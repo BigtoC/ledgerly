@@ -122,3 +122,5 @@ app.*.symbols
 # LLM
 .claude/worktrees/*
 .context
+# CocoIndex Code (ccc)
+/.cocoindex_code/
