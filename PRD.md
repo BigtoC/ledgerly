@@ -10,7 +10,7 @@ Ledgerly is a local-first mobile expense tracker built with Flutter. It is aimed
 - **Languages:** English, Traditional Chinese (zh-TW), Simplified Chinese (zh-CN)
 - **Target user:** People who prefer manual expense tracking over automation-heavy finance apps
 - **Product wedge:** Fast local-first entry with seeded defaults and no sign-in requirement
-- **MVP non-goals:** Bank sync, recurring automation, credit-card payoff flows, account transfers, multi-currency, charts, budgets, cloud sync, wallet transaction sync
+- **MVP non-goals:** Bank sync, recurring automation, credit-card payoff flows, account transfers, automatic FX price fetching / auto-conversion, charts, budgets, cloud sync, wallet transaction sync
 
 ---
 
@@ -21,6 +21,7 @@ Ledgerly is a local-first mobile expense tracker built with Flutter. It is aimed
 - Seeded categories with subcategories
 - Optional custom categories and subcategories
 - Multiple manual accounts (cash, bank, other)
+- Base multi-currency support with configurable default currency
 - Transaction memos
 - Quick repeat / duplicate existing transaction
 - Light/dark/system theme
@@ -34,7 +35,7 @@ Ledgerly is a local-first mobile expense tracker built with Flutter. It is aimed
 - Basic charts (pie, bar)
 - Fortune City CSV import
 - Transaction search
-- Multi-currency support
+- Extended multi-currency — fetch currency prices and auto-convert balances, summaries, and charts to the user's default currency
 - **Wallet transaction sync** — EVM wallet addresses linked to accounts, Ankr API integration, pending transaction review/approve/reject flow
 - **Pending transaction management screen**
 
@@ -54,7 +55,7 @@ Ledgerly is a local-first mobile expense tracker built with Flutter. It is aimed
 
 ## Architecture
 
-Use a simple feature-first Flutter architecture for MVP. Start from a standard `flutter create` scaffold and add only the layers required by the current app. Avoid repository interfaces and one-use-case-per-action abstractions until a second data source or sync backend exists.
+Use a simple feature-first Flutter architecture for MVP. Start from a standard `flutter create` scaffold and add only the layers required by the current app. Avoid repository interfaces and one-use-case-per-action abstractions until a second data source or sync backend exists. Phase 2 adds small integration services for wallet sync and exchange-rate fetching without changing the overall feature-first structure.
 
 ```text
 lib/
@@ -97,6 +98,8 @@ lib/
       wallets_screen.dart
       wallets_controller.dart
       ankr_service.dart
+    exchange_rates/              # Phase 2
+      exchange_rate_service.dart
     settings/
       settings_screen.dart
 test/
@@ -135,7 +138,7 @@ l10n/
 
 ### MVP Currency Policy
 
-MVP uses one app-wide currency stored in `user_preferences.default_currency`. All accounts and transactions use that single currency. Phase 2 multi-currency support will add per-account and per-transaction currency fields plus aggregation rules.
+MVP supports multi-currency accounts and transactions. `user_preferences.default_currency` is configurable and used as the default for new accounts, the first seeded account, and preferred display currency in Settings. MVP stores original amounts and currencies without auto-conversion; mixed-currency summaries are grouped by currency. Phase 2 fetches currency prices and auto-converts balances, summaries, and charts into the user's default currency while preserving original amounts.
 
 ### transactions
 
@@ -143,6 +146,7 @@ MVP uses one app-wide currency stored in `user_preferences.default_currency`. Al
 |-------------|----------|--------------------------------|
 | id          | INTEGER  | PRIMARY KEY AUTO               |
 | amount      | REAL     | NOT NULL                       |
+| currency    | TEXT     | NOT NULL                       |
 | category_id | INTEGER  | NOT NULL REFERENCES categories |
 | account_id  | INTEGER  | NOT NULL REFERENCES accounts   |
 | memo        | TEXT     |                                |
@@ -151,6 +155,8 @@ MVP uses one app-wide currency stored in `user_preferences.default_currency`. Al
 | updated_at  | DATETIME |                                |
 
 Note: Transaction type (expense/income) is derived from the linked category's `type` field. A category's `type` becomes immutable after the first transaction uses it, so historical transaction meaning cannot be changed later by editing the category.
+
+Additional note: `currency` stores the original transaction currency. Phase 2 conversion never overwrites the original `amount` or `currency`.
 
 ### categories
 
@@ -179,6 +185,7 @@ Notes:
 | id              | INTEGER | PRIMARY KEY AUTO                   |
 | name            | TEXT    | NOT NULL                           |
 | type            | TEXT    | NOT NULL — 'cash', 'bank', 'other' |
+| currency        | TEXT    | NOT NULL                           |
 | opening_balance | REAL    | DEFAULT 0                          |
 | icon            | TEXT    |                                    |
 | color           | INTEGER |                                    |
@@ -186,9 +193,26 @@ Notes:
 | is_archived     | BOOL    | DEFAULT false                      |
 
 Notes:
-- Tracked balance is derived in queries: `opening_balance + income - expense` for transactions assigned to that account.
+- New accounts default to `user_preferences.default_currency` but can be changed on creation.
+- Tracked balance is derived in the account's native currency from transactions assigned to that account.
+- MVP Home and Accounts surfaces group totals by original currency. Phase 2 can also show auto-converted totals in `default_currency`.
 - Accounts with existing transactions can be archived but not hard-deleted.
 - Transfers, reconciliation, and credit-card payoff flows are deferred to Phase 2.
+
+### exchange_rates (Phase 2)
+
+| Column         | Type     | Constraints         |
+|----------------|----------|---------------------|
+| id             | INTEGER  | PRIMARY KEY AUTO    |
+| base_currency  | TEXT     | NOT NULL            |
+| quote_currency | TEXT     | NOT NULL            |
+| rate           | REAL     | NOT NULL            |
+| fetched_at     | DATETIME | NOT NULL            |
+| provider       | TEXT     | NOT NULL            |
+
+Notes:
+- Stores fetched currency prices / exchange rates used to auto-convert balances and summaries into `user_preferences.default_currency`.
+- Original transaction and account amounts remain unchanged; conversion is additive display data.
 
 ### pending_transactions (Phase 2)
 
@@ -197,6 +221,7 @@ Notes:
 | id                | INTEGER  | PRIMARY KEY AUTO                           |
 | source            | TEXT     | NOT NULL — 'blockchain', 'recurring'       |
 | amount            | REAL     | NOT NULL                                   |
+| currency          | TEXT     | NOT NULL                                   |
 | category_id       | INTEGER  | REFERENCES categories, nullable            |
 | account_id        | INTEGER  | NOT NULL REFERENCES accounts               |
 | memo              | TEXT     | nullable                                   |
@@ -216,11 +241,11 @@ Note: `recurring_rules` table schema will be defined when recurring transactions
 
 Notes:
 - Universal staging table for auto-generated transactions from any source.
-- Shared fields (`amount`, `category_id`, `account_id`, `memo`, `date`) are common to all sources.
-- Blockchain fields populated only when `source = 'blockchain'`; `category_id` nullable since user assigns during review.
-- Recurring fields populated when `source = 'recurring'`; `category_id` pre-filled from the recurring rule.
+- Shared fields (`amount`, `currency`, `category_id`, `account_id`, `memo`, `date`) are common to all sources.
+- Blockchain fields populated only when `source = 'blockchain'`; `currency` usually comes from the token symbol / reviewed asset code, and `category_id` is nullable since user assigns it during review.
+- Recurring fields populated when `source = 'recurring'`; `category_id` and `currency` are pre-filled from the recurring rule.
 - `tx_hash` UNIQUE constraint prevents blockchain duplicates.
-- Approve: validate required fields, insert into `transactions`, delete from `pending_transactions`.
+- Approve: validate required fields, insert into `transactions` with original `currency`, delete from `pending_transactions`.
 - Reject: delete from `pending_transactions`.
 
 ### wallet_addresses (Phase 2)
@@ -413,7 +438,7 @@ App open (or manual refresh tap)
 ### First-run Defaults
 
 - On first launch, seed one `Cash` account with `opening_balance = 0` and all default categories
-- `default_currency` starts from device locale and can be changed in Settings
+- `default_currency` starts from device locale, can be changed in Settings, and is used for new account defaults
 - `splash_enabled = true` by default; first launch redirects to date picker before showing splash
 - After splash, Home opens in an empty state with primary CTA `Log first transaction`
 - Users can complete their first transaction without visiting Accounts, Categories, or Settings
@@ -421,9 +446,9 @@ App open (or manual refresh tap)
 ### Screens
 
 1. **Splash Screen** — Day counter with hnotes-style visual design, tap to enter Home
-2. **Home Screen** — Compact summary strip (`Today expense`, `Today income`, `Month net`), daily transaction list grouped by date, newest first, empty-state CTA, FAB to add transaction, pending transaction badge (Phase 2)
-3. **Add/Edit Transaction** — Expense/Income segmented control, calculator-style keypad for amount, category picker (icon grid), account selector, date picker, memo field, save; delete only in edit mode
-4. **Accounts Screen** — List accounts with tracked balances, add account, set default account, archive account
+2. **Home Screen** — Compact summary strip grouped by currency in MVP (`Today expense`, `Today income`, `Month net` per currency); Phase 2 can also show auto-converted totals in `default_currency`, daily transaction list grouped by date, newest first, empty-state CTA, FAB to add transaction, pending transaction badge (Phase 2)
+3. **Add/Edit Transaction** — Expense/Income segmented control, calculator-style keypad for amount, category picker (icon grid), account selector with currency indicator, date picker, memo field, save; delete only in edit mode
+4. **Accounts Screen** — List accounts with tracked balances in native currency, add account, set default account, archive account
 5. **Categories Screen** — List categories grouped by expense/income, add/edit/reorder/archive, subcategory management
 6. **Settings Screen** — Theme toggle (light/dark/system), language selector, default account, default currency, manage categories, splash screen settings
 7. **Pending Transactions Screen** (Phase 2) — Review/approve/reject auto-generated transactions, accessible from Home badge and Settings
@@ -435,6 +460,7 @@ App open (or manual refresh tap)
 - Expense is the default selection when opening from Home; users can switch to Income via a segmented control at the top
 - Category picker first shows top-level categories for the selected type; selecting a parent with children opens a subcategory sheet
 - Default account uses the user's configured default account, otherwise the last used active account
+- Transaction currency is inherited from the selected account and shown next to the amount; new accounts default to `default_currency`
 - Date defaults to today
 - Save stays disabled until amount is greater than zero and both category and account are selected
 - Leaving with unsaved changes shows a confirm-discard dialog
@@ -443,7 +469,7 @@ App open (or manual refresh tap)
 ### Screen States
 
 - **Splash:** shows day count when configured, date picker redirect when no start date set, skipped when disabled
-- **Home:** skeleton rows on cold start, `No transactions yet` empty state on first run, undo snackbar after delete, pending transaction badge (Phase 2)
+- **Home:** skeleton rows on cold start, `No transactions yet` empty state on first run, grouped summary chips when multiple currencies are present, undo snackbar after delete, pending transaction badge (Phase 2)
 - **Add/Edit Transaction:** inline validation for missing amount/category/account, confirm-discard dialog, save-error snackbar
 - **Accounts:** if no active account exists, show `Create account` CTA and block transaction save until one exists
 - **Categories:** if a type has no visible categories, show `Create category` CTA; used categories can be archived but not deleted
@@ -496,6 +522,7 @@ App open → auto-fetch transfers for all configured wallets
 - Home screen sorted newest-first by default
 - Home summary stays a single compact strip, not a dashboard of generic metric cards
 - Swipe-to-delete on transactions with undo snackbar
+- MVP summaries stay grouped by original currency; Phase 2 adds auto-converted totals in `default_currency` when rates are available
 - Pending transactions as a separate review screen rather than inline with confirmed transactions — keeps the main transaction list clean
 
 ---
@@ -515,7 +542,7 @@ Localized elements:
 - All UI labels, buttons, messages
 - Seeded category labels via `l10n_key`
 - Date formats (locale-aware)
-- Number/currency formats (locale-aware, using the single MVP default currency)
+- Number/currency formats (locale-aware, using each transaction/account currency in MVP and default-currency conversion labels in Phase 2)
 - Splash screen default display text and button label
 - Pending transaction labels and review UI (Phase 2)
 - Wallet management labels (Phase 2)
@@ -545,6 +572,7 @@ Material Design 3 with `ColorScheme.fromSeed()` for both light and dark variants
 - Ankr API key stored in `flutter_secure_storage`, never in `user_preferences` or logs (Phase 2)
 - Wallet addresses are stored in the local database only; no server-side storage
 - MVP stores no remote tokens. Phase 2 introduces the Ankr API key as the first secret requiring secure storage
+- Phase 2 currency-price requests send currency pairs and conversion metadata only; they must not include user memos, categories, or other transaction text
 - App lock remains future work. MVP baseline relies on OS device security plus sandbox/file-protection settings rather than an in-app passcode
 - Future CSV import/export must be explicit user actions with schema validation, size limits, malformed-row handling, formula escaping, and clear warnings that exported CSV files are portable unencrypted data
 - Future cloud backup must define provider choice, authentication, encryption expectations, token storage, sync scope, and delete/restore behavior before implementation
@@ -554,16 +582,17 @@ Material Design 3 with `ColorScheme.fromSeed()` for both light and dark variants
 ## Testing Strategy
 
 ### Unit Tests (Core Focus)
-- **Controllers/queries** — add/edit transaction validation, account balance derivation from `opening_balance`, Home summary calculations
+- **Controllers/queries** — add/edit transaction validation, account balance derivation in native currency, grouped Home summary calculations by currency, default-currency preference behavior
 - **Category rules** — archive/delete constraints, type immutability after first use, localized display label resolution from `l10n_key` + `custom_name`
-- **Formatters/utils** — currency formatting using `default_currency`, locale-aware date helpers
+- **Formatters/utils** — currency formatting for account / transaction currencies, default-currency preference, locale-aware date helpers
 - **Splash screen** — day count calculation from start date, preference read/write, template variable substitution (`{days}`, `{date}`)
+- **FX conversion (Phase 2)** — exchange-rate fetch/caching, auto-conversion to `default_currency`, stale-rate fallback, grouped-vs-converted summary behavior
 - **Wallet sync (Phase 2)** — Ankr response parsing, transfer-to-pending mapping, expense vs income detection (from/to address matching), timestamp window logic, duplicate tx_hash prevention
 - **Pending transactions (Phase 2)** — approve flow (insert into transactions + delete from pending), reject flow, source-based grouping
 
 ### Widget Tests
 - **Splash screen** — renders day count, respects enabled/disabled toggle, date picker flow on first config, fade transition
-- **Home screen** — first-run empty state, summary strip, transaction list rendering, delete undo snackbar, pending badge (Phase 2)
+- **Home screen** — first-run empty state, grouped-by-currency summary strip in MVP, converted-summary state in Phase 2, transaction list rendering, delete undo snackbar, pending badge (Phase 2)
 - **Add Transaction screen** — keypad input, expense/income toggle, category selection, validation, duplicate flow
 - **Category/Account screens** — create, archive, reorder, empty-state CTAs
 - **Settings screen** — theme, locale, default-currency updates, splash settings
@@ -575,6 +604,7 @@ Material Design 3 with `ColorScheme.fromSeed()` for both light and dark variants
 - Subsequent launch with splash enabled: splash → Home
 - Subsequent launch with splash disabled: straight to Home
 - Duplicate flow: duplicate existing transaction → edit amount/date → save → verify second row in DB
+- Multi-currency flow: create second account with a different currency → add transactions in both accounts → verify Home groups totals by currency in MVP
 - Management flow: archive used category/account → hidden from pickers but still visible in history/management screens
 - **Phase 2:** add wallet → sync → pending transactions appear → approve → visible in Home transaction list
 - **Phase 2:** reject pending transaction → removed from pending, not in transactions
@@ -583,7 +613,7 @@ Material Design 3 with `ColorScheme.fromSeed()` for both light and dark variants
 - Drift's in-memory database makes query and rules tests fast
 - Riverpod's ProviderContainer overrides enable clean dependency injection in tests
 - High coverage on the manual-entry loop, first-run flow, splash screen, and archive/type rules
-- Wallet sync, pending transactions, recurring, transfers, and multi-currency get dedicated coverage only when they enter scope in Phase 2
+- Wallet sync, pending transactions, recurring, transfers, and automatic FX conversion get dedicated coverage in Phase 2; base multi-currency coverage starts in MVP
 - `mocktail` for isolated controller tests where a full DB setup is unnecessary
 - Ankr API calls mocked in tests; no live API calls in test suite
 
@@ -613,7 +643,7 @@ Material Design 3 with `ColorScheme.fromSeed()` for both light and dark variants
 | Package                  | Purpose                                |
 |--------------------------|----------------------------------------|
 | `flutter_secure_storage` | Secure storage for Ankr API key        |
-| `dio`                    | HTTP client for Ankr JSON-RPC calls    |
+| `dio`                    | HTTP client for currency-price and Ankr API calls |
 
 ### Dev Dependencies
 
