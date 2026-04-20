@@ -14,16 +14,18 @@ import 'package:ledgerly/main.dart' as app;
 
 void main() {
   group('M0 smoke', () {
-    testWidgets('main boots into the placeholder shell without startup errors',
-        (tester) async {
-      await app.main();
-      await tester.pump();
-      await tester.pump();
+    testWidgets(
+      'main boots into the placeholder shell without startup errors',
+      (tester) async {
+        await app.main();
+        await tester.pump();
+        await tester.pump();
 
-      expect(find.byType(MaterialApp), findsOneWidget);
-      expect(find.byType(Scaffold), findsOneWidget);
-      expect(find.text('Ledgerly'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    });
+        expect(find.byType(MaterialApp), findsOneWidget);
+        expect(find.byType(Scaffold), findsOneWidget);
+        expect(find.text('Ledgerly'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
   });
 }

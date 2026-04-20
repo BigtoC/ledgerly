@@ -13,11 +13,7 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       title: 'Ledgerly',
-      home: Scaffold(
-        body: Center(
-          child: Text('Ledgerly'),
-        ),
-      ),
+      home: Scaffold(body: Center(child: Text('Ledgerly'))),
     );
   }
 }
