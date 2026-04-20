@@ -1,0 +1,24 @@
+name: iOS nightly build
+
+# Nightly iOS build so iOS-only breakage never surprises us at release
+# time (see implementation-plan.md risk #12).
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  ios-build:
+    name: iOS debug build (no codesign)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Flutter (stable)
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - run: flutter build ios --no-codesign --debug
