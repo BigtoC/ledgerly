@@ -1,0 +1,81 @@
+name: ledgerly
+description: Local-first Flutter expense tracker. See PRD.md for the spec.
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.11.5
+  flutter: ">=3.41.6"
+
+# Dependency list mirrors PRD.md -> Dependencies -> Core (MVP) exactly.
+# Phase 2 packages (dio, flutter_secure_storage, fl_chart, ...) are NOT
+# added here; they land with their corresponding milestone.
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # App shell / state
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # Local database
+  drift: ^2.23.0
+  drift_flutter: ^0.2.4
+  path_provider: ^2.1.5
+
+  # Navigation
+  go_router: ^14.8.0
+
+  # Domain modelling
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+  # i18n
+  intl: ^0.20.2
+
+  # UI components
+  flutter_slidable: ^3.1.2
+  material_symbols_icons: ^4.2803.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Code generation runners
+  build_runner: ^2.4.13
+  drift_dev: ^2.23.0
+  freezed: ^2.5.7
+  json_serializable: ^6.9.0
+  riverpod_generator: ^2.6.3
+
+  # Linting / static analysis
+  flutter_lints: ^5.0.0
+  custom_lint: ^0.7.0
+  riverpod_lint: ^2.6.3
+  import_lint: ^0.1.6
+
+  # Testing
+  mocktail: ^1.0.4
+
+  # Native splash is a codegen CLI (`dart run flutter_native_splash:create`),
+  # never imported at runtime, so it belongs in dev_dependencies even though
+  # PRD lists it under Core (MVP).
+  flutter_native_splash: ^2.4.4
+
+flutter:
+  uses-material-design: true
+  generate: true
+
+# Placeholder themed native splash per M0 plan; assets are regenerated in
+# M6 once the final sun-themed asset ships.
+flutter_native_splash:
+  color: "#FFFFFF"
+  color_dark: "#121212"
+  android_12:
+    color: "#FFFFFF"
+    color_dark: "#121212"
+  android: true
+  ios: true
+  web: false
