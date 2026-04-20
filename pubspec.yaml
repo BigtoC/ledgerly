@@ -21,22 +21,22 @@ dependencies:
   riverpod_annotation: ^2.6.1
 
   # Local database
-  drift: ^2.23.0
-  drift_flutter: ^0.2.4
+  drift: ^2.28.0
+  drift_flutter: ^0.2.7
   path_provider: ^2.1.5
 
   # Navigation
-  go_router: ^14.8.0
+  go_router: ^17.2.1
 
   # Domain modelling
-  freezed_annotation: ^2.4.4
+  freezed_annotation: ^3.0.0
   json_annotation: ^4.9.0
 
   # i18n
   intl: ^0.20.2
 
   # UI components
-  flutter_slidable: ^3.1.2
+  flutter_slidable: ^4.0.3
   material_symbols_icons: ^4.2803.0
 
 dev_dependencies:
@@ -44,16 +44,16 @@ dev_dependencies:
     sdk: flutter
 
   # Code generation runners
-  build_runner: ^2.4.13
-  drift_dev: ^2.23.0
-  freezed: ^2.5.7
+  build_runner: ^2.5.4
+  drift_dev: ^2.28.0
+  freezed: ^3.1.0
   json_serializable: ^6.9.0
   riverpod_generator: ^2.6.3
 
   # Linting / static analysis
-  flutter_lints: ^5.0.0
-  custom_lint: ^0.7.0
-  riverpod_lint: ^2.6.3
+  flutter_lints: ^6.0.0
+  custom_lint: ^0.7.6
+  riverpod_lint: ^2.6.5
   import_lint: ^0.1.6
 
   # Testing
