@@ -1,0 +1,11 @@
+# flutter_localizations codegen configuration.
+#
+# Source ARB files live in /l10n at the repo root per PRD -> Folder
+# Structure. Generated Dart lands in the synthetic `flutter_gen` package
+# and is imported via `package:flutter_gen/gen_l10n/app_localizations.dart`.
+
+arb-dir: l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+nullable-getter: false

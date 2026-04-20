@@ -1,0 +1,163 @@
+# Static analysis configuration.
+#
+# Layer-boundary enforcement comes from two places:
+#   1. `custom_lint` (loaded below) activates `riverpod_lint`.
+#   2. `import_lint` encodes the PRD -> Layer Boundaries table and runs via
+#      `dart run import_lint` (wired into CI alongside `flutter analyze`).
+#
+# Generated code is excluded; every other file is analysed.
+
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/*.drift.dart"
+    - "**/*.config.dart"
+    - "lib/generated/**"
+    - ".dart_tool/**"
+    - "build/**"
+  errors:
+    # Freezed occasionally emits annotations on non-targets; keep info-level.
+    invalid_annotation_target: ignore
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  plugins:
+    - custom_lint
+
+linter:
+  rules:
+    # Hygiene
+    always_declare_return_types: true
+    avoid_dynamic_calls: true
+    avoid_print: true
+    prefer_const_constructors: true
+    prefer_const_constructors_in_immutables: true
+    prefer_const_declarations: true
+    prefer_const_literals_to_create_immutables: true
+    prefer_final_locals: true
+    prefer_single_quotes: true
+    unawaited_futures: true
+    use_super_parameters: true
+
+# ---------------------------------------------------------------------------
+# import_lint: enforce PRD -> Layer Boundaries.
+# Rule names map one-to-one to the table in PRD.md.
+#
+# MVP has no `lib/domain/` (use cases are Phase 2). Rules for `domain/` are
+# still included so Phase 2 inherits them for free.
+# ---------------------------------------------------------------------------
+import_lint:
+  severity: error
+  rules:
+    # Widgets (features/*/*_screen.dart and features/**/widgets/**) may only
+    # import their own controller and UI primitives. Forbidden: repositories,
+    # services, AppDatabase, DAOs, Drift tables / packages.
+    widgets_forbid_data_internals:
+      target_file_path: "lib/features/**/*_screen.dart"
+      not_allow_imports:
+        - "lib/data/database/**"
+        - "lib/data/services/**"
+        - "lib/data/repositories/**"
+        - "package:drift/**"
+        - "package:drift_flutter/**"
+        - "package:path_provider/**"
+
+    widget_helpers_forbid_data_internals:
+      target_file_path: "lib/features/**/widgets/**.dart"
+      not_allow_imports:
+        - "lib/data/database/**"
+        - "lib/data/services/**"
+        - "lib/data/repositories/**"
+        - "package:drift/**"
+        - "package:drift_flutter/**"
+        - "package:path_provider/**"
+
+    # Controllers may import repositories, use cases, and domain models.
+    # They must not touch AppDatabase, DAOs, Drift tables, or services.
+    controllers_forbid_db_and_services:
+      target_file_path: "lib/features/**/*_controller.dart"
+      not_allow_imports:
+        - "lib/data/database/**"
+        - "lib/data/services/**"
+        - "package:drift/**"
+        - "package:drift_flutter/**"
+        - "package:path_provider/**"
+
+    # State classes (features/*/*_state.dart) should stay presentation-only:
+    # domain models are fine, data-layer internals are not.
+    states_forbid_data_internals:
+      target_file_path: "lib/features/**/*_state.dart"
+      not_allow_imports:
+        - "lib/data/database/**"
+        - "lib/data/services/**"
+        - "lib/data/repositories/**"
+        - "package:drift/**"
+        - "package:drift_flutter/**"
+
+    # Use cases (Phase 2) may import repositories, services, and domain
+    # models. They must not reach into controllers or widgets.
+    use_cases_forbid_ui:
+      target_file_path: "lib/domain/**.dart"
+      not_allow_imports:
+        - "lib/features/**"
+        - "lib/app/**"
+
+    # Repositories may import services, AppDatabase, DAOs, and domain
+    # models. They must not depend on upstream layers.
+    repositories_forbid_upstream:
+      target_file_path: "lib/data/repositories/**"
+      not_allow_imports:
+        - "lib/features/**"
+        - "lib/domain/**"
+        - "lib/app/**"
+
+    # Services may import external SDKs only. They cannot reach back into
+    # the repository / model layer or upstream UI layers.
+    services_forbid_upstream_and_siblings:
+      target_file_path: "lib/data/services/**"
+      not_allow_imports:
+        - "lib/data/repositories/**"
+        - "lib/data/models/**"
+        - "lib/data/database/**"
+        - "lib/features/**"
+        - "lib/domain/**"
+        - "lib/app/**"
+
+    # Domain models (Freezed types) stay pure. They must not see Drift,
+    # services, repositories, or any upstream layer.
+    models_forbid_non_pure:
+      target_file_path: "lib/data/models/**"
+      not_allow_imports:
+        - "lib/data/database/**"
+        - "lib/data/services/**"
+        - "lib/data/repositories/**"
+        - "lib/features/**"
+        - "lib/domain/**"
+        - "lib/app/**"
+        - "package:drift/**"
+        - "package:drift_flutter/**"
+
+    # Drift tables / DAOs stay at the bottom of the stack.
+    database_forbid_upstream:
+      target_file_path: "lib/data/database/**"
+      not_allow_imports:
+        - "lib/data/services/**"
+        - "lib/data/repositories/**"
+        - "lib/features/**"
+        - "lib/domain/**"
+        - "lib/app/**"
+
+    # core/ is importable from anywhere, but core itself must not reach
+    # back into the feature / data layers — it is supposed to be pure
+    # utilities, theme, and generated l10n.
+    core_stays_pure:
+      target_file_path: "lib/core/**"
+      not_allow_imports:
+        - "lib/data/**"
+        - "lib/features/**"
+        - "lib/domain/**"
+        - "lib/app/**"
