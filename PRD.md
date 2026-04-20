@@ -283,8 +283,8 @@ Notes:
 | account_id         | INTEGER  | NOT NULL REFERENCES accounts                |
 | memo               | TEXT     |                                             |
 | date               | DATETIME | NOT NULL                                    |
-| created_at         | DATETIME |                                             |
-| updated_at         | DATETIME |                                             |
+| created_at         | DATETIME | NOT NULL — set by repository on insert      |
+| updated_at         | DATETIME | NOT NULL — set by repository on insert and every update |
 
 Notes:
 - Transaction type (expense/income) is derived from the linked category's `type` field. A category's `type` becomes immutable after the first transaction uses it, so historical transaction meaning cannot be changed later by editing the category.
