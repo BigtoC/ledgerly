@@ -36,7 +36,7 @@ Why it matters: `implementation-plan.md` §5 M1 — *"Agree field names between 
 | Freezed **JSON key** (when `@JsonSerializable` is applied) | `camelCase` (the Dart field name). No `fieldRename` override. Backup/restore in Phase 3 consumes this; MVP has no JSON boundary that needs to match the SQL snake_case.                                                                         |
 | **Enum wire value** (DB `TEXT`)                            | lowercase string, exact match to what M3 writes into the `TEXT` column. Declared on every Dart enum case via `@JsonValue('…')`. Example: `@JsonValue('expense') expense`.                                                                       |
 | **Foreign-key fields**                                     | Freezed/Drift getter uses `…Id` suffix (`categoryId`, `accountId`, `parentId`). SQL column uses `…_id` (`category_id`, …). Drift `.references(Table, #id)` emits the SQL `REFERENCES` constraint.                                               |
-| **Currency FK**                                            | `Transaction.currency` and `Account.currency` are **`String` code** (the PK of `currencies.code`), not a nested `Currency` object. Hydration, if wanted, is a controller-layer cache of `CurrencyRepository.watchAll()` (Stream B §8.2 item 4). |
+| **Currency FK — hybrid read/write**                        | On the **read** side, Freezed domain models (`Transaction.currency`, `Account.currency`, `AccountType.defaultCurrency`) carry a **nested `Currency`** object — repositories join `currencies` when building the domain model so Home/Accounts screens have `symbol` and `decimals` without a second fetch. On the **write** side (repository `save(...)` / `update(...)` signatures), the caller passes a **`String` currency code** (PK of `currencies.code`) — the form only knows what the picker returned. Drift columns stay `TEXT` FKs regardless. See §9.1. |
 | **Boolean columns**                                        | Named `is…` (`isToken`, `isArchived`). Drift default `false` where the PRD says `DEFAULT false`.                                                                                                                                                |
 
 **Drift `@DataClassName` convention** (Stream A §2 header): Drift data classes use the `…Row` suffix — `TransactionRow`, `CategoryRow`, `AccountRow`, `UserPreferenceRow` — to leave the unsuffixed names (`Transaction`, `Category`, `Account`) free for the Freezed domain models. `Currency` is shared unprefixed because the two classes never appear in the same file (only M3 repositories cross both sides, and they alias as needed).
@@ -64,13 +64,13 @@ Phase 2 columns (`exchange_rates.*`, `pending_transactions.*`, `wallet_addresses
 |----------------------|------------------------------|---------------|------------------------------------------------------------------------------------------------------|
 | `id`                 | `id`                         | `int`         | PRIMARY KEY AUTOINCREMENT.                                                                           |
 | `amount_minor_units` | `amountMinorUnits`           | `int`         | **Money**. Integer minor units — never `double`. SQL name pinned via `.named('amount_minor_units')`. |
-| `currency`           | `currency`                   | `String`      | FK → `currencies.code`. Original transaction currency; Phase 2 conversion never overwrites.          |
+| `currency`           | `currency`                   | Read: `Currency` / Write: `String` | FK → `currencies.code`. Original transaction currency; Phase 2 conversion never overwrites. Drift column stays `TEXT`; repo joins on read so Freezed `Transaction.currency` is nested `Currency`. `save(...)` takes a scalar code. See §9.1. |
 | `category_id`        | `categoryId`                 | `int`         | FK → `categories.id`. Transaction type (expense/income) is derived from linked category.             |
 | `account_id`         | `accountId`                  | `int`         | FK → `accounts.id`.                                                                                  |
 | `memo`               | `memo`                       | `String?`     | Optional free text.                                                                                  |
 | `date`               | `date`                       | `DateTime`    | User-supplied transaction date. See §5.                                                              |
-| `created_at`         | `createdAt`                  | `DateTime?`   | Repository-populated at insert (M3). See §5.                                                         |
-| `updated_at`         | `updatedAt`                  | `DateTime?`   | Repository-populated at update (M3). See §5.                                                         |
+| `created_at`         | `createdAt`                  | `DateTime`    | **NOT NULL.** Repository-populated at insert (M3). See §5 and §9.3.                                   |
+| `updated_at`         | `updatedAt`                  | `DateTime`    | **NOT NULL.** Repository-populated at insert; refreshed on every update (M3). See §5 and §9.3.       |
 
 No `type` column — derived from `categories.type` (PRD 290).
 
@@ -97,7 +97,7 @@ First-class table seeded with `accountType.cash` and `accountType.investment` by
 | `id`               | `id`                         | `int`                      | PRIMARY KEY AUTOINCREMENT.                                                                                   |
 | `l10n_key`         | `l10nKey`                    | `String?`                  | UNIQUE (nullable). Stable identity for seeded rows. Seeded: `accountType.cash`, `accountType.investment`.    |
 | `custom_name`      | `customName`                 | `String?`                  | User override. Renamed seeded row keeps `l10nKey`, writes `customName`. No auto-translation after rename.    |
-| `default_currency` | `defaultCurrency`            | `String?`                  | **FK scalar** → `currencies.code`, nullable. Optional default when creating accounts of this type. Not nested. |
+| `default_currency` | `defaultCurrency`            | Read: `Currency?` / Write: `String?` | FK → `currencies.code`, nullable. Drift column stays `TEXT?`; repo joins on read so Freezed `AccountType.defaultCurrency` is nullable nested `Currency?`. Writes take a scalar code. Null = no preference — form falls back to `user_preferences.default_currency` then `'USD'`. See §9.1. |
 | `icon`             | `icon`                       | `String`                   | Icon-registry key (`core/utils/icon_registry.dart`). NOT NULL. Never `IconData`.                             |
 | `color`            | `color`                      | `int`                      | Index into `core/utils/color_palette.dart`. NOT NULL. Never ARGB. Append-only.                               |
 | `sort_order`       | `sortOrder`                  | `int?`                     | Order in pickers.                                                                                            |
@@ -110,7 +110,7 @@ First-class table seeded with `accountType.cash` and `accountType.investment` by
 | `id`                          | `id`                         | `int`                      | PRIMARY KEY AUTOINCREMENT.                                                           |
 | `name`                        | `name`                       | `String`                   | User-visible account name.                                                           |
 | `account_type_id`             | `accountTypeId`              | `int`                      | **FK** → `account_types.id`, NOT NULL. Replaces the removed `accounts.type TEXT` column. |
-| `currency`                    | `currency`                   | `String`                   | FK → `currencies.code`. Defaults to `user_preferences.default_currency` at creation. |
+| `currency`                    | `currency`                   | Read: `Currency` / Write: `String` | FK → `currencies.code`. New-account default currency chain: `account_types.default_currency` → `user_preferences.default_currency` → `'USD'`. Repo joins on read so Freezed `Account.currency` is nested `Currency`; writes take a scalar code. See §9.1. |
 | `opening_balance_minor_units` | `openingBalanceMinorUnits`   | `int` (`@Default(0)`)      | **Money**. Integer minor units — never `double`. SQL name pinned.                    |
 | `icon`                        | `icon`                       | `String?`                  | Icon-registry key or null.                                                           |
 | `color`                       | `color`                      | `int?`                     | Palette index or null.                                                               |
@@ -124,7 +124,7 @@ No `current_balance` / `tracked_balance` — derived from transactions (PRD 331)
 | DB column (PRD) | Drift getter / Freezed field                       | Type (domain) | Notes                                                                                                                                                                                                                  |
 |-----------------|----------------------------------------------------|---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `key`           | Drift getter `key`. **No Freezed domain model.**   | `String`      | PRIMARY KEY. Known keys: `theme_mode`, `default_account_id`, `default_currency`, `locale`, `first_run_completed`, `splash_enabled`, `splash_start_date`, `splash_display_text`, `splash_button_label` (Stream A §2.5). |
-| `value`         | Drift getter `value`. **No Freezed domain model.** | `String`      | Always JSON-encoded (even scalars — see §9 open question). Parsed by `UserPreferencesRepository` at M3.                                                                                                                |
+| `value`         | Drift getter `value`. **No Freezed domain model.** | `String`      | **Always JSON-encoded, including scalars** (§9.4 RESOLVED). `true` stored as `"true"`, `"light"` stored as `"\"light\""`. Parsed by `UserPreferencesRepository` at M3 with a single `jsonDecode` path.                 |
 
 Stream B deliberately omits a Freezed `UserPreference` model (Stream B §3.5). Typed accessors live on the M3 repository; this contract has nothing to bind on that table beyond the two raw column names.
 
@@ -164,19 +164,19 @@ Applies to: `transactions.created_at`, `transactions.updated_at`, `transactions.
 | Field        | Drift column type | SQL storage                          | Freezed type  | Nullability (MVP) | Populated by                                   |
 |--------------|-------------------|--------------------------------------|---------------|-------------------|------------------------------------------------|
 | `date`       | `DateTimeColumn`  | Drift default (Unix ms, `INTEGER`)   | `DateTime`    | NOT NULL          | UI → controller → repository (user picks).     |
-| `createdAt`  | `DateTimeColumn`  | Drift default (Unix ms, `INTEGER`)   | `DateTime?`   | Nullable          | **`TransactionRepository` at insert (M3).**    |
-| `updatedAt`  | `DateTimeColumn`  | Drift default (Unix ms, `INTEGER`)   | `DateTime?`   | Nullable          | **`TransactionRepository` at update (M3).**    |
+| `createdAt`  | `DateTimeColumn`  | Drift default (Unix ms, `INTEGER`)   | `DateTime`    | **NOT NULL**      | **`TransactionRepository` at insert (M3).** Immutable across updates. |
+| `updatedAt`  | `DateTimeColumn`  | Drift default (Unix ms, `INTEGER`)   | `DateTime`    | **NOT NULL**      | **`TransactionRepository` at insert and every update (M3).**          |
 
 **Decision — storage mode:** use Drift's **default `INTEGER` (Unix millisecond)** encoding for `DateTimeColumn`. Rationale:
 - Cheaper comparisons on the `transactions_date_idx` (Stream A §2.2) than `TEXT` ISO-8601.
 - Drift 2.x default — no opt-in flag needed.
 - Survives backup/restore via `DateTime.toIso8601String()` at the Freezed `toJson` boundary (Freezed handles this automatically with `json_serializable`).
 
-**Decision — who writes `created_at` / `updated_at`:** the **repository**, not the DB. Resolves Stream A §10 open question 4. Using Drift's `.clientDefault(() => DateTime.now())` was considered and rejected because:
+**Decision — who writes `created_at` / `updated_at`:** the **repository**, not the DB. Resolves Stream A §10 Q4 and Stream B §9 Q7. Using Drift's `.clientDefault(() => DateTime.now())` was considered and rejected because:
 - `clientDefault` does not fire on `UPDATE`, so `updatedAt` would go stale.
-- Repository-level `DateTime.now()` is mockable via an `Clock`-style override in M3 tests; a DB-level default is not.
+- Repository-level `DateTime.now()` is mockable via a `Clock`-style override in M3 tests; a DB-level default is not.
 
-Consequence: Drift columns stay `.nullable()` (Stream A §2.2). The repository guarantees non-null on write. M3 tests must assert both are populated.
+Consequence: Drift columns are **NOT NULL** (no `.nullable()`). Freezed fields are **required DateTime** (non-nullable). M3 tests assert: (a) both fields set on insert; (b) `updatedAt > createdAt` after any update; (c) `createdAt` is immutable across updates.
 
 ---
 
@@ -306,14 +306,13 @@ Disagreements or ambiguities between Stream A and Stream B that require a human 
 ### 9.1 `Transaction.currency` — scalar vs. nested `Currency`
 
 - **Stream A §10 Q1** asks the question, says either works.
-- **Stream B §8.2 item 4** answers: **`String` code, always.** No nested `Currency` object.
-- **Resolution (this contract):** `String`. §3.2 and §2 ("Currency FK") bind it. Hydration is a controller-layer concern.
+- ✅ **RESOLVED — hybrid.** Nested `Currency` on the Freezed read shape; `String currencyCode` on the write path (repository command signatures). Applied uniformly to `Transaction.currency`, `Account.currency`, and `AccountType.defaultCurrency` (nullable nested `Currency?`). Repositories join `currencies` when building domain models; forms pass scalar codes to `save(...)`/`update(...)`. Stream A is unchanged — DB columns stay `TEXT` FKs. Stream B §3.3 / §3.3a / §3.4 / §8.2 item 4 reflect this.
 
 ### 9.2 `categories.type` `CHECK` constraint
 
 - **Stream A §10 Q3** asks whether to add a `CHECK (type IN ('expense','income'))`; leans towards no.
 - **Stream B** does not address this — relies on the Dart `CategoryType` enum as the static-typing backstop and expects M3 to throw on unknown strings.
-- **Resolution (this contract):** **No SQL CHECK in MVP.** Matches Stream A's default. Enforcement is Dart-enum + repository throw. Adding a CHECK later requires a schema bump.
+- ✅ **RESOLVED — (b) no SQL CHECK, and `CategoryType` is locked to exactly `{expense, income}` forever.** Enforcement is Dart-enum + repository throw. **No third variant will ever be added.** Phase 2 account transfers and wallet sync model direction as expense/income from the tracked account/wallet's perspective: inflow = income, outflow = expense. An account-to-account transfer produces two transactions (expense on source, income on destination). This is documented in PRD *transactions* notes, PRD *Wallet Transaction Sync → Sync Flow*, Stream A §10 Q3, and Stream B §9 Q2.
 
 **RESOLVED — `accounts.type` CHECK constraint (obsolete).** Any prior open question from Stream A asking whether `accounts.type TEXT` should carry a `CHECK (type IN (...))` constraint is now moot: `accounts.type` was removed from the schema and replaced by the `accounts.account_type_id` FK into the first-class `account_types` table. Referential integrity is enforced by the FK, not a CHECK.
 
@@ -321,15 +320,15 @@ Disagreements or ambiguities between Stream A and Stream B that require a human 
 
 ### 9.3 `transactions.created_at` / `updated_at` population
 
-- **Stream A §10 Q4** asks whether Drift `.clientDefault` or the repository populates them; recommends the repository (UPDATE won't fire `clientDefault`).
-- **Stream B §9 Q7** defers to the repository and keeps Freezed fields nullable.
-- **Resolution (this contract):** **Repository populates both** (§5). Drift columns stay nullable. M3 tests assert population.
+- **Stream A §10 Q4** asks whether Drift `.clientDefault` or the repository populates them.
+- **Stream B §9 Q7** defers to the repository.
+- ✅ **RESOLVED — repository populates; both columns are NOT NULL on both sides.** `TransactionRepository` sets `createdAt = updatedAt = DateTime.now()` on insert and refreshes only `updatedAt` on every update. Drift columns are **NOT NULL** (no `.nullable()`); Freezed fields are **required DateTime** (not nullable). PRD §275–291 updated to match. M3 tests assert: (a) both fields set on insert, (b) `updatedAt > createdAt` after any update, (c) `createdAt` immutable across updates.
 
 ### 9.4 `UserPreferences.value` encoding
 
 - **Stream A §10 Q6** asks whether every value is JSON-encoded, even scalar bools/strings.
 - **Stream B §3.5** defers typed accessors to M3 without specifying.
-- **Resolution (this contract):** **Always JSON-encoded**, including scalars. Gives `UserPreferencesRepository` a single-code-path parser. `true` is stored as `'true'` (valid JSON); `'en_US'` is stored as `'"en_US"'` (JSON-quoted). Consequence: direct `sqlite3` inspection during debugging shows JSON-wrapped values.
+- ✅ **RESOLVED — (a) always JSON-encoded, including scalars.** Gives `UserPreferencesRepository` a single-code-path parser. `bool true` stored as `"true"`, `String "en_US"` stored as `"\"en_US\""` (JSON-quoted), `int 7` stored as `"7"`. Consequence: direct `sqlite3` inspection during debugging shows JSON-wrapped values — documented in the `user_preferences` table comment at M1 so a future maintainer opening `sqlite3` doesn't think it's a bug.
 
 ### 9.5 `fromJson` / `toJson` on all four Freezed models
 
@@ -341,7 +340,7 @@ Disagreements or ambiguities between Stream A and Stream B that require a human 
 
 - **Stream B §9 Q2** says no — wait for Phase 2.
 - **Stream A** only stores the raw string; silent on the enum shape.
-- **Resolution (this contract):** **MVP enum is exactly `{expense, income}`.** Adding `transfer` is a Phase 2 change (new enum case + new seed category behaviour + exhaustive-switch updates across M5 widgets).
+- ✅ **RESOLVED — `CategoryType` is `{expense, income}` forever.** No `transfer` variant, now or ever. Phase 2 transfers and Phase 2 wallet sync model direction as expense/income from the tracked account/wallet's perspective (see §9.2 and PRD *transactions* notes). Exhaustive-switch sites across M5 widgets therefore handle exactly two cases, period.
 
 ### 9.7 `LocaleService.resolveDefaultCurrency()` M1 return value
 

@@ -156,7 +156,9 @@ abstract class Account with _$Account {
     required int id,
     required String name,
     required int accountTypeId,            // FK: account_types.id.
-    required String currency,              // FK: currencies.code.
+    /// Nested native currency (repo joins `currencies` on read).
+    /// Write path accepts `String currencyCode`.
+    required Currency currency,
     /// Integer minor units. Scaling factor is `Currency.decimals`. Never
     /// a double. See PRD.md → Money Storage Policy.
     @Default(0) int openingBalanceMinorUnits,
@@ -172,8 +174,8 @@ abstract class Account with _$Account {
 ```
 
 Notes:
-- `accountTypeId` is an `int` FK into `account_types`. No nested `AccountType` model — matches principle §2.5. Controllers look up the `AccountType` from `AccountTypeRepository` the same way they look up `Currency` / `Category`.
-- `currency` is a `String` (the FK code). No nested `Currency` — matches principle §2.5. Controllers that need `Currency.decimals` for formatting look it up from `CurrencyRepository` (which is a cheap `.watchAll()` cached map).
+- `accountTypeId` is an `int` FK into `account_types`. No nested `AccountType` model — controllers look it up from `AccountTypeRepository` (a cheap `.watchAll()` cached map).
+- **Nested `Currency` on read.** Same hybrid rule as `Transaction.currency`: repo joins `currencies` so Home/Accounts screens render symbols and formatted totals without a second round-trip. Writes (`AccountRepository.save(...)`) take `String currencyCode`.
 - `openingBalanceMinorUnits` is `int`. Dartdoc on the field explicitly references the Money Storage Policy so the guardrail grep (G4, §7) only fires on accidental `double`s.
 - **No `currentBalance` field.** Derived by the repository / controller from transactions (PRD 331). Adding one here creates two sources of truth.
 
@@ -200,7 +202,10 @@ abstract class AccountType with _$AccountType {
     required int id,
     String? l10nKey,               // Stable identity for seeded rows.
     String? customName,            // User override of the localized name.
-    String? defaultCurrency,       // FK: currencies.code. Optional suggestion.
+    /// Optional default-currency hint (nested on read, `String?` code on write).
+    /// Null = no preference; account-creation form falls back to
+    /// `user_preferences.default_currency`, then `'USD'`.
+    Currency? defaultCurrency,
     required String icon,          // Icon-registry string key. Never IconData.
     required int color,            // Index into core/utils/color_palette.dart.
     @Default(0) int sortOrder,
@@ -241,13 +246,16 @@ abstract class Transaction with _$Transaction {
     /// Integer minor units. Scaling factor is `Currency.decimals`. Never a
     /// double, not even for display. See PRD.md → Money Storage Policy.
     required int amountMinorUnits,
-    required String currency,       // FK: currencies.code. Original tx currency.
+    /// Nested original-transaction currency (repo joins `currencies` on read).
+    /// On the write path, `TransactionRepository` accepts a scalar
+    /// `String currencyCode` — see §8.2 item 4.
+    required Currency currency,
     required int categoryId,        // FK: categories.id. Type derives from category.
     required int accountId,         // FK: accounts.id.
     required DateTime date,
     String? memo,
-    DateTime? createdAt,
-    DateTime? updatedAt,
+    required DateTime createdAt,
+    required DateTime updatedAt,
   }) = _Transaction;
 
   factory Transaction.fromJson(Map<String, Object?> json) =>
@@ -257,7 +265,8 @@ abstract class Transaction with _$Transaction {
 
 Notes:
 - **No `type` field.** Expense/income is derived from the linked `Category.type` (PRD 290). A `type` on `Transaction` would double-source that truth and can desync after a category type-lock violation attempt.
-- **No nested `Category` / `Account` / `Currency`.** Principle §2.5. Controllers resolve display names at render time.
+- **Nested `Currency` on read only.** The write path (`TransactionRepository.save(...)`) takes a `String currencyCode` — the form only knows the code the user picked. The repository resolves the code → row before calling the DAO. Other FKs (`categoryId`, `accountId`) stay as scalar ids on both paths because the widget rarely needs the full `Category` / `Account` object on Home (the summary strip and day list render from ids via controller-side lookups).
+- **`createdAt` / `updatedAt` are NOT NULL.** `TransactionRepository` sets both to `DateTime.now()` on insert and refreshes `updatedAt` on every update (PRD §275–291 notes, Stream A §10 Q4 RESOLVED).
 - `categoryId` is the write-side contract; `CategoryType` enum value only lives on the separately-fetched `Category`.
 
 ### 3.5 Why `UserPreferences` is absent
@@ -385,7 +394,7 @@ These are contracts Stream B imposes back on Stream A; flagged so Stream A's rev
 1. **`CategoryType` wire values are the exact strings `'expense'` and `'income'`.** Stream A stores these raw in `categories.type` (`TEXT`). Once seeded rows land at M3, changing these strings is a data migration, not a refactor. (`@JsonValue('expense')` in §3.2 is binding.)
 2. **`AccountType` is a first-class table, not an enum.** `accounts.account_type_id` is an `int` FK into `account_types.id`; there are no wire-value strings like `'cash'`/`'bank'`/`'other'` to agree on. The `account_types` field matrix is owned by Stream A's contract table (see Stream A §3 / §9 for the `account_types` row); Stream B mirrors those field names 1:1 on the `AccountType` Freezed model (§3.3a). Seeded rows are identified by `l10n_key` (e.g. `accountType.cash`, `accountType.investment`), not by a fixed enum casing.
 3. **Freezed model class names are unprefixed** (`Transaction`, `Category`, `Account`, `AccountType`, `Currency`). Stream A must keep the `…Row` suffix on conflicting Drift data classes (`TransactionRow`, `CategoryRow`, `AccountRow`, `AccountTypeRow`); `Currency` is shared — the two never meet in the same file, so the collision is harmless (repositories live in `data/repositories/` and are the only files importing both).
-4. **`Transaction.currency` / `Account.currency` are `String` on the Freezed side.** Stream A §10 open question 1 asks whether to hydrate to a nested `Currency` object. Stream B's answer: **String code, for M1**. Hydration, if needed, belongs in a thin controller-level cache of `CurrencyRepository.watchAll()`, not in the repository's read path. This keeps the Drift row → Freezed model mapping 1:1 (no joins) and keeps `Transaction.fromJson` round-trippable without multi-table context.
+4. **`Transaction.currency` / `Account.currency` are nested `Currency` on read, `String` code on write.** Repositories (`TransactionRepository`, `AccountRepository`) join `currencies` when building the Freezed domain model so Home/Accounts screens have `symbol` and `decimals` for free. The write paths (`save(...)`, `update(...)`) accept a scalar `String currencyCode` — forms only know the code the user picked. `AccountType.defaultCurrency` follows the same rule, typed as `Currency?` on the Freezed side. Stream A is unchanged — it still stores `TEXT` FKs. (Stream A §10 Q1 RESOLVED.)
 5. **No enum on `Currency.code`.** Phase 2 adds arbitrary token symbols (`ETH`, `USDC`, …); an enum would be a migration. Matches Stream A §2.1 "natural PK".
 6. **No `Currency.isToken`-driven Freezed union.** Stream B keeps `Currency` a single flat data class; fiat vs token is a bool flag, not a sealed variant. Simpler M2 `money_formatter` signature.
 
@@ -408,13 +417,13 @@ For the record, not for M1 sign-off:
 Decisions needed from a human before Stream B merges (or in tandem with Stream A's PR):
 
 1. **`fromJson`/`toJson` on all five models — confirm.** Stream B's default is "include on all five" (§3), justifying Phase 3 CSV/backup. Cost: five additional `*.g.dart` files + `json_serializable` in the build graph. Alternative: include only on `Transaction` (the actual CSV payload) and skip on `Currency` / `Category` / `Account` / `AccountType`. Current recommendation: include on all five — cheap, removes a future migration when Phase 3 lands.
-2. **`CategoryType` third variant?** PRD says "expense or income" (line 302). Phase 2 may add `transfer`. If the product roadmap is confident, should Stream B add it now as `@JsonValue('transfer') transfer` with comments marking it unused in MVP? Stream B's default: **no** — adding an unreachable enum case forces M3 repositories and M5 widgets to exhaustively handle it. Wait for Phase 2.
+2. **`CategoryType` third variant?** ✅ **RESOLVED — no third variant, ever.** PRD § transactions notes (updated) and `stream-a-drift-schema.md` §10 Q3 pin this: Phase 2 account transfers and wallet sync model direction as expense/income from the tracked account/wallet perspective. Outflow = expense, inflow = income. An account-to-account transfer creates two transactions (expense on source, income on destination). `CategoryType` stays two cases forever.
 3. **`CategoryType` wire-value casing.** `'expense'` / `'income'` (lowercase) is the obvious choice and matches CLAUDE.md's enum snippet. Confirm no one wants `'EXPENSE'` / `'INCOME'` (SCREAMING_SNAKE) before M3 seeds rows. (No longer applies to `AccountType` — it's a table, not an enum; seed identity is the `l10n_key` string, owned by M3's seed list.)
 3a. **Seeded `AccountType` icon keys + palette indices.** The two seeded rows (`accountType.cash`, `accountType.investment`) need a default `icon` string key and `color` palette index. Defer to **M2** when `core/utils/icon_registry.dart` and `core/utils/color_palette.dart` land — M1 only types the fields; picking the concrete values requires the registries to exist.
-4. **`Transaction.currency` scalar vs. nested `Currency` — confirm.** Stream B's recommendation (§8.2 item 4): `String`. Stream A §10 open question 1 asks this of Agent B. Stream B answers `String` here; if Agent C / platform lead disagree, update §3.4 and §8 before M3 starts building repository mappers.
+4. **`Transaction.currency` scalar vs. nested `Currency`.** ✅ **RESOLVED — hybrid.** Nested `Currency` on read, `String` code on write. Applied to `Transaction.currency`, `Account.currency`, and `AccountType.defaultCurrency` (§3.3, §3.3a, §3.4, §8.2 item 4).
 5. **`LocaleService.resolveDefaultCurrency()` M1 return value.** Hard-coded `'USD'` (§4.1). Acceptable? Alternative: parse `Platform.localeName` and map `JP` → `'JPY'`, `TW` → `'TWD'`, etc., now. Stream B's default: **hard-code USD** — the region→currency table belongs in a data file that M3 owns alongside the seed; M1 is compile-only and this path is exercised once, on first launch, after M4 bootstrap.
 6. **Generated-file commit policy.** `stream-a-drift-schema.md` §6 commits generated `*.g.dart`. Stream B follows the same posture. Confirm the repo's `.gitignore` does not exclude `*.freezed.dart` / `*.g.dart` under `lib/data/models/` before the first PR — M0 may have added a blanket `*.g.dart` ignore.
-7. **`Transaction.createdAt` / `updatedAt` — who writes them?** Stream A §10 open question 4 defers to the repository. Stream B keeps both nullable on the model; if the repo chooses `clientDefault`, Stream B changes them to non-null with a default in a later milestone. No action for M1.
+7. **`Transaction.createdAt` / `updatedAt` — who writes them?** ✅ **RESOLVED — NOT NULL, repository writes.** `TransactionRepository` sets `createdAt = updatedAt = DateTime.now()` on insert and refreshes only `updatedAt` on every update. Freezed model fields are non-nullable (`required DateTime createdAt / updatedAt`) — see §3.4. PRD §275–291 updated to match.
 
 ---
 

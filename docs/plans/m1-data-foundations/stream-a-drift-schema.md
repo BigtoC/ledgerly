@@ -454,12 +454,12 @@ Stream B (Freezed domain models) is writing `lib/data/models/{currency,transacti
 | `Currency`          | `sortOrder`                | `sort_order`                  | `sortOrder`                                          |
 | `TransactionRow`    | `id`                       | `id`                          | `id`                                                 |
 | `TransactionRow`    | `amountMinorUnits` (`int`) | `amount_minor_units`          | `amountMinorUnits` (`int`)                           |
-| `TransactionRow`    | `currency`                 | `currency`                    | `currency` (String code, not object — repo joins)    |
+| `TransactionRow`    | `currency`                 | `currency`                    | `currency` — Freezed nested `Currency` on read (repo joins); `String` code on write |
 | `TransactionRow`    | `categoryId`               | `category_id`                 | `categoryId`                                         |
 | `TransactionRow`    | `accountId`                | `account_id`                  | `accountId`                                          |
 | `TransactionRow`    | `memo`                     | `memo`                        | `memo`                                               |
 | `TransactionRow`    | `date`                     | `date`                        | `date`                                               |
-| `TransactionRow`    | `createdAt` / `updatedAt`  | `created_at` / `updated_at`   | `createdAt` / `updatedAt`                            |
+| `TransactionRow`    | `createdAt` / `updatedAt`  | `created_at` / `updated_at`   | `createdAt` / `updatedAt` — **NOT NULL** on both sides; repository populates |
 | `CategoryRow`       | `id`                       | `id`                          | `id`                                                 |
 | `CategoryRow`       | `l10nKey`                  | `l10n_key`                    | `l10nKey`                                            |
 | `CategoryRow`       | `customName`               | `custom_name`                 | `customName`                                         |
@@ -472,7 +472,7 @@ Stream B (Freezed domain models) is writing `lib/data/models/{currency,transacti
 | `AccountTypeRow`    | `id`                       | `id`                          | `id`                                                 |
 | `AccountTypeRow`    | `l10nKey`                  | `l10n_key`                    | `l10nKey`                                            |
 | `AccountTypeRow`    | `customName`               | `custom_name`                 | `customName`                                         |
-| `AccountTypeRow`    | `defaultCurrency`          | `default_currency`            | `defaultCurrency` (String code, nullable)            |
+| `AccountTypeRow`    | `defaultCurrency`          | `default_currency`            | `defaultCurrency` — Freezed nullable nested `Currency?` on read (repo joins); `String?` code on write |
 | `AccountTypeRow`    | `icon`                     | `icon`                        | `icon`                                               |
 | `AccountTypeRow`    | `color` (`int`)            | `color`                       | `color` (`int` palette index)                        |
 | `AccountTypeRow`    | `sortOrder`                | `sort_order`                  | `sortOrder`                                          |
@@ -481,7 +481,7 @@ Stream B (Freezed domain models) is writing `lib/data/models/{currency,transacti
 | `AccountRow`        | `name`                     | `name`                        | `name`                                               |
 | ~~`AccountRow`~~    | ~~`type` (`String`)~~      | ~~`type`~~                    | ~~enum — replaced by `accountTypeId` FK below~~      |
 | `AccountRow`        | `accountTypeId` (`int`)    | `account_type_id`             | `accountTypeId` (`int` FK → `AccountType.id`)        |
-| `AccountRow`        | `currency`                 | `currency`                    | `currency` (String code)                             |
+| `AccountRow`        | `currency`                 | `currency`                    | `currency` — Freezed nested `Currency` on read (repo joins); `String` code on write |
 | `AccountRow`        | `openingBalanceMinorUnits` | `opening_balance_minor_units` | `openingBalanceMinorUnits` (`int`)                   |
 | `AccountRow`        | `icon`                     | `icon`                        | `icon`                                               |
 | `AccountRow`        | `color`                    | `color`                       | `color`                                              |
@@ -508,12 +508,12 @@ If Stream B reaches for `json_serializable` with default `fieldRename` and expec
 
 Decisions needed from a human before Stream A merges (or in tandem with Stream B's first PR):
 
-1. **Transaction currency modeling in Freezed (Stream B).** Does `Transaction` carry a raw `String currencyCode`, or a nested `Currency` object resolved by the repository? Stream A stores the code; either works. A nested object costs one extra join in `TransactionRepository.watchAll()`; a string defers formatting knowledge to the controller. **Recommendation:** nested `Currency` on read (join in the repo), string on write (the form only knows the code the user picked). Needs sign-off from Agent B.
-2. **`AccountType` Freezed contract (replaces former "Account `type` values" Q).** `AccountType` was a wire-value enum when `accounts.type` was a TEXT column with values `'cash' | 'bank' | 'other'` and a possible `CHECK` constraint. With the new `account_types` table (§2.4) it is a first-class domain entity: users can add/rename/archive rows, and `accountType.cash` / `accountType.investment` are seeded-by-`l10n_key`. **Confirm** that the Stream A ↔ Stream B contract drops the `AccountType` enum section entirely and Stream B replaces it with a Freezed `AccountType` model (id, l10nKey, customName, defaultCurrency, icon, color, sortOrder, isArchived). No `CHECK` constraint on the old `accounts.type` column applies anymore — that line of the former Stream-A contract is obsolete.
-3. **`CategoryRow.type` check constraint.** PRD says `NOT NULL — 'expense' or 'income'` but the proposed table omits a SQL `CHECK` (§2.3). Confirm with platform lead that repository-level enforcement is acceptable (Stream A's default assumption). Adding a `CHECK` later is a schema bump.
+1. **Transaction currency modeling in Freezed (Stream B).** ✅ **RESOLVED — hybrid.** `TransactionRepository` (M3) joins `currencies` on read and returns the Freezed `Transaction` with a nested `Currency` object. Write path (insert/update) accepts a `String currencyCode` — the form only knows the code the user picked from the picker; the repository resolves it to a FK before the DAO call. Stream A itself is unchanged: `transactions.currency` stays a `TEXT` FK at the DB.
+2. **`AccountType` Freezed contract.** ✅ **RESOLVED — confirmed.** `AccountType` is a Freezed domain entity (id, l10nKey, customName, defaultCurrency, icon, color, sortOrder, isArchived), not an enum. Seeded rows (`accountType.cash`, `accountType.investment`) identified by `l10n_key`; users can add custom rows. The legacy TEXT enum and its former `CHECK` constraint are obsolete.
+3. **`CategoryRow.type` check constraint.** ✅ **RESOLVED — (b) no SQL `CHECK`.** `CategoryRepository` (M3) enforces the `'expense' | 'income'` invariant via the `CategoryType` enum wire-value contract (see Stream C §4.1). **No third enum value will be added.** Phase 2 account transfers and wallet sync model direction as expense/income from the tracked account's perspective: transfer/inflow **into** the tracked account or wallet address = **income**; transfer/outflow **out of** the tracked account or wallet address = **expense**. This removes any future pressure to add a `'transfer'` type and keeps the schema stable — see updated PRD *transactions* notes and *Wallet Transaction Sync → Sync Flow*.
 4. **Drift `created_at` / `updated_at` population.** ✅ **RESOLVED.** Both columns are **NOT NULL**. `TransactionRepository` (M3) sets `createdAt = updatedAt = DateTime.now()` on insert and updates only `updatedAt = DateTime.now()` on every update. DAO does not populate; Drift has no `clientDefault` (wouldn't fire for `UPDATE` anyway). Schema matches PRD §275–291 after PRD update.
-5. **Index on `categories(l10nKey)`.** We rely on the existing `UNIQUE` constraint's implicit index. Confirm no additional index is needed for seed idempotency (read volume is once per launch on an empty DB).
-6. **`UserPreferenceRow.value` format.** PRD says "JSON-encoded" (line 406). Confirm the convention is "always JSON, even for scalar bools/strings" so the repository can single-code-path its parsing. Affects only M3, but worth documenting alongside the table definition comment.
+5. **Index on `categories(l10nKey)`.** ✅ **RESOLVED — no additional index.** SQLite's implicit UNIQUE index covers seed idempotency reads (once per cold launch on an empty DB). Same applies to the new `account_types.l10n_key` — implicit UNIQUE index is sufficient.
+6. **`UserPreferenceRow.value` format.** ✅ **RESOLVED — (a) always JSON.** Every `value` is JSON-encoded, including scalars: `bool true` stored as `"true"`, `String "light"` stored as `"\"light\""`, `int 7` stored as `"7"`. `UserPreferencesRepository` (M3) uses one `jsonDecode` path for all keys. Stream A's DAO stays agnostic; the table comment simply references this rule.
 
 ---
 
