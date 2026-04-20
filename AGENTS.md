@@ -2,10 +2,12 @@
 ## Source precedence
 - Read `PRD.md` first. It is the authoritative source for architecture, schema, routing, layout primitives, bootstrap order, and dependency choices.
 - `CLAUDE.md` captures agent-facing repo rules and current status; use it as the quick summary.
+- `README.md` is useful for day-to-day commands and CI expectations, but some status/setup notes lag the committed scaffold; trust the checked-in tree when they differ.
 - `docs/superpowers/specs/2026-04-14-ledgerly-design.md` is historical context only. If it conflicts with `PRD.md`, follow `PRD.md`.
 ## Current repo state
-- This repository is still **pre-implementation**: there is no `pubspec.yaml`, no `lib/`, and no test suite yet.
-- When scaffolding, match the folder layout and package list in `PRD.md` exactly; do not default to a generic `flutter create` structure.
+- This repository is now in **M0 scaffolding**: `pubspec.yaml`, `analysis_options.yaml`, `l10n/`, `lib/`, `test/`, `drift_schemas/`, `.github/workflows/`, and native platform folders are all present in the workspace.
+- The current runtime is still a placeholder shell: `lib/app/bootstrap.dart` only does `WidgetsFlutterBinding.ensureInitialized()` + `runApp(const App())`, `lib/app/app.dart` renders a bare `MaterialApp`, and most files under `lib/data/` / `lib/features/` are milestone-tagged TODO stubs.
+- When extending the scaffold, match the folder layout and package list in `PRD.md` exactly; do not default to a generic `flutter create` structure.
 - In particular, `domain/` exists only in **Phase 2**. MVP is primarily `app/`, `core/`, `data/`, and `features/`.
 ## Architecture rules to preserve
 - Ledgerly uses a strict 3-layer flow: **Data → UI**, with `domain/` use cases added only for Phase 2 orchestration.
@@ -24,17 +26,25 @@
 ## UI, routing, and layout constraints
 - Preserve the bootstrap order from `PRD.md`: open DB → init locale → read prefs → seed if empty → inject `appDatabaseProvider` override → `runApp`.
 - Root routing uses a `go_router` `redirect:` that reads `splash_enabled`; when disabled, the app should not visit a splash route at all.
+- At M0 these are not wired into the runtime yet: `lib/app/router.dart` is still a TODO stub and `App` boots a plain `MaterialApp`. Follow `PRD.md` when implementing, but do not assume the route tree or shell primitives already exist in code.
 - Required layout primitives from `PRD.md`: Home uses `CustomScrollView` + slivers; Add/Edit Transaction uses `Scaffold(resizeToAvoidBottomInset: false)` with a fixed bottom keypad; Category picker uses a `ModalBottomSheet` with `CustomScrollView`, `SliverGrid`, and `SliverList`.
 - The only adaptive breakpoint is **600dp** at the shell level (`BottomNavigationBar` → `NavigationRail`, modal → constrained dialog/side sheet).
-## Commands and workflows (once scaffolded)
+## Commands and workflows
 - `flutter pub get`
-- `flutter analyze` (runs `custom_lint`, `import_lint`, and `riverpod_lint`)
+- `flutter run`
+- `flutter analyze` (currently clean; runs analyzer + `custom_lint` / `riverpod_lint`)
+- `dart run import_lint` is referenced in `README.md` and `.github/workflows/ci.yml`, but the current repo has no root `import_analysis_options.yaml`, so that command fails locally as-is.
 - `dart run build_runner build --delete-conflicting-outputs`
 - `dart run build_runner watch --delete-conflicting-outputs`
 - `dart run drift_dev schema dump lib/data/database/app_database.dart drift_schemas/`
-- `flutter test` / `flutter test --name 'category type is locked'`
+- `flutter test` / `flutter test test/widget/smoke_test.dart` / `flutter test --name 'M0 smoke'`
+- `dart format .`
+- `.github/workflows/ci.yml` currently runs package resolution → `dart run import_lint` → codegen → format check → `flutter analyze` → `flutter test` → Android debug build on pushes/PRs to `main`.
+- `.github/workflows/ios-nightly.yml` is currently a manual `workflow_dispatch` iOS debug build (`flutter build ios --no-codesign --debug`), not a scheduled nightly job.
 - Regenerate code whenever a `@freezed`, `@riverpod`, or Drift database/table annotation changes.
 ## Testing expectations
+- Current M0 reality: `test/widget/smoke_test.dart` is the only passing meaningful test, `test/unit/repositories/migration_test.dart` is a skipped harness stub, and `test/widget_test.dart` is still the default Flutter counter template and currently fails against `App`.
+- When adding coverage now, replace or remove `test/widget_test.dart` instead of extending it; use `test/widget/smoke_test.dart` as the pattern for boot-through-`main()` tests.
 - Tests are organized by layer, not feature: `test/unit/{services,repositories,use_cases,controllers,utils}`, then `test/widget/`, then `test/integration/`.
 - Repository tests use Drift in-memory DBs and should assert rules like category type locking, archive-instead-of-delete, FK integrity, and reactive stream emissions.
 - Controller tests use Riverpod `ProviderContainer` overrides with `mocktail`.
@@ -85,8 +95,8 @@ Trigger: User explicitly says "write code".
 
 After resolving a non-trivial problem, run `/ce:compound` to persist the solution for future reference.
 
-- `docs/solutions/` — documented solved problems (bug fixes, best practices, workflow patterns), organized by category
-- `/ce:plan` auto-searches `docs/solutions/` at planning time to surface relevant prior solutions before implementation begins
+- `docs/solutions/` is not present in the current scaffold; create it alongside the first consolidated solution doc if you need to persist a non-trivial fix.
+- Keep future solution docs under `docs/solutions/` so planning/review workflows have a stable place to search.
 - Each solution document includes: problem description, root cause, fix applied, and tags for search
 
 When to invoke `/ce:compound`:
