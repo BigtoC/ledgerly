@@ -1,0 +1,7 @@
+{
+  "@@locale": "en",
+  "appTitle": "Ledgerly",
+  "@appTitle": {
+    "description": "Application title shown on the launcher and in the app bar."
+  }
+}
