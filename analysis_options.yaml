@@ -1,0 +1,51 @@
+# Static analysis configuration.
+#
+# Layer-boundary enforcement comes from two places:
+#   1. `custom_lint` (loaded below) activates `riverpod_lint`.
+#   2. `import_lint` encodes the PRD -> Layer Boundaries table. Its rules
+#      live in `import_analysis_options.yaml` at the repo root (required
+#      by import_lint ^0.1.6 — do NOT move them back into this file, the
+#      0.1.6 runner will not find them). Runs via `dart run import_lint`,
+#      wired into CI alongside `flutter analyze`.
+#
+# Generated code is excluded; every other file is analyzed.
+
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/*.drift.dart"
+    - "**/*.config.dart"
+    - "lib/generated/**"
+    - ".dart_tool/**"
+    - "build/**"
+  errors:
+    # Freezed occasionally emits annotations on non-targets; keep info-level.
+    invalid_annotation_target: ignore
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  plugins:
+    - custom_lint
+
+linter:
+  rules:
+    # Hygiene
+    always_declare_return_types: true
+    avoid_dynamic_calls: true
+    avoid_print: true
+    prefer_const_constructors: true
+    prefer_const_constructors_in_immutables: true
+    prefer_const_declarations: true
+    prefer_const_literals_to_create_immutables: true
+    prefer_final_locals: true
+    prefer_single_quotes: true
+    unawaited_futures: true
+    use_super_parameters: true
+
+# import_lint rules are NOT configured here. They live in
+# `import_analysis_options.yaml` at the repo root (required by
+# import_lint ^0.1.6). See that file for the layer-boundary policy.

@@ -1,0 +1,131 @@
+# import_lint rules — PRD § Layer Boundaries.
+#
+# Read by `dart run import_lint` (import_lint ^0.1.6). 0.1.6 only reads
+# from this filename at the project root; it ignores any `import_lint:`
+# section inside analysis_options.yaml. Its schema is regex-based, not
+# glob-based — do not confuse with import_lint 2.x syntax.
+#
+# Rule names mirror the PRD -> Layer Boundaries table one-to-one. MVP
+# has no `lib/domain/` (use cases are Phase 2); `use_cases_forbid_ui` is
+# still declared so Phase 2 inherits it for free.
+#
+# Path regexes anchor at `lib/...` and tolerate both `package:ledgerly/...`
+# and relative imports (`.*/data/...` matches both forms).
+rules:
+  # Widgets (features/*/*_screen.dart) may only import their own
+  # controller and UI primitives — no repositories, services, DB, DAOs,
+  # or Drift packages.
+  widgets_forbid_data_internals:
+    search_file_path_reg_exp: "^lib/features/.*_screen\\.dart$"
+    not_allow_import_reg_exps:
+      - ".*/data/database/.*"
+      - ".*/data/services/.*"
+      - ".*/data/repositories/.*"
+      - "^package:drift/.*"
+      - "^package:drift_flutter/.*"
+      - "^package:path_provider/.*"
+    ignore_import_reg_exps: []
+
+  widget_helpers_forbid_data_internals:
+    search_file_path_reg_exp: "^lib/features/.*/widgets/.*\\.dart$"
+    not_allow_import_reg_exps:
+      - ".*/data/database/.*"
+      - ".*/data/services/.*"
+      - ".*/data/repositories/.*"
+      - "^package:drift/.*"
+      - "^package:drift_flutter/.*"
+      - "^package:path_provider/.*"
+    ignore_import_reg_exps: []
+
+  # Controllers may import repositories, use cases, domain models —
+  # never AppDatabase, DAOs, Drift, or services.
+  controllers_forbid_db_and_services:
+    search_file_path_reg_exp: "^lib/features/.*_controller\\.dart$"
+    not_allow_import_reg_exps:
+      - ".*/data/database/.*"
+      - ".*/data/services/.*"
+      - "^package:drift/.*"
+      - "^package:drift_flutter/.*"
+      - "^package:path_provider/.*"
+    ignore_import_reg_exps: []
+
+  # State classes stay presentation-only: domain models fine, data
+  # internals forbidden.
+  states_forbid_data_internals:
+    search_file_path_reg_exp: "^lib/features/.*_state\\.dart$"
+    not_allow_import_reg_exps:
+      - ".*/data/database/.*"
+      - ".*/data/services/.*"
+      - ".*/data/repositories/.*"
+      - "^package:drift/.*"
+      - "^package:drift_flutter/.*"
+    ignore_import_reg_exps: []
+
+  # Use cases (Phase 2) may import repositories, services, domain
+  # models — never controllers or widgets.
+  use_cases_forbid_ui:
+    search_file_path_reg_exp: "^lib/domain/.*\\.dart$"
+    not_allow_import_reg_exps:
+      - ".*/features/.*"
+      - ".*/app/.*"
+    ignore_import_reg_exps: []
+
+  # Repositories may import services, AppDatabase, DAOs, domain models —
+  # never upstream layers.
+  repositories_forbid_upstream:
+    search_file_path_reg_exp: "^lib/data/repositories/.*\\.dart$"
+    not_allow_import_reg_exps:
+      - ".*/features/.*"
+      - ".*/domain/.*"
+      - ".*/app/.*"
+    ignore_import_reg_exps: []
+
+  # Services may import external SDKs only — never peers (repositories,
+  # models, database) or upstream layers.
+  services_forbid_upstream_and_siblings:
+    search_file_path_reg_exp: "^lib/data/services/.*\\.dart$"
+    not_allow_import_reg_exps:
+      - ".*/data/repositories/.*"
+      - ".*/data/models/.*"
+      - ".*/data/database/.*"
+      - ".*/features/.*"
+      - ".*/domain/.*"
+      - ".*/app/.*"
+    ignore_import_reg_exps: []
+
+  # Domain models (Freezed) stay pure. No Drift, no services,
+  # no repositories, no upstream.
+  models_forbid_non_pure:
+    search_file_path_reg_exp: "^lib/data/models/.*\\.dart$"
+    not_allow_import_reg_exps:
+      - ".*/data/database/.*"
+      - ".*/data/services/.*"
+      - ".*/data/repositories/.*"
+      - ".*/features/.*"
+      - ".*/domain/.*"
+      - ".*/app/.*"
+      - "^package:drift/.*"
+      - "^package:drift_flutter/.*"
+    ignore_import_reg_exps: []
+
+  # Drift tables / DAOs stay at the bottom of the stack.
+  database_forbid_upstream:
+    search_file_path_reg_exp: "^lib/data/database/.*\\.dart$"
+    not_allow_import_reg_exps:
+      - ".*/data/services/.*"
+      - ".*/data/repositories/.*"
+      - ".*/features/.*"
+      - ".*/domain/.*"
+      - ".*/app/.*"
+    ignore_import_reg_exps: []
+
+  # core/ is importable from anywhere, but must not reach back into the
+  # feature / data / app layers — pure utilities, theme, generated l10n.
+  core_stays_pure:
+    search_file_path_reg_exp: "^lib/core/.*\\.dart$"
+    not_allow_import_reg_exps:
+      - ".*/data/.*"
+      - ".*/features/.*"
+      - ".*/domain/.*"
+      - ".*/app/.*"
+    ignore_import_reg_exps: []
