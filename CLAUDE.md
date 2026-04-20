@@ -29,7 +29,7 @@ Code generation is required whenever a `@freezed`, `@riverpod`, or Drift `@Drift
 
 Ledgerly uses a strict **3-layer architecture** (Data → UI; plus a `domain/` use-case layer in Phase 2 only). See `PRD.md` → *Architecture* for the full rule table. The rules that trip up generic Flutter code:
 
-- **SSOT on repositories.** Only `data/repositories/*` write to Drift or `flutter_secure_storage`. Controllers and widgets never construct Drift `Insertable` rows, never call DAO `.insert()`, never touch secure storage. Layer-boundary rules are declared in `analysis_options.yaml`; enforcement is best-effort under the current `import_lint ^0.1.6` pin (see *Dependency Pins* below), so reviewer discipline matters more than the linter here.
+- **SSOT on repositories.** Only `data/repositories/*` write to Drift or `flutter_secure_storage`. Controllers and widgets never construct Drift `Insertable` rows, never call DAO `.insert()`, never touch secure storage. Layer-boundary rules are declared in `import_analysis_options.yaml` at the repo root (the pinned `import_lint ^0.1.6` only reads from that filename, not from `analysis_options.yaml`); enforcement is best-effort under that pin (see *Dependency Pins* below), so reviewer discipline matters more than the linter here.
 - **Drift stays inside repositories.** Repositories map Drift data classes into Freezed domain models in `data/models/` and return those. Controllers and widgets must never see a Drift row type — that is the seam that protects the UI from schema churn.
 - **Controllers expose state + commands, not data access.** Each `*_controller.dart` owns an immutable Freezed sealed state (`loading | empty | data(...) | error`) and typed command methods. Widgets read state and call commands; no data transformation in `build()`.
 - **Reactive by default.** Repositories return `Stream<T>` backed by Drift `.watch()`; controllers consume via Riverpod `StreamNotifier` / `AsyncNotifier`. Avoid manual refresh patterns.
@@ -73,7 +73,7 @@ Ankr API calls are mocked in every test; no live network calls in the suite.
 
 Tested versions live in `pubspec.yaml` and in `PRD.md` → *Dependencies*. Two non-obvious pins to preserve when bumping:
 
-- **`import_lint: ^0.1.6`** — the 2.x line pulls `analyzer ^12.1.0` → `meta ^1.18.0`, but Flutter 3.41.7 pins `meta 1.17.0`. The 0.9.x–1.0.x band needs `analyzer ^5.2.0`, which conflicts with `freezed >=2.5.3`. Only `^0.1.6` resolves under the current SDK. Revisit when Flutter ships `meta 1.18+`.
+- **`import_lint: ^0.1.6`** — the 2.x line pulls `analyzer ^12.1.0` → `meta ^1.18.0`, but Flutter 3.41.7 pins `meta 1.17.0`. The 0.9.x–1.0.x band needs `analyzer ^5.2.0`, which conflicts with `freezed >=2.5.3`. Only `^0.1.6` resolves under the current SDK. Revisit when Flutter ships `meta 1.18+`. **Config-file quirk:** 0.1.6 reads rules from `import_analysis_options.yaml` at the repo root and uses a regex schema (`search_file_path_reg_exp`, `not_allow_import_reg_exps`). An `import_lint:` block inside `analysis_options.yaml` is silently ignored, and the glob-based `target_file_path`/`not_allow_imports` keys belong to 2.x — do not port them back.
 - **Chinese ARBs require a base `app_zh.arb`.** `flutter_localizations` fails codegen with "Arb file for a fallback, zh, does not exist" when only `app_zh_CN.arb` / `app_zh_TW.arb` are present. Keep `app_zh.arb` in `l10n/` even if it only contains `appTitle` — removing it breaks `flutter pub get`.
 
 ## Pagination Cap
