@@ -5,7 +5,7 @@
 #   2. `import_lint` encodes the PRD -> Layer Boundaries table and runs via
 #      `dart run import_lint` (wired into CI alongside `flutter analyze`).
 #
-# Generated code is excluded; every other file is analysed.
+# Generated code is excluded; every other file is analyzed.
 
 include: package:flutter_lints/flutter.yaml
 
