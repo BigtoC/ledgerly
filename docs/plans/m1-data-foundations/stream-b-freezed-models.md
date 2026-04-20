@@ -19,7 +19,8 @@
 ### In scope (Stream B builds)
 - `lib/data/models/transaction.dart` — Freezed `Transaction` domain model.
 - `lib/data/models/category.dart` — Freezed `Category` domain model + `CategoryType` enum.
-- `lib/data/models/account.dart` — Freezed `Account` domain model + `AccountType` enum.
+- `lib/data/models/account.dart` — Freezed `Account` domain model.
+- `lib/data/models/account_type.dart` — Freezed `AccountType` domain model.
 - `lib/data/models/currency.dart` — Freezed `Currency` domain model.
 - `lib/data/services/locale_service.dart` — minimal `Platform.localeName` wrapper for the bootstrap seed path.
 - Generated files (`*.freezed.dart`, `*.g.dart`) committed alongside the hand-written sources.
@@ -38,7 +39,7 @@
 
 1. **Framework-agnostic.** Files under `lib/data/models/` import only `package:freezed_annotation/freezed_annotation.dart`. Forbidden imports: `package:drift/*`, `package:flutter/*`, `dart:ui`, `dart:io`. This is what keeps Phase 3 backup/restore and future isolate-based workers portable. `import_lint` (M0) enforces this at the `data/models/**` glob.
 2. **Money is `int` minor units, always.** Every `amountMinorUnits` / `openingBalanceMinorUnits` field is a plain `int`. The scaling factor is `Currency.decimals`; formatting happens in M2's `money_formatter` at the UI boundary. Dartdoc on each money field references `PRD.md` → *Money Storage Policy*.
-3. **Enums are Dart `enum`s, never string literals in model code.** Two enums ship in M1: `CategoryType { expense, income }` and `AccountType { cash, bank, other }`. Each value carries an explicit `@JsonValue('expense')`-style annotation so the JSON wire format matches the SQL wire format M3 writes to Drift `TEXT` columns. Stream A stores the raw string at the Drift layer (see Stream A §2.3 and §9.2); repositories call `CategoryType.values.byName(...)` / enhanced-enum helpers in M3.
+3. **Enums are Dart `enum`s, never string literals in model code.** One enum ships in M1: `CategoryType { expense, income }`. Each value carries an explicit `@JsonValue('expense')`-style annotation so the JSON wire format matches the SQL wire format M3 writes to Drift `TEXT` columns. Stream A stores the raw string at the Drift layer (see Stream A §2.3); repositories call `CategoryType.values.byName(...)` / enhanced-enum helpers in M3. `AccountType` is **not** an enum — it is a first-class Freezed domain model backed by the `account_types` table (Stream A), mirroring the `Category` pattern (indirect icon string key + palette-index color, seeded rows identified by `l10n_key`, user-extensible).
 4. **IDs are `int`.** Matches Drift autoincrement PKs (Stream A §2.2, §2.3, §2.4). `Currency` is the only exception — its PK is `code` (`String`), per Stream A §2.1 and §9.1.
 5. **Relationships are FK scalars, not nested models.** `Transaction.categoryId` (`int`), `Transaction.accountId` (`int`), `Transaction.currency` (`String` — the ISO code / token symbol). No nested `Category` / `Account` / `Currency` object on `Transaction`. Rationale: keeps streams cheap (no N+1 joins in `TransactionRepository.watchAll()`), keeps controllers free to look up display names from separately-watched repositories, and keeps the model shape 1:1 with the Drift row — which is the easiest possible mapping surface for M3.
 6. **Immutability via Freezed.** All fields are `final`, generated via Freezed factory constructors. `copyWith`, `==`, `hashCode`, and `toString` are free.
@@ -147,16 +148,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'account.freezed.dart';
 part 'account.g.dart';
 
-/// Wire values match `accounts.type` TEXT column (Stream A §2.4, §9.2).
-enum AccountType {
-  @JsonValue('cash')
-  cash,
-  @JsonValue('bank')
-  bank,
-  @JsonValue('other')
-  other,
-}
-
 /// User-facing account. Mirrors `accounts` row (PRD.md 315–334).
 /// Current balance is DERIVED (PRD.md 331) — never a field on this model.
 @freezed
@@ -164,7 +155,7 @@ abstract class Account with _$Account {
   const factory Account({
     required int id,
     required String name,
-    required AccountType type,
+    required int accountTypeId,            // FK: account_types.id.
     required String currency,              // FK: currencies.code.
     /// Integer minor units. Scaling factor is `Currency.decimals`. Never
     /// a double. See PRD.md → Money Storage Policy.
@@ -181,9 +172,52 @@ abstract class Account with _$Account {
 ```
 
 Notes:
+- `accountTypeId` is an `int` FK into `account_types`. No nested `AccountType` model — matches principle §2.5. Controllers look up the `AccountType` from `AccountTypeRepository` the same way they look up `Currency` / `Category`.
 - `currency` is a `String` (the FK code). No nested `Currency` — matches principle §2.5. Controllers that need `Currency.decimals` for formatting look it up from `CurrencyRepository` (which is a cheap `.watchAll()` cached map).
 - `openingBalanceMinorUnits` is `int`. Dartdoc on the field explicitly references the Money Storage Policy so the guardrail grep (G4, §7) only fires on accidental `double`s.
 - **No `currentBalance` field.** Derived by the repository / controller from transactions (PRD 331). Adding one here creates two sources of truth.
+
+### 3.3a `AccountType` — `lib/data/models/account_type.dart`
+
+**PRD:** `account_types` table (first-class, mirrors `categories`). **Stream A row class:** `AccountTypeRow`.
+**`fromJson`/`toJson`:** **include.** Seeded + user-extensible; round-trips through Phase 3 backup alongside categories.
+
+```dart
+// lib/data/models/account_type.dart
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'account_type.freezed.dart';
+part 'account_type.g.dart';
+
+/// User-facing account type (e.g. "Cash", "Investment"). Mirrors the
+/// `account_types` row. Seeded rows (`accountType.cash`, `accountType.investment`)
+/// are identified by `l10nKey`; users can rename (sets `customName`) or
+/// add custom types. Display name resolution: `customName ?? l10nKey` —
+/// handled at the UI boundary, not here.
+@freezed
+abstract class AccountType with _$AccountType {
+  const factory AccountType({
+    required int id,
+    String? l10nKey,               // Stable identity for seeded rows.
+    String? customName,            // User override of the localized name.
+    String? defaultCurrency,       // FK: currencies.code. Optional suggestion.
+    required String icon,          // Icon-registry string key. Never IconData.
+    required int color,            // Index into core/utils/color_palette.dart.
+    @Default(0) int sortOrder,
+    @Default(false) bool isArchived,
+  }) = _AccountType;
+
+  factory AccountType.fromJson(Map<String, Object?> json) =>
+      _$AccountTypeFromJson(json);
+}
+```
+
+Notes:
+- **Indirect icon/color, same as `Category`.** `icon` is a string key resolved via `core/utils/icon_registry.dart` (M2); `color` is an index into the append-only `core/utils/color_palette.dart`. Never store raw `IconData` or ARGB ints — both break across Flutter updates and across backup/restore (CLAUDE.md → Data-Model Invariants).
+- `l10nKey` + `customName` nullability mirrors `Category`: seeded rows have `l10nKey` set; custom rows have `customName` set; renamed seeded rows have both. Do **not** collapse into one `String name` field.
+- `defaultCurrency` is an optional FK into `currencies.code`. Nullable — a user-created type may not prefer any particular currency. Consumed by the "new account" form as a default-selection hint in M5, not a hard constraint.
+- **Archive-instead-of-delete** when referenced by at least one `Account`. Enforced in `AccountTypeRepository` (M3), not here.
+- **NOT a Drift row.** Do not import `AccountTypeRow` here. Repositories (M3) convert `AccountTypeRow` → `AccountType`.
 
 ### 3.4 `Transaction` — `lib/data/models/transaction.dart`
 
@@ -296,6 +330,7 @@ Generated files:
 | `lib/data/models/currency.dart`         | `currency.freezed.dart`, `currency.g.dart`          |
 | `lib/data/models/category.dart`         | `category.freezed.dart`, `category.g.dart`          |
 | `lib/data/models/account.dart`          | `account.freezed.dart`, `account.g.dart`            |
+| `lib/data/models/account_type.dart`     | `account_type.freezed.dart`, `account_type.g.dart`  |
 | `lib/data/models/transaction.dart`      | `transaction.freezed.dart`, `transaction.g.dart`    |
 
 Run:
@@ -305,7 +340,7 @@ dart run build_runner build --delete-conflicting-outputs
 ```
 
 Rules:
-- All four generated `*.freezed.dart` and four `*.g.dart` files are **committed** (matches Stream A's posture in §6 of `stream-a-drift-schema.md`).
+- All five generated `*.freezed.dart` and five `*.g.dart` files are **committed** (matches Stream A's posture in §6 of `stream-a-drift-schema.md`).
 - Use `dart run build_runner watch --delete-conflicting-outputs` during active development.
 - If `flutter analyze` reports missing `_$Category`, `_$CategoryFromJson`, etc., codegen is stale. Re-run build_runner; never hand-write these symbols.
 - Stream B's codegen is independent of Stream A's — no `part of` crossover, no shared generated file — so the two streams can run `build_runner` in isolation without waiting on each other.
@@ -330,7 +365,7 @@ Stream B is done when **all** of the following hold:
 
 1. `flutter analyze` — clean (no errors, no lints) on `lib/data/models/**` and `lib/data/services/locale_service.dart`.
 2. `flutter test` compiles the tree (implementation-plan.md §5 M1 exit criterion). No behavioural tests required.
-3. `dart run build_runner build --delete-conflicting-outputs` — succeeds and is idempotent (second run produces no diff). All eight generated files (`*.freezed.dart` × 4, `*.g.dart` × 4) committed.
+3. `dart run build_runner build --delete-conflicting-outputs` — succeeds and is idempotent (second run produces no diff). All ten generated files (`*.freezed.dart` × 5, `*.g.dart` × 5) committed.
 4. **`drift_dev` round-trips.** Shared with Stream A: Stream A owns `drift_dev schema dump`, but the schema only round-trips if Stream B's enum wire values and field-name contract (§8) match Stream A's Drift definitions. **This is a shared failure mode** — both streams block on it.
 5. **Money grep** (`implementation-plan.md` §5, M1 exit): from repo root, `grep -rnE 'double\s+\w*(amount|balance|rate|price)' lib/` returns **zero hits**. Stream B's only money fields (`amountMinorUnits`, `openingBalanceMinorUnits`) are `int`; the grep's false-positive surface for Stream B is zero.
 6. No `package:drift/*`, `package:flutter/*`, or `dart:ui` import exists anywhere under `lib/data/models/`. Verifiable with `grep -rn "package:drift\|package:flutter\|dart:ui" lib/data/models/` returning zero hits. (Not a formal M1 exit criterion from the plan, but a Stream B self-guardrail that makes principle §2.1 auditable.)
@@ -348,8 +383,8 @@ The single source of truth for the Drift ↔ Freezed field-name contract is `doc
 These are contracts Stream B imposes back on Stream A; flagged so Stream A's reviewers see them.
 
 1. **`CategoryType` wire values are the exact strings `'expense'` and `'income'`.** Stream A stores these raw in `categories.type` (`TEXT`). Once seeded rows land at M3, changing these strings is a data migration, not a refactor. (`@JsonValue('expense')` in §3.2 is binding.)
-2. **`AccountType` wire values are the exact strings `'cash'`, `'bank'`, `'other'`.** Same reasoning, for `accounts.type`. Matches Stream A §9.2 assumption.
-3. **Freezed model class names are unprefixed** (`Transaction`, `Category`, `Account`, `Currency`). Stream A must keep the `…Row` suffix on conflicting Drift data classes (`TransactionRow`, `CategoryRow`, `AccountRow`); `Currency` is shared — the two never meet in the same file, so the collision is harmless (repositories live in `data/repositories/` and are the only files importing both).
+2. **`AccountType` is a first-class table, not an enum.** `accounts.account_type_id` is an `int` FK into `account_types.id`; there are no wire-value strings like `'cash'`/`'bank'`/`'other'` to agree on. The `account_types` field matrix is owned by Stream A's contract table (see Stream A §3 / §9 for the `account_types` row); Stream B mirrors those field names 1:1 on the `AccountType` Freezed model (§3.3a). Seeded rows are identified by `l10n_key` (e.g. `accountType.cash`, `accountType.investment`), not by a fixed enum casing.
+3. **Freezed model class names are unprefixed** (`Transaction`, `Category`, `Account`, `AccountType`, `Currency`). Stream A must keep the `…Row` suffix on conflicting Drift data classes (`TransactionRow`, `CategoryRow`, `AccountRow`, `AccountTypeRow`); `Currency` is shared — the two never meet in the same file, so the collision is harmless (repositories live in `data/repositories/` and are the only files importing both).
 4. **`Transaction.currency` / `Account.currency` are `String` on the Freezed side.** Stream A §10 open question 1 asks whether to hydrate to a nested `Currency` object. Stream B's answer: **String code, for M1**. Hydration, if needed, belongs in a thin controller-level cache of `CurrencyRepository.watchAll()`, not in the repository's read path. This keeps the Drift row → Freezed model mapping 1:1 (no joins) and keeps `Transaction.fromJson` round-trippable without multi-table context.
 5. **No enum on `Currency.code`.** Phase 2 adds arbitrary token symbols (`ETH`, `USDC`, …); an enum would be a migration. Matches Stream A §2.1 "natural PK".
 6. **No `Currency.isToken`-driven Freezed union.** Stream B keeps `Currency` a single flat data class; fiat vs token is a bool flag, not a sealed variant. Simpler M2 `money_formatter` signature.
@@ -372,9 +407,10 @@ For the record, not for M1 sign-off:
 
 Decisions needed from a human before Stream B merges (or in tandem with Stream A's PR):
 
-1. **`fromJson`/`toJson` on all four models — confirm.** Stream B's default is "include on all four" (§3), justifying Phase 3 CSV/backup. Cost: four additional `*.g.dart` files + `json_serializable` in the build graph. Alternative: include only on `Transaction` (the actual CSV payload) and skip on `Currency` / `Category` / `Account`. Current recommendation: include on all four — cheap, removes a future migration when Phase 3 lands.
+1. **`fromJson`/`toJson` on all five models — confirm.** Stream B's default is "include on all five" (§3), justifying Phase 3 CSV/backup. Cost: five additional `*.g.dart` files + `json_serializable` in the build graph. Alternative: include only on `Transaction` (the actual CSV payload) and skip on `Currency` / `Category` / `Account` / `AccountType`. Current recommendation: include on all five — cheap, removes a future migration when Phase 3 lands.
 2. **`CategoryType` third variant?** PRD says "expense or income" (line 302). Phase 2 may add `transfer`. If the product roadmap is confident, should Stream B add it now as `@JsonValue('transfer') transfer` with comments marking it unused in MVP? Stream B's default: **no** — adding an unreachable enum case forces M3 repositories and M5 widgets to exhaustively handle it. Wait for Phase 2.
-3. **`CategoryType` / `AccountType` wire-value casing.** `'expense'` / `'cash'` (lowercase) is the obvious choice and matches CLAUDE.md's enum snippet. Confirm no one wants `'EXPENSE'` / `'CASH'` (SCREAMING_SNAKE) before M3 seeds rows.
+3. **`CategoryType` wire-value casing.** `'expense'` / `'income'` (lowercase) is the obvious choice and matches CLAUDE.md's enum snippet. Confirm no one wants `'EXPENSE'` / `'INCOME'` (SCREAMING_SNAKE) before M3 seeds rows. (No longer applies to `AccountType` — it's a table, not an enum; seed identity is the `l10n_key` string, owned by M3's seed list.)
+3a. **Seeded `AccountType` icon keys + palette indices.** The two seeded rows (`accountType.cash`, `accountType.investment`) need a default `icon` string key and `color` palette index. Defer to **M2** when `core/utils/icon_registry.dart` and `core/utils/color_palette.dart` land — M1 only types the fields; picking the concrete values requires the registries to exist.
 4. **`Transaction.currency` scalar vs. nested `Currency` — confirm.** Stream B's recommendation (§8.2 item 4): `String`. Stream A §10 open question 1 asks this of Agent B. Stream B answers `String` here; if Agent C / platform lead disagree, update §3.4 and §8 before M3 starts building repository mappers.
 5. **`LocaleService.resolveDefaultCurrency()` M1 return value.** Hard-coded `'USD'` (§4.1). Acceptable? Alternative: parse `Platform.localeName` and map `JP` → `'JPY'`, `TW` → `'TWD'`, etc., now. Stream B's default: **hard-code USD** — the region→currency table belongs in a data file that M3 owns alongside the seed; M1 is compile-only and this path is exercised once, on first launch, after M4 bootstrap.
 6. **Generated-file commit policy.** `stream-a-drift-schema.md` §6 commits generated `*.g.dart`. Stream B follows the same posture. Confirm the repo's `.gitignore` does not exclude `*.freezed.dart` / `*.g.dart` under `lib/data/models/` before the first PR — M0 may have added a blanket `*.g.dart` ignore.
