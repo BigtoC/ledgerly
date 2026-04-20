@@ -288,7 +288,9 @@ Notes:
 
 Notes:
 - Transaction type (expense/income) is derived from the linked category's `type` field. A category's `type` becomes immutable after the first transaction uses it, so historical transaction meaning cannot be changed later by editing the category.
+- **No third `type` value exists or will be added.** Phase 2 account transfers and wallet sync model direction as expense/income from the tracked account's (or wallet address's) perspective: inflow **into** the tracked account = **income**; outflow **out of** the tracked account = **expense**. An account-to-account transfer produces two transactions (expense on the source, income on the destination) linked by shared memo / timestamp — not a single `'transfer'` type.
 - `currency` stores the original transaction currency. Phase 2 conversion never overwrites the original `amount_minor_units` or `currency`.
+- `created_at` and `updated_at` are populated by `TransactionRepository`, not by the database. On insert, both are set to `DateTime.now()`. On every update, `updated_at` is refreshed to `DateTime.now()` and `created_at` is left unchanged.
 
 ### categories
 
@@ -570,7 +572,7 @@ App open (or manual refresh tap) → WalletsController.sync() → WalletSyncUseC
     → for each transfer:
       → skip if tx_hash already exists in pending_transactions or transactions
       → if token unknown, register it in `currencies` (is_token = true)
-      → determine if expense (from_address = wallet) or income (to_address = wallet)
+      → determine direction: `from_address = wallet` → expense (outflow); `to_address = wallet` → income (inflow). There is no `'transfer'` category type — the direction relative to the monitored wallet fully determines the transaction type.
       → insert into pending_transactions with source='blockchain', account_id from wallet, amount stored as integer minor units using token decimals
     → update wallet.last_sync_timestamp = now
 ```
