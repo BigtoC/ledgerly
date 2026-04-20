@@ -55,108 +55,239 @@ Ledgerly is a local-first mobile expense tracker built with Flutter. It is aimed
 
 ## Architecture
 
-Use a simple feature-first Flutter architecture for MVP. Start from a standard `flutter create` scaffold and add only the layers required by the current app. Avoid repository interfaces and one-use-case-per-action abstractions until a second data source or sync backend exists. Phase 2 adds small integration services for wallet sync and exchange-rate fetching without changing the overall feature-first structure.
+Ledgerly uses a strict 3-layer architecture: a **Data** layer (SSOT), an optional **Domain** layer (Phase 2 only, for orchestration across repositories), and a **UI** layer organized feature-first. Each layer may only communicate with the layer directly adjacent to it.
+
+### Core Principles
+
+- **Separation of Concerns** — UI rendering, business logic, and data access live in distinct layers
+- **Single Source of Truth** — Repositories own all data; no other layer may mutate it
+- **Unidirectional Data Flow** — State flows down (Data → UI), events flow up (UI → Data)
+- **UI as a Function of State** — Every screen renders from an immutable state object; widgets never hold business state
+
+### Layer Boundaries (Forbidden Imports)
+
+| Layer                                        | May import                                                 | Must not import                                     |
+|----------------------------------------------|------------------------------------------------------------|-----------------------------------------------------|
+| Widgets (`features/*/*_screen.dart`)         | Own controller + UI primitives                             | Repositories, services, `AppDatabase`, Drift tables |
+| Controllers (`features/*/*_controller.dart`) | Repositories, use cases, domain models                     | `AppDatabase`, services, Drift tables, DAOs         |
+| Use Cases (`domain/*.dart`) — Phase 2        | Repositories, services, domain models                      | Controllers, widgets                                |
+| Repositories (`data/repositories/*.dart`)    | Services, `AppDatabase`, DAOs, domain models               | Controllers, widgets, use cases                     |
+| Services (`data/services/*.dart`)            | External SDKs only (Drift, Dio, flutter_secure_storage, …) | Upstream layers                                     |
+
+These rules are enforced via `custom_lint` / `import_lint` entries in `analysis_options.yaml`.
+
+### SSOT Rule
+
+Only repositories write to the database or to external stores. Controllers and use cases invoke repository methods; they never construct `Insertable` rows, call `.insert()` on DAOs, or write to `flutter_secure_storage` directly.
+
+### Controller Contract
+
+Every controller exposes two surfaces:
+
+- **State** — an immutable Freezed sealed union (e.g., `HomeState.loading | .empty | .data(...) | .error`)
+- **Commands** — typed methods for user actions (`saveTransaction(...)`, `deleteTransaction(id)`, `duplicateTransaction(id)`)
+
+Widgets read state and invoke commands. Widgets never mutate state directly and never perform data-layer work (grouping, formatting, aggregation) in `build()`.
+
+### Controller Responsibilities
+
+Controllers transform domain models into presentation-friendly state. For example, `HomeController` consumes `Stream<List<Transaction>>` from `TransactionRepository` and emits `HomeState.data(daysGroupedByDate, summariesByCurrency, pendingBadgeCount)` — the widget renders this without any further transformation.
+
+### Domain Models vs Drift Data Classes
+
+Drift generates data classes from each table definition; these stay **inside repositories only**. Repositories map Drift rows into Freezed domain models in `data/models/` and return those to controllers. This isolates the UI and domain layers from schema changes.
+
+### Reactive Data Flow
+
+Repositories expose `Stream<T>` for list queries (backed by Drift's `.watch()`). Controllers use `StreamNotifier` / `AsyncNotifier` from Riverpod so the UI reactively updates on insert/delete/edit without manual refresh.
+
+### Folder Structure
 
 ```text
 lib/
   app/
-    app.dart                 # MaterialApp, routing, app bootstrap
+    app.dart                 # MaterialApp, root ProviderScope
     router.dart              # go_router configuration
-    bootstrap.dart           # Database, providers, localization init
+    bootstrap.dart           # Async init sequence, provider overrides
   core/
     l10n/
     theme/
       app_theme.dart
       color_schemes.dart
-    storage/
-      app_database.dart      # Drift database
+    utils/
+      money_formatter.dart
+      icon_registry.dart
+      color_palette.dart
+      date_helpers.dart
+  data/
+    database/
+      app_database.dart      # Drift database, schemaVersion, migrations
       tables/
-    utils/                   # Formatters, validators, date helpers
-    preferences/
-      app_preferences.dart   # Theme, locale, default account/currency
+        transactions_table.dart
+        categories_table.dart
+        accounts_table.dart
+        currencies_table.dart
+        user_preferences_table.dart
+        pending_transactions_table.dart    # Phase 2
+        wallet_addresses_table.dart        # Phase 2
+        exchange_rates_table.dart          # Phase 2
+      daos/
+        transaction_dao.dart
+        category_dao.dart
+        account_dao.dart
+        currency_dao.dart
+        user_preferences_dao.dart
+        pending_transaction_dao.dart       # Phase 2
+        wallet_address_dao.dart            # Phase 2
+        exchange_rate_dao.dart             # Phase 2
+    services/
+      locale_service.dart
+      ankr_service.dart                    # Phase 2
+      exchange_rate_service.dart           # Phase 2
+      secure_storage_service.dart          # Phase 2
+    repositories/
+      transaction_repository.dart
+      category_repository.dart
+      account_repository.dart
+      currency_repository.dart
+      user_preferences_repository.dart
+      pending_transaction_repository.dart  # Phase 2
+      wallet_address_repository.dart       # Phase 2
+      exchange_rate_repository.dart        # Phase 2
+      api_key_repository.dart              # Phase 2
+    models/                                # Freezed domain models
+      transaction.dart
+      category.dart
+      account.dart
+      currency.dart
+      pending_transaction.dart             # Phase 2
+      wallet_address.dart                  # Phase 2
+      exchange_rate.dart                   # Phase 2
+  domain/                                  # Phase 2 — use cases
+    wallet_sync_use_case.dart
+    approve_pending_transaction_use_case.dart
+    reject_pending_transaction_use_case.dart
   features/
     splash/
       splash_screen.dart
       splash_controller.dart
+      splash_state.dart
     home/
       home_screen.dart
       home_controller.dart
+      home_state.dart
     transactions/
       transaction_form_screen.dart
       transaction_form_controller.dart
-      transaction_queries.dart
-    pending_transactions/        # Phase 2
+      transaction_form_state.dart
+    pending_transactions/                  # Phase 2
       pending_transactions_screen.dart
       pending_transactions_controller.dart
+      pending_transactions_state.dart
     categories/
       categories_screen.dart
       categories_controller.dart
+      categories_state.dart
     accounts/
       accounts_screen.dart
       accounts_controller.dart
-    wallets/                     # Phase 2
+      accounts_state.dart
+    wallets/                               # Phase 2
       wallets_screen.dart
       wallets_controller.dart
-      ankr_service.dart
-    exchange_rates/              # Phase 2
-      exchange_rate_service.dart
+      wallets_state.dart
     settings/
       settings_screen.dart
+      settings_controller.dart
+      settings_state.dart
 test/
   unit/
+    services/
+    repositories/
+    use_cases/                             # Phase 2
     controllers/
-    queries/
     utils/
   widget/
-    screens/
-    widgets/
   integration/
-    flows/
 l10n/
   app_en.arb
   app_zh_TW.arb
   app_zh_CN.arb
 ```
 
+### Bootstrap Sequence
+
+`app/bootstrap.dart` defines the ordered async init before `runApp`:
+
+1. `WidgetsFlutterBinding.ensureInitialized()`
+2. Open `AppDatabase` (async) — runs migrations if `schemaVersion` changed
+3. Initialize `LocaleService`, resolve device locale for default-currency fallback
+4. Read `user_preferences` table
+5. First-run seed (if empty DB): seed `currencies`, default categories, one `Cash` account, `default_currency` from device locale
+6. Configure `ProviderScope` with overrides injecting the opened `AppDatabase` into `appDatabaseProvider`
+7. `runApp(ProviderScope(overrides: [...], child: App()))`
+
 ### Technology Stack
 
-| Concern           | Technology                               |
-|-------------------|------------------------------------------|
-| App shell / state | Riverpod                                 |
-| Local database    | Drift + drift_flutter                    |
-| Navigation        | go_router                                |
-| Data models       | Freezed + json_annotation                |
-| i18n              | flutter_localizations + intl             |
-| Code generation   | build_runner, drift_dev                  |
-| UI components     | flutter_slidable, material_symbols_icons |
-| Native splash     | flutter_native_splash                    |
-| Testing           | mocktail, Drift in-memory DB             |
+| Concern           | Technology                                  |
+|-------------------|---------------------------------------------|
+| App shell / state | Riverpod + `riverpod_generator`             |
+| Local database    | Drift + drift_flutter (per-entity DAOs)     |
+| Navigation        | go_router (`StatefulShellRoute`)            |
+| Domain models     | Freezed + json_annotation                   |
+| i18n              | flutter_localizations + intl                |
+| Code generation   | build_runner, drift_dev, riverpod_generator |
+| UI components     | flutter_slidable, material_symbols_icons    |
+| Native splash     | flutter_native_splash                       |
+| Testing           | mocktail, Drift in-memory DB                |
 
 ---
 
 ## Database Schema
 
+### Money Storage Policy
+
+All monetary amounts are stored as **integer minor units** — the smallest indivisible unit of the currency: cents for USD (`2` decimals), yen for JPY (`0` decimals), wei for ETH (`18` decimals), and so on. Floating-point types are never used for money. This eliminates rounding drift across sums, monthly summaries, and long-lived balances, and gives Phase 2 tokens exact representation at 18 decimals.
+
+Formatting to a decimal string happens only at the UI boundary via `core/utils/money_formatter.dart`, which divides by `10^currencies.decimals` and applies locale-aware grouping via `intl`'s `NumberFormat.currency`.
+
 ### MVP Currency Policy
 
-MVP supports multi-currency accounts and transactions. `user_preferences.default_currency` is configurable and used as the default for new accounts, the first seeded account, and preferred display currency in Settings. MVP stores original amounts and currencies without auto-conversion; mixed-currency summaries are grouped by currency. Phase 2 fetches currency prices and auto-converts balances, summaries, and charts into the user's default currency while preserving original amounts.
+MVP supports multi-currency accounts and transactions. `user_preferences.default_currency` is configurable and used as the default for new accounts, the first seeded account, and preferred display currency in Settings. MVP stores original amounts in the transaction's native currency without auto-conversion; mixed-currency summaries are grouped by currency. Phase 2 fetches currency prices and auto-converts balances, summaries, and charts into the user's default currency while preserving original amounts.
+
+### currencies
+
+| Column        | Type    | Constraints                                          |
+|---------------|---------|------------------------------------------------------|
+| code          | TEXT    | PRIMARY KEY — ISO 4217 for fiat, symbol for tokens   |
+| decimals      | INTEGER | NOT NULL — 2 for USD, 0 for JPY, 18 for ETH/ERC-20   |
+| symbol        | TEXT    | display symbol (`$`, `¥`, `NT$`, …)                  |
+| name_l10n_key | TEXT    | optional, localized currency name key                |
+| is_token      | BOOL    | DEFAULT false — flags Phase 2 crypto tokens          |
+| sort_order    | INTEGER |                                                      |
+
+Notes:
+- Seeded at first launch with common fiat codes (USD, EUR, JPY, TWD, CNY, HKD, GBP). Phase 2 seeds token entries (ETH, USDC, USDT, …).
+- `transactions.currency`, `accounts.currency`, and `pending_transactions.currency` are foreign keys to `currencies.code`.
+- Single source of truth for how many minor units a currency has. Never duplicate `decimals` onto transaction rows.
 
 ### transactions
 
-| Column      | Type     | Constraints                    |
-|-------------|----------|--------------------------------|
-| id          | INTEGER  | PRIMARY KEY AUTO               |
-| amount      | REAL     | NOT NULL                       |
-| currency    | TEXT     | NOT NULL                       |
-| category_id | INTEGER  | NOT NULL REFERENCES categories |
-| account_id  | INTEGER  | NOT NULL REFERENCES accounts   |
-| memo        | TEXT     |                                |
-| date        | DATETIME | NOT NULL                       |
-| created_at  | DATETIME |                                |
-| updated_at  | DATETIME |                                |
+| Column             | Type     | Constraints                                 |
+|--------------------|----------|---------------------------------------------|
+| id                 | INTEGER  | PRIMARY KEY AUTO                            |
+| amount_minor_units | INTEGER  | NOT NULL — see Money Storage Policy         |
+| currency           | TEXT     | NOT NULL REFERENCES currencies(code)        |
+| category_id        | INTEGER  | NOT NULL REFERENCES categories              |
+| account_id         | INTEGER  | NOT NULL REFERENCES accounts                |
+| memo               | TEXT     |                                             |
+| date               | DATETIME | NOT NULL                                    |
+| created_at         | DATETIME |                                             |
+| updated_at         | DATETIME |                                             |
 
-Note: Transaction type (expense/income) is derived from the linked category's `type` field. A category's `type` becomes immutable after the first transaction uses it, so historical transaction meaning cannot be changed later by editing the category.
-
-Additional note: `currency` stores the original transaction currency. Phase 2 conversion never overwrites the original `amount` or `currency`.
+Notes:
+- Transaction type (expense/income) is derived from the linked category's `type` field. A category's `type` becomes immutable after the first transaction uses it, so historical transaction meaning cannot be changed later by editing the category.
+- `currency` stores the original transaction currency. Phase 2 conversion never overwrites the original `amount_minor_units` or `currency`.
 
 ### categories
 
@@ -165,8 +296,8 @@ Additional note: `currency` stores the original transaction currency. Phase 2 co
 | id          | INTEGER | PRIMARY KEY AUTO                       |
 | l10n_key    | TEXT    | UNIQUE, nullable for custom categories |
 | custom_name | TEXT    | nullable user override                 |
-| icon        | TEXT    | NOT NULL                               |
-| color       | INTEGER | NOT NULL                               |
+| icon        | TEXT    | NOT NULL — icon-registry string key    |
+| color       | INTEGER | NOT NULL — index into `color_palette`  |
 | type        | TEXT    | NOT NULL — 'expense' or 'income'       |
 | parent_id   | INTEGER | REFERENCES categories, nullable        |
 | sort_order  | INTEGER |                                        |
@@ -177,20 +308,22 @@ Notes:
 - Renaming a seeded category writes `custom_name` but keeps `l10n_key`, so locale changes do not duplicate or orphan categories.
 - Categories with existing transactions can be archived but not hard-deleted.
 - Unused custom categories may be deleted.
+- `icon` is a string key resolved at render time via `core/utils/icon_registry.dart`; unknown keys fall back to a default icon.
+- `color` is a fixed index into `core/utils/color_palette.dart`; indices are append-only across app versions.
 
 ### accounts
 
-| Column          | Type    | Constraints                        |
-|-----------------|---------|------------------------------------|
-| id              | INTEGER | PRIMARY KEY AUTO                   |
-| name            | TEXT    | NOT NULL                           |
-| type            | TEXT    | NOT NULL — 'cash', 'bank', 'other' |
-| currency        | TEXT    | NOT NULL                           |
-| opening_balance | REAL    | DEFAULT 0                          |
-| icon            | TEXT    |                                    |
-| color           | INTEGER |                                    |
-| sort_order      | INTEGER |                                    |
-| is_archived     | BOOL    | DEFAULT false                      |
+| Column                      | Type    | Constraints                          |
+|-----------------------------|---------|--------------------------------------|
+| id                          | INTEGER | PRIMARY KEY AUTO                     |
+| name                        | TEXT    | NOT NULL                             |
+| type                        | TEXT    | NOT NULL — 'cash', 'bank', 'other'   |
+| currency                    | TEXT    | NOT NULL REFERENCES currencies(code) |
+| opening_balance_minor_units | INTEGER | DEFAULT 0 — see Money Storage Policy |
+| icon                        | TEXT    |                                      |
+| color                       | INTEGER |                                      |
+| sort_order                  | INTEGER |                                      |
+| is_archived                 | BOOL    | DEFAULT false                        |
 
 Notes:
 - New accounts default to `user_preferences.default_currency` but can be changed on creation.
@@ -201,51 +334,52 @@ Notes:
 
 ### exchange_rates (Phase 2)
 
-| Column         | Type     | Constraints         |
-|----------------|----------|---------------------|
-| id             | INTEGER  | PRIMARY KEY AUTO    |
-| base_currency  | TEXT     | NOT NULL            |
-| quote_currency | TEXT     | NOT NULL            |
-| rate           | REAL     | NOT NULL            |
-| fetched_at     | DATETIME | NOT NULL            |
-| provider       | TEXT     | NOT NULL            |
+| Column           | Type     | Constraints                          |
+|------------------|----------|--------------------------------------|
+| id               | INTEGER  | PRIMARY KEY AUTO                     |
+| base_currency    | TEXT     | NOT NULL REFERENCES currencies(code) |
+| quote_currency   | TEXT     | NOT NULL REFERENCES currencies(code) |
+| rate_numerator   | INTEGER  | NOT NULL                             |
+| rate_denominator | INTEGER  | NOT NULL                             |
+| fetched_at       | DATETIME | NOT NULL                             |
+| provider         | TEXT     | NOT NULL                             |
 
 Notes:
-- Stores fetched currency prices / exchange rates used to auto-convert balances and summaries into `user_preferences.default_currency`.
+- Rate is stored as an integer fraction (`numerator / denominator`) to preserve precision when applied to integer minor-unit amounts. Provider-native rate strings parse cleanly into this form.
 - Original transaction and account amounts remain unchanged; conversion is additive display data.
 
 ### pending_transactions (Phase 2)
 
-| Column            | Type     | Constraints                                |
-|-------------------|----------|--------------------------------------------|
-| id                | INTEGER  | PRIMARY KEY AUTO                           |
-| source            | TEXT     | NOT NULL — 'blockchain', 'recurring'       |
-| amount            | REAL     | NOT NULL                                   |
-| currency          | TEXT     | NOT NULL                                   |
-| category_id       | INTEGER  | REFERENCES categories, nullable            |
-| account_id        | INTEGER  | NOT NULL REFERENCES accounts               |
-| memo              | TEXT     | nullable                                   |
-| date              | DATETIME | NOT NULL                                   |
-| fetched_at        | DATETIME | NOT NULL                                   |
-| token_name        | TEXT     | nullable, blockchain-specific              |
-| token_symbol      | TEXT     | nullable, blockchain-specific              |
-| token_decimals    | INTEGER  | nullable, blockchain-specific              |
-| contract_address  | TEXT     | nullable, blockchain-specific              |
-| from_address      | TEXT     | nullable, blockchain-specific              |
-| to_address        | TEXT     | nullable, blockchain-specific              |
-| tx_hash           | TEXT     | UNIQUE, nullable, blockchain-specific      |
-| blockchain        | TEXT     | nullable, blockchain-specific              |
-| recurring_rule_id | INTEGER  | REFERENCES recurring_rules, nullable       |
+| Column             | Type     | Constraints                                                                         |
+|--------------------|----------|-------------------------------------------------------------------------------------|
+| id                 | INTEGER  | PRIMARY KEY AUTO                                                                    |
+| source             | TEXT     | NOT NULL — 'blockchain', 'recurring'                                                |
+| amount_minor_units | INTEGER  | NOT NULL — see Money Storage Policy                                                 |
+| currency           | TEXT     | NOT NULL REFERENCES currencies(code)                                                |
+| category_id        | INTEGER  | REFERENCES categories, nullable                                                     |
+| account_id         | INTEGER  | NOT NULL REFERENCES accounts                                                        |
+| memo               | TEXT     | nullable                                                                            |
+| date               | DATETIME | NOT NULL                                                                            |
+| fetched_at         | DATETIME | NOT NULL                                                                            |
+| token_name         | TEXT     | nullable, blockchain-specific                                                       |
+| token_symbol       | TEXT     | nullable, blockchain-specific                                                       |
+| token_decimals     | INTEGER  | nullable, blockchain-specific (used before the token is registered in `currencies`) |
+| contract_address   | TEXT     | nullable, blockchain-specific                                                       |
+| from_address       | TEXT     | nullable, blockchain-specific                                                       |
+| to_address         | TEXT     | nullable, blockchain-specific                                                       |
+| tx_hash            | TEXT     | UNIQUE, nullable, blockchain-specific                                               |
+| blockchain         | TEXT     | nullable, blockchain-specific                                                       |
+| recurring_rule_id  | INTEGER  | REFERENCES recurring_rules, nullable                                                |
 
 Note: `recurring_rules` table schema will be defined when recurring transactions are designed in Phase 2.
 
 Notes:
 - Universal staging table for auto-generated transactions from any source.
-- Shared fields (`amount`, `currency`, `category_id`, `account_id`, `memo`, `date`) are common to all sources.
-- Blockchain fields populated only when `source = 'blockchain'`; `currency` usually comes from the token symbol / reviewed asset code, and `category_id` is nullable since user assigns it during review.
+- Shared fields (`amount_minor_units`, `currency`, `category_id`, `account_id`, `memo`, `date`) are common to all sources.
+- Blockchain fields populated only when `source = 'blockchain'`; `currency` usually comes from the token symbol / reviewed asset code, and `category_id` is nullable since user assigns it during review. If the token isn't yet in `currencies`, `token_decimals` carries the scaling factor until the token is registered.
 - Recurring fields populated when `source = 'recurring'`; `category_id` and `currency` are pre-filled from the recurring rule.
 - `tx_hash` UNIQUE constraint prevents blockchain duplicates.
-- Approve: validate required fields, insert into `transactions` with original `currency`, delete from `pending_transactions`.
+- Approve: validate required fields, insert into `transactions` with original `currency` and `amount_minor_units`, delete from `pending_transactions`.
 - Reject: delete from `pending_transactions`.
 
 ### wallet_addresses (Phase 2)
@@ -277,6 +411,14 @@ Stores theme preference (light/dark/system), default account, default currency, 
 - `splash_start_date` — ISO date string, nullable
 - `splash_display_text` — string, default uses l10n template
 - `splash_button_label` — string, default uses l10n "Enter"
+
+### Migration Strategy
+
+- MVP ships with `schemaVersion = 1`. All MVP tables (`currencies`, `transactions`, `categories`, `accounts`, `user_preferences`) exist at v1.
+- Phase 2 additions (`pending_transactions`, `wallet_addresses`, `exchange_rates`, plus token rows seeded into `currencies`) bump to `schemaVersion = 2` via `MigrationStrategy.onUpgrade`.
+- Each schema version has a committed snapshot in `drift_schemas/` (generated via `drift_dev schema dump`).
+- Migrations are tested by generating every historical schema and running the upgrade path on both an empty DB and a seeded DB (see Testing Strategy → Repository Tests).
+- Breaking schema changes (column type swaps, table splits) require a new version + a documented data-transform step — never rewrite existing migrations in place.
 
 ---
 
@@ -365,13 +507,15 @@ Day counter label, "Since {date}" default text, and "Enter" button label need en
 
 Users add EVM wallet addresses, each linked to a Ledgerly account. The app fetches token transfers via [Ankr's Advanced Multichain API](https://www.ankr.com/docs/advanced-api/token-methods/#ankr_gettokentransfers) and creates pending transactions for user review.
 
+The sync flow is implemented as `domain/wallet_sync_use_case.dart`, which orchestrates `AnkrService`, `WalletAddressRepository`, `TransactionRepository`, `PendingTransactionRepository`, and `CurrencyRepository` (to register unknown tokens on first sight). The `WalletsController` exposes a `sync()` command that invokes the use case and manages loading/error state only.
+
 ### Supported Chains
 
 All chains supported by Ankr's `ankr_getTokenTransfers` endpoint: Arbitrum, Avalanche, Base, BSC, Ethereum, Fantom, Flare, Gnosis, Linea, Optimism, Polygon, Scroll, Stellar, Story, Syscoin, Taiko, Telos, Xai, X Layer, and associated testnets.
 
 ### Architecture
 
-Direct API calls from the app to Ankr's JSON-RPC endpoint. No backend proxy. This preserves Ledgerly's local-first, no-sign-in philosophy. The Ankr API key is treated as a secret and stored in `flutter_secure_storage`.
+Direct API calls from the app to Ankr's JSON-RPC endpoint. No backend proxy. This preserves Ledgerly's local-first, no-sign-in philosophy. The Ankr API key is treated as a secret, wrapped by `SecureStorageService`, and accessed only through `ApiKeyRepository`.
 
 ### Wallet Management (Settings > Wallets)
 
@@ -383,17 +527,18 @@ Direct API calls from the app to Ankr's JSON-RPC endpoint. No backend proxy. Thi
 ### Sync Flow
 
 ```text
-App open (or manual refresh tap)
+App open (or manual refresh tap) → WalletsController.sync() → WalletSyncUseCase.execute()
   → for each wallet_address:
-    → call ankr_getTokenTransfers(
+    → call AnkrService.getTokenTransfers(
         address: wallet.address,
         fromTimestamp: wallet.last_sync_timestamp ?? wallet.created_at,
         toTimestamp: now
       )
     → for each transfer:
       → skip if tx_hash already exists in pending_transactions or transactions
+      → if token unknown, register it in `currencies` (is_token = true)
       → determine if expense (from_address = wallet) or income (to_address = wallet)
-      → insert into pending_transactions with source='blockchain', account_id from wallet
+      → insert into pending_transactions with source='blockchain', account_id from wallet, amount stored as integer minor units using token decimals
     → update wallet.last_sync_timestamp = now
 ```
 
@@ -407,14 +552,14 @@ App open (or manual refresh tap)
 - Swipe to reject (delete from pending)
 - Bulk approve available for items that already have categories assigned
 
-**Approve flow:** Validate required fields (amount, category, account) → insert into `transactions` table (memo auto-generated from token/chain info if not provided) → delete from `pending_transactions`.
+**Approve flow** — `ApprovePendingTransactionUseCase`: validate required fields (amount, category, account) → insert into `transactions` table (memo auto-generated from token/chain info if not provided) → delete from `pending_transactions`.
 
-**Reject flow:** Delete from `pending_transactions`.
+**Reject flow** — `RejectPendingTransactionUseCase`: delete from `pending_transactions`.
 
 ### API Key Management (Settings > Ankr API Key)
 
 - Input field for Ankr API key
-- Stored in `flutter_secure_storage`
+- Stored via `ApiKeyRepository` → `SecureStorageService` → `flutter_secure_storage`
 - Wallet sync features disabled until key is provided
 - Key is validated on save (test call to Ankr)
 
@@ -422,7 +567,34 @@ App open (or manual refresh tap)
 
 - Network failure: show error snackbar, retain last successful sync timestamp
 - Invalid API key: prompt user to re-enter
-- Rate limit hit (30 req/min free tier): queue remaining wallets, retry after cooldown
+- Rate limit hit (30 req/min free tier): queue remaining wallets, retry after cooldown; retry logic lives in `WalletSyncUseCase`
+
+---
+
+## Routing Structure
+
+Navigation uses `go_router` with a `StatefulShellRoute` for the bottom navigation, so Home / Accounts / Settings preserve independent state when switching tabs.
+
+```text
+/                           redirect → /splash if splash_enabled else /home
+/splash                     Day counter screen
+ShellRoute (bottom nav)
+  /home                     Home tab
+    /home/add               Add Transaction (modal push)
+    /home/edit/:id          Edit Transaction (modal push)
+    /home/pending           Pending Transactions (Phase 2)
+  /accounts                 Accounts tab
+    /accounts/new           New Account
+    /accounts/:id           Edit Account
+  /settings                 Settings tab
+    /settings/categories    Manage Categories
+    /settings/wallets       Wallet Management (Phase 2)
+    /settings/ankr-key      Ankr API Key (Phase 2)
+```
+
+- Add/Edit Transaction is a full-screen modal push (`MaterialPage` / `CupertinoPage`) so the calculator keypad has full vertical space.
+- Splash → Home transition uses a fade `CustomTransitionPage` to preserve the hnotes-style reveal.
+- Root `redirect:` reads `splash_enabled` from `user_preferences`; no splash route is visited when disabled.
 
 ---
 
@@ -430,15 +602,15 @@ App open (or manual refresh tap)
 
 ### Navigation
 
-- Bottom navigation: Home, Accounts, Settings
+- Bottom navigation on phone: Home, Accounts, Settings (switches to `NavigationRail` on ≥600dp — see Adaptive Layouts)
 - Home FAB opens Add Transaction
 - Categories is a secondary management screen opened from Add/Edit Transaction or Settings > Manage Categories
 - Splash screen is the initial route when enabled (before bottom navigation)
 
 ### First-run Defaults
 
-- On first launch, seed one `Cash` account with `opening_balance = 0` and all default categories
-- `default_currency` starts from device locale, can be changed in Settings, and is used for new account defaults
+- On first launch, seed common fiat entries into `currencies`, one `Cash` account with `opening_balance_minor_units = 0`, and all default categories
+- `default_currency` starts from device locale (resolved via `LocaleService`), can be changed in Settings, and is used for new account defaults
 - `splash_enabled = true` by default; first launch redirects to date picker before showing splash
 - After splash, Home opens in an empty state with primary CTA `Log first transaction`
 - Users can complete their first transaction without visiting Accounts, Categories, or Settings
@@ -453,7 +625,7 @@ App open (or manual refresh tap)
 6. **Settings Screen** — Theme toggle (light/dark/system), language selector, default account, default currency, manage categories, splash screen settings
 7. **Pending Transactions Screen** (Phase 2) — Review/approve/reject auto-generated transactions, accessible from Home badge and Settings
 8. **Wallet Management Screen** (Phase 2) — Add/edit/delete wallet addresses, linked accounts
-9. **Ankr API Key Screen** (Phase 2) — Enter/update API key stored in secure storage
+9. **Ankr API Key Screen** (Phase 2) — Enter/update API key stored via `ApiKeyRepository`
 
 ### Add/Edit Interaction Rules
 
@@ -500,7 +672,7 @@ Home → swipe or open overflow on an existing transaction → Duplicate
 ### Wallet Sync Flow (Phase 2)
 
 ```text
-App open → auto-fetch transfers for all configured wallets
+App open → WalletsController.sync() → auto-fetch transfers for all configured wallets
   → new transfers appear as pending transactions
   → user sees badge on Home → taps to open Pending Transactions screen
   → reviews each: assign category, optional memo → Approve
@@ -527,6 +699,117 @@ App open → auto-fetch transfers for all configured wallets
 
 ---
 
+## Adaptive Layouts
+
+Ledgerly is phone-first but must not break on larger form factors. A single breakpoint at **600dp** switches between compact and expanded layouts using `LayoutBuilder` at the shell level.
+
+| Region               | <600dp (phone)        | ≥600dp (tablet/foldable)                       |
+|----------------------|-----------------------|------------------------------------------------|
+| Primary navigation   | `BottomNavigationBar` | `NavigationRail` (left)                        |
+| Home                 | Single-pane list      | Two-pane: list left, selected-day detail right |
+| Add/Edit Transaction | Full-screen modal     | Constrained dialog (max 560dp wide)            |
+| Category picker      | Modal bottom sheet    | Side sheet                                     |
+
+Orientation policy:
+- Phone: portrait-primary; landscape allowed but not optimized (calculator keypad reflows)
+- Tablet: both orientations supported via the adaptive breakpoint above
+
+iOS safe-area and Android gesture insets are handled at the `Scaffold` level; no widget computes insets manually.
+
+---
+
+## Layout Primitives
+
+The following screens have known unbounded-constraint or keyboard-interaction hazards. The PRD specifies the required widget structure to avoid them.
+
+### Home screen
+
+Use `CustomScrollView` with slivers to combine the summary strip and the infinite daily list without nesting a `ListView` inside a `Column`:
+
+```text
+CustomScrollView
+  ├─ SliverToBoxAdapter  — currency-grouped summary strip
+  ├─ SliverList          — day headers + transaction rows
+  └─ SliverPadding       — bottom FAB clearance
+```
+
+### Add/Edit Transaction
+
+Fixed calculator keypad pinned to the bottom, scrollable form above, keyboard does not cover the keypad:
+
+```text
+Scaffold(resizeToAvoidBottomInset: false)
+  └─ SafeArea
+      └─ Column
+          ├─ Expanded → SingleChildScrollView (type toggle, amount display, category, account, date, memo)
+          └─ CalculatorKeypad (fixed height)
+```
+
+### Category picker
+
+Icon grid inside a modal bottom sheet; uses `SliverGrid` to lazily render with proper constraints:
+
+```text
+ModalBottomSheet
+  └─ CustomScrollView
+      ├─ SliverGrid      — top-level categories
+      └─ SliverList      — subcategory expansion
+```
+
+### Constraint rule
+
+All scrollable regions must survive a 2× text scale (`MediaQuery.textScalerOf`). Fixed-height widgets (keypad, day counter) declare a max-scale clamp or reflow into multiple lines.
+
+---
+
+## Icon & Color Registry
+
+Categories store `icon` as a string key and `color` as a palette index. The actual `IconData` and `Color` values are resolved at render time from compile-time registries in `core/utils/`:
+
+- `core/utils/icon_registry.dart` — `Map<String, IconData>` mapping string keys to `Symbols.*` from `material_symbols_icons`. Unknown keys fall back to `Symbols.category`.
+- `core/utils/color_palette.dart` — ordered `List<Color>` of MD3-compatible category colors. `categories.color` is the index into this list. Palette additions append; existing indices never change.
+
+This avoids storing raw `IconData` symbols or ARGB ints in the DB (both fragile across Flutter / Material updates) while keeping categories portable across future backup/restore.
+
+---
+
+## Error Handling Pattern
+
+Errors propagate through the layers with typed boundaries:
+
+- **Services** throw typed exceptions (`AnkrApiException`, `RateLimitException`, `DatabaseException`). No swallowing.
+- **Repositories** either re-throw or wrap lower-layer exceptions; they never catch-and-return-null.
+- **Use cases (Phase 2)** catch and translate to domain-level errors (`WalletSyncFailure.rateLimited`, `.network`, `.invalidKey`).
+- **Controllers** use Riverpod's `AsyncValue<State>` at the boundary; errors become `AsyncError(error, stack)` which the widget renders as an error state.
+- **Widgets** render three states (loading / data / error); errors surface via snackbar for recoverable actions (save failed) or a full-screen error state for unrecoverable reads.
+
+No `try/catch` in widgets. No unhandled `Future` anywhere.
+
+---
+
+## Accessibility
+
+- WCAG AA contrast for all text, including rainbow-gradient splash text and category tiles
+- Minimum 48×48dp tap targets for FAB, swipe actions, category tiles, keypad keys
+- `Semantics` labels on icon-only buttons (FAB, duplicate, delete, undo snackbar action)
+- Dynamic text scaling respected up to 2×; splash day counter uses `AutoSizeText` or clamps at 1.5× to preserve layout
+- `MediaQuery.boldText` respected in list rendering
+- Screen reader order verified on Home and Add Transaction screens
+
+---
+
+## Pagination
+
+MVP supports up to **10,000 transactions** rendered via Drift streams + `ListView.builder` (or slivers, per Layout Primitives). Beyond that, perceived scroll performance degrades because the full list is held in memory even though widgets render lazily.
+
+- MVP: document the 10k cap; no pagination
+- Phase 2: introduce cursor-based pagination in `TransactionRepository.watchPage(cursor, limit)` before the user-visible threshold is reached
+- Phase 3: archive-to-cold-storage strategy tied to CSV export / cloud backup availability
+
+This is an explicit decision; don't premature-optimize, but don't pretend the limit doesn't exist.
+
+---
+
 ## Internationalization
 
 Using Flutter's `intl` package with ARB files:
@@ -542,7 +825,7 @@ Localized elements:
 - All UI labels, buttons, messages
 - Seeded category labels via `l10n_key`
 - Date formats (locale-aware)
-- Number/currency formats (locale-aware, using each transaction/account currency in MVP and default-currency conversion labels in Phase 2)
+- Number/currency formats (locale-aware, using each transaction/account currency in MVP and default-currency conversion labels in Phase 2). All formatting funnels through `core/utils/money_formatter.dart`.
 - Splash screen default display text and button label
 - Pending transaction labels and review UI (Phase 2)
 - Wallet management labels (Phase 2)
@@ -557,9 +840,8 @@ Material Design 3 with `ColorScheme.fromSeed()` for both light and dark variants
 
 - `core/theme/app_theme.dart` — defines `lightTheme` and `darkTheme` ThemeData
 - `core/theme/color_schemes.dart` — custom ColorScheme definitions
-- `core/preferences/app_preferences.dart` — persists user choice (light/dark/system)
-- Theme preference stored in `user_preferences` table
-- Riverpod provider watches preference and rebuilds MaterialApp on change
+- Theme preference stored in `user_preferences` via `UserPreferencesRepository`
+- A Riverpod provider watches the preference and rebuilds MaterialApp on change
 - Splash screen respects current theme for native splash; day counter screen uses its own visual style (sun background, rainbow gradient) independent of theme
 
 ---
@@ -569,9 +851,12 @@ Material Design 3 with `ColorScheme.fromSeed()` for both light and dark variants
 - MVP is local-first and does not require sign-in or cloud services
 - Sensitive data includes transactions, memos, account names, balances, category names, and wallet addresses (Phase 2)
 - The Drift database lives inside the app sandbox. Before release, validate platform file-protection settings on both iOS and Android and do not write financial data to logs
-- Ankr API key stored in `flutter_secure_storage`, never in `user_preferences` or logs (Phase 2)
+- Phase 2 secret management:
+  - `flutter_secure_storage` is wrapped by `SecureStorageService` in `data/services/`.
+  - `ApiKeyRepository` is the only component that reads or writes the Ankr API key.
+  - Controllers request the key via the repository; they never touch secure storage directly.
 - Wallet addresses are stored in the local database only; no server-side storage
-- MVP stores no remote tokens. Phase 2 introduces the Ankr API key as the first secret requiring secure storage
+- MVP stores no remote tokens. Phase 2 introduces the Ankr API key as the first secret requiring secure storage.
 - Phase 2 currency-price requests send currency pairs and conversion metadata only; they must not include user memos, categories, or other transaction text
 - App lock remains future work. MVP baseline relies on OS device security plus sandbox/file-protection settings rather than an in-app passcode
 - Future CSV import/export must be explicit user actions with schema validation, size limits, malformed-row handling, formula escaping, and clear warnings that exported CSV files are portable unencrypted data
@@ -581,41 +866,70 @@ Material Design 3 with `ColorScheme.fromSeed()` for both light and dark variants
 
 ## Testing Strategy
 
-### Unit Tests (Core Focus)
-- **Controllers/queries** — add/edit transaction validation, account balance derivation in native currency, grouped Home summary calculations by currency, default-currency preference behavior
-- **Category rules** — archive/delete constraints, type immutability after first use, localized display label resolution from `l10n_key` + `custom_name`
-- **Formatters/utils** — currency formatting for account / transaction currencies, default-currency preference, locale-aware date helpers
-- **Splash screen** — day count calculation from start date, preference read/write, template variable substitution (`{days}`, `{date}`)
-- **FX conversion (Phase 2)** — exchange-rate fetch/caching, auto-conversion to `default_currency`, stale-rate fallback, grouped-vs-converted summary behavior
-- **Wallet sync (Phase 2)** — Ankr response parsing, transfer-to-pending mapping, expense vs income detection (from/to address matching), timestamp window logic, duplicate tx_hash prevention
-- **Pending transactions (Phase 2)** — approve flow (insert into transactions + delete from pending), reject flow, source-based grouping
+Tests are organized by **architectural layer**, not by feature. This mirrors the implementation workflow and makes layer coverage gaps obvious.
 
-### Widget Tests
-- **Splash screen** — renders day count, respects enabled/disabled toggle, date picker flow on first config, fade transition
-- **Home screen** — first-run empty state, grouped-by-currency summary strip in MVP, converted-summary state in Phase 2, transaction list rendering, delete undo snackbar, pending badge (Phase 2)
-- **Add Transaction screen** — keypad input, expense/income toggle, category selection, validation, duplicate flow
-- **Category/Account screens** — create, archive, reorder, empty-state CTAs
-- **Settings screen** — theme, locale, default-currency updates, splash settings
-- **Pending Transactions screen (Phase 2)** — list rendering, approve/reject actions, bulk approve, empty state
-- **Wallet Management screen (Phase 2)** — add/edit/delete wallet, linked account display
+### Service Tests (`test/unit/services/`)
 
-### Integration Tests
-- Full flow: first launch seeds defaults → date picker for splash → splash screen → add transaction → appears on Home → verify in DB
+- Primarily Phase 2: `AnkrService` response parsing, `ExchangeRateService` fetch + error shapes
+- Mock `Dio` / HTTP client; assert raw JSON → typed return values
+- `SecureStorageService` uses an in-memory fake implementation
+- `AppDatabase` is not unit-tested directly; repositories exercise it via the in-memory Drift constructor
+
+### Repository Tests (`test/unit/repositories/`)
+
+- Use Drift's in-memory database
+- Assert domain-model transformation (Drift row → Freezed model)
+- Assert business rules: category type locking after first use, archive-instead-of-delete when referenced, currency FK integrity, integer minor-unit arithmetic
+- Assert reactive streams emit on insert/update/delete
+- Migration tests: run `MigrationStrategy.onUpgrade` from v1 → v2 on a seeded DB; assert data is intact and new columns have defaults
+
+### Use Case Tests (`test/unit/use_cases/`) — Phase 2
+
+- Mock repositories and services
+- `WalletSyncUseCase`: happy path, duplicate tx_hash dedupe, partial failure (1 of N wallets fails), rate-limit retry, timestamp window correctness, auto-registration of unknown tokens
+- `ApprovePendingTransactionUseCase`: insert-then-delete atomicity, missing-category rejection
+
+### Controller Tests (`test/unit/controllers/`)
+
+- Mock repositories (or use cases in Phase 2) via Riverpod `ProviderContainer` overrides
+- Assert state transitions: loading → data, loading → error, command → new state
+- Assert presentation transformation: grouping, summary aggregation, badge-count derivation
+
+### Utility Tests (`test/unit/utils/`)
+
+- `money_formatter` — correct minor-unit → display conversion per currency (USD cents, JPY zero-decimal, ETH wei), locale grouping
+- `date_helpers` — day boundary math, locale-aware formatting
+- Splash day count calculation, template variable substitution (`{days}`, `{date}`)
+
+### Widget Tests (`test/widget/`)
+
+- Override controller provider with a test double; assert rendering per state variant
+- Golden tests for the splash screen (visual design is a product requirement)
+- Home: first-run empty state, grouped-by-currency summary strip, delete-undo snackbar
+- Add Transaction: keypad input, expense/income toggle, validation, duplicate flow
+- Category/Account: create, archive, reorder, empty-state CTAs
+- Settings: theme, locale, default-currency updates, splash settings
+- Phase 2: pending badge, pending list approve/reject actions, wallet add/edit/delete
+
+### Integration Tests (`test/integration/`)
+
+- Full stack with in-memory Drift
+- First launch → seed defaults → splash date picker → splash → Home → add transaction → verify DB row
 - Subsequent launch with splash enabled: splash → Home
 - Subsequent launch with splash disabled: straight to Home
 - Duplicate flow: duplicate existing transaction → edit amount/date → save → verify second row in DB
-- Multi-currency flow: create second account with a different currency → add transactions in both accounts → verify Home groups totals by currency in MVP
-- Management flow: archive used category/account → hidden from pickers but still visible in history/management screens
-- **Phase 2:** add wallet → sync → pending transactions appear → approve → visible in Home transaction list
-- **Phase 2:** reject pending transaction → removed from pending, not in transactions
+- Multi-currency flow: create second account with different currency → add transactions → verify Home groups totals by currency
+- Archive flow: archive used category/account → hidden from pickers but visible in management screens
+- Phase 2: add wallet → sync → pending appears → approve → visible in Home
+- Phase 2: reject pending → removed from pending, absent from transactions
 
 ### Key Testing Decisions
-- Drift's in-memory database makes query and rules tests fast
-- Riverpod's ProviderContainer overrides enable clean dependency injection in tests
-- High coverage on the manual-entry loop, first-run flow, splash screen, and archive/type rules
-- Wallet sync, pending transactions, recurring, transfers, and automatic FX conversion get dedicated coverage in Phase 2; base multi-currency coverage starts in MVP
-- `mocktail` for isolated controller tests where a full DB setup is unnecessary
-- Ankr API calls mocked in tests; no live API calls in test suite
+
+- Drift's in-memory database makes repository and rule tests fast
+- Riverpod's `ProviderContainer` overrides provide clean DI at every layer
+- `mocktail` for controller and use case tests where a full DB setup is unnecessary
+- Ankr API calls mocked in all tests; no live API calls in the test suite
+- Migration tests run against every committed schema snapshot in `drift_schemas/`
 
 ---
 
@@ -623,38 +937,43 @@ Material Design 3 with `ColorScheme.fromSeed()` for both light and dark variants
 
 ### Core (MVP)
 
-| Package                  | Purpose                          |
-|--------------------------|----------------------------------|
-| `flutter_riverpod`       | State management                 |
-| `drift`                  | Database ORM                     |
-| `drift_flutter`          | Flutter SQLite integration       |
-| `path_provider`          | DB file path location            |
-| `go_router`              | Navigation/routing               |
-| `freezed_annotation`     | Immutable data model annotations |
-| `json_annotation`        | JSON serialization annotations   |
-| `flutter_localizations`  | i18n framework                   |
-| `intl`                   | Localization utilities           |
-| `flutter_slidable`       | Swipe actions on list items      |
-| `material_symbols_icons` | MD3 icon set                     |
-| `flutter_native_splash`  | Native pre-Flutter splash screen |
+| Package                  | Purpose                                    |
+|--------------------------|--------------------------------------------|
+| `flutter_riverpod`       | State management                           |
+| `riverpod_annotation`    | Provider code-gen annotations              |
+| `drift`                  | Database ORM                               |
+| `drift_flutter`          | Flutter SQLite integration                 |
+| `path_provider`          | DB file path location                      |
+| `go_router`              | Navigation/routing (`StatefulShellRoute`)  |
+| `freezed_annotation`     | Immutable data model annotations           |
+| `json_annotation`        | JSON serialization annotations             |
+| `flutter_localizations`  | i18n framework                             |
+| `intl`                   | Localization utilities + `NumberFormat`    |
+| `flutter_slidable`       | Swipe actions on list items                |
+| `material_symbols_icons` | MD3 icon set                               |
+| `flutter_native_splash`  | Native pre-Flutter splash screen           |
 
 ### Phase 2 Additions
 
-| Package                  | Purpose                                |
-|--------------------------|----------------------------------------|
-| `flutter_secure_storage` | Secure storage for Ankr API key        |
-| `dio`                    | HTTP client for currency-price and Ankr API calls |
+| Package                  | Purpose                                                       |
+|--------------------------|---------------------------------------------------------------|
+| `flutter_secure_storage` | Wrapped by `SecureStorageService` for Ankr API key            |
+| `dio`                    | HTTP client (wrapped by `AnkrService`, `ExchangeRateService`) |
 
 ### Dev Dependencies
 
-| Package             | Purpose                 |
-|---------------------|-------------------------|
-| `build_runner`      | Code generation runner  |
-| `drift_dev`         | Drift code generation   |
-| `freezed`           | Freezed code generation |
-| `json_serializable` | JSON code generation    |
-| `mocktail`          | Mocking for tests       |
-| `flutter_lints`     | Static analysis         |
+| Package              | Purpose                             |
+|----------------------|-------------------------------------|
+| `build_runner`       | Code generation runner              |
+| `drift_dev`          | Drift code generation + schema dump |
+| `freezed`            | Freezed code generation             |
+| `json_serializable`  | JSON code generation                |
+| `riverpod_generator` | Riverpod code generation            |
+| `custom_lint`        | Riverpod lint support               |
+| `riverpod_lint`      | Riverpod-specific lints             |
+| `import_lint`        | Enforce layer-boundary rules        |
+| `mocktail`           | Mocking for tests                   |
+| `flutter_lints`      | Static analysis                     |
 
 ### Deferred (Not in MVP)
 
