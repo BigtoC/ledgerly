@@ -79,7 +79,7 @@ M0 lint + CI + folder skeleton
                                                                                    M6 Integration
 ```
 
-**Allowed stubs:** `LocaleService` returns fixed `"en"` until M6; placeholder screens in M4 return `Scaffold(body: Center(child: Text('Home')))`; native-splash assets default config until M6 regeneration.
+**Allowed stubs:** `LocaleService` may stay a thin wrapper around `Platform.localeName` until M6 hardening; placeholder screens in M4 may return simple `Scaffold(body: Center(child: Text('Home')))` implementations, but first-run splash routing branches must already match `PRD.md`; native-splash assets default config until M6 regeneration.
 
 **Never stub:** repository method signatures, schema column types, `categories.color` palette indices.
 
@@ -100,7 +100,7 @@ M0 lint + CI + folder skeleton
 - Folder skeleton from `PRD.md` → *Folder Structure* in place (empty files with `// TODO(M<n>): ...` header comments are fine).
 
 **Exit criteria**
-- Fresh clone → `flutter run` launches a placeholder splash and exits cleanly.
+- Fresh clone → `flutter run` launches the placeholder app shell and stays running without startup errors.
 - Intentional layer-violation PR (widget importing `AppDatabase`) fails CI.
 
 **Parallel?** No. One person scaffolds; others write issue tickets from `PRD.md`.
@@ -117,7 +117,7 @@ M0 lint + CI + folder skeleton
 - First schema snapshot committed to `drift_schemas/drift_schema_v1.json` (from `drift_dev schema dump`).
 - Per-entity DAOs in `data/database/daos/`: thin SQL wrappers only, no business rules.
 - Freezed domain models in `data/models/`: `Transaction`, `Category`, `Account`, `Currency`. Amount fields typed `int`, not `double`.
-- `LocaleService` in `data/services/`: stub that returns `Platform.localeName`.
+- `LocaleService` in `data/services/`: thin wrapper that returns `Platform.localeName` so bootstrap can seed `default_currency` from the actual device locale from day 1.
 
 **Exit criteria**
 - `flutter test` passes (no behavioural tests yet; compilation only).
@@ -227,13 +227,13 @@ Streams overlap the same Drift transaction API — merge within a tight window (
   - Add/Edit Transaction as a modal push
 - Placeholder screens in every `features/*/` folder so routing is navigable end-to-end.
 - Adaptive breakpoint (`BottomNavigationBar` ↔ `NavigationRail` at 600dp) wired at the shell level.
-- `main.dart` is a three-liner: `bootstrap().then(runApp)`.
+- `main.dart` stays tiny: it delegates to `bootstrap()` and does not call `runApp` itself.
 
 **Exit criteria**
-- Cold launch on a clean device: splash → Home placeholder.
+- Cold launch on a clean device follows the correct first-run path: start-date prompt placeholder → splash placeholder → Home placeholder.
 - Toggling `splash_enabled = false` in `user_preferences` skips splash entirely (no flash).
 - A smoke widget test builds `app.dart` with a `ProviderScope` override injecting in-memory `AppDatabase` — this becomes the template for all M5 widget tests.
-- One end-to-end integration test: cold start → empty Home. Keeps the integration harness green from day 1 instead of piling up at M6.
+- One end-to-end integration test: cold start → first-run splash gate (set date if missing) → Home placeholder. Keeps the integration harness green from day 1 instead of piling up at M6.
 
 **Parallel?** Better as a single PR — shell concerns couple tightly.
 
@@ -248,9 +248,9 @@ Six slices, each a self-contained folder under `features/`:
 | Slice | Key concerns | Depends on | Parallel-safe against |
 |---|---|---|---|
 | **Splash** | Day counter, hnotes-style visual, date-picker redirect when unconfigured. Golden tests mandatory. | `user_preferences_repository`, `date_helpers` | All others |
-| **Home** | Currency-grouped summary strip, sliver day list, FAB, swipe-to-delete + undo, pending badge (Phase 2 stub). | `transaction_repository`, `money_formatter` | All others |
-| **Transactions (Add/Edit)** | Full-screen modal, calculator keypad, expense/income toggle, category picker, account selector, memo, date. | `transaction_repository`, `category_repository`, `account_repository`, **shared `CategoryPicker` widget** | All others, except it shares `CategoryPicker` with Categories |
-| **Categories** | List by type, add/edit/archive/reorder, subcategory management, uses the same `CategoryPicker`. | `category_repository`, `icon_registry`, `color_palette` | All others |
+| **Home** | Currency-grouped summary strip, sliver day list, FAB, swipe-to-delete + undo, duplicate entry point, pending badge (Phase 2 stub). | `transaction_repository`, `money_formatter` | All others |
+| **Transactions (Add/Edit)** | Full-screen modal, calculator keypad, expense/income toggle, category picker, account selector, memo, date, duplicate-prefill flow. | `transaction_repository`, `category_repository`, `account_repository`, **shared `CategoryPicker` widget** | All others |
+| **Categories** | List by type, add/edit/archive/reorder, subcategory management. | `category_repository`, `icon_registry`, `color_palette` | All others |
 | **Accounts** | List with native-currency balances, add account, set default, archive. | `account_repository`, `currency_repository` | All others |
 | **Settings** | Theme, language, default account, default currency, splash settings, manage categories entry. | `user_preferences_repository`, theme provider | All others |
 
@@ -270,7 +270,10 @@ class CategoryPicker extends ConsumerWidget {
   // Renders as ModalBottomSheet + CustomScrollView per PRD.md → Layout Primitives.
 }
 ```
-Both Transactions and Categories consume this. Extracting it later causes divergent implementations.
+This widget is for transaction-category selection. The Categories management screen may share lower-level tiles or grid primitives, but it should not be forced through the picker API.
+
+**Cross-slice ownership to freeze on day 1 of M5:**
+- Quick repeat / duplicate spans two slices: Home owns the swipe/overflow affordance and navigation into the form; Transactions owns duplicated form prefill and save semantics.
 
 **Layout primitives to follow (non-negotiable, per `PRD.md` → Layout Primitives):**
 - Home: `CustomScrollView` + slivers. Never `ListView` inside `Column`.
