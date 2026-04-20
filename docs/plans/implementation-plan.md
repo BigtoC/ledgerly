@@ -41,15 +41,15 @@ The goal of the first four milestones is to freeze every contract a feature slic
 
 ## 3. Milestone Summary
 
-| # | Milestone | Purpose | Parallelism |
-|---|---|---|---|
-| M0 | Repo scaffold & toolchain | Runnable empty app, lint rules wired, CI green | Sequential (one person) |
-| M1 | Data foundations | Drift v1 + DAOs + Freezed models + service stubs | Narrow (2 streams, day-1 field-name agreement) |
-| M2 | Core utilities | `money_formatter`, `icon_registry`, `color_palette`, `date_helpers`, theme, ARBs | Narrow (3 streams) |
-| M3 | Repositories + seed | SSOT API + first-run seeding | 3 repo streams, same merge window |
-| M4 | App shell | `bootstrap.dart`, `router.dart`, theme/locale providers, placeholder screens | Sequential (single PR) |
-| M5 | Feature slices | All 6 MVP screens | **Maximum — one owner per slice** |
-| M6 | Integration + polish | E2E flows, a11y, release prep | Serial |
+| #  | Milestone                 | Purpose                                                                          | Parallelism                                    |
+|----|---------------------------|----------------------------------------------------------------------------------|------------------------------------------------|
+| M0 | Repo scaffold & toolchain | Runnable empty app, lint rules wired, CI green                                   | Sequential (one person)                        |
+| M1 | Data foundations          | Drift v1 + DAOs + Freezed models + service stubs                                 | Narrow (2 streams, day-1 field-name agreement) |
+| M2 | Core utilities            | `money_formatter`, `icon_registry`, `color_palette`, `date_helpers`, theme, ARBs | Narrow (3 streams)                             |
+| M3 | Repositories + seed       | SSOT API + first-run seeding                                                     | 3 repo streams, same merge window              |
+| M4 | App shell                 | `bootstrap.dart`, `router.dart`, theme/locale providers, placeholder screens     | Sequential (single PR)                         |
+| M5 | Feature slices            | All 6 MVP screens                                                                | **Maximum — one owner per slice**              |
+| M6 | Integration + polish      | E2E flows, a11y, release prep                                                    | Serial                                         |
 
 Rough sizing: ~8 weeks with 2–3 devs. Not a commitment — scope the tail (a11y, splash goldens, tablet adaptive passes) against the shipping calendar.
 
@@ -125,10 +125,11 @@ M0 lint + CI + folder skeleton
 - Grep `double.*amount|double.*balance|double.*rate` in `lib/` returns zero hits.
 
 **Parallel window**
-| Stream | Owner | Deliverables |
-|---|---|---|
-| A: Drift tables + DAOs + `AppDatabase` | Data | tables/, daos/, app_database.dart, schema snapshot |
-| B: Freezed domain models | Data or Core | data/models/*.dart |
+
+| Stream                                 | Owner        | Deliverables                                       |
+|----------------------------------------|--------------|----------------------------------------------------|
+| A: Drift tables + DAOs + `AppDatabase` | Data         | tables/, daos/, app_database.dart, schema snapshot |
+| B: Freezed domain models               | Data or Core | data/models/*.dart                                 |
 
 **Critical sync:** Agree field names between Drift tables and Freezed models on **day 1**. A 30-minute sync captured as a comment block in `data/models/README.md` (or similar). Without that, regeneration churn cascades into M2 formatters and M3 seeds.
 
@@ -152,11 +153,12 @@ M0 lint + CI + folder skeleton
 - Theme preview builds (manual verification).
 
 **Parallel window**
-| Stream | Owner | Deliverables |
-|---|---|---|
-| A: `money_formatter` + `date_helpers` + tests | Core | utils + unit tests |
-| B: `icon_registry` + `color_palette` | Core or Features | utils + sample usage |
-| C: Theme + ARBs | Shell | theme/ + l10n/ |
+
+| Stream                                        | Owner            | Deliverables         |
+|-----------------------------------------------|------------------|----------------------|
+| A: `money_formatter` + `date_helpers` + tests | Core             | utils + unit tests   |
+| B: `icon_registry` + `color_palette`          | Core or Features | utils + sample usage |
+| C: Theme + ARBs                               | Shell            | theme/ + l10n/       |
 
 Stream B must not start its seed icon/color choices until the `Category` domain model is final from M1 — otherwise indices churn.
 
@@ -196,11 +198,12 @@ Stream B must not start its seed icon/color choices until the `Category` domain 
 - Seed routine is idempotent (running twice doesn't duplicate rows).
 
 **Parallel window**
-| Stream | Owner | Deliverables |
-|---|---|---|
-| A: `transaction_repository` + `category_repository` | Data | repos + rule tests |
-| B: `account_repository` + `currency_repository` | Data | repos + rule tests |
-| C: `user_preferences_repository` + seed routine + migration harness | Data | repo + seed module + harness |
+
+| Stream                                                              | Owner | Deliverables                 |
+|---------------------------------------------------------------------|-------|------------------------------|
+| A: `transaction_repository` + `category_repository`                 | Data  | repos + rule tests           |
+| B: `account_repository` + `currency_repository`                     | Data  | repos + rule tests           |
+| C: `user_preferences_repository` + seed routine + migration harness | Data  | repo + seed module + harness |
 
 Streams overlap the same Drift transaction API — merge within a tight window (same week, ideally same PR stack) to avoid rebase churn.
 
@@ -245,14 +248,14 @@ Streams overlap the same Drift transaction API — merge within a tight window (
 
 Six slices, each a self-contained folder under `features/`:
 
-| Slice | Key concerns | Depends on | Parallel-safe against |
-|---|---|---|---|
-| **Splash** | Day counter, hnotes-style visual, date-picker redirect when unconfigured. Golden tests mandatory. | `user_preferences_repository`, `date_helpers` | All others |
-| **Home** | Currency-grouped summary strip, sliver day list, FAB, swipe-to-delete + undo, duplicate entry point, pending badge (Phase 2 stub). | `transaction_repository`, `money_formatter` | All others |
-| **Transactions (Add/Edit)** | Full-screen modal, calculator keypad, expense/income toggle, category picker, account selector, memo, date, duplicate-prefill flow. | `transaction_repository`, `category_repository`, `account_repository`, **shared `CategoryPicker` widget** | All others |
-| **Categories** | List by type, add/edit/archive/reorder, subcategory management. | `category_repository`, `icon_registry`, `color_palette` | All others |
-| **Accounts** | List with native-currency balances, add account, set default, archive. | `account_repository`, `currency_repository` | All others |
-| **Settings** | Theme, language, default account, default currency, splash settings, manage categories entry. | `user_preferences_repository`, theme provider | All others |
+| Slice                       | Key concerns                                                                                                                        | Depends on                                                                                                | Parallel-safe against |
+|-----------------------------|-------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|-----------------------|
+| **Splash**                  | Day counter, hnotes-style visual, date-picker redirect when unconfigured. Golden tests mandatory.                                   | `user_preferences_repository`, `date_helpers`                                                             | All others            |
+| **Home**                    | Currency-grouped summary strip, sliver day list, FAB, swipe-to-delete + undo, duplicate entry point, pending badge (Phase 2 stub).  | `transaction_repository`, `money_formatter`                                                               | All others            |
+| **Transactions (Add/Edit)** | Full-screen modal, calculator keypad, expense/income toggle, category picker, account selector, memo, date, duplicate-prefill flow. | `transaction_repository`, `category_repository`, `account_repository`, **shared `CategoryPicker` widget** | All others            |
+| **Categories**              | List by type, add/edit/archive/reorder, subcategory management.                                                                     | `category_repository`, `icon_registry`, `color_palette`                                                   | All others            |
+| **Accounts**                | List with native-currency balances, add account, set default, archive.                                                              | `account_repository`, `currency_repository`                                                               | All others            |
+| **Settings**                | Theme, language, default account, default currency, splash settings, manage categories entry.                                       | `user_preferences_repository`, theme provider                                                             | All others            |
 
 **Each slice delivers:**
 - `features/<slice>/<slice>_screen.dart` — lean widget, renders state, invokes commands. No `groupBy` / `fold` / `NumberFormat` / `DateFormat` inside `build()`.
@@ -317,20 +320,20 @@ This widget is for transaction-category selection. The Categories management scr
 
 Each rule maps to a PRD section and has a specific enforcement point.
 
-| # | Rule | Enforcement |
-|---|---|---|
-| G1 | Only repositories write to the DB / secure storage | `import_lint` blocks `data/database/daos/*` imports outside `data/repositories/` |
-| G2 | Drift types never cross the repository boundary | `import_lint` blocks `data/database/**` imports inside `features/**` + `domain/**` |
-| G3 | Controllers own presentation transformation (grouping, formatting) | Review: `groupBy` / `fold` / `NumberFormat` / `DateFormat` inside `build()` is blocked |
-| G4 | Money is `int` minor units end-to-end | Pre-merge grep: `double.*(amount\|balance\|rate\|price)` must return zero hits outside `money_formatter` |
-| G5 | Category `type` locked after first use | `CategoryRepository.update` rejects type changes with a typed exception; tested both branches |
-| G6 | Archive-instead-of-delete for referenced rows | Repository throws typed exception on delete-with-references; tested both branches |
-| G7 | Seeded categories identified by `l10n_key`; renames write `custom_name` only | `CategoryRepository.rename` only writes `custom_name`; seeding checks `l10n_key` for idempotency |
-| G8 | Icons / colors are string keys + palette indices, never raw `IconData` / ARGB | Column types `TEXT` / `INTEGER`; no serializer for `IconData` or `Color` exists |
-| G9 | Bootstrap sequence matches PRD exactly | All `await` lives inside `bootstrap.dart`; any `await` in `main.dart` outside `bootstrap()` is blocked at review |
-| G10 | Router `redirect:` reads `splash_enabled`; no flag inside `SplashScreen` | Splash-disabled integration test asserts no splash render on launch |
-| G11 | Layout primitives match PRD | No `ListView` inside `Column` on Home; `resizeToAvoidBottomInset: false` on Add/Edit; widget tests exercise 2× text-scale |
-| G12 | Tests organized by layer, not by feature | CI fails if `*_test.dart` lands outside the `test/unit/{services,repositories,controllers,utils}/` or `test/widget/` or `test/integration/` layout |
+| #   | Rule                                                                          | Enforcement                                                                                                                                        |
+|-----|-------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
+| G1  | Only repositories write to the DB / secure storage                            | `import_lint` blocks `data/database/daos/*` imports outside `data/repositories/`                                                                   |
+| G2  | Drift types never cross the repository boundary                               | `import_lint` blocks `data/database/**` imports inside `features/**` + `domain/**`                                                                 |
+| G3  | Controllers own presentation transformation (grouping, formatting)            | Review: `groupBy` / `fold` / `NumberFormat` / `DateFormat` inside `build()` is blocked                                                             |
+| G4  | Money is `int` minor units end-to-end                                         | Pre-merge grep: `double.*(amount\|balance\|rate\|price)` must return zero hits outside `money_formatter`                                           |
+| G5  | Category `type` locked after first use                                        | `CategoryRepository.update` rejects type changes with a typed exception; tested both branches                                                      |
+| G6  | Archive-instead-of-delete for referenced rows                                 | Repository throws typed exception on delete-with-references; tested both branches                                                                  |
+| G7  | Seeded categories identified by `l10n_key`; renames write `custom_name` only  | `CategoryRepository.rename` only writes `custom_name`; seeding checks `l10n_key` for idempotency                                                   |
+| G8  | Icons / colors are string keys + palette indices, never raw `IconData` / ARGB | Column types `TEXT` / `INTEGER`; no serializer for `IconData` or `Color` exists                                                                    |
+| G9  | Bootstrap sequence matches PRD exactly                                        | All `await` lives inside `bootstrap.dart`; any `await` in `main.dart` outside `bootstrap()` is blocked at review                                   |
+| G10 | Router `redirect:` reads `splash_enabled`; no flag inside `SplashScreen`      | Splash-disabled integration test asserts no splash render on launch                                                                                |
+| G11 | Layout primitives match PRD                                                   | No `ListView` inside `Column` on Home; `resizeToAvoidBottomInset: false` on Add/Edit; widget tests exercise 2× text-scale                          |
+| G12 | Tests organized by layer, not by feature                                      | CI fails if `*_test.dart` lands outside the `test/unit/{services,repositories,controllers,utils}/` or `test/widget/` or `test/integration/` layout |
 
 Guardrails exist to be automated. Anything that falls to "review catches it" will, eventually, not be caught.
 
@@ -340,15 +343,15 @@ Guardrails exist to be automated. Anything that falls to "review catches it" wil
 
 Tests land **as each layer lands**, not at the end.
 
-| Milestone | Tests that land |
-|---|---|
-| M0 | CI runs `flutter test` on the generated sample test. Migration harness skeleton stubbed. |
-| M1 | None (no behaviour to assert). DAOs are covered transitively by M3 repository tests. |
-| M2 | `test/unit/utils/money_formatter_test.dart` (USD / JPY / ETH / TWD, positive / negative / zero). `date_helpers_test.dart`. Splash day-count helper test. |
-| M3 | `test/unit/repositories/*_test.dart` — one per repo, in-memory Drift. Mandatory: happy path, archive-instead-of-delete, category type lock, currency FK, reactive stream emissions. Migration harness activated against v1 snapshot. |
-| M4 | Smoke widget test: `app.dart` builds with a `ProviderScope` override. One integration test: cold-start → empty Home. |
-| M5 | Per slice: `test/unit/controllers/<slice>_controller_test.dart` + `test/widget/features/<slice>/`. Splash golden tests land here. |
-| M6 | Full `test/integration/` flows. Accessibility audit. |
+| Milestone | Tests that land                                                                                                                                                                                                                      |
+|-----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| M0        | CI runs `flutter test` on the generated sample test. Migration harness skeleton stubbed.                                                                                                                                             |
+| M1        | None (no behaviour to assert). DAOs are covered transitively by M3 repository tests.                                                                                                                                                 |
+| M2        | `test/unit/utils/money_formatter_test.dart` (USD / JPY / ETH / TWD, positive / negative / zero). `date_helpers_test.dart`. Splash day-count helper test.                                                                             |
+| M3        | `test/unit/repositories/*_test.dart` — one per repo, in-memory Drift. Mandatory: happy path, archive-instead-of-delete, category type lock, currency FK, reactive stream emissions. Migration harness activated against v1 snapshot. |
+| M4        | Smoke widget test: `app.dart` builds with a `ProviderScope` override. One integration test: cold-start → empty Home.                                                                                                                 |
+| M5        | Per slice: `test/unit/controllers/<slice>_controller_test.dart` + `test/widget/features/<slice>/`. Splash golden tests land here.                                                                                                    |
+| M6        | Full `test/integration/` flows. Accessibility audit.                                                                                                                                                                                 |
 
 **Non-negotiables**
 - Ankr API calls are mocked (Phase 2 consideration, but don't add `http` to test deps in MVP).
