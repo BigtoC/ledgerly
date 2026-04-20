@@ -211,6 +211,7 @@ test/
   integration/
 l10n/
   app_en.arb
+  app_zh.arb            # Base Chinese fallback (required by flutter_localizations)
   app_zh_TW.arb
   app_zh_CN.arb
 ```
@@ -816,7 +817,10 @@ Using Flutter's `intl` package with ARB files:
 
 ```text
 l10n/
-  app_en.arb            # English
+  app_en.arb            # English (template)
+  app_zh.arb            # Base Chinese fallback — required because zh_CN / zh_TW
+                        # include a country code; flutter_localizations demands a
+                        # bare `zh` fallback or codegen fails.
   app_zh_TW.arb         # Traditional Chinese
   app_zh_CN.arb         # Simplified Chinese
 ```
@@ -935,45 +939,52 @@ Tests are organized by **architectural layer**, not by feature. This mirrors the
 
 ## Dependencies
 
+Versions below are the tested resolvable set under Flutter **3.41.7** (Dart 3.11.5). Keep `pubspec.yaml` in sync with this table — any version bump needs to round-trip `flutter pub get` and `dart run build_runner build` before landing here.
+
 ### Core (MVP)
 
-| Package                  | Purpose                                    |
-|--------------------------|--------------------------------------------|
-| `flutter_riverpod`       | State management                           |
-| `riverpod_annotation`    | Provider code-gen annotations              |
-| `drift`                  | Database ORM                               |
-| `drift_flutter`          | Flutter SQLite integration                 |
-| `path_provider`          | DB file path location                      |
-| `go_router`              | Navigation/routing (`StatefulShellRoute`)  |
-| `freezed_annotation`     | Immutable data model annotations           |
-| `json_annotation`        | JSON serialization annotations             |
-| `flutter_localizations`  | i18n framework                             |
-| `intl`                   | Localization utilities + `NumberFormat`    |
-| `flutter_slidable`       | Swipe actions on list items                |
-| `material_symbols_icons` | MD3 icon set                               |
-| `flutter_native_splash`  | Native pre-Flutter splash screen           |
+| Package                  | Version     | Purpose                                                                  |
+|--------------------------|-------------|--------------------------------------------------------------------------|
+| `flutter_riverpod`       | `^2.6.1`    | State management                                                         |
+| `riverpod_annotation`    | `^2.6.1`    | Provider code-gen annotations                                            |
+| `drift`                  | `^2.28.0`   | Database ORM                                                             |
+| `drift_flutter`          | `^0.2.7`    | Flutter SQLite integration                                               |
+| `path_provider`          | `^2.1.5`    | DB file path location                                                    |
+| `go_router`              | `^17.2.1`   | Navigation/routing (`StatefulShellRoute`)                                |
+| `freezed_annotation`     | `^3.0.0`    | Immutable data model annotations                                         |
+| `json_annotation`        | `^4.9.0`    | JSON serialization annotations                                           |
+| `flutter_localizations`  | sdk         | i18n framework                                                           |
+| `intl`                   | `^0.20.2`   | Localization utilities + `NumberFormat`                                  |
+| `flutter_slidable`       | `^4.0.3`    | Swipe actions on list items                                              |
+| `material_symbols_icons` | `^4.2803.0` | MD3 icon set                                                             |
+| `flutter_native_splash`  | `^2.4.4`    | Native pre-Flutter splash screen (dev-only import; see Dev Dependencies) |
 
 ### Phase 2 Additions
 
-| Package                  | Purpose                                                       |
-|--------------------------|---------------------------------------------------------------|
-| `flutter_secure_storage` | Wrapped by `SecureStorageService` for Ankr API key            |
-| `dio`                    | HTTP client (wrapped by `AnkrService`, `ExchangeRateService`) |
+| Package                  | Version  | Purpose                                                       |
+|--------------------------|----------|---------------------------------------------------------------|
+| `flutter_secure_storage` | TBD      | Wrapped by `SecureStorageService` for Ankr API key            |
+| `dio`                    | TBD      | HTTP client (wrapped by `AnkrService`, `ExchangeRateService`) |
+
+Phase 2 versions are pinned when the milestone lands; do not pre-add to `pubspec.yaml`.
 
 ### Dev Dependencies
 
-| Package              | Purpose                             |
-|----------------------|-------------------------------------|
-| `build_runner`       | Code generation runner              |
-| `drift_dev`          | Drift code generation + schema dump |
-| `freezed`            | Freezed code generation             |
-| `json_serializable`  | JSON code generation                |
-| `riverpod_generator` | Riverpod code generation            |
-| `custom_lint`        | Riverpod lint support               |
-| `riverpod_lint`      | Riverpod-specific lints             |
-| `import_lint`        | Enforce layer-boundary rules        |
-| `mocktail`           | Mocking for tests                   |
-| `flutter_lints`      | Static analysis                     |
+| Package                 | Version   | Purpose                                                                                                                                                               |
+|-------------------------|-----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `build_runner`          | `^2.5.4`  | Code generation runner                                                                                                                                                |
+| `drift_dev`             | `^2.28.0` | Drift code generation + schema dump                                                                                                                                   |
+| `freezed`               | `^3.1.0`  | Freezed code generation                                                                                                                                               |
+| `json_serializable`     | `^6.9.0`  | JSON code generation                                                                                                                                                  |
+| `riverpod_generator`    | `^2.6.3`  | Riverpod code generation                                                                                                                                              |
+| `custom_lint`           | `^0.7.6`  | Riverpod lint support                                                                                                                                                 |
+| `riverpod_lint`         | `^2.6.5`  | Riverpod-specific lints                                                                                                                                               |
+| `import_lint`           | `^0.1.6`  | Enforce layer-boundary rules — pinned to the 0.1.x line; see note                                                                                                     |
+| `mocktail`              | `^1.0.4`  | Mocking for tests                                                                                                                                                     |
+| `flutter_lints`         | `^6.0.0`  | Static analysis                                                                                                                                                       |
+| `flutter_native_splash` | `^2.4.4`  | Splash asset codegen CLI (`dart run flutter_native_splash:create`); never imported at runtime, so it lives in dev deps even though it's listed under Core (MVP) above |
+
+**`import_lint` version note.** `import_lint >=2.0.0` pulls `analyzer ^12.1.0`, which requires `meta ^1.18.0`. Flutter 3.41.7 pins `meta` to `1.17.0`, so 2.x is unresolvable. The 0.9.x–1.0.x line requires `analyzer ^5.2.0`, which conflicts with `freezed >=2.5.3`. Only `^0.1.6` resolves — it has no `analyzer` constraint. Revisit this pin when Flutter ships `meta 1.18+`; at that point pin `import_lint ^2.x` for the full layer-boundary rule set.
 
 ### Deferred (Not in MVP)
 
