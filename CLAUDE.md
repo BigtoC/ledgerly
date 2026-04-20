@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Status
 
-Ledgerly is a **pre-implementation** local-first Flutter expense tracker. As of now the repo contains the spec, not the app: there is no `pubspec.yaml`, no `lib/`, and no test suite yet. The authoritative source of truth is [`PRD.md`](PRD.md) — read it before making any architectural or data-model decision. Earlier design thinking lives in `docs/superpowers/specs/` but has been superseded by `PRD.md` wherever they conflict.
+Ledgerly is a local-first Flutter expense tracker currently in **M0 scaffolding** on `feature/m0-scaffold-app`. The spec in [`PRD.md`](PRD.md) is the authoritative source of truth — read it before making any architectural or data-model decision. Earlier design thinking lives in `docs/superpowers/specs/` but has been superseded by `PRD.md` wherever they conflict.
 
-When scaffolding, match the folder layout and package list in `PRD.md` exactly — they encode decisions (e.g. layered folder split, `domain/` only in Phase 2) that are easy to get wrong by defaulting to a generic `flutter create` shape.
+The repo now contains: `pubspec.yaml`, `analysis_options.yaml`, `l10n/` (`app_en.arb`, `app_zh.arb`, `app_zh_CN.arb`, `app_zh_TW.arb`), `lib/`, `test/`, `drift_schemas/`, and `.github/workflows/`. Match the folder layout and package list in `PRD.md` exactly when extending the scaffold — they encode decisions (layered folder split, `domain/` only in Phase 2, etc.) that are easy to get wrong by defaulting to a generic `flutter create` shape.
 
 ## Common Commands (after scaffold exists)
 
@@ -29,7 +29,7 @@ Code generation is required whenever a `@freezed`, `@riverpod`, or Drift `@Drift
 
 Ledgerly uses a strict **3-layer architecture** (Data → UI; plus a `domain/` use-case layer in Phase 2 only). See `PRD.md` → *Architecture* for the full rule table. The rules that trip up generic Flutter code:
 
-- **SSOT on repositories.** Only `data/repositories/*` write to Drift or `flutter_secure_storage`. Controllers and widgets never construct Drift `Insertable` rows, never call DAO `.insert()`, never touch secure storage. Violations are caught by `import_lint` in `analysis_options.yaml`.
+- **SSOT on repositories.** Only `data/repositories/*` write to Drift or `flutter_secure_storage`. Controllers and widgets never construct Drift `Insertable` rows, never call DAO `.insert()`, never touch secure storage. Layer-boundary rules are declared in `analysis_options.yaml`; enforcement is best-effort under the current `import_lint ^0.1.6` pin (see *Dependency Pins* below), so reviewer discipline matters more than the linter here.
 - **Drift stays inside repositories.** Repositories map Drift data classes into Freezed domain models in `data/models/` and return those. Controllers and widgets must never see a Drift row type — that is the seam that protects the UI from schema churn.
 - **Controllers expose state + commands, not data access.** Each `*_controller.dart` owns an immutable Freezed sealed state (`loading | empty | data(...) | error`) and typed command methods. Widgets read state and call commands; no data transformation in `build()`.
 - **Reactive by default.** Repositories return `Stream<T>` backed by Drift `.watch()`; controllers consume via Riverpod `StreamNotifier` / `AsyncNotifier`. Avoid manual refresh patterns.
@@ -68,6 +68,13 @@ Root route uses a `go_router` `redirect:` that reads `splash_enabled` from `user
 Tests are organized **by architectural layer, not by feature** (`test/unit/{services,repositories,use_cases,controllers,utils}`, `test/widget/`, `test/integration/`). Repository tests use Drift's in-memory database; controller tests use Riverpod `ProviderContainer` overrides with `mocktail`; the splash screen has golden tests because its visual design is a product requirement. Migration tests run `onUpgrade` against every committed snapshot in `drift_schemas/` on both empty and seeded DBs — never rewrite a merged migration in place; add a new schema version instead.
 
 Ankr API calls are mocked in every test; no live network calls in the suite.
+
+## Dependency Pins
+
+Tested versions live in `pubspec.yaml` and in `PRD.md` → *Dependencies*. Two non-obvious pins to preserve when bumping:
+
+- **`import_lint: ^0.1.6`** — the 2.x line pulls `analyzer ^12.1.0` → `meta ^1.18.0`, but Flutter 3.41.7 pins `meta 1.17.0`. The 0.9.x–1.0.x band needs `analyzer ^5.2.0`, which conflicts with `freezed >=2.5.3`. Only `^0.1.6` resolves under the current SDK. Revisit when Flutter ships `meta 1.18+`.
+- **Chinese ARBs require a base `app_zh.arb`.** `flutter_localizations` fails codegen with "Arb file for a fallback, zh, does not exist" when only `app_zh_CN.arb` / `app_zh_TW.arb` are present. Keep `app_zh.arb` in `l10n/` even if it only contains `appTitle` — removing it breaks `flutter pub get`.
 
 ## Pagination Cap
 
