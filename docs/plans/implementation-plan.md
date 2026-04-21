@@ -228,7 +228,7 @@ Streams overlap the same Drift transaction API — merge within a tight window (
   7. Build `ProviderScope` overrides injecting the opened DB
   8. `runApp`
 - `app/app.dart` wires `MaterialApp.router`, theme provider watching `user_preferences`, and locale provider.
-- `app/app.dart` also wires the locale resolution policy for Chinese locales: Traditional Chinese locales resolve to `zh_TW`, Simplified Chinese locales resolve to `zh_CN`, and ambiguous Chinese locales fall back to `zh_CN`.
+- `app/app.dart` also wires the locale resolution policy for Chinese locales: Traditional Chinese locales resolve to `zh_TW`, Simplified Chinese locales resolve to `zh_CN`, and ambiguous Chinese locales fall back to English.
 - `app/router.dart` defines the route tree from `PRD.md` → *Routing Structure*:
   - `StatefulShellRoute` for Home / Accounts / Settings
   - Root `redirect:` on `splash_enabled`

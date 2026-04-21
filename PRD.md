@@ -887,7 +887,7 @@ Localized elements:
 Locale fallback policy:
 - Keep `app_zh.arb` as the required bare-`zh` fallback file for Flutter codegen.
 - Runtime locale resolution maps Chinese locales by script/region before falling back: `zh_TW`, `zh_HK`, `zh_MO`, and other Traditional Chinese locales resolve to `zh_TW`; `zh_CN`, `zh_SG`, and other Simplified Chinese locales resolve to `zh_CN`.
-- When the runtime cannot determine script or region for a Chinese locale, fall back to `zh_CN`.
+- When the runtime cannot determine script or region for a Chinese locale, fall back to English.
 
 User-renamed categories are not auto-translated after rename; they display the user's chosen label in every locale. Custom splash display text and button labels are not auto-translated.
 
