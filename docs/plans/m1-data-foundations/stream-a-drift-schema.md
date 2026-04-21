@@ -109,7 +109,8 @@ class Categories extends Table {
   TextColumn get customName => text().named('custom_name').nullable()();
   TextColumn get icon => text()();                            // string key → icon_registry
   IntColumn get color => integer()();                         // index into color_palette
-  TextColumn get type => text()();                            // 'expense' | 'income'
+  TextColumn get type =>
+      text().customConstraint("CHECK (type IN ('expense', 'income'))")();
   IntColumn get parentId =>
       integer().named('parent_id').nullable()
         .references(Categories, #id)();                       // self-FK, nullable root

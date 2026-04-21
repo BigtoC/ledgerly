@@ -353,9 +353,12 @@ Disagreements or ambiguities between Stream A and Stream B that required a human
 
 ### 9.8 Seeded `account_types` icon keys and palette indices
 
-- The `account_types.icon` (NOT NULL `String`) and `account_types.color` (NOT NULL palette index) values for the two seeded rows (`accountType.cash`, `accountType.investment`) are **not fixed here**.
-- **Open:** pick both in M2 when `core/utils/icon_registry.dart` and `core/utils/color_palette.dart` land, so the seeded icon keys are guaranteed to resolve and the palette indices point at real, appended entries.
-- **Stream B and Stream C must not hard-code defaults** in the Freezed model, the Drift table, or this contract in the meantime. M3 seed code picks them up from the M2 registries.
+- ✅ **RESOLVED** — per PRD → *Default Account Types*:
+  - `accountType.cash` → icon key `'wallet'`, color **Neutral Variant 70 `#AEA9B4`**.
+  - `accountType.investment` → icon key `'trending_up'`, color **Neutral Variant 70 `#AEA9B4`**.
+- Account types are visually distinguished by icon, not tint — the shared Neutral Variant 70 background is intentional.
+- M2 contract: `core/utils/icon_registry.dart` must register `'wallet'` → `Symbols.wallet` and `'trending_up'` → `Symbols.trending_up`. `core/utils/color_palette.dart` must include Neutral Variant 70 `#AEA9B4` (shared with other seeded rows that use it per PRD → Default Categories).
+- M3 seed writes the palette **index** (not the hex string) resolved at M2 time; the index for Neutral Variant 70 is documented in `color_palette.dart` and referenced by a named constant (e.g. `kPaletteNeutralVariant70`) so the seed code is readable.
 
 ### 9.9 Non-contradictions observed (for the record)
 
