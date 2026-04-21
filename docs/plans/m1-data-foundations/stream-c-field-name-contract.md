@@ -15,8 +15,8 @@
 This contract binds **three identifier spaces** that otherwise drift independently across a two-stream milestone:
 
 1. Drift **SQL column names** (snake_case, persisted to disk and captured in `drift_schemas/drift_schema_v1.json`).
-2. Drift **Dart getter names** on the generated data classes (`Currency`, `TransactionRow`, `CategoryRow`, `AccountRow`, `UserPreferenceRow`).
-3. Freezed **domain-model field names** on `Currency`, `Transaction`, `Category`, `Account`.
+2. Drift **Dart getter names** on the generated data classes (`Currency`, `TransactionRow`, `CategoryRow`, `AccountTypeRow`, `AccountRow`, `UserPreferenceRow`).
+3. Freezed **domain-model field names** on `Currency`, `Transaction`, `Category`, `AccountType`, `Account`.
 
 Plus the **enum wire values** (`'expense'`, `'income'`) stored as `TEXT` in the DB.
 
@@ -360,7 +360,14 @@ Disagreements or ambiguities between Stream A and Stream B that required a human
 - M2 contract: `core/utils/icon_registry.dart` must register `'wallet'` → `Symbols.wallet` and `'trending_up'` → `Symbols.trending_up`. `core/utils/color_palette.dart` must include Neutral Variant 70 `#AEA9B4` (shared with other seeded rows that use it per PRD → Default Categories).
 - M3 seed writes the palette **index** (not the hex string) resolved at M2 time; the index for Neutral Variant 70 is documented in `color_palette.dart` and referenced by a named constant (e.g. `kPaletteNeutralVariant70`) so the seed code is readable.
 
-### 9.9 Non-contradictions observed (for the record)
+### 9.9 M1 implementation findings (retrospective)
+
+Surfaced during Stream A implementation; recorded so the next DAO author doesn't rediscover them.
+
+1. **DAO method name `delete(String key)` is forbidden.** `DatabaseAccessor` (via `DatabaseConnectionUser`) already exposes a generic `delete<T extends Table, D>(TableInfo<T, D>)`. A same-class instance method with signature `Future<int> delete(String)` is a compile-time invalid override. Rule: **any DAO delete method taking a scalar key must use a disambiguated name** (e.g. `deleteByKey`, `deleteById`, `deleteByL10nKey`). `UserPreferencesDao.delete(String key)` was renamed to `UserPreferencesDao.deleteByKey(String key)` during M1 Stream A implementation; future DAOs follow the same pattern. M3 repository callers use `deleteByKey`.
+2. **`customConstraint` replaces, does not append to, Drift's default `NOT NULL`.** When writing a SQL CHECK constraint via `.customConstraint(...)`, the NOT NULL clause must be included in the string: `"NOT NULL CHECK (type IN ('expense', 'income'))"`, not just `"CHECK (type IN ('expense', 'income'))"`. Stream A §2.3's snippet carries the full form.
+
+### 9.10 Non-contradictions observed (for the record)
 
 Stream A and Stream B **agree** on:
 
