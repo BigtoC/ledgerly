@@ -452,42 +452,54 @@ Stores theme preference (light/dark/system), default account, default currency, 
 
 ## Default Categories
 
+### Color Source — MD3 Baseline
+
+All seeded colors (categories and account types) are picked from the **Material Design 3 baseline palettes** (https://m3.material.io/styles/color/static/baseline). The `core/utils/color_palette.dart` registry stores these as an append-only ordered `List<Color>`; `categories.color` and `account_types.color` are integer indices into that registry. New seeded categories or account types added later must also pick from the MD3 baseline — custom colors invented per-feature break the visual coherence of the app.
+
 ### Expense Categories
 
-| Category       | Subcategories                           |
-|----------------|-----------------------------------------|
-| Food           | Groceries, Restaurants                  |
-| Drinks         | Coffee, Alcohol, Beverages              |
-| Transportation | Gas, Public Transit, Taxi/Ride, Parking |
-| Shopping       | Clothing, Household                     |
-| Housing        | Rent, Utilities, Maintenance            |
-| Entertainment  | Movies, Games, Subscriptions            |
-| Medical        | Doctor, Pharmacy, Insurance             |
-| Education      | Tuition, Books, Courses                 |
-| Personal       | Haircut, Gym, Gifts                     |
-| Travel         | Flights, Hotels, Activities             |
-| 3C             | Phone, Computer, Gadgets                |
-| Miscellaneous  | —                                       |
-| Other          | —                                       |
+| Category       | Subcategories                           | Color (MD3 baseline)                                               |
+|----------------|-----------------------------------------|--------------------------------------------------------------------|
+| Food           | Groceries, Restaurants                  | Red 60 — `#B3251E`                                                 |
+| Drinks         | Coffee, Alcohol, Beverages              | Green 40 — `#006C35`                                               |
+| Transportation | Gas, Public Transit, Taxi/Ride, Parking | Cyan 70 — `#00BBDF`                                                |
+| Shopping       | Clothing, Household                     | Purple 30 — `#5629A4`                                              |
+| Housing        | Rent, Utilities, Maintenance            | Green 80 — `#80DA88`                                               |
+| Entertainment  | Movies, Games, Subscriptions            | Orange 70 — `#FF8D41`                                              |
+| Medical        | Doctor, Pharmacy, Insurance             | Red 50 — `#DB372D`                                                 |
+| Education      | Tuition, Books, Courses                 | Purple 30 — `#5629A4`                                              |
+| Personal       | Haircut, Gym, Gifts                     | Green 80 — `#80DA88`                                               |
+| Travel         | Flights, Hotels, Activities             | Cyan 70 — `#00BBDF`                                                |
+| 3C             | Phone, Computer, Gadgets                | Blue 30 — `#04409F`                                                |
+| Miscellaneous  | —                                       | Neutral Variant 50 — `#79747E`                                     |
+| Other          | —                                       | Neutral Variant 50 — `#79747E`                                     |
+
+**Color reuse is intentional.** Transportation + Travel share Cyan 70; Shopping + Education share Purple 30; Housing + Personal share Green 80; Other + Miscellaneous share Neutral Variant 50. The `color_palette.dart` registry de-duplicates: each unique color occupies one index, and multiple `categories` rows can reference the same index.
 
 ### Income Categories
 
-| Category     | Subcategories |
-|--------------|---------------|
-| Salary       | —             |
-| Freelance    | —             |
-| Investment   | —             |
-| Gift         | —             |
-| Other Income | —             |
+All seeded income categories share **Yellow 80 — `#FCBD00`**.
+
+| Category     | Subcategories | Color (MD3 baseline)  |
+|--------------|---------------|-----------------------|
+| Salary       | —             | Yellow 80 — `#FCBD00` |
+| Freelance    | —             | Yellow 80 — `#FCBD00` |
+| Investment   | —             | Yellow 80 — `#FCBD00` |
+| Gift         | —             | Yellow 80 — `#FCBD00` |
+| Other Income | —             | Yellow 80 — `#FCBD00` |
+
+Income vs expense is also disambiguated by the `+` / `-` amount sign in lists — color is a secondary cue.
 
 Seeded categories use stable `l10n_key` values so locale changes do not create duplicate categories or break references. Users can rename any seeded category, create custom categories/subcategories, archive seeded categories they do not use, and delete only unused custom categories.
 
 ### Default Account Types
 
-| Account Type | `l10n_key`               | Default Currency                                 | Notes                                    |
-|--------------|--------------------------|--------------------------------------------------|------------------------------------------|
-| Cash         | `accountType.cash`       | `user_preferences.default_currency` at seed time | Seeded with default icon + palette color |
-| Investment   | `accountType.investment` | `user_preferences.default_currency` at seed time | Seeded with default icon + palette color |
+| Account Type | `l10n_key`               | Icon key        | Color (MD3 baseline)           | Default Currency                                 |
+|--------------|--------------------------|-----------------|--------------------------------|--------------------------------------------------|
+| Cash         | `accountType.cash`       | `'wallet'`      | Neutral Variant 70 — `#AEA9B4` | `user_preferences.default_currency` at seed time |
+| Investment   | `accountType.investment` | `'trending_up'` | Neutral Variant 70 — `#AEA9B4` | `user_preferences.default_currency` at seed time |
+
+Account type tiles deliberately use a shared neutral tint — account types are visually distinguished by their **icon**, not by color. Users creating custom account types can pick any other palette color if they want color-coded account types. Icon keys (`'wallet'`, `'trending_up'`) resolve via `core/utils/icon_registry.dart` at render time to `Symbols.wallet` and `Symbols.trending_up` from `material_symbols_icons`.
 
 Seeded account types follow the same identity rules as seeded categories: `l10n_key` stays stable across renames; user renames write `custom_name` only. Users can add custom account types from the Accounts screen (name + icon + color + default currency). Archiving / deletion rules match categories: archive when referenced, hard-delete only when unused.
 
