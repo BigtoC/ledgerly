@@ -20,7 +20,7 @@ Ledgerly is a local-first mobile expense tracker built with Flutter. It is aimed
 - Fast manual expense/income recording
 - Seeded categories with subcategories
 - Optional custom categories and subcategories
-- Multiple manual accounts (cash, bank, other)
+- Multiple manual accounts with user-extensible account types (Cash, Investment seeded; users can add more)
 - Base multi-currency support with configurable default currency
 - Transaction memos
 - Quick repeat / duplicate existing transaction
@@ -125,6 +125,7 @@ lib/
       tables/
         transactions_table.dart
         categories_table.dart
+        account_types_table.dart
         accounts_table.dart
         currencies_table.dart
         user_preferences_table.dart
@@ -134,6 +135,7 @@ lib/
       daos/
         transaction_dao.dart
         category_dao.dart
+        account_type_dao.dart
         account_dao.dart
         currency_dao.dart
         user_preferences_dao.dart
@@ -148,6 +150,7 @@ lib/
     repositories/
       transaction_repository.dart
       category_repository.dart
+      account_type_repository.dart
       account_repository.dart
       currency_repository.dart
       user_preferences_repository.dart
@@ -158,6 +161,7 @@ lib/
     models/                                # Freezed domain models
       transaction.dart
       category.dart
+      account_type.dart
       account.dart
       currency.dart
       pending_transaction.dart             # Phase 2
@@ -224,7 +228,7 @@ l10n/
 2. Open `AppDatabase` (async) — runs migrations if `schemaVersion` changed
 3. Initialize `LocaleService`, resolve device locale for default-currency fallback
 4. Read `user_preferences` table
-5. First-run seed (if empty DB): seed `currencies`, default categories, one `Cash` account, `default_currency` from device locale
+5. First-run seed (if empty DB): seed `currencies`, default categories, default account types (Cash, Investment), one `Cash` account (of type `accountType.cash`), `default_currency` from device locale
 6. Configure `ProviderScope` with overrides injecting the opened `AppDatabase` into `appDatabaseProvider`
 7. `runApp(ProviderScope(overrides: [...], child: App()))`
 
@@ -283,12 +287,14 @@ Notes:
 | account_id         | INTEGER  | NOT NULL REFERENCES accounts                |
 | memo               | TEXT     |                                             |
 | date               | DATETIME | NOT NULL                                    |
-| created_at         | DATETIME |                                             |
-| updated_at         | DATETIME |                                             |
+| created_at         | DATETIME | NOT NULL — set by repository on insert      |
+| updated_at         | DATETIME | NOT NULL — set by repository on insert and every update |
 
 Notes:
 - Transaction type (expense/income) is derived from the linked category's `type` field. A category's `type` becomes immutable after the first transaction uses it, so historical transaction meaning cannot be changed later by editing the category.
+- **No third `type` value exists or will be added.** Phase 2 account transfers and wallet sync model direction as expense/income from the tracked account's (or wallet address's) perspective: inflow **into** the tracked account = **income**; outflow **out of** the tracked account = **expense**. An account-to-account transfer produces two transactions (expense on the source, income on the destination) linked by shared memo / timestamp — not a single `'transfer'` type.
 - `currency` stores the original transaction currency. Phase 2 conversion never overwrites the original `amount_minor_units` or `currency`.
+- `created_at` and `updated_at` are populated by `TransactionRepository`, not by the database. On insert, both are set to `DateTime.now()`. On every update, `updated_at` is refreshed to `DateTime.now()` and `created_at` is left unchanged.
 
 ### categories
 
@@ -312,22 +318,43 @@ Notes:
 - `icon` is a string key resolved at render time via `core/utils/icon_registry.dart`; unknown keys fall back to a default icon.
 - `color` is a fixed index into `core/utils/color_palette.dart`; indices are append-only across app versions.
 
-### accounts
+### account_types
 
-| Column                      | Type    | Constraints                          |
-|-----------------------------|---------|--------------------------------------|
-| id                          | INTEGER | PRIMARY KEY AUTO                     |
-| name                        | TEXT    | NOT NULL                             |
-| type                        | TEXT    | NOT NULL — 'cash', 'bank', 'other'   |
-| currency                    | TEXT    | NOT NULL REFERENCES currencies(code) |
-| opening_balance_minor_units | INTEGER | DEFAULT 0 — see Money Storage Policy |
-| icon                        | TEXT    |                                      |
-| color                       | INTEGER |                                      |
-| sort_order                  | INTEGER |                                      |
-| is_archived                 | BOOL    | DEFAULT false                        |
+| Column           | Type    | Constraints                                      |
+|------------------|---------|--------------------------------------------------|
+| id               | INTEGER | PRIMARY KEY AUTO                                 |
+| l10n_key         | TEXT    | UNIQUE, nullable for custom account types        |
+| custom_name      | TEXT    | nullable user override                           |
+| default_currency | TEXT    | nullable REFERENCES currencies(code)             |
+| icon             | TEXT    | NOT NULL — icon-registry string key              |
+| color            | INTEGER | NOT NULL — index into `color_palette`            |
+| sort_order       | INTEGER |                                                  |
+| is_archived      | BOOL    | DEFAULT false                                    |
 
 Notes:
-- New accounts default to `user_preferences.default_currency` but can be changed on creation.
+- Seeded account types use `l10n_key` for stable identity and localized display; custom account types set `custom_name` and leave `l10n_key` NULL.
+- Renaming a seeded account type writes `custom_name` but keeps `l10n_key`, so locale changes do not duplicate or orphan types. Same pattern as `categories`.
+- `default_currency` is used to pre-fill the currency when the user creates a new account of this type; falls back to `user_preferences.default_currency` when NULL. Users can still change the currency on any individual account.
+- Account types with existing accounts can be archived but not hard-deleted. Unused custom account types may be deleted.
+- `icon` and `color` follow the same indirection rules as `categories` — string key resolved via `icon_registry.dart`, integer index into the append-only `color_palette.dart`. Never raw `IconData` or ARGB.
+
+### accounts
+
+| Column                      | Type    | Constraints                           |
+|-----------------------------|---------|---------------------------------------|
+| id                          | INTEGER | PRIMARY KEY AUTO                      |
+| name                        | TEXT    | NOT NULL                              |
+| account_type_id             | INTEGER | NOT NULL REFERENCES account_types(id) |
+| currency                    | TEXT    | NOT NULL REFERENCES currencies(code)  |
+| opening_balance_minor_units | INTEGER | DEFAULT 0 — see Money Storage Policy  |
+| icon                        | TEXT    |                                       |
+| color                       | INTEGER |                                       |
+| sort_order                  | INTEGER |                                       |
+| is_archived                 | BOOL    | DEFAULT false                         |
+
+Notes:
+- New accounts default currency from `account_types.default_currency`; if NULL, fall back to `user_preferences.default_currency`. User can override on creation.
+- `account_type_id` is required; archiving an account type does not cascade-archive accounts, but new-account creation hides archived types from the picker.
 - Tracked balance is derived in the account's native currency from transactions assigned to that account.
 - MVP Home and Accounts surfaces group totals by original currency. Phase 2 can also show auto-converted totals in `default_currency`.
 - Accounts with existing transactions can be archived but not hard-deleted.
@@ -425,35 +452,58 @@ Stores theme preference (light/dark/system), default account, default currency, 
 
 ## Default Categories
 
+### Color Source — MD3 Baseline
+
+All seeded colors (categories and account types) are picked from the **Material Design 3 baseline palettes** (https://m3.material.io/styles/color/static/baseline). The `core/utils/color_palette.dart` registry stores these as an append-only ordered `List<Color>`; `categories.color` and `account_types.color` are integer indices into that registry. New seeded categories or account types added later must also pick from the MD3 baseline — custom colors invented per-feature break the visual coherence of the app.
+
 ### Expense Categories
 
-| Category       | Subcategories                           |
-|----------------|-----------------------------------------|
-| Food           | Groceries, Restaurants                  |
-| Drinks         | Coffee, Alcohol, Beverages              |
-| Transportation | Gas, Public Transit, Taxi/Ride, Parking |
-| Shopping       | Clothing, Household                     |
-| Housing        | Rent, Utilities, Maintenance            |
-| Entertainment  | Movies, Games, Subscriptions            |
-| Medical        | Doctor, Pharmacy, Insurance             |
-| Education      | Tuition, Books, Courses                 |
-| Personal       | Haircut, Gym, Gifts                     |
-| Travel         | Flights, Hotels, Activities             |
-| 3C             | Phone, Computer, Gadgets                |
-| Miscellaneous  | —                                       |
-| Other          | —                                       |
+| Category       | Subcategories                           | Color (MD3 baseline)                                               |
+|----------------|-----------------------------------------|--------------------------------------------------------------------|
+| Food           | Groceries, Restaurants                  | Red 60 — `#B3251E`                                                 |
+| Drinks         | Coffee, Alcohol, Beverages              | Green 40 — `#006C35`                                               |
+| Transportation | Gas, Public Transit, Taxi/Ride, Parking | Cyan 70 — `#00BBDF`                                                |
+| Shopping       | Clothing, Household                     | Purple 30 — `#5629A4`                                              |
+| Housing        | Rent, Utilities, Maintenance            | Green 80 — `#80DA88`                                               |
+| Entertainment  | Movies, Games, Subscriptions            | Orange 70 — `#FF8D41`                                              |
+| Medical        | Doctor, Pharmacy, Insurance             | Red 50 — `#DB372D`                                                 |
+| Education      | Tuition, Books, Courses                 | Purple 30 — `#5629A4`                                              |
+| Personal       | Haircut, Gym, Gifts                     | Green 80 — `#80DA88`                                               |
+| Travel         | Flights, Hotels, Activities             | Cyan 70 — `#00BBDF`                                                |
+| 3C             | Phone, Computer, Gadgets                | Blue 30 — `#04409F`                                                |
+| Miscellaneous  | —                                       | Neutral Variant 50 — `#79747E`                                     |
+| Other          | —                                       | Neutral Variant 50 — `#79747E`                                     |
+
+**Color reuse is intentional.** Transportation + Travel share Cyan 70; Shopping + Education share Purple 30; Housing + Personal share Green 80; Other + Miscellaneous share Neutral Variant 50. The `color_palette.dart` registry de-duplicates: each unique color occupies one index, and multiple `categories` rows can reference the same index.
 
 ### Income Categories
 
-| Category     | Subcategories |
-|--------------|---------------|
-| Salary       | —             |
-| Freelance    | —             |
-| Investment   | —             |
-| Gift         | —             |
-| Other Income | —             |
+All seeded income categories share **Yellow 80 — `#FCBD00`**.
+
+| Category     | Subcategories | Color (MD3 baseline)  |
+|--------------|---------------|-----------------------|
+| Salary       | —             | Yellow 80 — `#FCBD00` |
+| Freelance    | —             | Yellow 80 — `#FCBD00` |
+| Investment   | —             | Yellow 80 — `#FCBD00` |
+| Gift         | —             | Yellow 80 — `#FCBD00` |
+| Other Income | —             | Yellow 80 — `#FCBD00` |
+
+Income vs expense is also disambiguated by the `+` / `-` amount sign in lists — color is a secondary cue.
 
 Seeded categories use stable `l10n_key` values so locale changes do not create duplicate categories or break references. Users can rename any seeded category, create custom categories/subcategories, archive seeded categories they do not use, and delete only unused custom categories.
+
+### Default Account Types
+
+| Account Type | `l10n_key`               | Icon key        | Color (MD3 baseline)           | Default Currency                                 |
+|--------------|--------------------------|-----------------|--------------------------------|--------------------------------------------------|
+| Cash         | `accountType.cash`       | `'wallet'`      | Neutral Variant 70 — `#AEA9B4` | `user_preferences.default_currency` at seed time |
+| Investment   | `accountType.investment` | `'trending_up'` | Neutral Variant 70 — `#AEA9B4` | `user_preferences.default_currency` at seed time |
+
+Account type tiles deliberately use a shared neutral tint — account types are visually distinguished by their **icon**, not by color. Users creating custom account types can pick any other palette color if they want color-coded account types. Icon keys (`'wallet'`, `'trending_up'`) resolve via `core/utils/icon_registry.dart` at render time to `Symbols.wallet` and `Symbols.trending_up` from `material_symbols_icons`.
+
+Seeded account types follow the same identity rules as seeded categories: `l10n_key` stays stable across renames; user renames write `custom_name` only. Users can add custom account types from the Accounts screen (name + icon + color + default currency). Archiving / deletion rules match categories: archive when referenced, hard-delete only when unused.
+
+Phase 2 token wallets will be another account type (seeded when the wallet sync milestone lands) — the table shape above is forward-compatible.
 
 ---
 
@@ -538,7 +588,7 @@ App open (or manual refresh tap) → WalletsController.sync() → WalletSyncUseC
     → for each transfer:
       → skip if tx_hash already exists in pending_transactions or transactions
       → if token unknown, register it in `currencies` (is_token = true)
-      → determine if expense (from_address = wallet) or income (to_address = wallet)
+      → determine direction: `from_address = wallet` → expense (outflow); `to_address = wallet` → income (inflow). There is no `'transfer'` category type — the direction relative to the monitored wallet fully determines the transaction type.
       → insert into pending_transactions with source='blockchain', account_id from wallet, amount stored as integer minor units using token decimals
     → update wallet.last_sync_timestamp = now
 ```
@@ -610,7 +660,7 @@ ShellRoute (bottom nav)
 
 ### First-run Defaults
 
-- On first launch, seed common fiat entries into `currencies`, one `Cash` account with `opening_balance_minor_units = 0`, and all default categories
+- On first launch, seed common fiat entries into `currencies`, all default account types (Cash, Investment), one `Cash` account (type = `accountType.cash`) with `opening_balance_minor_units = 0`, and all default categories
 - `default_currency` starts from device locale (resolved via `LocaleService`), can be changed in Settings, and is used for new account defaults
 - `splash_enabled = true` by default; first launch redirects to date picker before showing splash
 - After splash, Home opens in an empty state with primary CTA `Log first transaction`
@@ -621,7 +671,7 @@ ShellRoute (bottom nav)
 1. **Splash Screen** — Day counter with hnotes-style visual design, tap to enter Home
 2. **Home Screen** — Compact summary strip grouped by currency in MVP (`Today expense`, `Today income`, `Month net` per currency); Phase 2 can also show auto-converted totals in `default_currency`, daily transaction list grouped by date, newest first, empty-state CTA, FAB to add transaction, pending transaction badge (Phase 2)
 3. **Add/Edit Transaction** — Expense/Income segmented control, calculator-style keypad for amount, category picker (icon grid), account selector with currency indicator, date picker, memo field, save; delete only in edit mode
-4. **Accounts Screen** — List accounts with tracked balances in native currency, add account, set default account, archive account
+4. **Accounts Screen** — List accounts with tracked balances in native currency, add account (pick from existing account types or create a new type inline with name + icon + color + default currency), manage account types, set default account, archive account
 5. **Categories Screen** — List categories grouped by expense/income, add/edit/reorder/archive, subcategory management
 6. **Settings Screen** — Theme toggle (light/dark/system), language selector, default account, default currency, manage categories, splash screen settings
 7. **Pending Transactions Screen** (Phase 2) — Review/approve/reject auto-generated transactions, accessible from Home badge and Settings
