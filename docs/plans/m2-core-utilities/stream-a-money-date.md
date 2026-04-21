@@ -200,7 +200,7 @@ class DateHelpers {
 2. **Currency param is the Freezed `Currency`, not a code string.** This forces the caller to supply a fully resolved currency (with `decimals`), eliminating the "what's the scale?" ambiguity. Callers with only a code must resolve via `CurrencyRepository` (M3) first.
 3. **`locale` is a `String` BCP-47 tag (`en_US`, `zh_TW`, `zh_CN`).** Not a `Locale`. `intl` expects the string form; passing `Locale` would force a conversion in every call site.
 4. **Pure functions.** No `static` mutable state, no caching. `intl` internally memoizes pattern parsing — that is enough.
-5. **Locale data must be initialized elsewhere.** `DateFormat` for non-`en` locales requires `initializeDateFormatting(locale)` from `package:intl/date_symbol_data_local.dart`. That call lands in M4 `bootstrap.dart` (documented in §8). This stream does **not** call it; the unit tests call it explicitly.
+5. **Locale data must be initialized elsewhere.** `DateFormat` for non-`en` locales requires `initializeDateFormatting(locale)` from `package:intl/date_symbol_data_local.dart`. That call lands in M4 `bootstrap.dart` as part of the bootstrap contract. This stream does **not** call it; the unit tests call it explicitly.
 
 ---
 
@@ -208,31 +208,31 @@ class DateHelpers {
 
 ### 2.1 `money_formatter_test.dart` — 4 currencies × {positive, negative, zero} × 3 locales where grouping matters
 
-| # | Method | Currency | Locale  | Input (minor units)       | Expected output          | PRD cite        |
-|---|--------|----------|---------|---------------------------|--------------------------|-----------------|
-| M01 | `format`      | USD (2) | `en_US` | `0`                       | `$0.00`                  | 253-257         |
-| M02 | `format`      | USD (2) | `en_US` | `12345`                   | `$123.45`                | 253-257         |
-| M03 | `format`      | USD (2) | `en_US` | `-12345`                  | `-$123.45`               | 253-257         |
-| M04 | `format`      | JPY (0) | `en_US` | `0`                       | `¥0`                     | 265-268         |
-| M05 | `format`      | JPY (0) | `en_US` | `1234567`                 | `¥1,234,567`             | 265-268         |
-| M06 | `format`      | JPY (0) | `en_US` | `-1234567`                | `-¥1,234,567`            | 265-268         |
-| M07 | `format`      | TWD (2, sym `NT$`) | `zh_TW` | `0`              | `NT$0.00`                | 265-268, 880    |
-| M08 | `format`      | TWD (2)            | `zh_TW` | `1234567`        | `NT$12,345.67`           | 265-268         |
-| M09 | `format`      | TWD (2)            | `zh_TW` | `-1234567`       | `-NT$12,345.67`          | 265-268         |
-| M10 | `format`      | CNY (2, sym `¥`)   | `zh_CN` | `123456789`      | `¥1,234,567.89`          | 865-882         |
-| M11 | `format`      | ETH (18)           | `en_US` | `1500000000000000000`  | `ETH1.500000000000000000` *(symbol-less token — falls back to code)* | 265-268, 275 |
-| M12 | `format`      | ETH (18)           | `en_US` | `0`                   | `ETH0.000000000000000000`   | 265-268 |
-| M13 | `format`      | ETH (18)           | `en_US` | `-1500000000000000000` | `-ETH1.500000000000000000` | 265-268 |
-| M14 | `formatSigned`| USD (2) | `en_US` | `12345`                   | `+$123.45`               | 491             |
-| M15 | `formatSigned`| USD (2) | `en_US` | `-12345`                  | `-$123.45`               | 491             |
-| M16 | `formatSigned`| USD (2) | `en_US` | `0`                       | `$0.00` *(no sign)*      | 491             |
-| M17 | `formatBare`  | JPY (0) | `en_US` | `1234567`                 | `1,234,567`              | 953-954         |
-| M18 | `formatBare`  | USD (2) | `zh_CN` | `12345`                   | `123.45`                 | 865-882         |
-| M19 | `parseToMinorUnits` | USD (2) | `en_US` | `"123.45"`           | `12345`                  | 253-257         |
-| M20 | `parseToMinorUnits` | JPY (0) | `en_US` | `"1234"`             | `1234`                   | 265-268         |
-| M21 | `parseToMinorUnits` | USD (2) | `zh_CN` | `"1,234.56"`         | `123456`                 | 865-882         |
-| M22 | `parseToMinorUnits` | USD (2) | `en_US` | `"12.345"`           | throws `FormatException` *(too many fraction digits)* | 253-257 |
-| M23 | `parseToMinorUnits` | USD (2) | `en_US` | `"abc"`              | throws `FormatException` | 253-257         |
+| #   | Method              | Currency           | Locale  | Input (minor units)    | Expected output                                                      | PRD cite     |
+|-----|---------------------|--------------------|---------|------------------------|----------------------------------------------------------------------|--------------|
+| M01 | `format`            | USD (2)            | `en_US` | `0`                    | `$0.00`                                                              | 253-257      |
+| M02 | `format`            | USD (2)            | `en_US` | `12345`                | `$123.45`                                                            | 253-257      |
+| M03 | `format`            | USD (2)            | `en_US` | `-12345`               | `-$123.45`                                                           | 253-257      |
+| M04 | `format`            | JPY (0)            | `en_US` | `0`                    | `¥0`                                                                 | 265-268      |
+| M05 | `format`            | JPY (0)            | `en_US` | `1234567`              | `¥1,234,567`                                                         | 265-268      |
+| M06 | `format`            | JPY (0)            | `en_US` | `-1234567`             | `-¥1,234,567`                                                        | 265-268      |
+| M07 | `format`            | TWD (2, sym `NT$`) | `zh_TW` | `0`                    | `NT$0.00`                                                            | 265-268, 880 |
+| M08 | `format`            | TWD (2)            | `zh_TW` | `1234567`              | `NT$12,345.67`                                                       | 265-268      |
+| M09 | `format`            | TWD (2)            | `zh_TW` | `-1234567`             | `-NT$12,345.67`                                                      | 265-268      |
+| M10 | `format`            | CNY (2, sym `¥`)   | `zh_CN` | `123456789`            | `¥1,234,567.89`                                                      | 865-882      |
+| M11 | `format`            | ETH (18)           | `en_US` | `1500000000000000000`  | `ETH1.500000000000000000` *(symbol-less token — falls back to code)* | 265-268, 275 |
+| M12 | `format`            | ETH (18)           | `en_US` | `0`                    | `ETH0.000000000000000000`                                            | 265-268      |
+| M13 | `format`            | ETH (18)           | `en_US` | `-1500000000000000000` | `-ETH1.500000000000000000`                                           | 265-268      |
+| M14 | `formatSigned`      | USD (2)            | `en_US` | `12345`                | `+$123.45`                                                           | 491          |
+| M15 | `formatSigned`      | USD (2)            | `en_US` | `-12345`               | `-$123.45`                                                           | 491          |
+| M16 | `formatSigned`      | USD (2)            | `en_US` | `0`                    | `$0.00` *(no sign)*                                                  | 491          |
+| M17 | `formatBare`        | JPY (0)            | `en_US` | `1234567`              | `1,234,567`                                                          | 953-954      |
+| M18 | `formatBare`        | USD (2)            | `zh_CN` | `12345`                | `123.45`                                                             | 865-882      |
+| M19 | `parseToMinorUnits` | USD (2)            | `en_US` | `"123.45"`             | `12345`                                                              | 253-257      |
+| M20 | `parseToMinorUnits` | JPY (0)            | `en_US` | `"1234"`               | `1234`                                                               | 265-268      |
+| M21 | `parseToMinorUnits` | USD (2)            | `zh_CN` | `"1,234.56"`           | `123456`                                                             | 865-882      |
+| M22 | `parseToMinorUnits` | USD (2)            | `en_US` | `"12.345"`             | throws `FormatException` *(too many fraction digits)*                | 253-257      |
+| M23 | `parseToMinorUnits` | USD (2)            | `en_US` | `"abc"`                | throws `FormatException`                                             | 253-257      |
 
 **Decimal-width note.** `intl`'s `NumberFormat.currency` accepts `decimalDigits`; we pass `currency.decimals`, so ETH at 18 digits "just works". The test asserts the full 18-digit string literally.
 
@@ -240,31 +240,31 @@ class DateHelpers {
 
 ### 2.2 `date_helpers_test.dart`
 
-| # | Method | Scenario | Inputs | Expected | PRD cite |
-|---|--------|----------|--------|----------|----------|
-| D01 | `startOfDay` | Strips time-of-day | `2026-04-21T14:37:58.123Z` *(but interpreted as local — see Note A)* | `2026-04-21T00:00:00.000` (local) | 510-552 |
-| D02 | `isSameDay`  | Same day, different times | `(2026-04-21 00:00, 2026-04-21 23:59)` | `true` | 510-552 |
-| D03 | `isSameDay`  | One minute before midnight vs next day | `(2026-04-21 23:59, 2026-04-22 00:01)` | `false` | 510-552 |
-| D04 | `daysBetween`| Forward, 5 days | `(2026-04-21, 2026-04-26)` | `5` | 510-552 |
-| D05 | `daysBetween`| Backward | `(2026-04-26, 2026-04-21)` | `-5` | 510-552 |
-| D06 | `daysBetween`| Same day | `(2026-04-21 09:00, 2026-04-21 23:30)` | `0` | 510-552 |
-| D07 | `daysBetween`| DST spring-forward (US) | `(2026-03-07 12:00 America/New_York, 2026-03-09 12:00 America/New_York)` | `2` *(not 1 or 3 — `Duration`-based impls fail this)* | 510-552 |
-| D08 | `daysSince`  | Start today | `(2026-04-21, 2026-04-21)` | `0` | 510-552 |
-| D09 | `daysSince`  | Start 10 days ago | `(2026-04-11, 2026-04-21)` | `10` | 510-552 |
-| D10 | `daysSince`  | Start in future → negative | `(2026-04-30, 2026-04-21)` | `-9` | 510-552 |
-| D11 | `formatDisplayDate` | en_US | `(2026-04-21, 'en_US')` | `Apr 21, 2026` | 525, 549 |
-| D12 | `formatDisplayDate` | zh_TW | `(2026-04-21, 'zh_TW')` | `2026年4月21日` | 525, 549, 865-882 |
-| D13 | `formatDisplayDate` | zh_CN | `(2026-04-21, 'zh_CN')` | `2026年4月21日` | 525, 549, 865-882 |
-| D14 | `formatDayHeader`   | en_US | `(2026-04-21, 'en_US')` | `Mon, Apr 21` | 881-882 |
-| D15 | `formatDayHeader`   | zh_TW | `(2026-04-21, 'zh_TW')` | `4月21日 週一` *(accept `DateFormat.MMMMd+E` canonical output)* | 881-882 |
-| D16 | `formatShortDate`   | en_US | `(2026-04-21, 'en_US')` | `4/21/2026` | 881-882 |
-| D17 | `formatShortDate`   | zh_CN | `(2026-04-21, 'zh_CN')` | `2026/4/21` | 881-882 |
-| D18 | `applySplashTemplate` | Default en_US | `("Since {date}", 2026-04-11, 2026-04-21, 'en_US')` | `Since Apr 11, 2026` | 526, 549-551 |
-| D19 | `applySplashTemplate` | With `{days}` | `("{days} days since {date}", 2026-04-11, 2026-04-21, 'en_US')` | `10 days since Apr 11, 2026` | 526, 549-551 |
-| D20 | `applySplashTemplate` | `{days}` at 0 | `("{days} days since {date}", 2026-04-21, 2026-04-21, 'en_US')` | `0 days since Apr 21, 2026` | 526, 549-551 |
-| D21 | `applySplashTemplate` | Negative `{days}` | `("{days} days since {date}", 2026-04-30, 2026-04-21, 'en_US')` | `-9 days since Apr 30, 2026` | 526, 549-551 |
-| D22 | `applySplashTemplate` | Unknown placeholder passes through | `("{foo} is kept", ...)` | `{foo} is kept` | 526, 549-551 |
-| D23 | `applySplashTemplate` | Locale grouping for large `{days}` | `("{days}", 2000-04-21, 2026-04-21, 'en_US')` | `9,497` *(or computed exact — see §6 Task D8)* | 526, 549-551, 865-882 |
+| #   | Method                | Scenario                               | Inputs                                                                   | Expected                                                    | PRD cite              |
+|-----|-----------------------|----------------------------------------|--------------------------------------------------------------------------|-------------------------------------------------------------|-----------------------|
+| D01 | `startOfDay`          | Strips time-of-day                     | `2026-04-21T14:37:58.123Z` *(but interpreted as local — see Note A)*     | `2026-04-21T00:00:00.000` (local)                           | 510-552               |
+| D02 | `isSameDay`           | Same day, different times              | `(2026-04-21 00:00, 2026-04-21 23:59)`                                   | `true`                                                      | 510-552               |
+| D03 | `isSameDay`           | One minute before midnight vs next day | `(2026-04-21 23:59, 2026-04-22 00:01)`                                   | `false`                                                     | 510-552               |
+| D04 | `daysBetween`         | Forward, 5 days                        | `(2026-04-21, 2026-04-26)`                                               | `5`                                                         | 510-552               |
+| D05 | `daysBetween`         | Backward                               | `(2026-04-26, 2026-04-21)`                                               | `-5`                                                        | 510-552               |
+| D06 | `daysBetween`         | Same day                               | `(2026-04-21 09:00, 2026-04-21 23:30)`                                   | `0`                                                         | 510-552               |
+| D07 | `daysBetween`         | DST spring-forward (US)                | `(2026-03-07 12:00 America/New_York, 2026-03-09 12:00 America/New_York)` | `2` *(not 1 or 3 — `Duration`-based impls fail this)*       | 510-552               |
+| D08 | `daysSince`           | Start today                            | `(2026-04-21, 2026-04-21)`                                               | `0`                                                         | 510-552               |
+| D09 | `daysSince`           | Start 10 days ago                      | `(2026-04-11, 2026-04-21)`                                               | `10`                                                        | 510-552               |
+| D10 | `daysSince`           | Start in future → negative             | `(2026-04-30, 2026-04-21)`                                               | `-9`                                                        | 510-552               |
+| D11 | `formatDisplayDate`   | en_US                                  | `(2026-04-21, 'en_US')`                                                  | `Apr 21, 2026`                                              | 525, 549              |
+| D12 | `formatDisplayDate`   | zh_TW                                  | `(2026-04-21, 'zh_TW')`                                                  | `2026年4月21日`                                                | 525, 549, 865-882     |
+| D13 | `formatDisplayDate`   | zh_CN                                  | `(2026-04-21, 'zh_CN')`                                                  | `2026年4月21日`                                                | 525, 549, 865-882     |
+| D14 | `formatDayHeader`     | en_US                                  | `(2026-04-21, 'en_US')`                                                  | `Mon, Apr 21`                                               | 881-882               |
+| D15 | `formatDayHeader`     | zh_TW                                  | `(2026-04-21, 'zh_TW')`                                                  | `4月21日 週一` *(accept `DateFormat.MMMMd+E` canonical output)* | 881-882               |
+| D16 | `formatShortDate`     | en_US                                  | `(2026-04-21, 'en_US')`                                                  | `4/21/2026`                                                 | 881-882               |
+| D17 | `formatShortDate`     | zh_CN                                  | `(2026-04-21, 'zh_CN')`                                                  | `2026/4/21`                                                 | 881-882               |
+| D18 | `applySplashTemplate` | Default en_US                          | `("Since {date}", 2026-04-11, 2026-04-21, 'en_US')`                      | `Since Apr 11, 2026`                                        | 526, 549-551          |
+| D19 | `applySplashTemplate` | With `{days}`                          | `("{days} days since {date}", 2026-04-11, 2026-04-21, 'en_US')`          | `10 days since Apr 11, 2026`                                | 526, 549-551          |
+| D20 | `applySplashTemplate` | `{days}` at 0                          | `("{days} days since {date}", 2026-04-21, 2026-04-21, 'en_US')`          | `0 days since Apr 21, 2026`                                 | 526, 549-551          |
+| D21 | `applySplashTemplate` | Negative `{days}`                      | `("{days} days since {date}", 2026-04-30, 2026-04-21, 'en_US')`          | `-9 days since Apr 30, 2026`                                | 526, 549-551          |
+| D22 | `applySplashTemplate` | Unknown placeholder passes through     | `("{foo} is kept", ...)`                                                 | `{foo} is kept`                                             | 526, 549-551          |
+| D23 | `applySplashTemplate` | Locale grouping for large `{days}`     | `("{days}", 2000-04-21, 2026-04-21, 'en_US')`                            | `9,497` *(or computed exact — see §6 Task D8)*              | 526, 549-551, 865-882 |
 
 **Note A.** All tests use naive `DateTime` (construct via `DateTime(year, month, day, hh, mm)` = local). Production callers also feed local `DateTime` values from Drift (Drift stores Unix ms → `DateTime.fromMillisecondsSinceEpoch` returns local by default). Timezone handling is out of MVP scope; `startOfDay` is documented as "in the same time zone as [dt]".
 
@@ -290,12 +290,12 @@ This is a **test-only** concern; production `DateFormat` coverage is handled in 
 
 ## 3. File structure
 
-| Action | Path | Responsibility |
-|--------|------|----------------|
-| Modify (full replacement) | `lib/core/utils/money_formatter.dart` | `MoneyFormatter` class per §1.1 |
-| Modify (full replacement) | `lib/core/utils/date_helpers.dart` | `DateHelpers` class per §1.2 |
-| Create | `test/unit/utils/money_formatter_test.dart` | Table §2.1 — all 23 cases |
-| Create | `test/unit/utils/date_helpers_test.dart` | Table §2.2 — all 23 cases |
+| Action                    | Path                                        | Responsibility                  |
+|---------------------------|---------------------------------------------|---------------------------------|
+| Modify (full replacement) | `lib/core/utils/money_formatter.dart`       | `MoneyFormatter` class per §1.1 |
+| Modify (full replacement) | `lib/core/utils/date_helpers.dart`          | `DateHelpers` class per §1.2    |
+| Create                    | `test/unit/utils/money_formatter_test.dart` | Table §2.1 — all 23 cases       |
+| Create                    | `test/unit/utils/date_helpers_test.dart`    | Table §2.2 — all 23 cases       |
 
 No other file in `lib/` is touched. No new entry in `pubspec.yaml`. No new ARB key.
 
@@ -1604,19 +1604,19 @@ Expected: a coherent series of `feat(core):` / `test(core):` commits, one per ta
 
 These call sites exist only after M3/M5 — this stream must not pre-import from them, but the contract freezes here so they can be built in parallel once M5 unblocks.
 
-| Caller | File (planned) | Method used |
-|--------|----------------|-------------|
-| M5 Home summary strip     | `features/home/home_controller.dart`          | `MoneyFormatter.format`                 |
-| M5 Home day list row      | `features/home/widgets/transaction_tile.dart` | `MoneyFormatter.formatSigned`           |
-| M5 Home day header        | `features/home/widgets/day_header.dart`       | `DateHelpers.formatDayHeader`           |
-| M5 Transactions keypad    | `features/transactions/transaction_form.dart` | `MoneyFormatter.parseToMinorUnits`      |
-| M5 Transactions display   | `features/transactions/transaction_form.dart` | `MoneyFormatter.formatBare`             |
-| M5 Splash label           | `features/splash/splash_screen.dart`          | `DateHelpers.applySplashTemplate`       |
-| M5 Splash rainbow text    | `features/splash/splash_screen.dart`          | `DateHelpers.formatDisplayDate`         |
-| M5 Accounts balance card  | `features/accounts/widgets/account_card.dart` | `MoneyFormatter.format`                 |
-| M5 Settings date display  | `features/settings/settings_screen.dart`      | `DateHelpers.formatDisplayDate`         |
-| M3 `TransactionRepository` tests (minor-unit math) | `test/unit/repositories/transaction_repository_test.dart` | *(none — repository tests do not format; formatter tests are the only utility tests)* |
-| M4 `bootstrap.dart`       | `app/bootstrap.dart`                          | Calls `initializeDateFormatting(...)` for `Platform.localeName` + the three MVP locales. Not a direct `DateHelpers` call — a prerequisite. |
+| Caller                                             | File (planned)                                            | Method used                                                                                                                            |
+|----------------------------------------------------|-----------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
+| M5 Home summary strip                              | `features/home/home_controller.dart`                      | `MoneyFormatter.format`                                                                                                                |
+| M5 Home day list row                               | `features/home/widgets/transaction_tile.dart`             | `MoneyFormatter.formatSigned`                                                                                                          |
+| M5 Home day header                                 | `features/home/widgets/day_header.dart`                   | `DateHelpers.formatDayHeader`                                                                                                          |
+| M5 Transactions keypad                             | `features/transactions/transaction_form.dart`             | `MoneyFormatter.parseToMinorUnits`                                                                                                     |
+| M5 Transactions display                            | `features/transactions/transaction_form.dart`             | `MoneyFormatter.formatBare`                                                                                                            |
+| M5 Splash label                                    | `features/splash/splash_screen.dart`                      | `DateHelpers.applySplashTemplate`                                                                                                      |
+| M5 Splash rainbow text                             | `features/splash/splash_screen.dart`                      | `DateHelpers.formatDisplayDate`                                                                                                        |
+| M5 Accounts balance card                           | `features/accounts/widgets/account_card.dart`             | `MoneyFormatter.format`                                                                                                                |
+| M5 Settings date display                           | `features/settings/settings_screen.dart`                  | `DateHelpers.formatDisplayDate`                                                                                                        |
+| M3 `TransactionRepository` tests (minor-unit math) | `test/unit/repositories/transaction_repository_test.dart` | *(none — repository tests do not format; formatter tests are the only utility tests)*                                                  |
+| M4 `bootstrap.dart`                                | `app/bootstrap.dart`                                      | Calls `initializeDateFormatting(...)` for the active locale + the three MVP locales. Not a direct `DateHelpers` call — a prerequisite. |
 
 **Non-consumer note.** M3 repositories do **not** use `MoneyFormatter`. Their tests work on raw `int amountMinorUnits` — formatting is a UI concern. G3 (controllers own presentation) keeps formatter calls out of widget `build()` methods as well; M5 controllers map state → pre-formatted strings.
 
@@ -1641,16 +1641,16 @@ Stream A is done when **all** hold:
 
 ## 10. Risks & mitigations
 
-| Risk | Likelihood | Mitigation |
-|------|------------|------------|
-| `double` rounding at 18 decimals (ETH) produces off-by-ULP output | High without guard | Task M5 switches to `BigInt` path for `decimals > 12`. Test row M11 asserts the exact 18-digit string. |
-| `DateFormat` throws "Locale data has not been initialized" in tests | Medium | `setUpAll` calls `initializeDateFormatting` for all three MVP locales. Documented in §2.3. Production init is M4's `bootstrap.dart` concern. |
-| `Duration.inDays` mis-counts across DST | Medium | `daysBetween` uses `startOfDay(...).toUtc().millisecondsSinceEpoch` with `round()`, not `.inDays`. Test D07 asserts the DST-crossing case. |
-| Freezed `Currency` field-name drift from the M1 contract | Low (M1 already merged) | §11 re-verifies at plan time; task M1 imports the real `Currency` and will fail to compile if field names ever change. |
-| `intl 0.20.2` behavior differs from `0.19.x` on canonical `yMMMd` zh_TW output (`2026年4月21日` vs `2026/4/21`) | Low | Test D12/D13 assert the exact string. If `intl` ever updates the CLDR snapshot and the assertion drifts, the test is the tripwire — update the expectation and document the bump. |
-| Negative splash day count surprises downstream UI | Low | Contract § D3 freezes "negative is valid, UI decides presentation". Splash widget (M5) documents this in its own plan. |
-| `parseToMinorUnits` silently truncates trailing zeros (`"1.2"` in USD → 120? or 12?) | Medium | Implementation right-pads the fractional part with zeros to `decimals`. `"1.2"` in USD → `120` minor units (= `$1.20`). Documented in Task M9 Step 3. |
-| Locale `zh_CN` vs `zh` fallback chain in `intl` | Low | CLAUDE.md explicitly requires a base `app_zh.arb`; `intl` date/number data for both `zh_CN` and `zh_TW` ships in the package and initializes independently. |
+| Risk                                                                                                         | Likelihood              | Mitigation                                                                                                                                                                        |
+|--------------------------------------------------------------------------------------------------------------|-------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `double` rounding at 18 decimals (ETH) produces off-by-ULP output                                            | High without guard      | Task M5 switches to `BigInt` path for `decimals > 12`. Test row M11 asserts the exact 18-digit string.                                                                            |
+| `DateFormat` throws "Locale data has not been initialized" in tests                                          | Medium                  | `setUpAll` calls `initializeDateFormatting` for all three MVP locales. Documented in §2.3. Production init is M4's `bootstrap.dart` concern.                                      |
+| `Duration.inDays` mis-counts across DST                                                                      | Medium                  | `daysBetween` uses `startOfDay(...).toUtc().millisecondsSinceEpoch` with `round()`, not `.inDays`. Test D07 asserts the DST-crossing case.                                        |
+| Freezed `Currency` field-name drift from the M1 contract                                                     | Low (M1 already merged) | §11 re-verifies at plan time; task M1 imports the real `Currency` and will fail to compile if field names ever change.                                                            |
+| `intl 0.20.2` behavior differs from `0.19.x` on canonical `yMMMd` zh_TW output (`2026年4月21日` vs `2026/4/21`) | Low                     | Test D12/D13 assert the exact string. If `intl` ever updates the CLDR snapshot and the assertion drifts, the test is the tripwire — update the expectation and document the bump. |
+| Negative splash day count surprises downstream UI                                                            | Low                     | Contract § D3 freezes "negative is valid, UI decides presentation". Splash widget (M5) documents this in its own plan.                                                            |
+| `parseToMinorUnits` silently truncates trailing zeros (`"1.2"` in USD → 120? or 12?)                         | Medium                  | Implementation right-pads the fractional part with zeros to `decimals`. `"1.2"` in USD → `120` minor units (= `$1.20`). Documented in Task M9 Step 3.                             |
+| Locale `zh_CN` vs `zh` fallback chain in `intl`                                                              | Low                     | CLAUDE.md explicitly requires a base `app_zh.arb`; `intl` date/number data for both `zh_CN` and `zh_TW` ships in the package and initializes independently.                       |
 
 ---
 

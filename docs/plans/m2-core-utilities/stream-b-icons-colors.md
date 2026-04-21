@@ -80,19 +80,19 @@ This section is the frozen contract. **Until this table is final, M3 cannot star
 
 The MD3 baseline colors named by PRD 453–506 deduplicate into **11 unique entries**. They go into `color_palette.dart` in this order. **Do not reorder. Do not insert new indices in the middle. Append only.**
 
-| Index | MD3 name           | Hex        | Consumed by (preview)                                            |
-|-------|--------------------|------------|------------------------------------------------------------------|
-| `0`   | Red 60             | `#B3251E`  | `category.food`                                                  |
-| `1`   | Green 40           | `#006C35`  | `category.drinks`                                                |
-| `2`   | Cyan 70            | `#00BBDF`  | `category.transportation`, `category.travel` (shared, PRD 477)   |
-| `3`   | Purple 30          | `#5629A4`  | `category.shopping`, `category.education` (shared, PRD 477)      |
-| `4`   | Green 80           | `#80DA88`  | `category.housing`, `category.personal` (shared, PRD 477)        |
-| `5`   | Orange 70          | `#FF8D41`  | `category.entertainment`                                         |
-| `6`   | Red 50             | `#DB372D`  | `category.medical`                                               |
-| `7`   | Blue 30            | `#04409F`  | `category.threeC` (PRD "3C": phone/computer/gadgets)             |
-| `8`   | Neutral Variant 50 | `#79747E`  | `category.miscellaneous`, `category.other` (shared, PRD 477)     |
-| `9`   | Yellow 80          | `#FCBD00`  | All 5 income categories (PRD 479–491)                            |
-| `10`  | Neutral Variant 70 | `#AEA9B4`  | `accountType.cash`, `accountType.investment` (PRD 499–500)       |
+| Index | MD3 name           | Hex       | Consumed by (preview)                                                      |
+|-------|--------------------|-----------|----------------------------------------------------------------------------|
+| `0`   | Red 60             | `#B3251E` | `category.food`                                                            |
+| `1`   | Green 40           | `#006C35` | `category.drinks`                                                          |
+| `2`   | Cyan 70            | `#00BBDF` | `category.transportation`, `category.travel` (shared, PRD 477)             |
+| `3`   | Purple 30          | `#5629A4` | `category.shopping`, `category.education` (shared, PRD 477)                |
+| `4`   | Green 80           | `#80DA88` | `category.housing`, `category.personal` (shared, PRD 477)                  |
+| `5`   | Orange 70          | `#FF8D41` | `category.entertainment`                                                   |
+| `6`   | Red 50             | `#DB372D` | `category.medical`                                                         |
+| `7`   | Blue 30            | `#04409F` | `category.threeC` (PRD "3C": memo examples include phone/computer/gadgets) |
+| `8`   | Neutral Variant 50 | `#79747E` | `category.miscellaneous`, `category.other` (shared, PRD 477)               |
+| `9`   | Yellow 80          | `#FCBD00` | All 5 income categories (PRD 479–491)                                      |
+| `10`  | Neutral Variant 70 | `#AEA9B4` | `accountType.cash`, `accountType.investment` (PRD 499–500)                 |
 
 **Named constants.** To keep M3 seed code and code review readable, expose a named constant for each entry alongside the list. M3 writes `palette[CategoryPaletteIndex.food]` (or `CategoryPaletteIndex.food.index`), not a bare `0`. Constants are an **ergonomic alias** for indices — the list is still the source of truth, and constants can only ever be **appended**.
 
@@ -119,28 +119,28 @@ Every seeded `categories.icon` and `account_types.icon` string key from the tabl
 
 ### 4.3 Full seed contract table — categories
 
-All PRD 459–491 entries. The `l10n_key` column is Stream C's input; the `icon key` and `palette index` columns are M3's input. One row per seeded category. Subcategories of seeded categories are **not seeded in M3** (PRD 493 says users can create custom subcategories); the subcategory column below is informational only, to help a reviewer sanity-check icon-key choice. If M3 later decides to seed the subcategories listed in PRD, each subcategory reuses its parent's icon key + palette index by default.
+All PRD 459–491 seeded category entries. The `l10n_key` column is Stream C's input; the `icon key` and `palette index` columns are M3's input. One row per seeded category. The middle column carries example memo text from the PRD for review context only; it is **not** a seeded subcategory contract and does not create extra DB rows.
 
-| `l10n_key`                   | Type      | Subcategories (PRD, informational) | Icon key           | Justification (1 line)                                        | Palette index (name → int)                        |
-|------------------------------|-----------|------------------------------------|--------------------|---------------------------------------------------------------|---------------------------------------------------|
-| `category.food`              | `expense` | Groceries, Restaurants             | `restaurant`       | Universal "food" glyph; covers grocery + dine-in use cases.   | `red60` → `0`                                     |
-| `category.drinks`            | `expense` | Coffee, Alcohol, Beverages         | `local_cafe`       | Cup glyph generalizes across coffee / alcohol / beverage.     | `green40` → `1`                                   |
-| `category.transportation`    | `expense` | Gas, Public Transit, Taxi, Parking | `directions_car`   | Car is the broadest "ground transport" glyph in Material.     | `cyan70` → `2`                                    |
-| `category.shopping`          | `expense` | Clothing, Household                | `shopping_bag`     | Shopping bag reads as retail, not grocery.                    | `purple30` → `3`                                  |
-| `category.housing`           | `expense` | Rent, Utilities, Maintenance       | `home`             | House silhouette = rent/utilities root.                       | `green80` → `4`                                   |
-| `category.entertainment`     | `expense` | Movies, Games, Subscriptions       | `movie`            | Film reel covers movies + general entertainment.              | `orange70` → `5`                                  |
-| `category.medical`           | `expense` | Doctor, Pharmacy, Insurance        | `medical_services` | Stethoscope/caduceus variant in MS reads as healthcare.       | `red50` → `6`                                     |
-| `category.education`         | `expense` | Tuition, Books, Courses            | `school`           | Mortarboard = schooling / courses.                            | `purple30` → `3` (shared with shopping, PRD 477)  |
-| `category.personal`          | `expense` | Haircut, Gym, Gifts                | `self_care`        | MS "self_care" glyph covers gym / haircut / self-spend.       | `green80` → `4` (shared with housing, PRD 477)    |
-| `category.travel`            | `expense` | Flights, Hotels, Activities        | `flight`           | Plane glyph is the canonical travel/trip symbol.              | `cyan70` → `2` (shared with transport, PRD 477)   |
-| `category.threeC`            | `expense` | Phone, Computer, Gadgets           | `devices`          | "Devices" = multi-device / gadget bucket — matches "3C".      | `blue30` → `7`                                    |
-| `category.miscellaneous`     | `expense` | —                                  | `more_horiz`       | Three-dot "more" = miscellaneous / unsorted.                  | `neutralVariant50` → `8`                          |
-| `category.other`             | `expense` | —                                  | `category`         | Generic "category" glyph = unnamed bucket.                    | `neutralVariant50` → `8` (shared w/ misc, PRD 477)|
-| `category.income.salary`     | `income`  | —                                  | `payments`         | "Payments" glyph = incoming wage.                             | `yellow80` → `9`                                  |
-| `category.income.freelance`  | `income`  | —                                  | `work`             | Briefcase = self-employment / contract work.                  | `yellow80` → `9`                                  |
-| `category.income.investment` | `income`  | —                                  | `trending_up`      | Up-arrow chart = investment gains (also used by account type).| `yellow80` → `9`                                  |
-| `category.income.gift`       | `income`  | —                                  | `redeem`           | Gift box glyph (MS `redeem`) = gift income.                   | `yellow80` → `9`                                  |
-| `category.income.other`      | `income`  | —                                  | `savings`          | Piggy bank = misc income / savings deposit.                   | `yellow80` → `9`                                  |
+| `l10n_key`                   | Type      | Example memos (PRD, informational) | Icon key           | Justification (1 line)                                         | Palette index (name → int)                         |
+|------------------------------|-----------|------------------------------------|--------------------|----------------------------------------------------------------|----------------------------------------------------|
+| `category.food`              | `expense` | Groceries, Restaurants             | `restaurant`       | Universal "food" glyph; covers grocery + dine-in use cases.    | `red60` → `0`                                      |
+| `category.drinks`            | `expense` | Coffee, Alcohol, Beverages         | `local_cafe`       | Cup glyph generalizes across coffee / alcohol / beverage.      | `green40` → `1`                                    |
+| `category.transportation`    | `expense` | Gas, Public Transit, Taxi, Parking | `directions_car`   | Car is the broadest "ground transport" glyph in Material.      | `cyan70` → `2`                                     |
+| `category.shopping`          | `expense` | Clothing, Household                | `shopping_bag`     | Shopping bag reads as retail, not grocery.                     | `purple30` → `3`                                   |
+| `category.housing`           | `expense` | Rent, Utilities, Maintenance       | `home`             | House silhouette = rent/utilities root.                        | `green80` → `4`                                    |
+| `category.entertainment`     | `expense` | Movies, Games, Subscriptions       | `movie`            | Film reel covers movies + general entertainment.               | `orange70` → `5`                                   |
+| `category.medical`           | `expense` | Doctor, Pharmacy, Insurance        | `medical_services` | Stethoscope/caduceus variant in MS reads as healthcare.        | `red50` → `6`                                      |
+| `category.education`         | `expense` | Tuition, Books, Courses            | `school`           | Mortarboard = schooling / courses.                             | `purple30` → `3` (shared with shopping, PRD 477)   |
+| `category.personal`          | `expense` | Haircut, Gym, Gifts                | `self_care`        | MS "self_care" glyph covers gym / haircut / self-spend.        | `green80` → `4` (shared with housing, PRD 477)     |
+| `category.travel`            | `expense` | Flights, Hotels, Activities        | `flight`           | Plane glyph is the canonical travel/trip symbol.               | `cyan70` → `2` (shared with transport, PRD 477)    |
+| `category.threeC`            | `expense` | Phone, Computer, Gadgets           | `devices`          | "Devices" = multi-device / gadget bucket — matches "3C".       | `blue30` → `7`                                     |
+| `category.miscellaneous`     | `expense` | —                                  | `more_horiz`       | Three-dot "more" = miscellaneous / unsorted.                   | `neutralVariant50` → `8`                           |
+| `category.other`             | `expense` | —                                  | `category`         | Generic "category" glyph = unnamed bucket.                     | `neutralVariant50` → `8` (shared w/ misc, PRD 477) |
+| `category.income.salary`     | `income`  | —                                  | `payments`         | "Payments" glyph = incoming wage.                              | `yellow80` → `9`                                   |
+| `category.income.freelance`  | `income`  | —                                  | `work`             | Briefcase = self-employment / contract work.                   | `yellow80` → `9`                                   |
+| `category.income.investment` | `income`  | —                                  | `trending_up`      | Up-arrow chart = investment gains (also used by account type). | `yellow80` → `9`                                   |
+| `category.income.gift`       | `income`  | —                                  | `redeem`           | Gift box glyph (MS `redeem`) = gift income.                    | `yellow80` → `9`                                   |
+| `category.income.other`      | `income`  | —                                  | `savings`          | Piggy bank = misc income / savings deposit.                    | `yellow80` → `9`                                   |
 
 ### 4.4 Full seed contract table — account types
 
@@ -645,7 +645,7 @@ Map 1-to-1 against `docs/plans/implementation-plan.md` §5 M2:
 5. **Seed contract (§4) reviewed and signed off** by the reviewer covering M3 seed work — after this, §4 is frozen. Any subsequent change to an existing row requires a data migration.
 6. **Append-only rule is visible in three places:** the code header comment in `color_palette.dart`, the plan's §6.1 + §10, and the golden test's failure message (§Task B-4).
 
-Shared exit dependency: **Stream C** must read §4 to populate the `l10n_key` entries in the three ARBs (`app_en.arb`, `app_zh_TW.arb`, `app_zh_CN.arb`). Stream B does not write ARBs but commits to not changing its `l10n_key` column after Stream C has translated against it.
+Shared exit dependency: **Stream C** must read §4 to populate the `l10n_key` entries in the three localized ARBs (`app_en.arb`, `app_zh_TW.arb`, `app_zh_CN.arb`) while keeping the required bare fallback `app_zh.arb` in place. Stream B does not write ARBs but commits to not changing its `l10n_key` column after Stream C has translated against it.
 
 ---
 

@@ -203,13 +203,13 @@ final lightTheme = _base(lightColorScheme);
 final darkTheme  = _base(darkColorScheme);
 ```
 
-| Knob | Value | Rationale |
-|---|---|---|
-| `useMaterial3` | `true` | PRD 893 mandates MD3. |
-| `colorScheme` | Injected scheme | The single source of visible color. |
-| `typography` | `Typography.material2021` | MD3-aligned type scale; avoids the 2014 legacy `Typography.material2014` that Flutter still defaults to on some platforms. |
-| `visualDensity` | `VisualDensity.adaptivePlatformDensity` | Lets tablet (≥600dp, per CLAUDE.md Layout Primitives) loosen tap targets without widget-level overrides. |
-| `iconTheme` | `onSurface` / size 24 | Registry icons (Stream B) come in at a single default rather than random per-widget `Icon(size: ...)` calls. |
+| Knob            | Value                                   | Rationale                                                                                                                  |
+|-----------------|-----------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| `useMaterial3`  | `true`                                  | PRD 893 mandates MD3.                                                                                                      |
+| `colorScheme`   | Injected scheme                         | The single source of visible color.                                                                                        |
+| `typography`    | `Typography.material2021`               | MD3-aligned type scale; avoids the 2014 legacy `Typography.material2014` that Flutter still defaults to on some platforms. |
+| `visualDensity` | `VisualDensity.adaptivePlatformDensity` | Lets tablet (≥600dp, per CLAUDE.md Layout Primitives) loosen tap targets without widget-level overrides.                   |
+| `iconTheme`     | `onSurface` / size 24                   | Registry icons (Stream B) come in at a single default rather than random per-widget `Icon(size: ...)` calls.               |
 
 **Deliberately NOT set (left at MD3 defaults):**
 - `textTheme` — Material 2021 typography already handles the full scale.
@@ -229,7 +229,7 @@ Four groups of keys ship in this stream. Keys that belong to a single M5 slice a
 
 - **Group S (Shell / Navigation / Common)** — bottom-nav labels, app-wide snackbars/CTAs, shared verb labels (Save, Cancel, Delete, Archive, Edit, Undo), Home empty-state text, first-run CTA.
 - **Group P (Splash / Settings for splash)** — splash defaults (`splashEnter`, `splashSinceDate`, day-counter label) plus splash settings-screen labels referenced on the Settings screen M5 slice.
-- **Group C (Seeded categories)** — every expense + income category from PRD 459–491 and every subcategory.
+- **Group C (Seeded categories)** — every expense + income seeded category from PRD 459–491.
 - **Group A (Seeded account types)** — `accountTypeCash`, `accountTypeInvestment` from PRD 497–499.
 
 Plus `appTitle` stays as-is — already seeded in M0.
@@ -238,44 +238,44 @@ Plus `appTitle` stays as-is — already seeded in M0.
 
 `key | usage | EN string`
 
-| Key | Usage | EN |
-|---|---|---|
-| `navHome` | Bottom-nav tab 1 (PRD 656) | Home |
-| `navAccounts` | Bottom-nav tab 2 (PRD 656) | Accounts |
-| `navSettings` | Bottom-nav tab 3 (PRD 656) | Settings |
-| `commonSave` | Primary CTA in Add/Edit Transaction, Accounts form, Categories form, Settings form | Save |
-| `commonCancel` | Form dismiss, confirm-discard dialog negative action | Cancel |
-| `commonDelete` | Swipe action and confirm dialog | Delete |
-| `commonArchive` | List swipe, category/account archive action (PRD Management Rules 737) | Archive |
-| `commonEdit` | Row overflow, Add/Edit screen title when editing | Edit |
-| `commonUndo` | Undo snackbar after delete (PRD 695) | Undo |
-| `commonDiscard` | Confirm-discard dialog positive action (PRD 689) | Discard |
-| `commonAdd` | Create affordances (accounts, categories) | Add |
-| `commonDone` | Modal close affordance (picker sheet) | Done |
-| `transactionTypeExpense` | Expense/income segmented control (PRD 683) | Expense |
-| `transactionTypeIncome` | Expense/income segmented control (PRD 683) | Income |
-| `homeEmptyTitle` | Home empty-state title (PRD 695) | No transactions yet |
-| `homeEmptyCta` | Home empty-state primary CTA (PRD 666) | Log first transaction |
-| `homeFabLabel` | Home FAB semantics label (PRD 657) | Add transaction |
-| `homeSummaryTodayExpense` | Home summary strip row (PRD 672) | Today expense |
-| `homeSummaryTodayIncome` | Home summary strip row (PRD 672) | Today income |
-| `homeSummaryMonthNet` | Home summary strip row (PRD 672) | Month net |
-| `errorSnackbarGeneric` | Save-failure snackbar (PRD 690, 696) | Something went wrong. Please try again. |
+| Key                       | Usage                                                                              | EN                                      |
+|---------------------------|------------------------------------------------------------------------------------|-----------------------------------------|
+| `navHome`                 | Bottom-nav tab 1 (PRD 656)                                                         | Home                                    |
+| `navAccounts`             | Bottom-nav tab 2 (PRD 656)                                                         | Accounts                                |
+| `navSettings`             | Bottom-nav tab 3 (PRD 656)                                                         | Settings                                |
+| `commonSave`              | Primary CTA in Add/Edit Transaction, Accounts form, Categories form, Settings form | Save                                    |
+| `commonCancel`            | Form dismiss, confirm-discard dialog negative action                               | Cancel                                  |
+| `commonDelete`            | Swipe action and confirm dialog                                                    | Delete                                  |
+| `commonArchive`           | List swipe, category/account archive action (PRD Management Rules 737)             | Archive                                 |
+| `commonEdit`              | Row overflow, Add/Edit screen title when editing                                   | Edit                                    |
+| `commonUndo`              | Undo snackbar after delete (PRD 695)                                               | Undo                                    |
+| `commonDiscard`           | Confirm-discard dialog positive action (PRD 689)                                   | Discard                                 |
+| `commonAdd`               | Create affordances (accounts, categories)                                          | Add                                     |
+| `commonDone`              | Modal close affordance (picker sheet)                                              | Done                                    |
+| `transactionTypeExpense`  | Expense/income segmented control (PRD 683)                                         | Expense                                 |
+| `transactionTypeIncome`   | Expense/income segmented control (PRD 683)                                         | Income                                  |
+| `homeEmptyTitle`          | Home empty-state title (PRD 695)                                                   | No transactions yet                     |
+| `homeEmptyCta`            | Home empty-state primary CTA (PRD 666)                                             | Log first transaction                   |
+| `homeFabLabel`            | Home FAB semantics label (PRD 657)                                                 | Add transaction                         |
+| `homeSummaryTodayExpense` | Home summary strip row (PRD 672)                                                   | Today expense                           |
+| `homeSummaryTodayIncome`  | Home summary strip row (PRD 672)                                                   | Today income                            |
+| `homeSummaryMonthNet`     | Home summary strip row (PRD 672)                                                   | Month net                               |
+| `errorSnackbarGeneric`    | Save-failure snackbar (PRD 690, 696)                                               | Something went wrong. Please try again. |
 
 **Note on Group S scope.** These are the strings referenced either (a) by the app shell (nav, MaterialApp), (b) by the Home screen's first-run/empty state that M4 shows as a placeholder and M5 finishes, or (c) by verbs reused across ≥ 2 slices (Save/Cancel/Delete/Archive/Edit/Undo/Discard/Add/Done). Slice-only verbs are deferred.
 
 ### 5.3 Key inventory — Group P (Splash + splash Settings labels)
 
-| Key | Usage | EN |
-|---|---|---|
-| `splashEnter` | Default "Enter" button label (PRD 527, 547) | Enter |
-| `splashSinceDate` | Default display text template (PRD 526, 546); ICU with `{date}` | Since {date} |
-| `splashDayCountLabel` | Day-counter secondary label on splash (PRD 551) | days |
-| `settingsSplashSection` | Settings section header for splash group (PRD 544) | Splash screen |
-| `settingsSplashEnabled` | Toggle label (PRD 544) | Show splash screen |
-| `settingsSplashStartDate` | Date-picker label (PRD 545) | Start date |
-| `settingsSplashDisplayText` | Free-text field label (PRD 546) | Display text |
-| `settingsSplashButtonLabel` | Free-text field label (PRD 547) | Button label |
+| Key                         | Usage                                                           | EN                 |
+|-----------------------------|-----------------------------------------------------------------|--------------------|
+| `splashEnter`               | Default "Enter" button label (PRD 527, 547)                     | Enter              |
+| `splashSinceDate`           | Default display text template (PRD 526, 546); ICU with `{date}` | Since {date}       |
+| `splashDayCountLabel`       | Day-counter secondary label on splash (PRD 551)                 | days               |
+| `settingsSplashSection`     | Settings section header for splash group (PRD 544)              | Splash screen      |
+| `settingsSplashEnabled`     | Toggle label (PRD 544)                                          | Show splash screen |
+| `settingsSplashStartDate`   | Date-picker label (PRD 545)                                     | Start date         |
+| `settingsSplashDisplayText` | Free-text field label (PRD 546)                                 | Display text       |
+| `settingsSplashButtonLabel` | Free-text field label (PRD 547)                                 | Button label       |
 
 `splashSinceDate` is an ICU template; the `@splashSinceDate` template block declares:
 
@@ -294,72 +294,38 @@ Plus `appTitle` stays as-is — already seeded in M0.
 
 ### 5.4 Key inventory — Group C (Seeded categories)
 
-Covers PRD **459–491** exactly. Each row captures **ARB key** (camelCase) ← → **DB `l10n_key`** (dotted, as PRD writes it) ← → **EN string**. Parent categories are listed first; subcategories indented.
+Covers PRD **459–491** exactly for seeded categories. Each row captures **ARB key** (camelCase) ← → **DB `l10n_key`** (dotted, as PRD writes it) ← → **EN string**.
 
-| ARB key | DB `l10n_key` (dotted) | EN |
-|---|---|---|
-| `categoryFood` | `category.food` | Food |
-| `categoryFoodGroceries` | `category.food.groceries` | Groceries |
-| `categoryFoodRestaurants` | `category.food.restaurants` | Restaurants |
-| `categoryDrinks` | `category.drinks` | Drinks |
-| `categoryDrinksCoffee` | `category.drinks.coffee` | Coffee |
-| `categoryDrinksAlcohol` | `category.drinks.alcohol` | Alcohol |
-| `categoryDrinksBeverages` | `category.drinks.beverages` | Beverages |
-| `categoryTransportation` | `category.transportation` | Transportation |
-| `categoryTransportationGas` | `category.transportation.gas` | Gas |
-| `categoryTransportationPublicTransit` | `category.transportation.publicTransit` | Public Transit |
-| `categoryTransportationTaxiRide` | `category.transportation.taxiRide` | Taxi/Ride |
-| `categoryTransportationParking` | `category.transportation.parking` | Parking |
-| `categoryShopping` | `category.shopping` | Shopping |
-| `categoryShoppingClothing` | `category.shopping.clothing` | Clothing |
-| `categoryShoppingHousehold` | `category.shopping.household` | Household |
-| `categoryHousing` | `category.housing` | Housing |
-| `categoryHousingRent` | `category.housing.rent` | Rent |
-| `categoryHousingUtilities` | `category.housing.utilities` | Utilities |
-| `categoryHousingMaintenance` | `category.housing.maintenance` | Maintenance |
-| `categoryEntertainment` | `category.entertainment` | Entertainment |
-| `categoryEntertainmentMovies` | `category.entertainment.movies` | Movies |
-| `categoryEntertainmentGames` | `category.entertainment.games` | Games |
-| `categoryEntertainmentSubscriptions` | `category.entertainment.subscriptions` | Subscriptions |
-| `categoryMedical` | `category.medical` | Medical |
-| `categoryMedicalDoctor` | `category.medical.doctor` | Doctor |
-| `categoryMedicalPharmacy` | `category.medical.pharmacy` | Pharmacy |
-| `categoryMedicalInsurance` | `category.medical.insurance` | Insurance |
-| `categoryEducation` | `category.education` | Education |
-| `categoryEducationTuition` | `category.education.tuition` | Tuition |
-| `categoryEducationBooks` | `category.education.books` | Books |
-| `categoryEducationCourses` | `category.education.courses` | Courses |
-| `categoryPersonal` | `category.personal` | Personal |
-| `categoryPersonalHaircut` | `category.personal.haircut` | Haircut |
-| `categoryPersonalGym` | `category.personal.gym` | Gym |
-| `categoryPersonalGifts` | `category.personal.gifts` | Gifts |
-| `categoryTravel` | `category.travel` | Travel |
-| `categoryTravelFlights` | `category.travel.flights` | Flights |
-| `categoryTravelHotels` | `category.travel.hotels` | Hotels |
-| `categoryTravelActivities` | `category.travel.activities` | Activities |
-| `category3c` | `category.3c` | 3C |
-| `category3cPhone` | `category.3c.phone` | Phone |
-| `category3cComputer` | `category.3c.computer` | Computer |
-| `category3cGadgets` | `category.3c.gadgets` | Gadgets |
-| `categoryMiscellaneous` | `category.miscellaneous` | Miscellaneous |
-| `categoryOther` | `category.other` | Other |
-| `categoryIncomeSalary` | `category.income.salary` | Salary |
-| `categoryIncomeFreelance` | `category.income.freelance` | Freelance |
-| `categoryIncomeInvestment` | `category.income.investment` | Investment |
-| `categoryIncomeGift` | `category.income.gift` | Gift |
-| `categoryIncomeOther` | `category.income.other` | Other Income |
+| ARB key                    | DB `l10n_key` (dotted)       | EN             |
+|----------------------------|------------------------------|----------------|
+| `categoryFood`             | `category.food`              | Food           |
+| `categoryDrinks`           | `category.drinks`            | Drinks         |
+| `categoryTransportation`   | `category.transportation`    | Transportation |
+| `categoryShopping`         | `category.shopping`          | Shopping       |
+| `categoryHousing`          | `category.housing`           | Housing        |
+| `categoryEntertainment`    | `category.entertainment`     | Entertainment  |
+| `categoryMedical`          | `category.medical`           | Medical        |
+| `categoryEducation`        | `category.education`         | Education      |
+| `categoryPersonal`         | `category.personal`          | Personal       |
+| `categoryTravel`           | `category.travel`            | Travel         |
+| `categoryThreeC`           | `category.threeC`            | 3C             |
+| `categoryMiscellaneous`    | `category.miscellaneous`     | Miscellaneous  |
+| `categoryOther`            | `category.other`             | Other          |
+| `categoryIncomeSalary`     | `category.income.salary`     | Salary         |
+| `categoryIncomeFreelance`  | `category.income.freelance`  | Freelance      |
+| `categoryIncomeInvestment` | `category.income.investment` | Investment     |
+| `categoryIncomeGift`       | `category.income.gift`       | Gift           |
+| `categoryIncomeOther`      | `category.income.other`      | Other Income   |
 
-**Note — `categoryIncomeInvestment` vs `accountTypeInvestment`.** Both exist and do not collide: one is an income category (PRD 487), the other is an account type (PRD 500). EN strings differ ("Investment" for the category to keep parity with PRD 487; see §5.5 for account-type string).
+**Note — `categoryIncomeInvestment` vs `accountTypeInvestment`.** Both exist and do not collide: one is an income category (PRD 487), the other is an account type (PRD 500). The displayed English label is identical; the keys stay distinct.
 
-**Note — leading digit in `category.3c`.** Dart identifiers cannot start with a digit, so the ARB key is `category3c` (parent) and `category3cPhone` (subcategory). The DB stores `category.3c` (unchanged from PRD 473).
-
-**Coordination caveat vs Stream B.** Stream B's seed contract uses the dotted key `category.threeC` (to avoid the leading-digit problem in its Dart-named `CategoryPaletteIndex` constants) while this plan preserves PRD 473's `category.3c` literal in the DB column. Before either stream merges, the two authors must reconcile: either (a) this plan changes the DB `l10n_key` to `category.threeC`, or (b) Stream B updates its `l10n_key` column to `category.3c`. PRD 473 is the tiebreaker — stick with `category.3c` unless a written PRD change is made first. §10.1 checkpoint catches this.
+**Note — `category.threeC`.** The canonical seeded key is `category.threeC`. The ARB getter is `categoryThreeC`, which keeps the generated Dart identifier readable while preserving the dotted DB key used by seed data.
 
 ### 5.5 Key inventory — Group A (Seeded account types)
 
-| ARB key | DB `l10n_key` | EN |
-|---|---|---|
-| `accountTypeCash` | `accountType.cash` | Cash |
+| ARB key                 | DB `l10n_key`            | EN         |
+|-------------------------|--------------------------|------------|
+| `accountTypeCash`       | `accountType.cash`       | Cash       |
 | `accountTypeInvestment` | `accountType.investment` | Investment |
 
 EN strings match PRD 499–500 word-for-word.
@@ -369,10 +335,10 @@ EN strings match PRD 499–500 word-for-word.
 Count check:
 - Group S: 21 keys
 - Group P: 8 keys
-- Group C: 50 keys (13 expense parents + 32 expense subcategories + 5 income parents = 50)
+- Group C: 18 keys (13 expense categories + 5 income categories)
 - Group A: 2 keys
 
-**Total new keys: 81.** Plus `appTitle` (kept from M0) = 82 keys in the finished `app_en.arb`.
+**Total new keys: 49.** Plus `appTitle` (kept from M0) = 50 keys in the finished `app_en.arb`.
 
 ---
 
@@ -384,110 +350,78 @@ Trad. ⇄ Simplified lexical differences are real; the table deliberately does n
 
 ### 6.1 Group S — Shell / Common
 
-| Key | zh_TW | zh_CN |
-|---|---|---|
-| `navHome` | 首頁 | 首页 |
-| `navAccounts` | 帳戶 | 账户 |
-| `navSettings` | 設定 | 设置 |
-| `commonSave` | 儲存 | 保存 |
-| `commonCancel` | 取消 | 取消 |
-| `commonDelete` | 刪除 | 删除 |
-| `commonArchive` | 封存 | 归档 |
-| `commonEdit` | 編輯 | 编辑 |
-| `commonUndo` | 復原 | 撤销 |
-| `commonDiscard` | 捨棄 | 放弃 |
-| `commonAdd` | 新增 | 添加 |
-| `commonDone` | 完成 | 完成 |
-| `transactionTypeExpense` | 支出 | 支出 |
-| `transactionTypeIncome` | 收入 | 收入 |
-| `homeEmptyTitle` | 尚無交易紀錄 | 暂无交易记录 |
-| `homeEmptyCta` | 記錄第一筆交易 | 记录第一笔交易 |
-| `homeFabLabel` | 新增交易 | 添加交易 |
-| `homeSummaryTodayExpense` | 今日支出 | 今日支出 |
-| `homeSummaryTodayIncome` | 今日收入 | 今日收入 |
-| `homeSummaryMonthNet` | 本月淨額 | 本月净额 |
-| `errorSnackbarGeneric` | 發生錯誤，請再試一次。 | 出错了，请重试。 |
+| Key                       | zh_TW       | zh_CN    |
+|---------------------------|-------------|----------|
+| `navHome`                 | 首頁          | 首页       |
+| `navAccounts`             | 帳戶          | 账户       |
+| `navSettings`             | 設定          | 设置       |
+| `commonSave`              | 儲存          | 保存       |
+| `commonCancel`            | 取消          | 取消       |
+| `commonDelete`            | 刪除          | 删除       |
+| `commonArchive`           | 封存          | 归档       |
+| `commonEdit`              | 編輯          | 编辑       |
+| `commonUndo`              | 復原          | 撤销       |
+| `commonDiscard`           | 捨棄          | 放弃       |
+| `commonAdd`               | 新增          | 添加       |
+| `commonDone`              | 完成          | 完成       |
+| `transactionTypeExpense`  | 支出          | 支出       |
+| `transactionTypeIncome`   | 收入          | 收入       |
+| `homeEmptyTitle`          | 尚無交易紀錄      | 暂无交易记录   |
+| `homeEmptyCta`            | 記錄第一筆交易     | 记录第一笔交易  |
+| `homeFabLabel`            | 新增交易        | 添加交易     |
+| `homeSummaryTodayExpense` | 今日支出        | 今日支出     |
+| `homeSummaryTodayIncome`  | 今日收入        | 今日收入     |
+| `homeSummaryMonthNet`     | 本月淨額        | 本月净额     |
+| `errorSnackbarGeneric`    | 發生錯誤，請再試一次。 | 出错了，请重试。 |
 
 ### 6.2 Group P — Splash and Splash Settings
 
-| Key | zh_TW | zh_CN |
-|---|---|---|
-| `splashEnter` | 進入 | 进入 |
-| `splashSinceDate` | 自 {date} 起 | 自 {date} 起 |
-| `splashDayCountLabel` | 天 | 天 |
-| `settingsSplashSection` | 啟動畫面 | 启动页 |
-| `settingsSplashEnabled` | 顯示啟動畫面 | 显示启动页 |
-| `settingsSplashStartDate` | 起始日期 | 起始日期 |
-| `settingsSplashDisplayText` | 顯示文字 | 显示文字 |
-| `settingsSplashButtonLabel` | 按鈕文字 | 按钮文字 |
+| Key                         | zh_TW      | zh_CN      |
+|-----------------------------|------------|------------|
+| `splashEnter`               | 進入         | 进入         |
+| `splashSinceDate`           | 自 {date} 起 | 自 {date} 起 |
+| `splashDayCountLabel`       | 天          | 天          |
+| `settingsSplashSection`     | 啟動畫面       | 启动页        |
+| `settingsSplashEnabled`     | 顯示啟動畫面     | 显示启动页      |
+| `settingsSplashStartDate`   | 起始日期       | 起始日期       |
+| `settingsSplashDisplayText` | 顯示文字       | 显示文字       |
+| `settingsSplashButtonLabel` | 按鈕文字       | 按钮文字       |
 
-The ICU placeholder block is copied verbatim into both Chinese ARBs so codegen emits the same method signature for the `splashSinceDate` getter.
+The translated `splashSinceDate` value keeps the same `{date}` token in both Chinese ARBs. The `@splashSinceDate` placeholder metadata lives in `app_en.arb` only, which is enough for `gen_l10n` to generate the shared method signature.
 
 ### 6.3 Group C — Seeded categories
 
-| Key | zh_TW | zh_CN |
-|---|---|---|
-| `categoryFood` | 飲食 | 饮食 |
-| `categoryFoodGroceries` | 生鮮雜貨 | 生鲜杂货 |
-| `categoryFoodRestaurants` | 餐廳 | 餐厅 |
-| `categoryDrinks` | 飲料 | 饮料 |
-| `categoryDrinksCoffee` | 咖啡 | 咖啡 |
-| `categoryDrinksAlcohol` | 酒類 | 酒类 |
-| `categoryDrinksBeverages` | 飲品 | 饮品 |
-| `categoryTransportation` | 交通 | 交通 |
-| `categoryTransportationGas` | 加油 | 加油 |
-| `categoryTransportationPublicTransit` | 大眾運輸 | 公共交通 |
-| `categoryTransportationTaxiRide` | 計程車 | 出租车 |
-| `categoryTransportationParking` | 停車 | 停车 |
-| `categoryShopping` | 購物 | 购物 |
-| `categoryShoppingClothing` | 服飾 | 服饰 |
-| `categoryShoppingHousehold` | 家居用品 | 家居用品 |
-| `categoryHousing` | 居住 | 居住 |
-| `categoryHousingRent` | 房租 | 房租 |
-| `categoryHousingUtilities` | 水電瓦斯 | 水电燃气 |
-| `categoryHousingMaintenance` | 維修 | 维修 |
-| `categoryEntertainment` | 娛樂 | 娱乐 |
-| `categoryEntertainmentMovies` | 電影 | 电影 |
-| `categoryEntertainmentGames` | 遊戲 | 游戏 |
-| `categoryEntertainmentSubscriptions` | 訂閱 | 订阅 |
-| `categoryMedical` | 醫療 | 医疗 |
-| `categoryMedicalDoctor` | 看診 | 看诊 |
-| `categoryMedicalPharmacy` | 藥品 | 药品 |
-| `categoryMedicalInsurance` | 保險 | 保险 |
-| `categoryEducation` | 教育 | 教育 |
-| `categoryEducationTuition` | 學費 | 学费 |
-| `categoryEducationBooks` | 書籍 | 书籍 |
-| `categoryEducationCourses` | 課程 | 课程 |
-| `categoryPersonal` | 個人 | 个人 |
-| `categoryPersonalHaircut` | 理髮 | 理发 |
-| `categoryPersonalGym` | 健身 | 健身 |
-| `categoryPersonalGifts` | 送禮 | 送礼 |
-| `categoryTravel` | 旅遊 | 旅游 |
-| `categoryTravelFlights` | 機票 | 机票 |
-| `categoryTravelHotels` | 住宿 | 住宿 |
-| `categoryTravelActivities` | 行程 | 行程 |
-| `category3c` | 3C | 3C |
-| `category3cPhone` | 手機 | 手机 |
-| `category3cComputer` | 電腦 | 电脑 |
-| `category3cGadgets` | 配件 | 配件 |
-| `categoryMiscellaneous` | 雜項 | 杂项 |
-| `categoryOther` | 其他 | 其他 |
-| `categoryIncomeSalary` | 薪資 | 工资 |
-| `categoryIncomeFreelance` | 接案 | 自由职业 |
-| `categoryIncomeInvestment` | 投資 | 投资 |
-| `categoryIncomeGift` | 餽贈 | 馈赠 |
-| `categoryIncomeOther` | 其他收入 | 其他收入 |
+| Key                        | zh_TW | zh_CN |
+|----------------------------|-------|-------|
+| `categoryFood`             | 飲食    | 饮食    |
+| `categoryDrinks`           | 飲料    | 饮料    |
+| `categoryTransportation`   | 交通    | 交通    |
+| `categoryShopping`         | 購物    | 购物    |
+| `categoryHousing`          | 居住    | 居住    |
+| `categoryEntertainment`    | 娛樂    | 娱乐    |
+| `categoryMedical`          | 醫療    | 医疗    |
+| `categoryEducation`        | 教育    | 教育    |
+| `categoryPersonal`         | 個人    | 个人    |
+| `categoryTravel`           | 旅遊    | 旅游    |
+| `categoryThreeC`           | 3C    | 3C    |
+| `categoryMiscellaneous`    | 雜項    | 杂项    |
+| `categoryOther`            | 其他    | 其他    |
+| `categoryIncomeSalary`     | 薪資    | 工资    |
+| `categoryIncomeFreelance`  | 接案    | 自由职业  |
+| `categoryIncomeInvestment` | 投資    | 投资    |
+| `categoryIncomeGift`       | 餽贈    | 馈赠    |
+| `categoryIncomeOther`      | 其他收入  | 其他收入  |
 
 ### 6.4 Group A — Seeded account types
 
-| Key | zh_TW | zh_CN |
-|---|---|---|
-| `accountTypeCash` | 現金 | 现金 |
-| `accountTypeInvestment` | 投資 | 投资 |
+| Key                     | zh_TW | zh_CN |
+|-------------------------|-------|-------|
+| `accountTypeCash`       | 現金    | 现金    |
+| `accountTypeInvestment` | 投資    | 投资    |
 
 ### 6.5 Cross-table audit
 
-Both the EN table (§5) and the zh_TW/zh_CN table (§6) list the **identical 81 keys**, in the same order. Any PR that adds a 82nd key to one must add it to both — the task checklist in §8 enforces this.
+Both the EN table (§5) and the zh_TW/zh_CN table (§6) list the identical stream-owned keys, in the same order. Any PR that adds a new key to one must add it to both — the task checklist in §8 enforces this.
 
 ---
 
@@ -510,7 +444,7 @@ Exactly — and only — the one key required to keep codegen happy:
 }
 ```
 
-**Do NOT promote any Group S/P/C/A keys into `app_zh.arb`.** Rationale: if the bare `zh` file contains e.g. `categoryFood`, then a user on a device reporting `zh-HK` (Cantonese) or any unspecified Chinese locale would fall back to `app_zh.arb` and see a string the maintainers never reviewed. Keeping the `zh` fallback minimal forces those users to `app_zh_CN.arb` or `app_zh_TW.arb` via `Localizations.localeListResolutionCallback` (wired in M4). The downside — a `zh-HK` user with no `zh_CN`/`zh_TW` locale matching might see an English-shaped appTitle — is acceptable because (a) `appTitle` is not locale-dependent ("Ledgerly" is the brand) and (b) MVP does not claim Cantonese or Hong Kong Chinese support.
+**Do NOT promote any Group S/P/C/A keys into `app_zh.arb`.** Rationale: if the bare `zh` file contains e.g. `categoryFood`, then a user on a device reporting `zh-HK` (Cantonese) or any unspecified Chinese locale would fall back to `app_zh.arb` and see a string the maintainers never reviewed. Keeping the `zh` fallback minimal is safe because M4 explicitly resolves Chinese locales before fallback: `zh_TW`, `zh_HK`, `zh_MO`, and other Traditional Chinese locales resolve to `zh_TW`; `zh_CN`, `zh_SG`, and other Simplified Chinese locales resolve to `zh_CN`; ambiguous Chinese locales fall back to English.
 
 ### 7.3 Scope boundary for screen-specific labels
 
@@ -524,7 +458,7 @@ Examples of what stays in M5:
 
 If two slices discover they want the same label (e.g. "Category" as a section header in both Categories and Add/Edit), they negotiate: the first to land adds it to `commonCategory`; the second imports from `commonCategory` rather than duplicating. Review catches the duplication.
 
-**`l10n_key` lookup helper** (shipped by M3, called out here so the naming is predictable): a tiny `localizedCategoryName(AppLocalizations l10n, String dottedKey)` function maps `category.food.groceries` → `l10n.categoryFoodGroceries`. The function lives in `core/utils/` (owner: Stream A or Stream B — **not** this stream — because the lookup table is closed at M3 seed time). This plan only declares the keys; the helper is an M3 concern. If the helper's existence slips to M5, a switch statement at the call site works until M3 fills it in.
+**`l10n_key` lookup helper** (owned by this stream so the naming is predictable): a tiny `localizedCategoryName(AppLocalizations l10n, String dottedKey)` function maps `category.food` → `l10n.categoryFood` and `category.threeC` → `l10n.categoryThreeC`. The helper lives in `core/utils/` and ships as part of Stream C's contract because this stream owns the ARB key naming.
 
 ---
 
@@ -537,7 +471,7 @@ Each task is one PR-sized unit. Tests land with the task that introduces the cod
 - **Goal:** `app_en.arb` declares every Group S key with description stubs. Chinese ARBs each add the same keys with placeholder English copy (intentionally wrong, to be overwritten in Task 8.3 / 8.4). `app_zh.arb` untouched.
 - **Red:** write a widget test `test/widget/smoke/app_localizations_groups_test.dart` that builds a minimal `MaterialApp` with `AppLocalizations.delegate` and asserts `AppLocalizations.of(context).navHome` is non-null for EN, zh_TW, zh_CN. The test fails because the keys do not exist yet.
 - **Green:** add all Group S keys to `app_en.arb` (with `@key` descriptions) and to `app_zh_TW.arb` / `app_zh_CN.arb` (with English placeholder text — the test only asserts non-null).
-- **Codegen:** run `flutter pub get` (which triggers `flutter_localizations` codegen when `generate: true`), confirm `.dart_tool/flutter_gen/gen_l10n/app_localizations.dart` compiles. If `flutter pub get` does not refresh the generator on your machine, run `flutter gen-l10n` explicitly.
+- **Codegen:** run `flutter pub get` (which triggers `flutter_localizations` codegen when `generate: true`), confirm `l10n/app_localizations.dart` compiles. If `flutter pub get` does not refresh the generator on your machine, run `flutter gen-l10n` explicitly.
 - **Commit:** message prefix `l10n(shell):`; stage only `l10n/app_{en,zh_TW,zh_CN}.arb` and the smoke test file. Do NOT commit `.dart_tool/` (gitignored).
 
 ### Task 8.2 — Theme files
@@ -551,9 +485,9 @@ Each task is one PR-sized unit. Tests land with the task that introduces the cod
 ### Task 8.3 — Populate Group C (seeded categories) in all three ARBs
 
 - **Goal:** every key in §5.4 / §6.3 present in `app_en.arb`, `app_zh_TW.arb`, `app_zh_CN.arb`. Descriptions live only in EN.
-- **Red:** extend the smoke test to assert `AppLocalizations.of(context).categoryFood` etc. are non-null for each of three locales. Pick one sentinel per category parent (not all 50) to keep the test readable.
-- **Green:** add all 50 keys to EN with strings from §5.4 and descriptions naming the PRD line (e.g. `"PRD 464, expense category 'Drinks' — parent"`). Add the same 50 keys to zh_TW with §6.3 column 2 and to zh_CN with §6.3 column 3.
-- **Codegen:** `flutter pub get` (or `flutter gen-l10n`). Verify generated file is ~50 additional getter methods per locale.
+- **Red:** extend the smoke test to assert `AppLocalizations.of(context).categoryFood` etc. are non-null for each of three locales. Pick one sentinel per seeded category family to keep the test readable.
+- **Green:** add all 18 keys to EN with strings from §5.4 and descriptions naming the PRD line (e.g. `"PRD 464, seeded expense category 'Drinks'"`). Add the same 18 keys to zh_TW with §6.3 column 2 and to zh_CN with §6.3 column 3.
+- **Codegen:** `flutter pub get` (or `flutter gen-l10n`). Verify generated file includes the additional getter methods per locale.
 - **Commit:** `l10n(seed-categories):` prefix.
 
 ### Task 8.4 — Populate Group A (account types) and Group P (splash + splash settings)
@@ -561,7 +495,7 @@ Each task is one PR-sized unit. Tests land with the task that introduces the cod
 - **Goal:** §5.5, §5.3 / §6.2, §6.4 keys present.
 - **Red:** smoke test asserts `accountTypeCash`, `accountTypeInvestment`, `splashEnter`, `splashSinceDate(DateTime(2024, 1, 1))` non-null. The `splashSinceDate` call exercises the ICU placeholder; if the placeholder block is missing or the `format` is wrong, generation fails at build time.
 - **Green:** add keys per §5.3 / §5.5 / §6.2 / §6.4. Include the `@splashSinceDate` placeholder block in EN only (Chinese ARBs carry the value but not the `@` metadata, per ARB conventions).
-- **Codegen:** `flutter pub get`; verify `AppLocalizations.splashSinceDate` has signature `String splashSinceDate(DateTime date)` in all three generated classes.
+- **Codegen:** `flutter pub get`; verify `AppLocalizations.splashSinceDate` has signature `String splashSinceDate(DateTime date)` in the generated localization output under `l10n/`.
 - **Commit:** `l10n(splash+account-types):` prefix.
 
 ### Task 8.5 — Backfill Group S Chinese translations
@@ -579,7 +513,7 @@ Each task is one PR-sized unit. Tests land with the task that introduces the cod
   1. Every key present in `app_en.arb` (excluding `@`-prefixed metadata) is present in `app_zh_TW.arb` and `app_zh_CN.arb`.
   2. No key is present in `app_zh_TW.arb` or `app_zh_CN.arb` that is absent in `app_en.arb`.
   3. `app_zh.arb` contains exactly one key: `appTitle`.
-  4. Total non-metadata key count in `app_en.arb` is `82` (81 added by this stream + `appTitle`).
+  4. `app_en.arb` contains all stream-owned keys from §5.2–§5.5, plus `appTitle`.
 - **Green:** any drift uncovered is fixed in the same PR.
 - **Commit:** `l10n(audit):` prefix. This test becomes a standing regression guard — any future key addition has to keep the three-way parity, or CI fails.
 
@@ -600,7 +534,7 @@ flutter test test/widget/smoke/app_localizations_groups_test.dart
 flutter test test/unit/l10n/arb_audit_test.dart
 ```
 
-Every PR in this stream runs the full sequence locally before `git push`. The generated `app_localizations_*.dart` files live under `.dart_tool/flutter_gen/` and are **gitignored**; they are regenerated on CI after `flutter pub get`. Do NOT commit `.dart_tool/`.
+Every PR in this stream runs the full sequence locally before `git push`. The generated `app_localizations*.dart` files live under `l10n/` in this repo and should stay in sync with the ARBs. Do not edit the generated files by hand.
 
 ---
 
@@ -608,17 +542,18 @@ Every PR in this stream runs the full sequence locally before `git push`. The ge
 
 Maps to `docs/plans/implementation-plan.md` §5 M2 exit criteria row for stream C:
 
-| Criterion | Verification |
-|---|---|
-| `lightTheme` and `darkTheme` compile and are importable from `lib/core/theme/app_theme.dart` | `flutter analyze` green; `theme_smoke_test.dart` green |
-| `ColorScheme.fromSeed(...)` invocation is concrete (no TBD seed) | §4.1 commits to `0xFF006C35`; color_schemes.dart ships that literal |
-| All three target ARBs (`en`, `zh_TW`, `zh_CN`) contain every Group S/P/C/A key | `arb_audit_test.dart` passes (Task 8.6) |
-| `app_zh.arb` preserved with at least `appTitle` | `arb_audit_test.dart` assertion 3 passes |
-| `flutter pub get` → `flutter gen-l10n` round-trip produces a compiling `AppLocalizations` class | Task 8.7 clean |
-| Theme preview builds (implementation-plan.md §5 M2 "Theme preview builds (manual verification)") | Run `flutter run` on any attached device; Scaffold opens without assertion failures |
-| No theme knob is set that M5 slices will have to unpick | §4.3 documents the allowlist; review enforces |
-| PRD 459–491 (categories) and 497–500 (account types) are 1:1 covered in EN + zh_TW + zh_CN | §5.4, §5.5, §6.3, §6.4 checked against PRD line-by-line |
-| Splash default strings (`splashEnter`, `splashSinceDate`) present with ICU placeholder on `splashSinceDate` | §5.3 / §6.2 + Task 8.4 red test |
+| Criterion                                                                                                   | Verification                                                                                  |
+|-------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| `lightTheme` and `darkTheme` compile and are importable from `lib/core/theme/app_theme.dart`                | `flutter analyze` green; `theme_smoke_test.dart` green                                        |
+| `ColorScheme.fromSeed(...)` invocation is concrete (no TBD seed)                                            | §4.1 commits to `0xFF006C35`; color_schemes.dart ships that literal                           |
+| All three target ARBs (`en`, `zh_TW`, `zh_CN`) contain every Group S/P/C/A key                              | `arb_audit_test.dart` passes (Task 8.6)                                                       |
+| `app_zh.arb` preserved with at least `appTitle`                                                             | `arb_audit_test.dart` assertion 3 passes                                                      |
+| Chinese locale resolution is explicit and tested in M4                                                      | M4 shell test covers Traditional → `zh_TW`, Simplified → `zh_CN`, ambiguous Chinese → English |
+| `flutter pub get` → `flutter gen-l10n` round-trip produces a compiling `AppLocalizations` class             | Task 8.7 clean                                                                                |
+| Theme preview builds (implementation-plan.md §5 M2 "Theme preview builds (manual verification)")            | Run `flutter run` on any attached device; Scaffold opens without assertion failures           |
+| No theme knob is set that M5 slices will have to unpick                                                     | §4.3 documents the allowlist; review enforces                                                 |
+| PRD 459–491 (categories) and 497–500 (account types) are 1:1 covered in EN + zh_TW + zh_CN                  | §5.4, §5.5, §6.3, §6.4 checked against PRD line-by-line                                       |
+| Splash default strings (`splashEnter`, `splashSinceDate`) present with ICU placeholder on `splashSinceDate` | §5.3 / §6.2 + Task 8.4 red test                                                               |
 
 ---
 
@@ -636,19 +571,19 @@ If any of the three is missing, M3 seed either writes a row with an `l10n_key` n
 ### 10.1 Coordination checkpoint
 
 - **Day 1 of M2:** Stream B's author publishes the `(l10nKey, iconKey, colorPaletteIndex)` list for every row in PRD 459–506 (now in `stream-b-icons-colors.md` §4).
-- **Day 1 of M2:** Stream C's author reads Stream B's list, diffs it against this plan's §5.4 / §5.5, and either (a) reconciles keys here if Stream B found a typo in the PRD, or (b) opens a correction PR against Stream B's plan. The known mismatch on `category.3c` vs `category.threeC` (see §5.4 caveat) is reconciled here.
+- **Day 1 of M2:** Stream C's author reads Stream B's list, diffs it against this plan's §5.4 / §5.5, and either (a) reconciles keys here if Stream B found a typo in the PRD, or (b) opens a correction PR against Stream B's plan.
 - **Before either stream merges:** a three-way diff (PRD 459–506 ⇄ Stream B tuples ⇄ Stream C ARB keys) shows zero missing and zero extras.
 
 A `docs/plans/m2-core-utilities/seed-key-contract.md` co-owned doc is an option, but given only two streams touch the key list, a cross-reference checkpoint on day 1 + peer review on each PR is sufficient and avoids a third document to keep in sync. If a third consumer emerges (e.g. Stream A's `money_formatter` ever needs a currency-name ARB key), consider promoting the cross-reference into its own doc then.
 
 ### 10.2 Concrete handoff items this stream owes Stream B
 
-| Item | Location | Format |
-|---|---|---|
+| Item                                                                        | Location                              | Format           |
+|-----------------------------------------------------------------------------|---------------------------------------|------------------|
 | Canonical DB `l10n_key` spelling for every seeded category and account type | §5.4 and §5.5, "DB `l10n_key`" column | Dotted lowercase |
-| Canonical ARB getter name (camelCase) for each | §5.4 and §5.5, "ARB key" column | Dart identifier |
+| Canonical ARB getter name (camelCase) for each                              | §5.4 and §5.5, "ARB key" column       | Dart identifier  |
 
-Stream B owes this stream: nothing — the icon/color indices do not surface in ARBs.
+Stream B owes this stream: the canonical seeded dotted `l10n_key` set. Icon/color indices themselves do not surface in ARBs.
 
 ### 10.3 Blocking dependency on Stream A
 
@@ -658,18 +593,18 @@ Stream B owes this stream: nothing — the icon/color indices do not surface in 
 
 ## 11. Downstream consumers
 
-| Consumer | Depends on this stream for | Lands in |
-|---|---|---|
-| **M3 Seed routine** (`user_preferences_repository.dart` seed module) | Dotted `l10n_key` values for every seeded category + account type (§5.4, §5.5) | M3 Stream C |
-| **M3 Repository tests** | Dotted keys used in assertions when seed-idempotency tests verify `SELECT COUNT(*) WHERE l10n_key = 'category.food'` | M3 Stream A |
-| **M4 App shell** (`app/app.dart`, `app/bootstrap.dart`) | `lightTheme`, `darkTheme` imported into `MaterialApp.theme` / `.darkTheme`; theme provider wiring (shell owns the provider; this stream owns the constants) | M4 |
-| **M4 Smoke widget test** | `MaterialApp` builds with `AppLocalizations.delegate` + `lightTheme`; the smoke test becomes the template M5 slice tests extend | M4 |
-| **M5 Splash** | `splashEnter`, `splashSinceDate(date)`, `splashDayCountLabel`; Settings-for-splash labels rendered on Settings screen when splash is toggled | M5 Splash + M5 Settings |
-| **M5 Home** | `navHome`, `homeEmptyTitle`, `homeEmptyCta`, `homeFabLabel`, `homeSummaryTodayExpense`, `homeSummaryTodayIncome`, `homeSummaryMonthNet`, `commonUndo`, `commonDelete`, `errorSnackbarGeneric` | M5 Home |
-| **M5 Transactions (Add/Edit)** | `transactionTypeExpense`, `transactionTypeIncome`, `commonSave`, `commonCancel`, `commonDiscard`, `commonEdit`, `errorSnackbarGeneric` | M5 Transactions |
-| **M5 Categories** | `commonAdd`, `commonEdit`, `commonArchive`, `commonDelete`; every `categoryFoo…` getter for rendering seeded rows | M5 Categories |
-| **M5 Accounts** | `commonAdd`, `commonEdit`, `commonArchive`, `commonDelete`, `accountTypeCash`, `accountTypeInvestment` | M5 Accounts |
-| **M5 Settings** | `navSettings`, `settingsSplashSection`, `settingsSplashEnabled`, `settingsSplashStartDate`, `settingsSplashDisplayText`, `settingsSplashButtonLabel`, plus slice-local Theme-toggle / Language / Default-currency labels (added in the Settings PR per §7.3) | M5 Settings |
+| Consumer                                                             | Depends on this stream for                                                                                                                                                                                                                                   | Lands in                |
+|----------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------|
+| **M3 Seed routine** (`user_preferences_repository.dart` seed module) | Dotted `l10n_key` values for every seeded category + account type (§5.4, §5.5)                                                                                                                                                                               | M3 Stream C             |
+| **M3 Repository tests**                                              | Dotted keys used in assertions when seed-idempotency tests verify `SELECT COUNT(*) WHERE l10n_key = 'category.food'`                                                                                                                                         | M3 Stream A             |
+| **M4 App shell** (`app/app.dart`, `app/bootstrap.dart`)              | `lightTheme`, `darkTheme` imported into `MaterialApp.theme` / `.darkTheme`; theme provider wiring (shell owns the provider; this stream owns the constants)                                                                                                  | M4                      |
+| **M4 Smoke widget test**                                             | `MaterialApp` builds with `AppLocalizations.delegate` + `lightTheme`; the smoke test becomes the template M5 slice tests extend                                                                                                                              | M4                      |
+| **M5 Splash**                                                        | `splashEnter`, `splashSinceDate(date)`, `splashDayCountLabel`; Settings-for-splash labels rendered on Settings screen when splash is toggled                                                                                                                 | M5 Splash + M5 Settings |
+| **M5 Home**                                                          | `navHome`, `homeEmptyTitle`, `homeEmptyCta`, `homeFabLabel`, `homeSummaryTodayExpense`, `homeSummaryTodayIncome`, `homeSummaryMonthNet`, `commonUndo`, `commonDelete`, `errorSnackbarGeneric`                                                                | M5 Home                 |
+| **M5 Transactions (Add/Edit)**                                       | `transactionTypeExpense`, `transactionTypeIncome`, `commonSave`, `commonCancel`, `commonDiscard`, `commonEdit`, `errorSnackbarGeneric`                                                                                                                       | M5 Transactions         |
+| **M5 Categories**                                                    | `commonAdd`, `commonEdit`, `commonArchive`, `commonDelete`; every `categoryFoo…` getter for rendering seeded rows                                                                                                                                            | M5 Categories           |
+| **M5 Accounts**                                                      | `commonAdd`, `commonEdit`, `commonArchive`, `commonDelete`, `accountTypeCash`, `accountTypeInvestment`                                                                                                                                                       | M5 Accounts             |
+| **M5 Settings**                                                      | `navSettings`, `settingsSplashSection`, `settingsSplashEnabled`, `settingsSplashStartDate`, `settingsSplashDisplayText`, `settingsSplashButtonLabel`, plus slice-local Theme-toggle / Language / Default-currency labels (added in the Settings PR per §7.3) | M5 Settings             |
 
 ---
 
@@ -686,7 +621,7 @@ Stream B owes this stream: nothing — the icon/color indices do not surface in 
 
 1. **Translator drift on Group S.** Non-native-speaker-written Chinese copy in §6 gets nitpicked later. Mitigation: §8.5 explicitly requests reviewer sign-off, and `errorSnackbarGeneric` plus CTAs are the highest-visibility strings — those are listed first in §6.1 so reviewers read them first.
 2. **`app_zh.arb` accidentally deleted during cleanup.** CLAUDE.md warns; `arb_audit_test.dart` Task 8.6 assertion 3 is the automated guard.
-3. **Seed `l10n_key` casing drift (`category.3c` vs `category.3C` vs `category.threeC`).** Lowercase is enforced in §5.4 by construction; `category.3c` tracks PRD 473 literally. The mismatch with Stream B's `category.threeC` is flagged in §5.4 note and §10.1 checkpoint.
+3. **Seed `l10n_key` drift (`category.threeC` vs variants).** Lowercase-with-camel-tail is enforced in §5.4 by construction; `category.threeC` is the canonical key shared with Stream B and M3 seed.
 4. **Codegen cache staleness.** After any ARB edit, running `flutter test` without first running `flutter pub get` uses the previous generated class. Every task's "Codegen" step runs `flutter pub get` first, which is why §8.8 lists the full command sequence.
 5. **Theme accent drift via a `ThemeExtension` snuck in per-feature.** Out-of-scope here; if an M5 slice ships an extension, review asks "why not a shared key?" and the answer is documented — no silent forks.
 6. **ICU placeholder format mismatch.** `{date}` with `format: yMMMMd` in EN must match both Chinese ARBs exactly; a difference emits a different method signature per locale and breaks `AppLocalizations` at compile time. Task 8.4's red test exercises this.
@@ -695,7 +630,7 @@ Stream B owes this stream: nothing — the icon/color indices do not surface in 
 
 ## 14. Self-review
 
-- **(a)** Every seeded category from PRD 459–491 and every seeded account type from PRD 497–500 has an entry in each of `app_en.arb`, `app_zh_TW.arb`, `app_zh_CN.arb`. §5.4 + §5.5 list 52 rows (50 category + 2 account-type); §6.3 + §6.4 list the matching 52 in both Chinese locales. `arb_audit_test.dart` (Task 8.6) fails CI if any of the 156 `(key, locale)` pairs is missing.
+- **(a)** Every seeded category from PRD 459–491 and every seeded account type from PRD 497–500 has an entry in each of `app_en.arb`, `app_zh_TW.arb`, `app_zh_CN.arb`. §5.4 + §5.5 list 20 rows (18 category + 2 account-type); §6.3 + §6.4 list the matching 20 in both Chinese locales. `arb_audit_test.dart` (Task 8.6) fails CI if any required pair is missing.
 - **(b)** Base `app_zh.arb` preserved. §2.2 quotes current contents; §7.2 confirms post-plan contents are still `{"@@locale":"zh","appTitle":"Ledgerly"}`. CLAUDE.md pin cited verbatim.
 - **(c)** No placeholders. Every EN string is final copy; every zh_TW/zh_CN value is a concrete translation in §6 (not `TODO` strings). Task 8.5 notes an explicit reviewer sign-off path if the authoring dev does not speak Chinese, but the table itself does not contain placeholders.
 - **(d)** Theme choices are concrete. Seed color is `Color(0xFF006C35)` (Green 40) with rationale in §4.1; ColorScheme invocations are spelled out in §4.2; ThemeData knob allowlist is enumerated in §4.3. No "TBD", no "pick a color later".
