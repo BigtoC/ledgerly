@@ -124,7 +124,7 @@ Notes:
 - `parent_id` is the **self-FK** for subcategories (Food → Groceries). Nullable because top-level categories have no parent. Self-FKs in Drift need the owning table name on both sides — `.references(Categories, #id)` works because `Categories` is the class we're defining.
 - **`type` is stored as TEXT**, not an enum. Drift enum mapping lives in Stream B's Freezed model; Stream A only stores/retrieves the raw string. This keeps the DAO layer independent of the enum's package location.
 - **`type` immutability is NOT enforced at the table level** — SQLite cannot express "frozen after first referencing row". Enforcement lives in `CategoryRepository` (M3). Stream A simply stores whatever it is handed.
-- No `CHECK(type IN ('expense','income'))` constraint — kept out to avoid migration pain if we add a third type in Phase 2 (e.g., transfer). Validation lives in the repository.
+- Add `CHECK(type IN ('expense','income'))` at the SQL level. The allowed set is now permanently fixed to these two values, so the database should enforce the invariant directly while `CategoryRepository` continues to own the higher-level type-lock rule.
 - **Indexes**: `@TableIndex(name: 'categories_parent_idx', columns: {#parentId})` for subcategory lookup.
 
 ### 2.4 `account_types` — PRD (Account Types table)
@@ -440,59 +440,59 @@ Stream A is done when **all** of the following hold:
 
 ## 9. Stream-B handoff points
 
-Stream B (Freezed domain models) is writing `lib/data/models/{currency,transaction,category,account_type,account}.dart` in parallel. The **field-name contract** between Drift data classes and Freezed models is the hinge of this milestone (`implementation-plan.md` §5 → "Critical sync: Agree field names…day 1"). `AccountType` — previously an enum wire-value — is now a full Freezed domain model backed by the `account_types` table; see §10 for the pending contract confirmation.
+Stream B (Freezed domain models) is writing `lib/data/models/{currency,transaction,category,account_type,account}.dart` in parallel. The **field-name contract** between Drift data classes and Freezed models is the hinge of this milestone (`implementation-plan.md` §5 → "Critical sync: Agree field names…day 1"), with `stream-c-field-name-contract.md` acting as the shared contract artifact. `AccountType` — previously an enum wire-value — is now a full Freezed domain model backed by the `account_types` table.
 
 ### 9.1 Field names Stream A commits to (Dart-side)
 
-| Drift data class    | Dart property              | SQL column                    | Stream B's Freezed field (expected)                  |
-|---------------------|----------------------------|-------------------------------|------------------------------------------------------|
-| `Currency`          | `code`                     | `code`                        | `code`                                               |
-| `Currency`          | `decimals`                 | `decimals`                    | `decimals`                                           |
-| `Currency`          | `symbol`                   | `symbol`                      | `symbol`                                             |
-| `Currency`          | `nameL10nKey`              | `name_l10n_key`               | `nameL10nKey`                                        |
-| `Currency`          | `isToken`                  | `is_token`                    | `isToken`                                            |
-| `Currency`          | `sortOrder`                | `sort_order`                  | `sortOrder`                                          |
-| `TransactionRow`    | `id`                       | `id`                          | `id`                                                 |
-| `TransactionRow`    | `amountMinorUnits` (`int`) | `amount_minor_units`          | `amountMinorUnits` (`int`)                           |
-| `TransactionRow`    | `currency`                 | `currency`                    | `currency` — Freezed nested `Currency` on read (repo joins); `String` code on write |
-| `TransactionRow`    | `categoryId`               | `category_id`                 | `categoryId`                                         |
-| `TransactionRow`    | `accountId`                | `account_id`                  | `accountId`                                          |
-| `TransactionRow`    | `memo`                     | `memo`                        | `memo`                                               |
-| `TransactionRow`    | `date`                     | `date`                        | `date`                                               |
-| `TransactionRow`    | `createdAt` / `updatedAt`  | `created_at` / `updated_at`   | `createdAt` / `updatedAt` — **NOT NULL** on both sides; repository populates |
-| `CategoryRow`       | `id`                       | `id`                          | `id`                                                 |
-| `CategoryRow`       | `l10nKey`                  | `l10n_key`                    | `l10nKey`                                            |
-| `CategoryRow`       | `customName`               | `custom_name`                 | `customName`                                         |
-| `CategoryRow`       | `icon`                     | `icon`                        | `icon`                                               |
-| `CategoryRow`       | `color` (`int`)            | `color`                       | `color` (`int` palette index)                        |
-| `CategoryRow`       | `type` (`String`)          | `type`                        | `type` (enum — Stream B maps)                        |
-| `CategoryRow`       | `parentId`                 | `parent_id`                   | `parentId`                                           |
-| `CategoryRow`       | `sortOrder`                | `sort_order`                  | `sortOrder`                                          |
-| `CategoryRow`       | `isArchived`               | `is_archived`                 | `isArchived`                                         |
-| `AccountTypeRow`    | `id`                       | `id`                          | `id`                                                 |
-| `AccountTypeRow`    | `l10nKey`                  | `l10n_key`                    | `l10nKey`                                            |
-| `AccountTypeRow`    | `customName`               | `custom_name`                 | `customName`                                         |
-| `AccountTypeRow`    | `defaultCurrency`          | `default_currency`            | `defaultCurrency` — Freezed nullable nested `Currency?` on read (repo joins); `String?` code on write |
-| `AccountTypeRow`    | `icon`                     | `icon`                        | `icon`                                               |
-| `AccountTypeRow`    | `color` (`int`)            | `color`                       | `color` (`int` palette index)                        |
-| `AccountTypeRow`    | `sortOrder`                | `sort_order`                  | `sortOrder`                                          |
-| `AccountTypeRow`    | `isArchived`               | `is_archived`                 | `isArchived`                                         |
-| `AccountRow`        | `id`                       | `id`                          | `id`                                                 |
-| `AccountRow`        | `name`                     | `name`                        | `name`                                               |
-| ~~`AccountRow`~~    | ~~`type` (`String`)~~      | ~~`type`~~                    | ~~enum — replaced by `accountTypeId` FK below~~      |
-| `AccountRow`        | `accountTypeId` (`int`)    | `account_type_id`             | `accountTypeId` (`int` FK → `AccountType.id`)        |
-| `AccountRow`        | `currency`                 | `currency`                    | `currency` — Freezed nested `Currency` on read (repo joins); `String` code on write |
-| `AccountRow`        | `openingBalanceMinorUnits` | `opening_balance_minor_units` | `openingBalanceMinorUnits` (`int`)                   |
-| `AccountRow`        | `icon`                     | `icon`                        | `icon`                                               |
-| `AccountRow`        | `color`                    | `color`                       | `color`                                              |
-| `AccountRow`        | `sortOrder`                | `sort_order`                  | `sortOrder`                                          |
-| `AccountRow`        | `isArchived`               | `is_archived`                 | `isArchived`                                         |
-| `UserPreferenceRow` | `key` / `value`            | `key` / `value`               | N/A — Stream B exposes typed accessors at repo layer |
+| Drift data class    | Dart property              | SQL column                    | Stream B's Freezed field (expected)                                                                          |
+|---------------------|----------------------------|-------------------------------|--------------------------------------------------------------------------------------------------------------|
+| `Currency`          | `code`                     | `code`                        | `code`                                                                                                       |
+| `Currency`          | `decimals`                 | `decimals`                    | `decimals`                                                                                                   |
+| `Currency`          | `symbol`                   | `symbol`                      | `symbol`                                                                                                     |
+| `Currency`          | `nameL10nKey`              | `name_l10n_key`               | `nameL10nKey`                                                                                                |
+| `Currency`          | `isToken`                  | `is_token`                    | `isToken`                                                                                                    |
+| `Currency`          | `sortOrder`                | `sort_order`                  | `sortOrder`                                                                                                  |
+| `TransactionRow`    | `id`                       | `id`                          | `id`                                                                                                         |
+| `TransactionRow`    | `amountMinorUnits` (`int`) | `amount_minor_units`          | `amountMinorUnits` (`int`)                                                                                   |
+| `TransactionRow`    | `currency`                 | `currency`                    | `currency` — read-side Freezed model may hydrate nested `Currency`; write API decided in M3                  |
+| `TransactionRow`    | `categoryId`               | `category_id`                 | `categoryId`                                                                                                 |
+| `TransactionRow`    | `accountId`                | `account_id`                  | `accountId`                                                                                                  |
+| `TransactionRow`    | `memo`                     | `memo`                        | `memo`                                                                                                       |
+| `TransactionRow`    | `date`                     | `date`                        | `date`                                                                                                       |
+| `TransactionRow`    | `createdAt` / `updatedAt`  | `created_at` / `updated_at`   | `createdAt` / `updatedAt` — **NOT NULL** on both sides; repository populates                                 |
+| `CategoryRow`       | `id`                       | `id`                          | `id`                                                                                                         |
+| `CategoryRow`       | `l10nKey`                  | `l10n_key`                    | `l10nKey`                                                                                                    |
+| `CategoryRow`       | `customName`               | `custom_name`                 | `customName`                                                                                                 |
+| `CategoryRow`       | `icon`                     | `icon`                        | `icon`                                                                                                       |
+| `CategoryRow`       | `color` (`int`)            | `color`                       | `color` (`int` palette index)                                                                                |
+| `CategoryRow`       | `type` (`String`)          | `type`                        | `type` (enum — Stream B maps)                                                                                |
+| `CategoryRow`       | `parentId`                 | `parent_id`                   | `parentId`                                                                                                   |
+| `CategoryRow`       | `sortOrder`                | `sort_order`                  | `sortOrder`                                                                                                  |
+| `CategoryRow`       | `isArchived`               | `is_archived`                 | `isArchived`                                                                                                 |
+| `AccountTypeRow`    | `id`                       | `id`                          | `id`                                                                                                         |
+| `AccountTypeRow`    | `l10nKey`                  | `l10n_key`                    | `l10nKey`                                                                                                    |
+| `AccountTypeRow`    | `customName`               | `custom_name`                 | `customName`                                                                                                 |
+| `AccountTypeRow`    | `defaultCurrency`          | `default_currency`            | `defaultCurrency` — read-side Freezed model may hydrate nullable nested `Currency?`; write API decided in M3 |
+| `AccountTypeRow`    | `icon`                     | `icon`                        | `icon`                                                                                                       |
+| `AccountTypeRow`    | `color` (`int`)            | `color`                       | `color` (`int` palette index)                                                                                |
+| `AccountTypeRow`    | `sortOrder`                | `sort_order`                  | `sortOrder`                                                                                                  |
+| `AccountTypeRow`    | `isArchived`               | `is_archived`                 | `isArchived`                                                                                                 |
+| `AccountRow`        | `id`                       | `id`                          | `id`                                                                                                         |
+| `AccountRow`        | `name`                     | `name`                        | `name`                                                                                                       |
+| ~~`AccountRow`~~    | ~~`type` (`String`)~~      | ~~`type`~~                    | ~~enum — replaced by `accountTypeId` FK below~~                                                              |
+| `AccountRow`        | `accountTypeId` (`int`)    | `account_type_id`             | `accountTypeId` (`int` FK → `AccountType.id`)                                                                |
+| `AccountRow`        | `currency`                 | `currency`                    | `currency` — read-side Freezed model may hydrate nested `Currency`; write API decided in M3                  |
+| `AccountRow`        | `openingBalanceMinorUnits` | `opening_balance_minor_units` | `openingBalanceMinorUnits` (`int`)                                                                           |
+| `AccountRow`        | `icon`                     | `icon`                        | `icon`                                                                                                       |
+| `AccountRow`        | `color`                    | `color`                       | `color`                                                                                                      |
+| `AccountRow`        | `sortOrder`                | `sort_order`                  | `sortOrder`                                                                                                  |
+| `AccountRow`        | `isArchived`               | `is_archived`                 | `isArchived`                                                                                                 |
+| `UserPreferenceRow` | `key` / `value`            | `key` / `value`               | N/A — Stream B exposes typed accessors at repo layer                                                         |
 
 ### 9.2 Constraints Stream A imposes on Stream B
 
 - **`amountMinorUnits` and `openingBalanceMinorUnits` are `int` everywhere** — Freezed model, domain model, controller, widget. No `double`, not even for display (display formatting is the M2 `money_formatter`'s job).
-- **`currency` is a `String` code at the Drift layer.** Stream B must decide: does the Freezed `Transaction` model carry a `String currencyCode` or a nested `Currency` object? Repositories (M3) will join if the latter. Stream A has no preference, but we need a contract (see §10).
+- **`currency` is a `String` code at the Drift layer.** Stream B's read-side Freezed models may hydrate nested `Currency` objects, but that repository join and write-signature policy is an M3 concern, not part of Stream A's M1 field-name contract.
 - **`type` on `CategoryRow` is `String` at the Drift layer.** Stream B is expected to wrap with an enum (e.g. `CategoryType.expense / income`). The **string values** stored in SQLite are `'expense'` / `'income'`. Changing the wire values later is a migration, not a refactor.
 - **`AccountRow` no longer has a `type` column.** The legacy TEXT enum (`'cash' | 'bank' | 'other'`) was replaced by an `accountTypeId` FK into the new `account_types` table (see §2.4–2.5). Stream B models `AccountType` as a **Freezed domain entity**, not an enum; seeded rows (`accountType.cash`, `accountType.investment`) are identified by `l10n_key` and users can add custom rows.
 - **Drift data-class names are `…Row` (except `Currency`).** Stream B's Freezed classes should **not** be suffixed — the whole point of `@DataClassName('TransactionRow')` is to keep the clean name `Transaction` reserved for the domain model.
@@ -508,9 +508,9 @@ If Stream B reaches for `json_serializable` with default `fieldRename` and expec
 
 Decisions needed from a human before Stream A merges (or in tandem with Stream B's first PR):
 
-1. **Transaction currency modeling in Freezed (Stream B).** ✅ **RESOLVED — hybrid.** `TransactionRepository` (M3) joins `currencies` on read and returns the Freezed `Transaction` with a nested `Currency` object. Write path (insert/update) accepts a `String currencyCode` — the form only knows the code the user picked from the picker; the repository resolves it to a FK before the DAO call. Stream A itself is unchanged: `transactions.currency` stays a `TEXT` FK at the DB.
+1. **Transaction currency modeling in Freezed (Stream B).** ✅ **RESOLVED — deferred to M3 repository design.** Stream A's M1 contract is only that `transactions.currency` is a `TEXT` FK to `currencies.code` and the Drift-side field name is `currency`. Whether repositories later expose a nested `Currency` on reads or scalar codes everywhere is decided in M3 alongside repository APIs.
 2. **`AccountType` Freezed contract.** ✅ **RESOLVED — confirmed.** `AccountType` is a Freezed domain entity (id, l10nKey, customName, defaultCurrency, icon, color, sortOrder, isArchived), not an enum. Seeded rows (`accountType.cash`, `accountType.investment`) identified by `l10n_key`; users can add custom rows. The legacy TEXT enum and its former `CHECK` constraint are obsolete.
-3. **`CategoryRow.type` check constraint.** ✅ **RESOLVED — (b) no SQL `CHECK`.** `CategoryRepository` (M3) enforces the `'expense' | 'income'` invariant via the `CategoryType` enum wire-value contract (see Stream C §4.1). **No third enum value will be added.** Phase 2 account transfers and wallet sync model direction as expense/income from the tracked account's perspective: transfer/inflow **into** the tracked account or wallet address = **income**; transfer/outflow **out of** the tracked account or wallet address = **expense**. This removes any future pressure to add a `'transfer'` type and keeps the schema stable — see updated PRD *transactions* notes and *Wallet Transaction Sync → Sync Flow*.
+3. **`CategoryRow.type` check constraint.** ✅ **RESOLVED — add SQL `CHECK(type IN ('expense','income'))`.** The allowed set is now permanently fixed and the column is already a closed enum at the product level, so v1 should enforce that invariant in the schema as well as in repository code. `CategoryRepository` still owns the separate rule that category `type` becomes immutable after first use.
 4. **Drift `created_at` / `updated_at` population.** ✅ **RESOLVED.** Both columns are **NOT NULL**. `TransactionRepository` (M3) sets `createdAt = updatedAt = DateTime.now()` on insert and updates only `updatedAt = DateTime.now()` on every update. DAO does not populate; Drift has no `clientDefault` (wouldn't fire for `UPDATE` anyway). Schema matches PRD §275–291 after PRD update.
 5. **Index on `categories(l10nKey)`.** ✅ **RESOLVED — no additional index.** SQLite's implicit UNIQUE index covers seed idempotency reads (once per cold launch on an empty DB). Same applies to the new `account_types.l10n_key` — implicit UNIQUE index is sufficient.
 6. **`UserPreferenceRow.value` format.** ✅ **RESOLVED — (a) always JSON.** Every `value` is JSON-encoded, including scalars: `bool true` stored as `"true"`, `String "light"` stored as `"\"light\""`, `int 7` stored as `"7"`. `UserPreferencesRepository` (M3) uses one `jsonDecode` path for all keys. Stream A's DAO stays agnostic; the table comment simply references this rule.
