@@ -26,10 +26,8 @@ import 'currencies_table.dart';
 @DataClassName('AccountTypeRow')
 class AccountTypes extends Table {
   IntColumn get id => integer().autoIncrement()();
-  TextColumn get l10nKey =>
-      text().named('l10n_key').nullable().unique()();
-  TextColumn get customName =>
-      text().named('custom_name').nullable()();
+  TextColumn get l10nKey => text().named('l10n_key').nullable().unique()();
+  TextColumn get customName => text().named('custom_name').nullable()();
   TextColumn get defaultCurrency => text()
       .named('default_currency')
       .nullable()
@@ -37,7 +35,6 @@ class AccountTypes extends Table {
   TextColumn get icon => text()();
   IntColumn get color => integer()();
   IntColumn get sortOrder => integer().named('sort_order').nullable()();
-  BoolColumn get isArchived => boolean()
-      .named('is_archived')
-      .withDefault(const Constant(false))();
+  BoolColumn get isArchived =>
+      boolean().named('is_archived').withDefault(const Constant(false))();
 }

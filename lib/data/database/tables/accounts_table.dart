@@ -18,18 +18,13 @@ import 'currencies_table.dart';
 /// - Tracked balance is **derived**, not stored. There is no
 ///   `current_balance` column.
 @DataClassName('AccountRow')
-@TableIndex(
-  name: 'accounts_account_type_idx',
-  columns: {#accountTypeId},
-)
+@TableIndex(name: 'accounts_account_type_idx', columns: {#accountTypeId})
 class Accounts extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text()();
-  IntColumn get accountTypeId => integer()
-      .named('account_type_id')
-      .references(AccountTypes, #id)();
-  TextColumn get currency =>
-      text().references(Currencies, #code)();
+  IntColumn get accountTypeId =>
+      integer().named('account_type_id').references(AccountTypes, #id)();
+  TextColumn get currency => text().references(Currencies, #code)();
 
   /// Integer minor units. Scaling factor is `currencies.decimals` —
   /// never a double. See `PRD.md` → Money Storage Policy and
@@ -40,7 +35,6 @@ class Accounts extends Table {
   TextColumn get icon => text().nullable()();
   IntColumn get color => integer().nullable()();
   IntColumn get sortOrder => integer().named('sort_order').nullable()();
-  BoolColumn get isArchived => boolean()
-      .named('is_archived')
-      .withDefault(const Constant(false))();
+  BoolColumn get isArchived =>
+      boolean().named('is_archived').withDefault(const Constant(false))();
 }

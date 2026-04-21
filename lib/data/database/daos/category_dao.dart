@@ -24,10 +24,10 @@ class CategoryDao extends DatabaseAccessor<AppDatabase>
     }
     query.orderBy([
       (c) => OrderingTerm(
-            expression: c.sortOrder,
-            mode: OrderingMode.asc,
-            nulls: NullsOrder.last,
-          ),
+        expression: c.sortOrder,
+        mode: OrderingMode.asc,
+        nulls: NullsOrder.last,
+      ),
       (c) => OrderingTerm(expression: c.id),
     ]);
     return query.watch();
@@ -37,15 +37,13 @@ class CategoryDao extends DatabaseAccessor<AppDatabase>
   /// the raw string `'expense'` or `'income'`.
   Stream<List<CategoryRow>> watchByType(String type) {
     return (select(categories)
-          ..where(
-            (c) => c.type.equals(type) & c.isArchived.equals(false),
-          )
+          ..where((c) => c.type.equals(type) & c.isArchived.equals(false))
           ..orderBy([
             (c) => OrderingTerm(
-                  expression: c.sortOrder,
-                  mode: OrderingMode.asc,
-                  nulls: NullsOrder.last,
-                ),
+              expression: c.sortOrder,
+              mode: OrderingMode.asc,
+              nulls: NullsOrder.last,
+            ),
             (c) => OrderingTerm(expression: c.id),
           ]))
         .watch();
@@ -57,24 +55,26 @@ class CategoryDao extends DatabaseAccessor<AppDatabase>
           ..where((c) => c.parentId.equals(parentId))
           ..orderBy([
             (c) => OrderingTerm(
-                  expression: c.sortOrder,
-                  mode: OrderingMode.asc,
-                  nulls: NullsOrder.last,
-                ),
+              expression: c.sortOrder,
+              mode: OrderingMode.asc,
+              nulls: NullsOrder.last,
+            ),
             (c) => OrderingTerm(expression: c.id),
           ]))
         .watch();
   }
 
   Future<CategoryRow?> findById(int id) {
-    return (select(categories)..where((c) => c.id.equals(id)))
-        .getSingleOrNull();
+    return (select(
+      categories,
+    )..where((c) => c.id.equals(id))).getSingleOrNull();
   }
 
   /// Used by M3 seed idempotency check.
   Future<CategoryRow?> findByL10nKey(String key) {
-    return (select(categories)..where((c) => c.l10nKey.equals(key)))
-        .getSingleOrNull();
+    return (select(
+      categories,
+    )..where((c) => c.l10nKey.equals(key))).getSingleOrNull();
   }
 
   Future<int> insert(CategoriesCompanion row) {

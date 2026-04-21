@@ -26,10 +26,8 @@ class Transactions extends Table {
   /// Integer minor units. Scaling factor is `currencies.decimals` —
   /// never a double. See `PRD.md` → Money Storage Policy and
   /// `CLAUDE.md` → Data-Model Invariants.
-  IntColumn get amountMinorUnits =>
-      integer().named('amount_minor_units')();
-  TextColumn get currency =>
-      text().references(Currencies, #code)();
+  IntColumn get amountMinorUnits => integer().named('amount_minor_units')();
+  TextColumn get currency => text().references(Currencies, #code)();
   IntColumn get categoryId =>
       integer().named('category_id').references(Categories, #id)();
   IntColumn get accountId =>

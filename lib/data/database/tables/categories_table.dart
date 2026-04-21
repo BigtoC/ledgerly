@@ -18,21 +18,16 @@ import 'package:drift/drift.dart';
 @TableIndex(name: 'categories_parent_idx', columns: {#parentId})
 class Categories extends Table {
   IntColumn get id => integer().autoIncrement()();
-  TextColumn get l10nKey =>
-      text().named('l10n_key').nullable().unique()();
-  TextColumn get customName =>
-      text().named('custom_name').nullable()();
+  TextColumn get l10nKey => text().named('l10n_key').nullable().unique()();
+  TextColumn get customName => text().named('custom_name').nullable()();
   TextColumn get icon => text()();
   IntColumn get color => integer()();
   TextColumn get type => text().customConstraint(
-        "NOT NULL CHECK (type IN ('expense', 'income'))",
-      )();
-  IntColumn get parentId => integer()
-      .named('parent_id')
-      .nullable()
-      .references(Categories, #id)();
+    "NOT NULL CHECK (type IN ('expense', 'income'))",
+  )();
+  IntColumn get parentId =>
+      integer().named('parent_id').nullable().references(Categories, #id)();
   IntColumn get sortOrder => integer().named('sort_order').nullable()();
-  BoolColumn get isArchived => boolean()
-      .named('is_archived')
-      .withDefault(const Constant(false))();
+  BoolColumn get isArchived =>
+      boolean().named('is_archived').withDefault(const Constant(false))();
 }

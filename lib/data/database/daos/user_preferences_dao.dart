@@ -29,9 +29,9 @@ class UserPreferencesDao extends DatabaseAccessor<AppDatabase>
 
   /// One-shot read. Returns `null` when the key is missing.
   Future<String?> read(String key) async {
-    final row = await (select(userPreferences)
-          ..where((p) => p.key.equals(key)))
-        .getSingleOrNull();
+    final row = await (select(
+      userPreferences,
+    )..where((p) => p.key.equals(key))).getSingleOrNull();
     return row?.value;
   }
 

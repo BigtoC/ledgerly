@@ -18,15 +18,14 @@ class AccountTypeDao extends DatabaseAccessor<AppDatabase>
   /// Watch every account type, **including archived rows**. Backs the
   /// settings / admin view.
   Stream<List<AccountTypeRow>> watchAll() {
-    return (select(accountTypes)
-          ..orderBy([
-            (t) => OrderingTerm(
-                  expression: t.sortOrder,
-                  mode: OrderingMode.asc,
-                  nulls: NullsOrder.last,
-                ),
-            (t) => OrderingTerm(expression: t.id),
-          ]))
+    return (select(accountTypes)..orderBy([
+          (t) => OrderingTerm(
+            expression: t.sortOrder,
+            mode: OrderingMode.asc,
+            nulls: NullsOrder.last,
+          ),
+          (t) => OrderingTerm(expression: t.id),
+        ]))
         .watch();
   }
 
@@ -37,25 +36,27 @@ class AccountTypeDao extends DatabaseAccessor<AppDatabase>
           ..where((t) => t.isArchived.equals(false))
           ..orderBy([
             (t) => OrderingTerm(
-                  expression: t.sortOrder,
-                  mode: OrderingMode.asc,
-                  nulls: NullsOrder.last,
-                ),
+              expression: t.sortOrder,
+              mode: OrderingMode.asc,
+              nulls: NullsOrder.last,
+            ),
             (t) => OrderingTerm(expression: t.id),
           ]))
         .watch();
   }
 
   Future<AccountTypeRow?> findById(int id) {
-    return (select(accountTypes)..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
+    return (select(
+      accountTypes,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   /// Used by M3 seed idempotency check for `accountType.cash` /
   /// `accountType.investment`.
   Future<AccountTypeRow?> findByL10nKey(String key) {
-    return (select(accountTypes)..where((t) => t.l10nKey.equals(key)))
-        .getSingleOrNull();
+    return (select(
+      accountTypes,
+    )..where((t) => t.l10nKey.equals(key))).getSingleOrNull();
   }
 
   Future<int> insert(AccountTypesCompanion row) {

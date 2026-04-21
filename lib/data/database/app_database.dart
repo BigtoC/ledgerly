@@ -58,14 +58,14 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) => m.createAll(),
-        onUpgrade: (m, from, to) async {
-          // MVP ships at v1; no upgrade steps exist. Phase 2 adds
-          // v1→v2 here (pending_transactions, wallet_addresses,
-          // exchange_rates, + token rows). Do NOT add v2 shapes in MVP.
-        },
-        beforeOpen: (details) async {
-          await customStatement('PRAGMA foreign_keys = ON');
-        },
-      );
+    onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      // MVP ships at v1; no upgrade steps exist. Phase 2 adds
+      // v1→v2 here (pending_transactions, wallet_addresses,
+      // exchange_rates, + token rows). Do NOT add v2 shapes in MVP.
+    },
+    beforeOpen: (details) async {
+      await customStatement('PRAGMA foreign_keys = ON');
+    },
+  );
 }

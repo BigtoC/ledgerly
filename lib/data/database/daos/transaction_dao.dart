@@ -21,14 +21,8 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
   Stream<List<TransactionRow>> watchAll({int limit = 10000}) {
     return (select(transactions)
           ..orderBy([
-            (t) => OrderingTerm(
-                  expression: t.date,
-                  mode: OrderingMode.desc,
-                ),
-            (t) => OrderingTerm(
-                  expression: t.id,
-                  mode: OrderingMode.desc,
-                ),
+            (t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc),
+            (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
           ])
           ..limit(limit))
         .watch();
@@ -36,24 +30,16 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
 
   /// Watch transactions whose `date` falls in the half-open range
   /// `[start, end)`. Used by month/day summaries.
-  Stream<List<TransactionRow>> watchByDateRange(
-    DateTime start,
-    DateTime end,
-  ) {
+  Stream<List<TransactionRow>> watchByDateRange(DateTime start, DateTime end) {
     return (select(transactions)
           ..where(
-            (t) => t.date.isBiggerOrEqualValue(start) &
+            (t) =>
+                t.date.isBiggerOrEqualValue(start) &
                 t.date.isSmallerThanValue(end),
           )
           ..orderBy([
-            (t) => OrderingTerm(
-                  expression: t.date,
-                  mode: OrderingMode.desc,
-                ),
-            (t) => OrderingTerm(
-                  expression: t.id,
-                  mode: OrderingMode.desc,
-                ),
+            (t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc),
+            (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
           ]))
         .watch();
   }
@@ -63,28 +49,24 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
     return (select(transactions)
           ..where((t) => t.accountId.equals(accountId))
           ..orderBy([
-            (t) => OrderingTerm(
-                  expression: t.date,
-                  mode: OrderingMode.desc,
-                ),
-            (t) => OrderingTerm(
-                  expression: t.id,
-                  mode: OrderingMode.desc,
-                ),
+            (t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc),
+            (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
           ]))
         .watch();
   }
 
   /// Watch a single transaction by id (Edit screen).
   Stream<TransactionRow?> watchById(int id) {
-    return (select(transactions)..where((t) => t.id.equals(id)))
-        .watchSingleOrNull();
+    return (select(
+      transactions,
+    )..where((t) => t.id.equals(id))).watchSingleOrNull();
   }
 
   /// One-shot read by id (e.g. duplicate flow).
   Future<TransactionRow?> findById(int id) {
-    return (select(transactions)..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
+    return (select(
+      transactions,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   /// Insert a new row. Returns the new `id`.
@@ -106,10 +88,11 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
   /// category type-lock check.
   Future<int> countByCategory(int categoryId) async {
     final countExp = transactions.id.count();
-    final row = await (selectOnly(transactions)
-          ..addColumns([countExp])
-          ..where(transactions.categoryId.equals(categoryId)))
-        .getSingle();
+    final row =
+        await (selectOnly(transactions)
+              ..addColumns([countExp])
+              ..where(transactions.categoryId.equals(categoryId)))
+            .getSingle();
     return row.read(countExp) ?? 0;
   }
 
@@ -117,10 +100,11 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
   /// account archive-vs-delete check.
   Future<int> countByAccount(int accountId) async {
     final countExp = transactions.id.count();
-    final row = await (selectOnly(transactions)
-          ..addColumns([countExp])
-          ..where(transactions.accountId.equals(accountId)))
-        .getSingle();
+    final row =
+        await (selectOnly(transactions)
+              ..addColumns([countExp])
+              ..where(transactions.accountId.equals(accountId)))
+            .getSingle();
     return row.read(countExp) ?? 0;
   }
 }

@@ -11,8 +11,7 @@ part 'account_dao.g.dart';
 /// resolution chain) live in `AccountRepository` (M3). This DAO
 /// returns Drift rows only.
 @DriftAccessor(tables: [Accounts])
-class AccountDao extends DatabaseAccessor<AppDatabase>
-    with _$AccountDaoMixin {
+class AccountDao extends DatabaseAccessor<AppDatabase> with _$AccountDaoMixin {
   AccountDao(super.db);
 
   /// Watch every account, optionally excluding archived rows.
@@ -23,10 +22,10 @@ class AccountDao extends DatabaseAccessor<AppDatabase>
     }
     query.orderBy([
       (a) => OrderingTerm(
-            expression: a.sortOrder,
-            mode: OrderingMode.asc,
-            nulls: NullsOrder.last,
-          ),
+        expression: a.sortOrder,
+        mode: OrderingMode.asc,
+        nulls: NullsOrder.last,
+      ),
       (a) => OrderingTerm(expression: a.id),
     ]);
     return query.watch();
@@ -37,23 +36,23 @@ class AccountDao extends DatabaseAccessor<AppDatabase>
   Stream<List<AccountRow>> watchByType(int accountTypeId) {
     return (select(accounts)
           ..where(
-            (a) => a.accountTypeId.equals(accountTypeId) &
+            (a) =>
+                a.accountTypeId.equals(accountTypeId) &
                 a.isArchived.equals(false),
           )
           ..orderBy([
             (a) => OrderingTerm(
-                  expression: a.sortOrder,
-                  mode: OrderingMode.asc,
-                  nulls: NullsOrder.last,
-                ),
+              expression: a.sortOrder,
+              mode: OrderingMode.asc,
+              nulls: NullsOrder.last,
+            ),
             (a) => OrderingTerm(expression: a.id),
           ]))
         .watch();
   }
 
   Future<AccountRow?> findById(int id) {
-    return (select(accounts)..where((a) => a.id.equals(id)))
-        .getSingleOrNull();
+    return (select(accounts)..where((a) => a.id.equals(id))).getSingleOrNull();
   }
 
   Future<int> insert(AccountsCompanion row) {
@@ -81,10 +80,11 @@ class AccountDao extends DatabaseAccessor<AppDatabase>
   /// settings/display use cases that want the actual count.
   Future<int> countByAccountType(int accountTypeId) async {
     final countExp = accounts.id.count();
-    final row = await (selectOnly(accounts)
-          ..addColumns([countExp])
-          ..where(accounts.accountTypeId.equals(accountTypeId)))
-        .getSingle();
+    final row =
+        await (selectOnly(accounts)
+              ..addColumns([countExp])
+              ..where(accounts.accountTypeId.equals(accountTypeId)))
+            .getSingle();
     return row.read(countExp) ?? 0;
   }
 }

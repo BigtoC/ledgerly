@@ -17,22 +17,22 @@ class CurrencyDao extends DatabaseAccessor<AppDatabase>
   /// Watch all currencies. Ordered by `sort_order` (NULLs last), then
   /// `code` ascending — the shape expected by currency pickers.
   Stream<List<Currency>> watchAll() {
-    return (select(currencies)
-          ..orderBy([
-            (c) => OrderingTerm(
-                  expression: c.sortOrder,
-                  mode: OrderingMode.asc,
-                  nulls: NullsOrder.last,
-                ),
-            (c) => OrderingTerm(expression: c.code),
-          ]))
+    return (select(currencies)..orderBy([
+          (c) => OrderingTerm(
+            expression: c.sortOrder,
+            mode: OrderingMode.asc,
+            nulls: NullsOrder.last,
+          ),
+          (c) => OrderingTerm(expression: c.code),
+        ]))
         .watch();
   }
 
   /// One-shot read by primary key.
   Future<Currency?> findByCode(String code) {
-    return (select(currencies)..where((c) => c.code.equals(code)))
-        .getSingleOrNull();
+    return (select(
+      currencies,
+    )..where((c) => c.code.equals(code))).getSingleOrNull();
   }
 
   /// Bulk upsert used by the M3 seed. Inserts with
