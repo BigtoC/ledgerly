@@ -116,3 +116,6 @@ layer-boundary rules.
 PRs must be green on the CI workflow at `.github/workflows/ci.yml`
 (analysis, lint, codegen, tests, Android debug build). iOS runs nightly
 via `.github/workflows/ios-nightly.yml`.
+
+## Reference:
+- Color codes: https://m3.material.io/styles/color/static/baseline#c9263303-f4ef-4a33-ad57-7d91dc736b6b
