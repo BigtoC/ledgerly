@@ -252,31 +252,31 @@ class TransactionDao extends DatabaseAccessor<AppDatabase> with _$TransactionDao
 
 ### 3.3 `CategoryDao` — `@DriftAccessor(tables: [Categories])`
 
-| Method                                                           | Return type                  | Notes                                                       |
-|------------------------------------------------------------------|------------------------------|-------------------------------------------------------------|
-| `Stream<List<CategoryRow>> watchAll({bool includeArchived = false})` | `Stream<List<CategoryRow>>` | Ordered by `sort_order NULLS LAST, id ASC`.                 |
-| `Stream<List<CategoryRow>> watchByType(String type)`            | `Stream<List<CategoryRow>>`  | `type` is `'expense'` or `'income'`. Non-archived.          |
-| `Stream<List<CategoryRow>> watchChildren(int parentId)`         | `Stream<List<CategoryRow>>`  | Subcategory list.                                           |
-| `Future<CategoryRow?> findById(int id)`                         | `Future<CategoryRow?>`       |                                                             |
-| `Future<CategoryRow?> findByL10nKey(String key)`                | `Future<CategoryRow?>`       | Used by M3 seed idempotency check.                          |
-| `Future<int> insert(CategoriesCompanion row)`                   | `Future<int>`                |                                                             |
-| `Future<bool> updateRow(CategoriesCompanion row)`               | `Future<bool>`               |                                                             |
-| `Future<int> deleteById(int id)`                                | `Future<int>`                | Repository decides hard-delete vs archive; DAO just deletes. |
-| `Future<int> archiveById(int id)`                               | `Future<int>`                | `UPDATE ... SET is_archived = 1`.                           |
+| Method                                                               | Return type                 | Notes                                                        |
+|----------------------------------------------------------------------|-----------------------------|--------------------------------------------------------------|
+| `Stream<List<CategoryRow>> watchAll({bool includeArchived = false})` | `Stream<List<CategoryRow>>` | Ordered by `sort_order NULLS LAST, id ASC`.                  |
+| `Stream<List<CategoryRow>> watchByType(String type)`                 | `Stream<List<CategoryRow>>` | `type` is `'expense'` or `'income'`. Non-archived.           |
+| `Stream<List<CategoryRow>> watchChildren(int parentId)`              | `Stream<List<CategoryRow>>` | Subcategory list.                                            |
+| `Future<CategoryRow?> findById(int id)`                              | `Future<CategoryRow?>`      |                                                              |
+| `Future<CategoryRow?> findByL10nKey(String key)`                     | `Future<CategoryRow?>`      | Used by M3 seed idempotency check.                           |
+| `Future<int> insert(CategoriesCompanion row)`                        | `Future<int>`               |                                                              |
+| `Future<bool> updateRow(CategoriesCompanion row)`                    | `Future<bool>`              |                                                              |
+| `Future<int> deleteById(int id)`                                     | `Future<int>`               | Repository decides hard-delete vs archive; DAO just deletes. |
+| `Future<int> archiveById(int id)`                                    | `Future<int>`               | `UPDATE ... SET is_archived = 1`.                            |
 
 ### 3.4 `AccountTypeDao` — `@DriftAccessor(tables: [AccountTypes])`
 
-| Method                                                                   | Return type                         | Notes                                                                                                |
-|--------------------------------------------------------------------------|-------------------------------------|------------------------------------------------------------------------------------------------------|
-| `Stream<List<AccountTypeRow>> watchAll()`                                | `Stream<List<AccountTypeRow>>`      | Ordered by `sort_order NULLS LAST, id ASC`. Includes archived — settings/admin view.                 |
-| `Stream<List<AccountTypeRow>> watchActive()`                             | `Stream<List<AccountTypeRow>>`      | `is_archived = 0`. Feeds the account-type picker in the Add/Edit Account form.                       |
-| `Future<AccountTypeRow?> findById(int id)`                               | `Future<AccountTypeRow?>`           |                                                                                                      |
-| `Future<AccountTypeRow?> findByL10nKey(String key)`                      | `Future<AccountTypeRow?>`           | M3 seed idempotency check for `accountType.cash` / `accountType.investment`.                         |
-| `Future<int> insert(AccountTypesCompanion row)`                          | `Future<int>`                       | Returns new `id`.                                                                                    |
-| `Future<bool> updateRow(AccountTypesCompanion row)`                      | `Future<bool>`                      | `replace(...)` — rename, icon/color/default-currency change.                                         |
-| `Future<int> archive(int id)`                                            | `Future<int>`                       | `UPDATE ... SET is_archived = 1`. Repository (M3) decides archive-vs-delete; DAO just flips the bit. |
-| `Future<int> deleteById(int id)`                                         | `Future<int>`                       | Hard-delete — repository restricts to unused custom rows.                                            |
-| `Future<bool> hasReferencingAccounts(int id)`                            | `Future<bool>`                      | `SELECT EXISTS(SELECT 1 FROM accounts WHERE account_type_id = ?)`. Required by `accounts_account_type_idx` (§2.7). Feeds the M3 archive-vs-delete decision. |
+| Method                                              | Return type                    | Notes                                                                                                                                                       |
+|-----------------------------------------------------|--------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Stream<List<AccountTypeRow>> watchAll()`           | `Stream<List<AccountTypeRow>>` | Ordered by `sort_order NULLS LAST, id ASC`. Includes archived — settings/admin view.                                                                        |
+| `Stream<List<AccountTypeRow>> watchActive()`        | `Stream<List<AccountTypeRow>>` | `is_archived = 0`. Feeds the account-type picker in the Add/Edit Account form.                                                                              |
+| `Future<AccountTypeRow?> findById(int id)`          | `Future<AccountTypeRow?>`      |                                                                                                                                                             |
+| `Future<AccountTypeRow?> findByL10nKey(String key)` | `Future<AccountTypeRow?>`      | M3 seed idempotency check for `accountType.cash` / `accountType.investment`.                                                                                |
+| `Future<int> insert(AccountTypesCompanion row)`     | `Future<int>`                  | Returns new `id`.                                                                                                                                           |
+| `Future<bool> updateRow(AccountTypesCompanion row)` | `Future<bool>`                 | `replace(...)` — rename, icon/color/default-currency change.                                                                                                |
+| `Future<int> archive(int id)`                       | `Future<int>`                  | `UPDATE ... SET is_archived = 1`. Repository (M3) decides archive-vs-delete; DAO just flips the bit.                                                        |
+| `Future<int> deleteById(int id)`                    | `Future<int>`                  | Hard-delete — repository restricts to unused custom rows.                                                                                                   |
+| `Future<bool> hasReferencingAccounts(int id)`       | `Future<bool>`                 | `SELECT EXISTS(SELECT 1 FROM accounts WHERE account_type_id = ?)`. Required by `accounts_account_type_idx` (§2.7). Feeds the M3 archive-vs-delete decision. |
 
 Scope note: M3-only business logic (e.g. "cannot hard-delete a seeded row", "must reassign accounts before delete") stays in `AccountTypeRepository`. This DAO exposes only the SQL primitives those rules compose from.
 
@@ -284,16 +284,16 @@ Scope note: M3-only business logic (e.g. "cannot hard-delete a seeded row", "mus
 
 Mirrors `CategoryDao`:
 
-| Method                                                              | Return type                 | Notes                                                                   |
-|---------------------------------------------------------------------|-----------------------------|-------------------------------------------------------------------------|
-| `Stream<List<AccountRow>> watchAll({bool includeArchived = false})` | `Stream<List<AccountRow>>`  |                                                                         |
-| `Stream<List<AccountRow>> watchByType(int accountTypeId)`           | `Stream<List<AccountRow>>`  | Accounts-grouped-by-type UI query. Uses `accounts_account_type_idx`.    |
-| `Future<AccountRow?> findById(int id)`                              | `Future<AccountRow?>`       |                                                                         |
-| `Future<int> insert(AccountsCompanion row)`                         | `Future<int>`               |                                                                         |
-| `Future<bool> updateRow(AccountsCompanion row)`                     | `Future<bool>`              |                                                                         |
-| `Future<int> deleteById(int id)`                                    | `Future<int>`               |                                                                         |
-| `Future<int> archiveById(int id)`                                   | `Future<int>`               |                                                                         |
-| `Future<int> countByAccountType(int accountTypeId)`                 | `Future<int>`               | Complement of `AccountTypeDao.hasReferencingAccounts` when counts are needed (e.g. settings display). |
+| Method                                                              | Return type                | Notes                                                                                                 |
+|---------------------------------------------------------------------|----------------------------|-------------------------------------------------------------------------------------------------------|
+| `Stream<List<AccountRow>> watchAll({bool includeArchived = false})` | `Stream<List<AccountRow>>` |                                                                                                       |
+| `Stream<List<AccountRow>> watchByType(int accountTypeId)`           | `Stream<List<AccountRow>>` | Accounts-grouped-by-type UI query. Uses `accounts_account_type_idx`.                                  |
+| `Future<AccountRow?> findById(int id)`                              | `Future<AccountRow?>`      |                                                                                                       |
+| `Future<int> insert(AccountsCompanion row)`                         | `Future<int>`              |                                                                                                       |
+| `Future<bool> updateRow(AccountsCompanion row)`                     | `Future<bool>`             |                                                                                                       |
+| `Future<int> deleteById(int id)`                                    | `Future<int>`              |                                                                                                       |
+| `Future<int> archiveById(int id)`                                   | `Future<int>`              |                                                                                                       |
+| `Future<int> countByAccountType(int accountTypeId)`                 | `Future<int>`              | Complement of `AccountTypeDao.hasReferencingAccounts` when counts are needed (e.g. settings display). |
 
 No `watchByCurrency` — not needed in MVP; grouping happens in the controller.
 
@@ -444,55 +444,55 @@ Stream B (Freezed domain models) is writing `lib/data/models/{currency,transacti
 
 ### 9.1 Field names Stream A commits to (Dart-side)
 
-| Drift data class    | Dart property              | SQL column                    | Stream B's Freezed field (expected)                                                                          |
-|---------------------|----------------------------|-------------------------------|--------------------------------------------------------------------------------------------------------------|
-| `Currency`          | `code`                     | `code`                        | `code`                                                                                                       |
-| `Currency`          | `decimals`                 | `decimals`                    | `decimals`                                                                                                   |
-| `Currency`          | `symbol`                   | `symbol`                      | `symbol`                                                                                                     |
-| `Currency`          | `nameL10nKey`              | `name_l10n_key`               | `nameL10nKey`                                                                                                |
-| `Currency`          | `isToken`                  | `is_token`                    | `isToken`                                                                                                    |
-| `Currency`          | `sortOrder`                | `sort_order`                  | `sortOrder`                                                                                                  |
-| `TransactionRow`    | `id`                       | `id`                          | `id`                                                                                                         |
-| `TransactionRow`    | `amountMinorUnits` (`int`) | `amount_minor_units`          | `amountMinorUnits` (`int`)                                                                                   |
-| `TransactionRow`    | `currency`                 | `currency`                    | `currency` — read-side Freezed model may hydrate nested `Currency`; write API decided in M3                  |
-| `TransactionRow`    | `categoryId`               | `category_id`                 | `categoryId`                                                                                                 |
-| `TransactionRow`    | `accountId`                | `account_id`                  | `accountId`                                                                                                  |
-| `TransactionRow`    | `memo`                     | `memo`                        | `memo`                                                                                                       |
-| `TransactionRow`    | `date`                     | `date`                        | `date`                                                                                                       |
-| `TransactionRow`    | `createdAt` / `updatedAt`  | `created_at` / `updated_at`   | `createdAt` / `updatedAt` — **NOT NULL** on both sides; repository populates                                 |
-| `CategoryRow`       | `id`                       | `id`                          | `id`                                                                                                         |
-| `CategoryRow`       | `l10nKey`                  | `l10n_key`                    | `l10nKey`                                                                                                    |
-| `CategoryRow`       | `customName`               | `custom_name`                 | `customName`                                                                                                 |
-| `CategoryRow`       | `icon`                     | `icon`                        | `icon`                                                                                                       |
-| `CategoryRow`       | `color` (`int`)            | `color`                       | `color` (`int` palette index)                                                                                |
-| `CategoryRow`       | `type` (`String`)          | `type`                        | `type` (enum — Stream B maps)                                                                                |
-| `CategoryRow`       | `parentId`                 | `parent_id`                   | `parentId`                                                                                                   |
-| `CategoryRow`       | `sortOrder`                | `sort_order`                  | `sortOrder`                                                                                                  |
-| `CategoryRow`       | `isArchived`               | `is_archived`                 | `isArchived`                                                                                                 |
-| `AccountTypeRow`    | `id`                       | `id`                          | `id`                                                                                                         |
-| `AccountTypeRow`    | `l10nKey`                  | `l10n_key`                    | `l10nKey`                                                                                                    |
-| `AccountTypeRow`    | `customName`               | `custom_name`                 | `customName`                                                                                                 |
-| `AccountTypeRow`    | `defaultCurrency`          | `default_currency`            | `defaultCurrency` — read-side Freezed model may hydrate nullable nested `Currency?`; write API decided in M3 |
-| `AccountTypeRow`    | `icon`                     | `icon`                        | `icon`                                                                                                       |
-| `AccountTypeRow`    | `color` (`int`)            | `color`                       | `color` (`int` palette index)                                                                                |
-| `AccountTypeRow`    | `sortOrder`                | `sort_order`                  | `sortOrder`                                                                                                  |
-| `AccountTypeRow`    | `isArchived`               | `is_archived`                 | `isArchived`                                                                                                 |
-| `AccountRow`        | `id`                       | `id`                          | `id`                                                                                                         |
-| `AccountRow`        | `name`                     | `name`                        | `name`                                                                                                       |
-| ~~`AccountRow`~~    | ~~`type` (`String`)~~      | ~~`type`~~                    | ~~enum — replaced by `accountTypeId` FK below~~                                                              |
-| `AccountRow`        | `accountTypeId` (`int`)    | `account_type_id`             | `accountTypeId` (`int` FK → `AccountType.id`)                                                                |
-| `AccountRow`        | `currency`                 | `currency`                    | `currency` — read-side Freezed model may hydrate nested `Currency`; write API decided in M3                  |
-| `AccountRow`        | `openingBalanceMinorUnits` | `opening_balance_minor_units` | `openingBalanceMinorUnits` (`int`)                                                                           |
-| `AccountRow`        | `icon`                     | `icon`                        | `icon`                                                                                                       |
-| `AccountRow`        | `color`                    | `color`                       | `color`                                                                                                      |
-| `AccountRow`        | `sortOrder`                | `sort_order`                  | `sortOrder`                                                                                                  |
-| `AccountRow`        | `isArchived`               | `is_archived`                 | `isArchived`                                                                                                 |
-| `UserPreferenceRow` | `key` / `value`            | `key` / `value`               | N/A — Stream B exposes typed accessors at repo layer                                                         |
+| Drift data class    | Dart property              | SQL column                    | Stream B's Freezed field (expected)                                          |
+|---------------------|----------------------------|-------------------------------|------------------------------------------------------------------------------|
+| `Currency`          | `code`                     | `code`                        | `code`                                                                       |
+| `Currency`          | `decimals`                 | `decimals`                    | `decimals`                                                                   |
+| `Currency`          | `symbol`                   | `symbol`                      | `symbol`                                                                     |
+| `Currency`          | `nameL10nKey`              | `name_l10n_key`               | `nameL10nKey`                                                                |
+| `Currency`          | `isToken`                  | `is_token`                    | `isToken`                                                                    |
+| `Currency`          | `sortOrder`                | `sort_order`                  | `sortOrder`                                                                  |
+| `TransactionRow`    | `id`                       | `id`                          | `id`                                                                         |
+| `TransactionRow`    | `amountMinorUnits` (`int`) | `amount_minor_units`          | `amountMinorUnits` (`int`)                                                   |
+| `TransactionRow`    | `currency`                 | `currency`                    | `currency` — Freezed domain model uses `Currency`                            |
+| `TransactionRow`    | `categoryId`               | `category_id`                 | `categoryId`                                                                 |
+| `TransactionRow`    | `accountId`                | `account_id`                  | `accountId`                                                                  |
+| `TransactionRow`    | `memo`                     | `memo`                        | `memo`                                                                       |
+| `TransactionRow`    | `date`                     | `date`                        | `date`                                                                       |
+| `TransactionRow`    | `createdAt` / `updatedAt`  | `created_at` / `updated_at`   | `createdAt` / `updatedAt` — **NOT NULL** on both sides; repository populates |
+| `CategoryRow`       | `id`                       | `id`                          | `id`                                                                         |
+| `CategoryRow`       | `l10nKey`                  | `l10n_key`                    | `l10nKey`                                                                    |
+| `CategoryRow`       | `customName`               | `custom_name`                 | `customName`                                                                 |
+| `CategoryRow`       | `icon`                     | `icon`                        | `icon`                                                                       |
+| `CategoryRow`       | `color` (`int`)            | `color`                       | `color` (`int` palette index)                                                |
+| `CategoryRow`       | `type` (`String`)          | `type`                        | `type` (enum — Stream B maps)                                                |
+| `CategoryRow`       | `parentId`                 | `parent_id`                   | `parentId`                                                                   |
+| `CategoryRow`       | `sortOrder`                | `sort_order`                  | `sortOrder`                                                                  |
+| `CategoryRow`       | `isArchived`               | `is_archived`                 | `isArchived`                                                                 |
+| `AccountTypeRow`    | `id`                       | `id`                          | `id`                                                                         |
+| `AccountTypeRow`    | `l10nKey`                  | `l10n_key`                    | `l10nKey`                                                                    |
+| `AccountTypeRow`    | `customName`               | `custom_name`                 | `customName`                                                                 |
+| `AccountTypeRow`    | `defaultCurrency`          | `default_currency`            | `defaultCurrency` — Freezed domain model uses nullable `Currency?`           |
+| `AccountTypeRow`    | `icon`                     | `icon`                        | `icon`                                                                       |
+| `AccountTypeRow`    | `color` (`int`)            | `color`                       | `color` (`int` palette index)                                                |
+| `AccountTypeRow`    | `sortOrder`                | `sort_order`                  | `sortOrder`                                                                  |
+| `AccountTypeRow`    | `isArchived`               | `is_archived`                 | `isArchived`                                                                 |
+| `AccountRow`        | `id`                       | `id`                          | `id`                                                                         |
+| `AccountRow`        | `name`                     | `name`                        | `name`                                                                       |
+| ~~`AccountRow`~~    | ~~`type` (`String`)~~      | ~~`type`~~                    | ~~enum — replaced by `accountTypeId` FK below~~                              |
+| `AccountRow`        | `accountTypeId` (`int`)    | `account_type_id`             | `accountTypeId` (`int` FK → `AccountType.id`)                                |
+| `AccountRow`        | `currency`                 | `currency`                    | `currency` — Freezed domain model uses `Currency`                            |
+| `AccountRow`        | `openingBalanceMinorUnits` | `opening_balance_minor_units` | `openingBalanceMinorUnits` (`int`)                                           |
+| `AccountRow`        | `icon`                     | `icon`                        | `icon`                                                                       |
+| `AccountRow`        | `color`                    | `color`                       | `color`                                                                      |
+| `AccountRow`        | `sortOrder`                | `sort_order`                  | `sortOrder`                                                                  |
+| `AccountRow`        | `isArchived`               | `is_archived`                 | `isArchived`                                                                 |
+| `UserPreferenceRow` | `key` / `value`            | `key` / `value`               | N/A — Stream B exposes typed accessors at repo layer                         |
 
 ### 9.2 Constraints Stream A imposes on Stream B
 
 - **`amountMinorUnits` and `openingBalanceMinorUnits` are `int` everywhere** — Freezed model, domain model, controller, widget. No `double`, not even for display (display formatting is the M2 `money_formatter`'s job).
-- **`currency` is a `String` code at the Drift layer.** Stream B's read-side Freezed models may hydrate nested `Currency` objects, but that repository join and write-signature policy is an M3 concern, not part of Stream A's M1 field-name contract.
+- **`currency` is a `String` code at the Drift layer.** On the Freezed side, the corresponding domain-model fields use `Currency` / `Currency?`. Repository API details are not part of Stream A's M1 field-name contract.
 - **`type` on `CategoryRow` is `String` at the Drift layer.** Stream B is expected to wrap with an enum (e.g. `CategoryType.expense / income`). The **string values** stored in SQLite are `'expense'` / `'income'`. Changing the wire values later is a migration, not a refactor.
 - **`AccountRow` no longer has a `type` column.** The legacy TEXT enum (`'cash' | 'bank' | 'other'`) was replaced by an `accountTypeId` FK into the new `account_types` table (see §2.4–2.5). Stream B models `AccountType` as a **Freezed domain entity**, not an enum; seeded rows (`accountType.cash`, `accountType.investment`) are identified by `l10n_key` and users can add custom rows.
 - **Drift data-class names are `…Row` (except `Currency`).** Stream B's Freezed classes should **not** be suffixed — the whole point of `@DataClassName('TransactionRow')` is to keep the clean name `Transaction` reserved for the domain model.
@@ -508,7 +508,7 @@ If Stream B reaches for `json_serializable` with default `fieldRename` and expec
 
 Decisions needed from a human before Stream A merges (or in tandem with Stream B's first PR):
 
-1. **Transaction currency modeling in Freezed (Stream B).** ✅ **RESOLVED — deferred to M3 repository design.** Stream A's M1 contract is only that `transactions.currency` is a `TEXT` FK to `currencies.code` and the Drift-side field name is `currency`. Whether repositories later expose a nested `Currency` on reads or scalar codes everywhere is decided in M3 alongside repository APIs.
+1. **Transaction currency modeling in Freezed (Stream B).** ✅ **RESOLVED — Stream B uses `Currency` / `Currency?` on the domain-model side.** Stream A's M1 contract remains that `transactions.currency` is a `TEXT` FK to `currencies.code` and the Drift-side field name is `currency`.
 2. **`AccountType` Freezed contract.** ✅ **RESOLVED — confirmed.** `AccountType` is a Freezed domain entity (id, l10nKey, customName, defaultCurrency, icon, color, sortOrder, isArchived), not an enum. Seeded rows (`accountType.cash`, `accountType.investment`) identified by `l10n_key`; users can add custom rows. The legacy TEXT enum and its former `CHECK` constraint are obsolete.
 3. **`CategoryRow.type` check constraint.** ✅ **RESOLVED — add SQL `CHECK(type IN ('expense','income'))`.** The allowed set is now permanently fixed and the column is already a closed enum at the product level, so v1 should enforce that invariant in the schema as well as in repository code. `CategoryRepository` still owns the separate rule that category `type` becomes immutable after first use.
 4. **Drift `created_at` / `updated_at` population.** ✅ **RESOLVED.** Both columns are **NOT NULL**. `TransactionRepository` (M3) sets `createdAt = updatedAt = DateTime.now()` on insert and updates only `updatedAt = DateTime.now()` on every update. DAO does not populate; Drift has no `clientDefault` (wouldn't fire for `UPDATE` anyway). Schema matches PRD §275–291 after PRD update.
