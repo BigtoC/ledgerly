@@ -110,7 +110,7 @@ class Categories extends Table {
   TextColumn get icon => text()();                            // string key → icon_registry
   IntColumn get color => integer()();                         // index into color_palette
   TextColumn get type =>
-      text().customConstraint("CHECK (type IN ('expense', 'income'))")();
+      text().customConstraint("NOT NULL CHECK (type IN ('expense', 'income'))")();
   IntColumn get parentId =>
       integer().named('parent_id').nullable()
         .references(Categories, #id)();                       // self-FK, nullable root
@@ -306,7 +306,7 @@ No `watchByCurrency` — not needed in MVP; grouping happens in the controller.
 | `Stream<List<UserPreferenceRow>> watchAll()`           | `Stream<List<UserPreferenceRow>>`       | Debug / settings bulk read.                      |
 | `Future<String?> read(String key)`                     | `Future<String?>`                       | One-shot.                                        |
 | `Future<void> write(String key, String value)`         | `Future<void>`                          | `insertOnConflictUpdate` — upsert on PK `key`.   |
-| `Future<int> delete(String key)`                       | `Future<int>`                           |                                                  |
+| `Future<int> deleteByKey(String key)`                  | `Future<int>`                           | Renamed from `delete` — `DatabaseAccessor.delete<T>(TableInfo)` would shadow. |
 
 ### 3.7 Return-type rule (non-negotiable)
 
