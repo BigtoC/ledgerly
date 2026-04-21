@@ -112,7 +112,6 @@ abstract class Category with _$Category {
     required CategoryType type,   // Immutable after first referencing tx (M3).
     String? l10nKey,              // Stable identity for seeded rows.
     String? customName,           // User override of the localized name.
-    int? parentId,                // Self-FK for subcategories. Nullable root.
     int? sortOrder,
     @Default(false) bool isArchived,
   }) = _Category;
