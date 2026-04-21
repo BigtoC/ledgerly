@@ -125,6 +125,7 @@ lib/
       tables/
         transactions_table.dart
         categories_table.dart
+        account_types_table.dart
         accounts_table.dart
         currencies_table.dart
         user_preferences_table.dart
@@ -134,6 +135,7 @@ lib/
       daos/
         transaction_dao.dart
         category_dao.dart
+        account_type_dao.dart
         account_dao.dart
         currency_dao.dart
         user_preferences_dao.dart
@@ -148,6 +150,7 @@ lib/
     repositories/
       transaction_repository.dart
       category_repository.dart
+      account_type_repository.dart
       account_repository.dart
       currency_repository.dart
       user_preferences_repository.dart
@@ -158,6 +161,7 @@ lib/
     models/                                # Freezed domain models
       transaction.dart
       category.dart
+      account_type.dart
       account.dart
       currency.dart
       pending_transaction.dart             # Phase 2

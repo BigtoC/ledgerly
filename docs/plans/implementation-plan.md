@@ -112,12 +112,12 @@ M0 lint + CI + folder skeleton
 **Goal:** Drift schema v1 compiles, DAOs work, Freezed domain models exist, service stubs are usable.
 
 **Deliverables**
-- All MVP tables in `data/database/tables/` — `currencies`, `transactions`, `categories`, `accounts`, `user_preferences` — with the columns and constraints in `PRD.md` → *Database Schema*.
+- All MVP tables in `data/database/tables/` — `currencies`, `transactions`, `categories`, `account_types`, `accounts`, `user_preferences` — with the columns and constraints in `PRD.md` → *Database Schema*.
 - `AppDatabase` declares `schemaVersion = 1`.
 - First schema snapshot committed to `drift_schemas/drift_schema_v1.json` (from `drift_dev schema dump`).
 - Per-entity DAOs in `data/database/daos/`: thin SQL wrappers only, no business rules.
-- Freezed domain models in `data/models/`: `Transaction`, `Category`, `Account`, `Currency`. Amount fields typed `int`, not `double`.
-- `LocaleService` in `data/services/`: thin wrapper that returns `Platform.localeName` so bootstrap can seed `default_currency` from the actual device locale from day 1.
+- Freezed domain models in `data/models/`: `Transaction`, `Category`, `AccountType`, `Account`, `Currency`. Amount fields typed `int`, not `double`.
+- `LocaleService` in `data/services/`: thin wrapper that exposes `Platform.localeName`. The locale-to-currency lookup policy itself lands with the M3 seed / M4 bootstrap path, where the seeded currency set is available.
 
 **Exit criteria**
 - `flutter test` passes (no behavioural tests yet; compilation only).
@@ -126,12 +126,12 @@ M0 lint + CI + folder skeleton
 
 **Parallel window**
 
-| Stream                                 | Owner        | Deliverables                                       |
-|----------------------------------------|--------------|----------------------------------------------------|
-| A: Drift tables + DAOs + `AppDatabase` | Data         | tables/, daos/, app_database.dart, schema snapshot |
-| B: Freezed domain models               | Data or Core | data/models/*.dart                                 |
+| Stream                                     | Owner        | Deliverables                                       |
+|--------------------------------------------|--------------|----------------------------------------------------|
+| A: Drift tables + DAOs + `AppDatabase`     | Data         | tables/, daos/, app_database.dart, schema snapshot |
+| B: Freezed domain models + `LocaleService` | Data or Core | data/models/*.dart, locale_service.dart            |
 
-**Critical sync:** Agree field names between Drift tables and Freezed models on **day 1**. A 30-minute sync captured as a comment block in `data/models/README.md` (or similar). Without that, regeneration churn cascades into M2 formatters and M3 seeds.
+**Critical sync:** Agree field names between Drift tables and Freezed models on **day 1** in `docs/plans/m1-data-foundations/stream-c-field-name-contract.md`. Without that, regeneration churn cascades into M2 formatters and M3 seeds.
 
 ---
 
@@ -172,6 +172,7 @@ Stream B must not start its seed icon/color choices until the `Category` domain 
 - All MVP repositories in `data/repositories/`:
   - `transaction_repository.dart`
   - `category_repository.dart`
+  - `account_type_repository.dart`
   - `account_repository.dart`
   - `currency_repository.dart`
   - `user_preferences_repository.dart`
@@ -181,14 +182,16 @@ Stream B must not start its seed icon/color choices until the `Category` domain 
   - Drift → Freezed mapping inside the repository. Drift types do not escape.
 - Business rules enforced inside repositories:
   - Category `type` locked after first referencing transaction.
+  - Account types archive-instead-of-delete once any account references them.
   - Archive-instead-of-delete for categories/accounts with references.
   - Integer minor-unit math on every amount.
   - Currency FK integrity on every insert.
 - First-run seed routine (idempotent, callable from `bootstrap.dart`):
   - Seeds `currencies` with USD, EUR, JPY, TWD, CNY, HKD, GBP.
   - Seeds every default category from `PRD.md` → *Default Categories* using stable `l10n_key`s.
-  - Seeds one `Cash` account with `opening_balance_minor_units = 0`.
-  - Resolves `default_currency` via `LocaleService` (falls back to USD).
+  - Seeds default account types `accountType.cash` and `accountType.investment`.
+  - Seeds one `Cash` account of type `accountType.cash` with `opening_balance_minor_units = 0`.
+  - Resolves `default_currency` from `LocaleService.deviceLocale`, falling back to USD when the locale does not map to a seeded currency.
 - Migration test harness exists (even with only v1 defined) — Phase 2 inherits it without retrofitting.
 
 **Exit criteria**
@@ -199,11 +202,11 @@ Stream B must not start its seed icon/color choices until the `Category` domain 
 
 **Parallel window**
 
-| Stream                                                              | Owner | Deliverables                 |
-|---------------------------------------------------------------------|-------|------------------------------|
-| A: `transaction_repository` + `category_repository`                 | Data  | repos + rule tests           |
-| B: `account_repository` + `currency_repository`                     | Data  | repos + rule tests           |
-| C: `user_preferences_repository` + seed routine + migration harness | Data  | repo + seed module + harness |
+| Stream                                                                      | Owner | Deliverables                 |
+|-----------------------------------------------------------------------------|-------|------------------------------|
+| A: `transaction_repository` + `category_repository`                         | Data  | repos + rule tests           |
+| B: `account_type_repository` + `account_repository` + `currency_repository` | Data  | repos + rule tests           |
+| C: `user_preferences_repository` + seed routine + migration harness         | Data  | repo + seed module + harness |
 
 Streams overlap the same Drift transaction API — merge within a tight window (same week, ideally same PR stack) to avoid rebase churn.
 
