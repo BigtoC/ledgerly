@@ -103,7 +103,12 @@ Downstream consumers (Stream A, Stream C, the M5 Accounts / Settings slices) wil
 
 ### 1.1 `lib/data/repositories/currency_repository.dart`
 
-**Scope disclaimer.** `CurrencyRepository` is **read-mostly in MVP.** The only write path exercised in MVP is `upsert`, which the first-run seed (Stream C) calls for USD / EUR / JPY / TWD / CNY / HKD / GBP. Phase 2 reuses `upsert` for token registration (ETH, USDC, USDT, …). No `delete`, no `archive`, no `rename` in MVP — `currencies` has no `is_archived` column (PRD 263–278) and rename is a Phase 2 concern. The test plan in §6.1 reflects this honestly.
+**Scope disclaimer.** `CurrencyRepository` is **read-mostly in MVP.** Two write paths exist:
+
+- `upsert` — used by the first-run seed (Stream C) for the eleven seeded fiats (USD / EUR / JPY / TWD / CNY / HKD / GBP / CAD / SGD / AUD / NZD) and reused by Phase 2 for token registration (ETH, USDC, USDT, …).
+- `updateCustomName` — user-facing rename (Stream C §12 Q7, 2026-04-22). Writes only the `custom_name` column; leaves `name_l10n_key` untouched so locale changes do not duplicate or orphan rows. Same G7 rename pattern as `categories` / `account_types`.
+
+No `delete`, no `archive` — `currencies` has no `is_archived` column (PRD 263–278). The test plan in §6.1 reflects this.
 
 ```dart
 import '../models/currency.dart';
@@ -398,6 +403,7 @@ Currency _toDomain(drift.Currency row) => Currency(
       decimals: row.decimals,
       symbol: row.symbol,
       nameL10nKey: row.nameL10nKey,
+      customName: row.customName,
       isToken: row.isToken,
       sortOrder: row.sortOrder,
     );
@@ -408,6 +414,9 @@ drift.CurrenciesCompanion _toCompanion(Currency currency) =>
       decimals: Value(currency.decimals),
       symbol: Value(currency.symbol),
       nameL10nKey: Value(currency.nameL10nKey),
+      // `customName` is deliberately omitted from the upsert companion —
+      // `upsert` preserves user renames. `updateCustomName` is the only
+      // path that writes this column; see §3.8 and §1.1 dartdoc.
       isToken: Value(currency.isToken),
       sortOrder: Value(currency.sortOrder),
     );
@@ -668,7 +677,8 @@ One rule per subsection, with the enforcement point, the PRD cite, and the test 
 ### 3.10 `CurrencyRepository` is MVP read-mostly — documented
 
 - **PRD cite:** lines 263–278. `currencies` has no `is_archived` column, no deletion flow. MVP does not ship `delete` or `archive` on this repo.
-- **Enforcement:** the `CurrencyRepository` interface in §1.1 exposes only `watchAll`, `getByCode`, `upsert`. No TODO comments for Phase-2 methods in MVP — adding them later is additive and safe.
+- **Enforcement:** the `CurrencyRepository` interface in §1.1 exposes `watchAll`, `getByCode`, `upsert`, and `updateCustomName`. `updateCustomName` is the user-rename seam added per Stream C §12 Q7 (2026-04-22) — it writes only the `custom_name` column. No other user-facing writes ship in MVP.
+- **Seed vs user-rename split.** `upsert` and `updateCustomName` are deliberately separate so the seed's idempotent re-runs do not stomp user renames: `upsert` touches every seeded column except `custom_name`, `updateCustomName` touches only `custom_name`. Tested by CR08 (upsert preserves custom_name) and the new CR11 (updateCustomName leaves other columns untouched).
 - **Phase 2 future-proofing:** `upsert` is deliberately generic enough to serve Phase 2 token registration. `watchAll({includeTokens: true})` is the Phase-2 switch; MVP callers never pass `true`.
 
 ---
@@ -777,6 +787,8 @@ Minimum coverage below. Implementer may add more — none may be removed.
 | CR06 | `upsert(USD)` twice is idempotent                                     | `upsert`             | Second call succeeds; `watchAll` emits `[USD]` both times (no duplicate)                                         | §3.8      |
 | CR07 | `upsert` does NOT mutate `decimals` on an existing code               | `upsert`             | Upsert USD with decimals=2, then upsert USD with decimals=4 → throws `CurrencyDecimalsMismatchException`         | §3.8      |
 | CR08 | `upsert` updates symbol / nameL10nKey on an existing code             | `upsert`             | Upsert USD symbol `$`, then upsert USD symbol `US$` (same decimals) → second `watchAll` snapshot shows `US$`     | §3.8      |
+| CR08b | `upsert` preserves `customName` on an existing code                  | `upsert`             | Upsert USD → `updateCustomName('USD', 'My Dollar')` → re-run `upsert(USD)` → `watchAll` snapshot still shows `customName == 'My Dollar'` | §3.10, Stream C §12 Q7 |
+| CR11 | `updateCustomName` writes only `custom_name`, leaves other columns untouched | `updateCustomName` | Upsert USD (decimals=2, symbol=`$`, nameL10nKey=`currency.usd`); `updateCustomName('USD', 'Dollar')` → round-trip shows `customName == 'Dollar'` and every other field unchanged; then `updateCustomName('USD', null)` → `customName == null`; `updateCustomName('XYZ', 'x')` throws `CurrencyNotFoundException`; empty string / whitespace normalized to null | §1.1, §3.10, Stream C §12 Q7 |
 | CR09 | `upsert` preserves `sortOrder` when new value is null                 | `upsert`             | Upsert USD sortOrder=1, then upsert USD sortOrder=null → row keeps sortOrder=1                                   | §3.8      |
 | CR10 | Drift data class is never returned                                    | All                  | Assert-on-type: `expect(result, isA<Currency>())` where `Currency` is the Freezed model (structural)             | §1.5.2    |
 
@@ -926,7 +938,7 @@ Direct mapping to `docs/plans/implementation-plan.md` §5 M3 exit criteria, scop
 - [ ] Archive-instead-of-delete covered (AC10, AT11).
 - [ ] Reactive stream emissions on insert / update / delete covered (CR02, AT15, AC15).
 - [ ] Currency FK enforcement covered (AC03, AT03) — the master plan's required "currency FK enforcement" case.
-- [ ] `CurrencyRepository` documented as read-mostly in the repo file's class dartdoc; only `watchAll` / `getByCode` / `upsert` exposed.
+- [ ] `CurrencyRepository` documented as read-mostly in the repo file's class dartdoc; exposes `watchAll`, `getByCode`, `upsert`, and `updateCustomName` (seed + user-rename seams split per Stream C §12 Q7 / Stream B §3.10). No `delete` / `archive`.
 - [ ] `lib/data/repositories/account_type_repository.dart` exists (created in B0, implemented in B2).
 - [ ] `lib/data/repositories/repository_exceptions.dart` exists with `RepositoryException` + 5 subclasses; Stream A and Stream C import it without edits from Stream B.
 - [ ] `flutter analyze` clean on the branch.
