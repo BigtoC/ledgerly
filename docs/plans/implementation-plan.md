@@ -146,6 +146,7 @@ M0 lint + CI + folder skeleton
 - `core/utils/date_helpers.dart` — day-boundary math, locale-aware formatting, splash day-count helper per `PRD.md` → *Splash Screen*.
 - `core/theme/app_theme.dart` + `color_schemes.dart` — `lightTheme` / `darkTheme` via `ColorScheme.fromSeed()`.
 - `l10n/app_{en,zh_TW,zh_CN}.arb` — populated with seeded-category `l10n_key`s, splash defaults (`splash.enter`, `splash.sinceDate`), and any shared UI labels the screens will need.
+- Runtime locale fallback policy for Chinese locales is frozen so the minimal `l10n/app_zh.arb` codegen fallback remains safe.
 
 **Exit criteria**
 - `test/unit/utils/money_formatter_test.dart` covers 4 currencies × (positive / negative / zero).
@@ -221,11 +222,13 @@ Streams overlap the same Drift transaction API — merge within a tight window (
   1. `WidgetsFlutterBinding.ensureInitialized()`
   2. Open `AppDatabase`
   3. Initialize `LocaleService`
-  4. Read `user_preferences`
-  5. First-run seed (idempotent)
-  6. Build `ProviderScope` overrides injecting the opened DB
-  7. `runApp`
+  4. Initialize locale data for the active locale and the three MVP locales (`en_US`, `zh_TW`, `zh_CN`)
+  5. Read `user_preferences`
+  6. First-run seed (idempotent)
+  7. Build `ProviderScope` overrides injecting the opened DB
+  8. `runApp`
 - `app/app.dart` wires `MaterialApp.router`, theme provider watching `user_preferences`, and locale provider.
+- `app/app.dart` also wires the locale resolution policy for Chinese locales: Traditional Chinese locales resolve to `zh_TW`, Simplified Chinese locales resolve to `zh_CN`, and ambiguous Chinese locales fall back to English.
 - `app/router.dart` defines the route tree from `PRD.md` → *Routing Structure*:
   - `StatefulShellRoute` for Home / Accounts / Settings
   - Root `redirect:` on `splash_enabled`
@@ -256,7 +259,7 @@ Six slices, each a self-contained folder under `features/`:
 | **Splash**                  | Day counter, hnotes-style visual, date-picker redirect when unconfigured. Golden tests mandatory.                                   | `user_preferences_repository`, `date_helpers`                                                             | All others            |
 | **Home**                    | Currency-grouped summary strip, sliver day list, FAB, swipe-to-delete + undo, duplicate entry point, pending badge (Phase 2 stub).  | `transaction_repository`, `money_formatter`                                                               | All others            |
 | **Transactions (Add/Edit)** | Full-screen modal, calculator keypad, expense/income toggle, category picker, account selector, memo, date, duplicate-prefill flow. | `transaction_repository`, `category_repository`, `account_repository`, **shared `CategoryPicker` widget** | All others            |
-| **Categories**              | List by type, add/edit/archive/reorder, subcategory management.                                                                     | `category_repository`, `icon_registry`, `color_palette`                                                   | All others            |
+| **Categories**              | List by type, add/edit/archive/reorder.                                                                                             | `category_repository`, `icon_registry`, `color_palette`                                                   | All others            |
 | **Accounts**                | List with native-currency balances, add account, set default, archive.                                                              | `account_repository`, `currency_repository`                                                               | All others            |
 | **Settings**                | Theme, language, default account, default currency, splash settings, manage categories entry.                                       | `user_preferences_repository`, theme provider                                                             | All others            |
 

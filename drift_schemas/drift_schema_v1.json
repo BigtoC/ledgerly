@@ -169,32 +169,6 @@
             "dsl_features": []
           },
           {
-            "name": "parent_id",
-            "getter_name": "parentId",
-            "moor_type": "int",
-            "nullable": true,
-            "customConstraints": null,
-            "defaultConstraints": "REFERENCES categories (id)",
-            "dialectAwareDefaultConstraints": {
-              "sqlite": "REFERENCES categories (id)"
-            },
-            "default_dart": null,
-            "default_client_dart": null,
-            "dsl_features": [
-              {
-                "foreign_key": {
-                  "to": {
-                    "table": "categories",
-                    "column": "id"
-                  },
-                  "initially_deferred": false,
-                  "on_update": null,
-                  "on_delete": null
-                }
-              }
-            ]
-          },
-          {
             "name": "sort_order",
             "getter_name": "sortOrder",
             "moor_type": "int",
@@ -750,22 +724,6 @@
     },
     {
       "id": 9,
-      "references": [
-        1
-      ],
-      "type": "index",
-      "data": {
-        "on": 1,
-        "name": "categories_parent_idx",
-        "sql": null,
-        "unique": false,
-        "columns": [
-          "parent_id"
-        ]
-      }
-    },
-    {
-      "id": 10,
       "references": [
         3
       ],

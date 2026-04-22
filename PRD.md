@@ -18,8 +18,8 @@ Ledgerly is a local-first mobile expense tracker built with Flutter. It is aimed
 
 ### MVP
 - Fast manual expense/income recording
-- Seeded categories with subcategories
-- Optional custom categories and subcategories
+- Seeded categories
+- Optional custom categories
 - Multiple manual accounts with user-extensible account types (Cash, Investment seeded; users can add more)
 - Base multi-currency support with configurable default currency
 - Transaction memos
@@ -227,10 +227,11 @@ l10n/
 1. `WidgetsFlutterBinding.ensureInitialized()`
 2. Open `AppDatabase` (async) — runs migrations if `schemaVersion` changed
 3. Initialize `LocaleService`, resolve device locale for default-currency fallback
-4. Read `user_preferences` table
-5. First-run seed (if empty DB): seed `currencies`, default categories, default account types (Cash, Investment), one `Cash` account (of type `accountType.cash`), `default_currency` from device locale
-6. Configure `ProviderScope` with overrides injecting the opened `AppDatabase` into `appDatabaseProvider`
-7. `runApp(ProviderScope(overrides: [...], child: App()))`
+4. Initialize locale data for the active locale and the three MVP locales (`en_US`, `zh_TW`, `zh_CN`) so `intl` date formatting is ready before first render
+5. Read `user_preferences` table
+6. First-run seed (if empty DB): seed `currencies`, default categories, default account types (Cash, Investment), one `Cash` account (of type `accountType.cash`), `default_currency` from device locale
+7. Configure `ProviderScope` with overrides injecting the opened `AppDatabase` into `appDatabaseProvider`
+8. `runApp(ProviderScope(overrides: [...], child: App()))`
 
 ### Technology Stack
 
@@ -278,21 +279,22 @@ Notes:
 
 ### transactions
 
-| Column             | Type     | Constraints                                 |
-|--------------------|----------|---------------------------------------------|
-| id                 | INTEGER  | PRIMARY KEY AUTO                            |
-| amount_minor_units | INTEGER  | NOT NULL — see Money Storage Policy         |
-| currency           | TEXT     | NOT NULL REFERENCES currencies(code)        |
-| category_id        | INTEGER  | NOT NULL REFERENCES categories              |
-| account_id         | INTEGER  | NOT NULL REFERENCES accounts                |
-| memo               | TEXT     |                                             |
-| date               | DATETIME | NOT NULL                                    |
-| created_at         | DATETIME | NOT NULL — set by repository on insert      |
+| Column             | Type     | Constraints                                             |
+|--------------------|----------|---------------------------------------------------------|
+| id                 | INTEGER  | PRIMARY KEY AUTO                                        |
+| amount_minor_units | INTEGER  | NOT NULL — see Money Storage Policy                     |
+| currency           | TEXT     | NOT NULL REFERENCES currencies(code)                    |
+| category_id        | INTEGER  | NOT NULL REFERENCES categories                          |
+| account_id         | INTEGER  | NOT NULL REFERENCES accounts                            |
+| memo               | TEXT     |                                                         |
+| date               | DATETIME | NOT NULL                                                |
+| created_at         | DATETIME | NOT NULL — set by repository on insert                  |
 | updated_at         | DATETIME | NOT NULL — set by repository on insert and every update |
 
 Notes:
 - Transaction type (expense/income) is derived from the linked category's `type` field. A category's `type` becomes immutable after the first transaction uses it, so historical transaction meaning cannot be changed later by editing the category.
 - **No third `type` value exists or will be added.** Phase 2 account transfers and wallet sync model direction as expense/income from the tracked account's (or wallet address's) perspective: inflow **into** the tracked account = **income**; outflow **out of** the tracked account = **expense**. An account-to-account transfer produces two transactions (expense on the source, income on the destination) linked by shared memo / timestamp — not a single `'transfer'` type.
+- `memo` is optional free-form user text and must support Unicode across all supported locales.
 - `currency` stores the original transaction currency. Phase 2 conversion never overwrites the original `amount_minor_units` or `currency`.
 - `created_at` and `updated_at` are populated by `TransactionRepository`, not by the database. On insert, both are set to `DateTime.now()`. On every update, `updated_at` is refreshed to `DateTime.now()` and `created_at` is left unchanged.
 
@@ -306,7 +308,6 @@ Notes:
 | icon        | TEXT    | NOT NULL — icon-registry string key    |
 | color       | INTEGER | NOT NULL — index into `color_palette`  |
 | type        | TEXT    | NOT NULL — 'expense' or 'income'       |
-| parent_id   | INTEGER | REFERENCES categories, nullable        |
 | sort_order  | INTEGER |                                        |
 | is_archived | BOOL    | DEFAULT false                          |
 
@@ -458,7 +459,7 @@ All seeded colors (categories and account types) are picked from the **Material 
 
 ### Expense Categories
 
-| Category       | Subcategories                           | Color (MD3 baseline)                                               |
+| Category       | Example memos (informational only)      | Color (MD3 baseline)                                               |
 |----------------|-----------------------------------------|--------------------------------------------------------------------|
 | Food           | Groceries, Restaurants                  | Red 60 — `#B3251E`                                                 |
 | Drinks         | Coffee, Alcohol, Beverages              | Green 40 — `#006C35`                                               |
@@ -480,17 +481,17 @@ All seeded colors (categories and account types) are picked from the **Material 
 
 All seeded income categories share **Yellow 80 — `#FCBD00`**.
 
-| Category     | Subcategories | Color (MD3 baseline)  |
-|--------------|---------------|-----------------------|
-| Salary       | —             | Yellow 80 — `#FCBD00` |
-| Freelance    | —             | Yellow 80 — `#FCBD00` |
-| Investment   | —             | Yellow 80 — `#FCBD00` |
-| Gift         | —             | Yellow 80 — `#FCBD00` |
-| Other Income | —             | Yellow 80 — `#FCBD00` |
+| Category     | Example memos (informational only) | Color (MD3 baseline)  |
+|--------------|------------------------------------|-----------------------|
+| Salary       | —                                  | Yellow 80 — `#FCBD00` |
+| Freelance    | —                                  | Yellow 80 — `#FCBD00` |
+| Investment   | —                                  | Yellow 80 — `#FCBD00` |
+| Gift         | —                                  | Yellow 80 — `#FCBD00` |
+| Other Income | —                                  | Yellow 80 — `#FCBD00` |
 
 Income vs expense is also disambiguated by the `+` / `-` amount sign in lists — color is a secondary cue.
 
-Seeded categories use stable `l10n_key` values so locale changes do not create duplicate categories or break references. Users can rename any seeded category, create custom categories/subcategories, archive seeded categories they do not use, and delete only unused custom categories.
+Seeded categories use stable `l10n_key` values so locale changes do not create duplicate categories or break references. Users can rename any seeded category, create custom categories, archive seeded categories they do not use, and delete only unused custom categories.
 
 ### Default Account Types
 
@@ -670,9 +671,9 @@ ShellRoute (bottom nav)
 
 1. **Splash Screen** — Day counter with hnotes-style visual design, tap to enter Home
 2. **Home Screen** — Compact summary strip grouped by currency in MVP (`Today expense`, `Today income`, `Month net` per currency); Phase 2 can also show auto-converted totals in `default_currency`, daily transaction list grouped by date, newest first, empty-state CTA, FAB to add transaction, pending transaction badge (Phase 2)
-3. **Add/Edit Transaction** — Expense/Income segmented control, calculator-style keypad for amount, category picker (icon grid), account selector with currency indicator, date picker, memo field, save; delete only in edit mode
+3. **Add/Edit Transaction** — Expense/Income segmented control, calculator-style keypad for amount, category picker (icon grid), account selector with currency indicator, date picker, memo field for optional free-form detail, save; delete only in edit mode
 4. **Accounts Screen** — List accounts with tracked balances in native currency, add account (pick from existing account types or create a new type inline with name + icon + color + default currency), manage account types, set default account, archive account
-5. **Categories Screen** — List categories grouped by expense/income, add/edit/reorder/archive, subcategory management
+5. **Categories Screen** — List categories grouped by expense/income, add/edit/reorder/archive
 6. **Settings Screen** — Theme toggle (light/dark/system), language selector, default account, default currency, manage categories, splash screen settings
 7. **Pending Transactions Screen** (Phase 2) — Review/approve/reject auto-generated transactions, accessible from Home badge and Settings
 8. **Wallet Management Screen** (Phase 2) — Add/edit/delete wallet addresses, linked accounts
@@ -681,7 +682,7 @@ ShellRoute (bottom nav)
 ### Add/Edit Interaction Rules
 
 - Expense is the default selection when opening from Home; users can switch to Income via a segmented control at the top
-- Category picker first shows top-level categories for the selected type; selecting a parent with children opens a subcategory sheet
+- Category picker shows all visible categories for the selected type in a single icon grid
 - Default account uses the user's configured default account, otherwise the last used active account
 - Transaction currency is inherited from the selected account and shown next to the amount; new accounts default to `default_currency`
 - Date defaults to today
@@ -803,8 +804,7 @@ Icon grid inside a modal bottom sheet; uses `SliverGrid` to lazily render with p
 ```text
 ModalBottomSheet
   └─ CustomScrollView
-      ├─ SliverGrid      — top-level categories
-      └─ SliverList      — subcategory expansion
+      └─ SliverGrid      — category tiles
 ```
 
 ### Constraint rule
@@ -883,6 +883,11 @@ Localized elements:
 - Splash screen default display text and button label
 - Pending transaction labels and review UI (Phase 2)
 - Wallet management labels (Phase 2)
+
+Locale fallback policy:
+- Keep `app_zh.arb` as the required bare-`zh` fallback file for Flutter codegen.
+- Runtime locale resolution maps Chinese locales by script/region before falling back: `zh_TW`, `zh_HK`, `zh_MO`, and other Traditional Chinese locales resolve to `zh_TW`; `zh_CN`, `zh_SG`, and other Simplified Chinese locales resolve to `zh_CN`.
+- When the runtime cannot determine script or region for a Chinese locale, fall back to English.
 
 User-renamed categories are not auto-translated after rename; they display the user's chosen label in every locale. Custom splash display text and button labels are not auto-translated.
 

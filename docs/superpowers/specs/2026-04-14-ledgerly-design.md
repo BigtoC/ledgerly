@@ -18,8 +18,8 @@ Ledgerly is a local-first mobile expense tracker built with Flutter. It is aimed
 
 ### MVP
 - Fast manual expense/income recording
-- Seeded categories with subcategories
-- Optional custom categories and subcategories
+- Seeded categories
+- Optional custom categories
 - Multiple manual accounts (cash, bank, other)
 - Transaction memos
 - Quick repeat / duplicate existing transaction
@@ -146,7 +146,6 @@ Note: Transaction type (expense/income) is derived from the linked category's `t
 | icon        | TEXT    | NOT NULL                               |
 | color       | INTEGER | NOT NULL                               |
 | type        | TEXT    | NOT NULL — 'expense' or 'income'       |
-| parent_id   | INTEGER | REFERENCES categories, nullable        |
 | sort_order  | INTEGER |                                        |
 | is_archived | BOOL    | DEFAULT false                          |
 
@@ -215,7 +214,7 @@ Stores theme preference (light/dark/system), default account, default currency, 
 | Gift         | —             |
 | Other Income | —             |
 
-Seeded categories use stable `l10n_key` values so locale changes do not create duplicate categories or break references. Users can rename any seeded category, create custom categories/subcategories, archive seeded categories they do not use, and delete only unused custom categories.
+Seeded categories use stable `l10n_key` values so locale changes do not create duplicate categories or break references. Users can rename any seeded category, create custom categories, archive seeded categories they do not use, and delete only unused custom categories.
 
 ---
 
@@ -239,13 +238,13 @@ Seeded categories use stable `l10n_key` values so locale changes do not create d
 1. **Home Screen** — Compact summary strip (`Today expense`, `Today income`, `Month net`), daily transaction list grouped by date, newest first, empty-state CTA, FAB to add transaction
 2. **Add/Edit Transaction** — Expense/Income segmented control, calculator-style keypad for amount, category picker (icon grid), account selector, date picker, memo field, save; delete only in edit mode
 3. **Accounts Screen** — List accounts with tracked balances, add account, set default account, archive account
-4. **Categories Screen** — List categories grouped by expense/income, add/edit/reorder/archive, subcategory management
+4. **Categories Screen** — List categories grouped by expense/income, add/edit/reorder/archive
 5. **Settings Screen** — Theme toggle (light/dark/system), language selector, default account, default currency, manage categories
 
 ### Add/Edit Interaction Rules
 
 - Expense is the default selection when opening from Home; users can switch to Income via a segmented control at the top
-- Category picker first shows top-level categories for the selected type; selecting a parent with children opens a subcategory sheet
+- Category picker shows all visible categories for the selected type in a single icon grid
 - Default account uses the user's configured default account, otherwise the last used active account
 - Date defaults to today
 - Save stays disabled until amount is greater than zero and both category and account are selected

@@ -20,8 +20,7 @@ mixin _$Category {
 /// `CategoryRepository` at M3).
  CategoryType get type;/// Stable identity for seeded rows.
  String? get l10nKey;/// User override of the localized name.
- String? get customName;/// Self-FK for subcategories. Nullable root.
- int? get parentId;/// Order in pickers.
+ String? get customName;/// Order in pickers.
  int? get sortOrder;/// DB default `false`.
  bool get isArchived;
 /// Create a copy of Category
@@ -34,16 +33,16 @@ $CategoryCopyWith<Category> get copyWith => _$CategoryCopyWithImpl<Category>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Category&&(identical(other.id, id) || other.id == id)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.type, type) || other.type == type)&&(identical(other.l10nKey, l10nKey) || other.l10nKey == l10nKey)&&(identical(other.customName, customName) || other.customName == customName)&&(identical(other.parentId, parentId) || other.parentId == parentId)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.isArchived, isArchived) || other.isArchived == isArchived));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Category&&(identical(other.id, id) || other.id == id)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.type, type) || other.type == type)&&(identical(other.l10nKey, l10nKey) || other.l10nKey == l10nKey)&&(identical(other.customName, customName) || other.customName == customName)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.isArchived, isArchived) || other.isArchived == isArchived));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,icon,color,type,l10nKey,customName,parentId,sortOrder,isArchived);
+int get hashCode => Object.hash(runtimeType,id,icon,color,type,l10nKey,customName,sortOrder,isArchived);
 
 @override
 String toString() {
-  return 'Category(id: $id, icon: $icon, color: $color, type: $type, l10nKey: $l10nKey, customName: $customName, parentId: $parentId, sortOrder: $sortOrder, isArchived: $isArchived)';
+  return 'Category(id: $id, icon: $icon, color: $color, type: $type, l10nKey: $l10nKey, customName: $customName, sortOrder: $sortOrder, isArchived: $isArchived)';
 }
 
 
@@ -54,7 +53,7 @@ abstract mixin class $CategoryCopyWith<$Res>  {
   factory $CategoryCopyWith(Category value, $Res Function(Category) _then) = _$CategoryCopyWithImpl;
 @useResult
 $Res call({
- int id, String icon, int color, CategoryType type, String? l10nKey, String? customName, int? parentId, int? sortOrder, bool isArchived
+ int id, String icon, int color, CategoryType type, String? l10nKey, String? customName, int? sortOrder, bool isArchived
 });
 
 
@@ -71,7 +70,7 @@ class _$CategoryCopyWithImpl<$Res>
 
 /// Create a copy of Category
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? icon = null,Object? color = null,Object? type = null,Object? l10nKey = freezed,Object? customName = freezed,Object? parentId = freezed,Object? sortOrder = freezed,Object? isArchived = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? icon = null,Object? color = null,Object? type = null,Object? l10nKey = freezed,Object? customName = freezed,Object? sortOrder = freezed,Object? isArchived = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,icon: null == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
@@ -79,8 +78,7 @@ as String,color: null == color ? _self.color : color // ignore: cast_nullable_to
 as int,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as CategoryType,l10nKey: freezed == l10nKey ? _self.l10nKey : l10nKey // ignore: cast_nullable_to_non_nullable
 as String?,customName: freezed == customName ? _self.customName : customName // ignore: cast_nullable_to_non_nullable
-as String?,parentId: freezed == parentId ? _self.parentId : parentId // ignore: cast_nullable_to_non_nullable
-as int?,sortOrder: freezed == sortOrder ? _self.sortOrder : sortOrder // ignore: cast_nullable_to_non_nullable
+as String?,sortOrder: freezed == sortOrder ? _self.sortOrder : sortOrder // ignore: cast_nullable_to_non_nullable
 as int?,isArchived: null == isArchived ? _self.isArchived : isArchived // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -167,10 +165,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String icon,  int color,  CategoryType type,  String? l10nKey,  String? customName,  int? parentId,  int? sortOrder,  bool isArchived)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String icon,  int color,  CategoryType type,  String? l10nKey,  String? customName,  int? sortOrder,  bool isArchived)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Category() when $default != null:
-return $default(_that.id,_that.icon,_that.color,_that.type,_that.l10nKey,_that.customName,_that.parentId,_that.sortOrder,_that.isArchived);case _:
+return $default(_that.id,_that.icon,_that.color,_that.type,_that.l10nKey,_that.customName,_that.sortOrder,_that.isArchived);case _:
   return orElse();
 
 }
@@ -188,10 +186,10 @@ return $default(_that.id,_that.icon,_that.color,_that.type,_that.l10nKey,_that.c
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String icon,  int color,  CategoryType type,  String? l10nKey,  String? customName,  int? parentId,  int? sortOrder,  bool isArchived)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String icon,  int color,  CategoryType type,  String? l10nKey,  String? customName,  int? sortOrder,  bool isArchived)  $default,) {final _that = this;
 switch (_that) {
 case _Category():
-return $default(_that.id,_that.icon,_that.color,_that.type,_that.l10nKey,_that.customName,_that.parentId,_that.sortOrder,_that.isArchived);case _:
+return $default(_that.id,_that.icon,_that.color,_that.type,_that.l10nKey,_that.customName,_that.sortOrder,_that.isArchived);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -208,10 +206,10 @@ return $default(_that.id,_that.icon,_that.color,_that.type,_that.l10nKey,_that.c
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String icon,  int color,  CategoryType type,  String? l10nKey,  String? customName,  int? parentId,  int? sortOrder,  bool isArchived)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String icon,  int color,  CategoryType type,  String? l10nKey,  String? customName,  int? sortOrder,  bool isArchived)?  $default,) {final _that = this;
 switch (_that) {
 case _Category() when $default != null:
-return $default(_that.id,_that.icon,_that.color,_that.type,_that.l10nKey,_that.customName,_that.parentId,_that.sortOrder,_that.isArchived);case _:
+return $default(_that.id,_that.icon,_that.color,_that.type,_that.l10nKey,_that.customName,_that.sortOrder,_that.isArchived);case _:
   return null;
 
 }
@@ -223,7 +221,7 @@ return $default(_that.id,_that.icon,_that.color,_that.type,_that.l10nKey,_that.c
 
 
 class _Category implements Category {
-  const _Category({required this.id, required this.icon, required this.color, required this.type, this.l10nKey, this.customName, this.parentId, this.sortOrder, this.isArchived = false});
+  const _Category({required this.id, required this.icon, required this.color, required this.type, this.l10nKey, this.customName, this.sortOrder, this.isArchived = false});
   
 
 @override final  int id;
@@ -238,8 +236,6 @@ class _Category implements Category {
 @override final  String? l10nKey;
 /// User override of the localized name.
 @override final  String? customName;
-/// Self-FK for subcategories. Nullable root.
-@override final  int? parentId;
 /// Order in pickers.
 @override final  int? sortOrder;
 /// DB default `false`.
@@ -255,16 +251,16 @@ _$CategoryCopyWith<_Category> get copyWith => __$CategoryCopyWithImpl<_Category>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Category&&(identical(other.id, id) || other.id == id)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.type, type) || other.type == type)&&(identical(other.l10nKey, l10nKey) || other.l10nKey == l10nKey)&&(identical(other.customName, customName) || other.customName == customName)&&(identical(other.parentId, parentId) || other.parentId == parentId)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.isArchived, isArchived) || other.isArchived == isArchived));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Category&&(identical(other.id, id) || other.id == id)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.type, type) || other.type == type)&&(identical(other.l10nKey, l10nKey) || other.l10nKey == l10nKey)&&(identical(other.customName, customName) || other.customName == customName)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.isArchived, isArchived) || other.isArchived == isArchived));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,icon,color,type,l10nKey,customName,parentId,sortOrder,isArchived);
+int get hashCode => Object.hash(runtimeType,id,icon,color,type,l10nKey,customName,sortOrder,isArchived);
 
 @override
 String toString() {
-  return 'Category(id: $id, icon: $icon, color: $color, type: $type, l10nKey: $l10nKey, customName: $customName, parentId: $parentId, sortOrder: $sortOrder, isArchived: $isArchived)';
+  return 'Category(id: $id, icon: $icon, color: $color, type: $type, l10nKey: $l10nKey, customName: $customName, sortOrder: $sortOrder, isArchived: $isArchived)';
 }
 
 
@@ -275,7 +271,7 @@ abstract mixin class _$CategoryCopyWith<$Res> implements $CategoryCopyWith<$Res>
   factory _$CategoryCopyWith(_Category value, $Res Function(_Category) _then) = __$CategoryCopyWithImpl;
 @override @useResult
 $Res call({
- int id, String icon, int color, CategoryType type, String? l10nKey, String? customName, int? parentId, int? sortOrder, bool isArchived
+ int id, String icon, int color, CategoryType type, String? l10nKey, String? customName, int? sortOrder, bool isArchived
 });
 
 
@@ -292,7 +288,7 @@ class __$CategoryCopyWithImpl<$Res>
 
 /// Create a copy of Category
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? icon = null,Object? color = null,Object? type = null,Object? l10nKey = freezed,Object? customName = freezed,Object? parentId = freezed,Object? sortOrder = freezed,Object? isArchived = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? icon = null,Object? color = null,Object? type = null,Object? l10nKey = freezed,Object? customName = freezed,Object? sortOrder = freezed,Object? isArchived = null,}) {
   return _then(_Category(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,icon: null == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
@@ -300,8 +296,7 @@ as String,color: null == color ? _self.color : color // ignore: cast_nullable_to
 as int,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as CategoryType,l10nKey: freezed == l10nKey ? _self.l10nKey : l10nKey // ignore: cast_nullable_to_non_nullable
 as String?,customName: freezed == customName ? _self.customName : customName // ignore: cast_nullable_to_non_nullable
-as String?,parentId: freezed == parentId ? _self.parentId : parentId // ignore: cast_nullable_to_non_nullable
-as int?,sortOrder: freezed == sortOrder ? _self.sortOrder : sortOrder // ignore: cast_nullable_to_non_nullable
+as String?,sortOrder: freezed == sortOrder ? _self.sortOrder : sortOrder // ignore: cast_nullable_to_non_nullable
 as int?,isArchived: null == isArchived ? _self.isArchived : isArchived // ignore: cast_nullable_to_non_nullable
 as bool,
   ));

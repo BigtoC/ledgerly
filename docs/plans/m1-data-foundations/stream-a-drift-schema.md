@@ -111,9 +111,6 @@ class Categories extends Table {
   IntColumn get color => integer()();                         // index into color_palette
   TextColumn get type =>
       text().customConstraint("NOT NULL CHECK (type IN ('expense', 'income'))")();
-  IntColumn get parentId =>
-      integer().named('parent_id').nullable()
-        .references(Categories, #id)();                       // self-FK, nullable root
   IntColumn get sortOrder => integer().nullable()();
   BoolColumn get isArchived =>
       boolean().named('is_archived').withDefault(const Constant(false))();
@@ -122,11 +119,9 @@ class Categories extends Table {
 
 Notes:
 - `l10nKey` is `UNIQUE` but **nullable** — custom categories created by the user have `l10n_key = NULL` and `custom_name = 'My thing'`. SQLite treats multiple `NULL`s as distinct under `UNIQUE`, which is exactly what we want.
-- `parent_id` is the **self-FK** for subcategories (Food → Groceries). Nullable because top-level categories have no parent. Self-FKs in Drift need the owning table name on both sides — `.references(Categories, #id)` works because `Categories` is the class we're defining.
 - **`type` is stored as TEXT**, not an enum. Drift enum mapping lives in Stream B's Freezed model; Stream A only stores/retrieves the raw string. This keeps the DAO layer independent of the enum's package location.
 - **`type` immutability is NOT enforced at the table level** — SQLite cannot express "frozen after first referencing row". Enforcement lives in `CategoryRepository` (M3). Stream A simply stores whatever it is handed.
 - Add `CHECK(type IN ('expense','income'))` at the SQL level. The allowed set is now permanently fixed to these two values, so the database should enforce the invariant directly while `CategoryRepository` continues to own the higher-level type-lock rule.
-- **Indexes**: `@TableIndex(name: 'categories_parent_idx', columns: {#parentId})` for subcategory lookup.
 
 ### 2.4 `account_types` — PRD (Account Types table)
 
@@ -207,7 +202,6 @@ Notes:
 | `transactions_date_idx`       | transactions | `date DESC`        | Home reverse-chronological list                      |
 | `transactions_account_idx`    | transactions | `account_id`       | Account balance + pre-delete check                   |
 | `transactions_category_idx`   | transactions | `category_id`      | Category type-lock check + archive check             |
-| `categories_parent_idx`       | categories   | `parent_id`        | Subcategory lookup                                   |
 | `accounts_account_type_idx`   | accounts     | `account_type_id`  | List accounts by type + account-type archive probe   |
 
 ---
@@ -257,7 +251,6 @@ class TransactionDao extends DatabaseAccessor<AppDatabase> with _$TransactionDao
 |----------------------------------------------------------------------|-----------------------------|--------------------------------------------------------------|
 | `Stream<List<CategoryRow>> watchAll({bool includeArchived = false})` | `Stream<List<CategoryRow>>` | Ordered by `sort_order NULLS LAST, id ASC`.                  |
 | `Stream<List<CategoryRow>> watchByType(String type)`                 | `Stream<List<CategoryRow>>` | `type` is `'expense'` or `'income'`. Non-archived.           |
-| `Stream<List<CategoryRow>> watchChildren(int parentId)`              | `Stream<List<CategoryRow>>` | Subcategory list.                                            |
 | `Future<CategoryRow?> findById(int id)`                              | `Future<CategoryRow?>`      |                                                              |
 | `Future<CategoryRow?> findByL10nKey(String key)`                     | `Future<CategoryRow?>`      | Used by M3 seed idempotency check.                           |
 | `Future<int> insert(CategoriesCompanion row)`                        | `Future<int>`               |                                                              |
@@ -300,13 +293,13 @@ No `watchByCurrency` — not needed in MVP; grouping happens in the controller.
 
 ### 3.6 `UserPreferencesDao` — `@DriftAccessor(tables: [UserPreferences])`
 
-| Method                                                 | Return type                             | Notes                                            |
-|--------------------------------------------------------|-----------------------------------------|--------------------------------------------------|
-| `Stream<String?> watch(String key)`                    | `Stream<String?>`                       | `value` only. Null if missing.                   |
-| `Stream<List<UserPreferenceRow>> watchAll()`           | `Stream<List<UserPreferenceRow>>`       | Debug / settings bulk read.                      |
-| `Future<String?> read(String key)`                     | `Future<String?>`                       | One-shot.                                        |
-| `Future<void> write(String key, String value)`         | `Future<void>`                          | `insertOnConflictUpdate` — upsert on PK `key`.   |
-| `Future<int> deleteByKey(String key)`                  | `Future<int>`                           | Renamed from `delete` — `DatabaseAccessor.delete<T>(TableInfo)` would shadow. |
+| Method                                         | Return type                       | Notes                                                                         |
+|------------------------------------------------|-----------------------------------|-------------------------------------------------------------------------------|
+| `Stream<String?> watch(String key)`            | `Stream<String?>`                 | `value` only. Null if missing.                                                |
+| `Stream<List<UserPreferenceRow>> watchAll()`   | `Stream<List<UserPreferenceRow>>` | Debug / settings bulk read.                                                   |
+| `Future<String?> read(String key)`             | `Future<String?>`                 | One-shot.                                                                     |
+| `Future<void> write(String key, String value)` | `Future<void>`                    | `insertOnConflictUpdate` — upsert on PK `key`.                                |
+| `Future<int> deleteByKey(String key)`          | `Future<int>`                     | Renamed from `delete` — `DatabaseAccessor.delete<T>(TableInfo)` would shadow. |
 
 ### 3.7 Return-type rule (non-negotiable)
 
@@ -467,7 +460,6 @@ Stream B (Freezed domain models) is writing `lib/data/models/{currency,transacti
 | `CategoryRow`       | `icon`                     | `icon`                        | `icon`                                                                       |
 | `CategoryRow`       | `color` (`int`)            | `color`                       | `color` (`int` palette index)                                                |
 | `CategoryRow`       | `type` (`String`)          | `type`                        | `type` (enum — Stream B maps)                                                |
-| `CategoryRow`       | `parentId`                 | `parent_id`                   | `parentId`                                                                   |
 | `CategoryRow`       | `sortOrder`                | `sort_order`                  | `sortOrder`                                                                  |
 | `CategoryRow`       | `isArchived`               | `is_archived`                 | `isArchived`                                                                 |
 | `AccountTypeRow`    | `id`                       | `id`                          | `id`                                                                         |

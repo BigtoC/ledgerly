@@ -1,4 +1,64 @@
 {
   "@@locale": "zh_CN",
-  "appTitle": "Ledgerly"
+
+  "appTitle": "Ledgerly",
+
+  "navHome": "首页",
+  "navAccounts": "账户",
+  "navSettings": "设置",
+
+  "commonSave": "保存",
+  "commonCancel": "取消",
+  "commonDelete": "删除",
+  "commonArchive": "归档",
+  "commonEdit": "编辑",
+  "commonUndo": "撤销",
+  "commonDiscard": "放弃",
+  "commonAdd": "添加",
+  "commonDone": "完成",
+
+  "transactionTypeExpense": "支出",
+  "transactionTypeIncome": "收入",
+
+  "homeEmptyTitle": "暂无交易记录",
+  "homeEmptyCta": "记录第一笔交易",
+  "homeFabLabel": "添加交易",
+  "homeSummaryTodayExpense": "今日支出",
+  "homeSummaryTodayIncome": "今日收入",
+  "homeSummaryMonthNet": "本月净额",
+
+  "errorSnackbarGeneric": "出错了，请重试。",
+
+  "categoryFood": "饮食",
+  "categoryDrinks": "饮料",
+  "categoryTransportation": "交通",
+  "categoryShopping": "购物",
+  "categoryHousing": "居住",
+  "categoryEntertainment": "娱乐",
+  "categoryMedical": "医疗",
+  "categoryEducation": "教育",
+  "categoryPersonal": "个人",
+  "categoryTravel": "旅游",
+  "categoryThreeC": "3C",
+  "categoryMiscellaneous": "杂项",
+  "categoryOther": "其他",
+
+  "categoryIncomeSalary": "工资",
+  "categoryIncomeFreelance": "自由职业",
+  "categoryIncomeInvestment": "投资",
+  "categoryIncomeGift": "馈赠",
+  "categoryIncomeOther": "其他收入",
+
+  "accountTypeCash": "现金",
+  "accountTypeInvestment": "投资",
+
+  "splashEnter": "进入",
+  "splashSinceDate": "自 {date} 起",
+  "splashDayCountLabel": "天",
+
+  "settingsSplashSection": "启动页",
+  "settingsSplashEnabled": "显示启动页",
+  "settingsSplashStartDate": "起始日期",
+  "settingsSplashDisplayText": "显示文字",
+  "settingsSplashButtonLabel": "按钮文字"
 }

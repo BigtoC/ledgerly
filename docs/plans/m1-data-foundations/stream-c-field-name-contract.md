@@ -35,7 +35,7 @@ Why it matters: `implementation-plan.md` §5 M1 — *"Agree field names between 
 | Freezed **field name**                                     | `camelCase`. **MUST byte-for-byte match the Drift getter** (so M3 repository mappers can use the same identifier on both sides of the `=`).                                                                                                         |
 | Freezed **JSON key** (when `@JsonSerializable` is applied) | `camelCase` (the Dart field name). No `fieldRename` override. Backup/restore in Phase 3 consumes this; MVP has no JSON boundary that needs to match the SQL snake_case.                                                                             |
 | **Enum wire value** (DB `TEXT`)                            | lowercase string, exact match to what M3 writes into the `TEXT` column. Declared on every Dart enum case via `@JsonValue('…')`. Example: `@JsonValue('expense') expense`.                                                                           |
-| **Foreign-key fields**                                     | Freezed/Drift getter uses `…Id` suffix (`categoryId`, `accountId`, `parentId`). SQL column uses `…_id` (`category_id`, …). Drift `.references(Table, #id)` emits the SQL `REFERENCES` constraint.                                                   |
+| **Foreign-key fields**                                     | Freezed/Drift getter uses `…Id` suffix (`categoryId`, `accountId`). SQL column uses `…_id` (`category_id`, …). Drift `.references(Table, #id)` emits the SQL `REFERENCES` constraint.                                                               |
 | **Currency FK — domain-model shape**                       | On the Freezed side, `Transaction.currency`, `Account.currency`, and `AccountType.defaultCurrency` use `Currency` / `Currency?` so render-time utilities have `symbol` and `decimals` together. Drift columns stay `TEXT` FKs regardless. See §9.1. |
 | **Boolean columns**                                        | Named `is…` (`isToken`, `isArchived`). Drift default `false` where the PRD says `DEFAULT false`.                                                                                                                                                    |
 
@@ -84,7 +84,6 @@ No `type` column — derived from `categories.type` (PRD 290).
 | `icon`          | `icon`                       | `String`                   | Icon-registry key (`core/utils/icon_registry.dart`). Never `IconData`.                                                                        |
 | `color`         | `color`                      | `int`                      | Index into `core/utils/color_palette.dart`. Never ARGB. Append-only.                                                                          |
 | `type`          | `type`                       | `CategoryType` (domain)    | Freezed side holds enum; Drift side holds `String`. Wire values: §4. **Immutable after first referencing transaction** (repository rule, M3). |
-| `parent_id`     | `parentId`                   | `int?`                     | Self-FK (nullable root). `REFERENCES categories(id)`.                                                                                         |
 | `sort_order`    | `sortOrder`                  | `int?`                     |                                                                                                                                               |
 | `is_archived`   | `isArchived`                 | `bool` (`@Default(false)`) | DB default `false`.                                                                                                                           |
 
@@ -259,7 +258,7 @@ Copied / distilled from Stream A §2 and §9. Freezed nullability in Stream B's 
 |-----------------|-------------------------------------------------------------|------------------------------------------------------------------------|
 | `currencies`    | `symbol`, `name_l10n_key`, `sort_order`                     | `Currency.symbol`, `.nameL10nKey`, `.sortOrder`                        |
 | `transactions`  | `memo`                                                      | `Transaction.memo`                                                     |
-| `categories`    | `l10n_key`, `custom_name`, `parent_id`, `sort_order`        | `Category.l10nKey`, `.customName`, `.parentId`, `.sortOrder`           |
+| `categories`    | `l10n_key`, `custom_name`, `sort_order`                     | `Category.l10nKey`, `.customName`, `.sortOrder`                        |
 | `account_types` | `l10n_key`, `custom_name`, `default_currency`, `sort_order` | `AccountType.l10nKey`, `.customName`, `.defaultCurrency`, `.sortOrder` |
 | `accounts`      | `icon`, `color`, `sort_order`                               | `Account.icon`, `.color`, `.sortOrder`                                 |
 
@@ -281,7 +280,7 @@ Copied / distilled from Stream A §2 and §9. Freezed nullability in Stream B's 
 | UNIQUE (nullable)                 | `categories.l10n_key`                                                                     | SQLite treats multiple NULLs as distinct → custom categories with `l10nKey = null` coexist. Freezed mirrors as `String?` (Stream A §2.3).                            |
 | UNIQUE (nullable)                 | `account_types.l10n_key`                                                                  | Same NULL-distinct semantics as `categories.l10n_key`. Freezed mirrors as `String?`.                                                                                 |
 | FK `REFERENCES currencies(code)`  | `transactions.currency`, `accounts.currency`, `account_types.default_currency` (nullable) | Fires only with `PRAGMA foreign_keys = ON` (set in `beforeOpen`). M3 repositories must handle FK-violation exceptions. `account_types.default_currency` is nullable. |
-| FK `REFERENCES categories(id)`    | `transactions.category_id`, `categories.parent_id` (self-FK)                              | Self-FK allows nullable root (`parentId == null`).                                                                                                                   |
+| FK `REFERENCES categories(id)`    | `transactions.category_id`                                                                  |                                                                                                                                                                      |
 | FK `REFERENCES accounts(id)`      | `transactions.account_id`                                                                 |                                                                                                                                                                      |
 | FK `REFERENCES account_types(id)` | `accounts.account_type_id`                                                                | NOT NULL. Every account must reference an `account_types` row (seeded or custom).                                                                                    |
 
@@ -297,7 +296,6 @@ Listed for completeness — Stream B does not consume these, but M3 repository q
 - `transactions_account_idx` on `account_id`
 - `transactions_category_idx` on `category_id`
 - `accounts_account_type_idx` on `account_type_id`
-- `categories_parent_idx` on `parent_id`
 - Implicit index from `UNIQUE(l10n_key)` on `categories`
 
 ---

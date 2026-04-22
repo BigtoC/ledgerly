@@ -1,7 +1,220 @@
 {
   "@@locale": "en",
+
   "appTitle": "Ledgerly",
   "@appTitle": {
     "description": "Application title shown on the launcher and in the app bar."
+  },
+
+  "navHome": "Home",
+  "@navHome": {
+    "description": "PRD 656. Bottom-nav tab 1 label."
+  },
+  "navAccounts": "Accounts",
+  "@navAccounts": {
+    "description": "PRD 656. Bottom-nav tab 2 label."
+  },
+  "navSettings": "Settings",
+  "@navSettings": {
+    "description": "PRD 656. Bottom-nav tab 3 label."
+  },
+
+  "commonSave": "Save",
+  "@commonSave": {
+    "description": "Primary CTA label reused across Add/Edit forms (transactions, categories, accounts, settings)."
+  },
+  "commonCancel": "Cancel",
+  "@commonCancel": {
+    "description": "Form dismiss / confirm-discard dialog negative action."
+  },
+  "commonDelete": "Delete",
+  "@commonDelete": {
+    "description": "Swipe action and confirm-delete dialog positive action."
+  },
+  "commonArchive": "Archive",
+  "@commonArchive": {
+    "description": "PRD 737. List swipe action for categories/accounts that have transactions (archive-instead-of-delete)."
+  },
+  "commonEdit": "Edit",
+  "@commonEdit": {
+    "description": "Row overflow action and Add/Edit screen title when editing."
+  },
+  "commonUndo": "Undo",
+  "@commonUndo": {
+    "description": "PRD 695. Undo snackbar action after delete."
+  },
+  "commonDiscard": "Discard",
+  "@commonDiscard": {
+    "description": "PRD 689. Confirm-discard dialog positive action when abandoning unsaved form edits."
+  },
+  "commonAdd": "Add",
+  "@commonAdd": {
+    "description": "Create affordance label (accounts, categories)."
+  },
+  "commonDone": "Done",
+  "@commonDone": {
+    "description": "Modal close affordance (picker sheet)."
+  },
+
+  "transactionTypeExpense": "Expense",
+  "@transactionTypeExpense": {
+    "description": "PRD 683. Expense/income segmented control — expense option."
+  },
+  "transactionTypeIncome": "Income",
+  "@transactionTypeIncome": {
+    "description": "PRD 683. Expense/income segmented control — income option."
+  },
+
+  "homeEmptyTitle": "No transactions yet",
+  "@homeEmptyTitle": {
+    "description": "PRD 695. Home screen empty-state title shown on first run."
+  },
+  "homeEmptyCta": "Log first transaction",
+  "@homeEmptyCta": {
+    "description": "PRD 666. Home screen empty-state primary CTA."
+  },
+  "homeFabLabel": "Add transaction",
+  "@homeFabLabel": {
+    "description": "PRD 657. Home FAB semantics label (a11y)."
+  },
+  "homeSummaryTodayExpense": "Today expense",
+  "@homeSummaryTodayExpense": {
+    "description": "PRD 672. Home summary strip — today expense row label."
+  },
+  "homeSummaryTodayIncome": "Today income",
+  "@homeSummaryTodayIncome": {
+    "description": "PRD 672. Home summary strip — today income row label."
+  },
+  "homeSummaryMonthNet": "Month net",
+  "@homeSummaryMonthNet": {
+    "description": "PRD 672. Home summary strip — month net row label."
+  },
+
+  "errorSnackbarGeneric": "Something went wrong. Please try again.",
+  "@errorSnackbarGeneric": {
+    "description": "PRD 690, 696. Generic save-failure snackbar."
+  },
+
+  "categoryFood": "Food",
+  "@categoryFood": {
+    "description": "PRD 464. Seeded expense category — Food. DB l10n_key: category.food."
+  },
+  "categoryDrinks": "Drinks",
+  "@categoryDrinks": {
+    "description": "PRD 464. Seeded expense category — Drinks. DB l10n_key: category.drinks."
+  },
+  "categoryTransportation": "Transportation",
+  "@categoryTransportation": {
+    "description": "PRD 466. Seeded expense category — Transportation. DB l10n_key: category.transportation."
+  },
+  "categoryShopping": "Shopping",
+  "@categoryShopping": {
+    "description": "PRD 467. Seeded expense category — Shopping. DB l10n_key: category.shopping."
+  },
+  "categoryHousing": "Housing",
+  "@categoryHousing": {
+    "description": "PRD 468. Seeded expense category — Housing. DB l10n_key: category.housing."
+  },
+  "categoryEntertainment": "Entertainment",
+  "@categoryEntertainment": {
+    "description": "PRD 469. Seeded expense category — Entertainment. DB l10n_key: category.entertainment."
+  },
+  "categoryMedical": "Medical",
+  "@categoryMedical": {
+    "description": "PRD 470. Seeded expense category — Medical. DB l10n_key: category.medical."
+  },
+  "categoryEducation": "Education",
+  "@categoryEducation": {
+    "description": "PRD 471. Seeded expense category — Education. DB l10n_key: category.education."
+  },
+  "categoryPersonal": "Personal",
+  "@categoryPersonal": {
+    "description": "PRD 472. Seeded expense category — Personal. DB l10n_key: category.personal."
+  },
+  "categoryTravel": "Travel",
+  "@categoryTravel": {
+    "description": "PRD 473. Seeded expense category — Travel. DB l10n_key: category.travel."
+  },
+  "categoryThreeC": "3C",
+  "@categoryThreeC": {
+    "description": "PRD 474. Seeded expense category — 3C (consumer electronics; phone/computer/gadgets). DB l10n_key: category.threeC."
+  },
+  "categoryMiscellaneous": "Miscellaneous",
+  "@categoryMiscellaneous": {
+    "description": "PRD 475. Seeded expense category — Miscellaneous. DB l10n_key: category.miscellaneous."
+  },
+  "categoryOther": "Other",
+  "@categoryOther": {
+    "description": "PRD 476. Seeded expense category — Other. DB l10n_key: category.other."
+  },
+
+  "categoryIncomeSalary": "Salary",
+  "@categoryIncomeSalary": {
+    "description": "PRD 485. Seeded income category — Salary. DB l10n_key: category.income.salary."
+  },
+  "categoryIncomeFreelance": "Freelance",
+  "@categoryIncomeFreelance": {
+    "description": "PRD 486. Seeded income category — Freelance. DB l10n_key: category.income.freelance."
+  },
+  "categoryIncomeInvestment": "Investment",
+  "@categoryIncomeInvestment": {
+    "description": "PRD 487. Seeded income category — Investment (distinct from the accountType.investment row). DB l10n_key: category.income.investment."
+  },
+  "categoryIncomeGift": "Gift",
+  "@categoryIncomeGift": {
+    "description": "PRD 488. Seeded income category — Gift. DB l10n_key: category.income.gift."
+  },
+  "categoryIncomeOther": "Other Income",
+  "@categoryIncomeOther": {
+    "description": "PRD 489. Seeded income category — Other Income. DB l10n_key: category.income.other."
+  },
+
+  "accountTypeCash": "Cash",
+  "@accountTypeCash": {
+    "description": "PRD 499. Seeded account type — Cash. DB l10n_key: accountType.cash."
+  },
+  "accountTypeInvestment": "Investment",
+  "@accountTypeInvestment": {
+    "description": "PRD 500. Seeded account type — Investment (distinct from the category.income.investment row). DB l10n_key: accountType.investment."
+  },
+
+  "splashEnter": "Enter",
+  "@splashEnter": {
+    "description": "PRD 527, 547. Default splash 'Enter' button label."
+  },
+  "splashSinceDate": "Since {date}",
+  "@splashSinceDate": {
+    "description": "PRD 526, 546. Splash default display text. {date} is formatted locale-aware via intl (yMMMMd).",
+    "placeholders": {
+      "date": {
+        "type": "DateTime",
+        "format": "yMMMMd"
+      }
+    }
+  },
+  "splashDayCountLabel": "days",
+  "@splashDayCountLabel": {
+    "description": "PRD 551. Day-counter secondary label on splash."
+  },
+
+  "settingsSplashSection": "Splash screen",
+  "@settingsSplashSection": {
+    "description": "PRD 544. Settings section header for the splash group."
+  },
+  "settingsSplashEnabled": "Show splash screen",
+  "@settingsSplashEnabled": {
+    "description": "PRD 544. Toggle label for enabling the splash screen."
+  },
+  "settingsSplashStartDate": "Start date",
+  "@settingsSplashStartDate": {
+    "description": "PRD 545. Date-picker label for the splash start date."
+  },
+  "settingsSplashDisplayText": "Display text",
+  "@settingsSplashDisplayText": {
+    "description": "PRD 546. Free-text field label for the splash display text template."
+  },
+  "settingsSplashButtonLabel": "Button label",
+  "@settingsSplashButtonLabel": {
+    "description": "PRD 547. Free-text field label for the splash button label."
   }
 }
