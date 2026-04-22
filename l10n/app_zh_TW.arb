@@ -1,4 +1,64 @@
 {
   "@@locale": "zh_TW",
-  "appTitle": "Ledgerly"
+
+  "appTitle": "Ledgerly",
+
+  "navHome": "首頁",
+  "navAccounts": "帳戶",
+  "navSettings": "設定",
+
+  "commonSave": "儲存",
+  "commonCancel": "取消",
+  "commonDelete": "刪除",
+  "commonArchive": "封存",
+  "commonEdit": "編輯",
+  "commonUndo": "復原",
+  "commonDiscard": "捨棄",
+  "commonAdd": "新增",
+  "commonDone": "完成",
+
+  "transactionTypeExpense": "支出",
+  "transactionTypeIncome": "收入",
+
+  "homeEmptyTitle": "尚無交易紀錄",
+  "homeEmptyCta": "記錄第一筆交易",
+  "homeFabLabel": "新增交易",
+  "homeSummaryTodayExpense": "今日支出",
+  "homeSummaryTodayIncome": "今日收入",
+  "homeSummaryMonthNet": "本月淨額",
+
+  "errorSnackbarGeneric": "發生錯誤，請再試一次。",
+
+  "categoryFood": "飲食",
+  "categoryDrinks": "飲料",
+  "categoryTransportation": "交通",
+  "categoryShopping": "購物",
+  "categoryHousing": "居住",
+  "categoryEntertainment": "娛樂",
+  "categoryMedical": "醫療",
+  "categoryEducation": "教育",
+  "categoryPersonal": "個人",
+  "categoryTravel": "旅遊",
+  "categoryThreeC": "3C",
+  "categoryMiscellaneous": "雜項",
+  "categoryOther": "其他",
+
+  "categoryIncomeSalary": "薪資",
+  "categoryIncomeFreelance": "接案",
+  "categoryIncomeInvestment": "投資",
+  "categoryIncomeGift": "餽贈",
+  "categoryIncomeOther": "其他收入",
+
+  "accountTypeCash": "現金",
+  "accountTypeInvestment": "投資",
+
+  "splashEnter": "進入",
+  "splashSinceDate": "自 {date} 起",
+  "splashDayCountLabel": "天",
+
+  "settingsSplashSection": "啟動畫面",
+  "settingsSplashEnabled": "顯示啟動畫面",
+  "settingsSplashStartDate": "起始日期",
+  "settingsSplashDisplayText": "顯示文字",
+  "settingsSplashButtonLabel": "按鈕文字"
 }

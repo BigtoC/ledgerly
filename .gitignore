@@ -124,3 +124,4 @@ app.*.symbols
 .context
 # CocoIndex Code (ccc)
 /.cocoindex_code/
+/.worktrees/
