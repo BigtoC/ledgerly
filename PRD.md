@@ -158,6 +158,8 @@ lib/
       wallet_address_repository.dart       # Phase 2
       exchange_rate_repository.dart        # Phase 2
       api_key_repository.dart              # Phase 2
+    seed/                                  # First-run seed orchestration
+      first_run_seed.dart
     models/                                # Freezed domain models
       transaction.dart
       category.dart
@@ -268,12 +270,14 @@ MVP supports multi-currency accounts and transactions. `user_preferences.default
 | code          | TEXT    | PRIMARY KEY — ISO 4217 for fiat, symbol for tokens   |
 | decimals      | INTEGER | NOT NULL — 2 for USD, 0 for JPY, 18 for ETH/ERC-20   |
 | symbol        | TEXT    | display symbol (`$`, `¥`, `NT$`, …)                  |
-| name_l10n_key | TEXT    | optional, localized currency name key                |
+| name_l10n_key | TEXT    | localized currency name key (`currency.usd`, …)      |
+| custom_name   | TEXT    | nullable user override — see Notes                   |
 | is_token      | BOOL    | DEFAULT false — flags Phase 2 crypto tokens          |
 | sort_order    | INTEGER |                                                      |
 
 Notes:
-- Seeded at first launch with common fiat codes (USD, EUR, JPY, TWD, CNY, HKD, GBP). Phase 2 seeds token entries (ETH, USDC, USDT, …).
+- Seeded at first launch with common fiat codes (USD, EUR, JPY, TWD, CNY, HKD, GBP, CAD, SGD, AUD, NZD). Phase 2 seeds token entries (ETH, USDC, USDT, …).
+- Every seeded currency carries `name_l10n_key = 'currency.<code>'` (e.g. `currency.usd`, `currency.twd`) so the display name can be localized at render time. Users may override the display name by writing `custom_name` — locale changes leave `name_l10n_key` untouched so renames do not duplicate or orphan rows. Same pattern as `categories` / `account_types`.
 - `transactions.currency`, `accounts.currency`, and `pending_transactions.currency` are foreign keys to `currencies.code`.
 - Single source of truth for how many minor units a currency has. Never duplicate `decimals` onto transaction rows.
 
@@ -663,6 +667,7 @@ ShellRoute (bottom nav)
 
 - On first launch, seed common fiat entries into `currencies`, all default account types (Cash, Investment), one `Cash` account (type = `accountType.cash`) with `opening_balance_minor_units = 0`, and all default categories
 - `default_currency` starts from device locale (resolved via `LocaleService`), can be changed in Settings, and is used for new account defaults
+- `default_account_id` is seeded to the id of the Cash account created during first-run seeding, so the user's first Add Transaction entry auto-selects the Cash account without requiring a visit to the Accounts screen
 - `splash_enabled = true` by default; first launch redirects to date picker before showing splash
 - After splash, Home opens in an empty state with primary CTA `Log first transaction`
 - Users can complete their first transaction without visiting Accounts, Categories, or Settings
