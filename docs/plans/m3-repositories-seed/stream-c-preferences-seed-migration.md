@@ -423,38 +423,42 @@ if (await preferences.getFirstRunComplete()) {
 
 The flag is read with a fresh `dao.read('first_run_completed')`. False when the key is missing (default value in `_readJson`). Running `runFirstRunSeed(...)` a second time on the same DB is guaranteed to be a no-op; this is the risk-4 guardrail (master plan §9 risk 4).
 
-**Step 1 — Seed `currencies`.** Seven fiat entries (PRD 276). Stable `sort_order` lets the Currency picker render a predictable list.
+**Step 1 — Seed `currencies`.** Eleven fiat entries (PRD 276, updated 2026-04-22 — see §12 Q6). Stable `sort_order` lets the Currency picker render a predictable list. Every seeded currency carries an `l10n_key`-style `name_l10n_key` so the display name can be localized at render time and user-renamed via `custom_name` (see §12 Q7 — requires a one-column addition to `currencies` in the v1 snapshot, owned by Stream B).
 
-| Code | Decimals | Symbol | `name_l10n_key` (nullable — defer to M5)  | `is_token` | `sort_order` |
-|------|----------|--------|-------------------------------------------|------------|--------------|
-| USD  | 2        | `$`    | `null`                                    | false      | 0            |
-| EUR  | 2        | `€`    | `null`                                    | false      | 1            |
-| JPY  | 0        | `¥`    | `null`                                    | false      | 2            |
-| TWD  | 2        | `NT$`  | `null`                                    | false      | 3            |
-| CNY  | 2        | `¥`    | `null`                                    | false      | 4            |
-| HKD  | 2        | `HK$`  | `null`                                    | false      | 5            |
-| GBP  | 2        | `£`    | `null`                                    | false      | 6            |
+| Code | Decimals | Symbol | `name_l10n_key`   | `is_token` | `sort_order` |
+|------|----------|--------|-------------------|------------|--------------|
+| USD  | 2        | `$`    | `currency.usd`    | false      | 0            |
+| EUR  | 2        | `€`    | `currency.eur`    | false      | 1            |
+| JPY  | 0        | `¥`    | `currency.jpy`    | false      | 2            |
+| TWD  | 2        | `NT$`  | `currency.twd`    | false      | 3            |
+| CNY  | 2        | `¥`    | `currency.cny`    | false      | 4            |
+| HKD  | 2        | `HK$`  | `currency.hkd`    | false      | 5            |
+| GBP  | 2        | `£`    | `currency.gbp`    | false      | 6            |
+| CAD  | 2        | `CA$`  | `currency.cad`    | false      | 7            |
+| SGD  | 2        | `S$`   | `currency.sgd`    | false      | 8            |
+| AUD  | 2        | `A$`   | `currency.aud`    | false      | 9            |
+| NZD  | 2        | `NZ$`  | `currency.nzd`    | false      | 10           |
 
-Calls: `await currencies.upsert(Currency(code: 'USD', decimals: 2, symbol: r'$', isToken: false, sortOrder: 0, nameL10nKey: null));` × 7. `upsert` is idempotent by PK (`code`); re-running the step after a partial failure re-writes the same row.
+Calls: `await currencies.upsert(Currency(code: 'USD', decimals: 2, symbol: r'$', nameL10nKey: 'currency.usd', customName: null, isToken: false, sortOrder: 0));` × 11. `upsert` is idempotent by PK (`code`); re-running the step after a partial failure re-writes the same row. `custom_name` is always `null` at seed time — user renames write through `CurrencyRepository.updateCustomName(code, name)` (Stream B §1.1), which does not touch `name_l10n_key` or `decimals`.
 
 **Step 2 — Resolve `default_currency` from device locale.** PRD 665. Exact mapping this stream owns:
 
-| Locale prefix (normalized)        | `default_currency`                                                                  |
-|-----------------------------------|-------------------------------------------------------------------------------------|
-| `en_US`                           | USD                                                                                 |
-| `en_GB`                           | GBP                                                                                 |
-| `en_CA`                           | USD (MVP accepts USD for North American English not pinned to CAD — CAD not seeded) |
-| `en_AU` / `en_NZ` / other `en_*`  | USD                                                                                 |
-| `zh_TW`                           | TWD                                                                                 |
-| `zh_HK`                           | HKD                                                                                 |
-| `zh_MO`                           | HKD                                                                                 |
-| `zh_CN` / `zh_SG` / other `zh_*`  | CNY                                                                                 |
-| `zh` (bare, no region)            | CNY                                                                                 |
-| `ja_JP` / bare `ja`               | JPY                                                                                 |
-| `de_*` / `fr_*` / `es_*` / `it_*` | EUR                                                                                 |
-| Anything else                     | **USD (fallback)**                                                                  |
+| Locale prefix (normalized)                 | `default_currency`                                                                                                                                                                                            |
+|--------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `en_US`                                    | USD (kept unchanged per §12 Q6)                                                                                                                                                                               |
+| `en_GB`                                    | GBP                                                                                                                                                                                                           |
+| `en_CA` / `en_AU` / `en_NZ` / other `en_*` | USD (kept unchanged per §12 Q6 — not remapped to CAD / AUD / NZD even though those fiats are now seeded)                                                                                                      |
+| `zh_TW`                                    | TWD (kept unchanged per §12 Q6)                                                                                                                                                                               |
+| `zh_HK`                                    | HKD                                                                                                                                                                                                           |
+| `zh_MO`                                    | HKD                                                                                                                                                                                                           |
+| `zh_CN` / `zh_SG` / other `zh_*`           | CNY (kept unchanged per §12 Q6)                                                                                                                                                                               |
+| `zh` (bare, no region)                     | CNY                                                                                                                                                                                                           |
+| `ja_JP` / bare `ja`                        | JPY                                                                                                                                                                                                           |
+| Anything else                              | **USD (fallback)** — language-only fallbacks for `de_*` / `fr_*` / `es_*` / `it_*` were removed per the §12 Q6 "language should not affect fiat" policy; non-English European locales now fall through to USD |
 
 **Chinese-locale note.** UI-locale resolution and default-currency resolution are related but distinct. PRD 889 maps `zh_HK` / `zh_MO` to the Traditional-Chinese ARB set (`zh_TW`) for copy; this seed mapping remains **region-first for currency** so Hong Kong and Macau default to `HKD` while Taiwan defaults to `TWD`.
+
+**"Language should not affect fiat" policy note (§12 Q6).** Earlier drafts included language-prefix fallbacks that mapped `de_*` / `fr_*` / `es_*` / `it_*` → EUR. Those were dropped 2026-04-22. The rule now: explicit locale-to-currency mappings are region-specific (`en_US`, `en_GB`, `zh_TW`, `zh_HK`, …); language-only prefix fallbacks are retained **only** for `en` → USD, `zh` → CNY, and `ja` → JPY because those three languages also have explicit regional mappings that collapse to the same default. Every other locale falls through to the USD global fallback. Users whose preferred currency differs from the fallback change it in Settings; the seed picks a sensible default, not a perfect one.
 
 Implementation shape (lives in this file, not in `LocaleService`):
 
@@ -470,14 +474,18 @@ String _defaultCurrencyForLocale(String rawLocale) {
     case 'zh_CN': case 'zh_SG': case 'zh':    return 'CNY';
     case 'ja_JP': case 'ja':                  return 'JPY';
   }
-  // language-only prefix fallback
+  // Language-only prefix fallback. Retained for `en` / `zh` / `ja`
+  // because their explicit regional mappings (above) collapse to the
+  // same default; dropped for `de` / `fr` / `es` / `it` per the
+  // §12 Q6 "language should not affect fiat" policy — those locales
+  // fall through to the USD global fallback.
   final lang = normalized.split('_').first;
   switch (lang) {
-    case 'de': case 'fr': case 'es': case 'it': return 'EUR';
     case 'en': return 'USD';
     case 'zh': return 'CNY';
+    case 'ja': return 'JPY';
   }
-  return 'USD'; // documented fallback
+  return 'USD'; // documented global fallback
 }
 ```
 
@@ -551,16 +559,16 @@ if (defaultCurrency == null) {
 
 **Step 6 — Seed `user_preferences`.** The seed populates the minimum set bootstrap depends on. Every value goes through `UserPreferencesRepository` setters (never DAO.write directly) so the JSON codec path is exercised end-to-end.
 
-| Key                   | Seed value                                                                    | Source                              |
-|-----------------------|-------------------------------------------------------------------------------|-------------------------------------|
-| `theme_mode`          | `ThemeMode.system`                                                            | PRD 902 default                     |
-| `locale`              | `null`                                                                        | "follow device" (PRD 887)           |
-| `default_currency`    | `defaultCurrency` from Step 2                                                 | PRD 665                             |
-| `default_account_id`  | **not written** (null default)                                                | User picks later (PRD 686)          |
-| `splash_enabled`      | `true`                                                                        | PRD 439, 666                        |
-| `splash_start_date`   | `null`                                                                        | PRD 440 (user sets at first launch) |
-| `splash_display_text` | `'Since {date}'` (literal template — runtime substitutes `{date}` / `{days}`) | PRD 441, 526                        |
-| `splash_button_label` | `'Enter'`                                                                     | PRD 442, 527                        |
+| Key                   | Seed value                                                                    | Source                                                                             |
+|-----------------------|-------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
+| `theme_mode`          | `ThemeMode.system`                                                            | PRD 902 default                                                                    |
+| `locale`              | `null`                                                                        | "follow device" (PRD 887)                                                          |
+| `default_currency`    | `defaultCurrency` from Step 2                                                 | PRD 665                                                                            |
+| `default_account_id`  | `cashAccountId` — id of the Cash account seeded in Step 5                     | §12 Q2 resolution (2026-04-22): first transaction entry auto-selects this account  |
+| `splash_enabled`      | `true`                                                                        | PRD 439, 666                                                                       |
+| `splash_start_date`   | `null`                                                                        | PRD 440 (user sets at first launch)                                                |
+| `splash_display_text` | `'Since {date}'` (literal template — runtime substitutes `{date}` / `{days}`) | PRD 441, 526                                                                       |
+| `splash_button_label` | `'Enter'`                                                                     | PRD 442, 527                                                                       |
 
 **`splash_display_text` seed value note.** The seeded default is the literal template string `'Since {date}'`, not a per-locale translation — M5 Splash reads the preference and, when it equals the literal default, falls back to the localized `AppLocalizations.splashSinceDate(date)` getter (M2 Stream C §5.3). If the user customises the text, the customised string is stored verbatim and never auto-translated (PRD 892).
 
@@ -587,10 +595,11 @@ Future<void> runFirstRunSeed({...}) async {
     await _seedCategories(categories);
     // Step 4 — account types (defaultCurrency = localeCurrency)
     final cashTypeId = await _seedAccountTypes(accountTypes, localeCurrency);
-    // Step 5 — one Cash account
-    await _seedCashAccount(accounts, cashTypeId, localeCurrency);
-    // Step 6 — user_preferences (excluding first_run_completed)
-    await _seedPreferences(preferences, localeCurrency);
+    // Step 5 — one Cash account; capture its id for default_account_id
+    final cashAccountId = await _seedCashAccount(accounts, cashTypeId, localeCurrency);
+    // Step 6 — user_preferences (excluding first_run_completed);
+    // writes default_account_id = cashAccountId per §12 Q2.
+    await _seedPreferences(preferences, localeCurrency, cashAccountId);
     // Step 7 — idempotency flag LAST
     await preferences.markFirstRunComplete();
   });
@@ -818,8 +827,8 @@ Each task is one PR-sized unit. Tasks C0–C11 are ordered by the ship sequence;
 - [ ] **C5 — Splash preference methods.** `watchSplashEnabled` + `getSplashEnabled` + `setSplashEnabled` + start-date + display-text + button-label (9 methods). Red tests assert: `watchSplashEnabled()` default-emits `true`; `watchSplashStartDate()` default-emits `null`; `watchSplashDisplayText()` default-emits `'Since {date}'` when the seed has not yet run (i.e. the hard-coded `defaultValue` of `_watchJson`).
 - [ ] **C6 — First-run seed: currencies step.** New `first_run_seed.dart` with an **unexported** `_seedCurrencies(CurrencyRepository)` helper. Public `runFirstRunSeed` exists but only calls step 0 (idempotency) + step 1 for now; **do not write `first_run_completed` yet**. Red test: calls `runFirstRunSeed`; asserts seven currency rows; the final idempotency/no-op contract is only locked once C7–C9 land and step 7 (`markFirstRunComplete`) is added last. Seed calls `await currencies.upsert(...)`; if Stream B has not merged yet, C6 depends on a merged Stream B branch — coordinate via §7.
 - [ ] **C7 — Seed: categories step.** Adds `_seedCategories(CategoryRepository)`. Red test: 18 rows; 13 expense + 5 income; `l10n_key` values match §2.3 Step 3 table exactly; `sort_order` is 0..17; idempotency still holds.
-- [ ] **C8 — Seed: account types + Cash account.** Adds `_seedAccountTypes(...)` and `_seedCashAccount(...)`. Red test: 2 account-type rows with `default_currency = 'USD'` when locale is `en_US`; 1 Cash account row with `opening_balance_minor_units = 0` (literal int, G4); account's `account_type_id` matches the Cash row's id. `_seedAccountTypes(...)` uses `AccountTypeRepository.upsertSeeded(...)` and reuses the returned Cash row id for step 5.
-- [ ] **C9 — Seed: user_preferences step.** Adds `_seedPreferences(...)`. Red test: after seed, `preferences.getSplashEnabled() == true`; `getThemeMode() == ThemeMode.system`; `getLocale() == null`; `getDefaultCurrency() == 'USD'`; `getSplashDisplayText() == 'Since {date}'`; `getDefaultAccountId() == null` (deliberately unwritten).
+- [ ] **C8 — Seed: account types + Cash account.** Adds `_seedAccountTypes(...)` and `_seedCashAccount(...)`. Red test: 2 account-type rows with `default_currency = 'USD'` when locale is `en_US`; 1 Cash account row with `opening_balance_minor_units = 0` (literal int, G4); account's `account_type_id` matches the Cash row's id. `_seedAccountTypes(...)` uses `AccountTypeRepository.upsertSeeded(...)` and reuses the returned Cash row id for step 5. `_seedCashAccount(...)` returns the inserted account's id so step 6 can wire it into `default_account_id`.
+- [ ] **C9 — Seed: user_preferences step.** Adds `_seedPreferences(...)` with the `cashAccountId` parameter. Red test: after seed, `preferences.getSplashEnabled() == true`; `getThemeMode() == ThemeMode.system`; `getLocale() == null`; `getDefaultCurrency() == 'USD'`; `getSplashDisplayText() == 'Since {date}'`; **`getDefaultAccountId() == cashAccountId`** (set per §12 Q2; the seeded Cash account is the default for first-transaction entry).
 - [ ] **C10 — Migration test harness activation.** `drift_dev schema generate` → commit `test/unit/repositories/_harness/generated/schema_v1.dart`. Extend `migration_test.dart` with the three blocks in §3.3. Keep the `TODO(phase-2)` comment for v1→v2.
 - [ ] **C11 — Integration verification.** Extend `test/unit/repositories/first_run_seed_test.dart` (do not create a `test/integration/` file in this stream). Open a fresh `newTestAppDatabase()`, run the seed with `_FakeLocaleService('zh_TW')`, then read via the sibling repository watchers (`categories.watchAll()`, `currencies.watchAll()`, etc.) to confirm the reactive path lights up with the seeded data. This is the cross-seam smoke that catches "seed wrote rows but the watcher stream had already emitted `[]` and doesn't refresh."
 
@@ -844,17 +853,21 @@ One file per concern; every test uses `newTestAppDatabase()` from §4.
 
 ### 6.2 `test/unit/repositories/first_run_seed_test.dart`
 
-- `empty DB → every step populates`: fresh `newTestAppDatabase()`, `runFirstRunSeed(...)`. Assert currency count == 7, category count == 18, account-type count == 2, account count == 1, `first_run_completed == true`, `splash_enabled == true`, `theme_mode == system`, `default_currency` matches the stub locale.
+- `empty DB → every step populates`: fresh `newTestAppDatabase()`, `runFirstRunSeed(...)`. Assert currency count == 11, category count == 18, account-type count == 2, account count == 1, `first_run_completed == true`, `splash_enabled == true`, `theme_mode == system`, `default_currency` matches the stub locale, `default_account_id` equals the seeded Cash account's id (not null).
 - `runs twice → no duplicates, no side effects`: call `runFirstRunSeed(...)` twice in a row. Assert row counts unchanged after the second call. Assert `preferences.getFirstRunComplete() == true` both times. Assert no `UNIQUE constraint failed: categories.l10n_key` error surfaces.
 - `locale en_US → default_currency == USD`: stub `LocaleService` with `'en_US'`, run seed, assert `preferences.getDefaultCurrency() == 'USD'`.
 - `locale zh_TW → default_currency == TWD`: assert TWD.
 - `locale zh_CN → default_currency == CNY`: assert CNY.
 - `locale ja_JP → default_currency == JPY`: assert JPY.
 - `locale en_GB → default_currency == GBP`: assert GBP.
-- `locale de_DE → default_currency == EUR`: assert EUR.
+- `locale de_DE → default_currency == USD (fallback)`: pins §12 Q6 — the former `de_* → EUR` language-prefix mapping was removed, so `de_DE` now falls through to the USD global fallback.
+- `locale fr_FR → default_currency == USD (fallback)`: same §12 Q6 pin for French locales.
 - `unknown locale → USD fallback`: stub with `'kl_GL'` (Kalaallisut, Greenland — intentionally unmapped), assert `'USD'`.
 - `locale zh_HK → default_currency == HKD`: pins the §2.3 decision.
 - `bare zh → default_currency == CNY`: pins the bare-language fallback.
+- `default_account_id points at seeded Cash account`: run seed, read the single `accounts` row id, assert `preferences.getDefaultAccountId() == that id` (§12 Q2).
+- `seeded currencies include the four new fiats`: assert the `currencies` table contains `CAD`, `SGD`, `AUD`, `NZD` rows with `is_token == false` and `decimals == 2` (§12 Q6).
+- `seeded currencies carry name_l10n_key`: assert every seeded currency row has `name_l10n_key == 'currency.<code>'` (lowercase) and `custom_name == null` (§12 Q7).
 - `transactional atomicity`: inject a sibling-repo stub whose `upsert` throws on the **3rd** category call. Run seed, expect it throws. Then re-open the DB and assert zero currencies, zero categories, zero account types, zero accounts, and `first_run_completed == false`. **This is the risk-4 guardrail** (master plan §9 risk 4).
 - `Cash account points at Cash type`: seed with `en_US`, read the single `accounts` row, assert its `account_type_id` equals the `id` of the row where `l10n_key == 'accountType.cash'`.
 - `opening_balance_minor_units is literal int 0`: the Freezed model field is `int`; the test is `expect(account.openingBalanceMinorUnits, 0);`. G4 guard.
@@ -956,7 +969,7 @@ Maps to `docs/plans/implementation-plan.md` §5 M3 exit criteria for stream C.
 - [ ] Running `runFirstRunSeed` twice on the same DB is a no-op (row counts stable, no exceptions).
 - [ ] A step-level failure rolls back every write and leaves `first_run_completed == false` (transactional atomicity test).
 - [ ] Locale resolution table (§2.3 Step 2) is fully covered — every explicit row + the USD fallback path is asserted in `first_run_seed_test.dart`.
-- [ ] The seeded DB contains exactly 7 currencies, 18 categories (13 expense + 5 income), 2 account types, 1 account with `opening_balance_minor_units == 0`, the 7 `user_preferences` keys written in §2.3 Step 6 (`theme_mode`, `locale`, `default_currency`, `splash_enabled`, `splash_start_date`, `splash_display_text`, `splash_button_label`), and `first_run_completed` written separately in Step 7.
+- [ ] The seeded DB contains exactly 11 currencies (each with `name_l10n_key = 'currency.<code>'` and `custom_name = null` per §12 Q7), 18 categories (13 expense + 5 income), 2 account types, 1 account with `opening_balance_minor_units == 0`, the 8 `user_preferences` keys written in §2.3 Step 6 (`theme_mode`, `locale`, `default_currency`, `default_account_id` set to the seeded Cash account's id per §12 Q2, `splash_enabled`, `splash_start_date`, `splash_display_text`, `splash_button_label`), and `first_run_completed` written separately in Step 7.
 - [ ] `test/unit/repositories/migration_test.dart` runs four real assertions against the v1 snapshot (`schemaVersion`, empty DB, seeded DB, `foreign_keys` PRAGMA) — no `skip:`, no TODO test cases.
 - [ ] `test/unit/repositories/_harness/test_app_database.dart` ships `newTestAppDatabase()` + `TestRepoBundle`; sibling streams import it.
 - [ ] `flutter analyze` is clean; `flutter test` is green; `dart run build_runner build --delete-conflicting-outputs` round-trips without error.
@@ -987,6 +1000,42 @@ Files read from disk while authoring this plan:
 | `lib/core/utils/color_palette.dart`                       | 77 lines. 11 palette indices (`red60` through `neutralVariant70`). Seed mapping pinned in §0.10.                                                                                                          |
 
 This verification log is the audit trail reviewers use to confirm that the plan's numerical claims (row counts, palette indices, PRD line ranges) were read, not guessed.
+
+---
+
+## 12. Open-question resolution log
+
+All eight open questions surfaced during plan review on **2026-04-22**. Decisions are locked for this stream; cross-stream / PRD implications listed against each.
+
+| #  | Question                                                                                                                                                    | Resolution                                                                                                                                                                                                                                                                                                                                                                                                                      | Plan impact                                                                                                                                                                                                                                                                                      |
+|----|-------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Q1 | Seeded Cash account name — English literal `'Cash'` vs locale-picked label vs new `accounts.l10n_key` column?                                               | **Option (a) — English literal `'Cash'`.** Users rename at will. Accounts management screen renders the literal string as-is. No schema change.                                                                                                                                                                                                                                                                                 | §2.3 Step 5 unchanged. No cascade to PRD or Stream B.                                                                                                                                                                                                                                            |
+| Q2 | `default_account_id` at seed time — leave null vs set to the seeded Cash account's id?                                                                      | **Option (b) — seed `default_account_id` to the Cash account's id.** First transaction entry auto-selects the account without the user visiting Accounts first.                                                                                                                                                                                                                                                                 | §2.3 Step 6 row updated; §2.4 transaction wrapper threads the Cash account id into `_seedPreferences(...)`; §5 C8 / C9 tasks reflect the new parameter; §6.2 adds a `default_account_id points at seeded Cash account` test; §10 exit-criteria list now shows 8 `user_preferences` keys (was 7). |
+| Q3 | `import_lint ^0.1.6` rule amendment for `lib/data/seed/**` — try the regex vs move seed into repositories/ vs move into services/?                          | **Option (a) — try the regex rule; fall back to reviewer discipline.** Matches the plan's existing position. The pinned regex schema is known fragile; reviewer discipline is the established backup per CLAUDE.md.                                                                                                                                                                                                             | §5 C0 wording unchanged. No plan restructure.                                                                                                                                                                                                                                                    |
+| Q4 | `lib/data/seed/` folder is not in the PRD folder structure — reconcile PRD now vs defer?                                                                    | **Reconcile PRD now.** PRD.md → *Folder Structure* gets one new line listing `data/seed/first_run_seed.dart` beside `data/repositories/`, `data/services/`, etc.                                                                                                                                                                                                                                                                | No Stream C plan change; PRD edit flagged in §12.1 follow-ups below.                                                                                                                                                                                                                             |
+| Q5 | `AccountTypeRepository.upsertSeeded` — Stream C's named-param signature vs Stream B's `upsertSeeded(AccountType type)` signature?                           | **Stream C's named-param signature wins.** `upsertSeeded({required String l10nKey, required String icon, required int color, required Currency defaultCurrency, required int sortOrder}) → Future<int>` is frozen. Stream B's plan is updated to match (see §12.1 below).                                                                                                                                                       | §7.1 Stream B → Stream C row stays as-written; Stream B plan edit flagged in §12.1.                                                                                                                                                                                                              |
+| Q6 | Locale→currency mapping completeness — keep language-prefix EUR fallback, add region fiats, or drop language-based defaults?                                | **Add four new seeded fiats (CAD, SGD, AUD, NZD) and drop language-prefix EUR fallbacks.** Policy: "language should not affect fiat." Region-specific mappings for `en_*`, `zh_*`, `ja_*` are kept unchanged (en_CA / en_AU / en_NZ stay → USD; they are not remapped to the newly-seeded regional fiats). Language-only fallbacks for `de_*`/`fr_*`/`es_*`/`it_*` → EUR are removed; those locales fall through to USD global. | §2.3 Step 1 currency table now 11 rows; §2.3 Step 2 locale table + code drop the European-language rows; §6.2 test list flips `de_DE → EUR` into `de_DE → USD (fallback)` and adds `fr_FR → USD` + four-new-fiats presence tests; §10 exit criteria shows 11 currencies.                         |
+| Q7 | Seeded currency `name_l10n_key` — pin now (`currency.<code>`) and allow user rename, or defer both to M5?                                                   | **Pin `name_l10n_key = 'currency.<code>'` at seed and add `currencies.custom_name` column for user rename support.** Matches the category / account-type pattern. Stream B owns `CurrencyRepository.updateCustomName(String code, String? customName)` and the column addition; Stream C consumes the new field at seed (always `null`).                                                                                        | §2.3 Step 1 now pins `name_l10n_key` per row and mentions `custom_name`; §6.2 asserts `name_l10n_key` format and `custom_name == null`; §10 exit criteria mirrors; Stream B plan + PRD + v1 schema snapshot edits flagged in §12.1.                                                              |
+| Q8 | Minor cleanup items — `kDefaultSplashDisplayText` location; `_FakeLocaleService` location; commit generated schema; bootstrap failure mode on corrupt JSON? | **Accept all four defaults as-written in the plan.** Constant lives in `first_run_seed.dart`; `_FakeLocaleService` ships in the shared `_harness/` directory; generated `schema_v1.dart` is committed to git; corrupt-JSON read throws `PreferenceDecodeException` at bootstrap and M4 shell renders the error state rather than silently recovering.                                                                           | No plan change — reaffirms §3.3 (harness), §3.2 (commit generated), §9 Risk 5 (error-boundary strategy), §9 Risk 8 (shared constant).                                                                                                                                                            |
+
+### 12.1 Follow-ups triggered by these resolutions
+
+These cascade to documents owned outside Stream C. Stream C flags but does not apply unilaterally — the listed owner applies.
+
+- **PRD.md — Folder Structure (~lines 105–210).** Add `data/seed/first_run_seed.dart` to the `lib/data/` block. Triggered by §12 Q4.
+- **PRD.md — `currencies` schema (~line 263).** Add a `custom_name` row: `TEXT | nullable user override`. Mirror the wording already used on `categories` and `account_types`. Note in the schema notes that seeded currencies carry `name_l10n_key` set, `custom_name` nullable. Triggered by §12 Q7.
+- **PRD.md — Seeded currencies sentence (~line 276).** Expand from "USD, EUR, JPY, TWD, CNY, HKD, GBP" to "USD, EUR, JPY, TWD, CNY, HKD, GBP, CAD, SGD, AUD, NZD". Triggered by §12 Q6.
+- **PRD.md — First-run Defaults (~lines 662–668).** Add a sentence: "`default_account_id` is seeded to the id of the Cash account created in this step, so the first Add Transaction entry auto-selects the Cash account without requiring a visit to the Accounts screen." Triggered by §12 Q2.
+- **Stream B plan (`stream-b-account-currency.md`).**
+  - §1.1 `CurrencyRepository` — add `Future<void> updateCustomName(String code, String? customName)` method; rename guardrails match the category / account-type pattern. Triggered by §12 Q7.
+  - §1.1 / §2 `Currency` domain model reference — acknowledge the new `customName` field (Freezed regeneration required).
+  - §1.2 `AccountTypeRepository.upsertSeeded` — change signature from `Future<int> upsertSeeded(AccountType type)` to `Future<int> upsertSeeded({required String l10nKey, required String icon, required int color, required Currency defaultCurrency, required int sortOrder})`. Triggered by §12 Q5.
+- **Source files (pre-v1 schema tweak — Stream B / M1 boundary).**
+  - `lib/data/database/tables/currencies_table.dart` — add `TextColumn get customName => text().nullable()();`.
+  - `lib/data/models/currency.dart` — add `String? customName` to the Freezed `Currency` model. Re-run `dart run build_runner build --delete-conflicting-outputs` to regenerate `currency.freezed.dart`.
+  - `drift_schemas/drift_schema_v1.json` — regenerate via `dart run drift_dev schema dump lib/data/database/app_database.dart drift_schemas/`. This updates the v1 snapshot in place (pre-v1 is still malleable — no migration involved because v1 has not shipped).
+
+These follow-ups are listed for product-owner / Stream B owner awareness. Stream C does not apply them unilaterally — the listed owner applies.
 
 ---
 
