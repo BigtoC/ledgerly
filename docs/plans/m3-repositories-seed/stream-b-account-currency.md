@@ -16,7 +16,7 @@
 - *Default Categories → Color Source*: lines **456–458** (MD3 baseline — informs AccountType color constraint)
 
 **Sibling streams (same milestone, merge within the same window):**
-- Stream A — `TransactionRepository` + `CategoryRepository` + shared error base. Stream A depends on `CurrencyRepository.getByCode` (FK check on transaction save) and on `AccountRepository.getById` (nothing else crosses). Stream B ships those reads first.
+- Stream A — `TransactionRepository` + `CategoryRepository` + shared error base. Stream A depends only on the shared `repository_exceptions.dart` contract from this stream; its runtime repository logic stays on its own DAOs.
 - Stream C — `UserPreferencesRepository` + first-run seed + migration test harness. Stream C depends on `CurrencyRepository.upsert` (seed fiats), `AccountTypeRepository.save` (seed Cash + Investment), and `AccountRepository.save` (seed one Cash account). Stream B exposes those writes and nothing more — seed policy lives in Stream C.
 
 Stream B touches **no file owned by Stream A or Stream C**. The only cross-cutting file is the shared error-type module — ownership resolved in §7.
@@ -29,11 +29,11 @@ Stream B touches **no file owned by Stream A or Stream C**. The only cross-cutti
 
 Verified on disk 2026-04-22 — see §11.
 
-**Stack:** `drift ^2.28.0`, `drift_flutter ^0.2.7`, `freezed ^2.5.3`, `flutter_test` (sdk), Dart `^3.11.5`, Flutter `>=3.41.6`. **No new dependencies.** `pubspec.yaml` is not modified by this stream.
+**Stack:** `drift ^2.28.0`, `drift_flutter ^0.2.7`, `freezed ^3.1.0`, `flutter_test` (sdk), Dart `^3.11.5`, Flutter `>=3.41.6`. **No new dependencies.** `pubspec.yaml` is not modified by this stream.
 
-**Goal:** Ship the repository SSOT for currencies, account types, and accounts — reactive `Stream<…>` reads, typed command writes, Drift → Freezed mapping inside the repository, business rules (archive-instead-of-delete, FK integrity, `l10n_key` identity, integer minor units) enforced once — so Stream A's transaction / category writes compile against stable `CurrencyRepository.getByCode` / `AccountRepository.getById` signatures and Stream C's seed has a thin `upsert` + `save` surface to call.
+**Goal:** Ship the repository SSOT for currencies, account types, and accounts — reactive `Stream<…>` reads, typed command writes, Drift → Freezed mapping inside the repository, business rules (archive-instead-of-delete, FK integrity, `l10n_key` identity, integer minor units) enforced once — so Stream C's seed has a thin `upsert` / `upsertSeeded` / `save` surface to call and the shared repository exception contract is frozen for the rest of M3.
 
-**Architecture:** Three sibling files in `lib/data/repositories/`, each wrapping exactly one DAO, each returning Freezed domain models. Drift types (`Currency` the Drift row, `AccountRow`, `AccountTypeRow`, every `…Companion`) never leave these files. Shared exception types live in one module at `lib/data/repositories/exceptions.dart` (coordinated with Stream A — see §7). Tests are per-repository, built on an in-memory `AppDatabase` via `NativeDatabase.memory()`, sharing the test harness owned by Stream C.
+**Architecture:** Three sibling files in `lib/data/repositories/`, each exporting an abstract repository interface plus a concrete `Drift*Repository` implementation that wraps exactly one DAO and returns Freezed domain models. Drift types (`Currency` the Drift row, `AccountRow`, `AccountTypeRow`, every `…Companion`) never leave these files. Shared exception types live in the narrow module `lib/data/repositories/repository_exceptions.dart` (owned by Stream B; coordinated with Stream A and Stream C — see §7). Tests are per-repository and consume the shared in-memory harness owned by Stream C at `test/unit/repositories/_harness/test_app_database.dart`; no temporary local harnesses.
 
 **One-sentence gap to flag up front:** `lib/data/repositories/account_type_repository.dart` **does not exist on disk** (see §0). M0 scaffolding created every other repo as a TODO-only stub but skipped this one — almost certainly because `account_types` was a late addition to the schema. This plan creates the file; it is the first task (B0) before any implementation begins.
 
@@ -133,6 +133,12 @@ abstract class CurrencyRepository {
   /// by raising [CurrencyDecimalsMismatchException] rather than writing.
   Future<void> upsert(Currency currency);
 }
+
+final class DriftCurrencyRepository implements CurrencyRepository {
+  DriftCurrencyRepository(this._db);
+
+  final AppDatabase _db;
+}
 ```
 
 ### 1.2 `lib/data/repositories/account_type_repository.dart` *(new file)*
@@ -157,6 +163,17 @@ abstract class AccountTypeRepository {
   /// Does NOT mutate `l10n_key` — see [rename] for the rename path.
   Future<int> save(AccountType accountType);
 
+  /// Seed-only insert-or-update keyed by `l10nKey`. Used by Stream C's
+  /// first-run seed so seeded account-type writes stay idempotent while
+  /// user-facing writes continue to flow through [save]. Returns the row id.
+  Future<int> upsertSeeded({
+    required String l10nKey,
+    required String icon,
+    required int color,
+    required Currency defaultCurrency,
+    required int sortOrder,
+  });
+
   /// Rename a seeded account type. Writes `custom_name` only;
   /// `l10n_key` is preserved so locale changes do not duplicate or
   /// orphan the row (PRD 336–337, CLAUDE.md → Data-Model Invariants).
@@ -178,6 +195,13 @@ abstract class AccountTypeRepository {
   /// Settings screen to decide between enabling "Delete" vs "Archive"
   /// on the row action menu.
   Future<bool> isReferenced(int id);
+}
+
+final class DriftAccountTypeRepository implements AccountTypeRepository {
+  DriftAccountTypeRepository(this._db, this._currencies);
+
+  final AppDatabase _db;
+  final CurrencyRepository _currencies;
 }
 ```
 
@@ -230,11 +254,18 @@ abstract class AccountRepository {
   /// menu to gate Delete vs Archive.
   Future<bool> isReferenced(int id);
 }
+
+final class DriftAccountRepository implements AccountRepository {
+  DriftAccountRepository(this._db, this._currencies);
+
+  final AppDatabase _db;
+  final CurrencyRepository _currencies;
+}
 ```
 
-### 1.4 Error types — `lib/data/repositories/exceptions.dart`
+### 1.4 Error types — `lib/data/repositories/repository_exceptions.dart`
 
-**Ownership:** this file is shared with Stream A. **Stream B creates it** as task B4 with the full set below; Stream A adds only its own category-specific type (`CategoryInUseException`, `CategoryTypeLockedException`) later in the same merge window. Rationale: Stream A needs `CurrencyNotFoundException` on day 1 of its `TransactionRepository.save`, and Stream B needs it on day 1 of `AccountRepository.save` — the only sane resolution is a shared module, created by whichever stream writes it first. Stream B writes `CurrencyRepository` first (task B1), so Stream B creates the file.
+**Ownership:** this file is shared with Streams A and C. **Stream B creates and owns it** as task B4. Keep it narrow: the repository-layer base plus the leaf exceptions reused cross-stream (`CurrencyNotFoundException`, `CurrencyDecimalsMismatchException`, `AccountTypeNotFoundException`, `AccountTypeInUseException`, `AccountInUseException`). Stream-A-only category exceptions stay local to Stream A unless later reused.
 
 ```dart
 /// Base for every typed repository exception. Never thrown directly —
@@ -570,7 +601,7 @@ One rule per subsection, with the enforcement point, the PRD cite, and the test 
 ### 3.10 `CurrencyRepository` is MVP read-mostly — documented
 
 - **PRD cite:** lines 263–278. `currencies` has no `is_archived` column, no deletion flow. MVP does not ship `delete` or `archive` on this repo.
-- **Enforcement:** the `abstract class CurrencyRepository` signature in §1.1 exposes only `watchAll`, `getByCode`, `upsert`. No TODO comments for Phase-2 methods in MVP — adding them later is additive and safe.
+- **Enforcement:** the `CurrencyRepository` interface in §1.1 exposes only `watchAll`, `getByCode`, `upsert`. No TODO comments for Phase-2 methods in MVP — adding them later is additive and safe.
 - **Phase 2 future-proofing:** `upsert` is deliberately generic enough to serve Phase 2 token registration. `watchAll({includeTokens: true})` is the Phase-2 switch; MVP callers never pass `true`.
 
 ---
@@ -588,7 +619,7 @@ Drift `.watch()` is the foundation. Every stream-returning method composes from 
 
 **Caveat on `asyncMap`:** when the account-type stream emits a new snapshot before the currency lookup for the previous snapshot has finished, `asyncMap` processes in order but may coalesce. For MVP scale (10k transactions, dozens of accounts, handful of account types, ~10 currencies), the lookup is a handful of `SELECT WHERE code = ?` calls — effectively free. Test in §6.2 asserts ordering, not latency.
 
-**Cross-stream coordination:** Stream A's `TransactionRepository` will need `AccountRepository.getById` (to resolve an account's currency into the transaction on read). It does **not** need an Account stream — Stream A joins at the controller level too, per the decision in §2.3. No cross-stream stream wiring.
+**Cross-stream coordination:** Stream C consumes `CurrencyRepository.upsert`, `AccountTypeRepository.upsertSeeded`, and `AccountRepository.save` for first-run seeding. Stream A consumes only the shared exception contract from this stream; no runtime cross-repository wiring.
 
 ---
 
@@ -616,7 +647,7 @@ Each task is a committable unit. The dev may stack them into a single PR or land
 
 ### B1. `CurrencyRepository` (read-mostly, lands first)
 
-- [ ] Write the abstract class signature per §1.1.
+- [ ] Write the `CurrencyRepository` interface per §1.1.
 - [ ] Write the concrete `DriftCurrencyRepository` implementation with `_toDomain` / `_toCompanion` helpers per §2.1.
 - [ ] Implement `watchAll({includeTokens})` by `.map`-ing the DAO stream and filtering `isToken` in-repo.
 - [ ] Implement `getByCode` by delegating to `CurrencyDao.findByCode` + `_toDomain`.
@@ -625,7 +656,7 @@ Each task is a committable unit. The dev may stack them into a single PR or land
 
 ### B2. `AccountTypeRepository`
 
-- [ ] Replace the B0 stub with the abstract class + `DriftAccountTypeRepository` implementation per §1.2 and §2.2.
+- [ ] Replace the B0 stub with the `AccountTypeRepository` interface + `DriftAccountTypeRepository` implementation per §1.2 and §2.2.
 - [ ] Constructor takes `AccountTypeDao _dao` and `CurrencyRepository _currencies`. Do NOT inject `AccountDao` — use `hasReferencingAccounts` on the account-type DAO (already a `customSelect`).
 - [ ] Implement `watchAll` with the async map currency-resolution pattern in §2.2.
 - [ ] Implement `getById` by `findById` + `_toDomain`. Remember: `_toDomain` is async because it resolves currency.
@@ -638,7 +669,7 @@ Each task is a committable unit. The dev may stack them into a single PR or land
 
 ### B3. `AccountRepository`
 
-- [ ] Replace the 8-line TODO stub (§0.2) with the abstract class + `DriftAccountRepository` implementation per §1.3 and §2.3.
+- [ ] Replace the 8-line TODO stub (§0.2) with the `AccountRepository` interface + `DriftAccountRepository` implementation per §1.3 and §2.3.
 - [ ] Constructor takes `AccountDao _accountDao`, `AccountTypeDao _accountTypeDao`, `TransactionDao _transactionDao`, `CurrencyRepository _currencies`.
 - [ ] Implement `watchAll({includeArchived})` + `watchById(id)` with currency resolution.
 - [ ] Implement `getById`.
@@ -650,9 +681,9 @@ Each task is a committable unit. The dev may stack them into a single PR or land
 
 ### B4. Error types module
 
-- [ ] Create `lib/data/repositories/exceptions.dart` with the six types in §1.4 (`RepositoryException` base + 5 subclasses).
-- [ ] Export from each repository file that throws (Dart barrel-file is not required — consumers `import 'package:ledgerly/data/repositories/exceptions.dart'` directly).
-- [ ] Coordinate with Stream A: notify them in the PR description that `exceptions.dart` now exists and that their category-specific exceptions should extend `RepositoryException` and live in the same file.
+- [ ] Create `lib/data/repositories/repository_exceptions.dart` with the six types in §1.4 (`RepositoryException` base + 5 subclasses).
+- [ ] Export from each repository file that throws (Dart barrel-file is not required — consumers `import 'package:ledgerly/data/repositories/repository_exceptions.dart'` directly).
+- [ ] Coordinate with Stream A: notify them in the PR description that `repository_exceptions.dart` now exists and that only cross-stream-reused leaf exceptions belong there; Stream-A-only category exceptions stay local unless reused.
 - [ ] Commit as `feat(m3-b): shared repository exception types`. Can ship between B1 and B2 (B1 also needs `CurrencyDecimalsMismatchException` and `CurrencyNotFoundException`). Practically, write B4 first, then B1 compiles.
 
     **Dependency order in practice:** B0 → B4 → B1 → B2 → B3 → B5. The §5 section header lists B0-first-then-B1 because B0 is purely filesystem; B4 is code. Both are written before any test runs.
@@ -679,7 +710,7 @@ Each task is a committable unit. The dev may stack them into a single PR or land
 
 ## 6. Test plan
 
-Every repository has one test file. All three use the shared in-memory harness from Stream C — a `TestDatabase` factory that returns `AppDatabase(NativeDatabase.memory())` with `foreign_keys = ON`, pre-built currencies seeded (USD / JPY / EUR) so tests opt into seeding what they need.
+Every repository has one test file. All three use the shared in-memory harness from Stream C — `newTestAppDatabase()` plus `TestRepoBundle` in `test/unit/repositories/_harness/test_app_database.dart` — with `foreign_keys = ON` and opt-in fixture helpers.
 
 Minimum coverage below. Implementer may add more — none may be removed.
 
@@ -702,6 +733,10 @@ Minimum coverage below. Implementer may add more — none may be removed.
 
 Preconditions: every test first seeds USD (and sometimes JPY) via `CurrencyRepository.upsert`.
 
+Seed-specific coverage also includes:
+- `AT17`: `upsertSeeded(accountType.cash)` inserts once and returns the row id.
+- `AT18`: re-running `upsertSeeded(accountType.cash)` updates the same logical row, preserves `l10nKey`, and does not duplicate rows.
+
 | #    | Test                                                                      | Method                | Assertion                                                                                                     | Rule cite |
 |------|---------------------------------------------------------------------------|-----------------------|---------------------------------------------------------------------------------------------------------------|-----------|
 | AT01 | Empty DB → `watchAll` emits `[]`                                          | `watchAll`            | `await stream.first` → `[]`                                                                                   | §1.2      |
@@ -723,7 +758,7 @@ Preconditions: every test first seeds USD (and sometimes JPY) via `CurrencyRepos
 
 ### 6.3 `test/unit/repositories/account_repository_test.dart`
 
-Preconditions: seed USD + JPY via `CurrencyRepository.upsert`; seed one `accountType.cash` via `AccountTypeRepository.save`.
+Preconditions: seed USD + JPY via `CurrencyRepository.upsert`; seed one `accountType.cash` via `AccountTypeRepository.upsertSeeded`.
 
 | #    | Test                                                                      | Method                        | Assertion                                                                                                     | Rule cite |
 |------|---------------------------------------------------------------------------|-------------------------------|---------------------------------------------------------------------------------------------------------------|-----------|
@@ -746,13 +781,19 @@ Preconditions: seed USD + JPY via `CurrencyRepository.upsert`; seed one `account
 
 ### 6.4 Shared test harness (reference — owned by Stream C)
 
-Stream C creates `test/support/test_database.dart` with:
+Stream C creates `test/unit/repositories/_harness/test_app_database.dart` with:
 
 ```dart
-AppDatabase buildTestDatabase() => AppDatabase(NativeDatabase.memory());
+AppDatabase newTestAppDatabase() => AppDatabase(NativeDatabase.memory());
+
+class TestRepoBundle {
+  TestRepoBundle(this.db);
+  final AppDatabase db;
+  // interface-typed repository collaborators backed by concrete Drift repos
+}
 ```
 
-Plus helpers for seeding a minimal set of currencies (USD, JPY) and constructing a `DriftCurrencyRepository` on top. Stream B consumes this harness — **does not re-implement**. If Stream C has not yet merged the harness when Stream B starts B5, Stream B writes a temporary `buildTestDatabase()` at the top of its first test file and moves it to `test/support/` when Stream C lands. The temporary version is identical in shape to the shared one to minimize the later diff.
+Plus helpers for seeding the minimal shared repository fixtures. Stream B consumes this harness and **does not re-implement or temporarily duplicate it**.
 
 ---
 
@@ -760,14 +801,13 @@ Plus helpers for seeding a minimal set of currencies (USD, JPY) and constructing
 
 | Seam                            | Sibling stream | Direction                         | What Stream B exposes                                                                               | What Stream B consumes                                                                         |
 |---------------------------------|----------------|-----------------------------------|-----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
-| FK pre-check on transaction save | A              | B → A                             | `CurrencyRepository.getByCode`                                                                      | —                                                                                              |
-| FK pre-check on transaction save | A              | B → A                             | `AccountRepository.getById` (transaction needs the account's currency when displaying totals)       | —                                                                                              |
+| Shared exception contract         | A              | B → A                             | `repository_exceptions.dart` (`RepositoryException`, `CurrencyNotFoundException`, etc.)             | —                                                                                              |
 | Account referenced-by-txn probe  | A              | B → A (via DAO contract)          | Stream B **calls** `TransactionDao.countByAccount` directly from `AccountRepository`                | Stream B **requires** `TransactionDao.countByAccount` to exist (M1 §3.2); Stream A owns the DAO |
-| Shared error types               | A              | Shared file, written by B         | Stream B creates `lib/data/repositories/exceptions.dart` with the base + 5 subclasses from §1.4     | Stream A extends with `CategoryInUseException`, `CategoryTypeLockedException`                 |
+| Shared error types               | A              | Shared file, written by B         | Stream B creates `lib/data/repositories/repository_exceptions.dart` with the base + 5 subclasses from §1.4 | Stream A imports the shared base / reused leaves and keeps category-only leaves local |
 | Seed currencies                 | C              | B → C                             | `CurrencyRepository.upsert` — Stream C calls it 7× for MVP fiats                                    | —                                                                                              |
-| Seed account types              | C              | B → C                             | `AccountTypeRepository.save` — Stream C calls it for `accountType.cash` + `accountType.investment` | Stream B's `save` pre-check requires USD (or the resolved `default_currency`) to be upserted *first* — Stream C orders accordingly |
+| Seed account types              | C              | B → C                             | `AccountTypeRepository.upsertSeeded` — Stream C calls it for `accountType.cash` + `accountType.investment` | Stream B's seed seam validates the resolved `default_currency`; Stream C orders currencies first |
 | Seed Cash account               | C              | B → C                             | `AccountRepository.save` — Stream C calls it once with `accountTypeId = <cash.id>` and the resolved default currency | Stream B's `save` requires both upstream seeds to have landed — Stream C's ordering again |
-| Shared test DB harness          | C              | C → B (Stream B consumes)         | —                                                                                                   | `test/support/test_database.dart` with `buildTestDatabase()` + seeded currencies helper        |
+| Shared test DB harness          | C              | C → B (Stream B consumes)         | —                                                                                                   | `test/unit/repositories/_harness/test_app_database.dart` with `newTestAppDatabase()` + `TestRepoBundle` |
 | Default-currency resolution     | C              | C owns the chain                  | `AccountRepository.save` validates whatever currency the caller supplies; does NOT read user_prefs | Stream C's seed + the M5 Accounts controller own the `account_type.default_currency → user_pref → 'USD'` walk |
 
 **Merge-window rule:** Streams A / B / C merge in the same week (implementation plan §5, "Streams overlap the same Drift transaction API — merge within a tight window"). Land B1 (CurrencyRepository) first within the window; A and C can both start the moment B1 is on main.
@@ -800,7 +840,7 @@ Stream B does **not** enforce G3, G5, G9, G10, G11 — those are controller / bo
 2. **Account-type archive silently cascading to accounts.** PRD 358 is explicit: archiving a type does NOT cascade. Risk: a dev writes a "cascade archive" convenience. Mitigation: no cascade method is defined in §1.2; test AT08 seeds an account of the type, archives the type, confirms the account is still active and visible.
 3. **`custom_name` overwriting `l10n_key` by accident.** The `rename` implementation (§3.3) uses Drift's `replace`, which writes every companion field. Omitting `l10nKey` from the companion would silently set it to NULL. Mitigation: the template in §3.3 explicitly copies every other column from the existing row; test AT05 / AT06 proves it.
 4. **Async map stream ordering under load.** `AccountTypeRepository.watchAll`'s `asyncMap` could, in principle, reorder snapshots during rapid seed + rename + archive bursts. MVP does not hit the load. Mitigation: test AT15 asserts ordering under rapid emits, and Dart's single-threaded event loop guarantees FIFO.
-5. **Test harness divergence between streams.** If Stream B writes its own `buildTestDatabase` and Stream C writes another, two versions diverge, breaking the first attempt at running `flutter test` on the full tree. Mitigation: §7 pins ownership to Stream C; §6.4 documents the fallback when C hasn't merged yet.
+5. **Test harness divergence between streams.** If Stream B writes its own in-memory DB helper instead of consuming Stream C's canonical harness, the first full-tree `flutter test` run drifts immediately. Mitigation: §7 pins ownership to Stream C and §6.4 forbids local fallback helpers.
 6. **Drift `Currency` vs Freezed `Currency` name collision.** Both classes are called `Currency`. Accidentally returning the Drift one breaks every controller cast. Mitigation: Import pattern in §2.1 — always `import '../database/app_database.dart' as drift;`. Pre-merge grep for `'../database/app_database.dart'` without a prefix in the repository diff.
 7. **`isToken` filter forgotten in `watchAll({includeTokens: false})`.** MVP has no token rows, so the bug is invisible until Phase 2 land. Mitigation: test CR03 seeds an explicit ETH row (`isToken: true`) and asserts exclusion.
 8. **Phase-2 pressure to add `CurrencyRepository.delete` / `archive`.** The schema lacks `is_archived` on `currencies`. Resist any Phase-2 addition here; tokens are append-only in the current PRD. Any future delete requires a schema change + new snapshot. Document at the top of the repo file.
@@ -821,7 +861,7 @@ Direct mapping to `docs/plans/implementation-plan.md` §5 M3 exit criteria, scop
 - [ ] Currency FK enforcement covered (AC03, AT03) — the master plan's required "currency FK enforcement" case.
 - [ ] `CurrencyRepository` documented as read-mostly in the repo file's class dartdoc; only `watchAll` / `getByCode` / `upsert` exposed.
 - [ ] `lib/data/repositories/account_type_repository.dart` exists (created in B0, implemented in B2).
-- [ ] `lib/data/repositories/exceptions.dart` exists with `RepositoryException` + 5 subclasses; Stream A can extend it without edits from Stream B.
+- [ ] `lib/data/repositories/repository_exceptions.dart` exists with `RepositoryException` + 5 subclasses; Stream A and Stream C import it without edits from Stream B.
 - [ ] `flutter analyze` clean on the branch.
 - [ ] `grep -nE 'double.*\b(amount|balance|rate|price)\b' lib/data/repositories/` → zero hits (G4).
 - [ ] `grep -nE '(IconData|ARGB)' lib/data/repositories/` → zero hits (G8).

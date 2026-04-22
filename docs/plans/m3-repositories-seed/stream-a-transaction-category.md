@@ -17,7 +17,7 @@
 - **Stream B** — `account_type_repository.dart`, `account_repository.dart`, `currency_repository.dart` + rule tests.
 - **Stream C** — `user_preferences_repository.dart` + first-run seed module + migration harness activation. **Owner of the shared in-memory Drift test harness** (see §7).
 
-Stream A MUST NOT touch `account*_repository.dart`, `currency_repository.dart`, `user_preferences_repository.dart`, the seed module, or migration-harness wiring. Those are other streams' exit criteria. This stream's only repository files are `transaction_repository.dart` and `category_repository.dart` plus their dedicated rule tests.
+Stream A MUST NOT touch `account*_repository.dart`, `currency_repository.dart`, `user_preferences_repository.dart`, the seed module, or migration-harness wiring. Those are other streams' exit criteria. This stream's code changes are limited to `transaction_repository.dart`, `category_repository.dart`, their dedicated rule tests, and the one leaf DAO addition explicitly called out in task A3.3 (`TransactionDao.watchByCategory`).
 
 **Upstream dependency (must be green before starting):**
 - **M1 merged** — `lib/data/database/{tables,daos}/*`, `lib/data/database/app_database.dart`, `lib/data/models/{transaction,category,currency,account_type,account}.dart`, and `drift_schemas/drift_schema_v1.json` exist as described in `docs/plans/m1-data-foundations/stream-a-drift-schema.md` and `stream-b-freezed-models.md`. Verified 2026-04-22 on disk — see §11.
@@ -27,7 +27,7 @@ Stream A MUST NOT touch `account*_repository.dart`, `currency_repository.dart`, 
 
 **Goal:** Replace the two TODO stubs with production `TransactionRepository` and `CategoryRepository` implementations that enforce the five PRD-mandated invariants (integer minor units, currency FK, category-type lock, archive-instead-of-delete, repository-populated timestamps), expose frozen public signatures the M4 bootstrap and M5 controllers compile against, and ship exhaustive in-memory-Drift rule tests.
 
-**Architecture:** Each repository is a plain Dart class constructed with an `AppDatabase` handle. It calls per-entity DAOs, maps Drift rows to Freezed domain models inside private helpers, and exposes `Stream<T>` / `Future<T>` methods only. Drift types (`TransactionRow`, `CategoryRow`, `CategoriesCompanion`, `TransactionsCompanion`) do not escape. Business rules live **in the repository methods**, never in DAO SQL. Errors propagate via typed exceptions declared in this stream; `AsyncError` surfacing is a controller concern at M5.
+**Architecture:** Stream A exports abstract repository interfaces plus concrete `Drift*Repository` implementations constructed with an `AppDatabase` handle. The concrete classes call per-entity DAOs, map Drift rows to Freezed domain models inside private helpers, and expose `Stream<T>` / `Future<T>` methods only. Drift types (`TransactionRow`, `CategoryRow`, `CategoriesCompanion`, `TransactionsCompanion`) do not escape. Business rules live **in the repository methods**, never in DAO SQL. Shared repository errors come from Stream B's narrow `repository_exceptions.dart`; Stream-A-specific leaf exceptions stay local to Stream A.
 
 ---
 
@@ -107,17 +107,7 @@ import 'repository_exceptions.dart';
 ///   (G2 / PRD.md 286).
 /// - `createdAt` / `updatedAt` populated by the repository, never by
 ///   SQL defaults (PRD.md 291-293).
-class TransactionRepository {
-  TransactionRepository(this._db, {DateTime Function()? clock})
-    : _clock = clock ?? DateTime.now;
-
-  final AppDatabase _db;
-  final DateTime Function() _clock;
-
-  TransactionDao get _dao => _db.transactionDao;
-  CategoryDao get _categoryDao => _db.categoryDao;
-  CurrencyDao get _currencyDao => _db.currencyDao;
-
+abstract class TransactionRepository {
   /// Reverse-chronological stream of up to `limit` transactions. Default
   /// cap is the MVP pagination limit of 10 000 (PRD.md → Pagination,
   /// CLAUDE.md → Pagination Cap). Backs the Home list.
@@ -150,7 +140,7 @@ class TransactionRepository {
   /// stored `createdAt` untouched. Returns the updated row.
   ///
   /// Throws:
-  /// - [TransactionCurrencyUnknownException] when `tx.currency.code`
+  /// - [CurrencyNotFoundException] when `tx.currency.code`
   ///   is absent from the `currencies` table.
   /// - [RepositoryException] on any other Drift-layer failure.
   ///
@@ -176,9 +166,21 @@ class TransactionRepository {
   /// Throws [RepositoryException] when `sourceId` does not exist.
   Future<Transaction> duplicate(int sourceId);
 }
+
+final class DriftTransactionRepository implements TransactionRepository {
+  DriftTransactionRepository(this._db, {DateTime Function()? clock})
+    : _clock = clock ?? DateTime.now;
+
+  final AppDatabase _db;
+  final DateTime Function() _clock;
+
+  TransactionDao get _dao => _db.transactionDao;
+  CategoryDao get _categoryDao => _db.categoryDao;
+  CurrencyDao get _currencyDao => _db.currencyDao;
+}
 ```
 
-**Exported:** class `TransactionRepository` with the seven methods above. No top-level functions.
+**Exported:** abstract interface `TransactionRepository` plus concrete `DriftTransactionRepository`. No top-level functions.
 
 ### 1.2 `lib/data/repositories/category_repository.dart`
 
@@ -205,14 +207,7 @@ import 'repository_exceptions.dart';
 ///   Invariants).
 /// - Wire values of `CategoryType` are `'expense'` / `'income'` (no
 ///   third variant, ever — PRD.md 293-294).
-class CategoryRepository {
-  CategoryRepository(this._db);
-
-  final AppDatabase _db;
-
-  CategoryDao get _dao => _db.categoryDao;
-  TransactionDao get _txDao => _db.transactionDao;
-
+abstract class CategoryRepository {
   /// Categories stream, optionally filtered by type and including
   /// archived rows. Ordered by `sortOrder NULLS LAST, id ASC`.
   ///
@@ -232,6 +227,24 @@ class CategoryRepository {
   /// One-shot read by `l10nKey`. Consumed by the M3-C seed module to
   /// check idempotency for seeded rows (`category.food`, etc.).
   Future<Category?> getByL10nKey(String l10nKey);
+
+  /// Seed-only insert-or-update keyed by `l10nKey`. Used exclusively by
+  /// Stream C's first-run seed to make seeded category writes idempotent
+  /// without routing through the user-facing `save(Category)` path.
+  ///
+  /// - Insert path: creates the row with the supplied seed-owned fields.
+  /// - Update path: rewrites seed-owned fields (`icon`, `color`,
+  ///   `sortOrder`, `isArchived`) and preserves row identity.
+  /// - `customName` is preserved on existing rows.
+  /// - If the incoming `type` disagrees with a referenced row, the same
+  ///   type-lock guard as [save] applies.
+  Future<Category> upsertSeeded({
+    required String l10nKey,
+    required String icon,
+    required int color,
+    required CategoryType type,
+    required int sortOrder,
+  });
 
   /// Insert-or-update.
   ///
@@ -274,53 +287,22 @@ class CategoryRepository {
   /// archive-vs-delete UI affordance and the delete guard above.
   Future<bool> isReferenced(int id);
 }
-```
 
-**Exported:** class `CategoryRepository` with the seven methods above. No top-level functions.
+final class DriftCategoryRepository implements CategoryRepository {
+  DriftCategoryRepository(this._db);
 
-### 1.3 `lib/data/repositories/repository_exceptions.dart` (new file)
+  final AppDatabase _db;
 
-Stream A owns the shared base exception plus the three repo-specific subclasses thrown by `TransactionRepository` and `CategoryRepository`. Stream B will extend this file with its own subclasses (`CurrencyUnknownException`, `AccountTypeInUseException`, etc.) in the same merge window; naming the base class and file up front removes the cross-stream churn.
-
-```dart
-/// Base class for typed repository errors. Repositories throw instances
-/// of [RepositoryException] (or subclasses); controllers catch and
-/// surface them as `AsyncError` per PRD.md → Error Handling Pattern
-/// (lines 828-837).
-class RepositoryException implements Exception {
-  const RepositoryException(this.message, {this.cause});
-  final String message;
-  final Object? cause;
-  @override
-  String toString() => 'RepositoryException: $message';
-}
-
-/// Attempted to mutate `Category.type` after a transaction already
-/// referenced the category (G5 — PRD.md 293-294).
-class CategoryTypeLockedException extends RepositoryException {
-  const CategoryTypeLockedException(this.categoryId)
-    : super('Category $categoryId.type is locked by existing transactions');
-  final int categoryId;
-}
-
-/// Attempted to hard-delete a category that has at least one
-/// referencing transaction (G6 — PRD.md 315-316).
-class CategoryInUseException extends RepositoryException {
-  const CategoryInUseException(this.categoryId)
-    : super('Category $categoryId has transactions; archive instead');
-  final int categoryId;
-}
-
-/// `Transaction.currency.code` is not present in the `currencies`
-/// table (G2 — PRD.md 286).
-class TransactionCurrencyUnknownException extends RepositoryException {
-  const TransactionCurrencyUnknownException(this.currencyCode)
-    : super('Currency "$currencyCode" is not registered');
-  final String currencyCode;
+  CategoryDao get _dao => _db.categoryDao;
+  TransactionDao get _txDao => _db.transactionDao;
 }
 ```
 
-Stream B imports `RepositoryException` from this file. Stream A defines no subclass for Stream B's concerns.
+**Exported:** abstract interface `CategoryRepository` plus concrete `DriftCategoryRepository`. No top-level functions.
+
+### 1.3 `lib/data/repositories/repository_exceptions.dart` (shared, owned by Stream B)
+
+This shared file stays deliberately narrow. Stream B owns and defines the canonical contents of `repository_exceptions.dart` in its §1.4. Stream A imports `RepositoryException` and `CurrencyNotFoundException` from that shared file and keeps `CategoryTypeLockedException` / `CategoryInUseException` local to `category_repository.dart` because they are Stream-A-only guardrails.
 
 ### 1.4 Contract rules (non-negotiable once this stream merges)
 
@@ -349,7 +331,7 @@ Future<Transaction> _toDomain(TransactionRow row) async {
   if (currency == null) {
     // Unreachable under foreign_keys = ON + insert-side FK guard, but
     // we defend at the boundary.
-    throw TransactionCurrencyUnknownException(row.currency);
+    throw CurrencyNotFoundException(row.currency);
   }
   return Transaction(
     id: row.id,
@@ -497,13 +479,13 @@ Archive writes `is_archived = 1` via the DAO; referenced rows remain queryable v
 
 ### 3.3 Currency FK integrity on transaction save (guardrail G2, PRD 286)
 
-**Enforcement:** `TransactionRepository.save(Transaction)` verifies `Currency.code` exists in `currencies` **before** insert/update. The `PRAGMA foreign_keys = ON` pragma in `AppDatabase.beforeOpen` is the SQLite-layer safety net, but the repository-side check runs first so the thrown exception is `TransactionCurrencyUnknownException` (typed, carries the offending code) rather than an opaque `SqliteException`.
+**Enforcement:** `TransactionRepository.save(Transaction)` verifies `Currency.code` exists in `currencies` **before** insert/update. The `PRAGMA foreign_keys = ON` pragma in `AppDatabase.beforeOpen` is the SQLite-layer safety net, but the repository-side check runs first so the thrown exception is `CurrencyNotFoundException` (typed, carries the offending code) rather than an opaque `SqliteException`.
 
 ```dart
 Future<Transaction> save(Transaction tx) async {
   final resolved = await _currencyDao.findByCode(tx.currency.code);
   if (resolved == null) {
-    throw TransactionCurrencyUnknownException(tx.currency.code);
+    throw CurrencyNotFoundException(tx.currency.code);
   }
   // ... proceed with insert / update ...
 }
@@ -624,14 +606,14 @@ All tasks land on `feature/M3-Stream-A-repositories` (or the agent's equivalent)
 
 ### Phase A1. Skeleton + shared exception types
 
-- [ ] **Task A1.1 — Create `lib/data/repositories/repository_exceptions.dart`** with `RepositoryException`, `CategoryTypeLockedException`, `CategoryInUseException`, `TransactionCurrencyUnknownException` per §1.3. No other file imports it yet; verify via `flutter analyze`.
-  - Commit: `feat(data): add typed repository exceptions for M3 rule enforcement`.
+- [ ] **Task A1.1 — Pull in Stream B's shared exception base.** Verify `lib/data/repositories/repository_exceptions.dart` exists with `RepositoryException` + `CurrencyNotFoundException` per §1.3, then add Stream-A-local `CategoryTypeLockedException` / `CategoryInUseException` to `category_repository.dart`.
+  - Commit: `feat(data): wire shared repository exceptions into Stream A repos`.
 
-- [ ] **Task A1.2 — Remove the M0 TODO stub** in `lib/data/repositories/transaction_repository.dart`. Replace with the skeleton class: constructor, `_clock` field, DAO getters, every method body `throw UnimplementedError(...)` for now. This is the "contract is frozen" marker — once merged, M5 controllers can import.
-  - Commit: `feat(data): freeze TransactionRepository public surface (skeleton)`.
+- [ ] **Task A1.2 — Remove the M0 TODO stub** in `lib/data/repositories/transaction_repository.dart`. Replace it with the abstract `TransactionRepository` interface plus a `DriftTransactionRepository` skeleton: constructor, `_clock` field, DAO getters, every method body `throw UnimplementedError(...)` for now. This is the "contract is frozen" marker — once merged, M5 controllers can import the interface and bootstrap can construct the concrete class.
+  - Commit: `feat(data): freeze TransactionRepository interface and Drift implementation`.
 
-- [ ] **Task A1.3 — Remove the M0 TODO stub** in `lib/data/repositories/category_repository.dart`. Same pattern as A1.2: skeleton, `throw UnimplementedError(...)`.
-  - Commit: `feat(data): freeze CategoryRepository public surface (skeleton)`.
+- [ ] **Task A1.3 — Remove the M0 TODO stub** in `lib/data/repositories/category_repository.dart`. Same pattern as A1.2: abstract `CategoryRepository` interface plus `DriftCategoryRepository` skeleton, `throw UnimplementedError(...)`, and Stream-A-local category exception declarations.
+  - Commit: `feat(data): freeze CategoryRepository interface and Drift implementation`.
 
 ### Phase A2. Test harness import
 
@@ -650,7 +632,7 @@ All tasks land on `feature/M3-Stream-A-repositories` (or the agent's equivalent)
 - [ ] **Task A3.3 — `watchForAccount` + `watchForCategory`.** Add DAO helper `TransactionDao.watchByCategory(int id)` alongside the existing `watchByAccount` (one-line addition to the M1 DAO; keep the commit scoped to that single helper with a dartdoc referencing this plan). Write `T-stream-02` and `T-stream-03`, implement.
   - Commit: `feat(data): TransactionRepository filtered streams (account, category)`.
 
-- [ ] **Task A3.4 — Currency FK guard.** Write `T-currency-fk-01` (red — expects `TransactionCurrencyUnknownException`), wire the pre-insert `CurrencyDao.findByCode` check.
+- [ ] **Task A3.4 — Currency FK guard.** Write `T-currency-fk-01` (red — expects `CurrencyNotFoundException`), wire the pre-insert `CurrencyDao.findByCode` check.
   - Commit: `feat(data): reject TransactionRepository.save on unknown currency (G2)`.
 
 - [ ] **Task A3.5 — Update path + timestamp policy.** Write `T-timestamps-01/02/03`, implement update branch that preserves `createdAt` and refreshes `updatedAt` from `_clock`.
@@ -664,8 +646,8 @@ All tasks land on `feature/M3-Stream-A-repositories` (or the agent's equivalent)
 
 ### Phase A4. `CategoryRepository` — TDD by rule
 
-- [ ] **Task A4.1 — Happy-path CRUD + mapping.** Write `C-happy-01` (insert + getById), implement `_toDomain`/`_toCompanion`, `save` insert path, `getById`, `getByL10nKey`.
-  - Commit: `feat(data): CategoryRepository insert + getById + Drift mapping`.
+- [ ] **Task A4.1 — Happy-path CRUD + seed seam + mapping.** Write `C-happy-01`, `C-happy-02`, `C-seed-01`, and `C-seed-02`; implement `_toDomain`/`_toCompanion`, `save` insert path, `getById`, `getByL10nKey`, and `upsertSeeded`.
+  - Commit: `feat(data): CategoryRepository insert, lookups, seed seam, and Drift mapping`.
 
 - [ ] **Task A4.2 — `watchAll` with type and archive filters.** Write `C-stream-01`, implement the four-way switch in §4.3.
   - Commit: `feat(data): CategoryRepository.watchAll (type, includeArchived)`.
@@ -709,7 +691,7 @@ All tasks land on `feature/M3-Stream-A-repositories` (or the agent's equivalent)
 
 - [ ] **Task A5.4 — Lint gate.** `flutter analyze` clean. `dart format .` applied. Verify no `import_lint` violations (import of `data/database/daos/*` outside `data/repositories/` is what G1 blocks).
 
-- [ ] **Task A5.5 — Cross-stream checkpoint.** Ping Stream B and Stream C owners: confirm `repository_exceptions.dart` compiles cleanly when they import it, confirm `TestAppDatabase` harness contract matches §7.
+- [ ] **Task A5.5 — Cross-stream checkpoint.** Ping Stream B and Stream C owners: confirm `repository_exceptions.dart` compiles cleanly when they import it, confirm `newTestAppDatabase()` + `TestRepoBundle` match §7.
 
 - [ ] **Task A5.6 — Merge.** Squash-merge in the same PR window as Streams B and C. Per the M3 plan, the three streams overlap the same Drift transaction API and should not sit in isolation long enough to accumulate rebase churn.
 
@@ -746,15 +728,18 @@ import 'package:ledgerly/data/models/transaction.dart';
 import '_harness/test_app_database.dart';
 
 void main() {
-  late TestAppDatabase db;
+  late AppDatabase db;
+  late TestRepoBundle bundle;
   late TransactionRepository txRepo;
   late CategoryRepository catRepo;
   DateTime frozenNow = DateTime.utc(2026, 4, 22, 12, 0);
 
   setUp(() async {
-    db = await TestAppDatabase.seeded(); // seeds currencies + 1 cat/tx-each
-    txRepo = TransactionRepository(db, clock: () => frozenNow);
-    catRepo = CategoryRepository(db);
+    db = newTestAppDatabase();
+    bundle = TestRepoBundle(db);
+    await bundle.seedMinimalRepositoryFixtures();
+    txRepo = DriftTransactionRepository(db, clock: () => frozenNow);
+    catRepo = DriftCategoryRepository(db);
   });
 
   tearDown(() async {
@@ -765,7 +750,7 @@ void main() {
 }
 ```
 
-`TestAppDatabase.seeded()` (Stream C) returns an `AppDatabase` subclass with:
+`newTestAppDatabase()` (Stream C) returns a fresh in-memory `AppDatabase`, and `TestRepoBundle.seedMinimalRepositoryFixtures()` seeds the shared repository fixtures Stream A depends on:
 - `currencies`: `USD(2, $)`, `JPY(0, ¥)`, `TWD(2, NT$)`.
 - `categories`: one seeded expense (`category.food`, icon `'restaurant'`, color `0`), one seeded income (`category.salary`, icon `'work'`, color `1`).
 - `account_types`: `accountType.cash`.
@@ -785,7 +770,7 @@ Test IDs prefixed `T-*`. Every row is a single `test(...)` invocation inside a n
 | T-stream-01        | watchAll               | Subscribe, then insert                                                                    | Next emission contains the new row; order is `date DESC, id DESC`                                   | 100-102, 938-943   |
 | T-stream-02        | watchForAccount        | Two accounts, insert into each                                                            | `watchForAccount(accountId)` only emits transactions for its account                                | 100-102            |
 | T-stream-03        | watchForCategory       | Two categories, insert into each                                                          | `watchForCategory(categoryId)` only emits transactions for its category                             | 100-102            |
-| T-currency-fk-01   | save → FK              | Save `Transaction` whose `currency.code == 'XXX'` (not seeded)                            | Throws `TransactionCurrencyUnknownException('XXX')`; no row inserted (`watchAll` still length 0)    | 286, G2            |
+| T-currency-fk-01   | save → FK              | Save `Transaction` whose `currency.code == 'XXX'` (not seeded)                            | Throws `CurrencyNotFoundException('XXX')`; no row inserted (`watchAll` still length 0)               | 286, G2            |
 | T-timestamps-01    | save → timestamps      | Insert at `frozenNow`                                                                     | Returned `createdAt == frozenNow && updatedAt == frozenNow`                                         | 291-293            |
 | T-timestamps-02    | save → timestamps      | Update at `frozenNow + 1h`                                                                | `updatedAt == frozenNow + 1h`; `createdAt` unchanged from insert                                    | 291-293            |
 | T-timestamps-03    | save → timestamps      | Update with a mangled `Transaction.createdAt` (e.g. epoch 0)                              | Stored `createdAt` is preserved (matches the original insert), not the incoming mangled value       | 291-293 (defence)  |
@@ -796,7 +781,7 @@ Test IDs prefixed `T-*`. Every row is a single `test(...)` invocation inside a n
 | T-duplicate-03     | duplicate              | Duplicate of a missing id                                                                 | Throws `RepositoryException`                                                                        | 828-837            |
 | T-amount-int-01    | save → money           | Insert `amountMinorUnits = 1500000000000000000` (ETH-scale)                               | Round-trips exactly; no precision loss                                                              | 253-257, G4        |
 
-**Total:** 14 tests.
+**Total:** 15 tests.
 
 ### 6.4 `category_repository_test.dart` matrix
 
@@ -806,6 +791,8 @@ Test IDs prefixed `C-*`.
 |--------------------|--------------------------|--------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|-------------------|
 | C-happy-01         | save / getById           | Insert a custom expense category                                                           | Returned `Category` has new `id != 0`; `getById` round-trips                      | 301-320           |
 | C-happy-02         | getByL10nKey             | Lookup seeded `category.food`                                                              | Returns non-null with matching `l10nKey`; lookup for `'not.a.key'` returns null   | 315 + idempotency |
+| C-seed-01          | upsertSeeded             | Seed `category.food` into an empty DB                                                      | Inserts once, returns row with matching `l10nKey`, `type`, `icon`, `color`        | 315, G7           |
+| C-seed-02          | upsertSeeded             | Re-run seed for existing `category.food`                                                   | Returns same logical row, does not create duplicate `l10n_key`                    | 315, G7           |
 | C-stream-01        | watchAll                 | Default watch (no type, no archived)                                                       | Emits the two seeded categories, sorted as specified                              | 100-102           |
 | C-stream-02        | watchAll / type filter   | `watchAll(type: CategoryType.expense)`                                                     | Emits only expense rows                                                           | 100-102           |
 | C-stream-03        | watchAll / archive flag  | Archive a category, watch with `includeArchived: false` then `true`                        | First emission excludes archived; second includes                                 | 315-316           |
@@ -823,7 +810,7 @@ Test IDs prefixed `C-*`.
 | C-isref-01         | isReferenced             | Unused category                                                                            | Returns `false`                                                                   | 315-316           |
 | C-isref-02         | isReferenced             | Category with one referencing transaction                                                  | Returns `true`                                                                    | 315-316           |
 
-**Total:** 18 tests.
+**Total:** 20 tests.
 
 ### 6.5 Reactive-stream test recipe (applies to T-stream-0*, C-stream-0*)
 
@@ -855,7 +842,7 @@ test('T-stream-01: insert triggers emission', () async {
 |----------------------------------------------------------------|-------------------|-------------|
 | `lib/data/repositories/transaction_repository.dart`            | **A (this plan)** | M4 bootstrap, M5 Home / Transactions / Accounts controllers |
 | `lib/data/repositories/category_repository.dart`               | **A (this plan)** | M4 bootstrap, M5 Transactions / Categories controllers |
-| `lib/data/repositories/repository_exceptions.dart`             | **A (this plan)** | Streams B, C; all M5 controllers that surface typed errors |
+| `lib/data/repositories/repository_exceptions.dart`             | **B** | Streams A, C; all M5 controllers that surface typed errors |
 | `lib/data/repositories/{account_type,account,currency}_repository.dart` | B | M4 bootstrap, M5 Accounts / Categories / Transactions controllers |
 | `lib/data/repositories/user_preferences_repository.dart`       | C | M4 bootstrap, M5 Splash / Settings controllers |
 | `lib/data/seed/first_run_seed.dart` (path TBD by Stream C)     | C | M4 bootstrap |
@@ -871,18 +858,20 @@ test('T-stream-01: insert triggers emission', () async {
 Target the **same PR stack** (implementation-plan.md §5, M3 parallel-window note: "merge within a tight window — same week, ideally same PR stack"):
 
 1. **Stream C harness** merges first (§6.1 imports it).
-2. **Streams A and B** land in parallel PRs; either order is fine because neither imports the other's implementation files.
-3. **Stream C seed + migration harness activation** lands last, because the seed consumes Stream A's and Stream B's repositories.
+2. **Stream B shared exception contract** merges alongside or immediately after the harness.
+3. **Streams A and B repository implementations** land in parallel PRs after those shared seams exist.
+4. **Stream C seed + migration harness activation** lands last, because the seed consumes Stream A's and Stream B's repositories.
 
 ### 7.3 What Stream A exports to B / C
 
-- `RepositoryException` (base class; B subclasses it for its own typed errors).
+- `CategoryRepository.upsertSeeded(...)` for Stream C's first-run seed.
+- Concrete `DriftTransactionRepository` / `DriftCategoryRepository` classes for M4 bootstrap and Stream C's shared test harness wiring.
 - `TransactionRepository.watchForAccount`, `.watchForCategory` (C's seed does not use these, but Stream B's `AccountRepository` uses `TransactionDao.countByAccount` independently; we do not leak streams to B).
 - No shared utility functions: Drift mapping is per-repo, not in a common `_mapping.dart`. Each repo's mapping is small enough that centralizing would be premature.
 
 ### 7.4 What Stream A imports from B / C
 
-- **Nothing from B.** The `Transaction` model has an `int accountId` (not an `Account`), so `AccountRepository` is not a compile-time dep. Currency resolution goes through `CurrencyDao` (M1 deliverable), not `CurrencyRepository` — one layer down.
+- **Nothing from B's runtime repositories.** Production code imports only the shared `repository_exceptions.dart` module (`RepositoryException` + `CurrencyNotFoundException`). Currency resolution still goes through `CurrencyDao` (M1 deliverable), not `CurrencyRepository`.
 - **Nothing from C at runtime.** Stream A's tests import the Stream C harness; production code does not.
 
 ---
@@ -917,7 +906,7 @@ Each risk links to a prevention and a test or grep that would catch it.
    - **Prevention:** §2.1 rule; `_toCompanion` helpers audited in Task A3.1 review.
    - **Catch:** T-happy-02 (round-trip null memo), plus reviewer discipline.
 
-3. **`.watch()` subscribing before seed completes, flashing empty state.** The M4 bootstrap guarantees seed runs before `runApp`; tests must not race. Stream A's tests pre-seed via `TestAppDatabase.seeded()` in `setUp`.
+3. **`.watch()` subscribing before seed completes, flashing empty state.** The M4 bootstrap guarantees seed runs before `runApp`; tests must not race. Stream A's tests explicitly seed fixtures via `TestRepoBundle.seedMinimalRepositoryFixtures()` in `setUp`.
    - **Prevention:** §4.4; §6.2.
    - **Catch:** any stream test would drift-fail if seed was racy; explicit expectation for first-emission content.
 
@@ -925,7 +914,7 @@ Each risk links to a prevention and a test or grep that would catch it.
    - **Prevention:** noted in §4.1 — if later profiling shows a hotspot, join in the DAO. Do **not** build an in-memory currency cache in the repo; currencies are mutable (settings can register new ones in Phase 2).
    - **Catch:** integration perf audit at M6.
 
-5. **Stream C's harness contract drifts.** If `TestAppDatabase.seeded()` changes which categories it seeds (e.g. drops the income one), C-stream-02 and type-lock tests silently break.
+5. **Stream C's harness contract drifts.** If `seedMinimalRepositoryFixtures()` changes which categories it seeds (e.g. drops the income one), C-stream-02 and type-lock tests silently break.
    - **Prevention:** Task A5.5 (cross-stream checkpoint).
    - **Catch:** CI test failure on Stream C's PR that changes the harness. A terse contract comment in `_harness/test_app_database.dart` documents the fixtures Streams A and B depend on.
 
@@ -945,9 +934,9 @@ Stream A is done when **all** hold:
 
 - [ ] `lib/data/repositories/transaction_repository.dart` — implements the public API in §1.1, no `throw UnimplementedError` remains, TODO stub is gone.
 - [ ] `lib/data/repositories/category_repository.dart` — implements the public API in §1.2, no `throw UnimplementedError` remains, TODO stub is gone.
-- [ ] `lib/data/repositories/repository_exceptions.dart` exists with §1.3 contents.
-- [ ] `test/unit/repositories/transaction_repository_test.dart` — all 14 tests in §6.3 green.
-- [ ] `test/unit/repositories/category_repository_test.dart` — all 18 tests in §6.4 green, including **C-type-lock-02 ("reject `type` change after first referencing transaction")** which is the mandatory M3 exit criterion from `implementation-plan.md` §5.
+- [ ] Stream A imports `lib/data/repositories/repository_exceptions.dart` from Stream B, uses `CurrencyNotFoundException` from that shared file, and keeps only Stream-A-specific leaf exceptions local per §1.3.
+- [ ] `test/unit/repositories/transaction_repository_test.dart` — all 15 tests in §6.3 green.
+- [ ] `test/unit/repositories/category_repository_test.dart` — all 20 tests in §6.4 green, including **C-type-lock-02 ("reject `type` change after first referencing transaction")** which is the mandatory M3 exit criterion from `implementation-plan.md` §5.
 - [ ] `test/unit/repositories/category_dao_test.dart` (M1 regression) still green — not modified.
 - [ ] `flutter analyze` clean. `dart format .` applied. `custom_lint` / `import_lint` clean.
 - [ ] `grep -rnE 'double\s+\w*(amount|balance|rate|price)' lib/data/repositories/` returns zero hits (G4).

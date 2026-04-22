@@ -7,8 +7,8 @@
 **Owner:** Agent C — Data / Shell boundary (`docs/plans/implementation-plan.md` §5 M3 row, stream C; §8 3-developer split → Dev A Data)
 **Milestone:** M3 — Repositories + first-run seed (`docs/plans/implementation-plan.md` §5 M3; exit criteria in §7 M3 row).
 **Sibling streams (M3, same merge window):**
-- **Stream A** — `transaction_repository.dart`, `category_repository.dart` (`docs/plans/m3-repositories-seed/stream-a-transaction-category-repositories.md`). Freezes `CategoryRepository.save(...)` / `upsertSeeded(...)` which this stream calls.
-- **Stream B** — `account_type_repository.dart`, `account_repository.dart`, `currency_repository.dart` (`docs/plans/m3-repositories-seed/stream-b-account-currency-repositories.md`). Freezes `CurrencyRepository.upsert(...)`, `AccountTypeRepository.save(...)`, `AccountRepository.save(...)` which this stream calls.
+- **Stream A** — `transaction_repository.dart`, `category_repository.dart` (`docs/plans/m3-repositories-seed/stream-a-transaction-category.md`). Freezes `CategoryRepository.save(...)` / `upsertSeeded(...)` plus the concrete `DriftTransactionRepository` / `DriftCategoryRepository` implementations this stream wires in tests.
+- **Stream B** — `account_type_repository.dart`, `account_repository.dart`, `currency_repository.dart` (`docs/plans/m3-repositories-seed/stream-b-account-currency.md`). Freezes `CurrencyRepository.upsert(...)`, `AccountTypeRepository.save(...)`, `AccountRepository.save(...)` plus the concrete `Drift*Repository` implementations this stream wires in tests.
 
 **Upstream dependencies (must be merged to `main` before this stream starts red/green):**
 - M1 Stream A — Drift tables + DAOs + `AppDatabase` + `drift_schemas/drift_schema_v1.json`. **Merged.**
@@ -32,7 +32,7 @@
 
 **One-sentence goal.** Ship the `UserPreferencesRepository` typed API, the idempotent transactional first-run seed that produces a launchable empty DB, and the migration test harness that keeps the v1 snapshot honest — so that M4's `bootstrap.dart` can wire steps 3–7 of the PRD bootstrap sequence with zero invention.
 
-**Architecture paragraph.** `user_preferences` is a key/value Drift table whose `value` column stores JSON (M1 Stream A §2.6 fixes the shape). This stream wraps the DAO's raw `String` API with a typed, JSON-aware `UserPreferencesRepository` that owns both the scalar codec and the watch/read/write contract the UI + router consume. On top of that repository, a single module — `lib/data/seed/first_run_seed.dart` — composes the sibling repositories (Currency, Category, AccountType, Account) in a single Drift transaction to produce the first-run DB state mandated by PRD §First-run Defaults. Because the seed takes its seven collaborators by argument rather than constructing them, it is fully unit-testable with `TestAppDatabase()` from §4 and wire-up at M4 is a one-liner. The migration harness completes the triangle: it freezes `drift_schemas/drift_schema_v1.json` as the committed shape, proves `MigrationStrategy.onUpgrade` is a no-op at v1, and leaves the v1→v2 slot pre-wired for Phase 2.
+**Architecture paragraph.** `user_preferences` is a key/value Drift table whose `value` column stores JSON (M1 Stream A §2.6 fixes the shape). This stream exports an abstract `UserPreferencesRepository` interface plus a concrete `DriftUserPreferencesRepository` that owns both the scalar codec and the watch/read/write contract the UI + router consume. On top of that repository, a single module — `lib/data/seed/first_run_seed.dart` — composes the sibling repository interfaces (Currency, Category, AccountType, Account) in a single Drift transaction to produce the first-run DB state mandated by PRD §First-run Defaults. Because the seed takes its seven collaborators by argument rather than constructing them, it is fully unit-testable with `newTestAppDatabase()` + `TestRepoBundle` from §4 and wire-up at M4 is a one-liner. The migration harness completes the triangle: it freezes `drift_schemas/drift_schema_v1.json` as the committed shape, proves `MigrationStrategy.onUpgrade` is a no-op at v1, and leaves the v1→v2 slot pre-wired for Phase 2.
 
 ---
 
@@ -95,7 +95,7 @@ class LocaleService {
 }
 ```
 
-Returns BCP 47-ish `language_REGION` strings. **Task C3** extends this with the locale → default currency mapping (§5 C3 picks the location — either an extension method on `LocaleService` or a pure function co-located with the seed).
+Returns BCP 47-ish `language_REGION` strings. **Task C3** keeps the locale → default currency mapping as a private helper in `lib/data/seed/first_run_seed.dart`; it does not extend `LocaleService`.
 
 ### 0.6 `drift_schemas/drift_schema_v1.json` (M1 Stream A snapshot — entity summary)
 
@@ -223,14 +223,19 @@ Imports: `package:drift/drift.dart` (for errors only), `dart:async`, `dart:conve
 **Construction.**
 
 ```dart
-class UserPreferencesRepository {
-  UserPreferencesRepository(this._db) : _dao = _db.userPreferencesDao;
+abstract class UserPreferencesRepository {
+  // method surface in §1.3
+}
+
+final class DriftUserPreferencesRepository
+    implements UserPreferencesRepository {
+  DriftUserPreferencesRepository(this._db) : _dao = _db.userPreferencesDao;
   final AppDatabase _db;
   final UserPreferencesDao _dao;
 }
 ```
 
-Takes the `AppDatabase` (not the DAO directly) so the seed module can call `_db.transaction(...)` on the same database instance. G1 still holds: only this repository reads and writes `user_preferences`; consumers import the repository, never the DAO.
+The concrete implementation takes the `AppDatabase` (not the DAO directly) so the seed module can call `_db.transaction(...)` on the same database instance. G1 still holds: only this repository reads and writes `user_preferences`; consumers import the repository interface, never the DAO.
 
 ### 1.2 Preference key registry
 
@@ -354,10 +359,7 @@ Stream<T> _watchJson<T>(
 ### 1.5 Error types
 
 ```dart
-sealed class RepositoryException implements Exception {
-  const RepositoryException(this.message);
-  final String message;
-}
+import 'repository_exceptions.dart';
 
 class PreferenceDecodeException extends RepositoryException {
   PreferenceDecodeException(this.key, this.rawValue, Object cause)
@@ -367,7 +369,7 @@ class PreferenceDecodeException extends RepositoryException {
 }
 ```
 
-`RepositoryException` is the shared repository-layer base (Streams A and B declare the same type; coordination checkpoint in §7). If Stream A or B ship their own `RepositoryException` hierarchy first, this stream imports theirs instead of declaring a duplicate. **Merge order (§7) places Stream B first**, so Stream B owns the base declaration and this stream subclasses.
+`RepositoryException` is the shared repository-layer base from Stream B's `lib/data/repositories/repository_exceptions.dart`. This stream subclasses it for preference-codec failures; it does not declare a duplicate base type.
 
 ### 1.6 What the repository deliberately does NOT do
 
@@ -443,14 +445,16 @@ Calls: `await currencies.upsert(Currency(code: 'USD', decimals: 2, symbol: r'$',
 | `en_GB`                         | GBP                |
 | `en_CA`                         | USD (MVP accepts USD for North American English not pinned to CAD — CAD not seeded) |
 | `en_AU` / `en_NZ` / other `en_*`| USD                |
-| `zh_TW` / `zh_HK` / `zh_MO`     | TWD  (see note)    |
+| `zh_TW`                         | TWD                |
+| `zh_HK`                         | HKD                |
+| `zh_MO`                         | HKD                |
 | `zh_CN` / `zh_SG` / other `zh_*`| CNY                |
 | `zh` (bare, no region)          | CNY                |
 | `ja_JP` / bare `ja`             | JPY                |
 | `de_*` / `fr_*` / `es_*` / `it_*` | EUR              |
 | Anything else                   | **USD (fallback)** |
 
-**`zh_HK` note.** Hong Kong's currency is HKD. The mapping above intentionally prefers **TWD for traditional-Chinese locales** because (a) the Chinese ARB layering (PRD 889) groups `zh_HK` under `zh_TW` linguistically, and (b) the user can override in Settings. If product feedback in M6 disagrees, change the table here — but the repository does not attempt auto-resolution from region alone.
+**Chinese-locale note.** UI-locale resolution and default-currency resolution are related but distinct. PRD 889 maps `zh_HK` / `zh_MO` to the Traditional-Chinese ARB set (`zh_TW`) for copy; this seed mapping remains **region-first for currency** so Hong Kong and Macau default to `HKD` while Taiwan defaults to `TWD`.
 
 Implementation shape (lives in this file, not in `LocaleService`):
 
@@ -461,7 +465,8 @@ String _defaultCurrencyForLocale(String rawLocale) {
   switch (normalized) {
     case 'en_US': case 'en_CA': case 'en_AU': case 'en_NZ': return 'USD';
     case 'en_GB': return 'GBP';
-    case 'zh_TW': case 'zh_HK': case 'zh_MO': return 'TWD';
+    case 'zh_TW': return 'TWD';
+    case 'zh_HK': case 'zh_MO': return 'HKD';
     case 'zh_CN': case 'zh_SG': case 'zh':    return 'CNY';
     case 'ja_JP': case 'ja':                  return 'JPY';
   }
@@ -508,7 +513,7 @@ final defaultCurrency = _defaultCurrencyForLocale(locale);
 
 **Icon key contract.** Icon keys are strings; the registry in `core/utils/icon_registry.dart` resolves them to `Symbols.*` at render time (PRD 817–822). The exact mapping is owned by M2 Stream B. The seed references whatever string key Stream B's registry exposes for each row; if a name in the table above differs from Stream B's canonical spelling, reconcile with Stream B (§7 coordination) and update this table — the plan does not commit to a key string Stream B hasn't confirmed.
 
-**Call shape.** `await categories.upsertSeeded(...)` — Stream A's `CategoryRepository` exposes a `upsertSeeded({required String l10nKey, required String icon, required int color, required CategoryType type, required int sortOrder})` method designed for idempotent seeding (it looks up by `l10n_key` and inserts-or-updates, never duplicates). This is **the contract Stream A must freeze in their plan**; the seed does not call bare `.save(...)` because that accepts an auto-increment id and would silently insert on re-entry.
+**Call shape.** `await categories.upsertSeeded(...)` — Stream A's `CategoryRepository` exposes a `upsertSeeded({required String l10nKey, required String icon, required int color, required CategoryType type, required int sortOrder})` method designed for idempotent seeding (it looks up by `l10n_key` and inserts-or-updates, never duplicates). This is the narrow seed seam Stream A freezes so the seed does not route through the user-facing `save(Category)` path.
 
 **Step 4 — Seed default account types.** PRD 497–507.
 
@@ -519,7 +524,7 @@ final defaultCurrency = _defaultCurrencyForLocale(locale);
 
 **Seeded `default_currency`.** Per PRD 500, both account types' `default_currency` is "`user_preferences.default_currency` at seed time" — i.e. the `defaultCurrency` computed in Step 2. The seed captures that value into a local and passes it to both account-type rows; it does NOT leave the column `NULL` (which would trigger the M3 fall-through in `AccountRepository`). This makes the seeded account-type rows self-documenting after the seed completes.
 
-**Call shape.** `await accountTypes.upsertSeeded(l10nKey: 'accountType.cash', icon: 'wallet', color: CategoryPaletteIndex.neutralVariant70, defaultCurrency: defaultCurrency, sortOrder: 0)`. Stream B's `AccountTypeRepository` freezes `upsertSeeded(...)` as the idempotent variant; same reasoning as categories.
+**Call shape.** `await accountTypes.upsertSeeded(l10nKey: 'accountType.cash', icon: 'wallet', color: CategoryPaletteIndex.neutralVariant70, defaultCurrency: currency, sortOrder: 0)`. Stream B's `AccountTypeRepository` freezes `upsertSeeded(...)` as the idempotent seeded-row seam; same reason as categories.
 
 **Step 5 — Seed the one Cash account.** PRD 664.
 
@@ -536,7 +541,7 @@ final defaultCurrency = _defaultCurrencyForLocale(locale);
 
 **Localized name resolution.** The seeded account name is the English literal **`'Cash'`** written into the DB. Rationale: (a) `accounts.name` has no `l10n_key` column (unlike categories and account types — PRD 343), so localization at render would require a rename policy the DB can't express; (b) PRD 664 says "seed one `Cash` account" — the name itself is the label; (c) users rename at will, and the rename writes the new literal. `M5` surfaces the account name as-is. If a reviewer pushes for a localized seed name, the correct move is to introduce `accounts.l10n_key` (Phase 2 schema bump), not to alias via `AppLocalizations` in the seed.
 
-**Call shape.** `final cashTypeId = await accountTypes.idForL10nKey('accountType.cash');` → `await accounts.save(Account(name: 'Cash', accountTypeId: cashTypeId, currency: defaultCurrency, openingBalanceMinorUnits: 0, ...));`. Stream B's `AccountTypeRepository.idForL10nKey(String) -> Future<int>` is required.
+**Call shape.** `final cashTypeId = await accountTypes.upsertSeeded(...)` returns the seeded Cash row id; the seed then passes that id into `accounts.save(Account(...))`. Stream B still does **not** need a dedicated `idForL10nKey` helper.
 
 **Step 6 — Seed `user_preferences`.** The seed populates the minimum set bootstrap depends on. Every value goes through `UserPreferencesRepository` setters (never DAO.write directly) so the JSON codec path is exercised end-to-end.
 
@@ -662,8 +667,8 @@ void main() {
         await legacy.customStatement('SELECT 1');           // force open
         await legacy.close();
 
-        // Re-open with the real AppDatabase; onUpgrade(1 -> 1) is a no-op.
-        final db = AppDatabase(NativeDatabase.memory()); // Fresh in-memory: new v1 creation path.
+        // Re-open the same snapshot DB with the real AppDatabase; onUpgrade(1 -> 1) is a no-op.
+        final db = AppDatabase(executor);
         await db.customStatement('PRAGMA foreign_keys');  // forces beforeOpen
         expect(db.schemaVersion, 1);
         await db.close();
@@ -708,7 +713,7 @@ void main() {
 }
 ```
 
-**`_wireSeedDepsFor(db)` is a test helper** that constructs real `CurrencyRepository`, `CategoryRepository`, `AccountTypeRepository`, `AccountRepository`, `UserPreferencesRepository` over the provided `AppDatabase`. It lives in `test/unit/repositories/_harness/test_app_database.dart` (§4) alongside the shared `TestAppDatabase()` constructor.
+**`_wireSeedDepsFor(db)` is a test helper** that constructs real `DriftCurrencyRepository`, `DriftCategoryRepository`, `DriftAccountTypeRepository`, `DriftAccountRepository`, and `DriftUserPreferencesRepository` over the provided `AppDatabase`, then exposes them through interface-typed fields. It lives in `test/unit/repositories/_harness/test_app_database.dart` (§4) alongside `newTestAppDatabase()`.
 
 **`_FakeLocaleService` is a local test double** that returns a fixed string. Using the real `LocaleService()` would make the test flaky across CI hosts. The test for locale-dependent seed behaviour lives in `first_run_seed_test.dart` (§6), not in the migration harness.
 
@@ -745,27 +750,34 @@ import 'package:ledgerly/data/database/app_database.dart';
 ///
 /// `NativeDatabase.memory()` gives each test an isolated DB with no disk
 /// footprint. The caller MUST `await db.close()` in a `tearDown` block.
-AppDatabase TestAppDatabase() => AppDatabase(NativeDatabase.memory());
+AppDatabase newTestAppDatabase() => AppDatabase(NativeDatabase.memory());
 
 /// Bundle of repositories wired to a given AppDatabase, for tests that
 /// exercise cross-repo flows (seed, migration-with-seeded-data).
 class TestRepoBundle {
   TestRepoBundle(this.db)
-      : currencies = CurrencyRepository(db),
-        categories = CategoryRepository(db),
-        accountTypes = AccountTypeRepository(db),
-        accounts = AccountRepository(db),
-        preferences = UserPreferencesRepository(db);
+      : currencies = DriftCurrencyRepository(db),
+        categories = DriftCategoryRepository(db),
+        accountTypes = DriftAccountTypeRepository(db, DriftCurrencyRepository(db)),
+        accounts = DriftAccountRepository(db, DriftCurrencyRepository(db)),
+        preferences = DriftUserPreferencesRepository(db);
   final AppDatabase db;
   final CurrencyRepository currencies;
   final CategoryRepository categories;
   final AccountTypeRepository accountTypes;
   final AccountRepository accounts;
   final UserPreferencesRepository preferences;
+
+  Future<void> seedMinimalRepositoryFixtures() async {
+    // Shared fixtures consumed by Streams A and B:
+    // USD / JPY / TWD currencies, one seeded expense category,
+    // one seeded income category, one seeded Cash account type,
+    // and one Cash account in USD.
+  }
 }
 ```
 
-`TestAppDatabase()` is a zero-arg constructor function (Dart style: PascalCase function names are unusual, but this mirrors the class-like usage pattern expected at call sites; the underscore-prefixed private test file keeps it out of `lib/`). If the reviewer prefers `newTestAppDatabase()`, rename — the plan does not die on the casing.
+`newTestAppDatabase()` is the canonical shared harness entrypoint. `TestRepoBundle` wires concrete `Drift*Repository` implementations but exposes interface-typed collaborators so sibling tests consume the same abstraction surface as production code. The harness also owns `seedMinimalRepositoryFixtures()`, whose fixture contract is shared across Streams A and B.
 
 ### 4.3 Sibling-stream consumption contract
 
@@ -780,22 +792,22 @@ Each task is one PR-sized unit. Tasks C0–C11 are ordered by the ship sequence;
 
 - [ ] **C0 — `import_lint` rule amendment.** Update `import_analysis_options.yaml` so `lib/data/seed/**` may import `lib/data/repositories/**` + `lib/data/services/locale_service.dart`. Confirm the pinned `import_lint ^0.1.6` (CLAUDE.md pin) actually enforces the new rule. If the 0.1.6 regex schema can't express this split, document the gap in the PR description — reviewer discipline stays the primary guard.
 - [ ] **C1 — `UserPreferencesRepository` skeleton + key registry.** File header, constructor, nine `static const` key strings, `_readJson` / `_writeJson` / `_watchJson` helpers + `PreferenceDecodeException`. No typed getter methods yet. Ships with `user_preferences_repository_test.dart` red case asserting `PreferenceDecodeException.toString()` includes the key name.
-- [ ] **C2 — Shared in-memory Drift test harness.** `test/unit/repositories/_harness/test_app_database.dart`. Empty `TestRepoBundle` (sibling constructors may be TODO at this stage; the file exists and exports the helper). Ship with a trivial test `await TestAppDatabase().close();` to keep CI green.
-- [ ] **C3 — `LocaleService` → default currency mapping.** Implement `_defaultCurrencyForLocale(String)` in `lib/data/seed/first_run_seed.dart` (top-level private). Unit test covers every row in §2.3 Step 2 table + the `zh` bare fallback + the "unknown" default. **Decision locked: mapping lives in the seed file, NOT in `LocaleService`.** Rationale: the mapping is seed policy (the currencies it references are the seeded set), not a locale-system primitive; keeping it in the seed file prevents `LocaleService` from accumulating knowledge of Ledgerly's currency list.
+- [ ] **C2 — Shared in-memory Drift test harness.** `test/unit/repositories/_harness/test_app_database.dart`. Ship `newTestAppDatabase()` + `TestRepoBundle` with concrete `Drift*Repository` wiring and interface-typed fields. Include `seedMinimalRepositoryFixtures()` with the exact shared fixture contract from §4.2, plus a trivial smoke test `await newTestAppDatabase().close();` to keep CI green.
+- [ ] **C3 — `LocaleService` → default currency mapping.** Implement `_defaultCurrencyForLocale(String)` in `lib/data/seed/first_run_seed.dart` (top-level private). Unit test covers every row in §2.3 Step 2 table + the `zh` bare fallback + the "unknown" default. **Decision locked: mapping lives in the seed file, NOT in `LocaleService`.** Currency mapping is region-first where a seeded fiat exists (`zh_HK` / `zh_MO` → `HKD`), while UI copy localization still follows PRD 889's Chinese-locale resolution.
 - [ ] **C4 — Typed theme / locale / default-currency / default-account / first-run-completed methods.** 10 methods total. Red tests assert: getter default values when key missing; setter round-trips; watcher emits on write. No splash keys yet — they ship in C5.
 - [ ] **C5 — Splash preference methods.** `watchSplashEnabled` + `getSplashEnabled` + `setSplashEnabled` + start-date + display-text + button-label (9 methods). Red tests assert: `watchSplashEnabled()` default-emits `true`; `watchSplashStartDate()` default-emits `null`; `watchSplashDisplayText()` default-emits `'Since {date}'` when the seed has not yet run (i.e. the hard-coded `defaultValue` of `_watchJson`).
-- [ ] **C6 — First-run seed: currencies step.** New `first_run_seed.dart` with an **unexported** `_seedCurrencies(CurrencyRepository)` helper. Public `runFirstRunSeed` exists but only calls step 0 (idempotency) + step 1 + step 7 (markFirstRunComplete). Red test: calls `runFirstRunSeed`; asserts seven currency rows; asserts re-running is a no-op. Seed calls `await currencies.upsert(...)`; if Stream B has not merged yet, C6 depends on a merged Stream B branch — coordinate via §7.
+- [ ] **C6 — First-run seed: currencies step.** New `first_run_seed.dart` with an **unexported** `_seedCurrencies(CurrencyRepository)` helper. Public `runFirstRunSeed` exists but only calls step 0 (idempotency) + step 1 for now; **do not write `first_run_completed` yet**. Red test: calls `runFirstRunSeed`; asserts seven currency rows; the final idempotency/no-op contract is only locked once C7–C9 land and step 7 (`markFirstRunComplete`) is added last. Seed calls `await currencies.upsert(...)`; if Stream B has not merged yet, C6 depends on a merged Stream B branch — coordinate via §7.
 - [ ] **C7 — Seed: categories step.** Adds `_seedCategories(CategoryRepository)`. Red test: 18 rows; 13 expense + 5 income; `l10n_key` values match §2.3 Step 3 table exactly; `sort_order` is 0..17; idempotency still holds.
-- [ ] **C8 — Seed: account types + Cash account.** Adds `_seedAccountTypes(...)` and `_seedCashAccount(...)`. Red test: 2 account-type rows with `default_currency = 'USD'` when locale is `en_US`; 1 Cash account row with `opening_balance_minor_units = 0` (literal int, G4); account's `account_type_id` matches the Cash row's id.
+- [ ] **C8 — Seed: account types + Cash account.** Adds `_seedAccountTypes(...)` and `_seedCashAccount(...)`. Red test: 2 account-type rows with `default_currency = 'USD'` when locale is `en_US`; 1 Cash account row with `opening_balance_minor_units = 0` (literal int, G4); account's `account_type_id` matches the Cash row's id. `_seedAccountTypes(...)` uses `AccountTypeRepository.upsertSeeded(...)` and reuses the returned Cash row id for step 5.
 - [ ] **C9 — Seed: user_preferences step.** Adds `_seedPreferences(...)`. Red test: after seed, `preferences.getSplashEnabled() == true`; `getThemeMode() == ThemeMode.system`; `getLocale() == null`; `getDefaultCurrency() == 'USD'`; `getSplashDisplayText() == 'Since {date}'`; `getDefaultAccountId() == null` (deliberately unwritten).
 - [ ] **C10 — Migration test harness activation.** `drift_dev schema generate` → commit `test/unit/repositories/_harness/generated/schema_v1.dart`. Extend `migration_test.dart` with the three blocks in §3.3. Keep the `TODO(phase-2)` comment for v1→v2.
-- [ ] **C11 — Integration verification.** One `first_run_seed_integration_test.dart` under `test/integration/` (if the M0 test structure permits — otherwise extend the existing `test/unit/repositories/first_run_seed_test.dart`). Opens a fresh `TestAppDatabase()`, runs the seed with `_FakeLocaleService('zh_TW')`, then reads via the **sibling repository watchers** (Stream A's `categories.watchAll()`, Stream B's `currencies.watchAll()`, etc.) to confirm the reactive path lights up with the seeded data. This is the cross-seam smoke that catches "seed wrote rows but the watcher stream had already emitted `[]` and doesn't refresh."
+- [ ] **C11 — Integration verification.** One `first_run_seed_integration_test.dart` under `test/integration/` (if the M0 test structure permits — otherwise extend the existing `test/unit/repositories/first_run_seed_test.dart`). Opens a fresh `newTestAppDatabase()`, runs the seed with `_FakeLocaleService('zh_TW')`, then reads via the sibling repository watchers (`categories.watchAll()`, `currencies.watchAll()`, etc.) to confirm the reactive path lights up with the seeded data. This is the cross-seam smoke that catches "seed wrote rows but the watcher stream had already emitted `[]` and doesn't refresh."
 
 ---
 
 ## 6. Test plan
 
-One file per concern; every test uses `TestAppDatabase()` from §4.
+One file per concern; every test uses `newTestAppDatabase()` from §4.
 
 ### 6.1 `test/unit/repositories/user_preferences_repository_test.dart`
 
@@ -812,7 +824,7 @@ One file per concern; every test uses `TestAppDatabase()` from §4.
 
 ### 6.2 `test/unit/repositories/first_run_seed_test.dart`
 
-- `empty DB → every step populates`: fresh `TestAppDatabase`, `runFirstRunSeed(...)`. Assert currency count == 7, category count == 18, account-type count == 2, account count == 1, `first_run_completed == true`, `splash_enabled == true`, `theme_mode == system`, `default_currency` matches the stub locale.
+- `empty DB → every step populates`: fresh `newTestAppDatabase()`, `runFirstRunSeed(...)`. Assert currency count == 7, category count == 18, account-type count == 2, account count == 1, `first_run_completed == true`, `splash_enabled == true`, `theme_mode == system`, `default_currency` matches the stub locale.
 - `runs twice → no duplicates, no side effects`: call `runFirstRunSeed(...)` twice in a row. Assert row counts unchanged after the second call. Assert `preferences.getFirstRunComplete() == true` both times. Assert no `UNIQUE constraint failed: categories.l10n_key` error surfaces.
 - `locale en_US → default_currency == USD`: stub `LocaleService` with `'en_US'`, run seed, assert `preferences.getDefaultCurrency() == 'USD'`.
 - `locale zh_TW → default_currency == TWD`: assert TWD.
@@ -821,7 +833,7 @@ One file per concern; every test uses `TestAppDatabase()` from §4.
 - `locale en_GB → default_currency == GBP`: assert GBP.
 - `locale de_DE → default_currency == EUR`: assert EUR.
 - `unknown locale → USD fallback`: stub with `'kl_GL'` (Kalaallisut, Greenland — intentionally unmapped), assert `'USD'`.
-- `locale zh_HK → default_currency == TWD`: pins the §2.3 decision.
+- `locale zh_HK → default_currency == HKD`: pins the §2.3 decision.
 - `bare zh → default_currency == CNY`: pins the bare-language fallback.
 - `transactional atomicity`: inject a sibling-repo stub whose `upsert` throws on the **3rd** category call. Run seed, expect it throws. Then re-open the DB and assert zero currencies, zero categories, zero account types, zero accounts, and `first_run_completed == false`. **This is the risk-4 guardrail** (master plan §9 risk 4).
 - `Cash account points at Cash type`: seed with `en_US`, read the single `accounts` row, assert its `account_type_id` equals the `id` of the row where `l10n_key == 'accountType.cash'`.
@@ -839,7 +851,7 @@ Full shape in §3.3. Three assertions:
 
 ### 6.4 Test-harness-level invariants (implicit in every test file)
 
-- Every test opens a fresh `TestAppDatabase()` in `setUp` and `await db.close()` in `tearDown`. No shared-DB tests.
+- Every test opens a fresh `newTestAppDatabase()` in `setUp` and `await db.close()` in `tearDown`. No shared-DB tests.
 - Ankr API calls: N/A in M3 (Phase 2).
 - No `Future` goes unhandled: every `runFirstRunSeed(...)` is `await`ed.
 
@@ -852,8 +864,7 @@ Full shape in §3.3. Three assertions:
 | Dependency direction | API frozen by | Contract this stream assumes (must appear in sibling plan) |
 |---|---|---|
 | **Stream B → Stream C** | Stream B | `CurrencyRepository.upsert(Currency)` — idempotent upsert by PK `code`. |
-| Stream B → Stream C | Stream B | `AccountTypeRepository.upsertSeeded({required String l10nKey, required String icon, required int color, required String? defaultCurrency, required int sortOrder}) → Future<int>` — returns seeded row id. |
-| Stream B → Stream C | Stream B | `AccountTypeRepository.idForL10nKey(String l10nKey) → Future<int>` — reads id; throws if missing. |
+| Stream B → Stream C | Stream B | `AccountTypeRepository.upsertSeeded({required String l10nKey, required String icon, required int color, required Currency defaultCurrency, required int sortOrder}) → Future<int>` — idempotent seeded-row write that returns the row id. |
 | Stream B → Stream C | Stream B | `AccountRepository.save(Account)` — plain insert; `id` autoincrement; returns void or new row id. |
 | Stream B → Stream C | Stream B | `AccountRepository.watchAll()` — used by C11 integration test to assert reactive emission. |
 | Stream B → Stream C | Stream B | `CurrencyRepository.watchAll()` — same. |
@@ -864,24 +875,25 @@ Full shape in §3.3. Three assertions:
 | **Stream C → M4** | This stream | `runFirstRunSeed(...)` top-level function, seven-arg named constructor. |
 | Stream C → M4 | This stream | `UserPreferencesRepository.watchSplashEnabled()` — for router `redirect:`. |
 | Stream C → M4 | This stream | `UserPreferencesRepository.watchThemeMode()` + `watchLocale()` — for theme + locale providers at the shell level. |
-| **Stream C declares** | This stream | `test/unit/repositories/_harness/test_app_database.dart` — `TestAppDatabase()` + `TestRepoBundle`. Sibling streams A and B import. |
+| **Stream C declares** | This stream | `test/unit/repositories/_harness/test_app_database.dart` — `newTestAppDatabase()` + `TestRepoBundle`. Sibling streams A and B import. |
 
 ### 7.2 Merge order (mandatory, to prevent rebase-churn during the shared merge window)
 
-1. **Stream B first.** Currencies + Account Types + Accounts have no repo-level dependencies. Seed cannot compile without `CurrencyRepository.upsert` and `AccountTypeRepository.upsertSeeded`.
-2. **Stream A second.** `CategoryRepository.upsertSeeded` depends on the `CategoryType` enum Stream A freezes.
-3. **Stream C third.** Seed composes both sibling repositories.
+1. **Stream C harness first.** The empty in-memory harness is a shared seam both sibling streams consume in tests.
+2. **Stream B shared exception contract next.** `repository_exceptions.dart` is the other shared seam; Stream A and this stream import it.
+3. **Streams A and B repository implementations next.** Stream C's seed waits for `CategoryRepository.upsertSeeded`, `AccountTypeRepository.upsertSeeded`, `AccountRepository.save`, and the concrete `Drift*Repository` classes.
+4. **Stream C third for seed/migration work.** Seed composes both sibling repositories once their APIs are on main.
 
 If Stream B or A slips, this stream can still land C1–C5 (`UserPreferencesRepository` + its tests) and C10 (migration harness against v1 which has no cross-repo dependency). C6–C9 + C11 wait for siblings.
 
 ### 7.3 Coordination checkpoint
 
-- **Day 1 of M3.** Sibling plans publish their frozen `upsert` / `upsertSeeded` signatures in their own `§1 Public API contract` sections. This stream reads them and updates the §2.3 call sites to match.
+- **Day 1 of M3.** Sibling plans publish their frozen seed-facing signatures plus the concrete `Drift*Repository` constructor shape in their own `§1 Public API contract` sections. This stream reads them and updates the §2.3 call sites to match.
 - **Before any stream merges.** A three-way diff asserts that every call site in `first_run_seed.dart` references a method that exists in a sibling plan's API contract section. If the sibling plan changes a signature after Day 1, the author opens a coordination PR here — no silent ABI drift.
 
 ### 7.4 Test-harness ownership cross-reference
 
-This stream's §4 declares `TestAppDatabase()` + `TestRepoBundle`. Stream A's plan and Stream B's plan must reference this location (not reinvent the helper) and update their test files to import `'../_harness/test_app_database.dart'`. If the sibling plans silently ship their own in-memory harness, this stream's author flags it at review and reconciles.
+This stream's §4 declares `newTestAppDatabase()` + `TestRepoBundle`. Stream A's plan and Stream B's plan must reference this location (not reinvent the helper) and update their test files to import `'_harness/test_app_database.dart'`. If the sibling plans silently ship their own in-memory harness, this stream's author flags it at review and reconciles.
 
 ---
 
@@ -891,7 +903,7 @@ This stream's §4 declares `TestAppDatabase()` + `TestRepoBundle`. Stream A's pl
 |-------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **G1** Only repositories write to the DB / secure storage         | `lib/data/seed/first_run_seed.dart` calls repositories only; no DAO imports. `user_preferences_repository_test.dart` imports the repo, not the DAO.    |
 | **G4** Money is `int` minor units end-to-end                      | `opening_balance_minor_units: 0` is a literal `int 0` in the seed; test `first_run_seed_test.dart` asserts `account.openingBalanceMinorUnits == 0` via the Freezed model's `int` field. `grep 'double.*balance'` over this stream's surface area returns zero hits. |
-| **G7** Seeded categories / account types identified by `l10n_key` | The §2.3 Step 3 / Step 4 tables enumerate the exact 18 + 2 dotted keys. `upsertSeeded` is keyed on `l10n_key`. Re-running the seed updates by key, never duplicates. `first_run_seed_test.dart` "runs twice → no duplicates" pins this. |
+| **G7** Seeded categories / account types identified by `l10n_key` | The §2.3 Step 3 / Step 4 tables enumerate the exact 18 + 2 dotted keys. Categories and account types both use dedicated `upsertSeeded` seams keyed on `l10n_key`. Re-running the seed updates by key, never duplicates. `first_run_seed_test.dart` "runs twice → no duplicates" pins this. |
 | **G9** Bootstrap sequence matches PRD exactly                     | `runFirstRunSeed(...)` is callable standalone (testable) but the only in-repo call site is M4 `bootstrap.dart` step 6. This stream does not spawn `await`s from `main.dart` and does not call `runApp`. |
 | **G10** Router `redirect:` reads `splash_enabled`; no flag inside `SplashScreen` | `UserPreferencesRepository.watchSplashEnabled()` is the exact seam the router consumes. The repository exposes no widget-visible hook; `SplashScreen` reading the flag would require constructing the repository inside a widget layer, which G1/G2 already forbid. |
 | **G12** Tests organized by layer                                  | Every file in this stream lands under `test/unit/repositories/` (repo + seed + migration). No `test/features/`, no feature-folder mixing. |
@@ -902,12 +914,12 @@ Guardrails not owned by this stream: G2 (Drift types never leave repo — siblin
 
 ## 9. Risks specific to this stream
 
-1. **Re-seeding duplicates rows if the idempotency check is wrong.** Master plan §9 risk 4. **Guardrail:** Step 0 reads `first_run_completed` before entering the transaction; `markFirstRunComplete()` runs last inside the transaction. The `runs twice → no duplicates` test in §6.2 + the `transactional atomicity` test (partial failure leaves the flag unwritten) prove both halves. If `upsertSeeded` semantics ever slip from idempotent to plain-insert, the `runs twice` test fails first.
+1. **Re-seeding duplicates rows if the idempotency check is wrong.** Master plan §9 risk 4. **Guardrail:** Step 0 reads `first_run_completed` before entering the transaction; `markFirstRunComplete()` runs last inside the transaction. The `runs twice → no duplicates` test in §6.2 + the `transactional atomicity` test (partial failure leaves the flag unwritten) prove both halves. If `upsertSeeded` semantics slip from update-by-`l10n_key` to plain-insert, the `runs twice` test fails first.
 2. **Locale resolves after seed runs → `default_currency` is wrong.** Master plan §9 risk 8. **Guardrail:** `runFirstRunSeed` accepts `LocaleService` as a required argument — a wrong-ordered bootstrap (seed before locale init) fails compilation in M4, not at runtime. The M4 smoke test additionally asserts "seed with `en_US` device locale produces `default_currency == USD` after bootstrap completes" (this stream's §6.2 test covers the unit-level equivalent).
 3. **Router redirect leaks splash because `SplashScreen` reads the flag instead of the router.** Master plan §9 risk 7. **Guardrail:** `UserPreferencesRepository.watchSplashEnabled()` is the only entry point for the flag, and the doc comment on that method explicitly says "consumed by the M4 router `redirect:`; not for widget-level use." M4 integration tests (master plan §7 M4 row) assert no splash render when the flag is false. If an M5 slice later tries to construct `UserPreferencesRepository` inside a `ConsumerWidget` to read `splash_enabled`, G1 / G2 `import_lint` rules catch it.
 4. **Migration harness silently passes because no v2 exists.** **Guardrail:** §3.4 enumerates three non-trivial checks the v1-only harness still performs — seeded-DB open, FK PRAGMA stays ON, schemaVersion parity. If any of these regress, the harness fails. The Phase 2 slot (a `TODO(phase-2)` comment) is deliberately *not* a skipped test — grep-discoverable but not misleading CI.
 5. **JSON decode corruption from a user-mutated DB.** Users who sideload the DB or flip a row via a debug tool can leave `user_preferences.value` in a non-parseable state. **Guardrail:** Typed `PreferenceDecodeException` includes the key + raw value in the message; the `theme decode failure` test in §6.1 locks the error path. UI error boundaries (M4 shell + M5 settings) render an error state rather than crashing — that is M4/M5's problem, but the exception type is stable so they can switch on it.
-6. **`upsertSeeded` drift between siblings.** If Stream A ships `CategoryRepository.upsertSeeded` with different parameter names than Stream B's `AccountTypeRepository.upsertSeeded`, the seed call sites become asymmetric and reviewers miss the pattern. **Guardrail:** §7.1 table freezes both signatures in this plan. Day-1 coordination (§7.3) reconciles before merge.
+6. **Seed seam drift between siblings.** If Stream A ships `CategoryRepository.upsertSeeded` with different semantics than Stream B's `AccountTypeRepository.upsertSeeded`, the seed call sites become asymmetric and reviewers miss the pattern. **Guardrail:** §7.1 table freezes both seams in this plan. Day-1 coordination (§7.3) reconciles before merge.
 7. **`l10n_key` typo (e.g. `category.threeC` vs `category.three_c`).** A silent ARB-vs-seed mismatch renders as a blank category name in the picker. **Guardrail:** §0.9 cross-check table line-checks each seeded key against `app_en.arb`; M2 Stream C's `arb_audit_test.dart` plus this stream's `first_run_seed_test.dart` "`l10n_key` values match §2.3 table" assertion triangulate the set.
 8. **`splash_display_text` seeded value drift vs `UserPreferencesRepository`'s default.** The seed writes `'Since {date}'`; the repository's `_watchJson` also hard-codes `'Since {date}'` as the default. If the two drift (someone updates one but not the other), first launch shows one string and a subsequent wipe-and-reseed shows another. **Guardrail:** a small constant `const kDefaultSplashDisplayText = 'Since {date}';` lives in a single file (`lib/data/seed/first_run_seed.dart` or a dedicated `preference_defaults.dart`) and both the seed and the repository import it. §5 Task C5 + C9 wire the same constant.
 
@@ -925,8 +937,8 @@ Maps to `docs/plans/implementation-plan.md` §5 M3 exit criteria for stream C.
 - [ ] A step-level failure rolls back every write and leaves `first_run_completed == false` (transactional atomicity test).
 - [ ] Locale resolution table (§2.3 Step 2) is fully covered — every explicit row + the USD fallback path is asserted in `first_run_seed_test.dart`.
 - [ ] The seeded DB contains exactly 7 currencies, 18 categories (13 expense + 5 income), 2 account types, 1 account with `opening_balance_minor_units == 0`, and the eight `user_preferences` keys from §2.3 Step 6.
-- [ ] `test/unit/repositories/migration_test.dart` runs three real assertions against the v1 snapshot — no `skip:`, no TODO test cases.
-- [ ] `test/unit/repositories/_harness/test_app_database.dart` ships `TestAppDatabase()` + `TestRepoBundle`; sibling streams import it.
+- [ ] `test/unit/repositories/migration_test.dart` runs four real assertions against the v1 snapshot (`schemaVersion`, empty DB, seeded DB, `foreign_keys` PRAGMA) — no `skip:`, no TODO test cases.
+- [ ] `test/unit/repositories/_harness/test_app_database.dart` ships `newTestAppDatabase()` + `TestRepoBundle`; sibling streams import it.
 - [ ] `flutter analyze` is clean; `flutter test` is green; `dart run build_runner build --delete-conflicting-outputs` round-trips without error.
 - [ ] `grep -E 'double.*(amount|balance|rate|price)' lib/data/seed/ lib/data/repositories/user_preferences_repository.dart` returns zero hits.
 - [ ] `import_analysis_options.yaml` permits `lib/data/seed/**` → `lib/data/repositories/**` + `lib/data/services/locale_service.dart`; no repository imports a DAO outside `lib/data/repositories/` (G1 spirit); no test file outside `test/unit/repositories/` writes to `user_preferences`.
