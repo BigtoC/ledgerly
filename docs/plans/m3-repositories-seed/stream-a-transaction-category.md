@@ -108,24 +108,45 @@ import 'repository_exceptions.dart';
 /// - `createdAt` / `updatedAt` populated by the repository, never by
 ///   SQL defaults (PRD.md 291-293).
 abstract class TransactionRepository {
-  /// Reverse-chronological stream of up to `limit` transactions. Default
-  /// cap is the MVP pagination limit of 10 000 (PRD.md → Pagination,
-  /// CLAUDE.md → Pagination Cap). Backs the Home list.
-  Stream<List<Transaction>> watchAll({int limit = 10000});
+  /// Transactions for one calendar day, in the device's local
+  /// timezone. Day window: `[localMidnight(day), localMidnight(day) + 24h)`.
+  /// Reverse-chronological within the day.
+  ///
+  /// Backs the Home screen. Per the Option B day-by-day UX (resolved
+  /// 2026-04-22, see §12), Home shows one day at a time with prev/next
+  /// navigation — `watchAll` is intentionally NOT part of this contract.
+  ///
+  /// The caller passes a `DateTime` whose date component identifies the
+  /// day; time-of-day is ignored. Implementations MUST compute the day
+  /// window in local time via `DateTime(day.year, day.month, day.day)` so
+  /// transactions logged near midnight land in the day the user saw on
+  /// the clock when they entered them.
+  Stream<List<Transaction>> watchByDay(DateTime day);
+
+  /// Newest-first stream of days that have at least one transaction,
+  /// bounded by `limit`. Each element is the local-midnight `DateTime`
+  /// of a distinct day.
+  ///
+  /// Backs Home's prev/next day navigation: the controller subscribes
+  /// once to discover which days are non-empty, then subscribes to
+  /// `watchByDay(...)` for the currently-selected day. Without this
+  /// helper, Home would step one calendar day at a time and render
+  /// empty lists for gap days, which is a poor UX.
+  Stream<List<DateTime>> watchDaysWithActivity({int limit = 365});
 
   /// Transactions for a single account, reverse-chronological.
-  /// Backs the Accounts tab detail and the per-account balance
-  /// computation in `HomeController`. Also used by `AccountRepository`
-  /// (Stream B) to decide archive-vs-delete on an account — consumed via
-  /// its own DAO probe, not this stream; the method exists because M5's
-  /// Accounts screen needs a reactive list.
-  Stream<List<Transaction>> watchForAccount(int accountId);
+  /// Backs the Accounts tab detail (a full per-account history list).
+  /// Bounded by `limit` to avoid unbounded streams; Accounts screen
+  /// never needs more than the default. `AccountRepository` (Stream B)
+  /// decides archive-vs-delete through its own `TransactionDao.countByAccount`
+  /// probe, not this stream.
+  Stream<List<Transaction>> watchForAccount(int accountId, {int limit = 200});
 
   /// Transactions for a single category, reverse-chronological.
-  /// Backs `CategoryRepository.isReferenced` indirectly via DAO count;
-  /// this stream exists for the Categories management screen (M5) which
-  /// surfaces "N transactions under this category" reactively.
-  Stream<List<Transaction>> watchForCategory(int categoryId);
+  /// Backs the Categories management screen (M5), which surfaces
+  /// "N transactions under this category" reactively. Bounded by
+  /// `limit` — the management screen never needs more.
+  Stream<List<Transaction>> watchForCategory(int categoryId, {int limit = 200});
 
   /// One-shot read by id. Consumed by the duplicate flow and by
   /// controllers that need a snapshot for form prefill.
@@ -324,15 +345,16 @@ Each repository declares private helpers below its public methods. These are the
 // --- private mapping helpers ---
 
 Future<Transaction> _toDomain(TransactionRow row) async {
-  // Currency is a FK-resolved value object in the domain model. The
-  // repository resolves it via CurrencyDao.findByCode on read. Callers
-  // never see a bare code string on a Transaction.
-  final currency = await _currencyDao.findByCode(row.currency);
-  if (currency == null) {
-    // Unreachable under foreign_keys = ON + insert-side FK guard, but
-    // we defend at the boundary.
-    throw CurrencyNotFoundException(row.currency);
-  }
+  // Currency is FK-resolved on read. Non-null-asserted because the
+  // row cannot exist without a matching `currencies` entry:
+  //   (a) `TransactionRepository.save` runs a pre-insert
+  //       `CurrencyDao.findByCode` check (§3.3), and
+  //   (b) `AppDatabase.beforeOpen` sets `PRAGMA foreign_keys = ON`.
+  // Together those make a row-with-unresolvable-currency unreachable
+  // under normal operation. Users do not type currency codes by hand;
+  // every code in the DB was put there by the seed or by a controlled
+  // Phase 2 token-registration path. See Q4 resolution in §12.
+  final currency = (await _currencyDao.findByCode(row.currency))!;
   return Transaction(
     id: row.id,
     amountMinorUnits: row.amountMinorUnits,
@@ -365,7 +387,7 @@ TransactionsCompanion _toCompanion(
 }
 ```
 
-**Stream mapping rule.** `watchAll` composes `dao.watchAll().asyncMap((rows) => Future.wait(rows.map(_toDomain)))`. `asyncMap` (not `map`) because `_toDomain` awaits the currency lookup. Currencies are seeded once by Stream C and cached by SQLite; the per-row lookup is a PK hit.
+**Stream mapping rule.** `watchByDay` composes `dao.watchByDay(...).asyncMap((rows) => Future.wait(rows.map(_toDomain)))`. `asyncMap` (not `map`) because `_toDomain` awaits the currency lookup. The day-bounded stream emits at most a single day's transactions per tick (typically < 20 rows), so the per-row PK lookup into `currencies` is trivially cheap; a DAO-level JOIN is not warranted for MVP.
 
 **`Value.absent()` rule.** `id == 0` triggers autoincrement on insert; on update, the caller must pass the real id. `memo == null` uses `Value.absent()`, not `Value(null)` — otherwise Drift writes SQL `NULL` on every insert, blanking any DB-side default we might add later.
 
@@ -512,7 +534,7 @@ Must return zero hits. `money_formatter` is the only file in the tree where `dou
 - **Update** (`tx.id != 0`):
   `final stored = await _dao.findById(tx.id); final now = _clock(); companion = _toCompanion(tx, createdAt: stored.createdAt, updatedAt: now);`
 
-`createdAt` is never re-read from the incoming `tx`: callers are free to hand back the model they got from `watchAll`, which already carries the stored `createdAt`, and we trust the stored row regardless. This is a deliberate belt-and-braces choice — one test case (T-timestamps-03) proves a caller with a mangled `createdAt` in the incoming `Transaction` does not corrupt the stored value.
+`createdAt` is never re-read from the incoming `tx`: callers are free to hand back the model they got from any `watch*` stream (`watchByDay`, `watchForAccount`, `watchForCategory`), which already carries the stored `createdAt`, and we trust the stored row regardless. This is a deliberate belt-and-braces choice — one test case (T-timestamps-03) proves a caller with a mangled `createdAt` in the incoming `Transaction` does not corrupt the stored value.
 
 Tests: T-timestamps-01, T-timestamps-02, T-timestamps-03 (§6).
 
@@ -547,33 +569,54 @@ Test: C-rename-01, C-rename-02, C-rename-03, C-l10nkey-lock-01 (§6).
 
 ### 3.7 Reactive stream emissions on every write (PRD 100-102)
 
-Drift's `.watch()` re-emits whenever any statement writes to the watched table. This is behavior Stream A gets for free from `TransactionDao.watchAll()` / `CategoryDao.watchAll()` — **so long as** every write goes through the DAO. The repository's `save`/`delete`/`rename`/`archive` methods funnel through `dao.insert` / `dao.updateRow` / `dao.deleteById` / `dao.archiveById`; none of them bypasses via `customStatement`.
+Drift's `.watch()` re-emits whenever any statement writes to the watched table. This is behavior Stream A gets for free from `TransactionDao.watchInDateRange(...)` / `TransactionDao.watchDistinctActivityDays(...)` / `TransactionDao.watchByAccount(...)` / `TransactionDao.watchByCategory(...)` / `CategoryDao.watchAll()` — **so long as** every write goes through the DAO. The repository's `save`/`delete`/`rename`/`archive` methods funnel through `dao.insert` / `dao.updateRow` / `dao.deleteById` / `dao.archiveById`; none of them bypasses via `customStatement`.
 
-Tests assert emissions by subscribing to the stream with a `StreamQueue` (package:async), performing a write, and awaiting the next item. Tests: T-stream-01, T-stream-02, T-stream-03, C-stream-01, C-stream-02 (§6).
+Tests assert emissions by subscribing to the stream with a `StreamQueue` (package:async), performing a write, and awaiting the next item. Tests: T-day-01, T-days-01, T-stream-02, T-stream-03, C-stream-01, C-stream-02 (§6).
 
 ---
 
 ## 4. Reactive streams — composition detail
 
-### 4.1 `TransactionRepository.watchAll({int limit = 10000})`
+### 4.1 `TransactionRepository.watchByDay(DateTime day)`
 
 ```dart
 @override
-Stream<List<Transaction>> watchAll({int limit = 10000}) {
+Stream<List<Transaction>> watchByDay(DateTime day) {
+  final start = DateTime(day.year, day.month, day.day);
+  final end = start.add(const Duration(days: 1));
   return _dao
-      .watchAll(limit: limit)
+      .watchInDateRange(start: start, end: end)
       .asyncMap((rows) => Future.wait(rows.map(_toDomain)));
 }
 ```
 
+- **Local-time day window.** `DateTime(y, m, d)` builds a local-midnight boundary. The caller passes any `DateTime` whose date component is the target day; the repository does the canonicalization. This matches Home's UX: the user thinks in local time.
+- **DAO boundary condition.** `watchInDateRange` uses `start <= date < end` (half-open interval). A transaction stamped at exactly local midnight belongs to the *later* day — consistent with how calendars render 00:00 as the start of a day.
 - **`asyncMap`, not `map`.** `_toDomain` awaits `CurrencyDao.findByCode`. Using `map` would return `Stream<List<Future<Transaction>>>`.
-- **No `.distinct()`.** Adjacent emissions always come from a real DB mutation; Drift coalesces same-transaction writes already. Adding `.distinct()` would require implementing deep equality across `List<Transaction>` values, which Freezed supports but costs cycles on every tick. Accept duplicate-looking emissions; controllers can `.distinct` at their layer if a widget complains.
+- **No `.distinct()`.** Adjacent emissions always come from a real DB mutation; Drift coalesces same-transaction writes already. Accept duplicate-looking emissions; controllers can `.distinct` at their layer if a widget complains.
+- **DAO leaf addition.** `TransactionDao.watchInDateRange({DateTime start, DateTime end})` is added by this stream as a leaf extension to `lib/data/database/daos/transaction_dao.dart` (see §5 task A3.3; ownership exception approved 2026-04-22 per §12 Q1).
 
-### 4.2 `TransactionRepository.watchForAccount(int accountId)` and `watchForCategory(int categoryId)`
+### 4.2 `TransactionRepository.watchDaysWithActivity({int limit = 365})`
 
-Same shape as `watchAll`, but the DAO call is `_dao.watchByAccount(accountId)` / an analog (see §5 task A2 for the note that M1 does not currently ship `watchByCategory` — we add the thinnest possible DAO extension inline in this stream).
+```dart
+@override
+Stream<List<DateTime>> watchDaysWithActivity({int limit = 365}) {
+  return _dao
+      .watchDistinctActivityDays(limit: limit)
+      .map((localMidnights) => List.unmodifiable(localMidnights));
+}
+```
 
-### 4.3 `CategoryRepository.watchAll({CategoryType? type, bool includeArchived = false})`
+- DAO emits `List<DateTime>` of distinct local-midnight instants, newest first. The SQL groups by `date(date, 'localtime')` and orders descending; the DAO converts back to `DateTime` at local midnight before handing to the repo.
+- The `limit` default of 365 caps the set for UI paging. A user with activity across > 365 distinct days is a future-tense concern (cursor pagination lands in Phase 2 per PRD → Pagination).
+- No currency lookup is needed here — the method returns plain `DateTime` instances, so `map` suffices. Cheap.
+- **DAO leaf addition.** `TransactionDao.watchDistinctActivityDays({int limit})` is added by this stream as a leaf extension alongside `watchInDateRange` (see §5 task A3.3).
+
+### 4.3 `TransactionRepository.watchForAccount(int accountId, {int limit = 200})` and `watchForCategory(int categoryId, {int limit = 200})`
+
+Same shape as `watchByDay`, but the DAO call is `_dao.watchByAccount(accountId, limit: limit)` / `_dao.watchByCategory(categoryId, limit: limit)`. M1 ships `watchByAccount` already; `watchByCategory` is the thinnest possible DAO extension, added inline in this stream (§5 task A3.3).
+
+### 4.4 `CategoryRepository.watchAll({CategoryType? type, bool includeArchived = false})`
 
 ```dart
 @override
@@ -594,7 +637,7 @@ Stream<List<Category>> watchAll({CategoryType? type, bool includeArchived = fals
 - **Synchronous `map`** (vs `asyncMap` in transactions) — category mapping does not await. Cheaper.
 - The fourth case (`type != null && includeArchived`) is the Categories management screen's "Show archived" toggle filtered by expense/income. No M1 DAO helper ships this combination — we filter on the Dart side rather than adding a fifth DAO method, because the row count is bounded (seeded categories + user custom; typically < 30).
 
-### 4.4 Stream warm-up vs seed (coordination note)
+### 4.5 Stream warm-up vs seed (coordination note)
 
 Drift's `.watch()` emits an immediate first value when subscribed. If a Home controller subscribes **before** the Stream C seed routine has populated categories, the first emission is an empty list, and the UI flashes an empty state. M4's bootstrap sequence (PRD.md 223-234) guarantees seed runs before `runApp`; Stream A's contract is "behave correctly when subscribed; do not attempt to race the seed". Tests pin the clock and pre-seed fixtures before subscribing — see §6 Common test harness.
 
@@ -626,10 +669,17 @@ All tasks land on `feature/M3-Stream-A-repositories` (or the agent's equivalent)
 - [ ] **Task A3.1 — Drift mapping helpers + happy-path insert.** Write `T-happy-01` (red), implement `_toDomain`/`_toCompanion` + `save` insert path + `getById`, make green.
   - Commit: `feat(data): TransactionRepository insert + getById + Drift mapping`.
 
-- [ ] **Task A3.2 — `watchAll` reactive stream.** Write `T-stream-01` asserting an insert triggers the second emission; implement `watchAll` via `asyncMap`.
-  - Commit: `feat(data): TransactionRepository.watchAll reactive stream`.
+- [ ] **Task A3.2 — `watchByDay` + `watchDaysWithActivity` reactive streams.** Write `T-day-01` (in-window emission), `T-day-02` (out-of-window exclusion), `T-day-03` (local-timezone boundary at midnight), and `T-days-01` (newest-first distinct-day set); implement `watchByDay` via `asyncMap` and `watchDaysWithActivity` via plain `map`. The DAO leaf additions are landed in task A3.3 — do that first.
+  - Commit: `feat(data): TransactionRepository day-bounded streams for Home (watchByDay, watchDaysWithActivity)`.
 
-- [ ] **Task A3.3 — `watchForAccount` + `watchForCategory`.** Add DAO helper `TransactionDao.watchByCategory(int id)` alongside the existing `watchByAccount` (one-line addition to the M1 DAO; keep the commit scoped to that single helper with a dartdoc referencing this plan). Write `T-stream-02` and `T-stream-03`, implement.
+- [ ] **Task A3.3 — DAO leaf additions for day-bounded + filtered streams.** Add three methods to `lib/data/database/daos/transaction_dao.dart`:
+  - `Stream<List<TransactionRow>> watchInDateRange({required DateTime start, required DateTime end})` — half-open `[start, end)` filter, ordered `date DESC, id DESC`.
+  - `Stream<List<DateTime>> watchDistinctActivityDays({int limit = 365})` — distinct local-midnight days, newest first, bounded.
+  - `Stream<List<TransactionRow>> watchByCategory(int categoryId, {int limit = 200})` — alongside the existing `watchByAccount` (which is updated to take the same bounded `limit` parameter).
+  Each method ships with a dartdoc backref to `docs/plans/m3-repositories-seed/stream-a-transaction-category.md § 4`. Keep the commit scoped to the DAO file plus this plan's test scaffold. This crosses M1 ownership — approval recorded in §12 Q1 (2026-04-22).
+  - Commit: `feat(data): TransactionDao leaf methods for day-bounded + filtered transaction streams (G2)`.
+
+- [ ] **Task A3.3b — `watchForAccount` + `watchForCategory`.** Implement both repository methods as thin `asyncMap` wrappers over the DAO helpers landed in A3.3. Write `T-stream-02` and `T-stream-03`.
   - Commit: `feat(data): TransactionRepository filtered streams (account, category)`.
 
 - [ ] **Task A3.4 — Currency FK guard.** Write `T-currency-fk-01` (red — expects `CurrencyNotFoundException`), wire the pre-insert `CurrencyDao.findByCode` check.
@@ -649,7 +699,7 @@ All tasks land on `feature/M3-Stream-A-repositories` (or the agent's equivalent)
 - [ ] **Task A4.1 — Happy-path CRUD + seed seam + mapping.** Write `C-happy-01`, `C-happy-02`, `C-seed-01`, and `C-seed-02`; implement `_toDomain`/`_toCompanion`, `save` insert path, `getById`, `getByL10nKey`, and `upsertSeeded`.
   - Commit: `feat(data): CategoryRepository insert, lookups, seed seam, and Drift mapping`.
 
-- [ ] **Task A4.2 — `watchAll` with type and archive filters.** Write `C-stream-01/02/03/04`, implement the four-way switch in §4.3.
+- [ ] **Task A4.2 — `watchAll` with type and archive filters.** Write `C-stream-01/02/03/04`, implement the four-way switch in §4.4.
   - Commit: `feat(data): CategoryRepository.watchAll (type, includeArchived)`.
 
 - [ ] **Task A4.3 — Type-lock update path (G5, mutable branch).** Write `C-type-lock-01` — no referencing transaction yet, flip type, expect success.
@@ -765,23 +815,27 @@ Test IDs prefixed `T-*`. Every row is a single `test(...)` invocation inside a n
 
 | ID               | Group             | Scenario                                                       | Assertion                                                                                           | PRD / Guardrail   |
 |------------------|-------------------|----------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|-------------------|
-| T-happy-01       | save / getById    | Insert a valid USD expense                                     | `watchAll` yields a list of length 1; `getById(inserted.id)` returns a `Transaction` with same data | 280-299           |
-| T-happy-02       | save / getById    | Round-trip `memo == null`                                      | Inserted row has `memo == null`, not empty string                                                   | 297               |
-| T-stream-01      | watchAll          | Subscribe, then insert                                         | Next emission contains the new row; order is `date DESC, id DESC`                                   | 100-102, 938-943  |
-| T-stream-02      | watchForAccount   | Two accounts, insert into each                                 | `watchForAccount(accountId)` only emits transactions for its account                                | 100-102           |
-| T-stream-03      | watchForCategory  | Two categories, insert into each                               | `watchForCategory(categoryId)` only emits transactions for its category                             | 100-102           |
-| T-currency-fk-01 | save → FK         | Save `Transaction` whose `currency.code == 'XXX'` (not seeded) | Throws `CurrencyNotFoundException('XXX')`; no row inserted (`watchAll` still length 0)              | 286, G2           |
-| T-timestamps-01  | save → timestamps | Insert at `frozenNow`                                          | Returned `createdAt == frozenNow && updatedAt == frozenNow`                                         | 291-293           |
-| T-timestamps-02  | save → timestamps | Update at `frozenNow + 1h`                                     | `updatedAt == frozenNow + 1h`; `createdAt` unchanged from insert                                    | 291-293           |
-| T-timestamps-03  | save → timestamps | Update with a mangled `Transaction.createdAt` (e.g. epoch 0)   | Stored `createdAt` is preserved (matches the original insert), not the incoming mangled value       | 291-293 (defence) |
-| T-delete-01      | delete            | Delete an inserted row                                         | Returns `true`; `getById` returns `null`; `watchAll` emits empty list                               | 100-102           |
-| T-delete-02      | delete            | Delete a non-existent id                                       | Returns `false`; no exception                                                                       | 100-102           |
-| T-duplicate-01   | duplicate         | Duplicate an existing row                                      | New row has different `id`, same `categoryId/accountId/currency/amountMinorUnits/memo/date`         | 716-722           |
-| T-duplicate-02   | duplicate         | Duplicate sets new timestamps                                  | `createdAt == updatedAt == frozenNow` on the duplicate, not the source's timestamps                 | 716-722, 291-293  |
-| T-duplicate-03   | duplicate         | Duplicate of a missing id                                      | Throws `RepositoryException`                                                                        | 828-837           |
-| T-amount-int-01  | save → money      | Insert `amountMinorUnits = 1500000000000000000` (ETH-scale)    | Round-trips exactly; no precision loss                                                              | 253-257, G4       |
+| T-happy-01       | save / getById    | Insert a valid USD expense                                         | `getById(inserted.id)` returns a `Transaction` with same data; `watchByDay(today)` emits length 1                   | 280-299           |
+| T-happy-02       | save / getById    | Round-trip `memo == null`                                          | Inserted row has `memo == null`, not empty string                                                                   | 297               |
+| T-day-01         | watchByDay        | Subscribe to today, insert one today + one yesterday               | Today's stream emits only the today row; reverse-chronological within the day                                       | 100-102, 938-943  |
+| T-day-02         | watchByDay        | Subscribe, then delete a row in that day                           | Next emission excludes the deleted row                                                                              | 100-102           |
+| T-day-03         | watchByDay (tz)   | Insert tx at `2026-04-22T23:59:59` local; query `watchByDay(22nd)` | Emission includes it. Insert tx at `2026-04-23T00:00:00` local; query `watchByDay(22nd)` emission excludes it       | local-time window |
+| T-days-01        | watchDaysActivity | Seed activity on three distinct days                               | `watchDaysWithActivity()` emits a list of three local-midnight `DateTime`s, newest first, no duplicates             | 100-102           |
+| T-days-02        | watchDaysActivity | Activity on same day from two different accounts                   | Only one `DateTime` emitted for that day                                                                            | 100-102           |
+| T-stream-02      | watchForAccount   | Two accounts, insert into each                                     | `watchForAccount(accountId)` only emits transactions for its account; respects default `limit`                      | 100-102           |
+| T-stream-03      | watchForCategory  | Two categories, insert into each                                   | `watchForCategory(categoryId)` only emits transactions for its category                                             | 100-102           |
+| T-currency-fk-01 | save → FK         | Save `Transaction` whose `currency.code == 'XXX'` (not seeded)     | Throws `CurrencyNotFoundException('XXX')`; no row inserted (`watchByDay(today)` still length 0)                     | 286, G2           |
+| T-timestamps-01  | save → timestamps | Insert at `frozenNow`                                              | Returned `createdAt == frozenNow && updatedAt == frozenNow`                                                         | 291-293           |
+| T-timestamps-02  | save → timestamps | Update at `frozenNow + 1h`                                         | `updatedAt == frozenNow + 1h`; `createdAt` unchanged from insert                                                    | 291-293           |
+| T-timestamps-03  | save → timestamps | Update with a mangled `Transaction.createdAt` (e.g. epoch 0)       | Stored `createdAt` is preserved (matches the original insert), not the incoming mangled value                       | 291-293 (defence) |
+| T-delete-01      | delete            | Delete an inserted row                                             | Returns `true`; `getById` returns `null`; `watchByDay(today)` emits empty list                                      | 100-102           |
+| T-delete-02      | delete            | Delete a non-existent id                                           | Returns `false`; no exception                                                                                       | 100-102           |
+| T-duplicate-01   | duplicate         | Duplicate an existing row                                          | New row has different `id`, same `categoryId/accountId/currency/amountMinorUnits/memo/date`                         | 716-722           |
+| T-duplicate-02   | duplicate         | Duplicate sets new timestamps                                      | `createdAt == updatedAt == frozenNow` on the duplicate, not the source's timestamps                                 | 716-722, 291-293  |
+| T-duplicate-03   | duplicate         | Duplicate of a missing id                                          | Throws `RepositoryException`                                                                                        | 828-837           |
+| T-amount-int-01  | save → money      | Insert `amountMinorUnits = 1500000000000000000` (ETH-scale)        | Round-trips exactly; no precision loss                                                                              | 253-257, G4       |
 
-**Total:** 15 tests.
+**Total:** 18 tests.
 
 ### 6.4 `category_repository_test.dart` matrix
 
@@ -796,7 +850,7 @@ Test IDs prefixed `C-*`.
 | C-stream-01       | watchAll                | Default watch (no type, no archived)                                            | Emits the two seeded categories, sorted as specified                                | 100-102           |
 | C-stream-02       | watchAll / type filter  | `watchAll(type: CategoryType.expense)`                                          | Emits only expense rows                                                             | 100-102           |
 | C-stream-03       | watchAll / archive flag | Archive a category, watch with `includeArchived: false` then `true`             | First emission excludes archived; second includes                                   | 315-316           |
-| C-stream-04       | watchAll / both filters | `(type: income, includeArchived: true)` after archiving the seeded income       | Emits the archived income row (filtered-in-dart branch of §4.3)                     | 315-316           |
+| C-stream-04       | watchAll / both filters | `(type: income, includeArchived: true)` after archiving the seeded income       | Emits the archived income row (filtered-in-dart branch of §4.4)                     | 315-316           |
 | C-type-lock-01    | save / type lock        | Unreferenced category — flip `type` and save                                    | Succeeds; new type persisted                                                        | 293-294, G5       |
 | C-type-lock-02    | save / type lock        | Insert a transaction referencing the category; then save with flipped `type`    | Throws `CategoryTypeLockedException`; stored row's `type` unchanged                 | 293-294, G5       |
 | C-archive-01      | archive                 | Archive a seeded category                                                       | `isArchived == true`; default `watchAll` omits it; `includeArchived: true` includes | 315-316, G6       |
@@ -815,12 +869,13 @@ Test IDs prefixed `C-*`.
 ### 6.5 Reactive-stream test recipe (applies to T-stream-0*, C-stream-0*)
 
 ```dart
-test('T-stream-01: insert triggers emission', () async {
-  final queue = StreamQueue(txRepo.watchAll());
+test('T-day-01: insert into today triggers emission', () async {
+  final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
+  final queue = StreamQueue(txRepo.watchByDay(today));
   final first = await queue.next;
   expect(first, isEmpty);
 
-  final inserted = await txRepo.save(_sampleTx(amount: 1234));
+  final inserted = await txRepo.save(_sampleTx(amount: 1234, date: frozenNow));
   final second = await queue.next;
   expect(second, hasLength(1));
   expect(second.single.id, inserted.id);
@@ -907,12 +962,12 @@ Each risk links to a prevention and a test or grep that would catch it.
    - **Catch:** T-happy-02 (round-trip null memo), plus reviewer discipline.
 
 3. **`.watch()` subscribing before seed completes, flashing empty state.** The M4 bootstrap guarantees seed runs before `runApp`; tests must not race. Stream A's tests explicitly seed fixtures via `TestRepoBundle.seedMinimalRepositoryFixtures()` in `setUp`.
-   - **Prevention:** §4.4; §6.2.
+   - **Prevention:** §4.5; §6.2.
    - **Catch:** any stream test would drift-fail if seed was racy; explicit expectation for first-emission content.
 
-4. **`CurrencyDao.findByCode` per-row on `watchAll`.** Each stream emission runs `asyncMap` → N PK lookups into `currencies`. For the 10 000-row cap, that's 10 001 SQL round-trips per emission. SQLite in-process handles that in microseconds per row, so the wall-clock impact is single-digit ms on the Home stream — acceptable for MVP.
-   - **Prevention:** noted in §4.1 — if later profiling shows a hotspot, join in the DAO. Do **not** build an in-memory currency cache in the repo; currencies are mutable (settings can register new ones in Phase 2).
-   - **Catch:** integration perf audit at M6.
+4. **Timezone boundary for `watchByDay`.** Comparing `transactions.date` as UTC against a local-midnight window silently misplaces transactions logged near midnight — a 23:59 local-time entry could land in the *next* day depending on the offset. The DAO helper `watchInDateRange` MUST receive the window as local-time `DateTime` and compare against the stored column after converting both sides consistently. Stored `date` values are written with `DateTime.now()` (local), so a local-vs-local comparison is the natural choice; the rule is "never mix local and UTC in the window math."
+   - **Prevention:** §4.1 spells out `DateTime(day.year, day.month, day.day)` canonicalization; §4.2 notes the DAO groups by `date(date, 'localtime')`.
+   - **Catch:** T-day-03 explicitly tests the 23:59/00:00 boundary pair.
 
 5. **Stream C's harness contract drifts.** If `seedMinimalRepositoryFixtures()` changes which categories it seeds (e.g. drops the income one), C-stream-02 and type-lock tests silently break.
    - **Prevention:** Task A5.5 (cross-stream checkpoint).
@@ -935,13 +990,14 @@ Stream A is done when **all** hold:
 - [ ] `lib/data/repositories/transaction_repository.dart` — implements the public API in §1.1, no `throw UnimplementedError` remains, TODO stub is gone.
 - [ ] `lib/data/repositories/category_repository.dart` — implements the public API in §1.2, no `throw UnimplementedError` remains, TODO stub is gone.
 - [ ] Stream A imports `lib/data/repositories/repository_exceptions.dart` from Stream B, uses `CurrencyNotFoundException` from that shared file, and keeps only Stream-A-specific leaf exceptions local per §1.3.
-- [ ] `test/unit/repositories/transaction_repository_test.dart` — all 15 tests in §6.3 green.
+- [ ] `test/unit/repositories/transaction_repository_test.dart` — all 18 tests in §6.3 green, including **T-day-01 / T-day-03** (day-bounded emissions, local-timezone boundary) and **T-days-01** (distinct activity days).
 - [ ] `test/unit/repositories/category_repository_test.dart` — all 20 tests in §6.4 green, including **C-type-lock-02 ("reject `type` change after first referencing transaction")** which is the mandatory M3 exit criterion from `implementation-plan.md` §5.
 - [ ] `test/unit/repositories/category_dao_test.dart` (M1 regression) still green — not modified.
 - [ ] `flutter analyze` clean. `dart format .` applied. `custom_lint` / `import_lint` clean.
 - [ ] `grep -rnE 'double\s+\w*(amount|balance|rate|price)' lib/data/repositories/` returns zero hits (G4).
 - [ ] No public method in either repository returns a Drift type (Task A5.2 grep).
-- [ ] Every `watch*` method on the public surface is reactive — a write through `save` / `delete` / `archive` / `rename` / `duplicate` triggers the next emission (tests T-stream-01/02/03, C-stream-01/02/03/04).
+- [ ] Every `watch*` method on the public surface is reactive — a write through `save` / `delete` / `archive` / `rename` / `duplicate` triggers the next emission (tests T-day-01/02, T-days-01, T-stream-02/03, C-stream-01/02/03/04).
+- [ ] No public method named `watchAll` exists on `TransactionRepository`. Home queries day-by-day via `watchByDay` + `watchDaysWithActivity` per the Option B UX resolution (§12 Q2).
 - [ ] Currency FK enforcement proven by T-currency-fk-01.
 - [ ] Archive-instead-of-delete proven by C-delete-02 and C-archive-01.
 - [ ] Category type-lock proven by C-type-lock-01 (mutable) and C-type-lock-02 (locked).
@@ -963,6 +1019,34 @@ Captured 2026-04-22 when writing this plan (UTC). Commands to re-run for fresh v
 | `AppDatabase` shape | `cat lib/data/database/app_database.dart`                                                | `schemaVersion = 1`; all six DAOs registered; `beforeOpen` enables `PRAGMA foreign_keys = ON`; constructor takes `QueryExecutor` — ready for `NativeDatabase.memory()` injection in tests                                                                                                                                                                                                         |
 | Existing repo tests | `ls test/unit/repositories/`                                                             | `category_dao_test.dart` (M1 regression on flat schema), `migration_test.dart` (Stream C will activate). Neither overlaps with this stream's new test files                                                                                                                                                                                                                                       |
 | Git branch          | `git status --short` on `feature/M2-Core-utilities`                                      | Clean; Stream A will branch from the M3 kick-off base after M2 merges to `main`                                                                                                                                                                                                                                                                                                                   |
+
+---
+
+## 12. Open-question resolution log
+
+All open questions surfaced during plan review on **2026-04-22**. Decisions are locked for this stream; cross-stream implications listed against each.
+
+| #  | Question                                                                                                                                                                                                                                                       | Resolution                                                                                                                                                                                                                                                                                                                             | Plan impact                                                                                                                                                                                                        |
+|----|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Q1 | Stream A needs leaf additions to `lib/data/database/daos/transaction_dao.dart` (an M1 deliverable). Approve the boundary crossing, or split into a separate M1-follow-up PR?                                                                                   | **Approved.** Stream A lands `watchInDateRange`, `watchDistinctActivityDays`, `watchByCategory` on `TransactionDao` in its own PR as leaf additions. Each method ships with a dartdoc backref to this plan. No M1-follow-up PR needed.                                                                                                 | §5 Task A3.3 captures the ownership exception and the exact DAO surface being added.                                                                                                                               |
+| Q2 | `TransactionRepository.watchAll({int limit = 10000})` for the Home list vs day-by-day querying?                                                                                                                                                                | **Option B — full UX change.** Remove `watchAll` entirely. Repo exposes `watchByDay(DateTime day)` + `watchDaysWithActivity({int limit = 365})`. Home UX changes to "one day at a time with prev/next nav".                                                                                                                            | §1.1 API contract, §2.1 stream mapping rule, §3.7 test IDs, §4.1–4.3 composition detail, §5 tasks A3.2 + A3.3 + A3.3b, §6.3 test matrix, §6.5 reactive recipe, §10 exit criteria all rewritten for day-bounded UX. |
+| Q3 | `CurrencyDao.findByCode` per-row on stream emissions — N+1 concern at MVP pagination cap?                                                                                                                                                                      | **Moot under Q2.** With `watchByDay`, each emission contains at most an intra-day row count (typically <20), so N+1 is trivially cheap. Kept `asyncMap` + per-row lookup; rejected both JOIN-at-DAO and in-memory cache (the cache would go stale when Phase 2 registers new tokens dynamically).                                      | §4.1 + §2.1 note the intra-day bound; §9 Risk #4 replaced with a timezone-boundary risk (which matters more now that day windows are the primary query).                                                           |
+| Q4 | `_toDomain` throws `CurrencyNotFoundException` when FK-resolved currency is missing — keep the defensive throw, or drop it?                                                                                                                                    | **Drop.** The user correctly notes users never type currency codes by hand; every code in the DB was put there by the seed or by the controlled Phase 2 token-registration path. Combined with `PRAGMA foreign_keys = ON` and the pre-insert `save`-side FK check, the read-path throw is dead code. Replaced with `!` non-null assert. | §2.1 `_toDomain` helper simplified. `CurrencyNotFoundException` remains in the write path (`TransactionRepository.save` pre-insert check, §3.3) — that one is still required.                                      |
+| Q5 | If Q2 is accepted, what exactly replaces the infinite-scroll Home?                                                                                                                                                                                             | **Day-by-day navigation.** One day shown at a time; prev/next affordance walks through days-with-activity (driven by `watchDaysWithActivity`). Empty gap days are skipped by the controller, not the repository.                                                                                                                       | §1.1 `watchDaysWithActivity` added explicitly to support this pattern. Downstream PRD / master-plan reconciliation flagged in §12 Follow-ups (below).                                                               |
+| Q6 | `seedMinimalRepositoryFixtures()` shape contract — does Stream C's commitment (USD/JPY/TWD + 1 expense + 1 income + 1 Cash account_type + 1 USD Cash account) match Stream A's test needs?                                                                     | **Confirmed.** The contract is sufficient for every T-* and C-* test in §6. A terse fixture-contract comment will ship in `_harness/test_app_database.dart` — Stream C already plans this in its §C2.                                                                                                                                  | No plan change. Cross-stream checkpoint (§5 A5.5) confirms the match at merge time.                                                                                                                                |
+
+### 12.1 Follow-ups triggered by these resolutions (not Stream A's responsibility)
+
+These are downstream documents that diverge from Q2's Option B decision. Stream A flags but does NOT edit them.
+
+- **`PRD.md` → Home Screen (line ~673).** Current text: "daily transaction list grouped by date, newest first". Needs rewording to "one day at a time with prev/next day navigation".
+- **`PRD.md` → Layout Primitives → Home screen (lines ~781–786).** Current text shows an infinite `CustomScrollView` with a `SliverList` of day headers + transaction rows. Needs replacement with a single-day layout (summary strip + the day's transaction list + a prev/next day control).
+- **`PRD.md` → Primary User Flow / Home interactions (lines ~709–714).** Should note that "returns to Home with new entry visible at the top" implicitly means "returns to Home pinned to the day of the just-saved transaction".
+- **`docs/plans/implementation-plan.md` §5 M5 Home slice (lines ~260–261).** Describes "currency-grouped summary strip, sliver day list, FAB, swipe-to-delete + undo, duplicate entry point, pending badge". The "sliver day list" phrasing bakes in the old UX. Needs to read "single-day list with prev/next navigation" (or equivalent).
+- **`CLAUDE.md` → Layout Primitives → Home.** Repeats the infinite `SliverList` shape; needs the same rewrite as PRD.
+- **Stream B and Stream C plans.** No API-surface changes required (neither uses `TransactionRepository.watchAll`), but the `seedMinimalRepositoryFixtures` comment in Stream C's harness file should note that Stream A's tests rely on transactions being groupable into at least two distinct local-timezone days so T-day-03 / T-days-01 can exercise the timezone boundary.
+
+These are listed for product-owner awareness. Resolving them is scope for whoever owns PRD / CLAUDE / master-plan edits — not for Stream A's implementer.
 
 ---
 
