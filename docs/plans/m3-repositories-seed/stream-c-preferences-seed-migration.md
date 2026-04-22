@@ -785,6 +785,14 @@ class TestRepoBundle {
     // USD / JPY / TWD currencies, one seeded expense category,
     // one seeded income category, one seeded Cash account type,
     // and one Cash account in USD.
+    //
+    // Contract note for Stream A's day-bounded stream tests
+    // (T-day-01..03, T-days-01..02, per Stream A §6.3): callers
+    // that exercise watchByDay / watchDaysWithActivity are
+    // responsible for inserting transactions across at least two
+    // distinct local-timezone days inside the test body. This
+    // helper does NOT seed any transactions — that is intentional,
+    // because per-day fixtures vary per test.
   }
 }
 ```

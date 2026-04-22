@@ -670,7 +670,7 @@ ShellRoute (bottom nav)
 ### Screens
 
 1. **Splash Screen** — Day counter with hnotes-style visual design, tap to enter Home
-2. **Home Screen** — Compact summary strip grouped by currency in MVP (`Today expense`, `Today income`, `Month net` per currency); Phase 2 can also show auto-converted totals in `default_currency`, daily transaction list grouped by date, newest first, empty-state CTA, FAB to add transaction, pending transaction badge (Phase 2)
+2. **Home Screen** — Compact summary strip grouped by currency in MVP (`Today expense`, `Today income`, `Month net` per currency); Phase 2 can also show auto-converted totals in `default_currency`. Below the strip, the transaction list shows **one day at a time**, with prev/next day navigation to walk through days that have activity (empty gap days are skipped). Today is the default day on cold start. Empty-state CTA, FAB to add transaction, pending transaction badge (Phase 2).
 3. **Add/Edit Transaction** — Expense/Income segmented control, calculator-style keypad for amount, category picker (icon grid), account selector with currency indicator, date picker, memo field for optional free-form detail, save; delete only in edit mode
 4. **Accounts Screen** — List accounts with tracked balances in native currency, add account (pick from existing account types or create a new type inline with name + icon + color + default currency), manage account types, set default account, archive account
 5. **Categories Screen** — List categories grouped by expense/income, add/edit/reorder/archive
@@ -693,7 +693,7 @@ ShellRoute (bottom nav)
 ### Screen States
 
 - **Splash:** shows day count when configured, date picker redirect when no start date set, skipped when disabled
-- **Home:** skeleton rows on cold start, `No transactions yet` empty state on first run, grouped summary chips when multiple currencies are present, undo snackbar after delete, pending transaction badge (Phase 2)
+- **Home:** cold start pins the day to today and shows a skeleton row; `No transactions yet` empty state on first run; per-day empty state (`No transactions on {date}`) on a day with no activity when reached via prev/next; grouped summary chips when multiple currencies are present; undo snackbar after delete; pending transaction badge (Phase 2); prev-day affordance disables when the selected day is older than the oldest day with activity, next-day affordance disables when the selected day is today
 - **Add/Edit Transaction:** inline validation for missing amount/category/account, confirm-discard dialog, save-error snackbar
 - **Accounts:** if no active account exists, show `Create account` CTA and block transaction save until one exists
 - **Categories:** if a type has no visible categories, show `Create category` CTA; used categories can be archived but not deleted
@@ -709,7 +709,7 @@ Home → tap FAB → Add Transaction screen
   → default account preselected, change if needed
   → date defaults to today, tap to change
   → optional: add memo
-  → tap Save → returns to Home with new entry visible at the top
+  → tap Save → returns to Home with the day pinned to the new transaction's date and the new entry visible at the top of that day's list
 ```
 
 ### Quick Repeat Flow
@@ -718,7 +718,7 @@ Home → tap FAB → Add Transaction screen
 Home → swipe or open overflow on an existing transaction → Duplicate
   → Add Transaction screen opens with copied type/category/account/memo/amount
   → user adjusts amount or date if needed
-  → tap Save → returns to Home with the duplicate visible at the top
+  → tap Save → returns to Home with the day pinned to the duplicate's date and the duplicate visible at the top of that day's list
 ```
 
 ### Wallet Sync Flow (Phase 2)
@@ -776,14 +776,17 @@ The following screens have known unbounded-constraint or keyboard-interaction ha
 
 ### Home screen
 
-Use `CustomScrollView` with slivers to combine the summary strip and the infinite daily list without nesting a `ListView` inside a `Column`:
+Home shows one day at a time. Use `CustomScrollView` with slivers to combine the summary strip, the day-navigation header, and the selected day's transaction list without nesting a `ListView` inside a `Column`:
 
 ```text
 CustomScrollView
   ├─ SliverToBoxAdapter  — currency-grouped summary strip
-  ├─ SliverList          — day headers + transaction rows
+  ├─ SliverToBoxAdapter  — day navigation header (prev ◀  {selectedDate}  ▶ next)
+  ├─ SliverList          — transaction rows for the selected day (reverse-chronological)
   └─ SliverPadding       — bottom FAB clearance
 ```
+
+The prev/next controls advance by one day-with-activity at a time, driven by `TransactionRepository.watchDaysWithActivity(...)`. The selected-day transactions come from `watchByDay(selectedDay)`. Days with no activity are skipped by the controller; a per-day empty state only appears if the user manually lands on a gap day (e.g. via a future date picker).
 
 ### Add/Edit Transaction
 
