@@ -49,6 +49,17 @@ class $CurrenciesTable extends Currencies
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _customNameMeta = const VerificationMeta(
+    'customName',
+  );
+  @override
+  late final GeneratedColumn<String> customName = GeneratedColumn<String>(
+    'custom_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _isTokenMeta = const VerificationMeta(
     'isToken',
   );
@@ -81,6 +92,7 @@ class $CurrenciesTable extends Currencies
     decimals,
     symbol,
     nameL10nKey,
+    customName,
     isToken,
     sortOrder,
   ];
@@ -127,6 +139,12 @@ class $CurrenciesTable extends Currencies
         ),
       );
     }
+    if (data.containsKey('custom_name')) {
+      context.handle(
+        _customNameMeta,
+        customName.isAcceptableOrUnknown(data['custom_name']!, _customNameMeta),
+      );
+    }
     if (data.containsKey('is_token')) {
       context.handle(
         _isTokenMeta,
@@ -164,6 +182,10 @@ class $CurrenciesTable extends Currencies
         DriftSqlType.string,
         data['${effectivePrefix}name_l10n_key'],
       ),
+      customName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}custom_name'],
+      ),
       isToken: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_token'],
@@ -186,6 +208,7 @@ class Currency extends DataClass implements Insertable<Currency> {
   final int decimals;
   final String? symbol;
   final String? nameL10nKey;
+  final String? customName;
   final bool isToken;
   final int? sortOrder;
   const Currency({
@@ -193,6 +216,7 @@ class Currency extends DataClass implements Insertable<Currency> {
     required this.decimals,
     this.symbol,
     this.nameL10nKey,
+    this.customName,
     required this.isToken,
     this.sortOrder,
   });
@@ -206,6 +230,9 @@ class Currency extends DataClass implements Insertable<Currency> {
     }
     if (!nullToAbsent || nameL10nKey != null) {
       map['name_l10n_key'] = Variable<String>(nameL10nKey);
+    }
+    if (!nullToAbsent || customName != null) {
+      map['custom_name'] = Variable<String>(customName);
     }
     map['is_token'] = Variable<bool>(isToken);
     if (!nullToAbsent || sortOrder != null) {
@@ -224,6 +251,9 @@ class Currency extends DataClass implements Insertable<Currency> {
       nameL10nKey: nameL10nKey == null && nullToAbsent
           ? const Value.absent()
           : Value(nameL10nKey),
+      customName: customName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(customName),
       isToken: Value(isToken),
       sortOrder: sortOrder == null && nullToAbsent
           ? const Value.absent()
@@ -241,6 +271,7 @@ class Currency extends DataClass implements Insertable<Currency> {
       decimals: serializer.fromJson<int>(json['decimals']),
       symbol: serializer.fromJson<String?>(json['symbol']),
       nameL10nKey: serializer.fromJson<String?>(json['nameL10nKey']),
+      customName: serializer.fromJson<String?>(json['customName']),
       isToken: serializer.fromJson<bool>(json['isToken']),
       sortOrder: serializer.fromJson<int?>(json['sortOrder']),
     );
@@ -253,6 +284,7 @@ class Currency extends DataClass implements Insertable<Currency> {
       'decimals': serializer.toJson<int>(decimals),
       'symbol': serializer.toJson<String?>(symbol),
       'nameL10nKey': serializer.toJson<String?>(nameL10nKey),
+      'customName': serializer.toJson<String?>(customName),
       'isToken': serializer.toJson<bool>(isToken),
       'sortOrder': serializer.toJson<int?>(sortOrder),
     };
@@ -263,6 +295,7 @@ class Currency extends DataClass implements Insertable<Currency> {
     int? decimals,
     Value<String?> symbol = const Value.absent(),
     Value<String?> nameL10nKey = const Value.absent(),
+    Value<String?> customName = const Value.absent(),
     bool? isToken,
     Value<int?> sortOrder = const Value.absent(),
   }) => Currency(
@@ -270,6 +303,7 @@ class Currency extends DataClass implements Insertable<Currency> {
     decimals: decimals ?? this.decimals,
     symbol: symbol.present ? symbol.value : this.symbol,
     nameL10nKey: nameL10nKey.present ? nameL10nKey.value : this.nameL10nKey,
+    customName: customName.present ? customName.value : this.customName,
     isToken: isToken ?? this.isToken,
     sortOrder: sortOrder.present ? sortOrder.value : this.sortOrder,
   );
@@ -281,6 +315,9 @@ class Currency extends DataClass implements Insertable<Currency> {
       nameL10nKey: data.nameL10nKey.present
           ? data.nameL10nKey.value
           : this.nameL10nKey,
+      customName: data.customName.present
+          ? data.customName.value
+          : this.customName,
       isToken: data.isToken.present ? data.isToken.value : this.isToken,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
     );
@@ -293,6 +330,7 @@ class Currency extends DataClass implements Insertable<Currency> {
           ..write('decimals: $decimals, ')
           ..write('symbol: $symbol, ')
           ..write('nameL10nKey: $nameL10nKey, ')
+          ..write('customName: $customName, ')
           ..write('isToken: $isToken, ')
           ..write('sortOrder: $sortOrder')
           ..write(')'))
@@ -300,8 +338,15 @@ class Currency extends DataClass implements Insertable<Currency> {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(code, decimals, symbol, nameL10nKey, isToken, sortOrder);
+  int get hashCode => Object.hash(
+    code,
+    decimals,
+    symbol,
+    nameL10nKey,
+    customName,
+    isToken,
+    sortOrder,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -310,6 +355,7 @@ class Currency extends DataClass implements Insertable<Currency> {
           other.decimals == this.decimals &&
           other.symbol == this.symbol &&
           other.nameL10nKey == this.nameL10nKey &&
+          other.customName == this.customName &&
           other.isToken == this.isToken &&
           other.sortOrder == this.sortOrder);
 }
@@ -319,6 +365,7 @@ class CurrenciesCompanion extends UpdateCompanion<Currency> {
   final Value<int> decimals;
   final Value<String?> symbol;
   final Value<String?> nameL10nKey;
+  final Value<String?> customName;
   final Value<bool> isToken;
   final Value<int?> sortOrder;
   final Value<int> rowid;
@@ -327,6 +374,7 @@ class CurrenciesCompanion extends UpdateCompanion<Currency> {
     this.decimals = const Value.absent(),
     this.symbol = const Value.absent(),
     this.nameL10nKey = const Value.absent(),
+    this.customName = const Value.absent(),
     this.isToken = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -336,6 +384,7 @@ class CurrenciesCompanion extends UpdateCompanion<Currency> {
     required int decimals,
     this.symbol = const Value.absent(),
     this.nameL10nKey = const Value.absent(),
+    this.customName = const Value.absent(),
     this.isToken = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -346,6 +395,7 @@ class CurrenciesCompanion extends UpdateCompanion<Currency> {
     Expression<int>? decimals,
     Expression<String>? symbol,
     Expression<String>? nameL10nKey,
+    Expression<String>? customName,
     Expression<bool>? isToken,
     Expression<int>? sortOrder,
     Expression<int>? rowid,
@@ -355,6 +405,7 @@ class CurrenciesCompanion extends UpdateCompanion<Currency> {
       if (decimals != null) 'decimals': decimals,
       if (symbol != null) 'symbol': symbol,
       if (nameL10nKey != null) 'name_l10n_key': nameL10nKey,
+      if (customName != null) 'custom_name': customName,
       if (isToken != null) 'is_token': isToken,
       if (sortOrder != null) 'sort_order': sortOrder,
       if (rowid != null) 'rowid': rowid,
@@ -366,6 +417,7 @@ class CurrenciesCompanion extends UpdateCompanion<Currency> {
     Value<int>? decimals,
     Value<String?>? symbol,
     Value<String?>? nameL10nKey,
+    Value<String?>? customName,
     Value<bool>? isToken,
     Value<int?>? sortOrder,
     Value<int>? rowid,
@@ -375,6 +427,7 @@ class CurrenciesCompanion extends UpdateCompanion<Currency> {
       decimals: decimals ?? this.decimals,
       symbol: symbol ?? this.symbol,
       nameL10nKey: nameL10nKey ?? this.nameL10nKey,
+      customName: customName ?? this.customName,
       isToken: isToken ?? this.isToken,
       sortOrder: sortOrder ?? this.sortOrder,
       rowid: rowid ?? this.rowid,
@@ -396,6 +449,9 @@ class CurrenciesCompanion extends UpdateCompanion<Currency> {
     if (nameL10nKey.present) {
       map['name_l10n_key'] = Variable<String>(nameL10nKey.value);
     }
+    if (customName.present) {
+      map['custom_name'] = Variable<String>(customName.value);
+    }
     if (isToken.present) {
       map['is_token'] = Variable<bool>(isToken.value);
     }
@@ -415,6 +471,7 @@ class CurrenciesCompanion extends UpdateCompanion<Currency> {
           ..write('decimals: $decimals, ')
           ..write('symbol: $symbol, ')
           ..write('nameL10nKey: $nameL10nKey, ')
+          ..write('customName: $customName, ')
           ..write('isToken: $isToken, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('rowid: $rowid')
@@ -2861,6 +2918,7 @@ typedef $$CurrenciesTableCreateCompanionBuilder =
       required int decimals,
       Value<String?> symbol,
       Value<String?> nameL10nKey,
+      Value<String?> customName,
       Value<bool> isToken,
       Value<int?> sortOrder,
       Value<int> rowid,
@@ -2871,6 +2929,7 @@ typedef $$CurrenciesTableUpdateCompanionBuilder =
       Value<int> decimals,
       Value<String?> symbol,
       Value<String?> nameL10nKey,
+      Value<String?> customName,
       Value<bool> isToken,
       Value<int?> sortOrder,
       Value<int> rowid,
@@ -2968,6 +3027,11 @@ class $$CurrenciesTableFilterComposer
 
   ColumnFilters<String> get nameL10nKey => $composableBuilder(
     column: $table.nameL10nKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get customName => $composableBuilder(
+    column: $table.customName,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3086,6 +3150,11 @@ class $$CurrenciesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get customName => $composableBuilder(
+    column: $table.customName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isToken => $composableBuilder(
     column: $table.isToken,
     builder: (column) => ColumnOrderings(column),
@@ -3117,6 +3186,11 @@ class $$CurrenciesTableAnnotationComposer
 
   GeneratedColumn<String> get nameL10nKey => $composableBuilder(
     column: $table.nameL10nKey,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get customName => $composableBuilder(
+    column: $table.customName,
     builder: (column) => column,
   );
 
@@ -3238,6 +3312,7 @@ class $$CurrenciesTableTableManager
                 Value<int> decimals = const Value.absent(),
                 Value<String?> symbol = const Value.absent(),
                 Value<String?> nameL10nKey = const Value.absent(),
+                Value<String?> customName = const Value.absent(),
                 Value<bool> isToken = const Value.absent(),
                 Value<int?> sortOrder = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -3246,6 +3321,7 @@ class $$CurrenciesTableTableManager
                 decimals: decimals,
                 symbol: symbol,
                 nameL10nKey: nameL10nKey,
+                customName: customName,
                 isToken: isToken,
                 sortOrder: sortOrder,
                 rowid: rowid,
@@ -3256,6 +3332,7 @@ class $$CurrenciesTableTableManager
                 required int decimals,
                 Value<String?> symbol = const Value.absent(),
                 Value<String?> nameL10nKey = const Value.absent(),
+                Value<String?> customName = const Value.absent(),
                 Value<bool> isToken = const Value.absent(),
                 Value<int?> sortOrder = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -3264,6 +3341,7 @@ class $$CurrenciesTableTableManager
                 decimals: decimals,
                 symbol: symbol,
                 nameL10nKey: nameL10nKey,
+                customName: customName,
                 isToken: isToken,
                 sortOrder: sortOrder,
                 rowid: rowid,

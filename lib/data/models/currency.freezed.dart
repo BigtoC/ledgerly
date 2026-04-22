@@ -17,8 +17,15 @@ mixin _$Currency {
 /// PK. ISO 4217 for fiat, symbol for tokens.
  String get code;/// 2 for USD, 0 for JPY, 18 for ETH/ERC-20.
  int get decimals;/// Display symbol: `$`, `¥`, `NT$`, ...
- String? get symbol;/// Optional localized-name key (SQL column: `name_l10n_key`).
- String? get nameL10nKey;/// Phase 2 token flag. DB default `false`.
+ String? get symbol;/// Localized-name key (SQL column: `name_l10n_key`). Seeded currencies
+/// use `currency.<code>` (e.g. `currency.usd`); nullable so Phase 2
+/// tokens can omit it when the symbol is itself the display name.
+ String? get nameL10nKey;/// Optional user override for the display name. When non-null, M5
+/// renders this instead of the localized label resolved from
+/// `nameL10nKey`. Written via `CurrencyRepository.updateCustomName`;
+/// never touched by `upsert`. Same rename pattern as
+/// `categories.custom_name` / `account_types.custom_name`.
+ String? get customName;/// Phase 2 token flag. DB default `false`.
  bool get isToken;/// Order in pickers.
  int? get sortOrder;
 /// Create a copy of Currency
@@ -31,16 +38,16 @@ $CurrencyCopyWith<Currency> get copyWith => _$CurrencyCopyWithImpl<Currency>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Currency&&(identical(other.code, code) || other.code == code)&&(identical(other.decimals, decimals) || other.decimals == decimals)&&(identical(other.symbol, symbol) || other.symbol == symbol)&&(identical(other.nameL10nKey, nameL10nKey) || other.nameL10nKey == nameL10nKey)&&(identical(other.isToken, isToken) || other.isToken == isToken)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Currency&&(identical(other.code, code) || other.code == code)&&(identical(other.decimals, decimals) || other.decimals == decimals)&&(identical(other.symbol, symbol) || other.symbol == symbol)&&(identical(other.nameL10nKey, nameL10nKey) || other.nameL10nKey == nameL10nKey)&&(identical(other.customName, customName) || other.customName == customName)&&(identical(other.isToken, isToken) || other.isToken == isToken)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,code,decimals,symbol,nameL10nKey,isToken,sortOrder);
+int get hashCode => Object.hash(runtimeType,code,decimals,symbol,nameL10nKey,customName,isToken,sortOrder);
 
 @override
 String toString() {
-  return 'Currency(code: $code, decimals: $decimals, symbol: $symbol, nameL10nKey: $nameL10nKey, isToken: $isToken, sortOrder: $sortOrder)';
+  return 'Currency(code: $code, decimals: $decimals, symbol: $symbol, nameL10nKey: $nameL10nKey, customName: $customName, isToken: $isToken, sortOrder: $sortOrder)';
 }
 
 
@@ -51,7 +58,7 @@ abstract mixin class $CurrencyCopyWith<$Res>  {
   factory $CurrencyCopyWith(Currency value, $Res Function(Currency) _then) = _$CurrencyCopyWithImpl;
 @useResult
 $Res call({
- String code, int decimals, String? symbol, String? nameL10nKey, bool isToken, int? sortOrder
+ String code, int decimals, String? symbol, String? nameL10nKey, String? customName, bool isToken, int? sortOrder
 });
 
 
@@ -68,12 +75,13 @@ class _$CurrencyCopyWithImpl<$Res>
 
 /// Create a copy of Currency
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? code = null,Object? decimals = null,Object? symbol = freezed,Object? nameL10nKey = freezed,Object? isToken = null,Object? sortOrder = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? code = null,Object? decimals = null,Object? symbol = freezed,Object? nameL10nKey = freezed,Object? customName = freezed,Object? isToken = null,Object? sortOrder = freezed,}) {
   return _then(_self.copyWith(
 code: null == code ? _self.code : code // ignore: cast_nullable_to_non_nullable
 as String,decimals: null == decimals ? _self.decimals : decimals // ignore: cast_nullable_to_non_nullable
 as int,symbol: freezed == symbol ? _self.symbol : symbol // ignore: cast_nullable_to_non_nullable
 as String?,nameL10nKey: freezed == nameL10nKey ? _self.nameL10nKey : nameL10nKey // ignore: cast_nullable_to_non_nullable
+as String?,customName: freezed == customName ? _self.customName : customName // ignore: cast_nullable_to_non_nullable
 as String?,isToken: null == isToken ? _self.isToken : isToken // ignore: cast_nullable_to_non_nullable
 as bool,sortOrder: freezed == sortOrder ? _self.sortOrder : sortOrder // ignore: cast_nullable_to_non_nullable
 as int?,
@@ -161,10 +169,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String code,  int decimals,  String? symbol,  String? nameL10nKey,  bool isToken,  int? sortOrder)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String code,  int decimals,  String? symbol,  String? nameL10nKey,  String? customName,  bool isToken,  int? sortOrder)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Currency() when $default != null:
-return $default(_that.code,_that.decimals,_that.symbol,_that.nameL10nKey,_that.isToken,_that.sortOrder);case _:
+return $default(_that.code,_that.decimals,_that.symbol,_that.nameL10nKey,_that.customName,_that.isToken,_that.sortOrder);case _:
   return orElse();
 
 }
@@ -182,10 +190,10 @@ return $default(_that.code,_that.decimals,_that.symbol,_that.nameL10nKey,_that.i
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String code,  int decimals,  String? symbol,  String? nameL10nKey,  bool isToken,  int? sortOrder)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String code,  int decimals,  String? symbol,  String? nameL10nKey,  String? customName,  bool isToken,  int? sortOrder)  $default,) {final _that = this;
 switch (_that) {
 case _Currency():
-return $default(_that.code,_that.decimals,_that.symbol,_that.nameL10nKey,_that.isToken,_that.sortOrder);case _:
+return $default(_that.code,_that.decimals,_that.symbol,_that.nameL10nKey,_that.customName,_that.isToken,_that.sortOrder);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -202,10 +210,10 @@ return $default(_that.code,_that.decimals,_that.symbol,_that.nameL10nKey,_that.i
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String code,  int decimals,  String? symbol,  String? nameL10nKey,  bool isToken,  int? sortOrder)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String code,  int decimals,  String? symbol,  String? nameL10nKey,  String? customName,  bool isToken,  int? sortOrder)?  $default,) {final _that = this;
 switch (_that) {
 case _Currency() when $default != null:
-return $default(_that.code,_that.decimals,_that.symbol,_that.nameL10nKey,_that.isToken,_that.sortOrder);case _:
+return $default(_that.code,_that.decimals,_that.symbol,_that.nameL10nKey,_that.customName,_that.isToken,_that.sortOrder);case _:
   return null;
 
 }
@@ -217,7 +225,7 @@ return $default(_that.code,_that.decimals,_that.symbol,_that.nameL10nKey,_that.i
 
 
 class _Currency implements Currency {
-  const _Currency({required this.code, required this.decimals, this.symbol, this.nameL10nKey, this.isToken = false, this.sortOrder});
+  const _Currency({required this.code, required this.decimals, this.symbol, this.nameL10nKey, this.customName, this.isToken = false, this.sortOrder});
   
 
 /// PK. ISO 4217 for fiat, symbol for tokens.
@@ -226,8 +234,16 @@ class _Currency implements Currency {
 @override final  int decimals;
 /// Display symbol: `$`, `¥`, `NT$`, ...
 @override final  String? symbol;
-/// Optional localized-name key (SQL column: `name_l10n_key`).
+/// Localized-name key (SQL column: `name_l10n_key`). Seeded currencies
+/// use `currency.<code>` (e.g. `currency.usd`); nullable so Phase 2
+/// tokens can omit it when the symbol is itself the display name.
 @override final  String? nameL10nKey;
+/// Optional user override for the display name. When non-null, M5
+/// renders this instead of the localized label resolved from
+/// `nameL10nKey`. Written via `CurrencyRepository.updateCustomName`;
+/// never touched by `upsert`. Same rename pattern as
+/// `categories.custom_name` / `account_types.custom_name`.
+@override final  String? customName;
 /// Phase 2 token flag. DB default `false`.
 @override@JsonKey() final  bool isToken;
 /// Order in pickers.
@@ -243,16 +259,16 @@ _$CurrencyCopyWith<_Currency> get copyWith => __$CurrencyCopyWithImpl<_Currency>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Currency&&(identical(other.code, code) || other.code == code)&&(identical(other.decimals, decimals) || other.decimals == decimals)&&(identical(other.symbol, symbol) || other.symbol == symbol)&&(identical(other.nameL10nKey, nameL10nKey) || other.nameL10nKey == nameL10nKey)&&(identical(other.isToken, isToken) || other.isToken == isToken)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Currency&&(identical(other.code, code) || other.code == code)&&(identical(other.decimals, decimals) || other.decimals == decimals)&&(identical(other.symbol, symbol) || other.symbol == symbol)&&(identical(other.nameL10nKey, nameL10nKey) || other.nameL10nKey == nameL10nKey)&&(identical(other.customName, customName) || other.customName == customName)&&(identical(other.isToken, isToken) || other.isToken == isToken)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,code,decimals,symbol,nameL10nKey,isToken,sortOrder);
+int get hashCode => Object.hash(runtimeType,code,decimals,symbol,nameL10nKey,customName,isToken,sortOrder);
 
 @override
 String toString() {
-  return 'Currency(code: $code, decimals: $decimals, symbol: $symbol, nameL10nKey: $nameL10nKey, isToken: $isToken, sortOrder: $sortOrder)';
+  return 'Currency(code: $code, decimals: $decimals, symbol: $symbol, nameL10nKey: $nameL10nKey, customName: $customName, isToken: $isToken, sortOrder: $sortOrder)';
 }
 
 
@@ -263,7 +279,7 @@ abstract mixin class _$CurrencyCopyWith<$Res> implements $CurrencyCopyWith<$Res>
   factory _$CurrencyCopyWith(_Currency value, $Res Function(_Currency) _then) = __$CurrencyCopyWithImpl;
 @override @useResult
 $Res call({
- String code, int decimals, String? symbol, String? nameL10nKey, bool isToken, int? sortOrder
+ String code, int decimals, String? symbol, String? nameL10nKey, String? customName, bool isToken, int? sortOrder
 });
 
 
@@ -280,12 +296,13 @@ class __$CurrencyCopyWithImpl<$Res>
 
 /// Create a copy of Currency
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? code = null,Object? decimals = null,Object? symbol = freezed,Object? nameL10nKey = freezed,Object? isToken = null,Object? sortOrder = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? code = null,Object? decimals = null,Object? symbol = freezed,Object? nameL10nKey = freezed,Object? customName = freezed,Object? isToken = null,Object? sortOrder = freezed,}) {
   return _then(_Currency(
 code: null == code ? _self.code : code // ignore: cast_nullable_to_non_nullable
 as String,decimals: null == decimals ? _self.decimals : decimals // ignore: cast_nullable_to_non_nullable
 as int,symbol: freezed == symbol ? _self.symbol : symbol // ignore: cast_nullable_to_non_nullable
 as String?,nameL10nKey: freezed == nameL10nKey ? _self.nameL10nKey : nameL10nKey // ignore: cast_nullable_to_non_nullable
+as String?,customName: freezed == customName ? _self.customName : customName // ignore: cast_nullable_to_non_nullable
 as String?,isToken: null == isToken ? _self.isToken : isToken // ignore: cast_nullable_to_non_nullable
 as bool,sortOrder: freezed == sortOrder ? _self.sortOrder : sortOrder // ignore: cast_nullable_to_non_nullable
 as int?,
