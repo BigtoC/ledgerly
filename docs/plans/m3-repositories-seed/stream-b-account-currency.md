@@ -17,7 +17,7 @@
 
 **Sibling streams (same milestone, merge within the same window):**
 - Stream A — `TransactionRepository` + `CategoryRepository` + shared error base. Stream A depends only on the shared `repository_exceptions.dart` contract from this stream; its runtime repository logic stays on its own DAOs.
-- Stream C — `UserPreferencesRepository` + first-run seed + migration test harness. Stream C depends on `CurrencyRepository.upsert` (seed fiats), `AccountTypeRepository.save` (seed Cash + Investment), and `AccountRepository.save` (seed one Cash account). Stream B exposes those writes and nothing more — seed policy lives in Stream C.
+- Stream C — `UserPreferencesRepository` + first-run seed + migration test harness. Stream C depends on `CurrencyRepository.upsert` (seed fiats), `AccountTypeRepository.upsertSeeded` (seed Cash + Investment), and `AccountRepository.save` (seed one Cash account). Stream B exposes those writes and nothing more — seed policy lives in Stream C.
 
 Stream B touches **no file owned by Stream A or Stream C**. The only cross-cutting file is the shared error-type module — ownership resolved in §7.
 
@@ -81,7 +81,7 @@ Stream B replaces this file in full.
 
 Stream B replaces this file in full.
 
-### 0.4 Adjacent files read but NOT modified by Stream B
+### 0.4 Adjacent files read and minimally extended by Stream B
 
 Verified to match the M1 contract:
 
@@ -90,7 +90,7 @@ Verified to match the M1 contract:
 - `lib/data/database/tables/accounts_table.dart` — `Accounts` table, `accountTypeId` INTEGER NOT NULL FK → `account_types(id)`, `currency` TEXT NOT NULL FK → `currencies(code)`, `openingBalanceMinorUnits` INTEGER default 0, `icon` nullable, `color` nullable, `is_archived` default false.
 - `lib/data/database/daos/currency_dao.dart` — `watchAll` / `findByCode` / `upsertAll` / `insert` / `updateRow`.
 - `lib/data/database/daos/account_type_dao.dart` — `watchAll` (includes archived) / `watchActive` / `findById` / `findByL10nKey` / `insert` / `updateRow` / `archive` / `deleteById` / `hasReferencingAccounts`.
-- `lib/data/database/daos/account_dao.dart` — `watchAll({includeArchived})` / `watchByType` / `findById` / `insert` / `updateRow` / `deleteById` / `archiveById` / `countByAccountType`.
+- `lib/data/database/daos/account_dao.dart` — `watchAll({includeArchived})` / `watchByType` / `findById` / `insert` / `updateRow` / `deleteById` / `archiveById` / `countByAccountType`. Stream B may add the one leaf helper `watchById(int id)` if keeping the `.watch()` symmetry in the DAO is cleaner than composing it inline in the repository.
 - `lib/data/models/currency.dart`, `lib/data/models/account_type.dart`, `lib/data/models/account.dart` — Freezed domain models. Already import the field names (`openingBalanceMinorUnits`, `isArchived`, etc.) the repositories will return.
 
 **Missing DAO method flagged to Stream A** (NOT a Stream B deliverable, but needed by Stream B's `AccountRepository.isReferenced` / `delete` path): `TransactionDao.countByAccount(int accountId)` was specified in M1 §3.2 and confirmed by inspection. Used by `AccountRepository` to answer "is this account referenced?". If this DAO method is missing or misnamed in the merged main branch at start of M3, Stream B must coordinate with Stream A to add it before continuing.
@@ -155,12 +155,13 @@ abstract class AccountTypeRepository {
   /// One-shot read by PK. Null if absent.
   Future<AccountType?> getById(int id);
 
-  /// Insert when `id == null` / `id == 0`, otherwise replace.
+  /// Insert when `id == 0`, otherwise replace.
   /// Returns the row id.
   ///
   /// Validates that `defaultCurrency` (when non-null) points at a
   /// registered currency; throws [CurrencyNotFoundException] otherwise.
-  /// Does NOT mutate `l10n_key` — see [rename] for the rename path.
+  /// On update, preserves the stored `l10nKey`; seeded-row identity changes
+  /// go through [upsertSeeded], and user renames go through [rename].
   Future<int> save(AccountType accountType);
 
   /// Seed-only insert-or-update keyed by `l10nKey`. Used by Stream C's
@@ -325,14 +326,7 @@ class AccountInUseException extends RepositoryException {
 }
 ```
 
-Stream A extends this file with:
-
-```dart
-class CategoryInUseException extends RepositoryException { ... }
-class CategoryTypeLockedException extends RepositoryException { ... }
-```
-
-Those are NOT Stream B's concern. This plan only mentions them to confirm no name collision.
+Stream A imports this file's shared base / reused leaves but keeps category-only exceptions local to `category_repository.dart`. Those category exceptions are outside Stream B's contract surface.
 
 ### 1.5 Contract rules (non-negotiable once merged)
 
@@ -511,7 +505,7 @@ One rule per subsection, with the enforcement point, the PRD cite, and the test 
       await _dao.updateRow(AccountTypesCompanion(
         id: Value(id),
         customName: Value(customName),
-        // l10nKey omitted — replace(...) uses the existing value.
+        // l10nKey explicitly preserved from the stored row.
         // defaultCurrency, icon, color, sortOrder, isArchived likewise.
         l10nKey: Value(row.l10nKey),
         defaultCurrency: Value(row.defaultCurrency),
@@ -529,7 +523,7 @@ One rule per subsection, with the enforcement point, the PRD cite, and the test 
 ### 3.4 Seeded account-type identity survives locale changes (G7)
 
 - **PRD cite:** lines 336–337 + 497–507 (Default Account Types: `accountType.cash`, `accountType.investment`).
-- **Enforcement point:** `AccountTypeRepository.rename` (previous rule). Corollary: `save` never mutates `l10nKey` either — the mapper copies the incoming `l10nKey` verbatim. Seed code (Stream C) always inserts with the l10n key set.
+- **Enforcement point:** `AccountTypeRepository.rename` (previous rule). Corollary: `save` preserves the stored `l10nKey` on update rather than trusting the caller-supplied value, while `upsertSeeded` is the only path allowed to manage seeded-row identity by `l10nKey`. Seed code (Stream C) always inserts with the l10n key set.
 - **Test (§6.2) — round-trip scenario:** seed `accountType.cash` + `accountType.investment` → user renames Cash to "Wallet" → call `watchAll` → two rows, one with `l10nKey='accountType.cash', customName='Wallet'`, one with `l10nKey='accountType.investment', customName=null`. Re-running the seed is idempotent (Stream C's concern, exercised in Stream C's test).
 
 ### 3.5 `accounts.currency` FK integrity (G2, G4-adjacent)
@@ -652,12 +646,12 @@ Each task is a committable unit. The dev may stack them into a single PR or land
 - [ ] Implement `watchAll({includeTokens})` by `.map`-ing the DAO stream and filtering `isToken` in-repo.
 - [ ] Implement `getByCode` by delegating to `CurrencyDao.findByCode` + `_toDomain`.
 - [ ] Implement `upsert` with the `decimals` mismatch guard per §3.8.
-- [ ] Commit as `feat(m3-b): CurrencyRepository`. This commit unblocks Stream A (they can start mocking `CurrencyRepository.getByCode` in their transaction tests).
+- [ ] Commit as `feat(m3-b): CurrencyRepository`. This commit unblocks Stream C's seed wiring and freezes the shared currency exception contract early in the merge window.
 
 ### B2. `AccountTypeRepository`
 
 - [ ] Replace the B0 stub with the `AccountTypeRepository` interface + `DriftAccountTypeRepository` implementation per §1.2 and §2.2.
-- [ ] Constructor takes `AccountTypeDao _dao` and `CurrencyRepository _currencies`. Do NOT inject `AccountDao` — use `hasReferencingAccounts` on the account-type DAO (already a `customSelect`).
+- [ ] Constructor stays DB-based per §1.2: `DriftAccountTypeRepository(AppDatabase db, CurrencyRepository currencies)`. Resolve DAOs from `db` inside the concrete class; do NOT widen the public constructor surface to raw DAOs.
 - [ ] Implement `watchAll` with the async map currency-resolution pattern in §2.2.
 - [ ] Implement `getById` by `findById` + `_toDomain`. Remember: `_toDomain` is async because it resolves currency.
 - [ ] Implement `save` (§1.2). Branch on `id == 0` for insert vs replace.
@@ -670,7 +664,7 @@ Each task is a committable unit. The dev may stack them into a single PR or land
 ### B3. `AccountRepository`
 
 - [ ] Replace the 8-line TODO stub (§0.2) with the `AccountRepository` interface + `DriftAccountRepository` implementation per §1.3 and §2.3.
-- [ ] Constructor takes `AccountDao _accountDao`, `AccountTypeDao _accountTypeDao`, `TransactionDao _transactionDao`, `CurrencyRepository _currencies`.
+- [ ] Constructor stays DB-based per §1.3: `DriftAccountRepository(AppDatabase db, CurrencyRepository currencies)`. Resolve `AccountDao`, `AccountTypeDao`, and `TransactionDao` from `db` inside the concrete class.
 - [ ] Implement `watchAll({includeArchived})` + `watchById(id)` with currency resolution.
 - [ ] Implement `getById`.
 - [ ] Implement `save` with **both** FK pre-checks (§3.5, §3.6). Branch on `id == 0` for insert vs replace. Return the id.
@@ -716,18 +710,18 @@ Minimum coverage below. Implementer may add more — none may be removed.
 
 ### 6.1 `test/unit/repositories/currency_repository_test.dart`
 
-| #    | Test                                                                  | Method                 | Assertion                                                                                                   | Rule cite |
-|------|-----------------------------------------------------------------------|------------------------|-------------------------------------------------------------------------------------------------------------|-----------|
-| CR01 | Empty DB → `watchAll` emits `[]`                                      | `watchAll`             | `expect(await stream.first, isEmpty)`                                                                       | §1.1      |
-| CR02 | After `upsert(USD)` → `watchAll` emits `[USD]`                        | `watchAll`, `upsert`   | Stream emits two snapshots in order: `[]` then `[USD]`                                                      | §4        |
-| CR03 | `watchAll(includeTokens: false)` filters `isToken == true`            | `watchAll`             | Seed USD (`isToken: false`) and ETH (`isToken: true`); default call returns `[USD]`, `true` returns `[USD, ETH]` | §1.1      |
-| CR04 | `getByCode('USD')` after upsert → Freezed Currency with decimals == 2 | `getByCode`            | Round-trip equality on every field                                                                          | §2.1      |
-| CR05 | `getByCode('XYZ')` unregistered → null                                | `getByCode`            | `expect(result, isNull)`                                                                                    | §1.1      |
-| CR06 | `upsert(USD)` twice is idempotent                                     | `upsert`               | Second call succeeds; `watchAll` emits `[USD]` both times (no duplicate)                                    | §3.8      |
-| CR07 | `upsert` does NOT mutate `decimals` on an existing code               | `upsert`               | Upsert USD with decimals=2, then upsert USD with decimals=4 → throws `CurrencyDecimalsMismatchException`    | §3.8      |
-| CR08 | `upsert` updates symbol / nameL10nKey on an existing code             | `upsert`               | Upsert USD symbol `$`, then upsert USD symbol `US$` (same decimals) → second `watchAll` snapshot shows `US$` | §3.8      |
-| CR09 | `upsert` preserves `sortOrder` when new value is null                 | `upsert`               | Upsert USD sortOrder=1, then upsert USD sortOrder=null → row keeps sortOrder=1                             | §3.8      |
-| CR10 | Drift data class is never returned                                    | All                    | Assert-on-type: `expect(result, isA<Currency>())` where `Currency` is the Freezed model (structural)       | §1.5.2    |
+| #    | Test                                                                  | Method               | Assertion                                                                                                        | Rule cite |
+|------|-----------------------------------------------------------------------|----------------------|------------------------------------------------------------------------------------------------------------------|-----------|
+| CR01 | Empty DB → `watchAll` emits `[]`                                      | `watchAll`           | `expect(await stream.first, isEmpty)`                                                                            | §1.1      |
+| CR02 | After `upsert(USD)` → `watchAll` emits `[USD]`                        | `watchAll`, `upsert` | Stream emits two snapshots in order: `[]` then `[USD]`                                                           | §4        |
+| CR03 | `watchAll(includeTokens: false)` filters `isToken == true`            | `watchAll`           | Seed USD (`isToken: false`) and ETH (`isToken: true`); default call returns `[USD]`, `true` returns `[USD, ETH]` | §1.1      |
+| CR04 | `getByCode('USD')` after upsert → Freezed Currency with decimals == 2 | `getByCode`          | Round-trip equality on every field                                                                               | §2.1      |
+| CR05 | `getByCode('XYZ')` unregistered → null                                | `getByCode`          | `expect(result, isNull)`                                                                                         | §1.1      |
+| CR06 | `upsert(USD)` twice is idempotent                                     | `upsert`             | Second call succeeds; `watchAll` emits `[USD]` both times (no duplicate)                                         | §3.8      |
+| CR07 | `upsert` does NOT mutate `decimals` on an existing code               | `upsert`             | Upsert USD with decimals=2, then upsert USD with decimals=4 → throws `CurrencyDecimalsMismatchException`         | §3.8      |
+| CR08 | `upsert` updates symbol / nameL10nKey on an existing code             | `upsert`             | Upsert USD symbol `$`, then upsert USD symbol `US$` (same decimals) → second `watchAll` snapshot shows `US$`     | §3.8      |
+| CR09 | `upsert` preserves `sortOrder` when new value is null                 | `upsert`             | Upsert USD sortOrder=1, then upsert USD sortOrder=null → row keeps sortOrder=1                                   | §3.8      |
+| CR10 | Drift data class is never returned                                    | All                  | Assert-on-type: `expect(result, isA<Currency>())` where `Currency` is the Freezed model (structural)             | §1.5.2    |
 
 ### 6.2 `test/unit/repositories/account_type_repository_test.dart`
 
@@ -737,47 +731,47 @@ Seed-specific coverage also includes:
 - `AT17`: `upsertSeeded(accountType.cash)` inserts once and returns the row id.
 - `AT18`: re-running `upsertSeeded(accountType.cash)` updates the same logical row, preserves `l10nKey`, and does not duplicate rows.
 
-| #    | Test                                                                      | Method                | Assertion                                                                                                     | Rule cite |
-|------|---------------------------------------------------------------------------|-----------------------|---------------------------------------------------------------------------------------------------------------|-----------|
-| AT01 | Empty DB → `watchAll` emits `[]`                                          | `watchAll`            | `await stream.first` → `[]`                                                                                   | §1.2      |
-| AT02 | `save(Cash seeded)` → `watchAll` emits `[Cash]`                           | `save`, `watchAll`    | Row round-trip preserves `l10nKey`, `icon`, `color`, `defaultCurrency`                                        | §1.2      |
-| AT03 | `save` with unknown `defaultCurrency.code` → `CurrencyNotFoundException`  | `save`                | Construct an AccountType with a Currency not upserted; expect throw                                           | §3.5-adjacent |
-| AT04 | `save` with `defaultCurrency == null` → inserts row with NULL default     | `save`                | DAO round-trip: `row.defaultCurrency` is null                                                                 | §2.2      |
-| AT05 | `rename(id, 'Wallet')` writes `customName` only; `l10nKey` preserved      | `rename`              | Seed with `l10nKey: 'accountType.cash'`; after `rename`, `findByL10nKey('accountType.cash')` still returns row with `customName: 'Wallet'` | §3.3 G7 |
-| AT06 | Second `rename` does not disturb `l10nKey`                                | `rename`              | Round-trip: two `rename` calls, `l10nKey` stable across both                                                  | §3.4      |
-| AT07 | `rename` on nonexistent id → `AccountTypeNotFoundException`               | `rename`              | Expect throw                                                                                                  | §1.2      |
-| AT08 | `archive(id)` marks archived; `watchAll()` default excludes archived      | `archive`, `watchAll` | Seed, archive, `watchAll` → row absent                                                                        | §1.2      |
-| AT09 | `watchAll(includeArchived: true)` returns archived rows                   | `watchAll`            | Seed, archive, `watchAll(includeArchived: true)` → row present                                                | §1.2      |
-| AT10 | `delete(id)` with no referencing accounts → succeeds                      | `delete`              | Seed custom type with `l10nKey: null`, no accounts → `delete` succeeds, stream emits `[]`                    | §3.2      |
-| AT11 | `delete(id)` with referencing account → `AccountTypeInUseException`       | `delete`              | Seed type + seed account of that type → `delete` throws; row unchanged                                        | §3.2 G6   |
-| AT12 | `delete(id)` with archived referencing account → still throws             | `delete`              | Seed account, archive it, then call `delete(type.id)` → throws (history preserved)                            | §3.2      |
-| AT13 | `isReferenced` matches `delete` predicate                                 | `isReferenced`        | Seed with account → true; delete account → false                                                              | §1.2      |
-| AT14 | `getById(id)` returns `AccountType` with resolved `defaultCurrency`       | `getById`             | Seed type with `defaultCurrency: USD`; `getById` returns a Freezed Currency matching USD                      | §2.2      |
-| AT15 | Reactive emission after insert / update / delete / archive                | `watchAll`            | `emitsInOrder([ [], [row], [updatedRow], [] ])`                                                               | §4        |
-| AT16 | Guardrail G8 — `icon` is `String`, `color` is `int`                        | save / round-trip     | `expect(result.icon, isA<String>())`; `expect(result.color, isA<int>())`                                      | §3.9 G8   |
+| #    | Test                                                                     | Method                | Assertion                                                                                                                                  | Rule cite     |
+|------|--------------------------------------------------------------------------|-----------------------|--------------------------------------------------------------------------------------------------------------------------------------------|---------------|
+| AT01 | Empty DB → `watchAll` emits `[]`                                         | `watchAll`            | `await stream.first` → `[]`                                                                                                                | §1.2          |
+| AT02 | `save(Cash seeded)` → `watchAll` emits `[Cash]`                          | `save`, `watchAll`    | Row round-trip preserves `l10nKey`, `icon`, `color`, `defaultCurrency`                                                                     | §1.2          |
+| AT03 | `save` with unknown `defaultCurrency.code` → `CurrencyNotFoundException` | `save`                | Construct an AccountType with a Currency not upserted; expect throw                                                                        | §3.5-adjacent |
+| AT04 | `save` with `defaultCurrency == null` → inserts row with NULL default    | `save`                | DAO round-trip: `row.defaultCurrency` is null                                                                                              | §2.2          |
+| AT05 | `rename(id, 'Wallet')` writes `customName` only; `l10nKey` preserved     | `rename`              | Seed with `l10nKey: 'accountType.cash'`; after `rename`, `findByL10nKey('accountType.cash')` still returns row with `customName: 'Wallet'` | §3.3 G7       |
+| AT06 | Second `rename` does not disturb `l10nKey`                               | `rename`              | Round-trip: two `rename` calls, `l10nKey` stable across both                                                                               | §3.4          |
+| AT07 | `rename` on nonexistent id → `AccountTypeNotFoundException`              | `rename`              | Expect throw                                                                                                                               | §1.2          |
+| AT08 | `archive(id)` marks archived; `watchAll()` default excludes archived     | `archive`, `watchAll` | Seed, archive, `watchAll` → row absent                                                                                                     | §1.2          |
+| AT09 | `watchAll(includeArchived: true)` returns archived rows                  | `watchAll`            | Seed, archive, `watchAll(includeArchived: true)` → row present                                                                             | §1.2          |
+| AT10 | `delete(id)` with no referencing accounts → succeeds                     | `delete`              | Seed custom type with `l10nKey: null`, no accounts → `delete` succeeds, stream emits `[]`                                                  | §3.2          |
+| AT11 | `delete(id)` with referencing account → `AccountTypeInUseException`      | `delete`              | Seed type + seed account of that type → `delete` throws; row unchanged                                                                     | §3.2 G6       |
+| AT12 | `delete(id)` with archived referencing account → still throws            | `delete`              | Seed account, archive it, then call `delete(type.id)` → throws (history preserved)                                                         | §3.2          |
+| AT13 | `isReferenced` matches `delete` predicate                                | `isReferenced`        | Seed with account → true; delete account → false                                                                                           | §1.2          |
+| AT14 | `getById(id)` returns `AccountType` with resolved `defaultCurrency`      | `getById`             | Seed type with `defaultCurrency: USD`; `getById` returns a Freezed Currency matching USD                                                   | §2.2          |
+| AT15 | Reactive emission after insert / update / delete / archive               | `watchAll`            | `emitsInOrder([ [], [row], [updatedRow], [] ])`                                                                                            | §4            |
+| AT16 | Guardrail G8 — `icon` is `String`, `color` is `int`                      | save / round-trip     | `expect(result.icon, isA<String>())`; `expect(result.color, isA<int>())`                                                                   | §3.9 G8       |
 
 ### 6.3 `test/unit/repositories/account_repository_test.dart`
 
 Preconditions: seed USD + JPY via `CurrencyRepository.upsert`; seed one `accountType.cash` via `AccountTypeRepository.upsertSeeded`.
 
-| #    | Test                                                                      | Method                        | Assertion                                                                                                     | Rule cite |
-|------|---------------------------------------------------------------------------|-------------------------------|---------------------------------------------------------------------------------------------------------------|-----------|
-| AC01 | Empty DB → `watchAll` emits `[]`                                          | `watchAll`                    | `await stream.first` → `[]`                                                                                   | §1.3      |
-| AC02 | `save` happy path                                                         | `save`, `watchAll`            | Round-trip all fields: `name`, `accountTypeId`, `currency`, `openingBalanceMinorUnits`, `icon`, `color`        | §1.3      |
-| AC03 | `save` with unknown currency → `CurrencyNotFoundException`                | `save`                        | Construct Account with `currency: Currency(code: 'XYZ', decimals: 2)` (never upserted) → expect throw         | §3.5 G2   |
-| AC04 | `save` with unknown accountTypeId → `AccountTypeNotFoundException`        | `save`                        | `accountTypeId: 999` (nonexistent) → expect throw                                                             | §3.6 G2   |
-| AC05 | `save` round-trips `openingBalanceMinorUnits: -12345`                     | `save`                        | `await getById(id)` returns `-12345` exactly                                                                  | §3.7 G4   |
-| AC06 | `save` round-trips `openingBalanceMinorUnits: 1500000000000000000` (ETH)  | `save`                        | 18-digit integer preserved as `int` (Dart int is 64-bit on VM, safe up to 2^63-1 ≈ 9.2e18)                    | §3.7 G4   |
-| AC07 | `archive(id)` hides row from default `watchAll`                           | `archive`                     | Seed, archive, `watchAll()` default → row absent; `watchAll(includeArchived: true)` → present                 | §1.3      |
-| AC08 | `watchById(id)` emits null after delete                                   | `watchById`, `delete`         | Seed, `watchById` emits the row, `delete` → stream emits null                                                  | §4        |
-| AC09 | `delete(id)` with no referencing transactions → succeeds                  | `delete`                      | Seed, `delete` → stream empty                                                                                  | §3.1      |
-| AC10 | `delete(id)` with a referencing transaction → `AccountInUseException`     | `delete`                      | Seed a transaction with `account_id = id` → `delete` throws; row still present                                | §3.1 G6   |
-| AC11 | `isReferenced(id)` true when transaction exists, false otherwise          | `isReferenced`                | Seed / assert both branches                                                                                    | §1.3      |
-| AC12 | `watchAll` excludes archived by default; `sortOrder` respected            | `watchAll`                    | Seed two accounts with `sortOrder: 1` / `sortOrder: 0`; archive one → remaining ordered                       | §2.3      |
-| AC13 | `watchAll({includeArchived: true})` includes archived                     | `watchAll`                    | Seed one archived + one active → both returned                                                                 | §1.3      |
-| AC14 | `getById` resolves `currency` to Freezed `Currency`                       | `getById`                     | Returns Freezed Currency, not a string code                                                                    | §2.3      |
-| AC15 | Reactive emission after insert / update / archive / delete                | `watchAll`                    | `emitsInOrder([ [], [a], [updated], [] ])`                                                                     | §4        |
-| AC16 | Guardrail G8 — `icon` is `String?`, `color` is `int?`                      | save / round-trip             | Accept nulls; `isA<String>()` / `isA<int>()` when non-null                                                    | §3.9 G8   |
+| #    | Test                                                                     | Method                | Assertion                                                                                               | Rule cite |
+|------|--------------------------------------------------------------------------|-----------------------|---------------------------------------------------------------------------------------------------------|-----------|
+| AC01 | Empty DB → `watchAll` emits `[]`                                         | `watchAll`            | `await stream.first` → `[]`                                                                             | §1.3      |
+| AC02 | `save` happy path                                                        | `save`, `watchAll`    | Round-trip all fields: `name`, `accountTypeId`, `currency`, `openingBalanceMinorUnits`, `icon`, `color` | §1.3      |
+| AC03 | `save` with unknown currency → `CurrencyNotFoundException`               | `save`                | Construct Account with `currency: Currency(code: 'XYZ', decimals: 2)` (never upserted) → expect throw   | §3.5 G2   |
+| AC04 | `save` with unknown accountTypeId → `AccountTypeNotFoundException`       | `save`                | `accountTypeId: 999` (nonexistent) → expect throw                                                       | §3.6 G2   |
+| AC05 | `save` round-trips `openingBalanceMinorUnits: -12345`                    | `save`                | `await getById(id)` returns `-12345` exactly                                                            | §3.7 G4   |
+| AC06 | `save` round-trips `openingBalanceMinorUnits: 1500000000000000000` (ETH) | `save`                | 18-digit integer preserved as `int` (Dart int is 64-bit on VM, safe up to 2^63-1 ≈ 9.2e18)              | §3.7 G4   |
+| AC07 | `archive(id)` hides row from default `watchAll`                          | `archive`             | Seed, archive, `watchAll()` default → row absent; `watchAll(includeArchived: true)` → present           | §1.3      |
+| AC08 | `watchById(id)` emits null after delete                                  | `watchById`, `delete` | Seed, `watchById` emits the row, `delete` → stream emits null                                           | §4        |
+| AC09 | `delete(id)` with no referencing transactions → succeeds                 | `delete`              | Seed, `delete` → stream empty                                                                           | §3.1      |
+| AC10 | `delete(id)` with a referencing transaction → `AccountInUseException`    | `delete`              | Seed a transaction with `account_id = id` → `delete` throws; row still present                          | §3.1 G6   |
+| AC11 | `isReferenced(id)` true when transaction exists, false otherwise         | `isReferenced`        | Seed / assert both branches                                                                             | §1.3      |
+| AC12 | `watchAll` excludes archived by default; `sortOrder` respected           | `watchAll`            | Seed two accounts with `sortOrder: 1` / `sortOrder: 0`; archive one → remaining ordered                 | §2.3      |
+| AC13 | `watchAll({includeArchived: true})` includes archived                    | `watchAll`            | Seed one archived + one active → both returned                                                          | §1.3      |
+| AC14 | `getById` resolves `currency` to Freezed `Currency`                      | `getById`             | Returns Freezed Currency, not a string code                                                             | §2.3      |
+| AC15 | Reactive emission after insert / update / archive / delete               | `watchAll`            | `emitsInOrder([ [], [a], [updated], [] ])`                                                              | §4        |
+| AC16 | Guardrail G8 — `icon` is `String?`, `color` is `int?`                    | save / round-trip     | Accept nulls; `isA<String>()` / `isA<int>()` when non-null                                              | §3.9 G8   |
 
 ### 6.4 Shared test harness (reference — owned by Stream C)
 
@@ -799,18 +793,18 @@ Plus helpers for seeding the minimal shared repository fixtures. Stream B consum
 
 ## 7. Integration points with sibling streams
 
-| Seam                            | Sibling stream | Direction                         | What Stream B exposes                                                                               | What Stream B consumes                                                                         |
-|---------------------------------|----------------|-----------------------------------|-----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
-| Shared exception contract         | A              | B → A                             | `repository_exceptions.dart` (`RepositoryException`, `CurrencyNotFoundException`, etc.)             | —                                                                                              |
-| Account referenced-by-txn probe  | A              | B → A (via DAO contract)          | Stream B **calls** `TransactionDao.countByAccount` directly from `AccountRepository`                | Stream B **requires** `TransactionDao.countByAccount` to exist (M1 §3.2); Stream A owns the DAO |
-| Shared error types               | A              | Shared file, written by B         | Stream B creates `lib/data/repositories/repository_exceptions.dart` with the base + 5 subclasses from §1.4 | Stream A imports the shared base / reused leaves and keeps category-only leaves local |
-| Seed currencies                 | C              | B → C                             | `CurrencyRepository.upsert` — Stream C calls it 7× for MVP fiats                                    | —                                                                                              |
-| Seed account types              | C              | B → C                             | `AccountTypeRepository.upsertSeeded` — Stream C calls it for `accountType.cash` + `accountType.investment` | Stream B's seed seam validates the resolved `default_currency`; Stream C orders currencies first |
-| Seed Cash account               | C              | B → C                             | `AccountRepository.save` — Stream C calls it once with `accountTypeId = <cash.id>` and the resolved default currency | Stream B's `save` requires both upstream seeds to have landed — Stream C's ordering again |
-| Shared test DB harness          | C              | C → B (Stream B consumes)         | —                                                                                                   | `test/unit/repositories/_harness/test_app_database.dart` with `newTestAppDatabase()` + `TestRepoBundle` |
-| Default-currency resolution     | C              | C owns the chain                  | `AccountRepository.save` validates whatever currency the caller supplies; does NOT read user_prefs | Stream C's seed + the M5 Accounts controller own the `account_type.default_currency → user_pref → 'USD'` walk |
+| Seam                            | Sibling stream | Direction                 | What Stream B exposes                                                                                                | What Stream B consumes                                                                                        |
+|---------------------------------|----------------|---------------------------|----------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| Shared exception contract       | A              | B → A                     | `repository_exceptions.dart` (`RepositoryException`, `CurrencyNotFoundException`, etc.)                              | —                                                                                                             |
+| Account referenced-by-txn probe | A              | B → A (via DAO contract)  | Stream B **calls** `TransactionDao.countByAccount` directly from `AccountRepository`                                 | Stream B **requires** `TransactionDao.countByAccount` to exist (M1 §3.2); Stream A owns the DAO               |
+| Shared error types              | A              | Shared file, written by B | Stream B creates `lib/data/repositories/repository_exceptions.dart` with the base + 5 subclasses from §1.4           | Stream A imports the shared base / reused leaves and keeps category-only leaves local                         |
+| Seed currencies                 | C              | B → C                     | `CurrencyRepository.upsert` — Stream C calls it 7× for MVP fiats                                                     | —                                                                                                             |
+| Seed account types              | C              | B → C                     | `AccountTypeRepository.upsertSeeded` — Stream C calls it for `accountType.cash` + `accountType.investment`           | Stream B's seed seam validates the resolved `default_currency`; Stream C orders currencies first              |
+| Seed Cash account               | C              | B → C                     | `AccountRepository.save` — Stream C calls it once with `accountTypeId = <cash.id>` and the resolved default currency | Stream B's `save` requires both upstream seeds to have landed — Stream C's ordering again                     |
+| Shared test DB harness          | C              | C → B (Stream B consumes) | —                                                                                                                    | `test/unit/repositories/_harness/test_app_database.dart` with `newTestAppDatabase()` + `TestRepoBundle`       |
+| Default-currency resolution     | C              | C owns the chain          | `AccountRepository.save` validates whatever currency the caller supplies; does NOT read user_prefs                   | Stream C's seed + the M5 Accounts controller own the `account_type.default_currency → user_pref → 'USD'` walk |
 
-**Merge-window rule:** Streams A / B / C merge in the same week (implementation plan §5, "Streams overlap the same Drift transaction API — merge within a tight window"). Land B1 (CurrencyRepository) first within the window; A and C can both start the moment B1 is on main.
+**Merge-window rule:** Streams A / B / C merge in the same week (implementation plan §5, "Streams overlap the same Drift transaction API — merge within a tight window"). The shared seams land first (`repository_exceptions.dart`, then `CurrencyRepository`), after which Stream C can start seed integration and Stream A can proceed without waiting on any further Stream B runtime repository surface.
 
 **Field-name contract:** already frozen in `docs/plans/m1-data-foundations/stream-c-field-name-contract.md`. Stream B does not rename any field. Any pressure to rename (e.g. `openingBalanceMinorUnits` → `openingBalance`) is rejected; a rename would invalidate every M5 widget test.
 
@@ -820,15 +814,15 @@ Plus helpers for seeding the minimal shared repository fixtures. Stream B consum
 
 Cross-referenced to `docs/plans/implementation-plan.md` §6.
 
-| # | Rule                                                                             | Stream B enforcement                                                                                                                                             | Proven by                                                                        |
-|---|----------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
-| G1 | Only repositories write to the DB / secure storage                              | Stream B's three repos are the only writers to `currencies`, `account_types`, `accounts`. `import_lint` blocks any non-repo from importing `data/database/daos`. | `flutter analyze` in task G                                                      |
-| G2 | Drift types never cross the repository boundary                                 | `AccountRow`, `AccountTypeRow`, Drift `Currency`, every `…Companion` stay in `lib/data/repositories/*.dart`; never exported. Prefix import for Drift `Currency`. | Inspection + `import_lint` + `grep` during task G                               |
-| G4 | Money is `int` minor units end-to-end                                            | `Account.openingBalanceMinorUnits` stays `int`. No `double` in any signature. FK / amount columns store raw minor units.                                         | Test AC05 / AC06 + pre-merge grep in task G                                     |
-| G6 | Archive-instead-of-delete for referenced rows                                    | `AccountRepository.delete` + `AccountTypeRepository.delete` each throw a typed exception when referenced; both branches tested.                                  | Tests AC10 / AT11 / AT12                                                        |
-| G7 | Seeded rows identified by `l10n_key`; renames write `custom_name` only           | `AccountTypeRepository.rename` never mutates `l10nKey`. Seed (Stream C) identifies rows by `l10nKey`.                                                             | Tests AT05 / AT06                                                               |
-| G8 | Icons / colors are string keys + palette indices, never raw `IconData` / ARGB    | `icon` is `String` / `String?`, `color` is `int` / `int?` throughout the stream. No Flutter `Color` / `IconData` imported in `lib/data/repositories/*.dart`.     | Tests AT16 / AC16 + task-G grep                                                 |
-| G12 | Tests organized by layer, not by feature                                        | All tests land under `test/unit/repositories/` with one file per repo.                                                                                           | File layout at commit time                                                      |
+| #   | Rule                                                                          | Stream B enforcement                                                                                                                                             | Proven by                                         |
+|-----|-------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------|
+| G1  | Only repositories write to the DB / secure storage                            | Stream B's three repos are the only writers to `currencies`, `account_types`, `accounts`. `import_lint` blocks any non-repo from importing `data/database/daos`. | `flutter analyze` in task G                       |
+| G2  | Drift types never cross the repository boundary                               | `AccountRow`, `AccountTypeRow`, Drift `Currency`, every `…Companion` stay in `lib/data/repositories/*.dart`; never exported. Prefix import for Drift `Currency`. | Inspection + `import_lint` + `grep` during task G |
+| G4  | Money is `int` minor units end-to-end                                         | `Account.openingBalanceMinorUnits` stays `int`. No `double` in any signature. FK / amount columns store raw minor units.                                         | Test AC05 / AC06 + pre-merge grep in task G       |
+| G6  | Archive-instead-of-delete for referenced rows                                 | `AccountRepository.delete` + `AccountTypeRepository.delete` each throw a typed exception when referenced; both branches tested.                                  | Tests AC10 / AT11 / AT12                          |
+| G7  | Seeded rows identified by `l10n_key`; renames write `custom_name` only        | `AccountTypeRepository.rename` never mutates `l10nKey`. Seed (Stream C) identifies rows by `l10nKey`.                                                            | Tests AT05 / AT06                                 |
+| G8  | Icons / colors are string keys + palette indices, never raw `IconData` / ARGB | `icon` is `String` / `String?`, `color` is `int` / `int?` throughout the stream. No Flutter `Color` / `IconData` imported in `lib/data/repositories/*.dart`.     | Tests AT16 / AC16 + task-G grep                   |
+| G12 | Tests organized by layer, not by feature                                      | All tests land under `test/unit/repositories/` with one file per repo.                                                                                           | File layout at commit time                        |
 
 Stream B does **not** enforce G3, G5, G9, G10, G11 — those are controller / bootstrap / router / layout concerns.
 
@@ -854,6 +848,7 @@ Direct mapping to `docs/plans/implementation-plan.md` §5 M3 exit criteria, scop
 
 - [ ] `test/unit/repositories/currency_repository_test.dart` exists and passes with every CR01–CR10 case from §6.1.
 - [ ] `test/unit/repositories/account_type_repository_test.dart` exists and passes with every AT01–AT16 case from §6.2.
+- [ ] `test/unit/repositories/account_type_repository_test.dart` includes the seeded-row idempotency cases `AT17` / `AT18` for `upsertSeeded`.
 - [ ] `test/unit/repositories/account_repository_test.dart` exists and passes with every AC01–AC16 case from §6.3.
 - [ ] Happy path covered for each of three repos (CR02, AT02, AC02).
 - [ ] Archive-instead-of-delete covered (AC10, AT11).

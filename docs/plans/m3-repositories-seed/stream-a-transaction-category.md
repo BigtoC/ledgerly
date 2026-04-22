@@ -64,18 +64,18 @@ At M0 scaffold time these two files were created as TODO-only stubs. Their full 
 
 **Related Drift surface this stream queries (already merged in M1 — not modified here):**
 
-| File | Symbols this stream uses | Source of truth |
-|------|---------------------------|-----------------|
-| `lib/data/database/app_database.dart` | `AppDatabase` (constructor takes `QueryExecutor`; `beforeOpen` enables `foreign_keys = ON`) | `stream-a-drift-schema.md` §4 |
-| `lib/data/database/tables/transactions_table.dart` | `Transactions`, `TransactionRow`, `TransactionsCompanion` | `stream-a-drift-schema.md` §2.2 |
-| `lib/data/database/tables/categories_table.dart` | `Categories`, `CategoryRow`, `CategoriesCompanion` | `stream-a-drift-schema.md` §2.3 |
-| `lib/data/database/daos/transaction_dao.dart` | `TransactionDao.{watchAll, watchByDateRange, watchByAccount, watchById, findById, insert, updateRow, deleteById, countByCategory, countByAccount}` | `stream-a-drift-schema.md` §3.2 |
-| `lib/data/database/daos/category_dao.dart` | `CategoryDao.{watchAll, watchByType, findById, findByL10nKey, insert, updateRow, deleteById, archiveById}` | `stream-a-drift-schema.md` §3.3 |
-| `lib/data/models/transaction.dart` | `Transaction` (Freezed) | `stream-b-freezed-models.md` |
-| `lib/data/models/category.dart` | `Category`, `CategoryType.{expense, income}` | `stream-b-freezed-models.md` |
-| `lib/data/models/currency.dart` | `Currency` (needed only because `Transaction.currency` holds a `Currency`) | `stream-b-freezed-models.md` |
+| File                                               | Symbols this stream uses                                                                                                                           | Source of truth                 |
+|----------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------|
+| `lib/data/database/app_database.dart`              | `AppDatabase` (constructor takes `QueryExecutor`; `beforeOpen` enables `foreign_keys = ON`)                                                        | `stream-a-drift-schema.md` §4   |
+| `lib/data/database/tables/transactions_table.dart` | `Transactions`, `TransactionRow`, `TransactionsCompanion`                                                                                          | `stream-a-drift-schema.md` §2.2 |
+| `lib/data/database/tables/categories_table.dart`   | `Categories`, `CategoryRow`, `CategoriesCompanion`                                                                                                 | `stream-a-drift-schema.md` §2.3 |
+| `lib/data/database/daos/transaction_dao.dart`      | `TransactionDao.{watchAll, watchByDateRange, watchByAccount, watchById, findById, insert, updateRow, deleteById, countByCategory, countByAccount}` | `stream-a-drift-schema.md` §3.2 |
+| `lib/data/database/daos/category_dao.dart`         | `CategoryDao.{watchAll, watchByType, findById, findByL10nKey, insert, updateRow, deleteById, archiveById}`                                         | `stream-a-drift-schema.md` §3.3 |
+| `lib/data/models/transaction.dart`                 | `Transaction` (Freezed)                                                                                                                            | `stream-b-freezed-models.md`    |
+| `lib/data/models/category.dart`                    | `Category`, `CategoryType.{expense, income}`                                                                                                       | `stream-b-freezed-models.md`    |
+| `lib/data/models/currency.dart`                    | `Currency` (needed only because `Transaction.currency` holds a `Currency`)                                                                         | `stream-b-freezed-models.md`    |
 
-Everything Stream A needs from Drift is already present. This stream adds **nothing** to `lib/data/database/`.
+Everything Stream A needs from Drift is already present. This stream adds **no schema or table changes** to `lib/data/database/`; the only database-layer change is the one leaf DAO addition explicitly called out later: `TransactionDao.watchByCategory`.
 
 ---
 
@@ -131,7 +131,7 @@ abstract class TransactionRepository {
   /// controllers that need a snapshot for form prefill.
   Future<Transaction?> getById(int id);
 
-  /// Insert-or-update. Treats `id == null` as insert, `id != null` as
+  /// Insert-or-update. Treats `id == 0` as insert, `id != 0` as
   /// update by PK.
   ///
   /// On **insert**: sets `createdAt = updatedAt = clock()`. Returns the
@@ -541,7 +541,7 @@ Future<Category> rename(int id, String? customName) async {
 
 2. **`CategoryRepository.save`** rejects any update that changes `l10nKey` (§3.1). Callers who need to set or clear an `l10nKey` must do so via the seed module (Stream C), not via `save`.
 
-Stream C's seed is contractually forbidden from rewriting `l10n_key` once the row exists — idempotency checks on `findByL10nKey` and skip on hit. Stream A's contribution is making `save` refuse the mutation so a buggy Stream C iteration cannot silently renumber rows.
+Stream C's seed is contractually forbidden from rewriting `l10n_key` once the row exists. It must go through `upsertSeeded(...)`, which keeps identity fixed by `l10nKey` while updating the seed-owned fields. Stream A's contribution is making `save` refuse arbitrary `l10nKey` mutation so a buggy caller cannot silently renumber rows.
 
 Test: C-rename-01, C-rename-02, C-rename-03, C-l10nkey-lock-01 (§6).
 
@@ -641,7 +641,7 @@ All tasks land on `feature/M3-Stream-A-repositories` (or the agent's equivalent)
 - [ ] **Task A3.6 — `delete`.** Write `T-delete-01/02` (happy + missing-id), implement.
   - Commit: `feat(data): TransactionRepository.delete`.
 
-- [ ] **Task A3.7 — `duplicate`.** Write `T-duplicate-01/02`, implement in terms of `findById` + `save(insert)`. Confirm new `id`, new `createdAt`/`updatedAt`, all other fields copied.
+- [ ] **Task A3.7 — `duplicate`.** Write `T-duplicate-01/02/03`, implement in terms of `findById` + `save(insert)`. Confirm new `id`, new `createdAt`/`updatedAt`, all other fields copied, and the missing-source path throws `RepositoryException`.
   - Commit: `feat(data): TransactionRepository.duplicate (quick-repeat flow)`.
 
 ### Phase A4. `CategoryRepository` — TDD by rule
@@ -649,7 +649,7 @@ All tasks land on `feature/M3-Stream-A-repositories` (or the agent's equivalent)
 - [ ] **Task A4.1 — Happy-path CRUD + seed seam + mapping.** Write `C-happy-01`, `C-happy-02`, `C-seed-01`, and `C-seed-02`; implement `_toDomain`/`_toCompanion`, `save` insert path, `getById`, `getByL10nKey`, and `upsertSeeded`.
   - Commit: `feat(data): CategoryRepository insert, lookups, seed seam, and Drift mapping`.
 
-- [ ] **Task A4.2 — `watchAll` with type and archive filters.** Write `C-stream-01`, implement the four-way switch in §4.3.
+- [ ] **Task A4.2 — `watchAll` with type and archive filters.** Write `C-stream-01/02/03/04`, implement the four-way switch in §4.3.
   - Commit: `feat(data): CategoryRepository.watchAll (type, includeArchived)`.
 
 - [ ] **Task A4.3 — Type-lock update path (G5, mutable branch).** Write `C-type-lock-01` — no referencing transaction yet, flip type, expect success.
@@ -685,7 +685,7 @@ All tasks land on `feature/M3-Stream-A-repositories` (or the agent's equivalent)
   ```
   grep -rnE '\b(TransactionRow|CategoryRow|TransactionsCompanion|CategoriesCompanion|AppDatabase)\b' lib/data/repositories/*.dart
   ```
-  Every hit must be inside a private helper or an import. No public signature mentions any of these. (Expected hits: imports + `_toDomain` / `_toCompanion` bodies + the `_db` field.)
+  Every hit must be inside an import, a private helper, a private field, or the concrete `Drift*Repository` constructor/private state. Public repository interfaces must not mention any of these Drift/database types. (Expected hits: imports + `_toDomain` / `_toCompanion` bodies + the `_db` field + concrete constructor wiring.)
 
 - [ ] **Task A5.3 — Full test run.** `flutter test test/unit/repositories/transaction_repository_test.dart test/unit/repositories/category_repository_test.dart -r expanded`. All tests green.
 
@@ -701,10 +701,10 @@ All tasks land on `feature/M3-Stream-A-repositories` (or the agent's equivalent)
 
 ### 6.1 File layout
 
-| Path | Responsibility |
-|------|-----------------|
-| `test/unit/repositories/transaction_repository_test.dart` (new) | Every row in §6.3 |
-| `test/unit/repositories/category_repository_test.dart` (new) | Every row in §6.4 |
+| Path                                                                                       | Responsibility                                    |
+|--------------------------------------------------------------------------------------------|---------------------------------------------------|
+| `test/unit/repositories/transaction_repository_test.dart` (new)                            | Every row in §6.3                                 |
+| `test/unit/repositories/category_repository_test.dart` (new)                               | Every row in §6.4                                 |
 | `test/unit/repositories/_harness/test_app_database.dart` (Stream C owns; Stream A imports) | In-memory `AppDatabase` factory + seeded fixtures |
 
 Existing files — **do not touch**:
@@ -763,23 +763,23 @@ Stream clock freezing uses the constructor parameter on `TransactionRepository`.
 
 Test IDs prefixed `T-*`. Every row is a single `test(...)` invocation inside a named `group(...)`.
 
-| ID                 | Group                  | Scenario                                                                                  | Assertion                                                                                           | PRD / Guardrail    |
-|--------------------|------------------------|-------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|--------------------|
-| T-happy-01         | save / getById         | Insert a valid USD expense                                                                | `watchAll` yields a list of length 1; `getById(inserted.id)` returns a `Transaction` with same data | 280-299            |
-| T-happy-02         | save / getById         | Round-trip `memo == null`                                                                 | Inserted row has `memo == null`, not empty string                                                   | 297                |
-| T-stream-01        | watchAll               | Subscribe, then insert                                                                    | Next emission contains the new row; order is `date DESC, id DESC`                                   | 100-102, 938-943   |
-| T-stream-02        | watchForAccount        | Two accounts, insert into each                                                            | `watchForAccount(accountId)` only emits transactions for its account                                | 100-102            |
-| T-stream-03        | watchForCategory       | Two categories, insert into each                                                          | `watchForCategory(categoryId)` only emits transactions for its category                             | 100-102            |
-| T-currency-fk-01   | save → FK              | Save `Transaction` whose `currency.code == 'XXX'` (not seeded)                            | Throws `CurrencyNotFoundException('XXX')`; no row inserted (`watchAll` still length 0)               | 286, G2            |
-| T-timestamps-01    | save → timestamps      | Insert at `frozenNow`                                                                     | Returned `createdAt == frozenNow && updatedAt == frozenNow`                                         | 291-293            |
-| T-timestamps-02    | save → timestamps      | Update at `frozenNow + 1h`                                                                | `updatedAt == frozenNow + 1h`; `createdAt` unchanged from insert                                    | 291-293            |
-| T-timestamps-03    | save → timestamps      | Update with a mangled `Transaction.createdAt` (e.g. epoch 0)                              | Stored `createdAt` is preserved (matches the original insert), not the incoming mangled value       | 291-293 (defence)  |
-| T-delete-01        | delete                 | Delete an inserted row                                                                    | Returns `true`; `getById` returns `null`; `watchAll` emits empty list                               | 100-102            |
-| T-delete-02        | delete                 | Delete a non-existent id                                                                  | Returns `false`; no exception                                                                       | 100-102            |
-| T-duplicate-01     | duplicate              | Duplicate an existing row                                                                 | New row has different `id`, same `categoryId/accountId/currency/amountMinorUnits/memo/date`         | 716-722            |
-| T-duplicate-02     | duplicate              | Duplicate sets new timestamps                                                             | `createdAt == updatedAt == frozenNow` on the duplicate, not the source's timestamps                 | 716-722, 291-293   |
-| T-duplicate-03     | duplicate              | Duplicate of a missing id                                                                 | Throws `RepositoryException`                                                                        | 828-837            |
-| T-amount-int-01    | save → money           | Insert `amountMinorUnits = 1500000000000000000` (ETH-scale)                               | Round-trips exactly; no precision loss                                                              | 253-257, G4        |
+| ID               | Group             | Scenario                                                       | Assertion                                                                                           | PRD / Guardrail   |
+|------------------|-------------------|----------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|-------------------|
+| T-happy-01       | save / getById    | Insert a valid USD expense                                     | `watchAll` yields a list of length 1; `getById(inserted.id)` returns a `Transaction` with same data | 280-299           |
+| T-happy-02       | save / getById    | Round-trip `memo == null`                                      | Inserted row has `memo == null`, not empty string                                                   | 297               |
+| T-stream-01      | watchAll          | Subscribe, then insert                                         | Next emission contains the new row; order is `date DESC, id DESC`                                   | 100-102, 938-943  |
+| T-stream-02      | watchForAccount   | Two accounts, insert into each                                 | `watchForAccount(accountId)` only emits transactions for its account                                | 100-102           |
+| T-stream-03      | watchForCategory  | Two categories, insert into each                               | `watchForCategory(categoryId)` only emits transactions for its category                             | 100-102           |
+| T-currency-fk-01 | save → FK         | Save `Transaction` whose `currency.code == 'XXX'` (not seeded) | Throws `CurrencyNotFoundException('XXX')`; no row inserted (`watchAll` still length 0)              | 286, G2           |
+| T-timestamps-01  | save → timestamps | Insert at `frozenNow`                                          | Returned `createdAt == frozenNow && updatedAt == frozenNow`                                         | 291-293           |
+| T-timestamps-02  | save → timestamps | Update at `frozenNow + 1h`                                     | `updatedAt == frozenNow + 1h`; `createdAt` unchanged from insert                                    | 291-293           |
+| T-timestamps-03  | save → timestamps | Update with a mangled `Transaction.createdAt` (e.g. epoch 0)   | Stored `createdAt` is preserved (matches the original insert), not the incoming mangled value       | 291-293 (defence) |
+| T-delete-01      | delete            | Delete an inserted row                                         | Returns `true`; `getById` returns `null`; `watchAll` emits empty list                               | 100-102           |
+| T-delete-02      | delete            | Delete a non-existent id                                       | Returns `false`; no exception                                                                       | 100-102           |
+| T-duplicate-01   | duplicate         | Duplicate an existing row                                      | New row has different `id`, same `categoryId/accountId/currency/amountMinorUnits/memo/date`         | 716-722           |
+| T-duplicate-02   | duplicate         | Duplicate sets new timestamps                                  | `createdAt == updatedAt == frozenNow` on the duplicate, not the source's timestamps                 | 716-722, 291-293  |
+| T-duplicate-03   | duplicate         | Duplicate of a missing id                                      | Throws `RepositoryException`                                                                        | 828-837           |
+| T-amount-int-01  | save → money      | Insert `amountMinorUnits = 1500000000000000000` (ETH-scale)    | Round-trips exactly; no precision loss                                                              | 253-257, G4       |
 
 **Total:** 15 tests.
 
@@ -787,28 +787,28 @@ Test IDs prefixed `T-*`. Every row is a single `test(...)` invocation inside a n
 
 Test IDs prefixed `C-*`.
 
-| ID                 | Group                    | Scenario                                                                                   | Assertion                                                                         | PRD / Guardrail   |
-|--------------------|--------------------------|--------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|-------------------|
-| C-happy-01         | save / getById           | Insert a custom expense category                                                           | Returned `Category` has new `id != 0`; `getById` round-trips                      | 301-320           |
-| C-happy-02         | getByL10nKey             | Lookup seeded `category.food`                                                              | Returns non-null with matching `l10nKey`; lookup for `'not.a.key'` returns null   | 315 + idempotency |
-| C-seed-01          | upsertSeeded             | Seed `category.food` into an empty DB                                                      | Inserts once, returns row with matching `l10nKey`, `type`, `icon`, `color`        | 315, G7           |
-| C-seed-02          | upsertSeeded             | Re-run seed for existing `category.food`                                                   | Returns same logical row, does not create duplicate `l10n_key`                    | 315, G7           |
-| C-stream-01        | watchAll                 | Default watch (no type, no archived)                                                       | Emits the two seeded categories, sorted as specified                              | 100-102           |
-| C-stream-02        | watchAll / type filter   | `watchAll(type: CategoryType.expense)`                                                     | Emits only expense rows                                                           | 100-102           |
-| C-stream-03        | watchAll / archive flag  | Archive a category, watch with `includeArchived: false` then `true`                        | First emission excludes archived; second includes                                 | 315-316           |
-| C-stream-04        | watchAll / both filters  | `(type: income, includeArchived: true)` after archiving the seeded income                  | Emits the archived income row (filtered-in-dart branch of §4.3)                   | 315-316           |
-| C-type-lock-01     | save / type lock         | Unreferenced category — flip `type` and save                                               | Succeeds; new type persisted                                                      | 293-294, G5       |
-| C-type-lock-02     | save / type lock         | Insert a transaction referencing the category; then save with flipped `type`               | Throws `CategoryTypeLockedException`; stored row's `type` unchanged               | 293-294, G5       |
-| C-archive-01       | archive                  | Archive a seeded category                                                                  | `isArchived == true`; default `watchAll` omits it; `includeArchived: true` includes | 315-316, G6     |
-| C-archive-02       | archive                  | Archive an already-archived row                                                            | Idempotent — returns same row, no exception                                       | 315-316           |
-| C-delete-01        | delete                   | Delete a custom category that has **no** referencing transactions                          | Returns `true`; `getById` returns `null`                                          | 315-316, G6       |
-| C-delete-02        | delete                   | Delete a category that **has** one referencing transaction                                 | Throws `CategoryInUseException`; row still present                                | 315-316, G6       |
-| C-rename-01        | rename                   | Rename seeded category to `"Meals"`                                                        | `customName == "Meals"`; `l10nKey == "category.food"` unchanged                   | 314, 494, G7      |
-| C-rename-02        | rename                   | Clear the rename by passing `null`                                                         | `customName == null`; `l10nKey` unchanged                                         | 314, G7           |
-| C-rename-03        | rename                   | Rename with `"   "` (whitespace) → treated as null                                         | `customName == null`                                                              | 314, G7           |
-| C-l10nkey-lock-01  | save / l10nKey lock      | Load seeded `category.food`, mutate `l10nKey` to `'category.different'`, `save`            | Throws `RepositoryException`; stored `l10nKey` unchanged                          | 314, G7 (defence) |
-| C-isref-01         | isReferenced             | Unused category                                                                            | Returns `false`                                                                   | 315-316           |
-| C-isref-02         | isReferenced             | Category with one referencing transaction                                                  | Returns `true`                                                                    | 315-316           |
+| ID                | Group                   | Scenario                                                                        | Assertion                                                                           | PRD / Guardrail   |
+|-------------------|-------------------------|---------------------------------------------------------------------------------|-------------------------------------------------------------------------------------|-------------------|
+| C-happy-01        | save / getById          | Insert a custom expense category                                                | Returned `Category` has new `id != 0`; `getById` round-trips                        | 301-320           |
+| C-happy-02        | getByL10nKey            | Lookup seeded `category.food`                                                   | Returns non-null with matching `l10nKey`; lookup for `'not.a.key'` returns null     | 315 + idempotency |
+| C-seed-01         | upsertSeeded            | Seed `category.food` into an empty DB                                           | Inserts once, returns row with matching `l10nKey`, `type`, `icon`, `color`          | 315, G7           |
+| C-seed-02         | upsertSeeded            | Re-run seed for existing `category.food`                                        | Returns same logical row, does not create duplicate `l10n_key`                      | 315, G7           |
+| C-stream-01       | watchAll                | Default watch (no type, no archived)                                            | Emits the two seeded categories, sorted as specified                                | 100-102           |
+| C-stream-02       | watchAll / type filter  | `watchAll(type: CategoryType.expense)`                                          | Emits only expense rows                                                             | 100-102           |
+| C-stream-03       | watchAll / archive flag | Archive a category, watch with `includeArchived: false` then `true`             | First emission excludes archived; second includes                                   | 315-316           |
+| C-stream-04       | watchAll / both filters | `(type: income, includeArchived: true)` after archiving the seeded income       | Emits the archived income row (filtered-in-dart branch of §4.3)                     | 315-316           |
+| C-type-lock-01    | save / type lock        | Unreferenced category — flip `type` and save                                    | Succeeds; new type persisted                                                        | 293-294, G5       |
+| C-type-lock-02    | save / type lock        | Insert a transaction referencing the category; then save with flipped `type`    | Throws `CategoryTypeLockedException`; stored row's `type` unchanged                 | 293-294, G5       |
+| C-archive-01      | archive                 | Archive a seeded category                                                       | `isArchived == true`; default `watchAll` omits it; `includeArchived: true` includes | 315-316, G6       |
+| C-archive-02      | archive                 | Archive an already-archived row                                                 | Idempotent — returns same row, no exception                                         | 315-316           |
+| C-delete-01       | delete                  | Delete a custom category that has **no** referencing transactions               | Returns `true`; `getById` returns `null`                                            | 315-316, G6       |
+| C-delete-02       | delete                  | Delete a category that **has** one referencing transaction                      | Throws `CategoryInUseException`; row still present                                  | 315-316, G6       |
+| C-rename-01       | rename                  | Rename seeded category to `"Meals"`                                             | `customName == "Meals"`; `l10nKey == "category.food"` unchanged                     | 314, 494, G7      |
+| C-rename-02       | rename                  | Clear the rename by passing `null`                                              | `customName == null`; `l10nKey` unchanged                                           | 314, G7           |
+| C-rename-03       | rename                  | Rename with `"   "` (whitespace) → treated as null                              | `customName == null`                                                                | 314, G7           |
+| C-l10nkey-lock-01 | save / l10nKey lock     | Load seeded `category.food`, mutate `l10nKey` to `'category.different'`, `save` | Throws `RepositoryException`; stored `l10nKey` unchanged                            | 314, G7 (defence) |
+| C-isref-01        | isReferenced            | Unused category                                                                 | Returns `false`                                                                     | 315-316           |
+| C-isref-02        | isReferenced            | Category with one referencing transaction                                       | Returns `true`                                                                      | 315-316           |
 
 **Total:** 20 tests.
 
@@ -838,16 +838,16 @@ test('T-stream-01: insert triggers emission', () async {
 
 ### 7.1 Who owns what, this milestone
 
-| Artifact                                                       | Owner (stream)    | Consumed by |
-|----------------------------------------------------------------|-------------------|-------------|
-| `lib/data/repositories/transaction_repository.dart`            | **A (this plan)** | M4 bootstrap, M5 Home / Transactions / Accounts controllers |
-| `lib/data/repositories/category_repository.dart`               | **A (this plan)** | M4 bootstrap, M5 Transactions / Categories controllers |
-| `lib/data/repositories/repository_exceptions.dart`             | **B** | Streams A, C; all M5 controllers that surface typed errors |
-| `lib/data/repositories/{account_type,account,currency}_repository.dart` | B | M4 bootstrap, M5 Accounts / Categories / Transactions controllers |
-| `lib/data/repositories/user_preferences_repository.dart`       | C | M4 bootstrap, M5 Splash / Settings controllers |
-| `lib/data/seed/first_run_seed.dart` (path TBD by Stream C)     | C | M4 bootstrap |
-| `test/unit/repositories/_harness/test_app_database.dart`       | **C** | A, B, C tests |
-| Migration harness activation in `test/unit/repositories/migration_test.dart` | C | CI |
+| Artifact                                                                     | Owner (stream)    | Consumed by                                                       |
+|------------------------------------------------------------------------------|-------------------|-------------------------------------------------------------------|
+| `lib/data/repositories/transaction_repository.dart`                          | **A (this plan)** | M4 bootstrap, M5 Home / Transactions / Accounts controllers       |
+| `lib/data/repositories/category_repository.dart`                             | **A (this plan)** | M4 bootstrap, M5 Transactions / Categories controllers            |
+| `lib/data/repositories/repository_exceptions.dart`                           | **B**             | Streams A, C; all M5 controllers that surface typed errors        |
+| `lib/data/repositories/{account_type,account,currency}_repository.dart`      | B                 | M4 bootstrap, M5 Accounts / Categories / Transactions controllers |
+| `lib/data/repositories/user_preferences_repository.dart`                     | C                 | M4 bootstrap, M5 Splash / Settings controllers                    |
+| `lib/data/seed/first_run_seed.dart` (path TBD by Stream C)                   | C                 | M4 bootstrap                                                      |
+| `test/unit/repositories/_harness/test_app_database.dart`                     | **C**             | A, B, C tests                                                     |
+| Migration harness activation in `test/unit/repositories/migration_test.dart` | C                 | CI                                                                |
 
 **Stream A does not:** touch accounts/currencies/prefs repositories; write the seed module; flip the migration-harness skip flag.
 
@@ -880,15 +880,15 @@ Target the **same PR stack** (implementation-plan.md §5, M3 parallel-window not
 
 Cross-referencing `docs/plans/implementation-plan.md` §6 — G1, G2, G4, G5, G6, G7, G12.
 
-| # | Rule | Stream-A enforcement | Specific assertion |
-|---|------|------------------------|---------------------|
-| G1 | Only repositories write to the DB | Every Drift write in §1 / §2 goes through a DAO, never via `customStatement`. Controllers/widgets cannot reach DAOs (`import_lint`). | No `customStatement(…INSERT…)` or `customStatement(…UPDATE…)` anywhere in `lib/data/repositories/{transaction,category}_repository.dart`. |
-| G2 | Drift types never cross the repository boundary | §1.4 rule 2; §2 mapping helpers are private. | Task A5.2 grep shows every `TransactionRow`/`CategoryRow`/`*Companion` hit is inside a private member or a `_db.*Dao` getter. |
-| G4 | Money is `int` minor units end-to-end | `Transaction.amountMinorUnits` is `int` on the Freezed model; `_toCompanion` wraps as `Value<int>`; no `double` introduced. | Task A5.1 grep is zero hits. Test T-amount-int-01 round-trips `1500000000000000000` losslessly. |
-| G5 | Category `type` locked after first use | §3.1 guard in `CategoryRepository.save`. | Tests C-type-lock-01 (mutable branch) and C-type-lock-02 (locked branch). |
-| G6 | Archive-instead-of-delete for referenced rows | §3.2 guard in `CategoryRepository.delete`. | Tests C-delete-01 (unused → hard delete), C-delete-02 (used → `CategoryInUseException`), C-archive-01 (archive is non-destructive). |
-| G7 | Seeded categories identified by `l10nKey`; renames write `customName` only | §3.6: `rename` touches only `custom_name`; `save` rejects `l10nKey` mutation. | Tests C-rename-01/02/03 (rename preserves `l10nKey`), C-l10nkey-lock-01 (save rejects `l10nKey` change). |
-| G12 | Tests organized by layer, not by feature | New test files land under `test/unit/repositories/`. | `transaction_repository_test.dart` and `category_repository_test.dart` live in `test/unit/repositories/`, not in a per-feature folder. |
+| #   | Rule                                                                       | Stream-A enforcement                                                                                                                 | Specific assertion                                                                                                                        |
+|-----|----------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| G1  | Only repositories write to the DB                                          | Every Drift write in §1 / §2 goes through a DAO, never via `customStatement`. Controllers/widgets cannot reach DAOs (`import_lint`). | No `customStatement(…INSERT…)` or `customStatement(…UPDATE…)` anywhere in `lib/data/repositories/{transaction,category}_repository.dart`. |
+| G2  | Drift types never cross the repository boundary                            | §1.4 rule 2; §2 mapping helpers are private.                                                                                         | Task A5.2 grep shows every `TransactionRow`/`CategoryRow`/`*Companion` hit is inside a private member or a `_db.*Dao` getter.             |
+| G4  | Money is `int` minor units end-to-end                                      | `Transaction.amountMinorUnits` is `int` on the Freezed model; `_toCompanion` wraps as `Value<int>`; no `double` introduced.          | Task A5.1 grep is zero hits. Test T-amount-int-01 round-trips `1500000000000000000` losslessly.                                           |
+| G5  | Category `type` locked after first use                                     | §3.1 guard in `CategoryRepository.save`.                                                                                             | Tests C-type-lock-01 (mutable branch) and C-type-lock-02 (locked branch).                                                                 |
+| G6  | Archive-instead-of-delete for referenced rows                              | §3.2 guard in `CategoryRepository.delete`.                                                                                           | Tests C-delete-01 (unused → hard delete), C-delete-02 (used → `CategoryInUseException`), C-archive-01 (archive is non-destructive).       |
+| G7  | Seeded categories identified by `l10nKey`; renames write `customName` only | §3.6: `rename` touches only `custom_name`; `save` rejects `l10nKey` mutation.                                                        | Tests C-rename-01/02/03 (rename preserves `l10nKey`), C-l10nkey-lock-01 (save rejects `l10nKey` change).                                  |
+| G12 | Tests organized by layer, not by feature                                   | New test files land under `test/unit/repositories/`.                                                                                 | `transaction_repository_test.dart` and `category_repository_test.dart` live in `test/unit/repositories/`, not in a per-feature folder.    |
 
 G3 (controllers own presentation transformation), G8 (icons/colors indirection), G9 (bootstrap order), G10 (router redirect), G11 (layout primitives) are **out of scope** for this stream.
 
@@ -953,16 +953,16 @@ Stream A is done when **all** hold:
 
 Captured 2026-04-22 when writing this plan (UTC). Commands to re-run for fresh verification:
 
-| Verified | Command | Finding |
-|----------|---------|---------|
-| Stub sizes | `wc -l lib/data/repositories/{transaction,category}_repository.dart` | 10 lines (transaction), 9 lines (category) — both TODO-only |
-| Stub contents | `cat lib/data/repositories/transaction_repository.dart` & `... category_repository.dart` | Matches the verbatim dumps in §0 |
-| Drift tables | `cat lib/data/database/tables/{transactions,categories}_table.dart` | Confirms integer `amountMinorUnits`, FK to `Currencies`/`Categories`/`Accounts`, `CHECK (type IN ('expense','income'))`, `is_archived BOOL DEFAULT false` |
-| Drift DAOs | `cat lib/data/database/daos/{transaction,category}_dao.dart` | `watchAll`, `watchByDateRange`, `watchByAccount`, `watchById`, `findById`, `insert`, `updateRow`, `deleteById`, `countByCategory`, `countByAccount` on `TransactionDao`. No `watchByCategory` — to be added in Task A3.3. `CategoryDao` exposes `watchAll`, `watchByType`, `findById`, `findByL10nKey`, `insert`, `updateRow`, `deleteById`, `archiveById` |
-| Freezed models | `cat lib/data/models/{transaction,category,currency}.dart` | `Transaction` has `int amountMinorUnits`, `Currency currency`, `DateTime createdAt`, `DateTime updatedAt` (both required, non-null). `Category` has `CategoryType type` (enum with wire values `'expense'` / `'income'`), nullable `l10nKey` / `customName`, `@Default(false) bool isArchived`. `Currency` has `required String code`, `required int decimals`, nullable `symbol` / `nameL10nKey` |
-| `AppDatabase` shape | `cat lib/data/database/app_database.dart` | `schemaVersion = 1`; all six DAOs registered; `beforeOpen` enables `PRAGMA foreign_keys = ON`; constructor takes `QueryExecutor` — ready for `NativeDatabase.memory()` injection in tests |
-| Existing repo tests | `ls test/unit/repositories/` | `category_dao_test.dart` (M1 regression on flat schema), `migration_test.dart` (Stream C will activate). Neither overlaps with this stream's new test files |
-| Git branch | `git status --short` on `feature/M2-Core-utilities` | Clean; Stream A will branch from the M3 kick-off base after M2 merges to `main` |
+| Verified            | Command                                                                                  | Finding                                                                                                                                                                                                                                                                                                                                                                                           |
+|---------------------|------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Stub sizes          | `wc -l lib/data/repositories/{transaction,category}_repository.dart`                     | 10 lines (transaction), 9 lines (category) — both TODO-only                                                                                                                                                                                                                                                                                                                                       |
+| Stub contents       | `cat lib/data/repositories/transaction_repository.dart` & `... category_repository.dart` | Matches the verbatim dumps in §0                                                                                                                                                                                                                                                                                                                                                                  |
+| Drift tables        | `cat lib/data/database/tables/{transactions,categories}_table.dart`                      | Confirms integer `amountMinorUnits`, FK to `Currencies`/`Categories`/`Accounts`, `CHECK (type IN ('expense','income'))`, `is_archived BOOL DEFAULT false`                                                                                                                                                                                                                                         |
+| Drift DAOs          | `cat lib/data/database/daos/{transaction,category}_dao.dart`                             | `watchAll`, `watchByDateRange`, `watchByAccount`, `watchById`, `findById`, `insert`, `updateRow`, `deleteById`, `countByCategory`, `countByAccount` on `TransactionDao`. No `watchByCategory` — to be added in Task A3.3. `CategoryDao` exposes `watchAll`, `watchByType`, `findById`, `findByL10nKey`, `insert`, `updateRow`, `deleteById`, `archiveById`                                        |
+| Freezed models      | `cat lib/data/models/{transaction,category,currency}.dart`                               | `Transaction` has `int amountMinorUnits`, `Currency currency`, `DateTime createdAt`, `DateTime updatedAt` (both required, non-null). `Category` has `CategoryType type` (enum with wire values `'expense'` / `'income'`), nullable `l10nKey` / `customName`, `@Default(false) bool isArchived`. `Currency` has `required String code`, `required int decimals`, nullable `symbol` / `nameL10nKey` |
+| `AppDatabase` shape | `cat lib/data/database/app_database.dart`                                                | `schemaVersion = 1`; all six DAOs registered; `beforeOpen` enables `PRAGMA foreign_keys = ON`; constructor takes `QueryExecutor` — ready for `NativeDatabase.memory()` injection in tests                                                                                                                                                                                                         |
+| Existing repo tests | `ls test/unit/repositories/`                                                             | `category_dao_test.dart` (M1 regression on flat schema), `migration_test.dart` (Stream C will activate). Neither overlaps with this stream's new test files                                                                                                                                                                                                                                       |
+| Git branch          | `git status --short` on `feature/M2-Core-utilities`                                      | Clean; Stream A will branch from the M3 kick-off base after M2 merges to `main`                                                                                                                                                                                                                                                                                                                   |
 
 ---
 
