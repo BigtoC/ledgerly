@@ -49,21 +49,6 @@ class CategoryDao extends DatabaseAccessor<AppDatabase>
         .watch();
   }
 
-  /// Watch subcategories of the given parent.
-  Stream<List<CategoryRow>> watchChildren(int parentId) {
-    return (select(categories)
-          ..where((c) => c.parentId.equals(parentId))
-          ..orderBy([
-            (c) => OrderingTerm(
-              expression: c.sortOrder,
-              mode: OrderingMode.asc,
-              nulls: NullsOrder.last,
-            ),
-            (c) => OrderingTerm(expression: c.id),
-          ]))
-        .watch();
-  }
-
   Future<CategoryRow?> findById(int id) {
     return (select(
       categories,

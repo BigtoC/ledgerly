@@ -14,8 +14,9 @@ import 'package:ledgerly/core/theme/color_schemes.dart';
 
 void main() {
   group('M2 theme smoke', () {
-    testWidgets('lightTheme + darkTheme wire into MaterialApp with MD3 on',
-        (tester) async {
+    testWidgets('lightTheme + darkTheme wire into MaterialApp with MD3 on', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           theme: lightTheme,
@@ -24,8 +25,7 @@ void main() {
         ),
       );
 
-      final materialApp =
-          tester.widget<MaterialApp>(find.byType(MaterialApp));
+      final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
 
       expect(materialApp.theme, isNotNull);
       expect(materialApp.darkTheme, isNotNull);
@@ -33,14 +33,8 @@ void main() {
       expect(materialApp.theme!.useMaterial3, isTrue);
       expect(materialApp.darkTheme!.useMaterial3, isTrue);
 
-      expect(
-        materialApp.theme!.colorScheme.brightness,
-        Brightness.light,
-      );
-      expect(
-        materialApp.darkTheme!.colorScheme.brightness,
-        Brightness.dark,
-      );
+      expect(materialApp.theme!.colorScheme.brightness, Brightness.light);
+      expect(materialApp.darkTheme!.colorScheme.brightness, Brightness.dark);
 
       // The themes must consume the exported seeded schemes — catches any
       // future drift where someone swaps a local `ColorScheme.fromSeed()`

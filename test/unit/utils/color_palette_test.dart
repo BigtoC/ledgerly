@@ -54,8 +54,7 @@ void main() {
         0xFF04409F,
       );
       expect(
-        kCategoryColorPalette[CategoryPaletteIndex.neutralVariant50]
-            .toARGB32(),
+        kCategoryColorPalette[CategoryPaletteIndex.neutralVariant50].toARGB32(),
         0xFF79747E,
       );
       expect(
@@ -63,8 +62,7 @@ void main() {
         0xFFFCBD00,
       );
       expect(
-        kCategoryColorPalette[CategoryPaletteIndex.neutralVariant70]
-            .toARGB32(),
+        kCategoryColorPalette[CategoryPaletteIndex.neutralVariant70].toARGB32(),
         0xFFAEA9B4,
       );
     });
@@ -79,8 +77,7 @@ void main() {
       );
     });
 
-    test('out-of-range index clamps to Neutral Variant 50 (grey fallback)',
-        () {
+    test('out-of-range index clamps to Neutral Variant 50 (grey fallback)', () {
       final Color fallback =
           kCategoryColorPalette[CategoryPaletteIndex.neutralVariant50];
       expect(colorForIndex(-1), fallback);

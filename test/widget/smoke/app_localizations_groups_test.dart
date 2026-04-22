@@ -112,36 +112,36 @@ void main() {
     }
   });
 
-  group('Group A (account types) + Group P (splash) resolve for every locale',
-      () {
-    for (final locale in locales) {
-      testWidgets('$locale: account types + splash ICU non-null',
-          (tester) async {
-        final l10n = await _localizationsFor(tester, locale);
+  group(
+    'Group A (account types) + Group P (splash) resolve for every locale',
+    () {
+      for (final locale in locales) {
+        testWidgets('$locale: account types + splash ICU non-null', (
+          tester,
+        ) async {
+          final l10n = await _localizationsFor(tester, locale);
 
-        // Account types.
-        expect(l10n.accountTypeCash, isNotEmpty);
-        expect(l10n.accountTypeInvestment, isNotEmpty);
+          // Account types.
+          expect(l10n.accountTypeCash, isNotEmpty);
+          expect(l10n.accountTypeInvestment, isNotEmpty);
 
-        // Splash defaults.
-        expect(l10n.splashEnter, isNotEmpty);
-        expect(l10n.splashDayCountLabel, isNotEmpty);
+          // Splash defaults.
+          expect(l10n.splashEnter, isNotEmpty);
+          expect(l10n.splashDayCountLabel, isNotEmpty);
 
-        // ICU placeholder — if the @placeholders block or the format is
-        // wrong, generation produces a different method signature per locale
-        // and this call does not compile.
-        expect(
-          l10n.splashSinceDate(DateTime.utc(2024, 1, 1)),
-          isNotEmpty,
-        );
+          // ICU placeholder — if the @placeholders block or the format is
+          // wrong, generation produces a different method signature per locale
+          // and this call does not compile.
+          expect(l10n.splashSinceDate(DateTime.utc(2024, 1, 1)), isNotEmpty);
 
-        // Splash settings group.
-        expect(l10n.settingsSplashSection, isNotEmpty);
-        expect(l10n.settingsSplashEnabled, isNotEmpty);
-        expect(l10n.settingsSplashStartDate, isNotEmpty);
-        expect(l10n.settingsSplashDisplayText, isNotEmpty);
-        expect(l10n.settingsSplashButtonLabel, isNotEmpty);
-      });
-    }
-  });
+          // Splash settings group.
+          expect(l10n.settingsSplashSection, isNotEmpty);
+          expect(l10n.settingsSplashEnabled, isNotEmpty);
+          expect(l10n.settingsSplashStartDate, isNotEmpty);
+          expect(l10n.settingsSplashDisplayText, isNotEmpty);
+          expect(l10n.settingsSplashButtonLabel, isNotEmpty);
+        });
+      }
+    },
+  );
 }

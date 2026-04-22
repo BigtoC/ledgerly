@@ -42,10 +42,7 @@ class DateHelpers {
   ///
   /// Always normalizes to local-midnight of each argument before
   /// subtracting (delegates to [daysBetween]).
-  static int daysSince({
-    required DateTime startDate,
-    required DateTime now,
-  }) =>
+  static int daysSince({required DateTime startDate, required DateTime now}) =>
       daysBetween(startDate, now);
 
   /// Locale-aware "long-ish" date for splash and settings display
@@ -80,8 +77,6 @@ class DateHelpers {
     final days = daysSince(startDate: startDate, now: now);
     final daysStr = NumberFormat.decimalPattern(locale).format(days);
     final dateStr = formatDisplayDate(startDate, locale);
-    return template
-        .replaceAll('{days}', daysStr)
-        .replaceAll('{date}', dateStr);
+    return template.replaceAll('{days}', daysStr).replaceAll('{date}', dateStr);
   }
 }

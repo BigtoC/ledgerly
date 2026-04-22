@@ -15,7 +15,6 @@ import 'package:drift/drift.dart';
 ///   `CHECK (type IN ('expense', 'income'))`. The category type-lock
 ///   after first-use is enforced in `CategoryRepository` (M3), not here.
 @DataClassName('CategoryRow')
-@TableIndex(name: 'categories_parent_idx', columns: {#parentId})
 class Categories extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get l10nKey => text().named('l10n_key').nullable().unique()();
@@ -25,8 +24,6 @@ class Categories extends Table {
   TextColumn get type => text().customConstraint(
     "NOT NULL CHECK (type IN ('expense', 'income'))",
   )();
-  IntColumn get parentId =>
-      integer().named('parent_id').nullable().references(Categories, #id)();
   IntColumn get sortOrder => integer().named('sort_order').nullable()();
   BoolColumn get isArchived =>
       boolean().named('is_archived').withDefault(const Constant(false))();

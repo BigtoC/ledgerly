@@ -96,7 +96,8 @@ Map<String, dynamic> _readArb(String fileName) {
   expect(
     file.existsSync(),
     isTrue,
-    reason: '$fileName is missing from /$_l10nDir — CLAUDE.md pin requires '
+    reason:
+        '$fileName is missing from /$_l10nDir — CLAUDE.md pin requires '
         'all four ARB files (including the minimal app_zh.arb fallback) '
         'to stay present.',
   );
@@ -107,9 +108,7 @@ Map<String, dynamic> _readArb(String fileName) {
 /// Returns only non-metadata keys (drops both `@@locale` and any `@foo`
 /// description/placeholder block).
 Set<String> _translationKeys(Map<String, dynamic> arb) {
-  return arb.keys
-      .where((k) => !k.startsWith('@'))
-      .toSet();
+  return arb.keys.where((k) => !k.startsWith('@')).toSet();
 }
 
 void main() {
@@ -137,13 +136,15 @@ void main() {
       expect(
         missingInTw,
         isEmpty,
-        reason: 'app_zh_TW.arb is missing keys present in app_en.arb: '
+        reason:
+            'app_zh_TW.arb is missing keys present in app_en.arb: '
             '$missingInTw',
       );
       expect(
         missingInCn,
         isEmpty,
-        reason: 'app_zh_CN.arb is missing keys present in app_en.arb: '
+        reason:
+            'app_zh_CN.arb is missing keys present in app_en.arb: '
             '$missingInCn',
       );
     });
@@ -159,13 +160,15 @@ void main() {
       expect(
         extraInTw,
         isEmpty,
-        reason: 'app_zh_TW.arb has keys absent from app_en.arb '
+        reason:
+            'app_zh_TW.arb has keys absent from app_en.arb '
             '(template-arb-file is app_en.arb): $extraInTw',
       );
       expect(
         extraInCn,
         isEmpty,
-        reason: 'app_zh_CN.arb has keys absent from app_en.arb '
+        reason:
+            'app_zh_CN.arb has keys absent from app_en.arb '
             '(template-arb-file is app_en.arb): $extraInCn',
       );
     });
@@ -175,7 +178,8 @@ void main() {
       expect(
         zhKeys,
         equals(<String>{'appTitle'}),
-        reason: 'CLAUDE.md pin: app_zh.arb is the Chinese base-fallback '
+        reason:
+            'CLAUDE.md pin: app_zh.arb is the Chinese base-fallback '
             'required by flutter_localizations codegen and must contain '
             'only appTitle. Anything else risks rendering unreviewed '
             'English copy to users on unspecified Chinese locales.',
@@ -191,13 +195,15 @@ void main() {
       expect(
         missing,
         isEmpty,
-        reason: 'app_en.arb is missing stream-owned keys from plan §5: '
+        reason:
+            'app_en.arb is missing stream-owned keys from plan §5: '
             '$missing',
       );
       expect(
         unexpected,
         isEmpty,
-        reason: 'app_en.arb has keys not in plan §5 — either the plan '
+        reason:
+            'app_en.arb has keys not in plan §5 — either the plan '
             'needs an update or the ARB drifted: $unexpected',
       );
     });

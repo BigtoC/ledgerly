@@ -38,9 +38,6 @@ abstract class Category with _$Category {
     /// User override of the localized name.
     String? customName,
 
-    /// Self-FK for subcategories. Nullable root.
-    int? parentId,
-
     /// Order in pickers.
     int? sortOrder,
 
