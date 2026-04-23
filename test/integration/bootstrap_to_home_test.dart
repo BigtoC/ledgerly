@@ -89,43 +89,34 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    // M4 known issue: live DB writes in a testWidgets body cannot both
-    // complete (Drift needs real timers) and notify FakeAsync-bound Riverpod
-    // stream subscribers in the same turn. The first two variants above
-    // cover both splash-enabled=true and =false startup paths, so the only
-    // lost coverage is the in-session toggle; re-enable once we settle on a
-    // live-stream test pattern.
-    testWidgets(
-      'splash toggle in settings causes live re-route to home',
-      skip: true,
-      (tester) async {
-        final db = newTestAppDatabase();
-        addTearDown(db.close);
-        await tester.runAsync(() => runTestSeed(db));
-        final container = makeTestContainer(db: db);
-        addTearDown(container.dispose);
+    testWidgets('splash toggle in settings causes live re-route to home', (
+      tester,
+    ) async {
+      final db = newTestAppDatabase();
+      addTearDown(db.close);
+      await tester.runAsync(() => runTestSeed(db));
+      final container = makeTestContainer(db: db);
+      addTearDown(container.dispose);
 
-        await tester.pumpWidget(buildTestApp(container: container));
-        await tester.pump();
-        await tester.pump(const Duration(seconds: 1));
+      await tester.pumpWidget(buildTestApp(container: container));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
 
-        // Start on splash (date not set, so date prompt shows).
-        expect(find.byType(SplashScreen), findsOneWidget);
+      // Start on splash (date not set, so date prompt shows).
+      expect(find.byType(SplashScreen), findsOneWidget);
 
-        // Simulate a settings write while the splash is showing. The write
-        // must happen outside FakeAsync so Drift's real timers can advance;
-        // subsequent pumps let the queued stream emission flow through
-        // Riverpod → refreshListenable → GoRouter.redirect.
-        final prefs = DriftUserPreferencesRepository(db);
-        await tester.runAsync(() => prefs.setSplashEnabled(false));
-        await tester.pump();
-        await tester.pump(const Duration(seconds: 1));
+      // Simulate a settings write while the splash is showing. The write
+      // must happen outside FakeAsync so Drift's real timers can advance;
+      // subsequent pumps let the queued stream emission flow through
+      // Riverpod → refreshListenable → GoRouter.redirect.
+      final prefs = DriftUserPreferencesRepository(db);
+      await tester.runAsync(() => prefs.setSplashEnabled(false));
+      await tester.pumpAndSettle();
 
-        // The SplashGateSnapshot's stream subscription fires, notifies the
-        // router, which redirects from /splash to /home.
-        expect(find.byType(HomeScreen), findsOneWidget);
-        expect(find.byType(SplashScreen), findsNothing);
-      },
-    );
+      // The SplashGateSnapshot's stream subscription fires, notifies the
+      // router, which redirects from /splash to /home.
+      expect(find.byType(HomeScreen), findsOneWidget);
+      expect(find.byType(SplashScreen), findsNothing);
+    });
   });
 }

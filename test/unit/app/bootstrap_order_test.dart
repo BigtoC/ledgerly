@@ -67,6 +67,61 @@ void main() {
       expect(launched, isA<ProviderScope>());
     });
 
+    test(
+      'initialize formatting, eager reads, and seed happen before runApp',
+      () async {
+        final log = <String>[];
+        final db = AppDatabase(NativeDatabase.memory());
+        addTearDown(db.close);
+
+        await bootstrapFor(
+          openDatabase: () async {
+            log.add('openDatabase');
+            return db;
+          },
+          localeService: const _StubLocaleService(),
+          initializeDateFormattingFn: (locale) async {
+            log.add('initializeDateFormatting:$locale');
+          },
+          getSplashEnabledFn: (_) async {
+            log.add('getSplashEnabled');
+            return true;
+          },
+          getSplashStartDateFn: (_) async {
+            log.add('getSplashStartDate');
+            return null;
+          },
+          runFirstRunSeedFn:
+              ({
+                required db,
+                required currencies,
+                required categories,
+                required accountTypes,
+                required accounts,
+                required preferences,
+                required localeService,
+              }) async {
+                log.add('runFirstRunSeed');
+              },
+          runAppFn: (_) => log.add('runApp'),
+        );
+
+        expect(
+          log,
+          containsAllInOrder([
+            'openDatabase',
+            'initializeDateFormatting:en_US',
+            'initializeDateFormatting:zh_TW',
+            'initializeDateFormatting:zh_CN',
+            'getSplashEnabled',
+            'getSplashStartDate',
+            'runFirstRunSeed',
+            'runApp',
+          ]),
+        );
+      },
+    );
+
     test('main.dart has only one await (G9 guardrail)', () {
       // Static assertion — reads lib/main.dart and checks that the sole
       // awaited line is `bootstrap()`. Does not execute main().

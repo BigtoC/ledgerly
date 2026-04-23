@@ -5,9 +5,10 @@
 // controlled by each test case. No live DB interaction required.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
+import 'package:ledgerly/app/router.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
-import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/features/home/home_screen.dart';
 import 'package:ledgerly/features/splash/splash_screen.dart';
 
@@ -55,18 +56,86 @@ void main() {
       expect(find.byType(SplashScreen), findsNothing);
     });
 
+    testWidgets('splashEnabled=false: /splash → /home', (tester) async {
+      final db = newTestAppDatabase();
+      addTearDown(db.close);
+      final container = makeTestContainer(
+        db: db,
+        extraOverrides: [
+          splashGateSnapshotProvider.overrideWithValue(
+            SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(routerProvider);
+      addTearDown(router.dispose);
+      router.go('/splash');
+
+      await tester.pumpWidget(buildTestApp(container: container));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(HomeScreen), findsOneWidget);
+      expect(find.byType(SplashScreen), findsNothing);
+    });
+
+    testWidgets('/home/add uses a root modal route', (tester) async {
+      final db = newTestAppDatabase();
+      addTearDown(db.close);
+      final container = makeTestContainer(
+        db: db,
+        extraOverrides: [
+          splashGateSnapshotProvider.overrideWithValue(
+            SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(routerProvider);
+      addTearDown(router.dispose);
+      router.go('/home/add');
+
+      await tester.pumpWidget(buildTestApp(container: container));
+      await tester.pumpAndSettle();
+
+      final leaf = router.routerDelegate.currentConfiguration.last;
+      expect(leaf.matchedLocation, '/home/add');
+      expect(leaf.route, isA<GoRoute>());
+      expect(leaf.route.parentNavigatorKey, isNotNull);
+    });
+
+    testWidgets('/home/edit/:id rejects invalid ids safely', (tester) async {
+      final db = newTestAppDatabase();
+      addTearDown(db.close);
+      final container = makeTestContainer(
+        db: db,
+        extraOverrides: [
+          splashGateSnapshotProvider.overrideWithValue(
+            SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(routerProvider);
+      addTearDown(router.dispose);
+      router.go('/home/edit/not-a-number');
+
+      await tester.pumpWidget(buildTestApp(container: container));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(HomeScreen), findsOneWidget);
+      expect(find.byType(SplashScreen), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets(
       'splashEnabled=true with startDate set: /splash shows Enter CTA',
       (tester) async {
         final db = newTestAppDatabase();
         addTearDown(db.close);
-        // SplashScreen reads `splashStartDateProvider` (a live Drift stream),
-        // not the `SplashGateSnapshot`, so we must seed the DB so the stream
-        // actually emits a non-null value.
-        final prefs = DriftUserPreferencesRepository(db);
-        await tester.runAsync(
-          () => prefs.setSplashStartDate(DateTime(2025, 1, 1)),
-        );
 
         final container = makeTestContainer(
           db: db,
@@ -82,12 +151,11 @@ void main() {
         addTearDown(container.dispose);
 
         await tester.pumpWidget(buildTestApp(container: container));
-        await tester.pump();
-        await tester.pump(const Duration(seconds: 1));
+        await tester.pumpAndSettle();
 
         expect(find.byType(SplashScreen), findsOneWidget);
-        // SplashScreen renders "Enter" when startDate is set.
         expect(find.text('Enter'), findsOneWidget);
+        expect(find.text('Set start date'), findsNothing);
       },
     );
   });

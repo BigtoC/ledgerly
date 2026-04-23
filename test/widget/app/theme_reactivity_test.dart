@@ -1,46 +1,66 @@
 // M4 §7.10 — Theme reactivity test (T7.5).
 //
-// Verifies that calling `setThemeMode(ThemeMode.dark)` on the repository
-// triggers the `_themeModeStreamProvider` → `themeModeProvider` chain and
-// causes `MaterialApp` to rebuild with dark brightness.
-//
-// Note: DB operations (seed + setThemeMode) must run inside `tester.runAsync`
-// because Drift uses real timers that do not advance inside FakeAsync. After
-// the write completes, bounded `pump` calls propagate the stream emission
-// through Riverpod to the widget tree.
+// Uses a controllable provider override so the test proves the app-shell
+// theme wiring in CI without depending on Drift timers inside FakeAsync.
+
+import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ledgerly/app/app.dart';
-import 'package:ledgerly/app/providers/app_database_provider.dart';
-import 'package:ledgerly/app/providers/repository_providers.dart';
+import 'package:ledgerly/app/providers/locale_provider.dart';
+import 'package:ledgerly/app/providers/theme_provider.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
 
 import '../../support/test_app.dart';
 
 void main() {
   group('theme reactivity', () {
-    // M4 known issue: live DB writes in a testWidgets body cannot both
-    // complete (Drift needs real timers) and notify FakeAsync-bound Riverpod
-    // stream subscribers in the same turn. Re-enable once we settle on the
-    // test pattern for live-stream tests (candidates: real-DB integration
-    // harness, stream provider overrides, or switching Drift to a sync
-    // in-memory variant in tests).
+    testWidgets('initial persisted dark theme is applied on the first frame', (
+      tester,
+    ) async {
+      final db = newTestAppDatabase();
+      addTearDown(db.close);
+
+      final container = makeTestContainer(
+        db: db,
+        extraOverrides: [
+          initialThemeModeProvider.overrideWithValue(ThemeMode.dark),
+          themeModeStreamProvider.overrideWith((ref) => const Stream.empty()),
+          userLocalePreferenceProvider.overrideWith(
+            (ref) => const Locale('en'),
+          ),
+          splashGateSnapshotProvider.overrideWithValue(
+            SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(buildTestApp(container: container));
+      await tester.pump();
+
+      final brightness = Theme.of(
+        tester.element(find.byType(Scaffold).first),
+      ).brightness;
+      expect(brightness, Brightness.dark);
+    });
+
     testWidgets(
-      'setThemeMode(dark) rebuilds MaterialApp with dark brightness',
-      skip: true,
+      'theme stream update rebuilds MaterialApp with dark brightness',
       (tester) async {
         final db = newTestAppDatabase();
         addTearDown(db.close);
-        await tester.runAsync(() => runTestSeed(db));
+        final controller = StreamController<ThemeMode>.broadcast();
+        addTearDown(controller.close);
 
-        final container = ProviderContainer(
-          overrides: [
-            appDatabaseProvider.overrideWithValue(db),
-            // Pre-seed gate so the first frame lands at HomeScreen (avoids
-            // navigating through splash in this test).
+        final container = makeTestContainer(
+          db: db,
+          extraOverrides: [
+            themeModeStreamProvider.overrideWith((ref) => controller.stream),
+            userLocalePreferenceProvider.overrideWith(
+              (ref) => const Locale('en'),
+            ),
             splashGateSnapshotProvider.overrideWithValue(
               SplashGateSnapshot.withInitial(enabled: false, startDate: null),
             ),
@@ -48,77 +68,56 @@ void main() {
         );
         addTearDown(container.dispose);
 
-        await tester.pumpWidget(
-          UncontrolledProviderScope(container: container, child: const App()),
-        );
+        await tester.pumpWidget(buildTestApp(container: container));
+        await tester.pump();
+
+        final initialBrightness = Theme.of(
+          tester.element(find.byType(Scaffold).first),
+        ).brightness;
+        expect(initialBrightness, Brightness.light);
+        expect(container.read(themeModeProvider), ThemeMode.system);
+
+        controller.add(ThemeMode.dark);
+        await container.pump();
         await tester.pump();
         await tester.pump(const Duration(seconds: 1));
 
-        // Baseline: default theme is light.
-        final lightBrightness = Theme.of(
+        expect(container.read(themeModeProvider), ThemeMode.dark);
+
+        final updatedBrightness = Theme.of(
           tester.element(find.byType(Scaffold).first),
         ).brightness;
-        expect(lightBrightness, Brightness.light);
-
-        // Switch to dark. Run the DB write via `runAsync` so its real timers
-        // can fire, then pump twice inside FakeAsync so the queued stream
-        // emission microtask delivers the update and the widget rebuilds.
-        await tester.runAsync(
-          () => container
-              .read(userPreferencesRepositoryProvider)
-              .setThemeMode(ThemeMode.dark),
-        );
-        // Flush microtasks (stream emission → provider update → markNeedsBuild).
-        await tester.pump();
-        // Advance clock so the AnimatedTheme transition completes.
-        await tester.pump(const Duration(seconds: 1));
-
-        final darkBrightness = Theme.of(
-          tester.element(find.byType(Scaffold).first),
-        ).brightness;
-        expect(darkBrightness, Brightness.dark);
+        expect(updatedBrightness, Brightness.dark);
       },
     );
 
-    // M4 known issue: see sibling test. Same live-DB-to-FakeAsync gap.
-    testWidgets(
-      'setThemeMode(light) after dark reverts to light brightness',
-      skip: true,
-      (tester) async {
-        final db = newTestAppDatabase();
-        addTearDown(db.close);
-        await tester.runAsync(() => runTestSeed(db));
+    testWidgets('initial preferred locale is applied on the first frame', (
+      tester,
+    ) async {
+      final db = newTestAppDatabase();
+      addTearDown(db.close);
 
-        final container = ProviderContainer(
-          overrides: [
-            appDatabaseProvider.overrideWithValue(db),
-            splashGateSnapshotProvider.overrideWithValue(
-              SplashGateSnapshot.withInitial(enabled: false, startDate: null),
-            ),
-          ],
-        );
-        addTearDown(container.dispose);
+      final container = makeTestContainer(
+        db: db,
+        extraOverrides: [
+          initialPreferredLocaleProvider.overrideWithValue(
+            const Locale('zh', 'HK'),
+          ),
+          userLocalePreferenceStreamProvider.overrideWith(
+            (ref) => const Stream.empty(),
+          ),
+          splashGateSnapshotProvider.overrideWithValue(
+            SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
 
-        await tester.pumpWidget(
-          UncontrolledProviderScope(container: container, child: const App()),
-        );
-        await tester.pump();
-        await tester.pump(const Duration(seconds: 1));
+      await tester.pumpWidget(buildTestApp(container: container));
+      await tester.pump();
 
-        final prefs = container.read(userPreferencesRepositoryProvider);
-        await tester.runAsync(() => prefs.setThemeMode(ThemeMode.dark));
-        await tester.pump();
-        await tester.pump(const Duration(seconds: 1));
-
-        await tester.runAsync(() => prefs.setThemeMode(ThemeMode.light));
-        await tester.pump();
-        await tester.pump(const Duration(seconds: 1));
-
-        final brightness = Theme.of(
-          tester.element(find.byType(Scaffold).first),
-        ).brightness;
-        expect(brightness, Brightness.light);
-      },
-    );
+      final homeContext = tester.element(find.byType(Scaffold).first);
+      expect(Localizations.localeOf(homeContext), const Locale('zh', 'TW'));
+    });
   });
 }

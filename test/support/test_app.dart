@@ -24,6 +24,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:ledgerly/app/app.dart';
+import 'package:ledgerly/app/bootstrap.dart';
 import 'package:ledgerly/app/providers/app_database_provider.dart';
 import 'package:ledgerly/app/providers/locale_service_provider.dart';
 import 'package:ledgerly/data/database/app_database.dart';
@@ -81,6 +82,30 @@ ProviderContainer makeTestContainer({
 /// dispose it via `addTearDown(container.dispose)`.
 Widget buildTestApp({required ProviderContainer container}) {
   return UncontrolledProviderScope(container: container, child: const App());
+}
+
+/// Launches the app through the real `bootstrapFor(...)` flow and captures the
+/// widget passed to `runApp`. This exercises bootstrap ordering and Provider
+/// overrides the same way production startup does, while still letting tests
+/// pump the launched widget manually.
+Future<Widget> buildBootstrappedTestApp({
+  required AppDatabase db,
+  String locale = 'en_US',
+  List<Override> extraOverrides = const [],
+}) async {
+  Widget? launched;
+  await bootstrapFor(
+    openDatabase: () async => db,
+    localeService: _FixedLocaleService(locale),
+    runAppFn: (widget) => launched = widget,
+    extraOverrides: extraOverrides,
+  );
+
+  if (launched == null) {
+    throw StateError('bootstrapFor did not call runApp');
+  }
+
+  return launched!;
 }
 
 /// Deterministic [LocaleService] stub — returns a fixed locale string so

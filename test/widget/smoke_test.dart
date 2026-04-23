@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ledgerly/features/splash/splash_screen.dart';
+import 'package:ledgerly/l10n/app_localizations.dart';
 
 import '../support/test_app.dart';
 
@@ -30,7 +31,13 @@ void main() {
         await tester.pump(const Duration(seconds: 1));
 
         // App widget tree is present.
-        expect(find.byType(MaterialApp), findsOneWidget);
+        final materialApp = tester.widget<MaterialApp>(
+          find.byType(MaterialApp),
+        );
+        expect(materialApp.onGenerateTitle, isNotNull);
+
+        final splashContext = tester.element(find.byType(SplashScreen));
+        expect(AppLocalizations.of(splashContext).appTitle, 'Ledgerly');
 
         // First-run: splash route is reached (splash_enabled defaults to true,
         // start_date defaults to null from fresh unseeded DB).
