@@ -10,6 +10,7 @@
 // harness completion.
 
 import 'package:drift/drift.dart' show Variable;
+import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/data/database/app_database.dart' show AppDatabase;
 import 'package:ledgerly/data/models/category.dart';
@@ -138,6 +139,14 @@ class _Fixtures {
 // ---------------------------------------------------------------------------
 
 void main() {
+  setUpAll(() {
+    driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+  });
+
+  tearDownAll(() {
+    driftRuntimeOptions.dontWarnAboutMultipleDatabases = false;
+  });
+
   late AppDatabase db;
   late _Fixtures fixtures;
   late CategoryRepository catRepo;
@@ -404,6 +413,17 @@ void main() {
       // Row still present.
       final row = await catRepo.getById(fixtures.expenseCategoryId);
       expect(row, isNotNull);
+    });
+
+    test('C-delete-03: unused seeded category cannot be hard-deleted', () async {
+      await expectLater(
+        catRepo.delete(fixtures.expenseCategoryId),
+        throwsA(isA<Exception>()),
+      );
+
+      final row = await catRepo.getById(fixtures.expenseCategoryId);
+      expect(row, isNotNull);
+      expect(row!.l10nKey, 'category.food');
     });
   });
 

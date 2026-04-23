@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart' show ThemeMode, Locale;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/data/database/app_database.dart' show AppDatabase;
+import 'package:ledgerly/data/repositories/repository_exceptions.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 
 import '_harness/test_app_database.dart';
@@ -50,6 +51,7 @@ void main() {
         await prefs.getThemeMode();
         fail('expected PreferenceDecodeException');
       } on PreferenceDecodeException catch (e) {
+        expect(e, isA<RepositoryException>());
         expect(e.key, 'theme_mode');
         expect(e.rawValue, '"purple"');
         expect(e.toString(), contains('theme_mode'));
@@ -183,6 +185,7 @@ void main() {
         await prefs.getSplashEnabled();
         fail('expected PreferenceDecodeException');
       } on PreferenceDecodeException catch (e) {
+        expect(e, isA<RepositoryException>());
         expect(e.key, 'splash_enabled');
         expect(e.rawValue, 'not-json-at-all');
       }
@@ -195,6 +198,7 @@ void main() {
         await prefs.getDefaultAccountId();
         fail('expected PreferenceDecodeException');
       } on PreferenceDecodeException catch (e) {
+        expect(e, isA<RepositoryException>());
         expect(e.key, 'default_account_id');
         expect(e.rawValue, '"not-an-int"');
       }

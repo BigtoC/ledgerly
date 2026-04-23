@@ -77,7 +77,7 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
   /// SQL groups by `date(date, 'localtime')` so days are segmented in
   /// the device's local timezone, matching the home screen UX.
   Stream<List<DateTime>> watchDistinctActivityDays({int limit = 365}) {
-    final dayExpr = transactions.date.date;
+    final dayExpr = transactions.date.modify(const DateTimeModifier.localTime()).date;
     final query = selectOnly(transactions, distinct: true)
       ..addColumns([dayExpr])
       ..orderBy([OrderingTerm(expression: dayExpr, mode: OrderingMode.desc)])

@@ -36,6 +36,13 @@ class Currencies extends Table with TableInfo {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  late final GeneratedColumn<String> customName = GeneratedColumn<String>(
+    'custom_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   late final GeneratedColumn<bool> isToken = GeneratedColumn<bool>(
     'is_token',
     aliasedName,
@@ -60,6 +67,7 @@ class Currencies extends Table with TableInfo {
     decimals,
     symbol,
     nameL10nKey,
+    customName,
     isToken,
     sortOrder,
   ];
@@ -547,8 +555,8 @@ class UserPreferences extends Table with TableInfo {
   }
 }
 
-class DatabaseAtV1 extends GeneratedDatabase {
-  DatabaseAtV1(QueryExecutor e) : super(e);
+class DatabaseAtV2 extends GeneratedDatabase {
+  DatabaseAtV2(QueryExecutor e) : super(e);
   late final Currencies currencies = Currencies(this);
   late final Categories categories = Categories(this);
   late final AccountTypes accountTypes = AccountTypes(this);
@@ -588,5 +596,5 @@ class DatabaseAtV1 extends GeneratedDatabase {
     accountsAccountTypeIdx,
   ];
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 }

@@ -274,6 +274,14 @@ final class DriftAccountTypeRepository implements AccountTypeRepository {
 
   @override
   Future<void> delete(int id) async {
+    final existing = await _dao.findById(id);
+    if (existing == null) {
+      throw AccountTypeNotFoundException(id);
+    }
+    if (existing.l10nKey != null) {
+      throw AccountTypeInUseException(id);
+    }
+
     final inUse = await _dao.hasReferencingAccounts(id);
     if (inUse) {
       throw AccountTypeInUseException(id);

@@ -33,6 +33,17 @@ import '../models/currency.dart';
 import 'currency_repository.dart';
 import 'repository_exceptions.dart';
 
+/// Generic account-layer failure for stale/missing-row writes that do not map
+/// to one of the shared cross-stream repository exceptions.
+class AccountRepositoryException implements Exception {
+  const AccountRepositoryException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => 'AccountRepositoryException: $message';
+}
+
 /// SSOT for `accounts`. Owns every write path to the Drift `accounts`
 /// table. Drift data classes never leave this file.
 abstract class AccountRepository {
@@ -135,7 +146,10 @@ final class DriftAccountRepository implements AccountRepository {
       return _dao.insert(_toCompanion(account));
     }
 
-    await _dao.updateRow(_toCompanion(account));
+    final updated = await _dao.updateRow(_toCompanion(account));
+    if (!updated) {
+      throw AccountRepositoryException('Account ${account.id} not found');
+    }
     return account.id;
   }
 

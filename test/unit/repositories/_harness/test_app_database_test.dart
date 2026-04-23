@@ -11,19 +11,28 @@
 // land as their sibling repositories merge in later phases.
 
 import 'package:drift/drift.dart' show Variable;
+import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/data/database/app_database.dart';
 
 import 'test_app_database.dart';
 
 void main() {
+  setUpAll(() {
+    driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+  });
+
+  tearDownAll(() {
+    driftRuntimeOptions.dontWarnAboutMultipleDatabases = false;
+  });
+
   group('newTestAppDatabase()', () {
     test('returns a fresh AppDatabase that opens cleanly', () async {
       final AppDatabase db = newTestAppDatabase();
       addTearDown(() async => db.close());
 
       expect(db, isA<AppDatabase>());
-      expect(db.schemaVersion, 1);
+      expect(db.schemaVersion, 2);
     });
 
     test('has foreign_keys = ON (the beforeOpen pragma is applied)', () async {

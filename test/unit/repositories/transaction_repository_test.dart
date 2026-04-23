@@ -9,7 +9,9 @@
 // directly via `customStatement` calls so Stream A can merge ahead of
 // Stream C's harness completion.
 
-import 'package:drift/drift.dart' show Variable;
+import 'package:drift/drift.dart'
+    show ApplyInterceptor, QueryExecutor, QueryInterceptor, Variable, driftRuntimeOptions;
+import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/data/database/app_database.dart' show AppDatabase;
 import 'package:ledgerly/data/models/currency.dart';
@@ -161,9 +163,31 @@ class _Fixtures {
   final int accountId;
 }
 
+class _SelectCountingInterceptor extends QueryInterceptor {
+  final statements = <String>[];
+
+  @override
+  Future<List<Map<String, Object?>>> runSelect(
+    QueryExecutor executor,
+    String statement,
+    List<Object?> args,
+  ) {
+    statements.add(statement);
+    return super.runSelect(executor, statement, args);
+  }
+}
+
 // ---------------------------------------------------------------------------
 
 void main() {
+  setUpAll(() {
+    driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+  });
+
+  tearDownAll(() {
+    driftRuntimeOptions.dontWarnAboutMultipleDatabases = false;
+  });
+
   late AppDatabase db;
   late _Fixtures fixtures;
   late TransactionRepository txRepo;
@@ -285,6 +309,28 @@ void main() {
       expect(rows23.length, 1);
       expect(rows23.single.amountMinorUnits, 2);
     });
+
+    test('T-day-04: DST change still ends at next local midnight', () async {
+      final day = DateTime(2026, 3, 8);
+      final nextMidnight = DateTime(2026, 3, 9);
+
+      // This assertion is meaningful only in time zones where the process sees
+      // a DST transition on 2026-03-08. We run it explicitly under
+      // `TZ=America/New_York` in verification.
+      if (day.timeZoneOffset == nextMidnight.timeZoneOffset) {
+        return;
+      }
+
+      await txRepo.save(
+        sampleTx(
+          amount: 1,
+          date: DateTime(2026, 3, 9, 0, 30),
+        ),
+      );
+
+      final rows = await txRepo.watchByDay(day).first;
+      expect(rows, isEmpty);
+    });
   });
 
   group('watchDaysWithActivity', () {
@@ -323,6 +369,15 @@ void main() {
       final days = await txRepo.watchDaysWithActivity().first;
       expect(days, hasLength(1));
       expect(days.single, DateTime(2026, 4, 22));
+    });
+
+    test('T-days-03: groups activity by local day near UTC midnight', () async {
+      await txRepo.save(
+        sampleTx(date: DateTime.utc(2026, 4, 21, 16, 30)),
+      );
+
+      final days = await txRepo.watchDaysWithActivity().first;
+      expect(days, [DateTime(2026, 4, 22)]);
     });
   });
 
@@ -538,6 +593,52 @@ void main() {
       await txRepo.save(sampleTx(amount: 1));
       await Future<void>.delayed(Duration.zero);
       expect(emissions.last.length, 1);
+    });
+  });
+
+  group('read-path batching', () {
+    test('watchByDay resolves each currency code once per snapshot', () async {
+      final interceptor = _SelectCountingInterceptor();
+      final executor = NativeDatabase.memory();
+      final countedDb = AppDatabase(
+        executor.interceptWith(interceptor),
+      );
+      addTearDown(() async => countedDb.close());
+
+      final countedFixtures = await _seedFixtures(countedDb);
+      final countedRepo = DriftTransactionRepository(
+        countedDb,
+        clock: () => DateTime(2026, 4, 22, 12, 0),
+      );
+
+      Future<Transaction> insert(int amount) {
+        return countedRepo.save(
+          Transaction(
+            id: 0,
+            amountMinorUnits: amount,
+            currency: _usd,
+            categoryId: countedFixtures.expenseCategoryId,
+            accountId: countedFixtures.accountId,
+            date: DateTime(2026, 4, 22, 9, amount),
+            memo: null,
+            createdAt: DateTime.utc(0),
+            updatedAt: DateTime.utc(0),
+          ),
+        );
+      }
+
+      await insert(1);
+      await insert(2);
+      await insert(3);
+      interceptor.statements.clear();
+
+      final rows = await countedRepo.watchByDay(DateTime(2026, 4, 22)).first;
+
+      expect(rows, hasLength(3));
+      final currencySelects = interceptor.statements
+          .where((sql) => sql.contains('FROM "currencies"'))
+          .length;
+      expect(currencySelects, 1);
     });
   });
 }

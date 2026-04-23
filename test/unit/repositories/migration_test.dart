@@ -52,20 +52,44 @@ void main() {
       // snapshot" mistake next time Phase 2 touches the file.
       final db = AppDatabase(NativeDatabase.memory());
       addTearDown(() async => db.close());
-      expect(db.schemaVersion, 1);
-      // The drift_dev-generated helper also claims v1 as its latest.
+      expect(db.schemaVersion, 2);
+      // The drift_dev-generated helper should advance with the new snapshot.
       expect(GeneratedHelper.versions, contains(db.schemaVersion));
       expect(GeneratedHelper.versions.last, db.schemaVersion);
     });
 
     group('v1 snapshot', () {
+      test('upgrades v1 DBs to the live schema and preserves rows', () async {
+        final verifier = SchemaVerifier(GeneratedHelper());
+        final schema = await verifier.schemaAt(1);
+        final legacyDb = v1.DatabaseAtV1(schema.newConnection());
+        addTearDown(() async => legacyDb.close());
+
+        await legacyDb.customStatement(
+          'INSERT INTO currencies (code, decimals, symbol, name_l10n_key, '
+          'is_token, sort_order) VALUES (?, ?, ?, ?, 0, ?)',
+          <Object?>['USD', 2, r'$', 'currency.usd', 1],
+        );
+        await legacyDb.close();
+
+        final db = AppDatabase(schema.newConnection());
+        addTearDown(() async => db.close());
+
+        await verifier.migrateAndValidate(db, db.schemaVersion);
+
+        final rows = await db.select(db.currencies).get();
+        expect(rows, hasLength(1));
+        expect(rows.single.code, 'USD');
+        expect(rows.single.customName, isNull);
+      });
+
       test('opens cleanly on an empty DB and matches the committed '
           'schema', () async {
         final verifier = SchemaVerifier(GeneratedHelper());
 
         // `schemaAt` materialises the v1 DDL from the committed JSON
         // snapshot; `startAt` loads that DDL into a live native DB.
-        final schema = await verifier.schemaAt(1);
+        final schema = await verifier.schemaAt(dbVersionForOpenCheck);
         final db = AppDatabase(schema.newConnection());
         addTearDown(() async => db.close());
 
@@ -73,7 +97,7 @@ void main() {
         // is a no-op; onCreate is skipped because the snapshot already
         // created every table.
         await db.customStatement('SELECT 1');
-        expect(db.schemaVersion, 1);
+        expect(db.schemaVersion, dbVersionForOpenCheck);
 
         // Cross-check the live DB's schema vs. the generated expectation.
         // If the snapshot drifted from the code (e.g. someone renamed a
@@ -119,11 +143,14 @@ void main() {
         await db.validateDatabaseSchema();
       });
 
-      test('foreign_keys stays ON after onUpgrade runs', () async {
-        final db = AppDatabase(NativeDatabase.memory());
+      test('foreign_keys stays ON after a real upgrade run', () async {
+        final verifier = SchemaVerifier(GeneratedHelper());
+        final connection = await verifier.startAt(1);
+        final db = AppDatabase(connection.executor);
         addTearDown(() async => db.close());
 
-        // beforeOpen ran PRAGMA foreign_keys = ON.
+        await verifier.migrateAndValidate(db, db.schemaVersion);
+
         final result = await db.customSelect('PRAGMA foreign_keys').getSingle();
         expect(result.read<int>('foreign_keys'), 1);
       });
@@ -148,9 +175,8 @@ void main() {
       });
     });
 
-    // TODO(phase-2): add 'v1 -> v2 on empty DB' and
-    // 'v1 -> v2 on seeded DB' blocks once drift_schema_v2.json lands.
-    // The SchemaVerifier already supports `testAll(...)` across every
-    // committed version pair — wire that once Phase 2 dumps v2.
+    // TODO(phase-2): extend this to v2 -> v3 once Phase 2 adds a third snapshot.
   });
 }
+
+const int dbVersionForOpenCheck = 2;

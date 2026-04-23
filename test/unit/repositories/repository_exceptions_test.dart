@@ -6,6 +6,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/data/repositories/repository_exceptions.dart';
+import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 
 void main() {
   group('RepositoryException (sealed base)', () {
@@ -109,6 +110,36 @@ void main() {
     test('extends RepositoryException', () {
       const exception = AccountInUseException(3);
       expect(exception, isA<RepositoryException>());
+    });
+  });
+
+  group('PreferenceDecodeException', () {
+    test('extends RepositoryException', () {
+      final exception = PreferenceDecodeException(
+        'theme_mode',
+        '"purple"',
+        ArgumentError('bad value'),
+      );
+
+      expect(exception, isA<RepositoryException>());
+    });
+
+    test('retains key/rawValue/cause and shared toString shape', () {
+      final exception = PreferenceDecodeException(
+        'default_currency',
+        '123',
+        const FormatException('wrong type'),
+      );
+
+      expect(exception.key, 'default_currency');
+      expect(exception.rawValue, '123');
+      expect(exception.cause, isA<FormatException>());
+      expect(
+        exception.toString(),
+        'PreferenceDecodeException: '
+        'user_preferences[default_currency] corrupted: '
+        'FormatException: wrong type',
+      );
     });
   });
 }

@@ -126,9 +126,8 @@ abstract class CategoryRepository {
   /// remain queryable via `includeArchived: true`. Idempotent.
   Future<Category> archive(int id);
 
-  /// Hard-delete. Only allowed when the category has no referencing
-  /// transactions. Throws [CategoryInUseException] when at least one
-  /// transaction references the id.
+  /// Hard-delete. Only allowed for unused custom categories. Throws
+  /// [CategoryInUseException] when at least one transaction references the id.
   Future<bool> delete(int id);
 
   /// Returns `true` when at least one row in `transactions` references
@@ -350,10 +349,21 @@ final class DriftCategoryRepository implements CategoryRepository {
 
   @override
   Future<bool> delete(int id) async {
+    final existing = await _dao.findById(id);
+    if (existing == null) {
+      return false;
+    }
+
     final refCount = await _txDao.countByCategory(id);
     if (refCount > 0) {
       throw CategoryInUseException(id);
     }
+    if (existing.l10nKey != null) {
+      throw CategoryRepositoryException(
+        'Seeded category $id cannot be deleted; archive it instead',
+      );
+    }
+
     final removed = await _dao.deleteById(id);
     return removed > 0;
   }

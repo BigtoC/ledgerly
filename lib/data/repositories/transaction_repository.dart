@@ -15,6 +15,7 @@
 
 import 'package:drift/drift.dart' show Value;
 
+import '../../core/utils/date_helpers.dart';
 import '../database/app_database.dart' as drift;
 import '../database/daos/currency_dao.dart';
 import '../database/daos/transaction_dao.dart';
@@ -109,11 +110,13 @@ final class DriftTransactionRepository implements TransactionRepository {
 
   @override
   Stream<List<Transaction>> watchByDay(DateTime day) {
-    final start = DateTime(day.year, day.month, day.day);
-    final end = start.add(const Duration(days: 1));
+    final start = DateHelpers.startOfDay(day);
+    final end = DateHelpers.startOfDay(
+      DateTime(day.year, day.month, day.day + 1),
+    );
     return _dao
         .watchInDateRange(start: start, end: end)
-        .asyncMap((rows) => Future.wait(rows.map(_toDomain)));
+        .asyncMap(_rowsToDomain);
   }
 
   @override
@@ -127,7 +130,7 @@ final class DriftTransactionRepository implements TransactionRepository {
   Stream<List<Transaction>> watchForAccount(int accountId, {int limit = 200}) {
     return _dao
         .watchByAccount(accountId, limit: limit)
-        .asyncMap((rows) => Future.wait(rows.map(_toDomain)));
+        .asyncMap(_rowsToDomain);
   }
 
   @override
@@ -137,7 +140,7 @@ final class DriftTransactionRepository implements TransactionRepository {
   }) {
     return _dao
         .watchByCategory(categoryId, limit: limit)
-        .asyncMap((rows) => Future.wait(rows.map(_toDomain)));
+        .asyncMap(_rowsToDomain);
   }
 
   @override
@@ -223,6 +226,37 @@ final class DriftTransactionRepository implements TransactionRepository {
   }
 
   // ---------- Private mapping ----------
+
+  Future<List<Transaction>> _rowsToDomain(
+    List<drift.TransactionRow> rows,
+  ) async {
+    if (rows.isEmpty) {
+      return const <Transaction>[];
+    }
+
+    final codes = rows.map((row) => row.currency).toSet();
+    final currenciesByCode = <String, Currency>{};
+    for (final code in codes) {
+      final currencyRow = (await _currencyDao.findByCode(code))!;
+      currenciesByCode[code] = _currencyFromRow(currencyRow);
+    }
+
+    return rows
+        .map(
+          (row) => Transaction(
+            id: row.id,
+            amountMinorUnits: row.amountMinorUnits,
+            currency: currenciesByCode[row.currency]!,
+            categoryId: row.categoryId,
+            accountId: row.accountId,
+            memo: row.memo,
+            date: row.date,
+            createdAt: row.createdAt,
+            updatedAt: row.updatedAt,
+          ),
+        )
+        .toList(growable: false);
+  }
 
   Future<Transaction> _toDomain(drift.TransactionRow row) async {
     // Currency FK-resolved on read. Non-null asserted because the row

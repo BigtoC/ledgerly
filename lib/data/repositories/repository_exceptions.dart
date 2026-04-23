@@ -18,7 +18,7 @@
 
 /// Base for every typed repository exception. Never thrown directly —
 /// subclasses carry the specific failure.
-sealed class RepositoryException implements Exception {
+abstract class RepositoryException implements Exception {
   const RepositoryException(this.message);
 
   /// Human-readable description. Intended for developer logs and test

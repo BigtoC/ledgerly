@@ -27,6 +27,7 @@ import 'package:flutter/material.dart' show ThemeMode, Locale;
 
 import '../database/app_database.dart';
 import '../database/daos/user_preferences_dao.dart';
+import 'repository_exceptions.dart';
 
 /// Shared seed-default + repository-default constant. Stream C plan §9.8 —
 /// the seed writes this literal, and `_watchJson` falls back to it when the
@@ -43,13 +44,11 @@ const String kDefaultSplashButtonLabel = 'Enter';
 /// into the typed return shape (e.g. `'"purple"'` for `theme_mode`), or
 /// when `jsonDecode` itself throws (malformed JSON).
 ///
-/// Declared as `implements Exception` rather than extending the shared
-/// sealed `RepositoryException` base — the base class is closed to outside
-/// subclasses (same pattern as Stream A's `CategoryRepositoryException` in
-/// `category_repository.dart`). `toString()` shape mirrors the shared base
-/// so consumer logs stay uniform.
-class PreferenceDecodeException implements Exception {
-  PreferenceDecodeException(this.key, this.rawValue, this.cause);
+/// Extends the shared [RepositoryException] base so callers can handle
+/// corrupted preference state alongside other typed repository failures.
+class PreferenceDecodeException extends RepositoryException {
+  PreferenceDecodeException(this.key, this.rawValue, this.cause)
+    : super('user_preferences[$key] corrupted: $cause');
 
   /// The key whose stored value failed to decode.
   final String key;
@@ -59,10 +58,6 @@ class PreferenceDecodeException implements Exception {
 
   /// Underlying decode failure (JSON parse error or type mismatch).
   final Object cause;
-
-  /// Human-readable message. Includes the offending key so consumers can
-  /// surface "corrupted preference: theme_mode" without string-munging.
-  String get message => 'user_preferences[$key] corrupted: $cause';
 
   @override
   String toString() => 'PreferenceDecodeException: $message';

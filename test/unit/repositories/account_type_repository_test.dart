@@ -312,6 +312,22 @@ void main() {
       },
     );
 
+    test('AT12b: delete seeded unused account type is rejected', () async {
+      final id = await repo.save(
+        const AccountType(
+          id: 0,
+          l10nKey: 'accountType.cash',
+          icon: 'wallet',
+          color: 10,
+          defaultCurrency: _usd,
+        ),
+      );
+
+      await expectLater(repo.delete(id), throwsA(isA<Exception>()));
+
+      expect(await repo.getById(id), isNotNull);
+    });
+
     test('AT13: isReferenced matches delete predicate', () async {
       final typeId = await repo.save(
         const AccountType(

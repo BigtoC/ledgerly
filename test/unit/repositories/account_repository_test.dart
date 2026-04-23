@@ -342,6 +342,20 @@ void main() {
       },
     );
 
+    test('AC15b: update of missing row throws instead of reporting success', () async {
+      await expectLater(
+        repo.save(
+          buildCashAccount(
+            id: 999,
+            name: 'Missing',
+          ),
+        ),
+        throwsA(isA<Exception>()),
+      );
+
+      expect(await repo.getById(999), isNull);
+    });
+
     test(
       'AC16: Guardrail G8 — icon is String?, color is int? (both nullable)',
       () async {
