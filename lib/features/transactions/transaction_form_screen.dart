@@ -10,3 +10,15 @@
 //
 // `resizeToAvoidBottomInset: false` is mandatory — see risk #6 and
 // guardrail G11. The keypad must never be covered by the soft keyboard.
+
+import 'package:flutter/material.dart';
+
+class TransactionFormScreen extends StatelessWidget {
+  const TransactionFormScreen({super.key, this.transactionId});
+
+  final int? transactionId;
+
+  @override
+  Widget build(BuildContext context) =>
+      const Scaffold(body: Center(child: Text('Transaction Form')));
+}

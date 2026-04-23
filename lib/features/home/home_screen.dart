@@ -11,3 +11,21 @@
 // `watchByDay(selectedDay)`; prev/next walks across days-with-activity.
 // NEVER nest a ListView inside a Column. No groupBy / fold / NumberFormat /
 // DateFormat in build() — HomeController owns presentation transformation.
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../l10n/app_localizations.dart';
+
+class HomeScreen extends ConsumerWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.appTitle)),
+      body: const Center(child: Text('Home')),
+    );
+  }
+}
