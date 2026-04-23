@@ -2,7 +2,7 @@
 
 **Source of truth:** [`PRD.md`](../../../../PRD.md) → *Splash Screen (MVP)*, *Routing Structure*, *Testing Strategy → Widget Tests*. Contracts inherited from [`wave-0-contracts-plan.md`](../wave-0-contracts-plan.md).
 
-Splash owns the `/splash` route: an hnotes-style day counter with sun background, large center number, rainbow-gradient start date, customizable display text, and an "Enter" button that fades to Home.
+Splash owns the `/splash` route: a hnotes-style day counter with sun background, large center number, rainbow-gradient start date, customizable display text, and an "Enter" button that fades to Home.
 
 Golden tests are mandatory per `implementation-plan.md` → *Testing Rollout* — the visual design is a product requirement, not a nice-to-have.
 
@@ -16,14 +16,14 @@ Replace the M4 placeholder at `lib/features/splash/splash_screen.dart` with the 
 
 ## 2. Inputs
 
-| Dependency                          | Purpose                                                              | Import path                                                |
-|-------------------------------------|----------------------------------------------------------------------|-------------------------------------------------------------|
-| `userPreferencesRepositoryProvider` | Read `splash_start_date`, `splash_display_text`, `splash_button_label` (write is Settings' concern) | `app/providers/repository_providers.dart`                  |
-| `splashGateSnapshotProvider`        | First-frame hydrated snapshot of splash prefs from bootstrap         | `app/providers/splash_redirect_provider.dart`              |
-| `splashStartDateProvider`           | Reactive watch on `splash_start_date`                                | `app/providers/splash_redirect_provider.dart`              |
-| `date_helpers.dart`                 | `daysBetween(startDate, now)` (implemented in M2)                    | `core/utils/date_helpers.dart`                              |
-| `AppLocalizations`                  | `splash*` keys (already reserved in M4)                              | `l10n/app_localizations.dart`                               |
-| `intl`                              | Locale-aware date formatting for the rainbow gradient                | `package:intl/intl.dart`                                    |
+| Dependency                          | Purpose                                                                                             | Import path                                   |
+|-------------------------------------|-----------------------------------------------------------------------------------------------------|-----------------------------------------------|
+| `userPreferencesRepositoryProvider` | Read `splash_start_date`, `splash_display_text`, `splash_button_label` (write is Settings' concern) | `app/providers/repository_providers.dart`     |
+| `splashGateSnapshotProvider`        | First-frame hydrated snapshot of splash prefs from bootstrap                                        | `app/providers/splash_redirect_provider.dart` |
+| `splashStartDateProvider`           | Reactive watch on `splash_start_date`                                                               | `app/providers/splash_redirect_provider.dart` |
+| `date_helpers.dart`                 | `daysBetween(startDate, now)` (implemented in M2)                                                   | `core/utils/date_helpers.dart`                |
+| `AppLocalizations`                  | `splash*` keys (already reserved in M4)                                                             | `l10n/app_localizations.dart`                 |
+| `intl`                              | Locale-aware date formatting for the rainbow gradient                                               | `package:intl/intl.dart`                      |
 
 Splash **does not** write any preferences — the first-frame `Set start date` fallback that the current placeholder exposes is **moved to Settings** (see §8). Splash becomes read-only.
 

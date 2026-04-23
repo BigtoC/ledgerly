@@ -16,16 +16,16 @@ Settings is the **write-side** for every cross-slice preference. Splash, Home, T
 
 ## 2. Inputs
 
-| Dependency                          | Purpose                                                                                                 | Import path                                  |
-|-------------------------------------|---------------------------------------------------------------------------------------------------------|----------------------------------------------|
-| `userPreferencesRepositoryProvider` | Read/write all preferences: `themeMode`, `locale`, `defaultCurrency`, `defaultAccountId`, `splash_*`    | `app/providers/repository_providers.dart`    |
-| `accountRepositoryProvider`         | List non-archived accounts for the default-account picker                                               | `app/providers/repository_providers.dart`    |
-| `currencyRepositoryProvider`        | List currencies for the default-currency picker                                                          | `app/providers/repository_providers.dart`    |
-| `themeModeProvider` (M4)            | Reactive theme preference for the UI                                                                     | `app/providers/theme_provider.dart`          |
-| `localePreferenceProvider` (M4)     | Reactive locale preference for the UI                                                                    | `app/providers/locale_provider.dart`         |
-| `AppLocalizations`                  | `settings*` keys (splash subsection already reserved) + any new UI keys                                  | `l10n/app_localizations.dart`                |
+| Dependency                          | Purpose                                                                                              | Import path                               |
+|-------------------------------------|------------------------------------------------------------------------------------------------------|-------------------------------------------|
+| `userPreferencesRepositoryProvider` | Read/write all preferences: `themeMode`, `locale`, `defaultCurrency`, `defaultAccountId`, `splash_*` | `app/providers/repository_providers.dart` |
+| `accountRepositoryProvider`         | List non-archived accounts for the default-account picker                                            | `app/providers/repository_providers.dart` |
+| `currencyRepositoryProvider`        | List currencies for the default-currency picker                                                      | `app/providers/repository_providers.dart` |
+| `themeModeProvider` (M4)            | Reactive theme preference for the UI                                                                 | `app/providers/theme_provider.dart`       |
+| `localePreferenceProvider` (M4)     | Reactive locale preference for the UI                                                                | `app/providers/locale_provider.dart`      |
+| `AppLocalizations`                  | `settings*` keys (splash subsection already reserved) + any new UI keys                              | `l10n/app_localizations.dart`             |
 
-Settings does **not** import from other feature slices. Navigation to Categories goes via `go_router`, not via a direct widget import.
+Settings does **not** import from other feature slices. Navigation to `Categories` goes via `go_router`, not via a direct widget import.
 
 ---
 
@@ -86,12 +86,12 @@ No `Empty` variant. The bootstrap sequence guarantees user_preferences is popula
 
 Rendered as a `CustomScrollView` with `SliverList` per section. Section headers use `settings_section.dart`.
 
-| Section         | Widgets                                                                                                     | Notes                                                                                      |
-|-----------------|-------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------|
-| Appearance      | `theme_mode_selector`, `language_selector`                                                                  | Theme writes via `setThemeMode`; locale via `setLocale`. UI rebuilds reactively from M4 providers. |
-| General         | `default_account_tile`, `default_currency_tile`                                                             | Default-account picker lists non-archived accounts from `accountRepository.watchAll()`. Default-currency picker lists `currencies` from `currencyRepository.watchAll()`. |
-| Splash          | `splash_settings_section` (enabled toggle, conditional start-date picker, display text, button label)      | Toggle off hides the start-date, display-text, and button-label rows. (PRD → *Splash Screen → Settings*) |
-| Data management | `manage_categories_tile`                                                                                    | Navigates to `/settings/categories`. (Wallets / Ankr key tiles are Phase 2 — not in this slice.) |
+| Section         | Widgets                                                                                               | Notes                                                                                                                                                                    |
+|-----------------|-------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Appearance      | `theme_mode_selector`, `language_selector`                                                            | Theme writes via `setThemeMode`; locale via `setLocale`. UI rebuilds reactively from M4 providers.                                                                       |
+| General         | `default_account_tile`, `default_currency_tile`                                                       | Default-account picker lists non-archived accounts from `accountRepository.watchAll()`. Default-currency picker lists `currencies` from `currencyRepository.watchAll()`. |
+| Splash          | `splash_settings_section` (enabled toggle, conditional start-date picker, display text, button label) | Toggle off hides the start-date, display-text, and button-label rows. (PRD → *Splash Screen → Settings*)                                                                 |
+| Data management | `manage_categories_tile`                                                                              | Navigates to `/settings/categories`. (Wallets / Ankr key tiles are Phase 2 — not in this slice.)                                                                         |
 
 ---
 
@@ -176,7 +176,7 @@ Single agent, single PR:
 
 ## 13. Risks
 
-1. **Theme rebuild scope.** Changing `themeMode` must rebuild `MaterialApp`. Already wired in M4 via `themeModeProvider`; Settings only writes through the repository. Do **not** directly tweak `MaterialApp.theme` from inside Settings — the write-→-read loop handles it.
+1. **Theme rebuild scope.** Changing `themeMode` must rebuild `MaterialApp`. Already wired in M4 via `themeModeProvider`; Settings only writes through the repository. Do **not** directly tweak `MaterialApp.theme` from inside Settings — the `write -→ read` loop handles it.
 2. **Locale change flicker.** Same pattern: write to prefs, `localePreferenceProvider` re-emits, `MaterialApp.locale` updates. Test for: changing locale updates all currently-visible strings without manual navigation.
 3. **Coordinating the splash button removal.** Splash and Settings are parallel in Wave 1. The "Set start date" button removal is logically Settings' concern (Settings takes over the responsibility) but physically lives in `splash_screen.dart`. Recommended: Settings PR does the removal; Splash PR assumes it's already gone. If Splash PR lands first, it leaves the placeholder button; Settings PR will clean up.
 4. **Default-account picker with zero accounts.** Show "Create account" CTA, not a blank sheet.

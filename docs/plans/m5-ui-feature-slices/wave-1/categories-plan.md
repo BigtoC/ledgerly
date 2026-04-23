@@ -113,10 +113,10 @@ Save path calls the appropriate controller command. Repository exceptions (`Cate
 
 Enforced in the controller (not the widget):
 
-| Condition                                                | Affordance |
-|-----------------------------------------------------------|------------|
-| `isReferenced(id) == true`                                | Archive    |
-| `l10nKey != null` (seeded row), referenced or not         | Archive    |
+| Condition                                                          | Affordance |
+|--------------------------------------------------------------------|------------|
+| `isReferenced(id) == true`                                         | Archive    |
+| `l10nKey != null` (seeded row), referenced or not                  | Archive    |
 | `l10nKey == null` AND `isReferenced(id) == false` (custom, unused) | Delete     |
 
 - After Archive: SnackBar with `commonUndo` action. Controller exposes `undoArchive(id)` which calls `save` with `isArchived: false`.

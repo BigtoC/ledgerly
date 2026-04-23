@@ -16,14 +16,14 @@ Replace the M4 placeholder at `lib/features/accounts/accounts_screen.dart` with 
 
 ## 2. Inputs
 
-| Dependency                          | Purpose                                                             | Import path                                  |
-|-------------------------------------|---------------------------------------------------------------------|----------------------------------------------|
-| `accountRepositoryProvider`         | `watchAll`, `save`, `archive`, `delete`, `isReferenced`, `watchBalanceMinorUnits` (added in Wave 0 §2.8) | `app/providers/repository_providers.dart`    |
-| `accountTypeRepositoryProvider`     | List account types for picker; create custom account type inline   | `app/providers/repository_providers.dart`    |
-| `currencyRepositoryProvider`        | List currencies for the currency picker                            | `app/providers/repository_providers.dart`    |
-| `userPreferencesRepositoryProvider` | Read `default_currency`, read/write `default_account_id`           | `app/providers/repository_providers.dart`    |
-| `money_formatter.dart`              | Render minor-unit balances as localized strings                    | `core/utils/money_formatter.dart`            |
-| `icon_registry.dart` / `color_palette.dart` | Render tile icon/color                                      | `core/utils/*.dart`                          |
+| Dependency                                  | Purpose                                                                                                  | Import path                               |
+|---------------------------------------------|----------------------------------------------------------------------------------------------------------|-------------------------------------------|
+| `accountRepositoryProvider`                 | `watchAll`, `save`, `archive`, `delete`, `isReferenced`, `watchBalanceMinorUnits` (added in Wave 0 §2.8) | `app/providers/repository_providers.dart` |
+| `accountTypeRepositoryProvider`             | List account types for picker; create custom account type inline                                         | `app/providers/repository_providers.dart` |
+| `currencyRepositoryProvider`                | List currencies for the currency picker                                                                  | `app/providers/repository_providers.dart` |
+| `userPreferencesRepositoryProvider`         | Read `default_currency`, read/write `default_account_id`                                                 | `app/providers/repository_providers.dart` |
+| `money_formatter.dart`                      | Render minor-unit balances as localized strings                                                          | `core/utils/money_formatter.dart`         |
+| `icon_registry.dart` / `color_palette.dart` | Render tile icon/color                                                                                   | `core/utils/*.dart`                       |
 
 The slice **does not** directly read transactions. Balance rendering goes exclusively through `watchBalanceMinorUnits`, which Wave 0 §2.8 added to `AccountRepository`.
 
