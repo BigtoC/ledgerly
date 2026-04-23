@@ -1,4 +1,5 @@
 import 'package:drift_flutter/drift_flutter.dart';
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -13,7 +14,62 @@ import '../data/seed/first_run_seed.dart';
 import '../data/services/locale_service.dart';
 import 'app.dart';
 import 'providers/app_database_provider.dart';
+import 'providers/locale_provider.dart';
 import 'providers/splash_redirect_provider.dart';
+import 'providers/theme_provider.dart';
+
+typedef InitializeDateFormattingFn = Future<void> Function(String locale);
+typedef ReadThemeModeFn =
+    Future<ThemeMode> Function(UserPreferencesRepository preferences);
+typedef ReadLocaleFn =
+    Future<Locale?> Function(UserPreferencesRepository preferences);
+typedef ReadSplashEnabledFn =
+    Future<bool> Function(UserPreferencesRepository preferences);
+typedef ReadSplashStartDateFn =
+    Future<DateTime?> Function(UserPreferencesRepository preferences);
+typedef RunFirstRunSeedFn =
+    Future<void> Function({
+      required AppDatabase db,
+      required CurrencyRepository currencies,
+      required CategoryRepository categories,
+      required AccountTypeRepository accountTypes,
+      required AccountRepository accounts,
+      required UserPreferencesRepository preferences,
+      required LocaleService localeService,
+    });
+
+Future<void> _initializeDateFormattingForLocale(String locale) =>
+    initializeDateFormatting(locale);
+
+Future<ThemeMode> _readThemeMode(UserPreferencesRepository preferences) =>
+    preferences.getThemeMode();
+
+Future<Locale?> _readLocale(UserPreferencesRepository preferences) =>
+    preferences.getLocale();
+
+Future<bool> _readSplashEnabled(UserPreferencesRepository preferences) =>
+    preferences.getSplashEnabled();
+
+Future<DateTime?> _readSplashStartDate(UserPreferencesRepository preferences) =>
+    preferences.getSplashStartDate();
+
+Future<void> _runSeed({
+  required AppDatabase db,
+  required CurrencyRepository currencies,
+  required CategoryRepository categories,
+  required AccountTypeRepository accountTypes,
+  required AccountRepository accounts,
+  required UserPreferencesRepository preferences,
+  required LocaleService localeService,
+}) => runFirstRunSeed(
+  db: db,
+  currencies: currencies,
+  categories: categories,
+  accountTypes: accountTypes,
+  accounts: accounts,
+  preferences: preferences,
+  localeService: localeService,
+);
 
 Future<void> bootstrap() => bootstrapFor(
   openDatabase: () async => AppDatabase(driftDatabase(name: 'ledgerly')),
@@ -25,6 +81,13 @@ Future<void> bootstrapFor({
   required Future<AppDatabase> Function() openDatabase,
   required LocaleService localeService,
   void Function(Widget)? runAppFn,
+  InitializeDateFormattingFn initializeDateFormattingFn =
+      _initializeDateFormattingForLocale,
+  ReadThemeModeFn getThemeModeFn = _readThemeMode,
+  ReadLocaleFn getLocaleFn = _readLocale,
+  ReadSplashEnabledFn getSplashEnabledFn = _readSplashEnabled,
+  ReadSplashStartDateFn getSplashStartDateFn = _readSplashStartDate,
+  RunFirstRunSeedFn runFirstRunSeedFn = _runSeed,
   List<Override> extraOverrides = const [],
 }) async {
   // Step 1 — Framework binding.
@@ -36,19 +99,21 @@ Future<void> bootstrapFor({
   // Step 3 — LocaleService (synchronous; dedicated step for PRD ordering).
 
   // Step 4 — intl locale data (must precede first DateFormat call).
-  await initializeDateFormatting('en_US');
-  await initializeDateFormatting('zh_TW');
-  await initializeDateFormatting('zh_CN');
+  await initializeDateFormattingFn('en_US');
+  await initializeDateFormattingFn('zh_TW');
+  await initializeDateFormattingFn('zh_CN');
 
-  // Step 5 — Eager preference read. Pre-seeds SplashGateSnapshot so the
-  // router's first redirect sees real values on the first frame, not defaults.
+  // Step 5 — Eager preference read. Pre-seeds the first frame so the router,
+  // splash UI, theme, and locale all see persisted values immediately.
   final preferencesRepo = DriftUserPreferencesRepository(db);
-  final splashEnabled = await preferencesRepo.getSplashEnabled();
-  final splashStartDate = await preferencesRepo.getSplashStartDate();
+  final initialThemeMode = await getThemeModeFn(preferencesRepo);
+  final initialLocale = await getLocaleFn(preferencesRepo);
+  final splashEnabled = await getSplashEnabledFn(preferencesRepo);
+  final splashStartDate = await getSplashStartDateFn(preferencesRepo);
 
   // Step 6 — First-run seed (idempotent; short-circuits if already run).
   final currenciesRepo = DriftCurrencyRepository(db);
-  await runFirstRunSeed(
+  await runFirstRunSeedFn(
     db: db,
     currencies: currenciesRepo,
     categories: DriftCategoryRepository(db),
@@ -63,6 +128,8 @@ Future<void> bootstrapFor({
     ProviderScope(
       overrides: [
         appDatabaseProvider.overrideWithValue(db),
+        initialThemeModeProvider.overrideWithValue(initialThemeMode),
+        initialPreferredLocaleProvider.overrideWithValue(initialLocale),
         splashGateSnapshotProvider.overrideWith((ref) {
           final notifier = SplashGateSnapshot.withInitial(
             enabled: splashEnabled,

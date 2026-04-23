@@ -28,7 +28,11 @@ GoRouter router(Ref ref) {
     refreshListenable: gate,
     redirect: (context, state) {
       if (!gate.splashEnabled) {
-        return state.matchedLocation == '/' ? '/home' : null;
+        if (state.matchedLocation == '/' ||
+            state.matchedLocation == '/splash') {
+          return '/home';
+        }
+        return null;
       }
       if (state.matchedLocation == '/') return '/splash';
       return null;
@@ -65,6 +69,10 @@ GoRouter router(Ref ref) {
                   ),
                   GoRoute(
                     path: 'edit/:id',
+                    redirect: (_, state) =>
+                        int.tryParse(state.pathParameters['id'] ?? '') == null
+                        ? '/home'
+                        : null,
                     parentNavigatorKey: _rootNavigatorKey,
                     pageBuilder: (ctx, state) => _modalPage(
                       state,
