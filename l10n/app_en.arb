@@ -182,6 +182,10 @@
   "@splashEnter": {
     "description": "PRD 527, 547. Default splash 'Enter' button label."
   },
+  "splashSetStartDate": "Set start date",
+  "@splashSetStartDate": {
+    "description": "M4 placeholder. First-run splash prompt to set the start date."
+  },
   "splashSinceDate": "Since {date}",
   "@splashSinceDate": {
     "description": "PRD 526, 546. Splash default display text. {date} is formatted locale-aware via intl (yMMMMd).",

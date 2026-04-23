@@ -53,6 +53,7 @@
   "accountTypeInvestment": "投资",
 
   "splashEnter": "进入",
+  "splashSetStartDate": "设置起始日期",
   "splashSinceDate": "自 {date} 起",
   "splashDayCountLabel": "天",
 
