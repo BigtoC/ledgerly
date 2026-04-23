@@ -17,7 +17,11 @@ class SplashScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final startDate = ref.watch(splashStartDateProvider).value;
+    final initialStartDate = ref
+        .read(splashGateSnapshotProvider)
+        .splashStartDate;
+    final startDate =
+        ref.watch(splashStartDateProvider).valueOrNull ?? initialStartDate;
 
     if (startDate == null) {
       return Scaffold(
