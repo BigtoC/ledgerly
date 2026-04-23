@@ -1,11 +1,124 @@
-// go_router configuration.
-//
-// TODO(M4): Implement the route tree from PRD → Routing Structure:
-//   - StatefulShellRoute for Home / Accounts / Settings (preserve per-tab
-//     navigation state).
-//   - Root redirect: reads `splash_enabled` from user_preferences; when
-//     false the splash route is never visited (guardrail G10).
-//   - Add/Edit Transaction as a modal push (MaterialPage / CupertinoPage)
-//     so the calculator keypad has full vertical space.
-//   - Splash -> Home uses a fade CustomTransitionPage to preserve the
-//     hnotes-style reveal.
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import '../features/accounts/accounts_screen.dart';
+import '../features/categories/categories_screen.dart';
+import '../features/home/home_screen.dart';
+import '../features/settings/settings_screen.dart';
+import '../features/splash/splash_screen.dart';
+import '../features/transactions/transaction_form_screen.dart';
+import 'providers/splash_redirect_provider.dart';
+import 'widgets/adaptive_shell.dart';
+
+part 'router.g.dart';
+
+final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
+
+@Riverpod(keepAlive: true)
+GoRouter router(Ref ref) {
+  final gate = ref.watch(splashGateSnapshotProvider);
+  return GoRouter(
+    navigatorKey: _rootNavigatorKey,
+    initialLocation: '/',
+    debugLogDiagnostics: kDebugMode,
+    refreshListenable: gate,
+    redirect: (context, state) {
+      if (!gate.splashEnabled) {
+        return state.matchedLocation == '/' ? '/home' : null;
+      }
+      if (state.matchedLocation == '/') return '/splash';
+      return null;
+    },
+    routes: [
+      GoRoute(path: '/', builder: (_, _) => const SizedBox.shrink()),
+      GoRoute(
+        path: '/splash',
+        pageBuilder: (ctx, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const SplashScreen(),
+          transitionsBuilder: (_, animation, _, child) =>
+              FadeTransition(opacity: animation, child: child),
+        ),
+      ),
+      StatefulShellRoute.indexedStack(
+        builder: (ctx, state, shell) => AdaptiveShell(
+          currentIndex: shell.currentIndex,
+          onDestinationSelected: shell.goBranch,
+          child: shell,
+        ),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/home',
+                builder: (_, _) => const HomeScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'add',
+                    parentNavigatorKey: _rootNavigatorKey,
+                    pageBuilder: (ctx, state) =>
+                        _modalPage(state, const TransactionFormScreen()),
+                  ),
+                  GoRoute(
+                    path: 'edit/:id',
+                    parentNavigatorKey: _rootNavigatorKey,
+                    pageBuilder: (ctx, state) => _modalPage(
+                      state,
+                      TransactionFormScreen(
+                        transactionId: int.parse(state.pathParameters['id']!),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/accounts',
+                builder: (_, _) => const AccountsScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'new',
+                    builder: (_, _) => const AccountsScreen(),
+                  ),
+                  GoRoute(
+                    path: ':id',
+                    builder: (_, _) => const AccountsScreen(),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/settings',
+                builder: (_, _) => const SettingsScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'categories',
+                    builder: (_, _) => const CategoriesScreen(),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    ],
+  );
+}
+
+Page<void> _modalPage(GoRouterState state, Widget child) {
+  return switch (defaultTargetPlatform) {
+    TargetPlatform.iOS ||
+    TargetPlatform.macOS => CupertinoPage(key: state.pageKey, child: child),
+    _ => MaterialPage(key: state.pageKey, child: child),
+  };
+}
