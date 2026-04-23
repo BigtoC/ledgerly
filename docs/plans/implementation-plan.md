@@ -295,6 +295,20 @@ This widget is for transaction-category selection. The Categories management scr
 - One developer per slice. Do **not** split controller vs widget across devs — the state contract is too fluid during first implementation.
 - When team size < 6, prioritize by dependency fan-out: Categories + Accounts first (Transactions needs them), then Transactions, then Home (needs data to exist), then Settings + Splash last.
 
+**Agent execution waves (approved)**
+
+Claude agents execute M5 in four waves on a shared tree (not worktrees — Freezed/Drift codegen makes cross-worktree rebases painful). One agent per slice; no slice is split across agents.
+
+| Wave | Mode                 | Agents                                                            | Rationale                                                                                                                               |
+|------|----------------------|-------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| 0    | Serial (1 agent)     | [Shared contracts](m5-ui-feature-slices/wave-0-contracts-plan.md) | Freezes `features/categories/widgets/category_picker.dart` API skeleton, reserves ARB keys per slice, records duplicate-flow ownership. |
+| 1    | Parallel (4 agents)  | Splash · Settings · Categories · Accounts                         | Leaf slices with no cross-slice coupling. Categories owner implements `CategoryPicker` internals.                                       |
+| 2    | Serial (1 agent)     | Transactions                                                      | Entry: Categories + Accounts merged so `CategoryPicker` and account selector are real.                                                  |
+| 3    | Serial (1 agent)     | Home                                                              | Entry: Transactions save/duplicate flow merged so FAB → form → return-to-day round-trips.                                               |
+| 4    | Operator (not agent) | Integration                                                       | Replace placeholder routes in `app/router.dart` with real screens, reconcile ARB conflicts, run full test suite.                        |
+
+Branch: M5 continues from the M4 shell branch; cut `feature/m5-feature-slices` at the start of Wave 0.
+
 ---
 
 ### M6 — Integration & polish
