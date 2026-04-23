@@ -13,7 +13,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import '../../../l10n/app_localizations.dart';
+import 'package:ledgerly/l10n/app_localizations.dart';
 
 Future<AppLocalizations> _localizationsFor(
   WidgetTester tester,

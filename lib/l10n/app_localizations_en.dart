@@ -138,6 +138,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get splashEnter => 'Enter';
 
   @override
+  String get splashSetStartDate => 'Set start date';
+
+  @override
   String splashSinceDate(DateTime date) {
     final intl.DateFormat dateDateFormat = intl.DateFormat.yMMMMd(localeName);
     final String dateString = dateDateFormat.format(date);

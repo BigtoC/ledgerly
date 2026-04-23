@@ -358,6 +358,12 @@ abstract class AppLocalizations {
   /// **'Enter'**
   String get splashEnter;
 
+  /// M4 placeholder. First-run splash prompt to set the start date.
+  ///
+  /// In en, this message translates to:
+  /// **'Set start date'**
+  String get splashSetStartDate;
+
   /// PRD 526, 546. Splash default display text. {date} is formatted locale-aware via intl (yMMMMd).
   ///
   /// In en, this message translates to:

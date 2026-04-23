@@ -56,6 +56,7 @@ const Set<String> _expectedEnKeys = <String>{
 
   // §5.3 Group P — Splash + splash-settings.
   'splashEnter',
+  'splashSetStartDate',
   'splashSinceDate',
   'splashDayCountLabel',
   'settingsSplashSection',

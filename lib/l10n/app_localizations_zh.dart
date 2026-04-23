@@ -138,6 +138,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get splashEnter => 'Enter';
 
   @override
+  String get splashSetStartDate => 'Set start date';
+
+  @override
   String splashSinceDate(DateTime date) {
     final intl.DateFormat dateDateFormat = intl.DateFormat.yMMMMd(localeName);
     final String dateString = dateDateFormat.format(date);
@@ -298,6 +301,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get splashEnter => '进入';
 
   @override
+  String get splashSetStartDate => '设置起始日期';
+
+  @override
   String splashSinceDate(DateTime date) {
     final intl.DateFormat dateDateFormat = intl.DateFormat.yMMMMd(localeName);
     final String dateString = dateDateFormat.format(date);
@@ -456,6 +462,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get splashEnter => '進入';
+
+  @override
+  String get splashSetStartDate => '設定起始日期';
 
   @override
   String splashSinceDate(DateTime date) {
