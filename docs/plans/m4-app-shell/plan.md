@@ -273,6 +273,8 @@ SplashGateSnapshot splashGateSnapshot(Ref ref) {
 
 The router's `redirect:` reads `notifier.splashEnabled` and `notifier.splashStartDate` on each invocation, and the router re-evaluates because `refreshListenable: notifier` is set. No `async` inside `redirect:`.
 
+**Duplicate-value no-op.** `_setEnabled` and `_setStartDate` guard with `if (v == field) return;` before writing and calling `notifyListeners()`. This means an identical stream re-emission (e.g. Drift emitting on an unrelated table write) does not trigger a spurious redirect re-evaluation. Debouncing is not needed: `user_preferences` writes are coarse-grained (user tapping a toggle), and no Phase 2 code path writes splash preferences in bursts.
+
 **Initial value correctness.** Stream subscriptions are asynchronous; the first frame could land before either stream has emitted. To avoid a frame flash to the wrong route, bootstrap eagerly reads `getSplashEnabled()` / `getSplashStartDate()` once before `runApp` and uses the results to seed the `SplashGateSnapshot` via a second override (see §4.3). That makes the very first `redirect:` call see the real values.
 
 ### 2.7 `lib/app/router.dart` (replace TODO file)
@@ -678,6 +680,7 @@ Each task lands alongside its tests from §7. Prefer `riverpod_generator` codege
 5. **T5 — Feature placeholders.** Replace the three M5-bound screens (`splash`, `home`, `settings`) with the bare affordances from §2.11. Add one-line placeholders for `accounts`, `categories`, `transactions`. **No controllers.**
 6. **T6 — Adaptive shell.** Implement `lib/app/widgets/adaptive_shell.dart`. *Test:* `test/widget/app/adaptive_shell_test.dart` pumps two `MediaQueryData(size: Size(400, 800))` / `Size(900, 800)` wrappers; asserts `find.byType(NavigationBar)` vs `find.byType(NavigationRail)`.
 7. **T7 — App widget.** Replace `lib/app/app.dart` body with the `ConsumerWidget` from §2.8. Wire `onGenerateTitle`, `localeResolutionCallback`, `theme`, `darkTheme`, `themeMode`. *Test:* smoke test (T10).
+7.5. **T7.5 — Theme reactivity test.** Add `test/widget/app/theme_reactivity_test.dart` (§7.10). Pumps `buildTestApp(db: db)`, calls `container.read(userPreferencesRepositoryProvider).setThemeMode(ThemeMode.dark)`, `pumpAndSettle`, asserts `Theme.of(...).brightness == Brightness.dark`. Must pass before T10 is called done. *Owned by the same PR as T7.*
 8. **T8 — Bootstrap body.** Replace `lib/app/bootstrap.dart` body with §4.1; factor `bootstrapFor(...)` per §4.3. Keep `main.dart` untouched. *Test:* `test/unit/app/bootstrap_order_test.dart` — spy `AppDatabase` records call order; assert "open → intl init → preferences read → seed → runApp" sequence.
 9. **T9 — Test template.** Add `test/support/test_app.dart` with `buildTestApp` + `newTestAppDatabase`. Re-export from the M5 slices via `export 'package:ledgerly_test/test_app.dart'` — if that's too much plumbing, inline-import is fine; the contract is "one function call, no copy-paste".
 10. **T10 — Smoke test rewrite.** Rewrite `test/widget/smoke_test.dart` per §2.13. Keep the old `main boots without errors` assertion but swap the UI expectation to `AppLocalizations.of(ctx).appTitle`.
@@ -773,13 +776,40 @@ Redirect cases + modal page depth assertion.
 
 Spy `AppDatabase` that logs `.transaction`, `.customStatement`, `.close` calls; assert the sequence. Keep this test under 80 lines.
 
-### 7.9 Coverage floor
+### 7.10 `test/widget/app/theme_reactivity_test.dart`
+
+```dart
+testWidgets('setThemeMode(dark) rebuilds MaterialApp with dark brightness', (tester) async {
+  final db = await newTestAppDatabase();
+  await runFirstRunSeed(db: db, …);
+  final container = ProviderContainer(overrides: [
+    appDatabaseProvider.overrideWithValue(db),
+  ]);
+  addTearDown(container.dispose);
+
+  await tester.pumpWidget(UncontrolledProviderScope(
+    container: container,
+    child: const App(),
+  ));
+  await tester.pumpAndSettle();
+
+  await container.read(userPreferencesRepositoryProvider).setThemeMode(ThemeMode.dark);
+  await tester.pumpAndSettle();
+
+  final brightness = Theme.of(tester.element(find.byType(Scaffold).first)).brightness;
+  expect(brightness, Brightness.dark);
+});
+```
+
+Owns the reactivity contract for the `themeModeProvider` + `_themeModeStreamProvider` wiring in M4 code. If the provider plumbing is broken, this test catches it before M5 Settings gets involved.
+
+### 7.11 Coverage floor
 
 Layer-level test count:
 - `test/unit/providers/` — 3 files (provider graph, splash gate, future expansions).
 - `test/unit/app/` — 2 files (router, bootstrap order).
 - `test/unit/utils/` — 1 file (resolve_chinese_locale).
-- `test/widget/` — 2 files (smoke, adaptive shell).
+- `test/widget/` — 3 files (smoke, adaptive shell, theme reactivity).
 - `test/integration/` — 1 file (bootstrap → home, 2 variants).
 
 ---
@@ -804,6 +834,7 @@ Layer-level test count:
 5. **No Phase 2 routes declared.** `/home/pending`, `/settings/wallets`, `/settings/ankr-key` land in Phase 2 PRs. Adding them now creates dead code and drift — the "resist Phase 2 shapes" risk (`implementation-plan.md` §9 #10).
 6. **No `domain/` folder.** MVP has no use cases; `domain/` is Phase 2 only. M4 does not create it.
 7. **Splash first-launch date prompt lives inside `SplashScreen`, not as a separate route.** PRD 535–544 describes it as a **stage** of the splash, not a distinct destination. Keeping it intra-widget aligns with M5's owner splitting the placeholder into a full screen.
+8. **`NavigationBar`, not `BottomNavigationBar`, in `AdaptiveShell`.** PRD 765 names `BottomNavigationBar` as a category shorthand, not a class commitment. `BottomNavigationBar` is a Material 2 widget; rendering it under `useMaterial3: true` produces mismatched elevation, indicators, and label spacing. Every other PRD styling decision (`ColorScheme.fromSeed`, MD3 baseline palette, `material_symbols_icons`) tracks Material 3, so the shell navigation follows. If a Figma mock explicitly requires Material 2 chrome, swap back in a 10-line PR at that point. The §7.4 adaptive-shell test asserts the breakpoint switch, not the concrete widget class, so it stays green either way.
 
 ### 8.3 Deliberately NOT done in M4
 
@@ -815,11 +846,13 @@ Layer-level test count:
 
 ---
 
-## 9. Open questions (none blocking — defer if raised)
+## 9. Open questions
 
-1. **Should `AdaptiveShell` use `NavigationBar` (M3) or `BottomNavigationBar`?** PRD 765 says `BottomNavigationBar`. Material 3 guidance prefers `NavigationBar`. Default to `NavigationBar` to match `useMaterial3: true` in `app_theme.dart`; flag for review if the design mocks in Figma explicitly call out Material 2 chrome.
-2. **Should the integration test also cover the theme-toggle path?** Arguably a separate widget test; §7 does not require it for exit criteria, but the M5 Settings slice should own it when it replaces the placeholder.
-3. **Does `splashGateSnapshotProvider` need debouncing?** `user_preferences.value` writes are coarse-grained (user tapping a toggle), so no. Flag if a Phase 2 automated writer (recurring rule scheduler) emits burst updates.
+All three questions raised during plan review were closed before implementation started.
+
+- **Q1 (NavigationBar vs BottomNavigationBar)** → Closed. Decision: use `NavigationBar`. See §8.2 decision #8.
+- **Q2 (theme-toggle test in M4 or M5?)** → Closed. M4 owns the test because M4 owns the wiring. See §7.10 + task T7.5.
+- **Q3 (debouncing on `splashGateSnapshotProvider`?)** → Closed. No debouncing needed; duplicate-value no-op in the setters is sufficient. See §2.6.
 
 ---
 
@@ -827,7 +860,7 @@ Layer-level test count:
 
 - [ ] `flutter run` on a clean Android + iOS simulator reaches Home via the first-run flow (T13 recording attached).
 - [ ] With `splash_enabled=false` persisted, cold launch lands on Home; `SplashScreen` never builds (verified by §7.5 variant 2).
-- [ ] Theme toggle rebuilds `MaterialApp` (verified by a widget test added in T7 or deferred to M5 per §9 Q2).
+- [ ] `test/widget/app/theme_reactivity_test.dart` passes — `setThemeMode(ThemeMode.dark)` rebuilds with dark brightness (§7.10, T7.5).
 - [ ] `resolveChineseLocale` covers all 8 §7.2 cases.
 - [ ] `test/unit/app/bootstrap_order_test.dart` asserts the PRD step order.
 - [ ] `test/widget/smoke_test.dart` uses `buildTestApp`; passes.
