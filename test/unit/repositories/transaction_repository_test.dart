@@ -10,7 +10,12 @@
 // Stream C's harness completion.
 
 import 'package:drift/drift.dart'
-    show ApplyInterceptor, QueryExecutor, QueryInterceptor, Variable, driftRuntimeOptions;
+    show
+        ApplyInterceptor,
+        QueryExecutor,
+        QueryInterceptor,
+        Variable,
+        driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/data/database/app_database.dart' show AppDatabase;
@@ -321,12 +326,7 @@ void main() {
         return;
       }
 
-      await txRepo.save(
-        sampleTx(
-          amount: 1,
-          date: DateTime(2026, 3, 9, 0, 30),
-        ),
-      );
+      await txRepo.save(sampleTx(amount: 1, date: DateTime(2026, 3, 9, 0, 30)));
 
       final rows = await txRepo.watchByDay(day).first;
       expect(rows, isEmpty);
@@ -372,9 +372,7 @@ void main() {
     });
 
     test('T-days-03: groups activity by local day near UTC midnight', () async {
-      await txRepo.save(
-        sampleTx(date: DateTime.utc(2026, 4, 21, 16, 30)),
-      );
+      await txRepo.save(sampleTx(date: DateTime.utc(2026, 4, 21, 16, 30)));
 
       final days = await txRepo.watchDaysWithActivity().first;
       expect(days, [DateTime(2026, 4, 22)]);
@@ -600,9 +598,7 @@ void main() {
     test('watchByDay resolves each currency code once per snapshot', () async {
       final interceptor = _SelectCountingInterceptor();
       final executor = NativeDatabase.memory();
-      final countedDb = AppDatabase(
-        executor.interceptWith(interceptor),
-      );
+      final countedDb = AppDatabase(executor.interceptWith(interceptor));
       addTearDown(() async => countedDb.close());
 
       final countedFixtures = await _seedFixtures(countedDb);

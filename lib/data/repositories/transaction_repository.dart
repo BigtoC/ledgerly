@@ -128,9 +128,7 @@ final class DriftTransactionRepository implements TransactionRepository {
 
   @override
   Stream<List<Transaction>> watchForAccount(int accountId, {int limit = 200}) {
-    return _dao
-        .watchByAccount(accountId, limit: limit)
-        .asyncMap(_rowsToDomain);
+    return _dao.watchByAccount(accountId, limit: limit).asyncMap(_rowsToDomain);
   }
 
   @override

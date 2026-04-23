@@ -415,16 +415,19 @@ void main() {
       expect(row, isNotNull);
     });
 
-    test('C-delete-03: unused seeded category cannot be hard-deleted', () async {
-      await expectLater(
-        catRepo.delete(fixtures.expenseCategoryId),
-        throwsA(isA<Exception>()),
-      );
+    test(
+      'C-delete-03: unused seeded category cannot be hard-deleted',
+      () async {
+        await expectLater(
+          catRepo.delete(fixtures.expenseCategoryId),
+          throwsA(isA<Exception>()),
+        );
 
-      final row = await catRepo.getById(fixtures.expenseCategoryId);
-      expect(row, isNotNull);
-      expect(row!.l10nKey, 'category.food');
-    });
+        final row = await catRepo.getById(fixtures.expenseCategoryId);
+        expect(row, isNotNull);
+        expect(row!.l10nKey, 'category.food');
+      },
+    );
   });
 
   group('rename (G7)', () {
