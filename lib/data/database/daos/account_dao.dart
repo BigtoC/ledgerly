@@ -55,6 +55,14 @@ class AccountDao extends DatabaseAccessor<AppDatabase> with _$AccountDaoMixin {
     return (select(accounts)..where((a) => a.id.equals(id))).getSingleOrNull();
   }
 
+  /// Watch a single account by id (Edit Account screen). Emits `null`
+  /// once the row is deleted. See M3 Stream B plan §4 / §12 Q5.
+  Stream<AccountRow?> watchById(int id) {
+    return (select(
+      accounts,
+    )..where((a) => a.id.equals(id))).watchSingleOrNull();
+  }
+
   Future<int> insert(AccountsCompanion row) {
     return into(accounts).insert(row);
   }

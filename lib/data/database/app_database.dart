@@ -23,9 +23,9 @@ part 'app_database.g.dart';
 /// deliberately does **not** wire the production executor — that is
 /// the M4 bootstrap's job.
 ///
-/// `schemaVersion` stays at `1` until any schema change ships after
-/// the first tagged release. `account_types` lands in v1 — this is
-/// not a v1→v2 migration.
+/// MVP started at schema version 1. Adding `currencies.custom_name`
+/// requires a real v1 -> v2 migration so existing databases pick up the
+/// new nullable column without rewriting the historical v1 snapshot.
 ///
 /// `beforeOpen` enables `PRAGMA foreign_keys = ON` so the
 /// `.references(...)` constraints emitted by the MVP tables actually
@@ -54,15 +54,15 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
     onUpgrade: (m, from, to) async {
-      // MVP ships at v1; no upgrade steps exist. Phase 2 adds
-      // v1→v2 here (pending_transactions, wallet_addresses,
-      // exchange_rates, + token rows). Do NOT add v2 shapes in MVP.
+      if (from < 2) {
+        await m.addColumn(currencies, currencies.customName);
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');

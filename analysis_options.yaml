@@ -21,6 +21,10 @@ analyzer:
     - "lib/generated/**"
     - ".dart_tool/**"
     - "build/**"
+    # drift_dev `schema generate` output — regenerated from the committed
+    # JSON snapshots in `drift_schemas/` and consumed by the migration
+    # harness at `test/unit/repositories/migration_test.dart`.
+    - "test/unit/repositories/_harness/generated/**"
   errors:
     # Freezed occasionally emits annotations on non-targets; keep info-level.
     invalid_annotation_target: ignore

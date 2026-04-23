@@ -50,7 +50,7 @@ These are easy to violate and expensive to retrofit:
 
 `PRD.md` → *Layout Primitives* specifies the widget tree for screens with known unbounded-constraint or keyboard hazards. Follow them:
 
-- **Home:** `CustomScrollView` with `SliverToBoxAdapter` (summary strip) + `SliverList` (days). Never nest `ListView` in `Column`.
+- **Home:** `CustomScrollView` with `SliverToBoxAdapter` (summary strip) + `SliverToBoxAdapter` (day-nav header with prev/next) + `SliverList` (selected day's transaction rows). Home shows one day at a time — there is no combined infinite day-list. Never nest `ListView` in `Column`.
 - **Add/Edit Transaction:** `Scaffold(resizeToAvoidBottomInset: false)` → `SafeArea` → `Column` with scrollable form `Expanded` above a fixed-height `CalculatorKeypad`. The keypad must not be covered by the soft keyboard.
 - **Category picker:** `ModalBottomSheet` → `CustomScrollView` with `SliverGrid` + `SliverList`.
 - All scrollable regions must survive **2× text scale**; fixed-height widgets (keypad, splash day counter) clamp at 1.5× or reflow.

@@ -15,6 +15,7 @@ class Currencies extends Table {
   IntColumn get decimals => integer()();
   TextColumn get symbol => text().nullable()();
   TextColumn get nameL10nKey => text().named('name_l10n_key').nullable()();
+  TextColumn get customName => text().named('custom_name').nullable()();
   BoolColumn get isToken =>
       boolean().named('is_token').withDefault(const Constant(false))();
   IntColumn get sortOrder => integer().named('sort_order').nullable()();

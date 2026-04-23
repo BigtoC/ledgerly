@@ -16,8 +16,17 @@ abstract class Currency with _$Currency {
     /// Display symbol: `$`, `¥`, `NT$`, ...
     String? symbol,
 
-    /// Optional localized-name key (SQL column: `name_l10n_key`).
+    /// Localized-name key (SQL column: `name_l10n_key`). Seeded currencies
+    /// use `currency.<code>` (e.g. `currency.usd`); nullable so Phase 2
+    /// tokens can omit it when the symbol is itself the display name.
     String? nameL10nKey,
+
+    /// Optional user override for the display name. When non-null, M5
+    /// renders this instead of the localized label resolved from
+    /// `nameL10nKey`. Written via `CurrencyRepository.updateCustomName`;
+    /// never touched by `upsert`. Same rename pattern as
+    /// `categories.custom_name` / `account_types.custom_name`.
+    String? customName,
 
     /// Phase 2 token flag. DB default `false`.
     @Default(false) bool isToken,
