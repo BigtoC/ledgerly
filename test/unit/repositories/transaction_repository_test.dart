@@ -371,23 +371,26 @@ void main() {
       expect(days.single, DateTime(2026, 4, 22));
     });
 
-    test('T-days-03: groups UTC instants by the host local-day boundary', () async {
-      final localMidnight = DateTime(2026, 4, 22);
-      // Convert a pair of local instants around midnight into UTC so this
-      // assertion stays valid on every host timezone (including CI in UTC).
-      final justBeforeLocalMidnight = localMidnight
-          .subtract(const Duration(minutes: 30))
-          .toUtc();
-      final justAfterLocalMidnight = localMidnight
-          .add(const Duration(minutes: 30))
-          .toUtc();
+    test(
+      'T-days-03: groups UTC instants by the host local-day boundary',
+      () async {
+        final localMidnight = DateTime(2026, 4, 22);
+        // Convert a pair of local instants around midnight into UTC so this
+        // assertion stays valid on every host timezone (including CI in UTC).
+        final justBeforeLocalMidnight = localMidnight
+            .subtract(const Duration(minutes: 30))
+            .toUtc();
+        final justAfterLocalMidnight = localMidnight
+            .add(const Duration(minutes: 30))
+            .toUtc();
 
-      await txRepo.save(sampleTx(date: justBeforeLocalMidnight));
-      await txRepo.save(sampleTx(date: justAfterLocalMidnight));
+        await txRepo.save(sampleTx(date: justBeforeLocalMidnight));
+        await txRepo.save(sampleTx(date: justAfterLocalMidnight));
 
-      final days = await txRepo.watchDaysWithActivity().first;
-      expect(days, [DateTime(2026, 4, 22), DateTime(2026, 4, 21)]);
-    });
+        final days = await txRepo.watchDaysWithActivity().first;
+        expect(days, [DateTime(2026, 4, 22), DateTime(2026, 4, 21)]);
+      },
+    );
   });
 
   group('watchForAccount / watchForCategory', () {
