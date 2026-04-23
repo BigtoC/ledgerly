@@ -176,13 +176,60 @@ Both are resolved here so slice agents don't chase false signals while verifying
 - **Delete `app_zh.arb` entirely.** Breaks `flutter pub get` with `Arb file for a fallback, zh, does not exist`. Explicitly ruled out in CLAUDE.md → *Dependency Pins*.
 - **Populate `app_zh.arb` with zh_CN values.** Contradicts the PRD runtime policy that bare `zh` falls back to English, not zh_CN.
 
+### 2.8 `AccountRepository.watchBalanceMinorUnits` (new method)
+
+Wave 1 Accounts requires a tracked-balance stream per `PRD.md` → *accounts* notes ("Tracked balance is derived in the account's native currency from transactions assigned to that account"). The current `AccountRepository` surface cannot compute this:
+
+```dart
+Stream<List<Account>> watchAll({bool includeArchived = false});
+Stream<Account?> watchById(int id);
+Future<int> save(Account account);
+Future<void> archive(int id);
+Future<void> delete(int id);
+Future<bool> isReferenced(int id);
+```
+
+And `TransactionRepository.watchForAccount(accountId, {limit = 200})` only exposes the most recent N rows — insufficient for a complete sum. This is a contract gap, and Wave 0 is where contract gaps close. §2.4's "repository signatures frozen" rule applies to Wave 1+ slice agents; Wave 0 is allowed to extend the contract surface.
+
+**Add to `lib/data/repositories/account_repository.dart`:**
+
+```dart
+/// Sum of all transactions for `accountId` in the account's native
+/// currency, expressed as minor units. Expense transactions subtract
+/// from the balance; income transactions add. `opening_balance_minor_units`
+/// is included. Emits on every insert / update / delete of a transaction
+/// that references this account, and on changes to the account row itself
+/// (opening balance edits). No cross-currency conversion — the transaction
+/// form enforces that transactions on an account use the account's
+/// currency, per PRD.md → Add/Edit Interaction Rules. Archived accounts
+/// still compute a balance (accounts-plan.md §4).
+Stream<int> watchBalanceMinorUnits(int accountId);
+```
+
+**Implementation notes:**
+- Backed by a Drift SQL aggregate over `transactions` joined with `categories.type` for sign, plus `accounts.opening_balance_minor_units` for the base. Use Drift's `.watch()` to emit reactively.
+- Sign convention derived from the linked category: `CategoryType.expense` → subtract, `CategoryType.income` → add. Do not introduce a separate `transaction_type` column (PRD explicitly rejects a third type value).
+
+**Test coverage** — extends `test/unit/repositories/account_repository_test.dart`:
+- Empty account (no transactions, `opening_balance_minor_units = 0`) → emits `0`.
+- Only opening balance → emits opening balance.
+- Single expense → emits `opening - amount`.
+- Single income → emits `opening + amount`.
+- Mixed expense + income → correct net.
+- Transactions on a *different* account do not affect this account's balance.
+- Stream re-emits on insert / update / delete of a transaction for this account.
+- Archived account still emits its balance.
+
+This addition is the **only** repository surface change in Wave 0. If Wave 2/3 (Transactions / Home) discover their own gaps during their plan authoring, those additions land in the respective wave's contracts step, not retroactively here.
+
 ---
 
 ## 3. Exit Criteria
 
 - `lib/features/categories/widgets/category_picker.dart` exists with the frozen signature from §2.1 and throws `UnimplementedError` in its body.
+- `AccountRepository.watchBalanceMinorUnits(int)` (§2.8) is implemented in `DriftAccountRepository`, exported from the `AccountRepository` abstract class, and covered by the eight tests enumerated in §2.8. Every Wave 1 Accounts agent can consume it on day 1 with no follow-up Platform PR.
 - `flutter analyze` clean.
-- `flutter test` green (Wave 0 adds no tests; existing suite must still pass).
+- `flutter test` green, including the new §2.8 tests in `test/unit/repositories/account_repository_test.dart`.
 - `flutter run` from a clean `flutter clean && flutter pub get && dart run build_runner build --delete-conflicting-outputs` path no longer prints the `synthetic-package` deprecation warning or the `"zh": NN untranslated message(s).` line (§2.7).
 - This plan doc is committed in the same PR.
 - `docs/plans/implementation-plan.md` → M5 → *Agent execution waves (approved)* table links to this plan.
@@ -205,14 +252,15 @@ Both are resolved here so slice agents don't chase false signals while verifying
 Single agent, single PR, sequential within the PR:
 
 1. Add `lib/features/categories/widgets/category_picker.dart` with the §2.1 skeleton.
-2. Apply §2.7 codegen hygiene fixes:
+2. Implement §2.8 — add `watchBalanceMinorUnits(int)` to the `AccountRepository` abstract class and `DriftAccountRepository` implementation. Extend `test/unit/repositories/account_repository_test.dart` with the eight test cases enumerated in §2.8. Run the repository test file in isolation until green.
+3. Apply §2.7 codegen hygiene fixes:
    - Remove `synthetic-package: false` from `l10n.yaml`; refresh the stale header comment to match the real output path.
    - Add `untranslated-messages-file: untranslated-messages.txt` to `l10n.yaml` with an explanatory comment.
    - Add the resulting untranslated-messages file path to `.gitignore`.
-3. Re-run `flutter clean && flutter pub get && dart run build_runner build --delete-conflicting-outputs && flutter run` once to confirm the two warnings no longer appear.
-4. Run `flutter analyze` and `flutter test`; fix nothing else.
-5. Commit + update `implementation-plan.md` to link this doc from the waves table.
-6. Open PR titled `chore(m5): wave 0 shared contracts`.
+4. Re-run `flutter clean && flutter pub get && dart run build_runner build --delete-conflicting-outputs && flutter run` once to confirm the two warnings no longer appear.
+5. Run `flutter analyze` and the full `flutter test`; fix nothing else.
+6. Commit + confirm `implementation-plan.md` links this doc from the waves table (already linked as of the previous edit — just verify).
+7. Open PR titled `chore(m5): wave 0 shared contracts`.
 
 Wave 1 slice agents do **not** start until this PR merges.
 
