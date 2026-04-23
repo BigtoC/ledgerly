@@ -6,14 +6,32 @@ part of 'locale_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$userLocalePreferenceStreamHash() =>
-    r'1a0284c9b475b70493b6c830e403a041a9756f6d';
+String _$initialPreferredLocaleHash() =>
+    r'9d9fa24f078695989a8fbc4b9d523139aa5c1d90';
 
-/// See also [_userLocalePreferenceStream].
-@ProviderFor(_userLocalePreferenceStream)
-final _userLocalePreferenceStreamProvider = StreamProvider<Locale?>.internal(
-  _userLocalePreferenceStream,
-  name: r'_userLocalePreferenceStreamProvider',
+/// See also [initialPreferredLocale].
+@ProviderFor(initialPreferredLocale)
+final initialPreferredLocaleProvider = Provider<Locale?>.internal(
+  initialPreferredLocale,
+  name: r'initialPreferredLocaleProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$initialPreferredLocaleHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef InitialPreferredLocaleRef = ProviderRef<Locale?>;
+String _$userLocalePreferenceStreamHash() =>
+    r'3e82e6a1914c59a5e55bf8106266464518b332b7';
+
+/// See also [userLocalePreferenceStream].
+@ProviderFor(userLocalePreferenceStream)
+final userLocalePreferenceStreamProvider = StreamProvider<Locale?>.internal(
+  userLocalePreferenceStream,
+  name: r'userLocalePreferenceStreamProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
       : _$userLocalePreferenceStreamHash,
@@ -23,9 +41,9 @@ final _userLocalePreferenceStreamProvider = StreamProvider<Locale?>.internal(
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef _UserLocalePreferenceStreamRef = StreamProviderRef<Locale?>;
+typedef UserLocalePreferenceStreamRef = StreamProviderRef<Locale?>;
 String _$userLocalePreferenceHash() =>
-    r'8d74725ca5267cd7d6cb47b72c5790b282eb25cc';
+    r'da1076fbc3171161a1c459d78324281e5d7c4b3b';
 
 /// See also [userLocalePreference].
 @ProviderFor(userLocalePreference)

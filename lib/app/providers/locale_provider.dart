@@ -7,12 +7,16 @@ import 'repository_providers.dart';
 part 'locale_provider.g.dart';
 
 @Riverpod(keepAlive: true)
-Stream<Locale?> _userLocalePreferenceStream(Ref ref) =>
+Locale? initialPreferredLocale(Ref ref) => null;
+
+@Riverpod(keepAlive: true)
+Stream<Locale?> userLocalePreferenceStream(Ref ref) =>
     ref.watch(userPreferencesRepositoryProvider).watchLocale();
 
 @riverpod
 Locale? userLocalePreference(Ref ref) =>
-    ref.watch(_userLocalePreferenceStreamProvider).value;
+    ref.watch(userLocalePreferenceStreamProvider).value ??
+    ref.watch(initialPreferredLocaleProvider);
 
 /// Pure function implementing PRD 894–900 Chinese locale resolution.
 ///

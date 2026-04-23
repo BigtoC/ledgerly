@@ -7,9 +7,14 @@ import 'repository_providers.dart';
 part 'theme_provider.g.dart';
 
 @Riverpod(keepAlive: true)
-Stream<ThemeMode> _themeModeStream(Ref ref) =>
+ThemeMode? initialThemeMode(Ref ref) => null;
+
+@Riverpod(keepAlive: true)
+Stream<ThemeMode> themeModeStream(Ref ref) =>
     ref.watch(userPreferencesRepositoryProvider).watchThemeMode();
 
 @riverpod
-ThemeMode themeMode(Ref ref) =>
-    ref.watch(_themeModeStreamProvider).value ?? ThemeMode.system;
+ThemeMode themeMode(Ref ref) {
+  final initial = ref.watch(initialThemeModeProvider) ?? ThemeMode.system;
+  return ref.watch(themeModeStreamProvider).value ?? initial;
+}
