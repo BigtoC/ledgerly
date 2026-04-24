@@ -35,7 +35,7 @@ If the operator delegates, the agent runs in **foreground** with explicit instru
 - `/home` body → `HomeScreen` from `lib/features/home/home_screen.dart`.
 - `/home/add` + `/home/edit/:id` bodies → `TransactionFormScreen` from `lib/features/transactions/transaction_form_screen.dart`. Preserve the root-modal presentation (`parentNavigatorKey: _rootNavigatorKey`) and update `_modalPage` / equivalent so Material routes use `fullscreenDialog: true`, per PRD → *Routing Structure*.
 - `/accounts` body → `AccountsScreen`.
-- `/accounts/new` + `/accounts/:id` routes → the Accounts slice add/edit form surface, preserving the Accounts-plan modal push semantics (`parentNavigatorKey: _rootNavigatorKey` + modal page builder) instead of nesting them as plain in-branch screens.
+- `/accounts/new` + `/accounts/:id` routes → `AccountFormScreen(accountId: ...)`, preserving the Accounts-plan modal push semantics (`parentNavigatorKey: _rootNavigatorKey` + modal page builder) instead of nesting them as plain in-branch screens. `/accounts/new` is Add mode (`accountId: null`); `/accounts/:id` is Edit mode (`accountId: parsedId`); invalid ids redirect to `/accounts`.
 - `/settings` body → `SettingsScreen`.
 - `/settings/categories` body → `CategoriesScreen`.
 
@@ -53,17 +53,14 @@ Keep the existing:
 - Check that every key under `common*` is genuinely shared by ≥2 slices. Move singletons back to their slice prefix.
 - Verify every key added during Wave 1–3 landed in the shipped locale files (`app_en`, `app_zh_TW`, `app_zh_CN`) and that `app_zh.arb` remained fallback-only.
 
-### 3.3 Integration tests
+### 3.3 Integration harness preservation
 
-Extend `test/integration/` to cover the flows promised in `PRD.md` → *Testing Strategy → Integration Tests*:
+Wave 4 keeps the existing M4 integration harness green against the merged M5 app; it does **not** pull the full PRD integration-flow authoring work forward from M6.
 
-- First-launch flow: seeded defaults → launch-time splash date picker → splash day counter → tap Enter → Home → Add transaction → verify DB row via repository.
-- Subsequent launch with `splash_enabled = true` and a start date set: splash day counter → tap Enter → Home.
-- Subsequent launch with `splash_enabled = false`: direct to Home (no splash flash).
-- Duplicate flow: on Home, open an existing transaction's overflow → Duplicate → Transactions form prefilled → adjust amount → Save → return to Home with pinned day + visible new row.
-- Edit flow: on Home, tap an existing transaction → `/home/edit/:id` opens → adjust details → Save → return to Home with the edited row visible on the pinned day.
-- Multi-currency flow: seed a second account in a different currency → add one transaction per account → Home summary strip shows grouped-by-currency chips.
-- Archive flow: archive a used category/account → it is hidden from transaction pickers but remains visible in the relevant management screen; existing transactions continue to reference it.
+- Keep `test/integration/bootstrap_to_home_test.dart` green against the merged router + real slice screens.
+- Update that harness only where real slice screens intentionally replace M4 placeholders or where router wiring changes the expected launch timing / route transitions.
+- If Wave 4's router swap exposes a regression that cannot be covered by the existing harness, add the smallest additional integration smoke needed for the wiring change. Do not expand `test/integration/` into the full PRD end-to-end suite here.
+- The full PRD integration-flow set (first-launch, splash-on/off launches, duplicate, edit, multi-currency, archive) remains M6 work per `implementation-plan.md`.
 
 Phase 2 integration tests (wallet add/sync, pending approve/reject) remain out of scope.
 
@@ -76,7 +73,7 @@ Run `flutter test` (unit + widget + integration). Triage:
 
 ### 3.5 Manual smoke on device matrix
 
-Per `implementation-plan.md` → M6 → *Deliverables*, the full device matrix (Android phone + tablet + iOS phone + tablet) is M6's responsibility. Wave 4 runs a minimal smoke on the operator's primary device:
+Per `implementation-plan.md` → M6 → *Deliverables*, the full device matrix (Android phone + tablet + iOS phone + tablet) is M6's responsibility. Wave 4 runs a minimal smoke on the operator's primary device, plus one lightweight local `>=600dp` spot-check (simulator/emulator acceptable):
 - Cold launch with splash enabled and a configured start date → splash appears → Enter → Home.
 - Add a transaction → returns to Home with the day pinned.
 - Edit an existing transaction → save → verify the updated row remains visible on the pinned day.
@@ -84,6 +81,7 @@ Per `implementation-plan.md` → M6 → *Deliverables*, the full device matrix (
 - Archive a used category/account → confirm it disappears from the relevant picker but remains visible in management/history.
 - Toggle theme (Settings) → app recolors without restart.
 - Toggle locale (Settings) → strings change without restart.
+- `>=600dp` spot-check: shell switches to `NavigationRail`, Home renders its two-pane layout, and Add/Edit Transaction opens with constrained-dialog presentation instead of the phone full-screen modal.
 
 Deeper a11y / 2× text scale / screen reader verification stays in M6.
 
@@ -115,8 +113,8 @@ If the operator delegates Wave 4 to a Claude agent:
 
 - `lib/app/router.dart` references real slice screens for every MVP route. No placeholder imports remain.
 - `test/unit/l10n/arb_audit_test.dart` passes against the reconciled ARBs.
-- `flutter test` passes the full unit + widget + integration suite. Every integration test enumerated in §3.3 is implemented and green.
-- Manual smoke (§3.5) on the operator's primary device passes each step.
+- `flutter test` passes the full unit + widget + integration suite, including the preserved M4 integration harness and any minimal Wave 4 router-smoke additions from §3.3.
+- Manual smoke (§3.5) on the operator's primary device passes each step, and one lightweight local `>=600dp` spot-check verifies adaptive shell/home/form wiring.
 - `flutter analyze` clean across the whole tree.
 - M5 branch is ready for merge to `main`, or for M6 polish work to begin on top of it.
 
@@ -136,7 +134,7 @@ Single Wave 4 integration PR, plus any required per-slice follow-up PRs discover
 2. Edit `lib/app/router.dart` to wire real slice screens (§3.1).
 3. Run `flutter analyze` — resolve any compile errors introduced by the switch.
 4. Run `flutter test` — resolve M4 test regressions (Wave 4's job); triage slice regressions to the owning slice and pause Wave 4 merge until the required follow-up PRs land.
-5. Implement the integration tests enumerated in §3.3 under `test/integration/`.
+5. Preserve / minimally update the integration harness per §3.3.
 6. Run `test/unit/l10n/arb_audit_test.dart`; reconcile ARB collisions per §3.2.
 7. Manual device smoke (§3.5).
 8. Commit + open PR titled `chore(m5): wave 4 integration`.
@@ -151,6 +149,6 @@ PR size expectation: `router.dart` diff, ARB reconciliation, new integration tes
 2. **Cross-slice integration bug surfacing late.** E.g., Home's duplicate route extra doesn't unpack the way Transactions expected. Wave 4 doesn't fix it inside itself — it files a Wave 2 or Wave 3 follow-up PR and blocks on that landing. Better to delay Wave 4 than patch blindly.
 3. **ARB key leaked into `common*` unjustly.** A slice owner put `commonAccountName` or similar — should be `accountsFormName`. §3.2 catches via audit test + review.
 4. **Golden tests drift on CI runner.** Regenerate on CI, not locally. Document the regen command in the PR description.
-5. **Integration test harness gap.** If `test/integration/` doesn't have a helper for "seed a custom fixture DB", build one here — it'll unlock M6 integration work too.
+5. **Integration harness gap.** Prefer extending the existing M4 harness or using test-local setup for Wave 4 router-smoke needs. Only add a reusable helper here if a concrete Wave 4 integration update cannot be written cleanly without it.
 6. **Router transition regression.** The fade transition for `/splash → /home` may break when the real `SplashScreen` replaces the placeholder. Visual regression not caught by any existing test — verify manually in §3.5.
 7. **Delegation to an agent going wrong.** If delegated and the agent starts patching slice code, stop and take over. Re-emphasize the operator-run framing in §2.
