@@ -1,8 +1,8 @@
 // M4 §7.5 — Integration test: bootstrap → first-run flow → home.
 //
 // Two variants:
-//   1. First run (splash_enabled=true, no start date) → tap "Set start date"
-//      → tap "Enter" → HomeScreen.
+//   1. First run (splash_enabled=true, no start date) → set the start date
+//      on the Splash route → tap "Enter" → HomeScreen.
 //   2. Subsequent run (splash_enabled=false) → HomeScreen directly (G10).
 //
 // Note: `runTestSeed` and direct repository writes run inside `tester.runAsync`

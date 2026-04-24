@@ -698,7 +698,7 @@ ShellRoute (bottom nav)
 ### Screen States
 
 - **Splash:** shows day count when configured, date picker redirect when no start date set, skipped when disabled
-- **Home:** cold start pins the day to today and shows a skeleton row; `No transactions yet` empty state on first run; per-day empty state (`No transactions on {date}`) on a day with no activity when reached via prev/next; grouped summary chips when multiple currencies are present; undo snackbar after delete; pending transaction badge (Phase 2); prev-day affordance disables when the selected day is older than the oldest day with activity, next-day affordance disables when the selected day is today
+- **Home:** cold start pins the day to today and shows a skeleton row; `No transactions yet` empty state on first run; per-day empty state (`No transactions on {date}`) on a day with no activity when the user manually lands on a gap day; grouped summary chips when multiple currencies are present; undo snackbar after delete; pending transaction badge (Phase 2); prev-day affordance disables when there is no older day with activity than the selected day, next-day affordance disables when there is no newer day with activity than the selected day
 - **Add/Edit Transaction:** inline validation for missing amount/category/account, confirm-discard dialog, save-error snackbar
 - **Accounts:** if no active account exists, show `Create account` CTA and block transaction save until one exists
 - **Categories:** if a type has no visible categories, show `Create category` CTA; used categories can be archived but not deleted
@@ -791,7 +791,7 @@ CustomScrollView
   └─ SliverPadding       — bottom FAB clearance
 ```
 
-The prev/next controls advance by one day-with-activity at a time, driven by `TransactionRepository.watchDaysWithActivity(...)`. The selected-day transactions come from `watchByDay(selectedDay)`. Days with no activity are skipped by the controller; a per-day empty state only appears if the user manually lands on a gap day (e.g. via a future date picker).
+The prev/next controls advance by one day-with-activity at a time, driven by `TransactionRepository.watchDaysWithActivity(...)`. The selected-day transactions come from `watchByDay(selectedDay)`. Days with no activity are skipped by the controller; a per-day empty state only appears if the user manually lands on a gap day (for example, by choosing a future date in the date picker).
 
 ### Add/Edit Transaction
 
