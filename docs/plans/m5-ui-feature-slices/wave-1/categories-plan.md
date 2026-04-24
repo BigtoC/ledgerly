@@ -32,7 +32,7 @@ The slice **does not** read from any other repository. The slice **does not** im
 ### 3.1 Files (under `lib/features/categories/`)
 
 - `categories_screen.dart` — replaces the M4 placeholder.
-- `categories_controller.dart` — Riverpod `@riverpod class CategoriesController extends _$CategoriesController`. Commands: `renameCategory`, `updateIconColor`, `createCategory`, `archiveCategory`, `deleteCategory`, `reorder`.
+- `categories_controller.dart` — Riverpod `@riverpod class CategoriesController extends _$CategoriesController`. Commands: `renameCategory`, `updateIconColor`, `createCategory`, `archiveCategory`, `undoArchive`, `deleteCategory`, `reorder`.
 - `categories_state.dart` — Freezed sealed union (`Loading | Data(expense: List<Category>, income: List<Category>) | Error`). No top-level `Empty` variant — first-run seed guarantees categories exist, but the `Data` variant must still support per-section empty rendering after archive flows. The `Data` variant is always sorted by `sortOrder` (nulls last) → display name ascending.
 - `widgets/category_picker.dart` — fill in the Wave 0 skeleton (§2.1). **Keep the top-level `showCategoryPicker` signature exactly as frozen.**
 - `widgets/category_form_sheet.dart` — shared add/edit modal sheet.
@@ -46,7 +46,7 @@ Widget classes that are only used inside the slice stay library-private (`_Categ
 
 Prefix: `categories*` (UI). Do **not** add keys under `category*` — that prefix is reserved for seeded display names (already present).
 
-Minimum new keys (final list discovered during implementation): `categoriesManageTitle`, `categoriesAddCta`, `categoriesSectionExpense`, `categoriesSectionIncome`, `categoriesFormNameLabel`, `categoriesFormIconLabel`, `categoriesFormColorLabel`, `categoriesFormTypeLabel`, `categoriesFormTypeLockedHint`, `categoriesArchiveUndoSnackbar`, `categoriesDeleteConfirmTitle`, `categoriesDeleteConfirmBody`, `categoryPickerTitleExpense`, `categoryPickerTitleIncome`, `categoryPickerEmptyCta`.
+Minimum new keys (final list discovered during implementation): `categoriesManageTitle`, `categoriesAddCta`, `categoriesSectionExpense`, `categoriesSectionIncome`, `categoriesFormNameLabel`, `categoriesFormIconLabel`, `categoriesFormColorLabel`, `categoriesFormTypeLabel`, `categoriesFormTypeLockedHint`, `categoriesArchiveUndoSnackbar`, `categoriesDeleteConfirmTitle`, `categoriesDeleteConfirmBody`, `categoriesPickerTitleExpense`, `categoriesPickerTitleIncome`, `categoriesPickerEmptyCta`.
 
 Every new key lands in `app_en.arb`, `app_zh_TW.arb`, and `app_zh_CN.arb` in the same commit. `app_zh.arb` stays fallback-only. Every new key carries an `@<key>` description with a PRD line reference.
 
@@ -64,7 +64,7 @@ Every new key lands in `app_en.arb`, `app_zh_TW.arb`, and `app_zh_CN.arb` in the
 - `SliverToBoxAdapter` — Expense section header.
 - `SliverList` (or `SliverReorderableList`) — expense categories.
 - `SliverToBoxAdapter` — Income section header.
-- `SliverList` — income categories.
+- `SliverList` (or `SliverReorderableList`) — income categories.
 - `SliverPadding` — FAB clearance.
 
 FAB opens `category_form_sheet` in Add mode (type defaults to Expense; user toggles).

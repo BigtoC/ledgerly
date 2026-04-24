@@ -36,10 +36,10 @@ The slice **does not** directly read transactions. Balance rendering goes exclus
 - `accounts_screen.dart` — replaces the M4 placeholder.
 - `accounts_controller.dart` — `@riverpod class AccountsController extends _$AccountsController`. Commands: `setDefault(id)`, `archive(id)`, `delete(id)`, `unarchive(id)`.
 - `accounts_state.dart` — Freezed sealed union (`Loading | Data(accounts: List<AccountWithBalance>, defaultAccountId: int?) | Error`). `AccountWithBalance` is a controller-owned view model (Freezed) pairing the domain `Account` with its derived balance minor units.
-- `account_form_screen.dart` — full-page or bottom-sheet form for new account / edit account.
+- `account_form_screen.dart` — full-page form for new account / edit account.
 - `widgets/account_tile.dart` — list row (icon, name, account-type chip, balance right-aligned, swipe actions).
 - `widgets/account_type_picker_sheet.dart` — select an existing account type OR create a new one inline (inline form returns a newly-saved `AccountType`).
-- `widgets/currency_picker_sheet.dart` — filter/search over `currencies`.
+- `widgets/currency_picker_sheet.dart` — select from `currencies`.
 - (optional) `widgets/amount_minor_units_field.dart` — numeric input for `opening_balance_minor_units` respecting the chosen currency's `decimals`.
 
 ### 3.2 ARB keys
@@ -78,7 +78,7 @@ Modal push per PRD → *Routing Structure* (`/accounts/new`, `/accounts/:id`).
 
 Fields:
 - **Name** — `TextField`. Required, non-empty.
-- **Account type** — tap opens `account_type_picker_sheet`. Required. Inline "Create new account type" option opens a nested form (name, icon, color, default currency) that saves via `accountTypeRepositoryProvider.save` and returns the new `AccountType` to the outer form (Wave 0 §2.3 — this slice owns the inline creation flow).
+- **Account type** — tap opens `account_type_picker_sheet`. Required. Inline "Create new account type" option opens a nested form (name, icon, color, default currency) whose controller delegates to `accountTypeRepositoryProvider.save` and returns the new `AccountType` to the outer form (Wave 0 §2.3 — this slice owns the inline creation flow).
 - **Currency** — tap opens `currency_picker_sheet`. Defaults to `accountType.default_currency ?? userPreferences.default_currency`. User can override.
 - **Opening balance** — numeric field respecting `currency.decimals`. Stored as minor units. Defaults to 0.
 - **Icon** — string key (shared with Categories icon picker? — no; each slice owns its own widget, but both consume `iconRegistry`).

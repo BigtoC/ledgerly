@@ -44,7 +44,7 @@ Splash **does not** write any preferences — the first-frame `Set start date` f
 ### 3.2 Assets
 
 - `assets/splash/sun_background.png` — primary background image. Source and licensing documented in `assets/splash/README.md` (must be MIT-compatible or original).
-- `@2x` / `@3x` variants per Flutter asset conventions.
+- `2.0x/` / `3.0x/` asset variants per Flutter asset conventions.
 - `pubspec.yaml` `flutter.assets:` entry added for `assets/splash/`.
 
 Asset regeneration for native-splash (pre-Flutter static screen) stays **out of scope** — handled in M6 per `implementation-plan.md` → M6.
@@ -60,8 +60,8 @@ All required keys already exist in M4 (`splashEnter`, `splashSinceDate`, `splash
 - `test/widget/features/splash/splash_screen_golden_test.dart` — **golden tests, mandatory.** Three variants:
   - Default text ("Since {date}"), start date = 100 days ago, English locale.
   - Custom display text ("`{days}` days strong"), zh_TW locale.
-  - Long custom text at 1.5× text scale (verify clamp; PRD → *Accessibility*).
-- `test/widget/features/splash/splash_screen_test.dart` — Enter button triggers navigation; start date = null state renders nothing from Splash (router redirect to Settings handles it — see §8).
+  - Long custom text at 2× text scale (verify overall layout survives while the fixed-height day count clamps at 1.5×; PRD → *Layout Primitives* → *Constraint rule*).
+- `test/widget/features/splash/splash_screen_test.dart` — Enter button triggers navigation; direct render with `startDate = null` shows the safety-net message/link, while app-level routing tests continue to own the redirect path (see §8).
 
 ---
 
@@ -92,7 +92,7 @@ No `Empty` variant — if the user hasn't set a start date, the router redirects
 Layering (bottom → top):
 1. `splash_sun_background` — full-viewport image with a slight gradient tint to preserve text contrast in both light and dark themes. (The screen's palette is fixed per PRD — does **not** follow the active `ColorScheme`.)
 2. Center content:
-   - Huge day count — white, ~90pt, bold, `AutoSizeText` or explicit clamp at 1.5× text scale (PRD → *Accessibility*).
+   - Huge day count — white, ~90pt, bold, explicit `TextScaler` clamp at 1.5× text scale (PRD → *Accessibility*).
    - Secondary label ("days" / localized via `splashDayCountLabel`) right below.
    - Rainbow-gradient text — displayed below the day count, showing the formatted start date using `intl.DateFormat.yMMMMd(locale)`. `ShaderMask` with a horizontal rainbow gradient (red → orange → yellow → green → blue → indigo → violet). Meets WCAG AA by rendering a solid fallback stroke behind the gradient or by ensuring gradient colors have sufficient luminance contrast with the background — verified with a contrast-check widget test at 2× scale.
 3. Custom display text (if set) — below the gradient, sans-serif, wrapped.
@@ -147,7 +147,7 @@ Already wired in M4 router via a `CustomTransitionPage` per PRD → *Routing Str
 - Default and custom display text render correctly with `{date}` / `{days}` substitution.
 - Enter button navigates to `/home` via the existing fade transition.
 - Golden tests pass on the three variants from §3.4. Goldens checked in under `test/widget/features/splash/goldens/`.
-- 1.5× text-scale test passes (no overflow).
+- 2× text-scale test passes with the day count clamped to 1.5× (no overflow).
 - WCAG AA contrast test passes on the rainbow gradient.
 - `flutter analyze` clean; `flutter test` green.
 
