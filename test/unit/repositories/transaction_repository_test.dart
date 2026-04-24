@@ -618,11 +618,7 @@ void main() {
       const bigAmount = 1500000000000000000; // 1.5 ETH in wei
 
       final inserted = await txRepo.save(
-        sampleTx(
-          amount: bigAmount,
-          currency: eth,
-          accountId: ethAccountId,
-        ),
+        sampleTx(amount: bigAmount, currency: eth, accountId: ethAccountId),
       );
       expect(inserted.amountMinorUnits, bigAmount);
 

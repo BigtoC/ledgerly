@@ -164,7 +164,8 @@ final class DriftAccountRepository implements AccountRepository {
     if (stored == null) {
       throw AccountRepositoryException('Account ${account.id} not found');
     }
-    if (stored.currency != account.currency.code && await isReferenced(account.id)) {
+    if (stored.currency != account.currency.code &&
+        await isReferenced(account.id)) {
       throw AccountRepositoryException(
         'Account ${account.id} currency cannot change after transactions exist',
       );

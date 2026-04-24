@@ -308,28 +308,25 @@ void main() {
       },
     );
 
-    test(
-      'AC11b: referenced account cannot change currency',
-      () async {
-        final id = await repo.save(buildCashAccount(currency: _usd));
-        final categoryId = await _insertCategoryRaw(db);
-        await _insertTransactionRaw(db, accountId: id, categoryId: categoryId);
+    test('AC11b: referenced account cannot change currency', () async {
+      final id = await repo.save(buildCashAccount(currency: _usd));
+      final categoryId = await _insertCategoryRaw(db);
+      await _insertTransactionRaw(db, accountId: id, categoryId: categoryId);
 
-        await expectLater(
-          repo.save(buildCashAccount(id: id, currency: _jpy)),
-          throwsA(
-            isA<AccountRepositoryException>().having(
-              (e) => e.message,
-              'message',
-              'Account $id currency cannot change after transactions exist',
-            ),
+      await expectLater(
+        repo.save(buildCashAccount(id: id, currency: _jpy)),
+        throwsA(
+          isA<AccountRepositoryException>().having(
+            (e) => e.message,
+            'message',
+            'Account $id currency cannot change after transactions exist',
           ),
-        );
+        ),
+      );
 
-        final fetched = await repo.getById(id);
-        expect(fetched!.currency.code, 'USD');
-      },
-    );
+      final fetched = await repo.getById(id);
+      expect(fetched!.currency.code, 'USD');
+    });
 
     test(
       'AC12: watchAll excludes archived by default; sortOrder respected',
@@ -512,16 +509,10 @@ void main() {
         'ACB06: transactions on a different account do not affect this balance',
         () async {
           final mineId = await repo.save(
-            buildCashAccount(
-              name: 'Mine',
-              openingBalanceMinorUnits: 1000,
-            ),
+            buildCashAccount(name: 'Mine', openingBalanceMinorUnits: 1000),
           );
           final otherId = await repo.save(
-            buildCashAccount(
-              name: 'Other',
-              openingBalanceMinorUnits: 9000,
-            ),
+            buildCashAccount(name: 'Other', openingBalanceMinorUnits: 9000),
           );
           final expenseId = await _insertCategoryRaw(db);
           await _insertTransactionRaw(
@@ -532,10 +523,7 @@ void main() {
           );
 
           expect(await repo.watchBalanceMinorUnits(mineId).first, 1000);
-          expect(
-            await repo.watchBalanceMinorUnits(otherId).first,
-            9000 - 4000,
-          );
+          expect(await repo.watchBalanceMinorUnits(otherId).first, 9000 - 4000);
         },
       );
 
@@ -599,10 +587,7 @@ void main() {
           expect(snapshots.last, 10000);
 
           await repo.save(
-            buildCashAccount(
-              id: id,
-              openingBalanceMinorUnits: 12500,
-            ),
+            buildCashAccount(id: id, openingBalanceMinorUnits: 12500),
           );
           await Future<void>.delayed(Duration.zero);
           expect(snapshots.last, 12500);
@@ -650,25 +635,22 @@ void main() {
         },
       );
 
-      test(
-        'ACB08: archived account still emits its balance',
-        () async {
-          final id = await repo.save(
-            buildCashAccount(openingBalanceMinorUnits: 4000),
-          );
-          final categoryId = await _insertCategoryRaw(db);
-          await _insertTransactionRaw(
-            db,
-            accountId: id,
-            categoryId: categoryId,
-            amountMinorUnits: 1500,
-          );
+      test('ACB08: archived account still emits its balance', () async {
+        final id = await repo.save(
+          buildCashAccount(openingBalanceMinorUnits: 4000),
+        );
+        final categoryId = await _insertCategoryRaw(db);
+        await _insertTransactionRaw(
+          db,
+          accountId: id,
+          categoryId: categoryId,
+          amountMinorUnits: 1500,
+        );
 
-          await repo.archive(id);
+        await repo.archive(id);
 
-          expect(await repo.watchBalanceMinorUnits(id).first, 4000 - 1500);
-        },
-      );
+        expect(await repo.watchBalanceMinorUnits(id).first, 4000 - 1500);
+      });
     });
   });
 }
