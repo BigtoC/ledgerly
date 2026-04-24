@@ -1,13 +1,21 @@
 # flutter_localizations codegen configuration.
 #
 # Source ARB files live in /l10n at the repo root per PRD -> Folder
-# Structure. Generated Dart lands in the synthetic `flutter_gen` package
-# and is imported via `package:flutter_gen/gen_l10n/app_localizations.dart`.
+# Structure. Generated Dart lands at `lib/l10n/app_localizations.dart`
+# and is imported via `package:ledgerly/l10n/app_localizations.dart`.
 
 arb-dir: l10n
 template-arb-file: app_en.arb
 output-localization-file: app_localizations.dart
 output-class: AppLocalizations
 nullable-getter: false
-synthetic-package: false
 output-dir: lib/l10n
+
+# `app_zh.arb` is an intentional bare-fallback shim (only `appTitle`) per
+# PRD.md → Internationalization. Runtime locale resolution maps bare `zh`
+# to English, so full `zh` translations are not required. The codegen
+# emits a noisy "NN untranslated message(s)" warning for every new key;
+# redirect it to a file and .gitignore the file so stdout stays quiet
+# while still leaving the report available for inspection. See
+# docs/plans/m5-ui-feature-slices/wave-0-contracts-plan.md §2.7.
+untranslated-messages-file: untranslated-messages.txt
