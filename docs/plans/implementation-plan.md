@@ -316,7 +316,7 @@ Branch: M5 continues from the M4 shell branch; cut `feature/m5-feature-slices` a
 
 **Deliverables**
 - `test/integration/` covers every flow in `PRD.md` → *Primary User Flow*, *Quick Repeat Flow*, plus:
-  - First-launch flow (seeded defaults → splash date picker → Home → add transaction → DB row).
+  - First-launch flow (seeded defaults → splash date picker → splash day counter → Enter → Home → add transaction → DB row).
   - Subsequent launch with splash enabled / disabled.
   - Duplicate flow.
   - Multi-currency flow (two accounts, two currencies, grouped summary).
