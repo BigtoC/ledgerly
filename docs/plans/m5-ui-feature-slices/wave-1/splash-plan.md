@@ -18,14 +18,14 @@ Replace the M4 placeholder at `lib/features/splash/splash_screen.dart` with the 
 
 | Dependency                          | Purpose                                                                                             | Import path                                   |
 |-------------------------------------|-----------------------------------------------------------------------------------------------------|-----------------------------------------------|
-| `userPreferencesRepositoryProvider` | Read `splash_start_date`, `splash_display_text`, `splash_button_label` (write is Settings' concern) | `app/providers/repository_providers.dart`     |
+| `userPreferencesRepositoryProvider` | Read `splash_start_date`, `splash_display_text`, `splash_button_label`; write `splash_start_date` during the launch-time date-pick path | `app/providers/repository_providers.dart`     |
 | `splashGateSnapshotProvider`        | First-frame hydrated snapshot of splash prefs from bootstrap                                        | `app/providers/splash_redirect_provider.dart` |
 | `splashStartDateProvider`           | Reactive watch on `splash_start_date`                                                               | `app/providers/splash_redirect_provider.dart` |
 | `date_helpers.dart`                 | `daysBetween(startDate, now)` (implemented in M2)                                                   | `core/utils/date_helpers.dart`                |
 | `AppLocalizations`                  | `splash*` keys (already reserved in M4)                                                             | `l10n/app_localizations.dart`                 |
 | `intl`                              | Locale-aware date formatting for the rainbow gradient                                               | `package:intl/intl.dart`                      |
 
-Splash **does not** write any preferences — the first-frame `Set start date` fallback that the current placeholder exposes is **moved to Settings** (see §8). Splash becomes read-only.
+Splash is read-mostly. It renders configured splash state from preferences, but it also owns the launch-time "no start date yet" path from the PRD: if splash is enabled and `splash_start_date` is missing, Splash presents the inline start-date action and writes the chosen date before continuing to the day-counter state. Settings remains the ongoing editor for `splash_*` preferences after first run.
 
 ---
 
@@ -34,7 +34,7 @@ Splash **does not** write any preferences — the first-frame `Set start date` f
 ### 3.1 Files (under `lib/features/splash/`)
 
 - `splash_screen.dart` — replaces the M4 placeholder.
-- `splash_controller.dart` — `@riverpod class SplashController extends _$SplashController`. Computes the state from prefs + `DateTime.now()`. No commands — Splash is view-only. (The Enter button is pure navigation; no controller call needed.)
+- `splash_controller.dart` — `@riverpod class SplashController extends _$SplashController`. Computes the state from prefs + `DateTime.now()`. Command surface is minimal: launch-time `setStartDate(DateTime)` for the PRD cold-start date-picker path. (The Enter button remains pure navigation.)
 - `splash_state.dart` — Freezed sealed union (see §4).
 - `widgets/splash_sun_background.dart` — background image + gradient tint.
 - `widgets/splash_day_count.dart` — large centered count (`~90pt`, white).
@@ -61,7 +61,7 @@ All required keys already exist in M4 (`splashEnter`, `splashSinceDate`, `splash
   - Default text ("Since {date}"), start date = 100 days ago, English locale.
   - Custom display text ("`{days}` days strong"), zh_TW locale.
   - Long custom text at 2× text scale (verify overall layout survives while the fixed-height day count clamps at 1.5×; PRD → *Layout Primitives* → *Constraint rule*).
-- `test/widget/features/splash/splash_screen_test.dart` — Enter button triggers navigation; direct render with `startDate = null` shows the safety-net message/link, while app-level routing tests continue to own the redirect path (see §8).
+- `test/widget/features/splash/splash_screen_test.dart` — Enter button triggers navigation; direct render with `startDate = null` shows the launch-time "Set start date" action; choosing a date transitions the widget into the day-counter state while app-level routing tests continue to own the route-level splash gate.
 
 ---
 
@@ -81,9 +81,9 @@ sealed class SplashState with _$SplashState {
 }
 ```
 
-No `Empty` variant — if the user hasn't set a start date, the router redirects to Settings (see §8). If the user somehow lands on `/splash` with `splash_enabled = true` and `splash_start_date = null`, Splash renders a single-line "No start date set" message with a link to Settings; this is a safety net, not a primary flow.
+No top-level `Empty` variant. When `splash_enabled = true` and `splash_start_date = null`, Splash renders the launch-time start-date prompt inline on `/splash`; choosing a date writes the preference and rebuilds into `SplashData` on the same route.
 
-**No `SplashNeedsStartDate` variant.** The current M4 placeholder's inline `Set start date` button is superseded: Settings owns date configuration; Splash only renders configured state.
+**No `SplashNeedsStartDate` variant.** The launch-time date prompt is treated as a specialized render path around the same controller-backed state, not as a separate long-lived state machine branch.
 
 ---
 
@@ -123,18 +123,18 @@ Already wired in M4 router via a `CustomTransitionPage` per PRD → *Routing Str
 
 ## 8. Cross-slice contract adherence (Wave 0)
 
-- §2.3 — **Splash settings controls are owned by Settings.** The inline `Set start date` button that currently exists in the M4 placeholder **moves to Settings in this same Wave 1**. Splash stops offering any mutation; it is view-only. The Settings slice plan enumerates the date picker as its responsibility.
+- §2.3 — **Settings owns ongoing splash preference editing** (`splash_enabled`, `splash_start_date`, `splash_display_text`, `splash_button_label`) from `/settings`, but Splash still owns the PRD-required launch-time start-date capture when splash is enabled and no start date exists yet.
 - §2.4 — Do not edit `router.dart`, `splash_redirect_provider.dart`, or `user_preferences_repository.dart`. Read-only consumption of existing providers.
 - §2.5 — Widgets under `lib/features/splash/widgets/`. No `core/widgets/` promotion.
 
-**Coordination note:** Splash and Settings are both in Wave 1 and run in parallel. The "no start date" state is handled by **routing** (M4 already redirects via `splash_redirect_provider`) — so neither slice needs to own the transient state. If routing changes are required (they should not be), raise Platform RFC; do not paper over in Splash.
+**Coordination note:** Splash and Settings are both in Wave 1 and run in parallel. The launch-time start-date action lives on Splash; Settings provides the persistent editing surface afterward. Both write the same `splash_start_date` preference through `UserPreferencesRepository`; neither slice invents a second source of truth.
 
 ---
 
 ## 9. Out of scope (defer)
 
 - Native pre-Flutter splash asset regeneration — M6.
-- Splash configuration UI (date picker, display text edit, button label edit) — **Settings slice** (Wave 1, parallel).
+- Persistent splash configuration UI from Settings (display text, button label, enabled toggle, and post-setup start-date editing) — **Settings slice** (Wave 1, parallel).
 - Animated day counter (count-up) — not in MVP.
 - Theme-aware splash coloring — PRD fixes the visual to the hnotes aesthetic regardless of theme.
 
@@ -142,7 +142,7 @@ Already wired in M4 router via a `CustomTransitionPage` per PRD → *Routing Str
 
 ## 10. Exit criteria
 
-- `splash_screen.dart` renders `Loading`, `Data`, and `Error` variants.
+- `splash_screen.dart` renders the launch-time start-date prompt when `splash_start_date` is missing, and renders `Loading`, `Data`, and `Error` variants once configured.
 - Day count math is correct for (a) today, (b) 100 days ago, (c) future start date (clamped to 0).
 - Default and custom display text render correctly with `{date}` / `{days}` substitution.
 - Enter button navigates to `/home` via the existing fade transition.

@@ -36,7 +36,7 @@ The slice **does not** directly read transactions. Balance rendering goes exclus
 - `accounts_screen.dart` — replaces the M4 placeholder.
 - `accounts_controller.dart` — `@riverpod class AccountsController extends _$AccountsController`. Commands: `setDefault(id)`, `archive(id)`, `delete(id)`, `unarchive(id)`.
 - `accounts_state.dart` — Freezed sealed union (`Loading | Data(accounts: List<AccountWithBalance>, defaultAccountId: int?) | Error`). `AccountWithBalance` is a controller-owned view model (Freezed) pairing the domain `Account` with its derived balance minor units.
-- `account_form_screen.dart` — full-page form for new account / edit account.
+- `account_form_screen.dart` — full-page form for new account / edit account. Constructor contract: `AccountFormScreen({int? accountId})`; `null` = Add mode, non-null = Edit mode.
 - `widgets/account_tile.dart` — list row (icon, name, account-type chip, balance right-aligned, swipe actions).
 - `widgets/account_type_picker_sheet.dart` — select an existing account type OR create a new one inline (inline form returns a newly-saved `AccountType`).
 - `widgets/currency_picker_sheet.dart` — select from `currencies`.
@@ -52,7 +52,7 @@ Minimum new keys: `accountsListTitle`, `accountsAddCta`, `accountsEmptyTitle`, `
 
 - `test/unit/controllers/accounts_controller_test.dart` — state transitions; `setDefault` updates `userPreferences`; `archive` flips `isArchived`; balance stream emission propagates into `AccountWithBalance`.
 - `test/widget/features/accounts/accounts_screen_test.dart` — empty state CTA visible only when all accounts archived; default-badge rendering; swipe archive → undo snackbar; FAB opens form.
-- `test/widget/features/accounts/account_form_screen_test.dart` — create account with seeded type, create account with inline new type, validation (name required, currency required, type required); opening balance respects currency decimals.
+- `test/widget/features/accounts/account_form_screen_test.dart` — create account with seeded type, create account with inline new type, edit-mode hydration from `accountId`, validation (name required, currency required, type required), recoverable missing-row handling, and opening balance respecting currency decimals.
 
 ---
 
@@ -76,6 +76,12 @@ Each tile shows: icon + color chip, account name, account type display, balance 
 
 Modal push per PRD → *Routing Structure* (`/accounts/new`, `/accounts/:id`).
 
+Route contract:
+- `/accounts/new` → `const AccountFormScreen()` (Add mode).
+- `/accounts/:id` → `AccountFormScreen(accountId: id)` (Edit mode).
+- `router.dart` rejects invalid `:id` path params and redirects to `/accounts` rather than constructing the form with a bad value.
+- If Edit-mode hydration cannot load the requested row, the form shows a recoverable not-found state and pops back to `/accounts`; do not leave the widget on a null model.
+
 Fields:
 - **Name** — `TextField`. Required, non-empty.
 - **Account type** — tap opens `account_type_picker_sheet`. Required. Inline "Create new account type" option opens a nested form (name, icon, color, default currency) whose controller delegates to `accountTypeRepositoryProvider.save` and returns the new `AccountType` to the outer form (Wave 0 §2.3 — this slice owns the inline creation flow).
@@ -85,6 +91,10 @@ Fields:
 - **Color** — palette index.
 
 Save enabled when: name non-empty, account type selected, currency selected. Save calls `accountRepositoryProvider.save(Account(...))`; the repository assigns the id and currency FK integrity is already enforced.
+
+On successful save, the form calls `context.pop(savedAccountId)` with the `int` returned by `AccountRepository.save(...)`. Callers may ignore the result and rely on repository streams for list refresh; no manual list mutation is required.
+
+Archive/delete stay on the Accounts list row per §7. The form itself owns create/edit only in MVP.
 
 ---
 
@@ -132,7 +142,8 @@ Undo snackbar on archive (`commonUndo`). Delete is final, preceded by a confirm 
 ## 10. Exit criteria
 
 - `accounts_screen.dart` renders `Loading`, `Data`, `Error`, and handles the "only archived accounts" edge case with an empty-state CTA.
-- Create account, create inline account type, set default, archive, delete all work end-to-end against the in-memory Drift harness.
+- Create account, edit account, create inline account type, set default, archive, delete all work end-to-end against the in-memory Drift harness.
+- `/accounts/new` and `/accounts/:id` both route to `AccountFormScreen`; invalid edit ids redirect to `/accounts`, and missing edit rows recover cleanly.
 - Balance renders in the account's native currency via `money_formatter` (verified with USD + JPY + TWD fixtures).
 - 2× text scale survives on list + form.
 - `flutter analyze` clean.

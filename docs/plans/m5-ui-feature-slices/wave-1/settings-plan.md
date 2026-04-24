@@ -2,7 +2,7 @@
 
 **Source of truth:** [`PRD.md`](../../../../PRD.md) → *MVP Screens → Settings*, *Splash Screen → Settings*, *Theme*, *Internationalization*. Contracts inherited from [`wave-0-contracts-plan.md`](../wave-0-contracts-plan.md).
 
-Settings owns `/settings` (bottom-nav tab 3) and its sub-route `/settings/categories` navigation entry. It writes every user-preferences value that the other slices read reactively.
+Settings owns `/settings` (bottom-nav tab 3) and its sub-route `/settings/categories` navigation entry. It owns the persistent settings-side editing UI for the user-preferences values that other slices read reactively.
 
 ---
 
@@ -10,7 +10,7 @@ Settings owns `/settings` (bottom-nav tab 3) and its sub-route `/settings/catego
 
 Replace the M4 placeholder at `lib/features/settings/settings_screen.dart` with a full settings screen: theme toggle, language selector, default account, default currency, splash configuration, and a "Manage Categories" navigation tile.
 
-Settings is the **write-side** for every cross-slice preference. Splash, Home, Transactions, and Accounts read preferences via the same repository stream — there is no inter-controller messaging.
+Settings is the persistent settings-side editor for the cross-slice preferences. Splash, Home, Transactions, and Accounts read preferences via the same repository stream — there is no inter-controller messaging. Splash still writes the launch-time `splash_start_date` during first-run setup when required by the PRD.
 
 ---
 
@@ -54,7 +54,7 @@ Minimum new keys: `settingsSectionGeneral`, `settingsSectionAppearance`, `settin
 
 - `test/unit/controllers/settings_controller_test.dart` — each command writes through the repository; state re-emits on stream update; error surfaces when write fails.
 - `test/widget/features/settings/settings_screen_test.dart` — all sections render; changing theme triggers repository write; changing locale does the same; default-account tile shows "Not set" if `defaultAccountId` is `null`; "Manage Categories" tile navigates to `/settings/categories` (mock `GoRouter`).
-- `test/widget/features/settings/splash_settings_section_test.dart` — toggle hides/shows the start-date picker; first-run (no date set) surfaces the picker inline; display-text + button-label text fields persist on submit.
+- `test/widget/features/settings/splash_settings_section_test.dart` — toggle hides/shows the start-date picker; existing/null start dates render and persist correctly from Settings; display-text + button-label text fields persist on submit.
 
 ---
 
@@ -97,14 +97,14 @@ Rendered as a `CustomScrollView` with `SliverList` per section. Section headers 
 
 ## 6. Splash settings subsection
 
-Contract inherited from `splash-plan.md` §8: **Settings is the sole writer for `splash_*` preferences.** Splash slice (parallel in Wave 1) reads them.
+Contract inherited from `splash-plan.md` §8: **Settings owns the persistent settings-side editing UI for `splash_*` preferences.** Splash slice (parallel in Wave 1) still writes the launch-time `splash_start_date` when first-run setup requires it.
 
 - **Enabled** — `Switch`, default `true`. Writes `splash_enabled`.
-- **Start date** — conditional on `enabled == true`. Tap opens a platform date picker (`showDatePicker`). Writes `splash_start_date`. If `null` and splash is enabled, the router redirects to Settings on cold start (M4 behavior) and the tile highlights with a leading warning icon.
+- **Start date** — conditional on `enabled == true`. Tap opens a platform date picker (`showDatePicker`). Writes `splash_start_date`. This is the ongoing settings-side editor for the splash start date after setup; the PRD-required first-run capture still happens on the Splash route itself.
 - **Display text** — `TextField`. Placeholder shows the localized default (`splashSinceDate`). Writes `splash_display_text`. Hint text mentions the `{date}` and `{days}` template variables (PRD → *Splash Screen → Settings*).
 - **Button label** — `TextField`. Placeholder shows `splashEnter`. Writes `splash_button_label`.
 
-**Migration of the M4 inline "Set start date" button:** The M4 placeholder on the splash screen offers an inline "Set start date" button. That affordance is **moved here** in this Wave 1 PR. The Splash slice removes it in the same wave (confirmed with splash-plan.md §8).
+Settings does **not** take over the launch-time `Set start date` affordance from Splash. Its responsibility is the durable settings UI for editing the already-shared `splash_*` preferences after first run.
 
 ---
 
@@ -148,7 +148,6 @@ Tapping writes `setDefaultCurrency(code)`.
 
 - `settings_screen.dart` renders all sections; each control writes through the repository and re-renders reactively.
 - Toggling the splash `enabled` switch hides/shows the start-date, display-text, and button-label rows.
-- The M4 inline "Set start date" button is removed from `splash_screen.dart` (coordinated with Splash slice — both land in Wave 1).
 - "Manage Categories" tile navigates to `/settings/categories`.
 - Theme / locale changes rebuild the whole app live (via existing M4 providers).
 - 2× text scale passes on the settings screen.
@@ -166,11 +165,10 @@ Single agent, single PR:
 4. Implement `widgets/splash_settings_section.dart` — full splash subsection including conditional visibility.
 5. Implement `widgets/manage_categories_tile.dart`.
 6. Assemble `settings_screen.dart`.
-7. Coordinate with Splash slice: remove the M4 inline "Set start date" button from `splash_screen.dart`. This edit lands in the Settings PR (not the Splash PR) to avoid merge ordering issues — Splash expects it gone by the time Splash PR opens. Alternative: land it in Splash PR; decide at slice kickoff.
-8. Add ARB keys (§3.2) across `app_en.arb`, `app_zh_TW.arb`, and `app_zh_CN.arb`.
-9. Write controller + screen + splash-subsection widget tests.
-10. Run `dart run build_runner build --delete-conflicting-outputs && flutter analyze && flutter test`.
-11. Open PR titled `feat(m5): settings slice`.
+7. Add ARB keys (§3.2) across `app_en.arb`, `app_zh_TW.arb`, and `app_zh_CN.arb`.
+8. Write controller + screen + splash-subsection widget tests.
+9. Run `dart run build_runner build --delete-conflicting-outputs && flutter analyze && flutter test`.
+10. Open PR titled `feat(m5): settings slice`.
 
 ---
 
@@ -178,7 +176,7 @@ Single agent, single PR:
 
 1. **Theme rebuild scope.** Changing `themeMode` must rebuild `MaterialApp`. Already wired in M4 via `themeModeProvider`; Settings only writes through the repository. Do **not** directly tweak `MaterialApp.theme` from inside Settings — the `write -→ read` loop handles it.
 2. **Locale change flicker.** Same pattern: write to prefs, `localePreferenceProvider` re-emits, `MaterialApp.locale` updates. Test for: changing locale updates all currently-visible strings without manual navigation.
-3. **Coordinating the splash button removal.** Splash and Settings are parallel in Wave 1. The "Set start date" button removal is logically Settings' concern (Settings takes over the responsibility) but physically lives in `splash_screen.dart`. Recommended: Settings PR does the removal; Splash PR assumes it's already gone. If Splash PR lands first, it leaves the placeholder button; Settings PR will clean up.
+3. **Shared ownership confusion around `splash_start_date`.** Splash owns the launch-time capture path; Settings owns ongoing editing. Both write the same preference, so reviewer attention should focus on keeping the UX roles distinct rather than trying to move the first-run affordance entirely into Settings.
 4. **Default-account picker with zero accounts.** Show "Create account" CTA, not a blank sheet.
 5. **Default-currency picker with Phase 2 tokens visible.** Filter on `!currency.isToken` in MVP.
 6. **Text-field persistence.** Free-text fields for display text / button label should debounce writes (e.g. 300ms) rather than write on every keystroke — otherwise the Drift stream churns. Controller commands accept the final value on focus-out or explicit submit.
