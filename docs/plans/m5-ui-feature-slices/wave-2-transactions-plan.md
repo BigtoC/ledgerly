@@ -62,7 +62,7 @@ Widget classes only used inside the slice stay library-private.
 
 Prefix: `tx*` (Wave 0 §2.2). `transactionType*` keys already reserved in M4 (`transactionTypeExpense`, `transactionTypeIncome`).
 
-Minimum new keys: `txAddTitle`, `txEditTitle`, `txCategoryLabel`, `txCategoryEmpty`, `txAccountLabel`, `txAccountEmpty`, `txDateLabel`, `txMemoLabel`, `txSaveFailedSnackbar`, `txDeleteConfirmTitle`, `txDeleteConfirmBody`, `txDiscardConfirmTitle`, `txDiscardConfirmBody`, `txKeypadClear`, `txKeypadBackspace`. Full list discovered during implementation; all four ARBs updated in the same commit.
+Minimum new keys: `txAddTitle`, `txEditTitle`, `txCategoryLabel`, `txCategoryEmpty`, `txAccountLabel`, `txAccountEmpty`, `txDateLabel`, `txMemoLabel`, `txSaveFailedSnackbar`, `txDeleteConfirmTitle`, `txDeleteConfirmBody`, `txDiscardConfirmTitle`, `txDiscardConfirmBody`, `txKeypadClear`, `txKeypadBackspace`. Full list discovered during implementation; `app_en.arb`, `app_zh_TW.arb`, and `app_zh_CN.arb` are updated in the same commit while `app_zh.arb` stays fallback-only.
 
 ### 4.3 Tests
 
@@ -178,11 +178,11 @@ Discard-with-unsaved-changes:
 
 ## 10. Route arguments (driven by M4 router, not this slice)
 
-| Route                     | Mode      | Arguments (via `GoRouterState.extra`)                                      |
-|---------------------------|-----------|----------------------------------------------------------------------------|
-| `/home/add`               | Add       | none                                                                       |
-| `/home/add` + `duplicate` | Duplicate | `{'duplicateSourceId': <int>}` — passed via `go_router` typed extra helper |
-| `/home/edit/:id`          | Edit      | path param `id: int`                                                       |
+| Route                     | Mode      | Arguments (via `GoRouterState.extra`)                                                  |
+|---------------------------|-----------|----------------------------------------------------------------------------------------|
+| `/home/add`               | Add       | none                                                                                   |
+| `/home/add` + `duplicate` | Duplicate | `{'duplicateSourceId': <int>}` — transaction-id-only handoff via `GoRouterState.extra` |
+| `/home/edit/:id`          | Edit      | path param `id: int`                                                                   |
 
 On route entry, the screen reads `extra` once and invokes `controller.hydrateForAdd()` / `hydrateForDuplicate(sourceId)` / `hydrateForEdit(id)`. Hydration populates `_Data` and is a one-shot — subsequent user edits mutate state via commands.
 
@@ -234,7 +234,7 @@ Single agent, single PR. Entry: Wave 1 merged.
 3. Implement `widgets/calculator_keypad.dart` + `widgets/amount_display.dart`.
 4. Implement `widgets/category_chip.dart`, `widgets/account_selector_tile.dart`, `widgets/account_picker_sheet.dart`, `widgets/memo_field.dart`, `widgets/date_field.dart`, `widgets/transaction_type_segmented_control.dart`.
 5. Assemble `transaction_form_screen.dart`.
-6. Add ARB keys (§4.2) across all four ARB files in the same commit.
+6. Add ARB keys (§4.2) across `app_en.arb`, `app_zh_TW.arb`, and `app_zh_CN.arb` in the same commit.
 7. Write controller + widget tests.
 8. Run `dart run build_runner build --delete-conflicting-outputs && flutter analyze && flutter test`.
 9. Open PR titled `feat(m5): transactions slice`.

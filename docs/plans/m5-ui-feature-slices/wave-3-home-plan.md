@@ -26,7 +26,7 @@ Replace the M4 placeholder at `lib/features/home/home_screen.dart` with the real
 | `date_helpers.dart`                         | Day boundaries, locale-aware day formatting for the nav header                                                 | `core/utils/date_helpers.dart`            |
 | `icon_registry.dart` / `color_palette.dart` | Render category chip per row                                                                                   | `core/utils/*.dart`                       |
 
-Home does **not** import from Transactions. Duplicate navigation uses `context.go('/home/add', extra: {'duplicateSourceId': id})` — a string-keyed router extra honoring the Wave 2 §10 contract.
+Home does **not** import from Transactions. Duplicate navigation uses `context.push('/home/add', extra: {'duplicateSourceId': id})` — the frozen transaction-id-only handoff honoring the Wave 2 §10 contract.
 
 ---
 
@@ -96,7 +96,7 @@ This is the **only** repository surface change Wave 3 introduces. Slice agents m
 
 Prefix: `home*`. Some keys already reserved in M4 (`homeEmptyTitle`, `homeEmptyCta`, `homeFabLabel`, `homeSummaryTodayExpense`, `homeSummaryTodayIncome`, `homeSummaryMonthNet`).
 
-New keys (discovered during implementation): `homeDayEmptyTitle`, `homeDaySkeletonLabel`, `homeDeleteUndoSnackbar`, `homeDuplicateAction`, `homeDayLabelToday`, `homeDayLabelYesterday`, `homeDayNavPrevLabel`, `homeDayNavNextLabel`. Discovered keys carry PRD line refs; all four ARBs updated in the same commit.
+New keys (discovered during implementation): `homeDayEmptyTitle`, `homeDaySkeletonLabel`, `homeDeleteUndoSnackbar`, `homeDuplicateAction`, `homeDayLabelToday`, `homeDayLabelYesterday`, `homeDayNavPrevLabel`, `homeDayNavNextLabel`. Discovered keys carry PRD line refs; `app_en.arb`, `app_zh_TW.arb`, and `app_zh_CN.arb` are updated in the same commit while `app_zh.arb` stays fallback-only.
 
 ### 4.3 Tests
 
@@ -195,7 +195,7 @@ Edge cases:
 Each `TransactionTile` exposes a Duplicate action via:
 - **Leading swipe** or **overflow menu** (both acceptable; choose one — overflow is more discoverable, swipe is faster). Pick overflow for MVP consistency with the Accounts/Categories slices' overflow-first pattern; swipe-to-duplicate is future work.
 
-On tap: `context.go('/home/add', extra: {'duplicateSourceId': transaction.id})`. Navigation only; Transactions slice reads the extra and hydrates the form (Wave 2 §10).
+On tap: `context.push('/home/add', extra: {'duplicateSourceId': transaction.id})`. Navigation only; Transactions slice reads the extra and hydrates the form (Wave 2 §10).
 
 Home does not retain any duplicate-related state. When the form returns (via `pop(savedTx)`), Home uses the returned `Transaction.date` to pin the day via `pinDay(savedTx.date)`.
 
@@ -271,7 +271,7 @@ Single agent, single PR. Entry: Wave 2 merged.
 3. Implement `widgets/summary_strip.dart` + `widgets/day_navigation_header.dart` + `widgets/transaction_tile.dart` + `widgets/pending_badge.dart`.
 4. Assemble `home_screen.dart`, wiring FAB + swipe actions + overflow duplicate.
 5. Implement delete + undo timer logic in the controller; SnackBar wiring in the screen via a callback pattern.
-6. Add ARB keys (§4.2) across all four ARB files.
+6. Add ARB keys (§4.2) across `app_en.arb`, `app_zh_TW.arb`, and `app_zh_CN.arb`.
 7. Write controller + widget tests.
 8. Manually verify the save-return-pin-day round-trip works end-to-end with Wave 2's form on device / simulator.
 9. Run `dart run build_runner build --delete-conflicting-outputs && flutter analyze && flutter test`.

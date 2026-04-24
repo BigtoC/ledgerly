@@ -51,7 +51,7 @@ Keep the existing:
 - Run the existing `test/unit/l10n/arb_audit_test.dart` (M4) against the merged ARBs.
 - Resolve any duplicate-key collisions: two slices that accidentally claimed the same key — rename the lesser-used one under its proper slice prefix.
 - Check that every key under `common*` is genuinely shared by ≥2 slices. Move singletons back to their slice prefix.
-- Verify every key added during Wave 1–3 landed in all four ARB files (`app_en`, `app_zh`, `app_zh_TW`, `app_zh_CN`).
+- Verify every key added during Wave 1–3 landed in the shipped locale files (`app_en`, `app_zh_TW`, `app_zh_CN`) and that `app_zh.arb` remained fallback-only.
 
 ### 3.3 Integration tests
 
