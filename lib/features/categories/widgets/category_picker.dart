@@ -24,7 +24,7 @@ import '../../../data/models/category.dart';
 /// are sorted by `sortOrder` (nulls last) then by display name.
 ///
 /// Presents adaptively per PRD.md → Adaptive Layouts: modal bottom sheet
-/// on <600dp, constrained dialog on >=600dp. Both containers render the
+/// on <600dp, side sheet on >=600dp. Both containers render the
 /// same `CustomScrollView → SliverGrid` picker body and must survive 2×
 /// text scale per PRD.md → Layout Primitives → Constraint rule.
 ///
