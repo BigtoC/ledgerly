@@ -16,17 +16,19 @@ Replace the M4 placeholder at `lib/features/home/home_screen.dart` with the real
 
 ## 2. Inputs
 
-| Dependency                                  | Purpose                                                                                                        | Import path                               |
-|---------------------------------------------|----------------------------------------------------------------------------------------------------------------|-------------------------------------------|
-| `transactionRepositoryProvider`             | `watchByDay`, `watchDaysWithActivity`, `delete`, `save` (for undo restore), plus new aggregate methods from §3 | `app/providers/repository_providers.dart` |
-| `categoryRepositoryProvider`                | Resolve `transaction.categoryId` → display icon/color/name                                                     | `app/providers/repository_providers.dart` |
-| `accountRepositoryProvider`                 | Resolve `transaction.accountId` → account name (shown as a small tag on each row)                              | `app/providers/repository_providers.dart` |
-| `currencyRepositoryProvider`                | Resolve `transaction.currency` → `Currency` for `money_formatter`                                              | `app/providers/repository_providers.dart` |
-| `money_formatter.dart`                      | Render amounts in the list and summary strip                                                                   | `core/utils/money_formatter.dart`         |
-| `date_helpers.dart`                         | Day boundaries, locale-aware day formatting for the nav header                                                 | `core/utils/date_helpers.dart`            |
-| `icon_registry.dart` / `color_palette.dart` | Render category chip per row                                                                                   | `core/utils/*.dart`                       |
+| Dependency                                  | Purpose                                                                                          | Import path                               |
+|---------------------------------------------|--------------------------------------------------------------------------------------------------|-------------------------------------------|
+| `transactionRepositoryProvider`             | `watchByDay`, `watchDaysWithActivity`, `delete`, plus new aggregate methods from §3              | `app/providers/repository_providers.dart` |
+| `categoryRepositoryProvider`                | Resolve `transaction.categoryId` → display icon/color/name from an archived-safe category lookup | `app/providers/repository_providers.dart` |
+| `accountRepositoryProvider`                 | Resolve `transaction.accountId` → account name from an archived-safe account lookup              | `app/providers/repository_providers.dart` |
+| `currencyRepositoryProvider`                | Resolve `transaction.currency` → `Currency` for `money_formatter`                                | `app/providers/repository_providers.dart` |
+| `money_formatter.dart`                      | Render amounts in the list and summary strip                                                     | `core/utils/money_formatter.dart`         |
+| `date_helpers.dart`                         | Day boundaries, locale-aware day formatting for the nav header                                   | `core/utils/date_helpers.dart`            |
+| `icon_registry.dart` / `color_palette.dart` | Render category chip per row                                                                     | `core/utils/*.dart`                       |
 
 Home does **not** import from Transactions. Duplicate navigation uses `context.push('/home/add', extra: {'duplicateSourceId': id})` — the frozen transaction-id-only handoff honoring the Wave 2 §10 contract.
+
+Historical rows must remain renderable after category/account archive actions. Home builds its metadata lookup from repository surfaces that still expose archived rows (`watchAll(includeArchived: true)` or equivalent archived-safe lookups), not picker-style active-only lists.
 
 ---
 
@@ -34,7 +36,7 @@ Home does **not** import from Transactions. Duplicate navigation uses `context.p
 
 Wave 0 §2.8 added `AccountRepository.watchBalanceMinorUnits`; it explicitly noted future waves would add their own repository surface extensions here, not retroactively in Wave 0.
 
-The PRD's Home summary strip — *"`Today expense`, `Today income`, `Month net` per currency"* — cannot be derived from `watchByDay` alone (which returns a list, not aggregates) and cannot cover month boundaries. The slice adds two aggregate methods on `TransactionRepository` before the screen is implemented.
+The PRD's Home summary strip — *"`Today expense`, `Today income`, `Month net` per currency"* — cannot be derived from `watchByDay` alone (which returns a list, not aggregates) and cannot cover month boundaries. The slice adds three aggregate methods on `TransactionRepository` before the screen is implemented.
 
 **Add to `lib/data/repositories/transaction_repository.dart`:**
 
@@ -64,7 +66,7 @@ Stream<Map<String, int>> watchMonthNetByCurrency(DateTime month);
 **Implementation notes:**
 - Backed by Drift SQL aggregates (`SUM(amount_minor_units)` with a `CASE WHEN categories.type = 'expense' THEN -amount ELSE amount END` for net). No Dart-side aggregation — the query does the work.
 - Day boundaries computed in the device's local timezone, matching `watchByDay`'s existing boundary logic. Keep both using the same helper so month / day results are consistent.
-- Return type uses a Dart record for the expense/income split, or a typed tuple class — prefer record syntax for brevity.
+- Return type uses a Dart record for the expense/income split.
 - No cross-currency conversion; grouping is by the transaction's `currency` column.
 
 **Test coverage** — extends `test/unit/repositories/transaction_repository_test.dart`:
@@ -85,11 +87,11 @@ This is the **only** repository surface change Wave 3 introduces. Slice agents m
 ### 4.1 Files (under `lib/features/home/`)
 
 - `home_screen.dart` — replaces the M4 placeholder.
-- `home_controller.dart` — `@riverpod class HomeController extends _$HomeController`. Commands: `selectPrevDay`, `selectNextDay`, `selectToday`, `pinDay(DateTime)`, `deleteTransaction(int)`, `undoDelete()`.
+- `home_controller.dart` — `@Riverpod(keepAlive: true) class HomeController extends _$HomeController`. Commands: `selectPrevDay`, `selectNextDay`, `selectToday`, `pinDay(DateTime)`, `deleteTransaction(int)`, `undoDelete()`.
 - `home_state.dart` — Freezed sealed union (see §5).
-- `widgets/day_navigation_header.dart` — prev/next chevrons + selected-day label; disabled chevrons at boundaries.
+- `widgets/day_navigation_header.dart` — prev/next chevrons + selected-day label; disabled chevrons at boundaries; selected-day label opens the manual date picker.
 - `widgets/summary_strip.dart` — three-tile summary (Today expense / Today income / Month net), grouped by currency when multiple currencies are present.
-- `widgets/transaction_tile.dart` — row: category icon chip, category name, amount (+/- prefix, native currency), memo preview, account name tag, time.
+- `widgets/transaction_tile.dart` — row: category icon chip, category name, amount (+/- prefix, native currency), memo preview, account name tag, time, primary tap-to-edit, and overflow actions (`Edit`, `Duplicate`, `Delete`).
 - `widgets/pending_badge.dart` — placeholder badge; renders nothing when count is 0 (MVP: always 0).
 
 ### 4.2 ARB keys
@@ -101,9 +103,9 @@ New keys (discovered during implementation): `homeDayEmptyTitle`, `homeDaySkelet
 ### 4.3 Tests
 
 - `test/unit/controllers/home_controller_test.dart` — day traversal via `watchDaysWithActivity` (prev/next step-over empty days); `selectToday` pins to today; `deleteTransaction` schedules a timer and surfaces an undo window; `undoDelete` cancels the timer without touching the repository; timer expiry triggers `repo.delete`.
-- `test/widget/features/home/home_screen_test.dart` — first-run empty state renders `homeEmptyTitle` + `homeEmptyCta` CTA; per-day empty state after navigating to a gap day; summary strip renders chips per currency; swipe-delete surfaces undo snackbar; duplicate swipe action navigates with the correct route extra.
+- `test/widget/features/home/home_screen_test.dart` — first-run empty state renders `homeEmptyTitle` + `homeEmptyCta` CTA; per-day empty state after navigating to a gap day; summary strip renders chips per currency; row tap opens `/home/edit/:id`; overflow duplicate navigates with the correct route extra; overflow delete and swipe-delete both surface the same undo snackbar; archived category/account metadata still render in historical rows; `>=600dp` renders the tablet two-pane layout.
 - `test/widget/features/home/summary_strip_test.dart` — single-currency case, multi-currency case, all-zero case.
-- `test/widget/features/home/day_navigation_header_test.dart` — prev disabled at oldest day, next disabled at today, both active in between.
+- `test/widget/features/home/day_navigation_header_test.dart` — prev disabled at oldest day, next disabled when there is no newer activity day, both active in between, selected-day label opens the manual date picker.
 
 ---
 
@@ -113,14 +115,17 @@ New keys (discovered during implementation): `homeDayEmptyTitle`, `homeDaySkelet
 @freezed
 sealed class HomeState with _$HomeState {
   const factory HomeState.loading() = _Loading;
+  const factory HomeState.empty({
+    required DateTime selectedDay,
+    required int pendingBadgeCount,
+  }) = _Empty;
   const factory HomeState.data({
     required DateTime selectedDay,
     required List<Transaction> transactionsForDay,
     required Map<String, ({int expense, int income})> todayTotalsByCurrency,
     required Map<String, int> monthNetByCurrency,
-    required bool everHadAnyTransaction,   // false → render first-run empty state
     required DateTime? prevDayWithActivity, // null → prev disabled
-    required DateTime? nextDayWithActivity, // null → next disabled (or selectedDay == today)
+    required DateTime? nextDayWithActivity, // null → next disabled
     required int pendingBadgeCount,         // always 0 in MVP (Wave 0 §2.3)
     required PendingDelete? pendingDelete,  // set during the undo window; null otherwise
   }) = _Data;
@@ -133,9 +138,9 @@ class PendingDelete {
 }
 ```
 
-- No top-level `Empty` variant: first-run empty is encoded as `Data(everHadAnyTransaction: false, ...)`. The widget branches on this flag to render the CTA vs. the list.
+- `empty` is the first-run / no-history state. The controller emits it when `watchDaysWithActivity(limit: 1)` returns no rows; the widget renders the CTA from this variant instead of overloading `data`.
+- `data` covers both populated days and manual gap-day empties (`transactionsForDay.isEmpty`).
 - `transactionsForDay` comes from `watchByDay(selectedDay)`; the controller does **not** filter in Dart.
-- `everHadAnyTransaction` derived from `watchDaysWithActivity(limit: 1)` — empty list ⇒ false.
 
 ---
 
@@ -143,18 +148,18 @@ class PendingDelete {
 
 PRD: *"Home shows one day at a time … prev/next controls advance by one day-with-activity at a time."*
 
-Data source: `watchDaysWithActivity({limit = 365})` returns a list of dates sorted descending.
+Data source: `watchDaysWithActivity(...)` returns a list of dates sorted descending.
 
 Controller derivation:
 - `prevDayWithActivity = daysWithActivity.firstWhereOrNull((d) => d.isBefore(selectedDay))`
 - `nextDayWithActivity = daysWithActivity.lastWhereOrNull((d) => d.isAfter(selectedDay))`
 
 Edge cases:
-- `selectedDay == today` and no transactions today but there is history: next disabled; prev points at most recent activity.
-- `selectedDay == today` and no history at all: both disabled; render first-run empty state regardless of `selectedDay`.
-- User taps `selectedDay` label → opens `showDatePicker` bounded by the oldest-day-with-activity…today range. This lets the user jump to a specific day (PRD allows "gap day" rendering via explicit date pick).
+- `selectedDay == today` and no transactions today but there is history: if there is no newer activity day, next disabled; otherwise next points at the nearest newer activity day. Prev points at the most recent older activity day when one exists.
+- `selectedDay == today` and no history at all: both disabled; emit `HomeState.empty(selectedDay: today, pendingBadgeCount: 0)`.
+- User taps `selectedDay` label → opens `showDatePicker` with `firstDate` = oldest day with activity (or today when no history) and a `lastDate` that extends beyond today so the PRD's manual future-gap-day path remains reachable. Choosing a future day with no activity renders the per-day empty state in `HomeState.data(...)`.
 
-`selectToday()` command always pins to today even when today has no activity (renders per-day empty state).
+`selectToday()` command always pins to today even when today has no activity. If history exists, this renders the per-day empty state; if no history exists, it emits `HomeState.empty(...)`.
 
 ---
 
@@ -173,7 +178,7 @@ The strip does **not** show an auto-converted total. That is explicitly Phase 2 
 
 ## 8. Delete + undo mechanics
 
-Swipe-to-delete on a transaction tile (via `flutter_slidable`):
+Swipe-to-delete on a transaction tile (via `flutter_slidable`) is the primary destructive gesture. The same delete path is also reachable from the row overflow menu so delete is not gesture-only.
 
 1. Widget calls `controller.deleteTransaction(id)`.
 2. Controller snapshots the transaction, sets `pendingDelete`, starts a 4-second `Timer`. The widget subscribing to state observes the pending delete and hides the row from the rendered list (visual deletion). The DB row is **not** touched yet.
@@ -186,14 +191,15 @@ Why timer-based (not repo-level soft delete): the repository doesn't expose a so
 Edge cases:
 - User swipes-deletes a second row while the first is still pending: queue, or immediately commit the first and start a new timer for the second. Simpler: the controller holds a **single** `pendingDelete`; swiping again commits the prior and starts fresh. Document this in the test.
 - App backgrounded mid-timer: the delete may not execute if the app is killed. Accept this for MVP — the transaction reappears on next launch via the stream. Document in release notes.
-- Navigate away from Home mid-timer: controller keeps running; the timer fires even off-screen (per `@Riverpod(keepAlive: false)` — verify the timer survives until controller disposes).
+- Navigate away from Home mid-timer: `HomeController` stays alive for the undo window (`@Riverpod(keepAlive: true)`), so the timer still fires and commits the delete unless the user already tapped undo.
 
 ---
 
-## 9. Duplicate entry point (Wave 0 §2.3 producer side)
+## 9. Edit + duplicate entry points (Wave 0 §2.3 producer side)
 
 Each `TransactionTile` exposes a Duplicate action via:
-- **Leading swipe** or **overflow menu** (both acceptable; choose one — overflow is more discoverable, swipe is faster). Pick overflow for MVP consistency with the Accounts/Categories slices' overflow-first pattern; swipe-to-duplicate is future work.
+- Primary tap → `final savedTx = await context.push<Transaction>('/home/edit/${transaction.id}')`. If `savedTx != null`, Home calls `pinDay(savedTx.date)` so edit-save follows the same return-to-day contract as add/duplicate.
+- Overflow menu → `Edit`, `Duplicate`, `Delete`. Pick overflow for MVP consistency with the Accounts/Categories slices' overflow-first pattern; swipe-to-duplicate is future work.
 
 On tap: `context.push('/home/add', extra: {'duplicateSourceId': transaction.id})`. Navigation only; Transactions slice reads the extra and hydrates the form (Wave 2 §10).
 
@@ -204,8 +210,9 @@ Home does not retain any duplicate-related state. When the form returns (via `po
 ## 10. FAB
 
 - `FloatingActionButton.extended` with `homeFabLabel` semantics ("Add transaction").
-- Tap → `context.go('/home/add')` (no extra — Add mode).
-- On return with `savedTx`: `pinDay(savedTx.date)`, then rely on `watchByDay` + `watchDailyTotalsByType` streams to surface the new row. No manual list mutation.
+- Tap → `final savedTx = await context.push<Transaction>('/home/add')` (no extra — Add mode).
+- If `savedTx != null`, call `pinDay(savedTx.date)`, then rely on `watchByDay` + `watchDailyTotalsByType` streams to surface the new row. No manual list mutation.
+- FAB, day-nav chevrons, duplicate action, delete action, and undo snackbar action all carry explicit `Semantics` labels per PRD accessibility requirements.
 
 ---
 
@@ -224,6 +231,12 @@ Scaffold
 
 - Never nest `ListView` in `Column` (PRD Layout Primitives — non-negotiable).
 - 2× text scale: summary strip wraps (already `Wrap`); day nav header clamps at 1.5× (fixed-height region); transaction tiles reflow.
+
+Adaptive layout:
+- `<600dp`: use the single-pane sliver structure above.
+- `>=600dp`: switch to the PRD's two-pane Home layout. The left pane is the activity-day chooser / navigation surface driven by `watchDaysWithActivity(...)`; the right pane reuses the selected-day detail body (summary strip + selected day's transactions or per-day empty state) driven by the same `selectedDay` source of truth.
+- First-run empty state spans the content region instead of rendering a blank split pane.
+- Do **not** ship the phone single-pane Home unchanged on `>=600dp`.
 
 ---
 
@@ -256,7 +269,10 @@ Scaffold
 - Prev/next navigation traverses days-with-activity correctly; both chevrons disable at boundaries; `selectToday` snaps to today.
 - Swipe-delete surfaces undo snackbar; undo within 4 s restores the row; past 4 s the delete commits.
 - Duplicate action navigates to `/home/add` with `duplicateSourceId` extra; Wave 2 form prefills correctly.
+- Row tap navigates to `/home/edit/:id`; save returns a persisted `Transaction` and Home re-pins to `savedTx.date`.
 - Save from the form returns to Home and pins the day to `savedTx.date` with the new row visible.
+- Historical rows still render archived category/account metadata.
+- `>=600dp` uses the PRD two-pane Home layout instead of the phone single-pane scroll view.
 - 2× text scale passes on the screen.
 - `flutter analyze` clean; `flutter test` green.
 
@@ -267,9 +283,9 @@ Scaffold
 Single agent, single PR. Entry: Wave 2 merged.
 
 1. Implement §3 repository additions in `transaction_repository.dart` + `DriftTransactionRepository`. Extend `test/unit/repositories/transaction_repository_test.dart` with the cases from §3. Get repo tests green in isolation before touching the UI.
-2. Implement `home_state.dart` + `home_controller.dart` — consume the new aggregate streams; derive `everHadAnyTransaction`, `prevDayWithActivity`, `nextDayWithActivity`.
+2. Implement `home_state.dart` + `home_controller.dart` — consume the new aggregate streams; derive `empty` vs `data`, `prevDayWithActivity`, and `nextDayWithActivity`.
 3. Implement `widgets/summary_strip.dart` + `widgets/day_navigation_header.dart` + `widgets/transaction_tile.dart` + `widgets/pending_badge.dart`.
-4. Assemble `home_screen.dart`, wiring FAB + swipe actions + overflow duplicate.
+4. Assemble `home_screen.dart`, wiring FAB + row tap edit + overflow actions + swipe delete.
 5. Implement delete + undo timer logic in the controller; SnackBar wiring in the screen via a callback pattern.
 6. Add ARB keys (§4.2) across `app_en.arb`, `app_zh_TW.arb`, and `app_zh_CN.arb`.
 7. Write controller + widget tests.
@@ -283,7 +299,7 @@ Single agent, single PR. Entry: Wave 2 merged.
 
 1. **Aggregate query performance.** `SUM(...)` over thousands of rows inside a reactive stream might flicker on large DBs. MVP pagination cap is 10 000 rows; verify query completes in <50 ms on that size. Benchmark in repository tests.
 2. **Timezone drift.** `watchByDay`, `watchDailyNetByCurrency`, `watchMonthNetByCurrency` must all use the same day-boundary logic. Extract a single helper in `date_helpers.dart` (or reuse existing) and have all three methods call it.
-3. **Delete-undo timer across controller rebuilds.** Riverpod may rebuild the controller when the widget tree changes; the timer must outlive trivial rebuilds. `@Riverpod(keepAlive: true)` on `HomeController`, or move the timer into a separate keepAlive provider.
+3. **Delete-undo timer across controller rebuilds.** `HomeController` is `@Riverpod(keepAlive: true)` so the pending-delete timer survives trivial rebuilds and off-screen navigation during the undo window.
 4. **Second swipe-delete mid-undo.** Committing the first delete when the second arrives is correct MVP behavior — a queue-based undo is overkill. Widget test: rapid two-row swipe commits first, starts undo for second.
 5. **Currency pivot in summary strip.** If the user's only account is USD and they later add a JPY account, the strip silently gains a second set of chips. Test with multi-currency fixture.
 6. **Empty `prevDayWithActivity` when on oldest day.** Disable chevron, don't throw. Covered in day-nav widget test.
