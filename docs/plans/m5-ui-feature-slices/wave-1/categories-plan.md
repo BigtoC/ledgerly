@@ -88,6 +88,7 @@ Implementation contract:
 - Data source: a new family provider (e.g. `@Riverpod(keepAlive: false) Stream<List<Category>> categoriesByType(Ref ref, CategoryType type)`) that internally calls `categoryRepositoryProvider.watchAll(type: type, includeArchived: false)`. Defined in `categories_controller.dart` or a sibling file — not in the widget.
 - On tile tap: `Navigator.pop(context, tappedCategory)`.
 - On scrim dismiss: Flutter returns `null`. The `show*` function returns whatever `Navigator.pop` returned.
+- **View-only, no inline create.** When categories exist, the grid renders only real category tiles — no trailing "+ New" tile, no plus-FAB, no long-press-to-create. Category creation lives on the Categories management screen (Settings → Manage Categories) and nowhere else in MVP.
 - Empty state: inside the picker container, show a "No categories yet — Create one" CTA that closes the picker (`Navigator.pop(null)`) and resolves `null`. The picker does not navigate on Transactions' behalf; the caller decides whether to open category management / creation flow and whether to re-enter the picker afterward.
 
 Picker tests must cover 2× text scale per `PRD.md` → *Layout Primitives → Constraint rule*.

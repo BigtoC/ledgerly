@@ -53,6 +53,7 @@ Future<Category?> showCategoryPicker(
 - Signature is exactly `Future<Category?> showCategoryPicker(BuildContext, {required CategoryType type})`. No positional overloads, no `onSelected` callback variant, no extra named params in Wave 0.
 - Data flows through a Categories-owned Riverpod provider / controller surface that internally reads `categoryRepositoryProvider.watchAll(type: type, includeArchived: false)`. The picker widget does not open its own Drift session or call the database directly.
 - Widget class (if any) lives in the same file and is library-private (`_CategoryPickerSheet`). Call sites only see the top-level `show*` function.
+- **The picker is view-only in MVP.** No inline "+ New" tile, no plus-FAB, no long-press-to-create. Category creation always goes through the Categories management screen (reachable from Settings → Manage Categories). The empty-state CTA closes the picker and returns `null`; the caller decides whether to route to management — see Wave 1 Categories plan §5.
 - Stub body: `throw UnimplementedError('Wave 1: Categories slice owner')`. File compiles; tests for it land in Wave 1.
 
 **Why freeze the function, not the widget:** a Future-returning API composes with Transactions' form (`final picked = await showCategoryPicker(...); if (picked != null) controller.selectCategory(picked);`) while keeping adaptive presentation private to Categories. A callback-style widget forces the caller to manage the sheet/dialog lifecycle — rejected.

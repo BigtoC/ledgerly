@@ -27,6 +27,8 @@ Replace the M4 placeholder at `lib/features/splash/splash_screen.dart` with the 
 
 Splash is read-mostly. It renders configured splash state from preferences, but it also owns the launch-time "no start date yet" path from the PRD: if splash is enabled and `splash_start_date` is missing, Splash presents the inline start-date action and writes the chosen date before continuing to the day-counter state. Settings remains the ongoing editor for `splash_*` preferences after first run.
 
+**Date-picker bounds (both the launch-time prompt and any subsequent Settings edit):** `firstDate` is the earliest date the platform date picker will accept — use `DateTime(1900)` as the conventional lower bound. **No `lastDate` clamp** — future dates are allowed so users can run Splash as a countdown (negative day counts) and customize their splash text accordingly. The controller must **not** clamp negative day counts to zero.
+
 ---
 
 ## 3. Deliverables
@@ -55,7 +57,7 @@ All required keys already exist in M4 (`splashEnter`, `splashSinceDate`, `splash
 
 ### 3.4 Tests
 
-- `test/unit/controllers/splash_controller_test.dart` — day-count math (edge cases: start date = today → 0 days; start date in the future → 0 days, state is `Data` with a negative-is-clamped policy; DST transition days — delegate to `date_helpers` tests, assert controller just calls the helper).
+- `test/unit/controllers/splash_controller_test.dart` — day-count math (edge cases: start date = today → 0 days; start date in the future → negative day count surfaced as-is (countdown use case, **not** clamped); DST transition days — delegate to `date_helpers` tests, assert controller just calls the helper).
 - `test/unit/utils/splash_template_substitution_test.dart` — `{days}` and `{date}` template variable replacement for custom display text.
 - `test/widget/features/splash/splash_screen_golden_test.dart` — **golden tests, mandatory.** Three variants:
   - Default text ("Since {date}"), start date = 100 days ago, English locale.

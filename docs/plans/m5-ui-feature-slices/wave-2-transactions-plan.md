@@ -34,7 +34,18 @@ This slice does **not** import from Home. The Home → form navigation is driven
 
 ## 3. Repository contract observations
 
-`TransactionRepository` already exposes `save`, `delete`, and `getById`. **Do not call `TransactionRepository.duplicate(int)`.** Its documented behavior — "Copies every field except `id` and timestamps; the duplicate is a brand-new transaction row" — saves immediately, which is incompatible with the PRD quick-repeat flow ("user adjusts amount or date if needed → tap Save"). The form uses `getById(sourceId)` to hydrate a prefill and then calls `save(newTx)` on confirmation. `duplicate()` stays on the repository surface unused; removing it is out of scope for this slice.
+`TransactionRepository` already exposes `save`, `delete`, and `getById`. The form uses `getById(sourceId)` to hydrate a duplicate prefill and then calls `save(newTx)` on confirmation — the user may edit amount/date before committing, per PRD's quick-repeat flow.
+
+### 3.1 Remove `TransactionRepository.duplicate(int)` in this slice's contracts step
+
+The existing `duplicate()` method saves a new row immediately, which is incompatible with the PRD quick-repeat flow ("user adjusts amount or date if needed → tap Save"). Leaving it on the surface unused is a footgun — a future agent may wire it up to the duplicate menu item thinking it returns a draft.
+
+**Action for Wave 2 agent:**
+- Delete the `duplicate` method from `lib/data/repositories/transaction_repository.dart` and any corresponding test.
+- Add a short class-level doc comment on `TransactionRepository` explaining **why** the repository does not expose a duplicate convenience: the quick-repeat flow is driven from the UI via `getById` → prefill → user edit → `save`, so repository-level duplicate-save would bypass the edit step. Keep the comment to 2–3 lines — enough to steer a future reader away from re-adding it.
+- Verify no callers exist (`rg 'transactionRepository.*duplicate|\.duplicate\('`) before removal.
+
+### 3.2 Add `AccountRepository.getLastUsedActiveAccount()`
 
 Wave 2 needs one small repository contract addition to preserve the PRD's Add Transaction fallback order when `default_account_id` is unset:
 
@@ -45,6 +56,7 @@ Future<Account?> getLastUsedActiveAccount();
 
 Contract:
 - Returns the most recently used non-archived account based on the newest transaction (`date DESC, id DESC`).
+- **Archive filter applies in the SQL, not in Dart.** The query must `JOIN` / `WHERE` on the account-archive discriminator (`accounts.archived_at IS NULL` or the repo's equivalent) so archived rows never leave the DAO. Do not fetch the newest transaction first and then filter archived accounts in application code — that approach returns `null` when the newest transaction belongs to an archived account, which is the wrong answer.
 - Returns `null` when no transaction exists for any active account.
 - One-shot read only; no stream needed.
 

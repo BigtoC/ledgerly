@@ -39,7 +39,7 @@ Settings does **not** import from other feature slices. Navigation to `Categorie
 - `widgets/settings_section.dart` — reusable section header + body container.
 - `widgets/theme_mode_selector.dart` — segmented control over `ThemeMode.{light,dark,system}`.
 - `widgets/language_selector.dart` — list of supported locales (`en`, `zh_TW`, `zh_CN`).
-- `widgets/default_account_tile.dart` — tap opens picker sheet (reuses `Accounts` slice's `CurrencyPickerSheet`? — no, Settings owns its own lightweight tile-based picker; see §5).
+- `widgets/default_account_tile.dart` — tap opens a lightweight Settings-owned tile-based picker of non-archived accounts; see §7.
 - `widgets/default_currency_tile.dart` — same shape, different data.
 - `widgets/splash_settings_section.dart` — the splash subsection (enabled toggle, start date, display text, button label).
 - `widgets/manage_categories_tile.dart` — `ListTile` that navigates via `context.go('/settings/categories')`.
