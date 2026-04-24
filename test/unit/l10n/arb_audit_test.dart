@@ -90,6 +90,24 @@ const Set<String> _expectedEnKeys = <String>{
   // §5.5 Group A — Seeded account types.
   'accountTypeCash',
   'accountTypeInvestment',
+
+  // M5 Wave 1 — Categories slice UI keys
+  // (docs/plans/m5-ui-feature-slices/wave-1/categories-plan.md §3.2).
+  'categoriesManageTitle',
+  'categoriesAddCta',
+  'categoriesSectionExpense',
+  'categoriesSectionIncome',
+  'categoriesFormNameLabel',
+  'categoriesFormIconLabel',
+  'categoriesFormColorLabel',
+  'categoriesFormTypeLabel',
+  'categoriesFormTypeLockedHint',
+  'categoriesArchiveUndoSnackbar',
+  'categoriesDeleteConfirmTitle',
+  'categoriesDeleteConfirmBody',
+  'categoriesPickerTitleExpense',
+  'categoriesPickerTitleIncome',
+  'categoriesPickerEmptyCta',
 };
 
 Map<String, dynamic> _readArb(String fileName) {

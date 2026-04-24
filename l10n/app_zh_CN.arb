@@ -61,5 +61,21 @@
   "settingsSplashEnabled": "显示启动页",
   "settingsSplashStartDate": "起始日期",
   "settingsSplashDisplayText": "显示文字",
-  "settingsSplashButtonLabel": "按钮文字"
+  "settingsSplashButtonLabel": "按钮文字",
+
+  "categoriesManageTitle": "管理分类",
+  "categoriesAddCta": "添加分类",
+  "categoriesSectionExpense": "支出",
+  "categoriesSectionIncome": "收入",
+  "categoriesFormNameLabel": "名称",
+  "categoriesFormIconLabel": "图标",
+  "categoriesFormColorLabel": "颜色",
+  "categoriesFormTypeLabel": "类型",
+  "categoriesFormTypeLockedHint": "使用后类型无法更改",
+  "categoriesArchiveUndoSnackbar": "已归档分类",
+  "categoriesDeleteConfirmTitle": "要删除分类吗？",
+  "categoriesDeleteConfirmBody": "此操作无法撤销。",
+  "categoriesPickerTitleExpense": "选择支出分类",
+  "categoriesPickerTitleIncome": "选择收入分类",
+  "categoriesPickerEmptyCta": "暂无分类 — 创建一个"
 }

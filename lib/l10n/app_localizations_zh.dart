@@ -165,6 +165,52 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsSplashButtonLabel => 'Button label';
+
+  @override
+  String get categoriesManageTitle => 'Manage categories';
+
+  @override
+  String get categoriesAddCta => 'Add category';
+
+  @override
+  String get categoriesSectionExpense => 'Expense';
+
+  @override
+  String get categoriesSectionIncome => 'Income';
+
+  @override
+  String get categoriesFormNameLabel => 'Name';
+
+  @override
+  String get categoriesFormIconLabel => 'Icon';
+
+  @override
+  String get categoriesFormColorLabel => 'Color';
+
+  @override
+  String get categoriesFormTypeLabel => 'Type';
+
+  @override
+  String get categoriesFormTypeLockedHint =>
+      'Type cannot change after first use';
+
+  @override
+  String get categoriesArchiveUndoSnackbar => 'Category archived';
+
+  @override
+  String get categoriesDeleteConfirmTitle => 'Delete category?';
+
+  @override
+  String get categoriesDeleteConfirmBody => 'This cannot be undone.';
+
+  @override
+  String get categoriesPickerTitleExpense => 'Pick expense category';
+
+  @override
+  String get categoriesPickerTitleIncome => 'Pick income category';
+
+  @override
+  String get categoriesPickerEmptyCta => 'No categories yet — Create one';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -328,6 +374,51 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get settingsSplashButtonLabel => '按钮文字';
+
+  @override
+  String get categoriesManageTitle => '管理分类';
+
+  @override
+  String get categoriesAddCta => '添加分类';
+
+  @override
+  String get categoriesSectionExpense => '支出';
+
+  @override
+  String get categoriesSectionIncome => '收入';
+
+  @override
+  String get categoriesFormNameLabel => '名称';
+
+  @override
+  String get categoriesFormIconLabel => '图标';
+
+  @override
+  String get categoriesFormColorLabel => '颜色';
+
+  @override
+  String get categoriesFormTypeLabel => '类型';
+
+  @override
+  String get categoriesFormTypeLockedHint => '使用后类型无法更改';
+
+  @override
+  String get categoriesArchiveUndoSnackbar => '已归档分类';
+
+  @override
+  String get categoriesDeleteConfirmTitle => '要删除分类吗？';
+
+  @override
+  String get categoriesDeleteConfirmBody => '此操作无法撤销。';
+
+  @override
+  String get categoriesPickerTitleExpense => '选择支出分类';
+
+  @override
+  String get categoriesPickerTitleIncome => '选择收入分类';
+
+  @override
+  String get categoriesPickerEmptyCta => '暂无分类 — 创建一个';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -491,4 +582,49 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get settingsSplashButtonLabel => '按鈕文字';
+
+  @override
+  String get categoriesManageTitle => '管理分類';
+
+  @override
+  String get categoriesAddCta => '新增分類';
+
+  @override
+  String get categoriesSectionExpense => '支出';
+
+  @override
+  String get categoriesSectionIncome => '收入';
+
+  @override
+  String get categoriesFormNameLabel => '名稱';
+
+  @override
+  String get categoriesFormIconLabel => '圖示';
+
+  @override
+  String get categoriesFormColorLabel => '顏色';
+
+  @override
+  String get categoriesFormTypeLabel => '類型';
+
+  @override
+  String get categoriesFormTypeLockedHint => '使用後類型無法變更';
+
+  @override
+  String get categoriesArchiveUndoSnackbar => '已封存分類';
+
+  @override
+  String get categoriesDeleteConfirmTitle => '要刪除分類嗎？';
+
+  @override
+  String get categoriesDeleteConfirmBody => '此操作無法復原。';
+
+  @override
+  String get categoriesPickerTitleExpense => '選擇支出分類';
+
+  @override
+  String get categoriesPickerTitleIncome => '選擇收入分類';
+
+  @override
+  String get categoriesPickerEmptyCta => '尚無分類 — 建立一個';
 }

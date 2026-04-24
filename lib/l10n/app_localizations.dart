@@ -405,6 +405,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Button label'**
   String get settingsSplashButtonLabel;
+
+  /// PRD 728. AppBar title for the Categories management screen (Settings → Manage Categories).
+  ///
+  /// In en, this message translates to:
+  /// **'Manage categories'**
+  String get categoriesManageTitle;
+
+  /// PRD 728, 733. FAB label and inline empty-section CTA to open the category form sheet in Add mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Add category'**
+  String get categoriesAddCta;
+
+  /// PRD 731. Section header for the expense category group on the management screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get categoriesSectionExpense;
+
+  /// PRD 731. Section header for the income category group on the management screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get categoriesSectionIncome;
+
+  /// PRD 732. Category form sheet — display name text field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get categoriesFormNameLabel;
+
+  /// PRD 732. Category form sheet — icon picker label.
+  ///
+  /// In en, this message translates to:
+  /// **'Icon'**
+  String get categoriesFormIconLabel;
+
+  /// PRD 732. Category form sheet — color picker label.
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get categoriesFormColorLabel;
+
+  /// PRD 732. Category form sheet — expense/income segmented control label.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get categoriesFormTypeLabel;
+
+  /// PRD 293-294, 735-737. Inline hint shown beneath the disabled type toggle in Edit mode — category type is immutable once transactions reference the row.
+  ///
+  /// In en, this message translates to:
+  /// **'Type cannot change after first use'**
+  String get categoriesFormTypeLockedHint;
+
+  /// PRD 695, 737. SnackBar text shown after archiving a category; pairs with commonUndo as the action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Category archived'**
+  String get categoriesArchiveUndoSnackbar;
+
+  /// PRD 737. Confirm-delete dialog title — unused custom categories only.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete category?'**
+  String get categoriesDeleteConfirmTitle;
+
+  /// PRD 737. Confirm-delete dialog body — unused custom categories only.
+  ///
+  /// In en, this message translates to:
+  /// **'This cannot be undone.'**
+  String get categoriesDeleteConfirmBody;
+
+  /// PRD 683, 715. Category picker sheet title when opened for an expense transaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick expense category'**
+  String get categoriesPickerTitleExpense;
+
+  /// PRD 683, 715. Category picker sheet title when opened for an income transaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick income category'**
+  String get categoriesPickerTitleIncome;
+
+  /// PRD 715. Empty-state CTA inside the picker sheet; closes the sheet and resolves null so the caller decides the next step (per wave-0 §2.3 and categories-plan §5).
+  ///
+  /// In en, this message translates to:
+  /// **'No categories yet — Create one'**
+  String get categoriesPickerEmptyCta;
 }
 
 class _AppLocalizationsDelegate

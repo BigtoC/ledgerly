@@ -165,4 +165,50 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsSplashButtonLabel => 'Button label';
+
+  @override
+  String get categoriesManageTitle => 'Manage categories';
+
+  @override
+  String get categoriesAddCta => 'Add category';
+
+  @override
+  String get categoriesSectionExpense => 'Expense';
+
+  @override
+  String get categoriesSectionIncome => 'Income';
+
+  @override
+  String get categoriesFormNameLabel => 'Name';
+
+  @override
+  String get categoriesFormIconLabel => 'Icon';
+
+  @override
+  String get categoriesFormColorLabel => 'Color';
+
+  @override
+  String get categoriesFormTypeLabel => 'Type';
+
+  @override
+  String get categoriesFormTypeLockedHint =>
+      'Type cannot change after first use';
+
+  @override
+  String get categoriesArchiveUndoSnackbar => 'Category archived';
+
+  @override
+  String get categoriesDeleteConfirmTitle => 'Delete category?';
+
+  @override
+  String get categoriesDeleteConfirmBody => 'This cannot be undone.';
+
+  @override
+  String get categoriesPickerTitleExpense => 'Pick expense category';
+
+  @override
+  String get categoriesPickerTitleIncome => 'Pick income category';
+
+  @override
+  String get categoriesPickerEmptyCta => 'No categories yet — Create one';
 }
