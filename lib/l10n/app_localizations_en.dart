@@ -211,4 +211,102 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get categoriesPickerEmptyCta => 'No categories yet — Create one';
+
+  @override
+  String get accountsListTitle => 'Accounts';
+
+  @override
+  String get accountsAddCta => 'Add account';
+
+  @override
+  String get accountsEmptyTitle => 'No active accounts';
+
+  @override
+  String get accountsEmptyCta => 'Create account';
+
+  @override
+  String get accountsArchivedSectionLabel => 'Archived';
+
+  @override
+  String get accountsSetDefaultAction => 'Set as default';
+
+  @override
+  String get accountsDefaultBadge => 'Default';
+
+  @override
+  String get accountsArchiveAction => 'Archive';
+
+  @override
+  String get accountsDeleteAction => 'Delete';
+
+  @override
+  String get accountsArchiveUndoSnackbar => 'Account archived';
+
+  @override
+  String get accountsDeleteConfirmTitle => 'Delete account?';
+
+  @override
+  String get accountsDeleteConfirmBody => 'This cannot be undone.';
+
+  @override
+  String get accountsArchiveLastActiveBlocked =>
+      'Cannot archive the only active account';
+
+  @override
+  String get accountsDeleteDefaultBlockedTitle => 'Change default account';
+
+  @override
+  String get accountsDeleteDefaultBlockedBody =>
+      'Choose another default account before deleting this one.';
+
+  @override
+  String get accountsFormAddTitle => 'New account';
+
+  @override
+  String get accountsFormEditTitle => 'Edit account';
+
+  @override
+  String get accountsFormName => 'Name';
+
+  @override
+  String get accountsFormType => 'Account type';
+
+  @override
+  String get accountsFormCurrency => 'Currency';
+
+  @override
+  String get accountsFormOpeningBalance => 'Opening balance';
+
+  @override
+  String get accountsFormIcon => 'Icon';
+
+  @override
+  String get accountsFormColor => 'Color';
+
+  @override
+  String get accountsFormPickType => 'Pick account type';
+
+  @override
+  String get accountsFormPickCurrency => 'Pick currency';
+
+  @override
+  String get accountsFormNotFound => 'This account no longer exists.';
+
+  @override
+  String get accountsTypePickerTitle => 'Pick account type';
+
+  @override
+  String get accountsTypeCreateInlineCta => 'Create new account type';
+
+  @override
+  String get accountsTypeFormTitle => 'New account type';
+
+  @override
+  String get accountsTypeFormName => 'Name';
+
+  @override
+  String get accountsTypeFormDefaultCurrency => 'Default currency';
+
+  @override
+  String get accountsCurrencyPickerTitle => 'Pick currency';
 }

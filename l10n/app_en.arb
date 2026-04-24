@@ -281,5 +281,134 @@
   "categoriesPickerEmptyCta": "No categories yet — Create one",
   "@categoriesPickerEmptyCta": {
     "description": "PRD 715. Empty-state CTA inside the picker sheet; closes the sheet and resolves null so the caller decides the next step (per wave-0 §2.3 and categories-plan §5)."
+  },
+
+  "accountsListTitle": "Accounts",
+  "@accountsListTitle": {
+    "description": "PRD 680. AppBar title for the Accounts list screen."
+  },
+  "accountsAddCta": "Add account",
+  "@accountsAddCta": {
+    "description": "PRD 680. FAB label and empty-state CTA to open the account form in Add mode."
+  },
+  "accountsEmptyTitle": "No active accounts",
+  "@accountsEmptyTitle": {
+    "description": "PRD 703. Accounts list empty-state title shown when every account is archived."
+  },
+  "accountsEmptyCta": "Create account",
+  "@accountsEmptyCta": {
+    "description": "PRD 703. Primary CTA on the Accounts empty state — mirrors PRD's 'Create account' label when no active account exists."
+  },
+  "accountsArchivedSectionLabel": "Archived",
+  "@accountsArchivedSectionLabel": {
+    "description": "Accounts plan §4. Section header for the collapsible archived-accounts group beneath the active list."
+  },
+  "accountsSetDefaultAction": "Set as default",
+  "@accountsSetDefaultAction": {
+    "description": "Accounts plan §4, §6. Row overflow / swipe action to mark the account as the default account."
+  },
+  "accountsDefaultBadge": "Default",
+  "@accountsDefaultBadge": {
+    "description": "Accounts plan §4, §6. Badge shown on the currently-default account tile."
+  },
+  "accountsArchiveAction": "Archive",
+  "@accountsArchiveAction": {
+    "description": "Accounts plan §4, §7. Swipe action label when the account is referenced by at least one transaction and therefore cannot be deleted."
+  },
+  "accountsDeleteAction": "Delete",
+  "@accountsDeleteAction": {
+    "description": "Accounts plan §4, §7. Swipe action label when the account is custom, unreferenced, and has zero opening balance."
+  },
+  "accountsArchiveUndoSnackbar": "Account archived",
+  "@accountsArchiveUndoSnackbar": {
+    "description": "Accounts plan §7. SnackBar text shown after archiving an account; pairs with commonUndo as the action label."
+  },
+  "accountsDeleteConfirmTitle": "Delete account?",
+  "@accountsDeleteConfirmTitle": {
+    "description": "Accounts plan §7. Confirm-delete dialog title — unused custom accounts only."
+  },
+  "accountsDeleteConfirmBody": "This cannot be undone.",
+  "@accountsDeleteConfirmBody": {
+    "description": "Accounts plan §7. Confirm-delete dialog body — unused custom accounts only."
+  },
+  "accountsArchiveLastActiveBlocked": "Cannot archive the only active account",
+  "@accountsArchiveLastActiveBlocked": {
+    "description": "Accounts plan §7. Tooltip / snackbar shown when the user tries to archive the last remaining active account."
+  },
+  "accountsDeleteDefaultBlockedTitle": "Change default account",
+  "@accountsDeleteDefaultBlockedTitle": {
+    "description": "Accounts plan §7. Dialog title shown when the user tries to delete the currently-default account; prompts them to choose a new default first."
+  },
+  "accountsDeleteDefaultBlockedBody": "Choose another default account before deleting this one.",
+  "@accountsDeleteDefaultBlockedBody": {
+    "description": "Accounts plan §7. Dialog body — cannot delete the default account until a different default is selected."
+  },
+  "accountsFormAddTitle": "New account",
+  "@accountsFormAddTitle": {
+    "description": "PRD 643. AppBar title for /accounts/new (Add mode)."
+  },
+  "accountsFormEditTitle": "Edit account",
+  "@accountsFormEditTitle": {
+    "description": "PRD 644. AppBar title for /accounts/:id (Edit mode)."
+  },
+  "accountsFormName": "Name",
+  "@accountsFormName": {
+    "description": "Accounts plan §5. Account form — display-name text field label."
+  },
+  "accountsFormType": "Account type",
+  "@accountsFormType": {
+    "description": "Accounts plan §5. Account form — account-type picker label."
+  },
+  "accountsFormCurrency": "Currency",
+  "@accountsFormCurrency": {
+    "description": "Accounts plan §5. Account form — currency picker label."
+  },
+  "accountsFormOpeningBalance": "Opening balance",
+  "@accountsFormOpeningBalance": {
+    "description": "Accounts plan §5. Account form — opening balance numeric field label."
+  },
+  "accountsFormIcon": "Icon",
+  "@accountsFormIcon": {
+    "description": "Accounts plan §5. Account form — icon picker label."
+  },
+  "accountsFormColor": "Color",
+  "@accountsFormColor": {
+    "description": "Accounts plan §5. Account form — color picker label."
+  },
+  "accountsFormPickType": "Pick account type",
+  "@accountsFormPickType": {
+    "description": "Accounts plan §5. Placeholder shown on the account-type picker trigger when no type is selected."
+  },
+  "accountsFormPickCurrency": "Pick currency",
+  "@accountsFormPickCurrency": {
+    "description": "Accounts plan §5. Placeholder shown on the currency picker trigger when no currency is selected."
+  },
+  "accountsFormNotFound": "This account no longer exists.",
+  "@accountsFormNotFound": {
+    "description": "Accounts plan §5. Recoverable not-found state shown when /accounts/:id targets a row that has been deleted."
+  },
+  "accountsTypePickerTitle": "Pick account type",
+  "@accountsTypePickerTitle": {
+    "description": "Accounts plan §5. Title for the account-type picker sheet."
+  },
+  "accountsTypeCreateInlineCta": "Create new account type",
+  "@accountsTypeCreateInlineCta": {
+    "description": "Accounts plan §5. Inline CTA at the bottom of the account-type picker — opens a nested form to create a custom account type."
+  },
+  "accountsTypeFormTitle": "New account type",
+  "@accountsTypeFormTitle": {
+    "description": "Accounts plan §5. Title for the nested 'create account type' form launched from the picker sheet."
+  },
+  "accountsTypeFormName": "Name",
+  "@accountsTypeFormName": {
+    "description": "Accounts plan §5. Inline account-type form — display-name text field label."
+  },
+  "accountsTypeFormDefaultCurrency": "Default currency",
+  "@accountsTypeFormDefaultCurrency": {
+    "description": "Accounts plan §5. Inline account-type form — default-currency picker label."
+  },
+  "accountsCurrencyPickerTitle": "Pick currency",
+  "@accountsCurrencyPickerTitle": {
+    "description": "Accounts plan §5, §8. Title for the currency picker sheet opened from the account form."
   }
 }

@@ -495,6 +495,198 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No categories yet — Create one'**
   String get categoriesPickerEmptyCta;
+
+  /// PRD 680. AppBar title for the Accounts list screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts'**
+  String get accountsListTitle;
+
+  /// PRD 680. FAB label and empty-state CTA to open the account form in Add mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Add account'**
+  String get accountsAddCta;
+
+  /// PRD 703. Accounts list empty-state title shown when every account is archived.
+  ///
+  /// In en, this message translates to:
+  /// **'No active accounts'**
+  String get accountsEmptyTitle;
+
+  /// PRD 703. Primary CTA on the Accounts empty state — mirrors PRD's 'Create account' label when no active account exists.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account'**
+  String get accountsEmptyCta;
+
+  /// Accounts plan §4. Section header for the collapsible archived-accounts group beneath the active list.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get accountsArchivedSectionLabel;
+
+  /// Accounts plan §4, §6. Row overflow / swipe action to mark the account as the default account.
+  ///
+  /// In en, this message translates to:
+  /// **'Set as default'**
+  String get accountsSetDefaultAction;
+
+  /// Accounts plan §4, §6. Badge shown on the currently-default account tile.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get accountsDefaultBadge;
+
+  /// Accounts plan §4, §7. Swipe action label when the account is referenced by at least one transaction and therefore cannot be deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get accountsArchiveAction;
+
+  /// Accounts plan §4, §7. Swipe action label when the account is custom, unreferenced, and has zero opening balance.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get accountsDeleteAction;
+
+  /// Accounts plan §7. SnackBar text shown after archiving an account; pairs with commonUndo as the action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Account archived'**
+  String get accountsArchiveUndoSnackbar;
+
+  /// Accounts plan §7. Confirm-delete dialog title — unused custom accounts only.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account?'**
+  String get accountsDeleteConfirmTitle;
+
+  /// Accounts plan §7. Confirm-delete dialog body — unused custom accounts only.
+  ///
+  /// In en, this message translates to:
+  /// **'This cannot be undone.'**
+  String get accountsDeleteConfirmBody;
+
+  /// Accounts plan §7. Tooltip / snackbar shown when the user tries to archive the last remaining active account.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot archive the only active account'**
+  String get accountsArchiveLastActiveBlocked;
+
+  /// Accounts plan §7. Dialog title shown when the user tries to delete the currently-default account; prompts them to choose a new default first.
+  ///
+  /// In en, this message translates to:
+  /// **'Change default account'**
+  String get accountsDeleteDefaultBlockedTitle;
+
+  /// Accounts plan §7. Dialog body — cannot delete the default account until a different default is selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose another default account before deleting this one.'**
+  String get accountsDeleteDefaultBlockedBody;
+
+  /// PRD 643. AppBar title for /accounts/new (Add mode).
+  ///
+  /// In en, this message translates to:
+  /// **'New account'**
+  String get accountsFormAddTitle;
+
+  /// PRD 644. AppBar title for /accounts/:id (Edit mode).
+  ///
+  /// In en, this message translates to:
+  /// **'Edit account'**
+  String get accountsFormEditTitle;
+
+  /// Accounts plan §5. Account form — display-name text field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get accountsFormName;
+
+  /// Accounts plan §5. Account form — account-type picker label.
+  ///
+  /// In en, this message translates to:
+  /// **'Account type'**
+  String get accountsFormType;
+
+  /// Accounts plan §5. Account form — currency picker label.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get accountsFormCurrency;
+
+  /// Accounts plan §5. Account form — opening balance numeric field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening balance'**
+  String get accountsFormOpeningBalance;
+
+  /// Accounts plan §5. Account form — icon picker label.
+  ///
+  /// In en, this message translates to:
+  /// **'Icon'**
+  String get accountsFormIcon;
+
+  /// Accounts plan §5. Account form — color picker label.
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get accountsFormColor;
+
+  /// Accounts plan §5. Placeholder shown on the account-type picker trigger when no type is selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick account type'**
+  String get accountsFormPickType;
+
+  /// Accounts plan §5. Placeholder shown on the currency picker trigger when no currency is selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick currency'**
+  String get accountsFormPickCurrency;
+
+  /// Accounts plan §5. Recoverable not-found state shown when /accounts/:id targets a row that has been deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'This account no longer exists.'**
+  String get accountsFormNotFound;
+
+  /// Accounts plan §5. Title for the account-type picker sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick account type'**
+  String get accountsTypePickerTitle;
+
+  /// Accounts plan §5. Inline CTA at the bottom of the account-type picker — opens a nested form to create a custom account type.
+  ///
+  /// In en, this message translates to:
+  /// **'Create new account type'**
+  String get accountsTypeCreateInlineCta;
+
+  /// Accounts plan §5. Title for the nested 'create account type' form launched from the picker sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'New account type'**
+  String get accountsTypeFormTitle;
+
+  /// Accounts plan §5. Inline account-type form — display-name text field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get accountsTypeFormName;
+
+  /// Accounts plan §5. Inline account-type form — default-currency picker label.
+  ///
+  /// In en, this message translates to:
+  /// **'Default currency'**
+  String get accountsTypeFormDefaultCurrency;
+
+  /// Accounts plan §5, §8. Title for the currency picker sheet opened from the account form.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick currency'**
+  String get accountsCurrencyPickerTitle;
 }
 
 class _AppLocalizationsDelegate
