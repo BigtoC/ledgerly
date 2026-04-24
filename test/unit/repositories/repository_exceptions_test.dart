@@ -113,6 +113,33 @@ void main() {
     });
   });
 
+  group('TransactionAccountCurrencyMismatchException', () {
+    test('carries account id and both currency codes', () {
+      const exception = TransactionAccountCurrencyMismatchException(
+        accountId: 7,
+        accountCurrencyCode: 'USD',
+        transactionCurrencyCode: 'JPY',
+      );
+
+      expect(exception.accountId, 7);
+      expect(exception.accountCurrencyCode, 'USD');
+      expect(exception.transactionCurrencyCode, 'JPY');
+      expect(
+        exception.message,
+        'Transaction currency JPY must match account 7 currency USD.',
+      );
+    });
+
+    test('extends RepositoryException', () {
+      const exception = TransactionAccountCurrencyMismatchException(
+        accountId: 7,
+        accountCurrencyCode: 'USD',
+        transactionCurrencyCode: 'JPY',
+      );
+      expect(exception, isA<RepositoryException>());
+    });
+  });
+
   group('PreferenceDecodeException', () {
     test('extends RepositoryException', () {
       final exception = PreferenceDecodeException(

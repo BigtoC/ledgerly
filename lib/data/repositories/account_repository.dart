@@ -22,7 +22,7 @@
 // repository only validates whatever currency the caller supplies. It
 // does NOT read `user_preferences`.
 
-import 'package:drift/drift.dart' show Value;
+import 'package:drift/drift.dart' show Value, Variable;
 
 import '../database/app_database.dart' as drift;
 import '../database/daos/account_dao.dart';
@@ -80,6 +80,20 @@ abstract class AccountRepository {
   /// Cheap existence probe — returns true when any `transactions` row
   /// references this account.
   Future<bool> isReferenced(int id);
+
+  /// Sum of all transactions for `accountId` in the account's native
+  /// currency, expressed as minor units. Expense transactions subtract
+  /// from the balance; income transactions add. `opening_balance_minor_units`
+  /// is included. Emits on every insert / update / delete of a transaction
+  /// that references this account, and on changes to the account row
+  /// itself (opening balance edits). No cross-currency conversion — the
+  /// transaction form enforces that transactions on an account use the
+  /// account's currency, per PRD.md → Add/Edit Interaction Rules.
+  /// Archived accounts still compute a balance.
+  ///
+  /// Missing accounts emit `0` (subquery collapses via `COALESCE`), not
+  /// an error — matches `watchById`'s null-on-missing contract.
+  Stream<int> watchBalanceMinorUnits(int accountId);
 }
 
 /// Concrete Drift-backed implementation of [AccountRepository].
@@ -146,6 +160,17 @@ final class DriftAccountRepository implements AccountRepository {
       return _dao.insert(_toCompanion(account));
     }
 
+    final stored = await _dao.findById(account.id);
+    if (stored == null) {
+      throw AccountRepositoryException('Account ${account.id} not found');
+    }
+    if (stored.currency != account.currency.code &&
+        await isReferenced(account.id)) {
+      throw AccountRepositoryException(
+        'Account ${account.id} currency cannot change after transactions exist',
+      );
+    }
+
     final updated = await _dao.updateRow(_toCompanion(account));
     if (!updated) {
       throw AccountRepositoryException('Account ${account.id} not found');
@@ -171,6 +196,43 @@ final class DriftAccountRepository implements AccountRepository {
   Future<bool> isReferenced(int id) async {
     final count = await _txDao.countByAccount(id);
     return count > 0;
+  }
+
+  @override
+  Stream<int> watchBalanceMinorUnits(int accountId) {
+    // Tracked balance is derived, not stored. The outer `SELECT` assembles
+    // opening balance + signed transaction sum; category.type drives the
+    // sign (expense subtracts, income adds). Both subqueries are wrapped
+    // in COALESCE so a missing account or empty transaction set collapses
+    // to `0` instead of NULL.
+    //
+    // `readsFrom: {accounts, transactions}` tells Drift's stream-query
+    // store to re-emit on account-row edits and transaction writes. The
+    // aggregate also depends on `categories.type`, but CategoryRepository
+    // forbids changing a referenced category's type after first use, so
+    // unrelated category metadata edits should not invalidate every active
+    // balance stream.
+    final query = _db.customSelect(
+      'SELECT '
+      'COALESCE('
+      '(SELECT opening_balance_minor_units FROM accounts WHERE id = ?),'
+      ' 0'
+      ') + COALESCE('
+      '(SELECT SUM('
+      "CASE c.type WHEN 'income' THEN t.amount_minor_units "
+      "WHEN 'expense' THEN -t.amount_minor_units END"
+      ') '
+      'FROM transactions t '
+      'JOIN categories c ON c.id = t.category_id '
+      'WHERE t.account_id = ?'
+      '), 0) AS balance',
+      variables: [Variable<int>(accountId), Variable<int>(accountId)],
+      readsFrom: {_db.accounts, _db.transactions},
+    );
+    // The outer SELECT has no FROM clause, so Drift always yields exactly
+    // one row; both COALESCEs guarantee the `balance` column is never
+    // NULL.
+    return query.watch().map((rows) => rows.first.read<int>('balance'));
   }
 
   // ---------- Private mapping ----------

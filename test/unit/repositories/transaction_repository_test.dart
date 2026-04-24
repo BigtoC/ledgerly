@@ -460,6 +460,37 @@ void main() {
         expect(rows, isEmpty);
       },
     );
+
+    test(
+      'T-currency-fk-02: account/transaction currency mismatch throws, no row inserted',
+      () async {
+        await expectLater(
+          txRepo.save(
+            sampleTx(
+              currency: const Currency(
+                code: 'JPY',
+                decimals: 0,
+                symbol: '¥',
+                nameL10nKey: 'currency.jpy',
+                sortOrder: 2,
+              ),
+            ),
+          ),
+          throwsA(
+            isA<RepositoryException>().having(
+              (e) => e.message,
+              'message',
+              'Transaction currency JPY must match account ${fixtures.accountId} '
+                  'currency USD.',
+            ),
+          ),
+        );
+
+        final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
+        final rows = await txRepo.watchByDay(today).first;
+        expect(rows, isEmpty);
+      },
+    );
   });
 
   group('save → timestamps', () {
@@ -577,11 +608,17 @@ void main() {
         'sort_order) VALUES (?, ?, ?, 1, ?)',
         <Object?>['ETH', 18, 'Ξ', 100],
       );
+      final ethAccountId = await _insertAccountRaw(
+        db,
+        name: 'ETH wallet',
+        accountTypeId: fixtures.accountTypeId,
+        currencyCode: 'ETH',
+      );
       const eth = Currency(code: 'ETH', decimals: 18, isToken: true);
       const bigAmount = 1500000000000000000; // 1.5 ETH in wei
 
       final inserted = await txRepo.save(
-        sampleTx(amount: bigAmount, currency: eth),
+        sampleTx(amount: bigAmount, currency: eth, accountId: ethAccountId),
       );
       expect(inserted.amountMinorUnits, bigAmount);
 

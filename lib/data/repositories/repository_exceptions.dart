@@ -100,3 +100,19 @@ class AccountInUseException extends RepositoryException {
   /// The account id whose deletion is blocked.
   final int id;
 }
+
+/// Transaction currency does not match the referenced account currency.
+class TransactionAccountCurrencyMismatchException extends RepositoryException {
+  const TransactionAccountCurrencyMismatchException({
+    required this.accountId,
+    required this.accountCurrencyCode,
+    required this.transactionCurrencyCode,
+  }) : super(
+         'Transaction currency $transactionCurrencyCode must match '
+         'account $accountId currency $accountCurrencyCode.',
+       );
+
+  final int accountId;
+  final String accountCurrencyCode;
+  final String transactionCurrencyCode;
+}
