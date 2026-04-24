@@ -119,6 +119,11 @@ app.*.symbols
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !/dev/ci/**/Gemfile.lock
 
+# l10n codegen noise — see `l10n.yaml` and
+# `docs/plans/m5-ui-feature-slices/wave-0-contracts-plan.md` §2.7.
+untranslated-messages.txt
+l10n/untranslated-messages.txt
+
 # LLM
 .claude/worktrees/*
 .context
