@@ -46,7 +46,7 @@ The slice **does not** directly read transactions. Balance rendering goes exclus
 
 Prefix: `accounts*` (UI). Do **not** add keys under `accountType*` — that prefix is reserved for seeded account-type display names (already present).
 
-Minimum new keys: `accountsListTitle`, `accountsAddCta`, `accountsEmptyTitle`, `accountsEmptyCta`, `accountsSetDefaultAction`, `accountsDefaultBadge`, `accountsArchiveAction`, `accountsDeleteAction`, `accountsFormName`, `accountsFormType`, `accountsFormCurrency`, `accountsFormOpeningBalance`, `accountsFormIcon`, `accountsFormColor`, `accountsTypeCreateInlineCta`, `accountsTypeFormName`, `accountsTypeFormDefaultCurrency`. Full list discovered during implementation; all four ARBs updated in the same PR.
+Minimum new keys: `accountsListTitle`, `accountsAddCta`, `accountsEmptyTitle`, `accountsEmptyCta`, `accountsSetDefaultAction`, `accountsDefaultBadge`, `accountsArchiveAction`, `accountsDeleteAction`, `accountsFormName`, `accountsFormType`, `accountsFormCurrency`, `accountsFormOpeningBalance`, `accountsFormIcon`, `accountsFormColor`, `accountsTypeCreateInlineCta`, `accountsTypeFormName`, `accountsTypeFormDefaultCurrency`. Full list discovered during implementation; `app_en.arb`, `app_zh_TW.arb`, and `app_zh_CN.arb` are updated in the same PR while `app_zh.arb` stays fallback-only.
 
 ### 3.3 Tests
 
@@ -148,7 +148,7 @@ Single agent, single PR. Entry criterion: Wave 0 PR merged (so `watchBalanceMino
 2. Implement `widgets/account_tile.dart`, `widgets/account_type_picker_sheet.dart`, `widgets/currency_picker_sheet.dart`.
 3. Implement `account_form_screen.dart` including inline account-type creation.
 4. Implement `accounts_screen.dart`, wiring swipe + overflow + default badge.
-5. Add ARB keys (§3.2) across all four ARB files.
+5. Add ARB keys (§3.2) across `app_en.arb`, `app_zh_TW.arb`, and `app_zh_CN.arb`.
 6. Write controller + screen + form widget tests.
 7. Run `dart run build_runner build --delete-conflicting-outputs && flutter analyze && flutter test`.
 8. Open PR titled `feat(m5): accounts slice`.

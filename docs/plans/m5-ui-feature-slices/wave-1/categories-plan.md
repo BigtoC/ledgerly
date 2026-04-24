@@ -8,7 +8,7 @@ Categories owns two surfaces: the management screen at `/settings/categories`, a
 
 ## 1. Goal
 
-Replace the M4 placeholder at `lib/features/categories/categories_screen.dart` with a full management screen, and fill in the Wave 0 `CategoryPicker` skeleton with a real `ModalBottomSheet` + `SliverGrid` implementation.
+Replace the M4 placeholder at `lib/features/categories/categories_screen.dart` with a full management screen, and fill in the Wave 0 `CategoryPicker` skeleton with the real adaptive picker implementation.
 
 All business rules (category type lock, archive-vs-delete, seeded-vs-custom delete policy) are already enforced in `CategoryRepository`. This slice is UI-only — do not re-implement rules in the controller or widgets.
 
@@ -33,7 +33,7 @@ The slice **does not** read from any other repository. The slice **does not** im
 
 - `categories_screen.dart` — replaces the M4 placeholder.
 - `categories_controller.dart` — Riverpod `@riverpod class CategoriesController extends _$CategoriesController`. Commands: `renameCategory`, `updateIconColor`, `createCategory`, `archiveCategory`, `deleteCategory`, `reorder`.
-- `categories_state.dart` — Freezed sealed union (`Loading | Data(expense: List<Category>, income: List<Category>) | Error`). No `Empty` variant — first-run seed guarantees both lists are non-empty. The `Data` variant is always sorted by `sortOrder` (nulls last) → display name ascending.
+- `categories_state.dart` — Freezed sealed union (`Loading | Data(expense: List<Category>, income: List<Category>) | Error`). No top-level `Empty` variant — first-run seed guarantees categories exist, but the `Data` variant must still support per-section empty rendering after archive flows. The `Data` variant is always sorted by `sortOrder` (nulls last) → display name ascending.
 - `widgets/category_picker.dart` — fill in the Wave 0 skeleton (§2.1). **Keep the top-level `showCategoryPicker` signature exactly as frozen.**
 - `widgets/category_form_sheet.dart` — shared add/edit modal sheet.
 - `widgets/category_icon_picker.dart` — scrollable grid over `iconRegistry.entries`.
@@ -48,12 +48,12 @@ Prefix: `categories*` (UI). Do **not** add keys under `category*` — that prefi
 
 Minimum new keys (final list discovered during implementation): `categoriesManageTitle`, `categoriesAddCta`, `categoriesSectionExpense`, `categoriesSectionIncome`, `categoriesFormNameLabel`, `categoriesFormIconLabel`, `categoriesFormColorLabel`, `categoriesFormTypeLabel`, `categoriesFormTypeLockedHint`, `categoriesArchiveUndoSnackbar`, `categoriesDeleteConfirmTitle`, `categoriesDeleteConfirmBody`, `categoryPickerTitleExpense`, `categoryPickerTitleIncome`, `categoryPickerEmptyCta`.
 
-All four ARB files updated in the same commit. Every new key carries an `@<key>` description with a PRD line reference.
+Every new key lands in `app_en.arb`, `app_zh_TW.arb`, and `app_zh_CN.arb` in the same commit. `app_zh.arb` stays fallback-only. Every new key carries an `@<key>` description with a PRD line reference.
 
 ### 3.3 Tests
 
 - `test/unit/controllers/categories_controller_test.dart` — state transitions (loading → data, data after create/rename/archive/delete/reorder); command error surfacing when repository throws `CategoryTypeLockedException` or `CategoryInUseException`.
-- `test/widget/features/categories/categories_screen_test.dart` — grouped sections render in order, slidable archive action surfaces undo snackbar, FAB opens the form sheet, 2× text scale survives.
+- `test/widget/features/categories/categories_screen_test.dart` — grouped sections render in order, per-section empty CTA renders when one type has no visible categories, slidable archive action surfaces undo snackbar, FAB opens the form sheet, 2× text scale survives.
 - `test/widget/features/categories/category_picker_test.dart` — picker filters by type, excludes archived, resolves with the tapped category, resolves with `null` on scrim dismiss, empty-state CTA closes the sheet and resolves `null`.
 
 ---
@@ -74,6 +74,8 @@ Each tile uses `flutter_slidable` with:
 - Long-press: reorder drag handle.
 - Tap: opens form sheet in Edit mode.
 
+If one section becomes empty after archive flows, render that section header plus an inline `categoriesAddCta` affordance for that type. Do not assume both sections remain non-empty forever.
+
 ---
 
 ## 5. `CategoryPicker` internals (fills Wave 0 §2.1 skeleton)
@@ -81,12 +83,12 @@ Each tile uses `flutter_slidable` with:
 Entry point: the top-level `showCategoryPicker(BuildContext, {required CategoryType type})` function. **Frozen by Wave 0 — do not change the signature.**
 
 Implementation contract:
-- Opens `showModalBottomSheet<Category>` with `isScrollControlled: true`.
-- Sheet body: `CustomScrollView` → `SliverGrid` of category tiles (icon + name).
+- `showCategoryPicker` chooses the container internally: `showModalBottomSheet<Category>` with `isScrollControlled: true` on `<600dp`, constrained dialog on `>=600dp`.
+- Picker body in both containers: `CustomScrollView` → `SliverGrid` of category tiles (icon + name).
 - Data source: a new family provider (e.g. `@Riverpod(keepAlive: false) Stream<List<Category>> categoriesByType(Ref ref, CategoryType type)`) that internally calls `categoryRepositoryProvider.watchAll(type: type, includeArchived: false)`. Defined in `categories_controller.dart` or a sibling file — not in the widget.
 - On tile tap: `Navigator.pop(context, tappedCategory)`.
 - On scrim dismiss: Flutter returns `null`. The `show*` function returns whatever `Navigator.pop` returned.
-- Empty state: inside the sheet, show a "No categories yet — Create one" CTA that closes the sheet (`Navigator.pop(null)`) and navigates to `category_form_sheet` in Add mode with the type preselected. The original `showCategoryPicker` call resolves `null`; the caller (Transactions) is responsible for re-invoking if needed.
+- Empty state: inside the picker container, show a "No categories yet — Create one" CTA that closes the picker (`Navigator.pop(null)`) and resolves `null`. The picker does not navigate on Transactions' behalf; the caller decides whether to open category management / creation flow and whether to re-enter the picker afterward.
 
 Picker tests must cover 2× text scale per `PRD.md` → *Layout Primitives → Constraint rule*.
 
@@ -111,7 +113,7 @@ Save path calls the appropriate controller command. Repository exceptions (`Cate
 
 ## 7. Archive vs delete policy
 
-Enforced in the controller (not the widget):
+Repository rules remain authoritative. The controller derives which affordance to show and routes the correct command; it does not create a second source of truth for the policy.
 
 | Condition                                                          | Affordance |
 |--------------------------------------------------------------------|------------|
@@ -158,11 +160,11 @@ Enforced in the controller (not the widget):
 
 Single agent, single PR:
 
-1. Fill in `widgets/category_picker.dart` (Wave 0 skeleton → real `ModalBottomSheet`). Write `category_picker_test.dart` first.
+1. Fill in `widgets/category_picker.dart` (Wave 0 skeleton → real adaptive picker). Write `category_picker_test.dart` first.
 2. Implement `categories_state.dart` + `categories_controller.dart`.
 3. Implement `widgets/category_tile.dart`, `category_form_sheet.dart`, `category_icon_picker.dart`, `category_color_picker.dart`.
 4. Implement `categories_screen.dart`, wiring FAB + slidable actions + reorder.
-5. Add ARB keys (§3.2) across all four ARB files in the same commit.
+5. Add ARB keys (§3.2) across `app_en.arb`, `app_zh_TW.arb`, and `app_zh_CN.arb` in the same commit.
 6. Write `categories_controller_test.dart` + `categories_screen_test.dart`.
 7. Run `dart run build_runner build --delete-conflicting-outputs && flutter analyze && flutter test` until green.
 8. Open PR titled `feat(m5): categories slice`.

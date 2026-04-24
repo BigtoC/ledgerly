@@ -48,7 +48,7 @@ Settings does **not** import from other feature slices. Navigation to `Categorie
 
 Prefix: `settings*` (UI). Splash subsection keys already reserved in M4 (`settingsSplashSection`, `settingsSplashEnabled`, `settingsSplashStartDate`, `settingsSplashDisplayText`, `settingsSplashButtonLabel`).
 
-Minimum new keys: `settingsSectionGeneral`, `settingsSectionAppearance`, `settingsSectionCategoriesTile`, `settingsThemeLabel`, `settingsThemeLight`, `settingsThemeDark`, `settingsThemeSystem`, `settingsLanguageLabel`, `settingsLanguageEnglish`, `settingsLanguageZhTw`, `settingsLanguageZhCn`, `settingsDefaultAccountLabel`, `settingsDefaultAccountEmpty`, `settingsDefaultCurrencyLabel`, `settingsManageCategories`. Discovered during implementation; all four ARBs updated in the same PR.
+Minimum new keys: `settingsSectionGeneral`, `settingsSectionAppearance`, `settingsSectionCategoriesTile`, `settingsThemeLabel`, `settingsThemeLight`, `settingsThemeDark`, `settingsThemeSystem`, `settingsLanguageLabel`, `settingsLanguageEnglish`, `settingsLanguageZhTw`, `settingsLanguageZhCn`, `settingsDefaultAccountLabel`, `settingsDefaultAccountEmpty`, `settingsDefaultCurrencyLabel`, `settingsManageCategories`. Discovered during implementation; `app_en.arb`, `app_zh_TW.arb`, and `app_zh_CN.arb` are updated in the same PR while `app_zh.arb` stays fallback-only.
 
 ### 3.3 Tests
 
@@ -167,7 +167,7 @@ Single agent, single PR:
 5. Implement `widgets/manage_categories_tile.dart`.
 6. Assemble `settings_screen.dart`.
 7. Coordinate with Splash slice: remove the M4 inline "Set start date" button from `splash_screen.dart`. This edit lands in the Settings PR (not the Splash PR) to avoid merge ordering issues — Splash expects it gone by the time Splash PR opens. Alternative: land it in Splash PR; decide at slice kickoff.
-8. Add ARB keys (§3.2) across all four ARB files.
+8. Add ARB keys (§3.2) across `app_en.arb`, `app_zh_TW.arb`, and `app_zh_CN.arb`.
 9. Write controller + screen + splash-subsection widget tests.
 10. Run `dart run build_runner build --delete-conflicting-outputs && flutter analyze && flutter test`.
 11. Open PR titled `feat(m5): settings slice`.
