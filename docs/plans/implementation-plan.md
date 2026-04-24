@@ -258,7 +258,7 @@ Six slices, each a self-contained folder under `features/`:
 |-----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|-----------------------|
 | **Splash**                  | Day counter, hnotes-style visual, date-picker redirect when unconfigured. Golden tests mandatory.                                                                                                                                                | `user_preferences_repository`, `date_helpers`                                                             | All others            |
 | **Home**                    | Currency-grouped summary strip, single-day transaction list with prev/next day navigation (skips empty days), FAB, swipe-to-delete + undo, duplicate entry point, pending badge (Phase 2 stub). Consumes `watchByDay` + `watchDaysWithActivity`. | `transaction_repository`, `money_formatter`                                                               | All others            |
-| **Transactions (Add/Edit)** | Full-screen modal, calculator keypad, expense/income toggle, category picker, account selector, memo, date, duplicate-prefill flow.                                                                                                              | `transaction_repository`, `category_repository`, `account_repository`, **shared `CategoryPicker` widget** | All others            |
+| **Transactions (Add/Edit)** | Full-screen modal, calculator keypad, expense/income toggle, category picker, account selector, memo, date, duplicate-prefill flow.                                                                                                              | `transaction_repository`, `category_repository`, `account_repository`, **shared category-picker API**     | All others            |
 | **Categories**              | List by type, add/edit/archive/reorder.                                                                                                                                                                                                          | `category_repository`, `icon_registry`, `color_palette`                                                   | All others            |
 | **Accounts**                | List with native-currency balances, add account, set default, archive.                                                                                                                                                                           | `account_repository`, `currency_repository`                                                               | All others            |
 | **Settings**                | Theme, language, default account, default currency, splash settings, manage categories entry.                                                                                                                                                    | `user_preferences_repository`, theme provider                                                             | All others            |
@@ -270,24 +270,23 @@ Six slices, each a self-contained folder under `features/`:
 - `test/unit/controllers/<slice>_controller_test.dart` — uses `ProviderContainer` overrides + `mocktail` to assert state transitions and command side-effects.
 - `test/widget/features/<slice>/` — widget tests per state variant, including text-scale ≤ 2×.
 
-**Shared widget contract (freeze on day 1 of M5):**
+**Shared picker contract (freeze on day 1 of M5):**
 ```dart
 // features/categories/widgets/category_picker.dart
-class CategoryPicker extends ConsumerWidget {
-  final CategoryType type;                          // expense | income
-  final void Function(Category) onSelected;
-  // Renders as ModalBottomSheet + CustomScrollView per PRD.md → Layout Primitives.
-}
+Future<Category?> showCategoryPicker(
+  BuildContext context, {
+  required CategoryType type,
+});
 ```
-This widget is for transaction-category selection. The Categories management screen may share lower-level tiles or grid primitives, but it should not be forced through the picker API.
+This API is for transaction-category selection. It returns the selected category or `null` on dismiss, presents as a modal bottom sheet on `<600dp`, and as a constrained dialog on `>=600dp`; both containers render the same `CustomScrollView` + `SliverGrid` picker body. The Categories management screen may share lower-level tiles or grid primitives, but it should not be forced through the picker API.
 
 **Cross-slice ownership to freeze on day 1 of M5:**
-- Quick repeat / duplicate spans two slices: Home owns the swipe/overflow affordance and navigation into the form; Transactions owns duplicated form prefill and save semantics.
+- Quick repeat / duplicate spans two slices: Home owns the swipe/overflow affordance and modal push into the form; Transactions owns duplicated form prefill and save semantics. The shared handoff is `GoRouterState.extra = {'duplicateSourceId': id}` — transaction-id only.
 
-**Layout primitives to follow (non-negotiable, per `PRD.md` → Layout Primitives):**
+**Layout primitives to follow (non-negotiable, per `PRD.md` → Layout Primitives and Adaptive Layouts):**
 - Home: `CustomScrollView` + slivers. Never `ListView` inside `Column`.
 - Add/Edit: `Scaffold(resizeToAvoidBottomInset: false)`. Fixed keypad at bottom, scroll above.
-- Category picker: `ModalBottomSheet` + `CustomScrollView` + `SliverGrid`.
+- Category picker: adaptive container with `CustomScrollView` + `SliverGrid` body — `ModalBottomSheet` on `<600dp`, constrained dialog on `>=600dp`.
 
 **Entry criterion for any M5 slice:** M4 shell is merged and the smoke widget test is green.
 
@@ -299,13 +298,13 @@ This widget is for transaction-category selection. The Categories management scr
 
 Claude agents execute M5 in four waves on a shared tree (not worktrees — Freezed/Drift codegen makes cross-worktree rebases painful). One agent per slice; no slice is split across agents.
 
-| Wave | Mode                 | Agents                                                                                                                                                                                                                                    | Rationale                                                                                                                                                                                                      |
-|------|----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 0    | Serial (1 agent)     | [Shared contracts](m5-ui-feature-slices/wave-0-contracts-plan.md)                                                                                                                                                                         | Freezes `features/categories/widgets/category_picker.dart` API skeleton, reserves ARB keys per slice, records duplicate-flow ownership.                                                                        |
-| 1    | Parallel (4 agents)  | [Splash](m5-ui-feature-slices/wave-1/splash-plan.md) · [Settings](m5-ui-feature-slices/wave-1/settings-plan.md) · [Categories](m5-ui-feature-slices/wave-1/categories-plan.md) · [Accounts](m5-ui-feature-slices/wave-1/accounts-plan.md) | Leaf slices with no cross-slice coupling. Categories owner implements `CategoryPicker` internals. All contracts Wave 1 depends on (including `AccountRepository.watchBalanceMinorUnits`) are frozen in Wave 0. |
-| 2    | Serial (1 agent)     | [Transactions](m5-ui-feature-slices/wave-2-transactions-plan.md)                                                                                                                                                                          | Entry: Categories + Accounts merged so `CategoryPicker` and account selector are real.                                                                                                                         |
-| 3    | Serial (1 agent)     | [Home](m5-ui-feature-slices/wave-3-home-plan.md)                                                                                                                                                                                          | Entry: Transactions save/duplicate flow merged so FAB → form → return-to-day round-trips. Adds three aggregate methods to `TransactionRepository` per its own contracts step.                                  |
-| 4    | Operator (not agent) | [Integration](m5-ui-feature-slices/wave-4-integration-plan.md)                                                                                                                                                                            | Replace placeholder routes in `app/router.dart` with real screens, reconcile ARB conflicts, run full test suite.                                                                                               |
+| Wave | Mode                 | Agents                                                                                                                                                                                                                                    | Rationale                                                                                                                                                                                                     |
+|------|----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 0    | Serial (1 agent)     | [Shared contracts](m5-ui-feature-slices/wave-0-contracts-plan.md)                                                                                                                                                                         | Freezes `showCategoryPicker(...)`, reserves ARB keys per slice, and records duplicate-flow ownership.                                                                                                         |
+| 1    | Parallel (4 agents)  | [Splash](m5-ui-feature-slices/wave-1/splash-plan.md) · [Settings](m5-ui-feature-slices/wave-1/settings-plan.md) · [Categories](m5-ui-feature-slices/wave-1/categories-plan.md) · [Accounts](m5-ui-feature-slices/wave-1/accounts-plan.md) | Leaf slices with no cross-slice coupling. Categories owner implements `showCategoryPicker(...)`. All contracts Wave 1 depends on (including `AccountRepository.watchBalanceMinorUnits`) are frozen in Wave 0. |
+| 2    | Serial (1 agent)     | [Transactions](m5-ui-feature-slices/wave-2-transactions-plan.md)                                                                                                                                                                          | Entry: Categories + Accounts merged so `showCategoryPicker(...)` and the account selector are real.                                                                                                           |
+| 3    | Serial (1 agent)     | [Home](m5-ui-feature-slices/wave-3-home-plan.md)                                                                                                                                                                                          | Entry: Transactions save/duplicate flow merged so FAB → form → return-to-day round-trips. Adds three aggregate methods to `TransactionRepository` per its own contracts step.                                 |
+| 4    | Operator (not agent) | [Integration](m5-ui-feature-slices/wave-4-integration-plan.md)                                                                                                                                                                            | Replace placeholder routes in `app/router.dart` with real screens, reconcile ARB conflicts, run full test suite.                                                                                              |
 
 Branch: M5 continues from the M4 shell branch; cut `feature/m5-feature-slices` at the start of Wave 0.
 
@@ -393,11 +392,11 @@ Overlap window: during M3, both are active — A finishes repos, B writes `money
 
 ### 3-developer split (recommended)
 
-| Dev                  | Owns                                                                                                                                         |
-|----------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
-| Dev A — Data         | M1 schema + DAOs, M3 repositories, migration harness, `test/unit/repositories/*`                                                             |
-| Dev B — Core + Shell | M2 utilities, M2 theme + ARBs, M4 bootstrap + router + providers, smoke tests                                                                |
-| Dev C — Features     | M5 feature slices (starts after M4). During M0–M4, writes tickets, implements `CategoryPicker` API contract, authors golden-test scaffolding |
+| Dev                  | Owns                                                                                                                                                      |
+|----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Dev A — Data         | M1 schema + DAOs, M3 repositories, migration harness, `test/unit/repositories/*`                                                                          |
+| Dev B — Core + Shell | M2 utilities, M2 theme + ARBs, M4 bootstrap + router + providers, smoke tests                                                                             |
+| Dev C — Features     | M5 feature slices (starts after M4). During M0–M4, writes tickets, implements the `showCategoryPicker(...)` API contract, authors golden-test scaffolding |
 
 Inside M5, Dev C can pull A or B for unblockers. Slice ownership stays one-dev-per-slice.
 
@@ -405,7 +404,7 @@ Inside M5, Dev C can pull A or B for unblockers. Slice ownership stays one-dev-p
 
 Keep A, B on platform. Split features by **family**, not by layer:
 - C1: Splash + Settings (low-data, preferences-heavy).
-- C2: Home + Transactions (tightly coupled via repository streams and `CategoryPicker`).
+- C2: Home + Transactions (tightly coupled via repository streams, duplicate handoff, and `showCategoryPicker(...)`).
 - C3: Accounts + Categories (share archive-vs-delete UX rules).
 
 Never split a single feature across two devs during first implementation.
@@ -432,7 +431,7 @@ Never split a single feature across two devs during first implementation.
 6. **`resizeToAvoidBottomInset` default.** Flutter defaults to `true`; the keypad gets covered by soft keyboard. Set `false` explicitly; regression-test with keyboard open.
 7. **Router redirect leaks splash.** If splash visibility is checked inside `SplashScreen`, users still see a flash. Implement `redirect:` at root per `PRD.md`.
 8. **Locale resolution at the wrong time.** `LocaleService` must resolve before first-run seed so `default_currency` is correct. Bootstrap-order test asserts the sequence.
-9. **`CategoryPicker` diverges.** Two devs write it twice and it forks. Extract to `features/categories/widgets/` on day 1 of M5 and freeze the API.
+9. **`showCategoryPicker(...)` diverges.** Two devs write it twice and it forks. Keep it in `features/categories/widgets/` on day 1 of M5 and freeze the API.
 10. **Building Phase 2 shapes "just in case."** No `domain/` folder, no `ApiKeyRepository`, no `pending_transactions` in MVP. Resist.
 11. **Integration tests piling up at M6.** Add one in M4 (cold start → empty Home). Harness stays green as features land.
 12. **iOS-only breakage at release time.** Run nightly iOS build from M0.
@@ -448,7 +447,7 @@ For the impatient:
 3. **M2** — `money_formatter`, icon/color registries, theme, ARBs. Tests land here.
 4. **M3** — 5 repositories + seed routine. Repository tests land here. Migration harness turns on.
 5. **M4** — `bootstrap.dart`, `router.dart`, `ProviderScope`, placeholder screens. One smoke widget test + one integration test.
-6. **M5** — 6 feature slices in parallel, one owner each. Controller + widget tests per slice. Freeze `CategoryPicker` API on day 1.
+6. **M5** — 6 feature slices in parallel, one owner each. Controller + widget tests per slice. Freeze `showCategoryPicker(...)` on day 1.
 7. **M6** — integration flows, a11y, device matrix, native splash regen, release build.
 
 Any deviation from this order means either a scope shortcut (fine, document it) or a rebase bill (expensive, avoid).
