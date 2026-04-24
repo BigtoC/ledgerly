@@ -160,6 +160,16 @@ final class DriftAccountRepository implements AccountRepository {
       return _dao.insert(_toCompanion(account));
     }
 
+    final stored = await _dao.findById(account.id);
+    if (stored == null) {
+      throw AccountRepositoryException('Account ${account.id} not found');
+    }
+    if (stored.currency != account.currency.code && await isReferenced(account.id)) {
+      throw AccountRepositoryException(
+        'Account ${account.id} currency cannot change after transactions exist',
+      );
+    }
+
     final updated = await _dao.updateRow(_toCompanion(account));
     if (!updated) {
       throw AccountRepositoryException('Account ${account.id} not found');
@@ -195,14 +205,12 @@ final class DriftAccountRepository implements AccountRepository {
     // in COALESCE so a missing account or empty transaction set collapses
     // to `0` instead of NULL.
     //
-    // `readsFrom: {accounts, transactions, categories}` tells Drift's
-    // stream-query store to re-emit on any write to those tables — the
-    // filter inside each subquery narrows the produced values to this
-    // account. Category writes are included because a category's `type`
-    // flip (income ↔ expense) would change the sign of every referencing
-    // transaction; repository-level CategoryRepository forbids this after
-    // first use, but we surface the dependency honestly rather than
-    // silently relying on that invariant.
+    // `readsFrom: {accounts, transactions}` tells Drift's stream-query
+    // store to re-emit on account-row edits and transaction writes. The
+    // aggregate also depends on `categories.type`, but CategoryRepository
+    // forbids changing a referenced category's type after first use, so
+    // unrelated category metadata edits should not invalidate every active
+    // balance stream.
     final query = _db.customSelect(
       'SELECT '
       'COALESCE('
@@ -218,7 +226,7 @@ final class DriftAccountRepository implements AccountRepository {
       'WHERE t.account_id = ?'
       '), 0) AS balance',
       variables: [Variable<int>(accountId), Variable<int>(accountId)],
-      readsFrom: {_db.accounts, _db.transactions, _db.categories},
+      readsFrom: {_db.accounts, _db.transactions},
     );
     // The outer SELECT has no FROM clause, so Drift always yields exactly
     // one row; both COALESCEs guarantee the `balance` column is never
