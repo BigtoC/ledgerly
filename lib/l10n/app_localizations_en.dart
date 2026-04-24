@@ -309,4 +309,65 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountsCurrencyPickerTitle => 'Pick currency';
+
+  @override
+  String get settingsSectionAppearance => 'Appearance';
+
+  @override
+  String get settingsSectionGeneral => 'General';
+
+  @override
+  String get settingsSectionDataManagement => 'Data management';
+
+  @override
+  String get settingsThemeLabel => 'Theme';
+
+  @override
+  String get settingsThemeLight => 'Light';
+
+  @override
+  String get settingsThemeDark => 'Dark';
+
+  @override
+  String get settingsThemeSystem => 'System';
+
+  @override
+  String get settingsLanguageLabel => 'Language';
+
+  @override
+  String get settingsLanguageSystem => 'System';
+
+  @override
+  String get settingsLanguageEnglish => 'English';
+
+  @override
+  String get settingsLanguageZhTw => '繁體中文 (Traditional Chinese)';
+
+  @override
+  String get settingsLanguageZhCn => '简体中文 (Simplified Chinese)';
+
+  @override
+  String get settingsDefaultAccountLabel => 'Default account';
+
+  @override
+  String get settingsDefaultAccountEmpty => 'Not set';
+
+  @override
+  String get settingsDefaultAccountPickerTitle => 'Pick default account';
+
+  @override
+  String get settingsDefaultAccountCreateCta => 'Create account';
+
+  @override
+  String get settingsDefaultCurrencyLabel => 'Default currency';
+
+  @override
+  String get settingsDefaultCurrencyPickerTitle => 'Pick default currency';
+
+  @override
+  String get settingsManageCategories => 'Manage categories';
+
+  @override
+  String get settingsSplashDisplayTextHint =>
+      'Use [date] and [days] as placeholders';
 }

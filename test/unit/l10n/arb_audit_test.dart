@@ -143,6 +143,29 @@ const Set<String> _expectedEnKeys = <String>{
   'accountsTypeFormName',
   'accountsTypeFormDefaultCurrency',
   'accountsCurrencyPickerTitle',
+
+  // M5 Wave 1 — Settings slice UI keys
+  // (docs/plans/m5-ui-feature-slices/wave-1/settings-plan.md §3.2).
+  'settingsSectionAppearance',
+  'settingsSectionGeneral',
+  'settingsSectionDataManagement',
+  'settingsThemeLabel',
+  'settingsThemeLight',
+  'settingsThemeDark',
+  'settingsThemeSystem',
+  'settingsLanguageLabel',
+  'settingsLanguageSystem',
+  'settingsLanguageEnglish',
+  'settingsLanguageZhTw',
+  'settingsLanguageZhCn',
+  'settingsDefaultAccountLabel',
+  'settingsDefaultAccountEmpty',
+  'settingsDefaultAccountPickerTitle',
+  'settingsDefaultAccountCreateCta',
+  'settingsDefaultCurrencyLabel',
+  'settingsDefaultCurrencyPickerTitle',
+  'settingsManageCategories',
+  'settingsSplashDisplayTextHint',
 };
 
 Map<String, dynamic> _readArb(String fileName) {

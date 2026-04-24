@@ -110,5 +110,26 @@
   "accountsTypeFormTitle": "新帳戶類型",
   "accountsTypeFormName": "名稱",
   "accountsTypeFormDefaultCurrency": "預設幣別",
-  "accountsCurrencyPickerTitle": "選擇幣別"
+  "accountsCurrencyPickerTitle": "選擇幣別",
+
+  "settingsSectionAppearance": "外觀",
+  "settingsSectionGeneral": "一般",
+  "settingsSectionDataManagement": "資料管理",
+  "settingsThemeLabel": "主題",
+  "settingsThemeLight": "淺色",
+  "settingsThemeDark": "深色",
+  "settingsThemeSystem": "跟隨系統",
+  "settingsLanguageLabel": "語言",
+  "settingsLanguageSystem": "跟隨系統",
+  "settingsLanguageEnglish": "English",
+  "settingsLanguageZhTw": "繁體中文",
+  "settingsLanguageZhCn": "简体中文",
+  "settingsDefaultAccountLabel": "預設帳戶",
+  "settingsDefaultAccountEmpty": "尚未設定",
+  "settingsDefaultAccountPickerTitle": "選擇預設帳戶",
+  "settingsDefaultAccountCreateCta": "建立帳戶",
+  "settingsDefaultCurrencyLabel": "預設幣別",
+  "settingsDefaultCurrencyPickerTitle": "選擇預設幣別",
+  "settingsManageCategories": "管理分類",
+  "settingsSplashDisplayTextHint": "可使用 [date] 與 [days] 作為變數"
 }

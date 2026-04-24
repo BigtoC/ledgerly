@@ -110,5 +110,26 @@
   "accountsTypeFormTitle": "新账户类型",
   "accountsTypeFormName": "名称",
   "accountsTypeFormDefaultCurrency": "默认币种",
-  "accountsCurrencyPickerTitle": "选择币种"
+  "accountsCurrencyPickerTitle": "选择币种",
+
+  "settingsSectionAppearance": "外观",
+  "settingsSectionGeneral": "常规",
+  "settingsSectionDataManagement": "数据管理",
+  "settingsThemeLabel": "主题",
+  "settingsThemeLight": "浅色",
+  "settingsThemeDark": "深色",
+  "settingsThemeSystem": "跟随系统",
+  "settingsLanguageLabel": "语言",
+  "settingsLanguageSystem": "跟随系统",
+  "settingsLanguageEnglish": "English",
+  "settingsLanguageZhTw": "繁體中文",
+  "settingsLanguageZhCn": "简体中文",
+  "settingsDefaultAccountLabel": "默认账户",
+  "settingsDefaultAccountEmpty": "未设置",
+  "settingsDefaultAccountPickerTitle": "选择默认账户",
+  "settingsDefaultAccountCreateCta": "创建账户",
+  "settingsDefaultCurrencyLabel": "默认币种",
+  "settingsDefaultCurrencyPickerTitle": "选择默认币种",
+  "settingsManageCategories": "管理分类",
+  "settingsSplashDisplayTextHint": "可使用 [date] 与 [days] 作为变量"
 }

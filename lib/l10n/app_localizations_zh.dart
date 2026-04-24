@@ -309,6 +309,67 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get accountsCurrencyPickerTitle => 'Pick currency';
+
+  @override
+  String get settingsSectionAppearance => 'Appearance';
+
+  @override
+  String get settingsSectionGeneral => 'General';
+
+  @override
+  String get settingsSectionDataManagement => 'Data management';
+
+  @override
+  String get settingsThemeLabel => 'Theme';
+
+  @override
+  String get settingsThemeLight => 'Light';
+
+  @override
+  String get settingsThemeDark => 'Dark';
+
+  @override
+  String get settingsThemeSystem => 'System';
+
+  @override
+  String get settingsLanguageLabel => 'Language';
+
+  @override
+  String get settingsLanguageSystem => 'System';
+
+  @override
+  String get settingsLanguageEnglish => 'English';
+
+  @override
+  String get settingsLanguageZhTw => '繁體中文 (Traditional Chinese)';
+
+  @override
+  String get settingsLanguageZhCn => '简体中文 (Simplified Chinese)';
+
+  @override
+  String get settingsDefaultAccountLabel => 'Default account';
+
+  @override
+  String get settingsDefaultAccountEmpty => 'Not set';
+
+  @override
+  String get settingsDefaultAccountPickerTitle => 'Pick default account';
+
+  @override
+  String get settingsDefaultAccountCreateCta => 'Create account';
+
+  @override
+  String get settingsDefaultCurrencyLabel => 'Default currency';
+
+  @override
+  String get settingsDefaultCurrencyPickerTitle => 'Pick default currency';
+
+  @override
+  String get settingsManageCategories => 'Manage categories';
+
+  @override
+  String get settingsSplashDisplayTextHint =>
+      'Use [date] and [days] as placeholders';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -613,6 +674,66 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get accountsCurrencyPickerTitle => '选择币种';
+
+  @override
+  String get settingsSectionAppearance => '外观';
+
+  @override
+  String get settingsSectionGeneral => '常规';
+
+  @override
+  String get settingsSectionDataManagement => '数据管理';
+
+  @override
+  String get settingsThemeLabel => '主题';
+
+  @override
+  String get settingsThemeLight => '浅色';
+
+  @override
+  String get settingsThemeDark => '深色';
+
+  @override
+  String get settingsThemeSystem => '跟随系统';
+
+  @override
+  String get settingsLanguageLabel => '语言';
+
+  @override
+  String get settingsLanguageSystem => '跟随系统';
+
+  @override
+  String get settingsLanguageEnglish => 'English';
+
+  @override
+  String get settingsLanguageZhTw => '繁體中文';
+
+  @override
+  String get settingsLanguageZhCn => '简体中文';
+
+  @override
+  String get settingsDefaultAccountLabel => '默认账户';
+
+  @override
+  String get settingsDefaultAccountEmpty => '未设置';
+
+  @override
+  String get settingsDefaultAccountPickerTitle => '选择默认账户';
+
+  @override
+  String get settingsDefaultAccountCreateCta => '创建账户';
+
+  @override
+  String get settingsDefaultCurrencyLabel => '默认币种';
+
+  @override
+  String get settingsDefaultCurrencyPickerTitle => '选择默认币种';
+
+  @override
+  String get settingsManageCategories => '管理分类';
+
+  @override
+  String get settingsSplashDisplayTextHint => '可使用 [date] 与 [days] 作为变量';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -917,4 +1038,64 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get accountsCurrencyPickerTitle => '選擇幣別';
+
+  @override
+  String get settingsSectionAppearance => '外觀';
+
+  @override
+  String get settingsSectionGeneral => '一般';
+
+  @override
+  String get settingsSectionDataManagement => '資料管理';
+
+  @override
+  String get settingsThemeLabel => '主題';
+
+  @override
+  String get settingsThemeLight => '淺色';
+
+  @override
+  String get settingsThemeDark => '深色';
+
+  @override
+  String get settingsThemeSystem => '跟隨系統';
+
+  @override
+  String get settingsLanguageLabel => '語言';
+
+  @override
+  String get settingsLanguageSystem => '跟隨系統';
+
+  @override
+  String get settingsLanguageEnglish => 'English';
+
+  @override
+  String get settingsLanguageZhTw => '繁體中文';
+
+  @override
+  String get settingsLanguageZhCn => '简体中文';
+
+  @override
+  String get settingsDefaultAccountLabel => '預設帳戶';
+
+  @override
+  String get settingsDefaultAccountEmpty => '尚未設定';
+
+  @override
+  String get settingsDefaultAccountPickerTitle => '選擇預設帳戶';
+
+  @override
+  String get settingsDefaultAccountCreateCta => '建立帳戶';
+
+  @override
+  String get settingsDefaultCurrencyLabel => '預設幣別';
+
+  @override
+  String get settingsDefaultCurrencyPickerTitle => '選擇預設幣別';
+
+  @override
+  String get settingsManageCategories => '管理分類';
+
+  @override
+  String get settingsSplashDisplayTextHint => '可使用 [date] 與 [days] 作為變數';
 }

@@ -410,5 +410,86 @@
   "accountsCurrencyPickerTitle": "Pick currency",
   "@accountsCurrencyPickerTitle": {
     "description": "Accounts plan §5, §8. Title for the currency picker sheet opened from the account form."
+  },
+
+  "settingsSectionAppearance": "Appearance",
+  "@settingsSectionAppearance": {
+    "description": "Settings plan §5. Section header for theme + language group."
+  },
+  "settingsSectionGeneral": "General",
+  "@settingsSectionGeneral": {
+    "description": "Settings plan §5. Section header for default-account + default-currency group."
+  },
+  "settingsSectionDataManagement": "Data management",
+  "@settingsSectionDataManagement": {
+    "description": "Settings plan §5. Section header grouping Manage Categories (wallets/ankr-key are Phase 2)."
+  },
+  "settingsThemeLabel": "Theme",
+  "@settingsThemeLabel": {
+    "description": "Settings plan §3.2. Label for the theme-mode selector."
+  },
+  "settingsThemeLight": "Light",
+  "@settingsThemeLight": {
+    "description": "Settings plan §3.2. Theme-mode option — light."
+  },
+  "settingsThemeDark": "Dark",
+  "@settingsThemeDark": {
+    "description": "Settings plan §3.2. Theme-mode option — dark."
+  },
+  "settingsThemeSystem": "System",
+  "@settingsThemeSystem": {
+    "description": "Settings plan §3.2. Theme-mode option — follow system."
+  },
+  "settingsLanguageLabel": "Language",
+  "@settingsLanguageLabel": {
+    "description": "Settings plan §3.2. Label for the language selector."
+  },
+  "settingsLanguageSystem": "System",
+  "@settingsLanguageSystem": {
+    "description": "Settings plan §3.2. Language selector — follow system locale (null)."
+  },
+  "settingsLanguageEnglish": "English",
+  "@settingsLanguageEnglish": {
+    "description": "Settings plan §3.2. Language option — English."
+  },
+  "settingsLanguageZhTw": "繁體中文 (Traditional Chinese)",
+  "@settingsLanguageZhTw": {
+    "description": "Settings plan §3.2. Language option — Traditional Chinese (zh_TW)."
+  },
+  "settingsLanguageZhCn": "简体中文 (Simplified Chinese)",
+  "@settingsLanguageZhCn": {
+    "description": "Settings plan §3.2. Language option — Simplified Chinese (zh_CN)."
+  },
+  "settingsDefaultAccountLabel": "Default account",
+  "@settingsDefaultAccountLabel": {
+    "description": "Settings plan §3.2, §7. Label for the default-account tile."
+  },
+  "settingsDefaultAccountEmpty": "Not set",
+  "@settingsDefaultAccountEmpty": {
+    "description": "Settings plan §3.2, §7. Subtitle shown on the default-account tile when no default has been picked."
+  },
+  "settingsDefaultAccountPickerTitle": "Pick default account",
+  "@settingsDefaultAccountPickerTitle": {
+    "description": "Settings plan §7. Title for the default-account picker bottom sheet."
+  },
+  "settingsDefaultAccountCreateCta": "Create account",
+  "@settingsDefaultAccountCreateCta": {
+    "description": "Settings plan §7. CTA shown when no active accounts exist — routes to /accounts/new."
+  },
+  "settingsDefaultCurrencyLabel": "Default currency",
+  "@settingsDefaultCurrencyLabel": {
+    "description": "Settings plan §3.2, §8. Label for the default-currency tile."
+  },
+  "settingsDefaultCurrencyPickerTitle": "Pick default currency",
+  "@settingsDefaultCurrencyPickerTitle": {
+    "description": "Settings plan §8. Title for the default-currency picker bottom sheet."
+  },
+  "settingsManageCategories": "Manage categories",
+  "@settingsManageCategories": {
+    "description": "Settings plan §3.2, §5. ListTile label that navigates to /settings/categories."
+  },
+  "settingsSplashDisplayTextHint": "Use [date] and [days] as placeholders",
+  "@settingsSplashDisplayTextHint": {
+    "description": "Settings plan §6. Hint text under the splash display-text field explaining the template variables. Square brackets here are a visual stand-in for the literal '{date}' / '{days}' template tokens — gen_l10n parses curly braces as MessageFormat placeholders, so the copy uses bracketed forms to stay a plain string."
   }
 }

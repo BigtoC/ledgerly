@@ -687,6 +687,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pick currency'**
   String get accountsCurrencyPickerTitle;
+
+  /// Settings plan §5. Section header for theme + language group.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get settingsSectionAppearance;
+
+  /// Settings plan §5. Section header for default-account + default-currency group.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get settingsSectionGeneral;
+
+  /// Settings plan §5. Section header grouping Manage Categories (wallets/ankr-key are Phase 2).
+  ///
+  /// In en, this message translates to:
+  /// **'Data management'**
+  String get settingsSectionDataManagement;
+
+  /// Settings plan §3.2. Label for the theme-mode selector.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get settingsThemeLabel;
+
+  /// Settings plan §3.2. Theme-mode option — light.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get settingsThemeLight;
+
+  /// Settings plan §3.2. Theme-mode option — dark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get settingsThemeDark;
+
+  /// Settings plan §3.2. Theme-mode option — follow system.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get settingsThemeSystem;
+
+  /// Settings plan §3.2. Label for the language selector.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get settingsLanguageLabel;
+
+  /// Settings plan §3.2. Language selector — follow system locale (null).
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get settingsLanguageSystem;
+
+  /// Settings plan §3.2. Language option — English.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get settingsLanguageEnglish;
+
+  /// Settings plan §3.2. Language option — Traditional Chinese (zh_TW).
+  ///
+  /// In en, this message translates to:
+  /// **'繁體中文 (Traditional Chinese)'**
+  String get settingsLanguageZhTw;
+
+  /// Settings plan §3.2. Language option — Simplified Chinese (zh_CN).
+  ///
+  /// In en, this message translates to:
+  /// **'简体中文 (Simplified Chinese)'**
+  String get settingsLanguageZhCn;
+
+  /// Settings plan §3.2, §7. Label for the default-account tile.
+  ///
+  /// In en, this message translates to:
+  /// **'Default account'**
+  String get settingsDefaultAccountLabel;
+
+  /// Settings plan §3.2, §7. Subtitle shown on the default-account tile when no default has been picked.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get settingsDefaultAccountEmpty;
+
+  /// Settings plan §7. Title for the default-account picker bottom sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick default account'**
+  String get settingsDefaultAccountPickerTitle;
+
+  /// Settings plan §7. CTA shown when no active accounts exist — routes to /accounts/new.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account'**
+  String get settingsDefaultAccountCreateCta;
+
+  /// Settings plan §3.2, §8. Label for the default-currency tile.
+  ///
+  /// In en, this message translates to:
+  /// **'Default currency'**
+  String get settingsDefaultCurrencyLabel;
+
+  /// Settings plan §8. Title for the default-currency picker bottom sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick default currency'**
+  String get settingsDefaultCurrencyPickerTitle;
+
+  /// Settings plan §3.2, §5. ListTile label that navigates to /settings/categories.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage categories'**
+  String get settingsManageCategories;
+
+  /// Settings plan §6. Hint text under the splash display-text field explaining the template variables. Square brackets here are a visual stand-in for the literal '{date}' / '{days}' template tokens — gen_l10n parses curly braces as MessageFormat placeholders, so the copy uses bracketed forms to stay a plain string.
+  ///
+  /// In en, this message translates to:
+  /// **'Use [date] and [days] as placeholders'**
+  String get settingsSplashDisplayTextHint;
 }
 
 class _AppLocalizationsDelegate
