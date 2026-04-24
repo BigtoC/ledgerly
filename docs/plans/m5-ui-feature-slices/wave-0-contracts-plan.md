@@ -2,7 +2,7 @@
 
 **Source of truth:** [`PRD.md`](../../../PRD.md). Sequenced by [`implementation-plan.md`](../implementation-plan.md) → *M5 Feature slices* → *Agent execution waves*. Where this plan is silent, defer to those two.
 
-Wave 0 freezes every cross-slice contract **before** any Wave 1 slice starts. One agent, one PR. No feature logic lands here.
+Wave 0 freezes every cross-slice contract **before** any Wave 1 slice starts. One agent, one PR. No end-user feature UI lands here; only shared contracts and platform-enabling changes.
 
 ---
 
@@ -37,9 +37,10 @@ import '../../../data/models/category.dart';
 /// Archived categories are always excluded from the picker.
 /// Categories are sorted by `sortOrder` (nulls last) then by display name.
 ///
-/// Renders as ModalBottomSheet → CustomScrollView → SliverGrid per
-/// PRD.md → Layout Primitives → Category picker. Must survive 2× text
-/// scale per PRD.md → Layout Primitives → Constraint rule.
+/// Presents adaptively per PRD.md → Adaptive Layouts: modal bottom sheet on
+/// <600dp, constrained dialog on >=600dp. Both containers render the same
+/// CustomScrollView → SliverGrid picker body and must survive 2× text scale
+/// per PRD.md → Layout Primitives → Constraint rule.
 ///
 /// Implementation lands in Wave 1 (Categories slice owner).
 Future<Category?> showCategoryPicker(
@@ -50,11 +51,11 @@ Future<Category?> showCategoryPicker(
 
 **Non-negotiables:**
 - Signature is exactly `Future<Category?> showCategoryPicker(BuildContext, {required CategoryType type})`. No positional overloads, no `onSelected` callback variant, no extra named params in Wave 0.
-- Data source is `categoryRepositoryProvider.watchAll(type: type, includeArchived: false)`. Picker never opens its own Drift session.
+- Data flows through a Categories-owned Riverpod provider / controller surface that internally reads `categoryRepositoryProvider.watchAll(type: type, includeArchived: false)`. The picker widget does not open its own Drift session or call the database directly.
 - Widget class (if any) lives in the same file and is library-private (`_CategoryPickerSheet`). Call sites only see the top-level `show*` function.
 - Stub body: `throw UnimplementedError('Wave 1: Categories slice owner')`. File compiles; tests for it land in Wave 1.
 
-**Why freeze the function, not the widget:** `showModalBottomSheet` + Future-return composes with Transactions' form (`final picked = await showCategoryPicker(...); if (picked != null) controller.selectCategory(picked);`). A `ConsumerWidget` with `onSelected` callback forces the caller to manage the sheet lifecycle — rejected.
+**Why freeze the function, not the widget:** a Future-returning API composes with Transactions' form (`final picked = await showCategoryPicker(...); if (picked != null) controller.selectCategory(picked);`) while keeping adaptive presentation private to Categories. A callback-style widget forces the caller to manage the sheet/dialog lifecycle — rejected.
 
 **Forward-compat notes (do not implement in Wave 0):** If Wave 1 needs additional filtering (e.g. exclude a specific category id for "change category" flows), add named params with defaults that preserve the current behavior. Never change the required positional signature.
 
@@ -77,7 +78,7 @@ Existing keys in `l10n/app_en.arb` already follow `<slice><Concept>` camelCase (
 | `settings*`            | Settings slice            | Splash subsection keys already reserved (`settingsSplash*`).                                                                                                      |
 
 **Rules:**
-- One PR per slice adds its own keys. Each new key lands in **all four** ARB files (`app_en`, `app_zh`, `app_zh_TW`, `app_zh_CN`) in the same PR — never leave a locale behind.
+- One PR per slice adds its own keys. Each new product UI key lands in `app_en.arb`, `app_zh_TW.arb`, and `app_zh_CN.arb` in the same PR — never leave a shipped locale behind.
 - `app_zh.arb` remains the bare-fallback file and only carries `appTitle` plus anything explicitly marked "fallback-only." Full translations live in `app_zh_TW.arb` and `app_zh_CN.arb`.
 - Every new key needs an `@<key>` description block. PRD line references preferred when the key corresponds to a PRD-specified label.
 - If two slices discover they need the same label, promote to `common*` — but require reviewer sign-off, don't do it reflexively.
@@ -87,16 +88,17 @@ Existing keys in `l10n/app_en.arb` already follow `<slice><Concept>` camelCase (
 
 ### 2.3 Cross-slice ownership contract
 
-| Concern                               | Owner (UI)                                          | Owner (behavior / state) | Contract                                                                                                                                                                                                                                                                                               |
-|---------------------------------------|-----------------------------------------------------|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Duplicate transaction                 | Home                                                | Transactions             | Home owns swipe / overflow affordance and navigates to `/home/add` with a duplicate-source argument (route extra). Transactions reads the arg in its controller, prefills amount / category / account / memo, leaves `date` defaulting to today (user can adjust). Save path identical to a fresh add. |
-| Swipe-to-delete / archive             | Each list-owning slice (Home, Categories, Accounts) | Same slice's controller  | Controller decides delete-vs-archive per repository rules (`isReferenced` → archive). Affordance is a `flutter_slidable` action on the row. Each slice implements its own; no shared `SlidableRow` widget in Wave 0 — extract only if three divergent copies emerge in Wave 4.                         |
-| Undo after delete                     | Slice that deleted                                  | Same slice's controller  | SnackBar with `commonUndo` action. Controller exposes `undoLastDelete()` as a typed command. Timeout = platform default.                                                                                                                                                                               |
-| Manage Categories entry point         | Settings                                            | Categories               | Settings renders a tile that `context.go('/settings/categories')`. Categories owns the screen and its state.                                                                                                                                                                                           |
-| Splash settings controls              | Settings                                            | Settings                 | Settings reads/writes `user_preferences` keys `splash_enabled`, `splash_start_date`, `splash_display_text`, `splash_button_label` via `UserPreferencesRepository`. Splash reads the same keys; no cross-call between the two controllers.                                                              |
-| Default account / default currency    | Settings                                            | Settings                 | Settings writes `default_account_id` and `default_currency`. Transactions / Accounts read them via repo. Changes propagate via Riverpod stream; no direct notifications.                                                                                                                               |
-| Pending badge count (Phase 2 stub)    | Home                                                | Home                     | Home's controller reads a constant `0` in MVP. Do not wire a real stream; Phase 2 replaces the source.                                                                                                                                                                                                 |
-| Account currency indicator in tx form | Transactions                                        | Transactions             | Transactions reads the selected account's `currency` and renders the ISO code beside the amount. Accounts slice has no part in this.                                                                                                                                                                   |
+| Concern                                 | Owner (UI)                                          | Owner (behavior / state) | Contract                                                                                                                                                                                                                                                                                                                                                                             |
+|-----------------------------------------|-----------------------------------------------------|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Duplicate transaction                   | Home                                                | Transactions             | Home owns swipe / overflow affordance and modal-pushes to `/home/add` with `GoRouterState.extra = {'duplicateSourceId': transaction.id}`. Transactions reads that transaction-id-only handoff in its controller, loads the source transaction, prefills amount / category / account / memo, leaves `date` defaulting to today (user can adjust). Save path identical to a fresh add. |
+| Swipe-to-delete / archive               | Each list-owning slice (Home, Categories, Accounts) | Same slice's controller  | Controller decides delete-vs-archive per repository rules (`isReferenced` → archive). Affordance is a `flutter_slidable` action on the row. Each slice implements its own; no shared `SlidableRow` widget in Wave 0 — extract only if three divergent copies emerge in Wave 4.                                                                                                       |
+| Undo after delete                       | Home                                                | Home                     | Home is the only slice with a required delete-undo flow in MVP. It shows a SnackBar with `commonUndo` and owns the timer / restore behavior. Categories and Accounts keep their own archive/delete UX per slice plans; Wave 0 does not freeze a shared undo command name.                                                                                                            |
+| Manage Categories entry point           | Settings                                            | Categories               | Settings renders a tile that `context.go('/settings/categories')`. Categories owns the screen and its state.                                                                                                                                                                                                                                                                         |
+| Manage Categories from transaction flow | Categories                                          | Transactions             | `showCategoryPicker(...)` may surface the empty-state CTA when no visible categories exist for the chosen type. It closes by returning `null`; Transactions owns what happens next on the form side (for example, leaving state unchanged or re-opening the picker after the user creates a category).                                                                               |
+| Splash settings controls                | Settings                                            | Settings                 | Settings reads/writes `user_preferences` keys `splash_enabled`, `splash_start_date`, `splash_display_text`, `splash_button_label` via `UserPreferencesRepository`. Splash reads the same keys; no cross-call between the two controllers.                                                                                                                                            |
+| Default account / default currency      | Settings                                            | Settings                 | Settings writes `default_account_id` and `default_currency`. Transactions / Accounts read them via repo. Changes propagate via Riverpod stream; no direct notifications.                                                                                                                                                                                                             |
+| Pending badge count (Phase 2 stub)      | Home                                                | Home                     | Home's controller reads a constant `0` in MVP. Do not wire a real stream; Phase 2 replaces the source.                                                                                                                                                                                                                                                                               |
+| Account currency indicator in tx form   | Transactions                                        | Transactions             | Transactions reads the selected account's `currency` and renders the ISO code beside the amount. Accounts slice has no part in this.                                                                                                                                                                                                                                                 |
 
 **Record any cross-slice concern that surfaces mid-M5 as an addendum here,** not as a decision inside a slice PR. "We decided in review" is how contracts rot.
 
@@ -124,7 +126,7 @@ The following are frozen. Any change requires a dedicated PR and owner sign-off 
 
 **Slice agents may freely edit:**
 - Their own `lib/features/<slice>/` folder (screen, controller, state, `widgets/`).
-- All four ARB files for keys under their reserved prefixes (see §2.2).
+- `app_en.arb`, `app_zh_TW.arb`, and `app_zh_CN.arb` for keys under their reserved prefixes (see §2.2). `app_zh.arb` stays fallback-only unless a key is explicitly designated that way.
 - Their own `test/unit/controllers/<slice>_controller_test.dart` and `test/widget/features/<slice>/` folders.
 
 **Placeholder screens in `lib/features/<slice>/*_screen.dart` are expected to be fully replaced** by the slice owner. Corresponding placeholder tests in `test/widget/` that were scaffolded in M4 may be replaced by real widget tests per slice — the slice owner owns test replacement for their slice.
@@ -132,15 +134,14 @@ The following are frozen. Any change requires a dedicated PR and owner sign-off 
 ### 2.5 Shared widget directory convention
 
 - Intra-slice widgets live at `lib/features/<slice>/widgets/`. Example: `lib/features/categories/widgets/category_picker.dart`, `lib/features/transactions/widgets/calculator_keypad.dart`.
-- **No `lib/core/widgets/` folder in MVP.** If the same widget is genuinely needed by two slices, it lives under the slice that *owns the concept* (e.g. `CategoryPicker` is owned by Categories, consumed by Transactions). Consumers import across slice boundaries — `import_lint` does not forbid that (the layer boundary is widget↔repository, not slice↔slice).
-- A widget graduates to `core/widgets/` only after three slices need it and its API has survived one round of review. MVP has no such widget.
+- Shared concepts stay under the slice that owns them unless a later plan explicitly promotes them. `showCategoryPicker(...)` lives under Categories and is imported by Transactions; slice-to-slice widget imports are allowed because the enforced boundary is layer-based, not slice-based.
 
 ### 2.6 State / controller conventions (reminder, not new)
 
 These are already specified in `PRD.md` → *Controller Contract* and *Domain Models vs Drift Data Classes*, and already follow in the M4 placeholder files. Restated here only so slice agents don't invent variants:
 
 - State class: Freezed sealed union (`@freezed sealed class <Slice>State`) with variants `loading`, `empty`, `data(...)`, `error(...)`. Additional variants allowed per-slice (e.g. `splash.needsStartDate`); keep the four base variants spelled exactly this way.
-- Controller: Riverpod `@riverpod class <Slice>Controller extends _$<Slice>Controller` with `build()` returning the initial state. Stream-backed controllers override `build` to return the first emission and re-emit via `state = AsyncData(...)`.
+- Controller: Riverpod `@riverpod class <Slice>Controller extends _$<Slice>Controller`. Use `AsyncNotifier` or `StreamNotifier` as appropriate for the slice; stream-backed screens should not force widgets to aggregate multiple repository streams in `build()`.
 - Commands: typed methods on the controller class. No `.read(provider.notifier).someUntypedMethod(dynamic)` patterns.
 - Widgets never call repositories directly. Widgets never call `NumberFormat`/`DateFormat`/`groupBy`/`fold` inside `build()`.
 
@@ -164,16 +165,16 @@ Both are resolved here so slice agents don't chase false signals while verifying
 1. Delete the `synthetic-package: false` line from `l10n.yaml`.
 2. Update the header comment in `l10n.yaml` to reflect the actual output: `output-dir: lib/l10n`, import path `package:ledgerly/l10n/app_localizations.dart`. Remove the `flutter_gen` mention.
 
-**Issue B — `app_zh.arb` untranslated-messages spam.** `app_zh.arb` intentionally carries only `appTitle` per CLAUDE.md → *Dependency Pins* (it is a bare-fallback shim required by `flutter_localizations` codegen; removing it breaks `flutter pub get`). Runtime locale resolution maps bare `zh` to English per PRD → *Internationalization*, so the file is never served at runtime — translations live only in `app_zh_TW.arb` and `app_zh_CN.arb`. The codegen warning is therefore always a false alarm, but it scales with every new ARB key added in Waves 1–3 (50 → 70 → …), obscuring real warnings.
+**Issue B — `app_zh.arb` untranslated-messages spam.** `app_zh.arb` intentionally carries only `appTitle` per the PRD's locale fallback policy (it is a bare-fallback shim required by `flutter_localizations` codegen; removing it breaks `flutter pub get`). Runtime locale resolution maps bare `zh` to English per `PRD.md` → *Internationalization*, so the file is never served at runtime — translations live only in `app_zh_TW.arb` and `app_zh_CN.arb`. The codegen warning is therefore always a false alarm, but it scales with every new ARB key added in Waves 1–3 (50 → 70 → …), obscuring real warnings.
 
 *Fix (approved):* redirect the untranslated report to a file so stdout stays quiet.
 1. Add to `l10n.yaml`: `untranslated-messages-file: untranslated-messages.txt`.
 2. Add `untranslated-messages.txt` (and `l10n/untranslated-messages.txt`, whichever path gen_l10n writes to under the project's `arb-dir: l10n` / `output-dir: lib/l10n` config — verify at run time) to the repo root `.gitignore`.
-3. Add a one-line comment in `l10n.yaml` next to the new key explaining *why* the file is intentionally empty in git (points at PRD → *Internationalization* + CLAUDE.md → *Dependency Pins*).
+3. Add a one-line comment in `l10n.yaml` next to the new key explaining *why* the file is intentionally empty in git (points at `PRD.md` → *Internationalization*).
 
 *Rejected alternatives, do not pursue:*
-- **Mirror `app_en.arb` keys into `app_zh.arb` with English values.** Silences codegen but adds a 4th ARB file that must be updated on every future key addition. Violates CLAUDE.md's "keep `app_zh.arb` minimal" pin and creates a maintenance burden that compounds over every Wave 1–3 slice.
-- **Delete `app_zh.arb` entirely.** Breaks `flutter pub get` with `Arb file for a fallback, zh, does not exist`. Explicitly ruled out in CLAUDE.md → *Dependency Pins*.
+- **Mirror `app_en.arb` keys into `app_zh.arb` with English values.** Silences codegen but adds a 4th ARB file that must be updated on every future key addition. Violates the PRD's minimal bare-`zh` fallback policy and creates a maintenance burden that compounds over every Wave 1–3 slice.
+- **Delete `app_zh.arb` entirely.** Breaks `flutter pub get` with `Arb file for a fallback, zh, does not exist`. Explicitly ruled out by `PRD.md` → *Internationalization*.
 - **Populate `app_zh.arb` with zh_CN values.** Contradicts the PRD runtime policy that bare `zh` falls back to English, not zh_CN.
 
 ### 2.8 `AccountRepository.watchBalanceMinorUnits` (new method)
