@@ -1,6 +1,6 @@
 # M5 Wave 4 — Integration
 
-**Source of truth:** [`PRD.md`](../../../PRD.md) → *Routing Structure*, *Testing Strategy → Integration Tests*. Contracts inherited from [`wave-0-contracts-plan.md`](wave-0-contracts-plan.md). Prior-wave outputs: [`wave-1/`](../wave-1/), [`wave-2/transactions-plan.md`](wave-2-transactions-plan.md), [`wave-3/home-plan.md`](wave-3-home-plan.md).
+**Source of truth:** [`PRD.md`](../../../PRD.md) → *Routing Structure*, *Testing Strategy → Integration Tests*. Contracts inherited from [`wave-0-contracts-plan.md`](wave-0-contracts-plan.md). Prior-wave outputs: [`wave-1/`](wave-1/), [`wave-2-transactions-plan.md`](wave-2-transactions-plan.md), [`wave-3-home-plan.md`](wave-3-home-plan.md).
 
 Wave 4 is **not a slice**. It is an operator-run integration pass that wires the six merged slices into a working app, reconciles shared surfaces, and confirms the full test suite is green. No new features; no controller/widget authoring.
 
@@ -33,9 +33,9 @@ If the operator delegates, the agent runs in **foreground** with explicit instru
 `lib/app/router.dart` — replace placeholder references:
 - `/splash` body → `SplashScreen` from `lib/features/splash/splash_screen.dart`.
 - `/home` body → `HomeScreen` from `lib/features/home/home_screen.dart`.
-- `/home/add` + `/home/edit/:id` bodies → `TransactionFormScreen` from `lib/features/transactions/transaction_form_screen.dart`. Preserve the modal-push presentation (`MaterialPage` with `fullscreenDialog: true`) per PRD → *Routing Structure*.
+- `/home/add` + `/home/edit/:id` bodies → `TransactionFormScreen` from `lib/features/transactions/transaction_form_screen.dart`. Preserve the root-modal presentation (`parentNavigatorKey: _rootNavigatorKey`) and update `_modalPage` / equivalent so Material routes use `fullscreenDialog: true`, per PRD → *Routing Structure*.
 - `/accounts` body → `AccountsScreen`.
-- `/accounts/new` + `/accounts/:id` bodies → `AccountFormScreen`.
+- `/accounts/new` + `/accounts/:id` routes → the Accounts slice add/edit form surface, preserving the Accounts-plan modal push semantics (`parentNavigatorKey: _rootNavigatorKey` + modal page builder) instead of nesting them as plain in-branch screens.
 - `/settings` body → `SettingsScreen`.
 - `/settings/categories` body → `CategoriesScreen`.
 
@@ -48,7 +48,7 @@ Keep the existing:
 
 ### 3.2 ARB reconciliation
 
-- Run the existing `test/unit/l10n/arb_audit_test.dart` (M4) against the merged ARBs.
+- Update `test/unit/l10n/arb_audit_test.dart` from its M4 fixed-key inventory so it validates the intended merged-M5 invariants (locale parity, fallback-only `app_zh.arb`, no unexpected drift), then run it against the reconciled ARBs.
 - Resolve any duplicate-key collisions: two slices that accidentally claimed the same key — rename the lesser-used one under its proper slice prefix.
 - Check that every key under `common*` is genuinely shared by ≥2 slices. Move singletons back to their slice prefix.
 - Verify every key added during Wave 1–3 landed in the shipped locale files (`app_en`, `app_zh_TW`, `app_zh_CN`) and that `app_zh.arb` remained fallback-only.
@@ -57,12 +57,13 @@ Keep the existing:
 
 Extend `test/integration/` to cover the flows promised in `PRD.md` → *Testing Strategy → Integration Tests*:
 
-- First-launch flow: seeded defaults → splash date picker (via Settings) → splash → Home → Add transaction → verify DB row via repository.
-- Subsequent launch with `splash_enabled = true` and a start date set: splash → Home (straight through).
+- First-launch flow: seeded defaults → launch-time splash date picker → splash day counter → tap Enter → Home → Add transaction → verify DB row via repository.
+- Subsequent launch with `splash_enabled = true` and a start date set: splash day counter → tap Enter → Home.
 - Subsequent launch with `splash_enabled = false`: direct to Home (no splash flash).
 - Duplicate flow: on Home, open an existing transaction's overflow → Duplicate → Transactions form prefilled → adjust amount → Save → return to Home with pinned day + visible new row.
+- Edit flow: on Home, tap an existing transaction → `/home/edit/:id` opens → adjust details → Save → return to Home with the edited row visible on the pinned day.
 - Multi-currency flow: seed a second account in a different currency → add one transaction per account → Home summary strip shows grouped-by-currency chips.
-- Archive flow: archive a used category → it is hidden from the `CategoryPicker` but visible in the Categories management screen; existing transactions continue to reference it.
+- Archive flow: archive a used category/account → it is hidden from transaction pickers but remains visible in the relevant management screen; existing transactions continue to reference it.
 
 Phase 2 integration tests (wallet add/sync, pending approve/reject) remain out of scope.
 
@@ -76,10 +77,11 @@ Run `flutter test` (unit + widget + integration). Triage:
 ### 3.5 Manual smoke on device matrix
 
 Per `implementation-plan.md` → M6 → *Deliverables*, the full device matrix (Android phone + tablet + iOS phone + tablet) is M6's responsibility. Wave 4 runs a minimal smoke on the operator's primary device:
-- Cold launch → splash appears → Enter → Home.
+- Cold launch with splash enabled and a configured start date → splash appears → Enter → Home.
 - Add a transaction → returns to Home with the day pinned.
+- Edit an existing transaction → save → verify the updated row remains visible on the pinned day.
 - Duplicate → adjust → save → verify.
-- Archive a category → confirm it's gone from the picker.
+- Archive a used category/account → confirm it disappears from the relevant picker but remains visible in management/history.
 - Toggle theme (Settings) → app recolors without restart.
 - Toggle locale (Settings) → strings change without restart.
 
@@ -105,6 +107,7 @@ If the operator delegates Wave 4 to a Claude agent:
 - §2.3 — Cross-slice ownership is already enforced at slice-PR review time. Wave 4 only verifies the wiring, not the ownership.
 - §2.4 — Wave 4 is the **only** wave allowed to edit `lib/app/router.dart` (replacing placeholders with real screens). Router edits inside a slice PR should have been rejected in review; if any slipped through, revert them here.
 - §2.5 — No widget promotion to `core/widgets/` in MVP. If a widget was duplicated across three slices during Waves 1–3, flag for post-MVP extraction — do not refactor in Wave 4.
+- Wave 4 integration work itself stays in one PR, but any blocking per-slice regressions discovered here are fixed in separate follow-up PRs owned by the relevant slice before the Wave 4 PR merges.
 
 ---
 
@@ -127,12 +130,12 @@ Wave 4 intentionally does **not** gate on:
 
 ## 7. Sequencing
 
-Single PR, single pass:
+Single Wave 4 integration PR, plus any required per-slice follow-up PRs discovered during triage:
 
 1. Pull the merged M5 branch with all Wave 0–3 PRs included.
 2. Edit `lib/app/router.dart` to wire real slice screens (§3.1).
 3. Run `flutter analyze` — resolve any compile errors introduced by the switch.
-4. Run `flutter test` — resolve M4 test regressions (Wave 4's job); triage slice regressions (refer back to slice owner).
+4. Run `flutter test` — resolve M4 test regressions (Wave 4's job); triage slice regressions to the owning slice and pause Wave 4 merge until the required follow-up PRs land.
 5. Implement the integration tests enumerated in §3.3 under `test/integration/`.
 6. Run `test/unit/l10n/arb_audit_test.dart`; reconcile ARB collisions per §3.2.
 7. Manual device smoke (§3.5).
