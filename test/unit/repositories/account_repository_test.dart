@@ -309,6 +309,29 @@ void main() {
     );
 
     test(
+      'AC11b: referenced account cannot change currency',
+      () async {
+        final id = await repo.save(buildCashAccount(currency: _usd));
+        final categoryId = await _insertCategoryRaw(db);
+        await _insertTransactionRaw(db, accountId: id, categoryId: categoryId);
+
+        await expectLater(
+          repo.save(buildCashAccount(id: id, currency: _jpy)),
+          throwsA(
+            isA<AccountRepositoryException>().having(
+              (e) => e.message,
+              'message',
+              'Account $id currency cannot change after transactions exist',
+            ),
+          ),
+        );
+
+        final fetched = await repo.getById(id);
+        expect(fetched!.currency.code, 'USD');
+      },
+    );
+
+    test(
       'AC12: watchAll excludes archived by default; sortOrder respected',
       () async {
         final firstId = await repo.save(
@@ -557,6 +580,71 @@ void main() {
           );
           await Future<void>.delayed(Duration.zero);
           expect(snapshots.last, 10000);
+
+          await sub.cancel();
+        },
+      );
+
+      test(
+        'ACB07b: stream re-emits when opening balance changes on the account row',
+        () async {
+          final id = await repo.save(
+            buildCashAccount(openingBalanceMinorUnits: 10000),
+          );
+
+          final snapshots = <int>[];
+          final sub = repo.watchBalanceMinorUnits(id).listen(snapshots.add);
+
+          await Future<void>.delayed(Duration.zero);
+          expect(snapshots.last, 10000);
+
+          await repo.save(
+            buildCashAccount(
+              id: id,
+              openingBalanceMinorUnits: 12500,
+            ),
+          );
+          await Future<void>.delayed(Duration.zero);
+          expect(snapshots.last, 12500);
+
+          await sub.cancel();
+        },
+      );
+
+      test('ACB07c: missing account emits 0', () async {
+        expect(await repo.watchBalanceMinorUnits(999).first, 0);
+      });
+
+      test(
+        'ACB07d: unrelated category metadata edits do not re-emit the balance',
+        () async {
+          final id = await repo.save(
+            buildCashAccount(openingBalanceMinorUnits: 10000),
+          );
+          final categoryId = await _insertCategoryRaw(db);
+          await _insertTransactionRaw(
+            db,
+            accountId: id,
+            categoryId: categoryId,
+            amountMinorUnits: 2000,
+          );
+
+          final snapshots = <int>[];
+          final sub = repo.watchBalanceMinorUnits(id).listen(snapshots.add);
+
+          await Future<void>.delayed(Duration.zero);
+          expect(snapshots, [8000]);
+
+          await db.customUpdate(
+            'UPDATE categories SET icon = ? WHERE id = ?',
+            variables: [
+              const Variable<String>('local_cafe'),
+              Variable<int>(categoryId),
+            ],
+            updates: {db.categories},
+          );
+          await Future<void>.delayed(Duration.zero);
+          expect(snapshots, [8000]);
 
           await sub.cancel();
         },
