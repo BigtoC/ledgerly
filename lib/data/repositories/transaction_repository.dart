@@ -51,6 +51,13 @@ class TransactionRepositoryException implements Exception {
 ///   (G2 / PRD.md 286).
 /// - `createdAt` / `updatedAt` populated by the repository, never by
 ///   SQL defaults (PRD.md 291-293).
+///
+/// **No `duplicate(id)` convenience method exists by design.** PRD's
+/// quick-repeat flow ("user adjusts amount or date if needed → tap
+/// Save") requires the user to edit the prefill *before* it persists,
+/// so the UI drives the flow as `getById` → prefill in form state →
+/// user edits → `save`. A repository-level duplicate-and-save would
+/// bypass the edit step. Do not re-add it.
 abstract class TransactionRepository {
   /// Transactions for one calendar day, in the device's local timezone.
   /// Day window: `[localMidnight(day), localMidnight(day) + 24h)`.
@@ -88,12 +95,6 @@ abstract class TransactionRepository {
   /// Delete by id. Returns `true` when a row was removed, `false` when
   /// no row matched.
   Future<bool> delete(int id);
-
-  /// Quick-repeat / duplicate flow. Copies every field except `id` and
-  /// timestamps; the duplicate is a brand-new transaction row.
-  ///
-  /// Throws [RepositoryException] when `sourceId` does not exist.
-  Future<Transaction> duplicate(int sourceId);
 }
 
 /// Concrete Drift-backed implementation of [TransactionRepository].
@@ -211,30 +212,6 @@ final class DriftTransactionRepository implements TransactionRepository {
   Future<bool> delete(int id) async {
     final removed = await _dao.deleteById(id);
     return removed > 0;
-  }
-
-  @override
-  Future<Transaction> duplicate(int sourceId) async {
-    final source = await _dao.findById(sourceId);
-    if (source == null) {
-      throw TransactionRepositoryException(
-        'Cannot duplicate: transaction $sourceId not found',
-      );
-    }
-    final domain = await _toDomain(source);
-    final copy = Transaction(
-      id: 0,
-      amountMinorUnits: domain.amountMinorUnits,
-      currency: domain.currency,
-      categoryId: domain.categoryId,
-      accountId: domain.accountId,
-      memo: domain.memo,
-      date: domain.date,
-      // Placeholders; `save` overwrites with `clock()` on the insert path.
-      createdAt: domain.createdAt,
-      updatedAt: domain.updatedAt,
-    );
-    return save(copy);
   }
 
   // ---------- Private mapping ----------

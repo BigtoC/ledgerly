@@ -98,6 +98,18 @@ abstract class AccountRepository {
   /// Missing accounts emit `0` (subquery collapses via `COALESCE`), not
   /// an error — matches `watchById`'s null-on-missing contract.
   Stream<int> watchBalanceMinorUnits(int accountId);
+
+  /// One-shot lookup of the most recently used non-archived account, used by
+  /// the Add Transaction default-account fallback chain (M5 Wave 2 §3.2,
+  /// PRD → Add/Edit Interaction Rules). "Most recently used" is the account
+  /// referenced by the newest transaction (`date DESC, id DESC`) among rows
+  /// whose owning account is not archived.
+  ///
+  /// The archive filter applies in SQL — archived rows never leave the DAO.
+  /// If the newest transaction overall belongs to an archived account, this
+  /// method skips it and returns the next active account. Returns `null`
+  /// only when no transaction exists for any active account.
+  Future<Account?> getLastUsedActiveAccount();
 }
 
 /// Concrete Drift-backed implementation of [AccountRepository].
@@ -242,6 +254,27 @@ final class DriftAccountRepository implements AccountRepository {
     // one row; both COALESCEs guarantee the `balance` column is never
     // NULL.
     return query.watch().map((rows) => rows.first.read<int>('balance'));
+  }
+
+  @override
+  Future<Account?> getLastUsedActiveAccount() async {
+    // SQL-side archive filter (§3.2): the JOIN against accounts gated on
+    // `is_archived = 0` skips rows whose owning account is archived, so the
+    // newest *eligible* transaction surfaces directly. Doing the filter in
+    // Dart after a single-row read would return null when the absolute
+    // newest transaction belongs to an archived account, which is wrong.
+    final rows = await _db
+        .customSelect(
+          'SELECT t.account_id AS account_id '
+          'FROM transactions t '
+          'JOIN accounts a ON a.id = t.account_id '
+          'WHERE a.is_archived = 0 '
+          'ORDER BY t.date DESC, t.id DESC '
+          'LIMIT 1',
+        )
+        .get();
+    if (rows.isEmpty) return null;
+    return getById(rows.first.read<int>('account_id'));
   }
 
   // ---------- Private mapping ----------
