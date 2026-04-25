@@ -132,11 +132,8 @@ class KeypadState {
   }
 
   @override
-  int get hashCode => Object.hash(
-    amountMinorUnits,
-    fractionalDigitsEntered,
-    isFractionalMode,
-  );
+  int get hashCode =>
+      Object.hash(amountMinorUnits, fractionalDigitsEntered, isFractionalMode);
 
   @override
   String toString() =>

@@ -21,13 +21,14 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../app/providers/repository_providers.dart';
 import '../../data/models/account.dart';
 import '../../data/models/category.dart';
-import '../../data/models/currency.dart';
 import '../../data/models/transaction.dart';
 import '../../data/repositories/category_repository.dart';
 import 'keypad_state.dart';
 import 'transaction_form_state.dart';
 
 part 'transaction_form_controller.g.dart';
+
+enum _HydrationMode { add, duplicate, edit }
 
 @riverpod
 class TransactionFormController extends _$TransactionFormController {
@@ -37,6 +38,8 @@ class TransactionFormController extends _$TransactionFormController {
   /// the form only renders `amountMinorUnits`, which is mirrored into the
   /// state on each mutation.
   KeypadState _keypad = const KeypadState.initial();
+  _HydrationMode _resumeMode = _HydrationMode.add;
+  int? _resumeTargetId;
 
   @override
   TransactionFormState build() {
@@ -49,6 +52,8 @@ class TransactionFormController extends _$TransactionFormController {
   // ---------- Hydration ----------
 
   Future<void> hydrateForAdd() async {
+    _resumeMode = _HydrationMode.add;
+    _resumeTargetId = null;
     state = const TransactionFormState.loading();
     try {
       final account = await _resolveDefaultAccount();
@@ -80,6 +85,8 @@ class TransactionFormController extends _$TransactionFormController {
   }
 
   Future<void> hydrateForDuplicate(int sourceId) async {
+    _resumeMode = _HydrationMode.duplicate;
+    _resumeTargetId = sourceId;
     state = const TransactionFormState.loading();
     try {
       final txRepo = ref.read(transactionRepositoryProvider);
@@ -124,6 +131,8 @@ class TransactionFormController extends _$TransactionFormController {
   }
 
   Future<void> hydrateForEdit(int id) async {
+    _resumeMode = _HydrationMode.edit;
+    _resumeTargetId = id;
     state = const TransactionFormState.loading();
     try {
       final txRepo = ref.read(transactionRepositoryProvider);
@@ -172,7 +181,7 @@ class TransactionFormController extends _$TransactionFormController {
 
   void appendDigit(int digit) {
     final s = state;
-    if (s is! TransactionFormData) return;
+    if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
     final decimals = s.displayCurrency?.decimals ?? 2;
     _keypad = _keypad.push(digit, decimals: decimals);
     state = s.copyWith(
@@ -183,7 +192,7 @@ class TransactionFormController extends _$TransactionFormController {
 
   void appendDecimal() {
     final s = state;
-    if (s is! TransactionFormData) return;
+    if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
     final decimals = s.displayCurrency?.decimals ?? 2;
     _keypad = _keypad.pushDecimal(decimals: decimals);
     // amountMinorUnits doesn't change on the decimal press itself, but
@@ -194,7 +203,7 @@ class TransactionFormController extends _$TransactionFormController {
 
   void backspace() {
     final s = state;
-    if (s is! TransactionFormData) return;
+    if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
     final decimals = s.displayCurrency?.decimals ?? 2;
     _keypad = _keypad.pop(decimals: decimals);
     state = s.copyWith(
@@ -205,12 +214,9 @@ class TransactionFormController extends _$TransactionFormController {
 
   void clearAmount() {
     final s = state;
-    if (s is! TransactionFormData) return;
+    if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
     _keypad = _keypad.clear();
-    state = s.copyWith(
-      amountMinorUnits: 0,
-      isDirty: true,
-    );
+    state = s.copyWith(amountMinorUnits: 0, isDirty: true);
   }
 
   /// Read-only accessor for widgets / tests that need to know whether
@@ -223,7 +229,7 @@ class TransactionFormController extends _$TransactionFormController {
 
   void selectCategory(Category category) {
     final s = state;
-    if (s is! TransactionFormData) return;
+    if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
     state = s.copyWith(
       selectedCategory: category,
       pendingType: category.type,
@@ -236,7 +242,7 @@ class TransactionFormController extends _$TransactionFormController {
   /// (the widget calls [clearCategoryForTypeChange] first).
   void setPendingType(CategoryType type) {
     final s = state;
-    if (s is! TransactionFormData) return;
+    if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
     if (s.selectedCategory != null && s.selectedCategory!.type != type) {
       // Caller must clear the incompatible category first (Wave 2 §7).
       return;
@@ -250,7 +256,7 @@ class TransactionFormController extends _$TransactionFormController {
   /// in a single transition so the chip renders empty immediately.
   void clearCategoryForTypeChange(CategoryType newType) {
     final s = state;
-    if (s is! TransactionFormData) return;
+    if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
     state = s.copyWith(
       selectedCategory: null,
       pendingType: newType,
@@ -267,10 +273,9 @@ class TransactionFormController extends _$TransactionFormController {
     bool clearAmountOnCurrencyChange = false,
   }) {
     final s = state;
-    if (s is! TransactionFormData) return;
+    if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
     final newCurrency = account.currency;
-    final currencyChanged =
-        s.displayCurrency?.code != newCurrency.code;
+    final currencyChanged = s.displayCurrency?.code != newCurrency.code;
     if (currencyChanged &&
         s.amountMinorUnits > 0 &&
         !clearAmountOnCurrencyChange) {
@@ -297,7 +302,7 @@ class TransactionFormController extends _$TransactionFormController {
 
   void setDate(DateTime date) {
     final s = state;
-    if (s is! TransactionFormData) return;
+    if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
     final normalized = DateTime(date.year, date.month, date.day);
     if (normalized.isAtSameMomentAs(s.date)) return;
     state = s.copyWith(date: normalized, isDirty: true);
@@ -305,7 +310,7 @@ class TransactionFormController extends _$TransactionFormController {
 
   void setMemo(String memo) {
     final s = state;
-    if (s is! TransactionFormData) return;
+    if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
     if (s.memo == memo) return;
     state = s.copyWith(memo: memo, isDirty: true);
   }
@@ -320,6 +325,7 @@ class TransactionFormController extends _$TransactionFormController {
   Future<Transaction?> save() async {
     final s = state;
     if (s is! TransactionFormData) return null;
+    if (s.isSaving || s.isDeleting) return null;
     if (!s.canSave) return null;
     state = s.copyWith(isSaving: true);
     try {
@@ -356,6 +362,7 @@ class TransactionFormController extends _$TransactionFormController {
   Future<bool> deleteExisting() async {
     final s = state;
     if (s is! TransactionFormData) return false;
+    if (s.isSaving || s.isDeleting) return false;
     final id = s.editingId;
     if (id == null) return false;
     state = s.copyWith(isDeleting: true);
@@ -370,9 +377,15 @@ class TransactionFormController extends _$TransactionFormController {
     }
   }
 
-  /// Re-runs Add hydration after the user returns from `/accounts/new`.
-  /// Used by the empty-state CTA flow (Wave 2 §6).
-  Future<void> retryAddHydration() => hydrateForAdd();
+  /// Re-runs the last requested hydration mode after the user returns from
+  /// dependency-recovery flows like `/accounts/new`.
+  Future<void> retryHydration() {
+    return switch (_resumeMode) {
+      _HydrationMode.add => hydrateForAdd(),
+      _HydrationMode.duplicate => hydrateForDuplicate(_resumeTargetId!),
+      _HydrationMode.edit => hydrateForEdit(_resumeTargetId!),
+    };
+  }
 
   // ---------- Internals ----------
 
@@ -402,14 +415,18 @@ class TransactionFormController extends _$TransactionFormController {
     // Resolve category against the live row so an archived source
     // category still renders historically (risk #8).
     final category = await categoryRepo.getById(source.categoryId);
-    _keypad = _keypadFromAmount(
-      source.amountMinorUnits,
-      decimals: account.currency.decimals,
-    );
+    final preservesAmount = source.currency.code == account.currency.code;
+    final amountMinorUnits = preservesAmount ? source.amountMinorUnits : 0;
+    _keypad = preservesAmount
+        ? _keypadFromAmount(
+            source.amountMinorUnits,
+            decimals: account.currency.decimals,
+          )
+        : const KeypadState.initial();
     // Wave 2 risk #7 — duplicate prefill must default `date` to today,
     // not carry the source's date.
     state = TransactionFormState.data(
-      amountMinorUnits: source.amountMinorUnits,
+      amountMinorUnits: amountMinorUnits,
       selectedAccount: account,
       displayCurrency: account.currency,
       selectedCategory: category,
@@ -467,14 +484,4 @@ class TransactionFormController extends _$TransactionFormController {
     final now = DateTime.now();
     return DateTime(now.year, now.month, now.day);
   }
-}
-
-/// Read-only access to the current [Currency] for the keypad — used by
-/// the calculator widget to disable the decimal point on zero-decimal
-/// currencies and by the amount display to format the value.
-extension TransactionFormStateAccess on TransactionFormState {
-  Currency? get currencyOrNull => switch (this) {
-    TransactionFormData(:final displayCurrency) => displayCurrency,
-    _ => null,
-  };
 }

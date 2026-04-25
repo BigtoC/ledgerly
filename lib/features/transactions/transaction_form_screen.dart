@@ -47,8 +47,7 @@ class TransactionFormScreen extends ConsumerStatefulWidget {
       _TransactionFormScreenState();
 }
 
-class _TransactionFormScreenState
-    extends ConsumerState<TransactionFormScreen> {
+class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   /// Set after the first invalid save attempt so inline guidance kicks
   /// in (Wave 2 §9 inline validation).
   bool _showValidationHints = false;
@@ -88,9 +87,10 @@ class _TransactionFormScreenState
     final controller = ref.read(transactionFormControllerProvider.notifier);
 
     return PopScope(
-      canPop: !_isDirty(state),
+      canPop: _canPop(state),
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
+        if (_blocksPopDuringMutation(state)) return;
         final shouldDiscard = await _confirmDiscard(context, l10n);
         if (shouldDiscard && context.mounted) {
           context.pop();
@@ -105,14 +105,17 @@ class _TransactionFormScreenState
               IconButton(
                 icon: const Icon(Icons.delete_outline),
                 tooltip: l10n.commonDelete,
-                onPressed: state is TransactionFormData && !state.isDeleting
+                onPressed:
+                    state is TransactionFormData &&
+                        !state.isDeleting &&
+                        !state.isSaving
                     ? () => _delete(context, l10n, controller)
                     : null,
               ),
             TextButton(
               onPressed: state.canSave
                   ? () => _save(context, l10n, controller)
-                  : _showValidationHintsIfPossible,
+                  : null,
               child: Text(l10n.commonSave),
             ),
           ],
@@ -133,7 +136,12 @@ class _TransactionFormScreenState
                 child: Text('$error'),
               ),
             ),
-            TransactionFormData() => _buildForm(context, l10n, state, controller),
+            TransactionFormData() => _buildForm(
+              context,
+              l10n,
+              state,
+              controller,
+            ),
           },
         ),
       ),
@@ -146,72 +154,75 @@ class _TransactionFormScreenState
     TransactionFormData state,
     TransactionFormController controller,
   ) {
-    final showAmountError =
-        _showValidationHints && state.amountMinorUnits == 0;
+    final showAmountError = _showValidationHints && state.amountMinorUnits == 0;
     final showCategoryError =
         _showValidationHints && state.selectedCategory == null;
     final showAccountError =
         _showValidationHints && state.selectedAccount == null;
+    final controlsLocked = state.isSaving || state.isDeleting;
 
-    return Column(
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TransactionTypeSegmentedControl(
-                  value: state.pendingType,
-                  onChanged: (next) =>
-                      _onTypeChanged(context, l10n, state, controller, next),
-                ),
-                const SizedBox(height: 16),
-                AmountDisplay(
-                  keypad: controller.keypadSnapshot,
-                  currency: state.displayCurrency,
-                  hasError: showAmountError,
-                ),
-                if (showAmountError)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4, left: 8),
-                    child: Text(
-                      l10n.txAmountRequired,
-                      style: TextStyle(color: Theme.of(context).colorScheme.error),
-                    ),
+    return IgnorePointer(
+      ignoring: controlsLocked,
+      child: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TransactionTypeSegmentedControl(
+                    value: state.pendingType,
+                    onChanged: (next) =>
+                        _onTypeChanged(context, l10n, state, controller, next),
                   ),
-                const SizedBox(height: 12),
-                CategoryChip(
-                  category: state.selectedCategory,
-                  hasError: showCategoryError,
-                  onTap: () => _onTapCategoryChip(context, state, controller),
-                ),
-                AccountSelectorTile(
-                  account: state.selectedAccount,
-                  hasError: showAccountError,
-                  onTap: () => _onTapAccountTile(context, l10n, state, controller),
-                ),
-                DateField(
-                  value: state.date,
-                  onChanged: controller.setDate,
-                ),
-                const SizedBox(height: 8),
-                MemoField(
-                  initialValue: state.memo,
-                  onChanged: controller.setMemo,
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  AmountDisplay(
+                    keypad: controller.keypadSnapshot,
+                    currency: state.displayCurrency,
+                    hasError: showAmountError,
+                  ),
+                  if (showAmountError)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4, left: 8),
+                      child: Text(
+                        l10n.txAmountRequired,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 12),
+                  CategoryChip(
+                    category: state.selectedCategory,
+                    hasError: showCategoryError,
+                    onTap: () => _onTapCategoryChip(context, state, controller),
+                  ),
+                  AccountSelectorTile(
+                    account: state.selectedAccount,
+                    hasError: showAccountError,
+                    onTap: () =>
+                        _onTapAccountTile(context, l10n, state, controller),
+                  ),
+                  DateField(value: state.date, onChanged: controller.setDate),
+                  const SizedBox(height: 8),
+                  MemoField(
+                    initialValue: state.memo,
+                    onChanged: controller.setMemo,
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        CalculatorKeypad(
-          decimals: state.displayCurrency?.decimals ?? 2,
-          onDigit: controller.appendDigit,
-          onDecimal: controller.appendDecimal,
-          onBackspace: controller.backspace,
-          onClear: controller.clearAmount,
-        ),
-      ],
+          CalculatorKeypad(
+            decimals: state.displayCurrency?.decimals ?? 2,
+            onDigit: controller.appendDigit,
+            onDecimal: controller.appendDecimal,
+            onBackspace: controller.backspace,
+            onClear: controller.clearAmount,
+          ),
+        ],
+      ),
     );
   }
 
@@ -222,7 +233,16 @@ class _TransactionFormScreenState
   }
 
   bool _isDirty(TransactionFormState state) {
-    return state is TransactionFormData && state.isDirty && !state.isSaving;
+    return state is TransactionFormData && state.isDirty;
+  }
+
+  bool _blocksPopDuringMutation(TransactionFormState state) {
+    return state is TransactionFormData && (state.isSaving || state.isDeleting);
+  }
+
+  bool _canPop(TransactionFormState state) {
+    if (_blocksPopDuringMutation(state)) return false;
+    return !_isDirty(state);
   }
 
   Future<bool> _confirmDiscard(
@@ -259,9 +279,9 @@ class _TransactionFormScreenState
       saved = await controller.save();
     } catch (_) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.txSaveFailedSnackbar)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.txSaveFailedSnackbar)));
       return;
     }
     if (saved == null) {
@@ -306,16 +326,16 @@ class _TransactionFormScreenState
       removed = await controller.deleteExisting();
     } catch (_) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.txDeleteFailedSnackbar)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.txDeleteFailedSnackbar)));
       return;
     }
     if (!context.mounted) return;
     if (!removed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.txTransactionNotFound)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.txTransactionNotFound)));
     }
     context.pop();
   }
@@ -331,11 +351,10 @@ class _TransactionFormScreenState
     // create one (the picker would just show its empty-state CTA and
     // pop with `null`, which we cannot disambiguate from a dismiss).
     final type = state.pendingType;
-    final categories =
-        await ref.read(categoriesByTypeProvider(type).future);
+    final categories = await ref.read(categoriesByTypeProvider(type).future);
     if (!context.mounted) return;
     if (categories.isEmpty) {
-      context.go('/settings/categories');
+      await context.push('/settings/categories');
       return;
     }
     final picked = await showCategoryPicker(context, type: type);
@@ -353,8 +372,7 @@ class _TransactionFormScreenState
     if (picked == null || !context.mounted) return;
     final currentCode = state.displayCurrency?.code;
     final newCode = picked.currency.code;
-    final currencyChanges =
-        currentCode != null && currentCode != newCode;
+    final currencyChanges = currentCode != null && currentCode != newCode;
     final hasAmount = state.amountMinorUnits > 0;
 
     if (currencyChanges && hasAmount) {
@@ -433,12 +451,11 @@ class _TransactionFormScreenState
     BuildContext context,
     TransactionFormController controller,
   ) {
-    // After /accounts/new pops, re-run Add hydration so the form picks
-    // up the new active account. We don't await `push` because the user
-    // returns via back navigation, not a typed result.
+    // After /accounts/new pops, re-run the current hydration mode so add
+    // and duplicate flows both recover correctly.
     context.push('/accounts/new').then((_) {
       if (!mounted) return;
-      controller.retryAddHydration();
+      controller.retryHydration();
     });
   }
 }
@@ -495,4 +512,3 @@ class _EmptyState extends StatelessWidget {
     );
   }
 }
-

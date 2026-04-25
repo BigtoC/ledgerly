@@ -100,15 +100,17 @@ sealed class TransactionFormState with _$TransactionFormState {
       TransactionFormError;
 
   /// Computed-on-demand validity flag. PRD: amount > 0 AND category AND
-  /// account, plus no in-flight save.
+  /// account, plus no in-flight save/delete.
   bool get canSave => switch (this) {
     TransactionFormData(
       :final amountMinorUnits,
       :final selectedAccount,
       :final selectedCategory,
       :final isSaving,
+      :final isDeleting,
     ) =>
       !isSaving &&
+          !isDeleting &&
           amountMinorUnits > 0 &&
           selectedAccount != null &&
           selectedCategory != null,
