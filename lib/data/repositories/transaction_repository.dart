@@ -13,7 +13,7 @@
 //   - Home screen is day-bounded: `watchByDay` + `watchDaysWithActivity`
 //     replace any notion of `watchAll` (Stream A §12 Q2/Q5).
 
-import 'package:drift/drift.dart' show Value;
+import 'package:drift/drift.dart' show Value, Variable;
 
 import '../../core/utils/date_helpers.dart';
 import '../database/app_database.dart' as drift;
@@ -68,6 +68,27 @@ abstract class TransactionRepository {
   /// bounded by `limit`. Each element is the local-midnight `DateTime`
   /// of a distinct day.
   Stream<List<DateTime>> watchDaysWithActivity({int limit = 365});
+
+  /// Net per currency for transactions dated on `day` (midnight-to-midnight
+  /// in the device's local timezone). Income contributes positively,
+  /// expense negatively (sign derived from `categories.type`). Empty map
+  /// if no activity. Re-emits on every insert / update / delete on that
+  /// day. Used by Home's summary strip — Wave 3 §3.
+  Stream<Map<String, int>> watchDailyNetByCurrency(DateTime day);
+
+  /// Split of daily totals by transaction type (expense vs income),
+  /// grouped by currency. Both values are unsigned sums (non-negative).
+  /// Day window is the device-local boundary, same as
+  /// [watchDailyNetByCurrency]. Re-emits on every relevant mutation —
+  /// Wave 3 §3.
+  Stream<Map<String, ({int expense, int income})>> watchDailyTotalsByType(
+    DateTime day,
+  );
+
+  /// Net per currency for the calendar month containing `month` (device
+  /// local timezone). Same sign convention as [watchDailyNetByCurrency].
+  /// Re-emits on any transaction mutation within the month — Wave 3 §3.
+  Stream<Map<String, int>> watchMonthNetByCurrency(DateTime month);
 
   /// Transactions for a single account, reverse-chronological.
   Stream<List<Transaction>> watchForAccount(int accountId, {int limit = 200});
@@ -127,6 +148,90 @@ final class DriftTransactionRepository implements TransactionRepository {
     return _dao
         .watchDistinctActivityDays(limit: limit)
         .map((days) => List.unmodifiable(days));
+  }
+
+  @override
+  Stream<Map<String, int>> watchDailyNetByCurrency(DateTime day) {
+    final start = DateHelpers.startOfDay(day);
+    final end = DateHelpers.startOfDay(
+      DateTime(day.year, day.month, day.day + 1),
+    );
+    return _watchNetByCurrency(start: start, end: end);
+  }
+
+  @override
+  Stream<Map<String, ({int expense, int income})>> watchDailyTotalsByType(
+    DateTime day,
+  ) {
+    final start = DateHelpers.startOfDay(day);
+    final end = DateHelpers.startOfDay(
+      DateTime(day.year, day.month, day.day + 1),
+    );
+    // Both totals are unsigned (non-negative); the screen splits them
+    // for the summary strip and re-derives the signed net via
+    // [watchDailyNetByCurrency].
+    final query = _db.customSelect(
+      'SELECT t.currency AS code, '
+      "COALESCE(SUM(CASE WHEN c.type = 'expense' "
+      'THEN t.amount_minor_units ELSE 0 END), 0) AS expense, '
+      "COALESCE(SUM(CASE WHEN c.type = 'income' "
+      'THEN t.amount_minor_units ELSE 0 END), 0) AS income '
+      'FROM transactions t '
+      'JOIN categories c ON c.id = t.category_id '
+      'WHERE t.date >= ? AND t.date < ? '
+      'GROUP BY t.currency',
+      variables: <Variable<Object>>[
+        Variable<DateTime>(start),
+        Variable<DateTime>(end),
+      ],
+      readsFrom: {_db.transactions, _db.categories},
+    );
+    return query.watch().map((rows) {
+      final out = <String, ({int expense, int income})>{};
+      for (final row in rows) {
+        out[row.read<String>('code')] = (
+          expense: row.read<int>('expense'),
+          income: row.read<int>('income'),
+        );
+      }
+      return out;
+    });
+  }
+
+  @override
+  Stream<Map<String, int>> watchMonthNetByCurrency(DateTime month) {
+    final start = DateTime(month.year, month.month, 1);
+    final end = DateTime(month.year, month.month + 1, 1);
+    return _watchNetByCurrency(start: start, end: end);
+  }
+
+  Stream<Map<String, int>> _watchNetByCurrency({
+    required DateTime start,
+    required DateTime end,
+  }) {
+    final query = _db.customSelect(
+      'SELECT t.currency AS code, '
+      'SUM(CASE c.type '
+      "WHEN 'income' THEN t.amount_minor_units "
+      "WHEN 'expense' THEN -t.amount_minor_units "
+      'END) AS net '
+      'FROM transactions t '
+      'JOIN categories c ON c.id = t.category_id '
+      'WHERE t.date >= ? AND t.date < ? '
+      'GROUP BY t.currency',
+      variables: <Variable<Object>>[
+        Variable<DateTime>(start),
+        Variable<DateTime>(end),
+      ],
+      readsFrom: {_db.transactions, _db.categories},
+    );
+    return query.watch().map((rows) {
+      final out = <String, int>{};
+      for (final row in rows) {
+        out[row.read<String>('code')] = row.read<int>('net');
+      }
+      return out;
+    });
   }
 
   @override
