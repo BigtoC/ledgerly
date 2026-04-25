@@ -19,13 +19,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../app/providers/repository_providers.dart';
 import '../../core/utils/color_palette.dart';
 import '../../core/utils/icon_registry.dart';
 import '../../data/models/account.dart';
 import '../../data/models/account_type.dart';
 import '../../data/models/currency.dart';
 import '../../l10n/app_localizations.dart';
+import 'accounts_providers.dart';
 import 'widgets/account_type_display.dart';
 import 'widgets/account_type_picker_sheet.dart';
 import 'widgets/amount_minor_units_field.dart';
@@ -61,14 +61,8 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
   void initState() {
     super.initState();
     _nameCtrl = TextEditingController();
-    if (widget.isEdit) {
-      _hydrating = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _hydrateFromRepo());
-    } else {
-      WidgetsBinding.instance.addPostFrameCallback(
-        (_) => _resolveDefaultCurrency(),
-      );
-    }
+    _hydrating = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _hydrateFromProvider());
   }
 
   @override
@@ -77,40 +71,31 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
     super.dispose();
   }
 
-  Future<void> _hydrateFromRepo() async {
-    final repo = ref.read(accountRepositoryProvider);
-    final typesRepo = ref.read(accountTypeRepositoryProvider);
-    final account = await repo.getById(widget.accountId!);
+  Future<void> _hydrateFromProvider() async {
+    final seed = await ref.read(accountFormSeedDataProvider(widget.accountId).future);
     if (!mounted) return;
-    if (account == null) {
+    if (seed.isMissing) {
       setState(() {
         _hydrating = false;
         _notFound = true;
+        _defaultCurrencyResolved = true;
       });
       return;
     }
-    final type = await typesRepo.getById(account.accountTypeId);
-    if (!mounted) return;
-    setState(() {
-      _nameCtrl.text = account.name;
-      _type = type;
-      _currency = account.currency;
-      _openingBalanceMinorUnits = account.openingBalanceMinorUnits;
-      _icon = account.icon;
-      _color = account.color ?? 10;
-      _hydrating = false;
-      _defaultCurrencyResolved = true;
-    });
-  }
 
-  Future<void> _resolveDefaultCurrency() async {
-    final prefs = ref.read(userPreferencesRepositoryProvider);
-    final currencies = ref.read(currencyRepositoryProvider);
-    final code = await prefs.getDefaultCurrency();
-    final currency = await currencies.getByCode(code);
-    if (!mounted) return;
     setState(() {
-      _currency = _currency ?? currency;
+      final account = seed.account;
+      if (account != null) {
+        _nameCtrl.text = account.name;
+        _type = seed.accountType;
+        _currency = account.currency;
+        _openingBalanceMinorUnits = account.openingBalanceMinorUnits;
+        _icon = account.icon;
+        _color = account.color ?? 10;
+      } else {
+        _currency = _currency ?? seed.defaultCurrency;
+      }
+      _hydrating = false;
       _defaultCurrencyResolved = true;
     });
   }
@@ -130,7 +115,6 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
       _errorMessage = null;
     });
     try {
-      final repo = ref.read(accountRepositoryProvider);
       final draft = Account(
         id: widget.accountId ?? 0,
         name: name,
@@ -141,7 +125,7 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
         color: _color,
         sortOrder: null,
       );
-      final id = await repo.save(draft);
+      final id = await ref.read(accountFormActionsProvider).save(draft);
       if (mounted) context.pop(id);
     } catch (_) {
       setState(() {

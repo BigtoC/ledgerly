@@ -17,10 +17,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../app/providers/repository_providers.dart';
-import '../../data/models/account_type.dart';
 import '../../l10n/app_localizations.dart';
 import 'accounts_controller.dart';
+import 'accounts_providers.dart';
 import 'accounts_state.dart';
 import 'widgets/account_tile.dart';
 import 'widgets/account_type_display.dart';
@@ -148,7 +147,7 @@ class _AccountTileWithLookups extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final typeAsync = ref.watch(
-      _accountTypeByIdProvider(view.account.accountTypeId),
+      accountTypeByIdProvider(view.account.accountTypeId),
     );
     final typeLabel = typeAsync.maybeWhen(
       data: (t) => t == null ? '' : accountTypeDisplayName(t, l10n),
@@ -192,6 +191,23 @@ class _AccountTileWithLookups extends ConsumerWidget {
       if (e.kind == AccountsOperationError.lastActiveAccount) {
         messenger.showSnackBar(
           SnackBar(content: Text(l10n.accountsArchiveLastActiveBlocked)),
+        );
+        return;
+      }
+      if (e.kind == AccountsOperationError.defaultAccount) {
+        if (!context.mounted) return;
+        await showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(l10n.accountsDeleteDefaultBlockedTitle),
+            content: Text(l10n.accountsDeleteDefaultBlockedBody),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: Text(l10n.commonCancel),
+              ),
+            ],
+          ),
         );
         return;
       }
@@ -294,13 +310,3 @@ class _ErrorSurface extends StatelessWidget {
     );
   }
 }
-
-// Feature-local one-shot account-type lookup. Cached per-id so the
-// same Account rebuilding does not re-issue the repository read. Not
-// promoted to a shared provider — other slices do not need this shape
-// today.
-final _accountTypeByIdProvider =
-    FutureProvider.autoDispose.family<AccountType?, int>((ref, id) async {
-  final repo = ref.watch(accountTypeRepositoryProvider);
-  return repo.getById(id);
-});

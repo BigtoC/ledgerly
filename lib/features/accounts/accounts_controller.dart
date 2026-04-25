@@ -61,6 +61,16 @@ class AccountsController extends _$AccountsController {
   /// Riverpod stream has the same view the widget does, so the archive
   /// guard matches what the user sees.
   Future<void> archive(int accountId) async {
+    final prefs = ref.read(userPreferencesRepositoryProvider);
+    final currentDefault = state.value is AccountsData
+        ? (state.value! as AccountsData).defaultAccountId
+        : await prefs.getDefaultAccountId();
+    if (currentDefault == accountId) {
+      throw const AccountsOperationException(
+        AccountsOperationError.defaultAccount,
+      );
+    }
+
     final snapshot = state.value;
     if (snapshot is AccountsData) {
       final activeCount = snapshot.active.length;
@@ -140,7 +150,9 @@ class _AccountsComposer {
   StreamSubscription<List<Account>>? _accountsSub;
   StreamSubscription<int?>? _defaultSub;
   final Map<int, StreamSubscription<int>> _balanceSubs = {};
+  final Map<int, StreamSubscription<bool>> _referenceSubs = {};
   final Map<int, int> _balances = {};
+  final Map<int, bool> _references = {};
 
   List<Account> _accounts = const [];
   int? _defaultAccountId;
@@ -165,9 +177,17 @@ class _AccountsComposer {
     await _defaultSub?.cancel();
     _defaultSub = null;
     final subs = List<StreamSubscription<int>>.from(_balanceSubs.values);
+    final referenceSubs = List<StreamSubscription<bool>>.from(
+      _referenceSubs.values,
+    );
     _balanceSubs.clear();
+    _referenceSubs.clear();
     _balances.clear();
+    _references.clear();
     for (final sub in subs) {
+      await sub.cancel();
+    }
+    for (final sub in referenceSubs) {
       await sub.cancel();
     }
   }
@@ -191,7 +211,9 @@ class _AccountsComposer {
         .toList();
     for (final id in stale) {
       _balanceSubs.remove(id)?.cancel();
+      _referenceSubs.remove(id)?.cancel();
       _balances.remove(id);
+      _references.remove(id);
     }
 
     for (final a in rows) {
@@ -200,6 +222,12 @@ class _AccountsComposer {
           .watchBalanceMinorUnits(a.id)
           .listen(
             (balance) => _onBalance(a.id, balance),
+            onError: _onError,
+          );
+      _referenceSubs[a.id] = _accountRepo
+          .watchIsReferenced(a.id)
+          .listen(
+            (isReferenced) => _onReference(a.id, isReferenced),
             onError: _onError,
           );
     }
@@ -218,6 +246,11 @@ class _AccountsComposer {
     _emitIfReady();
   }
 
+  void _onReference(int accountId, bool isReferenced) {
+    _references[accountId] = isReferenced;
+    _emitIfReady();
+  }
+
   void _onError(Object error, StackTrace stack) {
     if (_out.isClosed) return;
     _out.add(AccountsState.error(error, stack));
@@ -232,6 +265,7 @@ class _AccountsComposer {
     // typically happens in the same microtask.
     for (final a in _accounts) {
       if (!_balances.containsKey(a.id)) return;
+      if (!_references.containsKey(a.id)) return;
     }
 
     final active = <AccountWithBalance>[];
@@ -240,7 +274,7 @@ class _AccountsComposer {
 
     for (final a in _sortForDisplay(_accounts)) {
       final balance = _balances[a.id] ?? 0;
-      final affordance = _affordance(a, activeCount);
+      final affordance = _affordance(a, activeCount, _references[a.id] ?? false);
       final view = AccountWithBalance(
         account: a,
         balanceMinorUnits: balance,
@@ -262,20 +296,17 @@ class _AccountsComposer {
     );
   }
 
-  AccountRowAffordance _affordance(Account a, int activeCount) {
+  AccountRowAffordance _affordance(
+    Account a,
+    int activeCount,
+    bool isReferenced,
+  ) {
     if (a.isArchived) return AccountRowAffordance.archive;
     // Single active row — archive blocked regardless of references.
     if (activeCount <= 1) return AccountRowAffordance.archiveBlocked;
-    // Unused custom (no transactions) with no opening balance → delete
-    // is allowed. Referenced rows always archive. We can only check
-    // "referenced" async, which is expensive to do for every emission;
-    // we use a cheap proxy: if the balance equals the opening balance
-    // AND the opening balance is 0, it *might* be unused, but that
-    // includes "has equal expense/income". To keep the widget honest
-    // and not lose the delete path entirely, we fall back to archive
-    // when we cannot prove unused. The actual delete attempt surfaces
-    // `AccountInUseException` from the repository if the proxy misses.
-    if (a.openingBalanceMinorUnits == 0) {
+    // Truthful affordance: only unreferenced zero-opening accounts may
+    // hard-delete; referenced rows always archive.
+    if (!isReferenced && a.openingBalanceMinorUnits == 0) {
       return AccountRowAffordance.delete;
     }
     return AccountRowAffordance.archive;
