@@ -81,6 +81,10 @@ abstract class AccountRepository {
   /// references this account.
   Future<bool> isReferenced(int id);
 
+  /// Reactive existence probe — emits `true` whenever at least one
+  /// transaction references this account.
+  Stream<bool> watchIsReferenced(int id);
+
   /// Sum of all transactions for `accountId` in the account's native
   /// currency, expressed as minor units. Expense transactions subtract
   /// from the balance; income transactions add. `opening_balance_minor_units`
@@ -196,6 +200,11 @@ final class DriftAccountRepository implements AccountRepository {
   Future<bool> isReferenced(int id) async {
     final count = await _txDao.countByAccount(id);
     return count > 0;
+  }
+
+  @override
+  Stream<bool> watchIsReferenced(int id) {
+    return _txDao.watchCountByAccount(id).map((count) => count > 0);
   }
 
   @override
