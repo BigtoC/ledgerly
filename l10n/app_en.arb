@@ -491,5 +491,94 @@
   "settingsSplashDisplayTextHint": "Use [date] and [days] as placeholders",
   "@settingsSplashDisplayTextHint": {
     "description": "Settings plan §6. Hint text under the splash display-text field explaining the template variables. Square brackets here are a visual stand-in for the literal '{date}' / '{days}' template tokens — gen_l10n parses curly braces as MessageFormat placeholders, so the copy uses bracketed forms to stay a plain string."
+  },
+
+  "txAddTitle": "Add transaction",
+  "@txAddTitle": {
+    "description": "Wave 2 §4.2. AppBar title for /home/add."
+  },
+  "txEditTitle": "Edit transaction",
+  "@txEditTitle": {
+    "description": "Wave 2 §4.2. AppBar title for /home/edit/:id."
+  },
+  "txCategoryLabel": "Category",
+  "@txCategoryLabel": {
+    "description": "Wave 2 §4.1. Category-row label in the form."
+  },
+  "txCategoryEmpty": "Select a category",
+  "@txCategoryEmpty": {
+    "description": "Wave 2 §4.1. Subtitle shown on the category chip before the user picks one."
+  },
+  "txAccountLabel": "Account",
+  "@txAccountLabel": {
+    "description": "Wave 2 §4.1. Account-row label in the form."
+  },
+  "txAccountEmpty": "No active accounts — create one first",
+  "@txAccountEmpty": {
+    "description": "Wave 2 §6. Subtitle for the empty account picker / no-active-account state."
+  },
+  "txAccountPickerTitle": "Pick account",
+  "@txAccountPickerTitle": {
+    "description": "Wave 2 §4.1. Title of the account picker bottom sheet."
+  },
+  "txDateLabel": "Date",
+  "@txDateLabel": {
+    "description": "Wave 2 §4.1. Date-row label in the form."
+  },
+  "txMemoLabel": "Memo",
+  "@txMemoLabel": {
+    "description": "Wave 2 §4.1. Memo text-field label."
+  },
+  "txAmountRequired": "Enter an amount",
+  "@txAmountRequired": {
+    "description": "Wave 2 §9. Inline validation hint shown on the amount display when amountMinorUnits is 0 after a save attempt."
+  },
+  "txCreateAccountCta": "Create account",
+  "@txCreateAccountCta": {
+    "description": "Wave 2 §6. CTA shown on the no-active-account empty state. Navigates to /accounts/new."
+  },
+  "txTransactionNotFound": "Transaction not found",
+  "@txTransactionNotFound": {
+    "description": "Wave 2 §10. Recoverable not-found state shown when hydrateForEdit/hydrateForDuplicate cannot resolve the row."
+  },
+  "txSaveFailedSnackbar": "Couldn’t save transaction. Please try again.",
+  "@txSaveFailedSnackbar": {
+    "description": "Wave 2 §9. SnackBar shown when TransactionRepository.save throws."
+  },
+  "txDeleteFailedSnackbar": "Couldn’t delete transaction. Please try again.",
+  "@txDeleteFailedSnackbar": {
+    "description": "Wave 2 §9. SnackBar shown when TransactionRepository.delete throws."
+  },
+  "txDeleteConfirmTitle": "Delete this transaction?",
+  "@txDeleteConfirmTitle": {
+    "description": "Wave 2 §9. Confirm-delete dialog title (Edit mode only)."
+  },
+  "txDeleteConfirmBody": "This permanently removes the transaction. This cannot be undone.",
+  "@txDeleteConfirmBody": {
+    "description": "Wave 2 §9. Confirm-delete dialog body."
+  },
+  "txDiscardConfirmTitle": "Discard changes?",
+  "@txDiscardConfirmTitle": {
+    "description": "Wave 2 §9. Confirm-discard dialog title shown when state.isDirty on back-nav."
+  },
+  "txDiscardConfirmBody": "Your unsaved edits will be lost.",
+  "@txDiscardConfirmBody": {
+    "description": "Wave 2 §9. Confirm-discard dialog body."
+  },
+  "txCurrencyChangeConfirmTitle": "Switch currency?",
+  "@txCurrencyChangeConfirmTitle": {
+    "description": "Wave 2 risk #9. Confirm dialog title when the user picks an account with a different currency after entering an amount."
+  },
+  "txCurrencyChangeConfirmBody": "Switching to this account changes the currency. The entered amount will be cleared.",
+  "@txCurrencyChangeConfirmBody": {
+    "description": "Wave 2 risk #9. Confirm dialog body for the currency-change clear flow."
+  },
+  "txKeypadClear": "Clear amount",
+  "@txKeypadClear": {
+    "description": "Wave 2 §8. Tooltip / a11y label for the calculator keypad C key."
+  },
+  "txKeypadBackspace": "Backspace",
+  "@txKeypadBackspace": {
+    "description": "Wave 2 §8. Tooltip / a11y label for the calculator keypad ⌫ key."
   }
 }
