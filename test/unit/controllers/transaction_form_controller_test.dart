@@ -19,6 +19,8 @@
 //
 // Repositories mocked via `mocktail`; no live DB.
 
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -48,12 +50,7 @@ class _MockUserPreferencesRepository extends Mock
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 const _jpy = Currency(code: 'JPY', decimals: 0, symbol: '¥');
 
-const _account = Account(
-  id: 1,
-  name: 'Cash',
-  accountTypeId: 1,
-  currency: _usd,
-);
+const _account = Account(id: 1, name: 'Cash', accountTypeId: 1, currency: _usd);
 const _accountJpy = Account(
   id: 2,
   name: 'Yen',
@@ -151,22 +148,17 @@ void main() {
   }
 
   group('hydrateForAdd — fallback chain', () {
-    test(
-      'TC01: defaultAccountId set → uses preferred account',
-      () async {
-        when(() => prefs.getDefaultAccountId()).thenAnswer((_) async => 1);
-        final c = makeContainer();
-        addTearDown(c.dispose);
-        await c
-            .read(transactionFormControllerProvider.notifier)
-            .hydrateForAdd();
-        final s = c.read(transactionFormControllerProvider);
-        expect(s, isA<TransactionFormData>());
-        expect((s as TransactionFormData).selectedAccount?.id, 1);
-        expect(s.displayCurrency?.code, 'USD');
-        expect(s.pendingType, CategoryType.expense);
-      },
-    );
+    test('TC01: defaultAccountId set → uses preferred account', () async {
+      when(() => prefs.getDefaultAccountId()).thenAnswer((_) async => 1);
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      await c.read(transactionFormControllerProvider.notifier).hydrateForAdd();
+      final s = c.read(transactionFormControllerProvider);
+      expect(s, isA<TransactionFormData>());
+      expect((s as TransactionFormData).selectedAccount?.id, 1);
+      expect(s.displayCurrency?.code, 'USD');
+      expect(s.pendingType, CategoryType.expense);
+    });
 
     test(
       'TC02: defaultAccountId unset → falls back to last-used active',
@@ -204,25 +196,20 @@ void main() {
       },
     );
 
-    test(
-      'TC04: zero active accounts → empty(noActiveAccount)',
-      () async {
-        when(
-          () => accountRepo.watchAll(includeArchived: false),
-        ).thenAnswer((_) => Stream.value(const <Account>[]));
-        final c = makeContainer();
-        addTearDown(c.dispose);
-        await c
-            .read(transactionFormControllerProvider.notifier)
-            .hydrateForAdd();
-        final s = c.read(transactionFormControllerProvider);
-        expect(s, isA<TransactionFormEmpty>());
-        expect(
-          (s as TransactionFormEmpty).reason,
-          TransactionFormEmptyReason.noActiveAccount,
-        );
-      },
-    );
+    test('TC04: zero active accounts → empty(noActiveAccount)', () async {
+      when(
+        () => accountRepo.watchAll(includeArchived: false),
+      ).thenAnswer((_) => Stream.value(const <Account>[]));
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      await c.read(transactionFormControllerProvider.notifier).hydrateForAdd();
+      final s = c.read(transactionFormControllerProvider);
+      expect(s, isA<TransactionFormEmpty>());
+      expect(
+        (s as TransactionFormEmpty).reason,
+        TransactionFormEmptyReason.noActiveAccount,
+      );
+    });
   });
 
   group('hydrateForEdit', () {
@@ -266,17 +253,15 @@ void main() {
     test(
       'TC20: prefills amount/category/memo and resets date to today',
       () async {
-        final source = _persistedTx(
-          memo: 'lunch',
-          date: DateTime(2025, 1, 1),
-        );
+        final source = _persistedTx(memo: 'lunch', date: DateTime(2025, 1, 1));
         when(() => txRepo.getById(99)).thenAnswer((_) async => source);
         final c = makeContainer();
         addTearDown(c.dispose);
         await c
             .read(transactionFormControllerProvider.notifier)
             .hydrateForDuplicate(99);
-        final s = c.read(transactionFormControllerProvider) as TransactionFormData;
+        final s =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
         expect(s.amountMinorUnits, source.amountMinorUnits);
         expect(s.memo, 'lunch');
         expect(s.duplicateSourceId, 99);
@@ -303,6 +288,77 @@ void main() {
         TransactionFormEmptyReason.notFound,
       );
     });
+
+    test(
+      'TC22: fallback to different-currency account clears duplicated amount',
+      () async {
+        final source = _persistedTx(
+          amountMinorUnits: 500,
+          currency: _usd,
+          accountId: 99,
+          memo: 'lunch',
+        );
+        when(() => txRepo.getById(99)).thenAnswer((_) async => source);
+        when(() => prefs.getDefaultAccountId()).thenAnswer((_) async => 2);
+        when(() => accountRepo.getById(99)).thenAnswer((_) async => null);
+        when(() => accountRepo.getById(2)).thenAnswer((_) async => _accountJpy);
+
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        await c
+            .read(transactionFormControllerProvider.notifier)
+            .hydrateForDuplicate(99);
+
+        final s =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(s.selectedAccount?.id, _accountJpy.id);
+        expect(s.displayCurrency?.code, 'JPY');
+        expect(s.amountMinorUnits, 0);
+        expect(s.memo, 'lunch');
+        expect(s.duplicateSourceId, 99);
+      },
+    );
+
+    test(
+      'TC23: retryHydration preserves duplicate mode after account creation',
+      () async {
+        final source = _persistedTx(
+          amountMinorUnits: 700,
+          accountId: 99,
+          memo: 'retry me',
+        );
+        when(() => txRepo.getById(99)).thenAnswer((_) async => source);
+        when(() => accountRepo.getById(99)).thenAnswer((_) async => null);
+        when(
+          () => accountRepo.watchAll(includeArchived: false),
+        ).thenAnswer((_) => Stream.value(const <Account>[]));
+
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+
+        await controller.hydrateForDuplicate(99);
+        TransactionFormState s = c.read(transactionFormControllerProvider);
+        expect(s, isA<TransactionFormEmpty>());
+        expect(
+          (s as TransactionFormEmpty).reason,
+          TransactionFormEmptyReason.noActiveAccount,
+        );
+
+        when(() => prefs.getDefaultAccountId()).thenAnswer((_) async => 1);
+        when(
+          () => accountRepo.watchAll(includeArchived: false),
+        ).thenAnswer((_) => Stream.value(const [_account]));
+
+        await controller.retryHydration();
+        s = c.read<TransactionFormState>(transactionFormControllerProvider);
+        expect(s, isA<TransactionFormData>());
+        final data = s as TransactionFormData;
+        expect(data.duplicateSourceId, 99);
+        expect(data.memo, 'retry me');
+        expect(data.amountMinorUnits, 700);
+      },
+    );
   });
 
   group('keypad commands', () {
@@ -313,7 +369,8 @@ void main() {
       await controller.hydrateForAdd();
       controller.appendDigit(1);
       controller.appendDigit(2);
-      final s = c.read(transactionFormControllerProvider) as TransactionFormData;
+      final s =
+          c.read(transactionFormControllerProvider) as TransactionFormData;
       expect(s.amountMinorUnits, 1200);
       expect(s.isDirty, isTrue);
     });
@@ -333,7 +390,8 @@ void main() {
         ..appendDigit(4);
       // The 4 should append as a regular integer digit because decimal
       // mode never engaged on a zero-decimals currency.
-      final s = c.read(transactionFormControllerProvider) as TransactionFormData;
+      final s =
+          c.read(transactionFormControllerProvider) as TransactionFormData;
       expect(s.amountMinorUnits, 1234);
       expect(s.displayCurrency?.code, 'JPY');
     });
@@ -362,7 +420,8 @@ void main() {
       final controller = c.read(transactionFormControllerProvider.notifier);
       await controller.hydrateForAdd();
       controller.selectCategory(_incomeCategory);
-      final s = c.read(transactionFormControllerProvider) as TransactionFormData;
+      final s =
+          c.read(transactionFormControllerProvider) as TransactionFormData;
       expect(s.pendingType, CategoryType.income);
       expect(s.selectedCategory?.id, _incomeCategory.id);
     });
@@ -372,14 +431,14 @@ void main() {
       () async {
         final c = makeContainer();
         addTearDown(c.dispose);
-        final controller =
-            c.read(transactionFormControllerProvider.notifier);
+        final controller = c.read(transactionFormControllerProvider.notifier);
         await controller.hydrateForAdd();
         controller.selectCategory(_expenseCategory);
         controller.setPendingType(CategoryType.income);
         // The screen owns the confirm-then-clear flow; the controller
         // alone must not silently drop the category.
-        final s = c.read(transactionFormControllerProvider) as TransactionFormData;
+        final s =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
         expect(s.selectedCategory?.id, _expenseCategory.id);
         expect(s.pendingType, CategoryType.expense);
       },
@@ -390,12 +449,12 @@ void main() {
       () async {
         final c = makeContainer();
         addTearDown(c.dispose);
-        final controller =
-            c.read(transactionFormControllerProvider.notifier);
+        final controller = c.read(transactionFormControllerProvider.notifier);
         await controller.hydrateForAdd();
         controller.selectCategory(_expenseCategory);
         controller.clearCategoryForTypeChange(CategoryType.income);
-        final s = c.read(transactionFormControllerProvider) as TransactionFormData;
+        final s =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
         expect(s.selectedCategory, isNull);
         expect(s.pendingType, CategoryType.income);
       },
@@ -408,14 +467,14 @@ void main() {
       () async {
         final c = makeContainer();
         addTearDown(c.dispose);
-        final controller =
-            c.read(transactionFormControllerProvider.notifier);
+        final controller = c.read(transactionFormControllerProvider.notifier);
         await controller.hydrateForAdd();
         controller.appendDigit(5); // amount = 500 minor units
         controller.selectAccount(_accountJpy);
         // Without the explicit clear flag, the swap is rejected so the
         // screen-level confirm dialog stays the gating step.
-        final s = c.read(transactionFormControllerProvider) as TransactionFormData;
+        final s =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
         expect(s.selectedAccount?.id, _account.id);
         expect(s.amountMinorUnits, 500);
       },
@@ -426,15 +485,15 @@ void main() {
       () async {
         final c = makeContainer();
         addTearDown(c.dispose);
-        final controller =
-            c.read(transactionFormControllerProvider.notifier);
+        final controller = c.read(transactionFormControllerProvider.notifier);
         await controller.hydrateForAdd();
         controller.appendDigit(5);
         controller.selectAccount(
           _accountJpy,
           clearAmountOnCurrencyChange: true,
         );
-        final s = c.read(transactionFormControllerProvider) as TransactionFormData;
+        final s =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
         expect(s.selectedAccount?.id, _accountJpy.id);
         expect(s.displayCurrency?.code, 'JPY');
         expect(s.amountMinorUnits, 0);
@@ -455,7 +514,8 @@ void main() {
       await controller.hydrateForAdd();
       controller.appendDigit(5);
       controller.selectAccount(otherUsd);
-      final s = c.read(transactionFormControllerProvider) as TransactionFormData;
+      final s =
+          c.read(transactionFormControllerProvider) as TransactionFormData;
       expect(s.selectedAccount?.id, 3);
       expect(s.amountMinorUnits, 500);
     });
@@ -475,7 +535,8 @@ void main() {
       when(() => txRepo.save(any())).thenAnswer((_) async => saved);
       final result = await controller.save();
       expect(result, saved);
-      final s = c.read(transactionFormControllerProvider) as TransactionFormData;
+      final s =
+          c.read(transactionFormControllerProvider) as TransactionFormData;
       expect(s.isSaving, isFalse);
     });
 
@@ -484,17 +545,15 @@ void main() {
       () async {
         final c = makeContainer();
         addTearDown(c.dispose);
-        final controller =
-            c.read(transactionFormControllerProvider.notifier);
+        final controller = c.read(transactionFormControllerProvider.notifier);
         await controller.hydrateForAdd();
         controller
           ..appendDigit(1)
           ..selectCategory(_expenseCategory);
-        when(
-          () => txRepo.save(any()),
-        ).thenThrow(Exception('repo offline'));
+        when(() => txRepo.save(any())).thenThrow(Exception('repo offline'));
         await expectLater(controller.save(), throwsA(isA<Exception>()));
-        final s = c.read(transactionFormControllerProvider) as TransactionFormData;
+        final s =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
         expect(s.isSaving, isFalse);
         expect(s, isA<TransactionFormData>()); // not pushed into .error
       },
@@ -510,43 +569,103 @@ void main() {
       verifyNever(() => txRepo.save(any()));
     });
 
-    test(
-      'TC63: deleteExisting in Edit mode returns repo result',
-      () async {
-        final tx = _persistedTx();
-        when(() => txRepo.getById(99)).thenAnswer((_) async => tx);
-        when(() => txRepo.delete(99)).thenAnswer((_) async => true);
-        final c = makeContainer();
-        addTearDown(c.dispose);
-        final controller =
-            c.read(transactionFormControllerProvider.notifier);
-        await controller.hydrateForEdit(99);
-        final removed = await controller.deleteExisting();
-        expect(removed, isTrue);
-      },
-    );
-
-    test('TC64: deleteExisting returns false when repo returns false', () async {
+    test('TC63: deleteExisting in Edit mode returns repo result', () async {
       final tx = _persistedTx();
       when(() => txRepo.getById(99)).thenAnswer((_) async => tx);
-      when(() => txRepo.delete(99)).thenAnswer((_) async => false);
+      when(() => txRepo.delete(99)).thenAnswer((_) async => true);
       final c = makeContainer();
       addTearDown(c.dispose);
       final controller = c.read(transactionFormControllerProvider.notifier);
       await controller.hydrateForEdit(99);
-      expect(await controller.deleteExisting(), isFalse);
+      final removed = await controller.deleteExisting();
+      expect(removed, isTrue);
     });
+
+    test(
+      'TC64: deleteExisting returns false when repo returns false',
+      () async {
+        final tx = _persistedTx();
+        when(() => txRepo.getById(99)).thenAnswer((_) async => tx);
+        when(() => txRepo.delete(99)).thenAnswer((_) async => false);
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+        await controller.hydrateForEdit(99);
+        expect(await controller.deleteExisting(), isFalse);
+      },
+    );
 
     test(
       'TC65: deleteExisting in Add mode is a no-op (returns false)',
       () async {
         final c = makeContainer();
         addTearDown(c.dispose);
-        final controller =
-            c.read(transactionFormControllerProvider.notifier);
+        final controller = c.read(transactionFormControllerProvider.notifier);
         await controller.hydrateForAdd();
         expect(await controller.deleteExisting(), isFalse);
         verifyNever(() => txRepo.delete(any()));
+      },
+    );
+
+    test(
+      'TC66: mutating commands are ignored while save is in flight',
+      () async {
+        final completer = Completer<Transaction>();
+        when(() => txRepo.save(any())).thenAnswer((_) => completer.future);
+
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+        await controller.hydrateForAdd();
+        controller
+          ..appendDigit(1)
+          ..selectCategory(_expenseCategory);
+
+        final saveFuture = controller.save();
+        var s =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(s.isSaving, isTrue);
+
+        controller
+          ..appendDigit(9)
+          ..setMemo('ignored');
+        s = c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(s.amountMinorUnits, 100);
+        expect(s.memo, isEmpty);
+
+        completer.complete(_persistedTx(amountMinorUnits: 100, id: 5));
+        await saveFuture;
+      },
+    );
+
+    test(
+      'TC67: delete mode disables save and ignores edits until it completes',
+      () async {
+        final tx = _persistedTx(memo: 'before');
+        final completer = Completer<bool>();
+        when(() => txRepo.getById(99)).thenAnswer((_) async => tx);
+        when(() => txRepo.delete(99)).thenAnswer((_) => completer.future);
+
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+        await controller.hydrateForEdit(99);
+
+        final deleteFuture = controller.deleteExisting();
+        var s =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(s.isDeleting, isTrue);
+        expect(s.canSave, isFalse);
+
+        controller
+          ..appendDigit(9)
+          ..setMemo('ignored');
+        s = c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(s.amountMinorUnits, tx.amountMinorUnits);
+        expect(s.memo, 'before');
+
+        completer.complete(true);
+        await deleteFuture;
       },
     );
   });
@@ -571,8 +690,7 @@ void main() {
       () async {
         final c = makeContainer();
         addTearDown(c.dispose);
-        final controller =
-            c.read(transactionFormControllerProvider.notifier);
+        final controller = c.read(transactionFormControllerProvider.notifier);
         await controller.hydrateForAdd();
         expect(c.read(transactionFormControllerProvider).canSave, isFalse);
         controller.appendDigit(1);

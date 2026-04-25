@@ -22,68 +22,63 @@ Widget _wrap(Widget child) => MaterialApp(
 );
 
 void main() {
-  testWidgets(
-    'WK01: decimal point is enabled on USD (decimals = 2)',
-    (tester) async {
-      var decimalTaps = 0;
-      await tester.pumpWidget(
-        _wrap(
-          CalculatorKeypad(
-            decimals: 2,
-            onDigit: (_) {},
-            onDecimal: () => decimalTaps++,
-            onBackspace: () {},
-            onClear: () {},
-          ),
+  testWidgets('WK01: decimal point is enabled on USD (decimals = 2)', (
+    tester,
+  ) async {
+    var decimalTaps = 0;
+    await tester.pumpWidget(
+      _wrap(
+        CalculatorKeypad(
+          decimals: 2,
+          onDigit: (_) {},
+          onDecimal: () => decimalTaps++,
+          onBackspace: () {},
+          onClear: () {},
         ),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('.'));
-      expect(decimalTaps, 1);
-    },
-  );
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('.'));
+    expect(decimalTaps, 1);
+  });
 
-  testWidgets(
-    'WK02: decimal point is disabled on JPY (decimals = 0)',
-    (tester) async {
-      var decimalTaps = 0;
-      await tester.pumpWidget(
-        _wrap(
-          CalculatorKeypad(
-            decimals: 0,
-            onDigit: (_) {},
-            onDecimal: () => decimalTaps++,
-            onBackspace: () {},
-            onClear: () {},
-          ),
+  testWidgets('WK02: decimal point is disabled on JPY (decimals = 0)', (
+    tester,
+  ) async {
+    var decimalTaps = 0;
+    await tester.pumpWidget(
+      _wrap(
+        CalculatorKeypad(
+          decimals: 0,
+          onDigit: (_) {},
+          onDecimal: () => decimalTaps++,
+          onBackspace: () {},
+          onClear: () {},
         ),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('.'));
-      expect(decimalTaps, 0); // tap was a no-op (key disabled)
-    },
-  );
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('.'));
+    expect(decimalTaps, 0); // tap was a no-op (key disabled)
+  });
 
-  testWidgets(
-    'WK03: 00 key fires onDigit(0) twice',
-    (tester) async {
-      final pressed = <int>[];
-      await tester.pumpWidget(
-        _wrap(
-          CalculatorKeypad(
-            decimals: 2,
-            onDigit: pressed.add,
-            onDecimal: () {},
-            onBackspace: () {},
-            onClear: () {},
-          ),
+  testWidgets('WK03: 00 key fires onDigit(0) twice', (tester) async {
+    final pressed = <int>[];
+    await tester.pumpWidget(
+      _wrap(
+        CalculatorKeypad(
+          decimals: 2,
+          onDigit: pressed.add,
+          onDecimal: () {},
+          onBackspace: () {},
+          onClear: () {},
         ),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('00'));
-      expect(pressed, [0, 0]);
-    },
-  );
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('00'));
+    expect(pressed, [0, 0]);
+  });
 
   testWidgets(
     'WK04: digit overflow after max decimals — KeypadState clamps the 4th frac digit',

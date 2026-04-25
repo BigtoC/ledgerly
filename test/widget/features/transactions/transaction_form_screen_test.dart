@@ -13,6 +13,8 @@
 // Repositories mocked via mocktail; the screen is mounted under a
 // minimal GoRouter so `GoRouterState.extra` works for duplicate.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -28,6 +30,7 @@ import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
+import 'package:ledgerly/features/categories/categories_controller.dart';
 import 'package:ledgerly/features/transactions/transaction_form_screen.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
@@ -43,12 +46,7 @@ class _MockUserPreferencesRepository extends Mock
 
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 
-const _account = Account(
-  id: 1,
-  name: 'Cash',
-  accountTypeId: 1,
-  currency: _usd,
-);
+const _account = Account(id: 1, name: 'Cash', accountTypeId: 1, currency: _usd);
 
 const _expenseCategory = Category(
   id: 10,
@@ -109,7 +107,7 @@ void main() {
     ).thenAnswer((_) async => _expenseCategory);
   });
 
-  Widget mountAdd({Object? extra}) {
+  Widget mountAdd({Object? extra, List<Override> extraOverrides = const []}) {
     final router = GoRouter(
       initialLocation: '/home/add',
       initialExtra: extra,
@@ -130,6 +128,13 @@ void main() {
             ),
           ],
         ),
+        GoRoute(
+          path: '/settings/categories',
+          builder: (_, _) => Scaffold(
+            appBar: AppBar(title: const Text('categories-stub')),
+            body: const Center(child: Text('categories-stub')),
+          ),
+        ),
       ],
     );
     return ProviderScope(
@@ -138,6 +143,7 @@ void main() {
         accountRepositoryProvider.overrideWithValue(accountRepo),
         categoryRepositoryProvider.overrideWithValue(categoryRepo),
         userPreferencesRepositoryProvider.overrideWithValue(prefs),
+        ...extraOverrides,
       ],
       child: MaterialApp.router(
         routerConfig: router,
@@ -180,7 +186,9 @@ void main() {
     );
   }
 
-  testWidgets('WS01: Add mode renders defaults + Save disabled', (tester) async {
+  testWidgets('WS01: Add mode renders defaults + Save disabled', (
+    tester,
+  ) async {
     await tester.pumpWidget(mountAdd());
     await tester.pumpAndSettle();
     // AppBar title "Add transaction" rendered.
@@ -190,34 +198,43 @@ void main() {
     final saveButton = tester.widget<TextButton>(
       find.widgetWithText(TextButton, 'Save'),
     );
-    expect(saveButton.onPressed, isNotNull); // present, but tap surfaces hints
+    expect(saveButton.onPressed, isNull);
     // Default account should be visible.
     expect(find.text('Cash'), findsOneWidget);
   });
 
-  testWidgets(
-    'WS02: typing 1 then picking a category enables save (controller path)',
-    (tester) async {
-      await tester.pumpWidget(mountAdd());
-      await tester.pumpAndSettle();
+  testWidgets('WS02: typing amount and selecting category enables save', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      mountAdd(
+        extraOverrides: [
+          categoriesByTypeProvider(
+            CategoryType.expense,
+          ).overrideWith((ref) => Stream.value(const [_expenseCategory])),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      // Tap "1" on the keypad.
-      await tester.tap(find.text('1'));
-      await tester.pumpAndSettle();
+    var saveButton = tester.widget<TextButton>(
+      find.widgetWithText(TextButton, 'Save'),
+    );
+    expect(saveButton.onPressed, isNull);
 
-      // No category picker UI in this scope — drive the controller via
-      // its key path: tap the chip and then bypass the picker by direct
-      // selectCategory() through the riverpod container.
-      // Because the container is internal to the ProviderScope, we
-      // reach in via the visible tap-to-route flow: the chip routes to
-      // /settings/categories on empty. Instead, we assert the visible
-      // amount changed to "1" and Save remains a no-op until category
-      // is set. This keeps the widget test focused on rendering;
-      // controller-level coverage of save-enable lives in the unit
-      // test (TC71).
-      expect(find.text('1'), findsWidgets);
-    },
-  );
+    await tester.tap(find.text('1'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Select a category'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Food'));
+    await tester.pumpAndSettle();
+
+    saveButton = tester.widget<TextButton>(
+      find.widgetWithText(TextButton, 'Save'),
+    );
+    expect(saveButton.onPressed, isNotNull);
+  });
 
   testWidgets('WS03: Edit mode renders persisted memo + Edit title', (
     tester,
@@ -250,9 +267,7 @@ void main() {
         date: DateTime(2025, 1, 15),
       );
       when(() => txRepo.getById(99)).thenAnswer((_) async => source);
-      await tester.pumpWidget(
-        mountAdd(extra: const {'duplicateSourceId': 99}),
-      );
+      await tester.pumpWidget(mountAdd(extra: const {'duplicateSourceId': 99}));
       await tester.pumpAndSettle();
       // Title is still "Add transaction" — duplicate routes through /home/add.
       expect(find.text('Add transaction'), findsOneWidget);
@@ -290,6 +305,129 @@ void main() {
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
     expect(find.text('Add transaction'), findsOneWidget);
+  });
+
+  testWidgets('WS08: empty-category recovery preserves the in-progress draft', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      mountAdd(
+        extraOverrides: [
+          categoriesByTypeProvider(
+            CategoryType.expense,
+          ).overrideWith((ref) => Stream.value(const <Category>[])),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('1'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'draft memo');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Select a category'));
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('Back'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Add transaction'), findsOneWidget);
+    expect(find.text('draft memo'), findsOneWidget);
+  });
+
+  testWidgets('WS09: historical edit dates still open the date picker', (
+    tester,
+  ) async {
+    when(
+      () => txRepo.getById(99),
+    ).thenAnswer((_) async => _persistedTx(date: DateTime(2000, 1, 1)));
+    await tester.pumpWidget(mountEdit(99));
+    await tester.pumpAndSettle();
+
+    final dateTile = find.ancestor(
+      of: find.text('Date'),
+      matching: find.byType(ListTile),
+    );
+
+    await tester.ensureVisible(dateTile);
+    await tester.pumpAndSettle();
+    await tester.tap(dateTile);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DatePickerDialog), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('WS10: back-nav is blocked while save is in flight', (
+    tester,
+  ) async {
+    final saveCompleter = Completer<Transaction>();
+    when(() => txRepo.save(any())).thenAnswer((_) => saveCompleter.future);
+
+    await tester.pumpWidget(
+      mountAdd(
+        extraOverrides: [
+          categoriesByTypeProvider(
+            CategoryType.expense,
+          ).overrideWith((ref) => Stream.value(const [_expenseCategory])),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('1'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Select a category'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Food'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(TextButton, 'Save'));
+    await tester.pump();
+
+    final saveButton = tester.widget<TextButton>(
+      find.widgetWithText(TextButton, 'Save'),
+    );
+    expect(saveButton.onPressed, isNull);
+
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Add transaction'), findsOneWidget);
+    expect(find.text('home-stub'), findsNothing);
+    expect(find.text('Discard changes?'), findsNothing);
+
+    saveCompleter.complete(_persistedTx(id: 5, amountMinorUnits: 100));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('WS11: back-nav is blocked while delete is in flight', (
+    tester,
+  ) async {
+    final deleteCompleter = Completer<bool>();
+    when(() => txRepo.getById(99)).thenAnswer((_) async => _persistedTx());
+    when(() => txRepo.delete(99)).thenAnswer((_) => deleteCompleter.future);
+
+    await tester.pumpWidget(mountEdit(99));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Delete'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit transaction'), findsOneWidget);
+    expect(find.text('home-stub'), findsNothing);
+    expect(find.text('Discard changes?'), findsNothing);
+
+    deleteCompleter.complete(true);
+    await tester.pumpAndSettle();
   });
 }
 

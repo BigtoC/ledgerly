@@ -696,63 +696,57 @@ void main() {
         },
       );
 
-      test(
-        'ACL03: newest tx belongs to archived account; older tx on active '
-        'account → returns the active account',
-        () async {
-          // Reproduces the SQL-side filter requirement from §3.2: the query
-          // must JOIN/WHERE against `accounts.is_archived = 0` so the newest
-          // transaction on an archived account is *skipped*, not returned and
-          // then filtered to null in Dart.
-          final activeId = await repo.save(buildCashAccount(name: 'Active'));
-          final archivedId = await repo.save(buildCashAccount(name: 'Archived'));
-          final categoryId = await _insertCategoryRaw(db);
+      test('ACL03: newest tx belongs to archived account; older tx on active '
+          'account → returns the active account', () async {
+        // Reproduces the SQL-side filter requirement from §3.2: the query
+        // must JOIN/WHERE against `accounts.is_archived = 0` so the newest
+        // transaction on an archived account is *skipped*, not returned and
+        // then filtered to null in Dart.
+        final activeId = await repo.save(buildCashAccount(name: 'Active'));
+        final archivedId = await repo.save(buildCashAccount(name: 'Archived'));
+        final categoryId = await _insertCategoryRaw(db);
 
-          await _insertTransactionRaw(
-            db,
-            accountId: activeId,
-            categoryId: categoryId,
-            date: DateTime.utc(2026, 1, 1),
-          );
-          await _insertTransactionRaw(
-            db,
-            accountId: archivedId,
-            categoryId: categoryId,
-            date: DateTime.utc(2026, 6, 1),
-          );
-          await repo.archive(archivedId);
+        await _insertTransactionRaw(
+          db,
+          accountId: activeId,
+          categoryId: categoryId,
+          date: DateTime.utc(2026, 1, 1),
+        );
+        await _insertTransactionRaw(
+          db,
+          accountId: archivedId,
+          categoryId: categoryId,
+          date: DateTime.utc(2026, 6, 1),
+        );
+        await repo.archive(archivedId);
 
-          final picked = await repo.getLastUsedActiveAccount();
-          expect(picked, isNotNull);
-          expect(picked!.id, activeId);
-        },
-      );
+        final picked = await repo.getLastUsedActiveAccount();
+        expect(picked, isNotNull);
+        expect(picked!.id, activeId);
+      });
 
-      test(
-        'ACL04: every historical account archived → returns null',
-        () async {
-          final firstId = await repo.save(buildCashAccount(name: 'A'));
-          final secondId = await repo.save(buildCashAccount(name: 'B'));
-          final categoryId = await _insertCategoryRaw(db);
+      test('ACL04: every historical account archived → returns null', () async {
+        final firstId = await repo.save(buildCashAccount(name: 'A'));
+        final secondId = await repo.save(buildCashAccount(name: 'B'));
+        final categoryId = await _insertCategoryRaw(db);
 
-          await _insertTransactionRaw(
-            db,
-            accountId: firstId,
-            categoryId: categoryId,
-            date: DateTime.utc(2026, 1, 1),
-          );
-          await _insertTransactionRaw(
-            db,
-            accountId: secondId,
-            categoryId: categoryId,
-            date: DateTime.utc(2026, 2, 1),
-          );
-          await repo.archive(firstId);
-          await repo.archive(secondId);
+        await _insertTransactionRaw(
+          db,
+          accountId: firstId,
+          categoryId: categoryId,
+          date: DateTime.utc(2026, 1, 1),
+        );
+        await _insertTransactionRaw(
+          db,
+          accountId: secondId,
+          categoryId: categoryId,
+          date: DateTime.utc(2026, 2, 1),
+        );
+        await repo.archive(firstId);
+        await repo.archive(secondId);
 
-          expect(await repo.getLastUsedActiveAccount(), isNull);
-        },
-      );
+        expect(await repo.getLastUsedActiveAccount(), isNull);
+      });
     });
   });
 }
