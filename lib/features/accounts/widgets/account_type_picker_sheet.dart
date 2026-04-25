@@ -10,12 +10,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../app/providers/repository_providers.dart';
 import '../../../core/utils/color_palette.dart';
 import '../../../core/utils/icon_registry.dart';
 import '../../../data/models/account_type.dart';
 import '../../../data/models/currency.dart';
 import '../../../l10n/app_localizations.dart';
+import '../accounts_providers.dart';
 import 'account_type_display.dart';
 import 'currency_picker_sheet.dart';
 
@@ -40,7 +40,7 @@ class _AccountTypePickerSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final async = ref.watch(_accountTypesStreamProvider);
+    final async = ref.watch(accountTypesProvider);
     return SafeArea(
       top: false,
       child: Column(
@@ -143,8 +143,6 @@ class _CreateAccountTypeForm extends ConsumerStatefulWidget {
 class _CreateAccountTypeFormState
     extends ConsumerState<_CreateAccountTypeForm> {
   late final TextEditingController _nameCtrl;
-  final String _icon = 'wallet';
-  final int _color = 10; // neutralVariant70 per PRD default for seeded types
   Currency? _defaultCurrency;
   bool _saving = false;
   String? _errorMessage;
@@ -171,17 +169,10 @@ class _CreateAccountTypeFormState
       _errorMessage = null;
     });
     try {
-      final repo = ref.read(accountTypeRepositoryProvider);
-      final draft = AccountType(
-        id: 0,
-        customName: name,
-        icon: _icon,
-        color: _color,
-        defaultCurrency: _defaultCurrency,
-      );
-      final id = await repo.save(draft);
-      // Re-read so we return the row with its assigned id.
-      final saved = await repo.getById(id);
+      final saved = await ref.read(accountTypeCreationActionsProvider).create(
+            name: name,
+            defaultCurrency: _defaultCurrency,
+          );
       if (mounted && saved != null) Navigator.of(context).pop(saved);
     } catch (_) {
       setState(() {
@@ -283,11 +274,3 @@ class _CreateAccountTypeFormState
     );
   }
 }
-
-// Feature-local stream of non-archived account types. `autoDispose` so
-// the picker frees its subscription on dismiss.
-final _accountTypesStreamProvider =
-    StreamProvider.autoDispose<List<AccountType>>((ref) {
-      final repo = ref.watch(accountTypeRepositoryProvider);
-      return repo.watchAll();
-    });

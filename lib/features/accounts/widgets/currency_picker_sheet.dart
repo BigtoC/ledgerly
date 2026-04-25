@@ -10,9 +10,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../app/providers/repository_providers.dart';
 import '../../../data/models/currency.dart';
 import '../../../l10n/app_localizations.dart';
+import '../accounts_providers.dart';
 import 'currency_display.dart';
 
 /// Opens the currency picker sheet and resolves with the user's
@@ -35,7 +35,7 @@ class _CurrencyPickerSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final async = ref.watch(_currenciesStreamProvider);
+    final async = ref.watch(selectableCurrenciesProvider);
     return SafeArea(
       top: false,
       child: Column(
@@ -78,14 +78,3 @@ class _CurrencyPickerSheet extends ConsumerWidget {
     );
   }
 }
-
-// Feature-local stream of non-token currencies. Not promoted to a
-// shared provider — Accounts owns it in MVP per plan §8.
-final _currenciesStreamProvider = StreamProvider.autoDispose<List<Currency>>((
-  ref,
-) {
-  final repo = ref.watch(currencyRepositoryProvider);
-  return repo.watchAll().map(
-    (rows) => rows.where((c) => !c.isToken).toList(growable: false),
-  );
-});
