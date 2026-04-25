@@ -191,6 +191,16 @@ const Set<String> _expectedEnKeys = <String>{
   'txCurrencyChangeConfirmBody',
   'txKeypadClear',
   'txKeypadBackspace',
+
+  // M5 Wave 3 — Home slice UI keys
+  // (docs/plans/m5-ui-feature-slices/wave-3-home-plan.md §4.2).
+  'homeDayEmptyTitle',
+  'homeDeleteUndoSnackbar',
+  'homeDuplicateAction',
+  'homeDayLabelToday',
+  'homeDayLabelYesterday',
+  'homeDayNavPrevLabel',
+  'homeDayNavNextLabel',
 };
 
 Map<String, dynamic> _readArb(String fileName) {

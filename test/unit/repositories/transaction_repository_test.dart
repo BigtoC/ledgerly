@@ -650,4 +650,216 @@ void main() {
       expect(currencySelects, 1);
     });
   });
+
+  // -------------------------------------------------------------------------
+  // Wave 3 §3 — daily / monthly aggregate streams.
+  // -------------------------------------------------------------------------
+  group('watchDailyNetByCurrency / watchDailyTotalsByType', () {
+    test('A-empty-01: empty DB emits empty maps', () async {
+      final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
+      final net = await txRepo.watchDailyNetByCurrency(today).first;
+      final byType = await txRepo.watchDailyTotalsByType(today).first;
+      expect(net, isEmpty);
+      expect(byType, isEmpty);
+    });
+
+    test(
+      'A-single-01: single USD expense — net is negative, totals show expense',
+      () async {
+        final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
+        await txRepo.save(
+          sampleTx(
+            amount: 1500,
+            categoryId: fixtures.expenseCategoryId,
+            date: today.add(const Duration(hours: 9)),
+          ),
+        );
+
+        final net = await txRepo.watchDailyNetByCurrency(today).first;
+        expect(net, {'USD': -1500});
+
+        final byType = await txRepo.watchDailyTotalsByType(today).first;
+        expect(byType, hasLength(1));
+        expect(byType['USD']!.expense, 1500);
+        expect(byType['USD']!.income, 0);
+      },
+    );
+
+    test(
+      'A-mixed-01: expense + income on same day — signed net + split',
+      () async {
+        final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
+        await txRepo.save(
+          sampleTx(
+            amount: 2500,
+            categoryId: fixtures.expenseCategoryId,
+            date: today.add(const Duration(hours: 9)),
+          ),
+        );
+        await txRepo.save(
+          sampleTx(
+            amount: 1000,
+            categoryId: fixtures.incomeCategoryId,
+            date: today.add(const Duration(hours: 11)),
+          ),
+        );
+
+        final net = await txRepo.watchDailyNetByCurrency(today).first;
+        // -2500 + 1000 = -1500
+        expect(net, {'USD': -1500});
+
+        final byType = await txRepo.watchDailyTotalsByType(today).first;
+        expect(byType['USD']!.expense, 2500);
+        expect(byType['USD']!.income, 1000);
+      },
+    );
+
+    test(
+      'A-multi-currency-01: multi-currency same day — separate keys per currency',
+      () async {
+        // Add a JPY account so we can write a JPY transaction.
+        final jpyAccountId = await _insertAccountRaw(
+          db,
+          name: 'JPY Wallet',
+          accountTypeId: fixtures.accountTypeId,
+          currencyCode: 'JPY',
+        );
+        const jpy = Currency(
+          code: 'JPY',
+          decimals: 0,
+          symbol: '¥',
+          nameL10nKey: 'currency.jpy',
+          sortOrder: 2,
+        );
+        final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
+
+        await txRepo.save(
+          sampleTx(
+            amount: 1000,
+            categoryId: fixtures.expenseCategoryId,
+            date: today.add(const Duration(hours: 9)),
+          ),
+        );
+        await txRepo.save(
+          sampleTx(
+            amount: 500, // 500 JPY (whole yen — decimals=0)
+            currency: jpy,
+            categoryId: fixtures.expenseCategoryId,
+            accountId: jpyAccountId,
+            date: today.add(const Duration(hours: 10)),
+          ),
+        );
+
+        final net = await txRepo.watchDailyNetByCurrency(today).first;
+        expect(net, {'USD': -1000, 'JPY': -500});
+
+        final byType = await txRepo.watchDailyTotalsByType(today).first;
+        expect(byType.keys, containsAll(<String>['USD', 'JPY']));
+        expect(byType['USD']!.expense, 1000);
+        expect(byType['USD']!.income, 0);
+        expect(byType['JPY']!.expense, 500);
+        expect(byType['JPY']!.income, 0);
+      },
+    );
+
+    test(
+      'A-day-bound-01: same-day stream excludes prev/next day rows',
+      () async {
+        final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
+        final yesterday = today.subtract(const Duration(days: 1));
+        final tomorrow = today.add(const Duration(days: 1));
+
+        await txRepo.save(sampleTx(amount: 100, date: yesterday));
+        await txRepo.save(sampleTx(amount: 200, date: today));
+        await txRepo.save(sampleTx(amount: 300, date: tomorrow));
+
+        final net = await txRepo.watchDailyNetByCurrency(today).first;
+        expect(net, {'USD': -200});
+      },
+    );
+
+    test('A-reactive-01: stream re-emits after insert and delete', () async {
+      final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
+      final emissions = <Map<String, int>>[];
+      final sub = txRepo.watchDailyNetByCurrency(today).listen(emissions.add);
+      addTearDown(sub.cancel);
+
+      await Future<void>.delayed(Duration.zero);
+      expect(emissions.last, isEmpty);
+
+      final tx = await txRepo.save(sampleTx(amount: 400));
+      await Future<void>.delayed(Duration.zero);
+      expect(emissions.last, {'USD': -400});
+
+      await txRepo.delete(tx.id);
+      await Future<void>.delayed(Duration.zero);
+      expect(emissions.last, isEmpty);
+    });
+  });
+
+  group('watchMonthNetByCurrency', () {
+    test('M-empty-01: empty DB emits empty map', () async {
+      final month = DateTime(frozenNow.year, frozenNow.month, 1);
+      final net = await txRepo.watchMonthNetByCurrency(month).first;
+      expect(net, isEmpty);
+    });
+
+    test('M-bound-01: rows on first/last day of month included; '
+        'first day of next month excluded', () async {
+      // April 2026.
+      final apr1 = DateTime(2026, 4, 1, 9);
+      final apr30 = DateTime(2026, 4, 30, 23, 30);
+      final may1 = DateTime(2026, 5, 1, 0, 30);
+
+      await txRepo.save(
+        sampleTx(
+          amount: 100,
+          categoryId: fixtures.expenseCategoryId,
+          date: apr1,
+        ),
+      );
+      await txRepo.save(
+        sampleTx(
+          amount: 200,
+          categoryId: fixtures.incomeCategoryId,
+          date: apr30,
+        ),
+      );
+      await txRepo.save(
+        sampleTx(
+          amount: 999,
+          categoryId: fixtures.expenseCategoryId,
+          date: may1,
+        ),
+      );
+
+      final aprNet = await txRepo
+          .watchMonthNetByCurrency(DateTime(2026, 4, 15))
+          .first;
+      // -100 + 200 = +100
+      expect(aprNet, {'USD': 100});
+
+      final mayNet = await txRepo
+          .watchMonthNetByCurrency(DateTime(2026, 5, 15))
+          .first;
+      expect(mayNet, {'USD': -999});
+    });
+
+    test('M-reactive-01: stream re-emits after insert', () async {
+      final emissions = <Map<String, int>>[];
+      final sub = txRepo
+          .watchMonthNetByCurrency(frozenNow)
+          .listen(emissions.add);
+      addTearDown(sub.cancel);
+
+      await Future<void>.delayed(Duration.zero);
+      expect(emissions.last, isEmpty);
+
+      await txRepo.save(
+        sampleTx(amount: 700, categoryId: fixtures.incomeCategoryId),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(emissions.last, {'USD': 700});
+    });
+  });
 }
