@@ -81,7 +81,7 @@ class _SplashStartDateRow extends ConsumerWidget {
           context: context,
           initialDate: startDate ?? DateTime.now(),
           firstDate: DateTime(1900),
-          lastDate: DateTime(2100),
+          lastDate: DateTime(9999, 12, 31),
         );
         if (picked == null) return;
         await ref

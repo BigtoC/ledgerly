@@ -11,9 +11,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../app/providers/repository_providers.dart';
 import '../../../data/models/currency.dart';
 import '../../../l10n/app_localizations.dart';
+import '../settings_providers.dart';
 
 /// Opens the default-currency picker sheet and resolves with the chosen
 /// ISO code, or null if the user dismisses.
@@ -35,7 +35,7 @@ class _DefaultCurrencyPickerSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final async = ref.watch(_fiatCurrenciesStreamProvider);
+    final async = ref.watch(settingsFiatCurrenciesProvider);
     return SafeArea(
       top: false,
       child: Column(
@@ -87,13 +87,3 @@ class _DefaultCurrencyPickerSheet extends ConsumerWidget {
     return c.code;
   }
 }
-
-// Feature-local stream of non-token currencies. Not promoted to a
-// shared provider — Settings owns its own picker per plan §8.
-final _fiatCurrenciesStreamProvider =
-    StreamProvider.autoDispose<List<Currency>>((ref) {
-  final repo = ref.watch(currencyRepositoryProvider);
-  return repo.watchAll().map(
-    (rows) => rows.where((c) => !c.isToken).toList(growable: false),
-  );
-});

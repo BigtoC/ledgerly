@@ -15,9 +15,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/providers/repository_providers.dart';
 import '../../../data/models/account.dart';
 import '../../../l10n/app_localizations.dart';
+import '../settings_providers.dart';
 
 /// Opens the default-account picker sheet and resolves with the selected
 /// account id, or null if the user dismisses or taps the "Create account"
@@ -40,7 +40,7 @@ class _DefaultAccountPickerSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final async = ref.watch(_activeAccountsStreamProvider);
+    final async = ref.watch(settingsActiveAccountsProvider);
     return SafeArea(
       top: false,
       child: Column(
@@ -119,12 +119,3 @@ class _EmptyState extends StatelessWidget {
     );
   }
 }
-
-// Feature-local stream of non-archived accounts for the picker. Not
-// promoted to a shared provider — Settings owns its own picker per
-// plan §7.
-final _activeAccountsStreamProvider =
-    StreamProvider.autoDispose<List<Account>>((ref) {
-  final repo = ref.watch(accountRepositoryProvider);
-  return repo.watchAll();
-});

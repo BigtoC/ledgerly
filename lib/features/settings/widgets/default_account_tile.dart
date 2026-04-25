@@ -10,10 +10,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../app/providers/repository_providers.dart';
-import '../../../data/models/account.dart';
 import '../../../l10n/app_localizations.dart';
 import '../settings_controller.dart';
+import '../settings_providers.dart';
 import 'default_account_picker_sheet.dart';
 
 class DefaultAccountTile extends ConsumerWidget {
@@ -27,7 +26,7 @@ class DefaultAccountTile extends ConsumerWidget {
     final id = defaultAccountId;
     final subtitle = id == null
         ? l10n.settingsDefaultAccountEmpty
-        : ref.watch(_accountByIdProvider(id)).maybeWhen(
+        : ref.watch(settingsDefaultAccountProvider(id)).maybeWhen(
             data: (a) => a?.name ?? l10n.settingsDefaultAccountEmpty,
             orElse: () => '',
           );
@@ -46,11 +45,3 @@ class DefaultAccountTile extends ConsumerWidget {
     );
   }
 }
-
-/// Feature-local one-shot account lookup. Cached per id so rebuilds of
-/// the tile don't re-issue the repository read.
-final _accountByIdProvider =
-    FutureProvider.autoDispose.family<Account?, int>((ref, id) async {
-  final repo = ref.watch(accountRepositoryProvider);
-  return repo.getById(id);
-});
