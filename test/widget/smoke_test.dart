@@ -69,10 +69,15 @@ void main() {
         expect(find.byType(SplashScreen), findsOneWidget);
         expect(find.text('Set start date'), findsOneWidget);
 
-        // Tap "Set start date" — the placeholder writes DateTime.now().
+        // Tap "Set start date", confirm the picker, then the splash rebuilds
+        // into the day-counter state with the Enter CTA.
         await tester.tap(find.text('Set start date'));
-        await tester.pump();
-        await tester.pump(const Duration(seconds: 1));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(DatePickerDialog), findsOneWidget);
+
+        await tester.tap(find.text('OK'));
+        await tester.pumpAndSettle();
 
         expect(find.text('Enter'), findsOneWidget);
         expect(tester.takeException(), isNull);

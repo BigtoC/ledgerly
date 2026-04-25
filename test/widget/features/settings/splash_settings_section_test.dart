@@ -89,6 +89,11 @@ void main() {
     registerFallbackValue(DateTime(2000));
   });
 
+  Future<void> pickToday(WidgetTester tester) async {
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+  }
+
   testWidgets(
     'SSS01: toggle-off hides start-date / display-text / button-label rows',
     (tester) async {
@@ -232,6 +237,28 @@ void main() {
       expect(find.text('June 15, 2024'), findsOneWidget);
     },
   );
+
+  testWidgets('SSS06b: start date picker persists the chosen value', (
+    tester,
+  ) async {
+    final prefs = _MockUserPreferencesRepository();
+    when(() => prefs.setSplashStartDate(any())).thenAnswer((_) async {});
+    final container = _makeContainer(prefs);
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      _wrap(container: container, splashEnabled: true),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('splashSettings:startDateTile')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DatePickerDialog), findsOneWidget);
+    await pickToday(tester);
+
+    verify(() => prefs.setSplashStartDate(any())).called(1);
+  });
 
   testWidgets(
     'SSS07: null start date falls back to the localized label as subtitle',

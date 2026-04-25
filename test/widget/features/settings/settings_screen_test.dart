@@ -352,6 +352,35 @@ void main() {
   );
 
   testWidgets(
+    'SS06b: language selector writes via setLocale before the app repumps',
+    (tester) async {
+      final prefs = _MockUserPreferencesRepository();
+      final accountRepo = _MockAccountRepository();
+      final currencyRepo = _MockCurrencyRepository();
+      when(() => prefs.setLocale(const Locale('zh', 'TW')))
+          .thenAnswer((_) async {});
+
+      final container = _makeContainer(
+        prefs: prefs,
+        accountRepo: accountRepo,
+        currencyRepo: currencyRepo,
+        fixed: _data(),
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Language'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('languageOption:zh_TW')));
+      await tester.pumpAndSettle();
+
+      verify(() => prefs.setLocale(const Locale('zh', 'TW'))).called(1);
+    },
+  );
+
+  testWidgets(
     'SS07: 2x text scale survives without layout overflow',
     (tester) async {
       final prefs = _MockUserPreferencesRepository();

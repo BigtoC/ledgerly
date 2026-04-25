@@ -15,11 +15,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 
+import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/category.dart';
+import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/features/categories/categories_controller.dart';
 import 'package:ledgerly/features/categories/widgets/category_picker.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
+
+class _MockCategoryRepository extends Mock implements CategoryRepository {}
 
 Category _c({
   required int id,
@@ -65,6 +70,12 @@ Widget _hostApp({
 }
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(
+      const Category(id: 0, icon: 'category', color: 0, type: CategoryType.expense),
+    );
+  });
+
   testWidgets(
     'P01: picker lists only categories of the requested type, sorted',
     (tester) async {
@@ -284,4 +295,52 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Very Long Category Name'), findsOneWidget);
   });
+
+  testWidgets(
+    'P06: real categoriesByType provider requests includeArchived=false for the selected type',
+    (tester) async {
+      final repo = _MockCategoryRepository();
+      when(
+        () => repo.watchAll(
+          type: CategoryType.expense,
+          includeArchived: false,
+        ),
+      ).thenAnswer(
+        (_) => Stream.value([
+          _c(id: 1, type: CategoryType.expense, customName: 'Food'),
+        ]),
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          categoryRepositoryProvider.overrideWithValue(repo),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      Category? picked;
+      await tester.pumpWidget(
+        _hostApp(
+          container: container,
+          onLaunch: (ctx) async {
+            picked = await showCategoryPicker(
+              ctx,
+              type: CategoryType.expense,
+            );
+            return picked;
+          },
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Food'), findsOneWidget);
+      verify(
+        () => repo.watchAll(
+          type: CategoryType.expense,
+          includeArchived: false,
+        ),
+      ).called(1);
+    },
+  );
 }

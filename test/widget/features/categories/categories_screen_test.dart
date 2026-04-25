@@ -225,6 +225,10 @@ void main() {
 
       // Locked-hint visible in Edit mode.
       expect(find.text('Type cannot change after first use'), findsOneWidget);
+      final segmented = tester.widget<SegmentedButton<CategoryType>>(
+        find.byType(SegmentedButton<CategoryType>),
+      );
+      expect(segmented.onSelectionChanged, isNull);
     },
   );
 

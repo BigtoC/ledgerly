@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -37,6 +38,30 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: SplashScreen(),
+      ),
+    );
+  }
+
+  Widget routerWrap(ProviderContainer container) {
+    final router = GoRouter(
+      routes: [
+        GoRoute(path: '/', redirect: (context, state) => '/splash'),
+        GoRoute(
+          path: '/splash',
+          builder: (context, state) => const SplashScreen(),
+        ),
+        GoRoute(
+          path: '/home',
+          builder: (context, state) => const Scaffold(body: Text('HOME')),
+        ),
+      ],
+    );
+    return UncontrolledProviderScope(
+      container: container,
+      child: MaterialApp.router(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        routerConfig: router,
       ),
     );
   }
@@ -148,6 +173,41 @@ void main() {
 
       verify(() => repo.setSplashStartDate(fixedNow)).called(1);
     });
+
+  testWidgets('W03b: Enter button navigates to /home', (tester) async {
+    final repo = _MockUserPreferencesRepository();
+    final startDate = DateTime(2026, 1, 1);
+
+    final container = ProviderContainer(
+      overrides: [
+        userPreferencesRepositoryProvider.overrideWithValue(repo),
+        splashGateSnapshotProvider.overrideWithValue(
+          SplashGateSnapshot.withInitial(enabled: true, startDate: startDate),
+        ),
+        splashStartDateProvider.overrideWith((ref) => Stream.value(startDate)),
+        splashControllerProvider.overrideWith(
+          () => _FakeSplashController(
+            SplashState.data(
+              startDate: startDate,
+              dayCount: 100,
+              formattedStartDate: 'Jan 1, 2026',
+              formattedDisplayText: 'Since Jan 1, 2026',
+              buttonLabel: 'Enter',
+            ),
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(routerWrap(container));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(SplashEnterButton));
+    await tester.pumpAndSettle();
+
+    expect(find.text('HOME'), findsOneWidget);
+  });
 
   testWidgets('W04: day count clamps at 1.5x even at 2x requested scale', (
     tester,
