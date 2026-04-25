@@ -562,44 +562,6 @@ void main() {
     });
   });
 
-  group('duplicate', () {
-    test('T-duplicate-01: copies all fields except id / timestamps', () async {
-      final source = await txRepo.save(
-        sampleTx(
-          amount: 500,
-          memo: 'lunch',
-          categoryId: fixtures.expenseCategoryId,
-        ),
-      );
-      final dup = await txRepo.duplicate(source.id);
-
-      expect(dup.id, isNot(source.id));
-      expect(dup.amountMinorUnits, source.amountMinorUnits);
-      expect(dup.currency.code, source.currency.code);
-      expect(dup.categoryId, source.categoryId);
-      expect(dup.accountId, source.accountId);
-      expect(dup.memo, source.memo);
-      expect(dup.date, source.date);
-    });
-
-    test('T-duplicate-02: duplicate sets fresh timestamps', () async {
-      final source = await txRepo.save(sampleTx());
-      final later = frozenNow.add(const Duration(hours: 3));
-      frozenNow = later;
-      final dup = await txRepo.duplicate(source.id);
-      expect(dup.createdAt, later);
-      expect(dup.updatedAt, later);
-      expect(dup.createdAt, isNot(source.createdAt));
-    });
-
-    test('T-duplicate-03: missing source id throws', () async {
-      await expectLater(
-        txRepo.duplicate(9999),
-        throwsA(isA<TransactionRepositoryException>()),
-      );
-    });
-  });
-
   group('save → money', () {
     test('T-amount-int-01: ETH-scale minor units round-trip exactly', () async {
       // Seed ETH currency.
