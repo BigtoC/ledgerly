@@ -12,8 +12,6 @@
 // state-machine variant). Choosing a date writes the preference and
 // rebuilds into the day-counter view on the same frame.
 
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -145,6 +143,7 @@ class _LaunchTimeStartDatePrompt extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final clock = ref.watch(splashClockProvider);
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -162,16 +161,19 @@ class _LaunchTimeStartDatePrompt extends ConsumerWidget {
                   ),
                   shape: const StadiumBorder(),
                 ),
-                // MVP: tapping the launch-time prompt seeds the counter
-                // with "today". Settings owns the ongoing editing surface
-                // (wave-0 §2.3), where the full date picker lives. A
-                // picker on this launch-time button is a known follow-up.
-                onPressed: () {
-                  unawaited(
-                    ref
-                        .read(splashControllerProvider.notifier)
-                        .setStartDate(DateTime.now()),
+                onPressed: () async {
+                  final initial = clock();
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: initial,
+                    firstDate: DateTime(1900),
+                    lastDate: DateTime(9999, 12, 31),
                   );
+                  if (picked == null) return;
+                  if (!context.mounted) return;
+                  await ref
+                      .read(splashControllerProvider.notifier)
+                      .setStartDate(picked);
                 },
                 child: Text(label),
               ),
