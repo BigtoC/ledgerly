@@ -370,6 +370,76 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get settingsSplashDisplayTextHint =>
       'Use [date] and [days] as placeholders';
+
+  @override
+  String get txAddTitle => 'Add transaction';
+
+  @override
+  String get txEditTitle => 'Edit transaction';
+
+  @override
+  String get txCategoryLabel => 'Category';
+
+  @override
+  String get txCategoryEmpty => 'Select a category';
+
+  @override
+  String get txAccountLabel => 'Account';
+
+  @override
+  String get txAccountEmpty => 'No active accounts — create one first';
+
+  @override
+  String get txAccountPickerTitle => 'Pick account';
+
+  @override
+  String get txDateLabel => 'Date';
+
+  @override
+  String get txMemoLabel => 'Memo';
+
+  @override
+  String get txAmountRequired => 'Enter an amount';
+
+  @override
+  String get txCreateAccountCta => 'Create account';
+
+  @override
+  String get txTransactionNotFound => 'Transaction not found';
+
+  @override
+  String get txSaveFailedSnackbar =>
+      'Couldn’t save transaction. Please try again.';
+
+  @override
+  String get txDeleteFailedSnackbar =>
+      'Couldn’t delete transaction. Please try again.';
+
+  @override
+  String get txDeleteConfirmTitle => 'Delete this transaction?';
+
+  @override
+  String get txDeleteConfirmBody =>
+      'This permanently removes the transaction. This cannot be undone.';
+
+  @override
+  String get txDiscardConfirmTitle => 'Discard changes?';
+
+  @override
+  String get txDiscardConfirmBody => 'Your unsaved edits will be lost.';
+
+  @override
+  String get txCurrencyChangeConfirmTitle => 'Switch currency?';
+
+  @override
+  String get txCurrencyChangeConfirmBody =>
+      'Switching to this account changes the currency. The entered amount will be cleared.';
+
+  @override
+  String get txKeypadClear => 'Clear amount';
+
+  @override
+  String get txKeypadBackspace => 'Backspace';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -734,6 +804,72 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get settingsSplashDisplayTextHint => '可使用 [date] 与 [days] 作为变量';
+
+  @override
+  String get txAddTitle => '新增交易';
+
+  @override
+  String get txEditTitle => '编辑交易';
+
+  @override
+  String get txCategoryLabel => '分类';
+
+  @override
+  String get txCategoryEmpty => '选择分类';
+
+  @override
+  String get txAccountLabel => '账户';
+
+  @override
+  String get txAccountEmpty => '目前没有可用账户——请先创建一个';
+
+  @override
+  String get txAccountPickerTitle => '选择账户';
+
+  @override
+  String get txDateLabel => '日期';
+
+  @override
+  String get txMemoLabel => '备注';
+
+  @override
+  String get txAmountRequired => '请输入金额';
+
+  @override
+  String get txCreateAccountCta => '创建账户';
+
+  @override
+  String get txTransactionNotFound => '找不到此笔交易';
+
+  @override
+  String get txSaveFailedSnackbar => '保存失败,请再试一次。';
+
+  @override
+  String get txDeleteFailedSnackbar => '删除失败,请再试一次。';
+
+  @override
+  String get txDeleteConfirmTitle => '要删除这笔交易吗?';
+
+  @override
+  String get txDeleteConfirmBody => '此交易将永久移除,且无法撤销。';
+
+  @override
+  String get txDiscardConfirmTitle => '舍弃编辑?';
+
+  @override
+  String get txDiscardConfirmBody => '尚未保存的更改将会丢失。';
+
+  @override
+  String get txCurrencyChangeConfirmTitle => '切换币种?';
+
+  @override
+  String get txCurrencyChangeConfirmBody => '切换到此账户会改变币种,当前输入的金额将被清除。';
+
+  @override
+  String get txKeypadClear => '清除金额';
+
+  @override
+  String get txKeypadBackspace => '退格';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1098,4 +1234,70 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get settingsSplashDisplayTextHint => '可使用 [date] 與 [days] 作為變數';
+
+  @override
+  String get txAddTitle => '新增交易';
+
+  @override
+  String get txEditTitle => '編輯交易';
+
+  @override
+  String get txCategoryLabel => '分類';
+
+  @override
+  String get txCategoryEmpty => '選擇分類';
+
+  @override
+  String get txAccountLabel => '帳戶';
+
+  @override
+  String get txAccountEmpty => '目前沒有可用帳戶——請先建立一個';
+
+  @override
+  String get txAccountPickerTitle => '選擇帳戶';
+
+  @override
+  String get txDateLabel => '日期';
+
+  @override
+  String get txMemoLabel => '備註';
+
+  @override
+  String get txAmountRequired => '請輸入金額';
+
+  @override
+  String get txCreateAccountCta => '建立帳戶';
+
+  @override
+  String get txTransactionNotFound => '找不到此筆交易';
+
+  @override
+  String get txSaveFailedSnackbar => '儲存失敗,請再試一次。';
+
+  @override
+  String get txDeleteFailedSnackbar => '刪除失敗,請再試一次。';
+
+  @override
+  String get txDeleteConfirmTitle => '要刪除這筆交易嗎?';
+
+  @override
+  String get txDeleteConfirmBody => '此交易將永久移除,且無法復原。';
+
+  @override
+  String get txDiscardConfirmTitle => '捨棄編輯?';
+
+  @override
+  String get txDiscardConfirmBody => '尚未儲存的變更將會遺失。';
+
+  @override
+  String get txCurrencyChangeConfirmTitle => '切換幣別?';
+
+  @override
+  String get txCurrencyChangeConfirmBody => '切換到此帳戶會改變幣別,目前輸入的金額將被清除。';
+
+  @override
+  String get txKeypadClear => '清除金額';
+
+  @override
+  String get txKeypadBackspace => '退格';
 }

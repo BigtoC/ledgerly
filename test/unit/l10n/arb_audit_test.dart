@@ -166,6 +166,31 @@ const Set<String> _expectedEnKeys = <String>{
   'settingsDefaultCurrencyPickerTitle',
   'settingsManageCategories',
   'settingsSplashDisplayTextHint',
+
+  // M5 Wave 2 — Transactions slice UI keys
+  // (docs/plans/m5-ui-feature-slices/wave-2-transactions-plan.md §4.2).
+  'txAddTitle',
+  'txEditTitle',
+  'txCategoryLabel',
+  'txCategoryEmpty',
+  'txAccountLabel',
+  'txAccountEmpty',
+  'txAccountPickerTitle',
+  'txDateLabel',
+  'txMemoLabel',
+  'txAmountRequired',
+  'txCreateAccountCta',
+  'txTransactionNotFound',
+  'txSaveFailedSnackbar',
+  'txDeleteFailedSnackbar',
+  'txDeleteConfirmTitle',
+  'txDeleteConfirmBody',
+  'txDiscardConfirmTitle',
+  'txDiscardConfirmBody',
+  'txCurrencyChangeConfirmTitle',
+  'txCurrencyChangeConfirmBody',
+  'txKeypadClear',
+  'txKeypadBackspace',
 };
 
 Map<String, dynamic> _readArb(String fileName) {

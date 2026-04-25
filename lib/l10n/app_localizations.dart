@@ -807,6 +807,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Use [date] and [days] as placeholders'**
   String get settingsSplashDisplayTextHint;
+
+  /// Wave 2 §4.2. AppBar title for /home/add.
+  ///
+  /// In en, this message translates to:
+  /// **'Add transaction'**
+  String get txAddTitle;
+
+  /// Wave 2 §4.2. AppBar title for /home/edit/:id.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit transaction'**
+  String get txEditTitle;
+
+  /// Wave 2 §4.1. Category-row label in the form.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get txCategoryLabel;
+
+  /// Wave 2 §4.1. Subtitle shown on the category chip before the user picks one.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a category'**
+  String get txCategoryEmpty;
+
+  /// Wave 2 §4.1. Account-row label in the form.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get txAccountLabel;
+
+  /// Wave 2 §6. Subtitle for the empty account picker / no-active-account state.
+  ///
+  /// In en, this message translates to:
+  /// **'No active accounts — create one first'**
+  String get txAccountEmpty;
+
+  /// Wave 2 §4.1. Title of the account picker bottom sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick account'**
+  String get txAccountPickerTitle;
+
+  /// Wave 2 §4.1. Date-row label in the form.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get txDateLabel;
+
+  /// Wave 2 §4.1. Memo text-field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Memo'**
+  String get txMemoLabel;
+
+  /// Wave 2 §9. Inline validation hint shown on the amount display when amountMinorUnits is 0 after a save attempt.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount'**
+  String get txAmountRequired;
+
+  /// Wave 2 §6. CTA shown on the no-active-account empty state. Navigates to /accounts/new.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account'**
+  String get txCreateAccountCta;
+
+  /// Wave 2 §10. Recoverable not-found state shown when hydrateForEdit/hydrateForDuplicate cannot resolve the row.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction not found'**
+  String get txTransactionNotFound;
+
+  /// Wave 2 §9. SnackBar shown when TransactionRepository.save throws.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t save transaction. Please try again.'**
+  String get txSaveFailedSnackbar;
+
+  /// Wave 2 §9. SnackBar shown when TransactionRepository.delete throws.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t delete transaction. Please try again.'**
+  String get txDeleteFailedSnackbar;
+
+  /// Wave 2 §9. Confirm-delete dialog title (Edit mode only).
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this transaction?'**
+  String get txDeleteConfirmTitle;
+
+  /// Wave 2 §9. Confirm-delete dialog body.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently removes the transaction. This cannot be undone.'**
+  String get txDeleteConfirmBody;
+
+  /// Wave 2 §9. Confirm-discard dialog title shown when state.isDirty on back-nav.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes?'**
+  String get txDiscardConfirmTitle;
+
+  /// Wave 2 §9. Confirm-discard dialog body.
+  ///
+  /// In en, this message translates to:
+  /// **'Your unsaved edits will be lost.'**
+  String get txDiscardConfirmBody;
+
+  /// Wave 2 risk #9. Confirm dialog title when the user picks an account with a different currency after entering an amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch currency?'**
+  String get txCurrencyChangeConfirmTitle;
+
+  /// Wave 2 risk #9. Confirm dialog body for the currency-change clear flow.
+  ///
+  /// In en, this message translates to:
+  /// **'Switching to this account changes the currency. The entered amount will be cleared.'**
+  String get txCurrencyChangeConfirmBody;
+
+  /// Wave 2 §8. Tooltip / a11y label for the calculator keypad C key.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear amount'**
+  String get txKeypadClear;
+
+  /// Wave 2 §8. Tooltip / a11y label for the calculator keypad ⌫ key.
+  ///
+  /// In en, this message translates to:
+  /// **'Backspace'**
+  String get txKeypadBackspace;
 }
 
 class _AppLocalizationsDelegate

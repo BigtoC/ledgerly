@@ -67,7 +67,7 @@ GoRouter router(Ref ref) {
                     parentNavigatorKey: _rootNavigatorKey,
                     pageBuilder: (ctx, state) => _modalPage(
                       state,
-                      const TransactionFormScreen(),
+                      const _AdaptiveTransactionFormRoute(),
                       fullscreenDialog: true,
                     ),
                   ),
@@ -80,7 +80,7 @@ GoRouter router(Ref ref) {
                     parentNavigatorKey: _rootNavigatorKey,
                     pageBuilder: (ctx, state) => _modalPage(
                       state,
-                      TransactionFormScreen(
+                      _AdaptiveTransactionFormRoute(
                         transactionId: int.parse(state.pathParameters['id']!),
                       ),
                       fullscreenDialog: true,
@@ -142,6 +142,39 @@ GoRouter router(Ref ref) {
       ),
     ],
   );
+}
+
+class _AdaptiveTransactionFormRoute extends StatelessWidget {
+  const _AdaptiveTransactionFormRoute({this.transactionId});
+
+  final int? transactionId;
+
+  @override
+  Widget build(BuildContext context) {
+    final form = TransactionFormScreen(transactionId: transactionId);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 600) {
+          return form;
+        }
+        return Scaffold(
+          backgroundColor: Colors.black54,
+          body: SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: Dialog(
+                  insetPadding: const EdgeInsets.all(24),
+                  clipBehavior: Clip.antiAlias,
+                  child: SizedBox.expand(child: form),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 Page<void> _modalPage(

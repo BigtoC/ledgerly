@@ -57,8 +57,10 @@ Future<int> _insertTransactionRaw(
   required int categoryId,
   int amountMinorUnits = 1000,
   String currency = 'USD',
+  DateTime? date,
 }) async {
-  final nowIso = DateTime.utc(2026, 1, 1).toIso8601String();
+  final txDate = date ?? DateTime.utc(2026, 1, 1);
+  final nowIso = txDate.toIso8601String();
   await db.customInsert(
     'INSERT INTO transactions (account_id, category_id, amount_minor_units, '
     'currency, date, created_at, updated_at) '
@@ -650,6 +652,100 @@ void main() {
         await repo.archive(id);
 
         expect(await repo.watchBalanceMinorUnits(id).first, 4000 - 1500);
+      });
+    });
+
+    // getLastUsedActiveAccount — M5 Wave 2 §3.2.
+    group('getLastUsedActiveAccount', () {
+      test('ACL01: no transactions exist → returns null', () async {
+        // Even with active accounts present, the absence of any transaction
+        // means there is no "last used" account to surface.
+        await repo.save(buildCashAccount(name: 'Idle'));
+
+        expect(await repo.getLastUsedActiveAccount(), isNull);
+      });
+
+      test(
+        'ACL02: newest transaction belongs to active account → returns it',
+        () async {
+          final olderId = await repo.save(
+            buildCashAccount(name: 'Older', sortOrder: 0),
+          );
+          final newerId = await repo.save(
+            buildCashAccount(name: 'Newer', sortOrder: 1),
+          );
+          final categoryId = await _insertCategoryRaw(db);
+
+          await _insertTransactionRaw(
+            db,
+            accountId: olderId,
+            categoryId: categoryId,
+            date: DateTime.utc(2026, 1, 1),
+          );
+          await _insertTransactionRaw(
+            db,
+            accountId: newerId,
+            categoryId: categoryId,
+            date: DateTime.utc(2026, 3, 15),
+          );
+
+          final picked = await repo.getLastUsedActiveAccount();
+          expect(picked, isNotNull);
+          expect(picked!.id, newerId);
+          expect(picked.name, 'Newer');
+        },
+      );
+
+      test('ACL03: newest tx belongs to archived account; older tx on active '
+          'account → returns the active account', () async {
+        // Reproduces the SQL-side filter requirement from §3.2: the query
+        // must JOIN/WHERE against `accounts.is_archived = 0` so the newest
+        // transaction on an archived account is *skipped*, not returned and
+        // then filtered to null in Dart.
+        final activeId = await repo.save(buildCashAccount(name: 'Active'));
+        final archivedId = await repo.save(buildCashAccount(name: 'Archived'));
+        final categoryId = await _insertCategoryRaw(db);
+
+        await _insertTransactionRaw(
+          db,
+          accountId: activeId,
+          categoryId: categoryId,
+          date: DateTime.utc(2026, 1, 1),
+        );
+        await _insertTransactionRaw(
+          db,
+          accountId: archivedId,
+          categoryId: categoryId,
+          date: DateTime.utc(2026, 6, 1),
+        );
+        await repo.archive(archivedId);
+
+        final picked = await repo.getLastUsedActiveAccount();
+        expect(picked, isNotNull);
+        expect(picked!.id, activeId);
+      });
+
+      test('ACL04: every historical account archived → returns null', () async {
+        final firstId = await repo.save(buildCashAccount(name: 'A'));
+        final secondId = await repo.save(buildCashAccount(name: 'B'));
+        final categoryId = await _insertCategoryRaw(db);
+
+        await _insertTransactionRaw(
+          db,
+          accountId: firstId,
+          categoryId: categoryId,
+          date: DateTime.utc(2026, 1, 1),
+        );
+        await _insertTransactionRaw(
+          db,
+          accountId: secondId,
+          categoryId: categoryId,
+          date: DateTime.utc(2026, 2, 1),
+        );
+        await repo.archive(firstId);
+        await repo.archive(secondId);
+
+        expect(await repo.getLastUsedActiveAccount(), isNull);
       });
     });
   });

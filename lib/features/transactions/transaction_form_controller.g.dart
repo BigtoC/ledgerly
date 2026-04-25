@@ -1,30 +1,30 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'accounts_controller.dart';
+part of 'transaction_form_controller.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$accountsControllerHash() =>
-    r'29833ce3ae984312e2a34c476036839410de2932';
+String _$transactionFormControllerHash() =>
+    r'365ea65bedeba4843aa1fa9283956b0128287d6a';
 
-/// See also [AccountsController].
-@ProviderFor(AccountsController)
-final accountsControllerProvider =
-    AutoDisposeStreamNotifierProvider<
-      AccountsController,
-      AccountsState
+/// See also [TransactionFormController].
+@ProviderFor(TransactionFormController)
+final transactionFormControllerProvider =
+    AutoDisposeNotifierProvider<
+      TransactionFormController,
+      TransactionFormState
     >.internal(
-      AccountsController.new,
-      name: r'accountsControllerProvider',
+      TransactionFormController.new,
+      name: r'transactionFormControllerProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
           ? null
-          : _$accountsControllerHash,
+          : _$transactionFormControllerHash,
       dependencies: null,
       allTransitiveDependencies: null,
     );
 
-typedef _$AccountsController = AutoDisposeStreamNotifier<AccountsState>;
+typedef _$TransactionFormController = AutoDisposeNotifier<TransactionFormState>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

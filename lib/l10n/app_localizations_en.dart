@@ -370,4 +370,74 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsSplashDisplayTextHint =>
       'Use [date] and [days] as placeholders';
+
+  @override
+  String get txAddTitle => 'Add transaction';
+
+  @override
+  String get txEditTitle => 'Edit transaction';
+
+  @override
+  String get txCategoryLabel => 'Category';
+
+  @override
+  String get txCategoryEmpty => 'Select a category';
+
+  @override
+  String get txAccountLabel => 'Account';
+
+  @override
+  String get txAccountEmpty => 'No active accounts — create one first';
+
+  @override
+  String get txAccountPickerTitle => 'Pick account';
+
+  @override
+  String get txDateLabel => 'Date';
+
+  @override
+  String get txMemoLabel => 'Memo';
+
+  @override
+  String get txAmountRequired => 'Enter an amount';
+
+  @override
+  String get txCreateAccountCta => 'Create account';
+
+  @override
+  String get txTransactionNotFound => 'Transaction not found';
+
+  @override
+  String get txSaveFailedSnackbar =>
+      'Couldn’t save transaction. Please try again.';
+
+  @override
+  String get txDeleteFailedSnackbar =>
+      'Couldn’t delete transaction. Please try again.';
+
+  @override
+  String get txDeleteConfirmTitle => 'Delete this transaction?';
+
+  @override
+  String get txDeleteConfirmBody =>
+      'This permanently removes the transaction. This cannot be undone.';
+
+  @override
+  String get txDiscardConfirmTitle => 'Discard changes?';
+
+  @override
+  String get txDiscardConfirmBody => 'Your unsaved edits will be lost.';
+
+  @override
+  String get txCurrencyChangeConfirmTitle => 'Switch currency?';
+
+  @override
+  String get txCurrencyChangeConfirmBody =>
+      'Switching to this account changes the currency. The entered amount will be cleared.';
+
+  @override
+  String get txKeypadClear => 'Clear amount';
+
+  @override
+  String get txKeypadBackspace => 'Backspace';
 }
