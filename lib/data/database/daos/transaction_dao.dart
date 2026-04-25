@@ -186,4 +186,13 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
             .getSingle();
     return row.read(countExp) ?? 0;
   }
+
+  /// Reactive count of transactions referencing the given account.
+  Stream<int> watchCountByAccount(int accountId) {
+    final countExp = transactions.id.count();
+    final query = selectOnly(transactions)
+      ..addColumns([countExp])
+      ..where(transactions.accountId.equals(accountId));
+    return query.watchSingle().map((row) => row.read(countExp) ?? 0);
+  }
 }

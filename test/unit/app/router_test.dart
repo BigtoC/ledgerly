@@ -9,6 +9,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:ledgerly/app/router.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
+import 'package:ledgerly/features/accounts/account_form_screen.dart';
+import 'package:ledgerly/features/accounts/accounts_screen.dart';
 import 'package:ledgerly/features/home/home_screen.dart';
 import 'package:ledgerly/features/splash/splash_screen.dart';
 
@@ -106,6 +108,36 @@ void main() {
       expect(leaf.route.parentNavigatorKey, isNotNull);
     });
 
+    testWidgets('/accounts/new uses a root modal route and renders the form', (
+      tester,
+    ) async {
+      final db = newTestAppDatabase();
+      addTearDown(db.close);
+      await tester.runAsync(() => runTestSeed(db));
+      final container = makeTestContainer(
+        db: db,
+        extraOverrides: [
+          splashGateSnapshotProvider.overrideWithValue(
+            SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(routerProvider);
+      addTearDown(router.dispose);
+      router.go('/accounts/new');
+
+      await tester.pumpWidget(buildTestApp(container: container));
+      await tester.pumpAndSettle();
+
+      final leaf = router.routerDelegate.currentConfiguration.last;
+      expect(leaf.matchedLocation, '/accounts/new');
+      expect(leaf.route.parentNavigatorKey, isNotNull);
+      expect(find.byType(AccountFormScreen), findsOneWidget);
+      expect(find.byType(AccountsScreen), findsNothing);
+    });
+
     testWidgets('/home/edit/:id rejects invalid ids safely', (tester) async {
       final db = newTestAppDatabase();
       addTearDown(db.close);
@@ -128,6 +160,34 @@ void main() {
 
       expect(find.byType(HomeScreen), findsOneWidget);
       expect(find.byType(SplashScreen), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('/accounts/:id rejects invalid ids safely', (tester) async {
+      final db = newTestAppDatabase();
+      addTearDown(db.close);
+      await tester.runAsync(() => runTestSeed(db));
+      final container = makeTestContainer(
+        db: db,
+        extraOverrides: [
+          splashGateSnapshotProvider.overrideWithValue(
+            SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(routerProvider);
+      addTearDown(router.dispose);
+      router.go('/accounts/not-a-number');
+
+      await tester.pumpWidget(buildTestApp(container: container));
+      await tester.pumpAndSettle();
+
+      final leaf = router.routerDelegate.currentConfiguration.last;
+      expect(leaf.matchedLocation, '/accounts');
+      expect(find.byType(AccountsScreen), findsOneWidget);
+      expect(find.byType(AccountFormScreen), findsNothing);
       expect(tester.takeException(), isNull);
     });
 

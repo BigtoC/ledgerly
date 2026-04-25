@@ -36,18 +36,22 @@ void main() {
       expect(find.byType(SplashScreen), findsOneWidget);
       expect(find.text('Set start date'), findsOneWidget);
 
-      // User taps — placeholder writes DateTime.now().
+      // User taps the prompt, confirms the picker, then the splash rebuilds
+      // into the normal Enter-CTA state.
       await tester.tap(find.text('Set start date'));
-      await tester.pump();
-      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+
+      expect(find.text('OK'), findsOneWidget);
+
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
 
       // UI rebuilt with "Enter" CTA.
       expect(find.text('Enter'), findsOneWidget);
 
       // Tap "Enter" → /home.
       await tester.tap(find.text('Enter'));
-      await tester.pump();
-      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
 
       expect(find.byType(HomeScreen), findsOneWidget);
       expect(find.byType(SplashScreen), findsNothing);

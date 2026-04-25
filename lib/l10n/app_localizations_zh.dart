@@ -165,6 +165,211 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsSplashButtonLabel => 'Button label';
+
+  @override
+  String get categoriesManageTitle => 'Manage categories';
+
+  @override
+  String get categoriesAddCta => 'Add category';
+
+  @override
+  String get categoriesSectionExpense => 'Expense';
+
+  @override
+  String get categoriesSectionIncome => 'Income';
+
+  @override
+  String get categoriesFormNameLabel => 'Name';
+
+  @override
+  String get categoriesFormIconLabel => 'Icon';
+
+  @override
+  String get categoriesFormColorLabel => 'Color';
+
+  @override
+  String get categoriesFormTypeLabel => 'Type';
+
+  @override
+  String get categoriesFormTypeLockedHint =>
+      'Type cannot change after first use';
+
+  @override
+  String get categoriesArchiveUndoSnackbar => 'Category archived';
+
+  @override
+  String get categoriesDeleteConfirmTitle => 'Delete category?';
+
+  @override
+  String get categoriesDeleteConfirmBody => 'This cannot be undone.';
+
+  @override
+  String get categoriesPickerTitleExpense => 'Pick expense category';
+
+  @override
+  String get categoriesPickerTitleIncome => 'Pick income category';
+
+  @override
+  String get categoriesPickerEmptyCta => 'No categories yet — Create one';
+
+  @override
+  String get accountsListTitle => 'Accounts';
+
+  @override
+  String get accountsAddCta => 'Add account';
+
+  @override
+  String get accountsEmptyTitle => 'No active accounts';
+
+  @override
+  String get accountsEmptyCta => 'Create account';
+
+  @override
+  String get accountsArchivedSectionLabel => 'Archived';
+
+  @override
+  String get accountsSetDefaultAction => 'Set as default';
+
+  @override
+  String get accountsDefaultBadge => 'Default';
+
+  @override
+  String get accountsArchiveAction => 'Archive';
+
+  @override
+  String get accountsDeleteAction => 'Delete';
+
+  @override
+  String get accountsArchiveUndoSnackbar => 'Account archived';
+
+  @override
+  String get accountsDeleteConfirmTitle => 'Delete account?';
+
+  @override
+  String get accountsDeleteConfirmBody => 'This cannot be undone.';
+
+  @override
+  String get accountsArchiveLastActiveBlocked =>
+      'Cannot archive the only active account';
+
+  @override
+  String get accountsDeleteDefaultBlockedTitle => 'Change default account';
+
+  @override
+  String get accountsDeleteDefaultBlockedBody =>
+      'Choose another default account before deleting this one.';
+
+  @override
+  String get accountsFormAddTitle => 'New account';
+
+  @override
+  String get accountsFormEditTitle => 'Edit account';
+
+  @override
+  String get accountsFormName => 'Name';
+
+  @override
+  String get accountsFormType => 'Account type';
+
+  @override
+  String get accountsFormCurrency => 'Currency';
+
+  @override
+  String get accountsFormOpeningBalance => 'Opening balance';
+
+  @override
+  String get accountsFormIcon => 'Icon';
+
+  @override
+  String get accountsFormColor => 'Color';
+
+  @override
+  String get accountsFormPickType => 'Pick account type';
+
+  @override
+  String get accountsFormPickCurrency => 'Pick currency';
+
+  @override
+  String get accountsFormNotFound => 'This account no longer exists.';
+
+  @override
+  String get accountsTypePickerTitle => 'Pick account type';
+
+  @override
+  String get accountsTypeCreateInlineCta => 'Create new account type';
+
+  @override
+  String get accountsTypeFormTitle => 'New account type';
+
+  @override
+  String get accountsTypeFormName => 'Name';
+
+  @override
+  String get accountsTypeFormDefaultCurrency => 'Default currency';
+
+  @override
+  String get accountsCurrencyPickerTitle => 'Pick currency';
+
+  @override
+  String get settingsSectionAppearance => 'Appearance';
+
+  @override
+  String get settingsSectionGeneral => 'General';
+
+  @override
+  String get settingsSectionDataManagement => 'Data management';
+
+  @override
+  String get settingsThemeLabel => 'Theme';
+
+  @override
+  String get settingsThemeLight => 'Light';
+
+  @override
+  String get settingsThemeDark => 'Dark';
+
+  @override
+  String get settingsThemeSystem => 'System';
+
+  @override
+  String get settingsLanguageLabel => 'Language';
+
+  @override
+  String get settingsLanguageSystem => 'System';
+
+  @override
+  String get settingsLanguageEnglish => 'English';
+
+  @override
+  String get settingsLanguageZhTw => '繁體中文 (Traditional Chinese)';
+
+  @override
+  String get settingsLanguageZhCn => '简体中文 (Simplified Chinese)';
+
+  @override
+  String get settingsDefaultAccountLabel => 'Default account';
+
+  @override
+  String get settingsDefaultAccountEmpty => 'Not set';
+
+  @override
+  String get settingsDefaultAccountPickerTitle => 'Pick default account';
+
+  @override
+  String get settingsDefaultAccountCreateCta => 'Create account';
+
+  @override
+  String get settingsDefaultCurrencyLabel => 'Default currency';
+
+  @override
+  String get settingsDefaultCurrencyPickerTitle => 'Pick default currency';
+
+  @override
+  String get settingsManageCategories => 'Manage categories';
+
+  @override
+  String get settingsSplashDisplayTextHint =>
+      'Use [date] and [days] as placeholders';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -328,6 +533,207 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get settingsSplashButtonLabel => '按钮文字';
+
+  @override
+  String get categoriesManageTitle => '管理分类';
+
+  @override
+  String get categoriesAddCta => '添加分类';
+
+  @override
+  String get categoriesSectionExpense => '支出';
+
+  @override
+  String get categoriesSectionIncome => '收入';
+
+  @override
+  String get categoriesFormNameLabel => '名称';
+
+  @override
+  String get categoriesFormIconLabel => '图标';
+
+  @override
+  String get categoriesFormColorLabel => '颜色';
+
+  @override
+  String get categoriesFormTypeLabel => '类型';
+
+  @override
+  String get categoriesFormTypeLockedHint => '使用后类型无法更改';
+
+  @override
+  String get categoriesArchiveUndoSnackbar => '已归档分类';
+
+  @override
+  String get categoriesDeleteConfirmTitle => '要删除分类吗？';
+
+  @override
+  String get categoriesDeleteConfirmBody => '此操作无法撤销。';
+
+  @override
+  String get categoriesPickerTitleExpense => '选择支出分类';
+
+  @override
+  String get categoriesPickerTitleIncome => '选择收入分类';
+
+  @override
+  String get categoriesPickerEmptyCta => '暂无分类 — 创建一个';
+
+  @override
+  String get accountsListTitle => '账户';
+
+  @override
+  String get accountsAddCta => '添加账户';
+
+  @override
+  String get accountsEmptyTitle => '没有使用中的账户';
+
+  @override
+  String get accountsEmptyCta => '创建账户';
+
+  @override
+  String get accountsArchivedSectionLabel => '已归档';
+
+  @override
+  String get accountsSetDefaultAction => '设为默认';
+
+  @override
+  String get accountsDefaultBadge => '默认';
+
+  @override
+  String get accountsArchiveAction => '归档';
+
+  @override
+  String get accountsDeleteAction => '删除';
+
+  @override
+  String get accountsArchiveUndoSnackbar => '已归档账户';
+
+  @override
+  String get accountsDeleteConfirmTitle => '要删除账户吗？';
+
+  @override
+  String get accountsDeleteConfirmBody => '此操作无法撤销。';
+
+  @override
+  String get accountsArchiveLastActiveBlocked => '无法归档唯一使用中的账户';
+
+  @override
+  String get accountsDeleteDefaultBlockedTitle => '请先更改默认账户';
+
+  @override
+  String get accountsDeleteDefaultBlockedBody => '删除前请先选择其他默认账户。';
+
+  @override
+  String get accountsFormAddTitle => '新账户';
+
+  @override
+  String get accountsFormEditTitle => '编辑账户';
+
+  @override
+  String get accountsFormName => '名称';
+
+  @override
+  String get accountsFormType => '账户类型';
+
+  @override
+  String get accountsFormCurrency => '币种';
+
+  @override
+  String get accountsFormOpeningBalance => '期初余额';
+
+  @override
+  String get accountsFormIcon => '图标';
+
+  @override
+  String get accountsFormColor => '颜色';
+
+  @override
+  String get accountsFormPickType => '选择账户类型';
+
+  @override
+  String get accountsFormPickCurrency => '选择币种';
+
+  @override
+  String get accountsFormNotFound => '此账户已不存在。';
+
+  @override
+  String get accountsTypePickerTitle => '选择账户类型';
+
+  @override
+  String get accountsTypeCreateInlineCta => '创建新的账户类型';
+
+  @override
+  String get accountsTypeFormTitle => '新账户类型';
+
+  @override
+  String get accountsTypeFormName => '名称';
+
+  @override
+  String get accountsTypeFormDefaultCurrency => '默认币种';
+
+  @override
+  String get accountsCurrencyPickerTitle => '选择币种';
+
+  @override
+  String get settingsSectionAppearance => '外观';
+
+  @override
+  String get settingsSectionGeneral => '常规';
+
+  @override
+  String get settingsSectionDataManagement => '数据管理';
+
+  @override
+  String get settingsThemeLabel => '主题';
+
+  @override
+  String get settingsThemeLight => '浅色';
+
+  @override
+  String get settingsThemeDark => '深色';
+
+  @override
+  String get settingsThemeSystem => '跟随系统';
+
+  @override
+  String get settingsLanguageLabel => '语言';
+
+  @override
+  String get settingsLanguageSystem => '跟随系统';
+
+  @override
+  String get settingsLanguageEnglish => 'English';
+
+  @override
+  String get settingsLanguageZhTw => '繁體中文';
+
+  @override
+  String get settingsLanguageZhCn => '简体中文';
+
+  @override
+  String get settingsDefaultAccountLabel => '默认账户';
+
+  @override
+  String get settingsDefaultAccountEmpty => '未设置';
+
+  @override
+  String get settingsDefaultAccountPickerTitle => '选择默认账户';
+
+  @override
+  String get settingsDefaultAccountCreateCta => '创建账户';
+
+  @override
+  String get settingsDefaultCurrencyLabel => '默认币种';
+
+  @override
+  String get settingsDefaultCurrencyPickerTitle => '选择默认币种';
+
+  @override
+  String get settingsManageCategories => '管理分类';
+
+  @override
+  String get settingsSplashDisplayTextHint => '可使用 [date] 与 [days] 作为变量';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -491,4 +897,205 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get settingsSplashButtonLabel => '按鈕文字';
+
+  @override
+  String get categoriesManageTitle => '管理分類';
+
+  @override
+  String get categoriesAddCta => '新增分類';
+
+  @override
+  String get categoriesSectionExpense => '支出';
+
+  @override
+  String get categoriesSectionIncome => '收入';
+
+  @override
+  String get categoriesFormNameLabel => '名稱';
+
+  @override
+  String get categoriesFormIconLabel => '圖示';
+
+  @override
+  String get categoriesFormColorLabel => '顏色';
+
+  @override
+  String get categoriesFormTypeLabel => '類型';
+
+  @override
+  String get categoriesFormTypeLockedHint => '使用後類型無法變更';
+
+  @override
+  String get categoriesArchiveUndoSnackbar => '已封存分類';
+
+  @override
+  String get categoriesDeleteConfirmTitle => '要刪除分類嗎？';
+
+  @override
+  String get categoriesDeleteConfirmBody => '此操作無法復原。';
+
+  @override
+  String get categoriesPickerTitleExpense => '選擇支出分類';
+
+  @override
+  String get categoriesPickerTitleIncome => '選擇收入分類';
+
+  @override
+  String get categoriesPickerEmptyCta => '尚無分類 — 建立一個';
+
+  @override
+  String get accountsListTitle => '帳戶';
+
+  @override
+  String get accountsAddCta => '新增帳戶';
+
+  @override
+  String get accountsEmptyTitle => '沒有使用中的帳戶';
+
+  @override
+  String get accountsEmptyCta => '建立帳戶';
+
+  @override
+  String get accountsArchivedSectionLabel => '已封存';
+
+  @override
+  String get accountsSetDefaultAction => '設為預設';
+
+  @override
+  String get accountsDefaultBadge => '預設';
+
+  @override
+  String get accountsArchiveAction => '封存';
+
+  @override
+  String get accountsDeleteAction => '刪除';
+
+  @override
+  String get accountsArchiveUndoSnackbar => '已封存帳戶';
+
+  @override
+  String get accountsDeleteConfirmTitle => '要刪除帳戶嗎？';
+
+  @override
+  String get accountsDeleteConfirmBody => '此操作無法復原。';
+
+  @override
+  String get accountsArchiveLastActiveBlocked => '無法封存唯一的使用中帳戶';
+
+  @override
+  String get accountsDeleteDefaultBlockedTitle => '請先變更預設帳戶';
+
+  @override
+  String get accountsDeleteDefaultBlockedBody => '刪除前請先選擇其他預設帳戶。';
+
+  @override
+  String get accountsFormAddTitle => '新帳戶';
+
+  @override
+  String get accountsFormEditTitle => '編輯帳戶';
+
+  @override
+  String get accountsFormName => '名稱';
+
+  @override
+  String get accountsFormType => '帳戶類型';
+
+  @override
+  String get accountsFormCurrency => '幣別';
+
+  @override
+  String get accountsFormOpeningBalance => '期初餘額';
+
+  @override
+  String get accountsFormIcon => '圖示';
+
+  @override
+  String get accountsFormColor => '顏色';
+
+  @override
+  String get accountsFormPickType => '選擇帳戶類型';
+
+  @override
+  String get accountsFormPickCurrency => '選擇幣別';
+
+  @override
+  String get accountsFormNotFound => '此帳戶已不存在。';
+
+  @override
+  String get accountsTypePickerTitle => '選擇帳戶類型';
+
+  @override
+  String get accountsTypeCreateInlineCta => '建立新的帳戶類型';
+
+  @override
+  String get accountsTypeFormTitle => '新帳戶類型';
+
+  @override
+  String get accountsTypeFormName => '名稱';
+
+  @override
+  String get accountsTypeFormDefaultCurrency => '預設幣別';
+
+  @override
+  String get accountsCurrencyPickerTitle => '選擇幣別';
+
+  @override
+  String get settingsSectionAppearance => '外觀';
+
+  @override
+  String get settingsSectionGeneral => '一般';
+
+  @override
+  String get settingsSectionDataManagement => '資料管理';
+
+  @override
+  String get settingsThemeLabel => '主題';
+
+  @override
+  String get settingsThemeLight => '淺色';
+
+  @override
+  String get settingsThemeDark => '深色';
+
+  @override
+  String get settingsThemeSystem => '跟隨系統';
+
+  @override
+  String get settingsLanguageLabel => '語言';
+
+  @override
+  String get settingsLanguageSystem => '跟隨系統';
+
+  @override
+  String get settingsLanguageEnglish => 'English';
+
+  @override
+  String get settingsLanguageZhTw => '繁體中文';
+
+  @override
+  String get settingsLanguageZhCn => '简体中文';
+
+  @override
+  String get settingsDefaultAccountLabel => '預設帳戶';
+
+  @override
+  String get settingsDefaultAccountEmpty => '尚未設定';
+
+  @override
+  String get settingsDefaultAccountPickerTitle => '選擇預設帳戶';
+
+  @override
+  String get settingsDefaultAccountCreateCta => '建立帳戶';
+
+  @override
+  String get settingsDefaultCurrencyLabel => '預設幣別';
+
+  @override
+  String get settingsDefaultCurrencyPickerTitle => '選擇預設幣別';
+
+  @override
+  String get settingsManageCategories => '管理分類';
+
+  @override
+  String get settingsSplashDisplayTextHint => '可使用 [date] 與 [days] 作為變數';
 }

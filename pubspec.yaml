@@ -67,6 +67,13 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   generate: true
+  assets:
+    # Splash slice (M5 Wave 1). Real sun-themed asset drops in during M6
+    # native-splash regeneration per implementation-plan.md → M6. Until
+    # then the directory only carries the README placeholder and the
+    # splash widgets fall back to a procedural gradient that matches
+    # the final visual direction (see widgets/splash_sun_background.dart).
+    - assets/splash/
 
 # Placeholder themed native splash per M0 plan; assets are regenerated in
 # M6 once the final sun-themed asset ships.

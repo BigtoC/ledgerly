@@ -165,4 +165,209 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsSplashButtonLabel => 'Button label';
+
+  @override
+  String get categoriesManageTitle => 'Manage categories';
+
+  @override
+  String get categoriesAddCta => 'Add category';
+
+  @override
+  String get categoriesSectionExpense => 'Expense';
+
+  @override
+  String get categoriesSectionIncome => 'Income';
+
+  @override
+  String get categoriesFormNameLabel => 'Name';
+
+  @override
+  String get categoriesFormIconLabel => 'Icon';
+
+  @override
+  String get categoriesFormColorLabel => 'Color';
+
+  @override
+  String get categoriesFormTypeLabel => 'Type';
+
+  @override
+  String get categoriesFormTypeLockedHint =>
+      'Type cannot change after first use';
+
+  @override
+  String get categoriesArchiveUndoSnackbar => 'Category archived';
+
+  @override
+  String get categoriesDeleteConfirmTitle => 'Delete category?';
+
+  @override
+  String get categoriesDeleteConfirmBody => 'This cannot be undone.';
+
+  @override
+  String get categoriesPickerTitleExpense => 'Pick expense category';
+
+  @override
+  String get categoriesPickerTitleIncome => 'Pick income category';
+
+  @override
+  String get categoriesPickerEmptyCta => 'No categories yet — Create one';
+
+  @override
+  String get accountsListTitle => 'Accounts';
+
+  @override
+  String get accountsAddCta => 'Add account';
+
+  @override
+  String get accountsEmptyTitle => 'No active accounts';
+
+  @override
+  String get accountsEmptyCta => 'Create account';
+
+  @override
+  String get accountsArchivedSectionLabel => 'Archived';
+
+  @override
+  String get accountsSetDefaultAction => 'Set as default';
+
+  @override
+  String get accountsDefaultBadge => 'Default';
+
+  @override
+  String get accountsArchiveAction => 'Archive';
+
+  @override
+  String get accountsDeleteAction => 'Delete';
+
+  @override
+  String get accountsArchiveUndoSnackbar => 'Account archived';
+
+  @override
+  String get accountsDeleteConfirmTitle => 'Delete account?';
+
+  @override
+  String get accountsDeleteConfirmBody => 'This cannot be undone.';
+
+  @override
+  String get accountsArchiveLastActiveBlocked =>
+      'Cannot archive the only active account';
+
+  @override
+  String get accountsDeleteDefaultBlockedTitle => 'Change default account';
+
+  @override
+  String get accountsDeleteDefaultBlockedBody =>
+      'Choose another default account before deleting this one.';
+
+  @override
+  String get accountsFormAddTitle => 'New account';
+
+  @override
+  String get accountsFormEditTitle => 'Edit account';
+
+  @override
+  String get accountsFormName => 'Name';
+
+  @override
+  String get accountsFormType => 'Account type';
+
+  @override
+  String get accountsFormCurrency => 'Currency';
+
+  @override
+  String get accountsFormOpeningBalance => 'Opening balance';
+
+  @override
+  String get accountsFormIcon => 'Icon';
+
+  @override
+  String get accountsFormColor => 'Color';
+
+  @override
+  String get accountsFormPickType => 'Pick account type';
+
+  @override
+  String get accountsFormPickCurrency => 'Pick currency';
+
+  @override
+  String get accountsFormNotFound => 'This account no longer exists.';
+
+  @override
+  String get accountsTypePickerTitle => 'Pick account type';
+
+  @override
+  String get accountsTypeCreateInlineCta => 'Create new account type';
+
+  @override
+  String get accountsTypeFormTitle => 'New account type';
+
+  @override
+  String get accountsTypeFormName => 'Name';
+
+  @override
+  String get accountsTypeFormDefaultCurrency => 'Default currency';
+
+  @override
+  String get accountsCurrencyPickerTitle => 'Pick currency';
+
+  @override
+  String get settingsSectionAppearance => 'Appearance';
+
+  @override
+  String get settingsSectionGeneral => 'General';
+
+  @override
+  String get settingsSectionDataManagement => 'Data management';
+
+  @override
+  String get settingsThemeLabel => 'Theme';
+
+  @override
+  String get settingsThemeLight => 'Light';
+
+  @override
+  String get settingsThemeDark => 'Dark';
+
+  @override
+  String get settingsThemeSystem => 'System';
+
+  @override
+  String get settingsLanguageLabel => 'Language';
+
+  @override
+  String get settingsLanguageSystem => 'System';
+
+  @override
+  String get settingsLanguageEnglish => 'English';
+
+  @override
+  String get settingsLanguageZhTw => '繁體中文 (Traditional Chinese)';
+
+  @override
+  String get settingsLanguageZhCn => '简体中文 (Simplified Chinese)';
+
+  @override
+  String get settingsDefaultAccountLabel => 'Default account';
+
+  @override
+  String get settingsDefaultAccountEmpty => 'Not set';
+
+  @override
+  String get settingsDefaultAccountPickerTitle => 'Pick default account';
+
+  @override
+  String get settingsDefaultAccountCreateCta => 'Create account';
+
+  @override
+  String get settingsDefaultCurrencyLabel => 'Default currency';
+
+  @override
+  String get settingsDefaultCurrencyPickerTitle => 'Pick default currency';
+
+  @override
+  String get settingsManageCategories => 'Manage categories';
+
+  @override
+  String get settingsSplashDisplayTextHint =>
+      'Use [date] and [days] as placeholders';
 }

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Status
 
-Ledgerly is a local-first Flutter expense tracker currently in **M0 scaffolding** on `feature/m0-scaffold-app`. The spec in [`PRD.md`](PRD.md) is the authoritative source of truth — read it before making any architectural or data-model decision. Earlier design thinking lives in `docs/superpowers/specs/` but has been superseded by `PRD.md` wherever they conflict.
+Ledgerly is a local-first Flutter expense tracker currently in **M5 Wave 1** on `feature/M5-UI-feature-slices-wave-1`. M0–M4 (scaffolding, database, repositories, app shell) are on `main`. M5 Wave 0 (shared contracts: frozen `CategoryPicker` signature, `AccountRepository.watchBalanceMinorUnits`, l10n codegen hygiene) is merged. M5 Wave 1 delivered four UI slices on top (Splash, Categories, Accounts, Settings); Wave 2 (Transactions) and Wave 3 (Home) are still ahead. Wave planning lives in [`docs/plans/m5-ui-feature-slices/`](docs/plans/m5-ui-feature-slices/). The spec in [`PRD.md`](PRD.md) is the authoritative source of truth — read it before making any architectural or data-model decision. Earlier design thinking lives in `docs/superpowers/specs/` but has been superseded by `PRD.md` wherever they conflict.
 
 The repo now contains: `pubspec.yaml`, `analysis_options.yaml`, `l10n/` (`app_en.arb`, `app_zh.arb`, `app_zh_CN.arb`, `app_zh_TW.arb`), `lib/`, `test/`, `drift_schemas/`, and `.github/workflows/`. Match the folder layout and package list in `PRD.md` exactly when extending the scaffold — they encode decisions (layered folder split, `domain/` only in Phase 2, etc.) that are easy to get wrong by defaulting to a generic `flutter create` shape.
 
@@ -82,12 +82,13 @@ MVP renders up to **10,000 transactions** via Drift streams + `ListView.builder`
 
 ## Skills Available
 
-Two Flutter-specific skills are installed at `.agents/skills/` and symlinked into `.claude/skills/`:
+Three Flutter-specific skills are installed at `.agents/skills/` and symlinked into `.claude/skills/`:
 
 - `flutter-architecting-apps` — recommended layered structure; aligns with the stricter version in `PRD.md`.
 - `flutter-building-layouts` — Flutter constraint/layout guidance for building the screens above.
+- `flutter-animating-apps` — animation / transition guidance for feature polish work.
 
-When the user asks to structure a new feature, invoke `flutter-architecting-apps`; when building or refining UI, invoke `flutter-building-layouts`.
+When the user asks to structure a new feature, invoke `flutter-architecting-apps`; when building or refining UI, invoke `flutter-building-layouts`; when adding transitions or motion, invoke `flutter-animating-apps`.
 
 ## Security & Secrets
 
