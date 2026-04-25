@@ -580,5 +580,34 @@
   "txKeypadBackspace": "Backspace",
   "@txKeypadBackspace": {
     "description": "Wave 2 §8. Tooltip / a11y label for the calculator keypad ⌫ key."
+  },
+
+  "homeDayEmptyTitle": "No transactions on this day",
+  "@homeDayEmptyTitle": {
+    "description": "Wave 3 §4.2. Per-day empty state title (gap day with prior history)."
+  },
+  "homeDeleteUndoSnackbar": "Transaction deleted",
+  "@homeDeleteUndoSnackbar": {
+    "description": "Wave 3 §8. SnackBar text shown after a swipe / overflow delete; the action button is `commonUndo`."
+  },
+  "homeDuplicateAction": "Duplicate",
+  "@homeDuplicateAction": {
+    "description": "Wave 3 §9. Row overflow menu — duplicate action."
+  },
+  "homeDayLabelToday": "Today",
+  "@homeDayLabelToday": {
+    "description": "Wave 3 §6. Day-nav header label override when selectedDay is today."
+  },
+  "homeDayLabelYesterday": "Yesterday",
+  "@homeDayLabelYesterday": {
+    "description": "Wave 3 §6. Day-nav header label override when selectedDay is yesterday."
+  },
+  "homeDayNavPrevLabel": "Previous day",
+  "@homeDayNavPrevLabel": {
+    "description": "Wave 3 §6, §10. A11y label for the day-nav prev (◀) chevron."
+  },
+  "homeDayNavNextLabel": "Next day",
+  "@homeDayNavNextLabel": {
+    "description": "Wave 3 §6, §10. A11y label for the day-nav next (▶) chevron."
   }
 }

@@ -154,5 +154,13 @@
   "txCurrencyChangeConfirmTitle": "切换币种?",
   "txCurrencyChangeConfirmBody": "切换到此账户会改变币种,当前输入的金额将被清除。",
   "txKeypadClear": "清除金额",
-  "txKeypadBackspace": "退格"
+  "txKeypadBackspace": "退格",
+
+  "homeDayEmptyTitle": "这天没有交易",
+  "homeDeleteUndoSnackbar": "交易已删除",
+  "homeDuplicateAction": "复制",
+  "homeDayLabelToday": "今天",
+  "homeDayLabelYesterday": "昨天",
+  "homeDayNavPrevLabel": "前一天",
+  "homeDayNavNextLabel": "后一天"
 }
