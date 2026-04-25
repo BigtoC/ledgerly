@@ -41,9 +41,9 @@ This slice does **not** import from Home. The Home → form navigation is driven
 The existing `duplicate()` method saves a new row immediately, which is incompatible with the PRD quick-repeat flow ("user adjusts amount or date if needed → tap Save"). Leaving it on the surface unused is a footgun — a future agent may wire it up to the duplicate menu item thinking it returns a draft.
 
 **Action for Wave 2 agent:**
-- Delete the `duplicate` method from `lib/data/repositories/transaction_repository.dart` and any corresponding test.
+- Delete the `duplicate` method from `lib/data/repositories/transaction_repository.dart` (abstract declaration around L92–96 and concrete implementation around L217–238) **and** the three matching tests `T-duplicate-01/02/03` in `test/unit/repositories/transaction_repository_test.dart` (currently around L565–597, inside the `group('duplicate', ...)` block — drop the whole group).
 - Add a short class-level doc comment on `TransactionRepository` explaining **why** the repository does not expose a duplicate convenience: the quick-repeat flow is driven from the UI via `getById` → prefill → user edit → `save`, so repository-level duplicate-save would bypass the edit step. Keep the comment to 2–3 lines — enough to steer a future reader away from re-adding it.
-- Verify no callers exist (`rg 'transactionRepository.*duplicate|\.duplicate\('`) before removal.
+- Verify no callers exist (`rg 'transactionRepository.*duplicate|\.duplicate\('`) before removal. As of the current `feature/M5-UI-feature-slices-wave-1` branch, the only hits are the repo's own definition + the three tests above; nothing in `lib/features/**` calls it.
 
 ### 3.2 Add `AccountRepository.getLastUsedActiveAccount()`
 
@@ -74,6 +74,7 @@ Required tests:
 
 - `transaction_form_screen.dart` — replaces the M4 placeholder.
 - `transaction_form_controller.dart` — `@riverpod class TransactionFormController extends _$TransactionFormController`. Commands: `appendDigit`, `appendDecimal`, `backspace`, `clear`, `selectCategory`, `selectAccount`, `setDate`, `setMemo`, `save`, `deleteExisting`. Hydration entrypoints: `hydrateForAdd()`, `hydrateForDuplicate(sourceId)`, `hydrateForEdit(id)`.
+- `transactions_providers.dart` — co-located Riverpod providers used by the controller and form widgets. Mirrors the Wave 1 convention (see `lib/features/accounts/accounts_providers.dart` and `lib/features/settings/settings_providers.dart`): `StreamProvider.autoDispose.family<Account?, int>` / `StreamProvider.autoDispose<List<Account>>` for watchers; `FutureProvider.autoDispose.family<TransactionFormSeedData, _Args>` for the one-shot hydration seed (analogous to `accountFormSeedDataProvider`). Reuse `categoriesByTypeProvider` from `features/categories/categories_controller.dart` rather than re-declaring it.
 - `transaction_form_state.dart` — Freezed sealed union (see §5).
 - `widgets/calculator_keypad.dart` — fixed-height keypad. Respects the active currency's `decimals`.
 - `widgets/amount_display.dart` — large-format amount shown above the keypad; re-renders on every digit press.
@@ -150,18 +151,39 @@ If all accounts are archived and no active account exists, hydration enters `Tra
 
 ## 7. Category selection flow
 
-Tap the category chip → `final picked = await showCategoryPicker(context, type: pendingType)`.
+Tap the category chip:
 - `pendingType` defaults to `expense` on Add entry (PRD → Add/Edit Interaction Rules: "Expense is the default selection when opening from Home").
 - User can toggle the segmented control **before** selecting a category to change `pendingType` — this only affects the picker's filter.
 - Once a category is selected, the segmented control remains available. If the user switches to the opposite type, show a confirm-then-clear dialog. Confirming clears the incompatible category, updates `pendingType`, and returns the chip to its empty state. Cancelling keeps the current category and type.
 - Re-opening the picker with an already-selected category passes `type: selectedCategory.type` until the user explicitly changes type via the confirmation flow above.
 
-If the picker resolves with `null` because the user dismissed it, state does not change.
+### 7.1 Picker-vs-management routing
 
-If the picker resolves with `null` from its empty-state CTA path, Transactions owns the next step per Wave 0 §2.3:
-1. route to category management / creation,
-2. when the user returns, re-open `showCategoryPicker(context, type: pendingType)`,
-3. require explicit selection from the reopened picker rather than auto-selecting.
+The frozen Wave 0 picker pops with `null` for both "user dismissed" and "user tapped the empty-state CTA" — `category_picker.dart` does not differentiate them. The form must therefore decide *before* opening the picker whether the picker is even useful for the current `pendingType`:
+
+```dart
+Future<void> _onTapCategoryChip() async {
+  final categories = await ref.read(categoriesByTypeProvider(pendingType).future);
+  if (categories.isEmpty) {
+    // No categories of this type exist → routing through the picker would
+    // only show the empty-state CTA, so skip the picker and go straight to
+    // management. The user creates a category and uses the back stack to
+    // return to the form; the existing chip remains empty until they
+    // re-tap it.
+    if (!mounted) return;
+    context.go('/settings/categories');
+    return;
+  }
+  final picked = await showCategoryPicker(context, type: pendingType);
+  if (picked == null) return; // dismissed — state unchanged
+  controller.selectCategory(picked);
+}
+```
+
+Notes:
+- The management route is `/settings/categories` (declared in `lib/app/router.dart`). It does not return a value, so the form cannot `await` a result. Resume behavior is "user navigates back; chip is still empty; user re-taps to open the now-non-empty picker." Do not attempt to detect route resume in this slice.
+- `categoriesByTypeProvider` is the existing Wave 1 family in `features/categories/categories_controller.dart`. Reuse it; do not re-declare a transactions-local copy.
+- This satisfies Wave 0 §2.3 ("Transactions owns what happens next on the form side") without requiring a sentinel-value contract amendment to `showCategoryPicker`.
 
 ---
 
@@ -213,6 +235,8 @@ Adaptive container contract:
 4. On success: return the **persisted** `Transaction` from `save(tx)`. The widget calls `context.pop(savedTx)` so Home (Wave 3) can pin the day to `savedTx.date` and scroll the new row into view. Home depends on the route result's persisted `id` and `date`; returning the full persisted model keeps the contract aligned with the current repository API.
 5. On failure during save: keep the screen in `.data`, clear `isSaving`, and surface the failure to the widget as a command error so it can show `txSaveFailedSnackbar`. Reserve `TransactionFormState.error(...)` for hydration/load failures (`hydrateForEdit`, `hydrateForDuplicate`, or irrecoverable delete failures), not normal save-action errors.
 
+> **Repository invariant — `TransactionAccountCurrencyMismatchException`.** `TransactionRepository.save` already throws this when `tx.currency.code != account.currency.code` (`lib/data/repositories/transaction_repository.dart` `save`, FK pre-check). The UI keeps that invariant by always setting `tx.currency = selectedAccount.currency` and by clearing the entered amount whenever the user swaps to an account with a different currency (risk #9 below). If the exception ever surfaces in normal flow, that is a controller bug, not a user-facing condition — handle it like any other repository failure (snackbar via `txSaveFailedSnackbar`) but treat it as a regression to fix in code.
+
 Delete (Edit mode only):
 - Confirmation dialog (`txDeleteConfirm*`).
 - `transactionRepositoryProvider.delete(id)`.
@@ -238,13 +262,15 @@ Inline validation:
 | `/home/add` + `duplicate` | Duplicate | `{'duplicateSourceId': <int>}` — transaction-id-only handoff via `GoRouterState.extra` |
 | `/home/edit/:id`          | Edit      | path param `id: int`                                                                   |
 
+**Routes are already wired.** `lib/app/router.dart` (committed under `feature/M5-UI-feature-slices-wave-1`) declares both `/home/add` and `/home/edit/:id` against `TransactionFormScreen`, attaches them to `_rootNavigatorKey`, applies `fullscreenDialog: true` for the adaptive modal-vs-dialog presentation, and redirects invalid `:id` path params back to `/home`. Wave 2 only writes the screen body — do **not** edit `router.dart`. The earlier "Router changes land in Wave 4 Integration" guidance is now stale: Wave 4's job for these routes is verification, not wiring.
+
 On route entry, the screen reads `extra` once and invokes `controller.hydrateForAdd()` / `hydrateForDuplicate(sourceId)` / `hydrateForEdit(id)`. Hydration populates `_Data` and is a one-shot — subsequent user edits mutate state via commands.
 
 Hydration failure behavior:
 - `hydrateForEdit(id)` / `hydrateForDuplicate(sourceId)` use `transactionRepository.getById(...)`.
 - If the row is missing, enter `TransactionFormState.empty()` and show a recoverable not-found state with a snackbar + pop back to Home, rather than leaving the widget to guess how to recover from `null`.
 
-**Do not add new routes in this slice.** Router changes land in Wave 4 Integration.
+**Do not add new routes in this slice.** The two routes above already exist; no slice-PR edits to `router.dart`.
 
 ---
 
