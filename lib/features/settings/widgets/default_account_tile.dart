@@ -26,10 +26,12 @@ class DefaultAccountTile extends ConsumerWidget {
     final id = defaultAccountId;
     final subtitle = id == null
         ? l10n.settingsDefaultAccountEmpty
-        : ref.watch(settingsDefaultAccountProvider(id)).maybeWhen(
-            data: (a) => a?.name ?? l10n.settingsDefaultAccountEmpty,
-            orElse: () => '',
-          );
+        : ref
+              .watch(settingsDefaultAccountProvider(id))
+              .maybeWhen(
+                data: (a) => a?.name ?? l10n.settingsDefaultAccountEmpty,
+                orElse: () => '',
+              );
     return ListTile(
       key: const ValueKey('settingsDefaultAccountTile'),
       title: Text(l10n.settingsDefaultAccountLabel),

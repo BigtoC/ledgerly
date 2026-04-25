@@ -39,7 +39,10 @@ class AccountsController extends _$AccountsController {
     final accountRepo = ref.watch(accountRepositoryProvider);
     final prefsRepo = ref.watch(userPreferencesRepositoryProvider);
 
-    final composer = _AccountsComposer(accountRepo: accountRepo, prefs: prefsRepo);
+    final composer = _AccountsComposer(
+      accountRepo: accountRepo,
+      prefs: prefsRepo,
+    );
     ref.onDispose(composer.dispose);
     return composer.stream;
   }
@@ -74,8 +77,9 @@ class AccountsController extends _$AccountsController {
     final snapshot = state.value;
     if (snapshot is AccountsData) {
       final activeCount = snapshot.active.length;
-      final targetIsActive = snapshot.active
-          .any((r) => r.account.id == accountId);
+      final targetIsActive = snapshot.active.any(
+        (r) => r.account.id == accountId,
+      );
       if (activeCount <= 1 && targetIsActive) {
         throw const AccountsOperationException(
           AccountsOperationError.lastActiveAccount,
@@ -91,9 +95,7 @@ class AccountsController extends _$AccountsController {
     final repo = ref.read(accountRepositoryProvider);
     final existing = await repo.getById(accountId);
     if (existing == null) {
-      throw const AccountsOperationException(
-        AccountsOperationError.missingRow,
-      );
+      throw const AccountsOperationException(AccountsOperationError.missingRow);
     }
     await repo.save(existing.copyWith(isArchived: false));
   }
@@ -134,9 +136,11 @@ enum AccountsOperationError { lastActiveAccount, defaultAccount, missingRow }
 /// subscriptions deterministically — `Stream` closures are harder to
 /// reason about under riverpod's `keepAlive: false` rebuilds.
 class _AccountsComposer {
-  _AccountsComposer({required AccountRepository accountRepo, required UserPreferencesRepository prefs})
-    : _accountRepo = accountRepo,
-      _prefs = prefs {
+  _AccountsComposer({
+    required AccountRepository accountRepo,
+    required UserPreferencesRepository prefs,
+  }) : _accountRepo = accountRepo,
+       _prefs = prefs {
     _out = StreamController<AccountsState>.broadcast(
       onListen: _start,
       onCancel: _stop,
@@ -220,10 +224,7 @@ class _AccountsComposer {
       if (_balanceSubs.containsKey(a.id)) continue;
       _balanceSubs[a.id] = _accountRepo
           .watchBalanceMinorUnits(a.id)
-          .listen(
-            (balance) => _onBalance(a.id, balance),
-            onError: _onError,
-          );
+          .listen((balance) => _onBalance(a.id, balance), onError: _onError);
       _referenceSubs[a.id] = _accountRepo
           .watchIsReferenced(a.id)
           .listen(
@@ -274,7 +275,11 @@ class _AccountsComposer {
 
     for (final a in _sortForDisplay(_accounts)) {
       final balance = _balances[a.id] ?? 0;
-      final affordance = _affordance(a, activeCount, _references[a.id] ?? false);
+      final affordance = _affordance(
+        a,
+        activeCount,
+        _references[a.id] ?? false,
+      );
       final view = AccountWithBalance(
         account: a,
         balanceMinorUnits: balance,

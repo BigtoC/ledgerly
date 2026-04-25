@@ -61,17 +61,9 @@ class _CategoriesBody extends ConsumerWidget {
     return CustomScrollView(
       slivers: [
         _SectionHeader(label: l10n.categoriesSectionExpense),
-        _Section(
-          type: CategoryType.expense,
-          rows: data.expense,
-          l10n: l10n,
-        ),
+        _Section(type: CategoryType.expense, rows: data.expense, l10n: l10n),
         _SectionHeader(label: l10n.categoriesSectionIncome),
-        _Section(
-          type: CategoryType.income,
-          rows: data.income,
-          l10n: l10n,
-        ),
+        _Section(type: CategoryType.income, rows: data.income, l10n: l10n),
         const SliverPadding(padding: EdgeInsets.only(bottom: 96)),
       ],
     );
@@ -107,12 +99,7 @@ class _Section extends ConsumerWidget {
           child: OutlinedButton.icon(
             onPressed: () => showCategoryFormSheet(
               context,
-              initial: Category(
-                id: 0,
-                icon: 'category',
-                color: 0,
-                type: type,
-              ),
+              initial: Category(id: 0, icon: 'category', color: 0, type: type),
             ),
             icon: const Icon(Icons.add),
             label: Text(l10n.categoriesAddCta),
@@ -170,9 +157,7 @@ class _Section extends ConsumerWidget {
         action: SnackBarAction(
           label: l10n.commonUndo,
           onPressed: () => unawaited(
-            ref
-                .read(categoriesControllerProvider.notifier)
-                .undoArchive(cat.id),
+            ref.read(categoriesControllerProvider.notifier).undoArchive(cat.id),
           ),
         ),
       ),
@@ -233,4 +218,3 @@ class _ErrorSurface extends StatelessWidget {
     );
   }
 }
-

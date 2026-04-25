@@ -72,7 +72,9 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
   }
 
   Future<void> _hydrateFromProvider() async {
-    final seed = await ref.read(accountFormSeedDataProvider(widget.accountId).future);
+    final seed = await ref.read(
+      accountFormSeedDataProvider(widget.accountId).future,
+    );
     if (!mounted) return;
     if (seed.isMissing) {
       setState(() {
@@ -154,7 +156,9 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.isEdit ? l10n.accountsFormEditTitle : l10n.accountsFormAddTitle,
+          widget.isEdit
+              ? l10n.accountsFormEditTitle
+              : l10n.accountsFormAddTitle,
         ),
       ),
       body: _hydrating || (!widget.isEdit && !_defaultCurrencyResolved)
@@ -253,20 +257,22 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: const [
-                        _IconChip(iconKey: 'wallet'),
-                        _IconChip(iconKey: 'trending_up'),
-                        _IconChip(iconKey: 'savings'),
-                        _IconChip(iconKey: 'payments'),
-                      ]
-                          .map(
-                            (chip) => _IconSelector(
-                              iconKey: chip.iconKey,
-                              selected: _icon == chip.iconKey,
-                              onTap: () => setState(() => _icon = chip.iconKey),
-                            ),
-                          )
-                          .toList(),
+                      children:
+                          const [
+                                _IconChip(iconKey: 'wallet'),
+                                _IconChip(iconKey: 'trending_up'),
+                                _IconChip(iconKey: 'savings'),
+                                _IconChip(iconKey: 'payments'),
+                              ]
+                              .map(
+                                (chip) => _IconSelector(
+                                  iconKey: chip.iconKey,
+                                  selected: _icon == chip.iconKey,
+                                  onTap: () =>
+                                      setState(() => _icon = chip.iconKey),
+                                ),
+                              )
+                              .toList(),
                     ),
                     if (_errorMessage != null) ...[
                       const SizedBox(height: 16),
@@ -279,7 +285,9 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
                         child: Text(
                           _errorMessage!,
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.onErrorContainer,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onErrorContainer,
                           ),
                         ),
                       ),
@@ -324,10 +332,8 @@ class _FieldHeader extends StatelessWidget {
   final String label;
 
   @override
-  Widget build(BuildContext context) => Text(
-    label,
-    style: Theme.of(context).textTheme.titleSmall,
-  );
+  Widget build(BuildContext context) =>
+      Text(label, style: Theme.of(context).textTheme.titleSmall);
 }
 
 class _ColorSwatches extends StatelessWidget {

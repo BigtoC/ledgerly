@@ -81,9 +81,7 @@ class SettingsController extends _$SettingsController {
   /// at render time.
   Future<void> setSplashButtonLabel(String label) async {
     final repo = ref.read(userPreferencesRepositoryProvider);
-    final normalized = label.trim().isEmpty
-        ? kDefaultSplashButtonLabel
-        : label;
+    final normalized = label.trim().isEmpty ? kDefaultSplashButtonLabel : label;
     await repo.setSplashButtonLabel(normalized);
   }
 }
@@ -138,70 +136,46 @@ class _SettingsComposer {
   Stream<SettingsState> get stream => _out.stream;
 
   void _start() {
-    _themeSub = _repo.watchThemeMode().listen(
-      (v) {
-        _themeMode = v;
-        _seenTheme = true;
-        _emitIfReady();
-      },
-      onError: _onError,
-    );
-    _localeSub = _repo.watchLocale().listen(
-      (v) {
-        _locale = v;
-        _seenLocale = true;
-        _emitIfReady();
-      },
-      onError: _onError,
-    );
-    _defaultCurrencySub = _repo.watchDefaultCurrency().listen(
-      (v) {
-        _defaultCurrency = v;
-        _seenDefaultCurrency = true;
-        _emitIfReady();
-      },
-      onError: _onError,
-    );
-    _defaultAccountSub = _repo.watchDefaultAccountId().listen(
-      (v) {
-        _defaultAccountId = v;
-        _seenDefaultAccount = true;
-        _emitIfReady();
-      },
-      onError: _onError,
-    );
-    _splashEnabledSub = _repo.watchSplashEnabled().listen(
-      (v) {
-        _splashEnabled = v;
-        _seenSplashEnabled = true;
-        _emitIfReady();
-      },
-      onError: _onError,
-    );
-    _splashStartDateSub = _repo.watchSplashStartDate().listen(
-      (v) {
-        _splashStartDate = v;
-        _seenSplashStartDate = true;
-        _emitIfReady();
-      },
-      onError: _onError,
-    );
-    _splashDisplayTextSub = _repo.watchSplashDisplayText().listen(
-      (v) {
-        _splashDisplayText = v;
-        _seenSplashDisplayText = true;
-        _emitIfReady();
-      },
-      onError: _onError,
-    );
-    _splashButtonLabelSub = _repo.watchSplashButtonLabel().listen(
-      (v) {
-        _splashButtonLabel = v;
-        _seenSplashButtonLabel = true;
-        _emitIfReady();
-      },
-      onError: _onError,
-    );
+    _themeSub = _repo.watchThemeMode().listen((v) {
+      _themeMode = v;
+      _seenTheme = true;
+      _emitIfReady();
+    }, onError: _onError);
+    _localeSub = _repo.watchLocale().listen((v) {
+      _locale = v;
+      _seenLocale = true;
+      _emitIfReady();
+    }, onError: _onError);
+    _defaultCurrencySub = _repo.watchDefaultCurrency().listen((v) {
+      _defaultCurrency = v;
+      _seenDefaultCurrency = true;
+      _emitIfReady();
+    }, onError: _onError);
+    _defaultAccountSub = _repo.watchDefaultAccountId().listen((v) {
+      _defaultAccountId = v;
+      _seenDefaultAccount = true;
+      _emitIfReady();
+    }, onError: _onError);
+    _splashEnabledSub = _repo.watchSplashEnabled().listen((v) {
+      _splashEnabled = v;
+      _seenSplashEnabled = true;
+      _emitIfReady();
+    }, onError: _onError);
+    _splashStartDateSub = _repo.watchSplashStartDate().listen((v) {
+      _splashStartDate = v;
+      _seenSplashStartDate = true;
+      _emitIfReady();
+    }, onError: _onError);
+    _splashDisplayTextSub = _repo.watchSplashDisplayText().listen((v) {
+      _splashDisplayText = v;
+      _seenSplashDisplayText = true;
+      _emitIfReady();
+    }, onError: _onError);
+    _splashButtonLabelSub = _repo.watchSplashButtonLabel().listen((v) {
+      _splashButtonLabel = v;
+      _seenSplashButtonLabel = true;
+      _emitIfReady();
+    }, onError: _onError);
   }
 
   Future<void> _stop() async {

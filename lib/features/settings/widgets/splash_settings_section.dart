@@ -147,9 +147,7 @@ class _SplashDisplayTextFieldState
     final value = _controller.text;
     if (value == _lastSyncedText) return;
     _lastSyncedText = value;
-    ref
-        .read(settingsControllerProvider.notifier)
-        .setSplashDisplayText(value);
+    ref.read(settingsControllerProvider.notifier).setSplashDisplayText(value);
   }
 
   @override
@@ -225,9 +223,7 @@ class _SplashButtonLabelFieldState
     final value = _controller.text;
     if (value == _lastSyncedLabel) return;
     _lastSyncedLabel = value;
-    ref
-        .read(settingsControllerProvider.notifier)
-        .setSplashButtonLabel(value);
+    ref.read(settingsControllerProvider.notifier).setSplashButtonLabel(value);
   }
 
   @override

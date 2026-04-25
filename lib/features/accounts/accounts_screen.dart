@@ -95,8 +95,9 @@ class _AccountsBody extends ConsumerWidget {
               view: data.active[i],
               isDefault: data.defaultAccountId == data.active[i].account.id,
               locale: locale,
-              allActiveIds:
-                  data.active.map((r) => r.account.id).toList(growable: false),
+              allActiveIds: data.active
+                  .map((r) => r.account.id)
+                  .toList(growable: false),
             ),
             childCount: data.active.length,
           ),
@@ -117,8 +118,9 @@ class _AccountsBody extends ConsumerWidget {
                 view: data.archived[i],
                 isDefault: false,
                 locale: locale,
-                allActiveIds:
-                    data.active.map((r) => r.account.id).toList(growable: false),
+                allActiveIds: data.active
+                    .map((r) => r.account.id)
+                    .toList(growable: false),
               ),
               childCount: data.archived.length,
             ),
@@ -227,9 +229,7 @@ class _AccountTileWithLookups extends ConsumerWidget {
         action: SnackBarAction(
           label: l10n.commonUndo,
           onPressed: () => unawaited(
-            ref
-                .read(accountsControllerProvider.notifier)
-                .unarchive(id),
+            ref.read(accountsControllerProvider.notifier).unarchive(id),
           ),
         ),
       ),

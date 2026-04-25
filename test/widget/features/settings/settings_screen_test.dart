@@ -50,12 +50,8 @@ class _FakeSettingsController extends SettingsController {
 
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 
-Account _a({required int id, required String name}) => Account(
-      id: id,
-      name: name,
-      accountTypeId: 1,
-      currency: _usd,
-    );
+Account _a({required int id, required String name}) =>
+    Account(id: id, name: name, accountTypeId: 1, currency: _usd);
 
 class _StubRouter {
   static GoRouter build(Widget home) {
@@ -124,17 +120,16 @@ SettingsData _data({
   DateTime? splashStartDate,
   String? splashDisplayText,
   String? splashButtonLabel,
-}) =>
-    SettingsData(
-      themeMode: themeMode,
-      locale: locale,
-      defaultCurrency: defaultCurrency,
-      defaultAccountId: defaultAccountId,
-      splashEnabled: splashEnabled,
-      splashStartDate: splashStartDate,
-      splashDisplayText: splashDisplayText,
-      splashButtonLabel: splashButtonLabel,
-    );
+}) => SettingsData(
+  themeMode: themeMode,
+  locale: locale,
+  defaultCurrency: defaultCurrency,
+  defaultAccountId: defaultAccountId,
+  splashEnabled: splashEnabled,
+  splashStartDate: splashStartDate,
+  splashDisplayText: splashDisplayText,
+  splashButtonLabel: splashButtonLabel,
+);
 
 void main() {
   setUpAll(() {
@@ -160,69 +155,59 @@ void main() {
     // `find.text` matches the element even if it has not laid out yet,
     // which is what we want here — the widget tree exists regardless of
     // scroll position.
-    expect(
-      find.text('Appearance', skipOffstage: false),
-      findsOneWidget,
-    );
+    expect(find.text('Appearance', skipOffstage: false), findsOneWidget);
     expect(find.text('General', skipOffstage: false), findsOneWidget);
-    expect(
-      find.text('Splash screen', skipOffstage: false),
-      findsOneWidget,
-    );
-    expect(
-      find.text('Data management', skipOffstage: false),
-      findsOneWidget,
-    );
+    expect(find.text('Splash screen', skipOffstage: false), findsOneWidget);
+    expect(find.text('Data management', skipOffstage: false), findsOneWidget);
   });
 
-  testWidgets(
-    'SS02: default-account tile shows "Not set" when id is null',
-    (tester) async {
-      final prefs = _MockUserPreferencesRepository();
-      final accountRepo = _MockAccountRepository();
-      final currencyRepo = _MockCurrencyRepository();
+  testWidgets('SS02: default-account tile shows "Not set" when id is null', (
+    tester,
+  ) async {
+    final prefs = _MockUserPreferencesRepository();
+    final accountRepo = _MockAccountRepository();
+    final currencyRepo = _MockCurrencyRepository();
 
-      final container = _makeContainer(
-        prefs: prefs,
-        accountRepo: accountRepo,
-        currencyRepo: currencyRepo,
-        fixed: _data(),
-      );
-      addTearDown(container.dispose);
+    final container = _makeContainer(
+      prefs: prefs,
+      accountRepo: accountRepo,
+      currencyRepo: currencyRepo,
+      fixed: _data(),
+    );
+    addTearDown(container.dispose);
 
-      await tester.pumpWidget(_wrap(container: container));
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
 
-      expect(find.text('Not set'), findsOneWidget);
-    },
-  );
+    expect(find.text('Not set'), findsOneWidget);
+  });
 
-  testWidgets(
-    'SS03: default-account tile shows account name when set',
-    (tester) async {
-      final prefs = _MockUserPreferencesRepository();
-      final accountRepo = _MockAccountRepository();
-      final currencyRepo = _MockCurrencyRepository();
-      when(() => accountRepo.getById(7))
-          .thenAnswer((_) async => _a(id: 7, name: 'Main Cash'));
-      when(() => accountRepo.watchById(7)).thenAnswer(
-        (_) => Stream.value(_a(id: 7, name: 'Main Cash')),
-      );
+  testWidgets('SS03: default-account tile shows account name when set', (
+    tester,
+  ) async {
+    final prefs = _MockUserPreferencesRepository();
+    final accountRepo = _MockAccountRepository();
+    final currencyRepo = _MockCurrencyRepository();
+    when(
+      () => accountRepo.getById(7),
+    ).thenAnswer((_) async => _a(id: 7, name: 'Main Cash'));
+    when(
+      () => accountRepo.watchById(7),
+    ).thenAnswer((_) => Stream.value(_a(id: 7, name: 'Main Cash')));
 
-      final container = _makeContainer(
-        prefs: prefs,
-        accountRepo: accountRepo,
-        currencyRepo: currencyRepo,
-        fixed: _data(defaultAccountId: 7),
-      );
-      addTearDown(container.dispose);
+    final container = _makeContainer(
+      prefs: prefs,
+      accountRepo: accountRepo,
+      currencyRepo: currencyRepo,
+      fixed: _data(defaultAccountId: 7),
+    );
+    addTearDown(container.dispose);
 
-      await tester.pumpWidget(_wrap(container: container));
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
 
-      expect(find.text('Main Cash'), findsOneWidget);
-    },
-  );
+    expect(find.text('Main Cash'), findsOneWidget);
+  });
 
   testWidgets(
     'SS03b: default-account subtitle updates when the account name changes',
@@ -233,7 +218,9 @@ void main() {
       final accountCtrl = StreamController<Account?>.broadcast();
       addTearDown(accountCtrl.close);
 
-      when(() => accountRepo.watchById(7)).thenAnswer((_) => accountCtrl.stream);
+      when(
+        () => accountRepo.watchById(7),
+      ).thenAnswer((_) => accountCtrl.stream);
 
       final container = _makeContainer(
         prefs: prefs,
@@ -259,32 +246,30 @@ void main() {
     },
   );
 
-  testWidgets(
-    'SS04: theme segmented control writes via setThemeMode',
-    (tester) async {
-      final prefs = _MockUserPreferencesRepository();
-      final accountRepo = _MockAccountRepository();
-      final currencyRepo = _MockCurrencyRepository();
-      when(() => prefs.setThemeMode(ThemeMode.dark))
-          .thenAnswer((_) async {});
+  testWidgets('SS04: theme segmented control writes via setThemeMode', (
+    tester,
+  ) async {
+    final prefs = _MockUserPreferencesRepository();
+    final accountRepo = _MockAccountRepository();
+    final currencyRepo = _MockCurrencyRepository();
+    when(() => prefs.setThemeMode(ThemeMode.dark)).thenAnswer((_) async {});
 
-      final container = _makeContainer(
-        prefs: prefs,
-        accountRepo: accountRepo,
-        currencyRepo: currencyRepo,
-        fixed: _data(),
-      );
-      addTearDown(container.dispose);
+    final container = _makeContainer(
+      prefs: prefs,
+      accountRepo: accountRepo,
+      currencyRepo: currencyRepo,
+      fixed: _data(),
+    );
+    addTearDown(container.dispose);
 
-      await tester.pumpWidget(_wrap(container: container));
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Dark'));
-      await tester.pumpAndSettle();
+    await tester.tap(find.text('Dark'));
+    await tester.pumpAndSettle();
 
-      verify(() => prefs.setThemeMode(ThemeMode.dark)).called(1);
-    },
-  );
+    verify(() => prefs.setThemeMode(ThemeMode.dark)).called(1);
+  });
 
   testWidgets(
     'SS05: Manage Categories tile navigates to /settings/categories',
@@ -357,8 +342,9 @@ void main() {
       final prefs = _MockUserPreferencesRepository();
       final accountRepo = _MockAccountRepository();
       final currencyRepo = _MockCurrencyRepository();
-      when(() => prefs.setLocale(const Locale('zh', 'TW')))
-          .thenAnswer((_) async {});
+      when(
+        () => prefs.setLocale(const Locale('zh', 'TW')),
+      ).thenAnswer((_) async {});
 
       final container = _makeContainer(
         prefs: prefs,
@@ -380,25 +366,24 @@ void main() {
     },
   );
 
-  testWidgets(
-    'SS07: 2x text scale survives without layout overflow',
-    (tester) async {
-      final prefs = _MockUserPreferencesRepository();
-      final accountRepo = _MockAccountRepository();
-      final currencyRepo = _MockCurrencyRepository();
+  testWidgets('SS07: 2x text scale survives without layout overflow', (
+    tester,
+  ) async {
+    final prefs = _MockUserPreferencesRepository();
+    final accountRepo = _MockAccountRepository();
+    final currencyRepo = _MockCurrencyRepository();
 
-      final container = _makeContainer(
-        prefs: prefs,
-        accountRepo: accountRepo,
-        currencyRepo: currencyRepo,
-        fixed: _data(),
-      );
-      addTearDown(container.dispose);
+    final container = _makeContainer(
+      prefs: prefs,
+      accountRepo: accountRepo,
+      currencyRepo: currencyRepo,
+      fixed: _data(),
+    );
+    addTearDown(container.dispose);
 
-      await tester.pumpWidget(_wrap(container: container, textScale: 2.0));
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull);
-      expect(find.text('Appearance'), findsOneWidget);
-    },
-  );
+    await tester.pumpWidget(_wrap(container: container, textScale: 2.0));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('Appearance'), findsOneWidget);
+  });
 }

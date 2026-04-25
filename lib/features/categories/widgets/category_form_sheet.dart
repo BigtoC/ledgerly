@@ -25,18 +25,13 @@ import 'category_color_picker.dart';
 import 'category_display.dart';
 import 'category_icon_picker.dart';
 
-Future<void> showCategoryFormSheet(
-  BuildContext context, {
-  Category? initial,
-}) {
+Future<void> showCategoryFormSheet(BuildContext context, {Category? initial}) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
     builder: (ctx) => Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(ctx).viewInsets.bottom,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
       child: _CategoryFormSheet(initial: initial),
     ),
   );
@@ -287,8 +282,6 @@ class _FieldHeader extends StatelessWidget {
   final String label;
 
   @override
-  Widget build(BuildContext context) => Text(
-    label,
-    style: Theme.of(context).textTheme.titleSmall,
-  );
+  Widget build(BuildContext context) =>
+      Text(label, style: Theme.of(context).textTheme.titleSmall);
 }

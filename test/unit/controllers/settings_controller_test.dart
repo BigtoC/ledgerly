@@ -91,9 +91,7 @@ void main() {
 
     ProviderContainer makeContainer() {
       return ProviderContainer(
-        overrides: [
-          userPreferencesRepositoryProvider.overrideWithValue(repo),
-        ],
+        overrides: [userPreferencesRepositoryProvider.overrideWithValue(repo)],
       );
     }
 
@@ -248,24 +246,26 @@ void main() {
       verify(() => repo.setSplashDisplayText('Day {days}')).called(1);
     });
 
-    test('SC09: setSplashDisplayText normalizes empty to seed default',
-        () async {
-      when(
-        () => repo.setSplashDisplayText(kDefaultSplashDisplayText),
-      ).thenAnswer((_) async {});
-      final container = makeContainer();
-      addTearDown(container.dispose);
-      container.listen(settingsControllerProvider, (_, _) {});
-      await pushAllInitial();
-      await waitForData(container);
+    test(
+      'SC09: setSplashDisplayText normalizes empty to seed default',
+      () async {
+        when(
+          () => repo.setSplashDisplayText(kDefaultSplashDisplayText),
+        ).thenAnswer((_) async {});
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        container.listen(settingsControllerProvider, (_, _) {});
+        await pushAllInitial();
+        await waitForData(container);
 
-      await container
-          .read(settingsControllerProvider.notifier)
-          .setSplashDisplayText('   ');
-      verify(
-        () => repo.setSplashDisplayText(kDefaultSplashDisplayText),
-      ).called(1);
-    });
+        await container
+            .read(settingsControllerProvider.notifier)
+            .setSplashDisplayText('   ');
+        verify(
+          () => repo.setSplashDisplayText(kDefaultSplashDisplayText),
+        ).called(1);
+      },
+    );
 
     test('SC10: setSplashButtonLabel writes non-empty value as-is', () async {
       when(() => repo.setSplashButtonLabel('Go!')).thenAnswer((_) async {});
@@ -281,24 +281,26 @@ void main() {
       verify(() => repo.setSplashButtonLabel('Go!')).called(1);
     });
 
-    test('SC11: setSplashButtonLabel normalizes empty to seed default',
-        () async {
-      when(
-        () => repo.setSplashButtonLabel(kDefaultSplashButtonLabel),
-      ).thenAnswer((_) async {});
-      final container = makeContainer();
-      addTearDown(container.dispose);
-      container.listen(settingsControllerProvider, (_, _) {});
-      await pushAllInitial();
-      await waitForData(container);
+    test(
+      'SC11: setSplashButtonLabel normalizes empty to seed default',
+      () async {
+        when(
+          () => repo.setSplashButtonLabel(kDefaultSplashButtonLabel),
+        ).thenAnswer((_) async {});
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        container.listen(settingsControllerProvider, (_, _) {});
+        await pushAllInitial();
+        await waitForData(container);
 
-      await container
-          .read(settingsControllerProvider.notifier)
-          .setSplashButtonLabel('');
-      verify(
-        () => repo.setSplashButtonLabel(kDefaultSplashButtonLabel),
-      ).called(1);
-    });
+        await container
+            .read(settingsControllerProvider.notifier)
+            .setSplashButtonLabel('');
+        verify(
+          () => repo.setSplashButtonLabel(kDefaultSplashButtonLabel),
+        ).called(1);
+      },
+    );
 
     test('SC12: state re-emits when upstream streams update', () async {
       final container = makeContainer();

@@ -46,7 +46,12 @@ Category _c({
 void main() {
   setUpAll(() {
     registerFallbackValue(
-      const Category(id: 0, icon: 'category', color: 0, type: CategoryType.expense),
+      const Category(
+        id: 0,
+        icon: 'category',
+        color: 0,
+        type: CategoryType.expense,
+      ),
     );
   });
 
@@ -84,44 +89,50 @@ void main() {
       throw StateError('CategoriesController never produced data');
     }
 
-    test('C01: starts in loading and transitions to data on first emit', () async {
-      final container = makeContainer();
-      addTearDown(container.dispose);
-      container.listen(categoriesControllerProvider, (_, _) {});
+    test(
+      'C01: starts in loading and transitions to data on first emit',
+      () async {
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        container.listen(categoriesControllerProvider, (_, _) {});
 
-      expect(
-        container.read(categoriesControllerProvider),
-        isA<AsyncLoading<CategoriesState>>(),
-      );
+        expect(
+          container.read(categoriesControllerProvider),
+          isA<AsyncLoading<CategoriesState>>(),
+        );
 
-      await Future<void>.delayed(Duration.zero);
-      rowsCtrl.add([
-        _c(id: 1, type: CategoryType.expense, customName: 'Food'),
-        _c(id: 2, type: CategoryType.income, customName: 'Salary'),
-      ]);
+        await Future<void>.delayed(Duration.zero);
+        rowsCtrl.add([
+          _c(id: 1, type: CategoryType.expense, customName: 'Food'),
+          _c(id: 2, type: CategoryType.income, customName: 'Salary'),
+        ]);
 
-      final state = await waitForData(container) as CategoriesData;
-      expect(state.expense, hasLength(1));
-      expect(state.income, hasLength(1));
-      expect(state.expense.single.category.customName, 'Food');
-      expect(state.income.single.category.customName, 'Salary');
-    });
+        final state = await waitForData(container) as CategoriesData;
+        expect(state.expense, hasLength(1));
+        expect(state.income, hasLength(1));
+        expect(state.expense.single.category.customName, 'Food');
+        expect(state.income.single.category.customName, 'Salary');
+      },
+    );
 
-    test('C02: seeded row shows Archive affordance regardless of usage', () async {
-      final container = makeContainer();
-      addTearDown(container.dispose);
-      container.listen(categoriesControllerProvider, (_, _) {});
-      await Future<void>.delayed(Duration.zero);
+    test(
+      'C02: seeded row shows Archive affordance regardless of usage',
+      () async {
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        container.listen(categoriesControllerProvider, (_, _) {});
+        await Future<void>.delayed(Duration.zero);
 
-      // Seeded + unreferenced must still be Archive (risk #3).
-      when(() => repo.isReferenced(1)).thenAnswer((_) async => false);
+        // Seeded + unreferenced must still be Archive (risk #3).
+        when(() => repo.isReferenced(1)).thenAnswer((_) async => false);
 
-      rowsCtrl.add([
-        _c(id: 1, type: CategoryType.expense, l10nKey: 'category.food'),
-      ]);
-      final state = await waitForData(container) as CategoriesData;
-      expect(state.expense.single.affordance, CategoryRowAffordance.archive);
-    });
+        rowsCtrl.add([
+          _c(id: 1, type: CategoryType.expense, l10nKey: 'category.food'),
+        ]);
+        final state = await waitForData(container) as CategoriesData;
+        expect(state.expense.single.affordance, CategoryRowAffordance.archive);
+      },
+    );
 
     test('C03: custom unreferenced row shows Delete', () async {
       final container = makeContainer();
@@ -173,21 +184,24 @@ void main() {
       expect(state.expense.map((v) => v.category.id), [2]);
     });
 
-    test('C06: expense/income rows are grouped into the matching section', () async {
-      final container = makeContainer();
-      addTearDown(container.dispose);
-      container.listen(categoriesControllerProvider, (_, _) {});
-      await Future<void>.delayed(Duration.zero);
+    test(
+      'C06: expense/income rows are grouped into the matching section',
+      () async {
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        container.listen(categoriesControllerProvider, (_, _) {});
+        await Future<void>.delayed(Duration.zero);
 
-      rowsCtrl.add([
-        _c(id: 1, type: CategoryType.expense, customName: 'A'),
-        _c(id: 2, type: CategoryType.income, customName: 'B'),
-        _c(id: 3, type: CategoryType.expense, customName: 'C'),
-      ]);
-      final state = await waitForData(container) as CategoriesData;
-      expect(state.expense.map((v) => v.category.id), [1, 3]);
-      expect(state.income.map((v) => v.category.id), [2]);
-    });
+        rowsCtrl.add([
+          _c(id: 1, type: CategoryType.expense, customName: 'A'),
+          _c(id: 2, type: CategoryType.income, customName: 'B'),
+          _c(id: 3, type: CategoryType.expense, customName: 'C'),
+        ]);
+        final state = await waitForData(container) as CategoriesData;
+        expect(state.expense.map((v) => v.category.id), [1, 3]);
+        expect(state.income.map((v) => v.category.id), [2]);
+      },
+    );
 
     test('C07: sort by sortOrder asc, nulls last, then display name', () async {
       final container = makeContainer();
@@ -197,12 +211,7 @@ void main() {
 
       rowsCtrl.add([
         _c(id: 1, type: CategoryType.expense, customName: 'Zebra'),
-        _c(
-          id: 2,
-          type: CategoryType.expense,
-          customName: 'Beta',
-          sortOrder: 1,
-        ),
+        _c(id: 2, type: CategoryType.expense, customName: 'Beta', sortOrder: 1),
         _c(
           id: 3,
           type: CategoryType.expense,
@@ -222,11 +231,7 @@ void main() {
       rowsCtrl.add(const []);
       await waitForData(container);
 
-      final draft = _c(
-        id: 99,
-        type: CategoryType.expense,
-        customName: 'New',
-      );
+      final draft = _c(id: 99, type: CategoryType.expense, customName: 'New');
       final saved = draft.copyWith(id: 42);
       when(() => repo.save(any())).thenAnswer((_) async => saved);
 
@@ -249,11 +254,7 @@ void main() {
       rowsCtrl.add(const []);
       await waitForData(container);
 
-      final after = _c(
-        id: 7,
-        type: CategoryType.expense,
-        customName: 'X',
-      );
+      final after = _c(id: 7, type: CategoryType.expense, customName: 'X');
       when(() => repo.rename(7, 'X')).thenAnswer((_) async => after);
 
       final result = await container
@@ -323,9 +324,7 @@ void main() {
       rowsCtrl.add(const []);
       await waitForData(container);
 
-      when(
-        () => repo.delete(11),
-      ).thenThrow(const CategoryInUseException(11));
+      when(() => repo.delete(11)).thenThrow(const CategoryInUseException(11));
 
       expect(
         () => container
@@ -365,25 +364,18 @@ void main() {
       rowsCtrl.add(const []);
       await waitForData(container);
 
-      final a = _c(
-        id: 10,
-        type: CategoryType.expense,
-        customName: 'A',
-      );
-      final b = _c(
-        id: 20,
-        type: CategoryType.expense,
-        customName: 'B',
-      );
+      final a = _c(id: 10, type: CategoryType.expense, customName: 'A');
+      final b = _c(id: 20, type: CategoryType.expense, customName: 'B');
       when(() => repo.getById(10)).thenAnswer((_) async => a);
       when(() => repo.getById(20)).thenAnswer((_) async => b);
-      when(() => repo.save(any())).thenAnswer(
-        (inv) async => inv.positionalArguments.first as Category,
-      );
+      when(
+        () => repo.save(any()),
+      ).thenAnswer((inv) async => inv.positionalArguments.first as Category);
 
-      await container
-          .read(categoriesControllerProvider.notifier)
-          .reorder([20, 10]);
+      await container.read(categoriesControllerProvider.notifier).reorder([
+        20,
+        10,
+      ]);
 
       final captures = verify(() => repo.save(captureAny())).captured;
       expect(captures, hasLength(2));
@@ -409,9 +401,9 @@ void main() {
         customName: 'Name',
       );
       when(() => repo.getById(50)).thenAnswer((_) async => existing);
-      when(() => repo.save(any())).thenAnswer(
-        (inv) async => inv.positionalArguments.first as Category,
-      );
+      when(
+        () => repo.save(any()),
+      ).thenAnswer((inv) async => inv.positionalArguments.first as Category);
 
       await container
           .read(categoriesControllerProvider.notifier)

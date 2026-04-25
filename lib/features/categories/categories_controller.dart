@@ -56,7 +56,10 @@ class CategoriesController extends _$CategoriesController {
           income.add(c);
         }
       }
-      final expenseViews = await _withAffordance(_sortForDisplay(expense), repo);
+      final expenseViews = await _withAffordance(
+        _sortForDisplay(expense),
+        repo,
+      );
       final incomeViews = await _withAffordance(_sortForDisplay(income), repo);
       yield CategoriesState.data(expense: expenseViews, income: incomeViews);
     }

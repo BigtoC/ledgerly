@@ -101,10 +101,7 @@ class _StubRouter {
   }
 }
 
-Widget _wrap({
-  required ProviderContainer container,
-  double textScale = 1.0,
-}) {
+Widget _wrap({required ProviderContainer container, double textScale = 1.0}) {
   return UncontrolledProviderScope(
     container: container,
     child: MaterialApp.router(
@@ -152,77 +149,76 @@ void main() {
     defaultCurrency: _usd,
   );
 
-  testWidgets(
-    'AS01: data state renders active accounts with default badge',
-    (tester) async {
-      final accountRepo = _MockAccountRepository();
-      final typeRepo = _MockAccountTypeRepository();
-      final prefs = _MockUserPreferencesRepository();
-      when(() => typeRepo.watchAll(includeArchived: true))
-          .thenAnswer((_) => Stream.value([cashType]));
+  testWidgets('AS01: data state renders active accounts with default badge', (
+    tester,
+  ) async {
+    final accountRepo = _MockAccountRepository();
+    final typeRepo = _MockAccountTypeRepository();
+    final prefs = _MockUserPreferencesRepository();
+    when(
+      () => typeRepo.watchAll(includeArchived: true),
+    ).thenAnswer((_) => Stream.value([cashType]));
 
-      final container = _makeContainer(
-        accountRepo: accountRepo,
-        typeRepo: typeRepo,
-        prefs: prefs,
-        fixed: AccountsState.data(
-          active: [
-            _wb(_a(id: 1, name: 'Cash')),
-            _wb(_a(id: 2, name: 'Savings')),
-          ],
-          archived: const [],
-          defaultAccountId: 1,
-        ),
-      );
-      addTearDown(container.dispose);
+    final container = _makeContainer(
+      accountRepo: accountRepo,
+      typeRepo: typeRepo,
+      prefs: prefs,
+      fixed: AccountsState.data(
+        active: [
+          _wb(_a(id: 1, name: 'Cash')),
+          _wb(_a(id: 2, name: 'Savings')),
+        ],
+        archived: const [],
+        defaultAccountId: 1,
+      ),
+    );
+    addTearDown(container.dispose);
 
-      await tester.pumpWidget(_wrap(container: container));
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
 
-      // 'Cash' appears twice per row (account name + account-type label
-      // subtitle). Savings has a unique name.
-      expect(find.text('Savings'), findsOneWidget);
-      expect(find.text('Default'), findsOneWidget);
-    },
-  );
+    // 'Cash' appears twice per row (account name + account-type label
+    // subtitle). Savings has a unique name.
+    expect(find.text('Savings'), findsOneWidget);
+    expect(find.text('Default'), findsOneWidget);
+  });
 
-  testWidgets(
-    'AS02: empty-state CTA renders when every account is archived',
-    (tester) async {
-      final accountRepo = _MockAccountRepository();
-      final typeRepo = _MockAccountTypeRepository();
-      final prefs = _MockUserPreferencesRepository();
-      when(() => typeRepo.watchAll(includeArchived: true))
-          .thenAnswer((_) => Stream.value([cashType]));
+  testWidgets('AS02: empty-state CTA renders when every account is archived', (
+    tester,
+  ) async {
+    final accountRepo = _MockAccountRepository();
+    final typeRepo = _MockAccountTypeRepository();
+    final prefs = _MockUserPreferencesRepository();
+    when(
+      () => typeRepo.watchAll(includeArchived: true),
+    ).thenAnswer((_) => Stream.value([cashType]));
 
-      final container = _makeContainer(
-        accountRepo: accountRepo,
-        typeRepo: typeRepo,
-        prefs: prefs,
-        fixed: AccountsState.data(
-          active: const [],
-          archived: [
-            _wb(_a(id: 1, name: 'OldCard', isArchived: true)),
-          ],
-          defaultAccountId: null,
-        ),
-      );
-      addTearDown(container.dispose);
+    final container = _makeContainer(
+      accountRepo: accountRepo,
+      typeRepo: typeRepo,
+      prefs: prefs,
+      fixed: AccountsState.data(
+        active: const [],
+        archived: [_wb(_a(id: 1, name: 'OldCard', isArchived: true))],
+        defaultAccountId: null,
+      ),
+    );
+    addTearDown(container.dispose);
 
-      await tester.pumpWidget(_wrap(container: container));
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
 
-      expect(find.text('No active accounts'), findsOneWidget);
-      expect(find.text('Create account'), findsOneWidget);
-    },
-  );
+    expect(find.text('No active accounts'), findsOneWidget);
+    expect(find.text('Create account'), findsOneWidget);
+  });
 
   testWidgets('AS03: FAB opens Add Account route', (tester) async {
     final accountRepo = _MockAccountRepository();
     final typeRepo = _MockAccountTypeRepository();
     final prefs = _MockUserPreferencesRepository();
-    when(() => typeRepo.watchAll(includeArchived: true))
-        .thenAnswer((_) => Stream.value([cashType]));
+    when(
+      () => typeRepo.watchAll(includeArchived: true),
+    ).thenAnswer((_) => Stream.value([cashType]));
 
     final container = _makeContainer(
       accountRepo: accountRepo,
@@ -245,91 +241,92 @@ void main() {
     expect(find.text('ADD_ACCOUNT'), findsOneWidget);
   });
 
-  testWidgets(
-    'AS04: archive action via overflow menu shows undo snackbar',
-    (tester) async {
-      final accountRepo = _MockAccountRepository();
-      final typeRepo = _MockAccountTypeRepository();
-      final prefs = _MockUserPreferencesRepository();
-      when(() => typeRepo.watchAll(includeArchived: true))
-          .thenAnswer((_) => Stream.value([cashType]));
-      when(() => accountRepo.archive(2)).thenAnswer((_) async {});
+  testWidgets('AS04: archive action via overflow menu shows undo snackbar', (
+    tester,
+  ) async {
+    final accountRepo = _MockAccountRepository();
+    final typeRepo = _MockAccountTypeRepository();
+    final prefs = _MockUserPreferencesRepository();
+    when(
+      () => typeRepo.watchAll(includeArchived: true),
+    ).thenAnswer((_) => Stream.value([cashType]));
+    when(() => accountRepo.archive(2)).thenAnswer((_) async {});
 
-      final container = _makeContainer(
-        accountRepo: accountRepo,
-        typeRepo: typeRepo,
-        prefs: prefs,
-        fixed: AccountsState.data(
-          active: [
-            _wb(
-              _a(id: 1, name: 'Cash'),
-              affordance: AccountRowAffordance.archiveBlocked,
-            ),
-            _wb(
-              _a(id: 2, name: 'Spare'),
-              affordance: AccountRowAffordance.archive,
-            ),
-          ],
-          archived: const [],
-          defaultAccountId: 1,
-        ),
-      );
-      addTearDown(container.dispose);
+    final container = _makeContainer(
+      accountRepo: accountRepo,
+      typeRepo: typeRepo,
+      prefs: prefs,
+      fixed: AccountsState.data(
+        active: [
+          _wb(
+            _a(id: 1, name: 'Cash'),
+            affordance: AccountRowAffordance.archiveBlocked,
+          ),
+          _wb(
+            _a(id: 2, name: 'Spare'),
+            affordance: AccountRowAffordance.archive,
+          ),
+        ],
+        archived: const [],
+        defaultAccountId: 1,
+      ),
+    );
+    addTearDown(container.dispose);
 
-      await tester.pumpWidget(_wrap(container: container));
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const ValueKey('accountTile:2:menu')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Archive').last);
-      await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('accountTile:2:menu')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Archive').last);
+    await tester.pumpAndSettle();
 
-      expect(find.text('Account archived'), findsOneWidget);
-      expect(find.text('Undo'), findsOneWidget);
-      verify(() => accountRepo.archive(2)).called(1);
-    },
-  );
+    expect(find.text('Account archived'), findsOneWidget);
+    expect(find.text('Undo'), findsOneWidget);
+    verify(() => accountRepo.archive(2)).called(1);
+  });
 
-  testWidgets(
-    'AS05: balance renders in native currency (USD + JPY + TWD)',
-    (tester) async {
-      final accountRepo = _MockAccountRepository();
-      final typeRepo = _MockAccountTypeRepository();
-      final prefs = _MockUserPreferencesRepository();
-      when(() => typeRepo.watchAll(includeArchived: true))
-          .thenAnswer((_) => Stream.value([cashType]));
+  testWidgets('AS05: balance renders in native currency (USD + JPY + TWD)', (
+    tester,
+  ) async {
+    final accountRepo = _MockAccountRepository();
+    final typeRepo = _MockAccountTypeRepository();
+    final prefs = _MockUserPreferencesRepository();
+    when(
+      () => typeRepo.watchAll(includeArchived: true),
+    ).thenAnswer((_) => Stream.value([cashType]));
 
-      final container = _makeContainer(
-        accountRepo: accountRepo,
-        typeRepo: typeRepo,
-        prefs: prefs,
-        fixed: AccountsState.data(
-          active: [
-            _wb(_a(id: 1, name: 'US', currency: _usd), balance: 12345),
-            _wb(_a(id: 2, name: 'JP', currency: _jpy), balance: 9999),
-            _wb(_a(id: 3, name: 'TW', currency: _twd), balance: 5000),
-          ],
-          archived: const [],
-          defaultAccountId: 1,
-        ),
-      );
-      addTearDown(container.dispose);
+    final container = _makeContainer(
+      accountRepo: accountRepo,
+      typeRepo: typeRepo,
+      prefs: prefs,
+      fixed: AccountsState.data(
+        active: [
+          _wb(_a(id: 1, name: 'US', currency: _usd), balance: 12345),
+          _wb(_a(id: 2, name: 'JP', currency: _jpy), balance: 9999),
+          _wb(_a(id: 3, name: 'TW', currency: _twd), balance: 5000),
+        ],
+        archived: const [],
+        defaultAccountId: 1,
+      ),
+    );
+    addTearDown(container.dispose);
 
-      await tester.pumpWidget(_wrap(container: container));
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
 
-      expect(find.textContaining(r'$123.45'), findsOneWidget);
-      expect(find.textContaining('¥9,999'), findsOneWidget);
-      expect(find.textContaining(r'NT$50.00'), findsOneWidget);
-    },
-  );
+    expect(find.textContaining(r'$123.45'), findsOneWidget);
+    expect(find.textContaining('¥9,999'), findsOneWidget);
+    expect(find.textContaining(r'NT$50.00'), findsOneWidget);
+  });
 
   testWidgets('AS06: 2x text scale survives', (tester) async {
     final accountRepo = _MockAccountRepository();
     final typeRepo = _MockAccountTypeRepository();
     final prefs = _MockUserPreferencesRepository();
-    when(() => typeRepo.watchAll(includeArchived: true))
-        .thenAnswer((_) => Stream.value([cashType]));
+    when(
+      () => typeRepo.watchAll(includeArchived: true),
+    ).thenAnswer((_) => Stream.value([cashType]));
 
     final container = _makeContainer(
       accountRepo: accountRepo,
@@ -357,32 +354,32 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets(
-    'AS07: archived section renders under Archived header',
-    (tester) async {
-      final accountRepo = _MockAccountRepository();
-      final typeRepo = _MockAccountTypeRepository();
-      final prefs = _MockUserPreferencesRepository();
-      when(() => typeRepo.watchAll(includeArchived: true))
-          .thenAnswer((_) => Stream.value([cashType]));
+  testWidgets('AS07: archived section renders under Archived header', (
+    tester,
+  ) async {
+    final accountRepo = _MockAccountRepository();
+    final typeRepo = _MockAccountTypeRepository();
+    final prefs = _MockUserPreferencesRepository();
+    when(
+      () => typeRepo.watchAll(includeArchived: true),
+    ).thenAnswer((_) => Stream.value([cashType]));
 
-      final container = _makeContainer(
-        accountRepo: accountRepo,
-        typeRepo: typeRepo,
-        prefs: prefs,
-        fixed: AccountsState.data(
-          active: [_wb(_a(id: 1, name: 'Cash'))],
-          archived: [_wb(_a(id: 2, name: 'OldCard', isArchived: true))],
-          defaultAccountId: 1,
-        ),
-      );
-      addTearDown(container.dispose);
+    final container = _makeContainer(
+      accountRepo: accountRepo,
+      typeRepo: typeRepo,
+      prefs: prefs,
+      fixed: AccountsState.data(
+        active: [_wb(_a(id: 1, name: 'Cash'))],
+        archived: [_wb(_a(id: 2, name: 'OldCard', isArchived: true))],
+        defaultAccountId: 1,
+      ),
+    );
+    addTearDown(container.dispose);
 
-      await tester.pumpWidget(_wrap(container: container));
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
 
-      expect(find.text('Archived'), findsOneWidget);
-      expect(find.text('OldCard'), findsOneWidget);
-    },
-  );
+    expect(find.text('Archived'), findsOneWidget);
+    expect(find.text('OldCard'), findsOneWidget);
+  });
 }

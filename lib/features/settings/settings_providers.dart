@@ -4,8 +4,8 @@ import '../../app/providers/repository_providers.dart';
 import '../../data/models/account.dart';
 import '../../data/models/currency.dart';
 
-final settingsDefaultAccountProvider =
-    StreamProvider.autoDispose.family<Account?, int>((ref, id) {
+final settingsDefaultAccountProvider = StreamProvider.autoDispose
+    .family<Account?, int>((ref, id) {
       final repo = ref.watch(accountRepositoryProvider);
       return repo.watchById(id);
     });

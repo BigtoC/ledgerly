@@ -55,9 +55,7 @@ Account _a({
 
 void main() {
   setUpAll(() {
-    registerFallbackValue(
-      _a(id: 0, name: '_'),
-    );
+    registerFallbackValue(_a(id: 0, name: '_'));
   });
 
   group('AccountsController', () {
@@ -88,7 +86,9 @@ void main() {
         );
         return balance.stream.asyncMap((_) => accountRepo.isReferenced(id));
       });
-      when(() => accountRepo.isReferenced(any())).thenAnswer((_) async => false);
+      when(
+        () => accountRepo.isReferenced(any()),
+      ).thenAnswer((_) async => false);
       when(() => accountRepo.watchBalanceMinorUnits(any())).thenAnswer((inv) {
         final id = inv.positionalArguments.first as int;
         final c = balanceCtrls.putIfAbsent(
@@ -127,60 +127,63 @@ void main() {
       throw StateError('AccountsController never produced data');
     }
 
-    test('A01: starts loading, transitions to data on joint first emit', () async {
-      final container = makeContainer();
-      addTearDown(container.dispose);
-      container.listen(accountsControllerProvider, (_, _) {});
+    test(
+      'A01: starts loading, transitions to data on joint first emit',
+      () async {
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        container.listen(accountsControllerProvider, (_, _) {});
 
-      expect(
-        container.read(accountsControllerProvider),
-        isA<AsyncLoading<AccountsState>>(),
-      );
+        expect(
+          container.read(accountsControllerProvider),
+          isA<AsyncLoading<AccountsState>>(),
+        );
 
-      await Future<void>.delayed(Duration.zero);
-      accountsCtrl.add([_a(id: 1, name: 'Cash')]);
-      defaultCtrl.add(1);
-      await Future<void>.delayed(Duration.zero);
-      balanceCtrls[1]!.add(0);
+        await Future<void>.delayed(Duration.zero);
+        accountsCtrl.add([_a(id: 1, name: 'Cash')]);
+        defaultCtrl.add(1);
+        await Future<void>.delayed(Duration.zero);
+        balanceCtrls[1]!.add(0);
 
-      final state = await waitForData(container) as AccountsData;
-      expect(state.active, hasLength(1));
-      expect(state.active.single.account.id, 1);
-      expect(state.defaultAccountId, 1);
-    });
+        final state = await waitForData(container) as AccountsData;
+        expect(state.active, hasLength(1));
+        expect(state.active.single.account.id, 1);
+        expect(state.defaultAccountId, 1);
+      },
+    );
 
-    test('A02: balance stream emission propagates to AccountWithBalance', () async {
-      final container = makeContainer();
-      addTearDown(container.dispose);
-      container.listen(accountsControllerProvider, (_, _) {});
-      await Future<void>.delayed(Duration.zero);
+    test(
+      'A02: balance stream emission propagates to AccountWithBalance',
+      () async {
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        container.listen(accountsControllerProvider, (_, _) {});
+        await Future<void>.delayed(Duration.zero);
 
-      accountsCtrl.add([
-        _a(id: 1, name: 'Cash'),
-        _a(id: 2, name: 'Savings'),
-      ]);
-      defaultCtrl.add(null);
-      await Future<void>.delayed(Duration.zero);
-      balanceCtrls[1]!.add(12345);
-      balanceCtrls[2]!.add(0);
+        accountsCtrl.add([_a(id: 1, name: 'Cash'), _a(id: 2, name: 'Savings')]);
+        defaultCtrl.add(null);
+        await Future<void>.delayed(Duration.zero);
+        balanceCtrls[1]!.add(12345);
+        balanceCtrls[2]!.add(0);
 
-      final state = await waitForData(container) as AccountsData;
-      final byId = {
-        for (final r in state.active) r.account.id: r.balanceMinorUnits,
-      };
-      expect(byId[1], 12345);
-      expect(byId[2], 0);
+        final state = await waitForData(container) as AccountsData;
+        final byId = {
+          for (final r in state.active) r.account.id: r.balanceMinorUnits,
+        };
+        expect(byId[1], 12345);
+        expect(byId[2], 0);
 
-      // Re-emission flows through.
-      balanceCtrls[1]!.add(99999);
-      await Future<void>.delayed(Duration.zero);
-      final state2 =
-          container.read(accountsControllerProvider).value! as AccountsData;
-      final byId2 = {
-        for (final r in state2.active) r.account.id: r.balanceMinorUnits,
-      };
-      expect(byId2[1], 99999);
-    });
+        // Re-emission flows through.
+        balanceCtrls[1]!.add(99999);
+        await Future<void>.delayed(Duration.zero);
+        final state2 =
+            container.read(accountsControllerProvider).value! as AccountsData;
+        final byId2 = {
+          for (final r in state2.active) r.account.id: r.balanceMinorUnits,
+        };
+        expect(byId2[1], 99999);
+      },
+    );
 
     test('A03: archived accounts land in archived bucket', () async {
       final container = makeContainer();
@@ -215,9 +218,7 @@ void main() {
       balanceCtrls[7]!.add(0);
       await waitForData(container);
 
-      await container
-          .read(accountsControllerProvider.notifier)
-          .setDefault(7);
+      await container.read(accountsControllerProvider.notifier).setDefault(7);
 
       verify(() => prefs.setDefaultAccountId(7)).called(1);
     });
@@ -228,58 +229,51 @@ void main() {
       addTearDown(container.dispose);
       container.listen(accountsControllerProvider, (_, _) {});
       await Future<void>.delayed(Duration.zero);
-      accountsCtrl.add([
-        _a(id: 1, name: 'Cash'),
-        _a(id: 2, name: 'Spare'),
-      ]);
+      accountsCtrl.add([_a(id: 1, name: 'Cash'), _a(id: 2, name: 'Spare')]);
       defaultCtrl.add(1);
       await Future<void>.delayed(Duration.zero);
       balanceCtrls[1]!.add(0);
       balanceCtrls[2]!.add(0);
       await waitForData(container);
 
-      await container
-          .read(accountsControllerProvider.notifier)
-          .archive(2);
+      await container.read(accountsControllerProvider.notifier).archive(2);
 
       verify(() => accountRepo.archive(2)).called(1);
     });
 
-    test('A06: archive refuses to leave user with zero active accounts', () async {
-      final container = makeContainer();
-      addTearDown(container.dispose);
-      container.listen(accountsControllerProvider, (_, _) {});
-      await Future<void>.delayed(Duration.zero);
-      accountsCtrl.add([_a(id: 1, name: 'Cash')]);
-      defaultCtrl.add(99);
-      await Future<void>.delayed(Duration.zero);
-      balanceCtrls[1]!.add(0);
-      await waitForData(container);
+    test(
+      'A06: archive refuses to leave user with zero active accounts',
+      () async {
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        container.listen(accountsControllerProvider, (_, _) {});
+        await Future<void>.delayed(Duration.zero);
+        accountsCtrl.add([_a(id: 1, name: 'Cash')]);
+        defaultCtrl.add(99);
+        await Future<void>.delayed(Duration.zero);
+        balanceCtrls[1]!.add(0);
+        await waitForData(container);
 
-      expect(
-        () => container
-            .read(accountsControllerProvider.notifier)
-            .archive(1),
-        throwsA(
-          isA<AccountsOperationException>().having(
-            (e) => e.kind,
-            'kind',
-            AccountsOperationError.lastActiveAccount,
+        expect(
+          () => container.read(accountsControllerProvider.notifier).archive(1),
+          throwsA(
+            isA<AccountsOperationException>().having(
+              (e) => e.kind,
+              'kind',
+              AccountsOperationError.lastActiveAccount,
+            ),
           ),
-        ),
-      );
-      verifyNever(() => accountRepo.archive(any()));
-    });
+        );
+        verifyNever(() => accountRepo.archive(any()));
+      },
+    );
 
     test('A06b: archive refuses the current default account', () async {
       final container = makeContainer();
       addTearDown(container.dispose);
       container.listen(accountsControllerProvider, (_, _) {});
       await Future<void>.delayed(Duration.zero);
-      accountsCtrl.add([
-        _a(id: 1, name: 'Cash'),
-        _a(id: 2, name: 'Spare'),
-      ]);
+      accountsCtrl.add([_a(id: 1, name: 'Cash'), _a(id: 2, name: 'Spare')]);
       defaultCtrl.add(1);
       await Future<void>.delayed(Duration.zero);
       balanceCtrls[1]!.add(0);
@@ -305,10 +299,7 @@ void main() {
       addTearDown(container.dispose);
       container.listen(accountsControllerProvider, (_, _) {});
       await Future<void>.delayed(Duration.zero);
-      accountsCtrl.add([
-        _a(id: 1, name: 'Cash'),
-        _a(id: 2, name: 'Spare'),
-      ]);
+      accountsCtrl.add([_a(id: 1, name: 'Cash'), _a(id: 2, name: 'Spare')]);
       defaultCtrl.add(1);
       await Future<void>.delayed(Duration.zero);
       balanceCtrls[1]!.add(0);
@@ -316,9 +307,7 @@ void main() {
       await waitForData(container);
 
       expect(
-        () => container
-            .read(accountsControllerProvider.notifier)
-            .delete(1),
+        () => container.read(accountsControllerProvider.notifier).delete(1),
         throwsA(
           isA<AccountsOperationException>().having(
             (e) => e.kind,
@@ -330,50 +319,8 @@ void main() {
       verifyNever(() => accountRepo.delete(any()));
     });
 
-    test('A08: affordance hints — single active row → archiveBlocked', () async {
-      final container = makeContainer();
-      addTearDown(container.dispose);
-      container.listen(accountsControllerProvider, (_, _) {});
-      await Future<void>.delayed(Duration.zero);
-      accountsCtrl.add([
-        _a(id: 1, name: 'Cash'),
-        _a(id: 2, name: 'OldCard', isArchived: true),
-      ]);
-      defaultCtrl.add(1);
-      await Future<void>.delayed(Duration.zero);
-      balanceCtrls[1]!.add(0);
-      balanceCtrls[2]!.add(0);
-
-      final state = await waitForData(container) as AccountsData;
-      expect(
-        state.active.single.affordance,
-        AccountRowAffordance.archiveBlocked,
-      );
-    });
-
-    test('A09: affordance — referenced zero-opening account stays archive', () async {
-      final container = makeContainer();
-      addTearDown(container.dispose);
-      container.listen(accountsControllerProvider, (_, _) {});
-      await Future<void>.delayed(Duration.zero);
-      when(() => accountRepo.isReferenced(2)).thenAnswer((_) async => true);
-      accountsCtrl.add([
-        _a(id: 1, name: 'Cash'),
-        _a(id: 2, name: 'Spare', openingBalanceMinorUnits: 0),
-      ]);
-      defaultCtrl.add(1);
-      await Future<void>.delayed(Duration.zero);
-      balanceCtrls[1]!.add(0);
-      balanceCtrls[2]!.add(0);
-
-      final state = await waitForData(container) as AccountsData;
-      final spare =
-          state.active.firstWhere((r) => r.account.id == 2).affordance;
-      expect(spare, AccountRowAffordance.archive);
-    });
-
     test(
-      'A10: affordance — multiple active, opening!=0 → archive',
+      'A08: affordance hints — single active row → archiveBlocked',
       () async {
         final container = makeContainer();
         addTearDown(container.dispose);
@@ -381,31 +328,71 @@ void main() {
         await Future<void>.delayed(Duration.zero);
         accountsCtrl.add([
           _a(id: 1, name: 'Cash'),
-          _a(
-            id: 2,
-            name: 'Funded',
-            openingBalanceMinorUnits: 5000,
-          ),
+          _a(id: 2, name: 'OldCard', isArchived: true),
         ]);
         defaultCtrl.add(1);
         await Future<void>.delayed(Duration.zero);
         balanceCtrls[1]!.add(0);
-        balanceCtrls[2]!.add(5000);
+        balanceCtrls[2]!.add(0);
 
         final state = await waitForData(container) as AccountsData;
-        final funded = state.active
-            .firstWhere((r) => r.account.id == 2)
-            .affordance;
-        expect(funded, AccountRowAffordance.archive);
+        expect(
+          state.active.single.affordance,
+          AccountRowAffordance.archiveBlocked,
+        );
       },
     );
+
+    test(
+      'A09: affordance — referenced zero-opening account stays archive',
+      () async {
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        container.listen(accountsControllerProvider, (_, _) {});
+        await Future<void>.delayed(Duration.zero);
+        when(() => accountRepo.isReferenced(2)).thenAnswer((_) async => true);
+        accountsCtrl.add([
+          _a(id: 1, name: 'Cash'),
+          _a(id: 2, name: 'Spare', openingBalanceMinorUnits: 0),
+        ]);
+        defaultCtrl.add(1);
+        await Future<void>.delayed(Duration.zero);
+        balanceCtrls[1]!.add(0);
+        balanceCtrls[2]!.add(0);
+
+        final state = await waitForData(container) as AccountsData;
+        final spare = state.active
+            .firstWhere((r) => r.account.id == 2)
+            .affordance;
+        expect(spare, AccountRowAffordance.archive);
+      },
+    );
+
+    test('A10: affordance — multiple active, opening!=0 → archive', () async {
+      final container = makeContainer();
+      addTearDown(container.dispose);
+      container.listen(accountsControllerProvider, (_, _) {});
+      await Future<void>.delayed(Duration.zero);
+      accountsCtrl.add([
+        _a(id: 1, name: 'Cash'),
+        _a(id: 2, name: 'Funded', openingBalanceMinorUnits: 5000),
+      ]);
+      defaultCtrl.add(1);
+      await Future<void>.delayed(Duration.zero);
+      balanceCtrls[1]!.add(0);
+      balanceCtrls[2]!.add(5000);
+
+      final state = await waitForData(container) as AccountsData;
+      final funded = state.active
+          .firstWhere((r) => r.account.id == 2)
+          .affordance;
+      expect(funded, AccountRowAffordance.archive);
+    });
 
     test('A11: unarchive writes isArchived=false via save', () async {
       final stored = _a(id: 9, name: 'Old', isArchived: true);
       when(() => accountRepo.getById(9)).thenAnswer((_) async => stored);
-      when(
-        () => accountRepo.save(any()),
-      ).thenAnswer((inv) async => 9);
+      when(() => accountRepo.save(any())).thenAnswer((inv) async => 9);
       final container = makeContainer();
       addTearDown(container.dispose);
       container.listen(accountsControllerProvider, (_, _) {});
@@ -417,9 +404,7 @@ void main() {
       balanceCtrls[9]!.add(0);
       await waitForData(container);
 
-      await container
-          .read(accountsControllerProvider.notifier)
-          .unarchive(9);
+      await container.read(accountsControllerProvider.notifier).unarchive(9);
 
       final captured =
           verify(() => accountRepo.save(captureAny())).captured.single

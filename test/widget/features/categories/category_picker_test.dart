@@ -72,7 +72,12 @@ Widget _hostApp({
 void main() {
   setUpAll(() {
     registerFallbackValue(
-      const Category(id: 0, icon: 'category', color: 0, type: CategoryType.expense),
+      const Category(
+        id: 0,
+        icon: 'category',
+        color: 0,
+        type: CategoryType.expense,
+      ),
     );
   });
 
@@ -80,12 +85,7 @@ void main() {
     'P01: picker lists only categories of the requested type, sorted',
     (tester) async {
       final rows = <Category>[
-        _c(
-          id: 1,
-          type: CategoryType.expense,
-          customName: 'Food',
-          sortOrder: 1,
-        ),
+        _c(id: 1, type: CategoryType.expense, customName: 'Food', sortOrder: 1),
         _c(
           id: 2,
           type: CategoryType.expense,
@@ -107,10 +107,7 @@ void main() {
         _hostApp(
           container: container,
           onLaunch: (ctx) async {
-            picked = await showCategoryPicker(
-              ctx,
-              type: CategoryType.expense,
-            );
+            picked = await showCategoryPicker(ctx, type: CategoryType.expense);
             return picked;
           },
         ),
@@ -301,10 +298,7 @@ void main() {
     (tester) async {
       final repo = _MockCategoryRepository();
       when(
-        () => repo.watchAll(
-          type: CategoryType.expense,
-          includeArchived: false,
-        ),
+        () => repo.watchAll(type: CategoryType.expense, includeArchived: false),
       ).thenAnswer(
         (_) => Stream.value([
           _c(id: 1, type: CategoryType.expense, customName: 'Food'),
@@ -312,9 +306,7 @@ void main() {
       );
 
       final container = ProviderContainer(
-        overrides: [
-          categoryRepositoryProvider.overrideWithValue(repo),
-        ],
+        overrides: [categoryRepositoryProvider.overrideWithValue(repo)],
       );
       addTearDown(container.dispose);
 
@@ -323,10 +315,7 @@ void main() {
         _hostApp(
           container: container,
           onLaunch: (ctx) async {
-            picked = await showCategoryPicker(
-              ctx,
-              type: CategoryType.expense,
-            );
+            picked = await showCategoryPicker(ctx, type: CategoryType.expense);
             return picked;
           },
         ),
@@ -336,10 +325,7 @@ void main() {
 
       expect(find.text('Food'), findsOneWidget);
       verify(
-        () => repo.watchAll(
-          type: CategoryType.expense,
-          includeArchived: false,
-        ),
+        () => repo.watchAll(type: CategoryType.expense, includeArchived: false),
       ).called(1);
     },
   );

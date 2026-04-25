@@ -66,20 +66,17 @@ class LanguageSelector extends ConsumerWidget {
             ListTile(
               key: const ValueKey('languageOption:en'),
               title: Text(l10n.settingsLanguageEnglish),
-              onTap: () =>
-                  Navigator.of(ctx).pop(const _LanguageChoice(_en)),
+              onTap: () => Navigator.of(ctx).pop(const _LanguageChoice(_en)),
             ),
             ListTile(
               key: const ValueKey('languageOption:zh_TW'),
               title: Text(l10n.settingsLanguageZhTw),
-              onTap: () =>
-                  Navigator.of(ctx).pop(const _LanguageChoice(_zhTw)),
+              onTap: () => Navigator.of(ctx).pop(const _LanguageChoice(_zhTw)),
             ),
             ListTile(
               key: const ValueKey('languageOption:zh_CN'),
               title: Text(l10n.settingsLanguageZhCn),
-              onTap: () =>
-                  Navigator.of(ctx).pop(const _LanguageChoice(_zhCn)),
+              onTap: () => Navigator.of(ctx).pop(const _LanguageChoice(_zhCn)),
             ),
           ],
         ),

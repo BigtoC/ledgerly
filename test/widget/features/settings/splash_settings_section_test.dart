@@ -125,45 +125,44 @@ void main() {
     },
   );
 
-  testWidgets(
-    'SSS02: toggle-on reveals all three conditional rows',
-    (tester) async {
-      final prefs = _MockUserPreferencesRepository();
-      final container = _makeContainer(prefs);
-      addTearDown(container.dispose);
+  testWidgets('SSS02: toggle-on reveals all three conditional rows', (
+    tester,
+  ) async {
+    final prefs = _MockUserPreferencesRepository();
+    final container = _makeContainer(prefs);
+    addTearDown(container.dispose);
 
-      await tester.pumpWidget(
-        _wrap(container: container, splashEnabled: true),
-      );
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(_wrap(container: container, splashEnabled: true));
+    await tester.pumpAndSettle();
 
-      expect(
-        find.byKey(const ValueKey('splashSettings:startDateTile')),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(const ValueKey('splashSettings:displayTextField')),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(const ValueKey('splashSettings:buttonLabelField')),
-        findsOneWidget,
-      );
-    },
-  );
+    expect(
+      find.byKey(const ValueKey('splashSettings:startDateTile')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('splashSettings:displayTextField')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('splashSettings:buttonLabelField')),
+      findsOneWidget,
+    );
+  });
 
-  testWidgets('SSS03: enabled switch writes via setSplashEnabled',
-      (tester) async {
+  testWidgets('SSS03: enabled switch writes via setSplashEnabled', (
+    tester,
+  ) async {
     final prefs = _MockUserPreferencesRepository();
     when(() => prefs.setSplashEnabled(false)).thenAnswer((_) async {});
     final container = _makeContainer(prefs);
     addTearDown(container.dispose);
 
-    await tester
-        .pumpWidget(_wrap(container: container, splashEnabled: true));
+    await tester.pumpWidget(_wrap(container: container, splashEnabled: true));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const ValueKey('splashSettings:enabledSwitch')));
+    await tester.tap(
+      find.byKey(const ValueKey('splashSettings:enabledSwitch')),
+    );
     await tester.pumpAndSettle();
 
     verify(() => prefs.setSplashEnabled(false)).called(1);
@@ -177,12 +176,12 @@ void main() {
       final container = _makeContainer(prefs);
       addTearDown(container.dispose);
 
-      await tester
-          .pumpWidget(_wrap(container: container, splashEnabled: true));
+      await tester.pumpWidget(_wrap(container: container, splashEnabled: true));
       await tester.pumpAndSettle();
 
-      final field =
-          find.byKey(const ValueKey('splashSettings:displayTextField'));
+      final field = find.byKey(
+        const ValueKey('splashSettings:displayTextField'),
+      );
       await tester.enterText(field, 'Day {days}');
       // No write yet — would fail if controller wrote per-keystroke.
       verifyNever(() => prefs.setSplashDisplayText(any()));
@@ -202,12 +201,12 @@ void main() {
       final container = _makeContainer(prefs);
       addTearDown(container.dispose);
 
-      await tester
-          .pumpWidget(_wrap(container: container, splashEnabled: true));
+      await tester.pumpWidget(_wrap(container: container, splashEnabled: true));
       await tester.pumpAndSettle();
 
-      final field =
-          find.byKey(const ValueKey('splashSettings:buttonLabelField'));
+      final field = find.byKey(
+        const ValueKey('splashSettings:buttonLabelField'),
+      );
       await tester.enterText(field, 'Go');
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
@@ -225,11 +224,7 @@ void main() {
       final date = DateTime(2024, 6, 15);
 
       await tester.pumpWidget(
-        _wrap(
-          container: container,
-          splashEnabled: true,
-          splashStartDate: date,
-        ),
+        _wrap(container: container, splashEnabled: true, splashStartDate: date),
       );
       await tester.pumpAndSettle();
 
@@ -246,12 +241,12 @@ void main() {
     final container = _makeContainer(prefs);
     addTearDown(container.dispose);
 
-    await tester.pumpWidget(
-      _wrap(container: container, splashEnabled: true),
-    );
+    await tester.pumpWidget(_wrap(container: container, splashEnabled: true));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const ValueKey('splashSettings:startDateTile')));
+    await tester.tap(
+      find.byKey(const ValueKey('splashSettings:startDateTile')),
+    );
     await tester.pumpAndSettle();
 
     expect(find.byType(DatePickerDialog), findsOneWidget);
@@ -267,9 +262,7 @@ void main() {
       final container = _makeContainer(prefs);
       addTearDown(container.dispose);
 
-      await tester.pumpWidget(
-        _wrap(container: container, splashEnabled: true),
-      );
+      await tester.pumpWidget(_wrap(container: container, splashEnabled: true));
       await tester.pumpAndSettle();
 
       // The label appears twice: once as the ListTile title, once as the

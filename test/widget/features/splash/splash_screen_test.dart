@@ -159,20 +159,20 @@ void main() {
     );
     addTearDown(container.dispose);
 
-      await tester.pumpWidget(wrap(container));
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(wrap(container));
+    await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Set start date'));
-      await tester.pumpAndSettle();
+    await tester.tap(find.text('Set start date'));
+    await tester.pumpAndSettle();
 
-      expect(find.byType(DatePickerDialog), findsOneWidget);
-      verifyNever(() => repo.setSplashStartDate(any()));
+    expect(find.byType(DatePickerDialog), findsOneWidget);
+    verifyNever(() => repo.setSplashStartDate(any()));
 
-      await tester.tap(find.text('OK'));
-      await tester.pumpAndSettle();
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
 
-      verify(() => repo.setSplashStartDate(fixedNow)).called(1);
-    });
+    verify(() => repo.setSplashStartDate(fixedNow)).called(1);
+  });
 
   testWidgets('W03b: Enter button navigates to /home', (tester) async {
     final repo = _MockUserPreferencesRepository();

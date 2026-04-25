@@ -87,7 +87,9 @@ class AccountTile extends StatelessWidget {
           ),
           AccountRowAffordance.archiveBlocked => SlidableAction(
             onPressed: (_) => onArchiveBlocked(),
-            backgroundColor: Theme.of(context).disabledColor.withValues(alpha: 0.24),
+            backgroundColor: Theme.of(
+              context,
+            ).disabledColor.withValues(alpha: 0.24),
             foregroundColor: Theme.of(context).colorScheme.onSurface,
             icon: Icons.archive_outlined,
             label: l10n.accountsArchiveAction,
@@ -168,10 +170,7 @@ class _DefaultBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(
-          fontSize: 11,
-          color: scheme.onPrimaryContainer,
-        ),
+        style: TextStyle(fontSize: 11, color: scheme.onPrimaryContainer),
       ),
     );
   }

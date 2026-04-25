@@ -65,12 +65,11 @@ GoRouter router(Ref ref) {
                   GoRoute(
                     path: 'add',
                     parentNavigatorKey: _rootNavigatorKey,
-                    pageBuilder: (ctx, state) =>
-                        _modalPage(
-                          state,
-                          const TransactionFormScreen(),
-                          fullscreenDialog: true,
-                        ),
+                    pageBuilder: (ctx, state) => _modalPage(
+                      state,
+                      const TransactionFormScreen(),
+                      fullscreenDialog: true,
+                    ),
                   ),
                   GoRoute(
                     path: 'edit/:id',
@@ -151,8 +150,7 @@ Page<void> _modalPage(
   bool fullscreenDialog = false,
 }) {
   return switch (defaultTargetPlatform) {
-    TargetPlatform.iOS ||
-    TargetPlatform.macOS => CupertinoPage(
+    TargetPlatform.iOS || TargetPlatform.macOS => CupertinoPage(
       key: state.pageKey,
       fullscreenDialog: fullscreenDialog,
       child: child,

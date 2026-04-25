@@ -58,27 +58,26 @@ class _DefaultAccountPickerSheet extends ConsumerWidget {
           ),
           Expanded(
             child: switch (async) {
-              AsyncData<List<Account>>(:final value) => value.isEmpty
-                  ? _EmptyState(
-                      onCreate: () {
-                        Navigator.of(context).pop();
-                        context.go('/accounts/new');
-                      },
-                    )
-                  : ListView.builder(
-                      itemCount: value.length,
-                      itemBuilder: (ctx, i) {
-                        final a = value[i];
-                        return ListTile(
-                          key: ValueKey(
-                            'defaultAccountOption:${a.id}',
-                          ),
-                          title: Text(a.name),
-                          subtitle: Text(a.currency.code),
-                          onTap: () => Navigator.of(context).pop(a.id),
-                        );
-                      },
-                    ),
+              AsyncData<List<Account>>(:final value) =>
+                value.isEmpty
+                    ? _EmptyState(
+                        onCreate: () {
+                          Navigator.of(context).pop();
+                          context.go('/accounts/new');
+                        },
+                      )
+                    : ListView.builder(
+                        itemCount: value.length,
+                        itemBuilder: (ctx, i) {
+                          final a = value[i];
+                          return ListTile(
+                            key: ValueKey('defaultAccountOption:${a.id}'),
+                            title: Text(a.name),
+                            subtitle: Text(a.currency.code),
+                            onTap: () => Navigator.of(context).pop(a.id),
+                          );
+                        },
+                      ),
               AsyncError(:final error) => Center(child: Text('$error')),
               _ => const Center(child: CircularProgressIndicator()),
             },

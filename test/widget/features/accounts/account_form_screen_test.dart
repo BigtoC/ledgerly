@@ -128,9 +128,7 @@ void main() {
     registerFallbackValue(
       const Account(id: 0, name: '_', accountTypeId: 1, currency: _usd),
     );
-    registerFallbackValue(
-      const AccountType(id: 0, icon: 'wallet', color: 10),
-    );
+    registerFallbackValue(const AccountType(id: 0, icon: 'wallet', color: 10));
   });
 
   testWidgets(
@@ -142,13 +140,13 @@ void main() {
       final prefs = _MockUserPreferencesRepository();
 
       when(() => prefs.getDefaultCurrency()).thenAnswer((_) async => 'USD');
-      when(() => currencyRepo.getByCode('USD'))
-          .thenAnswer((_) async => _usd);
-      when(() => typeRepo.watchAll()).thenAnswer(
-        (_) => Stream.value([_cashType]),
-      );
-      when(() => currencyRepo.watchAll())
-          .thenAnswer((_) => Stream.value([_usd, _jpy, _twd]));
+      when(() => currencyRepo.getByCode('USD')).thenAnswer((_) async => _usd);
+      when(
+        () => typeRepo.watchAll(),
+      ).thenAnswer((_) => Stream.value([_cashType]));
+      when(
+        () => currencyRepo.watchAll(),
+      ).thenAnswer((_) => Stream.value([_usd, _jpy, _twd]));
 
       final container = _makeContainer(
         accountRepo: accountRepo,
@@ -159,10 +157,7 @@ void main() {
       addTearDown(container.dispose);
 
       await tester.pumpWidget(
-        _hostApp(
-          container: container,
-          router: _router(onPopped: null),
-        ),
+        _hostApp(container: container, router: _router(onPopped: null)),
       );
       await tester.tap(find.byKey(const ValueKey('open-form')));
       await tester.pumpAndSettle();
@@ -184,12 +179,13 @@ void main() {
       final prefs = _MockUserPreferencesRepository();
 
       when(() => prefs.getDefaultCurrency()).thenAnswer((_) async => 'USD');
-      when(() => currencyRepo.getByCode('USD'))
-          .thenAnswer((_) async => _usd);
-      when(() => typeRepo.watchAll())
-          .thenAnswer((_) => Stream.value([_cashType]));
-      when(() => currencyRepo.watchAll())
-          .thenAnswer((_) => Stream.value([_usd, _jpy, _twd]));
+      when(() => currencyRepo.getByCode('USD')).thenAnswer((_) async => _usd);
+      when(
+        () => typeRepo.watchAll(),
+      ).thenAnswer((_) => Stream.value([_cashType]));
+      when(
+        () => currencyRepo.watchAll(),
+      ).thenAnswer((_) => Stream.value([_usd, _jpy, _twd]));
       when(() => accountRepo.save(any())).thenAnswer((_) async => 42);
 
       final container = _makeContainer(
@@ -201,10 +197,7 @@ void main() {
       addTearDown(container.dispose);
 
       await tester.pumpWidget(
-        _hostApp(
-          container: container,
-          router: _router(onPopped: null),
-        ),
+        _hostApp(container: container, router: _router(onPopped: null)),
       );
       await tester.tap(find.byKey(const ValueKey('open-form')));
       await tester.pumpAndSettle();
@@ -245,56 +238,54 @@ void main() {
     },
   );
 
-  testWidgets(
-    'AF03: Edit mode — hydrates from accountRepository.getById',
-    (tester) async {
-      final accountRepo = _MockAccountRepository();
-      final typeRepo = _MockAccountTypeRepository();
-      final currencyRepo = _MockCurrencyRepository();
-      final prefs = _MockUserPreferencesRepository();
+  testWidgets('AF03: Edit mode — hydrates from accountRepository.getById', (
+    tester,
+  ) async {
+    final accountRepo = _MockAccountRepository();
+    final typeRepo = _MockAccountTypeRepository();
+    final currencyRepo = _MockCurrencyRepository();
+    final prefs = _MockUserPreferencesRepository();
 
-      const stored = Account(
-        id: 7,
-        name: 'Checking',
-        accountTypeId: 1,
-        currency: _twd,
-        openingBalanceMinorUnits: 10000,
-        icon: 'wallet',
-        color: 3,
-      );
-      when(() => accountRepo.getById(7)).thenAnswer((_) async => stored);
-      when(() => typeRepo.getById(1)).thenAnswer((_) async => _cashType);
-      when(() => typeRepo.watchAll())
-          .thenAnswer((_) => Stream.value([_cashType]));
-      when(() => currencyRepo.watchAll())
-          .thenAnswer((_) => Stream.value([_usd, _jpy, _twd]));
+    const stored = Account(
+      id: 7,
+      name: 'Checking',
+      accountTypeId: 1,
+      currency: _twd,
+      openingBalanceMinorUnits: 10000,
+      icon: 'wallet',
+      color: 3,
+    );
+    when(() => accountRepo.getById(7)).thenAnswer((_) async => stored);
+    when(() => typeRepo.getById(1)).thenAnswer((_) async => _cashType);
+    when(
+      () => typeRepo.watchAll(),
+    ).thenAnswer((_) => Stream.value([_cashType]));
+    when(
+      () => currencyRepo.watchAll(),
+    ).thenAnswer((_) => Stream.value([_usd, _jpy, _twd]));
 
-      final container = _makeContainer(
-        accountRepo: accountRepo,
-        typeRepo: typeRepo,
-        currencyRepo: currencyRepo,
-        prefs: prefs,
-      );
-      addTearDown(container.dispose);
+    final container = _makeContainer(
+      accountRepo: accountRepo,
+      typeRepo: typeRepo,
+      currencyRepo: currencyRepo,
+      prefs: prefs,
+    );
+    addTearDown(container.dispose);
 
-      await tester.pumpWidget(
-        _hostApp(
-          container: container,
-          router: _router(accountId: 7, onPopped: null),
-        ),
-      );
-      await tester.tap(find.byKey(const ValueKey('open-form')));
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(
+      _hostApp(
+        container: container,
+        router: _router(accountId: 7, onPopped: null),
+      ),
+    );
+    await tester.tap(find.byKey(const ValueKey('open-form')));
+    await tester.pumpAndSettle();
 
-      // Name text field is pre-populated.
-      expect(
-        find.widgetWithText(TextField, 'Checking'),
-        findsOneWidget,
-      );
-      // Edit-mode title shown.
-      expect(find.text('Edit account'), findsOneWidget);
-    },
-  );
+    // Name text field is pre-populated.
+    expect(find.widgetWithText(TextField, 'Checking'), findsOneWidget);
+    // Edit-mode title shown.
+    expect(find.text('Edit account'), findsOneWidget);
+  });
 
   testWidgets(
     'AF04: Edit mode — missing row shows not-found and pops to /accounts',
@@ -305,10 +296,12 @@ void main() {
       final prefs = _MockUserPreferencesRepository();
 
       when(() => accountRepo.getById(999)).thenAnswer((_) async => null);
-      when(() => typeRepo.watchAll())
-          .thenAnswer((_) => Stream.value([_cashType]));
-      when(() => currencyRepo.watchAll())
-          .thenAnswer((_) => Stream.value([_usd]));
+      when(
+        () => typeRepo.watchAll(),
+      ).thenAnswer((_) => Stream.value([_cashType]));
+      when(
+        () => currencyRepo.watchAll(),
+      ).thenAnswer((_) => Stream.value([_usd]));
 
       final container = _makeContainer(
         accountRepo: accountRepo,
@@ -333,66 +326,61 @@ void main() {
     },
   );
 
-  testWidgets(
-    'AF05: JPY opening-balance rejects fractional input',
-    (tester) async {
-      final accountRepo = _MockAccountRepository();
-      final typeRepo = _MockAccountTypeRepository();
-      final currencyRepo = _MockCurrencyRepository();
-      final prefs = _MockUserPreferencesRepository();
+  testWidgets('AF05: JPY opening-balance rejects fractional input', (
+    tester,
+  ) async {
+    final accountRepo = _MockAccountRepository();
+    final typeRepo = _MockAccountTypeRepository();
+    final currencyRepo = _MockCurrencyRepository();
+    final prefs = _MockUserPreferencesRepository();
 
-      when(() => prefs.getDefaultCurrency()).thenAnswer((_) async => 'JPY');
-      when(() => currencyRepo.getByCode('JPY'))
-          .thenAnswer((_) async => _jpy);
-      when(() => typeRepo.watchAll())
-          .thenAnswer((_) => Stream.value([_cashType]));
-      when(() => currencyRepo.watchAll())
-          .thenAnswer((_) => Stream.value([_usd, _jpy]));
+    when(() => prefs.getDefaultCurrency()).thenAnswer((_) async => 'JPY');
+    when(() => currencyRepo.getByCode('JPY')).thenAnswer((_) async => _jpy);
+    when(
+      () => typeRepo.watchAll(),
+    ).thenAnswer((_) => Stream.value([_cashType]));
+    when(
+      () => currencyRepo.watchAll(),
+    ).thenAnswer((_) => Stream.value([_usd, _jpy]));
 
-      final container = _makeContainer(
-        accountRepo: accountRepo,
-        typeRepo: typeRepo,
-        currencyRepo: currencyRepo,
-        prefs: prefs,
-      );
-      addTearDown(container.dispose);
+    final container = _makeContainer(
+      accountRepo: accountRepo,
+      typeRepo: typeRepo,
+      currencyRepo: currencyRepo,
+      prefs: prefs,
+    );
+    addTearDown(container.dispose);
 
-      await tester.pumpWidget(
-        _hostApp(
-          container: container,
-          router: _router(onPopped: null),
-        ),
-      );
-      await tester.tap(find.byKey(const ValueKey('open-form')));
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(
+      _hostApp(container: container, router: _router(onPopped: null)),
+    );
+    await tester.tap(find.byKey(const ValueKey('open-form')));
+    await tester.pumpAndSettle();
 
-      await tester.enterText(
-        find.byKey(const ValueKey('accountForm:name')),
-        'JPY Cash',
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('accountForm:type')));
-      await tester.pumpAndSettle();
-      await tester.tap(
-        find.byKey(ValueKey('accountTypePicker:${_cashType.id}')),
-      );
-      await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('accountForm:name')),
+      'JPY Cash',
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('accountForm:type')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(ValueKey('accountTypePicker:${_cashType.id}')));
+    await tester.pumpAndSettle();
 
-      // Enter "100.5" into JPY (decimals = 0) — this must be rejected
-      // so the Save button stays disabled.
-      await tester.enterText(
-        find.byKey(ValueKey('accountForm:openingBalance:${_jpy.code}')),
-        '100.5',
-      );
-      await tester.pumpAndSettle();
+    // Enter "100.5" into JPY (decimals = 0) — this must be rejected
+    // so the Save button stays disabled.
+    await tester.enterText(
+      find.byKey(ValueKey('accountForm:openingBalance:${_jpy.code}')),
+      '100.5',
+    );
+    await tester.pumpAndSettle();
 
-      final save = tester.widget<FilledButton>(
-        find.byKey(const ValueKey('accountForm:save')),
-      );
-      expect(save.onPressed, isNull);
-      expect(find.text('Whole numbers only'), findsOneWidget);
-    },
-  );
+    final save = tester.widget<FilledButton>(
+      find.byKey(const ValueKey('accountForm:save')),
+    );
+    expect(save.onPressed, isNull);
+    expect(find.text('Whole numbers only'), findsOneWidget);
+  });
 
   testWidgets(
     'AF06: inline account-type creation returns a newly-created type',
@@ -403,12 +391,13 @@ void main() {
       final prefs = _MockUserPreferencesRepository();
 
       when(() => prefs.getDefaultCurrency()).thenAnswer((_) async => 'USD');
-      when(() => currencyRepo.getByCode('USD'))
-          .thenAnswer((_) async => _usd);
-      when(() => typeRepo.watchAll())
-          .thenAnswer((_) => Stream.value([_cashType]));
-      when(() => currencyRepo.watchAll())
-          .thenAnswer((_) => Stream.value([_usd, _jpy, _twd]));
+      when(() => currencyRepo.getByCode('USD')).thenAnswer((_) async => _usd);
+      when(
+        () => typeRepo.watchAll(),
+      ).thenAnswer((_) => Stream.value([_cashType]));
+      when(
+        () => currencyRepo.watchAll(),
+      ).thenAnswer((_) => Stream.value([_usd, _jpy, _twd]));
 
       const created = AccountType(
         id: 99,
@@ -428,10 +417,7 @@ void main() {
       addTearDown(container.dispose);
 
       await tester.pumpWidget(
-        _hostApp(
-          container: container,
-          router: _router(onPopped: null),
-        ),
+        _hostApp(container: container, router: _router(onPopped: null)),
       );
       await tester.tap(find.byKey(const ValueKey('open-form')));
       await tester.pumpAndSettle();
@@ -460,10 +446,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Outer form still shows the name we typed.
-      expect(
-        find.widgetWithText(TextField, 'OuterName'),
-        findsOneWidget,
-      );
+      expect(find.widgetWithText(TextField, 'OuterName'), findsOneWidget);
       // The type button now shows the new type label.
       expect(find.text('Crypto'), findsWidgets);
       verify(() => typeRepo.save(any())).called(1);

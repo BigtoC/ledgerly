@@ -37,8 +37,8 @@ class SettingsScreen extends ConsumerWidget {
       body: switch (state) {
         AsyncData<SettingsState>(value: final SettingsData data) =>
           _SettingsBody(data: data),
-        AsyncData<SettingsState>(value: SettingsError()) || AsyncError() =>
-          const _ErrorSurface(),
+        AsyncData<SettingsState>(value: SettingsError()) ||
+        AsyncError() => const _ErrorSurface(),
         _ => const Center(child: CircularProgressIndicator()),
       },
     );

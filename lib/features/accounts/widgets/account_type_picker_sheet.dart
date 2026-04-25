@@ -124,9 +124,7 @@ Future<AccountType?> _showCreateAccountTypeSheet(BuildContext context) {
     isScrollControlled: true,
     useSafeArea: true,
     builder: (ctx) => Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(ctx).viewInsets.bottom,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
       child: const _CreateAccountTypeForm(),
     ),
   );
@@ -169,10 +167,9 @@ class _CreateAccountTypeFormState
       _errorMessage = null;
     });
     try {
-      final saved = await ref.read(accountTypeCreationActionsProvider).create(
-            name: name,
-            defaultCurrency: _defaultCurrency,
-          );
+      final saved = await ref
+          .read(accountTypeCreationActionsProvider)
+          .create(name: name, defaultCurrency: _defaultCurrency);
       if (mounted && saved != null) Navigator.of(context).pop(saved);
     } catch (_) {
       setState(() {

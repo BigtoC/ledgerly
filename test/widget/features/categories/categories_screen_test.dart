@@ -57,10 +57,7 @@ class _FakeCategoriesController extends CategoriesController {
   }
 }
 
-Widget _wrap({
-  required ProviderContainer container,
-  double textScale = 1.0,
-}) {
+Widget _wrap({required ProviderContainer container, double textScale = 1.0}) {
   return UncontrolledProviderScope(
     container: container,
     child: MaterialApp(
@@ -80,58 +77,52 @@ Widget _wrap({
 void main() {
   setUpAll(() {
     registerFallbackValue(
-      const Category(id: 0, icon: 'category', color: 0, type: CategoryType.expense),
+      const Category(
+        id: 0,
+        icon: 'category',
+        color: 0,
+        type: CategoryType.expense,
+      ),
     );
   });
 
-  testWidgets(
-    'S01: data state renders both section headers in order',
-    (tester) async {
-      final repo = _MockCategoryRepository();
-      final container = ProviderContainer(
-        overrides: [
-          categoryRepositoryProvider.overrideWithValue(repo),
-          categoriesControllerProvider.overrideWith(
-            () => _FakeCategoriesController(
-              CategoriesState.data(
-                expense: [
-                  _row(
-                    _c(
-                      id: 1,
-                      type: CategoryType.expense,
-                      customName: 'Food',
-                    ),
-                  ),
-                ],
-                income: [
-                  _row(
-                    _c(
-                      id: 2,
-                      type: CategoryType.income,
-                      customName: 'Salary',
-                    ),
-                  ),
-                ],
-              ),
+  testWidgets('S01: data state renders both section headers in order', (
+    tester,
+  ) async {
+    final repo = _MockCategoryRepository();
+    final container = ProviderContainer(
+      overrides: [
+        categoryRepositoryProvider.overrideWithValue(repo),
+        categoriesControllerProvider.overrideWith(
+          () => _FakeCategoriesController(
+            CategoriesState.data(
+              expense: [
+                _row(_c(id: 1, type: CategoryType.expense, customName: 'Food')),
+              ],
+              income: [
+                _row(
+                  _c(id: 2, type: CategoryType.income, customName: 'Salary'),
+                ),
+              ],
             ),
           ),
-        ],
-      );
-      addTearDown(container.dispose);
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
 
-      await tester.pumpWidget(_wrap(container: container));
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
 
-      expect(find.text('Expense'), findsOneWidget);
-      expect(find.text('Income'), findsOneWidget);
-      expect(find.text('Food'), findsOneWidget);
-      expect(find.text('Salary'), findsOneWidget);
+    expect(find.text('Expense'), findsOneWidget);
+    expect(find.text('Income'), findsOneWidget);
+    expect(find.text('Food'), findsOneWidget);
+    expect(find.text('Salary'), findsOneWidget);
 
-      final expenseTop = tester.getTopLeft(find.text('Expense')).dy;
-      final incomeTop = tester.getTopLeft(find.text('Income')).dy;
-      expect(expenseTop, lessThan(incomeTop));
-    },
-  );
+    final expenseTop = tester.getTopLeft(find.text('Expense')).dy;
+    final incomeTop = tester.getTopLeft(find.text('Income')).dy;
+    expect(expenseTop, lessThan(incomeTop));
+  });
 
   testWidgets('S02: empty section renders inline Add CTA', (tester) async {
     final repo = _MockCategoryRepository();
@@ -142,13 +133,7 @@ void main() {
           () => _FakeCategoriesController(
             CategoriesState.data(
               expense: [
-                _row(
-                  _c(
-                    id: 1,
-                    type: CategoryType.expense,
-                    customName: 'Food',
-                  ),
-                ),
+                _row(_c(id: 1, type: CategoryType.expense, customName: 'Food')),
               ],
               income: const [],
             ),
@@ -202,11 +187,7 @@ void main() {
               CategoriesState.data(
                 expense: [
                   _row(
-                    _c(
-                      id: 1,
-                      type: CategoryType.expense,
-                      customName: 'Food',
-                    ),
+                    _c(id: 1, type: CategoryType.expense, customName: 'Food'),
                   ),
                 ],
                 income: const [],
@@ -266,9 +247,9 @@ void main() {
   testWidgets('S06: archive action emits an undo snackbar', (tester) async {
     final repo = _MockCategoryRepository();
     final cat = _c(id: 9, type: CategoryType.expense, customName: 'Hobby');
-    when(() => repo.archive(9)).thenAnswer(
-      (_) async => cat.copyWith(isArchived: true),
-    );
+    when(
+      () => repo.archive(9),
+    ).thenAnswer((_) async => cat.copyWith(isArchived: true));
     when(() => repo.getById(9)).thenAnswer((_) async => cat);
     when(
       () => repo.save(any()),

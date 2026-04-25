@@ -51,7 +51,9 @@ class CategoryTile extends StatelessWidget {
             SlidableAction(
               onPressed: (_) => onArchive(),
               backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-              foregroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
+              foregroundColor: Theme.of(
+                context,
+              ).colorScheme.onSecondaryContainer,
               icon: Icons.archive_outlined,
               label: l10n.commonArchive,
             )
