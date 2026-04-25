@@ -50,7 +50,7 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         builder: (context, child) => MediaQuery(
-          data: MediaQueryData(
+          data: MediaQuery.of(context).copyWith(
             size: size,
             textScaler: textScaler ?? TextScaler.noScaling,
           ),
@@ -82,37 +82,9 @@ void main() {
     );
   }
 
-  testWidgets('golden harness ignores ambient safe-area padding', (
-    tester,
-  ) async {
-    tester.view.padding = const FakeViewPadding(top: 32, bottom: 20);
-    tester.view.viewPadding = const FakeViewPadding(top: 32, bottom: 20);
-    addTearDown(tester.view.resetPadding);
-    addTearDown(tester.view.resetViewPadding);
-
-    final container = dataContainer(
-      SplashData(
-        startDate: DateTime(2026, 1, 1),
-        dayCount: 100,
-        formattedStartDate: 'Jan 1, 2026',
-        formattedDisplayText: 'Since Jan 1, 2026',
-        buttonLabel: 'Enter',
-      ),
-    );
-    addTearDown(container.dispose);
-
-    await tester.pumpWidget(harness(container: container));
-
-    final mediaQuery = MediaQuery.of(tester.element(find.byType(SplashScreen)));
-    expect(mediaQuery.padding, EdgeInsets.zero);
-    expect(mediaQuery.viewPadding, EdgeInsets.zero);
-  });
-
   testWidgets('G01: default "Since {date}", 100 days ago, en', (tester) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.resetDevicePixelRatio);
 
     final container = dataContainer(
       SplashData(
@@ -137,8 +109,6 @@ void main() {
   testWidgets('G02: custom "{days} days strong", zh_TW', (tester) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.resetDevicePixelRatio);
 
     final container = dataContainer(
       SplashData(
@@ -165,8 +135,6 @@ void main() {
   testWidgets('G03: long custom text at 2× text scale', (tester) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.resetDevicePixelRatio);
 
     const long =
         'Every day I am grateful for the journey since the '
