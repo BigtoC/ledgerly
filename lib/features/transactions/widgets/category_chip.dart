@@ -42,9 +42,7 @@ class CategoryChip extends StatelessWidget {
         title: Text(l10n.txCategoryLabel),
         subtitle: Text(
           l10n.txCategoryEmpty,
-          style: TextStyle(
-            color: hasError ? theme.colorScheme.error : null,
-          ),
+          style: TextStyle(color: hasError ? theme.colorScheme.error : null),
         ),
         trailing: const Icon(Icons.chevron_right),
         onTap: onTap,

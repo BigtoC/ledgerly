@@ -10,11 +10,7 @@ import '../../../core/utils/date_helpers.dart';
 import '../../../l10n/app_localizations.dart';
 
 class DateField extends StatelessWidget {
-  const DateField({
-    super.key,
-    required this.value,
-    required this.onChanged,
-  });
+  const DateField({super.key, required this.value, required this.onChanged});
 
   final DateTime value;
   final ValueChanged<DateTime> onChanged;
@@ -33,14 +29,11 @@ class DateField extends StatelessWidget {
   }
 
   Future<void> _pick(BuildContext context) async {
-    final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
       initialDate: value,
-      // Allow up to 5 years ago — covers backdated entries (PRD has no
-      // explicit window, but unbounded picks are user-hostile).
-      firstDate: DateTime(now.year - 5),
-      lastDate: DateTime(now.year + 1, 12, 31),
+      firstDate: DateTime(1900),
+      lastDate: DateTime(9999, 12, 31),
     );
     if (picked == null) return;
     onChanged(DateTime(picked.year, picked.month, picked.day));

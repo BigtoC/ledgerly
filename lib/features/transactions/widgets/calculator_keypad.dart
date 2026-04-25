@@ -58,10 +58,7 @@ class CalculatorKeypad extends StatelessWidget {
             _DigitKey(label: '4', onTap: () => onDigit(4)),
             _DigitKey(label: '5', onTap: () => onDigit(5)),
             _DigitKey(label: '6', onTap: () => onDigit(6)),
-            _DigitKey(
-              label: '.',
-              onTap: decimalEnabled ? onDecimal : null,
-            ),
+            _DigitKey(label: '.', onTap: decimalEnabled ? onDecimal : null),
           ]),
           _row([
             _DigitKey(label: '1', onTap: () => onDigit(1)),
@@ -78,11 +75,7 @@ class CalculatorKeypad extends StatelessWidget {
                 onDigit(0);
               },
             ),
-            _DigitKey(
-              label: 'C',
-              tooltip: l10n.txKeypadClear,
-              onTap: onClear,
-            ),
+            _DigitKey(label: 'C', tooltip: l10n.txKeypadClear, onTap: onClear),
             const _SpacerKey(),
           ]),
         ],
@@ -93,11 +86,7 @@ class CalculatorKeypad extends StatelessWidget {
   Widget _row(List<Widget> children) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          for (final c in children) Expanded(child: c),
-        ],
-      ),
+      child: Row(children: [for (final c in children) Expanded(child: c)]),
     );
   }
 }
@@ -128,7 +117,9 @@ class _DigitKey extends StatelessWidget {
               child: Text(
                 label,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: disabled ? colors.onSurface.withValues(alpha: 0.4) : null,
+                  color: disabled
+                      ? colors.onSurface.withValues(alpha: 0.4)
+                      : null,
                 ),
               ),
             ),

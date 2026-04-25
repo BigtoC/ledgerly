@@ -36,9 +36,7 @@ class AccountSelectorTile extends StatelessWidget {
         title: Text(l10n.txAccountLabel),
         subtitle: Text(
           l10n.txAccountEmpty,
-          style: TextStyle(
-            color: hasError ? theme.colorScheme.error : null,
-          ),
+          style: TextStyle(color: hasError ? theme.colorScheme.error : null),
         ),
         trailing: const Icon(Icons.chevron_right),
         onTap: onTap,
