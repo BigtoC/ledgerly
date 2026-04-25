@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../features/accounts/account_form_screen.dart';
 import '../features/accounts/accounts_screen.dart';
 import '../features/categories/categories_screen.dart';
 import '../features/home/home_screen.dart';
@@ -65,7 +66,11 @@ GoRouter router(Ref ref) {
                     path: 'add',
                     parentNavigatorKey: _rootNavigatorKey,
                     pageBuilder: (ctx, state) =>
-                        _modalPage(state, const TransactionFormScreen()),
+                        _modalPage(
+                          state,
+                          const TransactionFormScreen(),
+                          fullscreenDialog: true,
+                        ),
                   ),
                   GoRoute(
                     path: 'edit/:id',
@@ -79,6 +84,7 @@ GoRouter router(Ref ref) {
                       TransactionFormScreen(
                         transactionId: int.parse(state.pathParameters['id']!),
                       ),
+                      fullscreenDialog: true,
                     ),
                   ),
                 ],
@@ -93,11 +99,27 @@ GoRouter router(Ref ref) {
                 routes: [
                   GoRoute(
                     path: 'new',
-                    builder: (_, _) => const AccountsScreen(),
+                    parentNavigatorKey: _rootNavigatorKey,
+                    pageBuilder: (ctx, state) => _modalPage(
+                      state,
+                      const AccountFormScreen(),
+                      fullscreenDialog: true,
+                    ),
                   ),
                   GoRoute(
                     path: ':id',
-                    builder: (_, _) => const AccountsScreen(),
+                    redirect: (_, state) =>
+                        int.tryParse(state.pathParameters['id'] ?? '') == null
+                        ? '/accounts'
+                        : null,
+                    parentNavigatorKey: _rootNavigatorKey,
+                    pageBuilder: (ctx, state) => _modalPage(
+                      state,
+                      AccountFormScreen(
+                        accountId: int.parse(state.pathParameters['id']!),
+                      ),
+                      fullscreenDialog: true,
+                    ),
                   ),
                 ],
               ),
@@ -123,10 +145,22 @@ GoRouter router(Ref ref) {
   );
 }
 
-Page<void> _modalPage(GoRouterState state, Widget child) {
+Page<void> _modalPage(
+  GoRouterState state,
+  Widget child, {
+  bool fullscreenDialog = false,
+}) {
   return switch (defaultTargetPlatform) {
     TargetPlatform.iOS ||
-    TargetPlatform.macOS => CupertinoPage(key: state.pageKey, child: child),
-    _ => MaterialPage(key: state.pageKey, child: child),
+    TargetPlatform.macOS => CupertinoPage(
+      key: state.pageKey,
+      fullscreenDialog: fullscreenDialog,
+      child: child,
+    ),
+    _ => MaterialPage(
+      key: state.pageKey,
+      fullscreenDialog: fullscreenDialog,
+      child: child,
+    ),
   };
 }
