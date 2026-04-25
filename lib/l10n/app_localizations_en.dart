@@ -440,4 +440,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txKeypadBackspace => 'Backspace';
+
+  @override
+  String get homeDayEmptyTitle => 'No transactions on this day';
+
+  @override
+  String get homeDeleteUndoSnackbar => 'Transaction deleted';
+
+  @override
+  String get homeDuplicateAction => 'Duplicate';
+
+  @override
+  String get homeDayLabelToday => 'Today';
+
+  @override
+  String get homeDayLabelYesterday => 'Yesterday';
+
+  @override
+  String get homeDayNavPrevLabel => 'Previous day';
+
+  @override
+  String get homeDayNavNextLabel => 'Next day';
 }
