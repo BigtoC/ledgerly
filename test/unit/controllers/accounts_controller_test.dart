@@ -80,6 +80,15 @@ void main() {
       when(
         () => prefs.watchDefaultAccountId(),
       ).thenAnswer((_) => defaultCtrl.stream);
+      when(() => accountRepo.watchIsReferenced(any())).thenAnswer((inv) {
+        final id = inv.positionalArguments.first as int;
+        final balance = balanceCtrls.putIfAbsent(
+          id,
+          () => StreamController<int>.broadcast(),
+        );
+        return balance.stream.asyncMap((_) => accountRepo.isReferenced(id));
+      });
+      when(() => accountRepo.isReferenced(any())).thenAnswer((_) async => false);
       when(() => accountRepo.watchBalanceMinorUnits(any())).thenAnswer((inv) {
         final id = inv.positionalArguments.first as int;
         final c = balanceCtrls.putIfAbsent(
@@ -242,7 +251,7 @@ void main() {
       container.listen(accountsControllerProvider, (_, _) {});
       await Future<void>.delayed(Duration.zero);
       accountsCtrl.add([_a(id: 1, name: 'Cash')]);
-      defaultCtrl.add(1);
+      defaultCtrl.add(99);
       await Future<void>.delayed(Duration.zero);
       balanceCtrls[1]!.add(0);
       await waitForData(container);
@@ -256,6 +265,34 @@ void main() {
             (e) => e.kind,
             'kind',
             AccountsOperationError.lastActiveAccount,
+          ),
+        ),
+      );
+      verifyNever(() => accountRepo.archive(any()));
+    });
+
+    test('A06b: archive refuses the current default account', () async {
+      final container = makeContainer();
+      addTearDown(container.dispose);
+      container.listen(accountsControllerProvider, (_, _) {});
+      await Future<void>.delayed(Duration.zero);
+      accountsCtrl.add([
+        _a(id: 1, name: 'Cash'),
+        _a(id: 2, name: 'Spare'),
+      ]);
+      defaultCtrl.add(1);
+      await Future<void>.delayed(Duration.zero);
+      balanceCtrls[1]!.add(0);
+      balanceCtrls[2]!.add(0);
+      await waitForData(container);
+
+      expect(
+        () => container.read(accountsControllerProvider.notifier).archive(1),
+        throwsA(
+          isA<AccountsOperationException>().having(
+            (e) => e.kind,
+            'kind',
+            AccountsOperationError.defaultAccount,
           ),
         ),
       );
@@ -314,11 +351,12 @@ void main() {
       );
     });
 
-    test('A09: affordance — multiple active, opening==0 → delete', () async {
+    test('A09: affordance — referenced zero-opening account stays archive', () async {
       final container = makeContainer();
       addTearDown(container.dispose);
       container.listen(accountsControllerProvider, (_, _) {});
       await Future<void>.delayed(Duration.zero);
+      when(() => accountRepo.isReferenced(2)).thenAnswer((_) async => true);
       accountsCtrl.add([
         _a(id: 1, name: 'Cash'),
         _a(id: 2, name: 'Spare', openingBalanceMinorUnits: 0),
@@ -331,7 +369,7 @@ void main() {
       final state = await waitForData(container) as AccountsData;
       final spare =
           state.active.firstWhere((r) => r.account.id == 2).affordance;
-      expect(spare, AccountRowAffordance.delete);
+      expect(spare, AccountRowAffordance.archive);
     });
 
     test(

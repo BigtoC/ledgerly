@@ -117,6 +117,7 @@ void main() {
   ) async {
     final repo = _MockUserPreferencesRepository();
     when(() => repo.setSplashStartDate(any())).thenAnswer((_) async {});
+    final fixedNow = DateTime(2026, 1, 10);
 
     final container = ProviderContainer(
       overrides: [
@@ -125,6 +126,7 @@ void main() {
           SplashGateSnapshot.withInitial(enabled: true, startDate: null),
         ),
         splashStartDateProvider.overrideWith((ref) => Stream.value(null)),
+        splashClockProvider.overrideWithValue(() => fixedNow),
         splashControllerProvider.overrideWith(
           () => _FakeSplashController(const SplashState.loading()),
         ),
@@ -132,14 +134,20 @@ void main() {
     );
     addTearDown(container.dispose);
 
-    await tester.pumpWidget(wrap(container));
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(wrap(container));
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Set start date'));
-    await tester.pump();
+      await tester.tap(find.text('Set start date'));
+      await tester.pumpAndSettle();
 
-    verify(() => repo.setSplashStartDate(any())).called(1);
-  });
+      expect(find.byType(DatePickerDialog), findsOneWidget);
+      verifyNever(() => repo.setSplashStartDate(any()));
+
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+
+      verify(() => repo.setSplashStartDate(fixedNow)).called(1);
+    });
 
   testWidgets('W04: day count clamps at 1.5x even at 2x requested scale', (
     tester,

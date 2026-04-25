@@ -158,7 +158,8 @@ void main() {
       final accountRepo = _MockAccountRepository();
       final typeRepo = _MockAccountTypeRepository();
       final prefs = _MockUserPreferencesRepository();
-      when(() => typeRepo.getById(1)).thenAnswer((_) async => cashType);
+      when(() => typeRepo.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([cashType]));
 
       final container = _makeContainer(
         accountRepo: accountRepo,
@@ -191,7 +192,8 @@ void main() {
       final accountRepo = _MockAccountRepository();
       final typeRepo = _MockAccountTypeRepository();
       final prefs = _MockUserPreferencesRepository();
-      when(() => typeRepo.getById(any())).thenAnswer((_) async => cashType);
+      when(() => typeRepo.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([cashType]));
 
       final container = _makeContainer(
         accountRepo: accountRepo,
@@ -219,7 +221,8 @@ void main() {
     final accountRepo = _MockAccountRepository();
     final typeRepo = _MockAccountTypeRepository();
     final prefs = _MockUserPreferencesRepository();
-    when(() => typeRepo.getById(any())).thenAnswer((_) async => cashType);
+    when(() => typeRepo.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([cashType]));
 
     final container = _makeContainer(
       accountRepo: accountRepo,
@@ -248,7 +251,8 @@ void main() {
       final accountRepo = _MockAccountRepository();
       final typeRepo = _MockAccountTypeRepository();
       final prefs = _MockUserPreferencesRepository();
-      when(() => typeRepo.getById(any())).thenAnswer((_) async => cashType);
+      when(() => typeRepo.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([cashType]));
       when(() => accountRepo.archive(2)).thenAnswer((_) async {});
 
       final container = _makeContainer(
@@ -292,7 +296,8 @@ void main() {
       final accountRepo = _MockAccountRepository();
       final typeRepo = _MockAccountTypeRepository();
       final prefs = _MockUserPreferencesRepository();
-      when(() => typeRepo.getById(any())).thenAnswer((_) async => cashType);
+      when(() => typeRepo.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([cashType]));
 
       final container = _makeContainer(
         accountRepo: accountRepo,
@@ -323,7 +328,8 @@ void main() {
     final accountRepo = _MockAccountRepository();
     final typeRepo = _MockAccountTypeRepository();
     final prefs = _MockUserPreferencesRepository();
-    when(() => typeRepo.getById(any())).thenAnswer((_) async => cashType);
+    when(() => typeRepo.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([cashType]));
 
     final container = _makeContainer(
       accountRepo: accountRepo,
@@ -357,7 +363,8 @@ void main() {
       final accountRepo = _MockAccountRepository();
       final typeRepo = _MockAccountTypeRepository();
       final prefs = _MockUserPreferencesRepository();
-      when(() => typeRepo.getById(any())).thenAnswer((_) async => cashType);
+      when(() => typeRepo.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([cashType]));
 
       final container = _makeContainer(
         accountRepo: accountRepo,

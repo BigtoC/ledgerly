@@ -12,6 +12,8 @@
 //     without re-navigating.
 //   - 2× text scale survives.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -203,6 +205,9 @@ void main() {
       final currencyRepo = _MockCurrencyRepository();
       when(() => accountRepo.getById(7))
           .thenAnswer((_) async => _a(id: 7, name: 'Main Cash'));
+      when(() => accountRepo.watchById(7)).thenAnswer(
+        (_) => Stream.value(_a(id: 7, name: 'Main Cash')),
+      );
 
       final container = _makeContainer(
         prefs: prefs,
@@ -216,6 +221,41 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Main Cash'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'SS03b: default-account subtitle updates when the account name changes',
+    (tester) async {
+      final prefs = _MockUserPreferencesRepository();
+      final accountRepo = _MockAccountRepository();
+      final currencyRepo = _MockCurrencyRepository();
+      final accountCtrl = StreamController<Account?>.broadcast();
+      addTearDown(accountCtrl.close);
+
+      when(() => accountRepo.watchById(7)).thenAnswer((_) => accountCtrl.stream);
+
+      final container = _makeContainer(
+        prefs: prefs,
+        accountRepo: accountRepo,
+        currencyRepo: currencyRepo,
+        fixed: _data(defaultAccountId: 7),
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container));
+      await tester.pumpAndSettle();
+
+      accountCtrl.add(_a(id: 7, name: 'Main Cash'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Main Cash'), findsOneWidget);
+
+      accountCtrl.add(_a(id: 7, name: 'Renamed Cash'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Renamed Cash'), findsOneWidget);
+      expect(find.text('Main Cash'), findsNothing);
     },
   );
 
