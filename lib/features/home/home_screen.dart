@@ -289,60 +289,86 @@ class _SinglePane extends ConsumerWidget {
     final accounts =
         ref.watch(homeAccountsByIdProvider).valueOrNull ?? const {};
     final l10n = AppLocalizations.of(context);
-    return CustomScrollView(
-      slivers: [
-        const SliverPadding(padding: EdgeInsets.only(top: 28)),
-        SliverToBoxAdapter(
-          child: SummaryStrip(
-            todayTotalsByCurrency: data.todayTotalsByCurrency,
-            monthNetByCurrency: data.monthNetByCurrency,
-            currenciesByCode: currencies,
-            locale: locale,
+    return GestureDetector(
+      // Horizontal flick → step prev/next day. `flutter_slidable` rows
+      // sit deeper in the tree, so the gesture arena hands row swipes
+      // to Slidable; this detector only fires on empty regions
+      // (summary strip, nav header, between rows, gap-day empty).
+      behavior: HitTestBehavior.translucent,
+      onHorizontalDragEnd: (details) =>
+          _onHorizontalDragEnd(details, data: data),
+      child: CustomScrollView(
+        slivers: [
+          const SliverPadding(padding: EdgeInsets.only(top: 38)),
+          SliverToBoxAdapter(
+            child: SummaryStrip(
+              todayTotalsByCurrency: data.todayTotalsByCurrency,
+              monthNetByCurrency: data.monthNetByCurrency,
+              currenciesByCode: currencies,
+              locale: locale,
+            ),
           ),
-        ),
-        SliverToBoxAdapter(
-          child: DayNavigationHeader(
-            selectedDay: data.selectedDay,
-            locale: locale,
-            onPrev: onPrev,
-            onNext: onNext,
-            onPickDay: () => onPickDay(data.selectedDay),
-            canGoPrev: data.prevDayWithActivity != null,
-            canGoNext: data.nextDayWithActivity != null,
-            trailing: PendingBadge(count: data.pendingBadgeCount),
+          SliverToBoxAdapter(
+            child: DayNavigationHeader(
+              selectedDay: data.selectedDay,
+              locale: locale,
+              onPrev: onPrev,
+              onNext: onNext,
+              onPickDay: () => onPickDay(data.selectedDay),
+              canGoPrev: data.prevDayWithActivity != null,
+              canGoNext: data.nextDayWithActivity != null,
+              trailing: PendingBadge(count: data.pendingBadgeCount),
+            ),
           ),
-        ),
-        if (data.transactionsForDay.isEmpty)
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Center(
-                child: Text(
-                  l10n.homeDayEmptyTitle,
-                  style: Theme.of(context).textTheme.titleMedium,
+          if (data.transactionsForDay.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Center(
+                  child: Text(
+                    l10n.homeDayEmptyTitle,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                 ),
               ),
+            )
+          else
+            SliverList(
+              delegate: SliverChildBuilderDelegate((ctx, i) {
+                final tx = data.transactionsForDay[i];
+                return TransactionTile(
+                  transaction: tx,
+                  category: categories[tx.categoryId],
+                  account: accounts[tx.accountId],
+                  locale: locale,
+                  onTap: () => onTapRow(tx.id),
+                  onDuplicate: () => onDuplicateRow(tx.id),
+                  onDelete: () => onDeleteRow(tx.id),
+                );
+              }, childCount: data.transactionsForDay.length),
             ),
-          )
-        else
-          SliverList(
-            delegate: SliverChildBuilderDelegate((ctx, i) {
-              final tx = data.transactionsForDay[i];
-              return TransactionTile(
-                transaction: tx,
-                category: categories[tx.categoryId],
-                account: accounts[tx.accountId],
-                locale: locale,
-                onTap: () => onTapRow(tx.id),
-                onDuplicate: () => onDuplicateRow(tx.id),
-                onDelete: () => onDeleteRow(tx.id),
-              );
-            }, childCount: data.transactionsForDay.length),
-          ),
-        const SliverPadding(padding: EdgeInsets.only(bottom: 96)),
-      ],
+          const SliverPadding(padding: EdgeInsets.only(bottom: 96)),
+        ],
+      ),
     );
+  }
+
+  void _onHorizontalDragEnd(
+    DragEndDetails details, {
+    required HomeData data,
+  }) {
+    // primaryVelocity is in logical px/s. Negative = finger moving
+    // left → reveal newer day; positive = finger moving right → reveal
+    // older day. 300 px/s threshold filters incidental scroll-end
+    // motion from intentional flicks.
+    const threshold = 300.0;
+    final v = details.primaryVelocity ?? 0;
+    if (v <= -threshold) {
+      onNext();
+    } else if (v >= threshold) {
+      onPrev();
+    }
   }
 }
 
