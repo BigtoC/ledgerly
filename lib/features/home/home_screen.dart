@@ -291,6 +291,7 @@ class _SinglePane extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     return CustomScrollView(
       slivers: [
+        const SliverPadding(padding: EdgeInsets.only(top: 28)),
         SliverToBoxAdapter(
           child: SummaryStrip(
             todayTotalsByCurrency: data.todayTotalsByCurrency,
