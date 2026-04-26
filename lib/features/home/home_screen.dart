@@ -29,6 +29,7 @@ import 'home_controller.dart';
 import 'home_providers.dart';
 import 'home_state.dart';
 import 'widgets/day_navigation_header.dart';
+import 'widgets/pending_badge.dart';
 import 'widgets/summary_strip.dart';
 import 'widgets/transaction_tile.dart';
 
@@ -41,6 +42,20 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   PendingDelete? _lastShownPending;
+  late final HomeController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = ref.read(homeControllerProvider.notifier);
+    _controller.setEffectListener(_onEffect);
+  }
+
+  @override
+  void dispose() {
+    _controller.setEffectListener(null);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,6 +82,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         onPressed: () => _onAddPressed(context),
         icon: const Icon(Icons.add),
         label: Text(l10n.homeFabLabel),
+        tooltip: l10n.homeFabLabel,
       ),
       body: SlidableAutoCloseBehavior(
         child: switch (state) {
@@ -95,6 +111,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<void> _onAddPressed(BuildContext context) async {
     final saved = await context.push<Transaction>('/home/add');
+    if (!mounted) return;
     if (saved != null) {
       await ref.read(homeControllerProvider.notifier).pinDay(saved.date);
     }
@@ -102,6 +119,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<void> _onEditRow(int id) async {
     final saved = await context.push<Transaction>('/home/edit/$id');
+    if (!mounted) return;
     if (saved != null) {
       await ref.read(homeControllerProvider.notifier).pinDay(saved.date);
     }
@@ -112,6 +130,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       '/home/add',
       extra: <String, Object>{'duplicateSourceId': id},
     );
+    if (!mounted) return;
     if (saved != null) {
       await ref.read(homeControllerProvider.notifier).pinDay(saved.date);
     }
@@ -121,16 +140,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Range: oldest activity day .. today + 30d (PRD allows manual
     // future gap-day navigation).
     final today = DateHelpers.startOfDay(DateTime.now());
-    final firstDate =
-        data.prevDayWithActivity ??
-        (data.transactionsForDay.isNotEmpty ? data.selectedDay : today);
+    final firstDate = data.activityDays.isEmpty
+        ? today
+        : data.activityDays.last;
     final lastDate = today.add(const Duration(days: 30));
     final picked = await showDatePicker(
       context: context,
       initialDate: data.selectedDay,
-      firstDate: firstDate.isBefore(initial) ? firstDate : initial,
+      firstDate: firstDate,
       lastDate: lastDate,
     );
+    if (!mounted) return;
     if (picked != null) {
       await ref.read(homeControllerProvider.notifier).pinDay(picked);
     }
@@ -142,7 +162,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       _lastShownPending = null;
       return;
     }
-    if (identical(pending, _lastShownPending)) return;
+    if (_lastShownPending?.transaction.id == pending.transaction.id) return;
     _lastShownPending = pending;
     final messenger = ScaffoldMessenger.maybeOf(context);
     messenger
@@ -159,6 +179,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
       );
+  }
+
+  void _onEffect(HomeEffect effect) {
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final l10n = AppLocalizations.of(context);
+
+    switch (effect) {
+      case HomeDeleteFailedEffect():
+        messenger
+          ?..clearSnackBars()
+          ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
+    }
   }
 }
 
@@ -198,8 +231,8 @@ class _AdaptiveBody extends ConsumerWidget {
         }
         return _TwoPane(
           data: data,
-          onPrev: onPrev,
-          onNext: onNext,
+          onSelectActivityDay: (day) =>
+              ref.read(homeControllerProvider.notifier).pinDay(day),
           onPickDay: onPickDay,
           onTapRow: onTapRow,
           onDuplicateRow: onDuplicateRow,
@@ -258,6 +291,7 @@ class _SinglePane extends ConsumerWidget {
             onPickDay: () => onPickDay(data.selectedDay),
             canGoPrev: data.prevDayWithActivity != null,
             canGoNext: data.nextDayWithActivity != null,
+            trailing: PendingBadge(count: data.pendingBadgeCount),
           ),
         ),
         if (data.transactionsForDay.isEmpty)
@@ -297,8 +331,7 @@ class _SinglePane extends ConsumerWidget {
 class _TwoPane extends ConsumerWidget {
   const _TwoPane({
     required this.data,
-    required this.onPrev,
-    required this.onNext,
+    required this.onSelectActivityDay,
     required this.onPickDay,
     required this.onTapRow,
     required this.onDuplicateRow,
@@ -306,8 +339,7 @@ class _TwoPane extends ConsumerWidget {
   });
 
   final HomeData data;
-  final VoidCallback onPrev;
-  final VoidCallback onNext;
+  final void Function(DateTime day) onSelectActivityDay;
   final void Function(DateTime initial) onPickDay;
   final void Function(int id) onTapRow;
   final void Function(int id) onDuplicateRow;
@@ -319,14 +351,18 @@ class _TwoPane extends ConsumerWidget {
       children: [
         SizedBox(
           width: 280,
-          child: _ActivityPane(data: data, onPickDay: onPickDay),
+          child: _ActivityPane(
+            data: data,
+            onSelectDay: onSelectActivityDay,
+            onPickDay: onPickDay,
+          ),
         ),
         const VerticalDivider(width: 1),
         Expanded(
           child: _SinglePane(
             data: data,
-            onPrev: onPrev,
-            onNext: onNext,
+            onPrev: () => onSelectActivityDay(data.prevDayWithActivity!),
+            onNext: () => onSelectActivityDay(data.nextDayWithActivity!),
             onPickDay: onPickDay,
             onTapRow: onTapRow,
             onDuplicateRow: onDuplicateRow,
@@ -339,34 +375,42 @@ class _TwoPane extends ConsumerWidget {
 }
 
 class _ActivityPane extends ConsumerWidget {
-  const _ActivityPane({required this.data, required this.onPickDay});
+  const _ActivityPane({
+    required this.data,
+    required this.onSelectDay,
+    required this.onPickDay,
+  });
 
   final HomeData data;
+  final void Function(DateTime day) onSelectDay;
   final void Function(DateTime initial) onPickDay;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Render the prev/next chain as a vertical list of days starting
-    // from the selected day. We expose the manual date picker in the
-    // header so the user can jump anywhere even when the activity list
-    // is short.
-    final days = <DateTime>[
-      if (data.nextDayWithActivity != null) data.nextDayWithActivity!,
-      data.selectedDay,
-      if (data.prevDayWithActivity != null) data.prevDayWithActivity!,
-    ];
     final locale = Localizations.localeOf(context).toString();
-    return ListView.builder(
-      itemCount: days.length,
-      itemBuilder: (ctx, i) {
-        final day = days[i];
-        final isSelected = DateHelpers.isSameDay(day, data.selectedDay);
-        return ListTile(
-          selected: isSelected,
-          title: Text(DateHelpers.formatDayHeader(day, locale)),
-          onTap: () => onPickDay(day),
-        );
-      },
+    return Column(
+      children: [
+        ListTile(
+          title: Text(DateHelpers.formatDayHeader(data.selectedDay, locale)),
+          trailing: const Icon(Icons.calendar_today),
+          onTap: () => onPickDay(data.selectedDay),
+        ),
+        const Divider(height: 1),
+        Expanded(
+          child: ListView.builder(
+            itemCount: data.activityDays.length,
+            itemBuilder: (ctx, i) {
+              final day = data.activityDays[i];
+              final isSelected = DateHelpers.isSameDay(day, data.selectedDay);
+              return ListTile(
+                selected: isSelected,
+                title: Text(DateHelpers.formatDayHeader(day, locale)),
+                onTap: () => onSelectDay(day),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

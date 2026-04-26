@@ -60,14 +60,23 @@ class TransactionTile extends StatelessWidget {
     final icon = cat != null ? iconForKey(cat.icon) : Icons.help_outline;
 
     final isIncome = cat?.type == CategoryType.income;
-    final signedAmount = isIncome
-        ? transaction.amountMinorUnits
-        : -transaction.amountMinorUnits;
-    final amountText = MoneyFormatter.formatSigned(
-      amountMinorUnits: signedAmount,
-      currency: transaction.currency,
-      locale: locale,
-    );
+    final amountText = switch (cat?.type) {
+      CategoryType.income => MoneyFormatter.formatSigned(
+        amountMinorUnits: transaction.amountMinorUnits,
+        currency: transaction.currency,
+        locale: locale,
+      ),
+      CategoryType.expense => MoneyFormatter.formatSigned(
+        amountMinorUnits: -transaction.amountMinorUnits,
+        currency: transaction.currency,
+        locale: locale,
+      ),
+      null => MoneyFormatter.format(
+        amountMinorUnits: transaction.amountMinorUnits,
+        currency: transaction.currency,
+        locale: locale,
+      ),
+    };
 
     final timeText = DateFormat.Hm(locale).format(transaction.date);
     final memo = transaction.memo;
@@ -78,6 +87,7 @@ class TransactionTile extends StatelessWidget {
       endActionPane: ActionPane(
         motion: const BehindMotion(),
         extentRatio: 0.3,
+        dismissible: DismissiblePane(onDismissed: onDelete),
         children: [
           SlidableAction(
             onPressed: (_) => onDelete(),
@@ -145,11 +155,19 @@ class TransactionTile extends StatelessWidget {
             PopupMenuItem(value: _RowAction.edit, child: Text(l10n.commonEdit)),
             PopupMenuItem(
               value: _RowAction.duplicate,
-              child: Text(l10n.homeDuplicateAction),
+              child: Semantics(
+                button: true,
+                label: l10n.homeDuplicateAction,
+                child: Text(l10n.homeDuplicateAction),
+              ),
             ),
             PopupMenuItem(
               value: _RowAction.delete,
-              child: Text(l10n.commonDelete),
+              child: Semantics(
+                button: true,
+                label: l10n.commonDelete,
+                child: Text(l10n.commonDelete),
+              ),
             ),
           ],
         ),

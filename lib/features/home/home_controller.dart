@@ -33,17 +33,34 @@ import 'home_state.dart';
 
 part 'home_controller.g.dart';
 
+typedef HomeEffectListener = void Function(HomeEffect effect);
+
 /// Length of the undo window. PRD: snackbar with `commonUndo` action;
 /// 4 s matches the Material `SnackBar` default duration.
 const Duration kUndoWindow = Duration(seconds: 4);
+
+sealed class HomeEffect {
+  const HomeEffect();
+}
+
+final class HomeDeleteFailedEffect extends HomeEffect {
+  const HomeDeleteFailedEffect(this.error, this.stackTrace);
+
+  final Object error;
+  final StackTrace stackTrace;
+}
 
 @Riverpod(keepAlive: true)
 class HomeController extends _$HomeController {
   // Fields persist across rebuilds. They are reset on `ref.onDispose`.
   DateTime _selectedDay = DateHelpers.startOfDay(DateTime.now());
+  DateTime _todayAnchor = DateHelpers.startOfDay(DateTime.now());
   PendingDelete? _pendingDelete;
+  final Set<int> _committedDeleteIds = <int>{};
   Timer? _undoTimer;
+  Timer? _todayRefreshTimer;
   _Composer? _composer;
+  HomeEffectListener? _effectListener;
 
   @override
   Stream<HomeState> build() {
@@ -51,13 +68,19 @@ class HomeController extends _$HomeController {
     final composer = _Composer(
       repo: repo,
       selectedDayGetter: () => _selectedDay,
+      todayGetter: () => _todayAnchor,
       pendingDeleteGetter: () => _pendingDelete,
+      committedDeleteIdsGetter: () => _committedDeleteIds,
     );
     _composer = composer;
+    _scheduleTodayRefresh();
     ref.onDispose(() {
       _undoTimer?.cancel();
       _undoTimer = null;
+      _todayRefreshTimer?.cancel();
+      _todayRefreshTimer = null;
       _pendingDelete = null;
+      _committedDeleteIds.clear();
       composer.dispose();
     });
     return composer.stream;
@@ -68,6 +91,7 @@ class HomeController extends _$HomeController {
   /// Pin the selected day to today. Always succeeds, even when today has
   /// no activity (renders gap-day empty inside [HomeData]).
   Future<void> selectToday() async {
+    _syncTodayAnchor();
     _selectedDay = DateHelpers.startOfDay(DateTime.now());
     _composer?.changeSelectedDay(_selectedDay);
   }
@@ -76,12 +100,14 @@ class HomeController extends _$HomeController {
   /// round-trip — Home pins to `savedTx.date` so the new row lands in
   /// view even if the user picked a date other than today.
   Future<void> pinDay(DateTime day) async {
+    _syncTodayAnchor();
     _selectedDay = DateHelpers.startOfDay(day);
     _composer?.changeSelectedDay(_selectedDay);
   }
 
   /// Step to the nearest older day with activity. No-op when at oldest.
   Future<void> selectPrevDay() async {
+    _syncTodayAnchor();
     final prev = _composer?.prevDayWithActivity();
     if (prev == null) return;
     _selectedDay = prev;
@@ -90,6 +116,7 @@ class HomeController extends _$HomeController {
 
   /// Step to the nearest newer day with activity. No-op when at newest.
   Future<void> selectNextDay() async {
+    _syncTodayAnchor();
     final next = _composer?.nextDayWithActivity();
     if (next == null) return;
     _selectedDay = next;
@@ -106,11 +133,8 @@ class HomeController extends _$HomeController {
       _undoTimer?.cancel();
       _undoTimer = null;
       final prior = _pendingDelete!;
-      _pendingDelete = null;
-      _composer?.setPendingDelete(null);
-      await ref
-          .read(transactionRepositoryProvider)
-          .delete(prior.transaction.id);
+      final committed = await _commitDelete(prior.transaction.id);
+      if (!committed) return;
     }
 
     final tx = _composer?.transactionById(id);
@@ -123,11 +147,7 @@ class HomeController extends _$HomeController {
     _undoTimer = Timer(kUndoWindow, () async {
       final pending = _pendingDelete;
       if (pending == null) return;
-      _pendingDelete = null;
-      _composer?.setPendingDelete(null);
-      await ref
-          .read(transactionRepositoryProvider)
-          .delete(pending.transaction.id);
+      await _commitDelete(pending.transaction.id);
     });
   }
 
@@ -138,6 +158,55 @@ class HomeController extends _$HomeController {
     _undoTimer = null;
     _pendingDelete = null;
     _composer?.setPendingDelete(null);
+  }
+
+  void setEffectListener(HomeEffectListener? listener) {
+    _effectListener = listener;
+  }
+
+  Future<bool> _commitDelete(int id) async {
+    _committedDeleteIds.add(id);
+    _composer?.setPendingDelete(_pendingDelete);
+    try {
+      await ref.read(transactionRepositoryProvider).delete(id);
+      if (_pendingDelete?.transaction.id == id) {
+        _pendingDelete = null;
+        _composer?.setPendingDelete(null);
+      }
+      return true;
+    } catch (error, stackTrace) {
+      _committedDeleteIds.remove(id);
+      if (_pendingDelete?.transaction.id == id) {
+        _pendingDelete = null;
+        _composer?.setPendingDelete(null);
+      } else {
+        _composer?.setPendingDelete(_pendingDelete);
+      }
+      _effectListener?.call(HomeDeleteFailedEffect(error, stackTrace));
+      return false;
+    }
+  }
+
+  void _syncTodayAnchor() {
+    final today = DateHelpers.startOfDay(DateTime.now());
+    if (DateHelpers.isSameDay(today, _todayAnchor)) return;
+    _todayAnchor = today;
+    _composer?.changeToday(_todayAnchor);
+    _scheduleTodayRefresh();
+  }
+
+  void _scheduleTodayRefresh() {
+    _todayRefreshTimer?.cancel();
+    final now = DateTime.now();
+    final nextMidnight = DateHelpers.startOfDay(
+      DateTime(now.year, now.month, now.day + 1),
+    );
+    final delay = nextMidnight.difference(now);
+    _todayRefreshTimer = Timer(delay, () {
+      _todayAnchor = DateHelpers.startOfDay(DateTime.now());
+      _composer?.changeToday(_todayAnchor);
+      _scheduleTodayRefresh();
+    });
   }
 }
 
@@ -150,10 +219,14 @@ class _Composer {
   _Composer({
     required TransactionRepository repo,
     required DateTime Function() selectedDayGetter,
+    required DateTime Function() todayGetter,
     required PendingDelete? Function() pendingDeleteGetter,
+    required Set<int> Function() committedDeleteIdsGetter,
   }) : _repo = repo,
        _selectedDayGetter = selectedDayGetter,
-       _pendingDeleteGetter = pendingDeleteGetter {
+       _todayGetter = todayGetter,
+       _pendingDeleteGetter = pendingDeleteGetter,
+       _committedDeleteIdsGetter = committedDeleteIdsGetter {
     _out = StreamController<HomeState>.broadcast(
       onListen: _start,
       onCancel: _stop,
@@ -162,7 +235,9 @@ class _Composer {
 
   final TransactionRepository _repo;
   final DateTime Function() _selectedDayGetter;
+  final DateTime Function() _todayGetter;
   final PendingDelete? Function() _pendingDeleteGetter;
+  final Set<int> Function() _committedDeleteIdsGetter;
   late final StreamController<HomeState> _out;
 
   StreamSubscription<List<Transaction>>? _daySub;
@@ -175,29 +250,19 @@ class _Composer {
   List<DateTime>? _activityDays;
   Map<String, ({int expense, int income})>? _todayTotals;
   Map<String, int>? _monthNet;
-
-  // Cache of "today" pinned at composer creation. Today shifts only
-  // across midnight; the controller does not auto-pin past midnight in
-  // MVP — restart the app or interact with the day-nav to pull a fresh
-  // today reading.
-  late final DateTime _today = DateHelpers.startOfDay(DateTime.now());
+  int _dayGeneration = 0;
+  bool _emitScheduled = false;
 
   Stream<HomeState> get stream => _out.stream;
 
   void _start() {
+    _out.add(const HomeState.loading());
     _subscribeDay(_selectedDayGetter());
     _activitySub = _repo.watchDaysWithActivity().listen((days) {
       _activityDays = days;
-      _emitIfReady();
+      _scheduleEmit();
     }, onError: _onError);
-    _totalsSub = _repo.watchDailyTotalsByType(_today).listen((totals) {
-      _todayTotals = totals;
-      _emitIfReady();
-    }, onError: _onError);
-    _monthNetSub = _repo.watchMonthNetByCurrency(_today).listen((net) {
-      _monthNet = net;
-      _emitIfReady();
-    }, onError: _onError);
+    _subscribeSummaryStreams(_todayGetter());
   }
 
   Future<void> _stop() async {
@@ -217,11 +282,39 @@ class _Composer {
   }
 
   void _subscribeDay(DateTime day) {
+    _dayGeneration++;
+    final generation = _dayGeneration;
+    final targetDay = DateHelpers.startOfDay(day);
     _daySub?.cancel();
     _txForDay = null;
     _daySub = _repo.watchByDay(day).listen((rows) {
+      if (generation != _dayGeneration) return;
+      final isStale = rows.any(
+        (row) => !DateHelpers.isSameDay(row.date, targetDay),
+      );
+      if (isStale) return;
+      final committedDeleteIds = _committedDeleteIdsGetter();
+      if (committedDeleteIds.isNotEmpty) {
+        final visibleIds = rows.map((row) => row.id).toSet();
+        committedDeleteIds.removeWhere((id) => !visibleIds.contains(id));
+      }
       _txForDay = rows;
-      _emitIfReady();
+      _scheduleEmit();
+    }, onError: _onError);
+  }
+
+  void _subscribeSummaryStreams(DateTime today) {
+    _totalsSub?.cancel();
+    _monthNetSub?.cancel();
+    _todayTotals = null;
+    _monthNet = null;
+    _totalsSub = _repo.watchDailyTotalsByType(today).listen((totals) {
+      _todayTotals = totals;
+      _scheduleEmit();
+    }, onError: _onError);
+    _monthNetSub = _repo.watchMonthNetByCurrency(today).listen((net) {
+      _monthNet = net;
+      _scheduleEmit();
     }, onError: _onError);
   }
 
@@ -229,8 +322,12 @@ class _Composer {
     _subscribeDay(day);
   }
 
+  void changeToday(DateTime today) {
+    _subscribeSummaryStreams(today);
+  }
+
   void setPendingDelete(PendingDelete? pending) {
-    _emitIfReady();
+    _scheduleEmit();
   }
 
   Transaction? transactionById(int id) {
@@ -273,6 +370,15 @@ class _Composer {
     _out.add(HomeState.error(error, stack));
   }
 
+  void _scheduleEmit() {
+    if (_emitScheduled || _out.isClosed) return;
+    _emitScheduled = true;
+    scheduleMicrotask(() {
+      _emitScheduled = false;
+      _emitIfReady();
+    });
+  }
+
   void _emitIfReady() {
     if (_out.isClosed) return;
     if (_txForDay == null ||
@@ -285,6 +391,7 @@ class _Composer {
     final selectedDay = _selectedDayGetter();
     final activity = _activityDays!;
     final pending = _pendingDeleteGetter();
+    final committedDeleteIds = _committedDeleteIdsGetter();
 
     // Empty CTA fires only when there is no history at all AND today
     // has nothing pinned (selectedDay == today). Per Wave 3 §6, a
@@ -297,15 +404,19 @@ class _Composer {
 
     // Hide the pending row visually so the user sees it disappear during
     // the undo window. Re-appears on undo because pendingDelete clears.
-    final visible = pending == null
+    final hiddenIds = <int>{...committedDeleteIds};
+    if (pending != null) hiddenIds.add(pending.transaction.id);
+
+    final visible = hiddenIds.isEmpty
         ? _txForDay!
         : _txForDay!
-              .where((t) => t.id != pending.transaction.id)
+              .where((t) => !hiddenIds.contains(t.id))
               .toList(growable: false);
 
     _out.add(
       HomeState.data(
         selectedDay: selectedDay,
+        activityDays: List.unmodifiable(activity),
         transactionsForDay: visible,
         todayTotalsByCurrency: _todayTotals!,
         monthNetByCurrency: _monthNet!,
