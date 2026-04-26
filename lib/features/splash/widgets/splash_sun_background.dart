@@ -1,7 +1,7 @@
 // Splash sun background (plan §3.1, §5 layer 1).
 //
 // Renders a warm sun-tinted background behind the day counter. Tries to load
-// `assets/splash/sun_background.png` first; when the asset is missing
+// `assets/splash/sun-splash.png` first; when the asset is missing
 // (placeholder state during development — see `assets/splash/README.md`),
 // falls back to a radial gradient that approximates the sun aesthetic.
 // Either way a dark-to-black vertical gradient is layered on top to preserve
@@ -19,7 +19,7 @@ class SplashSunBackground extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         // Base layer: procedural radial gradient approximating a sun.
-        // This is the fallback when `sun_background.png` is the placeholder
+        // This is the fallback when `sun-splash.png` is missing or unsuitable
         // stub — the real asset drops in as part of M6.
         const DecoratedBox(
           decoration: BoxDecoration(
@@ -41,7 +41,7 @@ class SplashSunBackground extends StatelessWidget {
         // errorBuilder keeps the gradient visible.
         Positioned.fill(
           child: Image.asset(
-            'assets/splash/sun_background.png',
+            'assets/splash/sun-splash.png',
             fit: BoxFit.cover,
             errorBuilder: (_, _, _) => const SizedBox.shrink(),
           ),
