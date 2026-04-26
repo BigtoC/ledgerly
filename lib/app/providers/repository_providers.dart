@@ -11,31 +11,36 @@ import 'app_database_provider.dart';
 
 part 'repository_providers.g.dart';
 
-@Riverpod(keepAlive: true)
+// Repositories transitively depend on `appDatabaseProvider`, which is
+// scope-overridable by `bootstrap()` and by every test harness. Each one
+// also gets overridden directly in widget tests with mock implementations,
+// so they must declare `dependencies` to satisfy
+// `scoped_providers_should_specify_dependencies` at every override site.
+@Riverpod(keepAlive: true, dependencies: [appDatabase])
 CurrencyRepository currencyRepository(Ref ref) =>
     DriftCurrencyRepository(ref.watch(appDatabaseProvider));
 
-@Riverpod(keepAlive: true)
+@Riverpod(keepAlive: true, dependencies: [appDatabase])
 CategoryRepository categoryRepository(Ref ref) =>
     DriftCategoryRepository(ref.watch(appDatabaseProvider));
 
-@Riverpod(keepAlive: true)
+@Riverpod(keepAlive: true, dependencies: [appDatabase, currencyRepository])
 AccountTypeRepository accountTypeRepository(Ref ref) =>
     DriftAccountTypeRepository(
       ref.watch(appDatabaseProvider),
       ref.watch(currencyRepositoryProvider),
     );
 
-@Riverpod(keepAlive: true)
+@Riverpod(keepAlive: true, dependencies: [appDatabase, currencyRepository])
 AccountRepository accountRepository(Ref ref) => DriftAccountRepository(
   ref.watch(appDatabaseProvider),
   ref.watch(currencyRepositoryProvider),
 );
 
-@Riverpod(keepAlive: true)
+@Riverpod(keepAlive: true, dependencies: [appDatabase])
 TransactionRepository transactionRepository(Ref ref) =>
     DriftTransactionRepository(ref.watch(appDatabaseProvider));
 
-@Riverpod(keepAlive: true)
+@Riverpod(keepAlive: true, dependencies: [appDatabase])
 UserPreferencesRepository userPreferencesRepository(Ref ref) =>
     DriftUserPreferencesRepository(ref.watch(appDatabaseProvider));

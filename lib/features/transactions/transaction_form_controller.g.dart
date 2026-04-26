@@ -7,7 +7,7 @@ part of 'transaction_form_controller.dart';
 // **************************************************************************
 
 String _$transactionFormControllerHash() =>
-    r'365ea65bedeba4843aa1fa9283956b0128287d6a';
+    r'8366fd4c2dde84285c8ce3579d136c4136d5cef0';
 
 /// See also [TransactionFormController].
 @ProviderFor(TransactionFormController)
@@ -21,8 +21,22 @@ final transactionFormControllerProvider =
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
           ? null
           : _$transactionFormControllerHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
+      dependencies: <ProviderOrFamily>{
+        transactionRepositoryProvider,
+        accountRepositoryProvider,
+        categoryRepositoryProvider,
+        userPreferencesRepositoryProvider,
+      },
+      allTransitiveDependencies: <ProviderOrFamily>{
+        transactionRepositoryProvider,
+        ...?transactionRepositoryProvider.allTransitiveDependencies,
+        accountRepositoryProvider,
+        ...?accountRepositoryProvider.allTransitiveDependencies,
+        categoryRepositoryProvider,
+        ...?categoryRepositoryProvider.allTransitiveDependencies,
+        userPreferencesRepositoryProvider,
+        ...?userPreferencesRepositoryProvider.allTransitiveDependencies,
+      },
     );
 
 typedef _$TransactionFormController = AutoDisposeNotifier<TransactionFormState>;

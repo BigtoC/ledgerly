@@ -270,7 +270,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.commonDiscard),
+            child: Text(l10n.txDiscardAction),
           ),
         ],
       ),
@@ -410,7 +410,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.commonDone),
+            child: Text(l10n.txKeypadDone),
           ),
         ],
       ),
@@ -447,7 +447,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.commonDone),
+            child: Text(l10n.txKeypadDone),
           ),
         ],
       ),

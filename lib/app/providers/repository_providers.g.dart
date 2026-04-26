@@ -7,7 +7,7 @@ part of 'repository_providers.dart';
 // **************************************************************************
 
 String _$currencyRepositoryHash() =>
-    r'1f2906f3264e9fe49d8244fa9a53acca5fcec2df';
+    r'bf8c858bb3918d954d76ab2669ec63d33a17836b';
 
 /// See also [currencyRepository].
 @ProviderFor(currencyRepository)
@@ -17,15 +17,18 @@ final currencyRepositoryProvider = Provider<CurrencyRepository>.internal(
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
       : _$currencyRepositoryHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
+  dependencies: <ProviderOrFamily>[appDatabaseProvider],
+  allTransitiveDependencies: <ProviderOrFamily>{
+    appDatabaseProvider,
+    ...?appDatabaseProvider.allTransitiveDependencies,
+  },
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CurrencyRepositoryRef = ProviderRef<CurrencyRepository>;
 String _$categoryRepositoryHash() =>
-    r'537c6fc33bf30e1d12776c09770f0fc09d5db398';
+    r'1e4610381fc04292a17b40245adf139c4e16875e';
 
 /// See also [categoryRepository].
 @ProviderFor(categoryRepository)
@@ -35,15 +38,18 @@ final categoryRepositoryProvider = Provider<CategoryRepository>.internal(
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
       : _$categoryRepositoryHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
+  dependencies: <ProviderOrFamily>[appDatabaseProvider],
+  allTransitiveDependencies: <ProviderOrFamily>{
+    appDatabaseProvider,
+    ...?appDatabaseProvider.allTransitiveDependencies,
+  },
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CategoryRepositoryRef = ProviderRef<CategoryRepository>;
 String _$accountTypeRepositoryHash() =>
-    r'19a82ed36c5be7ac967520b6c41fe39a22b298dd';
+    r'1ca0b598d36c528f555f227489fa67ddf028893f';
 
 /// See also [accountTypeRepository].
 @ProviderFor(accountTypeRepository)
@@ -53,14 +59,22 @@ final accountTypeRepositoryProvider = Provider<AccountTypeRepository>.internal(
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
       : _$accountTypeRepositoryHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
+  dependencies: <ProviderOrFamily>[
+    appDatabaseProvider,
+    currencyRepositoryProvider,
+  ],
+  allTransitiveDependencies: <ProviderOrFamily>{
+    appDatabaseProvider,
+    ...?appDatabaseProvider.allTransitiveDependencies,
+    currencyRepositoryProvider,
+    ...?currencyRepositoryProvider.allTransitiveDependencies,
+  },
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef AccountTypeRepositoryRef = ProviderRef<AccountTypeRepository>;
-String _$accountRepositoryHash() => r'76c50a7e2e117cd6c73e28dd79cb463adec288b0';
+String _$accountRepositoryHash() => r'ac65599370448fd726a90beac26dadfa8c9cdc0e';
 
 /// See also [accountRepository].
 @ProviderFor(accountRepository)
@@ -70,15 +84,23 @@ final accountRepositoryProvider = Provider<AccountRepository>.internal(
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
       : _$accountRepositoryHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
+  dependencies: <ProviderOrFamily>[
+    appDatabaseProvider,
+    currencyRepositoryProvider,
+  ],
+  allTransitiveDependencies: <ProviderOrFamily>{
+    appDatabaseProvider,
+    ...?appDatabaseProvider.allTransitiveDependencies,
+    currencyRepositoryProvider,
+    ...?currencyRepositoryProvider.allTransitiveDependencies,
+  },
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef AccountRepositoryRef = ProviderRef<AccountRepository>;
 String _$transactionRepositoryHash() =>
-    r'78244cdf1f73d1d9dd6d0020e29608852925355e';
+    r'a0ac84b0ff8a6e5a134d1d1aa8b85236160c19b9';
 
 /// See also [transactionRepository].
 @ProviderFor(transactionRepository)
@@ -88,15 +110,18 @@ final transactionRepositoryProvider = Provider<TransactionRepository>.internal(
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
       : _$transactionRepositoryHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
+  dependencies: <ProviderOrFamily>[appDatabaseProvider],
+  allTransitiveDependencies: <ProviderOrFamily>{
+    appDatabaseProvider,
+    ...?appDatabaseProvider.allTransitiveDependencies,
+  },
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef TransactionRepositoryRef = ProviderRef<TransactionRepository>;
 String _$userPreferencesRepositoryHash() =>
-    r'da7714e26655dd6abfd9ac6979bf5d1c3a88773a';
+    r'd7e19749c987c8646e12acb561edc219946b58b0';
 
 /// See also [userPreferencesRepository].
 @ProviderFor(userPreferencesRepository)
@@ -107,8 +132,11 @@ final userPreferencesRepositoryProvider =
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
           ? null
           : _$userPreferencesRepositoryHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
+      dependencies: <ProviderOrFamily>[appDatabaseProvider],
+      allTransitiveDependencies: <ProviderOrFamily>{
+        appDatabaseProvider,
+        ...?appDatabaseProvider.allTransitiveDependencies,
+      },
     );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')

@@ -5,8 +5,8 @@
 - `README.md` is useful for day-to-day commands and CI expectations, but some status/setup notes lag the committed scaffold; trust the checked-in tree when they differ.
 - `docs/superpowers/specs/2026-04-14-ledgerly-design.md` is historical context only. If it conflicts with `PRD.md`, follow `PRD.md`.
 ## Current repo state
-- This repository is now in **M5 Wave 1**: the M0–M4 scaffold, Drift repositories, app shell, `drift_schemas/`, `.github/workflows/`, and native platform folders are all present in the workspace.
-- The runtime is live: `lib/main.dart` awaits `bootstrap()`, `lib/app/bootstrap.dart` opens Drift + reads preferences + seeds first-run data before `runApp`, `lib/app/app.dart` renders `MaterialApp.router`, and `lib/app/router.dart` wires the Splash / Accounts / Settings shell. `lib/features/home/` and `lib/features/transactions/` are still TODO placeholders for later M5 waves.
+- This repository has moved beyond the earlier Wave 1-only state: the M0–M4 scaffold, Drift repositories, app shell, `drift_schemas/`, `.github/workflows/`, native platform folders, and the M5 UI slices under `lib/features/splash/`, `lib/features/categories/`, `lib/features/accounts/`, `lib/features/settings/`, `lib/features/transactions/`, and `lib/features/home/` are all present in the workspace.
+- The runtime is live: `lib/main.dart` awaits `bootstrap()`, `lib/app/bootstrap.dart` opens Drift, initializes `intl` date data, eagerly reads theme/locale/splash preferences, seeds first-run data before `runApp`, `lib/app/app.dart` renders `MaterialApp.router`, and `lib/app/router.dart` now wires `/splash`, `/splash/preview`, `/home`, `/home/add`, `/home/edit/:id`, `/accounts`, `/accounts/new`, `/accounts/:id`, `/settings`, and `/settings/categories`. `lib/app/widgets/adaptive_shell.dart` owns the 600dp nav switch.
 - When extending the scaffold, match the folder layout and package list in `PRD.md` exactly; do not default to a generic `flutter create` structure.
 - In particular, `domain/` exists only in **Phase 2**. MVP is primarily `app/`, `core/`, `data/`, and `features/`.
 ## Architecture rules to preserve
@@ -14,6 +14,7 @@
 - Only `data/repositories/*` may write to Drift or `flutter_secure_storage`. Controllers/widgets must not call DAOs, build Drift `Insertable`s, or touch secure storage.
 - Drift data classes stay inside repositories; repositories map them into Freezed domain models in `data/models/` before returning anything upstream.
 - App-layer construction lives in providers: `lib/app/providers/repository_providers.dart` builds the concrete `Drift*Repository` implementations, and `appDatabaseProvider` is intentionally a required override from `bootstrap()` or `test/support/test_app.dart`.
+- Feature slices also co-locate read-only helper providers for view models and hydration seeds — see `lib/features/home/home_providers.dart`, `lib/features/accounts/accounts_providers.dart`, `lib/features/settings/settings_providers.dart`, and `lib/features/transactions/transactions_providers.dart`. Prefer those slice-local providers over reaching into DB internals from widgets.
 - Each `features/*/*_controller.dart` exposes immutable state + typed commands. Widgets render state and call commands; they do not aggregate, format, or group data in `build()`.
 - Reactive updates are the default: repositories expose Drift-backed `Stream<T>`; controllers consume with Riverpod `StreamNotifier` / `AsyncNotifier`.
 ## Data-model invariants
@@ -27,9 +28,9 @@
 ## UI, routing, and layout constraints
 - Preserve the bootstrap order from `PRD.md`: open DB → init locale → read prefs → seed if empty → inject `appDatabaseProvider` override → `runApp`.
 - Root routing is live in `lib/app/router.dart`: `routerProvider` builds a `GoRouter`, `SplashGateSnapshot` in `lib/app/providers/splash_redirect_provider.dart` bridges preference streams into the synchronous `redirect:`, and splash-disabled launches redirect straight to `/home` without constructing `SplashScreen`.
-- M5 Wave 1 delivered real UI slices under `lib/features/splash/`, `lib/features/categories/`, `lib/features/accounts/`, and `lib/features/settings/`; `lib/features/home/` and `lib/features/transactions/` still act as PRD/TODO scaffolds rather than finished references.
+- The current reference UI slices are `lib/features/splash/`, `lib/features/categories/`, `lib/features/accounts/`, `lib/features/settings/`, `lib/features/transactions/`, and `lib/features/home/`. Use `transaction_form_screen.dart`, `home_screen.dart`, `account_form_screen.dart`, and `widgets/category_picker.dart` as the live examples of the PRD layout primitives rather than older plan placeholders.
 - Required layout primitives from `PRD.md`: Home uses `CustomScrollView` + slivers; Add/Edit Transaction uses `Scaffold(resizeToAvoidBottomInset: false)` with a fixed bottom keypad; Category picker uses a `ModalBottomSheet` with `CustomScrollView`, `SliverGrid`, and `SliverList`.
-- The only adaptive breakpoint is **600dp** at the shell level (`BottomNavigationBar` → `NavigationRail`, modal → constrained dialog/side sheet).
+- The only adaptive breakpoint is **600dp**. `lib/app/widgets/adaptive_shell.dart` switches `NavigationBar` ↔ `NavigationRail`, `lib/app/router.dart` wraps `/home/add` + `/home/edit/:id` in `_AdaptiveTransactionFormRoute` so wide layouts render inside a constrained dialog, and `lib/features/categories/widgets/category_picker.dart` switches bottom sheet ↔ dialog at the same threshold.
 ## Commands and workflows
 - `flutter pub get`
 - `flutter run`
@@ -38,21 +39,20 @@
 - `dart run build_runner build --delete-conflicting-outputs`
 - `dart run build_runner watch --delete-conflicting-outputs`
 - `dart run drift_dev schema dump lib/data/database/app_database.dart drift_schemas/`
-- `flutter test` / `flutter test test/widget/smoke_test.dart` / `flutter test test/unit/repositories/migration_test.dart` / `flutter test test/integration/bootstrap_to_home_test.dart`
-- `flutter test --update-goldens test/widget/features/splash/splash_screen_golden_test.dart`
+- `flutter test` / `flutter test test/widget/features/transactions/transaction_form_screen_test.dart` / `flutter test test/unit/app/router_test.dart` / `flutter test test/unit/repositories/migration_test.dart` / `flutter test test/integration/bootstrap_to_home_test.dart`
 - `dart format .`
 - `.github/workflows/ci.yml` currently runs package resolution → `dart run import_lint` → codegen → format check → `flutter analyze` → `flutter test` → Android debug build on pushes/PRs to `main`.
 - `.github/workflows/ios-nightly.yml` is currently a manual `workflow_dispatch` iOS debug build (`flutter build ios --no-codesign --debug`), not a scheduled nightly job.
 - Regenerate code whenever a `@freezed`, `@riverpod`, or Drift database/table annotation changes.
 - l10n codegen is configured in `l10n.yaml`; generated output lands in `lib/l10n/`, and the fallback shim `l10n/app_zh.arb` must stay in the repo even though bare `zh` resolves to English at runtime.
 ## Testing expectations
-- Current M5 Wave 1 reality: coverage spans unit tests (`repositories`, `controllers`, `providers`, `utils`, `seed`, `app`, `l10n`), widget tests (`app/`, `theme/`, `features/*`), integration (`test/integration/bootstrap_to_home_test.dart`), and splash goldens under `test/widget/features/splash/goldens/`.
+- Current test coverage spans unit tests (`app`, `controllers`, `l10n`, `providers`, `repositories`, `seed`, `services`, `utils`), widget tests (`app/`, `theme/`, `smoke/`, `features/*` including `home/` and `transactions/`), and integration (`test/integration/bootstrap_to_home_test.dart`).
 - Use `test/support/test_app.dart` as the canonical app-shell harness: `newTestAppDatabase()`, `runTestSeed(db)`, `makeTestContainer(...)`, `buildTestApp(...)`, and `buildBootstrappedTestApp(...)` cover the standard in-memory DB + ProviderScope setup patterns.
-- Tests are organized by layer, not feature: `test/unit/{services,repositories,use_cases,controllers,utils}`, then `test/widget/`, then `test/integration/`.
+- Tests are organized by layer first: `test/unit/{app,controllers,l10n,providers,repositories,seed,services,utils}`, then `test/widget/{app,features,smoke,theme}`, then `test/integration/`. There is no MVP `test/unit/use_cases/` tree yet because `domain/` is Phase 2 only.
 - Drift-backed setup and direct repository writes that happen before the first `pump` must run inside `tester.runAsync(...)`; see `test/widget/smoke_test.dart` and `test/integration/bootstrap_to_home_test.dart` for the correct pattern.
 - Repository tests use Drift in-memory DBs and should assert rules like category type locking, archive-instead-of-delete, FK integrity, and reactive stream emissions.
 - Controller tests use Riverpod `ProviderContainer` overrides with `mocktail`.
-- Splash screen visuals require golden tests.
+- Splash widget coverage lives in `test/widget/features/splash/splash_screen_test.dart`; route-level splash redirect coverage lives in `test/unit/app/router_test.dart`.
 - Migration tests are live in `test/unit/repositories/migration_test.dart` and currently validate the committed `drift_schema_v1.json` / `drift_schema_v2.json` snapshots, seeded and empty DB opens, and `PRAGMA foreign_keys` after upgrade.
 - Ankr API calls are always mocked in tests; no live network calls in the suite.
 ## Security and agent hints

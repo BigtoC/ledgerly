@@ -30,7 +30,14 @@ part 'transaction_form_controller.g.dart';
 
 enum _HydrationMode { add, duplicate, edit }
 
-@riverpod
+@Riverpod(
+  dependencies: [
+    transactionRepository,
+    accountRepository,
+    categoryRepository,
+    userPreferencesRepository,
+  ],
+)
 class TransactionFormController extends _$TransactionFormController {
   /// Pure-helper accumulator that backs the keypad commands. Kept outside
   /// `TransactionFormState` because every keystroke would otherwise

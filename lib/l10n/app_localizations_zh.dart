@@ -30,22 +30,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commonDelete => 'Delete';
 
   @override
-  String get commonArchive => 'Archive';
+  String get categoriesArchiveAction => 'Archive';
 
   @override
-  String get commonEdit => 'Edit';
+  String get homeEditAction => 'Edit';
 
   @override
   String get commonUndo => 'Undo';
 
   @override
-  String get commonDiscard => 'Discard';
+  String get txDiscardAction => 'Discard';
 
   @override
-  String get commonAdd => 'Add';
-
-  @override
-  String get commonDone => 'Done';
+  String get txKeypadDone => 'Done';
 
   @override
   String get transactionTypeExpense => 'Expense';
@@ -495,22 +492,19 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get commonDelete => '删除';
 
   @override
-  String get commonArchive => '归档';
+  String get categoriesArchiveAction => '归档';
 
   @override
-  String get commonEdit => '编辑';
+  String get homeEditAction => '编辑';
 
   @override
   String get commonUndo => '撤销';
 
   @override
-  String get commonDiscard => '放弃';
+  String get txDiscardAction => '放弃';
 
   @override
-  String get commonAdd => '添加';
-
-  @override
-  String get commonDone => '完成';
+  String get txKeypadDone => '完成';
 
   @override
   String get transactionTypeExpense => '支出';
@@ -952,22 +946,19 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get commonDelete => '刪除';
 
   @override
-  String get commonArchive => '封存';
+  String get categoriesArchiveAction => '封存';
 
   @override
-  String get commonEdit => '編輯';
+  String get homeEditAction => '編輯';
 
   @override
   String get commonUndo => '復原';
 
   @override
-  String get commonDiscard => '捨棄';
+  String get txDiscardAction => '捨棄';
 
   @override
-  String get commonAdd => '新增';
-
-  @override
-  String get commonDone => '完成';
+  String get txKeypadDone => '完成';
 
   @override
   String get transactionTypeExpense => '支出';

@@ -50,7 +50,7 @@ final class HomeDeleteFailedEffect extends HomeEffect {
   final StackTrace stackTrace;
 }
 
-@Riverpod(keepAlive: true)
+@Riverpod(keepAlive: true, dependencies: [transactionRepository])
 class HomeController extends _$HomeController {
   // Fields persist across rebuilds. They are reset on `ref.onDispose`.
   DateTime _selectedDay = DateHelpers.startOfDay(DateTime.now());

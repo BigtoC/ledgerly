@@ -13,7 +13,7 @@ import 'package:ledgerly/core/utils/box_shadow.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../../../data/models/currency.dart';
 import '../../../l10n/app_localizations.dart';
-import '../constants.dart';
+import '../../../core/constants.dart';
 import '../home_state.dart';
 
 class SummaryStrip extends StatelessWidget {

@@ -6,7 +6,7 @@ part of 'home_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$homeControllerHash() => r'189abd29617a2358a402e133dd118de49d2ead83';
+String _$homeControllerHash() => r'58ccc10b683c99bed678c18e60ede668eced012e';
 
 /// See also [HomeController].
 @ProviderFor(HomeController)
@@ -17,8 +17,11 @@ final homeControllerProvider =
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
           ? null
           : _$homeControllerHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
+      dependencies: <ProviderOrFamily>[transactionRepositoryProvider],
+      allTransitiveDependencies: <ProviderOrFamily>{
+        transactionRepositoryProvider,
+        ...?transactionRepositoryProvider.allTransitiveDependencies,
+      },
     );
 
 typedef _$HomeController = StreamNotifier<HomeState>;

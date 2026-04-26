@@ -25,7 +25,7 @@ import 'settings_state.dart';
 
 part 'settings_controller.g.dart';
 
-@riverpod
+@Riverpod(dependencies: [userPreferencesRepository])
 class SettingsController extends _$SettingsController {
   @override
   Stream<SettingsState> build() {

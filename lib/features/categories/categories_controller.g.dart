@@ -6,7 +6,7 @@ part of 'categories_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$categoriesByTypeHash() => r'e83884bf436d8d98d6cec4585c672fe7d1454352';
+String _$categoriesByTypeHash() => r'460e80a636365276171def2f90e795c8899a271a';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -58,12 +58,18 @@ class CategoriesByTypeFamily extends Family<AsyncValue<List<Category>>> {
     return call(provider.type);
   }
 
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
+  static final Iterable<ProviderOrFamily> _dependencies = <ProviderOrFamily>[
+    categoryRepositoryProvider,
+  ];
 
   @override
   Iterable<ProviderOrFamily>? get dependencies => _dependencies;
 
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+  static final Iterable<ProviderOrFamily> _allTransitiveDependencies =
+      <ProviderOrFamily>{
+        categoryRepositoryProvider,
+        ...?categoryRepositoryProvider.allTransitiveDependencies,
+      };
 
   @override
   Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
@@ -161,7 +167,7 @@ class _CategoriesByTypeProviderElement
 }
 
 String _$categoriesControllerHash() =>
-    r'0b4a51b3f1382a317f2bdd8632709d7b438b8d9e';
+    r'a92184686f7227a47927abce8bb55527f206e514';
 
 /// See also [CategoriesController].
 @ProviderFor(CategoriesController)
@@ -175,8 +181,11 @@ final categoriesControllerProvider =
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
           ? null
           : _$categoriesControllerHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
+      dependencies: <ProviderOrFamily>[categoryRepositoryProvider],
+      allTransitiveDependencies: <ProviderOrFamily>{
+        categoryRepositoryProvider,
+        ...?categoryRepositoryProvider.allTransitiveDependencies,
+      },
     );
 
 typedef _$CategoriesController = AutoDisposeStreamNotifier<CategoriesState>;

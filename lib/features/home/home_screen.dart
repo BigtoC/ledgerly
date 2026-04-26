@@ -28,7 +28,7 @@ import '../../data/models/account.dart';
 import '../../data/models/category.dart';
 import '../../data/models/transaction.dart';
 import '../../l10n/app_localizations.dart';
-import 'constants.dart';
+import '../../core/constants.dart';
 import 'home_controller.dart';
 import 'home_providers.dart';
 import 'home_state.dart';

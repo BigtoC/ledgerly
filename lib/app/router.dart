@@ -19,7 +19,7 @@ part 'router.g.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
-@Riverpod(keepAlive: true)
+@Riverpod(keepAlive: true, dependencies: [splashGateSnapshot])
 GoRouter router(Ref ref) {
   final gate = ref.watch(splashGateSnapshotProvider);
   return GoRouter(

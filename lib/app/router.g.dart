@@ -6,7 +6,7 @@ part of 'router.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$routerHash() => r'f88c2a1fa93a01f8e3a77a9afadf545bab32a711';
+String _$routerHash() => r'ca34c3713a747e883c36283acf85f61178e0708d';
 
 /// See also [router].
 @ProviderFor(router)
@@ -16,8 +16,11 @@ final routerProvider = Provider<GoRouter>.internal(
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
       : _$routerHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
+  dependencies: <ProviderOrFamily>[splashGateSnapshotProvider],
+  allTransitiveDependencies: <ProviderOrFamily>{
+    splashGateSnapshotProvider,
+    ...?splashGateSnapshotProvider.allTransitiveDependencies,
+  },
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')

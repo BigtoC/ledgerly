@@ -7,7 +7,7 @@ part of 'accounts_controller.dart';
 // **************************************************************************
 
 String _$accountsControllerHash() =>
-    r'29833ce3ae984312e2a34c476036839410de2932';
+    r'ff23d404c2ad2febe4e3599b591092c180ad4c57';
 
 /// See also [AccountsController].
 @ProviderFor(AccountsController)
@@ -21,8 +21,16 @@ final accountsControllerProvider =
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
           ? null
           : _$accountsControllerHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
+      dependencies: <ProviderOrFamily>[
+        accountRepositoryProvider,
+        userPreferencesRepositoryProvider,
+      ],
+      allTransitiveDependencies: <ProviderOrFamily>{
+        accountRepositoryProvider,
+        ...?accountRepositoryProvider.allTransitiveDependencies,
+        userPreferencesRepositoryProvider,
+        ...?userPreferencesRepositoryProvider.allTransitiveDependencies,
+      },
     );
 
 typedef _$AccountsController = AutoDisposeStreamNotifier<AccountsState>;

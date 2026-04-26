@@ -7,7 +7,7 @@ part of 'settings_controller.dart';
 // **************************************************************************
 
 String _$settingsControllerHash() =>
-    r'0d34ce3919d0582df3ba069ec32bb903f47d5f51';
+    r'5b0c2763b6704edf602690fe3c831328a2ede920';
 
 /// See also [SettingsController].
 @ProviderFor(SettingsController)
@@ -21,8 +21,11 @@ final settingsControllerProvider =
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
           ? null
           : _$settingsControllerHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
+      dependencies: <ProviderOrFamily>[userPreferencesRepositoryProvider],
+      allTransitiveDependencies: <ProviderOrFamily>{
+        userPreferencesRepositoryProvider,
+        ...?userPreferencesRepositoryProvider.allTransitiveDependencies,
+      },
     );
 
 typedef _$SettingsController = AutoDisposeStreamNotifier<SettingsState>;

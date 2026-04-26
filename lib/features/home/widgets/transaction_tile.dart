@@ -152,7 +152,10 @@ class TransactionTile extends StatelessWidget {
             }
           },
           itemBuilder: (ctx) => [
-            PopupMenuItem(value: _RowAction.edit, child: Text(l10n.commonEdit)),
+            PopupMenuItem(
+              value: _RowAction.edit,
+              child: Text(l10n.homeEditAction),
+            ),
             PopupMenuItem(
               value: _RowAction.duplicate,
               child: Semantics(

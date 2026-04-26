@@ -142,17 +142,17 @@ abstract class AppLocalizations {
   /// **'Delete'**
   String get commonDelete;
 
-  /// PRD 737. List swipe action for categories/accounts that have transactions (archive-instead-of-delete).
+  /// PRD 737. Categories list swipe action for rows that have transactions (archive-instead-of-delete). Wave 4 §3.2 rename: was commonArchive — only used by categories slice.
   ///
   /// In en, this message translates to:
   /// **'Archive'**
-  String get commonArchive;
+  String get categoriesArchiveAction;
 
-  /// Row overflow action and Add/Edit screen title when editing.
+  /// Home transaction row overflow menu — Edit action label. Wave 4 §3.2 rename: was commonEdit — only used by home slice.
   ///
   /// In en, this message translates to:
   /// **'Edit'**
-  String get commonEdit;
+  String get homeEditAction;
 
   /// PRD 695. Undo snackbar action after delete.
   ///
@@ -160,23 +160,17 @@ abstract class AppLocalizations {
   /// **'Undo'**
   String get commonUndo;
 
-  /// PRD 689. Confirm-discard dialog positive action when abandoning unsaved form edits.
+  /// PRD 689. Confirm-discard dialog positive action when abandoning unsaved transaction-form edits. Wave 4 §3.2 rename: was commonDiscard — only used by transactions slice.
   ///
   /// In en, this message translates to:
   /// **'Discard'**
-  String get commonDiscard;
+  String get txDiscardAction;
 
-  /// Create affordance label (accounts, categories).
-  ///
-  /// In en, this message translates to:
-  /// **'Add'**
-  String get commonAdd;
-
-  /// Modal close affordance (picker sheet).
+  /// Calculator keypad close affordance on the transaction form. Wave 4 §3.2 rename: was commonDone — only used by transactions slice (keypad sheet).
   ///
   /// In en, this message translates to:
   /// **'Done'**
-  String get commonDone;
+  String get txKeypadDone;
 
   /// PRD 683. Expense/income segmented control — expense option.
   ///

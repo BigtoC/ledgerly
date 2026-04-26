@@ -38,12 +38,7 @@ const Set<String> _expectedEnKeys = <String>{
   'commonSave',
   'commonCancel',
   'commonDelete',
-  'commonArchive',
-  'commonEdit',
   'commonUndo',
-  'commonDiscard',
-  'commonAdd',
-  'commonDone',
   'transactionTypeExpense',
   'transactionTypeIncome',
   'homeEmptyTitle',
@@ -109,6 +104,8 @@ const Set<String> _expectedEnKeys = <String>{
   'categoriesPickerTitleExpense',
   'categoriesPickerTitleIncome',
   'categoriesPickerEmptyCta',
+  // Wave 4 §3.2 rename: was commonArchive — only categories used it.
+  'categoriesArchiveAction',
 
   // M5 Wave 1 — Accounts slice UI keys
   // (docs/plans/m5-ui-feature-slices/wave-1/accounts-plan.md §3.2).
@@ -192,6 +189,9 @@ const Set<String> _expectedEnKeys = <String>{
   'txCurrencyChangeConfirmBody',
   'txKeypadClear',
   'txKeypadBackspace',
+  // Wave 4 §3.2 renames: were commonDiscard / commonDone — only transactions used them.
+  'txDiscardAction',
+  'txKeypadDone',
 
   // M5 Wave 3 — Home slice UI keys
   // (docs/plans/m5-ui-feature-slices/wave-3-home-plan.md §4.2).
@@ -203,6 +203,8 @@ const Set<String> _expectedEnKeys = <String>{
   'homeDayLabelYesterday',
   'homeDayNavPrevLabel',
   'homeDayNavNextLabel',
+  // Wave 4 §3.2 rename: was commonEdit — only home used it.
+  'homeEditAction',
 };
 
 Map<String, dynamic> _readArb(String fileName) {
