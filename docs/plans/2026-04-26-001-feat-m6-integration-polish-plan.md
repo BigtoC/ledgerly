@@ -127,7 +127,7 @@ Integration test anatomy (repeats the established pattern):
 
 ---
 
-- [ ] **Unit 1: Integration test helpers extension**
+- [x] **Unit 1: Integration test helpers extension** *(done 2026-04-27)*
 
 **Goal:** Add reusable shortcut helpers to `test/support/test_app.dart` so individual flow tests remain concise and don't repeat boilerplate for transaction insertion, currency resolution, and account creation.
 
@@ -156,7 +156,7 @@ Integration test anatomy (repeats the established pattern):
 
 ---
 
-- [ ] **Unit 2: Integration test — complete first-launch add-transaction flow**
+- [x] **Unit 2: Integration test — complete first-launch add-transaction flow** *(done 2026-04-27 — see note at end of file)*
 
 **Goal:** Extend the first-run scenario to cover the full PRD first-launch flow: splash → Home → FAB → form → save → DB row verification + Home day pin.
 
@@ -193,7 +193,7 @@ Integration test anatomy (repeats the established pattern):
 
 ---
 
-- [ ] **Unit 3: Integration test — subsequent splash-enabled launch**
+- [x] **Unit 3: Integration test — subsequent splash-enabled launch** *(done 2026-04-27)*
 
 **Goal:** Verify that a subsequent launch with `splash_enabled = true` and a configured `splash_start_date` shows the day counter (not the date picker) and Enter → Home works.
 
@@ -223,7 +223,7 @@ Integration test anatomy (repeats the established pattern):
 
 ---
 
-- [ ] **Unit 4: Integration test — duplicate flow**
+- [x] **Unit 4: Integration test — duplicate flow** *(done 2026-04-27 — see note at end of file)*
 
 **Goal:** Test the full duplicate flow: add a transaction, then duplicate it from Home's overflow menu, edit the amount, save, and verify two distinct rows in the DB with the second pinned to today.
 
@@ -258,7 +258,7 @@ Integration test anatomy (repeats the established pattern):
 
 ---
 
-- [ ] **Unit 5: Integration test — multi-currency seeded-state rendering**
+- [x] **Unit 5: Integration test — multi-currency seeded-state rendering** *(done 2026-04-27)*
 
 **Goal:** Verify Home's summary strip groups totals by currency when the app boots with mixed-currency data already present.
 
@@ -292,7 +292,7 @@ Integration test anatomy (repeats the established pattern):
 
 ---
 
-- [ ] **Unit 6: Integration test — archived-state rendering**
+- [x] **Unit 6: Integration test — archived-state rendering** *(done 2026-04-27 — see note at end of file)*
 
 **Goal:** Verify that already-archived categories and accounts are hidden from pickers while remaining visible in management screens and historical transaction records.
 
@@ -328,7 +328,7 @@ Integration test anatomy (repeats the established pattern):
 
 ---
 
-- [ ] **Unit 7: Integration test — edit and delete flows**
+- [x] **Unit 7: Integration test — edit and delete flows** *(done 2026-04-27 — see note at end of file)*
 
 **Goal:** Verify that editing a transaction updates the DB row correctly, and that deleting commits after the undo window (and undo within the window restores the row).
 
@@ -367,7 +367,7 @@ Integration test anatomy (repeats the established pattern):
 
 ---
 
-- [ ] **Unit 8: Accessibility hardening**
+- [x] **Unit 8: Accessibility hardening** *(done 2026-04-27)*
 
 **Goal:** Add `Semantics` labels on all icon-only interactive buttons (FAB, day-nav chevrons, swipe actions, overflow items); write 2× text scale widget tests for Home, Add/Edit Transaction, and Category picker; document tap-target compliance.
 
@@ -414,7 +414,7 @@ Integration test anatomy (repeats the established pattern):
 
 ---
 
-- [ ] **Unit 9: Native splash finalization**
+- [x] **Unit 9: Native splash finalization**
 
 **Goal:** Place the final sun-background asset and regenerate `flutter_native_splash` for all platforms so the native splash frame matches the app's visual design.
 
@@ -513,3 +513,20 @@ Integration test anatomy (repeats the established pattern):
 - Related code: `lib/features/home/home_controller.dart`, `lib/features/transactions/transaction_form_controller.dart`
 - Related code: `lib/data/repositories/transaction_repository.dart` (aggregate methods)
 - Institutional learnings: `docs/solutions/logic-errors/home-delete-undo-stream-coordination-2026-04-26.md`, `docs/solutions/best-practices/reactive-feature-flow-ownership-2026-04-25.md`
+
+---
+
+## Implementation note (2026-04-27)
+
+Units 2, 4, 6, and 7 originally drove their assertions through the form-modal save/edit/delete flow. While implementing them, two FakeAsync interactions surfaced that the plan didn't anticipate:
+
+1. **Modal-route disposal leaks a Drift `markAsClosed` timer.** Closing the form modal cancels the form controller's repository subscriptions, which schedules a `Duration.zero` Drift Timer to mark the stream-query's underlying executor closed. That Timer is FakeAsync-bound and `pumpAndSettle` does not advance it, so test teardown trips the binding's `_verifyInvariants` "Timer is still pending" assertion.
+2. **Mid-test repository writes do not reach already-subscribed Home streams under FakeAsync.** Inserting a transaction with `tester.runAsync(...)` after `pumpWidget` lands the row in DB, but the post-write Drift stream re-emission needs real-time microtask drain that FakeAsync's `pump`/`pumpAndSettle` does not deliver in this codebase's compound `_Composer` stream graph.
+
+Together, these block the "tap FAB → form → category picker → Save → see tile on Home" walk-through that the plan originally specified. The form save path itself is still covered end-to-end at the widget layer (`test/widget/features/transactions/transaction_form_screen_test.dart`), and the home delete/undo timer logic is covered by `test/unit/controllers/home_controller_test.dart`. The integration tests were therefore re-scoped to:
+
+- **Pre-seeded state coverage** (Units 2 second test, 4, 5, 6, 7): write the post-action data (added / duplicated / edited / deleted / archived) into the Drift DB inside `tester.runAsync` *before* `pumpWidget`, then boot the full app shell and assert the seeded state renders correctly through the same router + Riverpod + Drift pipeline a real launch uses.
+- **Repository contract coverage** (Unit 6 archived-category half): assert the `watchAll(includeArchived: false/true)` SSOT contract via real Drift streams, since this is the same code the picker watches.
+- **Splash-pipeline coverage** (Units 2 first test, 3): unchanged — the splash flow does not hit either FakeAsync issue.
+
+Net effect: the data-pipeline integration claim still holds (real bootstrap + real router + real Drift + real Home re-render), but the form-modal UI walk-through stays in widget tests. `bootstrap_to_home_test.dart` test 1 already covers the splash → Home navigation walk-through end-to-end. Two follow-ups remain in `docs/a11y-audit-m6.md` (deferred to Unit 10's device matrix) and the form-modal test framework limitations should be revisited if Drift / flutter_test ship a fix for the FakeAsync timer interaction.
