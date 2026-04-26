@@ -75,21 +75,22 @@ flutter:
   uses-material-design: true
   generate: true
   assets:
-    # Splash slice (M5 Wave 1). Real sun-themed asset drops in during M6
-    # native-splash regeneration per implementation-plan.md → M6. Until
-    # then the directory only carries the README placeholder and the
-    # splash widgets fall back to a procedural gradient that matches
-    # the final visual direction (see widgets/splash_sun_background.dart).
+    # Splash slice assets. `sun-splash.png` now backs both the runtime
+    # Flutter splash and the native splash regeneration step.
     - assets/splash/
 
-# Placeholder themed native splash per M0 plan; assets are regenerated in
-# M6 once the final sun-themed asset ships.
+# Native splash config. `background_image` is supported on iOS and
+# pre-Android-12. Android 12+ only supports a solid background plus a
+# centered splash image, so that section keeps explicit fallback colors.
 flutter_native_splash:
-  color: "#FFFFFF"
-  color_dark: "#121212"
+  background_image_android: assets/splash/sun-splash.png
+  background_image_dark_android: assets/splash/sun-splash.png
+  background_image_ios: assets/splash/sun-splash.png
+  background_image_dark_ios: assets/splash/sun-splash.png
+  fullscreen: true
   android_12:
-    color: "#FFFFFF"
-    color_dark: "#121212"
+    color: "#D9A06C"
+    color_dark: "#2B1828"
   android: true
   ios: true
   web: false
