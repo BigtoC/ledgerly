@@ -13,7 +13,7 @@ M6 is the final milestone before a release candidate. All six M5 feature slices 
 
 ## Problem Frame
 
-M5 delivered six isolated slices with controller tests (mocked providers) and widget tests. The integration layer (`test/integration/`) has only three scenarios: first-run bootstrap → splash → Home, splash-disabled launch, and live splash-toggle. The PRD's full integration-flow set — first-launch add-transaction, subsequent splash-enabled launch, duplicate, multi-currency summary, and archive — is not yet covered. The accessibility audit (Semantics, 2× text scale, 48dp targets) has not been done. Native splash runs on a placeholder gradient. These gaps must close before a signed release build is meaningful.
+M5 delivered six isolated slices with controller tests (mocked providers) and widget tests. The integration layer (`test/integration/`) has only three scenarios: first-run bootstrap → splash → Home, splash-disabled launch, and live splash-toggle. The PRD's full integration-flow set — first-launch add-transaction, subsequent splash-enabled launch, duplicate, multi-currency summary, archive, and edit + delete — is not yet covered. The accessibility audit (Semantics, 2× text scale, 48dp targets) has not been done. Native splash runs on a placeholder gradient. These gaps must close before a signed release build is meaningful.
 
 ## Requirements Trace
 
@@ -42,7 +42,7 @@ M5 delivered six isolated slices with controller tests (mocked providers) and wi
 - **Repository layer**: all aggregate methods from Wave 3 (`watchDailyNetByCurrency`, `watchDailyTotalsByType`, `watchMonthNetByCurrency`) exist and are tested in `test/unit/repositories/transaction_repository_test.dart`.
 - **ARB audit**: `test/unit/l10n/arb_audit_test.dart` must stay green after any ARB additions.
 - **Semantics**: `features/splash/widgets/splash_day_count.dart` clamps `textScaler` at 1.5× — the established pattern for fixed-height regions.
-- **Sun splash asset**: `assets/splash/sun-splash.png` now exists but `flutter_native_splash` has not been rerun since M0. The `pubspec.yaml` `flutter_native_splash:` section has placeholder light/dark `#FFFFFF`/`#121212` colors only.
+- **Sun splash asset**: `assets/splash/sun-splash.png` now exists but `flutter_native_splash` has not been rerun since M0. The `pubspec.yaml` `flutter_native_splash:` section still uses placeholder light/dark `#FFFFFF`/`#121212` colors and does not yet point at the shipped asset. The runtime Flutter splash widget still references the older placeholder filename.
 - **About screen**: `lib/features/settings/about_screen.dart` exists on the current branch (`feature/display-version-number`); a version-display feature is in progress. M6 plan acknowledges but does not block on it.
 
 ### Institutional Learnings
@@ -58,7 +58,7 @@ M5 delivered six isolated slices with controller tests (mocked providers) and wi
 - **One test file per flow group**: keeps individual files under ~200 lines and failure output readable. Files: `first_launch_flow_test.dart`, `duplicate_flow_test.dart`, `multi_currency_flow_test.dart`, `archive_flow_test.dart`, `edit_delete_flow_test.dart`.
 - **Accessibility widget tests, not golden tests**: golden tests are brittle across devices; widget tests using `find.bySemanticsLabel()` and `tester.getSemantics()` are portable. The audit doc captures pass/fail per screen rather than a golden image.
 - **2× text scale via `MediaQuery` override in widget tests**: wrap the pumped widget with `MediaQuery(data: MediaQueryData(textScaler: TextScaler.linear(2.0)), ...)`. Integration tests do not carry 2× scale — they verify functional flows at default scale.
-- **Sun asset regen is a human step, documented in the plan**: `dart run flutter_native_splash:create` must run after the asset lands; CI regenerates the file; asset change is verified in the PR diff.
+- **Sun asset regen is a checked-in local generation step**: `dart run flutter_native_splash:create` must run after the asset lands, and the regenerated Android/iOS files ship in the same PR. Current CI does not run splash regeneration, so the diff itself is the source of truth.
 - **No new ARB keys in M6**: all localization is stable from M5. If any key is found missing during integration test authoring, add it following the existing `app_en + app_zh_TW + app_zh_CN + arb_audit_test` pattern (four-file update).
 
 ## Open Questions
@@ -131,7 +131,7 @@ Integration test anatomy (repeats the established pattern):
 
 **Approach:**
 - Add a `insertTestTransaction(AppDatabase db, {required int accountId, required int categoryId, required int amountMinorUnits, ...})` helper that calls `DriftTransactionRepository(db).save(...)` directly, returning the persisted `Transaction`. Callers wrap in `tester.runAsync`.
-- Add a `createTestAccount(AppDatabase db, {required String name, String currency = 'USD', ...})` helper wrapping `DriftAccountRepository.save(...)`.
+- Add a `createTestAccount(AppDatabase db, {required String name, required String currency, ...})` helper wrapping `DriftAccountRepository.save(...)`.
 - Keep helpers minimal: only parameters actually used across integration tests. No defaulting of currency without an explicit parameter — the currency invariant is too important.
 - Do not add Mocktail or provider-override helpers here; this file is for real-DB test support only.
 
@@ -197,12 +197,12 @@ Integration test anatomy (repeats the established pattern):
 
 **Approach:**
 - Seed the DB, then write `splash_enabled = true` and `splash_start_date = DateTime.now().subtract(const Duration(days: 30)).toIso8601String()` via `DriftUserPreferencesRepository` inside `tester.runAsync`.
-- Override `splashGateSnapshotProvider` with a `SplashGateSnapshot` whose `startDate` is set (mirrors the existing test 1 pattern for speed — avoids routing through the date-picker flow again).
+- Boot through the normal app shell with no `splashGateSnapshotProvider` override so the test exercises bootstrap preference reads, router redirect wiring, and the splash screen's configured-date path end to end.
 - Assert the day counter text is visible (e.g. `find.text('30')` or a broader `find.byType(SplashScreen)`).
 - Tap Enter → assert `HomeScreen`.
 
 **Patterns to follow:**
-- `bootstrap_to_home_test.dart` test 2 uses `splashGateSnapshotProvider.overrideWithValue(...)` — mirror this for the configured-date variant
+- `test/support/test_app.dart` `buildBootstrappedTestApp(...)` for real bootstrap-order coverage without provider shortcuts
 - PRD → Launch Flow (subsequent launch with splash enabled)
 
 **Test scenarios:**
@@ -249,9 +249,9 @@ Integration test anatomy (repeats the established pattern):
 
 ---
 
-- [ ] **Unit 5: Integration test — multi-currency flow**
+- [ ] **Unit 5: Integration test — multi-currency seeded-state rendering**
 
-**Goal:** Verify Home's summary strip groups totals by currency when the user has transactions in multiple currencies.
+**Goal:** Verify Home's summary strip groups totals by currency when the app boots with mixed-currency data already present.
 
 **Requirements:** R1
 
@@ -265,17 +265,17 @@ Integration test anatomy (repeats the established pattern):
 - Create a second account (JPY, Investment type) via `createTestAccount(db, name: 'Yen Account', currency: 'JPY')`.
 - Insert one USD expense (1000 minor units = $10.00) and one JPY expense (500 minor units = ¥500) via helpers.
 - Navigate to Home (skip splash via `splashGateSnapshotProvider` override).
-- Assert the summary strip shows two sets of chips: one for USD and one for JPY. Use `find.textContaining('USD')` or `find.textContaining('JPY')` or the rendered formatted amounts.
-- Verify `watchDailyNetByCurrency` yields `{'USD': -1000, 'JPY': -500}` by reading the controller's state through the stream directly (optional unit-test-style assertion on the repository).
+- Assert the summary strip renders two currency groups via the rendered formatted amounts/symbols (for example `$1.00` / `-$1.00` and `¥500` / `-¥500`) rather than raw `USD` / `JPY` code headers.
+- Do not add repository-stream assertions here; repository aggregation behavior remains covered by `test/unit/repositories/transaction_repository_test.dart`.
 
 **Patterns to follow:**
 - `test/unit/repositories/transaction_repository_test.dart` multi-currency group test structure
 - PRD → MVP Currency Policy: no auto-conversion in MVP, grouped by original currency
 
 **Test scenarios:**
-- Happy path: USD + JPY expenses → Home summary strip has two currency groups
+- Happy path: seeded USD + JPY expenses → Home summary strip has two currency groups
 - Edge: all transactions in same currency → strip has one currency group only
-- Integration: `watchDailyTotalsByType` emits independently for each currency key
+- Integration: mixed-currency seeded state rehydrates through the real app shell and renders grouped summary output correctly
 
 **Verification:**
 - Home summary strip renders two distinct currency groups
@@ -283,9 +283,9 @@ Integration test anatomy (repeats the established pattern):
 
 ---
 
-- [ ] **Unit 6: Integration test — archive flow**
+- [ ] **Unit 6: Integration test — archived-state rendering**
 
-**Goal:** Verify that archiving a used category and a used account hides them from pickers while keeping them visible in management screens and historical transaction records.
+**Goal:** Verify that already-archived categories and accounts are hidden from pickers while remaining visible in management screens and historical transaction records.
 
 **Requirements:** R1
 
@@ -308,8 +308,8 @@ Integration test anatomy (repeats the established pattern):
 - `test/unit/repositories/category_repository_test.dart` archive-instead-of-delete tests
 
 **Test scenarios:**
-- Happy path — category archive: picker hides `Food`, Categories screen shows it in archived section, Home history tile still renders it
-- Happy path — account archive: account picker hides `Cash`, Accounts screen shows it in archived section
+- Happy path — archived category state: picker hides `Food`, Categories screen shows it in archived section, Home history tile still renders it
+- Happy path — archived account state: account picker hides `Cash`, Accounts screen shows it in archived section
 - Edge: attempting to hard-delete an archived category with transactions — repository throws; not tested here (repository-level test already covers this)
 
 **Verification:**
@@ -367,21 +367,21 @@ Integration test anatomy (repeats the established pattern):
 **Dependencies:** None (independent of integration tests)
 
 **Files:**
-- Modify: `lib/features/home/home_screen.dart` (FAB semantics)
-- Modify: `lib/features/home/widgets/day_navigation_header.dart` (prev/next chevron semantics)
+- Verify or modify only if needed: `lib/features/home/home_screen.dart` (FAB semantics)
+- Verify or modify only if needed: `lib/features/home/widgets/day_navigation_header.dart` (prev/next chevron semantics)
 - Modify: `lib/features/home/widgets/transaction_tile.dart` (overflow and swipe-action semantics)
 - Modify: `lib/features/transactions/widgets/calculator_keypad.dart` (backspace/clear semantics)
-- Modify: `test/widget/features/home/home_screen_test.dart` (add 2× text scale test)
+- Verify or extend: `test/widget/features/home/home_screen_test.dart` (2× text scale coverage)
 - Modify: `test/widget/features/transactions/transaction_form_screen_test.dart` (add 2× scale + keyboard-cover test)
-- Modify: `test/widget/features/categories/categories_screen_test.dart` (add 2× scale test)
+- Verify or extend: `test/widget/features/categories/categories_screen_test.dart` (management-screen 2× scale coverage)
+- Verify or extend: `test/widget/features/categories/category_picker_test.dart` (picker 2× scale coverage)
 - Create: `docs/a11y-audit-m6.md`
 
 **Approach:**
-- Wrap the FAB with `Semantics(label: S.of(context).homeFabLabel, child: ...)` or use `FloatingActionButton.extended`'s `tooltip` parameter — whichever renders the accessible label.
-- Day-nav chevrons: add `Tooltip` or explicit `Semantics` with `homeDayNavPrevLabel` / `homeDayNavNextLabel` l10n keys (both keys exist from Wave 3 ARBs).
+- Confirm the existing FAB and day-nav tooltip/semantics coverage is sufficient before adding wrappers; only change these widgets if the current semantics tree fails the new tests.
 - Swipe actions (delete via `flutter_slidable`): use `SlidableAction.autoClose` with `label` set to the ARB key. Verify `find.bySemanticsLabel(deleteLabel)` finds it.
 - Overflow menu items (Edit, Duplicate, Delete on `TransactionTile`): these are `PopupMenuEntry` with text labels — already accessible. Verify via test.
-- Calculator keypad backspace and clear buttons: add `Semantics(label: 'Backspace', ...)` / `Semantics(label: 'Clear', ...)` wrapping the icon buttons.
+- Calculator keypad backspace and clear buttons: use the existing localized keypad labels (`txKeypadBackspace`, `txKeypadClear`) for semantics/tooltip coverage rather than adding hard-coded English strings.
 - **2× text scale widget tests**: follow the `splash_long_text_2x.png` golden's approach — wrap the widget under test with `MediaQuery(data: MediaQueryData(textScaler: TextScaler.linear(2.0)), ...)`. Assert no overflow errors (`tester.takeException()` is null) and key text is still visible (`find.text(...)` finds headings).
 - **48dp tap target audit**: check `ConstrainedBox`/`SizedBox` or `InkWell`/`IconButton` sizing. `IconButton` defaults to 48dp — verify no overrides shrink it. Document findings in `docs/a11y-audit-m6.md`.
 - `docs/a11y-audit-m6.md` is a markdown checklist: one row per screen × concern (Semantics, 2× scale, 48dp target) marked pass/fail with notes.
@@ -415,13 +415,14 @@ Integration test anatomy (repeats the established pattern):
 
 **Files:**
 - Modify or replace: `assets/splash/sun-splash.png` (final asset)
-- Modify: `pubspec.yaml` `flutter_native_splash:` section — add `image` and `image_dark` keys pointing to the asset
+- Modify: `pubspec.yaml` `flutter_native_splash:` section — add `background_image` for supported platforms and Android 12-specific fallback `color` + `image` settings
 - Regenerated by tooling (not hand-edited): `android/`, `ios/` platform splash files
 
 **Approach:**
 - Review `assets/splash/README.md` spec for required dimensions and format: 1:1 aspect ratio, 288×288dp native design, PNG.
-- Update `pubspec.yaml` `flutter_native_splash:` to add `image: assets/splash/sun-splash.png` (and `image_dark:` if a dark-mode variant is produced). Keep the existing `color`/`color_dark` hex values as the background frame color.
-- Run `dart run flutter_native_splash:create` (human/CI step).
+- Update `pubspec.yaml` `flutter_native_splash:` to use platform-specific `background_image_*` keys for iOS and pre-Android-12 native backgrounds. Because Android 12+ does not support a background image, keep `android_12.color` / `color_dark` as solid fallback colors there and retain the default launcher icon rather than forcing the full photo into the platform's circular crop.
+- Update the runtime Flutter splash widget to load `assets/splash/sun-splash.png` so the native frame and Flutter splash reference the same shipped asset.
+- Run `dart run flutter_native_splash:create` as a required checked-in local generation step.
 - Verify the native splash appears correctly on an Android API 29 device, an Android API 33 device (tests the `android_12:` stanza), and an iOS simulator.
 - Commit the regenerated platform files alongside the asset and `pubspec.yaml` change.
 
@@ -459,6 +460,7 @@ Integration test anatomy (repeats the established pattern):
 - Run `flutter test` (all unit + widget + integration). All must pass.
 - Device matrix (operator-run): cold launch on Android phone + Android tablet + iOS phone + iOS tablet. Manual smoke checklist from Wave 4 plan §3.5 as the baseline.
 - Version display in About screen: if the `feature/display-version-number` branch is merged before M6, confirm `package_info_plus` (or equivalent) surfaces the version string in `lib/features/settings/about_screen.dart`. If not merged, note as follow-up — it does not block the release build.
+- Native splash is RC-blocking for M6. Android 12+ verification must explicitly account for the platform limitation that only a solid background plus centered splash image is supported, not a full-screen background image.
 
 **Patterns to follow:**
 - `implementation-plan.md` → M6 → Deliverables + Exit Criteria
@@ -491,7 +493,7 @@ Integration test anatomy (repeats the established pattern):
 | Integration test for Add-Transaction form requires complex widget interaction (keypad, category picker, save) that may be fragile to widget-tree changes | Use semantic labels (`find.bySemanticsLabel(...)`) and key-based finders where possible; add keys to FAB and Save button if not already present |
 | Undo-window timer behavior in integration tests is non-deterministic under FakeAsync | Use `tester.runAsync` for the timer advance, or `tester.pump(const Duration(seconds: 5))` to skip past the 4s window; cross-check with `home_controller_test.dart` existing approach |
 | `flutter_native_splash` regen may produce merge conflicts with existing generated platform files | Run regen on a clean branch; commit the full diff in one PR so the before/after is clear |
-| Sun-background asset may not exist at plan-execution time | Regen deferred until asset is ready; Unit 9 can ship last. Native splash with color-only config is already functional as a fallback. |
+| Android 12+ cannot show a full-screen native background image | Use `background_image` for iOS and pre-Android-12, but verify Android 12+ with solid `color` + centered `image` and document the platform constraint in the audit / release notes |
 | 2× text scale tests may reveal layout overflows introduced in M5 that require widget fixes | Fix overflow at the widget level (e.g. add `Flexible`/`FittedBox` or extend the existing `textScaler` clamp pattern from `SplashDayCount`); do not suppress the test |
 | About screen (webview) cannot be integration-tested without a real network | Integration tests skip Settings → About navigation. The About screen is tested manually on device. |
 
