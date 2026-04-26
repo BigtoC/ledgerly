@@ -445,6 +445,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeDayEmptyTitle => 'No transactions on this day';
 
   @override
+  String get homeDaySkeletonLabel => 'Loading day';
+
+  @override
   String get homeDeleteUndoSnackbar => 'Transaction deleted';
 
   @override

@@ -946,6 +946,12 @@ abstract class AppLocalizations {
   /// **'No transactions on this day'**
   String get homeDayEmptyTitle;
 
+  /// Wave 3 §4.2. Accessibility label for a transient Home day-loading placeholder. Reserved for loading affordances.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading day'**
+  String get homeDaySkeletonLabel;
+
   /// Wave 3 §8. SnackBar text shown after a swipe / overflow delete; the action button is `commonUndo`.
   ///
   /// In en, this message translates to:

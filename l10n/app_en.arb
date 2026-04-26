@@ -586,6 +586,10 @@
   "@homeDayEmptyTitle": {
     "description": "Wave 3 §4.2. Per-day empty state title (gap day with prior history)."
   },
+  "homeDaySkeletonLabel": "Loading day",
+  "@homeDaySkeletonLabel": {
+    "description": "Wave 3 §4.2. Accessibility label for a transient Home day-loading placeholder. Reserved for loading affordances."
+  },
   "homeDeleteUndoSnackbar": "Transaction deleted",
   "@homeDeleteUndoSnackbar": {
     "description": "Wave 3 §8. SnackBar text shown after a swipe / overflow delete; the action button is `commonUndo`."

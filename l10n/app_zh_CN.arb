@@ -157,6 +157,7 @@
   "txKeypadBackspace": "退格",
 
   "homeDayEmptyTitle": "这天没有交易",
+  "homeDaySkeletonLabel": "加载中的日期",
   "homeDeleteUndoSnackbar": "交易已删除",
   "homeDuplicateAction": "复制",
   "homeDayLabelToday": "今天",

@@ -445,6 +445,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeDayEmptyTitle => 'No transactions on this day';
 
   @override
+  String get homeDaySkeletonLabel => 'Loading day';
+
+  @override
   String get homeDeleteUndoSnackbar => 'Transaction deleted';
 
   @override
@@ -896,6 +899,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get homeDayEmptyTitle => '这天没有交易';
 
   @override
+  String get homeDaySkeletonLabel => '加载中的日期';
+
+  @override
   String get homeDeleteUndoSnackbar => '交易已删除';
 
   @override
@@ -1345,6 +1351,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get homeDayEmptyTitle => '這天沒有交易';
+
+  @override
+  String get homeDaySkeletonLabel => '載入中的日期';
 
   @override
   String get homeDeleteUndoSnackbar => '交易已刪除';
