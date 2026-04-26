@@ -4,14 +4,26 @@
 // Route-level fade transition is owned by `app/router.dart` per PRD →
 // Routing Structure ("Splash → Home transition uses a fade") — this
 // widget just calls `context.go('/home')`.
+//
+// In preview mode (Settings → Splash → "Preview splash screen"), the
+// button calls `context.pop()` instead so the user returns to the
+// settings page they came from.
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 class SplashEnterButton extends StatelessWidget {
-  const SplashEnterButton({required this.label, super.key});
+  const SplashEnterButton({
+    required this.label,
+    this.previewMode = false,
+    super.key,
+  });
 
   final String label;
+
+  /// When `true`, the button pops the current route instead of going
+  /// to `/home`. Used by the settings preview entry point.
+  final bool previewMode;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +37,13 @@ class SplashEnterButton extends StatelessWidget {
           minimumSize: const Size(200, 52),
           shape: const StadiumBorder(),
         ),
-        onPressed: () => context.go('/home'),
+        onPressed: () {
+          if (previewMode) {
+            context.pop();
+          } else {
+            context.go('/home');
+          }
+        },
         child: Text(
           label,
           style: const TextStyle(
