@@ -33,8 +33,10 @@ void main() {
           final foodId = await getSeededCategoryId(db, 'category.food');
           final cash = await getFirstActiveAccount(db);
 
-          final investmentTypeId =
-              await getAccountTypeId(db, 'accountType.investment');
+          final investmentTypeId = await getAccountTypeId(
+            db,
+            'accountType.investment',
+          );
           final yenAccount = await createTestAccount(
             db,
             name: 'Yen Account',

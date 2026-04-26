@@ -75,27 +75,29 @@ void main() {
         // Repository contract: the picker-facing stream
         // (`includeArchived: false`) must exclude archived rows.
         final pickerCategories = await tester.runAsync(() async {
-          return DriftCategoryRepository(db)
-              .watchAll(type: CategoryType.expense, includeArchived: false)
-              .first;
+          return DriftCategoryRepository(
+            db,
+          ).watchAll(type: CategoryType.expense, includeArchived: false).first;
         });
         expect(
           pickerCategories!.any((c) => c.id == foodId),
           isFalse,
-          reason: 'Archived Food must not appear in the active-only picker stream',
+          reason:
+              'Archived Food must not appear in the active-only picker stream',
         );
 
         // Repository contract for archive-aware paths (e.g. Home tile
         // metadata): `includeArchived: true` still includes archived rows.
         final allCategories = await tester.runAsync(() async {
-          return DriftCategoryRepository(db)
-              .watchAll(type: CategoryType.expense, includeArchived: true)
-              .first;
+          return DriftCategoryRepository(
+            db,
+          ).watchAll(type: CategoryType.expense, includeArchived: true).first;
         });
         expect(
           allCategories!.any((c) => c.id == foodId && c.isArchived),
           isTrue,
-          reason: 'Archived Food remains queryable when includeArchived is true',
+          reason:
+              'Archived Food remains queryable when includeArchived is true',
         );
 
         expect(tester.takeException(), isNull);
@@ -114,16 +116,20 @@ void main() {
         // archive Cash via the repository.
         await tester.runAsync(() async {
           final cashAccount = await getFirstActiveAccount(db);
-          final investmentTypeId =
-              await getAccountTypeId(db, 'accountType.investment');
+          final investmentTypeId = await getAccountTypeId(
+            db,
+            'accountType.investment',
+          );
           await createTestAccount(
             db,
             name: 'Brokerage',
             currencyCode: 'USD',
             accountTypeId: investmentTypeId,
           );
-          await DriftAccountRepository(db, DriftCurrencyRepository(db))
-              .archive(cashAccount.id);
+          await DriftAccountRepository(
+            db,
+            DriftCurrencyRepository(db),
+          ).archive(cashAccount.id);
         });
 
         final container = makeTestContainer(

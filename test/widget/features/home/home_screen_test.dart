@@ -169,11 +169,11 @@ void main() {
         builder: textScale == null
             ? null
             : (context, child) => MediaQuery(
-                  data: MediaQuery.of(context).copyWith(
-                    textScaler: TextScaler.linear(textScale),
-                  ),
-                  child: child!,
-                ),
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(textScaler: TextScaler.linear(textScale)),
+                child: child!,
+              ),
         routerConfig: GoRouter(
           initialLocation: '/home',
           routes: [

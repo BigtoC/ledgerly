@@ -74,8 +74,9 @@ void main() {
 
         // DB has both rows — preserved + duplicate. Date contract: the
         // duplicate sits on today.
-        final rows =
-            await tester.runAsync(() => db.select(db.transactions).get());
+        final rows = await tester.runAsync(
+          () => db.select(db.transactions).get(),
+        );
         expect(rows, hasLength(2));
         rows!.sort((a, b) => a.id.compareTo(b.id));
         final original = rows[0];

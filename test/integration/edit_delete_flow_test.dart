@@ -75,8 +75,9 @@ void main() {
         expect(find.byType(HomeScreen), findsOneWidget);
         expect(find.byType(TransactionTile), findsOneWidget);
 
-        final rows =
-            await tester.runAsync(() => db.select(db.transactions).get());
+        final rows = await tester.runAsync(
+          () => db.select(db.transactions).get(),
+        );
         expect(rows, hasLength(1));
         final updated = rows!.single;
         expect(updated.id, txId);
@@ -118,8 +119,9 @@ void main() {
           // Same write path the home controller's `_commitDelete`
           // uses after its undo window expires; applied before
           // pumpWidget so the seeded subscribe sees the empty state.
-          final removed =
-              await DriftTransactionRepository(db).delete(inserted.id);
+          final removed = await DriftTransactionRepository(
+            db,
+          ).delete(inserted.id);
           if (!removed) {
             throw StateError('delete should have removed the seeded row');
           }
@@ -142,8 +144,9 @@ void main() {
         expect(find.byType(HomeScreen), findsOneWidget);
         expect(find.byType(TransactionTile), findsNothing);
 
-        final rows =
-            await tester.runAsync(() => db.select(db.transactions).get());
+        final rows = await tester.runAsync(
+          () => db.select(db.transactions).get(),
+        );
         expect(rows, isEmpty);
         expect(tester.takeException(), isNull);
       },
