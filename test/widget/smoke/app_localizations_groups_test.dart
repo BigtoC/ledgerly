@@ -54,16 +54,14 @@ void main() {
         expect(l10n.navAccounts, isNotEmpty);
         expect(l10n.navSettings, isNotEmpty);
 
-        // Common verbs.
+        // Common verbs (post Wave 4 §3.2: only keys used by ≥2 slices remain
+        // under the `common*` prefix; singletons moved to slice prefixes —
+        // see `categoriesArchiveAction`, `homeEditAction`, `txDiscardAction`,
+        // `txKeypadDone`. `commonAdd` was deleted as unused).
         expect(l10n.commonSave, isNotEmpty);
         expect(l10n.commonCancel, isNotEmpty);
         expect(l10n.commonDelete, isNotEmpty);
-        expect(l10n.commonArchive, isNotEmpty);
-        expect(l10n.commonEdit, isNotEmpty);
         expect(l10n.commonUndo, isNotEmpty);
-        expect(l10n.commonDiscard, isNotEmpty);
-        expect(l10n.commonAdd, isNotEmpty);
-        expect(l10n.commonDone, isNotEmpty);
 
         // Transaction type toggles.
         expect(l10n.transactionTypeExpense, isNotEmpty);
