@@ -16,9 +16,7 @@ Locale? initialPreferredLocale(Ref ref) => null;
 Stream<Locale?> userLocalePreferenceStream(Ref ref) =>
     ref.watch(userPreferencesRepositoryProvider).watchLocale();
 
-@Riverpod(
-  dependencies: [userLocalePreferenceStream, initialPreferredLocale],
-)
+@Riverpod(dependencies: [userLocalePreferenceStream, initialPreferredLocale])
 Locale? userLocalePreference(Ref ref) =>
     ref.watch(userLocalePreferenceStreamProvider).value ??
     ref.watch(initialPreferredLocaleProvider);
