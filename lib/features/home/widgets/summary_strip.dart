@@ -171,8 +171,10 @@ class _Chip extends StatelessWidget {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      // Wrap so the label + value reflow onto multiple lines under
+      // 2× text scale instead of overflowing the chip's row width.
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           Text('$label: ', style: theme.textTheme.bodySmall),
           Text(
@@ -209,8 +211,9 @@ class _PlaceholderBox extends StatelessWidget {
           for (final label in labels)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 2),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+              // Wrap mirrors `_Chip`'s 2× text-scale reflow.
+              child: Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Text('$label: ', style: theme.textTheme.bodySmall),
                   Text(
