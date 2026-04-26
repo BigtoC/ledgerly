@@ -13,6 +13,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
 import '../../l10n/app_localizations.dart';
@@ -102,10 +103,13 @@ class _SettingsBody extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.only(top: 24, bottom: 32),
             child: Center(
-              child: Text(
-                packageInfo.whenData((info) => 'v${info.version}+${info.buildNumber}').valueOrNull ?? '',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+              child: GestureDetector(
+                onTap: () => context.push('/settings/about'),
+                child: Text(
+                  packageInfo.whenData((info) => 'v${info.version}+${info.buildNumber}').valueOrNull ?? '',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             ),
