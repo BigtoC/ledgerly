@@ -16,6 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
 import 'settings_controller.dart';
+import 'settings_providers.dart';
 import 'settings_state.dart';
 import 'widgets/default_account_tile.dart';
 import 'widgets/default_currency_tile.dart';
@@ -45,14 +46,15 @@ class SettingsScreen extends ConsumerWidget {
   }
 }
 
-class _SettingsBody extends StatelessWidget {
+class _SettingsBody extends ConsumerWidget {
   const _SettingsBody({required this.data});
 
   final SettingsData data;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final packageInfo = ref.watch(packageInfoProvider);
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
@@ -88,7 +90,19 @@ class _SettingsBody extends StatelessWidget {
             children: const [ManageCategoriesTile()],
           ),
         ),
-        const SliverPadding(padding: EdgeInsets.only(bottom: 32)),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 8, bottom: 32),
+            child: Center(
+              child: Text(
+                packageInfo.whenData((info) => 'v${info.version}+${info.buildNumber}').valueOrNull ?? '',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
