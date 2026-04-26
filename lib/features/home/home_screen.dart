@@ -110,11 +110,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _onAddPressed(BuildContext context) async {
-    final saved = await context.push<Transaction>('/home/add');
+    // Carry the currently selected day to the form so the date field
+    // matches what the user is looking at on Home. The form falls back
+    // to today when `initialDate` is absent from the route extra.
+    final selectedDay = _selectedDayForAdd();
+    final saved = await context.push<Transaction>(
+      '/home/add',
+      extra: selectedDay == null
+          ? null
+          : <String, Object>{'initialDate': selectedDay},
+    );
     if (!mounted) return;
     if (saved != null) {
       await ref.read(homeControllerProvider.notifier).pinDay(saved.date);
     }
+  }
+
+  DateTime? _selectedDayForAdd() {
+    final s = ref.read(homeControllerProvider);
+    if (s is AsyncData<HomeState>) {
+      final v = s.value;
+      if (v is HomeData) return v.selectedDay;
+      if (v is HomeEmpty) return v.selectedDay;
+    }
+    return null;
   }
 
   Future<void> _onEditRow(int id) async {
@@ -137,18 +156,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _onPickDay(DateTime initial, HomeData data) async {
-    // Range: oldest activity day .. today + 30d (PRD allows manual
-    // future gap-day navigation).
-    final today = DateHelpers.startOfDay(DateTime.now());
-    final firstDate = data.activityDays.isEmpty
-        ? today
-        : data.activityDays.last;
-    final lastDate = today.add(const Duration(days: 30));
+    // Open range so the user can browse to any past day (gap days
+    // included), and to a future gap-day per PRD's manual-future path.
+    // Mirrors the bounds used by the transaction form's date picker
+    // (`features/transactions/widgets/date_field.dart`) to keep the
+    // user-visible range consistent across the app.
     final picked = await showDatePicker(
       context: context,
       initialDate: data.selectedDay,
-      firstDate: firstDate,
-      lastDate: lastDate,
+      firstDate: DateTime(1900),
+      lastDate: DateTime(9999, 12, 31),
     );
     if (!mounted) return;
     if (picked != null) {
