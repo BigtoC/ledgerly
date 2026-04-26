@@ -9,9 +9,11 @@
 
 import 'package:flutter/material.dart';
 
+import 'package:ledgerly/core/utils/box_shadow.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../../../data/models/currency.dart';
 import '../../../l10n/app_localizations.dart';
+import '../constants.dart';
 import '../home_state.dart';
 
 class SummaryStrip extends StatelessWidget {
@@ -50,8 +52,11 @@ class SummaryStrip extends StatelessWidget {
 
     if (codes.isEmpty) {
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: _PlaceholderRow(
+        padding: const EdgeInsets.symmetric(
+          horizontal: homePageCardHorizontalPadding,
+          vertical: 18,
+        ),
+        child: _PlaceholderBox(
           theme: theme,
           labels: [
             l10n.homeSummaryTodayExpense,
@@ -64,19 +69,18 @@ class SummaryStrip extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      child: Wrap(
-        spacing: 12,
-        runSpacing: 12,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          for (final code in codes)
+          for (var i = 0; i < codes.length; i++) ...[
+            if (i > 0) const SizedBox(height: 12),
             _CurrencyGroup(
-              code: code,
               currency:
-                  currenciesByCode[code] ??
-                  Currency(code: code, decimals: 2, symbol: code),
-              expense: todayTotalsByCurrency[code]?.expense ?? 0,
-              income: todayTotalsByCurrency[code]?.income ?? 0,
-              monthNet: monthNetByCurrency[code] ?? 0,
+                  currenciesByCode[codes[i]] ??
+                  Currency(code: codes[i], decimals: 2, symbol: codes[i]),
+              expense: todayTotalsByCurrency[codes[i]]?.expense ?? 0,
+              income: todayTotalsByCurrency[codes[i]]?.income ?? 0,
+              monthNet: monthNetByCurrency[codes[i]] ?? 0,
               locale: locale,
               labels: (
                 expense: l10n.homeSummaryTodayExpense,
@@ -84,6 +88,7 @@ class SummaryStrip extends StatelessWidget {
                 monthNet: l10n.homeSummaryMonthNet,
               ),
             ),
+          ],
         ],
       ),
     );
@@ -92,7 +97,6 @@ class SummaryStrip extends StatelessWidget {
 
 class _CurrencyGroup extends StatelessWidget {
   const _CurrencyGroup({
-    required this.code,
     required this.currency,
     required this.expense,
     required this.income,
@@ -101,7 +105,6 @@ class _CurrencyGroup extends StatelessWidget {
     required this.labels,
   });
 
-  final String code;
   final Currency currency;
   final int expense;
   final int income;
@@ -113,17 +116,20 @@ class _CurrencyGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(homePageCardBorderRadius),
+        boxShadow: [buildBoxShadow(homePageCardBorderRadius)],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(code, style: theme.textTheme.labelSmall),
-          const SizedBox(height: 6),
+          // Currency identity is conveyed by the symbol that
+          // `MoneyFormatter` prefixes onto each amount, so the row no
+          // longer carries a separate code header.
           _Chip(
             label: labels.expense,
             value: MoneyFormatter.format(
@@ -181,32 +187,43 @@ class _Chip extends StatelessWidget {
   }
 }
 
-class _PlaceholderRow extends StatelessWidget {
-  const _PlaceholderRow({required this.theme, required this.labels});
+class _PlaceholderBox extends StatelessWidget {
+  const _PlaceholderBox({required this.theme, required this.labels});
 
   final ThemeData theme;
   final List<String> labels;
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 12,
-      runSpacing: 8,
-      children: [
-        for (final label in labels)
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('$label: ', style: theme.textTheme.bodySmall),
-              Text(
-                '—',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final label in labels)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('$label: ', style: theme.textTheme.bodySmall),
+                  Text(
+                    '—',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-      ],
+            ),
+        ],
+      ),
     );
   }
 }
