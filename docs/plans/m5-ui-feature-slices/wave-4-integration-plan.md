@@ -2,14 +2,16 @@
 
 **Source of truth:** [`PRD.md`](../../../PRD.md) → *Routing Structure*, *Testing Strategy → Integration Tests*. Contracts inherited from [`wave-0-contracts-plan.md`](wave-0-contracts-plan.md). Prior-wave outputs: [`wave-1/`](wave-1/), [`wave-2-transactions-plan.md`](wave-2-transactions-plan.md), [`wave-3-home-plan.md`](wave-3-home-plan.md).
 
-Wave 4 is **not a slice**. It is an operator-run integration pass that wires the six merged slices into a working app, reconciles shared surfaces, and confirms the full test suite is green. No new features; no controller/widget authoring.
+Wave 4 is **not a slice**. It is an operator-run integration pass that verifies the six merged slices compose into a working app, reconciles shared surfaces, and confirms the full test suite is green. No new features; no controller/widget authoring.
+
+In practice, Waves 1–3 each wired their own real screens into `lib/app/router.dart` at slice-merge time rather than landing behind M4 placeholders. Wave 4's role for §3.1 is therefore **verification** of that wiring, not active replacement; placeholder cleanup is a fallback path only invoked if a slice failed to wire its screen.
 
 ---
 
 ## 1. Goal
 
 Turn the six independently-merged Wave 1–3 slice PRs into a shippable app:
-1. Replace the M4 placeholder routes in `lib/app/router.dart` with references to the real slice screens.
+1. Verify `lib/app/router.dart` references real slice screens for every MVP route; replace any lingering M4 placeholders that a slice failed to wire.
 2. Reconcile any ARB-key conflicts that slipped through slice reviews.
 3. Run the full test suite (unit + widget + integration) and resolve cross-slice integration bugs.
 4. Confirm the cold-start integration test from M4 still passes end-to-end.
@@ -30,12 +32,13 @@ If the operator delegates, the agent runs in **foreground** with explicit instru
 
 ### 3.1 Router updates
 
-`lib/app/router.dart` — replace placeholder references:
+`lib/app/router.dart` — verify each MVP route resolves to a real slice screen (slices wired these during their own PRs; revert any leftover placeholder if found):
 - `/splash` body → `SplashScreen` from `lib/features/splash/splash_screen.dart`.
+- `/splash/preview` body → `SplashScreen(previewMode: true)` from `lib/features/splash/splash_screen.dart`. Top-level route (`parentNavigatorKey: _rootNavigatorKey`) with the same fade `CustomTransitionPage` as `/splash`; backs the Settings → Splash → "Preview splash screen" CTA. Tapping the splash Enter button in this mode pops back to settings instead of going to `/home`. Owned by the Wave 1 splash slice.
 - `/home` body → `HomeScreen` from `lib/features/home/home_screen.dart`.
-- `/home/add` + `/home/edit/:id` bodies → `TransactionFormScreen` from `lib/features/transactions/transaction_form_screen.dart`. Preserve the root-modal presentation (`parentNavigatorKey: _rootNavigatorKey`) and update `_modalPage` / equivalent so Material routes use `fullscreenDialog: true`, per PRD → *Routing Structure*.
+- `/home/add` + `/home/edit/:id` bodies → `TransactionFormScreen` from `lib/features/transactions/transaction_form_screen.dart`. Verify the root-modal presentation (`parentNavigatorKey: _rootNavigatorKey`) and that `_modalPage` / equivalent uses `fullscreenDialog: true` for Material routes, per PRD → *Routing Structure*.
 - `/accounts` body → `AccountsScreen`.
-- `/accounts/new` + `/accounts/:id` routes → `AccountFormScreen(accountId: ...)`, preserving the Accounts-plan modal push semantics (`parentNavigatorKey: _rootNavigatorKey` + modal page builder) instead of nesting them as plain in-branch screens. `/accounts/new` is Add mode (`accountId: null`); `/accounts/:id` is Edit mode (`accountId: parsedId`); invalid ids redirect to `/accounts`.
+- `/accounts/new` + `/accounts/:id` routes → `AccountFormScreen(accountId: ...)`, with the Accounts-plan modal push semantics (`parentNavigatorKey: _rootNavigatorKey` + modal page builder) instead of nesting them as plain in-branch screens. `/accounts/new` is Add mode (`accountId: null`); `/accounts/:id` is Edit mode (`accountId: parsedId`); invalid ids redirect to `/accounts`.
 - `/settings` body → `SettingsScreen`.
 - `/settings/categories` body → `CategoriesScreen`.
 
@@ -44,7 +47,7 @@ Keep the existing:
 - `StatefulShellRoute` for Home / Accounts / Settings tabs (M4).
 - Fade `CustomTransitionPage` for `/splash → /home` (M4).
 
-**Do not** add new routes. Phase 2 routes (`/settings/wallets`, `/settings/ankr-key`, `/home/pending`) stay out of MVP per PRD.
+**Do not** add new routes beyond the inventory above. Phase 2 routes (`/settings/wallets`, `/settings/ankr-key`, `/home/pending`) stay out of MVP per PRD. `/splash/preview` is the only MVP-scope route added past M4 and is owned by Wave 1, not Wave 4.
 
 ### 3.2 ARB reconciliation
 
