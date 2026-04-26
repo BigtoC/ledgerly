@@ -14,6 +14,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/constants.dart';
 import '../../l10n/app_localizations.dart';
 import 'settings_controller.dart';
 import 'settings_providers.dart';
@@ -55,44 +56,51 @@ class _SettingsBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final packageInfo = ref.watch(packageInfoProvider);
+    const EdgeInsets cardPadding = EdgeInsets.symmetric(
+      horizontal: homePageCardHorizontalPadding - 16,
+    );
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
-        SliverToBoxAdapter(
-          child: SettingsSection(
-            title: l10n.settingsSectionAppearance,
-            children: [
-              ThemeModeSelector(value: data.themeMode),
-              LanguageSelector(value: data.locale),
-            ],
+        SliverPadding(
+          padding: cardPadding,
+          sliver: SliverToBoxAdapter(
+            child: SettingsSection(
+              title: l10n.settingsSectionAppearance,
+              children: [
+                ThemeModeSelector(value: data.themeMode),
+                LanguageSelector(value: data.locale),
+              ],
+            ),
           ),
         ),
-        SliverToBoxAdapter(
-          child: SettingsSection(
-            title: l10n.settingsSectionGeneral,
-            children: [
-              DefaultAccountTile(defaultAccountId: data.defaultAccountId),
-              DefaultCurrencyTile(defaultCurrency: data.defaultCurrency),
-            ],
+        SliverPadding(
+          padding: cardPadding,
+          sliver: SliverToBoxAdapter(
+            child: SettingsSection(
+              title: l10n.settingsSectionGeneral,
+              children: [
+                DefaultAccountTile(defaultAccountId: data.defaultAccountId),
+                DefaultCurrencyTile(defaultCurrency: data.defaultCurrency),
+                const ManageCategoriesTile(),
+              ],
+            ),
           ),
         ),
-        SliverToBoxAdapter(
-          child: SplashSettingsSection(
-            splashEnabled: data.splashEnabled,
-            splashStartDate: data.splashStartDate,
-            splashDisplayText: data.splashDisplayText,
-            splashButtonLabel: data.splashButtonLabel,
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: SettingsSection(
-            title: l10n.settingsSectionDataManagement,
-            children: const [ManageCategoriesTile()],
+        SliverPadding(
+          padding: cardPadding,
+          sliver: SliverToBoxAdapter(
+            child: SplashSettingsSection(
+              splashEnabled: data.splashEnabled,
+              splashStartDate: data.splashStartDate,
+              splashDisplayText: data.splashDisplayText,
+              splashButtonLabel: data.splashButtonLabel,
+            ),
           ),
         ),
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.only(top: 8, bottom: 32),
+            padding: const EdgeInsets.only(top: 24, bottom: 32),
             child: Center(
               child: Text(
                 packageInfo.whenData((info) => 'v${info.version}+${info.buildNumber}').valueOrNull ?? '',

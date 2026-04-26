@@ -1,11 +1,7 @@
-// Reusable settings section scaffolding (plan §3.1).
-//
-// Renders a section header on top of a column of child rows with the
-// material-you padding used by M3 settings patterns. Kept as a
-// `StatelessWidget` so it composes into any `CustomScrollView` via a
-// `SliverToBoxAdapter`.
-
 import 'package:flutter/material.dart';
+
+import '../../../core/constants.dart';
+import '../../../core/utils/box_shadow.dart';
 
 class SettingsSection extends StatelessWidget {
   const SettingsSection({
@@ -19,19 +15,28 @@ class SettingsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+          padding: const EdgeInsets.only(top: 24, bottom: 8),
           child: Text(
             title,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: theme.colorScheme.primary,
             ),
           ),
         ),
-        ...children,
+        Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainer,
+            borderRadius: BorderRadius.circular(homePageCardBorderRadius),
+            boxShadow: [buildBoxShadow(homePageCardBorderRadius)],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(children: children),
+        ),
       ],
     );
   }
