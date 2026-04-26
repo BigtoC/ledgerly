@@ -17,6 +17,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants.dart';
+import '../../core/utils/box_shadow.dart';
 import '../../l10n/app_localizations.dart';
 import 'accounts_controller.dart';
 import 'accounts_providers.dart';
@@ -87,45 +89,50 @@ class _AccountsBody extends ConsumerWidget {
       );
     }
 
+    const cardPadding = EdgeInsets.symmetric(
+      horizontal: homePageCardHorizontalPadding - 16,
+    );
+    final allActiveIds = data.active
+        .map((r) => r.account.id)
+        .toList(growable: false);
+
     return CustomScrollView(
       slivers: [
-        SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (ctx, i) => _AccountTileWithLookups(
-              view: data.active[i],
-              isDefault: data.defaultAccountId == data.active[i].account.id,
+        SliverPadding(
+          padding: cardPadding.copyWith(top: 16),
+          sliver: SliverToBoxAdapter(
+            child: _AccountListCard(
+              accounts: data.active,
+              defaultAccountId: data.defaultAccountId,
               locale: locale,
-              allActiveIds: data.active
-                  .map((r) => r.account.id)
-                  .toList(growable: false),
+              allActiveIds: allActiveIds,
             ),
-            childCount: data.active.length,
           ),
         ),
-        if (data.archived.isNotEmpty) ...[
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-              child: Text(
-                l10n.accountsArchivedSectionLabel,
-                style: Theme.of(context).textTheme.titleSmall,
+        if (data.archived.isNotEmpty)
+          SliverPadding(
+            padding: cardPadding,
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 24, bottom: 8),
+                    child: Text(
+                      l10n.accountsArchivedSectionLabel,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                  ),
+                  _AccountListCard(
+                    accounts: data.archived,
+                    defaultAccountId: null,
+                    locale: locale,
+                    allActiveIds: allActiveIds,
+                  ),
+                ],
               ),
             ),
           ),
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (ctx, i) => _AccountTileWithLookups(
-                view: data.archived[i],
-                isDefault: false,
-                locale: locale,
-                allActiveIds: data.active
-                    .map((r) => r.account.id)
-                    .toList(growable: false),
-              ),
-              childCount: data.archived.length,
-            ),
-          ),
-        ],
         const SliverPadding(padding: EdgeInsets.only(bottom: 96)),
       ],
     );
@@ -292,6 +299,45 @@ class _AccountTileWithLookups extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(l10n.accountsArchiveLastActiveBlocked)),
+    );
+  }
+}
+
+class _AccountListCard extends StatelessWidget {
+  const _AccountListCard({
+    required this.accounts,
+    required this.defaultAccountId,
+    required this.locale,
+    required this.allActiveIds,
+  });
+
+  final List<AccountWithBalance> accounts;
+  final int? defaultAccountId;
+  final String locale;
+  final List<int> allActiveIds;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(homePageCardBorderRadius),
+        boxShadow: [buildBoxShadow(homePageCardBorderRadius)],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          for (final view in accounts)
+            _AccountTileWithLookups(
+              view: view,
+              isDefault: defaultAccountId == view.account.id,
+              locale: locale,
+              allActiveIds: allActiveIds,
+            ),
+        ],
+      ),
     );
   }
 }

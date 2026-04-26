@@ -3,9 +3,8 @@
 // Layout: `CustomScrollView` with one `SliverToBoxAdapter` per section.
 // Sections (order):
 //   1. Appearance — theme segmented control + language selector.
-//   2. General — default account, default currency.
+//   2. General — default account, default currency, manage categories.
 //   3. Splash — splash settings subsection (plan §6).
-//   4. Data management — Manage Categories entry tile.
 //
 // The screen is purely a projection of `settingsControllerProvider` — it
 // never reads repositories directly, and no data transformation happens
@@ -13,9 +12,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../core/constants.dart';
 import '../../l10n/app_localizations.dart';
 import 'settings_controller.dart';
+import 'settings_providers.dart';
 import 'settings_state.dart';
 import 'widgets/default_account_tile.dart';
 import 'widgets/default_currency_tile.dart';
@@ -45,50 +47,78 @@ class SettingsScreen extends ConsumerWidget {
   }
 }
 
-class _SettingsBody extends StatelessWidget {
+class _SettingsBody extends ConsumerWidget {
   const _SettingsBody({required this.data});
 
   final SettingsData data;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final packageInfo = ref.watch(packageInfoProvider);
+    const EdgeInsets cardPadding = EdgeInsets.symmetric(
+      horizontal: homePageCardHorizontalPadding - 16,
+    );
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
-        SliverToBoxAdapter(
-          child: SettingsSection(
-            title: l10n.settingsSectionAppearance,
-            children: [
-              ThemeModeSelector(value: data.themeMode),
-              LanguageSelector(value: data.locale),
-            ],
+        SliverPadding(
+          padding: cardPadding,
+          sliver: SliverToBoxAdapter(
+            child: SettingsSection(
+              title: l10n.settingsSectionAppearance,
+              children: [
+                ThemeModeSelector(value: data.themeMode),
+                LanguageSelector(value: data.locale),
+              ],
+            ),
+          ),
+        ),
+        SliverPadding(
+          padding: cardPadding,
+          sliver: SliverToBoxAdapter(
+            child: SettingsSection(
+              title: l10n.settingsSectionGeneral,
+              children: [
+                DefaultAccountTile(defaultAccountId: data.defaultAccountId),
+                DefaultCurrencyTile(defaultCurrency: data.defaultCurrency),
+                const ManageCategoriesTile(),
+              ],
+            ),
+          ),
+        ),
+        SliverPadding(
+          padding: cardPadding,
+          sliver: SliverToBoxAdapter(
+            child: SplashSettingsSection(
+              splashEnabled: data.splashEnabled,
+              splashStartDate: data.splashStartDate,
+              splashDisplayText: data.splashDisplayText,
+              splashButtonLabel: data.splashButtonLabel,
+            ),
           ),
         ),
         SliverToBoxAdapter(
-          child: SettingsSection(
-            title: l10n.settingsSectionGeneral,
-            children: [
-              DefaultAccountTile(defaultAccountId: data.defaultAccountId),
-              DefaultCurrencyTile(defaultCurrency: data.defaultCurrency),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.only(top: 24, bottom: 32),
+            child: Center(
+              child: GestureDetector(
+                onTap: () => context.push('/settings/about'),
+                child: Text(
+                  packageInfo
+                          .whenData(
+                            (info) => 'v${info.version}+${info.buildNumber}',
+                          )
+                          .valueOrNull ??
+                      '',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
-        SliverToBoxAdapter(
-          child: SplashSettingsSection(
-            splashEnabled: data.splashEnabled,
-            splashStartDate: data.splashStartDate,
-            splashDisplayText: data.splashDisplayText,
-            splashButtonLabel: data.splashButtonLabel,
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: SettingsSection(
-            title: l10n.settingsSectionDataManagement,
-            children: const [ManageCategoriesTile()],
-          ),
-        ),
-        const SliverPadding(padding: EdgeInsets.only(bottom: 32)),
       ],
     );
   }

@@ -69,7 +69,10 @@ class _SplashPreviewTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return ListTile(
       key: const ValueKey('splashSettings:previewTile'),
-      leading: const Icon(Icons.play_circle_outline),
+      leading: Icon(
+        Icons.play_circle_outline,
+        color: Theme.of(context).colorScheme.primary,
+      ),
       title: Text(l10n.settingsSplashPreviewCta),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => context.push('/splash/preview'),

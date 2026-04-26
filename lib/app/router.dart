@@ -9,6 +9,7 @@ import '../features/accounts/account_form_screen.dart';
 import '../features/accounts/accounts_screen.dart';
 import '../features/categories/categories_screen.dart';
 import '../features/home/home_screen.dart';
+import '../features/settings/about_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/splash/splash_screen.dart';
 import '../features/transactions/transaction_form_screen.dart';
@@ -147,6 +148,11 @@ GoRouter router(Ref ref) {
                   GoRoute(
                     path: 'categories',
                     builder: (_, _) => const CategoriesScreen(),
+                  ),
+                  GoRoute(
+                    path: 'about',
+                    parentNavigatorKey: _rootNavigatorKey,
+                    builder: (_, _) => const AboutScreen(),
                   ),
                 ],
               ),

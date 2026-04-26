@@ -1,8 +1,8 @@
 // SettingsScreen widget tests (plan §3.3).
 //
 // Covers:
-//   - Data state renders all sections (Appearance, General, Splash,
-//     Data management) with their labels localized via AppLocalizations.
+//   - Data state renders all sections (Appearance, General, Splash)
+//     with their labels localized via AppLocalizations.
 //   - Theme segmented control exercises the `setThemeMode` command.
 //   - Default-account tile shows the "Not set" placeholder when no
 //     default is configured.
@@ -158,7 +158,6 @@ void main() {
     expect(find.text('Appearance', skipOffstage: false), findsOneWidget);
     expect(find.text('General', skipOffstage: false), findsOneWidget);
     expect(find.text('Splash screen', skipOffstage: false), findsOneWidget);
-    expect(find.text('Data management', skipOffstage: false), findsOneWidget);
   });
 
   testWidgets('SS02: default-account tile shows "Not set" when id is null', (
