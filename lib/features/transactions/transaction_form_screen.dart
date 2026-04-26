@@ -68,15 +68,24 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     if (!mounted) return;
     final controller = ref.read(transactionFormControllerProvider.notifier);
     final extra = GoRouterState.of(context).extra;
-    if (extra is Map && extra['duplicateSourceId'] is int) {
-      _duplicateSourceId = extra['duplicateSourceId'] as int;
+    DateTime? initialDate;
+    if (extra is Map) {
+      if (extra['duplicateSourceId'] is int) {
+        _duplicateSourceId = extra['duplicateSourceId'] as int;
+      }
+      // Home's FAB / day-nav carries the currently selected day so the
+      // form lands on that day instead of today (Wave 3 follow-up).
+      // Ignored for Edit and Duplicate flows by design.
+      if (extra['initialDate'] is DateTime) {
+        initialDate = extra['initialDate'] as DateTime;
+      }
     }
     if (widget.isEdit) {
       controller.hydrateForEdit(widget.transactionId!);
     } else if (_duplicateSourceId != null) {
       controller.hydrateForDuplicate(_duplicateSourceId!);
     } else {
-      controller.hydrateForAdd();
+      controller.hydrateForAdd(initialDate: initialDate);
     }
   }
 
