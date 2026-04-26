@@ -221,6 +221,10 @@
   "@settingsSplashButtonLabel": {
     "description": "PRD 547. Free-text field label for the splash button label."
   },
+  "settingsSplashPreviewCta": "Preview splash screen",
+  "@settingsSplashPreviewCta": {
+    "description": "Settings splash subsection — opens the splash screen as a preview. Tapping the splash Enter button pops back to settings."
+  },
 
   "categoriesManageTitle": "Manage categories",
   "@categoriesManageTitle": {

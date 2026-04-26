@@ -64,6 +64,7 @@ const Set<String> _expectedEnKeys = <String>{
   'settingsSplashStartDate',
   'settingsSplashDisplayText',
   'settingsSplashButtonLabel',
+  'settingsSplashPreviewCta',
 
   // §5.4 Group C — Seeded expense categories.
   'categoryFood',

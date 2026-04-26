@@ -167,6 +167,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsSplashButtonLabel => 'Button label';
 
   @override
+  String get settingsSplashPreviewCta => 'Preview splash screen';
+
+  @override
   String get categoriesManageTitle => 'Manage categories';
 
   @override

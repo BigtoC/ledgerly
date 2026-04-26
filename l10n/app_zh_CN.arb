@@ -62,6 +62,7 @@
   "settingsSplashStartDate": "起始日期",
   "settingsSplashDisplayText": "显示文字",
   "settingsSplashButtonLabel": "按钮文字",
+  "settingsSplashPreviewCta": "预览启动页",
 
   "categoriesManageTitle": "管理分类",
   "categoriesAddCta": "添加分类",

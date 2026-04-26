@@ -167,6 +167,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsSplashButtonLabel => 'Button label';
 
   @override
+  String get settingsSplashPreviewCta => 'Preview splash screen';
+
+  @override
   String get categoriesManageTitle => 'Manage categories';
 
   @override
@@ -629,6 +632,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get settingsSplashButtonLabel => '按钮文字';
 
   @override
+  String get settingsSplashPreviewCta => '预览启动页';
+
+  @override
   String get categoriesManageTitle => '管理分类';
 
   @override
@@ -1081,6 +1087,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get settingsSplashButtonLabel => '按鈕文字';
+
+  @override
+  String get settingsSplashPreviewCta => '預覽啟動畫面';
 
   @override
   String get categoriesManageTitle => '管理分類';

@@ -406,6 +406,12 @@ abstract class AppLocalizations {
   /// **'Button label'**
   String get settingsSplashButtonLabel;
 
+  /// Settings splash subsection — opens the splash screen as a preview. Tapping the splash Enter button pops back to settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview splash screen'**
+  String get settingsSplashPreviewCta;
+
   /// PRD 728. AppBar title for the Categories management screen (Settings → Manage Categories).
   ///
   /// In en, this message translates to:

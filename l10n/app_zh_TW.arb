@@ -62,6 +62,7 @@
   "settingsSplashStartDate": "起始日期",
   "settingsSplashDisplayText": "顯示文字",
   "settingsSplashButtonLabel": "按鈕文字",
+  "settingsSplashPreviewCta": "預覽啟動畫面",
 
   "categoriesManageTitle": "管理分類",
   "categoriesAddCta": "新增分類",
