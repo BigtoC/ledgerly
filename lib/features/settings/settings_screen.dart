@@ -3,8 +3,9 @@
 // Layout: `CustomScrollView` with one `SliverToBoxAdapter` per section.
 // Sections (order):
 //   1. Appearance — theme segmented control + language selector.
-//   2. General — default account, default currency, manage categories.
+//   2. General — default account, default currency.
 //   3. Splash — splash settings subsection (plan §6).
+//   4. Data management — Manage Categories entry tile.
 //
 // The screen is purely a projection of `settingsControllerProvider` — it
 // never reads repositories directly, and no data transformation happens
@@ -70,7 +71,6 @@ class _SettingsBody extends StatelessWidget {
             children: [
               DefaultAccountTile(defaultAccountId: data.defaultAccountId),
               DefaultCurrencyTile(defaultCurrency: data.defaultCurrency),
-              const ManageCategoriesTile(),
             ],
           ),
         ),
@@ -80,6 +80,12 @@ class _SettingsBody extends StatelessWidget {
             splashStartDate: data.splashStartDate,
             splashDisplayText: data.splashDisplayText,
             splashButtonLabel: data.splashButtonLabel,
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: SettingsSection(
+            title: l10n.settingsSectionDataManagement,
+            children: const [ManageCategoriesTile()],
           ),
         ),
         const SliverPadding(padding: EdgeInsets.only(bottom: 32)),

@@ -42,7 +42,12 @@ class ThemeModeSelector extends ConsumerWidget {
                 value: ThemeMode.dark,
                 label: Text(l10n.settingsThemeDark),
                 icon: const Icon(Icons.dark_mode),
-              )
+              ),
+              ButtonSegment(
+                value: ThemeMode.system,
+                label: Text(l10n.settingsThemeSystem),
+                icon: const Icon(Icons.brightness_auto),
+              ),
             ],
             selected: {value},
             onSelectionChanged: (selection) {
