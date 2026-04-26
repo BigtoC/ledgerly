@@ -58,7 +58,6 @@ class HomeController extends _$HomeController {
   PendingDelete? _pendingDelete;
   final Set<int> _committedDeleteIds = <int>{};
   Timer? _undoTimer;
-  Timer? _todayRefreshTimer;
   _Composer? _composer;
   HomeEffectListener? _effectListener;
 
@@ -73,12 +72,9 @@ class HomeController extends _$HomeController {
       committedDeleteIdsGetter: () => _committedDeleteIds,
     );
     _composer = composer;
-    _scheduleTodayRefresh();
     ref.onDispose(() {
       _undoTimer?.cancel();
       _undoTimer = null;
-      _todayRefreshTimer?.cancel();
-      _todayRefreshTimer = null;
       _pendingDelete = null;
       _committedDeleteIds.clear();
       composer.dispose();
@@ -187,26 +183,17 @@ class HomeController extends _$HomeController {
     }
   }
 
+  // Re-anchors `today` if the wall clock has crossed midnight since the
+  // last command. Called by every command path so the summary strip and
+  // month-net stream re-subscribe with the correct day boundary. We do
+  // not schedule a midnight Timer — a long-lived timer leaks past widget
+  // disposal in tests, and on mobile a sleeping device would not fire it
+  // reliably anyway. Idle-overnight rollover is corrected on next interaction.
   void _syncTodayAnchor() {
     final today = DateHelpers.startOfDay(DateTime.now());
     if (DateHelpers.isSameDay(today, _todayAnchor)) return;
     _todayAnchor = today;
     _composer?.changeToday(_todayAnchor);
-    _scheduleTodayRefresh();
-  }
-
-  void _scheduleTodayRefresh() {
-    _todayRefreshTimer?.cancel();
-    final now = DateTime.now();
-    final nextMidnight = DateHelpers.startOfDay(
-      DateTime(now.year, now.month, now.day + 1),
-    );
-    final delay = nextMidnight.difference(now);
-    _todayRefreshTimer = Timer(delay, () {
-      _todayAnchor = DateHelpers.startOfDay(DateTime.now());
-      _composer?.changeToday(_todayAnchor);
-      _scheduleTodayRefresh();
-    });
   }
 }
 
