@@ -354,10 +354,7 @@ class _SinglePane extends ConsumerWidget {
     );
   }
 
-  void _onHorizontalDragEnd(
-    DragEndDetails details, {
-    required HomeData data,
-  }) {
+  void _onHorizontalDragEnd(DragEndDetails details, {required HomeData data}) {
     // primaryVelocity is in logical px/s. Negative = finger moving
     // left → reveal newer day; positive = finger moving right → reveal
     // older day. 300 px/s threshold filters incidental scroll-end

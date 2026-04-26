@@ -236,9 +236,9 @@ void main() {
       monthNetCtrl.add(const {'USD': -100});
       await tester.pump(const Duration(milliseconds: 200));
 
-      // Summary strip USD chip group present.
-      expect(find.text('USD'), findsOneWidget);
-      // Today expense chip rendered.
+      // Summary strip renders the today-expense label and amount; the
+      // standalone `USD` code header was removed in favor of letting
+      // `MoneyFormatter` carry the currency symbol on each amount.
       expect(find.text('Today expense: '), findsOneWidget);
     },
   );

@@ -34,7 +34,10 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('USD'), findsOneWidget);
+    // The bare currency-code header is gone (the symbol on each amount
+    // already conveys the currency). Today-expense / today-income /
+    // month-net values still render via `MoneyFormatter`.
+    expect(find.text('USD'), findsNothing);
     expect(find.textContaining(r'$15.00'), findsOneWidget);
     expect(find.textContaining(r'$5.00'), findsOneWidget);
     expect(find.textContaining(r'-$10.00'), findsOneWidget);
@@ -57,11 +60,15 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('USD'), findsOneWidget);
-    expect(find.text('JPY'), findsOneWidget);
-    // JPY decimals = 0 → no fractional digits. Today-expense chip
-    // renders the unsigned amount; month-net chip renders the signed
-    // amount with a leading `-`.
+    // No standalone currency-code headers; both groups still render
+    // their amounts with currency-specific formatting (USD has two
+    // fractional digits, JPY has zero).
+    expect(find.text('USD'), findsNothing);
+    expect(find.text('JPY'), findsNothing);
+    // USD: expense=100 → $1.00, monthNet=-100 → -$1.00.
+    // Exact-match assertions to avoid `textContaining` matching both.
+    expect(find.text(r'$1.00'), findsOneWidget);
+    expect(find.text(r'-$1.00'), findsOneWidget);
     expect(find.text('¥500'), findsOneWidget);
     expect(find.text(r'-¥500'), findsOneWidget);
   });
