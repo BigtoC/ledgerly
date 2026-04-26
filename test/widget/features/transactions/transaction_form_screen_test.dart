@@ -107,7 +107,11 @@ void main() {
     ).thenAnswer((_) async => _expenseCategory);
   });
 
-  Widget mountAdd({Object? extra, List<Override> extraOverrides = const []}) {
+  Widget mountAdd({
+    Object? extra,
+    List<Override> extraOverrides = const [],
+    double? textScale,
+  }) {
     final router = GoRouter(
       initialLocation: '/home/add',
       initialExtra: extra,
@@ -149,6 +153,14 @@ void main() {
         routerConfig: router,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
+        builder: textScale == null
+            ? null
+            : (context, child) => MediaQuery(
+                  data: MediaQuery.of(context).copyWith(
+                    textScaler: TextScaler.linear(textScale),
+                  ),
+                  child: child!,
+                ),
       ),
     );
   }
@@ -428,6 +440,77 @@ void main() {
 
     deleteCompleter.complete(true);
     await tester.pumpAndSettle();
+  });
+
+  // M6 Unit 8 — accessibility: PRD a11y requirement that the form
+  // (with its fixed-height keypad above the soft keyboard) survives
+  // 2× text scale. The form's scrollable Column is `Expanded` above
+  // the keypad, so growing every text by 2× must not produce overflow
+  // exceptions.
+  testWidgets('WS12: 2× text scale survives in Add mode', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(mountAdd(textScale: 2.0));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    // Save button + AppBar title still render at 2× scale.
+    expect(find.text('Add transaction'), findsOneWidget);
+    expect(find.text('Save'), findsOneWidget);
+  });
+
+  testWidgets('WS13: 2× text scale survives in Edit mode', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    when(() => txRepo.getById(99)).thenAnswer(
+      (_) async => _persistedTx(memo: 'A long memo that pushes the form a bit'),
+    );
+
+    final router = GoRouter(
+      initialLocation: '/home/edit/99',
+      routes: [
+        GoRoute(
+          path: '/home',
+          builder: (_, _) => const _HomeStub(),
+          routes: [
+            GoRoute(
+              path: 'edit/:id',
+              builder: (_, state) => TransactionFormScreen(
+                transactionId: int.parse(state.pathParameters['id']!),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          transactionRepositoryProvider.overrideWithValue(txRepo),
+          accountRepositoryProvider.overrideWithValue(accountRepo),
+          categoryRepositoryProvider.overrideWithValue(categoryRepo),
+          userPreferencesRepositoryProvider.overrideWithValue(prefs),
+        ],
+        child: MaterialApp.router(
+          routerConfig: router,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              textScaler: const TextScaler.linear(2.0),
+            ),
+            child: child!,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Edit transaction'), findsOneWidget);
+    expect(find.text('Save'), findsOneWidget);
   });
 }
 

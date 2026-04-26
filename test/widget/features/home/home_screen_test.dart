@@ -155,7 +155,7 @@ void main() {
     await currenciesCtrl.close();
   });
 
-  Widget makeApp() {
+  Widget makeApp({double? textScale}) {
     return ProviderScope(
       overrides: [
         transactionRepositoryProvider.overrideWithValue(txRepo),
@@ -166,6 +166,14 @@ void main() {
       child: MaterialApp.router(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
+        builder: textScale == null
+            ? null
+            : (context, child) => MediaQuery(
+                  data: MediaQuery.of(context).copyWith(
+                    textScaler: TextScaler.linear(textScale),
+                  ),
+                  child: child!,
+                ),
         routerConfig: GoRouter(
           initialLocation: '/home',
           routes: [
@@ -658,6 +666,32 @@ void main() {
       find.text('Something went wrong. Please try again.'),
       findsOneWidget,
     );
+  });
+
+  // M6 Unit 8 — accessibility: PRD a11y requirement that the Home
+  // empty state survives 2× text scale. The data-state at 2× scale
+  // surfaces RenderFlex overflows in `SummaryStrip._CurrencyGroup`
+  // and `DayNavigationHeader` that were not caught at design time;
+  // `docs/a11y-audit-m6.md` tracks the follow-up. The FAB tooltip
+  // assertion below proves at least the always-visible CTA remains
+  // accessible at 2× scale on the empty-state path.
+  testWidgets('WH14: Home empty state survives 2× text scale', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 1200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(makeApp(textScale: 2.0));
+    await seedAll(tester);
+
+    dayCtrl.add(const []);
+    activityCtrl.add(const []);
+    todayTotalsCtrl.add(const {});
+    monthNetCtrl.add(const {});
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('No transactions yet'), findsOneWidget);
+    expect(find.text('Log first transaction'), findsOneWidget);
+    expect(find.byTooltip('Add transaction'), findsOneWidget);
   });
 }
 
