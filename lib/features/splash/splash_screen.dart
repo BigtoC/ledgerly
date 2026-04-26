@@ -25,7 +25,12 @@ import 'widgets/splash_rainbow_gradient_text.dart';
 import 'widgets/splash_sun_background.dart';
 
 class SplashScreen extends ConsumerWidget {
-  const SplashScreen({super.key});
+  const SplashScreen({super.key, this.previewMode = false});
+
+  /// When `true`, the Enter button pops the current route instead of
+  /// going to `/home`. Set by the `/splash/preview` route reached from
+  /// Settings → Splash → "Preview splash screen".
+  final bool previewMode;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -56,6 +61,7 @@ class SplashScreen extends ConsumerWidget {
             child: switch (state) {
               AsyncData(value: final SplashData data) => _SplashContent(
                 data: data,
+                previewMode: previewMode,
               ),
               AsyncData(value: SplashError()) => const _SplashErrorSurface(),
               AsyncError() => const _SplashErrorSurface(),
@@ -71,9 +77,10 @@ class SplashScreen extends ConsumerWidget {
 }
 
 class _SplashContent extends StatelessWidget {
-  const _SplashContent({required this.data});
+  const _SplashContent({required this.data, required this.previewMode});
 
   final SplashData data;
+  final bool previewMode;
 
   @override
   Widget build(BuildContext context) {
@@ -117,7 +124,7 @@ class _SplashContent extends StatelessWidget {
               ),
             ),
           ),
-          SplashEnterButton(label: data.buttonLabel),
+          SplashEnterButton(label: data.buttonLabel, previewMode: previewMode),
           const SizedBox(height: 24),
         ],
       ),

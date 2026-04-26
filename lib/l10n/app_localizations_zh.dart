@@ -167,6 +167,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsSplashButtonLabel => 'Button label';
 
   @override
+  String get settingsSplashPreviewCta => 'Preview splash screen';
+
+  @override
   String get categoriesManageTitle => 'Manage categories';
 
   @override
@@ -440,6 +443,30 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get txKeypadBackspace => 'Backspace';
+
+  @override
+  String get homeDayEmptyTitle => 'No transactions on this day';
+
+  @override
+  String get homeDaySkeletonLabel => 'Loading day';
+
+  @override
+  String get homeDeleteUndoSnackbar => 'Transaction deleted';
+
+  @override
+  String get homeDuplicateAction => 'Duplicate';
+
+  @override
+  String get homeDayLabelToday => 'Today';
+
+  @override
+  String get homeDayLabelYesterday => 'Yesterday';
+
+  @override
+  String get homeDayNavPrevLabel => 'Previous day';
+
+  @override
+  String get homeDayNavNextLabel => 'Next day';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -603,6 +630,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get settingsSplashButtonLabel => '按钮文字';
+
+  @override
+  String get settingsSplashPreviewCta => '预览启动页';
 
   @override
   String get categoriesManageTitle => '管理分类';
@@ -870,6 +900,30 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get txKeypadBackspace => '退格';
+
+  @override
+  String get homeDayEmptyTitle => '这天没有交易';
+
+  @override
+  String get homeDaySkeletonLabel => '加载中的日期';
+
+  @override
+  String get homeDeleteUndoSnackbar => '交易已删除';
+
+  @override
+  String get homeDuplicateAction => '复制';
+
+  @override
+  String get homeDayLabelToday => '今天';
+
+  @override
+  String get homeDayLabelYesterday => '昨天';
+
+  @override
+  String get homeDayNavPrevLabel => '前一天';
+
+  @override
+  String get homeDayNavNextLabel => '后一天';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1033,6 +1087,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get settingsSplashButtonLabel => '按鈕文字';
+
+  @override
+  String get settingsSplashPreviewCta => '預覽啟動畫面';
 
   @override
   String get categoriesManageTitle => '管理分類';
@@ -1300,4 +1357,28 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get txKeypadBackspace => '退格';
+
+  @override
+  String get homeDayEmptyTitle => '這天沒有交易';
+
+  @override
+  String get homeDaySkeletonLabel => '載入中的日期';
+
+  @override
+  String get homeDeleteUndoSnackbar => '交易已刪除';
+
+  @override
+  String get homeDuplicateAction => '複製';
+
+  @override
+  String get homeDayLabelToday => '今天';
+
+  @override
+  String get homeDayLabelYesterday => '昨天';
+
+  @override
+  String get homeDayNavPrevLabel => '前一天';
+
+  @override
+  String get homeDayNavNextLabel => '後一天';
 }

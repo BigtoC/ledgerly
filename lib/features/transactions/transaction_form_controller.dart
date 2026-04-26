@@ -40,6 +40,7 @@ class TransactionFormController extends _$TransactionFormController {
   KeypadState _keypad = const KeypadState.initial();
   _HydrationMode _resumeMode = _HydrationMode.add;
   int? _resumeTargetId;
+  DateTime? _resumeAddInitialDate;
 
   @override
   TransactionFormState build() {
@@ -51,9 +52,15 @@ class TransactionFormController extends _$TransactionFormController {
 
   // ---------- Hydration ----------
 
-  Future<void> hydrateForAdd() async {
+  /// Hydrate for the Add flow. When [initialDate] is supplied (e.g.,
+  /// from Home's FAB carrying the currently selected day) the form's
+  /// `date` field starts at that day instead of today; the value is
+  /// normalized to local midnight so it round-trips through `setDate`.
+  /// Omitting [initialDate] preserves the prior default of today.
+  Future<void> hydrateForAdd({DateTime? initialDate}) async {
     _resumeMode = _HydrationMode.add;
     _resumeTargetId = null;
+    _resumeAddInitialDate = initialDate;
     state = const TransactionFormState.loading();
     try {
       final account = await _resolveDefaultAccount();
@@ -70,7 +77,9 @@ class TransactionFormController extends _$TransactionFormController {
         displayCurrency: account.currency,
         selectedCategory: null,
         pendingType: CategoryType.expense,
-        date: _today(),
+        date: initialDate == null
+            ? _today()
+            : DateTime(initialDate.year, initialDate.month, initialDate.day),
         memo: '',
         isDirty: false,
         isSaving: false,
@@ -381,7 +390,7 @@ class TransactionFormController extends _$TransactionFormController {
   /// dependency-recovery flows like `/accounts/new`.
   Future<void> retryHydration() {
     return switch (_resumeMode) {
-      _HydrationMode.add => hydrateForAdd(),
+      _HydrationMode.add => hydrateForAdd(initialDate: _resumeAddInitialDate),
       _HydrationMode.duplicate => hydrateForDuplicate(_resumeTargetId!),
       _HydrationMode.edit => hydrateForEdit(_resumeTargetId!),
     };

@@ -62,6 +62,7 @@
   "settingsSplashStartDate": "起始日期",
   "settingsSplashDisplayText": "顯示文字",
   "settingsSplashButtonLabel": "按鈕文字",
+  "settingsSplashPreviewCta": "預覽啟動畫面",
 
   "categoriesManageTitle": "管理分類",
   "categoriesAddCta": "新增分類",
@@ -154,5 +155,14 @@
   "txCurrencyChangeConfirmTitle": "切換幣別?",
   "txCurrencyChangeConfirmBody": "切換到此帳戶會改變幣別,目前輸入的金額將被清除。",
   "txKeypadClear": "清除金額",
-  "txKeypadBackspace": "退格"
+  "txKeypadBackspace": "退格",
+
+  "homeDayEmptyTitle": "這天沒有交易",
+  "homeDaySkeletonLabel": "載入中的日期",
+  "homeDeleteUndoSnackbar": "交易已刪除",
+  "homeDuplicateAction": "複製",
+  "homeDayLabelToday": "今天",
+  "homeDayLabelYesterday": "昨天",
+  "homeDayNavPrevLabel": "前一天",
+  "homeDayNavNextLabel": "後一天"
 }

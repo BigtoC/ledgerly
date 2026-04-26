@@ -406,6 +406,12 @@ abstract class AppLocalizations {
   /// **'Button label'**
   String get settingsSplashButtonLabel;
 
+  /// Settings splash subsection — opens the splash screen as a preview. Tapping the splash Enter button pops back to settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview splash screen'**
+  String get settingsSplashPreviewCta;
+
   /// PRD 728. AppBar title for the Categories management screen (Settings → Manage Categories).
   ///
   /// In en, this message translates to:
@@ -939,6 +945,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Backspace'**
   String get txKeypadBackspace;
+
+  /// Wave 3 §4.2. Per-day empty state title (gap day with prior history).
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions on this day'**
+  String get homeDayEmptyTitle;
+
+  /// Wave 3 §4.2. Accessibility label for a transient Home day-loading placeholder. Reserved for loading affordances.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading day'**
+  String get homeDaySkeletonLabel;
+
+  /// Wave 3 §8. SnackBar text shown after a swipe / overflow delete; the action button is `commonUndo`.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction deleted'**
+  String get homeDeleteUndoSnackbar;
+
+  /// Wave 3 §9. Row overflow menu — duplicate action.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate'**
+  String get homeDuplicateAction;
+
+  /// Wave 3 §6. Day-nav header label override when selectedDay is today.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get homeDayLabelToday;
+
+  /// Wave 3 §6. Day-nav header label override when selectedDay is yesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get homeDayLabelYesterday;
+
+  /// Wave 3 §6, §10. A11y label for the day-nav prev (◀) chevron.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous day'**
+  String get homeDayNavPrevLabel;
+
+  /// Wave 3 §6, §10. A11y label for the day-nav next (▶) chevron.
+  ///
+  /// In en, this message translates to:
+  /// **'Next day'**
+  String get homeDayNavNextLabel;
 }
 
 class _AppLocalizationsDelegate

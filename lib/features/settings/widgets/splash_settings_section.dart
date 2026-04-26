@@ -13,6 +13,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../l10n/app_localizations.dart';
@@ -53,8 +54,25 @@ class SplashSettingsSection extends ConsumerWidget {
           _SplashStartDateRow(startDate: splashStartDate),
           _SplashDisplayTextField(text: splashDisplayText),
           _SplashButtonLabelField(label: splashButtonLabel),
+          const _SplashPreviewTile(),
         ],
       ],
+    );
+  }
+}
+
+class _SplashPreviewTile extends StatelessWidget {
+  const _SplashPreviewTile();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return ListTile(
+      key: const ValueKey('splashSettings:previewTile'),
+      leading: const Icon(Icons.play_circle_outline),
+      title: Text(l10n.settingsSplashPreviewCta),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => context.push('/splash/preview'),
     );
   }
 }

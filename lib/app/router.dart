@@ -49,6 +49,20 @@ GoRouter router(Ref ref) {
               FadeTransition(opacity: animation, child: child),
         ),
       ),
+      GoRoute(
+        // Preview entry from Settings → Splash. Top-level so the splash
+        // covers the bottom navigation, with a fade transition that
+        // matches the production splash. Tapping the splash Enter
+        // button pops back to settings (see `SplashEnterButton`).
+        path: '/splash/preview',
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (ctx, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const SplashScreen(previewMode: true),
+          transitionsBuilder: (_, animation, _, child) =>
+              FadeTransition(opacity: animation, child: child),
+        ),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (ctx, state, shell) => AdaptiveShell(
           currentIndex: shell.currentIndex,

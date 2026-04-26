@@ -65,7 +65,7 @@ Stream<Map<String, int>> watchMonthNetByCurrency(DateTime month);
 
 **Implementation notes:**
 - Backed by Drift SQL aggregates (`SUM(amount_minor_units)` with a `CASE WHEN categories.type = 'expense' THEN -amount ELSE amount END` for net). No Dart-side aggregation — the query does the work.
-- Day boundaries computed in the device's local timezone, matching `watchByDay`'s existing boundary logic. Keep both using the same helper so month / day results are consistent.
+- Day boundaries computed in the device's local timezone via `DateHelpers.startOfDay(...)` from `core/utils/date_helpers.dart`. `DriftTransactionRepository.watchByDay` already uses this helper (see `transaction_repository.dart` — `start = DateHelpers.startOfDay(day)`, `end = DateHelpers.startOfDay(day + 1)`); the three new methods MUST call the same helper rather than inventing a parallel implementation. Risk #2 covers the failure mode if they drift.
 - Return type uses a Dart record for the expense/income split.
 - No cross-currency conversion; grouping is by the transaction's `currency` column.
 
@@ -99,6 +99,8 @@ This is the **only** repository surface change Wave 3 introduces. Slice agents m
 Prefix: `home*`. Some keys already reserved in M4 (`homeEmptyTitle`, `homeEmptyCta`, `homeFabLabel`, `homeSummaryTodayExpense`, `homeSummaryTodayIncome`, `homeSummaryMonthNet`).
 
 New keys (discovered during implementation): `homeDayEmptyTitle`, `homeDaySkeletonLabel`, `homeDeleteUndoSnackbar`, `homeDuplicateAction`, `homeDayLabelToday`, `homeDayLabelYesterday`, `homeDayNavPrevLabel`, `homeDayNavNextLabel`. Discovered keys carry PRD line refs; `app_en.arb`, `app_zh_TW.arb`, and `app_zh_CN.arb` are updated in the same commit while `app_zh.arb` stays fallback-only.
+
+> **Inventory test:** every new key MUST also be added to the `_expectedEnKeys` set in `test/unit/l10n/arb_audit_test.dart` in the same commit. That test enforces the plan-vs-ARB contract (§5 inventory) and fails loudly when a key lands in `app_en.arb` without a matching entry in the audit. Wave 2 hit this exact failure when its `tx*` keys were added without updating the audit; the same trap applies here.
 
 ### 4.3 Tests
 
@@ -238,6 +240,8 @@ Adaptive layout:
 - First-run empty state spans the content region instead of rendering a blank split pane.
 - Do **not** ship the phone single-pane Home unchanged on `>=600dp`.
 
+> **Out of scope: form's own adaptive container.** The `/home/add` and `/home/edit/:id` routes already adapt at 600dp via `_AdaptiveTransactionFormRoute` in `lib/app/router.dart` (added during Wave 2): fullscreen below 600dp, `Dialog(maxWidth: 560)` at and above. Wave 3's adaptive concern is **only** Home's own screen. Do not re-implement the form adaptation, and do not edit `router.dart`.
+
 ---
 
 ## 12. Cross-slice contract adherence (Wave 0)
@@ -246,6 +250,7 @@ Adaptive layout:
 - §2.3 — Pending badge count = 0 in MVP; the `pending_badge.dart` widget renders nothing when count is 0. Do not wire a real stream in MVP.
 - §2.3 — Home's delete uses a SnackBar with `commonUndo`; no shared row/undo widget is extracted in MVP.
 - §2.4 — Wave 3's repository additions (§3) are the only change to repository surface. No other data-layer work.
+- §2.4 — Do **not** edit `router.dart`. `/home/add` and `/home/edit/:id` are already wired with adaptive 600dp presentation; Home only navigates to them via `context.push`. Mirrors the equivalent Wave 2 §11 stance now that the router is fully wired.
 - §2.5 — All widgets under `lib/features/home/widgets/`. No cross-slice imports.
 
 ---
