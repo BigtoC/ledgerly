@@ -57,6 +57,7 @@ dev_dependencies:
   import_lint: ^0.1.6
 
   # Testing
+  fake_async: ^1.3.3
   mocktail: ^1.0.4
 
   # Native splash is a codegen CLI (`dart run flutter_native_splash:create`),

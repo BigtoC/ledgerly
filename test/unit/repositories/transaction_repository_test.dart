@@ -795,6 +795,40 @@ void main() {
       await Future<void>.delayed(Duration.zero);
       expect(emissions.last, isEmpty);
     });
+
+    test('A-reactive-02: totals stream re-emits after insert and delete', () async {
+      final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
+      final emissions = <Map<String, ({int expense, int income})>>[];
+      final sub = txRepo.watchDailyTotalsByType(today).listen(emissions.add);
+      addTearDown(sub.cancel);
+
+      await Future<void>.delayed(Duration.zero);
+      expect(emissions.last, isEmpty);
+
+      final tx = await txRepo.save(sampleTx(amount: 400));
+      await Future<void>.delayed(Duration.zero);
+      expect(emissions.last['USD']!.expense, 400);
+      expect(emissions.last['USD']!.income, 0);
+
+      await txRepo.delete(tx.id);
+      await Future<void>.delayed(Duration.zero);
+      expect(emissions.last, isEmpty);
+    });
+
+    test('A-reactive-03: daily net re-emits after update', () async {
+      final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
+      final emissions = <Map<String, int>>[];
+      final sub = txRepo.watchDailyNetByCurrency(today).listen(emissions.add);
+      addTearDown(sub.cancel);
+
+      final tx = await txRepo.save(sampleTx(amount: 400));
+      await Future<void>.delayed(Duration.zero);
+      expect(emissions.last, {'USD': -400});
+
+      await txRepo.save(tx.copyWith(amountMinorUnits: 900));
+      await Future<void>.delayed(Duration.zero);
+      expect(emissions.last, {'USD': -900});
+    });
   });
 
   group('watchMonthNetByCurrency', () {
@@ -860,6 +894,26 @@ void main() {
       );
       await Future<void>.delayed(Duration.zero);
       expect(emissions.last, {'USD': 700});
+    });
+
+    test('M-reactive-02: stream re-emits after update and delete', () async {
+      final emissions = <Map<String, int>>[];
+      final sub = txRepo
+          .watchMonthNetByCurrency(frozenNow)
+          .listen(emissions.add);
+      addTearDown(sub.cancel);
+
+      final tx = await txRepo.save(sampleTx(amount: 100));
+      await Future<void>.delayed(Duration.zero);
+      expect(emissions.last, {'USD': -100});
+
+      await txRepo.save(tx.copyWith(amountMinorUnits: 250));
+      await Future<void>.delayed(Duration.zero);
+      expect(emissions.last, {'USD': -250});
+
+      await txRepo.delete(tx.id);
+      await Future<void>.delayed(Duration.zero);
+      expect(emissions.last, isEmpty);
     });
   });
 }

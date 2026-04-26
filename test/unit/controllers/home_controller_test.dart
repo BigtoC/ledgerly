@@ -17,6 +17,7 @@
 
 import 'dart:async';
 
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -111,6 +112,22 @@ void main() {
       throw StateError('HomeController never produced expected state');
     }
 
+    Future<void> pumpUntilSettled() async {
+      for (var i = 0; i < 10; i++) {
+        await Future<void>.delayed(Duration.zero);
+      }
+    }
+
+    void emitBase({
+      required List<Transaction> rows,
+      required List<DateTime> days,
+    }) {
+      dayCtrl.add(rows);
+      activityCtrl.add(days);
+      todayTotalsCtrl.add(const {});
+      monthNetCtrl.add(const {});
+    }
+
     test('H01: starts loading, transitions to empty when no history', () async {
       final container = makeContainer();
       addTearDown(container.dispose);
@@ -131,6 +148,37 @@ void main() {
       final state = await waitForNon(container, (s) => s is HomeEmpty);
       final empty = state as HomeEmpty;
       expect(empty.pendingBadgeCount, 0);
+    });
+
+    test('H01b: remains AsyncLoading until all four streams emit', () async {
+      final container = makeContainer();
+      addTearDown(container.dispose);
+      container.listen(homeControllerProvider, (_, _) {});
+
+      expect(
+        container.read(homeControllerProvider),
+        isA<AsyncLoading<HomeState>>(),
+      );
+
+      await Future<void>.delayed(Duration.zero);
+      dayCtrl.add(const []);
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        container.read(homeControllerProvider),
+        isA<AsyncLoading<HomeState>>(),
+      );
+
+      activityCtrl.add(const []);
+      todayTotalsCtrl.add(const {});
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        container.read(homeControllerProvider),
+        isA<AsyncLoading<HomeState>>(),
+      );
+
+      monthNetCtrl.add(const {});
+      final state = await waitForNon(container, (s) => s is HomeEmpty);
+      expect(state, isA<HomeEmpty>());
     });
 
     test(
@@ -155,6 +203,7 @@ void main() {
         final state = await waitForNon(container, (s) => s is HomeData);
         final data = state as HomeData;
         expect(data.transactionsForDay, hasLength(1));
+        expect(data.activityDays, [todayMidnight, yesterday, twoDaysAgo]);
         expect(data.prevDayWithActivity, yesterday);
         expect(data.nextDayWithActivity, isNull); // already at newest
       },
@@ -244,34 +293,114 @@ void main() {
 
         final tx = _tx(id: 42, date: today);
         await Future<void>.delayed(Duration.zero);
-        dayCtrl.add([tx]);
-        activityCtrl.add([today]);
-        todayTotalsCtrl.add(const {});
-        monthNetCtrl.add(const {});
+        emitBase(rows: [tx], days: [today]);
         await waitForNon(container, (s) => s is HomeData);
 
-        await fakeAsync(() async {
-          // Run inside `fakeAsync` so the 4-second timer is virtual.
+        fakeAsync((async) {
+          container
+              .read(homeControllerProvider.notifier)
+              .deleteTransaction(tx.id);
+          async.flushMicrotasks();
+
+          final pending =
+              container.read(homeControllerProvider).requireValue as HomeData;
+          expect(pending.pendingDelete!.transaction.id, tx.id);
+          expect(pending.transactionsForDay, isEmpty);
+          verifyNever(() => repo.delete(any()));
+
+          async.elapse(kUndoWindow + const Duration(milliseconds: 1));
+          async.flushMicrotasks();
         });
+
+        verify(() => repo.delete(tx.id)).called(1);
+      },
+    );
+
+    test(
+      'H05b: expired delete stays hidden until repository removal completes',
+      () async {
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        container.listen(homeControllerProvider, (_, _) {});
+
+        final deleteCompleter = Completer<bool>();
+        when(
+          () => repo.delete(any()),
+        ).thenAnswer((_) => deleteCompleter.future);
+
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        final tx = _tx(id: 42, date: today);
+        await Future<void>.delayed(Duration.zero);
+        emitBase(rows: [tx], days: [today]);
+        await waitForNon(container, (s) => s is HomeData);
 
         await container
             .read(homeControllerProvider.notifier)
             .deleteTransaction(tx.id);
         await Future<void>.delayed(Duration.zero);
 
-        // pendingDelete should be set.
         final pending = await waitForNon(
           container,
           (s) => s is HomeData && s.pendingDelete?.transaction.id == tx.id,
         );
-        expect((pending as HomeData).pendingDelete!.transaction.id, tx.id);
+        expect((pending as HomeData).transactionsForDay, isEmpty);
 
-        // Repo was not called yet.
-        verifyNever(() => repo.delete(any()));
-
-        // Wait the 4s undo window.
         await Future<void>.delayed(const Duration(seconds: 5));
+        await pumpUntilSettled();
 
+        final stillHidden = await waitForNon(container, (s) => s is HomeData);
+        expect((stillHidden as HomeData).transactionsForDay, isEmpty);
+
+        deleteCompleter.complete(true);
+        dayCtrl.add(const []);
+        await pumpUntilSettled();
+
+        verify(() => repo.delete(tx.id)).called(1);
+      },
+    );
+
+    test(
+      'H05c: failed timed delete restores the row and clears pendingDelete',
+      () async {
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        container.listen(homeControllerProvider, (_, _) {});
+
+        when(
+          () => repo.delete(any()),
+        ).thenAnswer((_) async => throw StateError('boom'));
+
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        final tx = _tx(id: 42, date: today);
+        await Future<void>.delayed(Duration.zero);
+        emitBase(rows: [tx], days: [today]);
+        await waitForNon(container, (s) => s is HomeData);
+
+        await container
+            .read(homeControllerProvider.notifier)
+            .deleteTransaction(tx.id);
+        await Future<void>.delayed(Duration.zero);
+
+        final pending = await waitForNon(
+          container,
+          (s) => s is HomeData && s.pendingDelete?.transaction.id == tx.id,
+        );
+        expect((pending as HomeData).transactionsForDay, isEmpty);
+
+        await Future<void>.delayed(const Duration(seconds: 5));
+        await pumpUntilSettled();
+
+        final recovered = await waitForNon(
+          container,
+          (s) =>
+              s is HomeData &&
+              s.pendingDelete == null &&
+              s.transactionsForDay.length == 1,
+        );
+
+        expect((recovered as HomeData).transactionsForDay, [tx]);
         verify(() => repo.delete(tx.id)).called(1);
       },
     );
@@ -292,19 +421,19 @@ void main() {
 
       final tx = _tx(id: 99, date: today);
       await Future<void>.delayed(Duration.zero);
-      dayCtrl.add([tx]);
-      activityCtrl.add([today]);
-      todayTotalsCtrl.add(const {});
-      monthNetCtrl.add(const {});
+      emitBase(rows: [tx], days: [today]);
       await waitForNon(container, (s) => s is HomeData);
 
-      await container
-          .read(homeControllerProvider.notifier)
-          .deleteTransaction(tx.id);
-      await Future<void>.delayed(Duration.zero);
-
-      await container.read(homeControllerProvider.notifier).undoDelete();
-      await Future<void>.delayed(const Duration(seconds: 5));
+      fakeAsync((async) {
+        container
+            .read(homeControllerProvider.notifier)
+            .deleteTransaction(tx.id);
+        async.flushMicrotasks();
+        container.read(homeControllerProvider.notifier).undoDelete();
+        async.flushMicrotasks();
+        async.elapse(kUndoWindow + const Duration(milliseconds: 1));
+        async.flushMicrotasks();
+      });
 
       verifyNever(() => repo.delete(any()));
       final after = await waitForNon(
@@ -312,6 +441,7 @@ void main() {
         (s) => s is HomeData && s.pendingDelete == null,
       );
       expect((after as HomeData).pendingDelete, isNull);
+      expect(after.transactionsForDay, [tx]);
     });
 
     test(
@@ -334,10 +464,43 @@ void main() {
         final tx2 = _tx(id: 2, date: today);
 
         await Future<void>.delayed(Duration.zero);
-        dayCtrl.add([tx1, tx2]);
-        activityCtrl.add([today]);
-        todayTotalsCtrl.add(const {});
-        monthNetCtrl.add(const {});
+        emitBase(rows: [tx1, tx2], days: [today]);
+        await waitForNon(container, (s) => s is HomeData);
+
+        fakeAsync((async) {
+          container.read(homeControllerProvider.notifier).deleteTransaction(1);
+          async.flushMicrotasks();
+
+          container.read(homeControllerProvider.notifier).deleteTransaction(2);
+          async.flushMicrotasks();
+
+          // First delete should have committed immediately.
+          verify(() => repo.delete(1)).called(1);
+          verifyNever(() => repo.delete(2));
+
+          async.elapse(kUndoWindow + const Duration(milliseconds: 1));
+          async.flushMicrotasks();
+        });
+        verify(() => repo.delete(2)).called(1);
+      },
+    );
+
+    test(
+      'H07b: second delete keeps the first row hidden until day stream catches up',
+      () async {
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        container.listen(homeControllerProvider, (_, _) {});
+
+        when(() => repo.delete(any())).thenAnswer((_) async => true);
+
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        final tx1 = _tx(id: 1, date: today);
+        final tx2 = _tx(id: 2, date: today);
+
+        await Future<void>.delayed(Duration.zero);
+        emitBase(rows: [tx1, tx2], days: [today]);
         await waitForNon(container, (s) => s is HomeData);
 
         await container
@@ -349,22 +512,107 @@ void main() {
             .deleteTransaction(2);
         await Future<void>.delayed(Duration.zero);
 
-        // First delete should have committed immediately.
-        verify(() => repo.delete(1)).called(1);
-        // Second is still pending until 4s.
-        verifyNever(() => repo.delete(2));
+        final pendingSecond = await waitForNon(
+          container,
+          (s) => s is HomeData && s.pendingDelete?.transaction.id == 2,
+        );
 
-        // Now wait the window.
-        await Future<void>.delayed(const Duration(seconds: 5));
-        verify(() => repo.delete(2)).called(1);
+        expect((pendingSecond as HomeData).transactionsForDay, isEmpty);
       },
     );
-  });
-}
 
-// fakeAsync placeholder — not currently using package:fake_async; kept
-// no-op so the tests compile. The real timer uses real time with a 5s
-// wait — slow but reliable for the small set of tests in this file.
-Future<T> fakeAsync<T>(Future<T> Function() body) async {
-  return body();
+    test(
+      'H07c: failed first commit restores rows and aborts the second delete',
+      () async {
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        container.listen(homeControllerProvider, (_, _) {});
+
+        final effects = <HomeEffect>[];
+        container
+            .read(homeControllerProvider.notifier)
+            .setEffectListener(effects.add);
+
+        when(
+          () => repo.delete(1),
+        ).thenAnswer((_) async => throw StateError('boom'));
+        when(() => repo.delete(2)).thenAnswer((_) async => true);
+
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        final tx1 = _tx(id: 1, date: today);
+        final tx2 = _tx(id: 2, date: today);
+
+        await Future<void>.delayed(Duration.zero);
+        emitBase(rows: [tx1, tx2], days: [today]);
+        await waitForNon(container, (s) => s is HomeData);
+
+        await container
+            .read(homeControllerProvider.notifier)
+            .deleteTransaction(1);
+        await Future<void>.delayed(Duration.zero);
+        await container
+            .read(homeControllerProvider.notifier)
+            .deleteTransaction(2);
+        await pumpUntilSettled();
+
+        final restored =
+            container.read(homeControllerProvider).requireValue as HomeData;
+        expect(restored.pendingDelete, isNull);
+        expect(restored.transactionsForDay, [tx1, tx2]);
+        expect(effects.single, isA<HomeDeleteFailedEffect>());
+        verify(() => repo.delete(1)).called(1);
+        verifyNever(() => repo.delete(2));
+      },
+    );
+
+    test(
+      'H08: stale prior day emission does not overwrite newer selection',
+      () async {
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        container.listen(homeControllerProvider, (_, _) {});
+
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        final yesterday = today.subtract(const Duration(days: 1));
+
+        await Future<void>.delayed(Duration.zero);
+        dayCtrl.add([_tx(id: 1, date: today)]);
+        activityCtrl.add([today, yesterday]);
+        todayTotalsCtrl.add(const {});
+        monthNetCtrl.add(const {});
+        await waitForNon(container, (s) => s is HomeData);
+
+        await container.read(homeControllerProvider.notifier).selectPrevDay();
+        await Future<void>.delayed(Duration.zero);
+
+        // Late emission from the old selection should be ignored.
+        dayCtrl.add([_tx(id: 999, date: today)]);
+        await Future<void>.delayed(Duration.zero);
+
+        // Then the real yesterday emission arrives.
+        dayCtrl.add([_tx(id: 2, date: yesterday)]);
+        final state = await waitForNon(
+          container,
+          (s) => s is HomeData && s.selectedDay == yesterday,
+        );
+
+        expect((state as HomeData).transactionsForDay.single.id, 2);
+      },
+    );
+
+    test('H09: stream error becomes HomeError', () async {
+      final container = makeContainer();
+      addTearDown(container.dispose);
+      container.listen(homeControllerProvider, (_, _) {});
+
+      final error = StateError('boom');
+      await Future<void>.delayed(Duration.zero);
+      dayCtrl.addError(error, StackTrace.current);
+
+      final state = await waitForNon(container, (s) => s is HomeError);
+      expect((state as HomeError).error, error);
+    });
+  });
 }
