@@ -106,7 +106,12 @@ class _SettingsBody extends ConsumerWidget {
               child: GestureDetector(
                 onTap: () => context.push('/settings/about'),
                 child: Text(
-                  packageInfo.whenData((info) => 'v${info.version}+${info.buildNumber}').valueOrNull ?? '',
+                  packageInfo
+                          .whenData(
+                            (info) => 'v${info.version}+${info.buildNumber}',
+                          )
+                          .valueOrNull ??
+                      '',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
