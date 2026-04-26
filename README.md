@@ -9,12 +9,13 @@ PRD disagree, the PRD wins. The milestone sequencing lives in
 
 ## Status
 
-Pre-implementation: M0 (scaffold + toolchain) is landing. M1+ work begins
-once this lands on `main`.
+M5 complete — all six feature slices (Splash, Home, Transactions, Categories,
+Accounts, Settings) plus Wave 4 integration are on `main`. M6 (integration
+polish, a11y, release prep) is next.
 
 ## Prerequisites
 
-- Flutter (stable channel), Dart SDK `^3.6`. `flutter --version` must run
+- Flutter (stable channel), Dart SDK `^3.11.5`. `flutter --version` must run
   cleanly.
 - For Android builds: JDK 17 + Android SDK.
 - For iOS builds: Xcode 15+ and CocoaPods.
@@ -78,16 +79,24 @@ loudly if generated files are stale.
 
 ```text
 lib/
-  app/        # bootstrap, router, MaterialApp
-  core/       # theme, utils, l10n helpers
-  data/       # database, DAOs, services, repositories, Freezed models
-  features/   # splash, home, transactions, categories, accounts, settings
-l10n/         # Source ARB files (en, zh_TW, zh_CN)
+  app/        # bootstrap, router, MaterialApp, providers
+  core/       # theme, utils (money_formatter, icon_registry, color_palette, date_helpers)
+  data/       # database + tables, DAOs, services, repositories, Freezed models
+  features/
+    splash/         # animated sun splash with day-count display
+    home/           # day-at-a-time transaction list with summary strip
+    transactions/   # add/edit form with calculator keypad
+    categories/     # category list + form sheet with icon/color pickers
+    accounts/       # account list + form with currency/type pickers
+    settings/       # language, theme, default currency/account, splash toggle
+l10n/         # Source ARB files (app_en, app_zh, app_zh_CN, app_zh_TW)
 test/
   unit/       # services / repositories / controllers / utils
   widget/     # widget + golden tests
   integration/
-drift_schemas/ # Committed schema snapshots per schemaVersion
+drift_schemas/ # Committed schema snapshots per schemaVersion (v1, v2)
+assets/
+  splash/     # Splash assets (sun-themed asset lands in M6)
 ```
 
 MVP has no `lib/domain/`; that directory is Phase 2 only, for use-case
