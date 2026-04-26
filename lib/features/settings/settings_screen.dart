@@ -3,9 +3,8 @@
 // Layout: `CustomScrollView` with one `SliverToBoxAdapter` per section.
 // Sections (order):
 //   1. Appearance — theme segmented control + language selector.
-//   2. General — default account, default currency.
+//   2. General — default account, default currency, manage categories.
 //   3. Splash — splash settings subsection (plan §6).
-//   4. Data management — Manage Categories entry tile.
 //
 // The screen is purely a projection of `settingsControllerProvider` — it
 // never reads repositories directly, and no data transformation happens
