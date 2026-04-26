@@ -55,7 +55,7 @@ class CategoryTile extends StatelessWidget {
                 context,
               ).colorScheme.onSecondaryContainer,
               icon: Icons.archive_outlined,
-              label: l10n.commonArchive,
+              label: l10n.categoriesArchiveAction,
             )
           else
             SlidableAction(
@@ -88,7 +88,7 @@ class CategoryTile extends StatelessWidget {
               IconButton(
                 key: ValueKey('categoryTile:${cat.id}:archive'),
                 icon: const Icon(Icons.archive_outlined),
-                tooltip: l10n.commonArchive,
+                tooltip: l10n.categoriesArchiveAction,
                 onPressed: onArchive,
               )
             else
