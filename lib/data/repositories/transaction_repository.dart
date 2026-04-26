@@ -200,8 +200,8 @@ final class DriftTransactionRepository implements TransactionRepository {
 
   @override
   Stream<Map<String, int>> watchMonthNetByCurrency(DateTime month) {
-    final start = DateTime(month.year, month.month, 1);
-    final end = DateTime(month.year, month.month + 1, 1);
+    final start = DateHelpers.startOfDay(DateTime(month.year, month.month, 1));
+    final end = DateHelpers.startOfDay(DateTime(month.year, month.month + 1, 1));
     return _watchNetByCurrency(start: start, end: end);
   }
 
