@@ -31,10 +31,17 @@ part 'splash_controller.g.dart';
 /// Injectable `DateTime.now()` for deterministic day-count tests.
 /// Production reads the real clock; tests override via
 /// `splashClockProvider.overrideWithValue(() => fixedNow)`.
-@Riverpod(keepAlive: true)
+@Riverpod(keepAlive: true, dependencies: [])
 DateTime Function() splashClock(Ref ref) => DateTime.now;
 
-@riverpod
+@Riverpod(
+  dependencies: [
+    userPreferencesRepository,
+    splashClock,
+    userLocalePreference,
+    splashGateSnapshot,
+  ],
+)
 class SplashController extends _$SplashController {
   @override
   Stream<SplashState> build() async* {

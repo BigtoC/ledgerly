@@ -32,7 +32,7 @@ import 'accounts_state.dart';
 
 part 'accounts_controller.g.dart';
 
-@riverpod
+@Riverpod(dependencies: [accountRepository, userPreferencesRepository])
 class AccountsController extends _$AccountsController {
   @override
   Stream<AccountsState> build() {

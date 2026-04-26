@@ -30,7 +30,7 @@ import 'categories_state.dart';
 part 'categories_controller.g.dart';
 
 /// Picker data source (plan §5). Must NOT be `keepAlive: true`.
-@riverpod
+@Riverpod(dependencies: [categoryRepository])
 Stream<List<Category>> categoriesByType(Ref ref, CategoryType type) {
   final repo = ref.watch(categoryRepositoryProvider);
   return repo
@@ -38,7 +38,7 @@ Stream<List<Category>> categoriesByType(Ref ref, CategoryType type) {
       .map((rows) => _sortForDisplay(rows));
 }
 
-@riverpod
+@Riverpod(dependencies: [categoryRepository])
 class CategoriesController extends _$CategoriesController {
   @override
   Stream<CategoriesState> build() async* {

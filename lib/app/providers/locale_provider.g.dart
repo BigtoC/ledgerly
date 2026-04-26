@@ -7,7 +7,7 @@ part of 'locale_provider.dart';
 // **************************************************************************
 
 String _$initialPreferredLocaleHash() =>
-    r'9d9fa24f078695989a8fbc4b9d523139aa5c1d90';
+    r'a47461f656c137fcbef03470866c468aa7be6e08';
 
 /// See also [initialPreferredLocale].
 @ProviderFor(initialPreferredLocale)
@@ -17,15 +17,15 @@ final initialPreferredLocaleProvider = Provider<Locale?>.internal(
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
       : _$initialPreferredLocaleHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
+  dependencies: const <ProviderOrFamily>[],
+  allTransitiveDependencies: const <ProviderOrFamily>{},
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef InitialPreferredLocaleRef = ProviderRef<Locale?>;
 String _$userLocalePreferenceStreamHash() =>
-    r'3e82e6a1914c59a5e55bf8106266464518b332b7';
+    r'c842847fca72be055f73981d0ff5c7f966b4e4f9';
 
 /// See also [userLocalePreferenceStream].
 @ProviderFor(userLocalePreferenceStream)
@@ -35,15 +35,18 @@ final userLocalePreferenceStreamProvider = StreamProvider<Locale?>.internal(
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
       : _$userLocalePreferenceStreamHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
+  dependencies: <ProviderOrFamily>[userPreferencesRepositoryProvider],
+  allTransitiveDependencies: <ProviderOrFamily>{
+    userPreferencesRepositoryProvider,
+    ...?userPreferencesRepositoryProvider.allTransitiveDependencies,
+  },
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef UserLocalePreferenceStreamRef = StreamProviderRef<Locale?>;
 String _$userLocalePreferenceHash() =>
-    r'da1076fbc3171161a1c459d78324281e5d7c4b3b';
+    r'ad7f67e9d7cd82b5b6f23372dcf958062e68b2ab';
 
 /// See also [userLocalePreference].
 @ProviderFor(userLocalePreference)
@@ -53,8 +56,16 @@ final userLocalePreferenceProvider = AutoDisposeProvider<Locale?>.internal(
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
       : _$userLocalePreferenceHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
+  dependencies: <ProviderOrFamily>[
+    userLocalePreferenceStreamProvider,
+    initialPreferredLocaleProvider,
+  ],
+  allTransitiveDependencies: <ProviderOrFamily>{
+    userLocalePreferenceStreamProvider,
+    ...?userLocalePreferenceStreamProvider.allTransitiveDependencies,
+    initialPreferredLocaleProvider,
+    ...?initialPreferredLocaleProvider.allTransitiveDependencies,
+  },
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')

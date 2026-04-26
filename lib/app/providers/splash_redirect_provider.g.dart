@@ -7,7 +7,7 @@ part of 'splash_redirect_provider.dart';
 // **************************************************************************
 
 String _$splashGateSnapshotHash() =>
-    r'499f4dae893b00fa6f5a1fdcd7077154e7cf2ecb';
+    r'281035d9bdb515023036bd97227870ce5be9ecb5';
 
 /// See also [splashGateSnapshot].
 @ProviderFor(splashGateSnapshot)
@@ -17,14 +17,17 @@ final splashGateSnapshotProvider = Provider<SplashGateSnapshot>.internal(
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
       : _$splashGateSnapshotHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
+  dependencies: <ProviderOrFamily>[userPreferencesRepositoryProvider],
+  allTransitiveDependencies: <ProviderOrFamily>{
+    userPreferencesRepositoryProvider,
+    ...?userPreferencesRepositoryProvider.allTransitiveDependencies,
+  },
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef SplashGateSnapshotRef = ProviderRef<SplashGateSnapshot>;
-String _$splashEnabledHash() => r'0febb7cf4211989ea07fd8d62fc6495a42b65269';
+String _$splashEnabledHash() => r'5d023f161ca598447425b44eba53ab1067969e57';
 
 /// Stream of `splash_enabled` for reactive UI (e.g. `SettingsScreen`).
 ///
@@ -36,14 +39,17 @@ final splashEnabledProvider = StreamProvider<bool>.internal(
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
       : _$splashEnabledHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
+  dependencies: <ProviderOrFamily>[userPreferencesRepositoryProvider],
+  allTransitiveDependencies: <ProviderOrFamily>{
+    userPreferencesRepositoryProvider,
+    ...?userPreferencesRepositoryProvider.allTransitiveDependencies,
+  },
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef SplashEnabledRef = StreamProviderRef<bool>;
-String _$splashStartDateHash() => r'2bcfc058122d74804e7b99a46177c16f7a13344c';
+String _$splashStartDateHash() => r'155a89a3b957efe426da2ea46b13d1bd5cbbb9f0';
 
 /// Stream of `splash_start_date` for reactive UI (e.g. `SplashScreen`).
 ///
@@ -55,8 +61,11 @@ final splashStartDateProvider = StreamProvider<DateTime?>.internal(
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
       : _$splashStartDateHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
+  dependencies: <ProviderOrFamily>[userPreferencesRepositoryProvider],
+  allTransitiveDependencies: <ProviderOrFamily>{
+    userPreferencesRepositoryProvider,
+    ...?userPreferencesRepositoryProvider.allTransitiveDependencies,
+  },
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')

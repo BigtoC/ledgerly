@@ -39,7 +39,12 @@ class SplashGateSnapshot extends ChangeNotifier {
   }
 }
 
-@Riverpod(keepAlive: true)
+// Scope-overridable. Declares `userPreferencesRepository` so the static
+// body's `ref.watch` satisfies the lint; bootstrap.dart's `overrideWith`
+// replaces the body entirely with one that captures `preferencesRepo`
+// directly (no `ref.watch`), so the override path is not bound by this
+// declaration in production.
+@Riverpod(keepAlive: true, dependencies: [userPreferencesRepository])
 SplashGateSnapshot splashGateSnapshot(Ref ref) {
   final notifier = SplashGateSnapshot._();
   final repo = ref.watch(userPreferencesRepositoryProvider);
@@ -57,11 +62,11 @@ SplashGateSnapshot splashGateSnapshot(Ref ref) {
 }
 
 /// Stream of `splash_enabled` for reactive UI (e.g. `SettingsScreen`).
-@Riverpod(keepAlive: true)
+@Riverpod(keepAlive: true, dependencies: [userPreferencesRepository])
 Stream<bool> splashEnabled(Ref ref) =>
     ref.watch(userPreferencesRepositoryProvider).watchSplashEnabled();
 
 /// Stream of `splash_start_date` for reactive UI (e.g. `SplashScreen`).
-@Riverpod(keepAlive: true)
+@Riverpod(keepAlive: true, dependencies: [userPreferencesRepository])
 Stream<DateTime?> splashStartDate(Ref ref) =>
     ref.watch(userPreferencesRepositoryProvider).watchSplashStartDate();

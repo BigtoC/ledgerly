@@ -6,7 +6,7 @@ part of 'theme_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$initialThemeModeHash() => r'b4e2bb8a412bae7c3d10f6eca6dd1ceddcb951ec';
+String _$initialThemeModeHash() => r'2c6afabe5a82826dd5bbab6aa55b415a08929814';
 
 /// See also [initialThemeMode].
 @ProviderFor(initialThemeMode)
@@ -16,14 +16,14 @@ final initialThemeModeProvider = Provider<ThemeMode?>.internal(
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
       : _$initialThemeModeHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
+  dependencies: const <ProviderOrFamily>[],
+  allTransitiveDependencies: const <ProviderOrFamily>{},
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef InitialThemeModeRef = ProviderRef<ThemeMode?>;
-String _$themeModeStreamHash() => r'dcb249ff5180b5d8d3e749093210702751182962';
+String _$themeModeStreamHash() => r'fdbe5e87e9b70715ff5a14df88a6dea59f6f9b74';
 
 /// See also [themeModeStream].
 @ProviderFor(themeModeStream)
@@ -33,14 +33,17 @@ final themeModeStreamProvider = StreamProvider<ThemeMode>.internal(
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
       : _$themeModeStreamHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
+  dependencies: <ProviderOrFamily>[userPreferencesRepositoryProvider],
+  allTransitiveDependencies: <ProviderOrFamily>{
+    userPreferencesRepositoryProvider,
+    ...?userPreferencesRepositoryProvider.allTransitiveDependencies,
+  },
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ThemeModeStreamRef = StreamProviderRef<ThemeMode>;
-String _$themeModeHash() => r'4290050e1b6c79dbca242e482bdec7a67ad7e8ad';
+String _$themeModeHash() => r'8ca266cf252229f3837e34042d0439722880f03a';
 
 /// See also [themeMode].
 @ProviderFor(themeMode)
@@ -50,8 +53,16 @@ final themeModeProvider = AutoDisposeProvider<ThemeMode>.internal(
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
       : _$themeModeHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
+  dependencies: <ProviderOrFamily>[
+    initialThemeModeProvider,
+    themeModeStreamProvider,
+  ],
+  allTransitiveDependencies: <ProviderOrFamily>{
+    initialThemeModeProvider,
+    ...?initialThemeModeProvider.allTransitiveDependencies,
+    themeModeStreamProvider,
+    ...?themeModeStreamProvider.allTransitiveDependencies,
+  },
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')

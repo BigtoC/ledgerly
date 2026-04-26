@@ -6,7 +6,7 @@ part of 'splash_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$splashClockHash() => r'f34a3bb2e726f6c0fcf3354cc82cf413ad5f80a9';
+String _$splashClockHash() => r'78c74264e29b3ae487f323f8014e45605d6e0c59';
 
 /// Injectable `DateTime.now()` for deterministic day-count tests.
 /// Production reads the real clock; tests override via
@@ -20,14 +20,14 @@ final splashClockProvider = Provider<DateTime Function()>.internal(
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
       : _$splashClockHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
+  dependencies: const <ProviderOrFamily>[],
+  allTransitiveDependencies: const <ProviderOrFamily>{},
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef SplashClockRef = ProviderRef<DateTime Function()>;
-String _$splashControllerHash() => r'47c9d627d1bf88b3ada41df394659d37ba9aee2a';
+String _$splashControllerHash() => r'c2a035a38dcb6e85b5665e1eab615f2ea9e21e96';
 
 /// See also [SplashController].
 @ProviderFor(SplashController)
@@ -38,8 +38,22 @@ final splashControllerProvider =
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
           ? null
           : _$splashControllerHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
+      dependencies: <ProviderOrFamily>{
+        userPreferencesRepositoryProvider,
+        splashClockProvider,
+        userLocalePreferenceProvider,
+        splashGateSnapshotProvider,
+      },
+      allTransitiveDependencies: <ProviderOrFamily>{
+        userPreferencesRepositoryProvider,
+        ...?userPreferencesRepositoryProvider.allTransitiveDependencies,
+        splashClockProvider,
+        ...?splashClockProvider.allTransitiveDependencies,
+        userLocalePreferenceProvider,
+        ...?userLocalePreferenceProvider.allTransitiveDependencies,
+        splashGateSnapshotProvider,
+        ...?splashGateSnapshotProvider.allTransitiveDependencies,
+      },
     );
 
 typedef _$SplashController = AutoDisposeStreamNotifier<SplashState>;

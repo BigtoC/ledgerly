@@ -6,14 +6,19 @@ import 'repository_providers.dart';
 
 part 'locale_provider.g.dart';
 
-@Riverpod(keepAlive: true)
+// `dependencies: const []` marks this as scope-overridable; bootstrap.dart
+// overrides it with the eagerly-read persisted locale so the first frame
+// resolves text in the user's preferred language.
+@Riverpod(keepAlive: true, dependencies: [])
 Locale? initialPreferredLocale(Ref ref) => null;
 
-@Riverpod(keepAlive: true)
+@Riverpod(keepAlive: true, dependencies: [userPreferencesRepository])
 Stream<Locale?> userLocalePreferenceStream(Ref ref) =>
     ref.watch(userPreferencesRepositoryProvider).watchLocale();
 
-@riverpod
+@Riverpod(
+  dependencies: [userLocalePreferenceStream, initialPreferredLocale],
+)
 Locale? userLocalePreference(Ref ref) =>
     ref.watch(userLocalePreferenceStreamProvider).value ??
     ref.watch(initialPreferredLocaleProvider);
