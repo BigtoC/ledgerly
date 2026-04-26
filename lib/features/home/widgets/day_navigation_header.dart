@@ -75,10 +75,7 @@ class DayNavigationHeader extends StatelessWidget {
             onPressed: canGoNext ? onNext : null,
             icon: const Icon(Icons.chevron_right),
           ),
-          if (trailing != null) ...[
-            const SizedBox(width: 8),
-            trailing!,
-          ],
+          if (trailing != null) ...[const SizedBox(width: 8), trailing!],
         ],
       ),
     );

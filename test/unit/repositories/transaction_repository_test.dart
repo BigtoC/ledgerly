@@ -796,24 +796,27 @@ void main() {
       expect(emissions.last, isEmpty);
     });
 
-    test('A-reactive-02: totals stream re-emits after insert and delete', () async {
-      final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
-      final emissions = <Map<String, ({int expense, int income})>>[];
-      final sub = txRepo.watchDailyTotalsByType(today).listen(emissions.add);
-      addTearDown(sub.cancel);
+    test(
+      'A-reactive-02: totals stream re-emits after insert and delete',
+      () async {
+        final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
+        final emissions = <Map<String, ({int expense, int income})>>[];
+        final sub = txRepo.watchDailyTotalsByType(today).listen(emissions.add);
+        addTearDown(sub.cancel);
 
-      await Future<void>.delayed(Duration.zero);
-      expect(emissions.last, isEmpty);
+        await Future<void>.delayed(Duration.zero);
+        expect(emissions.last, isEmpty);
 
-      final tx = await txRepo.save(sampleTx(amount: 400));
-      await Future<void>.delayed(Duration.zero);
-      expect(emissions.last['USD']!.expense, 400);
-      expect(emissions.last['USD']!.income, 0);
+        final tx = await txRepo.save(sampleTx(amount: 400));
+        await Future<void>.delayed(Duration.zero);
+        expect(emissions.last['USD']!.expense, 400);
+        expect(emissions.last['USD']!.income, 0);
 
-      await txRepo.delete(tx.id);
-      await Future<void>.delayed(Duration.zero);
-      expect(emissions.last, isEmpty);
-    });
+        await txRepo.delete(tx.id);
+        await Future<void>.delayed(Duration.zero);
+        expect(emissions.last, isEmpty);
+      },
+    );
 
     test('A-reactive-03: daily net re-emits after update', () async {
       final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
