@@ -17,6 +17,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants.dart';
+import '../../core/utils/box_shadow.dart';
 import '../../l10n/app_localizations.dart';
 import 'accounts_controller.dart';
 import 'accounts_providers.dart';
@@ -60,6 +62,9 @@ class _AccountsBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context).toString();
+    final theme = Theme.of(context);
+    final allActiveIds =
+        data.active.map((r) => r.account.id).toList(growable: false);
 
     if (data.active.isEmpty && data.archived.isEmpty) {
       return const Center(child: CircularProgressIndicator());
@@ -73,7 +78,7 @@ class _AccountsBody extends ConsumerWidget {
             children: [
               Text(
                 l10n.accountsEmptyTitle,
-                style: Theme.of(context).textTheme.titleMedium,
+                style: theme.textTheme.titleMedium,
               ),
               const SizedBox(height: 16),
               FilledButton.icon(
@@ -89,40 +94,76 @@ class _AccountsBody extends ConsumerWidget {
 
     return CustomScrollView(
       slivers: [
-        SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (ctx, i) => _AccountTileWithLookups(
-              view: data.active[i],
-              isDefault: data.defaultAccountId == data.active[i].account.id,
-              locale: locale,
-              allActiveIds: data.active
-                  .map((r) => r.account.id)
-                  .toList(growable: false),
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: homePageCardHorizontalPadding - 24,
+            vertical: 8,
+          ),
+          sliver: SliverToBoxAdapter(
+            child: Container(
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainer,
+                borderRadius: BorderRadius.circular(homePageCardBorderRadius),
+                boxShadow: [buildBoxShadow(homePageCardBorderRadius)],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final view in data.active)
+                    _AccountTileWithLookups(
+                      view: view,
+                      isDefault:
+                          data.defaultAccountId == view.account.id,
+                      locale: locale,
+                      allActiveIds: allActiveIds,
+                    ),
+                ],
+              ),
             ),
-            childCount: data.active.length,
           ),
         ),
         if (data.archived.isNotEmpty) ...[
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+              padding: const EdgeInsets.fromLTRB(
+                homePageCardHorizontalPadding - 24,
+                16,
+                homePageCardHorizontalPadding - 24,
+                8,
+              ),
               child: Text(
                 l10n.accountsArchivedSectionLabel,
-                style: Theme.of(context).textTheme.titleSmall,
+                style: theme.textTheme.titleSmall,
               ),
             ),
           ),
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (ctx, i) => _AccountTileWithLookups(
-                view: data.archived[i],
-                isDefault: false,
-                locale: locale,
-                allActiveIds: data.active
-                    .map((r) => r.account.id)
-                    .toList(growable: false),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: homePageCardHorizontalPadding - 24,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: Container(
+                clipBehavior: Clip.antiAlias,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainer,
+                  borderRadius:
+                      BorderRadius.circular(homePageCardBorderRadius),
+                  boxShadow: [buildBoxShadow(homePageCardBorderRadius)],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final view in data.archived)
+                      _AccountTileWithLookups(
+                        view: view,
+                        isDefault: false,
+                        locale: locale,
+                        allActiveIds: allActiveIds,
+                      ),
+                  ],
+                ),
               ),
-              childCount: data.archived.length,
             ),
           ),
         ],

@@ -38,13 +38,14 @@ class SettingsSection extends StatelessWidget {
               ),
             ),
           ),
-          Container(
+          Material(
+            color: theme.colorScheme.surfaceContainer,
             clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainer,
+            shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(homePageCardBorderRadius),
-              boxShadow: [buildBoxShadow(homePageCardBorderRadius)],
             ),
+            shadowColor: buildBoxShadow(homePageCardBorderRadius).color,
+            elevation: 3,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: children,
