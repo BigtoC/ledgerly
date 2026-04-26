@@ -30,22 +30,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonDelete => 'Delete';
 
   @override
-  String get commonArchive => 'Archive';
+  String get categoriesArchiveAction => 'Archive';
 
   @override
-  String get commonEdit => 'Edit';
+  String get homeEditAction => 'Edit';
 
   @override
   String get commonUndo => 'Undo';
 
   @override
-  String get commonDiscard => 'Discard';
+  String get txDiscardAction => 'Discard';
 
   @override
-  String get commonAdd => 'Add';
-
-  @override
-  String get commonDone => 'Done';
+  String get txKeypadDone => 'Done';
 
   @override
   String get transactionTypeExpense => 'Expense';

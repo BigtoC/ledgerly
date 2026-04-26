@@ -31,29 +31,25 @@
   "@commonDelete": {
     "description": "Swipe action and confirm-delete dialog positive action."
   },
-  "commonArchive": "Archive",
-  "@commonArchive": {
-    "description": "PRD 737. List swipe action for categories/accounts that have transactions (archive-instead-of-delete)."
+  "categoriesArchiveAction": "Archive",
+  "@categoriesArchiveAction": {
+    "description": "PRD 737. Categories list swipe action for rows that have transactions (archive-instead-of-delete). Wave 4 §3.2 rename: was commonArchive — only used by categories slice."
   },
-  "commonEdit": "Edit",
-  "@commonEdit": {
-    "description": "Row overflow action and Add/Edit screen title when editing."
+  "homeEditAction": "Edit",
+  "@homeEditAction": {
+    "description": "Home transaction row overflow menu — Edit action label. Wave 4 §3.2 rename: was commonEdit — only used by home slice."
   },
   "commonUndo": "Undo",
   "@commonUndo": {
     "description": "PRD 695. Undo snackbar action after delete."
   },
-  "commonDiscard": "Discard",
-  "@commonDiscard": {
-    "description": "PRD 689. Confirm-discard dialog positive action when abandoning unsaved form edits."
+  "txDiscardAction": "Discard",
+  "@txDiscardAction": {
+    "description": "PRD 689. Confirm-discard dialog positive action when abandoning unsaved transaction-form edits. Wave 4 §3.2 rename: was commonDiscard — only used by transactions slice."
   },
-  "commonAdd": "Add",
-  "@commonAdd": {
-    "description": "Create affordance label (accounts, categories)."
-  },
-  "commonDone": "Done",
-  "@commonDone": {
-    "description": "Modal close affordance (picker sheet)."
+  "txKeypadDone": "Done",
+  "@txKeypadDone": {
+    "description": "Calculator keypad close affordance on the transaction form. Wave 4 §3.2 rename: was commonDone — only used by transactions slice (keypad sheet)."
   },
 
   "transactionTypeExpense": "Expense",
