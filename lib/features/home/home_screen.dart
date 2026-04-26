@@ -22,9 +22,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/utils/box_shadow.dart';
 import '../../core/utils/date_helpers.dart';
+import '../../data/models/account.dart';
+import '../../data/models/category.dart';
 import '../../data/models/transaction.dart';
 import '../../l10n/app_localizations.dart';
+import 'constants.dart';
 import 'home_controller.dart';
 import 'home_providers.dart';
 import 'home_state.dart';
@@ -289,6 +293,7 @@ class _SinglePane extends ConsumerWidget {
     final accounts =
         ref.watch(homeAccountsByIdProvider).valueOrNull ?? const {};
     final l10n = AppLocalizations.of(context);
+    const double transactionPadding = 24;
     return GestureDetector(
       // Horizontal flick → step prev/next day. `flutter_slidable` rows
       // sit deeper in the tree, so the gesture arena hands row swipes
@@ -324,7 +329,7 @@ class _SinglePane extends ConsumerWidget {
             SliverFillRemaining(
               hasScrollBody: false,
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(transactionPadding),
                 child: Center(
                   child: Text(
                     l10n.homeDayEmptyTitle,
@@ -334,19 +339,22 @@ class _SinglePane extends ConsumerWidget {
               ),
             )
           else
-            SliverList(
-              delegate: SliverChildBuilderDelegate((ctx, i) {
-                final tx = data.transactionsForDay[i];
-                return TransactionTile(
-                  transaction: tx,
-                  category: categories[tx.categoryId],
-                  account: accounts[tx.accountId],
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: homePageCardHorizontalPadding - transactionPadding,
+                vertical: 12,
+              ),
+              sliver: SliverToBoxAdapter(
+                child: _TransactionListCard(
+                  transactions: data.transactionsForDay,
+                  categories: categories,
+                  accounts: accounts,
                   locale: locale,
-                  onTap: () => onTapRow(tx.id),
-                  onDuplicate: () => onDuplicateRow(tx.id),
-                  onDelete: () => onDeleteRow(tx.id),
-                );
-              }, childCount: data.transactionsForDay.length),
+                  onTapRow: onTapRow,
+                  onDuplicateRow: onDuplicateRow,
+                  onDeleteRow: onDeleteRow,
+                ),
+              ),
             ),
           const SliverPadding(padding: EdgeInsets.only(bottom: 96)),
         ],
@@ -502,6 +510,60 @@ class _ErrorSurface extends StatelessWidget {
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyMedium,
         ),
+      ),
+    );
+  }
+}
+
+/// Rounded surface that wraps a single day's transaction rows. Mirrors
+/// the summary-strip card styling (`homePageCardBorderRadius`,
+/// `buildBoxShadow`, `surfaceContainer`) so the home page reads as a
+/// stack of consistent cards. The list is rendered as a `Column` rather
+/// than a sliver because a single day's row count is bounded; the
+/// outer `CustomScrollView` still drives vertical scrolling.
+class _TransactionListCard extends StatelessWidget {
+  const _TransactionListCard({
+    required this.transactions,
+    required this.categories,
+    required this.accounts,
+    required this.locale,
+    required this.onTapRow,
+    required this.onDuplicateRow,
+    required this.onDeleteRow,
+  });
+
+  final List<Transaction> transactions;
+  final Map<int, Category> categories;
+  final Map<int, Account> accounts;
+  final String locale;
+  final void Function(int id) onTapRow;
+  final void Function(int id) onDuplicateRow;
+  final void Function(int id) onDeleteRow;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(homePageCardBorderRadius),
+        boxShadow: [buildBoxShadow(homePageCardBorderRadius)],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          for (final tx in transactions)
+            TransactionTile(
+              transaction: tx,
+              category: categories[tx.categoryId],
+              account: accounts[tx.accountId],
+              locale: locale,
+              onTap: () => onTapRow(tx.id),
+              onDuplicate: () => onDuplicateRow(tx.id),
+              onDelete: () => onDeleteRow(tx.id),
+            ),
+        ],
       ),
     );
   }
