@@ -1,0 +1,19 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+---
+
+<StarlightPage
+  frontmatter={{
+    title: 'Ledgerly',
+    description: 'Private, local-first expense tracking.',
+  }}
+  hasSidebar={false}
+>
+  <div class="home-shell">
+    <section class="home-hero">
+      <h1>Ledgerly</h1>
+      <p>Private expense tracking in a few taps.</p>
+      <p><a href="./ledgerly-guide/getting-started/">Open the Ledgerly Guide</a></p>
+    </section>
+  </div>
+</StarlightPage>
