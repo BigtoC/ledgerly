@@ -140,3 +140,4 @@ site/.astro/
 site/.yarn/*
 !site/.yarn/releases/
 !site/.yarn/patches/
+!site/yarn.lock
