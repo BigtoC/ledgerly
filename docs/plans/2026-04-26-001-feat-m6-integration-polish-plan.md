@@ -21,7 +21,7 @@ M5 delivered six isolated slices with controller tests (mocked providers) and wi
 - **R2.** Accessibility: `Semantics` labels on every icon-only button (FAB, day-nav chevrons, swipe-delete action, duplicate/delete overflow items); 2× text scale passes on Home, Add/Edit Transaction, and Category picker; 48dp minimum tap targets audited.
 - **R3.** `flutter analyze` clean across the full tree; pre-merge double-`double` grep (`double.*(amount|balance|rate)` → zero hits outside `money_formatter`).
 - **R4.** Migration harness runs the v1 snapshot upgrade path on both empty and seeded DB. Already green from M3; M6 confirms no regression.
-- **R5.** `flutter_native_splash` regenerated for Android (API < 12 + API 12+) and iOS with the final sun-background asset.
+- **R5.** `flutter_native_splash` regenerated for Android and iOS using the final sun-background asset where the platform supports full background images (pre-Android 12 and iOS), with Android 12+ verified against its compatible solid-color native-splash configuration.
 - **R6.** A11y audit doc committed to `docs/`.
 - **R7.** Release build produced and smoke-tested on the device matrix: Android phone + Android tablet + iOS phone + iOS tablet.
 
@@ -42,7 +42,7 @@ M5 delivered six isolated slices with controller tests (mocked providers) and wi
 - **Repository layer**: all aggregate methods from Wave 3 (`watchDailyNetByCurrency`, `watchDailyTotalsByType`, `watchMonthNetByCurrency`) exist and are tested in `test/unit/repositories/transaction_repository_test.dart`.
 - **ARB audit**: `test/unit/l10n/arb_audit_test.dart` must stay green after any ARB additions.
 - **Semantics**: `features/splash/widgets/splash_day_count.dart` clamps `textScaler` at 1.5× — the established pattern for fixed-height regions.
-- **Sun splash asset**: `assets/splash/sun-splash.png` now exists but `flutter_native_splash` has not been rerun since M0. The `pubspec.yaml` `flutter_native_splash:` section still uses placeholder light/dark `#FFFFFF`/`#121212` colors and does not yet point at the shipped asset. The runtime Flutter splash widget still references the older placeholder filename.
+- **Sun splash asset**: `assets/splash/sun-splash.png` now exists, `pubspec.yaml` already points the pre-Android-12/iOS native splash config at it, Android 12+ still uses the compatible solid-color `android_12:` fallback, and the runtime Flutter splash widget already loads the same asset. The remaining M6 step is rerunning `flutter_native_splash` and verifying the regenerated platform files.
 - **About screen**: `lib/features/settings/about_screen.dart` exists on the current branch (`feature/display-version-number`); a version-display feature is in progress. M6 plan acknowledges but does not block on it.
 
 ### Institutional Learnings
@@ -464,7 +464,7 @@ Integration test anatomy (repeats the established pattern):
 
 **Approach:**
 - Run `flutter analyze` across the full tree. Resolve any warnings introduced by M5 or M6 work. Common sources: unused imports in generated files (acceptable if `// ignore:` is the established pattern), deprecated API warnings.
-- Run `grep -r 'double.*\(amount\|balance\|rate\|price\)' lib/` and confirm zero hits outside `core/utils/money_formatter.dart`.
+- Run `grep -r 'double.*\(amount\|balance\|rate\)' lib/` and confirm zero hits outside `core/utils/money_formatter.dart`.
 - Run `flutter test` (all unit + widget + integration). All must pass.
 - Device matrix (operator-run): cold launch on Android phone + Android tablet + iOS phone + iOS tablet. Manual smoke checklist from Wave 4 plan §3.5 as the baseline.
 - Version display in About screen: if the `feature/display-version-number` branch is merged before M6, confirm `package_info_plus` (or equivalent) surfaces the version string in `lib/features/settings/about_screen.dart`. If not merged, note as follow-up — it does not block the release build.
@@ -480,7 +480,7 @@ Integration test anatomy (repeats the established pattern):
 **Verification:**
 - `flutter analyze` exits 0 with no warnings
 - `flutter test` exits 0 (all tests pass)
-- `grep` for `double.*amount|double.*balance` returns 0 hits outside `money_formatter`
+- `grep` for `double.*(amount|balance|rate)` returns 0 hits outside `money_formatter`
 - Device matrix smoke passes (documented by operator in `docs/a11y-audit-m6.md` device section)
 
 ---
@@ -491,7 +491,7 @@ Integration test anatomy (repeats the established pattern):
 - **Error propagation:** Integration tests assert `tester.takeException() == null` after each flow. Any unhandled `Future`, widget overflow, or Dart exception fails the test explicitly.
 - **State lifecycle risks:** `HomeController` is `@Riverpod(keepAlive: true)` — the delete-undo timer persists across test steps. `addTearDown(container.dispose)` must run after every test to flush pending timers.
 - **API surface parity:** Adding `Semantics` labels to buttons must not change the visible UI or break existing widget tests that use `find.byType(IconButton)` or similar structural finders. Use additive wrappers.
-- **Unchanged invariants:** Repository contracts, Drift schema v1, domain models, and ARB keys are frozen. M6 does not modify any of these.
+- **Unchanged invariants:** Repository contracts, Drift schema v1, and domain models are frozen. ARB files are expected to remain unchanged; if a missing localization key surfaces during M6 verification, add the minimal ARB update and keep `arb_audit_test.dart` green.
 - **Integration coverage:** Units 2–7 are the scenarios that unit tests and widget tests (with mocked providers) cannot prove — they verify that the full data pipeline from UI interaction through repository → Drift → stream re-emit → widget re-render produces correct end-state DB rows and visible UI updates.
 
 ## Risks & Dependencies
@@ -525,8 +525,8 @@ Units 2, 4, 6, and 7 originally drove their assertions through the form-modal sa
 
 Together, these block the "tap FAB → form → category picker → Save → see tile on Home" walk-through that the plan originally specified. The form save path itself is still covered end-to-end at the widget layer (`test/widget/features/transactions/transaction_form_screen_test.dart`), and the home delete/undo timer logic is covered by `test/unit/controllers/home_controller_test.dart`. The integration tests were therefore re-scoped to:
 
-- **Pre-seeded state coverage** (Units 2 second test, 4, 5, 6, 7): write the post-action data (added / duplicated / edited / deleted / archived) into the Drift DB inside `tester.runAsync` *before* `pumpWidget`, then boot the full app shell and assert the seeded state renders correctly through the same router + Riverpod + Drift pipeline a real launch uses.
+- **Pre-seeded state coverage** (the seeded-state test in Unit 2, plus Units 4, 5, 6, and 7): write the post-action data (added / duplicated / edited / deleted / archived) into the Drift DB inside `tester.runAsync` *before* `pumpWidget`, then boot the full app shell and assert the seeded state renders correctly through the same router + Riverpod + Drift pipeline a real launch uses.
 - **Repository contract coverage** (Unit 6 archived-category half): assert the `watchAll(includeArchived: false/true)` SSOT contract via real Drift streams, since this is the same code the picker watches.
-- **Splash-pipeline coverage** (Units 2 first test, 3): unchanged — the splash flow does not hit either FakeAsync issue.
+- **Splash-pipeline coverage** (the splash bootstrap test in Unit 2, plus Unit 3): unchanged — the splash flow does not hit either FakeAsync issue.
 
 Net effect: the data-pipeline integration claim still holds (real bootstrap + real router + real Drift + real Home re-render), but the form-modal UI walk-through stays in widget tests. `bootstrap_to_home_test.dart` test 1 already covers the splash → Home navigation walk-through end-to-end. Two follow-ups remain in `docs/a11y-audit-m6.md` (deferred to Unit 10's device matrix) and the form-modal test framework limitations should be revisited if Drift / flutter_test ship a fix for the FakeAsync timer interaction.
