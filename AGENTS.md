@@ -31,20 +31,23 @@
 - The current reference UI slices are `lib/features/splash/`, `lib/features/categories/`, `lib/features/accounts/`, `lib/features/settings/`, `lib/features/transactions/`, and `lib/features/home/`. Use `transaction_form_screen.dart`, `home_screen.dart`, `account_form_screen.dart`, and `widgets/category_picker.dart` as the live examples of the PRD layout primitives rather than older plan placeholders.
 - Required layout primitives from `PRD.md`: Home uses `CustomScrollView` + slivers; Add/Edit Transaction uses `Scaffold(resizeToAvoidBottomInset: false)` with a fixed bottom keypad; Category picker uses a `ModalBottomSheet` with `CustomScrollView`, `SliverGrid`, and `SliverList`.
 - The only adaptive breakpoint is **600dp**. `lib/app/widgets/adaptive_shell.dart` switches `NavigationBar` ↔ `NavigationRail`, `lib/app/router.dart` wraps `/home/add` + `/home/edit/:id` in `_AdaptiveTransactionFormRoute` so wide layouts render inside a constrained dialog, and `lib/features/categories/widgets/category_picker.dart` switches bottom sheet ↔ dialog at the same threshold.
+
 ## Commands and workflows
+> When verifying changes, run `dart format .` before any `flutter test` or `flutter analyze` command.
 - `flutter pub get`
 - `flutter run`
+- `dart format .` (run before `flutter test` or `flutter analyze` whenever verifying changes)
 - `flutter analyze` (currently clean; runs analyzer + `custom_lint` / `riverpod_lint`)
 - `dart run import_lint` (works locally; reads the regex rules in the root `import_analysis_options.yaml`)
 - `dart run build_runner build --delete-conflicting-outputs`
 - `dart run build_runner watch --delete-conflicting-outputs`
 - `dart run drift_dev schema dump lib/data/database/app_database.dart drift_schemas/`
 - `flutter test` / `flutter test test/widget/features/transactions/transaction_form_screen_test.dart` / `flutter test test/unit/app/router_test.dart` / `flutter test test/unit/repositories/migration_test.dart` / `flutter test test/integration/bootstrap_to_home_test.dart`
-- `dart format .`
 - `.github/workflows/ci.yml` currently runs package resolution → `dart run import_lint` → codegen → format check → `flutter analyze` → `flutter test` → Android debug build on pushes/PRs to `main`.
 - `.github/workflows/ios-nightly.yml` is currently a manual `workflow_dispatch` iOS debug build (`flutter build ios --no-codesign --debug`), not a scheduled nightly job.
 - Regenerate code whenever a `@freezed`, `@riverpod`, or Drift database/table annotation changes.
 - l10n codegen is configured in `l10n.yaml`; generated output lands in `lib/l10n/`, and the fallback shim `l10n/app_zh.arb` must stay in the repo even though bare `zh` resolves to English at runtime.
+
 ## Testing expectations
 - Current test coverage spans unit tests (`app`, `controllers`, `l10n`, `providers`, `repositories`, `seed`, `services`, `utils`), widget tests (`app/`, `theme/`, `smoke/`, `features/*` including `home/` and `transactions/`), and integration (`test/integration/bootstrap_to_home_test.dart`).
 - Use `test/support/test_app.dart` as the canonical app-shell harness: `newTestAppDatabase()`, `runTestSeed(db)`, `makeTestContainer(...)`, `buildTestApp(...)`, and `buildBootstrappedTestApp(...)` cover the standard in-memory DB + ProviderScope setup patterns.

@@ -155,7 +155,7 @@ void main() {
     await currenciesCtrl.close();
   });
 
-  Widget makeApp() {
+  Widget makeApp({double? textScale}) {
     return ProviderScope(
       overrides: [
         transactionRepositoryProvider.overrideWithValue(txRepo),
@@ -166,6 +166,14 @@ void main() {
       child: MaterialApp.router(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
+        builder: textScale == null
+            ? null
+            : (context, child) => MediaQuery(
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(textScaler: TextScaler.linear(textScale)),
+                child: child!,
+              ),
         routerConfig: GoRouter(
           initialLocation: '/home',
           routes: [
@@ -658,6 +666,53 @@ void main() {
       find.text('Something went wrong. Please try again.'),
       findsOneWidget,
     );
+  });
+
+  // M6 Unit 8 — accessibility: PRD a11y requirement that all Home
+  // surfaces (empty state, summary strip, day-nav header, transaction
+  // row) survive 2× text scale. Both the empty-state path and the
+  // data-state path are exercised so the audit doc's follow-up #1
+  // (RenderFlex overflows in `SummaryStrip` + `DayNavigationHeader`)
+  // is closed by behaviour, not by inspection.
+  testWidgets('WH14: Home empty state survives 2× text scale', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 1200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(makeApp(textScale: 2.0));
+    await seedAll(tester);
+
+    dayCtrl.add(const []);
+    activityCtrl.add(const []);
+    todayTotalsCtrl.add(const {});
+    monthNetCtrl.add(const {});
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('No transactions yet'), findsOneWidget);
+    expect(find.text('Log first transaction'), findsOneWidget);
+    expect(find.byTooltip('Add transaction'), findsOneWidget);
+  });
+
+  testWidgets('WH15: Home data state survives 2× text scale', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(makeApp(textScale: 2.0));
+    await seedAll(tester);
+
+    final today = DateTime.now();
+    final todayMidnight = DateTime(today.year, today.month, today.day);
+    dayCtrl.add([_tx(id: 1, date: todayMidnight)]);
+    activityCtrl.add([todayMidnight]);
+    // Long formatted amounts (large minor-unit values) stress the
+    // summary chips most: `-$12,345.67` is wider than the chip's row
+    // can hold without `Flexible` wrappers.
+    todayTotalsCtrl.add(const {'USD': (expense: 1234567, income: 0)});
+    monthNetCtrl.add(const {'USD': -1234567});
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(tester.takeException(), isNull);
+    expect(find.byTooltip('Add transaction'), findsOneWidget);
   });
 }
 

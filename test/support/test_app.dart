@@ -22,16 +22,20 @@
 import 'package:drift/native.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ledgerly/app/app.dart';
 import 'package:ledgerly/app/bootstrap.dart';
 import 'package:ledgerly/app/providers/app_database_provider.dart';
 import 'package:ledgerly/app/providers/locale_service_provider.dart';
 import 'package:ledgerly/data/database/app_database.dart';
+import 'package:ledgerly/data/models/account.dart';
+import 'package:ledgerly/data/models/transaction.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/account_type_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
+import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/data/seed/first_run_seed.dart';
 import 'package:ledgerly/data/services/locale_service.dart';
@@ -88,16 +92,33 @@ Widget buildTestApp({required ProviderContainer container}) {
 /// widget passed to `runApp`. This exercises bootstrap ordering and Provider
 /// overrides the same way production startup does, while still letting tests
 /// pump the launched widget manually.
+///
+/// If the captured widget is a `ProviderScope`, this returns an
+/// `UncontrolledProviderScope` backed by the same overrides so tests can own
+/// container disposal via `addTearDown`. That mirrors [buildTestApp] and avoids
+/// Drift cleanup timers being scheduled during implicit widget-tree teardown.
 Future<Widget> buildBootstrappedTestApp({
   required AppDatabase db,
   String locale = 'en_US',
   List<Override> extraOverrides = const [],
 }) async {
   Widget? launched;
+  ProviderContainer? container;
+  final overrides = <Override>[];
   await bootstrapFor(
     openDatabase: () async => db,
     localeService: _FixedLocaleService(locale),
-    runAppFn: (widget) => launched = widget,
+    runAppFn: (widget) {
+      launched = widget;
+      if (widget is ProviderScope) {
+        overrides.addAll(widget.overrides);
+        container = ProviderContainer(overrides: overrides);
+        launched = UncontrolledProviderScope(
+          container: container!,
+          child: widget.child,
+        );
+      }
+    },
     extraOverrides: extraOverrides,
   );
 
@@ -105,7 +126,116 @@ Future<Widget> buildBootstrappedTestApp({
     throw StateError('bootstrapFor did not call runApp');
   }
 
+  if (container != null) addTearDown(container!.dispose);
   return launched!;
+}
+
+// ---------------------------------------------------------------------------
+// Integration test helpers (Unit 1 — M6 plan)
+// ---------------------------------------------------------------------------
+
+/// Inserts a transaction directly into [db] via [DriftTransactionRepository].
+///
+/// Caller MUST wrap in `tester.runAsync` because Drift uses real timers.
+/// [currencyCode] must already be seeded (e.g. `'USD'`, `'JPY'`).
+/// [createdAt] / [updatedAt] are repository-populated on save; the values
+/// passed here are placeholder stubs overwritten by the repository.
+Future<Transaction> insertTestTransaction(
+  AppDatabase db, {
+  required int accountId,
+  required int categoryId,
+  required String currencyCode,
+  required int amountMinorUnits,
+  DateTime? date,
+  String? memo,
+}) async {
+  final currencies = DriftCurrencyRepository(db);
+  final currency = await currencies.getByCode(currencyCode);
+  if (currency == null) throw StateError('Currency $currencyCode not seeded');
+  final now = DateTime.now();
+  return DriftTransactionRepository(db).save(
+    Transaction(
+      id: 0,
+      amountMinorUnits: amountMinorUnits,
+      currency: currency,
+      categoryId: categoryId,
+      accountId: accountId,
+      date: date ?? now,
+      memo: memo,
+      createdAt: now,
+      updatedAt: now,
+    ),
+  );
+}
+
+/// Creates an account directly in [db] via [DriftAccountRepository].
+///
+/// Caller MUST wrap in `tester.runAsync`.
+Future<Account> createTestAccount(
+  AppDatabase db, {
+  required String name,
+  required String currencyCode,
+  required int accountTypeId,
+}) async {
+  final currencies = DriftCurrencyRepository(db);
+  final currency = await currencies.getByCode(currencyCode);
+  if (currency == null) throw StateError('Currency $currencyCode not seeded');
+  final repo = DriftAccountRepository(db, currencies);
+  final id = await repo.save(
+    Account(
+      id: 0,
+      name: name,
+      accountTypeId: accountTypeId,
+      currency: currency,
+    ),
+  );
+  final saved = await repo.getById(id);
+  if (saved == null) throw StateError('Account $id vanished after insert');
+  return saved;
+}
+
+/// Returns the id of the seeded account type whose [l10nKey] matches.
+/// Throws [StateError] when not found. Caller MUST wrap in `tester.runAsync`.
+///
+/// Seeded keys: `'accountType.cash'`, `'accountType.investment'`.
+Future<int> getAccountTypeId(AppDatabase db, String l10nKey) async {
+  final currencies = DriftCurrencyRepository(db);
+  final types = DriftAccountTypeRepository(db, currencies);
+  final type = await types.getByL10nKey(l10nKey);
+  if (type == null) throw StateError('AccountType $l10nKey not seeded');
+  return type.id;
+}
+
+/// Returns the id of the seeded category whose [l10nKey] matches.
+/// Throws [StateError] when not found. Caller MUST wrap in `tester.runAsync`.
+///
+/// Example seeded keys: `'category.food'`, `'category.income.salary'`.
+Future<int> getSeededCategoryId(AppDatabase db, String l10nKey) async {
+  final cat = await DriftCategoryRepository(db).getByL10nKey(l10nKey);
+  if (cat == null) throw StateError('Category $l10nKey not seeded');
+  return cat.id;
+}
+
+/// Returns the account currently pointed to by
+/// `user_preferences.default_account_id`. This avoids the
+/// stream-subscription cleanup timer that `watchAll().first` would schedule
+/// under FakeAsync. Caller MUST wrap in `tester.runAsync`.
+Future<Account> getDefaultAccount(AppDatabase db) async {
+  final currencies = DriftCurrencyRepository(db);
+  final defaultId = await DriftUserPreferencesRepository(
+    db,
+  ).getDefaultAccountId();
+  if (defaultId == null) {
+    throw StateError('default_account_id not set; seed did not run');
+  }
+  final account = await DriftAccountRepository(
+    db,
+    currencies,
+  ).getById(defaultId);
+  if (account == null) {
+    throw StateError('Default account $defaultId vanished after seed');
+  }
+  return account;
 }
 
 /// Deterministic [LocaleService] stub — returns a fixed locale string so

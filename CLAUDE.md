@@ -13,6 +13,7 @@ The repo now contains: `pubspec.yaml`, `analysis_options.yaml`, `l10n/` (`app_en
 ```bash
 flutter pub get
 flutter run                                           # run on attached device/emulator
+dart format .                                        # run before test or analyze
 flutter test                                          # all tests
 flutter test test/unit/repositories/foo_test.dart    # single file
 flutter test --name 'category type is locked'        # single test by name
@@ -20,8 +21,9 @@ dart run build_runner build --delete-conflicting-outputs   # Drift + Freezed + r
 dart run build_runner watch --delete-conflicting-outputs   # code-gen while developing
 dart run drift_dev schema dump lib/data/database/app_database.dart drift_schemas/   # snapshot schema
 flutter analyze                                      # runs custom_lint + import_lint + riverpod_lint
-dart format .
 ```
+
+When verifying changes, run `dart format .` before any `flutter test` or `flutter analyze` command.
 
 Code generation is required whenever a `@freezed`, `@riverpod`, or Drift `@DriftDatabase`/`@DataClassName` annotation changes — the build will fail loudly if generated files are stale.
 

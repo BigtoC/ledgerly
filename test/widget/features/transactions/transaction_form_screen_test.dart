@@ -32,6 +32,8 @@ import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/features/categories/categories_controller.dart';
 import 'package:ledgerly/features/transactions/transaction_form_screen.dart';
+import 'package:ledgerly/features/transactions/widgets/account_selector_tile.dart';
+import 'package:ledgerly/features/transactions/widgets/calculator_keypad.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockTransactionRepository extends Mock
@@ -107,7 +109,11 @@ void main() {
     ).thenAnswer((_) async => _expenseCategory);
   });
 
-  Widget mountAdd({Object? extra, List<Override> extraOverrides = const []}) {
+  Widget mountAdd({
+    Object? extra,
+    List<Override> extraOverrides = const [],
+    double? textScale,
+  }) {
     final router = GoRouter(
       initialLocation: '/home/add',
       initialExtra: extra,
@@ -149,11 +155,19 @@ void main() {
         routerConfig: router,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
+        builder: textScale == null
+            ? null
+            : (context, child) => MediaQuery(
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(textScaler: TextScaler.linear(textScale)),
+                child: child!,
+              ),
       ),
     );
   }
 
-  Widget mountEdit(int id) {
+  Widget mountEdit(int id, {double? textScale}) {
     final router = GoRouter(
       initialLocation: '/home/edit/$id',
       routes: [
@@ -182,6 +196,14 @@ void main() {
         routerConfig: router,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
+        builder: textScale == null
+            ? null
+            : (context, child) => MediaQuery(
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(textScaler: TextScaler.linear(textScale)),
+                child: child!,
+              ),
       ),
     );
   }
@@ -428,6 +450,94 @@ void main() {
 
     deleteCompleter.complete(true);
     await tester.pumpAndSettle();
+  });
+
+  // M6 Unit 8 — accessibility: PRD a11y requirement that the form
+  // (with its fixed-height keypad above the soft keyboard) survives
+  // 2× text scale. The form's scrollable Column is `Expanded` above
+  // the keypad, so growing every text by 2× must not produce overflow
+  // exceptions.
+  testWidgets('WS12: 2× text scale survives in Add mode', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(mountAdd(textScale: 2.0));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    // Save button + AppBar title still render at 2× scale.
+    expect(find.text('Add transaction'), findsOneWidget);
+    expect(find.text('Save'), findsOneWidget);
+  });
+
+  testWidgets('WS13: 2× text scale survives in Edit mode', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    when(() => txRepo.getById(99)).thenAnswer(
+      (_) async => _persistedTx(memo: 'A long memo that pushes the form a bit'),
+    );
+
+    await tester.pumpWidget(mountEdit(99, textScale: 2.0));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Edit transaction'), findsOneWidget);
+    expect(find.text('Save'), findsOneWidget);
+  });
+
+  testWidgets('WS14: memo keyboard does not move the fixed keypad', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(400, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+    addTearDown(() => tester.view.resetViewInsets());
+
+    await tester.pumpWidget(mountAdd());
+    await tester.pumpAndSettle();
+
+    final keypadBefore = tester.getRect(find.byType(CalculatorKeypad));
+    await tester.showKeyboard(find.byType(TextField));
+    await tester.pumpAndSettle();
+    final keypadAfter = tester.getRect(find.byType(CalculatorKeypad));
+
+    expect(keypadAfter.top, keypadBefore.top);
+    expect(keypadAfter.bottom, keypadBefore.bottom);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('WS15: account picker lists active accounts only', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(400, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    const archivedAccount = Account(
+      id: 2,
+      name: 'Archived Cash',
+      accountTypeId: 1,
+      currency: _usd,
+      isArchived: true,
+    );
+    when(
+      () => accountRepo.watchAll(includeArchived: false),
+    ).thenAnswer((_) => Stream.value(const [_account]));
+    when(
+      () => accountRepo.watchAll(includeArchived: true),
+    ).thenAnswer((_) => Stream.value(const [_account, archivedAccount]));
+
+    await tester.pumpWidget(mountAdd());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(AccountSelectorTile));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Pick account'), findsOneWidget);
+    expect(find.text('Cash'), findsAtLeastNWidgets(1));
+    expect(find.text('Archived Cash'), findsNothing);
+    verify(() => accountRepo.watchAll(includeArchived: false)).called(1);
+    verifyNever(() => accountRepo.watchAll(includeArchived: true));
   });
 }
 
