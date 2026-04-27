@@ -132,3 +132,8 @@ l10n/untranslated-messages.txt
 /.worktrees/
 
 .superpowers
+
+# Site workspace
+site/node_modules/
+site/dist/
+site/.astro/
