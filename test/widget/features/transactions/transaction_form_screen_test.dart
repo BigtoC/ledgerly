@@ -507,7 +507,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('WS15: account picker lists active accounts only', (tester) async {
+  testWidgets('WS15: account picker lists active accounts only', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(400, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -518,12 +520,12 @@ void main() {
       currency: _usd,
       isArchived: true,
     );
-    when(() => accountRepo.watchAll(includeArchived: false)).thenAnswer(
-      (_) => Stream.value(const [_account]),
-    );
-    when(() => accountRepo.watchAll(includeArchived: true)).thenAnswer(
-      (_) => Stream.value(const [_account, archivedAccount]),
-    );
+    when(
+      () => accountRepo.watchAll(includeArchived: false),
+    ).thenAnswer((_) => Stream.value(const [_account]));
+    when(
+      () => accountRepo.watchAll(includeArchived: true),
+    ).thenAnswer((_) => Stream.value(const [_account, archivedAccount]));
 
     await tester.pumpWidget(mountAdd());
     await tester.pumpAndSettle();
