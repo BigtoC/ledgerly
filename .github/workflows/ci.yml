@@ -7,12 +7,16 @@ on:
       - 'docs/**'
       - '**/*.md'
       - 'site/**'
+      - '.github/workflows/github-pages.yml'
+      - '.github/workflows/site-check.yml'
   push:
     branches: [main]
     paths-ignore:
       - 'docs/**'
       - '**/*.md'
       - 'site/**'
+      - '.github/workflows/github-pages.yml'
+      - '.github/workflows/site-check.yml'
 
 concurrency:
   group: ci-${{ github.ref }}
