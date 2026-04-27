@@ -166,6 +166,7 @@ Integration test anatomy (repeats the established pattern):
 
 **Files:**
 - Create: `test/integration/first_launch_flow_test.dart`
+- Create: `test/integration/transaction_mutation_flow_test.dart`
 
 **Approach:**
 - Start from the same seeded empty DB as `bootstrap_to_home_test.dart` test 1.
@@ -190,6 +191,7 @@ Integration test anatomy (repeats the established pattern):
 **Verification:**
 - `flutter test test/integration/first_launch_flow_test.dart` passes
 - `db.select(db.transactions).get()` returns exactly 1 row after save
+- `flutter test test/integration/transaction_mutation_flow_test.dart` covers Home FAB → Add form → Save → Home/DB row
 
 ---
 
@@ -233,6 +235,7 @@ Integration test anatomy (repeats the established pattern):
 
 **Files:**
 - Create: `test/integration/duplicate_flow_test.dart`
+- Create: `test/integration/transaction_mutation_flow_test.dart`
 
 **Approach:**
 - Use `insertTestTransaction` helper from Unit 1 to create the source transaction (e.g. `amountMinorUnits: 500`, USD, expense category).
@@ -255,6 +258,7 @@ Integration test anatomy (repeats the established pattern):
 **Verification:**
 - 2 rows in DB; second row has edited amount and today's date
 - Home day pinned to today after duplicate save
+- `flutter test test/integration/transaction_mutation_flow_test.dart` covers Home overflow → Duplicate → edit amount → Save → 2 DB rows
 
 ---
 
@@ -338,6 +342,7 @@ Integration test anatomy (repeats the established pattern):
 
 **Files:**
 - Create: `test/integration/edit_delete_flow_test.dart`
+- Create: `test/integration/transaction_mutation_flow_test.dart`
 
 **Approach:**
 
@@ -364,6 +369,8 @@ Integration test anatomy (repeats the established pattern):
 **Verification:**
 - `flutter test test/integration/edit_delete_flow_test.dart` passes
 - DB row count matches expected after each scenario
+- `flutter test test/integration/transaction_mutation_flow_test.dart` covers Home row tap → Edit form → amount edit → Save → updated DB row
+- Delete/undo remains covered at widget/controller layers (`home_screen_test.dart` WH08/WH09/WH12 series and `home_controller_test.dart` H05/H06/H07 series) because the real-DB timed delete path still trips Drift cleanup timers under `flutter_test` after the undo window advances.
 
 ---
 
@@ -448,7 +455,7 @@ Integration test anatomy (repeats the established pattern):
 
 ---
 
-- [ ] **Unit 10: Release prep sweep**
+- [x] **Unit 10: Release prep sweep** *(automatable checks done 2026-04-27; device-matrix smoke remains operator evidence)*
 
 **Goal:** Confirm `flutter analyze` is clean, the migration harness is green, the a11y audit doc is complete, and a release build is produced and smoke-tested on the device matrix.
 
@@ -481,7 +488,7 @@ Integration test anatomy (repeats the established pattern):
 - `flutter analyze` exits 0 with no warnings
 - `flutter test` exits 0 (all tests pass)
 - `grep` for `double.*(amount|balance|rate)` returns 0 hits outside `money_formatter`
-- Device matrix smoke passes (documented by operator in `docs/a11y-audit-m6.md` device section)
+- Device matrix smoke passes (operator-run; document evidence in release notes or PR before signed RC cut)
 
 ---
 
@@ -529,4 +536,4 @@ Together, these block the "tap FAB → form → category picker → Save → see
 - **Repository contract coverage** (Unit 6 archived-category half): assert the `watchAll(includeArchived: false/true)` SSOT contract via real Drift streams, since this is the same code the picker watches.
 - **Splash-pipeline coverage** (the splash bootstrap test in Unit 2, plus Unit 3): unchanged — the splash flow does not hit either FakeAsync issue.
 
-Net effect: the data-pipeline integration claim still holds (real bootstrap + real router + real Drift + real Home re-render), but the form-modal UI walk-through stays in widget tests. `bootstrap_to_home_test.dart` test 1 already covers the splash → Home navigation walk-through end-to-end. Two follow-ups remain in `docs/a11y-audit-m6.md` (deferred to Unit 10's device matrix) and the form-modal test framework limitations should be revisited if Drift / flutter_test ship a fix for the FakeAsync timer interaction.
+Net effect: the data-pipeline integration claim holds in two layers. Seeded-state tests still cover real bootstrap + router + Drift + Home initial subscribe for archive/multi-currency/delete-final-state scenarios, and `test/integration/transaction_mutation_flow_test.dart` now drives the stable real mutation paths end to end: Home FAB → Add form → Save, Home overflow → Duplicate → Save, and Home row tap → Edit form → Save. Delete/undo is intentionally kept at widget/controller granularity because advancing the real-DB undo window still schedules Drift cleanup timers under `flutter_test` teardown. `bootstrap_to_home_test.dart` and `first_launch_flow_test.dart` cover the splash → Home navigation walk-throughs, including the configured-date bootstrap path. Two follow-ups remain in `docs/a11y-audit-m6.md` (deferred to Unit 10's device matrix) and the timed-delete test framework limitation should be revisited if Drift / flutter_test ship a fix for the FakeAsync timer interaction.
