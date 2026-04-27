@@ -115,7 +115,7 @@ class _SettingsComposer {
   StreamSubscription<String>? _splashDisplayTextSub;
   StreamSubscription<String>? _splashButtonLabelSub;
 
-  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode _themeMode = ThemeMode.light;
   Locale? _locale;
   String _defaultCurrency = 'USD';
   int? _defaultAccountId;

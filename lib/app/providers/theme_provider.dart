@@ -18,6 +18,6 @@ Stream<ThemeMode> themeModeStream(Ref ref) =>
 
 @Riverpod(dependencies: [initialThemeMode, themeModeStream])
 ThemeMode themeMode(Ref ref) {
-  final initial = ref.watch(initialThemeModeProvider) ?? ThemeMode.system;
+  final initial = ref.watch(initialThemeModeProvider) ?? ThemeMode.light;
   return ref.watch(themeModeStreamProvider).value ?? initial;
 }

@@ -206,14 +206,14 @@ final class DriftUserPreferencesRepository
   @override
   Stream<ThemeMode> watchThemeMode() => _watchJson<ThemeMode>(
     _kThemeMode,
-    defaultValue: ThemeMode.system,
+    defaultValue: ThemeMode.light,
     decode: _decodeThemeMode,
   );
 
   @override
   Future<ThemeMode> getThemeMode() => _readJson<ThemeMode>(
     _kThemeMode,
-    defaultValue: ThemeMode.system,
+    defaultValue: ThemeMode.light,
     decode: _decodeThemeMode,
   );
 
@@ -227,6 +227,8 @@ final class DriftUserPreferencesRepository
         'Expected String for theme_mode, got ${v.runtimeType}',
       );
     }
+    // "system" was removed from the UI; treat any stored "system" as "light".
+    if (v == 'system') return ThemeMode.light;
     return ThemeMode.values.byName(v);
   }
 
