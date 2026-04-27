@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   classifyApkAssetName,
   collectApkAssets,
+  normalizeReleaseVersion,
   recommendPrimaryAsset,
 } from './apk-release';
 
@@ -135,5 +136,20 @@ describe('recommendPrimaryAsset', () => {
 
   it('returns null when no classified assets exist', () => {
     expect(recommendPrimaryAsset([])).toBeNull();
+  });
+});
+
+describe('normalizeReleaseVersion', () => {
+  it('keeps version tags that already start with v', () => {
+    expect(normalizeReleaseVersion('v0.1.1')).toBe('v0.1.1');
+  });
+
+  it('adds v when the release tag omits it', () => {
+    expect(normalizeReleaseVersion('0.1.1')).toBe('v0.1.1');
+  });
+
+  it('returns null for empty tags', () => {
+    expect(normalizeReleaseVersion('')).toBeNull();
+    expect(normalizeReleaseVersion(undefined)).toBeNull();
   });
 });

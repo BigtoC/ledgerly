@@ -5,6 +5,20 @@ export interface ReleaseAsset {
   browser_download_url: string;
 }
 
+export function normalizeReleaseVersion(tagName: string | undefined): string | null {
+  if (!tagName) {
+    return null;
+  }
+
+  const normalizedTag = tagName.trim();
+
+  if (!normalizedTag) {
+    return null;
+  }
+
+  return normalizedTag.startsWith('v') ? normalizedTag : `v${normalizedTag}`;
+}
+
 export interface ClassifiedApkAsset {
   name: string;
   url: string;
