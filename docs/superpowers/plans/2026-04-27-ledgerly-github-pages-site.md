@@ -4,7 +4,7 @@
 
 **Goal:** Build a Starlight-based GitHub Pages site for Ledgerly with a custom landing page, README-derived `Ledgerly Guide`, real screenshots, and a latest-release split-APK download flow while updating Android release automation to publish ABI-specific assets.
 
-**Architecture:** Keep the Flutter app and the website isolated by adding a dedicated `site/` Astro workspace inside the repo. Use Starlight for guide content and navigation, a custom Astro homepage for the marketing surface, and a small pure TypeScript helper to classify GitHub release assets so the interactive download card stays testable and the DOM code stays thin.
+**Architecture:** Keep the Flutter app and the website isolated by adding a dedicated `site/` Astro workspace inside the repo. Use Starlight for guide content and navigation, a custom Astro homepage for the marketing surface, and a small pure TypeScript helper to classify GitHub release assets. The download card fetches the latest release at **Astro build time** (not client-side), producing fully static HTML with pre-resolved download URLs and checksums — no runtime API dependency, no loading state, no rate-limit exposure. A `workflow_run` trigger on `android-release.yml` in the Pages workflow rebuilds the site after each successful Android release, so the download card always resolves the latest APK.
 
 **Tech Stack:** Astro, Starlight, TypeScript, plain CSS, Vitest, GitHub Actions, existing Flutter Android build pipeline.
 
@@ -17,7 +17,8 @@
 - Use Starlight + custom CSS only. Do not add Tailwind unless the homepage styling proves blocked without it.
 - Put the public guide under `site/src/content/docs/ledgerly-guide/` as four Markdown pages.
 - Keep Flutter CI unchanged; add dedicated site validation and Pages deployment workflows instead of forcing Node work into `.github/workflows/ci.yml`.
-- Update Android release automation to publish split APKs only, using predictable filenames that the site can parse.
+- Update Android release automation to publish split APKs only (no universal APK), using predictable filenames that the site can parse. Each release must also include a SHA-256 checksum manifest (`ledgerly-<tag>-checksums.txt`). Existing users updating from a prior universal APK must pick the correct ABI; document this in the first split-APK release notes.
+- Fetch the latest release from `https://api.github.com/repos/BigtoC/ledgerly/releases/latest` at **Astro build time** (not client-side runtime). The `ApkDownloadCard` renders static HTML with pre-resolved download URLs and checksums — no client-side fetch, no loading state. The `github-pages.yml` workflow triggers via `workflow_run` on `android-release.yml` completing successfully, so the Pages build always runs after APK assets are uploaded and the latest release is resolvable.
 
 ## References To Keep Open
 
@@ -30,7 +31,7 @@
 ## File Map
 
 - Modify: `.gitignore` — ignore `site/` build artifacts and local Node output.
-- Modify: `.github/workflows/android-release.yml` — build split APKs, rename them deterministically, upload all assets.
+- Modify: `.github/workflows/android-release.yml` — build split APKs, rename them deterministically, generate SHA-256 checksums manifest, upload all assets.
 - Modify: `README.md` — add contributor-facing website commands and deployment notes.
 - Create: `.github/workflows/site-check.yml` — validate the site on PRs and relevant pushes.
 - Create: `.github/workflows/github-pages.yml` — build and deploy `site/` to GitHub Pages.
@@ -42,7 +43,7 @@
 - Create: `site/src/styles/custom.css` — Starlight theme variables and homepage styles.
 - Create: `site/src/pages/index.astro` — custom product homepage.
 - Create: `site/src/components/ScreenshotGallery.astro` — display real app screenshots with captions.
-- Create: `site/src/components/ApkDownloadCard.astro` — interactive download UI shell.
+- Create: `site/src/components/ApkDownloadCard.astro` — build-time static download card; fetches latest release at `astro build` time.
 - Create: `site/src/lib/apk-release.ts` — pure helper for parsing release assets and recommending an APK.
 - Create: `site/src/lib/apk-release.test.ts` — unit tests for split-APK selection logic.
 - Create: `site/src/assets/screenshots/splash.png`
@@ -98,6 +99,7 @@ Write `site/package.json` with a small, explicit script surface:
     "@astrojs/starlight": "^0.30.0"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.0",
     "@types/node": "^22.0.0",
     "typescript": "^5.0.0",
     "vitest": "^3.0.0"
@@ -118,6 +120,8 @@ Write `site/tsconfig.json`:
   "exclude": ["dist"]
 }
 ```
+
+**Note:** `astro/tsconfigs/strict` is the correct path in Astro 5. If the install in Step 4 produces a "Cannot find tsconfig" error, check the Astro 5 docs — the path may have changed to `astro/tsconfigs/strictest`. Adjust accordingly.
 
 - [ ] **Step 4: Install the site dependencies and generate the lockfile**
 
@@ -179,13 +183,9 @@ export default defineConfig({
           ]
         }
       ],
-      social: [
-        {
-          icon: 'github',
-          label: 'GitHub',
-          href: 'https://github.com/BigtoC/ledgerly'
-        }
-      ]
+      social: {
+        github: 'https://github.com/BigtoC/ledgerly',
+      },
     })
   ]
 });
@@ -294,6 +294,8 @@ Expected:
 - exits `0`
 - `site/dist/index.html` exists
 - `site/dist/ledgerly-guide/getting-started/index.html` exists
+
+**Note:** Do not open these files directly in a browser (`file://`) to check links — the `base: '/ledgerly'` config bakes the subpath into all asset URLs, which will appear broken when opened as files. Use `npm --prefix site run preview` to verify links correctly under the configured base path.
 
 - [ ] **Step 7: Commit the shell once both commands pass**
 
@@ -443,7 +445,7 @@ site/src/assets/screenshots/accounts.png
 site/src/assets/screenshots/settings.png
 ```
 
-Capture all five screenshots in portrait orientation from the same Android phone-sized viewport. Keep the system status bar visible, use the app's actual light-or-dark theme consistently across all screenshots, and avoid mixing tablet and phone captures in the same gallery.
+Capture all five screenshots in portrait orientation from the same Android phone-sized viewport. Keep the system status bar visible, use the app's light theme consistently across all screenshots, and avoid mixing tablet and phone captures in the same gallery.
 
 If Android emulator tooling is available, capture with `adb exec-out screencap -p > <target-file>` after navigating to each screen. If not, use the simulator/device screenshot tool and save each PNG to the exact path above.
 
@@ -452,10 +454,19 @@ If Android emulator tooling is available, capture with `adb exec-out screencap -
 Write `site/src/components/ScreenshotGallery.astro` using `astro:assets` so the homepage stays focused on layout, not image plumbing.
 
 The component should render a list of screenshot cards with:
-- image
-- screen name
+- image (use Astro's `<Image>` component for automatic optimization)
+- screen name as a visible label
 - one-sentence caption
-- meaningful `alt` text
+- `alt` text following the pattern "Ledgerly <screen name> screen — <one-line description of what the screen shows>"
+
+Specific alt text for each screenshot:
+- `splash.png`: "Ledgerly splash screen — displays the number of days since tracking began"
+- `home.png`: "Ledgerly home screen — shows the daily transaction list and account balance summary"
+- `transaction-form.png`: "Ledgerly add transaction screen — calculator-style keypad with category and account selectors"
+- `accounts.png`: "Ledgerly accounts screen — lists all accounts with their current balances"
+- `settings.png`: "Ledgerly settings screen — currency, splash toggle, and app preferences"
+
+If any screenshot is missing at build time, render a placeholder `<div>` with the same dimensions rather than a broken `<img>` tag.
 
 Expected import shape:
 
@@ -472,25 +483,26 @@ import settings from '../assets/screenshots/settings.png';
 - [ ] **Step 3: Replace the homepage placeholder with the real landing-page sections**
 
 Update `site/src/pages/index.astro` so it includes:
-- hero with app promise
-- static primary CTA placeholder linking to GitHub Releases for now
-- secondary CTA to `./ledgerly-guide/getting-started/`
-- benefits grid
+- hero with app promise: “Track your spending privately. No cloud, no subscriptions, no data leaving your phone.”
+- `ApkDownloadCard` as the primary CTA (Task 6 replaces the placeholder added in Task 2)
+- secondary CTA: “Read the Ledgerly Guide” linking to `./ledgerly-guide/getting-started/`
+- benefits grid (three items, sourced from the README “Core ideas” section): local-first privacy, zero-subscription model, fast manual entry
 - `ScreenshotGallery`
-- privacy/local-first promise
-- simple “how it works” steps
-- MVP limitations summary
-- Android install note
+- “How it works” steps (three steps maximum: install → add your first account → log a transaction)
+- Android install note: “Ledgerly is distributed as an APK. Enable 'Install from unknown sources' in your Android settings, download the APK above, and tap to install.”
+- MVP limitations **linked** to the guide page (`./ledgerly-guide/mvp-limitations/`) rather than inlined; a one-line note is enough: “See what the current build doesn't include yet →”
 
 Use `StarlightPage` with `hasSidebar={false}` so the page inherits Starlight theme/header behavior while remaining custom.
 
 - [ ] **Step 4: Extend `custom.css` only as far as the homepage needs**
 
 Add homepage selectors for:
-- two-column hero on wide screens
-- card grid for benefits and screenshots
-- readable spacing on mobile
-- button and note styles that remain accessible in light and dark themes
+- two-column hero at `@media (min-width: 640px)`: text left, download card right
+- below 640px: single-column stacked layout, hero text above card
+- benefits grid: three columns at ≥640px, single column below
+- screenshot gallery: two columns at ≥640px, single column below; `overflow-x: hidden` — no horizontal scroll
+- minimum touch target 44px height for all download links and CTA buttons
+- button and note styles that remain accessible in light and dark themes (use Starlight CSS custom properties for colors; avoid hardcoded hex in layout selectors)
 
 Do not introduce a second global stylesheet.
 
@@ -534,7 +546,6 @@ import {
   classifyApkAssetName,
   collectApkAssets,
   recommendPrimaryAsset,
-  isAndroidUserAgent,
 } from './apk-release';
 
 describe('classifyApkAssetName', () => {
@@ -545,12 +556,14 @@ describe('classifyApkAssetName', () => {
 ```
 
 Add coverage for:
-- `armeabi-v7a`
-- `x86_64`
-- ignoring non-APK assets
-- preferring `arm64-v8a`
-- falling back to first available APK when the preferred ABI is missing
-- Android vs non-Android user-agent detection
+- `armeabi-v7a` and `x86_64` classification
+- ignoring non-APK assets (source archives, checksums.txt, etc.)
+- `recommendPrimaryAsset` prefers `arm64-v8a` when present
+- `recommendPrimaryAsset` falls back to `armeabi-v7a` then `x86_64` when preferred ABI is missing
+- `recommendPrimaryAsset` returns `null` when no classified assets exist
+- `collectApkAssets` handles partial asset lists (one or two ABIs, not necessarily three)
+
+Do **not** add tests for `isAndroidUserAgent` — that function is removed from the public surface.
 
 - [ ] **Step 2: Run the test suite before implementing the helper**
 
@@ -567,14 +580,14 @@ Expected:
 - Create: `site/src/components/ApkDownloadCard.astro`
 - Modify: `site/src/pages/index.astro`
 
-**Why this task exists:** The homepage needs a resilient download flow that prefers the right split APK without pretending browser ABI detection is exact.
+**Why this task exists:** The homepage needs a static, always-available download flow. Release data is fetched at Astro build time — no client-side API calls, no loading states, no runtime rate-limit exposure. The `github-pages.yml` workflow (Task 8) depends on `android-release.yml` via `workflow_run`, so the Pages build triggers only after APK assets are fully uploaded and the card can always resolve the latest release.
 
-- [ ] **Step 1: Implement the pure helper module to keep DOM code thin**
+- [ ] **Step 1: Implement the pure helper module**
 
 Write `site/src/lib/apk-release.ts` with a focused API surface:
 
 ```ts
-export type ApkAbi = 'arm64-v8a' | 'armeabi-v7a' | 'x86_64';
+export type ApkAbi = ‘arm64-v8a’ | ‘armeabi-v7a’ | ‘x86_64’;
 
 export interface ReleaseAsset {
   name: string;
@@ -589,17 +602,15 @@ export interface ClassifiedApkAsset {
 ```
 
 Functions to implement:
-- `isAndroidUserAgent(userAgent: string): boolean`
 - `classifyApkAssetName(name: string): ApkAbi | null`
 - `collectApkAssets(assets: ReleaseAsset[]): ClassifiedApkAsset[]`
-- `recommendPrimaryAsset(assets: ClassifiedApkAsset[], userAgent: string): ClassifiedApkAsset | null`
+- `recommendPrimaryAsset(assets: ClassifiedApkAsset[]): ClassifiedApkAsset | null`
 
-`collectApkAssets(...)` should be the function that maps a GitHub release asset into `{ name, url, abi }` by combining `browser_download_url` with the ABI returned from `classifyApkAssetName(...)`.
+`collectApkAssets(...)` maps a GitHub release asset into `{ name, url, abi }`.
 
-Recommendation rule:
-- if Android or platform unknown, prefer `arm64-v8a`
-- then `armeabi-v7a`
-- then `x86_64`
+Recommendation rule: prefer `arm64-v8a`, then `armeabi-v7a`, then `x86_64`. The card renders all available ABIs as alternatives regardless.
+
+`isAndroidUserAgent` is no longer needed — remove it from the public surface and from the tests.
 
 - [ ] **Step 2: Run the unit tests and make them pass before touching the homepage**
 
@@ -607,19 +618,49 @@ Run: `npm --prefix site run test`
 
 Expected:
 - PASS
-- the helper behavior is now locked before DOM rendering begins
+- the helper behavior is locked before component work begins
 
-- [ ] **Step 3: Create the interactive download card component**
+- [ ] **Step 3: Create the build-time APK download card component**
 
-Write `site/src/components/ApkDownloadCard.astro` with:
-- a server-rendered fallback link to `https://github.com/BigtoC/ledgerly/releases`
-- client-side fetch to `https://api.github.com/repos/BigtoC/ledgerly/releases/latest`
-- DOM states for loading, ready, no assets, API failure, and unknown platform / uncertain ABI guidance
-- one recommended APK plus manual alternatives
-- copy that avoids claiming exact chip detection
-- a preferred fallback to the latest release HTML URL when the API payload provides it, falling back to `https://github.com/BigtoC/ledgerly/releases` only when the latest release URL cannot be derived
+Write `site/src/components/ApkDownloadCard.astro` that fetches release data at build time:
 
-The component’s client script should import the pure helper and keep network/DOM work in the component only.
+```astro
+---
+import { collectApkAssets, recommendPrimaryAsset } from ‘../lib/apk-release’;
+
+const RELEASES_URL = ‘https://github.com/BigtoC/ledgerly/releases’;
+
+let recommended: import(‘../lib/apk-release’).ClassifiedApkAsset | null = null;
+let alternatives: import(‘../lib/apk-release’).ClassifiedApkAsset[] = [];
+let releaseUrl = RELEASES_URL;
+let checksumUrl: string | null = null;
+
+try {
+  const res = await fetch(‘https://api.github.com/repos/BigtoC/ledgerly/releases/latest’);
+  if (res.ok) {
+    const data = await res.json();
+    releaseUrl = data.html_url ?? RELEASES_URL;
+    const classified = collectApkAssets(data.assets ?? []);
+    recommended = recommendPrimaryAsset(classified);
+    alternatives = classified.filter(a => a !== recommended);
+    const checksumAsset = (data.assets ?? []).find(
+      (a: { name: string; browser_download_url: string }) => a.name.endsWith(‘-checksums.txt’)
+    );
+    checksumUrl = checksumAsset?.browser_download_url ?? null;
+  }
+} catch {
+  // build-time fetch failed; fall back to static releases link
+}
+---
+```
+
+The component renders:
+- If `recommended` is set: a primary download link (arm64-v8a) with the label "Download for Android (arm64 — most phones)" plus a SHA-256 checksum link if `checksumUrl` is available
+- A secondary list of all alternative ABI links with "Other architectures" heading
+- A note: "Not sure which to choose? Most modern Android phones use arm64-v8a."
+- If `recommended` is null: a static fallback link to `releaseUrl` with text "Download from GitHub Releases"
+
+No `<script>` tag. No client-side fetch. No loading state.
 
 - [ ] **Step 4: Replace the temporary homepage CTA with the real component**
 
@@ -627,8 +668,8 @@ Update `site/src/pages/index.astro`:
 
 ```astro
 ---
-import ApkDownloadCard from '../components/ApkDownloadCard.astro';
-import ScreenshotGallery from '../components/ScreenshotGallery.astro';
+import ApkDownloadCard from ‘../components/ApkDownloadCard.astro’;
+import ScreenshotGallery from ‘../components/ScreenshotGallery.astro’;
 ---
 
 <ApkDownloadCard />
@@ -648,19 +689,17 @@ Expected: PASS
 
 Run: `npm --prefix site run build`
 
-Expected: PASS
+Expected: PASS — if no GitHub release exists yet, the card renders the static fallback link; this is correct behavior.
 
 - [ ] **Step 6: Preview the homepage in a browser before committing**
 
-Run: `npm --prefix site run dev`
+Run: `npm --prefix site run preview`
 
 Manual checks:
-- the page initially shows a loading state
-- on success it shows a recommended APK and ABI alternatives
-- on a forced network failure it falls back to GitHub Releases copy
-- on non-Android or ambiguous platform strings it shows the uncertain-ABI guidance copy instead of claiming a chip match
-
-Force the failure state by using browser DevTools offline mode or blocking `https://api.github.com` for the page session.
+- if a GitHub Release exists, the card shows the recommended arm64-v8a download link and alternatives
+- if no release exists, the card shows the static GitHub Releases fallback link
+- the card is fully visible immediately (no loading spinner)
+- the checksum link appears when `checksumUrl` is non-null
 
 If browser automation is available, use `@test-browser` for this manual verification.
 
@@ -700,7 +739,12 @@ Use a bash loop in `.github/workflows/android-release.yml`:
 
 ```yaml
 - name: Prepare release assets
+  shell: bash
   run: |
+    if [[ ! "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+      echo "Unexpected ref name: ${GITHUB_REF_NAME}" >&2
+      exit 1
+    fi
     shopt -s nullglob
     files=(build/app/outputs/flutter-apk/app-*-release.apk)
     if [ ${#files[@]} -eq 0 ]; then
@@ -709,19 +753,30 @@ Use a bash loop in `.github/workflows/android-release.yml`:
     fi
 
     for file in "${files[@]}"; do
-      abi="${file##*app-}"
+      base=$(basename "$file")
+      abi="${base#app-}"
       abi="${abi%-release.apk}"
       cp "$file" "ledgerly-${GITHUB_REF_NAME}-${abi}.apk"
     done
 ```
 
-- [ ] **Step 3: Upload every renamed asset, not just one file**
+- [ ] **Step 3: Generate a SHA-256 checksum manifest and upload all assets**
 
-Replace the `softprops/action-gh-release` file input with:
+After the rename loop, generate the checksum file:
+
+```yaml
+- name: Generate checksums
+  shell: bash
+  run: sha256sum ledgerly-${GITHUB_REF_NAME}-*.apk > ledgerly-${GITHUB_REF_NAME}-checksums.txt
+```
+
+Then update the `softprops/action-gh-release` file input to include both APKs and the checksum manifest:
 
 ```yaml
 with:
-  files: ledgerly-${{ github.ref_name }}-*.apk
+  files: |
+    ledgerly-${{ github.ref_name }}-*.apk
+    ledgerly-${{ github.ref_name }}-checksums.txt
 ```
 
 - [ ] **Step 4: Rehearse the rename logic locally with fake filenames before relying on CI**
@@ -733,15 +788,12 @@ tmpdir=$(mktemp -d) && mkdir -p "$tmpdir/build/app/outputs/flutter-apk" && \
 touch "$tmpdir/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk" \
       "$tmpdir/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk" \
       "$tmpdir/build/app/outputs/flutter-apk/app-x86_64-release.apk" && \
-GITHUB_REF_NAME=v0.1.0 bash -lc 'cd "$1" && shopt -s nullglob; files=(build/app/outputs/flutter-apk/app-*-release.apk); for file in "${files[@]}"; do abi="${file##*app-}"; abi="${abi%-release.apk}"; cp "$file" "ledgerly-${GITHUB_REF_NAME}-${abi}.apk"; done' bash "$tmpdir" && \
+GITHUB_REF_NAME=v0.1.0 bash -lc 'cd "$1" && shopt -s nullglob; files=(build/app/outputs/flutter-apk/app-*-release.apk); for file in "${files[@]}"; do base=$(basename "$file"); abi="${base#app-}"; abi="${abi%-release.apk}"; cp "$file" "ledgerly-${GITHUB_REF_NAME}-${abi}.apk"; done' bash "$tmpdir" && \
 ls "$tmpdir"/ledgerly-v0.1.0-*.apk
 ```
 
 Expected:
-- three files printed:
-  - `ledgerly-v0.1.0-arm64-v8a.apk`
-  - `ledgerly-v0.1.0-armeabi-v7a.apk`
-  - `ledgerly-v0.1.0-x86_64.apk`
+- at least one file printed matching `ledgerly-v0.1.0-*.apk` (exact ABI set depends on the NDK toolchain available; `arm64-v8a`, `armeabi-v7a`, and `x86_64` are typical)
 
 - [ ] **Step 5: Commit the release-workflow change separately**
 
@@ -750,14 +802,13 @@ git add .github/workflows/android-release.yml
 git commit -m "ci(release): publish split apk assets"
 ```
 
-- [ ] **Step 6: Verify a tagged release uploads all expected split APK assets in GitHub**
+- [ ] **Step 6: Verify a tagged release uploads all expected assets in GitHub**
 
-After the workflow is merged and a test tag is pushed, verify on the GitHub release page that the release contains all three ABI-specific files:
-- `ledgerly-<tag>-arm64-v8a.apk`
-- `ledgerly-<tag>-armeabi-v7a.apk`
-- `ledgerly-<tag>-x86_64.apk`
+After the workflow is merged and a test tag is pushed, verify on the GitHub release page:
+- at least one `ledgerly-<tag>-<abi>.apk` file is present
+- `ledgerly-<tag>-checksums.txt` is present and contains SHA-256 lines for each APK
 
-Record this as operator evidence in the PR description or release notes because the site depends on those exact asset names.
+In the release notes for this first split-APK release, add a migration note: users who previously installed the universal APK should download the `arm64-v8a` variant (suitable for most modern Android phones); the universal APK is no longer published.
 
 ### Task 8: Add site validation, GitHub Pages deployment, and contributor docs
 
@@ -795,22 +846,26 @@ on:
 
 Its job should:
 - checkout
-- setup Node 22
+- setup Node 22 using `actions/setup-node@v4` with `node-version: '22'`
 - run `npm --prefix site ci`
+- run `npm --prefix site audit --audit-level=high`
 - run `npm --prefix site run test`
 - run `npm --prefix site run check`
 - run `npm --prefix site run build`
 
 - [ ] **Step 2: Create the GitHub Pages deployment workflow using Astro’s official action**
 
-Write `.github/workflows/github-pages.yml` using `withastro/action@v6` and `actions/deploy-pages@v5`.
+Write `.github/workflows/github-pages.yml` using `withastro/action@v3` and `actions/deploy-pages@v4`.
 
 Required details:
 - trigger on `push` to `main`
+- trigger on `workflow_run: workflows: ["Android release"], types: [completed]` — this creates an explicit dependency on `.github/workflows/android-release.yml` completing, so the Pages build always runs after the APK assets are uploaded; add a job-level condition `if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'` so a failed Android release does not redeploy the site
+- do **not** use `release: [published]` — `workflow_run` is more precise because it fires only when this specific workflow finishes, not when any release is manually published
 - allow `workflow_dispatch`
-- permissions: `contents: read`, `pages: write`, `id-token: write`
+- workflow-level default: `permissions: contents: read`; elevate `pages: write` and `id-token: write` at the deployment job level only (not at the top-level workflow block)
 - Astro action `path: ./site`
 - deployment job with environment `github-pages`
+- pin both third-party actions to immutable commit SHAs (add the version tag as a comment); configure Dependabot `github-actions` ecosystem to receive automated SHA-bump PRs
 
 - [ ] **Step 3: Update the repo README with site development commands**
 
@@ -824,7 +879,7 @@ npm --prefix site run check
 npm --prefix site run build
 ```
 
-Also mention that GitHub Project Pages deploys from `.github/workflows/github-pages.yml` and that the public APK button reads the latest GitHub Release.
+Also mention that GitHub Pages deploys from `.github/workflows/github-pages.yml` and that the public APK button reads the latest GitHub Release.
 
 - [ ] **Step 4: Run the same commands the new `site-check` workflow will run**
 
@@ -885,10 +940,7 @@ Run from the repo root:
 flutter build apk --release --split-per-abi
 ```
 
-Expected artifacts in `build/app/outputs/flutter-apk/`:
-- `app-arm64-v8a-release.apk`
-- `app-armeabi-v7a-release.apk`
-- `app-x86_64-release.apk`
+Expected: at least one `app-*-release.apk` in `build/app/outputs/flutter-apk/`. The exact ABI set depends on the NDK toolchain; `arm64-v8a`, `armeabi-v7a`, and `x86_64` are typical but not guaranteed.
 
 Also verify that a real tagged GitHub release uploaded the renamed assets listed in Task 7, Step 6.
 
@@ -919,13 +971,4 @@ After the Pages workflow runs, verify in GitHub Actions and the Pages environmen
 - the environment URL resolves
 - `https://bigtoc.github.io/ledgerly/` serves the homepage with the correct base path
 
-- [ ] **Step 6: Create the final verification commit if Task 9 required code edits**
-
-If verification forced fixes, commit only the fix files:
-
-```bash
-git add <fixed-files>
-git commit -m "fix(site): complete pages release flow"
-```
-
-If no files changed during verification, skip this step.
+If verification in steps 1–5 forced any code fixes, commit only the changed files: `git add <fixed-files> && git commit -m "fix(site): complete pages release flow"`.
