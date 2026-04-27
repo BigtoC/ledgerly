@@ -137,3 +137,6 @@ l10n/untranslated-messages.txt
 site/node_modules/
 site/dist/
 site/.astro/
+site/.yarn/*
+!site/.yarn/releases/
+!site/.yarn/patches/

@@ -2,6 +2,7 @@
   "name": "ledgerly-site",
   "private": true,
   "type": "module",
+  "packageManager": "yarn@4.13.0",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
