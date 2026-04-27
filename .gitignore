@@ -130,3 +130,5 @@ l10n/untranslated-messages.txt
 # CocoIndex Code (ccc)
 /.cocoindex_code/
 /.worktrees/
+
+.superpowers
