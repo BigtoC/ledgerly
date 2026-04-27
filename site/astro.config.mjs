@@ -14,7 +14,10 @@ export default defineConfig({
         {
           label: 'Ledgerly Guide',
           items: [
-            { slug: 'ledgerly-guide/getting-started' }
+            { slug: 'ledgerly-guide/getting-started' },
+            { slug: 'ledgerly-guide/main-screens' },
+            { slug: 'ledgerly-guide/daily-usage' },
+            { slug: 'ledgerly-guide/mvp-limitations' }
           ]
         }
       ],
