@@ -1,9 +1,8 @@
 // lib/core/utils/icon_registry.dart
-import 'package:flutter/widgets.dart' show IconData;
-import 'package:material_symbols_icons/symbols.dart';
+import 'package:flutter/material.dart' show IconData, Icons;
 
 /// -----------------------------------------------------------------------
-/// ICON REGISTRY — stable string keys → Material Symbols `IconData`.
+/// ICON REGISTRY — stable string keys → Material Icons `IconData`.
 /// -----------------------------------------------------------------------
 /// `categories.icon` and `account_types.icon` are string keys. The UI
 /// resolves them to real [IconData] at render time via [iconForKey].
@@ -14,20 +13,20 @@ import 'package:material_symbols_icons/symbols.dart';
 ///   * Keys are portable across backup/restore and across future icon
 ///     font swaps.
 ///
-/// Keys are snake_case strings that match the canonical `Symbols.*` Dart
-/// identifier (e.g. the key `'restaurant'` resolves to `Symbols.restaurant`).
-/// Unknown / null / empty keys fall back to `Symbols.category` (see PRD.md
+/// Keys are snake_case strings that match the canonical `Icons.*` Dart
+/// identifier (e.g. the key `'restaurant'` resolves to `Icons.restaurant`).
+/// Unknown / null / empty keys fall back to `Icons.category` (see PRD.md
 /// → Icon & Color Registry, lines 816-823).
 ///
 /// Adding a key:
 ///   1. Append to [kIconRegistry] below. Never remove a key — if a seeded
 ///      row still references it, removing orphans the DB.
-///   2. If the glyph is not in `material_symbols_icons ^4.2803.0`, bump
-///      the package pin in `pubspec.yaml` in a separate PR.
+///   2. Use only icons from Flutter's built-in `Icons` class — they use the
+///      MaterialIcons font bundled with Flutter and are always available.
 /// -----------------------------------------------------------------------
 
 /// Fallback icon returned by [iconForKey] on an unknown, null, or empty key.
-const IconData kFallbackIcon = Symbols.category;
+const IconData kFallbackIcon = Icons.category;
 
 /// Stable-key → [IconData] map. See header for the add/remove policy.
 ///
@@ -36,36 +35,36 @@ const IconData kFallbackIcon = Symbols.category;
 /// §4.3, §4.4) must resolve through this map.
 const Map<String, IconData> kIconRegistry = <String, IconData>{
   // Expense category roots (PRD.md 459-477).
-  'restaurant': Symbols.restaurant,
-  'local_cafe': Symbols.local_cafe,
-  'directions_car': Symbols.directions_car,
-  'shopping_bag': Symbols.shopping_bag,
-  'home': Symbols.home,
-  'movie': Symbols.movie,
-  'medical_services': Symbols.medical_services,
-  'school': Symbols.school,
-  'self_care': Symbols.self_care,
-  'flight': Symbols.flight,
-  'devices': Symbols.devices,
-  'more_horiz': Symbols.more_horiz,
-  'category': Symbols.category,
+  'restaurant': Icons.restaurant,
+  'local_cafe': Icons.local_cafe,
+  'directions_car': Icons.directions_car,
+  'shopping_bag': Icons.shopping_bag,
+  'home': Icons.home,
+  'movie': Icons.movie,
+  'medical_services': Icons.medical_services,
+  'school': Icons.school,
+  'self_care': Icons.spa,
+  'flight': Icons.flight,
+  'devices': Icons.devices,
+  'more_horiz': Icons.more_horiz,
+  'category': Icons.category,
 
   // Income category roots (PRD.md 479-491).
-  'payments': Symbols.payments,
-  'work': Symbols.work,
-  'trending_up': Symbols.trending_up,
-  'redeem': Symbols.redeem,
-  'savings': Symbols.savings,
+  'payments': Icons.payments,
+  'work': Icons.work,
+  'trending_up': Icons.trending_up,
+  'redeem': Icons.redeem,
+  'savings': Icons.savings,
 
   // Default account types (PRD.md 497-500).
-  'wallet': Symbols.wallet,
+  'wallet': Icons.wallet,
   // 'trending_up' above is shared with the Investment account type.
 };
 
 /// Resolves an icon string [key] to an [IconData].
 ///
 /// Unknown / `null` / empty keys fall back to [kFallbackIcon]
-/// (`Symbols.category`). Never throws — a corrupted row in the DB should
+/// (`Icons.category`). Never throws — a corrupted row in the DB should
 /// still render *something*.
 IconData iconForKey(String? key) {
   if (key == null || key.isEmpty) return kFallbackIcon;
