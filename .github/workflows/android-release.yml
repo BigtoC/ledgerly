@@ -33,13 +33,39 @@ jobs:
       - name: Generate code
         run: dart run build_runner build --delete-conflicting-outputs
 
-      - name: Build release APK
-        run: flutter build apk --release
+      - name: Build split release APKs
+        run: flutter build apk --release --split-per-abi
 
-      - name: Prepare release asset
-        run: cp build/app/outputs/flutter-apk/app-release.apk "ledgerly-${GITHUB_REF_NAME}.apk"
+      - name: Prepare release assets
+        shell: bash
+        run: |
+          if [[ ! "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Unexpected ref name: ${GITHUB_REF_NAME}" >&2
+            exit 1
+          fi
+
+          shopt -s nullglob
+          files=(build/app/outputs/flutter-apk/app-*-release.apk)
+
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No split APKs found" >&2
+            exit 1
+          fi
+
+          for file in "${files[@]}"; do
+            base=$(basename "$file")
+            abi="${base#app-}"
+            abi="${abi%-release.apk}"
+            cp "$file" "ledgerly-${GITHUB_REF_NAME}-${abi}.apk"
+          done
+
+      - name: Generate checksums
+        shell: bash
+        run: shasum -a 256 ledgerly-${GITHUB_REF_NAME}-*.apk > ledgerly-${GITHUB_REF_NAME}-checksums.txt
 
       - name: Create GitHub release and upload APK
         uses: softprops/action-gh-release@v2
         with:
-          files: ledgerly-${{ github.ref_name }}.apk
+          files: |
+            ledgerly-${{ github.ref_name }}-*.apk
+            ledgerly-${{ github.ref_name }}-checksums.txt

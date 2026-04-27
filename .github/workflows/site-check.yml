@@ -1,0 +1,66 @@
+name: Site check
+
+on:
+  pull_request:
+    paths:
+      - 'site/**'
+      - '.github/workflows/site-check.yml'
+      - '.github/workflows/github-pages.yml'
+      - '.github/workflows/android-release.yml'
+      - 'README.md'
+      - '.gitignore'
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - '.github/workflows/site-check.yml'
+      - '.github/workflows/github-pages.yml'
+      - '.github/workflows/android-release.yml'
+      - 'README.md'
+      - '.gitignore'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Enable Corepack
+        run: |
+          corepack enable
+          corepack prepare yarn@4.13.0 --activate
+
+      - name: Cache Yarn artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.yarn/berry/cache
+            ~/.cache/yarn
+            site/.yarn/install-state.gz
+          key: ${{ runner.os }}-site-yarn-${{ hashFiles('site/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-site-yarn-
+
+      - name: Install site dependencies
+        run: yarn --cwd site install --immutable
+
+      - name: Audit site dependencies
+        run: yarn --cwd site npm audit --severity high
+
+      - name: Run site tests
+        run: yarn --cwd site test
+
+      - name: Run Astro checks
+        run: yarn --cwd site check
+
+      - name: Build site
+        run: yarn --cwd site build

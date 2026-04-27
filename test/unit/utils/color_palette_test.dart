@@ -23,7 +23,7 @@ void main() {
       // PRD.md 459-491, 497-500 — MD3 baseline hexes.
       expect(
         kCategoryColorPalette[CategoryPaletteIndex.red60].toARGB32(),
-        0xFFB3251E,
+        0xFFF55E57,
       );
       expect(
         kCategoryColorPalette[CategoryPaletteIndex.green40].toARGB32(),
@@ -91,7 +91,7 @@ void main() {
     // CHANGE — every user's seeded category/account-type colour is keyed
     // to a specific index. Only append new hexes; never reorder / remove.
     const List<int> goldenHexes = <int>[
-      0xFFB3251E, // 0  Red 60
+      0xFFF55E57, // 0  Red 60
       0xFF006C35, // 1  Green 40
       0xFF00BBDF, // 2  Cyan 70
       0xFF5629A4, // 3  Purple 30

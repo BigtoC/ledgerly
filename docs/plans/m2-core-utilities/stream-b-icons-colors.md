@@ -82,7 +82,7 @@ The MD3 baseline colors named by PRD 453–506 deduplicate into **11 unique entr
 
 | Index | MD3 name           | Hex       | Consumed by (preview)                                                      |
 |-------|--------------------|-----------|----------------------------------------------------------------------------|
-| `0`   | Red 60             | `#B3251E` | `category.food`                                                            |
+| `0`   | Red 60             | `#F55E57` | `category.food`                                                            |
 | `1`   | Green 40           | `#006C35` | `category.drinks`                                                          |
 | `2`   | Cyan 70            | `#00BBDF` | `category.transportation`, `category.travel` (shared, PRD 477)             |
 | `3`   | Purple 30          | `#5629A4` | `category.shopping`, `category.education` (shared, PRD 477)                |
@@ -227,7 +227,7 @@ import 'package:flutter/material.dart' show Color;
 
 /// Ordered, append-only MD3 baseline palette. Treat as `const`.
 const List<Color> kCategoryColorPalette = <Color>[
-  Color(0xFFB3251E), // 0  Red 60
+  Color(0xFFF55E57), // 0  Red 60
   Color(0xFF006C35), // 1  Green 40
   Color(0xFF00BBDF), // 2  Cyan 70
   Color(0xFF5629A4), // 3  Purple 30
@@ -394,7 +394,7 @@ The stub file (`// TODO(M2): ...`) doesn't even declare `kCategoryColorPalette`,
 test('palette indices resolve to PRD-specified MD3 baseline hexes', () {
   // PRD.md 459-491, 497-500 — MD3 baseline hexes.
   expect(kCategoryColorPalette[CategoryPaletteIndex.red60].toARGB32(),
-      0xFFB3251E);
+      0xFFF55E57);
   expect(kCategoryColorPalette[CategoryPaletteIndex.green40].toARGB32(),
       0xFF006C35);
   expect(kCategoryColorPalette[CategoryPaletteIndex.cyan70].toARGB32(),
@@ -459,7 +459,7 @@ group('palette is append-only (GOLDEN — see color_palette.dart header)', () {
   // CHANGE — every user's seeded category/account-type colour is keyed
   // to a specific index. Only append new hexes; never reorder / remove.
   const goldenHexes = <int>[
-    0xFFB3251E, // 0  Red 60
+    0xFFF55E57, // 0  Red 60
     0xFF006C35, // 1  Green 40
     0xFF00BBDF, // 2  Cyan 70
     0xFF5629A4, // 3  Purple 30

@@ -465,7 +465,7 @@ All seeded colors (categories and account types) are picked from the **Material 
 
 | Category       | Example memos (informational only)      | Color (MD3 baseline)                                               |
 |----------------|-----------------------------------------|--------------------------------------------------------------------|
-| Food           | Groceries, Restaurants                  | Red 60 — `#B3251E`                                                 |
+| Food           | Groceries, Restaurants                  | Red 60 — `#F55E57`                                                 |
 | Drinks         | Coffee, Alcohol, Beverages              | Green 40 — `#006C35`                                               |
 | Transportation | Gas, Public Transit, Taxi/Ride, Parking | Cyan 70 — `#00BBDF`                                                |
 | Shopping       | Clothing, Household                     | Purple 30 — `#5629A4`                                              |

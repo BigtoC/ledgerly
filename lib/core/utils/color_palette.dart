@@ -28,7 +28,7 @@ import 'package:flutter/material.dart' show Color;
 
 /// Ordered, append-only MD3 baseline palette. Treat as `const`.
 const List<Color> kCategoryColorPalette = <Color>[
-  Color(0xFFB3251E), // 0  Red 60
+  Color(0xFFF55E57), // 0  Red 60
   Color(0xFF006C35), // 1  Green 40
   Color(0xFF00BBDF), // 2  Cyan 70
   Color(0xFF5629A4), // 3  Purple 30

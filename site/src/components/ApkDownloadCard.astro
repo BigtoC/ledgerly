@@ -1,0 +1,102 @@
+---
+import { collectApkAssets, recommendPrimaryAsset } from '../lib/apk-release';
+
+const RELEASES_URL = 'https://github.com/BigtoC/ledgerly/releases';
+
+interface LatestReleaseAsset {
+  name: string;
+  browser_download_url: string;
+}
+
+interface LatestReleaseResponse {
+  html_url?: string;
+  assets?: LatestReleaseAsset[];
+}
+
+const abiLabel = {
+  'arm64-v8a': 'arm64',
+  'armeabi-v7a': 'armeabi-v7a',
+  'x86_64': 'x86_64',
+} as const;
+
+let recommended: import('../lib/apk-release').ClassifiedApkAsset | null = null;
+let alternatives: import('../lib/apk-release').ClassifiedApkAsset[] = [];
+let checksumUrl: string | null = null;
+
+try {
+  const response = await fetch(
+    'https://api.github.com/repos/BigtoC/ledgerly/releases/latest',
+  );
+
+  if (response.ok) {
+    const data = (await response.json()) as LatestReleaseResponse;
+    const assets = data.assets ?? [];
+    const classified = collectApkAssets(assets);
+
+    recommended = recommendPrimaryAsset(classified);
+    alternatives = classified.filter((asset) => asset !== recommended);
+
+    const checksumAsset = assets.find((asset) =>
+      asset.name.endsWith('-checksums.txt'));
+
+    checksumUrl = checksumAsset?.browser_download_url ?? null;
+  }
+} catch {
+  // Build-time release fetch is optional. Fall back to the releases page.
+}
+
+const primaryLabel = recommended?.abi === 'arm64-v8a'
+  ? 'Download for Android (arm64 — most phones)'
+  : recommended
+    ? `Download for Android (${abiLabel[recommended.abi]})`
+    : null;
+---
+
+<aside class="apk-download-card">
+  <div class="apk-download-card__content">
+    <p class="apk-download-card__eyebrow">Android APK</p>
+    <h2 class="apk-download-card__title">Install Ledgerly on your phone</h2>
+
+    {recommended ? (
+      <>
+        <a class="apk-download-card__primary" href={recommended.url}>
+          {primaryLabel}
+        </a>
+
+        {checksumUrl ? (
+          <a class="apk-download-card__checksum" href={checksumUrl}>
+            View SHA-256 checksums
+          </a>
+        ) : null}
+
+        {alternatives.length > 0 ? (
+          <div class="apk-download-card__alternatives">
+            <h3>Other architectures</h3>
+            <ul>
+              {alternatives.map((asset) => (
+                <li>
+                  <a href={asset.url}>
+                    Download {asset.abi}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        <p class="apk-download-card__note">
+          Not sure which to choose? Most modern Android phones use arm64-v8a.
+        </p>
+      </>
+    ) : (
+      <>
+        <a class="apk-download-card__primary" href={RELEASES_URL}>
+          Download from GitHub Releases
+        </a>
+        <p class="apk-download-card__note">
+          If the latest release metadata is unavailable during the site build, use the GitHub releases page instead.
+        </p>
+      </>
+    )}
+  </div>
+</aside>

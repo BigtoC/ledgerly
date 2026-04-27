@@ -7,6 +7,10 @@ The authoritative spec is **[`PRD.md`](PRD.md)**. When this file and the
 PRD disagree, the PRD wins. The milestone sequencing lives in
 [`docs/plans/implementation-plan.md`](docs/plans/implementation-plan.md).
 
+[![CI](https://github.com/BigtoC/ledgerly/actions/workflows/ci.yml/badge.svg)](https://github.com/BigtoC/ledgerly/actions/workflows/ci.yml)
+[![Android release](https://github.com/BigtoC/ledgerly/actions/workflows/android-release.yml/badge.svg)](https://github.com/BigtoC/ledgerly/actions/workflows/android-release.yml)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/BigtoC/ledgerly)
+
 ## Status
 
 M5 complete — all six feature slices (Splash, Home, Transactions, Categories,
@@ -177,6 +181,21 @@ dart format .
 Regenerate code whenever a `@freezed`, `@riverpod`, or Drift
 `@DriftDatabase` / `@DataClassName` annotation changes — the build fails
 loudly if generated files are stale.
+
+## Website
+
+```bash
+corepack enable
+yarn --cwd site install
+yarn --cwd site dev
+yarn --cwd site test
+yarn --cwd site check
+yarn --cwd site build
+```
+
+GitHub Pages deploys from `.github/workflows/github-pages.yml`. The public APK
+download button on the site resolves the latest GitHub Release at Astro build
+time and falls back to the Releases page when release metadata is unavailable.
 
 ## Project layout
 

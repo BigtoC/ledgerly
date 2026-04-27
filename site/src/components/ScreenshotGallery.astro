@@ -1,0 +1,59 @@
+---
+import { Image } from 'astro:assets';
+import splash from '../assets/screenshots/splash.png';
+import home from '../assets/screenshots/home.png';
+import transactionForm from '../assets/screenshots/transaction-form.png';
+import accounts from '../assets/screenshots/accounts.png';
+import settings from '../assets/screenshots/settings.png';
+
+const screenshots = [
+  {
+    src: splash,
+    name: "Splash",
+    caption: "Displays the number of days since tracking began",
+    alt: "Ledgerly splash screen — displays the number of days since tracking began"
+  },
+  {
+    src: home,
+    name: "Home",
+    caption: "Shows the daily transaction list and account balance summary",
+    alt: "Ledgerly home screen — shows the daily transaction list and account balance summary"
+  },
+  {
+    src: transactionForm,
+    name: "Add Transaction",
+    caption: "Calculator-style keypad with category and account selectors",
+    alt: "Ledgerly add transaction screen — calculator-style keypad with category and account selectors"
+  },
+  {
+    src: accounts,
+    name: "Accounts",
+    caption: "Lists all accounts with their current balances",
+    alt: "Ledgerly accounts screen — lists all accounts with their current balances"
+  },
+  {
+    src: settings,
+    name: "Settings",
+    caption: "Currency, splash toggle, and app preferences",
+    alt: "Ledgerly settings screen — currency, splash toggle, and app preferences"
+  }
+];
+---
+
+<div class="screenshot-gallery">
+  {screenshots.map((s) => (
+    <div class="screenshot-card">
+      <div class="screenshot-image-wrapper">
+        {s.src ? (
+          <Image src={s.src} alt={s.alt} width={280} />
+        ) : (
+          <div class="screenshot-placeholder" />
+        )}
+      </div>
+      <div class="screenshot-info">
+        <h3>{s.name}</h3>
+        <p>{s.caption}</p>
+      </div>
+    </div>
+  ))}
+</div>

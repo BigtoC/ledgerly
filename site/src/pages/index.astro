@@ -1,0 +1,65 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import ApkDownloadCard from '../components/ApkDownloadCard.astro';
+import ScreenshotGallery from '../components/ScreenshotGallery.astro';
+---
+
+<StarlightPage
+  frontmatter={{
+    title: 'Ledgerly',
+    description: 'Private, local-first expense tracking.',
+    template: 'splash'
+  }}
+  hasSidebar={false}
+>
+  <div class="home-shell">
+    <section class="home-hero">
+      <div class="hero-text">
+        <h1>Ledgerly</h1>
+        <p class="app-promise">Track your spending privately. No cloud, no subscriptions, no data leaving your phone.</p>
+        <div class="hero-actions">
+          <a class="secondary-cta" href="./ledgerly-guide/getting-started/">Read the Ledgerly Guide</a>
+        </div>
+      </div>
+      <div class="hero-card">
+        <ApkDownloadCard />
+      </div>
+    </section>
+
+    <section class="benefits-grid">
+      <div class="benefit-item">
+        <h3>Local-First Privacy</h3>
+        <p>Your financial data stays on your device. No accounts, no cloud sync, no tracking.</p>
+      </div>
+      <div class="benefit-item">
+        <h3>Zero Subscriptions</h3>
+        <p>A one-time setup and you're good to go. No recurring fees to manage your own money.</p>
+      </div>
+      <div class="benefit-item">
+        <h3>Fast Manual Entry</h3>
+        <p>A calculator-style keypad optimized for quickly logging expenses on the go.</p>
+      </div>
+    </section>
+
+    <section class="screenshots-section">
+      <h2>Inside the App</h2>
+      <ScreenshotGallery />
+    </section>
+
+    <section class="how-it-works">
+      <h2>How it works</h2>
+      <ol class="steps-list">
+        <li><strong>Install:</strong> Download the APK and install Ledgerly on your Android device.</li>
+        <li><strong>Add your first account:</strong> Set up a cash or checking account to track your balance.</li>
+        <li><strong>Log a transaction:</strong> Tap to record expenses or income in seconds.</li>
+      </ol>
+      <div class="android-install-note">
+        <p><strong>Note:</strong> Ledgerly is distributed as an APK. Enable 'Install from unknown sources' in your Android settings, download the APK above, and tap to install.</p>
+      </div>
+    </section>
+
+    <section class="limitations-note">
+      <a href="./ledgerly-guide/mvp-limitations/">See what the current build doesn't include yet →</a>
+    </section>
+  </div>
+</StarlightPage>
