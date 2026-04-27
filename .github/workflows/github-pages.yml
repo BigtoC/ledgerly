@@ -27,8 +27,11 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
-          cache: npm
-          cache-dependency-path: site/package-lock.json
+          cache: yarn
+          cache-dependency-path: site/yarn.lock
+
+      - name: Enable Corepack
+        run: corepack enable
 
       - name: Build site with Astro action
         uses: withastro/action@56781b97402ce0487b7e61ce2cb960c0e2cc5289 # v3

@@ -14,8 +14,8 @@ tags:
   - astro
   - starlight
   - github-pages
-  - npm-ci
-  - npm-audit
+  - yarn
+  - corepack
   - workflows
   - static-site
 ---
@@ -24,35 +24,36 @@ tags:
 
 ## Context
 
-The Ledgerly GitHub Pages site introduced a separate `site/` Node workspace with its own CI and deployment workflows. Two easy-to-miss issues surfaced while validating that setup: running `npm ci` concurrently with `test`/`check`/`build` produced false missing-module failures, and the original Astro 5 plus Starlight 0.30 stack failed the planned `npm audit --audit-level=high` gate because Astro 5 is covered by a high-severity advisory.
+The Ledgerly GitHub Pages site introduced a separate `site/` Node workspace with its own CI and deployment workflows. Two easy-to-miss issues surfaced while validating that setup: running the package-manager install concurrently with `test`/`check`/`build` produced false missing-module failures, and the original Astro 5 plus Starlight 0.30 stack failed the security-gated dependency audit because Astro 5 is covered by a high-severity advisory.
 
 ## Guidance
 
 Verify the site workflow commands sequentially from a clean install, matching the workflow order.
 
-Do not run `npm --prefix site ci` in parallel with `npm --prefix site run test`, `npm --prefix site run check`, or `npm --prefix site run build`. `npm ci` rewrites `site/node_modules`, so parallel execution can produce transient `MODULE_NOT_FOUND` errors that do not reflect a real lockfile problem.
+Do not run `yarn --cwd site install --immutable` in parallel with `yarn --cwd site test`, `yarn --cwd site check`, or `yarn --cwd site build`. A clean install rewrites `site/node_modules`, so parallel execution can produce transient `MODULE_NOT_FOUND` errors that do not reflect a real lockfile problem.
 
 Use the same command order as the workflow:
 
 ```bash
-npm --prefix site ci && \
-  npm --prefix site audit --audit-level=high && \
-  npm --prefix site run test && \
-  npm --prefix site run check && \
-  npm --prefix site run build
+corepack enable && \
+  yarn --cwd site install --immutable && \
+  yarn --cwd site npm audit --severity high && \
+  yarn --cwd site test && \
+  yarn --cwd site check && \
+  yarn --cwd site build
 ```
 
 Keep the APK card fallback pointed at the repository releases index, not the latest release page.
 
 When the latest-release fetch succeeds but the release assets do not include recognized split APK names, the homepage should still send users to `https://github.com/BigtoC/ledgerly/releases`. Falling back to a single release page makes a malformed or incomplete release look authoritative.
 
-When the site workflow includes `npm audit --audit-level=high`, treat security-driven dependency upgrades as part of workflow correctness, not optional maintenance.
+When the site workflow includes a package audit gate, treat security-driven dependency upgrades as part of workflow correctness, not optional maintenance.
 
 For Ledgerly's site, the minimal working move was:
 
 - upgrade `astro` from the Astro 5 line to `^6.1.9`
 - upgrade `@astrojs/starlight` from `^0.30.0` to `^0.38.4`
-- regenerate `site/package-lock.json`
+- regenerate the committed site lockfile
 - update Starlight config to the newer `social` array shape
 
 ```js
@@ -76,9 +77,9 @@ This keeps the local verification path aligned with CI instead of validating aga
 
 ## When to Apply
 
-- A new workflow uses `npm ci` and additional Node-based checks.
+- A new workflow uses a clean package-manager install and additional Node-based checks.
 - Local verification succeeds only when using an already-populated `node_modules/` tree.
-- `npm audit --audit-level=high` fails for framework-level advisories.
+- The package audit step fails for framework-level advisories.
 - A Starlight upgrade starts failing in config parsing after dependency updates.
 - A release-aware download component needs a resilient fallback path.
 
@@ -87,11 +88,12 @@ This keeps the local verification path aligned with CI instead of validating aga
 - Correct local verification path for the Ledgerly site:
 
 ```bash
-npm --prefix site ci
-npm --prefix site audit --audit-level=high
-npm --prefix site run test
-npm --prefix site run check
-npm --prefix site run build
+corepack enable
+yarn --cwd site install --immutable
+yarn --cwd site npm audit --severity high
+yarn --cwd site test
+yarn --cwd site check
+yarn --cwd site build
 ```
 
 - Correct release-card fallback:
@@ -116,6 +118,6 @@ social: [
 
 ## Related
 
-- `site/package.json` and `site/package-lock.json` — the audited dependency surface for the site workspace
+- `site/package.json` and `site/yarn.lock` — the audited dependency surface for the site workspace
 - `.github/workflows/site-check.yml` — workflow command order to mirror locally
 - `site/src/components/ApkDownloadCard.astro` — static latest-release fetch and fallback behavior

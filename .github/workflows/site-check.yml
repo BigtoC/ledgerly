@@ -33,20 +33,23 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
-          cache: npm
-          cache-dependency-path: site/package-lock.json
+          cache: yarn
+          cache-dependency-path: site/yarn.lock
+
+      - name: Enable Corepack
+        run: corepack enable
 
       - name: Install site dependencies
-        run: npm --prefix site ci
+        run: yarn --cwd site install --immutable
 
       - name: Audit site dependencies
-        run: npm --prefix site audit --audit-level=high
+        run: yarn --cwd site npm audit --severity high
 
       - name: Run site tests
-        run: npm --prefix site run test
+        run: yarn --cwd site test
 
       - name: Run Astro checks
-        run: npm --prefix site run check
+        run: yarn --cwd site check
 
       - name: Build site
-        run: npm --prefix site run build
+        run: yarn --cwd site build
