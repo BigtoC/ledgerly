@@ -1,0 +1,52 @@
+name: Site check
+
+on:
+  pull_request:
+    paths:
+      - 'site/**'
+      - '.github/workflows/site-check.yml'
+      - '.github/workflows/github-pages.yml'
+      - '.github/workflows/android-release.yml'
+      - 'README.md'
+      - '.gitignore'
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - '.github/workflows/site-check.yml'
+      - '.github/workflows/github-pages.yml'
+      - '.github/workflows/android-release.yml'
+      - 'README.md'
+      - '.gitignore'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Install site dependencies
+        run: npm --prefix site ci
+
+      - name: Audit site dependencies
+        run: npm --prefix site audit --audit-level=high
+
+      - name: Run site tests
+        run: npm --prefix site run test
+
+      - name: Run Astro checks
+        run: npm --prefix site run check
+
+      - name: Build site
+        run: npm --prefix site run build

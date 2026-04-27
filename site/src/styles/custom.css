@@ -37,18 +37,6 @@
   margin-top: 1rem;
 }
 
-.download-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--sl-color-gray-6);
-  border: 1px solid var(--sl-color-gray-5);
-  border-radius: 0.5rem;
-  padding: 2rem;
-  text-align: center;
-  min-height: 44px;
-}
-
 .secondary-cta {
   display: inline-flex;
   align-items: center;
@@ -66,6 +54,102 @@
 .secondary-cta:hover {
   background-color: var(--sl-color-accent);
   color: var(--sl-color-gray-9);
+}
+
+.apk-download-card {
+  background: linear-gradient(
+    180deg,
+    var(--sl-color-gray-7) 0%,
+    var(--sl-color-gray-8) 100%
+  );
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 1rem;
+  box-shadow: 0 1rem 2rem rgb(0 0 0 / 18%);
+}
+
+.apk-download-card__content {
+  display: grid;
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.apk-download-card__eyebrow {
+  color: var(--sl-color-accent-high);
+  font-size: var(--sl-text-sm);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.apk-download-card__title {
+  color: var(--sl-color-white);
+  font-size: var(--sl-text-h4);
+  margin: 0;
+}
+
+.apk-download-card__primary,
+.apk-download-card__checksum,
+.apk-download-card__alternatives a {
+  align-items: center;
+  border-radius: 0.75rem;
+  display: inline-flex;
+  min-height: 44px;
+  text-decoration: none;
+}
+
+.apk-download-card__primary {
+  background-color: var(--sl-color-accent);
+  color: var(--sl-color-black);
+  font-weight: 700;
+  justify-content: center;
+  padding: 0.75rem 1rem;
+}
+
+.apk-download-card__primary:hover {
+  background-color: var(--sl-color-accent-high);
+}
+
+.apk-download-card__checksum {
+  color: var(--sl-color-accent-high);
+  justify-content: flex-start;
+}
+
+.apk-download-card__alternatives {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.apk-download-card__alternatives h3 {
+  color: var(--sl-color-white);
+  font-size: var(--sl-text-h5);
+  margin: 0;
+}
+
+.apk-download-card__alternatives ul {
+  display: grid;
+  gap: 0.75rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.apk-download-card__alternatives a {
+  border: 1px solid var(--sl-color-gray-4);
+  color: var(--sl-color-gray-2);
+  justify-content: center;
+  padding: 0.75rem 1rem;
+}
+
+.apk-download-card__alternatives a:hover,
+.apk-download-card__checksum:hover {
+  color: var(--sl-color-white);
+}
+
+.apk-download-card__note {
+  color: var(--sl-color-gray-3);
+  font-size: var(--sl-text-sm);
+  margin: 0;
 }
 
 /* Benefits Grid */

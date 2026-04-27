@@ -182,6 +182,20 @@ Regenerate code whenever a `@freezed`, `@riverpod`, or Drift
 `@DriftDatabase` / `@DataClassName` annotation changes — the build fails
 loudly if generated files are stale.
 
+## Website
+
+```bash
+npm --prefix site install
+npm --prefix site run dev
+npm --prefix site run test
+npm --prefix site run check
+npm --prefix site run build
+```
+
+GitHub Pages deploys from `.github/workflows/github-pages.yml`. The public APK
+download button on the site resolves the latest GitHub Release at Astro build
+time and falls back to the Releases page when release metadata is unavailable.
+
 ## Project layout
 
 ```text
