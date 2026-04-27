@@ -39,7 +39,7 @@ void main() {
         await tester.runAsync(() async {
           await runTestSeed(db);
           final foodId = await getSeededCategoryId(db, 'category.food');
-          final cash = await getFirstActiveAccount(db);
+          final cash = await getDefaultAccount(db);
           final inserted = await insertTestTransaction(
             db,
             accountId: cash.id,
@@ -107,7 +107,7 @@ void main() {
         await tester.runAsync(() async {
           await runTestSeed(db);
           final foodId = await getSeededCategoryId(db, 'category.food');
-          final cash = await getFirstActiveAccount(db);
+          final cash = await getDefaultAccount(db);
           final inserted = await insertTestTransaction(
             db,
             accountId: cash.id,

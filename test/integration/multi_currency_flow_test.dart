@@ -31,7 +31,7 @@ void main() {
         // Investment account, then insert one expense per currency.
         await tester.runAsync(() async {
           final foodId = await getSeededCategoryId(db, 'category.food');
-          final cash = await getFirstActiveAccount(db);
+          final cash = await getDefaultAccount(db);
 
           final investmentTypeId = await getAccountTypeId(
             db,
@@ -108,7 +108,7 @@ void main() {
 
         await tester.runAsync(() async {
           final foodId = await getSeededCategoryId(db, 'category.food');
-          final cash = await getFirstActiveAccount(db);
+          final cash = await getDefaultAccount(db);
           await insertTestTransaction(
             db,
             accountId: cash.id,

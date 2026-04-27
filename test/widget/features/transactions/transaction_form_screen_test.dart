@@ -165,7 +165,7 @@ void main() {
     );
   }
 
-  Widget mountEdit(int id) {
+  Widget mountEdit(int id, {double? textScale}) {
     final router = GoRouter(
       initialLocation: '/home/edit/$id',
       routes: [
@@ -194,6 +194,14 @@ void main() {
         routerConfig: router,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
+        builder: textScale == null
+            ? null
+            : (context, child) => MediaQuery(
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(textScaler: TextScaler.linear(textScale)),
+                child: child!,
+              ),
       ),
     );
   }
@@ -468,44 +476,7 @@ void main() {
       (_) async => _persistedTx(memo: 'A long memo that pushes the form a bit'),
     );
 
-    final router = GoRouter(
-      initialLocation: '/home/edit/99',
-      routes: [
-        GoRoute(
-          path: '/home',
-          builder: (_, _) => const _HomeStub(),
-          routes: [
-            GoRoute(
-              path: 'edit/:id',
-              builder: (_, state) => TransactionFormScreen(
-                transactionId: int.parse(state.pathParameters['id']!),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          transactionRepositoryProvider.overrideWithValue(txRepo),
-          accountRepositoryProvider.overrideWithValue(accountRepo),
-          categoryRepositoryProvider.overrideWithValue(categoryRepo),
-          userPreferencesRepositoryProvider.overrideWithValue(prefs),
-        ],
-        child: MaterialApp.router(
-          routerConfig: router,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(
-              context,
-            ).copyWith(textScaler: const TextScaler.linear(2.0)),
-            child: child!,
-          ),
-        ),
-      ),
-    );
+    await tester.pumpWidget(mountEdit(99, textScale: 2.0));
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);

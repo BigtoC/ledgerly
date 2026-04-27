@@ -197,11 +197,11 @@ Future<int> getSeededCategoryId(AppDatabase db, String l10nKey) async {
   return cat.id;
 }
 
-/// Returns the seeded default Cash account by reading
-/// `user_preferences.default_account_id` and then `getById`. This avoids
-/// the stream-subscription cleanup timer that `watchAll().first` would
-/// schedule under FakeAsync. Caller MUST wrap in `tester.runAsync`.
-Future<Account> getFirstActiveAccount(AppDatabase db) async {
+/// Returns the account currently pointed to by
+/// `user_preferences.default_account_id`. This avoids the
+/// stream-subscription cleanup timer that `watchAll().first` would schedule
+/// under FakeAsync. Caller MUST wrap in `tester.runAsync`.
+Future<Account> getDefaultAccount(AppDatabase db) async {
   final currencies = DriftCurrencyRepository(db);
   final defaultId = await DriftUserPreferencesRepository(
     db,

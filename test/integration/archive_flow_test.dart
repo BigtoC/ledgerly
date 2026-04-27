@@ -39,7 +39,7 @@ void main() {
         late int foodId;
         await tester.runAsync(() async {
           foodId = await getSeededCategoryId(db, 'category.food');
-          final cash = await getFirstActiveAccount(db);
+          final cash = await getDefaultAccount(db);
           await insertTestTransaction(
             db,
             accountId: cash.id,
@@ -115,7 +115,7 @@ void main() {
         // so archiving Cash does not strand the form / pickers, then
         // archive Cash via the repository.
         await tester.runAsync(() async {
-          final cashAccount = await getFirstActiveAccount(db);
+          final cashAccount = await getDefaultAccount(db);
           final investmentTypeId = await getAccountTypeId(
             db,
             'accountType.investment',
