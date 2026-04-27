@@ -436,10 +436,6 @@
   "@settingsThemeDark": {
     "description": "Settings plan §3.2. Theme-mode option — dark."
   },
-  "settingsThemeSystem": "System",
-  "@settingsThemeSystem": {
-    "description": "Settings plan §3.2. Theme-mode option — follow system."
-  },
   "settingsLanguageLabel": "Language",
   "@settingsLanguageLabel": {
     "description": "Settings plan §3.2. Label for the language selector."

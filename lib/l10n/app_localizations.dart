@@ -724,12 +724,6 @@ abstract class AppLocalizations {
   /// **'Dark'**
   String get settingsThemeDark;
 
-  /// Settings plan §3.2. Theme-mode option — follow system.
-  ///
-  /// In en, this message translates to:
-  /// **'System'**
-  String get settingsThemeSystem;
-
   /// Settings plan §3.2. Label for the language selector.
   ///
   /// In en, this message translates to:
