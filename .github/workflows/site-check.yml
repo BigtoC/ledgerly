@@ -33,11 +33,22 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: '22'
-          cache: yarn
-          cache-dependency-path: site/yarn.lock
 
       - name: Enable Corepack
-        run: corepack enable
+        run: |
+          corepack enable
+          corepack prepare yarn@4.13.0 --activate
+
+      - name: Cache Yarn artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.yarn/berry/cache
+            ~/.cache/yarn
+            site/.yarn/install-state.gz
+          key: ${{ runner.os }}-site-yarn-${{ hashFiles('site/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-site-yarn-
 
       - name: Install site dependencies
         run: yarn --cwd site install --immutable

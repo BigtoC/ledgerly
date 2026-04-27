@@ -13,7 +13,7 @@
 ## Locked Decisions
 
 - Use a dedicated `site/` workspace instead of mixing Node files into the Flutter root.
-- Use `npm` with a committed `site/package-lock.json` so `withastro/action` can auto-detect the package manager.
+- Use Yarn 4 with a committed `site/yarn.lock` and `packageManager` metadata in `site/package.json`.
 - Use Starlight + custom CSS only. Do not add Tailwind unless the homepage styling proves blocked without it.
 - Put the public guide under `site/src/content/docs/ledgerly-guide/` as four Markdown pages.
 - Keep Flutter CI unchanged; add dedicated site validation and Pages deployment workflows instead of forcing Node work into `.github/workflows/ci.yml`.
@@ -36,7 +36,7 @@
 - Create: `.github/workflows/site-check.yml` — validate the site on PRs and relevant pushes.
 - Create: `.github/workflows/github-pages.yml` — build and deploy `site/` to GitHub Pages.
 - Create: `site/package.json` — Node scripts and dependencies.
-- Create: `site/package-lock.json` — committed lockfile for CI and Pages builds.
+- Create: `site/yarn.lock` — committed lockfile for CI and Pages builds.
 - Create: `site/tsconfig.json` — strict Astro TypeScript config.
 - Create: `site/astro.config.mjs` — `site`, `base`, Starlight integration, sidebar, custom CSS.
 - Create: `site/src/content.config.ts` — Starlight content collection config.
@@ -64,7 +64,7 @@
 - Modify: `.gitignore`
 - Create: `site/package.json`
 - Create: `site/tsconfig.json`
-- Create: `site/package-lock.json`
+- Create: `site/yarn.lock`
 
 **Why this task exists:** The repo currently has no Node workspace, no lockfile, and no `site/` folder. Build reproducibility must land before any page or workflow work.
 
@@ -125,16 +125,16 @@ Write `site/tsconfig.json`:
 
 - [ ] **Step 4: Install the site dependencies and generate the lockfile**
 
-Run: `npm --prefix site install`
+Run: `corepack enable && yarn --cwd site install`
 
 Expected:
 - command exits `0`
-- `site/package-lock.json` is created
+- `site/yarn.lock` is created
 - `site/node_modules/` is populated locally
 
 - [ ] **Step 5: Sanity-check the installed Astro CLI before adding app code**
 
-Run: `npm --prefix site exec astro --version`
+Run: `yarn --cwd site astro --version`
 
 Expected:
 - command exits `0`
@@ -143,7 +143,7 @@ Expected:
 - [ ] **Step 6: Commit the bootstrap-only change**
 
 ```bash
-git add .gitignore site/package.json site/package-lock.json site/tsconfig.json
+git add .gitignore site/package.json site/yarn.lock site/tsconfig.json
 git commit -m "build(site): scaffold astro workspace"
 ```
 
@@ -282,20 +282,20 @@ Ledgerly is a private, local-first expense tracker for fast manual bookkeeping.
 
 - [ ] **Step 6: Run type and build verification for the shell**
 
-Run: `npm --prefix site run check`
+Run: `yarn --cwd site check`
 
 Expected:
 - exits `0`
 - no Starlight content-schema errors
 
-Run: `npm --prefix site run build`
+Run: `yarn --cwd site build`
 
 Expected:
 - exits `0`
 - `site/dist/index.html` exists
 - `site/dist/ledgerly-guide/getting-started/index.html` exists
 
-**Note:** Do not open these files directly in a browser (`file://`) to check links — the `base: '/ledgerly'` config bakes the subpath into all asset URLs, which will appear broken when opened as files. Use `npm --prefix site run preview` to verify links correctly under the configured base path.
+**Note:** Do not open these files directly in a browser (`file://`) to check links — the `base: '/ledgerly'` config bakes the subpath into all asset URLs, which will appear broken when opened as files. Use `yarn --cwd site preview` to verify links correctly under the configured base path.
 
 - [ ] **Step 7: Commit the shell once both commands pass**
 
@@ -396,13 +396,13 @@ Modify `site/astro.config.mjs` so the `Ledgerly Guide` group becomes:
 
 - [ ] **Step 6: Re-run Starlight verification once all four guide pages exist**
 
-Run: `npm --prefix site run check`
+Run: `yarn --cwd site check`
 
 Expected:
 - exits `0`
 - no missing sidebar slug errors
 
-Run: `npm --prefix site run build`
+Run: `yarn --cwd site build`
 
 Expected:
 - exits `0`
@@ -508,13 +508,13 @@ Do not introduce a second global stylesheet.
 
 - [ ] **Step 5: Run the site build and a manual local preview**
 
-Run: `npm --prefix site run build`
+Run: `yarn --cwd site build`
 
 Expected:
 - exits `0`
 - homepage and guide pages emit successfully
 
-Run: `npm --prefix site run dev`
+Run: `yarn --cwd site dev`
 
 Expected:
 - local preview URL appears
@@ -567,7 +567,7 @@ Do **not** add tests for `isAndroidUserAgent` — that function is removed from 
 
 - [ ] **Step 2: Run the test suite before implementing the helper**
 
-Run: `npm --prefix site run test`
+Run: `yarn --cwd site test`
 
 Expected:
 - FAIL
@@ -614,7 +614,7 @@ Recommendation rule: prefer `arm64-v8a`, then `armeabi-v7a`, then `x86_64`. The 
 
 - [ ] **Step 2: Run the unit tests and make them pass before touching the homepage**
 
-Run: `npm --prefix site run test`
+Run: `yarn --cwd site test`
 
 Expected:
 - PASS
@@ -679,21 +679,21 @@ Keep the guide CTA separate from the download card.
 
 - [ ] **Step 5: Verify test, type, and build paths together**
 
-Run: `npm --prefix site run test`
+Run: `yarn --cwd site test`
 
 Expected: PASS
 
-Run: `npm --prefix site run check`
+Run: `yarn --cwd site check`
 
 Expected: PASS
 
-Run: `npm --prefix site run build`
+Run: `yarn --cwd site build`
 
 Expected: PASS — if no GitHub release exists yet, the card renders the static fallback link; this is correct behavior.
 
 - [ ] **Step 6: Preview the homepage in a browser before committing**
 
-Run: `npm --prefix site run preview`
+Run: `yarn --cwd site preview`
 
 Manual checks:
 - if a GitHub Release exists, the card shows the recommended arm64-v8a download link and alternatives
@@ -847,11 +847,12 @@ on:
 Its job should:
 - checkout
 - setup Node 22 using `actions/setup-node@v4` with `node-version: '22'`
-- run `npm --prefix site ci`
-- run `npm --prefix site audit --audit-level=high`
-- run `npm --prefix site run test`
-- run `npm --prefix site run check`
-- run `npm --prefix site run build`
+- run `corepack enable`
+- run `yarn --cwd site install --immutable`
+- run `yarn --cwd site npm audit --severity high`
+- run `yarn --cwd site test`
+- run `yarn --cwd site check`
+- run `yarn --cwd site build`
 
 - [ ] **Step 2: Create the GitHub Pages deployment workflow using Astro’s official action**
 
@@ -872,11 +873,12 @@ Required details:
 Add a short `## Website` section to `README.md` with commands like:
 
 ```bash
-npm --prefix site install
-npm --prefix site run dev
-npm --prefix site run test
-npm --prefix site run check
-npm --prefix site run build
+corepack enable
+yarn --cwd site install
+yarn --cwd site dev
+yarn --cwd site test
+yarn --cwd site check
+yarn --cwd site build
 ```
 
 Also mention that GitHub Pages deploys from `.github/workflows/github-pages.yml` and that the public APK button reads the latest GitHub Release.
@@ -886,10 +888,11 @@ Also mention that GitHub Pages deploys from `.github/workflows/github-pages.yml`
 Run:
 
 ```bash
-npm --prefix site ci
-npm --prefix site run test
-npm --prefix site run check
-npm --prefix site run build
+corepack enable
+yarn --cwd site install --immutable
+yarn --cwd site test
+yarn --cwd site check
+yarn --cwd site build
 ```
 
 Expected:
@@ -924,9 +927,9 @@ git commit -m "ci(site): add validation and pages deploy"
 Run:
 
 ```bash
-npm --prefix site run test
-npm --prefix site run check
-npm --prefix site run build
+yarn --cwd site test
+yarn --cwd site check
+yarn --cwd site build
 ```
 
 Expected:
@@ -946,7 +949,7 @@ Also verify that a real tagged GitHub release uploaded the renamed assets listed
 
 - [ ] **Step 3: Smoke-test the built site in a browser**
 
-Run: `npm --prefix site run preview`
+Run: `yarn --cwd site preview`
 
 Manual checks:
 - homepage hero and screenshot gallery render

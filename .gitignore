@@ -140,4 +140,5 @@ site/.astro/
 site/.yarn/*
 !site/.yarn/releases/
 !site/.yarn/patches/
+site/.yarn/install-state.gz
 !site/yarn.lock
