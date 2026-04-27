@@ -1,6 +1,6 @@
 // Theme-mode selector (plan §3.1, §5).
 //
-// A segmented control over `ThemeMode.{light, dark, system}`. Writes via
+// A segmented control over `ThemeMode.{light, dark}`. Writes via
 // `SettingsController.setThemeMode`; the M4 `themeModeProvider` re-emits
 // through the repository stream and `MaterialApp.themeMode` rebuilds —
 // no direct `MaterialApp.theme` tweak from this slice (plan §13 risk #1).
@@ -42,11 +42,6 @@ class ThemeModeSelector extends ConsumerWidget {
                 value: ThemeMode.dark,
                 label: Text(l10n.settingsThemeDark),
                 icon: const Icon(Icons.dark_mode),
-              ),
-              ButtonSegment(
-                value: ThemeMode.system,
-                label: Text(l10n.settingsThemeSystem),
-                icon: const Icon(Icons.brightness_auto),
               ),
             ],
             selected: {value},

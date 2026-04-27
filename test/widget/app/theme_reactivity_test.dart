@@ -75,7 +75,7 @@ void main() {
           tester.element(find.byType(Scaffold).first),
         ).brightness;
         expect(initialBrightness, Brightness.light);
-        expect(container.read(themeModeProvider), ThemeMode.system);
+        expect(container.read(themeModeProvider), ThemeMode.light);
 
         controller.add(ThemeMode.dark);
         await container.pump();

@@ -165,7 +165,7 @@ void main() {
       // Preferences.
       expect(await h.preferences.getFirstRunComplete(), isTrue);
       expect(await h.preferences.getSplashEnabled(), isTrue);
-      expect(await h.preferences.getThemeMode(), ThemeMode.system);
+      expect(await h.preferences.getThemeMode(), ThemeMode.light);
       expect(await h.preferences.getLocale(), isNull);
       expect(await h.preferences.getDefaultCurrency(), 'USD');
       expect(await h.preferences.getSplashDisplayText(), 'Since {date}');

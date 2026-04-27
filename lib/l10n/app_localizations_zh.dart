@@ -329,9 +329,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsThemeDark => 'Dark';
 
   @override
-  String get settingsThemeSystem => 'System';
-
-  @override
   String get settingsLanguageLabel => 'Language';
 
   @override
@@ -788,9 +785,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get settingsThemeDark => '深色';
 
   @override
-  String get settingsThemeSystem => '跟随系统';
-
-  @override
   String get settingsLanguageLabel => '语言';
 
   @override
@@ -1240,9 +1234,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get settingsThemeDark => '深色';
-
-  @override
-  String get settingsThemeSystem => '跟隨系統';
 
   @override
   String get settingsLanguageLabel => '語言';

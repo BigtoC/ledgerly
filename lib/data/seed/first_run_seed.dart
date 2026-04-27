@@ -495,7 +495,7 @@ Future<void> _seedPreferences(
   required int defaultAccountId,
 }) async {
   // Eight keys per Stream C plan §2.3 Step 6 / §12 Q2.
-  await preferences.setThemeMode(ThemeMode.system);
+  await preferences.setThemeMode(ThemeMode.light);
   await preferences.setLocale(null);
   await preferences.setDefaultCurrency(defaultCurrency.code);
   await preferences.setDefaultAccountId(defaultAccountId);

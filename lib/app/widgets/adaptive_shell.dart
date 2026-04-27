@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:material_symbols_icons/symbols.dart';
 
 import '../../l10n/app_localizations.dart';
 
@@ -33,15 +32,15 @@ class AdaptiveShell extends StatelessWidget {
                   labelType: NavigationRailLabelType.all,
                   destinations: [
                     NavigationRailDestination(
-                      icon: const Icon(Symbols.home),
+                      icon: const Icon(Icons.home),
                       label: Text(l10n.navHome),
                     ),
                     NavigationRailDestination(
-                      icon: const Icon(Symbols.account_balance_wallet),
+                      icon: const Icon(Icons.account_balance_wallet),
                       label: Text(l10n.navAccounts),
                     ),
                     NavigationRailDestination(
-                      icon: const Icon(Symbols.settings),
+                      icon: const Icon(Icons.settings),
                       label: Text(l10n.navSettings),
                     ),
                   ],
@@ -59,15 +58,15 @@ class AdaptiveShell extends StatelessWidget {
             onDestinationSelected: onDestinationSelected,
             destinations: [
               NavigationDestination(
-                icon: const Icon(Symbols.home),
+                icon: const Icon(Icons.home),
                 label: l10n.navHome,
               ),
               NavigationDestination(
-                icon: const Icon(Symbols.account_balance_wallet),
+                icon: const Icon(Icons.account_balance_wallet),
                 label: l10n.navAccounts,
               ),
               NavigationDestination(
-                icon: const Icon(Symbols.settings),
+                icon: const Icon(Icons.settings),
                 label: l10n.navSettings,
               ),
             ],

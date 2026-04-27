@@ -24,7 +24,7 @@ Ledgerly is a local-first mobile expense tracker built with Flutter. It is aimed
 - Base multi-currency support with configurable default currency
 - Transaction memos
 - Quick repeat / duplicate existing transaction
-- Light/dark/system theme
+- Light/dark theme
 - English, Traditional Chinese, Simplified Chinese UI
 - **Splash screen with configurable day counter** — standalone feature, hnotes-style visual design
 
@@ -245,7 +245,7 @@ l10n/
 | Domain models     | Freezed + json_annotation                   |
 | i18n              | flutter_localizations + intl                |
 | Code generation   | build_runner, drift_dev, riverpod_generator |
-| UI components     | flutter_slidable, material_symbols_icons    |
+| UI components     | flutter_slidable                            |
 | Native splash     | flutter_native_splash                       |
 | Testing           | mocktail, Drift in-memory DB                |
 
@@ -437,7 +437,7 @@ Notes:
 | key    | TEXT | PRIMARY KEY  |
 | value  | TEXT | JSON-encoded |
 
-Stores theme preference (light/dark/system), default account, default currency, locale, first-run state, and splash screen settings.
+Stores theme preference (light/dark), default account, default currency, locale, first-run state, and splash screen settings.
 
 **Splash screen keys:**
 - `splash_enabled` — bool, default true
@@ -504,7 +504,7 @@ Seeded categories use stable `l10n_key` values so locale changes do not create d
 | Cash         | `accountType.cash`       | `'wallet'`      | Neutral Variant 70 — `#AEA9B4` | `user_preferences.default_currency` at seed time |
 | Investment   | `accountType.investment` | `'trending_up'` | Neutral Variant 70 — `#AEA9B4` | `user_preferences.default_currency` at seed time |
 
-Account type tiles deliberately use a shared neutral tint — account types are visually distinguished by their **icon**, not by color. Users creating custom account types can pick any other palette color if they want color-coded account types. Icon keys (`'wallet'`, `'trending_up'`) resolve via `core/utils/icon_registry.dart` at render time to `Symbols.wallet` and `Symbols.trending_up` from `material_symbols_icons`.
+Account type tiles deliberately use a shared neutral tint — account types are visually distinguished by their **icon**, not by color. Users creating custom account types can pick any other palette color if they want color-coded account types. Icon keys (`'wallet'`, `'trending_up'`) resolve via `core/utils/icon_registry.dart` at render time to `Icons.wallet` and `Icons.trending_up` from Flutter's built-in `material` library.
 
 Seeded account types follow the same identity rules as seeded categories: `l10n_key` stays stable across renames; user renames write `custom_name` only. Users can add custom account types from the Accounts screen (name + icon + color + default currency). Archiving / deletion rules match categories: archive when referenced, hard-delete only when unused.
 
@@ -679,7 +679,7 @@ ShellRoute (bottom nav)
 3. **Add/Edit Transaction** — Expense/Income segmented control, calculator-style keypad for amount, category picker (icon grid), account selector with currency indicator, date picker, memo field for optional free-form detail, save; delete only in edit mode
 4. **Accounts Screen** — List accounts with tracked balances in native currency, add account (pick from existing account types or create a new type inline with name + icon + color + default currency), manage account types, set default account, archive account
 5. **Categories Screen** — List categories grouped by expense/income, add/edit/reorder/archive
-6. **Settings Screen** — Theme toggle (light/dark/system), language selector, default account, default currency, manage categories, splash screen settings
+6. **Settings Screen** — Theme toggle (light/dark), language selector, default account, default currency, manage categories, splash screen settings
 7. **Pending Transactions Screen** (Phase 2) — Review/approve/reject auto-generated transactions, accessible from Home badge and Settings
 8. **Wallet Management Screen** (Phase 2) — Add/edit/delete wallet addresses, linked accounts
 9. **Ankr API Key Screen** (Phase 2) — Enter/update API key stored via `ApiKeyRepository`
@@ -825,7 +825,7 @@ All scrollable regions must survive a 2× text scale (`MediaQuery.textScalerOf`)
 
 Categories store `icon` as a string key and `color` as a palette index. The actual `IconData` and `Color` values are resolved at render time from compile-time registries in `core/utils/`:
 
-- `core/utils/icon_registry.dart` — `Map<String, IconData>` mapping string keys to `Symbols.*` from `material_symbols_icons`. Unknown keys fall back to `Symbols.category`.
+- `core/utils/icon_registry.dart` — `Map<String, IconData>` mapping string keys to `Icons.*` from Flutter's built-in `material` library. Unknown keys fall back to `Icons.category`.
 - `core/utils/color_palette.dart` — ordered `List<Color>` of MD3-compatible category colors. `categories.color` is the index into this list. Palette additions append; existing indices never change.
 
 This avoids storing raw `IconData` symbols or ARGB ints in the DB (both fragile across Flutter / Material updates) while keeping categories portable across future backup/restore.
@@ -1019,7 +1019,6 @@ Versions below are the tested resolvable set under Flutter **3.41.7** (Dart 3.11
 | `flutter_localizations`  | sdk         | i18n framework                                                           |
 | `intl`                   | `^0.20.2`   | Localization utilities + `NumberFormat`                                  |
 | `flutter_slidable`       | `^4.0.3`    | Swipe actions on list items                                              |
-| `material_symbols_icons` | `^4.2803.0` | MD3 icon set                                                             |
 | `flutter_native_splash`  | `^2.4.4`    | Native pre-Flutter splash screen (dev-only import; see Dev Dependencies) |
 
 ### Phase 2 Additions

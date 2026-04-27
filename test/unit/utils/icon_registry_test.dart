@@ -1,34 +1,33 @@
 // test/unit/utils/icon_registry_test.dart
 //
 // Tests for `lib/core/utils/icon_registry.dart`. Covers:
-//   - Task B-5: unknown / null / empty keys fall back to Symbols.category
+//   - Task B-5: unknown / null / empty keys fall back to Icons.category
 //     (the PRD.md 816-823 contract).
 //   - Task B-6: every key in the Stream B seed contract (§4.3, §4.4)
 //     resolves to a non-fallback IconData. A missing seed key means
 //     M3 seed would render the fallback glyph for that row.
 //   - Task B-7: keys are snake_case, map values are IconData.
 
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/core/utils/icon_registry.dart';
-import 'package:material_symbols_icons/symbols.dart';
 
 void main() {
   group('iconForKey fallback', () {
-    test('unknown key returns Symbols.category (PRD 816-823 contract)', () {
-      expect(iconForKey('this_key_does_not_exist'), Symbols.category);
+    test('unknown key returns Icons.category (PRD 816-823 contract)', () {
+      expect(iconForKey('this_key_does_not_exist'), Icons.category);
     });
 
-    test('null returns Symbols.category', () {
-      expect(iconForKey(null), Symbols.category);
+    test('null returns Icons.category', () {
+      expect(iconForKey(null), Icons.category);
     });
 
-    test('empty string returns Symbols.category', () {
-      expect(iconForKey(''), Symbols.category);
+    test('empty string returns Icons.category', () {
+      expect(iconForKey(''), Icons.category);
     });
 
-    test('kFallbackIcon is exposed as Symbols.category', () {
-      expect(kFallbackIcon, Symbols.category);
+    test('kFallbackIcon is exposed as Icons.category', () {
+      expect(kFallbackIcon, Icons.category);
     });
   });
 
@@ -68,18 +67,18 @@ void main() {
       test('"$key" resolves to a non-fallback IconData', () {
         final IconData icon = iconForKey(key);
         // If the key is missing from `kIconRegistry`, `iconForKey` returns
-        // `Symbols.category` (the fallback). That is only acceptable when
+        // `Icons.category` (the fallback). That is only acceptable when
         // the key itself is 'category'.
         if (key != 'category') {
           expect(
             icon,
-            isNot(Symbols.category),
+            isNot(Icons.category),
             reason:
                 'Seed contract key "$key" is missing from kIconRegistry — '
                 'M3 seed would render the fallback glyph for this row.',
           );
         } else {
-          expect(icon, Symbols.category);
+          expect(icon, Icons.category);
         }
       });
     }

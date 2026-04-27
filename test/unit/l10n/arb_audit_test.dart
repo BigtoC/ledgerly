@@ -150,7 +150,6 @@ const Set<String> _expectedEnKeys = <String>{
   'settingsThemeLabel',
   'settingsThemeLight',
   'settingsThemeDark',
-  'settingsThemeSystem',
   'settingsLanguageLabel',
   'settingsLanguageSystem',
   'settingsLanguageEnglish',
