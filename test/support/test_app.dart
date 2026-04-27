@@ -22,6 +22,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ledgerly/app/app.dart';
 import 'package:ledgerly/app/bootstrap.dart';
@@ -91,16 +92,33 @@ Widget buildTestApp({required ProviderContainer container}) {
 /// widget passed to `runApp`. This exercises bootstrap ordering and Provider
 /// overrides the same way production startup does, while still letting tests
 /// pump the launched widget manually.
+///
+/// If the captured widget is a `ProviderScope`, this returns an
+/// `UncontrolledProviderScope` backed by the same overrides so tests can own
+/// container disposal via `addTearDown`. That mirrors [buildTestApp] and avoids
+/// Drift cleanup timers being scheduled during implicit widget-tree teardown.
 Future<Widget> buildBootstrappedTestApp({
   required AppDatabase db,
   String locale = 'en_US',
   List<Override> extraOverrides = const [],
 }) async {
   Widget? launched;
+  ProviderContainer? container;
+  final overrides = <Override>[];
   await bootstrapFor(
     openDatabase: () async => db,
     localeService: _FixedLocaleService(locale),
-    runAppFn: (widget) => launched = widget,
+    runAppFn: (widget) {
+      launched = widget;
+      if (widget is ProviderScope) {
+        overrides.addAll(widget.overrides);
+        container = ProviderContainer(overrides: overrides);
+        launched = UncontrolledProviderScope(
+          container: container!,
+          child: widget.child,
+        );
+      }
+    },
     extraOverrides: extraOverrides,
   );
 
@@ -108,6 +126,7 @@ Future<Widget> buildBootstrappedTestApp({
     throw StateError('bootstrapFor did not call runApp');
   }
 
+  if (container != null) addTearDown(container!.dispose);
   return launched!;
 }
 

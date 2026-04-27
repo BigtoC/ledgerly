@@ -114,10 +114,11 @@ void main() {
           );
         });
 
-        final container = makeTestContainer(db: db);
-        addTearDown(container.dispose);
+        final app = await tester.runAsync(
+          () => buildBootstrappedTestApp(db: db),
+        );
 
-        await tester.pumpWidget(buildTestApp(container: container));
+        await tester.pumpWidget(app!);
         await tester.pump();
         await tester.pump(const Duration(seconds: 1));
 
@@ -125,6 +126,12 @@ void main() {
         // Configured-date path: the date-picker prompt must NOT appear.
         expect(find.text('Set start date'), findsNothing);
         expect(find.text('Enter'), findsOneWidget);
+
+        await tester.tap(find.text('Enter'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(HomeScreen), findsOneWidget);
+        expect(find.byType(SplashScreen), findsNothing);
         expect(tester.takeException(), isNull);
       },
     );

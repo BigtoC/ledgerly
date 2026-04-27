@@ -32,6 +32,8 @@ import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/features/categories/categories_controller.dart';
 import 'package:ledgerly/features/transactions/transaction_form_screen.dart';
+import 'package:ledgerly/features/transactions/widgets/account_selector_tile.dart';
+import 'package:ledgerly/features/transactions/widgets/calculator_keypad.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockTransactionRepository extends Mock
@@ -482,6 +484,58 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Edit transaction'), findsOneWidget);
     expect(find.text('Save'), findsOneWidget);
+  });
+
+  testWidgets('WS14: memo keyboard does not move the fixed keypad', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(400, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+    addTearDown(() => tester.view.resetViewInsets());
+
+    await tester.pumpWidget(mountAdd());
+    await tester.pumpAndSettle();
+
+    final keypadBefore = tester.getRect(find.byType(CalculatorKeypad));
+    await tester.showKeyboard(find.byType(TextField));
+    await tester.pumpAndSettle();
+    final keypadAfter = tester.getRect(find.byType(CalculatorKeypad));
+
+    expect(keypadAfter.top, keypadBefore.top);
+    expect(keypadAfter.bottom, keypadBefore.bottom);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('WS15: account picker lists active accounts only', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    const archivedAccount = Account(
+      id: 2,
+      name: 'Archived Cash',
+      accountTypeId: 1,
+      currency: _usd,
+      isArchived: true,
+    );
+    when(() => accountRepo.watchAll(includeArchived: false)).thenAnswer(
+      (_) => Stream.value(const [_account]),
+    );
+    when(() => accountRepo.watchAll(includeArchived: true)).thenAnswer(
+      (_) => Stream.value(const [_account, archivedAccount]),
+    );
+
+    await tester.pumpWidget(mountAdd());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(AccountSelectorTile));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Pick account'), findsOneWidget);
+    expect(find.text('Cash'), findsAtLeastNWidgets(1));
+    expect(find.text('Archived Cash'), findsNothing);
+    verify(() => accountRepo.watchAll(includeArchived: false)).called(1);
+    verifyNever(() => accountRepo.watchAll(includeArchived: true));
   });
 }
 
