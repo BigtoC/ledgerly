@@ -189,7 +189,7 @@ All 20 DB keys have live ARB entries (see `app_en.arb` lines 98–179). The seed
 
 | Constant           | Ordinal | Color                 | Seeds it's used for                          |
 |--------------------|---------|-----------------------|----------------------------------------------|
-| `red60`            | 0       | Red 60 `#B3251E`      | `category.food`                              |
+| `red60`            | 0       | Red 60 `#F55E57`      | `category.food`                              |
 | `green40`          | 1       | Green 40 `#006C35`    | `category.drinks`                            |
 | `cyan70`           | 2       | Cyan 70 `#00BBDF`     | `category.transportation`, `category.travel` |
 | `purple30`         | 3       | Purple 30 `#5629A4`   | `category.shopping`, `category.education`    |

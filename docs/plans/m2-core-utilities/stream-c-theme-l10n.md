@@ -154,7 +154,7 @@ No dependency edits are part of this stream.
 4. The splash screen's rainbow-gradient date text (PRD 525) and sun-themed background (PRD 523) are **intentionally outside the theme** per PRD 899, so the seed color does not need to coordinate with splash visuals.
 
 Alternative seeds considered and rejected:
-- `#B3251E` Red 60 (Food): red reads as error/alarm — wrong semantic for a neutral shell.
+- `#F55E57` Red 60 (Food): red reads as error/alarm — wrong semantic for a neutral shell.
 - `#04409F` Blue 30 (3C): too close to Material default blue; loses distinctiveness.
 - `#FCBD00` Yellow 80 (income): too saturated at scaled-up surface tones; dark-mode surfaces get muddy.
 
