@@ -21,10 +21,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@v6
 
       - name: Set up Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        uses: actions/setup-node@v6
         with:
           node-version: '22'
 
@@ -45,7 +45,7 @@ jobs:
             ${{ runner.os }}-site-yarn-
 
       - name: Build site with Astro action
-        uses: withastro/action@b7d53628f8b666036b0238aadb0b984a2a489f26 # v6.1.1
+        uses: withastro/action@v6
         with:
           path: ./site
 
@@ -62,4 +62,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
+        uses: actions/deploy-pages@v5
