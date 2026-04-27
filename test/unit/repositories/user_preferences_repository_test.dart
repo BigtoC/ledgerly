@@ -26,7 +26,7 @@ void main() {
 
   group('UserPreferencesRepository — theme', () {
     test('theme round-trip: setThemeMode -> getThemeMode', () async {
-      expect(await prefs.getThemeMode(), ThemeMode.system);
+      expect(await prefs.getThemeMode(), ThemeMode.light);
       await prefs.setThemeMode(ThemeMode.dark);
       expect(await prefs.getThemeMode(), ThemeMode.dark);
     });
@@ -34,7 +34,7 @@ void main() {
     test('watchThemeMode emits default then write', () async {
       final expectation = expectLater(
         prefs.watchThemeMode(),
-        emitsInOrder(<ThemeMode>[ThemeMode.system, ThemeMode.dark]),
+        emitsInOrder(<ThemeMode>[ThemeMode.light, ThemeMode.dark]),
       );
       // Defer the write so the subscription is installed first and the
       // default value has already been emitted by the time we mutate.
