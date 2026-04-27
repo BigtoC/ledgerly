@@ -24,7 +24,7 @@ Ledgerly is a local-first mobile expense tracker built with Flutter. It is aimed
 - Base multi-currency support with configurable default currency
 - Transaction memos
 - Quick repeat / duplicate existing transaction
-- Light/dark/system theme
+- Light/dark theme
 - English, Traditional Chinese, Simplified Chinese UI
 - **Splash screen with configurable day counter** — standalone feature, hnotes-style visual design
 
@@ -437,7 +437,7 @@ Notes:
 | key    | TEXT | PRIMARY KEY  |
 | value  | TEXT | JSON-encoded |
 
-Stores theme preference (light/dark/system), default account, default currency, locale, first-run state, and splash screen settings.
+Stores theme preference (light/dark), default account, default currency, locale, first-run state, and splash screen settings.
 
 **Splash screen keys:**
 - `splash_enabled` — bool, default true
@@ -679,7 +679,7 @@ ShellRoute (bottom nav)
 3. **Add/Edit Transaction** — Expense/Income segmented control, calculator-style keypad for amount, category picker (icon grid), account selector with currency indicator, date picker, memo field for optional free-form detail, save; delete only in edit mode
 4. **Accounts Screen** — List accounts with tracked balances in native currency, add account (pick from existing account types or create a new type inline with name + icon + color + default currency), manage account types, set default account, archive account
 5. **Categories Screen** — List categories grouped by expense/income, add/edit/reorder/archive
-6. **Settings Screen** — Theme toggle (light/dark/system), language selector, default account, default currency, manage categories, splash screen settings
+6. **Settings Screen** — Theme toggle (light/dark), language selector, default account, default currency, manage categories, splash screen settings
 7. **Pending Transactions Screen** (Phase 2) — Review/approve/reject auto-generated transactions, accessible from Home badge and Settings
 8. **Wallet Management Screen** (Phase 2) — Add/edit/delete wallet addresses, linked accounts
 9. **Ankr API Key Screen** (Phase 2) — Enter/update API key stored via `ApiKeyRepository`
