@@ -185,11 +185,12 @@ loudly if generated files are stale.
 ## Website
 
 ```bash
-npm --prefix site install
-npm --prefix site run dev
-npm --prefix site run test
-npm --prefix site run check
-npm --prefix site run build
+corepack enable
+yarn --cwd site install
+yarn --cwd site dev
+yarn --cwd site test
+yarn --cwd site check
+yarn --cwd site build
 ```
 
 GitHub Pages deploys from `.github/workflows/github-pages.yml`. The public APK
