@@ -22,8 +22,8 @@
   "homeEmptyTitle": "暂无交易记录",
   "homeEmptyCta": "记录第一笔交易",
   "homeFabLabel": "添加交易",
-  "homeSummaryTodayExpense": "今日支出",
-  "homeSummaryTodayIncome": "今日收入",
+  "homeSummaryTodayExpense": "支出",
+  "homeSummaryTodayIncome": "收入",
   "homeSummaryMonthNet": "本月净额",
 
   "errorSnackbarGeneric": "出错了，请重试。",
@@ -155,12 +155,41 @@
   "txKeypadClear": "清除金额",
   "txKeypadBackspace": "退格",
 
-  "homeDayEmptyTitle": "这天没有交易",
+  "homeEmptyDayMessage": "无交易",
+  "homeJumpToToday": "跳至今天",
+  "homeSummaryMultiCurrencyNote": "多种币种",
   "homeDaySkeletonLabel": "加载中的日期",
   "homeDeleteUndoSnackbar": "交易已删除",
   "homeDuplicateAction": "复制",
   "homeDayLabelToday": "今天",
   "homeDayLabelYesterday": "昨天",
   "homeDayNavPrevLabel": "前一天",
-  "homeDayNavNextLabel": "后一天"
+  "homeDayNavNextLabel": "后一天",
+
+  "txCurrencyLabel": "币种",
+  "txCurrencyPickerTitle": "选择币种",
+  "txCurrencySearchHint": "搜索币种",
+  "txCurrencyChangeConfirmAction": "更换并清除",
+  "txAmountPlaceholderInCurrency": "输入 {code} 金额",
+  "txCurrencyPickerNoResults": "未找到币种",
+  "txCurrencyPickerChangeConfirmBody": "更换币种将清除已输入的金额。",
+
+  "accountsBalanceMore": "+{count} 个更多",
+  "@accountsBalanceMore": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+
+  "currencyUsd": "美元",
+  "currencyEur": "欧元",
+  "currencyJpy": "日元",
+  "currencyTwd": "新台币",
+  "currencyCny": "人民币",
+  "currencyHkd": "港元",
+  "currencyGbp": "英镑",
+  "currencyCad": "加拿大元",
+  "currencySgd": "新加坡元",
+  "currencyAud": "澳元",
+  "currencyNzd": "新西兰元"
 }

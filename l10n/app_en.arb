@@ -73,13 +73,13 @@
   "@homeFabLabel": {
     "description": "PRD 657. Home FAB semantics label (a11y)."
   },
-  "homeSummaryTodayExpense": "Today expense",
+  "homeSummaryTodayExpense": "Expense",
   "@homeSummaryTodayExpense": {
-    "description": "PRD 672. Home summary strip — today expense row label."
+    "description": "PRD 672. Home summary strip — expense row label (day-neutral; was 'Today expense')."
   },
-  "homeSummaryTodayIncome": "Today income",
+  "homeSummaryTodayIncome": "Income",
   "@homeSummaryTodayIncome": {
-    "description": "PRD 672. Home summary strip — today income row label."
+    "description": "PRD 672. Home summary strip — income row label (day-neutral; was 'Today income')."
   },
   "homeSummaryMonthNet": "Month net",
   "@homeSummaryMonthNet": {
@@ -578,9 +578,17 @@
     "description": "Wave 2 §8. Tooltip / a11y label for the calculator keypad ⌫ key."
   },
 
-  "homeDayEmptyTitle": "No transactions on this day",
-  "@homeDayEmptyTitle": {
-    "description": "Wave 3 §4.2. Per-day empty state title (gap day with prior history)."
+  "homeEmptyDayMessage": "No transaction",
+  "@homeEmptyDayMessage": {
+    "description": "Gap day empty card message shown when no transactions exist for the selected day but history exists."
+  },
+  "homeJumpToToday": "Jump to today",
+  "@homeJumpToToday": {
+    "description": "Button shown in SummaryStrip when selectedDay is not today."
+  },
+  "homeSummaryMultiCurrencyNote": "Multiple currencies",
+  "@homeSummaryMultiCurrencyNote": {
+    "description": "Indicator row in SummaryStrip when more than 2 currency groups exist on the selected day."
   },
   "homeDaySkeletonLabel": "Loading day",
   "@homeDaySkeletonLabel": {
@@ -609,5 +617,90 @@
   "homeDayNavNextLabel": "Next day",
   "@homeDayNavNextLabel": {
     "description": "Wave 3 §6, §10. A11y label for the day-nav next (▶) chevron."
+  },
+
+  "txCurrencyLabel": "Currency",
+  "@txCurrencyLabel": {
+    "description": "Transaction form — currency row label."
+  },
+  "txCurrencyPickerTitle": "Pick currency",
+  "@txCurrencyPickerTitle": {
+    "description": "Transaction currency picker sheet title."
+  },
+  "txCurrencySearchHint": "Search currencies",
+  "@txCurrencySearchHint": {
+    "description": "Search field hint inside the transaction currency picker sheet."
+  },
+  "txCurrencyChangeConfirmAction": "Change and Clear",
+  "@txCurrencyChangeConfirmAction": {
+    "description": "Confirm button label on the currency-change dialog when a non-zero amount would be cleared."
+  },
+  "txAmountPlaceholderInCurrency": "Enter amount in {code}",
+  "@txAmountPlaceholderInCurrency": {
+    "description": "Amount display placeholder shown after a currency change clears the amount. {code} is the ISO currency code.",
+    "placeholders": {
+      "code": {"type": "String"}
+    }
+  },
+  "txCurrencyPickerNoResults": "No currencies found",
+  "@txCurrencyPickerNoResults": {
+    "description": "Empty state shown inside the transaction currency picker when the search filter matches nothing."
+  },
+  "txCurrencyPickerChangeConfirmBody": "Changing the currency will clear the entered amount.",
+  "@txCurrencyPickerChangeConfirmBody": {
+    "description": "Dialog body for the currency-change clear flow triggered from the transaction currency picker (distinct from account-swap flow)."
+  },
+
+  "accountsBalanceMore": "{count, plural, one {+{count} more} other {+{count} more}}",
+  "@accountsBalanceMore": {
+    "description": "Account tile balance overflow — '+N more' when an account has more than 3 currency groups.",
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+
+  "currencyUsd": "US Dollar",
+  "@currencyUsd": {
+    "description": "Seeded currency full name. DB nameL10nKey: currency.usd."
+  },
+  "currencyEur": "Euro",
+  "@currencyEur": {
+    "description": "Seeded currency full name. DB nameL10nKey: currency.eur."
+  },
+  "currencyJpy": "Japanese Yen",
+  "@currencyJpy": {
+    "description": "Seeded currency full name. DB nameL10nKey: currency.jpy."
+  },
+  "currencyTwd": "New Taiwan Dollar",
+  "@currencyTwd": {
+    "description": "Seeded currency full name. DB nameL10nKey: currency.twd."
+  },
+  "currencyCny": "Chinese Yuan",
+  "@currencyCny": {
+    "description": "Seeded currency full name. DB nameL10nKey: currency.cny."
+  },
+  "currencyHkd": "Hong Kong Dollar",
+  "@currencyHkd": {
+    "description": "Seeded currency full name. DB nameL10nKey: currency.hkd."
+  },
+  "currencyGbp": "British Pound",
+  "@currencyGbp": {
+    "description": "Seeded currency full name. DB nameL10nKey: currency.gbp."
+  },
+  "currencyCad": "Canadian Dollar",
+  "@currencyCad": {
+    "description": "Seeded currency full name. DB nameL10nKey: currency.cad."
+  },
+  "currencySgd": "Singapore Dollar",
+  "@currencySgd": {
+    "description": "Seeded currency full name. DB nameL10nKey: currency.sgd."
+  },
+  "currencyAud": "Australian Dollar",
+  "@currencyAud": {
+    "description": "Seeded currency full name. DB nameL10nKey: currency.aud."
+  },
+  "currencyNzd": "New Zealand Dollar",
+  "@currencyNzd": {
+    "description": "Seeded currency full name. DB nameL10nKey: currency.nzd."
   }
 }

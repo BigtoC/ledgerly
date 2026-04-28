@@ -332,7 +332,7 @@ class _SinglePane extends ConsumerWidget {
                 padding: const EdgeInsets.all(transactionPadding),
                 child: Center(
                   child: Text(
-                    l10n.homeDayEmptyTitle,
+                    l10n.homeEmptyDayMessage,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),

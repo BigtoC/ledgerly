@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/models/currency.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../accounts/widgets/currency_display.dart';
 import '../settings_providers.dart';
 
 /// Opens the default-currency picker sheet and resolves with the chosen
@@ -64,7 +65,7 @@ class _DefaultCurrencyPickerSheet extends ConsumerWidget {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     title: Text(c.code),
-                    subtitle: Text(_displayName(c)),
+                    subtitle: Text(currencyDisplayName(c, l10n)),
                     onTap: () => Navigator.of(context).pop(c.code),
                   );
                 },
@@ -76,14 +77,5 @@ class _DefaultCurrencyPickerSheet extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  /// Minimal display-name resolver — prefers `customName`, then falls back
-  /// to the ISO code. MVP ships no per-currency l10n mapping table; the
-  /// code alone is sufficient in all seeded locales.
-  String _displayName(Currency c) {
-    final custom = c.customName;
-    if (custom != null && custom.trim().isNotEmpty) return custom;
-    return c.code;
   }
 }

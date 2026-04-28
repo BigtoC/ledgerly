@@ -194,7 +194,6 @@ const Set<String> _expectedEnKeys = <String>{
 
   // M5 Wave 3 — Home slice UI keys
   // (docs/plans/m5-ui-feature-slices/wave-3-home-plan.md §4.2).
-  'homeDayEmptyTitle',
   'homeDaySkeletonLabel',
   'homeDeleteUndoSnackbar',
   'homeDuplicateAction',
@@ -204,6 +203,30 @@ const Set<String> _expectedEnKeys = <String>{
   'homeDayNavNextLabel',
   // Wave 4 §3.2 rename: was commonEdit — only home used it.
   'homeEditAction',
+
+  // Home calendar-day browsing + transaction currency (plan 2026-04-28).
+  'homeEmptyDayMessage',
+  'homeJumpToToday',
+  'homeSummaryMultiCurrencyNote',
+  'txCurrencyLabel',
+  'txCurrencyPickerTitle',
+  'txCurrencySearchHint',
+  'txCurrencyChangeConfirmAction',
+  'txAmountPlaceholderInCurrency',
+  'txCurrencyPickerNoResults',
+  'txCurrencyPickerChangeConfirmBody',
+  'accountsBalanceMore',
+  'currencyUsd',
+  'currencyEur',
+  'currencyJpy',
+  'currencyTwd',
+  'currencyCny',
+  'currencyHkd',
+  'currencyGbp',
+  'currencyCad',
+  'currencySgd',
+  'currencyAud',
+  'currencyNzd',
 };
 
 Map<String, dynamic> _readArb(String fileName) {
