@@ -244,14 +244,13 @@ void main() {
       monthNetCtrl.add(const {'USD': -100});
       await tester.pump(const Duration(milliseconds: 200));
 
-      // Summary strip renders the today-expense label and amount; the
-      // standalone `USD` code header was removed in favor of letting
-      // `MoneyFormatter` carry the currency symbol on each amount.
-      expect(find.text('Today expense: '), findsOneWidget);
+      // Summary strip renders the expense label and amount; the
+      // label changed from "Today expense" to "Expense" to be day-neutral.
+      expect(find.text('Expense: '), findsOneWidget);
     },
   );
 
-  testWidgets('WH03: gap-day with prior history shows per-day empty title', (
+  testWidgets('WH03: gap-day with prior history shows homeEmptyDayMessage', (
     tester,
   ) async {
     await tester.pumpWidget(makeApp());
@@ -268,8 +267,32 @@ void main() {
     monthNetCtrl.add(const {});
     await tester.pump(const Duration(milliseconds: 200));
 
-    expect(find.text('No transactions on this day'), findsOneWidget);
+    // Gap-day card uses homeEmptyDayMessage (localized "No transaction")
+    expect(find.text('No transaction'), findsOneWidget);
   });
+
+  testWidgets(
+    'WH03b: jump-to-today button shows only when selectedDay != today',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(400, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(makeApp());
+      await seedAll(tester);
+
+      final today = DateTime.now();
+      final todayMidnight = DateTime(today.year, today.month, today.day);
+
+      // Today is selected — jump-to-today should NOT show
+      dayCtrl.add(const []);
+      activityCtrl.add([todayMidnight]);
+      todayTotalsCtrl.add(const {});
+      monthNetCtrl.add(const {});
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(find.text('Jump to today'), findsNothing);
+    },
+  );
 
   testWidgets(
     'WH04: archived category metadata still renders on historical row',
@@ -440,7 +463,7 @@ void main() {
   });
 
   testWidgets(
-    'WH10: tablet activity pane shows full history and taps select directly',
+    'WH10: tablet two-pane layout renders without the activity pane',
     (tester) async {
       await tester.binding.setSurfaceSize(const Size(900, 800));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -450,27 +473,17 @@ void main() {
 
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
-      final yesterday = today.subtract(const Duration(days: 1));
-      final fourDaysAgo = today.subtract(const Duration(days: 4));
 
       dayCtrl.add([_tx(id: 1, date: today)]);
-      activityCtrl.add([today, yesterday, fourDaysAgo]);
+      activityCtrl.add([today]);
       todayTotalsCtrl.add(const {});
       monthNetCtrl.add(const {});
       await tester.pump(const Duration(milliseconds: 200));
 
-      final oldLabel = DateHelpers.formatDayHeader(fourDaysAgo, 'en');
-      expect(find.text(oldLabel), findsOneWidget);
-
-      await tester.tap(find.text(oldLabel));
-      await tester.pump();
-
-      expect(find.byType(DatePickerDialog), findsNothing);
-
-      dayCtrl.add([_tx(id: 2, date: fourDaysAgo)]);
-      await tester.pump(const Duration(milliseconds: 100));
-
-      expect(find.text(oldLabel), findsAtLeastNWidgets(2));
+      // Two-pane layout renders with a VerticalDivider
+      expect(find.byType(VerticalDivider), findsOneWidget);
+      // No crash and the day header renders
+      expect(find.text('Today'), findsOneWidget);
     },
   );
 

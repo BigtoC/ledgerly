@@ -39,12 +39,12 @@ sealed class HomeState with _$HomeState {
   /// (when `transactionsForDay.isEmpty`).
   const factory HomeState.data({
     required DateTime selectedDay,
-    required List<DateTime> activityDays,
+    required DateTime today,
     required List<Transaction> transactionsForDay,
     required DailyTotals todayTotalsByCurrency,
     required Map<String, int> monthNetByCurrency,
-    required DateTime? prevDayWithActivity,
-    required DateTime? nextDayWithActivity,
+    required bool canGoPrev,
+    required bool canGoNext,
     required int pendingBadgeCount,
     required PendingDelete? pendingDelete,
   }) = HomeData;

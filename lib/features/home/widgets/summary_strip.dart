@@ -23,12 +23,14 @@ class SummaryStrip extends StatelessWidget {
     required this.monthNetByCurrency,
     required this.currenciesByCode,
     required this.locale,
+    this.showJumpToToday = false,
+    this.onJumpToToday,
   });
 
-  /// Today's per-currency expense/income split.
+  /// Selected-day's per-currency expense/income split.
   final DailyTotals todayTotalsByCurrency;
 
-  /// Month-to-date net per currency.
+  /// Month-to-date net per currency for the selected day's month.
   final Map<String, int> monthNetByCurrency;
 
   /// Resolves a currency code to its metadata so [MoneyFormatter] can
@@ -39,37 +41,43 @@ class SummaryStrip extends StatelessWidget {
 
   final String locale;
 
+  /// When true, renders a "Jump to today" button at the top of the strip.
+  final bool showJumpToToday;
+
+  /// Called when the "Jump to today" button is tapped.
+  final VoidCallback? onJumpToToday;
+
+  /// Maximum number of currency groups to render before showing the note.
+  static const int _kMaxCurrencyGroups = 2;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
     // Union of currencies that appear in either map.
-    final codes = <String>{
+    final allCodes = <String>{
       ...todayTotalsByCurrency.keys,
       ...monthNetByCurrency.keys,
     }.toList()..sort();
 
-    if (codes.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: homePageCardHorizontalPadding,
-          vertical: 18,
-        ),
-        child: _PlaceholderBox(
-          theme: theme,
-          labels: [
-            l10n.homeSummaryTodayExpense,
-            l10n.homeSummaryTodayIncome,
-            l10n.homeSummaryMonthNet,
-          ],
-        ),
-      );
-    }
+    final hasMultiCurrency = allCodes.length > _kMaxCurrencyGroups;
+    final codes = hasMultiCurrency
+        ? allCodes.sublist(0, _kMaxCurrencyGroups)
+        : allCodes;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      child: Column(
+    Widget content;
+    if (allCodes.isEmpty) {
+      content = _PlaceholderBox(
+        theme: theme,
+        labels: [
+          l10n.homeSummaryTodayExpense,
+          l10n.homeSummaryTodayIncome,
+          l10n.homeSummaryMonthNet,
+        ],
+      );
+    } else {
+      content = Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           for (var i = 0; i < codes.length; i++) ...[
@@ -89,6 +97,34 @@ class SummaryStrip extends StatelessWidget {
               ),
             ),
           ],
+          if (hasMultiCurrency) ...[
+            const SizedBox(height: 8),
+            Text(
+              l10n.homeSummaryMultiCurrencyNote,
+              style: theme.textTheme.bodySmall,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ],
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // (1) Jump-to-today button (only when not on today)
+          if (showJumpToToday)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: onJumpToToday,
+                child: Text(l10n.homeJumpToToday),
+              ),
+            ),
+          // (2) Currency groups + (3) month-net + (4) multi-currency note
+          content,
         ],
       ),
     );
