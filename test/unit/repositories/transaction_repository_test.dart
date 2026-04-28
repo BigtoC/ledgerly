@@ -462,33 +462,21 @@ void main() {
     );
 
     test(
-      'T-currency-fk-02: account/transaction currency mismatch throws, no row inserted',
+      'T-currency-fk-02: cross-currency transaction on an account saves without throwing',
       () async {
-        await expectLater(
-          txRepo.save(
-            sampleTx(
-              currency: const Currency(
-                code: 'JPY',
-                decimals: 0,
-                symbol: '¥',
-                nameL10nKey: 'currency.jpy',
-                sortOrder: 2,
-              ),
-            ),
-          ),
-          throwsA(
-            isA<RepositoryException>().having(
-              (e) => e.message,
-              'message',
-              'Transaction currency JPY must match account ${fixtures.accountId} '
-                  'currency USD.',
+        final saved = await txRepo.save(
+          sampleTx(
+            currency: const Currency(
+              code: 'JPY',
+              decimals: 0,
+              symbol: '¥',
+              nameL10nKey: 'currency.jpy',
             ),
           ),
         );
 
-        final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
-        final rows = await txRepo.watchByDay(today).first;
-        expect(rows, isEmpty);
+        expect(saved.currency.code, 'JPY');
+        expect(saved.accountId, fixtures.accountId);
       },
     );
   });

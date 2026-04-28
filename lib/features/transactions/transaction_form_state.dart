@@ -55,10 +55,17 @@ sealed class TransactionFormState with _$TransactionFormState {
     /// `.data` states an account is always selected.
     required Account? selectedAccount,
 
-    /// Mirrors `selectedAccount.currency` when an account is selected;
-    /// when null, the keypad uses `userPreferences.defaultCurrency`
-    /// resolved by the controller during hydration.
+    /// The transaction's currency. Seeds from `selectedAccount.currency` on
+    /// hydration, but can be independently overridden by the user via the
+    /// currency picker. Once the user has made a manual selection,
+    /// `currencyTouched` is `true` and account changes no longer re-seed it.
     required Currency? displayCurrency,
+
+    /// `true` once the user has manually selected a currency via the picker.
+    /// When `false`, account changes re-seed `displayCurrency` from the
+    /// new account's currency. When `true`, `displayCurrency` is user-owned
+    /// and account changes only update `selectedAccount`.
+    required bool currencyTouched,
 
     required Category? selectedCategory,
 
@@ -100,12 +107,13 @@ sealed class TransactionFormState with _$TransactionFormState {
       TransactionFormError;
 
   /// Computed-on-demand validity flag. PRD: amount > 0 AND category AND
-  /// account, plus no in-flight save/delete.
+  /// account AND displayCurrency, plus no in-flight save/delete.
   bool get canSave => switch (this) {
     TransactionFormData(
       :final amountMinorUnits,
       :final selectedAccount,
       :final selectedCategory,
+      :final displayCurrency,
       :final isSaving,
       :final isDeleting,
     ) =>
@@ -113,7 +121,8 @@ sealed class TransactionFormState with _$TransactionFormState {
           !isDeleting &&
           amountMinorUnits > 0 &&
           selectedAccount != null &&
-          selectedCategory != null,
+          selectedCategory != null &&
+          displayCurrency != null,
     _ => false,
   };
 }

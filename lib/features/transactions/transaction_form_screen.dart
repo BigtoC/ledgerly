@@ -30,6 +30,8 @@ import 'widgets/account_selector_tile.dart';
 import 'widgets/amount_display.dart';
 import 'widgets/calculator_keypad.dart';
 import 'widgets/category_chip.dart';
+import 'widgets/currency_picker_sheet.dart';
+import 'widgets/currency_selector_tile.dart';
 import 'widgets/date_field.dart';
 import 'widgets/memo_field.dart';
 import 'widgets/transaction_type_segmented_control.dart';
@@ -189,6 +191,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                   AmountDisplay(
                     keypad: controller.keypadSnapshot,
                     currency: state.displayCurrency,
+                    currencyTouched: state.currencyTouched,
                     hasError: showAmountError,
                   ),
                   if (showAmountError)
@@ -212,6 +215,17 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                     hasError: showAccountError,
                     onTap: () =>
                         _onTapAccountTile(context, l10n, state, controller),
+                  ),
+                  CurrencySelectorTile(
+                    currency: state.displayCurrency,
+                    onTap: state.displayCurrency == null
+                        ? null
+                        : () => _onTapCurrencyTile(
+                            context,
+                            l10n,
+                            state,
+                            controller,
+                          ),
                   ),
                   DateField(value: state.date, onChanged: controller.setDate),
                   const SizedBox(height: 8),
@@ -392,6 +406,52 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       return;
     }
     controller.selectAccount(picked);
+  }
+
+  Future<void> _onTapCurrencyTile(
+    BuildContext context,
+    AppLocalizations l10n,
+    TransactionFormData state,
+    TransactionFormController controller,
+  ) async {
+    final picked = await showTxCurrencyPickerSheet(context);
+    if (picked == null || !context.mounted) return;
+    final currentCode = state.displayCurrency?.code;
+    final currencyChanges = currentCode != null && currentCode != picked.code;
+    final hasAmount = state.amountMinorUnits > 0;
+
+    if (currencyChanges && hasAmount) {
+      final confirmed = await _confirmPickerCurrencyChange(context, l10n);
+      if (!context.mounted) return;
+      if (!confirmed) return;
+      controller.selectCurrency(picked, clearAmountOnChange: true);
+      return;
+    }
+    controller.selectCurrency(picked);
+  }
+
+  Future<bool> _confirmPickerCurrencyChange(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.txCurrencyChangeConfirmTitle),
+        content: Text(l10n.txCurrencyPickerChangeConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n.txCurrencyChangeConfirmAction),
+          ),
+        ],
+      ),
+    );
+    return ok ?? false;
   }
 
   Future<bool> _confirmCurrencyChange(
