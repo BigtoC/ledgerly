@@ -209,6 +209,8 @@ Also update the existing values for:
 
 The existing `homeSummaryTodayExpense` ("Today expense") and `homeSummaryTodayIncome` ("Today income") say "Today" but the SummaryStrip will now show data for any selected day. Update the values to "Expense" and "Income" (day-neutral). `homeSummaryMonthNet` is already day-neutral and does not need updating. Apply the same value updates to `app_zh_TW.arb`, `app_zh_CN.arb`, and `app_zh.arb`.
 
+**Delete the existing `homeDayEmptyTitle` key from all four ARB files.** The key `"homeDayEmptyTitle": "No transactions on this day"` is superseded by `homeEmptyDayMessage`. Also update `home_screen.dart` line 335, which currently calls `l10n.homeDayEmptyTitle` — change it to `l10n.homeEmptyDayMessage`. Remove `homeDayEmptyTitle` from `_expectedEnKeys` in `test/unit/l10n/arb_audit_test.dart` in Step 5. Add the same deletion to all zh ARB files.
+
 **Do NOT change `txCurrencyChangeConfirmTitle` or `txCurrencyChangeConfirmBody`.** Those keys serve the existing account-swap confirm dialog with account-specific wording ("Switching to this account changes the currency..."). The currency-selector dialog (Task 8 Step 6) uses the new `txCurrencyPickerChangeConfirmBody` key so the two flows have independent, contextually correct copy. Add the same `txCurrencyPickerChangeConfirmBody` key to `app_zh_TW.arb`, `app_zh_CN.arb`, and `app_zh.arb`.
 
 - [ ] **Step 2: Add matching Traditional Chinese keys to `l10n/app_zh_TW.arb`**
@@ -220,13 +222,23 @@ Use real translations, not English fallbacks. Include the same keys as Step 1. K
 "accountsBalanceMore": "+{count} 個更多"
 ```
 
+Also include the `@accountsBalanceMore` metadata block with the same `count` placeholder definition as in `app_en.arb` — `flutter gen-l10n` requires the `@` metadata block in every locale file that uses a plural key, not only the English ARB:
+
+```json
+"@accountsBalanceMore": {
+  "placeholders": {
+    "count": {"type": "int"}
+  }
+}
+```
+
 - [ ] **Step 3: Add matching Simplified Chinese keys to `l10n/app_zh_CN.arb`**
 
-Use the same key set and placeholder names as Steps 1-2.
+Use the same key set and placeholder names as Steps 1-2. Include the `@accountsBalanceMore` metadata block (same format as Step 2) — omitting it causes `flutter gen-l10n` to fail or generate a mismatched plural getter signature.
 
 - [ ] **Step 4: Add the same new keys to `l10n/app_zh.arb`**
 
-CLAUDE.md requires `l10n/app_zh.arb` to exist as a fallback base for `flutter_localizations`. Add every new key from Steps 1-3 to this file as well. Translations may duplicate `app_zh_TW.arb` or use English fallbacks — the file must contain every key that `app_zh_TW.arb` and `app_zh_CN.arb` contain, including all placeholder syntax (`{code}`, `{count}`).
+CLAUDE.md requires `l10n/app_zh.arb` to exist as a fallback base for `flutter_localizations`. Add every new key from Steps 1-3 to this file as well. Translations may duplicate `app_zh_TW.arb` or use English fallbacks — the file must contain every key that `app_zh_TW.arb` and `app_zh_CN.arb` contain, including all placeholder syntax (`{code}`, `{count}`) and the `@accountsBalanceMore` metadata block.
 
 - [ ] **Step 5: Add the new keys to `test/unit/l10n/arb_audit_test.dart`**
 
@@ -435,7 +447,15 @@ Also ensure `required DateTime selectedDay` and `required DateTime today` are pr
 
 **`_emitIfReady` call site:** `_Composer._emitIfReady()` in `home_controller.dart` currently passes `prevDayWithActivity:` and `nextDayWithActivity:` as named arguments to `HomeState.data(...)`. Update these to `canGoPrev:` and `canGoNext:` (derived in Step 5) and add `today: _todayGetter()`. This call site will not compile against the new state shape until it is updated.
 
-Remove `activityDays` from `HomeState.data` as well. No production caller in this plan uses it for rendering — the tablet activity pane is not in this plan's scope. Retaining it as speculative state inflates the Freezed generated code and every snapshot test. If a future plan adds the tablet pane, the field is trivial to re-add.
+Remove `activityDays` from `HomeState.data` as well. No production caller in this plan uses it for rendering.
+
+**`_ActivityPane` must also be removed atomically with `activityDays`.** `home_screen.dart` contains a `_ActivityPane` widget that drives its `ListView.builder` from `data.activityDays` (lines 450, 452). Removing the field while leaving `_ActivityPane` intact causes a compile error. As part of this step, delete the `_ActivityPane` widget class entirely and replace the left-panel slot in `_TwoPane` with a no-op stub:
+
+```dart
+Widget _buildLeftPane() => const SizedBox.shrink();
+```
+
+The tablet activity pane is not in this plan's scope. If a future plan adds it, both `activityDays` and `_ActivityPane` are trivial to re-add.
 
 After making the state-shape changes above, immediately run:
 
@@ -582,13 +602,14 @@ onNext: () => onSelectActivityDay(data.nextDayWithActivity!),
 
 Instead, pass `onPrev: () => _enqueueDayStep(-1)` and `onNext: () => _enqueueDayStep(+1)` to `_TwoPane` — the same lambda closures used by `_SinglePane`.
 
-**`_TwoPane` type change — four edits that must be made atomically (the file will not compile with any subset):**
+**`_TwoPane` type change — five edits that must be made atomically (the file will not compile with any subset):**
 1. `_TwoPane` field declaration: replace `final void Function(DateTime day) onSelectActivityDay;` with `final VoidCallback onPrev;` and `final VoidCallback onNext;`
 2. `_TwoPane` constructor: remove `required this.onSelectActivityDay`, add `required this.onPrev` and `required this.onNext`
 3. `home_screen.dart` line 413 call site: replace `onPrev: () => onSelectActivityDay(data.prevDayWithActivity!)` with `onPrev: () => _enqueueDayStep(-1)`
 4. `home_screen.dart` line 414 call site: replace `onNext: () => onSelectActivityDay(data.nextDayWithActivity!)` with `onNext: () => _enqueueDayStep(+1)`
+5. `_AdaptiveBody` call site (the top-level `_TwoPane` instantiation, around line 253): replace `onSelectActivityDay: (day) => ref.read(homeControllerProvider.notifier).pinDay(day)` with `onPrev: () => _enqueueDayStep(-1)` and `onNext: () => _enqueueDayStep(+1)` — this is the outer constructor call that passes data and navigation callbacks into the two-pane layout
 
-After all four edits, run `dart format . && flutter analyze` to confirm no remaining `prevDayWithActivity!`/`nextDayWithActivity!` null-assertions exist anywhere.
+After all five edits, run `dart format . && flutter analyze` to confirm no remaining `prevDayWithActivity!`/`nextDayWithActivity!` null-assertions exist anywhere.
 
 - [ ] **Step 4: Cap the Home date picker at today**
 
@@ -625,7 +646,13 @@ so the button and `canGoNext` use the same normalized source of truth.
 
 `DateHelpers.isSameDay` is a pre-existing utility at `lib/core/utils/date_helpers.dart` — no new file needed.
 
-**SummaryStrip multi-currency specification:** `watchDailyTotalsByType(selectedDay)` and `watchMonthNetByCurrency(selectedDay)` return `Map<String, ...>` keyed by all currencies — neither method accepts a `currencyCode` filter parameter and neither should gain one here (no repository interface change is needed). Home has no single-account context (the controller declares no account subscription), so there is no `account.currency.code` anchor to filter by. Pass the unfiltered maps to `SummaryStrip` unchanged; the widget already renders one row per currency key. When `todayTotalsByCurrency.keys.length > 1`, show the `homeSummaryMultiCurrencyNote` indicator row (add this ARB key in Task 2, Step 1) below the net line so the user knows the day has cross-currency transactions. Full per-currency summary breakdown is deferred to Phase 2. Layout order within `SummaryStrip`: (1) jump-to-today button (top, right-aligned, only when `showJumpToToday`), (2) expense/income rows, (3) month-net row, (4) multi-currency note row (only when multi-currency).
+**SummaryStrip multi-currency specification:** `watchDailyTotalsByType(selectedDay)` and `watchMonthNetByCurrency(selectedDay)` return `Map<String, ...>` keyed by all currencies — neither method accepts a `currencyCode` filter parameter and neither should gain one here (no repository interface change is needed). Home has no single-account context (the controller declares no account subscription), so there is no `account.currency.code` anchor to filter by. Pass the unfiltered maps to `SummaryStrip` unchanged.
+
+**Row cap:** render at most **2 currency groups** in `SummaryStrip` (one expense/income pair per currency). When `todayTotalsByCurrency.keys.length > 1`, show the `homeSummaryMultiCurrencyNote` indicator row below all rendered rows — replacing any groups beyond the cap (consistent with the account tile's `+N more` pattern). This prevents unbounded strip growth when a user has many currency groups on a single day. Full per-currency summary breakdown is deferred to Phase 2.
+
+**Currency code normalization:** the repository methods feeding `SummaryStrip` must normalize currency codes to uppercase before keying their maps — the same normalization required for `watchBalanceByCurrency` in Task 10 Step 2. If `watchDailyTotalsByType` or `watchMonthNetByCurrency` do not currently normalize, add `.toUpperCase()` to the currency key extraction as part of this task. Without this, a transaction saved with `'usd'` and one with `'USD'` would appear as two separate groups, incorrectly triggering the multi-currency note.
+
+Layout order within `SummaryStrip`: (1) jump-to-today button (top, right-aligned, only when `showJumpToToday`), (2) expense/income rows (max 2 currency groups), (3) month-net row, (4) multi-currency note row (only when multi-currency).
 
 - [ ] **Step 6: Replace the text-only gap-day state with a transaction-style card**
 
@@ -704,6 +731,9 @@ Expected:
 Use the Flutter animation pattern directly in `lib/features/home/home_screen.dart`:
 
 ```dart
+static const _kDaySwitchDuration = Duration(milliseconds: 280);
+static const _kDaySwitchCurve = Curves.easeInOut;
+
 class _HomeScreenState extends ConsumerState<HomeScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _daySwitchController;
@@ -713,7 +743,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 }
 ```
 
-Dispose the controller in `dispose()`.
+Initialize: `_daySwitchController = AnimationController(duration: _kDaySwitchDuration, vsync: this)` in `initState()`. Use `CurvedAnimation(parent: _daySwitchController, curve: _kDaySwitchCurve)` as the animation input for the `SlideTransition`. Dispose the controller in `dispose()`.
 
 - [ ] **Step 4: Route prev/next/swipe/date-picker requests through a tiny queue API**
 
@@ -870,6 +900,13 @@ Also update the `displayCurrency` doc comment so it says user-controlled transac
 
 Run `dart run build_runner build --delete-conflicting-outputs` immediately after this step. CLAUDE.md requires codegen after any `@freezed` signature change, and Steps 2-7 reference `currencyTouched` in the generated state — they will not compile against a stale `.freezed.dart`.
 
+Adding `currencyTouched` as a `required` field forces every `TransactionFormState.data(...)` call site to supply it — the build will fail loudly if any are missed. The affected call sites and the value each must supply:
+- `hydrateForAdd`: `currencyTouched: false`
+- `hydrateForEdit`: `currencyTouched: true`
+- `_applyDuplicatePrefill` (line ~447): `currencyTouched: false`
+
+Any other call sites the build output flags must also be updated before proceeding.
+
 **Also update `canSave`:** The current `canSave` getter in `TransactionFormState` does not check `displayCurrency != null`. After adding `currencyTouched`, add `displayCurrency != null` to the `canSave` guard so that a form where `displayCurrency` is null (e.g., account not yet selected) cannot reach the `save()` path where `state.displayCurrency!` would throw:
 
 ```dart
@@ -924,6 +961,14 @@ currency: s.selectedAccount!.currency,
 ```
 This is the specific assignment that must change to `currency: s.displayCurrency!`. If this line is not updated, the old account-currency coupling persists silently even after the `currencyTouched` logic is correctly implemented.
 
+After making this change, run:
+
+```bash
+rg "selectedAccount!\.currency" lib/features/transactions/
+```
+
+Expected: zero hits. Any remaining reference is a silent regression that preserves the old coupling.
+
 **Note on `currencyTouched` as a replacement invariant:** `currencyTouched` is ephemeral controller state managed by an AutoDispose Riverpod controller — it resets when the form route is popped (controller disposed) and on app cold start, but not on Riverpod watch rebuilds within an active form session. It must live in `TransactionFormState.data`, not in widget state. It is a UX convenience flag, not a data integrity guard. The repository no longer enforces currency correctness after the exception is removed in Step 4, so the controller's `save()` path is the only enforcement point. Ensure `save()` guards `state.displayCurrency != null` before proceeding — throw a typed exception (e.g., `TransactionCurrencyMissingException`) rather than a `StateError`, so the error propagates correctly through the controller's `AsyncValue` error path in both debug and release builds. A `StateError` is stripped or surfaces as an unhandled crash; a typed exception is catchable and testable.
 
 - [ ] **Step 4: Remove the mismatch guard from the repository and delete the exception type**
@@ -956,8 +1001,12 @@ The new picker should:
 - show `code` as the title and `currencyDisplayName(c, l10n)` as the subtitle
 - include a search `TextField` that filters by code or localized name; when the filter matches no results, render a centered `Text(l10n.txCurrencyPickerNoResults)` message instead of an empty list (the ARB key is defined in Task 2 Step 1)
 - use `autofocus: true` on the `TextField` so keyboard focus lands on open; ensure the `ModalBottomSheet` uses `isScrollControlled: true` so the list is not hidden behind the soft keyboard when the IME appears
+- **loading state:** while `selectableCurrenciesProvider` is in the loading state, show a centered `CircularProgressIndicator` — aligns with the shimmer pattern established for `account_tile.dart` in Task 10 Step 6
+- **error state:** on provider error, show a centered error message (e.g., `Text('Could not load currencies')`) rather than an unhandled crash
 
 Keep the sheet file transactions-local because it adds search, confirmation wiring, and the transaction form's selection contract — concerns absent from the accounts picker. The currency data source (`selectableCurrenciesProvider`) is shared.
+
+**Also consolidate `settingsFiatCurrenciesProvider`:** `lib/features/settings/settings_providers.dart` has `settingsFiatCurrenciesProvider` which calls `repo.watchAll().where(!c.isToken)` — identical to `selectableCurrenciesProvider`. Migrate `lib/features/settings/widgets/default_currency_picker_sheet.dart` to import `selectableCurrenciesProvider` from `accounts_providers.dart` (Task 3 Step 2 already imports `currency_display.dart` from accounts; adding this import follows the same pattern). Delete `settingsFiatCurrenciesProvider` from `settings_providers.dart` once it has no remaining callers. Run `import_lint` after to confirm the cross-slice import is within allowed boundaries.
 
 - [ ] **Step 6: Insert the currency row into the form between account and date**
 
@@ -969,6 +1018,8 @@ CurrencySelectorTile(
   onTap: () => _onTapCurrencyTile(context, l10n, state, controller),
 )
 ```
+
+**`CurrencySelectorTile` null-currency rendering:** when `state.displayCurrency` is `null` (before the user selects an account), the tile renders in a disabled state — show the `txCurrencyLabel` ("Currency") label with a `—` placeholder value and set `onTap` to `null` (not tappable). The row becomes enabled automatically once `displayCurrency` is non-null, which happens when an account is selected (since account selection seeds `displayCurrency` from the account's default currency).
 
 When a non-zero amount would be cleared, show a confirm dialog: title `txCurrencyChangeConfirmTitle` ("Change currency?"), body `txCurrencyPickerChangeConfirmBody` ("Changing the currency will clear the entered amount.") — use the new picker-specific key, not `txCurrencyChangeConfirmBody` which is reserved for the account-swap flow, and confirm button `txCurrencyChangeConfirmAction` ("Change and Clear").
 
