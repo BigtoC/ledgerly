@@ -502,7 +502,7 @@ final canGoPrev = selectedDay.isAfter(DateTime(1900));
 final canGoNext = selectedDay.isBefore(today);
 ```
 
-Use `activity.isEmpty` only for the first-run empty-state branch.
+Use `activity.isEmpty` only for the first-run empty-state branch. The app enforces that transactions can only be saved on today or earlier — no future-dated transactions exist. This means `activity.isEmpty` is a reliable "no transactions ever" signal: any non-empty activity list means at least one past-or-today transaction exists, so the state is always `HomeData` (even if `transactionsForDay` is empty for the selected day). `HomeEmpty` fires only when the activity list is truly empty.
 
 Also expose one controller-owned normalized today value in `HomeState.data` so the widget layer does not recompute `DateTime.now()` independently. Add:
 
@@ -761,9 +761,17 @@ Rules:
 - **Queue data structure:** change `int _queuedDaySteps = 0` to `final Queue<int> _directionQueue = Queue<int>()` (import `dart:collection`). Each entry is the sign (`+1` or `-1`) for that step. Set `_activeDirection` from `_directionQueue.removeFirst()` at drain start, **not** from the most recent enqueue — this ensures each animation step slides in the direction it was originally requested, even when the user reverses direction mid-queue. Updating `_activeDirection` on enqueue (not drain) would invert the slide direction for already-queued steps when the user reverses.
 - each drain cycle removes one entry from `_directionQueue`, advances the day by that sign, sets `_activeDirection` accordingly, then animates
 - if the requested day equals the current visible day, update in place and do not animate
-- for `_jumpToDay` jumps spanning more than 5 days, skip intermediate animation and jump directly to the target day in a single transition; for 1–5 day jumps, enqueue one step per day (these fit within the queue cap)
+- `_jumpToDay` (date-picker selection) always performs a **single transition** regardless of distance — the target day becomes `selectedDay` immediately, direction sign is computed from `pickedDay.isAfter(currentDay) ? +1 : -1`, and one animation fires. Never enqueue per-step animations for date-picker jumps — the queue is only for prev/next button and swipe inputs
 - **direction convention:** next/swipe-left → newer day → slide in from right (`_activeDirection = +1`, tween `Offset(1.0, 0) → Offset.zero`); prev/swipe-right → older day → slide in from left (`_activeDirection = -1`, tween `Offset(-1.0, 0) → Offset.zero`)
-- for swipe detection, use `GestureDetector` with `onHorizontalDragEnd` (not `PageView`, which conflicts with `CustomScrollView`); treat positive `velocity.pixelsPerSecond.dx` (dragged right) as prev, negative as next; apply a minimum velocity threshold of 300 dp/s AND a directional-purity check `velocity.pixelsPerSecond.dx.abs() > velocity.pixelsPerSecond.dy.abs()` — both conditions must be true to prevent accidental day changes when the user scrolls the transaction list with slight horizontal drift
+- for swipe detection, use `GestureDetector` with `onHorizontalDragEnd` (not `PageView`, which conflicts with `CustomScrollView`); treat positive `details.velocity.pixelsPerSecond.dx` (dragged right) as prev, negative as next; apply a minimum velocity threshold of 300 dp/s AND a directional-purity check — both conditions must be true to prevent accidental day changes when the user scrolls the transaction list with slight horizontal drift:
+  ```dart
+  final dx = details.velocity.pixelsPerSecond.dx;
+  final dy = details.velocity.pixelsPerSecond.dy;
+  if (dx.abs() >= 300 && dx.abs() > dy.abs()) {
+    _enqueueDayStep(dx > 0 ? -1 : 1);
+  }
+  ```
+  Use `details.velocity.pixelsPerSecond` (type `Offset`) — **not** `details.primaryVelocity` (type `double?`), which is a 1-D projection that discards the `dy` component needed for the purity check. Wrap only the `SlideTransition` region (the animated day-content area below the summary strip and header) with this `GestureDetector` — do not wrap the `Scaffold`, `CustomScrollView`, or the header/summary strip, so the scroll view's vertical gesture recognition remains uncontested.
 
 - [ ] **Step 5: Animate only the day-content region, not the whole scaffold**
 
