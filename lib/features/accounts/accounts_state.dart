@@ -2,7 +2,8 @@
 //
 // Freezed sealed union. The Accounts tab is primarily backed by
 // `accountRepository.watchAll(includeArchived: true)` composed with
-// per-account `watchBalanceMinorUnits(id)` streams, then layered with
+// per-account `watchBalanceByCurrency(id)` streams (grouped by currency
+// code), then layered with
 // `userPreferencesRepository.watchDefaultAccountId()`. The controller
 // projects all three into a single `Data` variant so the widget never
 // aggregates streams in `build()`.
@@ -29,14 +30,16 @@ part 'accounts_state.freezed.dart';
 ///   suppresses swipe actions on archived tiles.
 enum AccountRowAffordance { archive, delete, archiveBlocked }
 
-/// View-model pairing a domain [Account] with its derived balance. The
-/// widget reads this shape directly — it never re-subscribes to the
-/// balance stream itself.
+/// View-model pairing a domain [Account] with its derived grouped
+/// balances. Keys are uppercase currency codes; values are the net
+/// balance in that currency's minor units. Zero-value groups are
+/// suppressed by the repository. The widget reads this shape directly —
+/// it never re-subscribes to the balance stream itself.
 @freezed
 abstract class AccountWithBalance with _$AccountWithBalance {
   const factory AccountWithBalance({
     required Account account,
-    required int balanceMinorUnits,
+    required Map<String, int> balancesByCurrency,
     required AccountRowAffordance affordance,
   }) = _AccountWithBalance;
 }

@@ -14,15 +14,18 @@
 // and keyboard users can reach each action without a gesture.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
 import '../../../core/utils/color_palette.dart';
 import '../../../core/utils/icon_registry.dart';
 import '../../../core/utils/money_formatter.dart';
+import '../../../data/models/currency.dart';
 import '../../../l10n/app_localizations.dart';
+import '../accounts_providers.dart';
 import '../accounts_state.dart';
 
-class AccountTile extends StatelessWidget {
+class AccountTile extends ConsumerWidget {
   const AccountTile({
     super.key,
     required this.view,
@@ -47,14 +50,24 @@ class AccountTile extends StatelessWidget {
   final VoidCallback onArchiveBlocked;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final a = view.account;
     final color = colorForIndex(a.color ?? 0);
-    final balance = MoneyFormatter.format(
-      amountMinorUnits: view.balanceMinorUnits,
-      currency: a.currency,
-      locale: locale,
+
+    // Resolve currency metadata for balance formatting.
+    final currenciesAsync = ref.watch(currenciesByCodeProvider);
+    final currenciesByCode = currenciesAsync.maybeWhen(
+      data: (m) => m,
+      orElse: () => <String, Currency>{},
+    );
+
+    // Build the grouped balance widget.
+    final balanceWidget = _buildBalanceColumn(
+      context,
+      view.balancesByCurrency,
+      currenciesByCode,
+      l10n,
     );
 
     final startActions = <Widget>[
@@ -116,6 +129,10 @@ class AccountTile extends StatelessWidget {
             ),
       child: ListTile(
         onTap: onTap,
+        // Use three-line mode when the balance column has more than one
+        // group so the tile grows vertically to accommodate multi-line
+        // trailing content at any text scale.
+        isThreeLine: view.balancesByCurrency.length > 1,
         leading: Container(
           width: 40,
           height: 40,
@@ -138,7 +155,7 @@ class AccountTile extends StatelessWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(balance),
+            balanceWidget,
             const SizedBox(width: 8),
             _TrailingActions(
               view: view,
@@ -151,6 +168,63 @@ class AccountTile extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  /// Builds the balance column for the tile trailing area.
+  ///
+  /// Renders at most 2 currency groups as individual lines, then an
+  /// `+N more` indicator when there are more than 2 groups.
+  Widget _buildBalanceColumn(
+    BuildContext context,
+    Map<String, int> balancesByCurrency,
+    Map<String, Currency> currenciesByCode,
+    AppLocalizations l10n,
+  ) {
+    if (balancesByCurrency.isEmpty) {
+      // No balance to show: render a neutral zero for the account's
+      // native currency, seeded from the account model.
+      final formatted = MoneyFormatter.format(
+        amountMinorUnits: 0,
+        currency: view.account.currency,
+        locale: locale,
+      );
+      return Text(formatted);
+    }
+
+    final entries = balancesByCurrency.entries.toList(growable: false);
+    final displayCount = entries.length > 2 ? 2 : entries.length;
+    final overflowCount = entries.length - displayCount;
+
+    final lines = <Widget>[];
+    for (var i = 0; i < displayCount; i++) {
+      final code = entries[i].key;
+      final amount = entries[i].value;
+      final currency =
+          currenciesByCode[code] ?? Currency(code: code, decimals: 2);
+      final formatted = MoneyFormatter.format(
+        amountMinorUnits: amount,
+        currency: currency,
+        locale: locale,
+      );
+      lines.add(Text(formatted, textAlign: TextAlign.end));
+    }
+    if (overflowCount > 0) {
+      lines.add(
+        Text(
+          l10n.accountsBalanceMore(overflowCount),
+          textAlign: TextAlign.end,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisSize: MainAxisSize.min,
+      children: lines,
     );
   }
 }

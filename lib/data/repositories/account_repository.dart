@@ -85,19 +85,21 @@ abstract class AccountRepository {
   /// transaction references this account.
   Stream<bool> watchIsReferenced(int id);
 
-  /// Sum of all transactions for `accountId` in the account's native
-  /// currency, expressed as minor units. Expense transactions subtract
-  /// from the balance; income transactions add. `opening_balance_minor_units`
-  /// is included. Emits on every insert / update / delete of a transaction
-  /// that references this account, and on changes to the account row
-  /// itself (opening balance edits). No cross-currency conversion — the
-  /// transaction form enforces that transactions on an account use the
-  /// account's currency, per PRD.md → Add/Edit Interaction Rules.
-  /// Archived accounts still compute a balance.
+  /// Grouped balance for `accountId`, keyed by currency code (uppercase).
+  /// Each entry is the sum of all transactions in that currency plus, for
+  /// the account's native currency, `opening_balance_minor_units`. Expense
+  /// transactions subtract; income transactions add.
   ///
-  /// Missing accounts emit `0` (subquery collapses via `COALESCE`), not
-  /// an error — matches `watchById`'s null-on-missing contract.
-  Stream<int> watchBalanceMinorUnits(int accountId);
+  /// Zero-value groups are suppressed so the map only contains entries
+  /// with a non-zero balance. An account with no transactions and
+  /// `opening_balance_minor_units == 0` emits `{}`. Missing accounts also
+  /// emit `{}`. Archived accounts still emit their grouped balance.
+  ///
+  /// Emits on every insert / update / delete of a transaction that
+  /// references this account, on account-row changes (opening balance
+  /// edits), and on category-type changes (since expense/income sign
+  /// depends on `categories.type`).
+  Stream<Map<String, int>> watchBalanceByCurrency(int accountId);
 
   /// One-shot lookup of the most recently used non-archived account, used by
   /// the Add Transaction default-account fallback chain (M5 Wave 2 §3.2,
@@ -220,40 +222,50 @@ final class DriftAccountRepository implements AccountRepository {
   }
 
   @override
-  Stream<int> watchBalanceMinorUnits(int accountId) {
-    // Tracked balance is derived, not stored. The outer `SELECT` assembles
-    // opening balance + signed transaction sum; category.type drives the
-    // sign (expense subtracts, income adds). Both subqueries are wrapped
-    // in COALESCE so a missing account or empty transaction set collapses
-    // to `0` instead of NULL.
-    //
-    // `readsFrom: {accounts, transactions}` tells Drift's stream-query
-    // store to re-emit on account-row edits and transaction writes. The
-    // aggregate also depends on `categories.type`, but CategoryRepository
-    // forbids changing a referenced category's type after first use, so
-    // unrelated category metadata edits should not invalidate every active
-    // balance stream.
+  Stream<Map<String, int>> watchBalanceByCurrency(int accountId) {
+    // One grouped query across all transactions for this account, keyed by
+    // transaction currency. The sign is driven by category.type (expense
+    // subtracts, income adds). `readsFrom` includes categories so that the
+    // rare category-type edit correctly invalidates the stream.
     final query = _db.customSelect(
-      'SELECT '
-      'COALESCE('
-      '(SELECT opening_balance_minor_units FROM accounts WHERE id = ?),'
-      ' 0'
-      ') + COALESCE('
-      '(SELECT SUM('
-      "CASE c.type WHEN 'income' THEN t.amount_minor_units "
-      "WHEN 'expense' THEN -t.amount_minor_units END"
-      ') '
+      'SELECT t.currency AS code, '
+      'SUM(CASE c.type '
+      "WHEN 'income' THEN t.amount_minor_units "
+      "WHEN 'expense' THEN -t.amount_minor_units "
+      'END) AS net '
       'FROM transactions t '
       'JOIN categories c ON c.id = t.category_id '
-      'WHERE t.account_id = ?'
-      '), 0) AS balance',
-      variables: [Variable<int>(accountId), Variable<int>(accountId)],
-      readsFrom: {_db.accounts, _db.transactions},
+      'WHERE t.account_id = ? '
+      'GROUP BY t.currency',
+      variables: [Variable<int>(accountId)],
+      readsFrom: {_db.accounts, _db.transactions, _db.categories},
     );
-    // The outer SELECT has no FROM clause, so Drift always yields exactly
-    // one row; both COALESCEs guarantee the `balance` column is never
-    // NULL.
-    return query.watch().map((rows) => rows.first.read<int>('balance'));
+
+    return query.watch().asyncMap((rows) async {
+      // Build map from SQL rows; normalise codes to uppercase.
+      final Map<String, int> map = {};
+      for (final row in rows) {
+        final code = row.read<String>('code').toUpperCase();
+        map[code] = row.read<int>('net');
+      }
+
+      // Merge opening balance into the account's native currency group.
+      final account = await _dao.findById(accountId);
+      if (account != null) {
+        final native = account.currency.toUpperCase();
+        final opening = account.openingBalanceMinorUnits;
+        if (opening != 0) {
+          map[native] = (map[native] ?? 0) + opening;
+        } else if (!map.containsKey(native)) {
+          // Native currency has no transactions and zero opening balance —
+          // do not add a zero entry.
+        }
+      }
+
+      // Suppress zero-value groups after the opening-balance merge.
+      map.removeWhere((_, balance) => balance == 0);
+      return map;
+    });
   }
 
   @override
