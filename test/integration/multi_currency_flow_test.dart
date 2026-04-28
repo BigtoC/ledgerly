@@ -100,6 +100,66 @@ void main() {
     );
 
     testWidgets(
+      'same-account cross-currency: USD + JPY on one account → two groups in summary',
+      (tester) async {
+        final db = newTestAppDatabase();
+        addTearDown(db.close);
+        await tester.runAsync(() => runTestSeed(db));
+
+        // Insert both USD and JPY transactions against the single seeded
+        // USD Cash account — cross-currency saves are now allowed.
+        await tester.runAsync(() async {
+          final foodId = await getSeededCategoryId(db, 'category.food');
+          final cash = await getDefaultAccount(db);
+
+          // USD expense — $1.00 today.
+          await insertTestTransaction(
+            db,
+            accountId: cash.id,
+            categoryId: foodId,
+            currencyCode: 'USD',
+            amountMinorUnits: 100,
+            date: DateTime.now(),
+          );
+
+          // JPY expense on the SAME USD account — cross-currency.
+          await insertTestTransaction(
+            db,
+            accountId: cash.id,
+            categoryId: foodId,
+            currencyCode: 'JPY',
+            amountMinorUnits: 500,
+            date: DateTime.now(),
+          );
+        });
+
+        final container = makeTestContainer(
+          db: db,
+          extraOverrides: [
+            splashGateSnapshotProvider.overrideWithValue(
+              SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        await tester.pumpWidget(buildTestApp(container: container));
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(HomeScreen), findsOneWidget);
+        expect(find.byType(SummaryStrip), findsOneWidget);
+
+        // Both currency groups must appear in the summary strip.
+        expect(find.textContaining(r'$1.00'), findsAtLeastNWidgets(1));
+        expect(find.textContaining('¥500'), findsAtLeastNWidgets(1));
+
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets(
       'all transactions in same currency → summary strip has one group',
       (tester) async {
         final db = newTestAppDatabase();

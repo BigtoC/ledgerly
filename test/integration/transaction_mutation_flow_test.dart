@@ -140,6 +140,66 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets(
+      'gap day: Add from empty-day state pins the new row to that day',
+      (tester) async {
+        final db = newTestAppDatabase();
+        addTearDown(db.close);
+        // Seed a transaction on yesterday so Home opens with history but
+        // today is a gap day (no transactions today).
+        await tester.runAsync(() async {
+          await runTestSeed(db);
+          final foodId = await getSeededCategoryId(db, 'category.food');
+          final cash = await getDefaultAccount(db);
+          final yesterday = DateTime.now().subtract(const Duration(days: 1));
+          await insertTestTransaction(
+            db,
+            accountId: cash.id,
+            categoryId: foodId,
+            currencyCode: 'USD',
+            amountMinorUnits: 100,
+            date: yesterday,
+          );
+        });
+
+        final container = makeTestContainer(
+          db: db,
+          extraOverrides: [
+            splashGateSnapshotProvider.overrideWithValue(
+              SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        await tester.pumpWidget(buildTestApp(container: container));
+        await pumpHome(tester);
+
+        // Today is a gap day — the empty-day message should be visible.
+        expect(find.byType(HomeScreen), findsOneWidget);
+        expect(find.text('No transaction'), findsOneWidget);
+        expect(find.byType(TransactionTile), findsNothing);
+
+        await tester.tap(find.byTooltip('Add transaction'));
+        await tester.pumpAndSettle();
+        expect(find.text('Add transaction'), findsOneWidget);
+
+        await enterAmountAndFood(tester, '5');
+        await saveForm(tester);
+
+        // Home should show the new tile; the gap-day message should be gone.
+        expect(find.byType(HomeScreen), findsOneWidget);
+        expect(find.byType(TransactionTile), findsOneWidget);
+        expect(find.text('No transaction'), findsNothing);
+
+        final rows = await tester.runAsync(
+          () => db.select(db.transactions).get(),
+        );
+        expect(rows, hasLength(2));
+        expect(tester.takeException(), isNull);
+      },
+    );
+
     testWidgets('Home row edit saves through form and updates the DB row', (
       tester,
     ) async {
