@@ -45,6 +45,7 @@ group('KeypadState — calculator expression fields', () {
     expect(s.operator, isNull);
     expect(s.isEvaluating, isFalse);
     expect(s.showingResult, isFalse);
+    expect(s.rightOperand, isNull);
   });
 });
 ```
@@ -74,6 +75,7 @@ class KeypadState {
     this.operator,
     this.isEvaluating = false,
     this.showingResult = false,
+    this.rightOperand,
   });
 
   const KeypadState.initial()
@@ -83,13 +85,15 @@ class KeypadState {
       leftOperand = null,
       operator = null,
       isEvaluating = false,
-      showingResult = false;
+      showingResult = false,
+      rightOperand = null;
 
   // ... existing fields ...
   final int? leftOperand;
   final CalcOperator? operator;
   final bool isEvaluating;
   final bool showingResult;
+  final int? rightOperand;
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
@@ -112,7 +116,8 @@ bool operator ==(Object other) {
       other.leftOperand == leftOperand &&
       other.operator == operator &&
       other.isEvaluating == isEvaluating &&
-      other.showingResult == showingResult;
+      other.showingResult == showingResult &&
+      other.rightOperand == rightOperand;
 }
 
 @override
@@ -124,6 +129,7 @@ int get hashCode => Object.hash(
   operator,
   isEvaluating,
   showingResult,
+  rightOperand,
 );
 
 @override
@@ -134,7 +140,8 @@ String toString() =>
     'leftOperand: $leftOperand, '
     'operator: $operator, '
     'isEvaluating: $isEvaluating, '
-    'showingResult: $showingResult)';
+    'showingResult: $showingResult, '
+    'rightOperand: $rightOperand)';
 ```
 
 - [ ] **Step 6: Commit**
@@ -249,6 +256,7 @@ KeypadState pushOperator(CalcOperator op, {required int decimals}) {
         leftOperand: leftOperand,  // preserve for expression line
         operator: operator,        // preserve for expression line
         showingResult: true,
+        rightOperand: amountMinorUnits, // preserve right operand for expression
       );
     }
     // Path 2b: different operator — chain
@@ -352,6 +360,7 @@ group('KeypadState.pushOperator — evaluation results', () {
     expect(result.operator, CalcOperator.add); // preserved for expression line
     expect(result.isEvaluating, isFalse);
     expect(result.showingResult, isTrue);
+    expect(result.rightOperand, 500); // preserved for expression line
   });
 
   test('K81: 150 - 50 = 100 (USD minor units)', () {
@@ -468,7 +477,7 @@ Add to `test/unit/utils/keypad_decimal_math_test.dart`:
 ```dart
 group('KeypadState.push — showingResult state', () {
   test('K90: digit during showingResult clears expression and starts fresh', () {
-    // Start from showingResult state (after evaluation, leftOperand/operator preserved)
+    // Start from showingResult state (after evaluation, leftOperand/operator/rightOperand preserved)
     final s = KeypadState(
       amountMinorUnits: 1700,
       fractionalDigitsEntered: 0,
@@ -477,6 +486,7 @@ group('KeypadState.push — showingResult state', () {
       operator: CalcOperator.add,
       isEvaluating: false,
       showingResult: true,
+      rightOperand: 500,
     );
     final result = s.push(3, decimals: 2);
     expect(result.amountMinorUnits, 300); // fresh 3, not 1700 + 3
@@ -484,6 +494,7 @@ group('KeypadState.push — showingResult state', () {
     expect(result.operator, isNull);
     expect(result.isEvaluating, isFalse);
     expect(result.showingResult, isFalse);
+    expect(result.rightOperand, isNull);
   });
 });
 ```
@@ -1054,6 +1065,7 @@ void main() {
       leftOperand: 1200,
       operator: CalcOperator.add,
       showingResult: true,
+      rightOperand: 500,
     );
     await tester.pumpWidget(
       _wrap(AmountDisplay(keypad: keypad, currency: _usd)),
@@ -1153,7 +1165,7 @@ Widget build(BuildContext context) {
 }
 ```
 
-Add the expression text builder method:
+Add the expression text builder methods inside the `AmountDisplay` class (after the existing `_renderAmountText` and `_pow10` methods):
 
 ```dart
 String? _buildExpressionText() {
@@ -1167,17 +1179,17 @@ String? _buildExpressionText() {
     return '$leftStr $opStr';
   }
 
-  if (k.showingResult && k.leftOperand != null && k.operator != null) {
+  if (k.showingResult && k.leftOperand != null && k.operator != null && k.rightOperand != null) {
     final leftStr = _formatMinorUnits(k.leftOperand!, unit, decimals);
     final opStr = _operatorSymbol(k.operator!);
-    final rightStr = _formatMinorUnits(k.amountMinorUnits, unit, decimals);
+    final rightStr = _formatMinorUnits(k.rightOperand!, unit, decimals);
     return '$leftStr $opStr $rightStr =';
   }
 
   return null;
 }
 
-String _operatorSymbol(CalcOperator op) {
+static String _operatorSymbol(CalcOperator op) {
   return switch (op) {
     CalcOperator.add => '+',
     CalcOperator.subtract => '−',
@@ -1186,7 +1198,7 @@ String _operatorSymbol(CalcOperator op) {
   };
 }
 
-String _formatMinorUnits(int minorUnits, int unit, int decimals) {
+static String _formatMinorUnits(int minorUnits, int unit, int decimals) {
   if (decimals == 0) return minorUnits.toString();
   final whole = minorUnits ~/ unit;
   final frac = (minorUnits % unit).toString().padLeft(decimals, '0');
@@ -1307,7 +1319,7 @@ group('TransactionFormController — calculator operators', () {
 Run: `flutter test test/widget/features/transactions/transaction_form_screen_test.dart`
 Expected: ALL PASS
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
 git add lib/features/transactions/transaction_form_controller.dart

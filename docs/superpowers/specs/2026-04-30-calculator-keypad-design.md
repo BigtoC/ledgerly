@@ -38,6 +38,7 @@ final int? leftOperand;        // stored left side of expression (minor units)
 final CalcOperator? operator;  // +, −, ×, ÷
 final bool isEvaluating;       // true after first operand + operator, typing 2nd number
 final bool showingResult;      // true after evaluation, before next digit/operator tap
+final int? rightOperand;       // stored right side after evaluation (for expression line)
 
 enum CalcOperator { add, subtract, multiply, divide }
 ```
@@ -47,13 +48,16 @@ enum CalcOperator { add, subtract, multiply, divide }
 ```dart
 /// Returns a new [KeypadState] with the operator applied.
 ///
-/// Three paths:
+/// Four paths:
 /// 1. No expression active (`leftOperand == null`, `showingResult == false`):
 ///    stores current `amountMinorUnits` as `leftOperand`, sets operator,
 ///    enters `isEvaluating` mode.
-/// 2. Evaluating (`isEvaluating == true`):
-///    if right operand is non-zero, evaluates the pending expression first;
-///    then sets the new operator and stores result as `leftOperand`.
+/// 2a. Evaluating, same operator (`isEvaluating == true`, `op == operator`):
+///    evaluates the pending expression, enters `showingResult` state.
+///    Preserves `leftOperand`, `operator`, and `rightOperand` for the expression line.
+/// 2b. Evaluating, different operator (`isEvaluating == true`, `op != operator`):
+///    evaluates the pending expression, stores result as `leftOperand`,
+///    sets new `operator`, continues `isEvaluating` mode.
 /// 3. Result showing (`showingResult == true`):
 ///    uses the current `amountMinorUnits` (the displayed result) as
 ///    `leftOperand`, sets operator, enters `isEvaluating` mode.
@@ -69,7 +73,7 @@ KeypadState pushOperator(CalcOperator op, {required int decimals})
 | Tap `+` (amount ≥ 0) | `leftOperand = amountMinorUnits`, `operator = add`, `isEvaluating = true`, reset `amountMinorUnits = 0`, reset fractional mode |
 | Type digits (while `isEvaluating`) | Accumulates into `amountMinorUnits` (the right operand) |
 | Tap `.` (while `isEvaluating`) | Enters fractional mode for the right operand (same pushDecimal logic) |
-| Tap `+` again (while `isEvaluating`) | Evaluate `leftOperand + amountMinorUnits` → result becomes new `amountMinorUnits`, clear `leftOperand`/`operator`, `isEvaluating = false`. Display enters "result showing" state. |
+| Tap `+` again (while `isEvaluating`) | Evaluate `leftOperand + amountMinorUnits` → result becomes new `amountMinorUnits`, preserve `leftOperand`/`operator`/`rightOperand` for expression line, `isEvaluating = false`, `showingResult = true`. |
 | Tap different operator (while `isEvaluating`) | Evaluate previous, store result as new `leftOperand`, set new `operator` |
 | Tap digit (in "result showing" state, no operator active) | Clear expression state entirely, start fresh accumulation |
 | Tap operator (in "result showing" state) | Use result as `leftOperand`, start new expression |
@@ -77,7 +81,7 @@ KeypadState pushOperator(CalcOperator op, {required int decimals})
 | Long-press `⌫` | Full reset — clear everything including expression |
 | Tap operator-again with 0 right side | Uses `leftOperand` as result (no-op effectively) |
 
-**"Result showing" state:** After evaluation completes, the system is in a transient state where the expression line shows the full calculation and the result is displayed. A digit tap clears the expression and starts fresh. An operator tap chains from the result. This is distinct from `isEvaluating` — it's the state where `leftOperand == null` but the expression line is still visible (tracked by a separate `showingResult` flag on `KeypadState`).
+**"Result showing" state:** After evaluation completes, the system is in a transient state where the expression line shows the full calculation and the result is displayed. `leftOperand`, `operator`, and `rightOperand` are preserved so the expression line can render `{left} {op} {right} =`. A digit tap clears all expression fields and starts fresh. An operator tap chains from the result. This is tracked by a `showingResult` flag on `KeypadState`.
 
 ### Evaluation Rules
 
@@ -194,7 +198,7 @@ KeypadState pushOperator(CalcOperator op, {required int decimals})
 
 | File | Change |
 |---|---|
-| `lib/features/transactions/keypad_state.dart` | Add `leftOperand`, `operator`, `isEvaluating`, `showingResult`; add `pushOperator()` method; modify `pop()` and `clear()` |
+| `lib/features/transactions/keypad_state.dart` | Add `leftOperand`, `operator`, `isEvaluating`, `showingResult`, `rightOperand`; add `pushOperator()` method; modify `pop()` and `clear()` |
 | `lib/features/transactions/widgets/calculator_keypad.dart` | New layout; add operator keys; add `onOperator` callback; long-press ⌫ for clear |
 | `lib/features/transactions/widgets/amount_display.dart` | Render expression line when operator active |
 | `lib/features/transactions/transaction_form_controller.dart` | Add `applyOperator()`; modify `appendDigit()`, `backspace()`, `clearAmount()` |
