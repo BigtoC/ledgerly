@@ -136,29 +136,22 @@ void main() {
     },
   );
 
-  testWidgets(
-    'SS06: capped groups prioritize selected-day currencies',
-    (tester) async {
-      await tester.pumpWidget(
-        _wrap(
-          const SummaryStrip(
-            todayTotalsByCurrency: {
-              'USD': (expense: 100, income: 0),
-            },
-            monthNetByCurrency: {
-              'AUD': -100,
-              'CAD': -200,
-              'USD': -300,
-            },
-            currenciesByCode: {'USD': _usd, 'JPY': _jpy, 'EUR': _eur},
-            locale: 'en_US',
-          ),
+  testWidgets('SS06: capped groups prioritize selected-day currencies', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        const SummaryStrip(
+          todayTotalsByCurrency: {'USD': (expense: 100, income: 0)},
+          monthNetByCurrency: {'AUD': -100, 'CAD': -200, 'USD': -300},
+          currenciesByCode: {'USD': _usd, 'JPY': _jpy, 'EUR': _eur},
+          locale: 'en_US',
         ),
-      );
-      await tester.pumpAndSettle();
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      expect(find.text('Multiple currencies'), findsOneWidget);
-      expect(find.textContaining(r'-$3.00'), findsOneWidget);
-    },
-  );
+    expect(find.text('Multiple currencies'), findsOneWidget);
+    expect(find.textContaining(r'-$3.00'), findsOneWidget);
+  });
 }

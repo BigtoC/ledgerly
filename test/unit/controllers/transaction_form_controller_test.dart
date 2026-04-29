@@ -844,7 +844,8 @@ void main() {
         final controller = c.read(transactionFormControllerProvider.notifier);
         await controller.hydrateForAdd();
 
-        var s = c.read(transactionFormControllerProvider) as TransactionFormData;
+        var s =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
         expect(s.displayCurrency?.code, 'USD');
         expect(s.currencyTouched, isFalse);
 
