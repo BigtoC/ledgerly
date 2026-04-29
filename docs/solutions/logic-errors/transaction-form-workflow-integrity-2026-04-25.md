@@ -1,7 +1,7 @@
 ---
 title: Transaction form workflow integrity across recovery, mutation, and adaptive routing
 date: 2026-04-25
-last_updated: 2026-04-25
+last_updated: 2026-04-29
 category: logic-errors
 module: transactions
 problem_type: logic_error
@@ -46,6 +46,7 @@ The Wave 2 transaction form had several workflow-integrity gaps across routing, 
 - Pressing Back during `save()` or `deleteExisting()` could pop the route before the operation finished, skipping the normal success/failure handling path.
 - `/home/add` had a wide-screen dialog regression test but no corresponding narrow-screen assertion.
 - Editing an older transaction could fail to open a valid date picker because the allowed range stopped too early.
+- Re-selecting the same currency that was already active could still flip `currencyTouched`, causing later account switches to stop re-seeding currency.
 
 ## What Didn't Work
 
@@ -136,7 +137,18 @@ bool _canPop(TransactionFormState state) {
 
 This closes the gap where the screen could disappear while the controller was still awaiting repository work.
 
-5. Keep the rest of the in-flight guardrails aligned with the same flags.
+5. Treat same-currency resubmissions as no-ops.
+
+`lib/features/transactions/transaction_form_controller.dart`
+
+```dart
+final currencyChanged = s.displayCurrency?.code != currency.code;
+if (!currencyChanged) return;
+```
+
+If the user re-selects the current transaction currency, the controller should do nothing instead of setting `currencyTouched`.
+
+6. Keep the rest of the in-flight guardrails aligned with the same flags.
 
 - `TransactionFormState.canSave` already requires `!isSaving && !isDeleting`.
 - Controller mutation commands already early-return while save/delete is in flight.
@@ -170,6 +182,7 @@ The pop-lock fix makes route navigation follow the same mutation contract.
 - Use intentionally broad date bounds for financial history unless the product has a real business limit.
 - Cover adaptive route behavior on both sides of the breakpoint, not just the new branch.
 - Add regression tests for route-pop behavior during async mutations; body-level `IgnorePointer` is not enough.
+- Treat no-op picker resubmissions as no-ops, not intent. In this codebase, re-selecting the current transaction currency must not flip `currencyTouched`, or later account switches will stop re-seeding currency correctly (`TC86b`).
 
 Verification that passed for this fix:
 
