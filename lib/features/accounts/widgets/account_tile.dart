@@ -191,7 +191,7 @@ class AccountTile extends ConsumerWidget {
         return a.key.compareTo(b.key);
       });
 
-    final displayCount = sortedEntries.length > 2 ? 2 : sortedEntries.length;
+    final displayCount = sortedEntries.length > 3 ? 2 : sortedEntries.length;
     final overflowCount = sortedEntries.length - displayCount;
 
     final lines = <Widget>[Text(accountTypeLabel)];

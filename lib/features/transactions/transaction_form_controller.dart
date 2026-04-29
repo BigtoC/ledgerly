@@ -343,6 +343,7 @@ class TransactionFormController extends _$TransactionFormController {
     final s = state;
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
     final currencyChanged = s.displayCurrency?.code != currency.code;
+    if (!currencyChanged) return;
     if (currencyChanged && s.amountMinorUnits > 0 && !clearAmountOnChange) {
       // Refuse until the widget shows the confirm dialog and re-calls with
       // clearAmountOnChange: true.
