@@ -90,42 +90,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   void _enqueueDayStep(int delta) {
-    // Cap the queue at 5 to prevent long drain after user stops interacting
-    if (_directionQueue.length >= 5) return;
     _directionQueue.add(delta > 0 ? 1 : -1);
     if (!_daySwitchController.isAnimating) {
-      _runNextQueuedStep();
+      unawaited(_runQueuedTransitions());
     }
   }
 
-  Future<void> _runNextQueuedStep() async {
-    if (_directionQueue.isEmpty) return;
-    final direction = _directionQueue.removeFirst();
+  Future<void> _runQueuedTransitions() async {
+    while (_directionQueue.isNotEmpty) {
+      final direction = _directionQueue.removeFirst();
+      final beforeDay = _currentSelectedDay();
 
-    // Capture the current selected day before the controller call so we
-    // can detect no-op steps (already at today or at the min day).
-    final beforeDay = _currentSelectedDay();
+      if (direction > 0) {
+        await ref.read(homeControllerProvider.notifier).selectNextDay();
+      } else {
+        await ref.read(homeControllerProvider.notifier).selectPrevDay();
+      }
 
-    if (direction > 0) {
-      await ref.read(homeControllerProvider.notifier).selectNextDay();
-    } else {
-      await ref.read(homeControllerProvider.notifier).selectPrevDay();
-    }
+      final afterDay = _currentSelectedDay();
+      final changed =
+          beforeDay == null ||
+          afterDay == null ||
+          !DateHelpers.isSameDay(beforeDay, afterDay);
 
-    final afterDay = _currentSelectedDay();
-    final changed =
-        beforeDay == null ||
-        afterDay == null ||
-        !DateHelpers.isSameDay(beforeDay, afterDay);
-
-    if (changed) {
-      _incomingOffset = _buildOffsetAnimation(direction);
-      _daySwitchController.reset();
-      await _daySwitchController.forward();
-    }
-
-    if (_directionQueue.isNotEmpty) {
-      unawaited(_runNextQueuedStep());
+      if (changed) {
+        _incomingOffset = _buildOffsetAnimation(direction);
+        _daySwitchController.reset();
+        await _daySwitchController.forward();
+      }
     }
   }
 
@@ -139,17 +131,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     return null;
   }
 
-  Future<void> _jumpToDay(DateTime pickedDay) async {
-    final current = _currentSelectedDay();
-    if (current != null && DateHelpers.isSameDay(pickedDay, current)) return;
 
-    final direction = (current == null || pickedDay.isAfter(current)) ? 1 : -1;
-    _incomingOffset = _buildOffsetAnimation(direction);
-
-    await ref.read(homeControllerProvider.notifier).pinDay(pickedDay);
-    _daySwitchController.reset();
-    await _daySwitchController.forward();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -185,6 +167,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             onPrev: () => _enqueueDayStep(-1),
             onNext: () => _enqueueDayStep(1),
             onPickDay: (day) => _onPickDay(day, data),
+            onJumpToToday: () async {
+              final current = _currentSelectedDay();
+              if (current != null && DateHelpers.isSameDay(data.today, current)) return;
+              await ref.read(homeControllerProvider.notifier).pinDay(data.today);
+              _incomingOffset = _buildOffsetAnimation(1);
+              _daySwitchController.reset();
+              await _daySwitchController.forward();
+            },
             onTapRow: _onEditRow,
             onDuplicateRow: _onDuplicateRow,
             onDeleteRow: (id) =>
@@ -261,7 +251,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
     if (!mounted) return;
     if (picked != null) {
-      await _jumpToDay(picked);
+      final current = _currentSelectedDay();
+      if (current == null || !DateHelpers.isSameDay(picked, current)) {
+        final direction = (current == null || picked.isAfter(current)) ? 1 : -1;
+        await ref.read(homeControllerProvider.notifier).pinDay(picked);
+        _incomingOffset = _buildOffsetAnimation(direction);
+        _daySwitchController.reset();
+        await _daySwitchController.forward();
+      }
     }
   }
 
@@ -304,12 +301,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 }
 
-class _AdaptiveBody extends ConsumerWidget {
+class _AdaptiveBody extends StatelessWidget {
   const _AdaptiveBody({
     required this.data,
     required this.onPrev,
     required this.onNext,
     required this.onPickDay,
+    required this.onJumpToToday,
     required this.onTapRow,
     required this.onDuplicateRow,
     required this.onDeleteRow,
@@ -320,38 +318,24 @@ class _AdaptiveBody extends ConsumerWidget {
   final VoidCallback onPrev;
   final VoidCallback onNext;
   final void Function(DateTime initial) onPickDay;
+  final VoidCallback onJumpToToday;
   final void Function(int id) onTapRow;
   final void Function(int id) onDuplicateRow;
   final void Function(int id) onDeleteRow;
   final Animation<Offset>? daySwitchAnimation;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < 600) {
-          return _SinglePane(
-            data: data,
-            onPrev: onPrev,
-            onNext: onNext,
-            onPickDay: onPickDay,
-            onTapRow: onTapRow,
-            onDuplicateRow: onDuplicateRow,
-            onDeleteRow: onDeleteRow,
-            daySwitchAnimation: daySwitchAnimation,
-          );
-        }
-        return _TwoPane(
-          data: data,
-          onPrev: onPrev,
-          onNext: onNext,
-          onPickDay: onPickDay,
-          onTapRow: onTapRow,
-          onDuplicateRow: onDuplicateRow,
-          onDeleteRow: onDeleteRow,
-          daySwitchAnimation: daySwitchAnimation,
-        );
-      },
+  Widget build(BuildContext context) {
+    return _SinglePane(
+      data: data,
+      onPrev: onPrev,
+      onNext: onNext,
+      onPickDay: onPickDay,
+      onJumpToToday: onJumpToToday,
+      onTapRow: onTapRow,
+      onDuplicateRow: onDuplicateRow,
+      onDeleteRow: onDeleteRow,
+      daySwitchAnimation: daySwitchAnimation,
     );
   }
 }
@@ -362,6 +346,7 @@ class _SinglePane extends ConsumerWidget {
     required this.onPrev,
     required this.onNext,
     required this.onPickDay,
+    required this.onJumpToToday,
     required this.onTapRow,
     required this.onDuplicateRow,
     required this.onDeleteRow,
@@ -372,6 +357,7 @@ class _SinglePane extends ConsumerWidget {
   final VoidCallback onPrev;
   final VoidCallback onNext;
   final void Function(DateTime initial) onPickDay;
+  final VoidCallback onJumpToToday;
   final void Function(int id) onTapRow;
   final void Function(int id) onDuplicateRow;
   final void Function(int id) onDeleteRow;
@@ -402,8 +388,7 @@ class _SinglePane extends ConsumerWidget {
               data.selectedDay,
               data.today,
             ),
-            onJumpToToday: () =>
-                ref.read(homeControllerProvider.notifier).selectToday(),
+            onJumpToToday: onJumpToToday,
           ),
         ),
         SliverToBoxAdapter(
@@ -475,52 +460,6 @@ class _SinglePane extends ConsumerWidget {
         }
       },
       child: body,
-    );
-  }
-}
-
-class _TwoPane extends ConsumerWidget {
-  const _TwoPane({
-    required this.data,
-    required this.onPrev,
-    required this.onNext,
-    required this.onPickDay,
-    required this.onTapRow,
-    required this.onDuplicateRow,
-    required this.onDeleteRow,
-    this.daySwitchAnimation,
-  });
-
-  final HomeData data;
-  final VoidCallback onPrev;
-  final VoidCallback onNext;
-  final void Function(DateTime initial) onPickDay;
-  final void Function(int id) onTapRow;
-  final void Function(int id) onDuplicateRow;
-  final void Function(int id) onDeleteRow;
-  final Animation<Offset>? daySwitchAnimation;
-
-  Widget _buildLeftPane() => const SizedBox.shrink();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Row(
-      children: [
-        SizedBox(width: 280, child: _buildLeftPane()),
-        const VerticalDivider(width: 1),
-        Expanded(
-          child: _SinglePane(
-            data: data,
-            onPrev: onPrev,
-            onNext: onNext,
-            onPickDay: onPickDay,
-            onTapRow: onTapRow,
-            onDuplicateRow: onDuplicateRow,
-            onDeleteRow: onDeleteRow,
-            daySwitchAnimation: daySwitchAnimation,
-          ),
-        ),
-      ],
     );
   }
 }

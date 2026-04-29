@@ -241,6 +241,8 @@ class _Composer {
   StreamSubscription<List<DateTime>>? _activitySub;
   StreamSubscription<Map<String, ({int expense, int income})>>? _totalsSub;
   StreamSubscription<Map<String, int>>? _monthNetSub;
+  DateTime? _subscribedDay;
+  DateTime? _subscribedSummaryDay;
 
   // Latest values; null until first emit.
   List<Transaction>? _txForDay;
@@ -279,12 +281,17 @@ class _Composer {
   }
 
   void _subscribeDay(DateTime day) {
+    final targetDay = DateHelpers.startOfDay(day);
+    if (_subscribedDay != null &&
+        DateHelpers.isSameDay(_subscribedDay!, targetDay)) {
+      return;
+    }
     _dayGeneration++;
     final generation = _dayGeneration;
-    final targetDay = DateHelpers.startOfDay(day);
+    _subscribedDay = targetDay;
     _daySub?.cancel();
     _txForDay = null;
-    _daySub = _repo.watchByDay(day).listen((rows) {
+    _daySub = _repo.watchByDay(targetDay).listen((rows) {
       if (generation != _dayGeneration) return;
       final isStale = rows.any(
         (row) => !DateHelpers.isSameDay(row.date, targetDay),
@@ -301,15 +308,21 @@ class _Composer {
   }
 
   void _subscribeSummaryStreams(DateTime today) {
+    final targetDay = DateHelpers.startOfDay(today);
+    if (_subscribedSummaryDay != null &&
+        DateHelpers.isSameDay(_subscribedSummaryDay!, targetDay)) {
+      return;
+    }
+    _subscribedSummaryDay = targetDay;
     _totalsSub?.cancel();
     _monthNetSub?.cancel();
     _todayTotals = null;
     _monthNet = null;
-    _totalsSub = _repo.watchDailyTotalsByType(today).listen((totals) {
+    _totalsSub = _repo.watchDailyTotalsByType(targetDay).listen((totals) {
       _todayTotals = totals;
       _scheduleEmit();
     }, onError: _onError);
-    _monthNetSub = _repo.watchMonthNetByCurrency(today).listen((net) {
+    _monthNetSub = _repo.watchMonthNetByCurrency(targetDay).listen((net) {
       _monthNet = net;
       _scheduleEmit();
     }, onError: _onError);
