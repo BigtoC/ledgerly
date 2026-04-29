@@ -364,20 +364,15 @@ group('KeypadState.pushOperator — evaluation results', () {
   });
 
   test('K81: 150 - 50 = 100 (USD minor units)', () {
+    // 150.00 = 15000 minor units, 50.00 = 5000 minor units
     final s = const KeypadState.initial()
-        .push(1, decimals: 2)
-        .push(5, decimals: 2) // 1500
-        .pushOperator(CalcOperator.subtract, decimals: 2)
-        .push(5, decimals: 0); // 50 — wait, this is wrong for decimals=2
-    // Actually: 150 - 50 means leftOperand=15000, right=5000
-    final s2 = const KeypadState.initial()
         .push(1, decimals: 2)
         .push(5, decimals: 2)
         .push(0, decimals: 2) // 15000
         .pushOperator(CalcOperator.subtract, decimals: 2)
         .push(5, decimals: 2)
         .push(0, decimals: 2); // 5000
-    final result = s2.pushOperator(CalcOperator.subtract, decimals: 2);
+    final result = s.pushOperator(CalcOperator.subtract, decimals: 2);
     expect(result.amountMinorUnits, 10000);
   });
 
@@ -1253,18 +1248,28 @@ void applyOperator(CalcOperator op) {
 
 - [ ] **Step 2: Write controller tests**
 
-Add controller tests in `test/unit/controllers/transaction_form_controller_test.dart` (or the existing controller test file):
+Add controller tests in `test/unit/controllers/transaction_form_controller_test.dart` (or the existing controller test file). Use the existing test setup pattern from `test/support/test_app.dart`:
 
 ```dart
 group('TransactionFormController — calculator operators', () {
-  test('applyOperator sets leftOperand and isEvaluating on keypad', () async {
-    // Setup: hydrate controller with a valid form state
-    // ... (use existing test setup pattern)
-    // Enter amount 12 via keypad
+  late ProviderContainer container;
+  late TransactionFormController controller;
+
+  setUp(() async {
+    final db = newTestAppDatabase();
+    await runTestSeed(db);
+    container = makeTestContainer(db);
+    controller = container.read(transactionFormControllerProvider.notifier);
+    // Hydrate into a valid form state
+    await controller.hydrateForAdd();
+  });
+
+  tearDown(() => container.dispose());
+
+  test('applyOperator sets leftOperand and isEvaluating on keypad', () {
     controller.appendDigit(1);
     controller.appendDigit(2);
     expect(controller.keypadSnapshot.amountMinorUnits, 1200);
-    // Apply operator
     controller.applyOperator(CalcOperator.add);
     expect(controller.keypadSnapshot.leftOperand, 1200);
     expect(controller.keypadSnapshot.operator, CalcOperator.add);
@@ -1272,8 +1277,7 @@ group('TransactionFormController — calculator operators', () {
     expect(controller.keypadSnapshot.amountMinorUnits, 0);
   });
 
-  test('applyOperator on second tap evaluates and updates state', () async {
-    // Setup controller, enter 12, tap +, enter 5, tap +
+  test('applyOperator on second tap evaluates and updates state', () {
     controller.appendDigit(1);
     controller.appendDigit(2);
     controller.applyOperator(CalcOperator.add);
@@ -1283,7 +1287,7 @@ group('TransactionFormController — calculator operators', () {
     expect(controller.keypadSnapshot.showingResult, isTrue);
   });
 
-  test('appendDigit during evaluating accumulates into right operand', () async {
+  test('appendDigit during evaluating accumulates into right operand', () {
     controller.appendDigit(1);
     controller.applyOperator(CalcOperator.add);
     controller.appendDigit(5);
@@ -1291,17 +1295,16 @@ group('TransactionFormController — calculator operators', () {
     expect(controller.keypadSnapshot.isEvaluating, isTrue);
   });
 
-  test('backspace during evaluating with amount=0 cancels expression', () async {
+  test('backspace during evaluating with amount=0 cancels expression', () {
     controller.appendDigit(1);
     controller.appendDigit(2);
     controller.applyOperator(CalcOperator.add);
-    // amountMinorUnits is 0, leftOperand is 1200
     controller.backspace();
     expect(controller.keypadSnapshot.amountMinorUnits, 1200);
     expect(controller.keypadSnapshot.leftOperand, isNull);
   });
 
-  test('clearAmount resets expression state', () async {
+  test('clearAmount resets expression state', () {
     controller.appendDigit(1);
     controller.applyOperator(CalcOperator.add);
     controller.appendDigit(5);
@@ -1367,45 +1370,23 @@ git commit -m "feat: wire operator keys to controller in TransactionFormScreen"
 
 ---
 
-### Task 11: Handle currency/account change mid-expression
+### Task 11: Verify currency/account change mid-expression resets state
 
 **Files:**
-- Modify: `lib/features/transactions/transaction_form_controller.dart`
-- Modify: `lib/features/transactions/keypad_state.dart`
+- None (verification only — no code changes needed)
 
-- [ ] **Step 1: Add resetExpression() helper to KeypadState**
+The existing `selectAccount()` and `selectCurrency()` methods in `transaction_form_controller.dart` already call `_keypad = const KeypadState.initial()` when the currency changes and the amount is cleared. Since `KeypadState.initial()` now includes the expression fields with default null/false values, this correctly resets expression state. No additional code or tests needed — the existing controller tests for currency change cover this path.
 
-In `lib/features/transactions/keypad_state.dart`:
+- [ ] **Step 1: Verify by reading the code**
 
-```dart
-/// Returns a new state with expression fields cleared but amount preserved.
-KeypadState resetExpression() {
-  return KeypadState(
-    amountMinorUnits: amountMinorUnits,
-    fractionalDigitsEntered: fractionalDigitsEntered,
-    isFractionalMode: isFractionalMode,
-  );
-}
-```
+Confirm that `selectAccount()` (line ~320 in `transaction_form_controller.dart`) and `selectCurrency()` (line ~352) both use `_keypad = const KeypadState.initial()` when `currencyChanged` is true.
 
-- [ ] **Step 2: Use resetExpression() in selectAccount() and selectCurrency()**
+- [ ] **Step 2: Run existing controller tests**
 
-In `transaction_form_controller.dart`, in `selectAccount()` where the currency changes and amount is cleared, also reset the expression:
+Run: `flutter test test/unit/controllers/transaction_form_controller_test.dart`
+Expected: ALL PASS
 
-```dart
-if (currencyChanged) {
-  _keypad = const KeypadState.initial(); // already resets everything
-  // ...
-}
-```
-
-This already works because `KeypadState.initial()` resets all fields. No change needed — the existing code handles this correctly.
-
-- [ ] **Step 3: Verify currency change resets expression**
-
-The existing `selectAccount()` and `selectCurrency()` methods already call `_keypad = const KeypadState.initial()` when the currency changes and amount is cleared. Since `KeypadState.initial()` now includes the expression fields with default null/false values, this correctly resets expression state. No additional test needed — the existing controller tests for currency change cover this path.
-
-- [ ] **Step 4: Commit**
+No commit needed — no code changes.
 
 ```bash
 git add lib/features/transactions/keypad_state.dart
