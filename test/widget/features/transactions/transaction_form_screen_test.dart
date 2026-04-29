@@ -530,6 +530,27 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('WS14b: memo field is single-line and done closes keyboard', (
+    tester,
+  ) async {
+    await tester.pumpWidget(mountAdd());
+    await tester.pumpAndSettle();
+
+    final memoFieldFinder = find.widgetWithText(TextField, 'Memo');
+    final memoField = tester.widget<TextField>(memoFieldFinder);
+
+    expect(memoField.maxLines, 1);
+    expect(memoField.textInputAction, TextInputAction.done);
+
+    await tester.showKeyboard(memoFieldFinder);
+    expect(tester.testTextInput.isVisible, isTrue);
+
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    expect(tester.testTextInput.isVisible, isFalse);
+  });
+
   testWidgets('WS15: account picker lists active accounts only', (
     tester,
   ) async {
