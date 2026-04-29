@@ -12,529 +12,517 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appTitle => 'Ledgerly';
 
   @override
-  String get navHome => 'Home';
+  String get navHome => '首頁';
 
   @override
-  String get navAccounts => 'Accounts';
+  String get navAccounts => '帳戶';
 
   @override
-  String get navSettings => 'Settings';
+  String get navSettings => '設定';
 
   @override
-  String get commonSave => 'Save';
+  String get commonSave => '儲存';
 
   @override
-  String get commonCancel => 'Cancel';
+  String get commonCancel => '取消';
 
   @override
-  String get commonDelete => 'Delete';
+  String get commonDelete => '刪除';
 
   @override
-  String get categoriesArchiveAction => 'Archive';
+  String get categoriesArchiveAction => '封存';
 
   @override
-  String get homeEditAction => 'Edit';
+  String get homeEditAction => '編輯';
 
   @override
-  String get commonUndo => 'Undo';
+  String get commonUndo => '復原';
 
   @override
-  String get txDiscardAction => 'Discard';
+  String get txDiscardAction => '捨棄';
 
   @override
-  String get txKeypadDone => 'Done';
+  String get txKeypadDone => '完成';
 
   @override
-  String get transactionTypeExpense => 'Expense';
+  String get transactionTypeExpense => '支出';
 
   @override
-  String get transactionTypeIncome => 'Income';
+  String get transactionTypeIncome => '收入';
 
   @override
-  String get homeEmptyTitle => 'No transactions yet';
+  String get homeEmptyTitle => '尚無交易紀錄';
 
   @override
-  String get homeEmptyCta => 'Log first transaction';
+  String get homeEmptyCta => '記錄第一筆交易';
 
   @override
-  String get homeFabLabel => 'Add transaction';
+  String get homeFabLabel => '新增交易';
 
   @override
-  String get homeSummaryTodayExpense => 'Expense';
+  String get homeSummaryTodayExpense => '支出';
 
   @override
-  String get homeSummaryTodayIncome => 'Income';
+  String get homeSummaryTodayIncome => '收入';
 
   @override
-  String get homeSummaryMonthNet => 'Month net';
+  String get homeSummaryMonthNet => '本月淨額';
 
   @override
-  String get errorSnackbarGeneric => 'Something went wrong. Please try again.';
+  String get errorSnackbarGeneric => '發生錯誤，請再試一次。';
 
   @override
-  String get categoryFood => 'Food';
+  String get categoryFood => '飲食';
 
   @override
-  String get categoryDrinks => 'Drinks';
+  String get categoryDrinks => '飲料';
 
   @override
-  String get categoryTransportation => 'Transportation';
+  String get categoryTransportation => '交通';
 
   @override
-  String get categoryShopping => 'Shopping';
+  String get categoryShopping => '購物';
 
   @override
-  String get categoryHousing => 'Housing';
+  String get categoryHousing => '居住';
 
   @override
-  String get categoryEntertainment => 'Entertainment';
+  String get categoryEntertainment => '娛樂';
 
   @override
-  String get categoryMedical => 'Medical';
+  String get categoryMedical => '醫療';
 
   @override
-  String get categoryEducation => 'Education';
+  String get categoryEducation => '教育';
 
   @override
-  String get categoryPersonal => 'Personal';
+  String get categoryPersonal => '個人';
 
   @override
-  String get categoryTravel => 'Travel';
+  String get categoryTravel => '旅遊';
 
   @override
   String get categoryThreeC => '3C';
 
   @override
-  String get categoryMiscellaneous => 'Miscellaneous';
+  String get categoryMiscellaneous => '雜項';
 
   @override
-  String get categoryOther => 'Other';
+  String get categoryOther => '其他';
 
   @override
-  String get categoryIncomeSalary => 'Salary';
+  String get categoryIncomeSalary => '薪資';
 
   @override
-  String get categoryIncomeFreelance => 'Freelance';
+  String get categoryIncomeFreelance => '接案';
 
   @override
-  String get categoryIncomeInvestment => 'Investment';
+  String get categoryIncomeInvestment => '投資';
 
   @override
-  String get categoryIncomeGift => 'Gift';
+  String get categoryIncomeGift => '餽贈';
 
   @override
-  String get categoryIncomeOther => 'Other Income';
+  String get categoryIncomeOther => '其他收入';
 
   @override
-  String get accountTypeCash => 'Cash';
+  String get accountTypeCash => '現金';
 
   @override
-  String get accountTypeInvestment => 'Investment';
+  String get accountTypeInvestment => '投資';
 
   @override
-  String get splashEnter => 'Enter';
+  String get splashEnter => '進入';
 
   @override
-  String get splashSetStartDate => 'Set start date';
+  String get splashSetStartDate => '設定起始日期';
 
   @override
   String splashSinceDate(DateTime date) {
     final intl.DateFormat dateDateFormat = intl.DateFormat.yMMMMd(localeName);
     final String dateString = dateDateFormat.format(date);
 
-    return 'Since $dateString';
+    return '自 $dateString 起';
   }
 
   @override
-  String get splashDayCountLabel => 'days';
+  String get splashDayCountLabel => '天';
 
   @override
-  String get settingsSplashSection => 'Splash screen';
+  String get settingsSplashSection => '啟動畫面';
 
   @override
-  String get settingsSplashEnabled => 'Show splash screen';
+  String get settingsSplashEnabled => '顯示啟動畫面';
 
   @override
-  String get settingsSplashStartDate => 'Start date';
+  String get settingsSplashStartDate => '起始日期';
 
   @override
-  String get settingsSplashDisplayText => 'Display text';
+  String get settingsSplashDisplayText => '顯示文字';
 
   @override
-  String get settingsSplashButtonLabel => 'Button label';
+  String get settingsSplashButtonLabel => '按鈕文字';
 
   @override
-  String get settingsSplashPreviewCta => 'Preview splash screen';
+  String get settingsSplashPreviewCta => '預覽啟動畫面';
 
   @override
-  String get categoriesManageTitle => 'Manage categories';
+  String get categoriesManageTitle => '管理分類';
 
   @override
-  String get categoriesAddCta => 'Add category';
+  String get categoriesAddCta => '新增分類';
 
   @override
-  String get categoriesSectionExpense => 'Expense';
+  String get categoriesSectionExpense => '支出';
 
   @override
-  String get categoriesSectionIncome => 'Income';
+  String get categoriesSectionIncome => '收入';
 
   @override
-  String get categoriesFormNameLabel => 'Name';
+  String get categoriesFormNameLabel => '名稱';
 
   @override
-  String get categoriesFormIconLabel => 'Icon';
+  String get categoriesFormIconLabel => '圖示';
 
   @override
-  String get categoriesFormColorLabel => 'Color';
+  String get categoriesFormColorLabel => '顏色';
 
   @override
-  String get categoriesFormTypeLabel => 'Type';
+  String get categoriesFormTypeLabel => '類型';
 
   @override
-  String get categoriesFormTypeLockedHint =>
-      'Type cannot change after first use';
+  String get categoriesFormTypeLockedHint => '使用後類型無法變更';
 
   @override
-  String get categoriesArchiveUndoSnackbar => 'Category archived';
+  String get categoriesArchiveUndoSnackbar => '已封存分類';
 
   @override
-  String get categoriesDeleteConfirmTitle => 'Delete category?';
+  String get categoriesDeleteConfirmTitle => '要刪除分類嗎？';
 
   @override
-  String get categoriesDeleteConfirmBody => 'This cannot be undone.';
+  String get categoriesDeleteConfirmBody => '此操作無法復原。';
 
   @override
-  String get categoriesPickerTitleExpense => 'Pick expense category';
+  String get categoriesPickerTitleExpense => '選擇支出分類';
 
   @override
-  String get categoriesPickerTitleIncome => 'Pick income category';
+  String get categoriesPickerTitleIncome => '選擇收入分類';
 
   @override
-  String get categoriesPickerEmptyCta => 'No categories yet — Create one';
+  String get categoriesPickerEmptyCta => '尚無分類 — 建立一個';
 
   @override
-  String get accountsListTitle => 'Accounts';
+  String get accountsListTitle => '帳戶';
 
   @override
-  String get accountsAddCta => 'Add account';
+  String get accountsAddCta => '新增帳戶';
 
   @override
-  String get accountsEmptyTitle => 'No active accounts';
+  String get accountsEmptyTitle => '沒有使用中的帳戶';
 
   @override
-  String get accountsEmptyCta => 'Create account';
+  String get accountsEmptyCta => '建立帳戶';
 
   @override
-  String get accountsArchivedSectionLabel => 'Archived';
+  String get accountsArchivedSectionLabel => '已封存';
 
   @override
-  String get accountsSetDefaultAction => 'Set as default';
+  String get accountsSetDefaultAction => '設為預設';
 
   @override
-  String get accountsDefaultBadge => 'Default';
+  String get accountsDefaultBadge => '預設';
 
   @override
-  String get accountsArchiveAction => 'Archive';
+  String get accountsArchiveAction => '封存';
 
   @override
-  String get accountsDeleteAction => 'Delete';
+  String get accountsDeleteAction => '刪除';
 
   @override
-  String get accountsArchiveUndoSnackbar => 'Account archived';
+  String get accountsArchiveUndoSnackbar => '已封存帳戶';
 
   @override
-  String get accountsDeleteConfirmTitle => 'Delete account?';
+  String get accountsDeleteConfirmTitle => '要刪除帳戶嗎？';
 
   @override
-  String get accountsDeleteConfirmBody => 'This cannot be undone.';
+  String get accountsDeleteConfirmBody => '此操作無法復原。';
 
   @override
-  String get accountsArchiveLastActiveBlocked =>
-      'Cannot archive the only active account';
+  String get accountsArchiveLastActiveBlocked => '無法封存唯一的使用中帳戶';
 
   @override
-  String get accountsDeleteDefaultBlockedTitle => 'Change default account';
+  String get accountsDeleteDefaultBlockedTitle => '請先變更預設帳戶';
 
   @override
-  String get accountsDeleteDefaultBlockedBody =>
-      'Choose another default account before deleting this one.';
+  String get accountsDeleteDefaultBlockedBody => '刪除前請先選擇其他預設帳戶。';
 
   @override
-  String get accountsFormAddTitle => 'New account';
+  String get accountsFormAddTitle => '新帳戶';
 
   @override
-  String get accountsFormEditTitle => 'Edit account';
+  String get accountsFormEditTitle => '編輯帳戶';
 
   @override
-  String get accountsFormName => 'Name';
+  String get accountsFormName => '名稱';
 
   @override
-  String get accountsFormType => 'Account type';
+  String get accountsFormType => '帳戶類型';
 
   @override
-  String get accountsFormCurrency => 'Currency';
+  String get accountsFormCurrency => '幣別';
 
   @override
-  String get accountsFormOpeningBalance => 'Opening balance';
+  String get accountsFormOpeningBalance => '期初餘額';
 
   @override
-  String get accountsFormIcon => 'Icon';
+  String get accountsFormIcon => '圖示';
 
   @override
-  String get accountsFormColor => 'Color';
+  String get accountsFormColor => '顏色';
 
   @override
-  String get accountsFormPickType => 'Pick account type';
+  String get accountsFormPickType => '選擇帳戶類型';
 
   @override
-  String get accountsFormPickCurrency => 'Pick currency';
+  String get accountsFormPickCurrency => '選擇幣別';
 
   @override
-  String get accountsFormNotFound => 'This account no longer exists.';
+  String get accountsFormNotFound => '此帳戶已不存在。';
 
   @override
-  String get accountsTypePickerTitle => 'Pick account type';
+  String get accountsTypePickerTitle => '選擇帳戶類型';
 
   @override
-  String get accountsTypeCreateInlineCta => 'Create new account type';
+  String get accountsTypeCreateInlineCta => '建立新的帳戶類型';
 
   @override
-  String get accountsTypeFormTitle => 'New account type';
+  String get accountsTypeFormTitle => '新帳戶類型';
 
   @override
-  String get accountsTypeFormName => 'Name';
+  String get accountsTypeFormName => '名稱';
 
   @override
-  String get accountsTypeFormDefaultCurrency => 'Default currency';
+  String get accountsTypeFormDefaultCurrency => '預設幣別';
 
   @override
-  String get accountsCurrencyPickerTitle => 'Pick currency';
+  String get accountsCurrencyPickerTitle => '選擇幣別';
 
   @override
-  String get settingsSectionAppearance => 'Appearance';
+  String get settingsSectionAppearance => '外觀';
 
   @override
-  String get settingsSectionGeneral => 'General';
+  String get settingsSectionGeneral => '一般';
 
   @override
-  String get settingsSectionDataManagement => 'Data management';
+  String get settingsSectionDataManagement => '資料管理';
 
   @override
-  String get settingsThemeLabel => 'Theme';
+  String get settingsThemeLabel => '主題';
 
   @override
-  String get settingsThemeLight => 'Light';
+  String get settingsThemeLight => '淺色';
 
   @override
-  String get settingsThemeDark => 'Dark';
+  String get settingsThemeDark => '深色';
 
   @override
-  String get settingsLanguageLabel => 'Language';
+  String get settingsThemeSystem => '跟隨系統';
 
   @override
-  String get settingsLanguageSystem => 'System';
+  String get settingsLanguageLabel => '語言';
+
+  @override
+  String get settingsLanguageSystem => '跟隨系統';
 
   @override
   String get settingsLanguageEnglish => 'English';
 
   @override
-  String get settingsLanguageZhTw => '繁體中文 (Traditional Chinese)';
+  String get settingsLanguageZhTw => '繁體中文';
 
   @override
-  String get settingsLanguageZhCn => '简体中文 (Simplified Chinese)';
+  String get settingsLanguageZhCn => '简体中文';
 
   @override
-  String get settingsDefaultAccountLabel => 'Default account';
+  String get settingsDefaultAccountLabel => '預設帳戶';
 
   @override
-  String get settingsDefaultAccountEmpty => 'Not set';
+  String get settingsDefaultAccountEmpty => '尚未設定';
 
   @override
-  String get settingsDefaultAccountPickerTitle => 'Pick default account';
+  String get settingsDefaultAccountPickerTitle => '選擇預設帳戶';
 
   @override
-  String get settingsDefaultAccountCreateCta => 'Create account';
+  String get settingsDefaultAccountCreateCta => '建立帳戶';
 
   @override
-  String get settingsDefaultCurrencyLabel => 'Default currency';
+  String get settingsDefaultCurrencyLabel => '預設幣別';
 
   @override
-  String get settingsDefaultCurrencyPickerTitle => 'Pick default currency';
+  String get settingsDefaultCurrencyPickerTitle => '選擇預設幣別';
 
   @override
-  String get settingsManageCategories => 'Manage categories';
+  String get settingsManageCategories => '管理分類';
 
   @override
-  String get settingsSplashDisplayTextHint =>
-      'Use [date] and [days] as placeholders';
+  String get settingsSplashDisplayTextHint => '可使用 [date] 與 [days] 作為變數';
 
   @override
-  String get txAddTitle => 'Add transaction';
+  String get txAddTitle => '新增交易';
 
   @override
-  String get txEditTitle => 'Edit transaction';
+  String get txEditTitle => '編輯交易';
 
   @override
-  String get txCategoryLabel => 'Category';
+  String get txCategoryLabel => '分類';
 
   @override
-  String get txCategoryEmpty => 'Select a category';
+  String get txCategoryEmpty => '選擇分類';
 
   @override
-  String get txAccountLabel => 'Account';
+  String get txAccountLabel => '帳戶';
 
   @override
-  String get txAccountEmpty => 'No active accounts — create one first';
+  String get txAccountEmpty => '目前沒有可用帳戶——請先建立一個';
 
   @override
-  String get txAccountPickerTitle => 'Pick account';
+  String get txAccountPickerTitle => '選擇帳戶';
 
   @override
-  String get txDateLabel => 'Date';
+  String get txDateLabel => '日期';
 
   @override
-  String get txMemoLabel => 'Memo';
+  String get txMemoLabel => '備註';
 
   @override
-  String get txAmountRequired => 'Enter an amount';
+  String get txAmountRequired => '請輸入金額';
 
   @override
-  String get txCreateAccountCta => 'Create account';
+  String get txCreateAccountCta => '建立帳戶';
 
   @override
-  String get txTransactionNotFound => 'Transaction not found';
+  String get txTransactionNotFound => '找不到此筆交易';
 
   @override
-  String get txSaveFailedSnackbar =>
-      'Couldn’t save transaction. Please try again.';
+  String get txSaveFailedSnackbar => '儲存失敗,請再試一次。';
 
   @override
-  String get txDeleteFailedSnackbar =>
-      'Couldn’t delete transaction. Please try again.';
+  String get txDeleteFailedSnackbar => '刪除失敗,請再試一次。';
 
   @override
-  String get txDeleteConfirmTitle => 'Delete this transaction?';
+  String get txDeleteConfirmTitle => '要刪除這筆交易嗎?';
 
   @override
-  String get txDeleteConfirmBody =>
-      'This permanently removes the transaction. This cannot be undone.';
+  String get txDeleteConfirmBody => '此交易將永久移除,且無法復原。';
 
   @override
-  String get txDiscardConfirmTitle => 'Discard changes?';
+  String get txDiscardConfirmTitle => '捨棄編輯?';
 
   @override
-  String get txDiscardConfirmBody => 'Your unsaved edits will be lost.';
+  String get txDiscardConfirmBody => '尚未儲存的變更將會遺失。';
 
   @override
-  String get txCurrencyChangeConfirmTitle => 'Switch currency?';
+  String get txCurrencyChangeConfirmTitle => '切換幣別?';
 
   @override
-  String get txCurrencyChangeConfirmBody =>
-      'Switching to this account changes the currency. The entered amount will be cleared.';
+  String get txCurrencyChangeConfirmBody => '切換到此帳戶會改變幣別,目前輸入的金額將被清除。';
 
   @override
-  String get txKeypadClear => 'Clear amount';
+  String get txKeypadClear => '清除金額';
 
   @override
-  String get txKeypadBackspace => 'Backspace';
+  String get txKeypadBackspace => '退格';
 
   @override
-  String get homeEmptyDayMessage => 'No transaction';
+  String get homeEmptyDayMessage => '無交易';
 
   @override
-  String get homeJumpToToday => 'Jump to today';
+  String get homeJumpToToday => '跳至今天';
 
   @override
-  String get homeSummaryMultiCurrencyNote => 'Multiple currencies';
+  String get homeSummaryMultiCurrencyNote => '多種幣別';
 
   @override
-  String get homeDaySkeletonLabel => 'Loading day';
+  String get homeDaySkeletonLabel => '載入中的日期';
 
   @override
-  String get homeDeleteUndoSnackbar => 'Transaction deleted';
+  String get homeDeleteUndoSnackbar => '交易已刪除';
 
   @override
-  String get homeDuplicateAction => 'Duplicate';
+  String get homeDuplicateAction => '複製';
 
   @override
-  String get homeDayLabelToday => 'Today';
+  String get homeDayLabelToday => '今天';
 
   @override
-  String get homeDayLabelYesterday => 'Yesterday';
+  String get homeDayLabelYesterday => '昨天';
 
   @override
-  String get homeDayNavPrevLabel => 'Previous day';
+  String get homeDayNavPrevLabel => '前一天';
 
   @override
-  String get homeDayNavNextLabel => 'Next day';
+  String get homeDayNavNextLabel => '後一天';
 
   @override
-  String get txCurrencyLabel => 'Currency';
+  String get txCurrencyLabel => '幣別';
 
   @override
-  String get txCurrencyPickerTitle => 'Pick currency';
+  String get txCurrencyPickerTitle => '選擇幣別';
 
   @override
-  String get txCurrencySearchHint => 'Search currencies';
+  String get txCurrencySearchHint => '搜尋幣別';
 
   @override
-  String get txCurrencyChangeConfirmAction => 'Change and Clear';
+  String get txCurrencyChangeConfirmAction => '更換並清除';
 
   @override
   String txAmountPlaceholderInCurrency(String code) {
-    return 'Enter amount in $code';
+    return '輸入 $code 金額';
   }
 
   @override
-  String get txCurrencyPickerNoResults => 'No currencies found';
+  String get txCurrencyPickerNoResults => '找不到幣別';
 
   @override
-  String get txCurrencyPickerChangeConfirmBody =>
-      'Changing the currency will clear the entered amount.';
+  String get txCurrencyPickerChangeConfirmBody => '更換幣別將清除已輸入的金額。';
 
   @override
   String accountsBalanceMore(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '+$count more',
-      one: '+$count more',
-    );
-    return '$_temp0';
+    return '+$count 個更多';
   }
 
   @override
-  String get currencyUsd => 'US Dollar';
+  String get currencyUsd => '美元';
 
   @override
-  String get currencyEur => 'Euro';
+  String get currencyEur => '歐元';
 
   @override
-  String get currencyJpy => 'Japanese Yen';
+  String get currencyJpy => '日圓';
 
   @override
-  String get currencyTwd => 'New Taiwan Dollar';
+  String get currencyTwd => '新台幣';
 
   @override
-  String get currencyCny => 'Chinese Yuan';
+  String get currencyCny => '人民幣';
 
   @override
-  String get currencyHkd => 'Hong Kong Dollar';
+  String get currencyHkd => '港幣';
 
   @override
-  String get currencyGbp => 'British Pound';
+  String get currencyGbp => '英鎊';
 
   @override
-  String get currencyCad => 'Canadian Dollar';
+  String get currencyCad => '加拿大元';
 
   @override
-  String get currencySgd => 'Singapore Dollar';
+  String get currencySgd => '新加坡元';
 
   @override
-  String get currencyAud => 'Australian Dollar';
+  String get currencyAud => '澳幣';
 
   @override
-  String get currencyNzd => 'New Zealand Dollar';
+  String get currencyNzd => '紐西蘭元';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -857,6 +845,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get settingsThemeDark => '深色';
+
+  @override
+  String get settingsThemeSystem => '跟随系统';
 
   @override
   String get settingsLanguageLabel => '语言';
@@ -1375,6 +1366,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get settingsThemeDark => '深色';
+
+  @override
+  String get settingsThemeSystem => '跟隨系統';
 
   @override
   String get settingsLanguageLabel => '語言';
