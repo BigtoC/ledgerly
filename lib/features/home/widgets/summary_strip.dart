@@ -56,17 +56,15 @@ class SummaryStrip extends StatelessWidget {
     final theme = Theme.of(context);
 
     final todayCodes = todayTotalsByCurrency.keys.toSet();
-    final allCodes = <String>{
-      ...todayCodes,
-      ...monthNetByCurrency.keys,
-    }.toList()
-      ..sort((a, b) {
-        final aToday = todayCodes.contains(a);
-        final bToday = todayCodes.contains(b);
-        if (aToday && !bToday) return -1;
-        if (!aToday && bToday) return 1;
-        return a.compareTo(b);
-      });
+    final allCodes =
+        <String>{...todayCodes, ...monthNetByCurrency.keys}.toList()
+          ..sort((a, b) {
+            final aToday = todayCodes.contains(a);
+            final bToday = todayCodes.contains(b);
+            if (aToday && !bToday) return -1;
+            if (!aToday && bToday) return 1;
+            return a.compareTo(b);
+          });
 
     final hasMultiCurrency = allCodes.length > _kMaxCurrencyGroups;
     final codes = hasMultiCurrency
