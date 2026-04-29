@@ -99,7 +99,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Future<void> _runQueuedTransitions() async {
     while (_directionQueue.isNotEmpty) {
       final direction = _directionQueue.removeFirst();
-      final beforeDay = _currentSelectedDay();
 
       if (direction > 0) {
         await ref.read(homeControllerProvider.notifier).selectNextDay();
@@ -107,17 +106,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         await ref.read(homeControllerProvider.notifier).selectPrevDay();
       }
 
-      final afterDay = _currentSelectedDay();
-      final changed =
-          beforeDay == null ||
-          afterDay == null ||
-          !DateHelpers.isSameDay(beforeDay, afterDay);
-
-      if (changed) {
-        _incomingOffset = _buildOffsetAnimation(direction);
-        _daySwitchController.reset();
-        await _daySwitchController.forward();
-      }
+      _incomingOffset = _buildOffsetAnimation(direction);
+      _daySwitchController.reset();
+      await _daySwitchController.forward();
     }
   }
 
