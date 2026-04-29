@@ -20,6 +20,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
+import 'package:ledgerly/core/utils/date_helpers.dart';
 import 'package:ledgerly/data/models/account.dart';
 import 'package:ledgerly/data/models/category.dart';
 import 'package:ledgerly/data/models/currency.dart';
@@ -326,10 +327,9 @@ void main() {
     },
   );
 
-  testWidgets('WH05: >=600dp tablet renders the two-pane layout', (
+  testWidgets('WH05: >=600dp tablet uses single-pane layout', (
     tester,
   ) async {
-    // Set a wide media size so LayoutBuilder picks the >=600dp branch.
     await tester.binding.setSurfaceSize(const Size(900, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -343,9 +343,7 @@ void main() {
     monthNetCtrl.add(const {});
     await tester.pump(const Duration(milliseconds: 200));
 
-    // The two-pane layout uses a VerticalDivider; the single-pane
-    // version doesn't.
-    expect(find.byType(VerticalDivider), findsOneWidget);
+    expect(find.byType(VerticalDivider), findsNothing);
   });
 
   testWidgets('WH06: tapping a row opens /home/edit/:id', (tester) async {
@@ -462,7 +460,7 @@ void main() {
   });
 
   testWidgets(
-    'WH10: tablet two-pane layout renders without the activity pane',
+    'WH10: tablet single-pane layout renders without VerticalDivider',
     (tester) async {
       await tester.binding.setSurfaceSize(const Size(900, 800));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -479,9 +477,7 @@ void main() {
       monthNetCtrl.add(const {});
       await tester.pump(const Duration(milliseconds: 200));
 
-      // Two-pane layout renders with a VerticalDivider
-      expect(find.byType(VerticalDivider), findsOneWidget);
-      // No crash and the day header renders
+      expect(find.byType(VerticalDivider), findsNothing);
       expect(find.text('Today'), findsOneWidget);
     },
   );
@@ -803,6 +799,48 @@ void main() {
     expect(find.text('Today'), findsOneWidget);
     expect(find.text('Jump to today'), findsNothing);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('WH18: queued rapid prev taps land on later day after slow drain', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(400, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(makeApp());
+    await seedAll(tester);
+
+    final today = DateTime.now();
+    final todayMidnight = DateTime(today.year, today.month, today.day);
+    final activity = <DateTime>[
+      for (var i = 7; i >= 0; i--) todayMidnight.subtract(Duration(days: i)),
+    ];
+    dayCtrl.add([_tx(id: 1, date: todayMidnight)]);
+    activityCtrl.add(activity);
+    todayTotalsCtrl.add(const {});
+    monthNetCtrl.add(const {});
+    await tester.pump(const Duration(milliseconds: 200));
+
+    final prevButton = find.widgetWithIcon(IconButton, Icons.chevron_left);
+
+    await tester.tap(prevButton);
+    await tester.pump(const Duration(milliseconds: 10));
+    await tester.tap(prevButton);
+    await tester.pump(const Duration(milliseconds: 10));
+    await tester.tap(prevButton);
+    await tester.pump(const Duration(milliseconds: 10));
+
+    for (var i = 0; i < 3; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+      dayCtrl.add([]);
+      todayTotalsCtrl.add(const {});
+      monthNetCtrl.add(const {});
+      await tester.pump(const Duration(milliseconds: 350));
+    }
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Today'), findsNothing);
   });
 }
 

@@ -137,17 +137,19 @@ void main() {
   );
 
   testWidgets(
-    'SS06: three currencies shows first two plus Multiple currencies note',
+    'SS06: capped groups prioritize selected-day currencies',
     (tester) async {
       await tester.pumpWidget(
         _wrap(
           const SummaryStrip(
             todayTotalsByCurrency: {
               'USD': (expense: 100, income: 0),
-              'JPY': (expense: 500, income: 0),
-              'EUR': (expense: 200, income: 0),
             },
-            monthNetByCurrency: {'USD': -100, 'JPY': -500, 'EUR': -200},
+            monthNetByCurrency: {
+              'AUD': -100,
+              'CAD': -200,
+              'USD': -300,
+            },
             currenciesByCode: {'USD': _usd, 'JPY': _jpy, 'EUR': _eur},
             locale: 'en_US',
           ),
@@ -155,9 +157,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Only the first 2 alphabetical currency groups render (EUR, JPY);
-      // the third is suppressed behind the multi-currency note.
       expect(find.text('Multiple currencies'), findsOneWidget);
+      expect(find.textContaining(r'-$3.00'), findsOneWidget);
     },
   );
 }
