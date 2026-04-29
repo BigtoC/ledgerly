@@ -393,6 +393,15 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   ) async {
     final picked = await showAccountPickerSheet(context);
     if (picked == null || !context.mounted) return;
+
+    // When the user has manually selected a currency, account changes
+    // leave displayCurrency and amount unchanged — skip the
+    // destructive clear-currency confirmation.
+    if (state.currencyTouched) {
+      controller.selectAccount(picked);
+      return;
+    }
+
     final currentCode = state.displayCurrency?.code;
     final newCode = picked.currency.code;
     final currencyChanges = currentCode != null && currentCode != newCode;
