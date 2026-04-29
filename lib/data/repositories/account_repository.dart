@@ -225,8 +225,11 @@ final class DriftAccountRepository implements AccountRepository {
   Stream<Map<String, int>> watchBalanceByCurrency(int accountId) {
     // One grouped query across all transactions for this account, keyed by
     // transaction currency. The sign is driven by category.type (expense
-    // subtracts, income adds). `readsFrom` includes categories so that the
-    // rare category-type edit correctly invalidates the stream.
+    // subtracts, income adds).
+    //
+    // categories is excluded from readsFrom because category.type is
+    // immutable after first use (PRD.md invariant), so unrelated
+    // category metadata edits must not invalidate every balance stream.
     final query = _db.customSelect(
       'SELECT t.currency AS code, '
       'SUM(CASE c.type '
@@ -238,7 +241,7 @@ final class DriftAccountRepository implements AccountRepository {
       'WHERE t.account_id = ? '
       'GROUP BY t.currency',
       variables: [Variable<int>(accountId)],
-      readsFrom: {_db.accounts, _db.transactions, _db.categories},
+      readsFrom: {_db.accounts, _db.transactions},
     );
 
     return query.watch().asyncMap((rows) async {
@@ -250,6 +253,10 @@ final class DriftAccountRepository implements AccountRepository {
       }
 
       // Merge opening balance into the account's native currency group.
+      // Only do the extra account read when needed: the account row is
+      // fetched once per emission to recover native currency and opening
+      // balance, but categories is not in readsFrom so category metadata
+      // edits don't trigger this path.
       final account = await _dao.findById(accountId);
       if (account != null) {
         final native = account.currency.toUpperCase();
