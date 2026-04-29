@@ -47,9 +47,16 @@ enum CalcOperator { add, subtract, multiply, divide }
 ```dart
 /// Returns a new [KeypadState] with the operator applied.
 ///
-/// If [isEvaluating] is true and the right operand is non-zero,
-/// evaluates the pending expression first, then sets the new operator.
-/// If [showingResult] is true, uses the current result as [leftOperand].
+/// Three paths:
+/// 1. No expression active (`leftOperand == null`, `showingResult == false`):
+///    stores current `amountMinorUnits` as `leftOperand`, sets operator,
+///    enters `isEvaluating` mode.
+/// 2. Evaluating (`isEvaluating == true`):
+///    if right operand is non-zero, evaluates the pending expression first;
+///    then sets the new operator and stores result as `leftOperand`.
+/// 3. Result showing (`showingResult == true`):
+///    uses the current `amountMinorUnits` (the displayed result) as
+///    `leftOperand`, sets operator, enters `isEvaluating` mode.
 KeypadState pushOperator(CalcOperator op, {required int decimals})
 ```
 
@@ -67,7 +74,7 @@ KeypadState pushOperator(CalcOperator op, {required int decimals})
 | Tap digit (in "result showing" state, no operator active) | Clear expression state entirely, start fresh accumulation |
 | Tap operator (in "result showing" state) | Use result as `leftOperand`, start new expression |
 | `⌫` (while `isEvaluating`, amount = 0) | Cancel expression — restore `leftOperand` as `amountMinorUnits`, clear operator |
-| `C` / long-press `⌫` | Full reset — clear everything including expression |
+| Long-press `⌫` | Full reset — clear everything including expression |
 | Tap operator-again with 0 right side | Uses `leftOperand` as result (no-op effectively) |
 
 **"Result showing" state:** After evaluation completes, the system is in a transient state where the expression line shows the full calculation and the result is displayed. A digit tap clears the expression and starts fresh. An operator tap chains from the result. This is distinct from `isEvaluating` — it's the state where `leftOperand == null` but the expression line is still visible (tracked by a separate `showingResult` flag on `KeypadState`).
@@ -97,7 +104,7 @@ KeypadState pushOperator(CalcOperator op, {required int decimals})
 └─────────────────────────────┘
 ```
 
-**After evaluation** (tap operator again):
+**After evaluation** (`showingResult == true`):
 - Expression line persists showing full calculation: `{leftOperand} {op} {rightOperand} =`
 - Main display shows the result
 
@@ -109,8 +116,8 @@ KeypadState pushOperator(CalcOperator op, {required int decimals})
 ```
 
 **Expression line clears when:**
-- User starts typing a new number (digit press resets expression state)
-- User taps `C` / long-press `⌫` (full reset)
+- User starts typing a new number (digit press resets expression state and `showingResult`)
+- User long-presses `⌫` (full reset)
 - User taps an operator on the result (starts a new expression chaining from result)
 
 ## 4. Controller Changes
