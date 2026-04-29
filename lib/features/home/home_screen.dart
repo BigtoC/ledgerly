@@ -144,6 +144,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'home_fab',
         onPressed: () => _onAddPressed(context),
         icon: const Icon(Icons.add),
         label: Text(l10n.homeFabLabel),
