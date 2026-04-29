@@ -131,8 +131,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     return null;
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -169,8 +167,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             onPickDay: (day) => _onPickDay(day, data),
             onJumpToToday: () async {
               final current = _currentSelectedDay();
-              if (current != null && DateHelpers.isSameDay(data.today, current)) return;
-              await ref.read(homeControllerProvider.notifier).pinDay(data.today);
+              if (current != null &&
+                  DateHelpers.isSameDay(data.today, current)) {
+                return;
+              }
+              await ref
+                  .read(homeControllerProvider.notifier)
+                  .pinDay(data.today);
               _incomingOffset = _buildOffsetAnimation(1);
               _daySwitchController.reset();
               await _daySwitchController.forward();
