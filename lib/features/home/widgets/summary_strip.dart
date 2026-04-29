@@ -119,15 +119,14 @@ class SummaryStrip extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // (1) Jump-to-today button (only when not on today)
-          if (showJumpToToday)
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: onJumpToToday,
-                child: Text(l10n.homeJumpToToday),
-              ),
+          // (1) Jump-to-today button — always visible; disabled when on today.
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: showJumpToToday ? onJumpToToday : null,
+              child: Text(l10n.homeJumpToToday),
             ),
+          ),
           // (2) Currency groups + (3) month-net + (4) multi-currency note
           content,
         ],
