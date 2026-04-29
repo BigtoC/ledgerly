@@ -449,13 +449,7 @@ Also ensure `required DateTime selectedDay` and `required DateTime today` are pr
 
 Remove `activityDays` from `HomeState.data` as well. No production caller in this plan uses it for rendering.
 
-**`_ActivityPane` must also be removed atomically with `activityDays`.** `home_screen.dart` contains a `_ActivityPane` widget that drives its `ListView.builder` from `data.activityDays` (lines 450, 452). Removing the field while leaving `_ActivityPane` intact causes a compile error. As part of this step, delete the `_ActivityPane` widget class entirely and replace the left-panel slot in `_TwoPane` with a no-op stub:
-
-```dart
-Widget _buildLeftPane() => const SizedBox.shrink();
-```
-
-The tablet activity pane is not in this plan's scope. If a future plan adds it, both `activityDays` and `_ActivityPane` are trivial to re-add.
+**`_ActivityPane` must also be removed atomically with `activityDays`.** `home_screen.dart` previously contained an activity-pane layout branch for wide screens. In the current implementation, that path has been collapsed: Home now uses the same single-pane content path at all widths. As part of this step, remove `activityDays` and any remaining activity-pane layout plumbing so the implementation reflects the current single-pane behavior.
 
 After making the state-shape changes above, immediately run:
 
@@ -593,23 +587,9 @@ canGoNext: data.canGoNext,
 
 Do not keep the old activity-day-only comments.
 
-Also update the wide-layout `_TwoPane` path so it no longer calls:
+Also ensure the wide-screen layout uses the same prev/next control contract as the primary content path. The current implementation collapses wide and narrow layouts into the same single-pane body, so the important invariant is that `onPrev` and `onNext` remain the same `enqueueDayStep(-1)` / `enqueueDayStep(+1)` callbacks regardless of viewport width.
 
-```dart
-onPrev: () => onSelectActivityDay(data.prevDayWithActivity!),
-onNext: () => onSelectActivityDay(data.nextDayWithActivity!),
-```
-
-Instead, pass `onPrev: () => _enqueueDayStep(-1)` and `onNext: () => _enqueueDayStep(+1)` to `_TwoPane` — the same lambda closures used by `_SinglePane`.
-
-**`_TwoPane` type change — five edits that must be made atomically (the file will not compile with any subset):**
-1. `_TwoPane` field declaration: replace `final void Function(DateTime day) onSelectActivityDay;` with `final VoidCallback onPrev;` and `final VoidCallback onNext;`
-2. `_TwoPane` constructor: remove `required this.onSelectActivityDay`, add `required this.onPrev` and `required this.onNext`
-3. `home_screen.dart` line 413 call site: replace `onPrev: () => onSelectActivityDay(data.prevDayWithActivity!)` with `onPrev: () => _enqueueDayStep(-1)`
-4. `home_screen.dart` line 414 call site: replace `onNext: () => onSelectActivityDay(data.nextDayWithActivity!)` with `onNext: () => _enqueueDayStep(+1)`
-5. `_AdaptiveBody` call site (the top-level `_TwoPane` instantiation, around line 253): replace `onSelectActivityDay: (day) => ref.read(homeControllerProvider.notifier).pinDay(day)` with `onPrev: () => _enqueueDayStep(-1)` and `onNext: () => _enqueueDayStep(+1)` — this is the outer constructor call that passes data and navigation callbacks into the two-pane layout
-
-After all five edits, run `dart format . && flutter analyze` to confirm no remaining `prevDayWithActivity!`/`nextDayWithActivity!` null-assertions exist anywhere.
+After the layout change, run `dart format . && flutter analyze` to confirm no remaining `prevDayWithActivity!` / `nextDayWithActivity!` null-assertions or stale wide-layout branches exist anywhere.
 
 - [ ] **Step 4: Cap the Home date picker at today**
 
