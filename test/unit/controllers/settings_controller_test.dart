@@ -29,7 +29,7 @@ class _MockUserPreferencesRepository extends Mock
 
 void main() {
   setUpAll(() {
-    registerFallbackValue(ThemeMode.system);
+    registerFallbackValue(ThemeMode.light);
     registerFallbackValue(const Locale('en'));
     registerFallbackValue(DateTime(2000));
   });
@@ -96,7 +96,7 @@ void main() {
     }
 
     Future<void> pushAllInitial() async {
-      themeCtrl.add(ThemeMode.system);
+      themeCtrl.add(ThemeMode.light);
       localeCtrl.add(null);
       defaultCurrencyCtrl.add('USD');
       defaultAccountCtrl.add(null);
@@ -132,7 +132,7 @@ void main() {
 
         await pushAllInitial();
         final state = await waitForData(container) as SettingsData;
-        expect(state.themeMode, ThemeMode.system);
+        expect(state.themeMode, ThemeMode.light);
         expect(state.locale, isNull);
         expect(state.defaultCurrency, 'USD');
         expect(state.defaultAccountId, isNull);
@@ -308,7 +308,7 @@ void main() {
       container.listen(settingsControllerProvider, (_, _) {});
       await pushAllInitial();
       final first = await waitForData(container) as SettingsData;
-      expect(first.themeMode, ThemeMode.system);
+      expect(first.themeMode, ThemeMode.light);
 
       themeCtrl.add(ThemeMode.dark);
       await Future<void>.delayed(Duration.zero);

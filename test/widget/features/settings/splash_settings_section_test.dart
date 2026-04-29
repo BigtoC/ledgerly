@@ -69,7 +69,7 @@ ProviderContainer _makeContainer(UserPreferencesRepository prefs) {
       settingsControllerProvider.overrideWith(
         () => _FakeSettingsController(
           const SettingsData(
-            themeMode: ThemeMode.system,
+            themeMode: ThemeMode.light,
             locale: null,
             defaultCurrency: 'USD',
             defaultAccountId: null,
