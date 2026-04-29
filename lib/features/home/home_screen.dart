@@ -57,8 +57,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   late final AnimationController _daySwitchController;
   late Animation<Offset> _incomingOffset;
   final Queue<int> _directionQueue = Queue<int>();
-  int _activeDirection = 0; // -1 older, +1 newer
-  DateTime? _visibleDay;
 
   @override
   void initState() {
@@ -103,8 +101,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Future<void> _runNextQueuedStep() async {
     if (_directionQueue.isEmpty) return;
     final direction = _directionQueue.removeFirst();
-    _activeDirection = direction;
-    _incomingOffset = _buildOffsetAnimation(direction);
+
+    // Capture the current selected day before the controller call so we
+    // can detect no-op steps (already at today or at the min day).
+    final beforeDay = _currentSelectedDay();
 
     if (direction > 0) {
       await ref.read(homeControllerProvider.notifier).selectNextDay();
@@ -112,20 +112,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       await ref.read(homeControllerProvider.notifier).selectPrevDay();
     }
 
-    _daySwitchController.reset();
-    await _daySwitchController.forward();
+    final afterDay = _currentSelectedDay();
+    final changed =
+        beforeDay == null ||
+        afterDay == null ||
+        !DateHelpers.isSameDay(beforeDay, afterDay);
+
+    if (changed) {
+      _incomingOffset = _buildOffsetAnimation(direction);
+      _daySwitchController.reset();
+      await _daySwitchController.forward();
+    }
 
     if (_directionQueue.isNotEmpty) {
       unawaited(_runNextQueuedStep());
     }
   }
 
+  DateTime? _currentSelectedDay() {
+    final s = ref.read(homeControllerProvider);
+    if (s is AsyncData<HomeState>) {
+      final v = s.value;
+      if (v is HomeData) return v.selectedDay;
+      if (v is HomeEmpty) return v.selectedDay;
+    }
+    return null;
+  }
+
   Future<void> _jumpToDay(DateTime pickedDay) async {
-    final current = _visibleDay;
+    final current = _currentSelectedDay();
     if (current != null && DateHelpers.isSameDay(pickedDay, current)) return;
 
-    _activeDirection = (current == null || pickedDay.isAfter(current)) ? 1 : -1;
-    _incomingOffset = _buildOffsetAnimation(_activeDirection);
+    final direction = (current == null || pickedDay.isAfter(current)) ? 1 : -1;
+    _incomingOffset = _buildOffsetAnimation(direction);
 
     await ref.read(homeControllerProvider.notifier).pinDay(pickedDay);
     _daySwitchController.reset();
@@ -370,113 +389,92 @@ class _SinglePane extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     const double transactionPadding = 24;
 
-    Widget dayContent;
-    if (data.transactionsForDay.isEmpty) {
-      dayContent = SliverFillRemaining(
-        hasScrollBody: false,
-        child: Padding(
-          padding: const EdgeInsets.all(transactionPadding),
-          child: Center(
-            child: Text(
-              l10n.homeEmptyDayMessage,
-              style: Theme.of(context).textTheme.titleMedium,
+    Widget body = CustomScrollView(
+      slivers: [
+        const SliverPadding(padding: EdgeInsets.only(top: 38)),
+        SliverToBoxAdapter(
+          child: SummaryStrip(
+            todayTotalsByCurrency: data.todayTotalsByCurrency,
+            monthNetByCurrency: data.monthNetByCurrency,
+            currenciesByCode: currencies,
+            locale: locale,
+            showJumpToToday: !DateHelpers.isSameDay(
+              data.selectedDay,
+              data.today,
+            ),
+            onJumpToToday: () =>
+                ref.read(homeControllerProvider.notifier).selectToday(),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: DayNavigationHeader(
+            selectedDay: data.selectedDay,
+            locale: locale,
+            onPrev: onPrev,
+            onNext: onNext,
+            onPickDay: () => onPickDay(data.selectedDay),
+            canGoPrev: data.canGoPrev,
+            canGoNext: data.canGoNext,
+            trailing: PendingBadge(count: data.pendingBadgeCount),
+          ),
+        ),
+        if (data.transactionsForDay.isEmpty)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: homePageCardHorizontalPadding,
+                vertical: 12,
+              ),
+              child: _EmptyDayCard(message: l10n.homeEmptyDayMessage),
+            ),
+          )
+        else
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: homePageCardHorizontalPadding - transactionPadding,
+              vertical: 12,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: _TransactionListCard(
+                transactions: data.transactionsForDay,
+                categories: categories,
+                accounts: accounts,
+                locale: locale,
+                onTapRow: onTapRow,
+                onDuplicateRow: onDuplicateRow,
+                onDeleteRow: onDeleteRow,
+              ),
             ),
           ),
-        ),
-      );
-    } else {
-      dayContent = SliverPadding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: homePageCardHorizontalPadding - transactionPadding,
-          vertical: 12,
-        ),
-        sliver: SliverToBoxAdapter(
-          child: _TransactionListCard(
-            transactions: data.transactionsForDay,
-            categories: categories,
-            accounts: accounts,
-            locale: locale,
-            onTapRow: onTapRow,
-            onDuplicateRow: onDuplicateRow,
-            onDeleteRow: onDeleteRow,
-          ),
-        ),
-      );
-    }
-
-    final animation = daySwitchAnimation;
-    Widget dayBody = CustomScrollView(
-      slivers: [
-        dayContent,
         const SliverPadding(padding: EdgeInsets.only(bottom: 96)),
       ],
     );
 
+    final animation = daySwitchAnimation;
     if (animation != null) {
-      dayBody = SlideTransition(
+      body = SlideTransition(
         position: animation,
         child: KeyedSubtree(
           key: ValueKey<DateTime>(data.selectedDay),
-          child: dayBody,
+          child: body,
         ),
       );
     }
 
-    return CustomScrollView(
-      physics: const NeverScrollableScrollPhysics(),
-      slivers: [
-        SliverToBoxAdapter(
-          child: Column(
-            children: [
-              const SizedBox(height: 38),
-              SummaryStrip(
-                todayTotalsByCurrency: data.todayTotalsByCurrency,
-                monthNetByCurrency: data.monthNetByCurrency,
-                currenciesByCode: currencies,
-                locale: locale,
-                showJumpToToday: !DateHelpers.isSameDay(
-                  data.selectedDay,
-                  data.today,
-                ),
-                onJumpToToday: () =>
-                    ref.read(homeControllerProvider.notifier).selectToday(),
-              ),
-              DayNavigationHeader(
-                selectedDay: data.selectedDay,
-                locale: locale,
-                onPrev: onPrev,
-                onNext: onNext,
-                onPickDay: () => onPickDay(data.selectedDay),
-                canGoPrev: data.canGoPrev,
-                canGoNext: data.canGoNext,
-                trailing: PendingBadge(count: data.pendingBadgeCount),
-              ),
-            ],
-          ),
-        ),
-        SliverFillRemaining(
-          child: GestureDetector(
-            // Horizontal flick → step prev/next day via animation queue.
-            // Use pixelsPerSecond (Offset) not primaryVelocity (double?)
-            // so the purity check (dx > dy) is possible.
-            behavior: HitTestBehavior.translucent,
-            onHorizontalDragEnd: (details) {
-              final dx = details.velocity.pixelsPerSecond.dx;
-              final dy = details.velocity.pixelsPerSecond.dy;
-              if (dx.abs() >= 300 && dx.abs() > dy.abs()) {
-                // positive dx = finger moved right = older day (prev)
-                // negative dx = finger moved left = newer day (next)
-                if (dx > 0) {
-                  onPrev();
-                } else {
-                  onNext();
-                }
-              }
-            },
-            child: dayBody,
-          ),
-        ),
-      ],
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onHorizontalDragEnd: (details) {
+        final dx = details.velocity.pixelsPerSecond.dx;
+        final dy = details.velocity.pixelsPerSecond.dy;
+        if (dx.abs() >= 300 && dx.abs() > dy.abs()) {
+          if (dx > 0 && data.canGoPrev) {
+            onPrev();
+          } else if (dx < 0 && data.canGoNext) {
+            onNext();
+          }
+        }
+      },
+      child: body,
     );
   }
 }
@@ -572,6 +570,36 @@ class _ErrorSurface extends StatelessWidget {
           message,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyMedium,
+        ),
+      ),
+    );
+  }
+}
+
+/// Rounded surface for gap-day empty state on Home. Uses the same
+/// container shell as [_TransactionListCard] so the home page reads as
+/// a stack of consistent cards.
+class _EmptyDayCard extends StatelessWidget {
+  const _EmptyDayCard({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(homePageCardBorderRadius),
+        boxShadow: [buildBoxShadow(homePageCardBorderRadius)],
+      ),
+      child: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
         ),
       ),
     );
