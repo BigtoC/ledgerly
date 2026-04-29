@@ -517,6 +517,22 @@ KeypadState push(int digit, {required int decimals}) {
   // ... rest of existing push logic unchanged ...
 ```
 
+Also modify `pushDecimal()` to handle `showingResult`:
+
+```dart
+KeypadState pushDecimal({required int decimals}) {
+  if (decimals == 0) return this;
+  // If showing result, clear expression and start fresh fractional mode
+  if (showingResult) {
+    return KeypadState(
+      amountMinorUnits: 0,
+      fractionalDigitsEntered: 0,
+      isFractionalMode: true,
+    );
+  }
+  // ... rest of existing pushDecimal logic unchanged ...
+```
+
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `flutter test test/unit/utils/keypad_decimal_math_test.dart --name K90`
@@ -973,21 +989,16 @@ class _IconKey extends StatelessWidget {
 
 Delete the `_SpacerKey` class — no longer used.
 
-- [ ] **Step 8: Run tests to verify they pass**
-
-Run: `flutter test test/widget/features/transactions/calculator_keypad_test.dart`
-Expected: ALL PASS
-
-- [ ] **Step 9: Update existing tests that reference old layout**
+- [ ] **Step 8: Update existing tests that reference old layout**
 
 Existing tests WK01–WK04 use the old constructor without `onOperator`. Update the `_wrap` helper and constructor calls to include `onOperator: (_) {}`.
 
-- [ ] **Step 10: Run all keypad tests**
+- [ ] **Step 9: Run all keypad tests**
 
 Run: `flutter test test/widget/features/transactions/calculator_keypad_test.dart`
 Expected: ALL PASS
 
-- [ ] **Step 11: Commit**
+- [ ] **Step 10: Commit**
 
 ```bash
 git add lib/features/transactions/widgets/calculator_keypad.dart test/widget/features/transactions/calculator_keypad_test.dart
@@ -1387,11 +1398,6 @@ Run: `flutter test test/unit/controllers/transaction_form_controller_test.dart`
 Expected: ALL PASS
 
 No commit needed — no code changes.
-
-```bash
-git add lib/features/transactions/keypad_state.dart
-git commit -m "feat: add resetExpression() helper to KeypadState"
-```
 
 ---
 
