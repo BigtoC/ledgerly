@@ -62,14 +62,6 @@ class AccountTile extends ConsumerWidget {
       orElse: () => <String, Currency>{},
     );
 
-    // Build the grouped balance widget.
-    final balanceWidget = _buildBalanceColumn(
-      context,
-      view.balancesByCurrency,
-      currenciesByCode,
-      l10n,
-    );
-
     final startActions = <Widget>[
       if (!a.isArchived && !isDefault)
         SlidableAction(
@@ -151,55 +143,61 @@ class AccountTile extends ConsumerWidget {
             ],
           ],
         ),
-        subtitle: Text(accountTypeLabel),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            balanceWidget,
-            const SizedBox(width: 8),
-            _TrailingActions(
-              view: view,
-              isDefault: isDefault,
-              onSetDefault: onSetDefault,
-              onArchive: onArchive,
-              onDelete: onDelete,
-              onArchiveBlocked: onArchiveBlocked,
-            ),
-          ],
+        subtitle: _buildSubtitle(
+          context,
+          accountTypeLabel,
+          view.balancesByCurrency,
+          currenciesByCode,
+          l10n,
+        ),
+        trailing: _TrailingActions(
+          view: view,
+          isDefault: isDefault,
+          onSetDefault: onSetDefault,
+          onArchive: onArchive,
+          onDelete: onDelete,
+          onArchiveBlocked: onArchiveBlocked,
         ),
       ),
     );
   }
 
-  /// Builds the balance column for the tile trailing area.
+  /// Builds the subtitle area: account type label + grouped balance lines.
   ///
   /// Renders at most 2 currency groups as individual lines, then an
-  /// `+N more` indicator when there are more than 2 groups.
-  Widget _buildBalanceColumn(
+  /// `+N more` indicator when there are more than 2 groups. Native
+  /// currency (the account's own currency) is always listed first;
+  /// remaining groups are sorted alphabetically by code for
+  /// deterministic display.
+  Widget _buildSubtitle(
     BuildContext context,
+    String accountTypeLabel,
     Map<String, int> balancesByCurrency,
     Map<String, Currency> currenciesByCode,
     AppLocalizations l10n,
   ) {
     if (balancesByCurrency.isEmpty) {
-      // No balance to show: render a neutral zero for the account's
-      // native currency, seeded from the account model.
-      final formatted = MoneyFormatter.format(
-        amountMinorUnits: 0,
-        currency: view.account.currency,
-        locale: locale,
-      );
-      return Text(formatted);
+      return Text(accountTypeLabel);
     }
 
-    final entries = balancesByCurrency.entries.toList(growable: false);
-    final displayCount = entries.length > 2 ? 2 : entries.length;
-    final overflowCount = entries.length - displayCount;
+    // Sort: native currency first, then alphabetical by code.
+    final nativeCode = view.account.currency.code.toUpperCase();
+    final sortedEntries = balancesByCurrency.entries.toList(growable: false)
+      ..sort((a, b) {
+        final aIsNative = a.key == nativeCode;
+        final bIsNative = b.key == nativeCode;
+        if (aIsNative && !bIsNative) return -1;
+        if (!aIsNative && bIsNative) return 1;
+        return a.key.compareTo(b.key);
+      });
 
-    final lines = <Widget>[];
+    final displayCount = sortedEntries.length > 2 ? 2 : sortedEntries.length;
+    final overflowCount = sortedEntries.length - displayCount;
+
+    final lines = <Widget>[Text(accountTypeLabel)];
     for (var i = 0; i < displayCount; i++) {
-      final code = entries[i].key;
-      final amount = entries[i].value;
+      final code = sortedEntries[i].key;
+      final amount = sortedEntries[i].value;
       final currency =
           currenciesByCode[code] ?? Currency(code: code, decimals: 2);
       final formatted = MoneyFormatter.format(
@@ -207,13 +205,12 @@ class AccountTile extends ConsumerWidget {
         currency: currency,
         locale: locale,
       );
-      lines.add(Text(formatted, textAlign: TextAlign.end));
+      lines.add(Text('$code: $formatted'));
     }
     if (overflowCount > 0) {
       lines.add(
         Text(
           l10n.accountsBalanceMore(overflowCount),
-          textAlign: TextAlign.end,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
@@ -222,7 +219,7 @@ class AccountTile extends ConsumerWidget {
     }
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: lines,
     );
