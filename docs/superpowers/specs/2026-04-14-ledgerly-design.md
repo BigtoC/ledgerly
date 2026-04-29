@@ -23,7 +23,7 @@ Ledgerly is a local-first mobile expense tracker built with Flutter. It is aimed
 - Multiple manual accounts (cash, bank, other)
 - Transaction memos
 - Quick repeat / duplicate existing transaction
-- Light/dark/system theme
+- Light/dark theme
 - English, Traditional Chinese, Simplified Chinese UI
 
 ### Phase 2
@@ -180,7 +180,7 @@ Notes:
 | key    | TEXT | PRIMARY KEY  |
 | value  | TEXT | JSON-encoded |
 
-Stores theme preference (light/dark/system), default account, default currency, locale, and first-run state.
+Stores theme preference (light/dark), default account, default currency, locale, and first-run state.
 
 ---
 
@@ -239,7 +239,7 @@ Seeded categories use stable `l10n_key` values so locale changes do not create d
 2. **Add/Edit Transaction** — Expense/Income segmented control, calculator-style keypad for amount, category picker (icon grid), account selector, date picker, memo field, save; delete only in edit mode
 3. **Accounts Screen** — List accounts with tracked balances, add account, set default account, archive account
 4. **Categories Screen** — List categories grouped by expense/income, add/edit/reorder/archive
-5. **Settings Screen** — Theme toggle (light/dark/system), language selector, default account, default currency, manage categories
+5. **Settings Screen** — Theme toggle (light/dark), language selector, default account, default currency, manage categories
 
 ### Add/Edit Interaction Rules
 
@@ -323,7 +323,7 @@ Material Design 3 with `ColorScheme.fromSeed()` for both light and dark variants
 
 - `core/theme/app_theme.dart` — defines `lightTheme` and `darkTheme` ThemeData
 - `core/theme/color_schemes.dart` — custom ColorScheme definitions
-- `core/preferences/app_preferences.dart` — persists user choice (light/dark/system)
+- `core/preferences/app_preferences.dart` — persists user choice (light/dark)
 - Theme preference stored in `user_preferences` table
 - Riverpod provider watches preference and rebuilds MaterialApp on change
 

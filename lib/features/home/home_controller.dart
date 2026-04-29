@@ -4,12 +4,19 @@
 //   1. `transactionRepository.watchByDay(selectedDay)` — rows for the
 //      selected calendar day.
 //   2. `transactionRepository.watchDaysWithActivity()` — newest-first
-//      list of days that have transactions; used to derive `prev` /
-//      `next` chevron targets.
-//   3. `transactionRepository.watchDailyTotalsByType(today)` — today's
-//      expense/income split per currency for the summary strip.
-//   4. `transactionRepository.watchMonthNetByCurrency(today)` — current
-//      month's signed net per currency.
+//      list of days that have transactions; used only for first-run
+//      detection (isEmpty → HomeEmpty).
+//   3. `transactionRepository.watchDailyTotalsByType(selectedDay)` —
+//      the selected day's expense/income split per currency for the
+//      summary strip. Re-subscribes when selectedDay changes.
+//   4. `transactionRepository.watchMonthNetByCurrency(selectedDay)` —
+//      the selected day's month net per currency. Re-subscribes when
+//      selectedDay changes.
+//
+// Navigation uses true calendar-day stepping (prev/next subtract/add
+// 1 day), not activity-day jumping. The chevron state is determined
+// by whether selectedDay is after 1900 (canGoPrev) and before today
+// (canGoNext).
 //
 // `keepAlive: true` because the delete-undo timer must survive trivial
 // rebuilds and off-screen navigation during the 4-second window
@@ -101,21 +108,24 @@ class HomeController extends _$HomeController {
     _composer?.changeSelectedDay(_selectedDay);
   }
 
-  /// Step to the nearest older day with activity. No-op when at oldest.
+  /// The earliest selectable day. Matches the Home date-picker floor.
+  static final DateTime _minSelectableDay = DateTime(1900);
+
+  /// Step back by one calendar day. No-op when already at [_minSelectableDay].
   Future<void> selectPrevDay() async {
     _syncTodayAnchor();
-    final prev = _composer?.prevDayWithActivity();
-    if (prev == null) return;
-    _selectedDay = prev;
+    if (_selectedDay.isAtSameMomentAs(_minSelectableDay)) return;
+    if (_selectedDay.isBefore(_minSelectableDay)) return;
+    _selectedDay = _selectedDay.subtract(const Duration(days: 1));
     _composer?.changeSelectedDay(_selectedDay);
   }
 
-  /// Step to the nearest newer day with activity. No-op when at newest.
+  /// Step forward by one calendar day. No-op when already at today.
   Future<void> selectNextDay() async {
     _syncTodayAnchor();
-    final next = _composer?.nextDayWithActivity();
-    if (next == null) return;
-    _selectedDay = next;
+    if (DateHelpers.isSameDay(_selectedDay, _todayAnchor)) return;
+    _selectedDay = _selectedDay.add(const Duration(days: 1));
+    if (_selectedDay.isAfter(_todayAnchor)) _selectedDay = _todayAnchor;
     _composer?.changeSelectedDay(_selectedDay);
   }
 
@@ -231,6 +241,8 @@ class _Composer {
   StreamSubscription<List<DateTime>>? _activitySub;
   StreamSubscription<Map<String, ({int expense, int income})>>? _totalsSub;
   StreamSubscription<Map<String, int>>? _monthNetSub;
+  DateTime? _subscribedDay;
+  DateTime? _subscribedSummaryDay;
 
   // Latest values; null until first emit.
   List<Transaction>? _txForDay;
@@ -269,12 +281,17 @@ class _Composer {
   }
 
   void _subscribeDay(DateTime day) {
+    final targetDay = DateHelpers.startOfDay(day);
+    if (_subscribedDay != null &&
+        DateHelpers.isSameDay(_subscribedDay!, targetDay)) {
+      return;
+    }
     _dayGeneration++;
     final generation = _dayGeneration;
-    final targetDay = DateHelpers.startOfDay(day);
+    _subscribedDay = targetDay;
     _daySub?.cancel();
     _txForDay = null;
-    _daySub = _repo.watchByDay(day).listen((rows) {
+    _daySub = _repo.watchByDay(targetDay).listen((rows) {
       if (generation != _dayGeneration) return;
       final isStale = rows.any(
         (row) => !DateHelpers.isSameDay(row.date, targetDay),
@@ -291,15 +308,21 @@ class _Composer {
   }
 
   void _subscribeSummaryStreams(DateTime today) {
+    final targetDay = DateHelpers.startOfDay(today);
+    if (_subscribedSummaryDay != null &&
+        DateHelpers.isSameDay(_subscribedSummaryDay!, targetDay)) {
+      return;
+    }
+    _subscribedSummaryDay = targetDay;
     _totalsSub?.cancel();
     _monthNetSub?.cancel();
     _todayTotals = null;
     _monthNet = null;
-    _totalsSub = _repo.watchDailyTotalsByType(today).listen((totals) {
+    _totalsSub = _repo.watchDailyTotalsByType(targetDay).listen((totals) {
       _todayTotals = totals;
       _scheduleEmit();
     }, onError: _onError);
-    _monthNetSub = _repo.watchMonthNetByCurrency(today).listen((net) {
+    _monthNetSub = _repo.watchMonthNetByCurrency(targetDay).listen((net) {
       _monthNet = net;
       _scheduleEmit();
     }, onError: _onError);
@@ -307,6 +330,7 @@ class _Composer {
 
   void changeSelectedDay(DateTime day) {
     _subscribeDay(day);
+    _subscribeSummaryStreams(day);
   }
 
   void changeToday(DateTime today) {
@@ -324,32 +348,6 @@ class _Composer {
       if (t.id == id) return t;
     }
     return null;
-  }
-
-  /// Newest-first activity list lookup: largest date strictly older than
-  /// the selected day.
-  DateTime? prevDayWithActivity() {
-    final days = _activityDays;
-    if (days == null) return null;
-    final sel = _selectedDayGetter();
-    for (final d in days) {
-      if (d.isBefore(sel)) return d;
-    }
-    return null;
-  }
-
-  /// Smallest date strictly newer than the selected day.
-  DateTime? nextDayWithActivity() {
-    final days = _activityDays;
-    if (days == null) return null;
-    final sel = _selectedDayGetter();
-    DateTime? best;
-    for (final d in days) {
-      if (d.isAfter(sel)) {
-        if (best == null || d.isBefore(best)) best = d;
-      }
-    }
-    return best;
   }
 
   void _onError(Object error, StackTrace stack) {
@@ -376,18 +374,23 @@ class _Composer {
     }
 
     final selectedDay = _selectedDayGetter();
+    final today = _todayGetter();
     final activity = _activityDays!;
     final pending = _pendingDeleteGetter();
     final committedDeleteIds = _committedDeleteIdsGetter();
 
-    // Empty CTA fires only when there is no history at all AND today
-    // has nothing pinned (selectedDay == today). Per Wave 3 §6, a
-    // pinned future / past gap-day with no history at all still emits
-    // empty (the chevrons are disabled — no other signal to differentiate).
+    // Empty CTA fires only when there is no transaction history at all.
+    // Any non-empty activity list means at least one past-or-today
+    // transaction exists → HomeData (even if transactionsForDay is empty
+    // for the selected gap day).
     if (activity.isEmpty) {
       _out.add(HomeState.empty(selectedDay: selectedDay, pendingBadgeCount: 0));
       return;
     }
+
+    // Calendar-based chevron flags (not activity-day based).
+    final canGoPrev = selectedDay.isAfter(DateTime(1900));
+    final canGoNext = selectedDay.isBefore(today);
 
     // Hide the pending row visually so the user sees it disappear during
     // the undo window. Re-appears on undo because pendingDelete clears.
@@ -403,12 +406,12 @@ class _Composer {
     _out.add(
       HomeState.data(
         selectedDay: selectedDay,
-        activityDays: List.unmodifiable(activity),
+        today: today,
         transactionsForDay: visible,
         todayTotalsByCurrency: _todayTotals!,
         monthNetByCurrency: _monthNet!,
-        prevDayWithActivity: prevDayWithActivity(),
-        nextDayWithActivity: nextDayWithActivity(),
+        canGoPrev: canGoPrev,
+        canGoNext: canGoNext,
         pendingBadgeCount: 0,
         pendingDelete: pending,
       ),

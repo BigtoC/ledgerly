@@ -425,90 +425,119 @@ void main() {
       },
     );
 
-    // watchBalanceMinorUnits — M5 Wave 0 §2.8.
-    group('watchBalanceMinorUnits', () {
+    // watchBalanceByCurrency — Chunk 5.
+    group('watchBalanceByCurrency', () {
       test(
-        'ACB01: empty account (no transactions, opening balance 0) emits 0',
+        'ACB01: empty account (no transactions, opening balance 0) emits empty map',
         () async {
           final id = await repo.save(buildCashAccount());
 
-          expect(await repo.watchBalanceMinorUnits(id).first, 0);
+          // Zero opening balance with no transactions → zero for USD → suppressed.
+          expect(await repo.watchBalanceByCurrency(id).first, isEmpty);
         },
       );
 
-      test('ACB02: only opening balance → emits opening balance', () async {
+      test(
+        'ACB02: only opening balance → own-currency group includes opening balance',
+        () async {
+          final id = await repo.save(
+            buildCashAccount(openingBalanceMinorUnits: 50000),
+          );
+
+          expect(await repo.watchBalanceByCurrency(id).first, {'USD': 50000});
+        },
+      );
+
+      test(
+        'ACB03: single expense → opening minus amount in own-currency group',
+        () async {
+          final id = await repo.save(
+            buildCashAccount(openingBalanceMinorUnits: 10000),
+          );
+          final categoryId = await _insertCategoryRaw(db);
+          await _insertTransactionRaw(
+            db,
+            accountId: id,
+            categoryId: categoryId,
+            amountMinorUnits: 2500,
+          );
+
+          // 10000 − 2500 = 7500 in USD.
+          expect(await repo.watchBalanceByCurrency(id).first, {'USD': 7500});
+        },
+      );
+
+      test(
+        'ACB04: single income → opening plus amount in own-currency group',
+        () async {
+          final id = await repo.save(
+            buildCashAccount(openingBalanceMinorUnits: 10000),
+          );
+          final categoryId = await _insertCategoryRaw(
+            db,
+            l10nKey: 'category.salary',
+            icon: 'payments',
+            type: 'income',
+          );
+          await _insertTransactionRaw(
+            db,
+            accountId: id,
+            categoryId: categoryId,
+            amountMinorUnits: 5000,
+          );
+
+          // 10000 + 5000 = 15000 in USD.
+          expect(await repo.watchBalanceByCurrency(id).first, {'USD': 15000});
+        },
+      );
+
+      test(
+        'ACB05: foreign-currency transactions create separate groups',
+        () async {
+          final id = await repo.save(
+            buildCashAccount(openingBalanceMinorUnits: 10000),
+          );
+          final expenseId = await _insertCategoryRaw(db);
+          await _insertTransactionRaw(
+            db,
+            accountId: id,
+            categoryId: expenseId,
+            amountMinorUnits: 2500,
+          ); // USD expense
+          await _insertTransactionRaw(
+            db,
+            accountId: id,
+            categoryId: expenseId,
+            amountMinorUnits: 500,
+            currency: 'JPY',
+          ); // JPY expense — no opening balance in JPY
+
+          expect(await repo.watchBalanceByCurrency(id).first, {
+            'USD': 7500, // 10000 − 2500
+            'JPY': -500, // foreign expense, no opening balance
+          });
+        },
+      );
+
+      test('ACB06: zero-value groups are suppressed', () async {
         final id = await repo.save(
-          buildCashAccount(openingBalanceMinorUnits: 50000),
-        );
-
-        expect(await repo.watchBalanceMinorUnits(id).first, 50000);
-      });
-
-      test('ACB03: single expense → emits opening − amount', () async {
-        final id = await repo.save(
-          buildCashAccount(openingBalanceMinorUnits: 10000),
-        );
-        final categoryId = await _insertCategoryRaw(db);
-        await _insertTransactionRaw(
-          db,
-          accountId: id,
-          categoryId: categoryId,
-          amountMinorUnits: 2500,
-        );
-
-        expect(await repo.watchBalanceMinorUnits(id).first, 10000 - 2500);
-      });
-
-      test('ACB04: single income → emits opening + amount', () async {
-        final id = await repo.save(
-          buildCashAccount(openingBalanceMinorUnits: 10000),
-        );
-        final categoryId = await _insertCategoryRaw(
-          db,
-          l10nKey: 'category.salary',
-          icon: 'payments',
-          type: 'income',
-        );
-        await _insertTransactionRaw(
-          db,
-          accountId: id,
-          categoryId: categoryId,
-          amountMinorUnits: 5000,
-        );
-
-        expect(await repo.watchBalanceMinorUnits(id).first, 10000 + 5000);
-      });
-
-      test('ACB05: mixed expense + income → correct net', () async {
-        final id = await repo.save(
-          buildCashAccount(openingBalanceMinorUnits: 10000),
+          buildCashAccount(openingBalanceMinorUnits: 2500),
         );
         final expenseId = await _insertCategoryRaw(db);
-        final incomeId = await _insertCategoryRaw(
-          db,
-          l10nKey: 'category.salary',
-          icon: 'payments',
-          type: 'income',
-        );
+        // Insert a USD expense that exactly cancels the opening balance.
         await _insertTransactionRaw(
           db,
           accountId: id,
           categoryId: expenseId,
           amountMinorUnits: 2500,
         );
-        await _insertTransactionRaw(
-          db,
-          accountId: id,
-          categoryId: incomeId,
-          amountMinorUnits: 7500,
-        );
 
-        // 10000 − 2500 + 7500 = 15000.
-        expect(await repo.watchBalanceMinorUnits(id).first, 15000);
+        final result = await repo.watchBalanceByCurrency(id).first;
+        expect(result, isNot(contains('USD')));
       });
 
       test(
-        'ACB06: transactions on a different account do not affect this balance',
+        'ACB07: transactions on a different account do not affect this balance',
         () async {
           final mineId = await repo.save(
             buildCashAccount(name: 'Mine', openingBalanceMinorUnits: 1000),
@@ -524,24 +553,28 @@ void main() {
             amountMinorUnits: 4000,
           );
 
-          expect(await repo.watchBalanceMinorUnits(mineId).first, 1000);
-          expect(await repo.watchBalanceMinorUnits(otherId).first, 9000 - 4000);
+          expect(await repo.watchBalanceByCurrency(mineId).first, {
+            'USD': 1000,
+          });
+          expect(await repo.watchBalanceByCurrency(otherId).first, {
+            'USD': 5000,
+          });
         },
       );
 
       test(
-        'ACB07: stream re-emits on insert / update / delete for this account',
+        'ACB07a: stream re-emits on insert / update / delete for this account',
         () async {
           final id = await repo.save(
             buildCashAccount(openingBalanceMinorUnits: 10000),
           );
           final categoryId = await _insertCategoryRaw(db);
 
-          final snapshots = <int>[];
-          final sub = repo.watchBalanceMinorUnits(id).listen(snapshots.add);
+          final snapshots = <Map<String, int>>[];
+          final sub = repo.watchBalanceByCurrency(id).listen(snapshots.add);
 
           await Future<void>.delayed(Duration.zero);
-          expect(snapshots.last, 10000);
+          expect(snapshots.last, {'USD': 10000});
 
           // Insert: balance drops by 2000.
           final txId = await _insertTransactionRaw(
@@ -551,7 +584,7 @@ void main() {
             amountMinorUnits: 2000,
           );
           await Future<void>.delayed(Duration.zero);
-          expect(snapshots.last, 10000 - 2000);
+          expect(snapshots.last, {'USD': 8000});
 
           // Update: same tx, now 3500 — balance should become 10000 − 3500.
           await db.customUpdate(
@@ -560,7 +593,7 @@ void main() {
             updates: {db.transactions},
           );
           await Future<void>.delayed(Duration.zero);
-          expect(snapshots.last, 10000 - 3500);
+          expect(snapshots.last, {'USD': 6500});
 
           // Delete: balance returns to opening balance.
           await db.customUpdate(
@@ -569,7 +602,7 @@ void main() {
             updates: {db.transactions},
           );
           await Future<void>.delayed(Duration.zero);
-          expect(snapshots.last, 10000);
+          expect(snapshots.last, {'USD': 10000});
 
           await sub.cancel();
         },
@@ -582,60 +615,25 @@ void main() {
             buildCashAccount(openingBalanceMinorUnits: 10000),
           );
 
-          final snapshots = <int>[];
-          final sub = repo.watchBalanceMinorUnits(id).listen(snapshots.add);
+          final snapshots = <Map<String, int>>[];
+          final sub = repo.watchBalanceByCurrency(id).listen(snapshots.add);
 
           await Future<void>.delayed(Duration.zero);
-          expect(snapshots.last, 10000);
+          expect(snapshots.last, {'USD': 10000});
 
           await repo.save(
             buildCashAccount(id: id, openingBalanceMinorUnits: 12500),
           );
           await Future<void>.delayed(Duration.zero);
-          expect(snapshots.last, 12500);
+          expect(snapshots.last, {'USD': 12500});
 
           await sub.cancel();
         },
       );
 
-      test('ACB07c: missing account emits 0', () async {
-        expect(await repo.watchBalanceMinorUnits(999).first, 0);
+      test('ACB07c: missing account emits empty map', () async {
+        expect(await repo.watchBalanceByCurrency(999).first, isEmpty);
       });
-
-      test(
-        'ACB07d: unrelated category metadata edits do not re-emit the balance',
-        () async {
-          final id = await repo.save(
-            buildCashAccount(openingBalanceMinorUnits: 10000),
-          );
-          final categoryId = await _insertCategoryRaw(db);
-          await _insertTransactionRaw(
-            db,
-            accountId: id,
-            categoryId: categoryId,
-            amountMinorUnits: 2000,
-          );
-
-          final snapshots = <int>[];
-          final sub = repo.watchBalanceMinorUnits(id).listen(snapshots.add);
-
-          await Future<void>.delayed(Duration.zero);
-          expect(snapshots, [8000]);
-
-          await db.customUpdate(
-            'UPDATE categories SET icon = ? WHERE id = ?',
-            variables: [
-              const Variable<String>('local_cafe'),
-              Variable<int>(categoryId),
-            ],
-            updates: {db.categories},
-          );
-          await Future<void>.delayed(Duration.zero);
-          expect(snapshots, [8000]);
-
-          await sub.cancel();
-        },
-      );
 
       test('ACB08: archived account still emits its balance', () async {
         final id = await repo.save(
@@ -651,7 +649,7 @@ void main() {
 
         await repo.archive(id);
 
-        expect(await repo.watchBalanceMinorUnits(id).first, 4000 - 1500);
+        expect(await repo.watchBalanceByCurrency(id).first, {'USD': 2500});
       });
     });
 

@@ -112,7 +112,7 @@ ProviderContainer _makeContainer({
 }
 
 SettingsData _data({
-  ThemeMode themeMode = ThemeMode.system,
+  ThemeMode themeMode = ThemeMode.light,
   Locale? locale,
   String defaultCurrency = 'USD',
   int? defaultAccountId,
@@ -133,7 +133,7 @@ SettingsData _data({
 
 void main() {
   setUpAll(() {
-    registerFallbackValue(ThemeMode.system);
+    registerFallbackValue(ThemeMode.light);
   });
 
   testWidgets('SS01: all section headers render on data', (tester) async {

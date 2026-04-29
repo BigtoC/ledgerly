@@ -5,8 +5,8 @@
 //      account row (active + archived).
 //   2. `userPreferencesRepository.watchDefaultAccountId()` — the
 //      current `default_account_id`.
-//   3. For each account, `accountRepository.watchBalanceMinorUnits(id)`
-//      — the Wave 0 §2.8 tracked balance stream.
+//   3. For each account, `accountRepository.watchBalanceByCurrency(id)`
+//      — per-currency grouped balances (Map<String, int>).
 //
 // Per-row balance streams are re-subscribed whenever the account set
 // changes. Stale subscriptions for removed rows are cancelled. This is
@@ -153,9 +153,9 @@ class _AccountsComposer {
 
   StreamSubscription<List<Account>>? _accountsSub;
   StreamSubscription<int?>? _defaultSub;
-  final Map<int, StreamSubscription<int>> _balanceSubs = {};
+  final Map<int, StreamSubscription<Map<String, int>>> _balanceSubs = {};
   final Map<int, StreamSubscription<bool>> _referenceSubs = {};
-  final Map<int, int> _balances = {};
+  final Map<int, Map<String, int>> _balances = {};
   final Map<int, bool> _references = {};
 
   List<Account> _accounts = const [];
@@ -180,7 +180,9 @@ class _AccountsComposer {
     _accountsSub = null;
     await _defaultSub?.cancel();
     _defaultSub = null;
-    final subs = List<StreamSubscription<int>>.from(_balanceSubs.values);
+    final subs = List<StreamSubscription<Map<String, int>>>.from(
+      _balanceSubs.values,
+    );
     final referenceSubs = List<StreamSubscription<bool>>.from(
       _referenceSubs.values,
     );
@@ -223,7 +225,7 @@ class _AccountsComposer {
     for (final a in rows) {
       if (_balanceSubs.containsKey(a.id)) continue;
       _balanceSubs[a.id] = _accountRepo
-          .watchBalanceMinorUnits(a.id)
+          .watchBalanceByCurrency(a.id)
           .listen((balance) => _onBalance(a.id, balance), onError: _onError);
       _referenceSubs[a.id] = _accountRepo
           .watchIsReferenced(a.id)
@@ -242,7 +244,7 @@ class _AccountsComposer {
     _emitIfReady();
   }
 
-  void _onBalance(int accountId, int balance) {
+  void _onBalance(int accountId, Map<String, int> balance) {
     _balances[accountId] = balance;
     _emitIfReady();
   }
@@ -274,7 +276,7 @@ class _AccountsComposer {
     final activeCount = _accounts.where((a) => !a.isArchived).length;
 
     for (final a in _sortForDisplay(_accounts)) {
-      final balance = _balances[a.id] ?? 0;
+      final balance = _balances[a.id] ?? {};
       final affordance = _affordance(
         a,
         activeCount,
@@ -282,7 +284,7 @@ class _AccountsComposer {
       );
       final view = AccountWithBalance(
         account: a,
-        balanceMinorUnits: balance,
+        balancesByCurrency: balance,
         affordance: affordance,
       );
       if (a.isArchived) {

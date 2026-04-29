@@ -60,10 +60,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeFabLabel => 'Add transaction';
 
   @override
-  String get homeSummaryTodayExpense => 'Today expense';
+  String get homeSummaryTodayExpense => 'Expense';
 
   @override
-  String get homeSummaryTodayIncome => 'Today income';
+  String get homeSummaryTodayIncome => 'Income';
 
   @override
   String get homeSummaryMonthNet => 'Month net';
@@ -439,7 +439,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get txKeypadBackspace => 'Backspace';
 
   @override
-  String get homeDayEmptyTitle => 'No transactions on this day';
+  String get homeEmptyDayMessage => 'No transaction';
+
+  @override
+  String get homeJumpToToday => 'Jump to today';
+
+  @override
+  String get homeSummaryMultiCurrencyNote => 'Multiple currencies';
 
   @override
   String get homeDaySkeletonLabel => 'Loading day';
@@ -461,6 +467,74 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get homeDayNavNextLabel => 'Next day';
+
+  @override
+  String get txCurrencyLabel => 'Currency';
+
+  @override
+  String get txCurrencyPickerTitle => 'Pick currency';
+
+  @override
+  String get txCurrencySearchHint => 'Search currencies';
+
+  @override
+  String get txCurrencyChangeConfirmAction => 'Change and Clear';
+
+  @override
+  String txAmountPlaceholderInCurrency(String code) {
+    return 'Enter amount in $code';
+  }
+
+  @override
+  String get txCurrencyPickerNoResults => 'No currencies found';
+
+  @override
+  String get txCurrencyPickerChangeConfirmBody =>
+      'Changing the currency will clear the entered amount.';
+
+  @override
+  String accountsBalanceMore(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '+$count more',
+      one: '+$count more',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get currencyUsd => 'US Dollar';
+
+  @override
+  String get currencyEur => 'Euro';
+
+  @override
+  String get currencyJpy => 'Japanese Yen';
+
+  @override
+  String get currencyTwd => 'New Taiwan Dollar';
+
+  @override
+  String get currencyCny => 'Chinese Yuan';
+
+  @override
+  String get currencyHkd => 'Hong Kong Dollar';
+
+  @override
+  String get currencyGbp => 'British Pound';
+
+  @override
+  String get currencyCad => 'Canadian Dollar';
+
+  @override
+  String get currencySgd => 'Singapore Dollar';
+
+  @override
+  String get currencyAud => 'Australian Dollar';
+
+  @override
+  String get currencyNzd => 'New Zealand Dollar';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -519,10 +593,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get homeFabLabel => '添加交易';
 
   @override
-  String get homeSummaryTodayExpense => '今日支出';
+  String get homeSummaryTodayExpense => '支出';
 
   @override
-  String get homeSummaryTodayIncome => '今日收入';
+  String get homeSummaryTodayIncome => '收入';
 
   @override
   String get homeSummaryMonthNet => '本月净额';
@@ -890,7 +964,13 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get txKeypadBackspace => '退格';
 
   @override
-  String get homeDayEmptyTitle => '这天没有交易';
+  String get homeEmptyDayMessage => '无交易';
+
+  @override
+  String get homeJumpToToday => '跳至今天';
+
+  @override
+  String get homeSummaryMultiCurrencyNote => '多种币种';
 
   @override
   String get homeDaySkeletonLabel => '加载中的日期';
@@ -912,6 +992,67 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get homeDayNavNextLabel => '后一天';
+
+  @override
+  String get txCurrencyLabel => '币种';
+
+  @override
+  String get txCurrencyPickerTitle => '选择币种';
+
+  @override
+  String get txCurrencySearchHint => '搜索币种';
+
+  @override
+  String get txCurrencyChangeConfirmAction => '更换并清除';
+
+  @override
+  String txAmountPlaceholderInCurrency(String code) {
+    return '输入 $code 金额';
+  }
+
+  @override
+  String get txCurrencyPickerNoResults => '未找到币种';
+
+  @override
+  String get txCurrencyPickerChangeConfirmBody => '更换币种将清除已输入的金额。';
+
+  @override
+  String accountsBalanceMore(int count) {
+    return '+$count 个更多';
+  }
+
+  @override
+  String get currencyUsd => '美元';
+
+  @override
+  String get currencyEur => '欧元';
+
+  @override
+  String get currencyJpy => '日元';
+
+  @override
+  String get currencyTwd => '新台币';
+
+  @override
+  String get currencyCny => '人民币';
+
+  @override
+  String get currencyHkd => '港元';
+
+  @override
+  String get currencyGbp => '英镑';
+
+  @override
+  String get currencyCad => '加拿大元';
+
+  @override
+  String get currencySgd => '新加坡元';
+
+  @override
+  String get currencyAud => '澳元';
+
+  @override
+  String get currencyNzd => '新西兰元';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -970,10 +1111,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get homeFabLabel => '新增交易';
 
   @override
-  String get homeSummaryTodayExpense => '今日支出';
+  String get homeSummaryTodayExpense => '支出';
 
   @override
-  String get homeSummaryTodayIncome => '今日收入';
+  String get homeSummaryTodayIncome => '收入';
 
   @override
   String get homeSummaryMonthNet => '本月淨額';
@@ -1341,7 +1482,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get txKeypadBackspace => '退格';
 
   @override
-  String get homeDayEmptyTitle => '這天沒有交易';
+  String get homeEmptyDayMessage => '無交易';
+
+  @override
+  String get homeJumpToToday => '跳至今天';
+
+  @override
+  String get homeSummaryMultiCurrencyNote => '多種幣別';
 
   @override
   String get homeDaySkeletonLabel => '載入中的日期';
@@ -1363,4 +1510,65 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get homeDayNavNextLabel => '後一天';
+
+  @override
+  String get txCurrencyLabel => '幣別';
+
+  @override
+  String get txCurrencyPickerTitle => '選擇幣別';
+
+  @override
+  String get txCurrencySearchHint => '搜尋幣別';
+
+  @override
+  String get txCurrencyChangeConfirmAction => '更換並清除';
+
+  @override
+  String txAmountPlaceholderInCurrency(String code) {
+    return '輸入 $code 金額';
+  }
+
+  @override
+  String get txCurrencyPickerNoResults => '找不到幣別';
+
+  @override
+  String get txCurrencyPickerChangeConfirmBody => '更換幣別將清除已輸入的金額。';
+
+  @override
+  String accountsBalanceMore(int count) {
+    return '+$count 個更多';
+  }
+
+  @override
+  String get currencyUsd => '美元';
+
+  @override
+  String get currencyEur => '歐元';
+
+  @override
+  String get currencyJpy => '日圓';
+
+  @override
+  String get currencyTwd => '新台幣';
+
+  @override
+  String get currencyCny => '人民幣';
+
+  @override
+  String get currencyHkd => '港幣';
+
+  @override
+  String get currencyGbp => '英鎊';
+
+  @override
+  String get currencyCad => '加拿大元';
+
+  @override
+  String get currencySgd => '新加坡元';
+
+  @override
+  String get currencyAud => '澳幣';
+
+  @override
+  String get currencyNzd => '紐西蘭元';
 }

@@ -28,12 +28,14 @@ import 'package:ledgerly/data/models/currency.dart';
 import 'package:ledgerly/data/models/transaction.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
+import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/features/categories/categories_controller.dart';
 import 'package:ledgerly/features/transactions/transaction_form_screen.dart';
 import 'package:ledgerly/features/transactions/widgets/account_selector_tile.dart';
 import 'package:ledgerly/features/transactions/widgets/calculator_keypad.dart';
+import 'package:ledgerly/features/transactions/widgets/currency_selector_tile.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockTransactionRepository extends Mock
@@ -46,7 +48,21 @@ class _MockCategoryRepository extends Mock implements CategoryRepository {}
 class _MockUserPreferencesRepository extends Mock
     implements UserPreferencesRepository {}
 
+class _MockCurrencyRepository extends Mock implements CurrencyRepository {}
+
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
+const _jpy = Currency(
+  code: 'JPY',
+  decimals: 0,
+  symbol: '¥',
+  nameL10nKey: 'currency.jpy',
+);
+const _eur = Currency(
+  code: 'EUR',
+  decimals: 2,
+  symbol: '€',
+  nameL10nKey: 'currency.eur',
+);
 
 const _account = Account(id: 1, name: 'Cash', accountTypeId: 1, currency: _usd);
 
@@ -89,12 +105,14 @@ void main() {
   late _MockAccountRepository accountRepo;
   late _MockCategoryRepository categoryRepo;
   late _MockUserPreferencesRepository prefs;
+  late _MockCurrencyRepository currencyRepo;
 
   setUp(() {
     txRepo = _MockTransactionRepository();
     accountRepo = _MockAccountRepository();
     categoryRepo = _MockCategoryRepository();
     prefs = _MockUserPreferencesRepository();
+    currencyRepo = _MockCurrencyRepository();
 
     when(() => prefs.getDefaultAccountId()).thenAnswer((_) async => 1);
     when(
@@ -107,6 +125,9 @@ void main() {
     when(
       () => categoryRepo.getById(10),
     ).thenAnswer((_) async => _expenseCategory);
+    when(
+      () => currencyRepo.watchAll(includeTokens: false),
+    ).thenAnswer((_) => Stream.value(const [_usd, _jpy, _eur]));
   });
 
   Widget mountAdd({
@@ -149,6 +170,7 @@ void main() {
         accountRepositoryProvider.overrideWithValue(accountRepo),
         categoryRepositoryProvider.overrideWithValue(categoryRepo),
         userPreferencesRepositoryProvider.overrideWithValue(prefs),
+        currencyRepositoryProvider.overrideWithValue(currencyRepo),
         ...extraOverrides,
       ],
       child: MaterialApp.router(
@@ -191,6 +213,7 @@ void main() {
         accountRepositoryProvider.overrideWithValue(accountRepo),
         categoryRepositoryProvider.overrideWithValue(categoryRepo),
         userPreferencesRepositoryProvider.overrideWithValue(prefs),
+        currencyRepositoryProvider.overrideWithValue(currencyRepo),
       ],
       child: MaterialApp.router(
         routerConfig: router,
@@ -539,6 +562,221 @@ void main() {
     verify(() => accountRepo.watchAll(includeArchived: false)).called(1);
     verifyNever(() => accountRepo.watchAll(includeArchived: true));
   });
+
+  testWidgets('WS16: currency row renders current displayCurrency code', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(400, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(mountAdd());
+    await tester.pumpAndSettle();
+
+    // The CurrencySelectorTile should be visible in the form
+    expect(find.byType(CurrencySelectorTile), findsOneWidget);
+    // USD is seeded from the default account
+    expect(find.text('USD'), findsAtLeastNWidgets(1));
+  });
+
+  testWidgets('WS17b: currency picker search filters by code and full name', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(400, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(mountAdd());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(CurrencySelectorTile));
+    await tester.pumpAndSettle();
+
+    // All currencies should be visible initially
+    expect(find.text('USD'), findsAtLeastNWidgets(1));
+    expect(find.text('JPY'), findsAtLeastNWidgets(1));
+    expect(find.text('EUR'), findsAtLeastNWidgets(1));
+
+    // Search by code — use the controller directly to avoid
+    // multiple-EditableText conflicts in the test framework.
+    final searchField = find.widgetWithText(TextField, 'Search currencies');
+    final textField = tester.widget<TextField>(searchField);
+    final controller = textField.controller!;
+    controller.text = 'JP';
+    controller.selection = const TextSelection.collapsed(offset: 2);
+    textField.onChanged?.call('JP');
+    await tester.pumpAndSettle();
+
+    // JPY should be visible, USD and EUR should be filtered out.
+    expect(find.text('JPY'), findsAtLeastNWidgets(1));
+    expect(find.byKey(const ValueKey('txCurrencyPicker:USD')), findsNothing);
+    expect(find.byKey(const ValueKey('txCurrencyPicker:EUR')), findsNothing);
+
+    // Search by full name
+    controller.text = 'Euro';
+    controller.selection = const TextSelection.collapsed(offset: 4);
+    textField.onChanged?.call('Euro');
+    await tester.pumpAndSettle();
+
+    expect(find.text('EUR'), findsAtLeastNWidgets(1));
+    expect(find.byKey(const ValueKey('txCurrencyPicker:USD')), findsNothing);
+    expect(find.byKey(const ValueKey('txCurrencyPicker:JPY')), findsNothing);
+  });
+
+  testWidgets(
+    'WS17c: currency picker shows no-results message for unmatched search',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(400, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(mountAdd());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(CurrencySelectorTile));
+      await tester.pumpAndSettle();
+
+      final searchField = find.widgetWithText(TextField, 'Search currencies');
+      final textField = tester.widget<TextField>(searchField);
+      final controller = textField.controller!;
+      controller.text = 'ZZZZZ';
+      controller.selection = const TextSelection.collapsed(offset: 5);
+      textField.onChanged?.call('ZZZZZ');
+      await tester.pumpAndSettle();
+
+      expect(find.text('No currencies found'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'WS18: changing currency with non-zero amount shows Change and Clear dialog',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(400, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(mountAdd());
+      await tester.pumpAndSettle();
+
+      // Enter an amount
+      await tester.tap(find.text('5'));
+      await tester.pumpAndSettle();
+
+      // Open currency picker
+      await tester.tap(find.byType(CurrencySelectorTile));
+      await tester.pumpAndSettle();
+
+      // Tap a different currency
+      await tester.tap(find.text('JPY').first);
+      await tester.pumpAndSettle();
+
+      // Confirm dialog should appear
+      expect(
+        find.text('Changing the currency will clear the entered amount.'),
+        findsOneWidget,
+      );
+      expect(find.text('Change and Clear'), findsOneWidget);
+    },
+  );
+
+  testWidgets('WS19: cancel keeps old currency and amount', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(mountAdd());
+    await tester.pumpAndSettle();
+
+    // Enter an amount
+    await tester.tap(find.text('5'));
+    await tester.pumpAndSettle();
+
+    // Open currency picker
+    await tester.tap(find.byType(CurrencySelectorTile));
+    await tester.pumpAndSettle();
+
+    // Tap JPY
+    await tester.tap(find.text('JPY').first);
+    await tester.pumpAndSettle();
+
+    // Dismiss dialog via cancel
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    // Currency tile should still show USD
+    final tile = tester.widget<CurrencySelectorTile>(
+      find.byType(CurrencySelectorTile),
+    );
+    expect(tile.currency?.code, 'USD');
+  });
+
+  testWidgets('WS20: Change and Clear empties amount and updates currency', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(400, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(mountAdd());
+    await tester.pumpAndSettle();
+
+    // Enter an amount
+    await tester.tap(find.text('5'));
+    await tester.pumpAndSettle();
+
+    // Open currency picker
+    await tester.tap(find.byType(CurrencySelectorTile));
+    await tester.pumpAndSettle();
+
+    // Tap JPY
+    await tester.tap(find.text('JPY').first);
+    await tester.pumpAndSettle();
+
+    // Confirm the change
+    await tester.tap(find.text('Change and Clear'));
+    await tester.pumpAndSettle();
+
+    // Currency tile should now show JPY
+    final tile = tester.widget<CurrencySelectorTile>(
+      find.byType(CurrencySelectorTile),
+    );
+    expect(tile.currency?.code, 'JPY');
+    // Amount placeholder should be visible (currencyTouched=true, amount=0)
+    expect(find.textContaining('JPY'), findsAtLeastNWidgets(1));
+  });
+
+  testWidgets(
+    'WS21: account switch after manual currency pick does not show destructive dialog',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(400, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(mountAdd());
+      await tester.pumpAndSettle();
+
+      // Enter an amount
+      await tester.tap(find.text('5'));
+      await tester.pumpAndSettle();
+
+      // Manually pick EUR (sets currencyTouched=true)
+      await tester.tap(find.byType(CurrencySelectorTile));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('EUR').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Change and Clear'));
+      await tester.pumpAndSettle();
+
+      // Verify currency is now EUR
+      final currencyTile = tester.widget<CurrencySelectorTile>(
+        find.byType(CurrencySelectorTile),
+      );
+      expect(currencyTile.currency?.code, 'EUR');
+
+      // Now switch account — the destructive dialog should NOT appear
+      // because currencyTouched=true means account changes leave
+      // displayCurrency unchanged.
+      await tester.tap(find.byType(AccountSelectorTile));
+      await tester.pumpAndSettle();
+
+      // The account picker should be open, not a confirmation dialog
+      expect(find.text('Pick account'), findsOneWidget);
+      expect(find.text('Switch currency?'), findsNothing);
+    },
+  );
 }
 
 class _HomeStub extends StatelessWidget {

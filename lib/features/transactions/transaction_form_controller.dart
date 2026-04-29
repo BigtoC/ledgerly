@@ -6,11 +6,12 @@
 // `_Data` variant via `state = ...`; widgets never call repositories
 // directly.
 //
-// Repository invariants this controller upholds:
-//   - `tx.currency = selectedAccount.currency` on save (avoids
-//     `TransactionAccountCurrencyMismatchException`; see Wave 2 §9 + risk
-//     #9). Currency-swap clearing is a widget-level confirm flow that
-//     calls `selectAccount(account, clearAmountOnCurrencyChange: true)`.
+// Controller invariants:
+//   - `tx.currency = displayCurrency` on save — the transaction currency
+//     is user-controlled (not bound to account currency). The account's
+//     currency seeds `displayCurrency` on hydration when `currencyTouched`
+//     is false; after the user manually picks a currency, account changes
+//     no longer re-seed `displayCurrency`.
 //   - Edit save preserves `createdAt`; new-row save passes a placeholder
 //     timestamp that `TransactionRepository.save` overwrites on insert.
 //   - `isSaving` / `isDeleting` serialize async commands so rapid double
@@ -21,6 +22,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../app/providers/repository_providers.dart';
 import '../../data/models/account.dart';
 import '../../data/models/category.dart';
+import '../../data/models/currency.dart';
 import '../../data/models/transaction.dart';
 import '../../data/repositories/category_repository.dart';
 import 'keypad_state.dart';
@@ -82,6 +84,7 @@ class TransactionFormController extends _$TransactionFormController {
         amountMinorUnits: 0,
         selectedAccount: account,
         displayCurrency: account.currency,
+        currencyTouched: false,
         selectedCategory: null,
         pendingType: CategoryType.expense,
         date: initialDate == null
@@ -177,6 +180,7 @@ class TransactionFormController extends _$TransactionFormController {
         amountMinorUnits: existing.amountMinorUnits,
         selectedAccount: account,
         displayCurrency: existing.currency,
+        currencyTouched: true,
         selectedCategory: category,
         pendingType: category?.type ?? CategoryType.expense,
         date: existing.date,
@@ -280,16 +284,29 @@ class TransactionFormController extends _$TransactionFormController {
     );
   }
 
-  /// Picks an account. When the new account's currency differs from the
-  /// current `displayCurrency` and the user has already entered a
-  /// non-zero amount, the widget prompts for confirmation (Wave 2 risk
-  /// #9) and re-invokes with `clearAmountOnCurrencyChange: true`.
+  /// Picks an account. When `currencyTouched` is false, the account's
+  /// currency re-seeds `displayCurrency`. When `currencyTouched` is true,
+  /// the user has manually selected a currency and account changes only
+  /// update `selectedAccount`.
+  ///
+  /// When the new account's currency differs from `displayCurrency` and
+  /// the user has already entered a non-zero amount (and `currencyTouched`
+  /// is false), the widget prompts for confirmation (Wave 2 risk #9) and
+  /// re-invokes with `clearAmountOnCurrencyChange: true`.
   void selectAccount(
     Account account, {
     bool clearAmountOnCurrencyChange = false,
   }) {
     final s = state;
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
+
+    // If the user has manually selected a currency, account changes do not
+    // re-seed displayCurrency — only selectedAccount changes.
+    if (s.currencyTouched) {
+      state = s.copyWith(selectedAccount: account, isDirty: true);
+      return;
+    }
+
     final newCurrency = account.currency;
     final currencyChanged = s.displayCurrency?.code != newCurrency.code;
     if (currencyChanged &&
@@ -311,6 +328,40 @@ class TransactionFormController extends _$TransactionFormController {
       state = s.copyWith(
         selectedAccount: account,
         displayCurrency: newCurrency,
+        isDirty: true,
+      );
+    }
+  }
+
+  /// Picks a currency. When the new currency differs from the current
+  /// `displayCurrency` and `amountMinorUnits > 0`, the widget prompts for
+  /// confirmation and re-invokes with `clearAmountOnChange: true`.
+  ///
+  /// On success, `currencyTouched` is set to `true` regardless of whether
+  /// the amount was cleared, so subsequent account changes do not re-seed.
+  void selectCurrency(Currency currency, {bool clearAmountOnChange = false}) {
+    final s = state;
+    if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
+    final currencyChanged = s.displayCurrency?.code != currency.code;
+    if (!currencyChanged) return;
+    if (currencyChanged && s.amountMinorUnits > 0 && !clearAmountOnChange) {
+      // Refuse until the widget shows the confirm dialog and re-calls with
+      // clearAmountOnChange: true.
+      return;
+    }
+    if (currencyChanged && clearAmountOnChange) {
+      _keypad = const KeypadState.initial();
+      state = s.copyWith(
+        displayCurrency: currency,
+        currencyTouched: true,
+        amountMinorUnits: 0,
+        isDirty: true,
+      );
+    } else {
+      // Same currency or zero-amount change — no need to clear amount.
+      state = s.copyWith(
+        displayCurrency: currency,
+        currencyTouched: true,
         isDirty: true,
       );
     }
@@ -348,7 +399,7 @@ class TransactionFormController extends _$TransactionFormController {
       final tx = Transaction(
         id: s.editingId ?? 0,
         amountMinorUnits: s.amountMinorUnits,
-        currency: s.selectedAccount!.currency,
+        currency: s.displayCurrency!,
         categoryId: s.selectedCategory!.id,
         accountId: s.selectedAccount!.id,
         memo: s.memo.isEmpty ? null : s.memo,
@@ -441,10 +492,14 @@ class TransactionFormController extends _$TransactionFormController {
         : const KeypadState.initial();
     // Wave 2 risk #7 — duplicate prefill must default `date` to today,
     // not carry the source's date.
+    // currencyTouched starts false (same as Add): currency seeds from
+    // account default; account changes will re-seed currency if the user
+    // has not yet manually selected a currency.
     state = TransactionFormState.data(
       amountMinorUnits: amountMinorUnits,
       selectedAccount: account,
       displayCurrency: account.currency,
+      currencyTouched: false,
       selectedCategory: category,
       pendingType: category?.type ?? CategoryType.expense,
       date: _today(),

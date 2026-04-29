@@ -182,7 +182,7 @@ void main() {
     });
 
     test(
-      'H02: data state with prev/next derived from days-with-activity',
+      'H02: calendar prev/next step one day at a time across gap days',
       () async {
         final container = makeContainer();
         addTearDown(container.dispose);
@@ -195,52 +195,153 @@ void main() {
 
         await Future<void>.delayed(Duration.zero);
         dayCtrl.add([_tx(id: 1, date: todayMidnight)]);
-        // newest-first
-        activityCtrl.add([todayMidnight, yesterday, twoDaysAgo]);
+        // Only today has activity — prev/next should still step by calendar day
+        activityCtrl.add([todayMidnight]);
         todayTotalsCtrl.add(const {'USD': (expense: 100, income: 0)});
         monthNetCtrl.add(const {'USD': -100});
 
         final state = await waitForNon(container, (s) => s is HomeData);
         final data = state as HomeData;
         expect(data.transactionsForDay, hasLength(1));
-        expect(data.activityDays, [todayMidnight, yesterday, twoDaysAgo]);
-        expect(data.prevDayWithActivity, yesterday);
-        expect(data.nextDayWithActivity, isNull); // already at newest
+        // Today is selected; cannot go next (at today), can go prev
+        expect(data.canGoPrev, isTrue);
+        expect(data.canGoNext, isFalse);
+
+        // Step back: today → yesterday (one calendar day, no activity gap skip)
+        await container.read(homeControllerProvider.notifier).selectPrevDay();
+        await Future<void>.delayed(Duration.zero);
+        dayCtrl.add(const []);
+        // After selectPrevDay, summary streams resubscribe — feed them new data
+        todayTotalsCtrl.add(const {});
+        monthNetCtrl.add(const {});
+        final afterPrev = await waitForNon(
+          container,
+          (s) => s is HomeData && s.selectedDay == yesterday,
+        );
+        expect((afterPrev as HomeData).selectedDay, yesterday);
+        expect(afterPrev.canGoPrev, isTrue);
+        expect(afterPrev.canGoNext, isTrue);
+
+        // Step back again: yesterday → two days ago
+        await container.read(homeControllerProvider.notifier).selectPrevDay();
+        await Future<void>.delayed(Duration.zero);
+        dayCtrl.add(const []);
+        todayTotalsCtrl.add(const {});
+        monthNetCtrl.add(const {});
+        final afterPrev2 = await waitForNon(
+          container,
+          (s) => s is HomeData && s.selectedDay == twoDaysAgo,
+        );
+        expect((afterPrev2 as HomeData).selectedDay, twoDaysAgo);
       },
     );
 
-    test('H03: selectPrevDay steps to nearest older activity day', () async {
+    test(
+      'H02b: selected-day summary streams follow selectedDay not todayAnchor',
+      () async {
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        container.listen(homeControllerProvider, (_, _) {});
+
+        final today = DateTime.now();
+        final todayMidnight = DateTime(today.year, today.month, today.day);
+        final yesterday = todayMidnight.subtract(const Duration(days: 1));
+
+        await Future<void>.delayed(Duration.zero);
+        dayCtrl.add(const []);
+        activityCtrl.add([yesterday]);
+        // Summary totals for today
+        todayTotalsCtrl.add(const {'USD': (expense: 500, income: 0)});
+        monthNetCtrl.add(const {'USD': -500});
+        await waitForNon(container, (s) => s is HomeData);
+
+        // Step to yesterday — summary streams should re-subscribe for yesterday
+        await container.read(homeControllerProvider.notifier).selectPrevDay();
+        await Future<void>.delayed(Duration.zero);
+        dayCtrl.add([_tx(id: 1, date: yesterday)]);
+        // Emit new summary totals (simulating yesterday's data)
+        todayTotalsCtrl.add(const {'USD': (expense: 200, income: 100)});
+        monthNetCtrl.add(const {'USD': -100});
+
+        final afterPrev = await waitForNon(
+          container,
+          (s) => s is HomeData && s.selectedDay == yesterday,
+        );
+        expect((afterPrev as HomeData).selectedDay, yesterday);
+        // Verify the strip data changed (was re-subscribed for yesterday)
+        expect(afterPrev.todayTotalsByCurrency['USD']?.expense, 200);
+      },
+    );
+
+    test('H02c: next day is capped at today', () async {
       final container = makeContainer();
       addTearDown(container.dispose);
       container.listen(homeControllerProvider, (_, _) {});
 
       final today = DateTime.now();
       final todayMidnight = DateTime(today.year, today.month, today.day);
-      final yesterday = todayMidnight.subtract(const Duration(days: 1));
-      final fourDaysAgo = todayMidnight.subtract(const Duration(days: 4));
 
       await Future<void>.delayed(Duration.zero);
       dayCtrl.add([_tx(id: 1, date: todayMidnight)]);
-      activityCtrl.add([todayMidnight, yesterday, fourDaysAgo]);
+      activityCtrl.add([todayMidnight]);
       todayTotalsCtrl.add(const {});
       monthNetCtrl.add(const {});
-      await waitForNon(container, (s) => s is HomeData);
 
-      // Walk back: today → yesterday.
-      await container.read(homeControllerProvider.notifier).selectPrevDay();
-      // The day stream resubscribes; emit yesterday's rows on the
-      // broadcast stream so the new subscriber sees them.
+      final state = await waitForNon(container, (s) => s is HomeData);
+      expect((state as HomeData).selectedDay, todayMidnight);
+      expect(state.canGoNext, isFalse);
+
+      // Attempting to go next should be a no-op
+      await container.read(homeControllerProvider.notifier).selectNextDay();
       await Future<void>.delayed(Duration.zero);
-      dayCtrl.add([_tx(id: 2, date: yesterday)]);
-      final state = await waitForNon(
-        container,
-        (s) =>
-            s is HomeData &&
-            s.selectedDay == yesterday &&
-            s.prevDayWithActivity == fourDaysAgo,
-      );
-      expect((state as HomeData).nextDayWithActivity, todayMidnight);
+
+      final after = await waitForNon(container, (s) => s is HomeData);
+      expect((after as HomeData).selectedDay, todayMidnight);
     });
+
+    test(
+      'H02d: first-run empty: no history → HomeEmpty; non-empty + empty day → HomeData with []',
+      () async {
+        // Part 1: no history at all → HomeEmpty
+        final container1 = makeContainer();
+        addTearDown(container1.dispose);
+        container1.listen(homeControllerProvider, (_, _) {});
+
+        await Future<void>.delayed(Duration.zero);
+        dayCtrl.add(const []);
+        activityCtrl.add(const []);
+        todayTotalsCtrl.add(const {});
+        monthNetCtrl.add(const {});
+
+        final emptyState = await waitForNon(container1, (s) => s is HomeEmpty);
+        expect(emptyState, isA<HomeEmpty>());
+      },
+    );
+
+    test(
+      'H02e: history exists but selected day has no rows → HomeData with empty list',
+      () async {
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        container.listen(homeControllerProvider, (_, _) {});
+
+        final today = DateTime.now();
+        final todayMidnight = DateTime(today.year, today.month, today.day);
+        final yesterday = todayMidnight.subtract(const Duration(days: 1));
+
+        await Future<void>.delayed(Duration.zero);
+        dayCtrl.add(const []); // today is empty
+        activityCtrl.add([yesterday]); // but yesterday has activity
+        todayTotalsCtrl.add(const {});
+        monthNetCtrl.add(const {});
+
+        final state = await waitForNon(container, (s) => s is HomeData);
+        final data = state as HomeData;
+        expect(data.transactionsForDay, isEmpty);
+        expect(data.canGoPrev, isTrue); // yesterday exists
+        expect(data.canGoNext, isFalse); // capped at today
+      },
+    );
 
     test('H04: selectToday pins to today even on a gap day', () async {
       final container = makeContainer();
@@ -266,8 +367,9 @@ void main() {
       final data = state as HomeData;
       expect(data.selectedDay, today);
       expect(data.transactionsForDay, isEmpty);
-      expect(data.prevDayWithActivity, yesterday);
-      expect(data.nextDayWithActivity, isNull);
+      // Calendar-based: can go prev (yesterday has activity), cannot go next (at today)
+      expect(data.canGoPrev, isTrue);
+      expect(data.canGoNext, isFalse);
 
       await container.read(homeControllerProvider.notifier).selectToday();
       await Future<void>.delayed(Duration.zero);
@@ -590,6 +692,10 @@ void main() {
         // Late emission from the old selection should be ignored.
         dayCtrl.add([_tx(id: 999, date: today)]);
         await Future<void>.delayed(Duration.zero);
+
+        // Emit summary data for the new subscription (yesterday)
+        todayTotalsCtrl.add(const {});
+        monthNetCtrl.add(const {});
 
         // Then the real yesterday emission arrives.
         dayCtrl.add([_tx(id: 2, date: yesterday)]);

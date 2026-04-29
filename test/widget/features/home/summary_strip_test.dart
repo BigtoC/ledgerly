@@ -12,6 +12,7 @@ import 'package:ledgerly/l10n/app_localizations.dart';
 
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 const _jpy = Currency(code: 'JPY', decimals: 0, symbol: '¥');
+const _eur = Currency(code: 'EUR', decimals: 2, symbol: '€');
 
 Widget _wrap(Widget child) => MaterialApp(
   localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -89,5 +90,75 @@ void main() {
     await tester.pumpAndSettle();
     // Three placeholder dashes — one per label row.
     expect(find.text('—'), findsNWidgets(3));
+  });
+
+  testWidgets(
+    'SS04: jump-to-today button renders when showJumpToToday is true',
+    (tester) async {
+      var jumped = false;
+      await tester.pumpWidget(
+        _wrap(
+          SummaryStrip(
+            todayTotalsByCurrency: const {'USD': (expense: 100, income: 0)},
+            monthNetByCurrency: const {'USD': -100},
+            currenciesByCode: const {'USD': _usd},
+            locale: 'en_US',
+            showJumpToToday: true,
+            onJumpToToday: () => jumped = true,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Jump to today'), findsOneWidget);
+      await tester.tap(find.text('Jump to today'));
+      await tester.pumpAndSettle();
+      expect(jumped, isTrue);
+    },
+  );
+
+  testWidgets(
+    'SS05: jump-to-today button disabled when showJumpToToday is false',
+    (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const SummaryStrip(
+            todayTotalsByCurrency: {'USD': (expense: 100, income: 0)},
+            monthNetByCurrency: {'USD': -100},
+            currenciesByCode: {'USD': _usd},
+            locale: 'en_US',
+            showJumpToToday: false,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Jump to today'), findsOneWidget);
+      final button = tester.widget<TextButton>(
+        find.ancestor(
+          of: find.text('Jump to today'),
+          matching: find.byType(TextButton),
+        ),
+      );
+      expect(button.onPressed, isNull);
+    },
+  );
+
+  testWidgets('SS06: capped groups prioritize selected-day currencies', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        const SummaryStrip(
+          todayTotalsByCurrency: {'USD': (expense: 100, income: 0)},
+          monthNetByCurrency: {'AUD': -100, 'CAD': -200, 'USD': -300},
+          currenciesByCode: {'USD': _usd, 'JPY': _jpy, 'EUR': _eur},
+          locale: 'en_US',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Multiple currencies'), findsOneWidget);
+    expect(find.textContaining(r'-$3.00'), findsOneWidget);
   });
 }

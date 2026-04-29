@@ -700,4 +700,191 @@ void main() {
       },
     );
   });
+
+  group('currencyTouched', () {
+    test('TC80: hydrateForAdd starts with currencyTouched=false', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+      await controller.hydrateForAdd();
+      final s =
+          c.read(transactionFormControllerProvider) as TransactionFormData;
+      expect(s.currencyTouched, isFalse);
+    });
+
+    test('TC81: hydrateForEdit starts with currencyTouched=true', () async {
+      final tx = _persistedTx();
+      when(() => txRepo.getById(99)).thenAnswer((_) async => tx);
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+      await controller.hydrateForEdit(99);
+      final s =
+          c.read(transactionFormControllerProvider) as TransactionFormData;
+      expect(s.currencyTouched, isTrue);
+    });
+
+    test(
+      'TC82: account change re-seeds displayCurrency when currencyTouched is false',
+      () async {
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+        await controller
+            .hydrateForAdd(); // starts with USD, currencyTouched=false
+        controller.selectAccount(_accountJpy);
+        final s =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(s.displayCurrency?.code, 'JPY');
+        expect(s.currencyTouched, isFalse);
+      },
+    );
+
+    test(
+      'TC83: account change leaves displayCurrency unchanged when currencyTouched is true',
+      () async {
+        const eur = Currency(
+          code: 'EUR',
+          decimals: 2,
+          symbol: '€',
+          nameL10nKey: 'currency.eur',
+        );
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+        await controller.hydrateForAdd();
+        // User manually picks EUR — sets currencyTouched=true
+        controller.selectCurrency(eur);
+        var s =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(s.displayCurrency?.code, 'EUR');
+        expect(s.currencyTouched, isTrue);
+        // Switching account should NOT re-seed currency
+        controller.selectAccount(_accountJpy);
+        s = c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(s.displayCurrency?.code, 'EUR');
+        expect(s.selectedAccount?.id, _accountJpy.id);
+      },
+    );
+
+    test(
+      'TC84: selectCurrency with non-zero amount refuses without clearAmountOnChange',
+      () async {
+        const eur = Currency(
+          code: 'EUR',
+          decimals: 2,
+          symbol: '€',
+          nameL10nKey: 'currency.eur',
+        );
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+        await controller.hydrateForAdd();
+        controller.appendDigit(5); // amount = 500 minor units
+        controller.selectCurrency(eur); // no clearAmountOnChange flag
+        final s =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        // Currency change should be refused
+        expect(s.displayCurrency?.code, 'USD');
+        expect(s.amountMinorUnits, 500);
+        expect(s.currencyTouched, isFalse);
+      },
+    );
+
+    test(
+      'TC85: selectCurrency with clearAmountOnChange clears amount and sets currencyTouched',
+      () async {
+        const eur = Currency(
+          code: 'EUR',
+          decimals: 2,
+          symbol: '€',
+          nameL10nKey: 'currency.eur',
+        );
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+        await controller.hydrateForAdd();
+        controller.appendDigit(5);
+        controller.selectCurrency(eur, clearAmountOnChange: true);
+        final s =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(s.displayCurrency?.code, 'EUR');
+        expect(s.amountMinorUnits, 0);
+        expect(s.currencyTouched, isTrue);
+      },
+    );
+
+    test(
+      'TC86: selectCurrency with zero amount succeeds without clearAmountOnChange',
+      () async {
+        const eur = Currency(
+          code: 'EUR',
+          decimals: 2,
+          symbol: '€',
+          nameL10nKey: 'currency.eur',
+        );
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+        await controller.hydrateForAdd();
+        // amount is 0, no need for clearAmountOnChange flag
+        controller.selectCurrency(eur);
+        final s =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(s.displayCurrency?.code, 'EUR');
+        expect(s.currencyTouched, isTrue);
+      },
+    );
+
+    test(
+      'TC86b: re-selecting the current currency keeps automatic account-driven currency behavior',
+      () async {
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+        await controller.hydrateForAdd();
+
+        var s =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(s.displayCurrency?.code, 'USD');
+        expect(s.currencyTouched, isFalse);
+
+        controller.selectCurrency(_usd);
+        s = c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(s.displayCurrency?.code, 'USD');
+        expect(s.currencyTouched, isFalse);
+
+        controller.selectAccount(_accountJpy);
+        s = c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(s.selectedAccount?.id, _accountJpy.id);
+        expect(s.displayCurrency?.code, 'JPY');
+      },
+    );
+
+    test(
+      'TC87: save persists displayCurrency rather than selectedAccount.currency',
+      () async {
+        const eur = Currency(
+          code: 'EUR',
+          decimals: 2,
+          symbol: '€',
+          nameL10nKey: 'currency.eur',
+        );
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+        await controller.hydrateForAdd();
+        controller.selectCurrency(eur); // user picks EUR on a USD account
+        controller.appendDigit(1);
+        controller.selectCategory(_expenseCategory);
+        Transaction? capturedTx;
+        when(() => txRepo.save(any())).thenAnswer((inv) async {
+          capturedTx = inv.positionalArguments.first as Transaction;
+          return capturedTx!;
+        });
+        await controller.save();
+        expect(capturedTx?.currency.code, 'EUR');
+      },
+    );
+  });
 }

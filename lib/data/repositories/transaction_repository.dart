@@ -8,6 +8,10 @@
 //   - Currency FK integrity — `save` pre-checks the FK and throws a
 //     typed `CurrencyNotFoundException` before Drift's SQL layer can
 //     surface an opaque `SqliteException` (G2 — PRD.md 286).
+//   - Transaction currency is independent of account currency. The
+//     controller sends `displayCurrency` (user-controlled) on save; the
+//     repository accepts any valid seeded currency regardless of the
+//     account's own currency.
 //   - `createdAt` / `updatedAt` populated by the repository, never by
 //     SQL defaults (PRD.md 291-293).
 //   - Home screen is day-bounded: `watchByDay` + `watchDaysWithActivity`
@@ -17,7 +21,6 @@ import 'package:drift/drift.dart' show Value, Variable;
 
 import '../../core/utils/date_helpers.dart';
 import '../database/app_database.dart' as drift;
-import '../database/daos/account_dao.dart';
 import '../database/daos/currency_dao.dart';
 import '../database/daos/transaction_dao.dart';
 import '../models/currency.dart';
@@ -127,7 +130,6 @@ final class DriftTransactionRepository implements TransactionRepository {
   final DateTime Function() _clock;
 
   TransactionDao get _dao => _db.transactionDao;
-  AccountDao get _accountDao => _db.accountDao;
   CurrencyDao get _currencyDao => _db.currencyDao;
 
   // ---------- Reads ----------
@@ -267,18 +269,6 @@ final class DriftTransactionRepository implements TransactionRepository {
     final resolved = await _currencyDao.findByCode(tx.currency.code);
     if (resolved == null) {
       throw CurrencyNotFoundException(tx.currency.code);
-    }
-
-    // Add/Edit Transaction rules inherit transaction currency from the
-    // selected account. Enforce the invariant here so non-UI writers
-    // cannot persist cross-currency rows onto a single account.
-    final account = await _accountDao.findById(tx.accountId);
-    if (account != null && account.currency != tx.currency.code) {
-      throw TransactionAccountCurrencyMismatchException(
-        accountId: tx.accountId,
-        accountCurrencyCode: account.currency,
-        transactionCurrencyCode: tx.currency.code,
-      );
     }
 
     final now = _clock();

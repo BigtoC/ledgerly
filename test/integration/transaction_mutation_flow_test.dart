@@ -12,6 +12,7 @@ import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
 import 'package:ledgerly/features/home/home_screen.dart';
 import 'package:ledgerly/features/home/widgets/transaction_tile.dart';
 import 'package:ledgerly/features/transactions/widgets/category_chip.dart';
+import 'package:ledgerly/features/transactions/widgets/currency_selector_tile.dart';
 
 import '../support/test_app.dart';
 
@@ -80,6 +81,59 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets(
+      'Home FAB -> Add form -> change currency -> Save persists cross-currency row',
+      (tester) async {
+        final db = newTestAppDatabase();
+        addTearDown(db.close);
+        await tester.runAsync(() => runTestSeed(db));
+
+        final container = makeTestContainer(
+          db: db,
+          extraOverrides: [
+            splashGateSnapshotProvider.overrideWithValue(
+              SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        await tester.pumpWidget(buildTestApp(container: container));
+        await pumpHome(tester);
+
+        expect(find.byType(HomeScreen), findsOneWidget);
+
+        await tester.tap(find.byTooltip('Add transaction'));
+        await tester.pumpAndSettle();
+        expect(find.text('Add transaction'), findsOneWidget);
+
+        await enterAmountAndFood(tester, '5');
+
+        final currencyTile = find.byType(CurrencySelectorTile);
+        await tester.ensureVisible(currencyTile);
+        await tester.tap(currencyTile, warnIfMissed: false);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('JPY').first);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Change and Clear'));
+        await tester.pumpAndSettle();
+
+        await enterAmountAndFood(tester, '5');
+        await saveForm(tester);
+
+        expect(find.byType(HomeScreen), findsOneWidget);
+        expect(find.textContaining('¥5'), findsAtLeastNWidgets(1));
+
+        final rows = await tester.runAsync(
+          () => db.select(db.transactions).get(),
+        );
+        expect(rows, hasLength(1));
+        expect(rows!.single.currency, 'JPY');
+        expect(rows.single.amountMinorUnits, 5);
+        expect(tester.takeException(), isNull);
+      },
+    );
+
     testWidgets('Home duplicate action saves a second row dated today', (
       tester,
     ) async {
@@ -139,6 +193,74 @@ void main() {
       expect(rows[1].date.day, today.day);
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets(
+      'gap day: Add from empty-day state pins the new row to that day',
+      (tester) async {
+        final db = newTestAppDatabase();
+        addTearDown(db.close);
+        // Seed a transaction on yesterday so Home opens with history but
+        // today is a gap day (no transactions today).
+        await tester.runAsync(() async {
+          await runTestSeed(db);
+          final foodId = await getSeededCategoryId(db, 'category.food');
+          final cash = await getDefaultAccount(db);
+          final yesterday = DateTime.now().subtract(const Duration(days: 1));
+          await insertTestTransaction(
+            db,
+            accountId: cash.id,
+            categoryId: foodId,
+            currencyCode: 'USD',
+            amountMinorUnits: 100,
+            date: yesterday,
+          );
+        });
+
+        final container = makeTestContainer(
+          db: db,
+          extraOverrides: [
+            splashGateSnapshotProvider.overrideWithValue(
+              SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        await tester.pumpWidget(buildTestApp(container: container));
+        await pumpHome(tester);
+
+        // Today is a gap day — the empty-day message should be visible.
+        expect(find.byType(HomeScreen), findsOneWidget);
+        expect(find.text('No transaction'), findsOneWidget);
+        expect(find.byType(TransactionTile), findsNothing);
+
+        await tester.tap(find.byTooltip('Add transaction'));
+        await tester.pumpAndSettle();
+        expect(find.text('Add transaction'), findsOneWidget);
+
+        await enterAmountAndFood(tester, '5');
+        await saveForm(tester);
+
+        // Home should show the new tile; the gap-day message should be gone.
+        expect(find.byType(HomeScreen), findsOneWidget);
+        expect(find.byType(TransactionTile), findsOneWidget);
+        expect(find.text('No transaction'), findsNothing);
+
+        final rows = await tester.runAsync(
+          () => db.select(db.transactions).get(),
+        );
+        expect(rows, hasLength(2));
+
+        // The new row must be pinned to today (the gap day), not yesterday.
+        final today = DateTime.now();
+        final newRow = rows!.singleWhere((r) => r.id != rows.first.id);
+        expect(newRow.date.year, today.year);
+        expect(newRow.date.month, today.month);
+        expect(newRow.date.day, today.day);
+
+        expect(tester.takeException(), isNull);
+      },
+    );
 
     testWidgets('Home row edit saves through form and updates the DB row', (
       tester,

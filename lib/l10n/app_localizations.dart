@@ -202,16 +202,16 @@ abstract class AppLocalizations {
   /// **'Add transaction'**
   String get homeFabLabel;
 
-  /// PRD 672. Home summary strip — today expense row label.
+  /// PRD 672. Home summary strip — expense row label (day-neutral; was 'Today expense').
   ///
   /// In en, this message translates to:
-  /// **'Today expense'**
+  /// **'Expense'**
   String get homeSummaryTodayExpense;
 
-  /// PRD 672. Home summary strip — today income row label.
+  /// PRD 672. Home summary strip — income row label (day-neutral; was 'Today income').
   ///
   /// In en, this message translates to:
-  /// **'Today income'**
+  /// **'Income'**
   String get homeSummaryTodayIncome;
 
   /// PRD 672. Home summary strip — month net row label.
@@ -934,11 +934,23 @@ abstract class AppLocalizations {
   /// **'Backspace'**
   String get txKeypadBackspace;
 
-  /// Wave 3 §4.2. Per-day empty state title (gap day with prior history).
+  /// Gap day empty card message shown when no transactions exist for the selected day but history exists.
   ///
   /// In en, this message translates to:
-  /// **'No transactions on this day'**
-  String get homeDayEmptyTitle;
+  /// **'No transaction'**
+  String get homeEmptyDayMessage;
+
+  /// Button shown in SummaryStrip when selectedDay is not today.
+  ///
+  /// In en, this message translates to:
+  /// **'Jump to today'**
+  String get homeJumpToToday;
+
+  /// Indicator row in SummaryStrip when more than 2 currency groups exist on the selected day.
+  ///
+  /// In en, this message translates to:
+  /// **'Multiple currencies'**
+  String get homeSummaryMultiCurrencyNote;
 
   /// Wave 3 §4.2. Accessibility label for a transient Home day-loading placeholder. Reserved for loading affordances.
   ///
@@ -981,6 +993,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Next day'**
   String get homeDayNavNextLabel;
+
+  /// Transaction form — currency row label.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get txCurrencyLabel;
+
+  /// Transaction currency picker sheet title.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick currency'**
+  String get txCurrencyPickerTitle;
+
+  /// Search field hint inside the transaction currency picker sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Search currencies'**
+  String get txCurrencySearchHint;
+
+  /// Confirm button label on the currency-change dialog when a non-zero amount would be cleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Change and Clear'**
+  String get txCurrencyChangeConfirmAction;
+
+  /// Amount display placeholder shown after a currency change clears the amount. {code} is the ISO currency code.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter amount in {code}'**
+  String txAmountPlaceholderInCurrency(String code);
+
+  /// Empty state shown inside the transaction currency picker when the search filter matches nothing.
+  ///
+  /// In en, this message translates to:
+  /// **'No currencies found'**
+  String get txCurrencyPickerNoResults;
+
+  /// Dialog body for the currency-change clear flow triggered from the transaction currency picker (distinct from account-swap flow).
+  ///
+  /// In en, this message translates to:
+  /// **'Changing the currency will clear the entered amount.'**
+  String get txCurrencyPickerChangeConfirmBody;
+
+  /// Account tile balance overflow — '+N more' when an account has more than 3 currency groups.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one {+{count} more} other {+{count} more}}'**
+  String accountsBalanceMore(int count);
+
+  /// Seeded currency full name. DB nameL10nKey: currency.usd.
+  ///
+  /// In en, this message translates to:
+  /// **'US Dollar'**
+  String get currencyUsd;
+
+  /// Seeded currency full name. DB nameL10nKey: currency.eur.
+  ///
+  /// In en, this message translates to:
+  /// **'Euro'**
+  String get currencyEur;
+
+  /// Seeded currency full name. DB nameL10nKey: currency.jpy.
+  ///
+  /// In en, this message translates to:
+  /// **'Japanese Yen'**
+  String get currencyJpy;
+
+  /// Seeded currency full name. DB nameL10nKey: currency.twd.
+  ///
+  /// In en, this message translates to:
+  /// **'New Taiwan Dollar'**
+  String get currencyTwd;
+
+  /// Seeded currency full name. DB nameL10nKey: currency.cny.
+  ///
+  /// In en, this message translates to:
+  /// **'Chinese Yuan'**
+  String get currencyCny;
+
+  /// Seeded currency full name. DB nameL10nKey: currency.hkd.
+  ///
+  /// In en, this message translates to:
+  /// **'Hong Kong Dollar'**
+  String get currencyHkd;
+
+  /// Seeded currency full name. DB nameL10nKey: currency.gbp.
+  ///
+  /// In en, this message translates to:
+  /// **'British Pound'**
+  String get currencyGbp;
+
+  /// Seeded currency full name. DB nameL10nKey: currency.cad.
+  ///
+  /// In en, this message translates to:
+  /// **'Canadian Dollar'**
+  String get currencyCad;
+
+  /// Seeded currency full name. DB nameL10nKey: currency.sgd.
+  ///
+  /// In en, this message translates to:
+  /// **'Singapore Dollar'**
+  String get currencySgd;
+
+  /// Seeded currency full name. DB nameL10nKey: currency.aud.
+  ///
+  /// In en, this message translates to:
+  /// **'Australian Dollar'**
+  String get currencyAud;
+
+  /// Seeded currency full name. DB nameL10nKey: currency.nzd.
+  ///
+  /// In en, this message translates to:
+  /// **'New Zealand Dollar'**
+  String get currencyNzd;
 }
 
 class _AppLocalizationsDelegate

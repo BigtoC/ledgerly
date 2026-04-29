@@ -37,7 +37,7 @@ Settings does **not** import from other feature slices. Navigation to `Categorie
 - `settings_controller.dart` — `@riverpod class SettingsController extends _$SettingsController`. Commands: `setThemeMode`, `setLocale`, `setDefaultCurrency`, `setDefaultAccountId`, `setSplashEnabled`, `setSplashStartDate`, `setSplashDisplayText`, `setSplashButtonLabel`.
 - `settings_state.dart` — Freezed sealed union. `Data` carries all current pref values (see §4).
 - `widgets/settings_section.dart` — reusable section header + body container.
-- `widgets/theme_mode_selector.dart` — segmented control over `ThemeMode.{light,dark,system}`.
+- `widgets/theme_mode_selector.dart` — segmented control over `ThemeMode.{light,dark}`.
 - `widgets/language_selector.dart` — list of supported locales (`en`, `zh_TW`, `zh_CN`).
 - `widgets/default_account_tile.dart` — tap opens a lightweight Settings-owned tile-based picker of non-archived accounts; see §7.
 - `widgets/default_currency_tile.dart` — same shape, different data.
@@ -48,7 +48,7 @@ Settings does **not** import from other feature slices. Navigation to `Categorie
 
 Prefix: `settings*` (UI). Splash subsection keys already reserved in M4 (`settingsSplashSection`, `settingsSplashEnabled`, `settingsSplashStartDate`, `settingsSplashDisplayText`, `settingsSplashButtonLabel`).
 
-Minimum new keys: `settingsSectionGeneral`, `settingsSectionAppearance`, `settingsSectionCategoriesTile`, `settingsThemeLabel`, `settingsThemeLight`, `settingsThemeDark`, `settingsThemeSystem`, `settingsLanguageLabel`, `settingsLanguageEnglish`, `settingsLanguageZhTw`, `settingsLanguageZhCn`, `settingsDefaultAccountLabel`, `settingsDefaultAccountEmpty`, `settingsDefaultCurrencyLabel`, `settingsManageCategories`. Discovered during implementation; `app_en.arb`, `app_zh_TW.arb`, and `app_zh_CN.arb` are updated in the same PR while `app_zh.arb` stays fallback-only.
+Minimum new keys: `settingsSectionGeneral`, `settingsSectionAppearance`, `settingsSectionCategoriesTile`, `settingsThemeLabel`, `settingsThemeLight`, `settingsThemeDark`, `settingsLanguageLabel`, `settingsLanguageEnglish`, `settingsLanguageZhTw`, `settingsLanguageZhCn`, `settingsDefaultAccountLabel`, `settingsDefaultAccountEmpty`, `settingsDefaultCurrencyLabel`, `settingsManageCategories`. Discovered during implementation; `app_en.arb`, `app_zh_TW.arb`, and `app_zh_CN.arb` are updated in the same PR while `app_zh.arb` stays fallback-only.
 
 ### 3.3 Tests
 

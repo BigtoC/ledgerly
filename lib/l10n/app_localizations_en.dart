@@ -60,10 +60,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeFabLabel => 'Add transaction';
 
   @override
-  String get homeSummaryTodayExpense => 'Today expense';
+  String get homeSummaryTodayExpense => 'Expense';
 
   @override
-  String get homeSummaryTodayIncome => 'Today income';
+  String get homeSummaryTodayIncome => 'Income';
 
   @override
   String get homeSummaryMonthNet => 'Month net';
@@ -439,7 +439,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txKeypadBackspace => 'Backspace';
 
   @override
-  String get homeDayEmptyTitle => 'No transactions on this day';
+  String get homeEmptyDayMessage => 'No transaction';
+
+  @override
+  String get homeJumpToToday => 'Jump to today';
+
+  @override
+  String get homeSummaryMultiCurrencyNote => 'Multiple currencies';
 
   @override
   String get homeDaySkeletonLabel => 'Loading day';
@@ -461,4 +467,72 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeDayNavNextLabel => 'Next day';
+
+  @override
+  String get txCurrencyLabel => 'Currency';
+
+  @override
+  String get txCurrencyPickerTitle => 'Pick currency';
+
+  @override
+  String get txCurrencySearchHint => 'Search currencies';
+
+  @override
+  String get txCurrencyChangeConfirmAction => 'Change and Clear';
+
+  @override
+  String txAmountPlaceholderInCurrency(String code) {
+    return 'Enter amount in $code';
+  }
+
+  @override
+  String get txCurrencyPickerNoResults => 'No currencies found';
+
+  @override
+  String get txCurrencyPickerChangeConfirmBody =>
+      'Changing the currency will clear the entered amount.';
+
+  @override
+  String accountsBalanceMore(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '+$count more',
+      one: '+$count more',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get currencyUsd => 'US Dollar';
+
+  @override
+  String get currencyEur => 'Euro';
+
+  @override
+  String get currencyJpy => 'Japanese Yen';
+
+  @override
+  String get currencyTwd => 'New Taiwan Dollar';
+
+  @override
+  String get currencyCny => 'Chinese Yuan';
+
+  @override
+  String get currencyHkd => 'Hong Kong Dollar';
+
+  @override
+  String get currencyGbp => 'British Pound';
+
+  @override
+  String get currencyCad => 'Canadian Dollar';
+
+  @override
+  String get currencySgd => 'Singapore Dollar';
+
+  @override
+  String get currencyAud => 'Australian Dollar';
+
+  @override
+  String get currencyNzd => 'New Zealand Dollar';
 }

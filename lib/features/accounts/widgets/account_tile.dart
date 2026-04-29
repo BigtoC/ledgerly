@@ -14,15 +14,18 @@
 // and keyboard users can reach each action without a gesture.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
 import '../../../core/utils/color_palette.dart';
 import '../../../core/utils/icon_registry.dart';
 import '../../../core/utils/money_formatter.dart';
+import '../../../data/models/currency.dart';
 import '../../../l10n/app_localizations.dart';
+import '../accounts_providers.dart';
 import '../accounts_state.dart';
 
-class AccountTile extends StatelessWidget {
+class AccountTile extends ConsumerWidget {
   const AccountTile({
     super.key,
     required this.view,
@@ -47,14 +50,16 @@ class AccountTile extends StatelessWidget {
   final VoidCallback onArchiveBlocked;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final a = view.account;
     final color = colorForIndex(a.color ?? 0);
-    final balance = MoneyFormatter.format(
-      amountMinorUnits: view.balanceMinorUnits,
-      currency: a.currency,
-      locale: locale,
+
+    // Resolve currency metadata for balance formatting.
+    final currenciesAsync = ref.watch(currenciesByCodeProvider);
+    final currenciesByCode = currenciesAsync.maybeWhen(
+      data: (m) => m,
+      orElse: () => <String, Currency>{},
     );
 
     final startActions = <Widget>[
@@ -116,6 +121,10 @@ class AccountTile extends StatelessWidget {
             ),
       child: ListTile(
         onTap: onTap,
+        // Use three-line mode when the balance column has more than one
+        // group so the tile grows vertically to accommodate multi-line
+        // trailing content at any text scale.
+        isThreeLine: view.balancesByCurrency.length > 1,
         leading: Container(
           width: 40,
           height: 40,
@@ -134,23 +143,85 @@ class AccountTile extends StatelessWidget {
             ],
           ],
         ),
-        subtitle: Text(accountTypeLabel),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(balance),
-            const SizedBox(width: 8),
-            _TrailingActions(
-              view: view,
-              isDefault: isDefault,
-              onSetDefault: onSetDefault,
-              onArchive: onArchive,
-              onDelete: onDelete,
-              onArchiveBlocked: onArchiveBlocked,
-            ),
-          ],
+        subtitle: _buildSubtitle(
+          context,
+          accountTypeLabel,
+          view.balancesByCurrency,
+          currenciesByCode,
+          l10n,
+        ),
+        trailing: _TrailingActions(
+          view: view,
+          isDefault: isDefault,
+          onSetDefault: onSetDefault,
+          onArchive: onArchive,
+          onDelete: onDelete,
+          onArchiveBlocked: onArchiveBlocked,
         ),
       ),
+    );
+  }
+
+  /// Builds the subtitle area: account type label + grouped balance lines.
+  ///
+  /// Renders at most 2 currency groups as individual lines, then an
+  /// `+N more` indicator when there are more than 2 groups. Native
+  /// currency (the account's own currency) is always listed first;
+  /// remaining groups are sorted alphabetically by code for
+  /// deterministic display.
+  Widget _buildSubtitle(
+    BuildContext context,
+    String accountTypeLabel,
+    Map<String, int> balancesByCurrency,
+    Map<String, Currency> currenciesByCode,
+    AppLocalizations l10n,
+  ) {
+    if (balancesByCurrency.isEmpty) {
+      return Text(accountTypeLabel);
+    }
+
+    // Sort: native currency first, then alphabetical by code.
+    final nativeCode = view.account.currency.code.toUpperCase();
+    final sortedEntries = balancesByCurrency.entries.toList(growable: false)
+      ..sort((a, b) {
+        final aIsNative = a.key == nativeCode;
+        final bIsNative = b.key == nativeCode;
+        if (aIsNative && !bIsNative) return -1;
+        if (!aIsNative && bIsNative) return 1;
+        return a.key.compareTo(b.key);
+      });
+
+    final displayCount = sortedEntries.length > 3 ? 2 : sortedEntries.length;
+    final overflowCount = sortedEntries.length - displayCount;
+
+    final lines = <Widget>[Text(accountTypeLabel)];
+    for (var i = 0; i < displayCount; i++) {
+      final code = sortedEntries[i].key;
+      final amount = sortedEntries[i].value;
+      final currency =
+          currenciesByCode[code] ?? Currency(code: code, decimals: 2);
+      final formatted = MoneyFormatter.format(
+        amountMinorUnits: amount,
+        currency: currency,
+        locale: locale,
+      );
+      lines.add(Text('$code: $formatted'));
+    }
+    if (overflowCount > 0) {
+      lines.add(
+        Text(
+          l10n.accountsBalanceMore(overflowCount),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: lines,
     );
   }
 }

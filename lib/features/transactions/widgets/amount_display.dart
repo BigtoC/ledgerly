@@ -12,10 +12,14 @@
 //   - Currency code is rendered to the right of the value as a small chip
 //     so the user can see which account currency is active without
 //     scanning the account row.
+//   - When `currencyTouched` is true and `amountMinorUnits == 0`, a
+//     currency-specific placeholder is shown instead of "0" so the user
+//     knows the amount was cleared for a currency change.
 
 import 'package:flutter/material.dart';
 
 import '../../../data/models/currency.dart';
+import '../../../l10n/app_localizations.dart';
 import '../keypad_state.dart';
 
 class AmountDisplay extends StatelessWidget {
@@ -23,6 +27,7 @@ class AmountDisplay extends StatelessWidget {
     super.key,
     required this.keypad,
     required this.currency,
+    this.currencyTouched = false,
     this.hasError = false,
   });
 
@@ -33,6 +38,11 @@ class AmountDisplay extends StatelessWidget {
 
   final Currency? currency;
 
+  /// When true and `amountMinorUnits == 0`, renders
+  /// `txAmountPlaceholderInCurrency(code)` instead of "0" to signal the
+  /// amount was cleared after a currency change.
+  final bool currencyTouched;
+
   /// When true, the display draws an error-toned outline and the
   /// surrounding label switches to the inline-validation color (Wave 2 §9
   /// inline validation).
@@ -41,11 +51,19 @@ class AmountDisplay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final code = currency?.code ?? '';
-    final text = _renderAmountText();
+    final showPlaceholder =
+        currencyTouched && keypad.amountMinorUnits == 0 && code.isNotEmpty;
+    final text = showPlaceholder
+        ? l10n.txAmountPlaceholderInCurrency(code)
+        : _renderAmountText();
     final foreground = hasError
         ? theme.colorScheme.error
         : theme.colorScheme.onSurface;
+    final textColor = showPlaceholder
+        ? foreground.withValues(alpha: 0.5)
+        : foreground;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       decoration: BoxDecoration(
@@ -65,13 +83,13 @@ class AmountDisplay extends StatelessWidget {
               child: Text(
                 text,
                 style: theme.textTheme.displaySmall?.copyWith(
-                  color: foreground,
+                  color: textColor,
                   fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
             ),
           ),
-          if (code.isNotEmpty)
+          if (code.isNotEmpty && !showPlaceholder)
             Padding(
               padding: const EdgeInsets.only(left: 8),
               child: Text(

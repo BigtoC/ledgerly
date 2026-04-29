@@ -63,7 +63,7 @@ void main() {
     late _MockUserPreferencesRepository prefs;
     late StreamController<List<Account>> accountsCtrl;
     late StreamController<int?> defaultCtrl;
-    final balanceCtrls = <int, StreamController<int>>{};
+    final balanceCtrls = <int, StreamController<Map<String, int>>>{};
 
     setUp(() {
       accountRepo = _MockAccountRepository();
@@ -82,18 +82,18 @@ void main() {
         final id = inv.positionalArguments.first as int;
         final balance = balanceCtrls.putIfAbsent(
           id,
-          () => StreamController<int>.broadcast(),
+          () => StreamController<Map<String, int>>.broadcast(),
         );
         return balance.stream.asyncMap((_) => accountRepo.isReferenced(id));
       });
       when(
         () => accountRepo.isReferenced(any()),
       ).thenAnswer((_) async => false);
-      when(() => accountRepo.watchBalanceMinorUnits(any())).thenAnswer((inv) {
+      when(() => accountRepo.watchBalanceByCurrency(any())).thenAnswer((inv) {
         final id = inv.positionalArguments.first as int;
         final c = balanceCtrls.putIfAbsent(
           id,
-          () => StreamController<int>.broadcast(),
+          () => StreamController<Map<String, int>>.broadcast(),
         );
         return c.stream;
       });
@@ -143,7 +143,7 @@ void main() {
         accountsCtrl.add([_a(id: 1, name: 'Cash')]);
         defaultCtrl.add(1);
         await Future<void>.delayed(Duration.zero);
-        balanceCtrls[1]!.add(0);
+        balanceCtrls[1]!.add({});
 
         final state = await waitForData(container) as AccountsData;
         expect(state.active, hasLength(1));
@@ -163,25 +163,25 @@ void main() {
         accountsCtrl.add([_a(id: 1, name: 'Cash'), _a(id: 2, name: 'Savings')]);
         defaultCtrl.add(null);
         await Future<void>.delayed(Duration.zero);
-        balanceCtrls[1]!.add(12345);
-        balanceCtrls[2]!.add(0);
+        balanceCtrls[1]!.add({'USD': 12345});
+        balanceCtrls[2]!.add({});
 
         final state = await waitForData(container) as AccountsData;
         final byId = {
-          for (final r in state.active) r.account.id: r.balanceMinorUnits,
+          for (final r in state.active) r.account.id: r.balancesByCurrency,
         };
-        expect(byId[1], 12345);
-        expect(byId[2], 0);
+        expect(byId[1], {'USD': 12345});
+        expect(byId[2], <String, int>{});
 
         // Re-emission flows through.
-        balanceCtrls[1]!.add(99999);
+        balanceCtrls[1]!.add({'USD': 99999});
         await Future<void>.delayed(Duration.zero);
         final state2 =
             container.read(accountsControllerProvider).value! as AccountsData;
         final byId2 = {
-          for (final r in state2.active) r.account.id: r.balanceMinorUnits,
+          for (final r in state2.active) r.account.id: r.balancesByCurrency,
         };
-        expect(byId2[1], 99999);
+        expect(byId2[1], {'USD': 99999});
       },
     );
 
@@ -197,13 +197,13 @@ void main() {
       ]);
       defaultCtrl.add(1);
       await Future<void>.delayed(Duration.zero);
-      balanceCtrls[1]!.add(0);
-      balanceCtrls[2]!.add(-500);
+      balanceCtrls[1]!.add({});
+      balanceCtrls[2]!.add({'USD': -500});
 
       final state = await waitForData(container) as AccountsData;
       expect(state.active.map((r) => r.account.id), [1]);
       expect(state.archived.map((r) => r.account.id), [2]);
-      expect(state.archived.single.balanceMinorUnits, -500);
+      expect(state.archived.single.balancesByCurrency, {'USD': -500});
     });
 
     test('A04: setDefault writes via UserPreferencesRepository', () async {
@@ -215,7 +215,7 @@ void main() {
       accountsCtrl.add([_a(id: 7, name: 'Target')]);
       defaultCtrl.add(null);
       await Future<void>.delayed(Duration.zero);
-      balanceCtrls[7]!.add(0);
+      balanceCtrls[7]!.add({});
       await waitForData(container);
 
       await container.read(accountsControllerProvider.notifier).setDefault(7);
@@ -232,8 +232,8 @@ void main() {
       accountsCtrl.add([_a(id: 1, name: 'Cash'), _a(id: 2, name: 'Spare')]);
       defaultCtrl.add(1);
       await Future<void>.delayed(Duration.zero);
-      balanceCtrls[1]!.add(0);
-      balanceCtrls[2]!.add(0);
+      balanceCtrls[1]!.add({});
+      balanceCtrls[2]!.add({});
       await waitForData(container);
 
       await container.read(accountsControllerProvider.notifier).archive(2);
@@ -251,7 +251,7 @@ void main() {
         accountsCtrl.add([_a(id: 1, name: 'Cash')]);
         defaultCtrl.add(99);
         await Future<void>.delayed(Duration.zero);
-        balanceCtrls[1]!.add(0);
+        balanceCtrls[1]!.add({});
         await waitForData(container);
 
         expect(
@@ -276,8 +276,8 @@ void main() {
       accountsCtrl.add([_a(id: 1, name: 'Cash'), _a(id: 2, name: 'Spare')]);
       defaultCtrl.add(1);
       await Future<void>.delayed(Duration.zero);
-      balanceCtrls[1]!.add(0);
-      balanceCtrls[2]!.add(0);
+      balanceCtrls[1]!.add({});
+      balanceCtrls[2]!.add({});
       await waitForData(container);
 
       expect(
@@ -302,8 +302,8 @@ void main() {
       accountsCtrl.add([_a(id: 1, name: 'Cash'), _a(id: 2, name: 'Spare')]);
       defaultCtrl.add(1);
       await Future<void>.delayed(Duration.zero);
-      balanceCtrls[1]!.add(0);
-      balanceCtrls[2]!.add(0);
+      balanceCtrls[1]!.add({});
+      balanceCtrls[2]!.add({});
       await waitForData(container);
 
       expect(
@@ -332,8 +332,8 @@ void main() {
         ]);
         defaultCtrl.add(1);
         await Future<void>.delayed(Duration.zero);
-        balanceCtrls[1]!.add(0);
-        balanceCtrls[2]!.add(0);
+        balanceCtrls[1]!.add({});
+        balanceCtrls[2]!.add({});
 
         final state = await waitForData(container) as AccountsData;
         expect(
@@ -357,8 +357,8 @@ void main() {
         ]);
         defaultCtrl.add(1);
         await Future<void>.delayed(Duration.zero);
-        balanceCtrls[1]!.add(0);
-        balanceCtrls[2]!.add(0);
+        balanceCtrls[1]!.add({});
+        balanceCtrls[2]!.add({});
 
         final state = await waitForData(container) as AccountsData;
         final spare = state.active
@@ -379,8 +379,8 @@ void main() {
       ]);
       defaultCtrl.add(1);
       await Future<void>.delayed(Duration.zero);
-      balanceCtrls[1]!.add(0);
-      balanceCtrls[2]!.add(5000);
+      balanceCtrls[1]!.add({});
+      balanceCtrls[2]!.add({'USD': 5000});
 
       final state = await waitForData(container) as AccountsData;
       final funded = state.active
@@ -400,8 +400,8 @@ void main() {
       accountsCtrl.add([_a(id: 1, name: 'Cash'), stored]);
       defaultCtrl.add(1);
       await Future<void>.delayed(Duration.zero);
-      balanceCtrls[1]!.add(0);
-      balanceCtrls[9]!.add(0);
+      balanceCtrls[1]!.add({});
+      balanceCtrls[9]!.add({});
       await waitForData(container);
 
       await container.read(accountsControllerProvider.notifier).unarchive(9);

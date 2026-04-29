@@ -125,12 +125,12 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( TransactionFormEmptyReason reason)?  empty,TResult Function( int amountMinorUnits,  Account? selectedAccount,  Currency? displayCurrency,  Category? selectedCategory,  CategoryType pendingType,  DateTime date,  String memo,  bool isDirty,  bool isSaving,  bool isDeleting,  int? editingId,  int? duplicateSourceId,  DateTime? originalCreatedAt)?  data,TResult Function( Object error,  StackTrace stack)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( TransactionFormEmptyReason reason)?  empty,TResult Function( int amountMinorUnits,  Account? selectedAccount,  Currency? displayCurrency,  bool currencyTouched,  Category? selectedCategory,  CategoryType pendingType,  DateTime date,  String memo,  bool isDirty,  bool isSaving,  bool isDeleting,  int? editingId,  int? duplicateSourceId,  DateTime? originalCreatedAt)?  data,TResult Function( Object error,  StackTrace stack)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case TransactionFormLoading() when loading != null:
 return loading();case TransactionFormEmpty() when empty != null:
 return empty(_that.reason);case TransactionFormData() when data != null:
-return data(_that.amountMinorUnits,_that.selectedAccount,_that.displayCurrency,_that.selectedCategory,_that.pendingType,_that.date,_that.memo,_that.isDirty,_that.isSaving,_that.isDeleting,_that.editingId,_that.duplicateSourceId,_that.originalCreatedAt);case TransactionFormError() when error != null:
+return data(_that.amountMinorUnits,_that.selectedAccount,_that.displayCurrency,_that.currencyTouched,_that.selectedCategory,_that.pendingType,_that.date,_that.memo,_that.isDirty,_that.isSaving,_that.isDeleting,_that.editingId,_that.duplicateSourceId,_that.originalCreatedAt);case TransactionFormError() when error != null:
 return error(_that.error,_that.stack);case _:
   return orElse();
 
@@ -149,12 +149,12 @@ return error(_that.error,_that.stack);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( TransactionFormEmptyReason reason)  empty,required TResult Function( int amountMinorUnits,  Account? selectedAccount,  Currency? displayCurrency,  Category? selectedCategory,  CategoryType pendingType,  DateTime date,  String memo,  bool isDirty,  bool isSaving,  bool isDeleting,  int? editingId,  int? duplicateSourceId,  DateTime? originalCreatedAt)  data,required TResult Function( Object error,  StackTrace stack)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( TransactionFormEmptyReason reason)  empty,required TResult Function( int amountMinorUnits,  Account? selectedAccount,  Currency? displayCurrency,  bool currencyTouched,  Category? selectedCategory,  CategoryType pendingType,  DateTime date,  String memo,  bool isDirty,  bool isSaving,  bool isDeleting,  int? editingId,  int? duplicateSourceId,  DateTime? originalCreatedAt)  data,required TResult Function( Object error,  StackTrace stack)  error,}) {final _that = this;
 switch (_that) {
 case TransactionFormLoading():
 return loading();case TransactionFormEmpty():
 return empty(_that.reason);case TransactionFormData():
-return data(_that.amountMinorUnits,_that.selectedAccount,_that.displayCurrency,_that.selectedCategory,_that.pendingType,_that.date,_that.memo,_that.isDirty,_that.isSaving,_that.isDeleting,_that.editingId,_that.duplicateSourceId,_that.originalCreatedAt);case TransactionFormError():
+return data(_that.amountMinorUnits,_that.selectedAccount,_that.displayCurrency,_that.currencyTouched,_that.selectedCategory,_that.pendingType,_that.date,_that.memo,_that.isDirty,_that.isSaving,_that.isDeleting,_that.editingId,_that.duplicateSourceId,_that.originalCreatedAt);case TransactionFormError():
 return error(_that.error,_that.stack);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -169,12 +169,12 @@ return error(_that.error,_that.stack);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( TransactionFormEmptyReason reason)?  empty,TResult? Function( int amountMinorUnits,  Account? selectedAccount,  Currency? displayCurrency,  Category? selectedCategory,  CategoryType pendingType,  DateTime date,  String memo,  bool isDirty,  bool isSaving,  bool isDeleting,  int? editingId,  int? duplicateSourceId,  DateTime? originalCreatedAt)?  data,TResult? Function( Object error,  StackTrace stack)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( TransactionFormEmptyReason reason)?  empty,TResult? Function( int amountMinorUnits,  Account? selectedAccount,  Currency? displayCurrency,  bool currencyTouched,  Category? selectedCategory,  CategoryType pendingType,  DateTime date,  String memo,  bool isDirty,  bool isSaving,  bool isDeleting,  int? editingId,  int? duplicateSourceId,  DateTime? originalCreatedAt)?  data,TResult? Function( Object error,  StackTrace stack)?  error,}) {final _that = this;
 switch (_that) {
 case TransactionFormLoading() when loading != null:
 return loading();case TransactionFormEmpty() when empty != null:
 return empty(_that.reason);case TransactionFormData() when data != null:
-return data(_that.amountMinorUnits,_that.selectedAccount,_that.displayCurrency,_that.selectedCategory,_that.pendingType,_that.date,_that.memo,_that.isDirty,_that.isSaving,_that.isDeleting,_that.editingId,_that.duplicateSourceId,_that.originalCreatedAt);case TransactionFormError() when error != null:
+return data(_that.amountMinorUnits,_that.selectedAccount,_that.displayCurrency,_that.currencyTouched,_that.selectedCategory,_that.pendingType,_that.date,_that.memo,_that.isDirty,_that.isSaving,_that.isDeleting,_that.editingId,_that.duplicateSourceId,_that.originalCreatedAt);case TransactionFormError() when error != null:
 return error(_that.error,_that.stack);case _:
   return null;
 
@@ -285,7 +285,7 @@ as TransactionFormEmptyReason,
 
 
 class TransactionFormData extends TransactionFormState {
-  const TransactionFormData({required this.amountMinorUnits, required this.selectedAccount, required this.displayCurrency, required this.selectedCategory, required this.pendingType, required this.date, required this.memo, required this.isDirty, required this.isSaving, required this.isDeleting, required this.editingId, required this.duplicateSourceId, required this.originalCreatedAt}): super._();
+  const TransactionFormData({required this.amountMinorUnits, required this.selectedAccount, required this.displayCurrency, required this.currencyTouched, required this.selectedCategory, required this.pendingType, required this.date, required this.memo, required this.isDirty, required this.isSaving, required this.isDeleting, required this.editingId, required this.duplicateSourceId, required this.originalCreatedAt}): super._();
   
 
 /// Keypad-accumulated integer in the active currency's minor units.
@@ -293,10 +293,16 @@ class TransactionFormData extends TransactionFormState {
 /// `null` only during `noActiveAccount` recovery flows; in normal
 /// `.data` states an account is always selected.
  final  Account? selectedAccount;
-/// Mirrors `selectedAccount.currency` when an account is selected;
-/// when null, the keypad uses `userPreferences.defaultCurrency`
-/// resolved by the controller during hydration.
+/// The transaction's currency. Seeds from `selectedAccount.currency` on
+/// hydration, but can be independently overridden by the user via the
+/// currency picker. Once the user has made a manual selection,
+/// `currencyTouched` is `true` and account changes no longer re-seed it.
  final  Currency? displayCurrency;
+/// `true` once the user has manually selected a currency via the picker.
+/// When `false`, account changes re-seed `displayCurrency` from the
+/// new account's currency. When `true`, `displayCurrency` is user-owned
+/// and account changes only update `selectedAccount`.
+ final  bool currencyTouched;
  final  Category? selectedCategory;
 /// Drives the picker filter before category selection. After a
 /// category is selected, `selectedCategory.type` is the source of
@@ -333,16 +339,16 @@ $TransactionFormDataCopyWith<TransactionFormData> get copyWith => _$TransactionF
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TransactionFormData&&(identical(other.amountMinorUnits, amountMinorUnits) || other.amountMinorUnits == amountMinorUnits)&&(identical(other.selectedAccount, selectedAccount) || other.selectedAccount == selectedAccount)&&(identical(other.displayCurrency, displayCurrency) || other.displayCurrency == displayCurrency)&&(identical(other.selectedCategory, selectedCategory) || other.selectedCategory == selectedCategory)&&(identical(other.pendingType, pendingType) || other.pendingType == pendingType)&&(identical(other.date, date) || other.date == date)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.isDirty, isDirty) || other.isDirty == isDirty)&&(identical(other.isSaving, isSaving) || other.isSaving == isSaving)&&(identical(other.isDeleting, isDeleting) || other.isDeleting == isDeleting)&&(identical(other.editingId, editingId) || other.editingId == editingId)&&(identical(other.duplicateSourceId, duplicateSourceId) || other.duplicateSourceId == duplicateSourceId)&&(identical(other.originalCreatedAt, originalCreatedAt) || other.originalCreatedAt == originalCreatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TransactionFormData&&(identical(other.amountMinorUnits, amountMinorUnits) || other.amountMinorUnits == amountMinorUnits)&&(identical(other.selectedAccount, selectedAccount) || other.selectedAccount == selectedAccount)&&(identical(other.displayCurrency, displayCurrency) || other.displayCurrency == displayCurrency)&&(identical(other.currencyTouched, currencyTouched) || other.currencyTouched == currencyTouched)&&(identical(other.selectedCategory, selectedCategory) || other.selectedCategory == selectedCategory)&&(identical(other.pendingType, pendingType) || other.pendingType == pendingType)&&(identical(other.date, date) || other.date == date)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.isDirty, isDirty) || other.isDirty == isDirty)&&(identical(other.isSaving, isSaving) || other.isSaving == isSaving)&&(identical(other.isDeleting, isDeleting) || other.isDeleting == isDeleting)&&(identical(other.editingId, editingId) || other.editingId == editingId)&&(identical(other.duplicateSourceId, duplicateSourceId) || other.duplicateSourceId == duplicateSourceId)&&(identical(other.originalCreatedAt, originalCreatedAt) || other.originalCreatedAt == originalCreatedAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,amountMinorUnits,selectedAccount,displayCurrency,selectedCategory,pendingType,date,memo,isDirty,isSaving,isDeleting,editingId,duplicateSourceId,originalCreatedAt);
+int get hashCode => Object.hash(runtimeType,amountMinorUnits,selectedAccount,displayCurrency,currencyTouched,selectedCategory,pendingType,date,memo,isDirty,isSaving,isDeleting,editingId,duplicateSourceId,originalCreatedAt);
 
 @override
 String toString() {
-  return 'TransactionFormState.data(amountMinorUnits: $amountMinorUnits, selectedAccount: $selectedAccount, displayCurrency: $displayCurrency, selectedCategory: $selectedCategory, pendingType: $pendingType, date: $date, memo: $memo, isDirty: $isDirty, isSaving: $isSaving, isDeleting: $isDeleting, editingId: $editingId, duplicateSourceId: $duplicateSourceId, originalCreatedAt: $originalCreatedAt)';
+  return 'TransactionFormState.data(amountMinorUnits: $amountMinorUnits, selectedAccount: $selectedAccount, displayCurrency: $displayCurrency, currencyTouched: $currencyTouched, selectedCategory: $selectedCategory, pendingType: $pendingType, date: $date, memo: $memo, isDirty: $isDirty, isSaving: $isSaving, isDeleting: $isDeleting, editingId: $editingId, duplicateSourceId: $duplicateSourceId, originalCreatedAt: $originalCreatedAt)';
 }
 
 
@@ -353,7 +359,7 @@ abstract mixin class $TransactionFormDataCopyWith<$Res> implements $TransactionF
   factory $TransactionFormDataCopyWith(TransactionFormData value, $Res Function(TransactionFormData) _then) = _$TransactionFormDataCopyWithImpl;
 @useResult
 $Res call({
- int amountMinorUnits, Account? selectedAccount, Currency? displayCurrency, Category? selectedCategory, CategoryType pendingType, DateTime date, String memo, bool isDirty, bool isSaving, bool isDeleting, int? editingId, int? duplicateSourceId, DateTime? originalCreatedAt
+ int amountMinorUnits, Account? selectedAccount, Currency? displayCurrency, bool currencyTouched, Category? selectedCategory, CategoryType pendingType, DateTime date, String memo, bool isDirty, bool isSaving, bool isDeleting, int? editingId, int? duplicateSourceId, DateTime? originalCreatedAt
 });
 
 
@@ -370,12 +376,13 @@ class _$TransactionFormDataCopyWithImpl<$Res>
 
 /// Create a copy of TransactionFormState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? amountMinorUnits = null,Object? selectedAccount = freezed,Object? displayCurrency = freezed,Object? selectedCategory = freezed,Object? pendingType = null,Object? date = null,Object? memo = null,Object? isDirty = null,Object? isSaving = null,Object? isDeleting = null,Object? editingId = freezed,Object? duplicateSourceId = freezed,Object? originalCreatedAt = freezed,}) {
+@pragma('vm:prefer-inline') $Res call({Object? amountMinorUnits = null,Object? selectedAccount = freezed,Object? displayCurrency = freezed,Object? currencyTouched = null,Object? selectedCategory = freezed,Object? pendingType = null,Object? date = null,Object? memo = null,Object? isDirty = null,Object? isSaving = null,Object? isDeleting = null,Object? editingId = freezed,Object? duplicateSourceId = freezed,Object? originalCreatedAt = freezed,}) {
   return _then(TransactionFormData(
 amountMinorUnits: null == amountMinorUnits ? _self.amountMinorUnits : amountMinorUnits // ignore: cast_nullable_to_non_nullable
 as int,selectedAccount: freezed == selectedAccount ? _self.selectedAccount : selectedAccount // ignore: cast_nullable_to_non_nullable
 as Account?,displayCurrency: freezed == displayCurrency ? _self.displayCurrency : displayCurrency // ignore: cast_nullable_to_non_nullable
-as Currency?,selectedCategory: freezed == selectedCategory ? _self.selectedCategory : selectedCategory // ignore: cast_nullable_to_non_nullable
+as Currency?,currencyTouched: null == currencyTouched ? _self.currencyTouched : currencyTouched // ignore: cast_nullable_to_non_nullable
+as bool,selectedCategory: freezed == selectedCategory ? _self.selectedCategory : selectedCategory // ignore: cast_nullable_to_non_nullable
 as Category?,pendingType: null == pendingType ? _self.pendingType : pendingType // ignore: cast_nullable_to_non_nullable
 as CategoryType,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
 as DateTime,memo: null == memo ? _self.memo : memo // ignore: cast_nullable_to_non_nullable

@@ -33,6 +33,7 @@ class CategoriesScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.categoriesManageTitle)),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'categories_fab',
         onPressed: () => showCategoryFormSheet(context),
         icon: const Icon(Icons.add),
         label: Text(l10n.categoriesAddCta),

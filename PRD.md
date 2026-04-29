@@ -689,7 +689,7 @@ ShellRoute (bottom nav)
 - Expense is the default selection when opening from Home; users can switch to Income via a segmented control at the top
 - Category picker shows all visible categories for the selected type in a single icon grid
 - Default account uses the user's configured default account, otherwise the last used active account
-- Transaction currency is inherited from the selected account and shown next to the amount; new accounts default to `default_currency`
+- Transaction currency is an explicit field in add, edit, and duplicate flows; seeded from the selected account's default but independently overridable by the user. Changing currency with a non-zero amount requires confirmation and clears the entered amount
 - Date defaults to today
 - Save stays disabled until amount is greater than zero and both category and account are selected
 - Leaving with unsaved changes shows a confirm-discard dialog
@@ -698,7 +698,7 @@ ShellRoute (bottom nav)
 ### Screen States
 
 - **Splash:** shows day count when configured, date picker redirect when no start date set, skipped when disabled
-- **Home:** cold start pins the day to today and shows a skeleton row; `No transactions yet` empty state on first run; per-day empty state (`No transactions on {date}`) on a day with no activity when the user manually lands on a gap day; grouped summary chips when multiple currencies are present; undo snackbar after delete; pending transaction badge (Phase 2); prev-day affordance disables when there is no older day with activity than the selected day, next-day affordance disables when there is no newer day with activity than the selected day
+- **Home:** cold start pins the day to today and shows a skeleton row; `No transactions yet` empty state on first run; per-day empty card (`No transaction`) on a day with no activity when the user lands on a gap day; grouped summary chips when multiple currencies are present with a `Multiple currencies` note when more than 2 groups are present; `Jump to today` button appears when the selected day differs from today; undo snackbar after delete; pending transaction badge (Phase 2); prev/next advance by one calendar day; prev disables at the date-picker floor (year 1900), next disables at today
 - **Add/Edit Transaction:** inline validation for missing amount/category/account, confirm-discard dialog, save-error snackbar
 - **Accounts:** if no active account exists, show `Create account` CTA and block transaction save until one exists
 - **Categories:** if a type has no visible categories, show `Create category` CTA; used categories can be archived but not deleted
@@ -791,7 +791,7 @@ CustomScrollView
   └─ SliverPadding       — bottom FAB clearance
 ```
 
-The prev/next controls advance by one day-with-activity at a time, driven by `TransactionRepository.watchDaysWithActivity(...)`. The selected-day transactions come from `watchByDay(selectedDay)`. Days with no activity are skipped by the controller; a per-day empty state only appears if the user manually lands on a gap day (for example, by choosing a future date in the date picker).
+The prev/next controls advance by one calendar day at a time. The selected-day transactions come from `watchByDay(selectedDay)`. A per-day empty card appears when the selected day has no transactions; the first-run empty state remains distinct. The summary strip reflects the selected day's totals and month-to-date net; a `Jump to today` button appears when the selected day differs from today.
 
 ### Add/Edit Transaction
 

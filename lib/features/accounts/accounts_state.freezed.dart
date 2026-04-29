@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AccountWithBalance {
 
- Account get account; int get balanceMinorUnits; AccountRowAffordance get affordance;
+ Account get account; Map<String, int> get balancesByCurrency; AccountRowAffordance get affordance;
 /// Create a copy of AccountWithBalance
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $AccountWithBalanceCopyWith<AccountWithBalance> get copyWith => _$AccountWithBal
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AccountWithBalance&&(identical(other.account, account) || other.account == account)&&(identical(other.balanceMinorUnits, balanceMinorUnits) || other.balanceMinorUnits == balanceMinorUnits)&&(identical(other.affordance, affordance) || other.affordance == affordance));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AccountWithBalance&&(identical(other.account, account) || other.account == account)&&const DeepCollectionEquality().equals(other.balancesByCurrency, balancesByCurrency)&&(identical(other.affordance, affordance) || other.affordance == affordance));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,account,balanceMinorUnits,affordance);
+int get hashCode => Object.hash(runtimeType,account,const DeepCollectionEquality().hash(balancesByCurrency),affordance);
 
 @override
 String toString() {
-  return 'AccountWithBalance(account: $account, balanceMinorUnits: $balanceMinorUnits, affordance: $affordance)';
+  return 'AccountWithBalance(account: $account, balancesByCurrency: $balancesByCurrency, affordance: $affordance)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $AccountWithBalanceCopyWith<$Res>  {
   factory $AccountWithBalanceCopyWith(AccountWithBalance value, $Res Function(AccountWithBalance) _then) = _$AccountWithBalanceCopyWithImpl;
 @useResult
 $Res call({
- Account account, int balanceMinorUnits, AccountRowAffordance affordance
+ Account account, Map<String, int> balancesByCurrency, AccountRowAffordance affordance
 });
 
 
@@ -62,11 +62,11 @@ class _$AccountWithBalanceCopyWithImpl<$Res>
 
 /// Create a copy of AccountWithBalance
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? account = null,Object? balanceMinorUnits = null,Object? affordance = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? account = null,Object? balancesByCurrency = null,Object? affordance = null,}) {
   return _then(_self.copyWith(
 account: null == account ? _self.account : account // ignore: cast_nullable_to_non_nullable
-as Account,balanceMinorUnits: null == balanceMinorUnits ? _self.balanceMinorUnits : balanceMinorUnits // ignore: cast_nullable_to_non_nullable
-as int,affordance: null == affordance ? _self.affordance : affordance // ignore: cast_nullable_to_non_nullable
+as Account,balancesByCurrency: null == balancesByCurrency ? _self.balancesByCurrency : balancesByCurrency // ignore: cast_nullable_to_non_nullable
+as Map<String, int>,affordance: null == affordance ? _self.affordance : affordance // ignore: cast_nullable_to_non_nullable
 as AccountRowAffordance,
   ));
 }
@@ -161,10 +161,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Account account,  int balanceMinorUnits,  AccountRowAffordance affordance)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Account account,  Map<String, int> balancesByCurrency,  AccountRowAffordance affordance)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AccountWithBalance() when $default != null:
-return $default(_that.account,_that.balanceMinorUnits,_that.affordance);case _:
+return $default(_that.account,_that.balancesByCurrency,_that.affordance);case _:
   return orElse();
 
 }
@@ -182,10 +182,10 @@ return $default(_that.account,_that.balanceMinorUnits,_that.affordance);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Account account,  int balanceMinorUnits,  AccountRowAffordance affordance)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Account account,  Map<String, int> balancesByCurrency,  AccountRowAffordance affordance)  $default,) {final _that = this;
 switch (_that) {
 case _AccountWithBalance():
-return $default(_that.account,_that.balanceMinorUnits,_that.affordance);case _:
+return $default(_that.account,_that.balancesByCurrency,_that.affordance);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -202,10 +202,10 @@ return $default(_that.account,_that.balanceMinorUnits,_that.affordance);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Account account,  int balanceMinorUnits,  AccountRowAffordance affordance)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Account account,  Map<String, int> balancesByCurrency,  AccountRowAffordance affordance)?  $default,) {final _that = this;
 switch (_that) {
 case _AccountWithBalance() when $default != null:
-return $default(_that.account,_that.balanceMinorUnits,_that.affordance);case _:
+return $default(_that.account,_that.balancesByCurrency,_that.affordance);case _:
   return null;
 
 }
@@ -217,11 +217,17 @@ return $default(_that.account,_that.balanceMinorUnits,_that.affordance);case _:
 
 
 class _AccountWithBalance implements AccountWithBalance {
-  const _AccountWithBalance({required this.account, required this.balanceMinorUnits, required this.affordance});
+  const _AccountWithBalance({required this.account, required final  Map<String, int> balancesByCurrency, required this.affordance}): _balancesByCurrency = balancesByCurrency;
   
 
 @override final  Account account;
-@override final  int balanceMinorUnits;
+ final  Map<String, int> _balancesByCurrency;
+@override Map<String, int> get balancesByCurrency {
+  if (_balancesByCurrency is EqualUnmodifiableMapView) return _balancesByCurrency;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_balancesByCurrency);
+}
+
 @override final  AccountRowAffordance affordance;
 
 /// Create a copy of AccountWithBalance
@@ -234,16 +240,16 @@ _$AccountWithBalanceCopyWith<_AccountWithBalance> get copyWith => __$AccountWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AccountWithBalance&&(identical(other.account, account) || other.account == account)&&(identical(other.balanceMinorUnits, balanceMinorUnits) || other.balanceMinorUnits == balanceMinorUnits)&&(identical(other.affordance, affordance) || other.affordance == affordance));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AccountWithBalance&&(identical(other.account, account) || other.account == account)&&const DeepCollectionEquality().equals(other._balancesByCurrency, _balancesByCurrency)&&(identical(other.affordance, affordance) || other.affordance == affordance));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,account,balanceMinorUnits,affordance);
+int get hashCode => Object.hash(runtimeType,account,const DeepCollectionEquality().hash(_balancesByCurrency),affordance);
 
 @override
 String toString() {
-  return 'AccountWithBalance(account: $account, balanceMinorUnits: $balanceMinorUnits, affordance: $affordance)';
+  return 'AccountWithBalance(account: $account, balancesByCurrency: $balancesByCurrency, affordance: $affordance)';
 }
 
 
@@ -254,7 +260,7 @@ abstract mixin class _$AccountWithBalanceCopyWith<$Res> implements $AccountWithB
   factory _$AccountWithBalanceCopyWith(_AccountWithBalance value, $Res Function(_AccountWithBalance) _then) = __$AccountWithBalanceCopyWithImpl;
 @override @useResult
 $Res call({
- Account account, int balanceMinorUnits, AccountRowAffordance affordance
+ Account account, Map<String, int> balancesByCurrency, AccountRowAffordance affordance
 });
 
 
@@ -271,11 +277,11 @@ class __$AccountWithBalanceCopyWithImpl<$Res>
 
 /// Create a copy of AccountWithBalance
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? account = null,Object? balanceMinorUnits = null,Object? affordance = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? account = null,Object? balancesByCurrency = null,Object? affordance = null,}) {
   return _then(_AccountWithBalance(
 account: null == account ? _self.account : account // ignore: cast_nullable_to_non_nullable
-as Account,balanceMinorUnits: null == balanceMinorUnits ? _self.balanceMinorUnits : balanceMinorUnits // ignore: cast_nullable_to_non_nullable
-as int,affordance: null == affordance ? _self.affordance : affordance // ignore: cast_nullable_to_non_nullable
+as Account,balancesByCurrency: null == balancesByCurrency ? _self._balancesByCurrency : balancesByCurrency // ignore: cast_nullable_to_non_nullable
+as Map<String, int>,affordance: null == affordance ? _self.affordance : affordance // ignore: cast_nullable_to_non_nullable
 as AccountRowAffordance,
   ));
 }

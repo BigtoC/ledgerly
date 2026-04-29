@@ -69,10 +69,10 @@ class PreferenceDecodeException extends RepositoryException {
 abstract class UserPreferencesRepository {
   // ---------- Theme (PRD 902) ----------
 
-  /// Watches the stored theme mode. Defaults to [ThemeMode.system].
+  /// Watches the stored theme mode. Defaults to [ThemeMode.light].
   Stream<ThemeMode> watchThemeMode();
 
-  /// One-shot read. Defaults to [ThemeMode.system] when missing.
+  /// One-shot read. Defaults to [ThemeMode.light] when missing.
   Future<ThemeMode> getThemeMode();
 
   Future<void> setThemeMode(ThemeMode mode);

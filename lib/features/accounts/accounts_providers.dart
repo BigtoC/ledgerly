@@ -34,6 +34,17 @@ final selectableCurrenciesProvider = StreamProvider.autoDispose<List<Currency>>(
   },
 );
 
+/// Read-only map from currency code (uppercase) to [Currency] model.
+/// Used by [AccountTile] to resolve decimals/symbol for grouped balance
+/// formatting without passing a full currency list down the widget tree.
+final currenciesByCodeProvider =
+    StreamProvider.autoDispose<Map<String, Currency>>((ref) {
+      final repo = ref.watch(currencyRepositoryProvider);
+      return repo.watchAll().map(
+        (rows) => {for (final c in rows) c.code.toUpperCase(): c},
+      );
+    });
+
 final accountByIdProvider = StreamProvider.autoDispose.family<Account?, int>((
   ref,
   id,
