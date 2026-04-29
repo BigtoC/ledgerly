@@ -289,7 +289,14 @@ void main() {
       monthNetCtrl.add(const {});
       await tester.pump(const Duration(milliseconds: 200));
 
-      expect(find.text('Jump to today'), findsNothing);
+      expect(find.text('Jump to today'), findsOneWidget);
+      final button = tester.widget<TextButton>(
+        find.ancestor(
+          of: find.text('Jump to today'),
+          matching: find.byType(TextButton),
+        ),
+      );
+      expect(button.onPressed, isNull);
     },
   );
 
@@ -794,7 +801,14 @@ void main() {
 
     // After the transition, "Today" should be the header label
     expect(find.text('Today'), findsOneWidget);
-    expect(find.text('Jump to today'), findsNothing);
+    // Button still renders but is disabled when on today
+    final jumpBtn = tester.widget<TextButton>(
+      find.ancestor(
+        of: find.text('Jump to today'),
+        matching: find.byType(TextButton),
+      ),
+    );
+    expect(jumpBtn.onPressed, isNull);
     expect(tester.takeException(), isNull);
   });
 

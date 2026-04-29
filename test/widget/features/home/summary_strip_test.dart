@@ -118,7 +118,7 @@ void main() {
   );
 
   testWidgets(
-    'SS05: jump-to-today button hidden when showJumpToToday is false',
+    'SS05: jump-to-today button disabled when showJumpToToday is false',
     (tester) async {
       await tester.pumpWidget(
         _wrap(
@@ -132,7 +132,14 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Jump to today'), findsNothing);
+      expect(find.text('Jump to today'), findsOneWidget);
+      final button = tester.widget<TextButton>(
+        find.ancestor(
+          of: find.text('Jump to today'),
+          matching: find.byType(TextButton),
+        ),
+      );
+      expect(button.onPressed, isNull);
     },
   );
 
