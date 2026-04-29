@@ -837,6 +837,30 @@ void main() {
     );
 
     test(
+      'TC86b: re-selecting the current currency keeps automatic account-driven currency behavior',
+      () async {
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+        await controller.hydrateForAdd();
+
+        var s = c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(s.displayCurrency?.code, 'USD');
+        expect(s.currencyTouched, isFalse);
+
+        controller.selectCurrency(_usd);
+        s = c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(s.displayCurrency?.code, 'USD');
+        expect(s.currencyTouched, isFalse);
+
+        controller.selectAccount(_accountJpy);
+        s = c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(s.selectedAccount?.id, _accountJpy.id);
+        expect(s.displayCurrency?.code, 'JPY');
+      },
+    );
+
+    test(
       'TC87: save persists displayCurrency rather than selectedAccount.currency',
       () async {
         const eur = Currency(

@@ -605,8 +605,10 @@ void main() {
     textField.onChanged?.call('JP');
     await tester.pumpAndSettle();
 
-    // JPY should be visible, USD and EUR should be filtered out
+    // JPY should be visible, USD and EUR should be filtered out.
     expect(find.text('JPY'), findsAtLeastNWidgets(1));
+    expect(find.byKey(const ValueKey('txCurrencyPicker:USD')), findsNothing);
+    expect(find.byKey(const ValueKey('txCurrencyPicker:EUR')), findsNothing);
 
     // Search by full name
     controller.text = 'Euro';
@@ -615,6 +617,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('EUR'), findsAtLeastNWidgets(1));
+    expect(find.byKey(const ValueKey('txCurrencyPicker:USD')), findsNothing);
+    expect(find.byKey(const ValueKey('txCurrencyPicker:JPY')), findsNothing);
   });
 
   testWidgets(

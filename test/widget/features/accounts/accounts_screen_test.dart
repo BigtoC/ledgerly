@@ -442,6 +442,42 @@ void main() {
     expect(find.textContaining('¥50,000'), findsOneWidget);
   });
 
+  testWidgets('AS08b: exactly three currencies render all groups', (
+    tester,
+  ) async {
+    final accountRepo = _MockAccountRepository();
+    final typeRepo = _MockAccountTypeRepository();
+    final prefs = _MockUserPreferencesRepository();
+    when(
+      () => typeRepo.watchAll(includeArchived: true),
+    ).thenAnswer((_) => Stream.value([cashType]));
+
+    final container = _makeContainer(
+      accountRepo: accountRepo,
+      typeRepo: typeRepo,
+      prefs: prefs,
+      fixed: AccountsState.data(
+        active: [
+          _wb(
+            _a(id: 1, name: 'Mixed', currency: _usd),
+            balances: {'USD': 12345, 'JPY': 50000, 'TWD': 99900},
+          ),
+        ],
+        archived: const [],
+        defaultAccountId: 1,
+      ),
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining(r'$123.45'), findsOneWidget);
+    expect(find.textContaining('¥50,000'), findsOneWidget);
+    expect(find.textContaining(r'NT$999.00'), findsOneWidget);
+    expect(find.textContaining('+1 more'), findsNothing);
+  });
+
   testWidgets('AS09: 2x text scale with multi-currency tile survives', (
     tester,
   ) async {
@@ -472,17 +508,6 @@ void main() {
     await tester.pumpWidget(_wrap(container: container, textScale: 2.0));
     await tester.pumpAndSettle();
 
-    // At 2× text scale, a three-currency tile with overflow line may
-    // still produce a RenderFlex overflow warning — that is acceptable
-    // as long as no null-pointer crash or binding error occurs.
-    // Ignore any RenderFlex overflow error; only crash-level errors matter.
-    final exception = tester.takeException();
-    if (exception != null) {
-      expect(
-        exception.toString(),
-        contains('RenderFlex overflowed'),
-        reason: 'Only RenderFlex overflow is tolerated at 2× scale',
-      );
-    }
+    expect(tester.takeException(), isNull);
   });
 }

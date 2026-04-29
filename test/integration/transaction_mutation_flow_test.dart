@@ -12,6 +12,7 @@ import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
 import 'package:ledgerly/features/home/home_screen.dart';
 import 'package:ledgerly/features/home/widgets/transaction_tile.dart';
 import 'package:ledgerly/features/transactions/widgets/category_chip.dart';
+import 'package:ledgerly/features/transactions/widgets/currency_selector_tile.dart';
 
 import '../support/test_app.dart';
 
@@ -79,6 +80,59 @@ void main() {
       expect(rows!.single.amountMinorUnits, 100);
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets(
+      'Home FAB -> Add form -> change currency -> Save persists cross-currency row',
+      (tester) async {
+        final db = newTestAppDatabase();
+        addTearDown(db.close);
+        await tester.runAsync(() => runTestSeed(db));
+
+        final container = makeTestContainer(
+          db: db,
+          extraOverrides: [
+            splashGateSnapshotProvider.overrideWithValue(
+              SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        await tester.pumpWidget(buildTestApp(container: container));
+        await pumpHome(tester);
+
+        expect(find.byType(HomeScreen), findsOneWidget);
+
+        await tester.tap(find.byTooltip('Add transaction'));
+        await tester.pumpAndSettle();
+        expect(find.text('Add transaction'), findsOneWidget);
+
+        await enterAmountAndFood(tester, '5');
+
+        final currencyTile = find.byType(CurrencySelectorTile);
+        await tester.ensureVisible(currencyTile);
+        await tester.tap(currencyTile, warnIfMissed: false);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('JPY').first);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Change and Clear'));
+        await tester.pumpAndSettle();
+
+        await enterAmountAndFood(tester, '5');
+        await saveForm(tester);
+
+        expect(find.byType(HomeScreen), findsOneWidget);
+        expect(find.textContaining('¥5'), findsAtLeastNWidgets(1));
+
+        final rows = await tester.runAsync(
+          () => db.select(db.transactions).get(),
+        );
+        expect(rows, hasLength(1));
+        expect(rows!.single.currency, 'JPY');
+        expect(rows.single.amountMinorUnits, 5);
+        expect(tester.takeException(), isNull);
+      },
+    );
 
     testWidgets('Home duplicate action saves a second row dated today', (
       tester,
