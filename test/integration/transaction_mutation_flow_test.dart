@@ -196,6 +196,14 @@ void main() {
           () => db.select(db.transactions).get(),
         );
         expect(rows, hasLength(2));
+
+        // The new row must be pinned to today (the gap day), not yesterday.
+        final today = DateTime.now();
+        final newRow = rows!.singleWhere((r) => r.id != rows.first.id);
+        expect(newRow.date.year, today.year);
+        expect(newRow.date.month, today.month);
+        expect(newRow.date.day, today.day);
+
         expect(tester.takeException(), isNull);
       },
     );

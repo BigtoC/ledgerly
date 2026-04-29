@@ -578,8 +578,47 @@ void main() {
     expect(find.text('USD'), findsAtLeastNWidgets(1));
   });
 
+  testWidgets('WS17b: currency picker search filters by code and full name', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(400, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(mountAdd());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(CurrencySelectorTile));
+    await tester.pumpAndSettle();
+
+    // All currencies should be visible initially
+    expect(find.text('USD'), findsAtLeastNWidgets(1));
+    expect(find.text('JPY'), findsAtLeastNWidgets(1));
+    expect(find.text('EUR'), findsAtLeastNWidgets(1));
+
+    // Search by code — use the controller directly to avoid
+    // multiple-EditableText conflicts in the test framework.
+    final searchField = find.widgetWithText(TextField, 'Search currencies');
+    final textField = tester.widget<TextField>(searchField);
+    final controller = textField.controller!;
+    controller.text = 'JP';
+    controller.selection = const TextSelection.collapsed(offset: 2);
+    textField.onChanged?.call('JP');
+    await tester.pumpAndSettle();
+
+    // JPY should be visible, USD and EUR should be filtered out
+    expect(find.text('JPY'), findsAtLeastNWidgets(1));
+
+    // Search by full name
+    controller.text = 'Euro';
+    controller.selection = const TextSelection.collapsed(offset: 4);
+    textField.onChanged?.call('Euro');
+    await tester.pumpAndSettle();
+
+    expect(find.text('EUR'), findsAtLeastNWidgets(1));
+  });
+
   testWidgets(
-    'WS17: currency row opens searchable picker showing code and full name',
+    'WS17c: currency picker shows no-results message for unmatched search',
     (tester) async {
       await tester.binding.setSurfaceSize(const Size(400, 1000));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -590,11 +629,15 @@ void main() {
       await tester.tap(find.byType(CurrencySelectorTile));
       await tester.pumpAndSettle();
 
-      // Picker title
-      expect(find.text('Pick currency'), findsOneWidget);
-      // Currencies should be listed with their codes
-      expect(find.text('USD'), findsAtLeastNWidgets(1));
-      expect(find.text('JPY'), findsAtLeastNWidgets(1));
+      final searchField = find.widgetWithText(TextField, 'Search currencies');
+      final textField = tester.widget<TextField>(searchField);
+      final controller = textField.controller!;
+      controller.text = 'ZZZZZ';
+      controller.selection = const TextSelection.collapsed(offset: 5);
+      textField.onChanged?.call('ZZZZZ');
+      await tester.pumpAndSettle();
+
+      expect(find.text('No currencies found'), findsOneWidget);
     },
   );
 
@@ -691,6 +734,45 @@ void main() {
     // Amount placeholder should be visible (currencyTouched=true, amount=0)
     expect(find.textContaining('JPY'), findsAtLeastNWidgets(1));
   });
+
+  testWidgets(
+    'WS21: account switch after manual currency pick does not show destructive dialog',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(400, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(mountAdd());
+      await tester.pumpAndSettle();
+
+      // Enter an amount
+      await tester.tap(find.text('5'));
+      await tester.pumpAndSettle();
+
+      // Manually pick EUR (sets currencyTouched=true)
+      await tester.tap(find.byType(CurrencySelectorTile));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('EUR').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Change and Clear'));
+      await tester.pumpAndSettle();
+
+      // Verify currency is now EUR
+      final currencyTile = tester.widget<CurrencySelectorTile>(
+        find.byType(CurrencySelectorTile),
+      );
+      expect(currencyTile.currency?.code, 'EUR');
+
+      // Now switch account — the destructive dialog should NOT appear
+      // because currencyTouched=true means account changes leave
+      // displayCurrency unchanged.
+      await tester.tap(find.byType(AccountSelectorTile));
+      await tester.pumpAndSettle();
+
+      // The account picker should be open, not a confirmation dialog
+      expect(find.text('Pick account'), findsOneWidget);
+      expect(find.text('Switch currency?'), findsNothing);
+    },
+  );
 }
 
 class _HomeStub extends StatelessWidget {

@@ -12,6 +12,7 @@ import 'package:ledgerly/l10n/app_localizations.dart';
 
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 const _jpy = Currency(code: 'JPY', decimals: 0, symbol: '¥');
+const _eur = Currency(code: 'EUR', decimals: 2, symbol: '€');
 
 Widget _wrap(Widget child) => MaterialApp(
   localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -90,4 +91,73 @@ void main() {
     // Three placeholder dashes — one per label row.
     expect(find.text('—'), findsNWidgets(3));
   });
+
+  testWidgets(
+    'SS04: jump-to-today button renders when showJumpToToday is true',
+    (tester) async {
+      var jumped = false;
+      await tester.pumpWidget(
+        _wrap(
+          SummaryStrip(
+            todayTotalsByCurrency: const {'USD': (expense: 100, income: 0)},
+            monthNetByCurrency: const {'USD': -100},
+            currenciesByCode: const {'USD': _usd},
+            locale: 'en_US',
+            showJumpToToday: true,
+            onJumpToToday: () => jumped = true,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Jump to today'), findsOneWidget);
+      await tester.tap(find.text('Jump to today'));
+      await tester.pumpAndSettle();
+      expect(jumped, isTrue);
+    },
+  );
+
+  testWidgets(
+    'SS05: jump-to-today button hidden when showJumpToToday is false',
+    (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const SummaryStrip(
+            todayTotalsByCurrency: {'USD': (expense: 100, income: 0)},
+            monthNetByCurrency: {'USD': -100},
+            currenciesByCode: {'USD': _usd},
+            locale: 'en_US',
+            showJumpToToday: false,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Jump to today'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'SS06: three currencies shows first two plus Multiple currencies note',
+    (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const SummaryStrip(
+            todayTotalsByCurrency: {
+              'USD': (expense: 100, income: 0),
+              'JPY': (expense: 500, income: 0),
+              'EUR': (expense: 200, income: 0),
+            },
+            monthNetByCurrency: {'USD': -100, 'JPY': -500, 'EUR': -200},
+            currenciesByCode: {'USD': _usd, 'JPY': _jpy, 'EUR': _eur},
+            locale: 'en_US',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Only the first 2 alphabetical currency groups render (EUR, JPY);
+      // the third is suppressed behind the multi-currency note.
+      expect(find.text('Multiple currencies'), findsOneWidget);
+    },
+  );
 }

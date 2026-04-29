@@ -726,6 +726,84 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.byTooltip('Add transaction'), findsOneWidget);
   });
+
+  testWidgets(
+    'WH16: boundary swipe at today does not animate when canGoNext is false',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(400, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(makeApp());
+      await seedAll(tester);
+
+      final today = DateTime.now();
+      final todayMidnight = DateTime(today.year, today.month, today.day);
+
+      dayCtrl.add([_tx(id: 1, date: todayMidnight)]);
+      activityCtrl.add([todayMidnight]);
+      todayTotalsCtrl.add(const {});
+      monthNetCtrl.add(const {});
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // Already on today — canGoNext is false. Swipe left (newer) should
+      // be a no-op: no animation, no state change.
+      await tester.drag(
+        find.byType(CustomScrollView).first,
+        const Offset(-900, 0),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // The day header should still show "Today" — no navigation occurred.
+      expect(find.text('Today'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('WH17: jump-to-today button navigates back to today', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(400, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(makeApp());
+    await seedAll(tester);
+
+    final today = DateTime.now();
+    final todayMidnight = DateTime(today.year, today.month, today.day);
+    final yesterday = todayMidnight.subtract(const Duration(days: 1));
+
+    // Emit initial state with activity on today and yesterday
+    dayCtrl.add([_tx(id: 1, date: todayMidnight)]);
+    activityCtrl.add([todayMidnight, yesterday]);
+    todayTotalsCtrl.add(const {'USD': (expense: 100, income: 0)});
+    monthNetCtrl.add(const {'USD': -100});
+    await tester.pump(const Duration(milliseconds: 200));
+
+    // Navigate to yesterday using prev button
+    final prevButton = find.widgetWithIcon(IconButton, Icons.chevron_left);
+    await tester.tap(prevButton);
+    await tester.pump(const Duration(milliseconds: 50));
+    dayCtrl.add([]);
+    todayTotalsCtrl.add(const {});
+    monthNetCtrl.add(const {});
+    await tester.pump(const Duration(milliseconds: 200));
+
+    // Jump to today button should be visible
+    expect(find.text('Jump to today'), findsOneWidget);
+
+    // Tap it
+    await tester.tap(find.text('Jump to today'));
+    await tester.pump(const Duration(milliseconds: 50));
+    dayCtrl.add([_tx(id: 1, date: todayMidnight)]);
+    todayTotalsCtrl.add(const {'USD': (expense: 100, income: 0)});
+    monthNetCtrl.add(const {'USD': -100});
+    await tester.pump(const Duration(milliseconds: 400));
+
+    // After the transition, "Today" should be the header label
+    expect(find.text('Today'), findsOneWidget);
+    expect(find.text('Jump to today'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 class _StubFormScreen extends StatelessWidget {
