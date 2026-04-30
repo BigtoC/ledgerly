@@ -47,6 +47,7 @@ class TransactionFormController extends _$TransactionFormController {
   /// the form only renders `amountMinorUnits`, which is mirrored into the
   /// state on each mutation.
   KeypadState _keypad = const KeypadState.initial();
+  int _keypadRevision = 0;
   _HydrationMode _resumeMode = _HydrationMode.add;
   int? _resumeTargetId;
   DateTime? _resumeAddInitialDate;
@@ -80,6 +81,7 @@ class TransactionFormController extends _$TransactionFormController {
         return;
       }
       _keypad = const KeypadState.initial();
+      _keypadRevision = 0;
       state = TransactionFormState.data(
         amountMinorUnits: 0,
         selectedAccount: account,
@@ -176,6 +178,7 @@ class TransactionFormController extends _$TransactionFormController {
         existing.amountMinorUnits,
         decimals: existing.currency.decimals,
       );
+      _keypadRevision = 0;
       state = TransactionFormState.data(
         amountMinorUnits: existing.amountMinorUnits,
         selectedAccount: account,
@@ -204,10 +207,7 @@ class TransactionFormController extends _$TransactionFormController {
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
     final decimals = s.displayCurrency?.decimals ?? 2;
     _keypad = _keypad.push(digit, decimals: decimals);
-    state = s.copyWith(
-      amountMinorUnits: _keypad.amountMinorUnits,
-      isDirty: true,
-    );
+    state = _copyWithKeypad(s, isDirty: true);
   }
 
   void appendDecimal() {
@@ -216,9 +216,9 @@ class TransactionFormController extends _$TransactionFormController {
     final decimals = s.displayCurrency?.decimals ?? 2;
     _keypad = _keypad.pushDecimal(decimals: decimals);
     // amountMinorUnits doesn't change on the decimal press itself, but
-    // the visible display string does — bump isDirty so the discard
-    // dialog fires if the user decided to abandon the form.
-    state = s.copyWith(isDirty: true);
+    // the visible display string does — bump isDirty and keypadRevision so
+    // Riverpod rebuilds and the discard dialog fires if the user abandons.
+    state = _copyWithKeypad(s, isDirty: true);
   }
 
   void backspace() {
@@ -226,17 +226,38 @@ class TransactionFormController extends _$TransactionFormController {
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
     final decimals = s.displayCurrency?.decimals ?? 2;
     _keypad = _keypad.pop(decimals: decimals);
-    state = s.copyWith(
-      amountMinorUnits: _keypad.amountMinorUnits,
-      isDirty: true,
-    );
+    state = _copyWithKeypad(s, isDirty: true);
   }
 
   void clearAmount() {
     final s = state;
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
     _keypad = _keypad.clear();
-    state = s.copyWith(amountMinorUnits: 0, isDirty: true);
+    state = _copyWithKeypad(s, isDirty: true);
+  }
+
+  void applyOperator(CalcOperator op) {
+    final s = state;
+    if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
+    final decimals = s.displayCurrency?.decimals ?? 2;
+    _keypad = _keypad.pushOperator(op, decimals: decimals);
+    state = _copyWithKeypad(s, isDirty: true);
+  }
+
+  /// Creates a `copyWith` snapshot that mirrors the current keypad
+  /// state into `TransactionFormData`, always incrementing
+  /// `keypadRevision` so Riverpod rebuilds even when `amountMinorUnits`
+  /// did not change (e.g., operator tap, decimal-start while evaluating).
+  TransactionFormData _copyWithKeypad(
+    TransactionFormData s, {
+    required bool isDirty,
+  }) {
+    _keypadRevision += 1;
+    return s.copyWith(
+      amountMinorUnits: _keypad.amountMinorUnits,
+      isDirty: isDirty,
+      keypadRevision: _keypadRevision,
+    );
   }
 
   /// Read-only accessor for widgets / tests that need to know whether
@@ -309,8 +330,10 @@ class TransactionFormController extends _$TransactionFormController {
 
     final newCurrency = account.currency;
     final currencyChanged = s.displayCurrency?.code != newCurrency.code;
+    final hasDestructiveInput =
+        s.amountMinorUnits > 0 || _keypad.hasVisibleInput;
     if (currencyChanged &&
-        s.amountMinorUnits > 0 &&
+        hasDestructiveInput &&
         !clearAmountOnCurrencyChange) {
       // Caller did not opt into clearing — refuse the swap so the
       // widget's confirmation dialog stays the gating step.
@@ -318,10 +341,8 @@ class TransactionFormController extends _$TransactionFormController {
     }
     if (currencyChanged) {
       _keypad = const KeypadState.initial();
-      state = s.copyWith(
-        selectedAccount: account,
-        displayCurrency: newCurrency,
-        amountMinorUnits: 0,
+      state = _copyWithKeypad(
+        s.copyWith(selectedAccount: account, displayCurrency: newCurrency),
         isDirty: true,
       );
     } else {
@@ -344,17 +365,17 @@ class TransactionFormController extends _$TransactionFormController {
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
     final currencyChanged = s.displayCurrency?.code != currency.code;
     if (!currencyChanged) return;
-    if (currencyChanged && s.amountMinorUnits > 0 && !clearAmountOnChange) {
+    final hasDestructiveInput =
+        s.amountMinorUnits > 0 || _keypad.hasVisibleInput;
+    if (currencyChanged && hasDestructiveInput && !clearAmountOnChange) {
       // Refuse until the widget shows the confirm dialog and re-calls with
       // clearAmountOnChange: true.
       return;
     }
     if (currencyChanged && clearAmountOnChange) {
       _keypad = const KeypadState.initial();
-      state = s.copyWith(
-        displayCurrency: currency,
-        currencyTouched: true,
-        amountMinorUnits: 0,
+      state = _copyWithKeypad(
+        s.copyWith(displayCurrency: currency, currencyTouched: true),
         isDirty: true,
       );
     } else {
@@ -490,6 +511,7 @@ class TransactionFormController extends _$TransactionFormController {
             decimals: account.currency.decimals,
           )
         : const KeypadState.initial();
+    _keypadRevision = 0;
     // Wave 2 risk #7 — duplicate prefill must default `date` to today,
     // not carry the source's date.
     // currencyTouched starts false (same as Add): currency seeds from
@@ -515,13 +537,16 @@ class TransactionFormController extends _$TransactionFormController {
 
   /// Reconstructs a [KeypadState] from a stored amount so backspace on a
   /// hydrated edit/duplicate value walks back through the visible digits
-  /// rather than dropping the whole amount in one press.
+  /// rather than dropping the whole amount in one press. Sets
+  /// `hasCurrentInput: true` for non-zero amounts so edit/duplicate flows
+  /// can immediately start operator expressions from the existing value.
   KeypadState _keypadFromAmount(int amountMinorUnits, {required int decimals}) {
     if (amountMinorUnits == 0 || decimals == 0) {
       return KeypadState(
         amountMinorUnits: amountMinorUnits,
         fractionalDigitsEntered: 0,
         isFractionalMode: false,
+        hasCurrentInput: amountMinorUnits != 0,
       );
     }
     // If the amount has no fractional part, treat it as integer-mode
@@ -534,12 +559,14 @@ class TransactionFormController extends _$TransactionFormController {
         amountMinorUnits: amountMinorUnits,
         fractionalDigitsEntered: 0,
         isFractionalMode: false,
+        hasCurrentInput: true,
       );
     }
     return KeypadState(
       amountMinorUnits: amountMinorUnits,
       fractionalDigitsEntered: decimals,
       isFractionalMode: true,
+      hasCurrentInput: true,
     );
   }
 

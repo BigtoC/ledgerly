@@ -101,6 +101,11 @@ sealed class TransactionFormState with _$TransactionFormState {
     /// repository contract (`save` keeps stored `createdAt`) is honored
     /// even if the controller round-trips through copyWith.
     required DateTime? originalCreatedAt,
+
+    /// Incremented on every keypad mutation — including expression-only
+    /// transitions that leave `amountMinorUnits` unchanged — so Riverpod
+    /// rebuilds the form whenever the display state changes.
+    @Default(0) int keypadRevision,
   }) = TransactionFormData;
 
   const factory TransactionFormState.error(Object error, StackTrace stack) =

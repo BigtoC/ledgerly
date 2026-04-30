@@ -34,6 +34,7 @@ import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/features/categories/categories_controller.dart';
 import 'package:ledgerly/features/transactions/transaction_form_screen.dart';
 import 'package:ledgerly/features/transactions/widgets/account_selector_tile.dart';
+import 'package:ledgerly/features/transactions/widgets/amount_display.dart';
 import 'package:ledgerly/features/transactions/widgets/calculator_keypad.dart';
 import 'package:ledgerly/features/transactions/widgets/currency_selector_tile.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
@@ -65,6 +66,12 @@ const _eur = Currency(
 );
 
 const _account = Account(id: 1, name: 'Cash', accountTypeId: 1, currency: _usd);
+const _yenAccount = Account(
+  id: 2,
+  name: 'Yen',
+  accountTypeId: 1,
+  currency: _jpy,
+);
 
 const _expenseCategory = Category(
   id: 10,
@@ -689,7 +696,9 @@ void main() {
 
       // Confirm dialog should appear
       expect(
-        find.text('Changing the currency will clear the entered amount.'),
+        find.text(
+          'Changing the currency will clear the current amount or calculation.',
+        ),
         findsOneWidget,
       );
       expect(find.text('Change and Clear'), findsOneWidget);
@@ -796,6 +805,187 @@ void main() {
       // The account picker should be open, not a confirmation dialog
       expect(find.text('Pick account'), findsOneWidget);
       expect(find.text('Switch currency?'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'WS22: operator flow shows expression history and a fixed-precision result',
+    (tester) async {
+      await tester.pumpWidget(mountAdd());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('1'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('2'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('+'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('5'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('+'));
+      await tester.pumpAndSettle();
+
+      final display = find.byType(AmountDisplay);
+      expect(
+        find.descendant(
+          of: display,
+          matching: find.textContaining('12.00 + 5.00 ='),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: display, matching: find.text('17.00')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'WS23: changing currency during an active expression still shows the Change and Clear dialog even when the visible amount is zero',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(400, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(mountAdd());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('1'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('+'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(CurrencySelectorTile));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('JPY').first);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          'Changing the currency will clear the current amount or calculation.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Change and Clear'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'WS23b: changing account during an active expression shows the destructive dialog even when the visible amount is zero',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(400, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      when(
+        () => accountRepo.watchAll(includeArchived: false),
+      ).thenAnswer((_) => Stream.value(const [_account, _yenAccount]));
+
+      await tester.pumpWidget(mountAdd());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('1'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('+'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(AccountSelectorTile));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Yen').first);
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('amount or calculation'), findsOneWidget);
+      expect(find.textContaining('Clear'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'WS24: confirming the destructive dialog clears the active expression and updates currency',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(400, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(mountAdd());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('1'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('+'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(CurrencySelectorTile));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('JPY').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Change and Clear'));
+      await tester.pumpAndSettle();
+
+      final tile = tester.widget<CurrencySelectorTile>(
+        find.byType(CurrencySelectorTile),
+      );
+      expect(tile.currency?.code, 'JPY');
+
+      final display = find.byType(AmountDisplay);
+      expect(
+        find.descendant(of: display, matching: find.textContaining('1.00 +')),
+        findsNothing,
+      );
+    },
+  );
+
+  testWidgets(
+    'WS25: divide-by-zero leaves the form unsaveable and keeps the expression visible',
+    (tester) async {
+      await tester.pumpWidget(mountAdd());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('7'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('÷'));
+      await tester.pumpAndSettle();
+      // '0' appears both on the keypad and in the amount display — tap
+      // the keypad button specifically via its position in the keypad.
+      await tester.tap(find.text('0').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('÷'));
+      await tester.pumpAndSettle();
+
+      final saveButton = tester.widget<TextButton>(
+        find.widgetWithText(TextButton, 'Save'),
+      );
+      expect(saveButton.onPressed, isNull);
+
+      final display = find.byType(AmountDisplay);
+      expect(
+        find.descendant(
+          of: display,
+          matching: find.textContaining('7.00 ÷ 0.00 ='),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'WS26: 2x text scale still shows the expression history and result',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(400, 1400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(mountAdd(textScale: 2.0));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('1'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('+'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('5'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('+'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('+'), findsOneWidget);
+      expect(find.textContaining('1.00 + 5.00 ='), findsOneWidget);
+      expect(find.text('6.00'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     },
   );
 }

@@ -43,7 +43,7 @@ final themeModeStreamProvider = StreamProvider<ThemeMode>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ThemeModeStreamRef = StreamProviderRef<ThemeMode>;
-String _$themeModeHash() => r'8ca266cf252229f3837e34042d0439722880f03a';
+String _$themeModeHash() => r'ffe15e42f4f820a99e6240223057ba1eb979e13d';
 
 /// See also [themeMode].
 @ProviderFor(themeMode)

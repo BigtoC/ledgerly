@@ -430,13 +430,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txCurrencyChangeConfirmBody =>
-      'Switching to this account changes the currency. The entered amount will be cleared.';
+      'Switching to this account changes the currency. The current amount or calculation will be cleared.';
 
   @override
   String get txKeypadClear => 'Clear amount';
 
   @override
   String get txKeypadBackspace => 'Backspace';
+
+  @override
+  String get txKeypadAdd => 'Add';
+
+  @override
+  String get txKeypadSubtract => 'Subtract';
+
+  @override
+  String get txKeypadMultiply => 'Multiply';
+
+  @override
+  String get txKeypadDivide => 'Divide';
 
   @override
   String get homeEmptyDayMessage => 'No transaction';
@@ -490,7 +502,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txCurrencyPickerChangeConfirmBody =>
-      'Changing the currency will clear the entered amount.';
+      'Changing the currency will clear the current amount or calculation.';
 
   @override
   String accountsBalanceMore(int count) {

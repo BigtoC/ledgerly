@@ -243,6 +243,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
             onDecimal: controller.appendDecimal,
             onBackspace: controller.backspace,
             onClear: controller.clearAmount,
+            onOperator: controller.applyOperator,
           ),
         ],
       ),
@@ -405,9 +406,10 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     final currentCode = state.displayCurrency?.code;
     final newCode = picked.currency.code;
     final currencyChanges = currentCode != null && currentCode != newCode;
-    final hasAmount = state.amountMinorUnits > 0;
+    final hasDestructiveInput =
+        state.amountMinorUnits > 0 || controller.keypadSnapshot.hasVisibleInput;
 
-    if (currencyChanges && hasAmount) {
+    if (currencyChanges && hasDestructiveInput) {
       final confirmed = await _confirmCurrencyChange(context, l10n);
       if (!context.mounted) return;
       if (!confirmed) return;
@@ -427,9 +429,10 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     if (picked == null || !context.mounted) return;
     final currentCode = state.displayCurrency?.code;
     final currencyChanges = currentCode != null && currentCode != picked.code;
-    final hasAmount = state.amountMinorUnits > 0;
+    final hasDestructiveInput =
+        state.amountMinorUnits > 0 || controller.keypadSnapshot.hasVisibleInput;
 
-    if (currencyChanges && hasAmount) {
+    if (currencyChanges && hasDestructiveInput) {
       final confirmed = await _confirmPickerCurrencyChange(context, l10n);
       if (!context.mounted) return;
       if (!confirmed) return;
@@ -479,7 +482,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.txKeypadDone),
+            child: Text(l10n.txCurrencyChangeConfirmAction),
           ),
         ],
       ),

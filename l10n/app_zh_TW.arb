@@ -151,9 +151,13 @@
   "txDiscardConfirmTitle": "捨棄編輯?",
   "txDiscardConfirmBody": "尚未儲存的變更將會遺失。",
   "txCurrencyChangeConfirmTitle": "切換幣別?",
-  "txCurrencyChangeConfirmBody": "切換到此帳戶會改變幣別,目前輸入的金額將被清除。",
+  "txCurrencyChangeConfirmBody": "切換此帳戶將更改貨幣。目前金額或計算結果將被清除。",
   "txKeypadClear": "清除金額",
   "txKeypadBackspace": "退格",
+  "txKeypadAdd": "加",
+  "txKeypadSubtract": "減",
+  "txKeypadMultiply": "乘",
+  "txKeypadDivide": "除",
 
   "homeEmptyDayMessage": "無交易",
   "homeJumpToToday": "跳至今天",
@@ -172,7 +176,7 @@
   "txCurrencyChangeConfirmAction": "更換並清除",
   "txAmountPlaceholderInCurrency": "輸入 {code} 金額",
   "txCurrencyPickerNoResults": "找不到幣別",
-  "txCurrencyPickerChangeConfirmBody": "更換幣別將清除已輸入的金額。",
+  "txCurrencyPickerChangeConfirmBody": "更改貨幣將清除目前金額或計算結果。",
 
   "accountsBalanceMore": "+{count} 個更多",
   "@accountsBalanceMore": {
