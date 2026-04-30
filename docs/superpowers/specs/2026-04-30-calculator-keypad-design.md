@@ -51,9 +51,16 @@ final bool hasCurrentInput;    // distinguishes empty right operand from explici
 enum CalcOperator { add, subtract, multiply, divide }
 ```
 
-Derived helper:
+Derived helpers:
 
 ```dart
+bool get hasExpression =>
+    leftOperand != null ||
+    operator != null ||
+    isEvaluating ||
+    showingResult ||
+    rightOperand != null;
+
 bool get hasVisibleInput => hasExpression || hasCurrentInput;
 ```
 
