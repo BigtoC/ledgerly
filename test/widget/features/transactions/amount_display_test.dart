@@ -188,4 +188,33 @@ void main() {
       expect(find.textContaining('1.00 +'), findsOneWidget);
     },
   );
+
+  testWidgets(
+    'AD07b: decimal-start input suppresses the placeholder after a manual currency pick',
+    (tester) async {
+      final keypad = KeypadState(
+        amountMinorUnits: 0,
+        fractionalDigitsEntered: 0,
+        isFractionalMode: true,
+        hasCurrentInput: true,
+      );
+
+      await tester.pumpWidget(
+        _wrap(
+          AmountDisplay(keypad: keypad, currency: _usd, currencyTouched: true),
+        ),
+      );
+
+      expect(find.text('0.'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Text &&
+              (widget.data?.startsWith('Enter') == true ||
+                  widget.data?.contains('amount') == true),
+        ),
+        findsNothing,
+      );
+    },
+  );
 }

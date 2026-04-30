@@ -430,6 +430,56 @@ void main() {
       },
     );
 
+    test(
+      'K92b: decimal during showingResult clears the old expression and starts a fresh fractional input',
+      () {
+        final s = KeypadState(
+          amountMinorUnits: 1700,
+          fractionalDigitsEntered: 0,
+          isFractionalMode: false,
+          leftOperand: 1200,
+          operator: CalcOperator.add,
+          showingResult: true,
+          rightOperand: 500,
+          hasCurrentInput: false,
+        );
+
+        final result = s.pushDecimal(decimals: 2);
+
+        expect(result.amountMinorUnits, 0);
+        expect(result.leftOperand, isNull);
+        expect(result.operator, isNull);
+        expect(result.showingResult, isFalse);
+        expect(result.isFractionalMode, isTrue);
+        expect(result.hasCurrentInput, isTrue);
+      },
+    );
+
+    test(
+      'K92c: operator during showingResult starts the next expression from the result',
+      () {
+        final s = KeypadState(
+          amountMinorUnits: 1700,
+          fractionalDigitsEntered: 0,
+          isFractionalMode: false,
+          leftOperand: 1200,
+          operator: CalcOperator.add,
+          showingResult: true,
+          rightOperand: 500,
+          hasCurrentInput: false,
+        );
+
+        final result = s.pushOperator(CalcOperator.multiply, decimals: 2);
+
+        expect(result.amountMinorUnits, 0);
+        expect(result.leftOperand, 1700);
+        expect(result.operator, CalcOperator.multiply);
+        expect(result.isEvaluating, isTrue);
+        expect(result.showingResult, isFalse);
+        expect(result.hasCurrentInput, isFalse);
+      },
+    );
+
     test('K93: pop with an empty right operand cancels the expression', () {
       final s = const KeypadState.initial()
           .push(1, decimals: 2)

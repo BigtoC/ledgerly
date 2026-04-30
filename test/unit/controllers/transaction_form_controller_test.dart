@@ -419,6 +419,34 @@ void main() {
       s = c.read(transactionFormControllerProvider) as TransactionFormData;
       expect(s.amountMinorUnits, 0);
     });
+
+    test('TC32b: pristine keypad no-op commands keep the form clean', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+
+      await controller.hydrateForAdd();
+
+      void expectClean() {
+        final s =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(s.amountMinorUnits, 0);
+        expect(s.isDirty, isFalse);
+        expect(s.keypadRevision, 0);
+        expect(controller.keypadSnapshot, const KeypadState.initial());
+      }
+
+      expectClean();
+
+      controller.applyOperator(CalcOperator.add);
+      expectClean();
+
+      controller.backspace();
+      expectClean();
+
+      controller.clearAmount();
+      expectClean();
+    });
   });
 
   group('type and category coordination', () {

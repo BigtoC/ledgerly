@@ -13,6 +13,7 @@
 //   - Text scale clamping at 1.5×.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ledgerly/features/transactions/keypad_state.dart';
@@ -205,6 +206,39 @@ void main() {
 
     await tester.longPress(find.byTooltip('Backspace'));
     expect(clearCount, 1);
+  });
+
+  testWidgets('WK12b: backspace exposes a custom clear semantics action', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+
+    await tester.pumpWidget(
+      _wrap(
+        CalculatorKeypad(
+          decimals: 2,
+          onDigit: (_) {},
+          onDecimal: () {},
+          onBackspace: () {},
+          onClear: () {},
+          onOperator: (_) {},
+        ),
+      ),
+    );
+
+    expect(
+      tester.getSemantics(find.byIcon(Icons.backspace_outlined)),
+      matchesSemantics(
+        hasTapAction: true,
+        hasFocusAction: true,
+        hasLongPressAction: true,
+        isFocusable: true,
+        onLongPressHint: 'Clear amount',
+        customActions: const [CustomSemanticsAction(label: 'Clear amount')],
+      ),
+    );
+
+    handle.dispose();
   });
 
   testWidgets('WK13: operator keys expose localized semantics labels', (
