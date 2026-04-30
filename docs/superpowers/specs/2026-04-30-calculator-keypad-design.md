@@ -1,16 +1,16 @@
 # Calculator Keypad — Design Spec
 
-**Date:** 2026-04-30
-**Status:** Draft
-**Scope:** Add basic calculator operations (+, −, ×, ÷) to the transaction form keypad
+**Date:** 2026-04-30  
+**Status:** Draft  
+**Scope:** Add basic calculator operations (`+`, `−`, `×`, `÷`) to the transaction form keypad
 
 ## Overview
 
-The transaction form's numeric keypad currently only supports entering raw amounts. This adds inline calculator functionality so users can compute amounts without leaving the form (e.g. `12.50 + 5.00 = 17.50`).
+The transaction form's numeric keypad currently only supports entering raw amounts. This adds inline calculator functionality so users can compute amounts without leaving the form (for example `12.50 + 5.00 = 17.50`).
 
 ## 1. Keypad Layout
 
-New 4×4 grid (replaces current layout):
+New 4x4 grid:
 
 ```
  7  8  9  ÷
@@ -20,187 +20,244 @@ New 4×4 grid (replaces current layout):
 ```
 
 Changes from current:
-- Right column: `÷`, `×`, `−`, `+` replace two `_SpacerKey`s and relocate `⌫`/`.`
-- Bottom row: `.` moves from row 2 col 4 to row 4 col 1; `00` removed (user taps `0` twice)
-- `C` key removed — long-press on `⌫` triggers clear
-- `⌫` moves from row 1 col 4 to row 4 col 3
+- Right column: `÷`, `×`, `−`, `+` replace the old spacer/backspace placement
+- Bottom row: `.` moves to row 4 col 1; `00` is removed
+- Visible `C` key is removed; long-press `⌫` performs full clear
+- Operator keys use a distinct visual style (for example `colorScheme.primaryContainer`)
 
-Operator keys use a distinct visual style (e.g. `colorScheme.primaryContainer`) to differentiate from digit keys. A new `_OperatorKey` widget (analogous to the existing `_DigitKey` and `_IconKey`) renders operator buttons with this style.
+Accessibility:
+- Visible operator glyphs stay literal Unicode (`÷`, `×`, `−`, `+`)
+- Operator buttons expose localized semantics labels (`Add`, `Subtract`, `Multiply`, `Divide`)
+- Backspace exposes the existing tooltip and a long-press clear hint
+- Full clear must also be reachable through a non-gesture accessibility path (for example a `CustomSemanticsAction` on the backspace control)
 
-Long-press on `⌫` reuses the existing `onClear` callback — no new callback needed.
+Large text:
+- Key labels clamp to the repo's existing fixed-height pattern: `MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.5)`
+- The transaction form as a whole must still survive 2x text scale without overflow
 
 ## 2. State Machine (`KeypadState`)
 
 New fields on `KeypadState`:
 
 ```dart
-final int? leftOperand;        // stored left side of expression (minor units)
+final int? leftOperand;        // stored left side in minor units
 final CalcOperator? operator;  // +, −, ×, ÷
-final bool isEvaluating;       // true after first operand + operator, typing 2nd number
+final bool isEvaluating;       // true after first operand + operator
 final bool showingResult;      // true after evaluation, before next digit/operator tap
-final int? rightOperand;       // stored right side after evaluation (for expression line)
+final int? rightOperand;       // preserved after evaluation for expression history
+final bool hasCurrentInput;    // distinguishes empty right operand from explicit 0
 
 enum CalcOperator { add, subtract, multiply, divide }
 ```
 
-### `pushOperator()` Method
+### Why `hasCurrentInput` exists
 
-```dart
-/// Returns a new [KeypadState] with the operator applied.
-///
-/// Four paths:
-/// 1. No expression active (`leftOperand == null`, `showingResult == false`):
-///    stores current `amountMinorUnits` as `leftOperand`, sets operator,
-///    enters `isEvaluating` mode.
-/// 2a. Evaluating, same operator (`isEvaluating == true`, `op == operator`):
-///    evaluates the pending expression, enters `showingResult` state.
-///    Preserves `leftOperand`, `operator`, and `rightOperand` for the expression line.
-/// 2b. Evaluating, different operator (`isEvaluating == true`, `op != operator`):
-///    evaluates the pending expression, stores result as `leftOperand`,
-///    sets new `operator`, continues `isEvaluating` mode.
-/// 3. Result showing (`showingResult == true`):
-///    uses the current `amountMinorUnits` (the displayed result) as
-///    `leftOperand`, sets operator, enters `isEvaluating` mode.
-KeypadState pushOperator(CalcOperator op, {required int decimals})
-```
+`amountMinorUnits == 0` is ambiguous:
+- empty right operand after tapping an operator
+- explicit integer `0`
+- explicit fractional zero like `.0`
 
-### State Transitions
+The reducer must distinguish those states so that:
+- `12 ×` then `−` corrects the operator without evaluating `12 × 0`
+- `12 ÷` then `÷` is a no-op
+- `12 ÷ 0` really evaluates as divide-by-zero
 
-| User action | Transition |
-|---|---|
-| Type digits (no operator active) | Same as today — accumulates `amountMinorUnits` |
-| Tap `.` (no operator active) | Same as today — enters fractional mode |
-| Tap `+` (amount ≥ 0) | `leftOperand = amountMinorUnits`, `operator = add`, `isEvaluating = true`, reset `amountMinorUnits = 0`, reset fractional mode |
-| Type digits (while `isEvaluating`) | Accumulates into `amountMinorUnits` (the right operand) |
-| Tap `.` (while `isEvaluating`) | Enters fractional mode for the right operand (same pushDecimal logic) |
-| Tap `+` again (while `isEvaluating`) | Evaluate `leftOperand + amountMinorUnits` → result becomes new `amountMinorUnits`, preserve `leftOperand`/`operator`/`rightOperand` for expression line, `isEvaluating = false`, `showingResult = true`. |
-| Tap different operator (while `isEvaluating`) | Evaluate previous, store result as new `leftOperand`, set new `operator` |
-| Tap digit (in "result showing" state, no operator active) | Clear expression state entirely, start fresh accumulation |
-| Tap operator (in "result showing" state) | Use result as `leftOperand`, start new expression |
-| `⌫` (while `isEvaluating`, amount = 0) | Cancel expression — restore `leftOperand` as `amountMinorUnits`, clear operator |
-| Long-press `⌫` | Full reset — clear everything including expression |
-| Tap operator-again with 0 right side | Uses `leftOperand` as result (no-op effectively) |
+### `pushOperator()` rules
 
-**"Result showing" state:** After evaluation completes, the system is in a transient state where the expression line shows the full calculation and the result is displayed. `leftOperand`, `operator`, and `rightOperand` are preserved so the expression line can render `{left} {op} {right} =`. A digit tap clears all expression fields and starts fresh. An operator tap chains from the result. This is tracked by a `showingResult` flag on `KeypadState`.
+1. No expression active:
+   store the current amount as `leftOperand`, set `operator`, enter `isEvaluating`, clear the current input
+2. Evaluating with **no** current right operand:
+   - same operator: no-op
+   - different operator: replace the pending operator, do not evaluate
+3. Evaluating with a current right operand:
+   evaluate the pending expression
+   - same operator: enter `showingResult`
+   - different operator: chain from the result into a new pending operator
+4. Showing a result:
+   tapping an operator uses the result as `leftOperand` and starts a new pending expression
 
-### Evaluation Rules
+### Digit / decimal / backspace rules
 
-- Division rounds half-up to the active currency's decimal precision (2 for USD, 0 for JPY, etc.)
-- Other operations (+, −, ×) stay exact since integer inputs produce integer results
-- Division by zero → result is `0`
-- Uses Dart `int` (64-bit) — sufficient for realistic amounts
+- Typing a digit while `isEvaluating == true` fills the right operand and preserves `leftOperand` / `operator`
+- Tapping decimal while `isEvaluating == true` marks the right operand as started even before a numeric digit is entered (`hasCurrentInput = true`)
+- Typing a digit while `showingResult == true` clears the old expression and starts a fresh amount
+- Backspace while `isEvaluating == true` and `hasCurrentInput == false` cancels the expression and restores `leftOperand`
+- Backspace while editing the right operand preserves the expression; if the current operand becomes empty again, set `hasCurrentInput = false`
+- Long-press `⌫` resets everything (`KeypadState.initial()`)
 
-## 3. Amount Display
+## 3. Arithmetic Rules
 
-`AmountDisplay` shows the expression inline above the current input.
+Amounts remain stored in integer minor units, but operators act on the displayed decimal values.
 
-**When no expression is active** (`leftOperand == null`):
-- Same as today — shows the typed amount
+Let `unit = 10^currency.decimals`.
 
-**When expression is active** (`isEvaluating == true`):
-- Small line above: `{leftOperand} {operator symbol}` in `onSurface` with reduced opacity
-- Main display shows the current right operand
+- Add: `left + right`
+- Subtract: `max(left - right, 0)`
+- Multiply: half-up round `(left * right) / unit`
+- Divide: half-up round `(left * unit) / right`
+
+Implementation rules:
+- Use integer / `BigInt` helpers only inside `KeypadState`
+- Do not use `double` in the calculator state machine
+
+Product rules:
+- Division by zero evaluates to `0`
+- Subtraction underflow clamps to `0`
+- These zero results remain visible in calculator history and in the main result line
+- Save remains blocked because `canSave` still requires `amountMinorUnits > 0`
+
+Examples:
+- `2.00 × 3.00 = 6.00`
+- `100.00 ÷ 3.00 = 33.33`
+- `1.00 ÷ 8.00 = 0.13` (half-up tie)
+- `0.05 × 0.10 = 0.01` (half-up tie)
+- `3.00 − 5.00 = 0.00`
+- `7.00 ÷ 0.00 = 0.00`
+
+## 4. Amount Display
+
+`AmountDisplay` shows two layers:
+
+### While typing a current operand
+
+- Main amount uses the existing live-entry preview behavior
+- Expression line is hidden unless an expression is active
+
+### While evaluating
+
+- Expression line shows `{leftOperand} {operator}` using `MoneyFormatter.formatBare(...)`
+- Main amount shows the current right operand using the existing live-entry preview
+
+Example:
 
 ```
 ┌─────────────────────────────┐
-│  12.50 +                    │  ← small, muted expression line
-│  5.00                    USD│  ← main amount (current input)
+│ 12.00 +                     │
+│ 5.00                    USD │
 └─────────────────────────────┘
 ```
 
-**After evaluation** (`showingResult == true`):
-- Expression line persists showing full calculation: `{leftOperand} {op} {rightOperand} =`
-- Main display shows the result
+### After evaluation (`showingResult == true`)
+
+- Expression line shows `{leftOperand} {operator} {rightOperand} =`
+- Main amount shows the computed result using `MoneyFormatter.formatBare(...)`
+
+Example:
 
 ```
 ┌─────────────────────────────┐
-│  12.50 + 5.00 =             │  ← full expression stays visible
-│  17.50                    USD│  ← result
+│ 12.00 + 5.00 =              │
+│ 17.00                   USD │
 └─────────────────────────────┘
 ```
 
-**Expression line clears when:**
-- User starts typing a new number (digit press resets expression state and `showingResult`)
-- User long-presses `⌫` (full reset)
-- User taps an operator on the result (starts a new expression chaining from result)
+Formatting rules:
+- Expression line and evaluated results use `MoneyFormatter.formatBare(...)`
+- Locale comes from `AppLocalizations.localeName`
+- Zero-decimal currencies stay zero-decimal (`12 ÷ 2 =` then `6`)
+- The currency-change placeholder is suppressed whenever calculator expression state is active so zero-valued results like `7 ÷ 0 = 0.00` remain visible after a manual currency pick
 
-## 4. Controller Changes
+Large text:
+- Expression line may be single-line + ellipsis, but at 2x scale it must still remain visible on a realistic phone width during tests
 
-`TransactionFormController` changes:
+## 5. Controller And Screen Rules
 
-**New method:**
-- `void applyOperator(CalcOperator op)` — handles operator tap. If `isEvaluating` and right operand is non-zero, evaluates first; then sets the new operator and left operand.
+### `TransactionFormController`
 
-**Modified behavior:**
-- `appendDigit()` — when `isEvaluating`, accumulates into the right operand (same push logic)
-- `backspace()` — when `isEvaluating` and `amountMinorUnits == 0`, cancels the expression and restores `leftOperand`
-- `clearAmount()` — full reset including expression state
+Add:
+- `void applyOperator(CalcOperator op)`
+- a lightweight observed field such as `keypadRevision` on `TransactionFormState.data`, incremented on every keypad mutation, so expression-only transitions repaint the screen even when `amountMinorUnits` does not change
 
-**Wiring in `CalculatorKeypad`:**
-- New callback: `ValueChanged<CalcOperator> onOperator`
-- Keypad widget renders 4 operator keys and calls `onOperator` on tap
+Behavior:
+- Mirrors `_keypad.amountMinorUnits` into `TransactionFormData.amountMinorUnits` after every operator action
+- Keeps `canSave` semantics unchanged (`amountMinorUnits > 0`)
 
-**State mirroring:**
-- `TransactionFormData.amountMinorUnits` updated on every evaluation result (same field, no Freezed model change)
-- Expression display reads from `keypadSnapshot` which already exposes `KeypadState`. The display widget reads the new `leftOperand`, `operator`, `isEvaluating`, and `showingResult` fields from this snapshot to render the expression line.
+### Currency / account changes during an active expression
 
-**L10n:** Operator symbols (`÷`, `×`, `−`, `+`) render as literal Unicode characters — no l10n keys needed for MVP. If locale-specific symbols are required later, add l10n keys at that point.
+Active expression state is destructive unsaved input, even when the visible amount is `0`.
 
-## 5. Edge Cases
+That means the confirm-and-clear flow is required when either is true:
+- `state.amountMinorUnits > 0`
+- `_keypad.hasExpression == true`
 
-- **Negative results:** `3 − 5 =` → result clamps to `0`. Amounts are always non-negative (no negation key). The expression line shows `3 − 5 = 0`.
-- **Division by zero:** `7 ÷ 0 =` → result is `0`. Expression line shows `7 ÷ 0 = 0`.
-- **Division rounding:** Half-up to currency decimals. `100 / 3 = 33.33` (USD) = 3333 minor units. `700 / 3 = 233.33` (USD) = 23333 minor units.
-- **Currency change mid-expression:** Full reset of expression state (leftOperand, operator, isEvaluating cleared).
-- **Account change mid-expression:** Same as currency change — full reset.
-- **Operator on zero:** `0 + 5` → leftOperand = 0, operator = add. Valid entry path.
-- **Chaining:** `12 + 5 − 3` — tapping `−` evaluates `12 + 5 = 17`, then starts `17 −`.
-- **Save validation:** `canSave` still checks `amountMinorUnits > 0`. In-progress expression (leftOperand set, right side is 0) is not saveable.
-- **Edit/Duplicate hydration:** Expression state starts clean. Calculator only activates on operator tap.
+After confirmation, if the successful account/currency change changes `displayCurrency`:
+- `_keypad = const KeypadState.initial()`
+- `amountMinorUnits = 0`
 
-## 6. Testing
+This applies to:
+- direct currency changes
+- account changes that would reseed `displayCurrency`
 
-**Unit tests (`keypad_decimal_math_test.dart`):**
-- `pushOperator(CalcOperator.add)` on state with `amountMinorUnits=1200` → sets `leftOperand=1200`, `operator=add`, `isEvaluating=true`, `amountMinorUnits=0`
-- Add: push `5`, push `0`, push `0` → `amountMinorUnits=500`; pushOperator(add) → `amountMinorUnits=1700`, `leftOperand=null`
-- Subtract: `leftOperand=150`, `amountMinorUnits=50`, evaluate → `amountMinorUnits=100`
-- Multiply: `leftOperand=200`, `amountMinorUnits=3`, evaluate → `amountMinorUnits=600`
-- Divide (USD, decimals=2): `leftOperand=10000` ($100.00), `amountMinorUnits=300` ($3.00), evaluate → `amountMinorUnits=3333` ($33.33, half-up rounded)
-- Divide (USD, decimals=2): `leftOperand=70000` ($700.00), `amountMinorUnits=300` ($3.00), evaluate → `amountMinorUnits=23333` ($233.33, half-up rounded)
-- Negative result: `leftOperand=300` ($3.00), `amountMinorUnits=500` ($5.00), subtract → `amountMinorUnits=0` (clamped)
-- Division by zero: `leftOperand=700`, `amountMinorUnits=0`, divide → `amountMinorUnits=0`
-- Chain: push `12`, pushOperator(add), push `5`, pushOperator(subtract) → intermediate `amountMinorUnits=17`, then `leftOperand=17`, `operator=subtract`
-- Cancel expression via backspace: `leftOperand=1200`, `isEvaluating=true`, `amountMinorUnits=0`, pop → `amountMinorUnits=1200`, `leftOperand=null`
-- Clear: state with expression → clear() → `amountMinorUnits=0`, `leftOperand=null`, `operator=null`, `isEvaluating=false`
-- Operator on zero: `amountMinorUnits=0`, pushOperator(add) → `leftOperand=0`, `isEvaluating=true`
+Dialog copy must reflect both cases, not just raw amount entry. It should say the current amount or calculation will be cleared.
 
-**Widget tests (`calculator_keypad_test.dart`):**
-- Operator keys render `÷`, `×`, `−`, `+` labels and call `onOperator` callback with correct `CalcOperator` enum
-- Operator keys use `colorScheme.primaryContainer` background (distinct from digit keys' `surfaceContainerHigh`)
-- Long-press ⌫ triggers `onClear` (not `onBackspace`)
-- Bottom row renders `. 0 ⌫ +` (no `00` key, no `C` key)
-- Decimal disabled on JPY (decimals = 0) still works
+### Invalid math + save behavior
 
-**Controller tests:**
-- `applyOperator(CalcOperator.add)` sets `_keypad.leftOperand` and `_keypad.isEvaluating`
-- `applyOperator` on second tap evaluates and updates `state.amountMinorUnits`
-- `appendDigit` during `isEvaluating` accumulates into right operand
-- `backspace` during `isEvaluating` with `amountMinorUnits=0` cancels expression, restores `leftOperand`
-- `clearAmount` resets `_keypad` to initial (including expression fields)
-- Currency change mid-expression resets expression state
+`÷ 0` and subtraction underflow intentionally resolve to `0`, but zero-value results are still unsaveable. The user can backspace, clear, or continue calculating from the result.
 
-**Display tests:**
-- Expression line renders `{leftOperand} {op}` when `isEvaluating == true`
-- Expression line shows `{leftOperand} {op} {rightOperand} =` after evaluation
-- Expression line clears when `showingResult == true` and user taps a digit
+## 6. Testing Expectations
+
+### Unit tests (`test/unit/utils/keypad_decimal_math_test.dart`)
+
+Must cover:
+- initial expression fields + `hasCurrentInput`
+- operator correction before any right input
+- same-operator no-op with empty right operand
+- explicit integer `0` and explicit fractional zero
+- add / subtract / multiply / divide
+- half-up tie cases for multiply and divide
+- chain evaluation
+- showing-result reset on digit input
+- cancel expression via backspace
+- clear resets all fields
+
+### Widget tests (`test/widget/features/transactions/calculator_keypad_test.dart`)
+
+Must cover:
+- operator glyphs render and callbacks fire with the correct enum
+- `00` / `C` removed
+- long-press backspace triggers clear
+- operator keys expose localized semantics labels
+- 1.5x label clamp under requested 2x text scale
+
+### Display tests (`test/widget/features/transactions/amount_display_test.dart`)
+
+Must cover:
+- no-expression state
+- evaluating expression line
+- showing-result expression line
+- fixed-precision evaluated main result
+- zero-decimal currencies
+- 2x text scale with expression history visible
+
+### Controller tests (`test/unit/controllers/transaction_form_controller_test.dart`)
+
+Must cover:
+- `applyOperator()`
+- operator correction before right input
+- destructive gating on active expression for account/currency changes
+- confirmed reset path clears expression state
+
+### Screen tests (`test/widget/features/transactions/transaction_form_screen_test.dart`)
+
+Must cover:
+- end-to-end operator flow in the form
+- active-expression currency change still shows the destructive dialog when amount display is zero
+- confirmed destructive change clears expression history
+- divide-by-zero remains unsaveable and visible
+- 2x text scale with expression history + result visible
 
 ## 7. Files Modified
 
 | File | Change |
 |---|---|
-| `lib/features/transactions/keypad_state.dart` | Add `leftOperand`, `operator`, `isEvaluating`, `showingResult`, `rightOperand`; add `pushOperator()` method; modify `pop()` and `clear()` |
-| `lib/features/transactions/widgets/calculator_keypad.dart` | New layout; add operator keys; add `onOperator` callback; long-press ⌫ for clear |
-| `lib/features/transactions/widgets/amount_display.dart` | Render expression line when operator active |
-| `lib/features/transactions/transaction_form_controller.dart` | Add `applyOperator()`; modify `appendDigit()`, `backspace()`, `clearAmount()` |
-| `test/unit/utils/keypad_decimal_math_test.dart` | Add calculator operation tests |
-| `test/widget/features/transactions/calculator_keypad_test.dart` | Update layout tests; add operator key tests |
+| `lib/features/transactions/keypad_state.dart` | Add calculator fields, `hasCurrentInput`, operator evaluation, editing rules |
+| `lib/features/transactions/widgets/calculator_keypad.dart` | New 4x4 layout, operator semantics labels, long-press clear, text-scale clamp |
+| `lib/features/transactions/widgets/amount_display.dart` | Render expression history and fixed-precision evaluated results |
+| `lib/features/transactions/transaction_form_controller.dart` | Add `applyOperator()` and expression-aware destructive gating |
+| `lib/features/transactions/transaction_form_screen.dart` | Wire operator taps and expression-aware destructive dialogs |
+| `test/unit/utils/keypad_decimal_math_test.dart` | Add state-machine and arithmetic coverage |
+| `test/widget/features/transactions/calculator_keypad_test.dart` | Add keypad layout/semantics/text-scale coverage |
+| `test/widget/features/transactions/amount_display_test.dart` | Add expression-line/result-format coverage |
+| `test/unit/controllers/transaction_form_controller_test.dart` | Add controller command + destructive gating coverage |
+| `test/widget/features/transactions/transaction_form_screen_test.dart` | Add end-to-end calculator flow coverage |
+| `l10n/app_en.arb` / `app_zh_CN.arb` / `app_zh_TW.arb` | Add localized operator semantics labels |

@@ -2,70 +2,84 @@
 
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add inline calculator operations (+, −, ×, ÷) to the transaction form keypad so users can compute amounts without leaving the form.
+**Goal:** Add inline calculator operations (`+`, `−`, `×`, `÷`) to the transaction form keypad so users can compute amounts without leaving the form.
 
-**Architecture:** Extend `KeypadState` with expression fields (leftOperand, operator, isEvaluating, showingResult). Add `pushOperator()` as the core evaluation method. Update `CalculatorKeypad` widget layout to include operator keys in the right column. Add expression line to `AmountDisplay`. Wire through `TransactionFormController`.
+**Architecture:** `KeypadState` remains the single calculator state machine. Add expression fields plus `hasCurrentInput` so the reducer can distinguish an empty right operand from an explicitly entered `0`; this is required for operator correction (`12 ×` then `−`) and for true divide-by-zero behavior (`12 ÷ 0`). Arithmetic stays integer-only: `+` / `−` are direct minor-unit math, `×` rounds half-up `(left * right) / unit`, and `÷` rounds half-up `(left * unit) / right` with `BigInt` helpers only. Because expression-only transitions can leave `amountMinorUnits` unchanged, add a `keypadRevision` field to `TransactionFormState.data` and bump it on every keypad mutation so Riverpod still rebuilds the form for operator correction and decimal-start states. `AmountDisplay` keeps the current live-entry preview while typing, but once `showingResult == true` both the expression line and the main result use `MoneyFormatter.formatBare(...)` so evaluated math is locale-aware and fixed-precision; the currency-change placeholder is suppressed whenever calculator expression state is active.
 
-**Tech Stack:** Flutter, Riverpod, Freezed, Drift
+**Tech Stack:** Flutter, Riverpod, intl `MoneyFormatter`, mocktail-based unit/widget tests, Flutter l10n (`flutter gen-l10n`)
 
-**Spec:** `docs/superpowers/specs/2026-04-30-calculator-keypad-design.md`
+**Spec:** `docs/superpowers/specs/2026-04-30-calculator-keypad-design.md` (update this in the same change so it stays consistent with the plan)
+
+**Scope Notes:**
+- P0: `KeypadState` transitions, keypad layout, controller wiring, destructive-expression confirm paths when `displayCurrency` would change
+- P1: expression-line polish, localized operator semantics labels, 2x text-scale assertions
+- Before every `flutter test` or `flutter analyze` command below, run `dart format .`
+- Snippets below pin down the non-obvious contracts. Use smaller repo-native edits when possible; do not treat every snippet as a required literal patch if a simpler equivalent keeps the same invariants and tests green.
+- Intermediate commits are optional checkpoint boundaries, not required output of the plan.
 
 ---
 
 ## File Structure
 
-| File | Responsibility |
-|---|---|
-| `lib/features/transactions/keypad_state.dart` | Pure state machine — expression fields, `pushOperator()`, evaluation logic |
-| `lib/features/transactions/widgets/calculator_keypad.dart` | Keypad widget — new 4×4 layout, operator keys, long-press ⌫ |
-| `lib/features/transactions/widgets/amount_display.dart` | Display — expression line rendering for evaluating/result states |
-| `lib/features/transactions/transaction_form_controller.dart` | Controller — `applyOperator()`, modified digit/backspace/clear methods |
-| `test/unit/utils/keypad_decimal_math_test.dart` | Unit tests for `KeypadState` calculator operations |
-| `test/widget/features/transactions/calculator_keypad_test.dart` | Widget tests for keypad layout and operator keys |
+| File                                                                  | Responsibility                                                                                            |
+|-----------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| `lib/features/transactions/keypad_state.dart`                         | Pure calculator state machine: expression fields, empty-vs-zero operand tracking, integer-only evaluation |
+| `lib/features/transactions/widgets/calculator_keypad.dart`            | 4x4 keypad layout, operator buttons, localized semantics labels, long-press clear, text-scale clamp       |
+| `lib/features/transactions/widgets/amount_display.dart`               | Expression line + fixed-precision evaluated result rendering                                              |
+| `lib/features/transactions/transaction_form_controller.dart`          | `applyOperator()`, `keypadRevision` mirroring, destructive-input gating for account/currency changes      |
+| `lib/features/transactions/transaction_form_screen.dart`              | Wire `onOperator`, expand destructive dialogs to cover active expressions                                 |
+| `lib/features/transactions/transaction_form_state.dart`               | Add `keypadRevision` so expression-only keypad changes trigger rebuilds                                   |
+| `test/unit/utils/keypad_decimal_math_test.dart`                       | Calculator arithmetic and state-transition tests                                                          |
+| `test/widget/features/transactions/calculator_keypad_test.dart`       | Keypad layout, semantics, long-press clear, text-scale behavior                                           |
+| `test/widget/features/transactions/amount_display_test.dart`          | Expression-line and fixed-result formatting tests                                                         |
+| `test/unit/controllers/transaction_form_controller_test.dart`         | Controller command tests using the existing mocktail + `ProviderContainer` harness                        |
+| `test/widget/features/transactions/transaction_form_screen_test.dart` | Screen-level operator flow, invalid-op save gating, destructive-change dialogs                            |
+| `test/integration/transaction_mutation_flow_test.dart`                | Update duplicate/edit clear interactions away from the removed `C` key                                    |
+| `l10n/app_en.arb` / `l10n/app_zh_CN.arb` / `l10n/app_zh_TW.arb`       | Localized accessibility labels for operator buttons                                                       |
+| `lib/l10n/app_localizations*.dart`                                    | Generated after `flutter gen-l10n`                                                                        |
 
 ---
 
-## Chunk 1: KeypadState — Pure State Machine
+## Chunk 1: KeypadState — Contracts First
 
-### Task 1: Add CalcOperator enum and new fields
+### Task 1: Add calculator fields and empty-vs-zero bookkeeping
 
 **Files:**
 - Modify: `lib/features/transactions/keypad_state.dart`
 - Test: `test/unit/utils/keypad_decimal_math_test.dart`
 
-- [ ] **Step 1: Write failing test for new fields**
+- [ ] **Step 1: Write the failing state-shape tests**
 
 Add to `test/unit/utils/keypad_decimal_math_test.dart`:
 
 ```dart
-group('KeypadState — calculator expression fields', () {
-  test('K60: initial state has no expression', () {
+group('KeypadState — calculator fields', () {
+  test('K60: initial state has no expression and no current input', () {
     const s = KeypadState.initial();
+
     expect(s.leftOperand, isNull);
     expect(s.operator, isNull);
     expect(s.isEvaluating, isFalse);
     expect(s.showingResult, isFalse);
     expect(s.rightOperand, isNull);
+    expect(s.hasCurrentInput, isFalse);
+    expect(s.hasExpression, isFalse);
   });
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **Step 2: Run the test to verify it fails**
 
-Run: `flutter test test/unit/utils/keypad_decimal_math_test.dart --name K60`
-Expected: FAIL — `leftOperand` not found on `KeypadState`
+Run: `dart format . && flutter test test/unit/utils/keypad_decimal_math_test.dart --name K60`
+Expected: FAIL because `hasCurrentInput` / expression fields do not exist yet
 
-- [ ] **Step 3: Add CalcOperator enum and fields to KeypadState**
+- [ ] **Step 3: Add `CalcOperator`, expression fields, `hasCurrentInput`, and `hasExpression`**
 
-In `lib/features/transactions/keypad_state.dart`, add enum before `KeypadState` class:
+In `lib/features/transactions/keypad_state.dart`:
 
 ```dart
 enum CalcOperator { add, subtract, multiply, divide }
-```
 
-Add fields to `KeypadState` constructor and `initial()`:
-
-```dart
 class KeypadState {
   const KeypadState({
     required this.amountMinorUnits,
@@ -76,6 +90,7 @@ class KeypadState {
     this.isEvaluating = false,
     this.showingResult = false,
     this.rightOperand,
+    this.hasCurrentInput = false,
   });
 
   const KeypadState.initial()
@@ -86,180 +101,246 @@ class KeypadState {
       operator = null,
       isEvaluating = false,
       showingResult = false,
-      rightOperand = null;
+      rightOperand = null,
+      hasCurrentInput = false;
 
-  // ... existing fields ...
+  final int amountMinorUnits;
+  final int fractionalDigitsEntered;
+  final bool isFractionalMode;
   final int? leftOperand;
   final CalcOperator? operator;
   final bool isEvaluating;
   final bool showingResult;
   final int? rightOperand;
-```
+  final bool hasCurrentInput;
 
-- [ ] **Step 4: Run test to verify it passes**
-
-Run: `flutter test test/unit/utils/keypad_decimal_math_test.dart --name K60`
-Expected: PASS
-
-- [ ] **Step 5: Update ==, hashCode, toString**
-
-Update `operator ==` to include new fields:
-
-```dart
-@override
-bool operator ==(Object other) {
-  if (identical(this, other)) return true;
-  return other is KeypadState &&
-      other.amountMinorUnits == amountMinorUnits &&
-      other.fractionalDigitsEntered == fractionalDigitsEntered &&
-      other.isFractionalMode == isFractionalMode &&
-      other.leftOperand == leftOperand &&
-      other.operator == operator &&
-      other.isEvaluating == isEvaluating &&
-      other.showingResult == showingResult &&
-      other.rightOperand == rightOperand;
+  bool get hasExpression =>
+      leftOperand != null ||
+      operator != null ||
+      isEvaluating ||
+      showingResult ||
+      rightOperand != null;
 }
-
-@override
-int get hashCode => Object.hash(
-  amountMinorUnits,
-  fractionalDigitsEntered,
-  isFractionalMode,
-  leftOperand,
-  operator,
-  isEvaluating,
-  showingResult,
-  rightOperand,
-);
-
-@override
-String toString() =>
-    'KeypadState(amountMinorUnits: $amountMinorUnits, '
-    'fractionalDigitsEntered: $fractionalDigitsEntered, '
-    'isFractionalMode: $isFractionalMode, '
-    'leftOperand: $leftOperand, '
-    'operator: $operator, '
-    'isEvaluating: $isEvaluating, '
-    'showingResult: $showingResult, '
-    'rightOperand: $rightOperand)';
 ```
 
-- [ ] **Step 6: Commit**
+Update `==`, `hashCode`, and `toString()` to include `hasCurrentInput`.
 
-```bash
-git add lib/features/transactions/keypad_state.dart test/unit/utils/keypad_decimal_math_test.dart
-git commit -m "feat: add CalcOperator enum and expression fields to KeypadState"
-```
+- [ ] **Step 4: Run the test to verify it passes**
+
+Run: `dart format . && flutter test test/unit/utils/keypad_decimal_math_test.dart --name K60`
+Expected: PASS
 
 ---
 
-### Task 2: Add pushOperator() method
+### Task 2: Define arithmetic, operator correction, and explicit-zero behavior
 
 **Files:**
 - Modify: `lib/features/transactions/keypad_state.dart`
 - Test: `test/unit/utils/keypad_decimal_math_test.dart`
 
-- [ ] **Step 1: Write failing tests for pushOperator**
+- [ ] **Step 1: Write the failing operator tests**
 
 Add to `test/unit/utils/keypad_decimal_math_test.dart`:
 
 ```dart
 group('KeypadState.pushOperator', () {
-  test('K70: pushOperator(add) stores leftOperand and enters evaluating', () {
+  test('K70: first operator stores the left operand and clears the input', () {
     final s = const KeypadState.initial()
         .push(1, decimals: 2)
-        .push(2, decimals: 2); // 1200
+        .push(2, decimals: 2); // 12.00
+
     final result = s.pushOperator(CalcOperator.add, decimals: 2);
+
     expect(result.leftOperand, 1200);
     expect(result.operator, CalcOperator.add);
     expect(result.isEvaluating, isTrue);
     expect(result.amountMinorUnits, 0);
-    expect(result.showingResult, isFalse);
+    expect(result.hasCurrentInput, isFalse);
   });
 
-  test('K71: pushOperator(add) on evaluating state evaluates first', () {
-    // 12 + 5 = 17, then push subtract
+  test('K71: tapping a different operator before right input replaces the pending operator', () {
     final s = const KeypadState.initial()
         .push(1, decimals: 2)
-        .push(2, decimals: 2) // 1200
-        .pushOperator(CalcOperator.add, decimals: 2)
-        .push(5, decimals: 2); // 500
+        .push(2, decimals: 2)
+        .pushOperator(CalcOperator.multiply, decimals: 2);
+
     final result = s.pushOperator(CalcOperator.subtract, decimals: 2);
-    expect(result.amountMinorUnits, 1700); // 12 + 5 = 17
-    expect(result.leftOperand, 1700);
+
+    expect(result.leftOperand, 1200);
     expect(result.operator, CalcOperator.subtract);
-    expect(result.isEvaluating, isTrue);
-  });
-
-  test('K72: pushOperator on showingResult chains from result', () {
-    // After 12 + 5 = 17, tap multiply
-    final s = KeypadState(
-      amountMinorUnits: 1700,
-      fractionalDigitsEntered: 0,
-      isFractionalMode: false,
-      leftOperand: null,
-      operator: null,
-      isEvaluating: false,
-      showingResult: true,
-    );
-    final result = s.pushOperator(CalcOperator.multiply, decimals: 2);
-    expect(result.leftOperand, 1700);
-    expect(result.operator, CalcOperator.multiply);
-    expect(result.isEvaluating, isTrue);
     expect(result.amountMinorUnits, 0);
-    expect(result.showingResult, isFalse);
+    expect(result.isEvaluating, isTrue);
+    expect(result.hasCurrentInput, isFalse);
   });
 
-  test('K73: pushOperator(add) on zero amount', () {
-    final s = const KeypadState.initial();
+  test('K72: repeating the same operator with no right input is a no-op', () {
+    final s = const KeypadState.initial()
+        .push(1, decimals: 2)
+        .pushOperator(CalcOperator.add, decimals: 2);
+
     final result = s.pushOperator(CalcOperator.add, decimals: 2);
-    expect(result.leftOperand, 0);
-    expect(result.operator, CalcOperator.add);
-    expect(result.isEvaluating, isTrue);
+    expect(result, s);
+  });
+
+  test('K73: explicit integer zero counts as divide-by-zero input', () {
+    final s = const KeypadState.initial()
+        .push(7, decimals: 2)
+        .pushOperator(CalcOperator.divide, decimals: 2)
+        .push(0, decimals: 2);
+
+    final result = s.pushOperator(CalcOperator.divide, decimals: 2);
+
     expect(result.amountMinorUnits, 0);
+    expect(result.showingResult, isTrue);
+    expect(result.rightOperand, 0);
+  });
+
+  test('K74: explicit fractional zero also counts as right input', () {
+    final s = const KeypadState.initial()
+        .push(7, decimals: 2)
+        .pushOperator(CalcOperator.divide, decimals: 2)
+        .pushDecimal(decimals: 2)
+        .push(0, decimals: 2);
+
+    final result = s.pushOperator(CalcOperator.divide, decimals: 2);
+
+    expect(result.amountMinorUnits, 0);
+    expect(result.showingResult, isTrue);
+    expect(result.rightOperand, 0);
+  });
+
+  test('K80: 12 + 5 = 17', () {
+    final s = const KeypadState.initial()
+        .push(1, decimals: 2)
+        .push(2, decimals: 2)
+        .pushOperator(CalcOperator.add, decimals: 2)
+        .push(5, decimals: 2);
+
+    final result = s.pushOperator(CalcOperator.add, decimals: 2);
+    expect(result.amountMinorUnits, 1700);
+  });
+
+  test('K81: 150 - 50 = 100', () {
+    final s = const KeypadState.initial()
+        .push(1, decimals: 2)
+        .push(5, decimals: 2)
+        .push(0, decimals: 2)
+        .pushOperator(CalcOperator.subtract, decimals: 2)
+        .push(5, decimals: 2)
+        .push(0, decimals: 2);
+
+    final result = s.pushOperator(CalcOperator.subtract, decimals: 2);
+    expect(result.amountMinorUnits, 10000);
+  });
+
+  test('K82: 2 × 3 = 6', () {
+    final s = const KeypadState.initial()
+        .push(2, decimals: 2)
+        .pushOperator(CalcOperator.multiply, decimals: 2)
+        .push(3, decimals: 2);
+
+    final result = s.pushOperator(CalcOperator.multiply, decimals: 2);
+    expect(result.amountMinorUnits, 600);
+  });
+
+  test('K83: 100 ÷ 3 = 33.33', () {
+    final s = const KeypadState.initial()
+        .push(1, decimals: 2)
+        .push(0, decimals: 2)
+        .push(0, decimals: 2)
+        .pushOperator(CalcOperator.divide, decimals: 2)
+        .push(3, decimals: 2);
+
+    final result = s.pushOperator(CalcOperator.divide, decimals: 2);
+    expect(result.amountMinorUnits, 3333);
+  });
+
+  test('K84: division half-up tie rounds up (1 ÷ 8 = 0.13)', () {
+    final s = const KeypadState.initial()
+        .push(1, decimals: 2)
+        .pushOperator(CalcOperator.divide, decimals: 2)
+        .push(8, decimals: 2);
+
+    final result = s.pushOperator(CalcOperator.divide, decimals: 2);
+    expect(result.amountMinorUnits, 13);
+  });
+
+  test('K85: multiplication half-up tie rounds up (0.05 × 0.10 = 0.01)', () {
+    final s = const KeypadState.initial()
+        .pushDecimal(decimals: 2)
+        .push(0, decimals: 2)
+        .push(5, decimals: 2)
+        .pushOperator(CalcOperator.multiply, decimals: 2)
+        .pushDecimal(decimals: 2)
+        .push(1, decimals: 2)
+        .push(0, decimals: 2);
+
+    final result = s.pushOperator(CalcOperator.multiply, decimals: 2);
+    expect(result.amountMinorUnits, 1);
+  });
+
+  test('K86: subtraction underflow clamps to zero', () {
+    final s = const KeypadState.initial()
+        .push(3, decimals: 2)
+        .pushOperator(CalcOperator.subtract, decimals: 2)
+        .push(5, decimals: 2);
+
+    final result = s.pushOperator(CalcOperator.subtract, decimals: 2);
+    expect(result.amountMinorUnits, 0);
+    expect(result.showingResult, isTrue);
   });
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `flutter test test/unit/utils/keypad_decimal_math_test.dart --name K7`
-Expected: FAIL — `pushOperator` not found
+Run: `dart format . && flutter test test/unit/utils/keypad_decimal_math_test.dart --name "KeypadState.pushOperator"`
+Expected: FAIL because `pushOperator()` does not exist and the reducer cannot yet distinguish empty vs explicit zero input
 
-- [ ] **Step 3: Implement pushOperator()**
+- [ ] **Step 3: Implement `pushOperator()` and integer-only arithmetic**
 
-Add to `lib/features/transactions/keypad_state.dart` (after `clear()`):
+In `lib/features/transactions/keypad_state.dart`, add the operator reducer using `hasCurrentInput`:
 
 ```dart
-/// Returns a new [KeypadState] with the operator applied.
-///
-/// Four paths:
-/// 1. No expression active: stores current amount as leftOperand.
-/// 2a. Evaluating, same operator: evaluates and shows result.
-/// 2b. Evaluating, different operator: evaluates, chains result as leftOperand.
-/// 3. Result showing: uses result as leftOperand, starts new expression.
 KeypadState pushOperator(CalcOperator op, {required int decimals}) {
-  // Path 2a/2b: evaluating — evaluate pending expression first
   if (isEvaluating && operator != null && leftOperand != null) {
+    if (!hasCurrentInput) {
+      if (op == operator) return this;
+      return KeypadState(
+        amountMinorUnits: 0,
+        fractionalDigitsEntered: 0,
+        isFractionalMode: false,
+        leftOperand: leftOperand,
+        operator: op,
+        isEvaluating: true,
+        showingResult: false,
+        rightOperand: null,
+        hasCurrentInput: false,
+      );
+    }
+
+    final right = amountMinorUnits;
     final result = _evaluate(
-      leftOperand!,
-      amountMinorUnits,
-      operator!,
+      leftOperand: leftOperand!,
+      rightOperand: right,
+      operator: operator!,
       decimals: decimals,
     );
-    // Path 2a: same operator — evaluate and show result
+
     if (op == operator) {
       return KeypadState(
         amountMinorUnits: result,
         fractionalDigitsEntered: 0,
         isFractionalMode: false,
-        leftOperand: leftOperand,  // preserve for expression line
-        operator: operator,        // preserve for expression line
+        leftOperand: leftOperand,
+        operator: operator,
+        isEvaluating: false,
         showingResult: true,
-        rightOperand: amountMinorUnits, // preserve right operand for expression
+        rightOperand: right,
+        hasCurrentInput: false,
       );
     }
-    // Path 2b: different operator — chain
+
     return KeypadState(
       amountMinorUnits: 0,
       fractionalDigitsEntered: 0,
@@ -268,9 +349,11 @@ KeypadState pushOperator(CalcOperator op, {required int decimals}) {
       operator: op,
       isEvaluating: true,
       showingResult: false,
+      rightOperand: null,
+      hasCurrentInput: false,
     );
   }
-  // Path 3: showing result — chain from result
+
   if (showingResult) {
     return KeypadState(
       amountMinorUnits: 0,
@@ -280,9 +363,11 @@ KeypadState pushOperator(CalcOperator op, {required int decimals}) {
       operator: op,
       isEvaluating: true,
       showingResult: false,
+      rightOperand: null,
+      hasCurrentInput: false,
     );
   }
-  // Path 1: no expression — store as left operand
+
   return KeypadState(
     amountMinorUnits: 0,
     fractionalDigitsEntered: 0,
@@ -291,411 +376,251 @@ KeypadState pushOperator(CalcOperator op, {required int decimals}) {
     operator: op,
     isEvaluating: true,
     showingResult: false,
+    rightOperand: null,
+    hasCurrentInput: false,
   );
 }
 
-/// Evaluate a binary expression. Result clamps to non-negative.
-/// Division rounds half-up to the currency's decimal precision.
-static int _evaluate(
-  int left,
-  int right,
-  CalcOperator op, {
+static int _evaluate({
+  required int leftOperand,
+  required int rightOperand,
+  required CalcOperator operator,
   required int decimals,
 }) {
-  return switch (op) {
-    CalcOperator.add => left + right,
-    CalcOperator.subtract => (left - right).clamp(0, left),
-    CalcOperator.multiply => left * right,
-    CalcOperator.divide => right == 0
+  final unit = BigInt.from(_pow10(decimals));
+  return switch (operator) {
+    CalcOperator.add => leftOperand + rightOperand,
+    CalcOperator.subtract => (leftOperand - rightOperand).clamp(0, leftOperand),
+    CalcOperator.multiply => _roundHalfUp(
+      BigInt.from(leftOperand) * BigInt.from(rightOperand),
+      unit,
+    ),
+    CalcOperator.divide => rightOperand == 0
         ? 0
-        : _roundHalfUp(left / right, decimals: decimals),
+        : _roundHalfUp(
+            BigInt.from(leftOperand) * unit,
+            BigInt.from(rightOperand),
+          ),
   };
 }
 
-/// Round half-up to the given decimal precision in minor units.
-static int _roundHalfUp(double value, {required int decimals}) {
-  final unit = _pow10(decimals);
-  final shifted = value * unit;
-  // Dart's round() uses half-away-from-zero, which matches half-up
-  // for positive values.
-  return shifted.round();
+static int _roundHalfUp(BigInt numerator, BigInt denominator) {
+  final adjusted = numerator + (denominator ~/ BigInt.from(2));
+  return (adjusted ~/ denominator).toInt();
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+Keep the zero-result policy for subtraction underflow and divide-by-zero. The expression stays visible and the form remains unsaveable because `TransactionFormState.canSave` still requires `amountMinorUnits > 0`.
 
-Run: `flutter test test/unit/utils/keypad_decimal_math_test.dart --name K7`
+- [ ] **Step 4: Run the tests to verify they pass**
+
+Run: `dart format . && flutter test test/unit/utils/keypad_decimal_math_test.dart --name "KeypadState.pushOperator"`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
-
-```bash
-git add lib/features/transactions/keypad_state.dart test/unit/utils/keypad_decimal_math_test.dart
-git commit -m "feat: add pushOperator() with evaluation logic to KeypadState"
-```
-
 ---
 
-### Task 3: Add evaluation result tests
-
-**Files:**
-- Test: `test/unit/utils/keypad_decimal_math_test.dart`
-
-- [ ] **Step 1: Write evaluation result tests**
-
-Add to `test/unit/utils/keypad_decimal_math_test.dart`:
-
-```dart
-group('KeypadState.pushOperator — evaluation results', () {
-  test('K80: 12 + 5 = 17 (USD minor units)', () {
-    final s = const KeypadState.initial()
-        .push(1, decimals: 2)
-        .push(2, decimals: 2) // 1200
-        .pushOperator(CalcOperator.add, decimals: 2)
-        .push(5, decimals: 2); // 500
-    // Evaluate by tapping add again
-    final result = s.pushOperator(CalcOperator.add, decimals: 2);
-    expect(result.amountMinorUnits, 1700);
-    expect(result.leftOperand, 1200); // preserved for expression line
-    expect(result.operator, CalcOperator.add); // preserved for expression line
-    expect(result.isEvaluating, isFalse);
-    expect(result.showingResult, isTrue);
-    expect(result.rightOperand, 500); // preserved for expression line
-  });
-
-  test('K81: 150 - 50 = 100 (USD minor units)', () {
-    // 150.00 = 15000 minor units, 50.00 = 5000 minor units
-    final s = const KeypadState.initial()
-        .push(1, decimals: 2)
-        .push(5, decimals: 2)
-        .push(0, decimals: 2) // 15000
-        .pushOperator(CalcOperator.subtract, decimals: 2)
-        .push(5, decimals: 2)
-        .push(0, decimals: 2); // 5000
-    final result = s.pushOperator(CalcOperator.subtract, decimals: 2);
-    expect(result.amountMinorUnits, 10000);
-  });
-
-  test('K82: 200 * 3 = 600 (USD minor units)', () {
-    // leftOperand=20000, right=300
-    final s = const KeypadState.initial()
-        .push(2, decimals: 2) // 200
-        .pushOperator(CalcOperator.multiply, decimals: 2)
-        .push(3, decimals: 2); // 3
-    final result = s.pushOperator(CalcOperator.multiply, decimals: 2);
-    // 200 * 3 = 600 → 60000 minor units
-    expect(result.amountMinorUnits, 60000);
-  });
-
-  test('K83: 100 / 3 = 33.33 (USD, half-up rounded) → 3333 minor units', () {
-    // leftOperand=10000, right=300
-    final s = const KeypadState.initial()
-        .push(1, decimals: 2) // 100
-        .pushOperator(CalcOperator.divide, decimals: 2)
-        .push(3, decimals: 2); // 3
-    final result = s.pushOperator(CalcOperator.divide, decimals: 2);
-    expect(result.amountMinorUnits, 3333);
-  });
-
-  test('K84: 700 / 3 = 233.33 (USD, half-up rounded) → 23333 minor units', () {
-    final s = const KeypadState.initial()
-        .push(7, decimals: 2) // 700
-        .pushOperator(CalcOperator.divide, decimals: 2)
-        .push(3, decimals: 2); // 3
-    final result = s.pushOperator(CalcOperator.divide, decimals: 2);
-    expect(result.amountMinorUnits, 23333);
-  });
-
-  test('K85: negative result clamps to 0 (3 - 5)', () {
-    final s = const KeypadState.initial()
-        .push(3, decimals: 2) // 300
-        .pushOperator(CalcOperator.subtract, decimals: 2)
-        .push(5, decimals: 2); // 500
-    final result = s.pushOperator(CalcOperator.subtract, decimals: 2);
-    expect(result.amountMinorUnits, 0);
-    expect(result.showingResult, isTrue);
-  });
-
-  test('K86: division by zero returns 0', () {
-    final s = const KeypadState.initial()
-        .push(7, decimals: 2) // 700
-        .pushOperator(CalcOperator.divide, decimals: 2);
-    // amountMinorUnits is still 0 (right operand not entered yet)
-    final result = s.pushOperator(CalcOperator.divide, decimals: 2);
-    expect(result.amountMinorUnits, 0);
-  });
-
-  test('K87: chain 12 + 5 - 3', () {
-    // First: 12 + 5
-    final s1 = const KeypadState.initial()
-        .push(1, decimals: 2)
-        .push(2, decimals: 2) // 1200
-        .pushOperator(CalcOperator.add, decimals: 2)
-        .push(5, decimals: 2); // 500
-    // Tap subtract: evaluates 12+5=17, then stores 17 as left
-    final s2 = s1.pushOperator(CalcOperator.subtract, decimals: 2);
-    expect(s2.amountMinorUnits, 0); // right operand cleared
-    expect(s2.leftOperand, 1700);
-    expect(s2.operator, CalcOperator.subtract);
-    // Enter 3 and evaluate
-    final s3 = s2.push(3, decimals: 2); // 300
-    final result = s3.pushOperator(CalcOperator.subtract, decimals: 2);
-    expect(result.amountMinorUnits, 1400); // 17 - 3 = 14
-  });
-});
-```
-
-- [ ] **Step 2: Run tests to verify they pass**
-
-Run: `flutter test test/unit/utils/keypad_decimal_math_test.dart --name K8`
-Expected: PASS (logic already implemented in Task 2)
-
-- [ ] **Step 3: Commit**
-
-```bash
-git add test/unit/utils/keypad_decimal_math_test.dart
-git commit -m "test: add calculator evaluation result tests"
-```
-
----
-
-### Task 4: Modify push() for showingResult state
+### Task 3: Preserve expression state while editing the right operand
 
 **Files:**
 - Modify: `lib/features/transactions/keypad_state.dart`
 - Test: `test/unit/utils/keypad_decimal_math_test.dart`
 
-- [ ] **Step 1: Write failing test**
+- [ ] **Step 1: Write the failing mutator tests**
 
 Add to `test/unit/utils/keypad_decimal_math_test.dart`:
 
 ```dart
-group('KeypadState.push — showingResult state', () {
-  test('K90: digit during showingResult clears expression and starts fresh', () {
-    // Start from showingResult state (after evaluation, leftOperand/operator/rightOperand preserved)
+group('KeypadState — editing the current operand', () {
+  test('K90: digit during evaluating preserves the pending expression', () {
+    final s = const KeypadState.initial()
+        .push(1, decimals: 2)
+        .pushOperator(CalcOperator.add, decimals: 2);
+
+    final result = s.push(5, decimals: 2);
+
+    expect(result.amountMinorUnits, 500);
+    expect(result.leftOperand, 100);
+    expect(result.operator, CalcOperator.add);
+    expect(result.isEvaluating, isTrue);
+    expect(result.hasCurrentInput, isTrue);
+  });
+
+  test('K91: decimal during evaluating marks the right operand as started', () {
+    final s = const KeypadState.initial()
+        .push(1, decimals: 2)
+        .pushOperator(CalcOperator.add, decimals: 2);
+
+    final result = s.pushDecimal(decimals: 2);
+
+    expect(result.leftOperand, 100);
+    expect(result.operator, CalcOperator.add);
+    expect(result.isEvaluating, isTrue);
+    expect(result.hasCurrentInput, isTrue);
+  });
+
+  test('K92: digit during showingResult clears the old expression and starts fresh', () {
     final s = KeypadState(
       amountMinorUnits: 1700,
       fractionalDigitsEntered: 0,
       isFractionalMode: false,
       leftOperand: 1200,
       operator: CalcOperator.add,
-      isEvaluating: false,
       showingResult: true,
       rightOperand: 500,
+      hasCurrentInput: false,
     );
+
     final result = s.push(3, decimals: 2);
-    expect(result.amountMinorUnits, 300); // fresh 3, not 1700 + 3
+
+    expect(result.amountMinorUnits, 300);
     expect(result.leftOperand, isNull);
     expect(result.operator, isNull);
-    expect(result.isEvaluating, isFalse);
     expect(result.showingResult, isFalse);
-    expect(result.rightOperand, isNull);
+    expect(result.hasCurrentInput, isTrue);
   });
-});
-```
 
-- [ ] **Step 2: Run test to verify it fails**
-
-Run: `flutter test test/unit/utils/keypad_decimal_math_test.dart --name K90`
-Expected: FAIL — result is 17300 instead of 300
-
-- [ ] **Step 3: Modify push() to handle showingResult**
-
-At the top of the `push()` method in `lib/features/transactions/keypad_state.dart`, add:
-
-```dart
-KeypadState push(int digit, {required int decimals}) {
-  assert(digit >= 0 && digit <= 9, 'digit out of range: $digit');
-  // If showing result, clear expression and start fresh
-  if (showingResult) {
-    return KeypadState(
-      amountMinorUnits: digit * _pow10(decimals),
-      fractionalDigitsEntered: 0,
-      isFractionalMode: false,
-    );
-  }
-  // ... rest of existing push logic unchanged ...
-```
-
-Also modify `pushDecimal()` to handle `showingResult`:
-
-```dart
-KeypadState pushDecimal({required int decimals}) {
-  if (decimals == 0) return this;
-  // If showing result, clear expression and start fresh fractional mode
-  if (showingResult) {
-    return KeypadState(
-      amountMinorUnits: 0,
-      fractionalDigitsEntered: 0,
-      isFractionalMode: true,
-    );
-  }
-  // ... rest of existing pushDecimal logic unchanged ...
-```
-
-- [ ] **Step 4: Run test to verify it passes**
-
-Run: `flutter test test/unit/utils/keypad_decimal_math_test.dart --name K90`
-Expected: PASS
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add lib/features/transactions/keypad_state.dart test/unit/utils/keypad_decimal_math_test.dart
-git commit -m "feat: clear expression on digit input during showingResult state"
-```
-
----
-
-### Task 5: Modify pop() for expression cancellation
-
-**Files:**
-- Modify: `lib/features/transactions/keypad_state.dart`
-- Test: `test/unit/utils/keypad_decimal_math_test.dart`
-
-- [ ] **Step 1: Write failing test**
-
-Add to `test/unit/utils/keypad_decimal_math_test.dart`:
-
-```dart
-group('KeypadState.pop — expression cancellation', () {
-  test('K95: pop during evaluating with amount=0 cancels expression', () {
-    // 12 + (nothing typed yet) → backspace → cancel, restore 12
+  test('K93: pop with an empty right operand cancels the expression', () {
     final s = const KeypadState.initial()
         .push(1, decimals: 2)
-        .push(2, decimals: 2) // 1200
+        .push(2, decimals: 2)
         .pushOperator(CalcOperator.add, decimals: 2);
-    // amountMinorUnits is 0, leftOperand is 1200
-    expect(s.amountMinorUnits, 0);
-    expect(s.leftOperand, 1200);
+
     final result = s.pop(decimals: 2);
+
     expect(result.amountMinorUnits, 1200);
     expect(result.leftOperand, isNull);
     expect(result.operator, isNull);
     expect(result.isEvaluating, isFalse);
+    expect(result.hasCurrentInput, isTrue);
   });
 
-  test('K96: pop during evaluating with amount>0 pops right operand digit', () {
-    final s = const KeypadState.initial()
-        .push(1, decimals: 2)
-        .push(2, decimals: 2) // 1200
-        .pushOperator(CalcOperator.add, decimals: 2)
-        .push(5, decimals: 2); // 500
-    final result = s.pop(decimals: 2);
-    expect(result.amountMinorUnits, 0); // 500 → 0 (single digit popped)
-    expect(result.leftOperand, 1200); // expression preserved
-    expect(result.operator, CalcOperator.add);
-    expect(result.isEvaluating, isTrue);
-  });
-});
-```
-
-- [ ] **Step 2: Run test to verify it fails**
-
-Run: `flutter test test/unit/utils/keypad_decimal_math_test.dart --name K95`
-Expected: FAIL
-
-- [ ] **Step 3: Modify pop() for expression cancellation**
-
-At the top of the `pop()` method in `lib/features/transactions/keypad_state.dart`, add before existing logic:
-
-```dart
-KeypadState pop({required int decimals}) {
-  // Cancel expression if evaluating and right operand is empty
-  if (isEvaluating && amountMinorUnits == 0 && leftOperand != null) {
-    return KeypadState(
-      amountMinorUnits: leftOperand!,
-      fractionalDigitsEntered: 0,
-      isFractionalMode: false,
-    );
-  }
-  // ... rest of existing pop logic unchanged ...
-```
-
-- [ ] **Step 4: Run tests to verify they pass**
-
-Run: `flutter test test/unit/utils/keypad_decimal_math_test.dart --name K9`
-Expected: PASS
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add lib/features/transactions/keypad_state.dart test/unit/utils/keypad_decimal_math_test.dart
-git commit -m "feat: cancel expression on backspace when right operand is empty"
-```
-
----
-
-### Task 6: Modify clear() to reset expression fields
-
-**Files:**
-- Modify: `lib/features/transactions/keypad_state.dart`
-- Test: `test/unit/utils/keypad_decimal_math_test.dart`
-
-- [ ] **Step 1: Write failing test**
-
-Add to `test/unit/utils/keypad_decimal_math_test.dart`:
-
-```dart
-group('KeypadState.clear — expression reset', () {
-  test('K98: clear resets expression fields', () {
+  test('K94: pop with a non-empty right operand preserves the expression', () {
     final s = const KeypadState.initial()
         .push(1, decimals: 2)
         .push(2, decimals: 2)
         .pushOperator(CalcOperator.add, decimals: 2)
         .push(5, decimals: 2);
+
+    final result = s.pop(decimals: 2);
+
+    expect(result.amountMinorUnits, 0);
+    expect(result.leftOperand, 1200);
+    expect(result.operator, CalcOperator.add);
+    expect(result.isEvaluating, isTrue);
+    expect(result.hasCurrentInput, isFalse);
+  });
+
+  test('K95: backspacing an explicit zero returns to the empty-right-operand state', () {
+    final s = const KeypadState.initial()
+        .push(7, decimals: 2)
+        .pushOperator(CalcOperator.divide, decimals: 2)
+        .push(0, decimals: 2);
+
+    final result = s.pop(decimals: 2);
+
+    expect(result.amountMinorUnits, 0);
+    expect(result.operator, CalcOperator.divide);
+    expect(result.isEvaluating, isTrue);
+    expect(result.hasCurrentInput, isFalse);
+  });
+
+  test('K96: clear resets every expression field', () {
+    final s = const KeypadState.initial()
+        .push(1, decimals: 2)
+        .pushOperator(CalcOperator.add, decimals: 2)
+        .push(5, decimals: 2);
+
     final result = s.clear();
+
     expect(result.amountMinorUnits, 0);
     expect(result.leftOperand, isNull);
     expect(result.operator, isNull);
     expect(result.isEvaluating, isFalse);
     expect(result.showingResult, isFalse);
+    expect(result.rightOperand, isNull);
+    expect(result.hasCurrentInput, isFalse);
   });
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `flutter test test/unit/utils/keypad_decimal_math_test.dart --name K98`
-Expected: FAIL — expression fields not reset
+Run: `dart format . && flutter test test/unit/utils/keypad_decimal_math_test.dart --name "K9|K96"`
+Expected: FAIL because `push`, `pushDecimal`, and `pop` still drop or mis-track expression state
 
-- [ ] **Step 3: Update clear() to reset expression fields**
+- [ ] **Step 3: Update `push`, `pushDecimal`, `pop`, and `clear()`**
 
-The `clear()` method already returns `const KeypadState.initial()` which now includes the new fields with their default values. The test should pass as-is since we added defaults to the `initial()` constructor.
+Add one helper that preserves the active expression only while editing the current operand:
 
-- [ ] **Step 4: Run test to verify it passes**
-
-Run: `flutter test test/unit/utils/keypad_decimal_math_test.dart --name K98`
-Expected: PASS
-
-- [ ] **Step 5: Run all KeypadState tests**
-
-Run: `flutter test test/unit/utils/keypad_decimal_math_test.dart`
-Expected: ALL PASS
-
-- [ ] **Step 6: Commit**
-
-```bash
-git add lib/features/transactions/keypad_state.dart test/unit/utils/keypad_decimal_math_test.dart
-git commit -m "test: verify clear() resets expression fields"
+```dart
+KeypadState _copyCurrentOperand({
+  required int amountMinorUnits,
+  required int fractionalDigitsEntered,
+  required bool isFractionalMode,
+  required bool hasCurrentInput,
+}) {
+  return KeypadState(
+    amountMinorUnits: amountMinorUnits,
+    fractionalDigitsEntered: fractionalDigitsEntered,
+    isFractionalMode: isFractionalMode,
+    leftOperand: isEvaluating ? leftOperand : null,
+    operator: isEvaluating ? operator : null,
+    isEvaluating: isEvaluating,
+    showingResult: false,
+    rightOperand: null,
+    hasCurrentInput: hasCurrentInput,
+  );
+}
 ```
+
+Then update the mutators with these rules:
+- `push(...)`: if `showingResult`, clear the old expression and start a fresh current operand; otherwise preserve `leftOperand` / `operator` while `isEvaluating == true`
+- `pushDecimal(...)`: when it successfully enters fractional mode, set `hasCurrentInput = true`; this is what makes `.0` different from “empty operand”
+- `pop(...)`: if `showingResult`, first convert the result into a plain current operand and then backspace it; if `isEvaluating && !hasCurrentInput`, cancel the expression and restore `leftOperand`; if backspacing reduces the current operand to an empty zero state, set `hasCurrentInput = false`
+- `clear()`: still return `const KeypadState.initial()`
+
+- [ ] **Step 4: Run the full keypad-state suite**
+
+Run: `dart format . && flutter test test/unit/utils/keypad_decimal_math_test.dart`
+Expected: ALL PASS
 
 ---
 
-## Chunk 2: CalculatorKeypad Widget
+## Chunk 2: CalculatorKeypad — Layout, Accessibility, Text Scale
 
-### Task 7: Add operator keys and new layout
+### Task 4: Replace the keypad layout and add localized operator semantics
 
 **Files:**
 - Modify: `lib/features/transactions/widgets/calculator_keypad.dart`
-- Test: `test/widget/features/transactions/calculator_keypad_test.dart`
+- Modify: `test/widget/features/transactions/calculator_keypad_test.dart`
+- Modify: `l10n/app_en.arb`
+- Modify: `l10n/app_zh_CN.arb`
+- Modify: `l10n/app_zh_TW.arb`
+- Generated: `lib/l10n/app_localizations*.dart`
+- Reference: `lib/features/splash/widgets/splash_day_count.dart` for the repo's `textScaler.clamp(maxScaleFactor: 1.5)` pattern
 
-- [ ] **Step 1: Write failing tests for new layout**
+- [ ] **Step 1: Add failing keypad widget tests**
 
-Add to `test/widget/features/transactions/calculator_keypad_test.dart`:
+Update `test/widget/features/transactions/calculator_keypad_test.dart`:
 
 ```dart
-testWidgets('WK10: operator keys render with correct labels', (tester) async {
+Widget _wrap(Widget child, {double? textScale}) => MaterialApp(
+  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  supportedLocales: AppLocalizations.supportedLocales,
+  builder: textScale == null
+      ? null
+      : (context, inner) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(textScale)),
+          child: inner!,
+        ),
+  home: Scaffold(body: child),
+);
+
+testWidgets('WK10: operator keys render and forward the expected enum values', (tester) async {
+  final tapped = <CalcOperator>[];
+
   await tester.pumpWidget(
     _wrap(
       CalculatorKeypad(
@@ -704,39 +629,22 @@ testWidgets('WK10: operator keys render with correct labels', (tester) async {
         onDecimal: () {},
         onBackspace: () {},
         onClear: () {},
-        onOperator: (_) {},
+        onOperator: tapped.add,
       ),
     ),
   );
-  await tester.pumpAndSettle();
+
   expect(find.text('÷'), findsOneWidget);
   expect(find.text('×'), findsOneWidget);
   expect(find.text('−'), findsOneWidget);
   expect(find.text('+'), findsOneWidget);
-});
 
-testWidgets('WK11: onOperator callback fires with correct CalcOperator', (
-  tester,
-) async {
-  final operators = <CalcOperator>[];
-  await tester.pumpWidget(
-    _wrap(
-      CalculatorKeypad(
-        decimals: 2,
-        onDigit: (_) {},
-        onDecimal: () {},
-        onBackspace: () {},
-        onClear: () {},
-        onOperator: operators.add,
-      ),
-    ),
-  );
-  await tester.pumpAndSettle();
   await tester.tap(find.text('+'));
   await tester.tap(find.text('−'));
   await tester.tap(find.text('×'));
   await tester.tap(find.text('÷'));
-  expect(operators, [
+
+  expect(tapped, const [
     CalcOperator.add,
     CalcOperator.subtract,
     CalcOperator.multiply,
@@ -744,7 +652,7 @@ testWidgets('WK11: onOperator callback fires with correct CalcOperator', (
   ]);
 });
 
-testWidgets('WK12: 00 key is removed', (tester) async {
+testWidgets('WK11: old 00 and C keys are gone', (tester) async {
   await tester.pumpWidget(
     _wrap(
       CalculatorKeypad(
@@ -757,29 +665,14 @@ testWidgets('WK12: 00 key is removed', (tester) async {
       ),
     ),
   );
-  await tester.pumpAndSettle();
-  expect(find.text('00'), findsNothing);
-});
 
-testWidgets('WK13: C key is removed', (tester) async {
-  await tester.pumpWidget(
-    _wrap(
-      CalculatorKeypad(
-        decimals: 2,
-        onDigit: (_) {},
-        onDecimal: () {},
-        onBackspace: () {},
-        onClear: () {},
-        onOperator: (_) {},
-      ),
-    ),
-  );
-  await tester.pumpAndSettle();
+  expect(find.text('00'), findsNothing);
   expect(find.text('C'), findsNothing);
 });
 
-testWidgets('WK14: long-press ⌫ triggers onClear', (tester) async {
+testWidgets('WK12: long-pressing backspace triggers clear', (tester) async {
   var clearCount = 0;
+
   await tester.pumpWidget(
     _wrap(
       CalculatorKeypad(
@@ -792,260 +685,179 @@ testWidgets('WK14: long-press ⌫ triggers onClear', (tester) async {
       ),
     ),
   );
-  await tester.pumpAndSettle();
-  await tester.longPress(find.byTooltip(AppLocalizations.of(
-    tester.element(find.byType(CalculatorKeypad)),
-  ).txKeypadBackspace));
+
+  await tester.longPress(find.byTooltip('Backspace'));
   expect(clearCount, 1);
+});
+
+testWidgets('WK13: operator keys expose localized semantics labels', (tester) async {
+  await tester.pumpWidget(
+    _wrap(
+      CalculatorKeypad(
+        decimals: 2,
+        onDigit: (_) {},
+        onDecimal: () {},
+        onBackspace: () {},
+        onClear: () {},
+        onOperator: (_) {},
+      ),
+    ),
+  );
+
+  expect(find.bySemanticsLabel('Add'), findsOneWidget);
+  expect(find.bySemanticsLabel('Subtract'), findsOneWidget);
+  expect(find.bySemanticsLabel('Multiply'), findsOneWidget);
+  expect(find.bySemanticsLabel('Divide'), findsOneWidget);
+});
+
+testWidgets('WK14: operator labels clamp at 1.5x text scale', (tester) async {
+  await tester.pumpWidget(
+    _wrap(
+      CalculatorKeypad(
+        decimals: 2,
+        onDigit: (_) {},
+        onDecimal: () {},
+        onBackspace: () {},
+        onClear: () {},
+        onOperator: (_) {},
+      ),
+      textScale: 2.0,
+    ),
+  );
+
+  final plusText = tester.widget<Text>(find.text('+'));
+  expect(plusText.textScaler!.scale(10), lessThanOrEqualTo(15.0));
+  expect(find.text('+'), findsOneWidget);
+  expect(find.text('÷'), findsOneWidget);
+  expect(tester.takeException(), isNull);
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+Also update the old WK01-WK04 constructor calls to pass `onOperator: (_) {}`.
 
-Run: `flutter test test/widget/features/transactions/calculator_keypad_test.dart --name WK1`
-Expected: FAIL — `onOperator` parameter not found
+- [ ] **Step 2: Run the keypad tests to verify they fail**
 
-- [ ] **Step 3: Add _OperatorKey widget and onOperator callback**
+Run: `dart format . && flutter test test/widget/features/transactions/calculator_keypad_test.dart`
+Expected: FAIL because `CalculatorKeypad` is still numeric-only and has no operator semantics labels
 
-In `lib/features/transactions/widgets/calculator_keypad.dart`:
+- [ ] **Step 3: Add operator l10n keys for semantics labels**
 
-Add `onOperator` callback to `CalculatorKeypad`:
+In `l10n/app_en.arb` add:
 
-```dart
-class CalculatorKeypad extends StatelessWidget {
-  const CalculatorKeypad({
-    super.key,
-    required this.decimals,
-    required this.onDigit,
-    required this.onDecimal,
-    required this.onBackspace,
-    required this.onClear,
-    required this.onOperator,
-  });
-
-  final int decimals;
-  final ValueChanged<int> onDigit;
-  final VoidCallback onDecimal;
-  final VoidCallback onBackspace;
-  final VoidCallback onClear;
-  final ValueChanged<CalcOperator> onOperator;
+```json
+"txKeypadAdd": "Add",
+"txKeypadSubtract": "Subtract",
+"txKeypadMultiply": "Multiply",
+"txKeypadDivide": "Divide",
 ```
 
-Add import at top:
+Add the matching translations to `l10n/app_zh_CN.arb` and `l10n/app_zh_TW.arb`.
+
+Update `test/unit/l10n/arb_audit_test.dart` to add these four keys to `_expectedEnKeys` so the ARB inventory test stays aligned with the new localization surface.
+
+Run: `flutter gen-l10n`
+Expected: generated `lib/l10n/app_localizations*.dart` updates successfully
+
+- [ ] **Step 4: Replace the layout and add operator semantics**
+
+In `lib/features/transactions/widgets/calculator_keypad.dart`:
 
 ```dart
 import '../keypad_state.dart';
 ```
 
-- [ ] **Step 4: Update layout to new 4×4 grid**
-
-Replace the `build` method body with the new layout:
+Add the callback:
 
 ```dart
-@override
-Widget build(BuildContext context) {
-  final l10n = AppLocalizations.of(context);
-  final decimalEnabled = decimals > 0;
-  return SafeArea(
-    top: false,
-    minimum: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _row([
-          _DigitKey(label: '7', onTap: () => onDigit(7)),
-          _DigitKey(label: '8', onTap: () => onDigit(8)),
-          _DigitKey(label: '9', onTap: () => onDigit(9)),
-          _OperatorKey(
-            label: '÷',
-            onTap: () => onOperator(CalcOperator.divide),
-          ),
-        ]),
-        _row([
-          _DigitKey(label: '4', onTap: () => onDigit(4)),
-          _DigitKey(label: '5', onTap: () => onDigit(5)),
-          _DigitKey(label: '6', onTap: () => onDigit(6)),
-          _OperatorKey(
-            label: '×',
-            onTap: () => onOperator(CalcOperator.multiply),
-          ),
-        ]),
-        _row([
-          _DigitKey(label: '1', onTap: () => onDigit(1)),
-          _DigitKey(label: '2', onTap: () => onDigit(2)),
-          _DigitKey(label: '3', onTap: () => onDigit(3)),
-          _OperatorKey(
-            label: '−',
-            onTap: () => onOperator(CalcOperator.subtract),
-          ),
-        ]),
-        _row([
-          _DigitKey(
-            label: '.',
-            onTap: decimalEnabled ? onDecimal : null,
-          ),
-          _DigitKey(label: '0', onTap: () => onDigit(0)),
-          _IconKey(
-            icon: Icons.backspace_outlined,
-            tooltip: l10n.txKeypadBackspace,
-            onTap: onBackspace,
-            onLongPress: onClear,
-          ),
-          _OperatorKey(
-            label: '+',
-            onTap: () => onOperator(CalcOperator.add),
-          ),
-        ]),
-      ],
-    ),
-  );
-}
+final ValueChanged<CalcOperator> onOperator;
 ```
 
-- [ ] **Step 5: Add _OperatorKey widget**
-
-Add after `_IconKey` class:
+Replace the old layout with:
 
 ```dart
-class _OperatorKey extends StatelessWidget {
-  const _OperatorKey({required this.label, required this.onTap});
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return SizedBox(
-      height: 56,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Material(
-          color: colors.primaryContainer,
-          borderRadius: BorderRadius.circular(12),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: onTap,
-            child: Center(
-              child: Text(
-                label,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: colors.onPrimaryContainer,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
+7 8 9 ÷
+4 5 6 ×
+1 2 3 −
+. 0 ⌫ +
 ```
 
-- [ ] **Step 6: Add onLongPress to _IconKey**
+Implementation rules:
+- Remove `00`, `C`, and `_SpacerKey`
+- `_OperatorKey` uses `colorScheme.primaryContainer`
+- `_DigitKey` and `_OperatorKey` clamp `MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.5)`
+- `_OperatorKey` wraps the visible glyph in `Semantics(label: semanticsLabel, button: true)` + `ExcludeSemantics`
+- `_IconKey` keeps the backspace tooltip, adds `onLongPressHint: l10n.txKeypadClear`, and exposes a `CustomSemanticsAction(label: l10n.txKeypadClear)` so full clear is reachable without requiring a touch long-press gesture
 
-Update `_IconKey` to support long-press:
+Representative constructor shape:
 
 ```dart
-class _IconKey extends StatelessWidget {
-  const _IconKey({
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-    this.onLongPress,
-  });
-
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onTap;
-  final VoidCallback? onLongPress;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return SizedBox(
-      height: 56,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Tooltip(
-          message: tooltip,
-          child: Material(
-            color: colors.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(12),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: onTap,
-              onLongPress: onLongPress,
-              child: Center(child: Icon(icon)),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
+_OperatorKey(
+  label: '+',
+  semanticsLabel: l10n.txKeypadAdd,
+  onTap: () => onOperator(CalcOperator.add),
+)
 ```
 
-- [ ] **Step 7: Remove _SpacerKey class**
+- [ ] **Step 5: Run the keypad tests again**
 
-Delete the `_SpacerKey` class — no longer used.
-
-- [ ] **Step 8: Update existing tests that reference old layout**
-
-Existing tests WK01–WK04 use the old constructor without `onOperator`. Update the `_wrap` helper and constructor calls to include `onOperator: (_) {}`.
-
-- [ ] **Step 9: Run all keypad tests**
-
-Run: `flutter test test/widget/features/transactions/calculator_keypad_test.dart`
+Run: `dart format . && flutter test test/widget/features/transactions/calculator_keypad_test.dart`
 Expected: ALL PASS
-
-- [ ] **Step 10: Commit**
-
-```bash
-git add lib/features/transactions/widgets/calculator_keypad.dart test/widget/features/transactions/calculator_keypad_test.dart
-git commit -m "feat: add operator keys and new 4×4 keypad layout"
-```
 
 ---
 
-## Chunk 3: AmountDisplay — Expression Line
+## Chunk 3: AmountDisplay — Expression Line And Result Formatting
 
-### Task 8: Add expression line to AmountDisplay
+### Task 5: Add display tests for expression history and fixed-precision results
 
 **Files:**
-- Modify: `lib/features/transactions/widgets/amount_display.dart`
-- Test: `test/widget/features/transactions/amount_display_test.dart` (may need to create)
+- Create: `test/widget/features/transactions/amount_display_test.dart`
 
-- [ ] **Step 1: Write failing tests**
+- [ ] **Step 1: Write the failing display tests**
 
-Create or update `test/widget/features/transactions/amount_display_test.dart`:
+Create `test/widget/features/transactions/amount_display_test.dart`:
 
 ```dart
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:ledgerly/data/models/currency.dart';
 import 'package:ledgerly/features/transactions/keypad_state.dart';
 import 'package:ledgerly/features/transactions/widgets/amount_display.dart';
-import 'package:ledgerly/data/models/currency.dart';
+import 'package:ledgerly/l10n/app_localizations.dart';
 
-Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
+Widget _wrap(Widget child, {double? textScale}) => MaterialApp(
+  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  supportedLocales: AppLocalizations.supportedLocales,
+  builder: textScale == null
+      ? null
+      : (context, inner) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(textScale)),
+          child: inner!,
+        ),
+  home: Scaffold(body: child),
+);
 
-// Use a test currency with 2 decimals
-final _usd = Currency(code: 'USD', decimals: 2);
+final _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
+final _jpy = Currency(code: 'JPY', decimals: 0, symbol: '¥');
 
 void main() {
-  testWidgets('AD01: no expression — no expression line', (tester) async {
+  testWidgets('AD01: no expression state renders no expression line', (tester) async {
     await tester.pumpWidget(
-      _wrap(AmountDisplay(
-        keypad: const KeypadState.initial(),
-        currency: _usd,
-      )),
+      _wrap(
+        const AmountDisplay(
+          keypad: KeypadState.initial(),
+          currency: null,
+        ),
+      ),
     );
+
+    expect(find.textContaining('='), findsNothing);
     expect(find.textContaining('+'), findsNothing);
   });
 
-  testWidgets('AD02: evaluating — expression line shows left + op', (
-    tester,
-  ) async {
+  testWidgets('AD02: evaluating state shows the left operand and operator', (tester) async {
     final keypad = KeypadState(
       amountMinorUnits: 500,
       fractionalDigitsEntered: 0,
@@ -1053,17 +865,15 @@ void main() {
       leftOperand: 1200,
       operator: CalcOperator.add,
       isEvaluating: true,
+      hasCurrentInput: true,
     );
-    await tester.pumpWidget(
-      _wrap(AmountDisplay(keypad: keypad, currency: _usd)),
-    );
-    // Expression line should show "12 +"
-    expect(find.textContaining('12 +'), findsOneWidget);
+
+    await tester.pumpWidget(_wrap(AmountDisplay(keypad: keypad, currency: _usd)));
+
+    expect(find.textContaining('12.00 +'), findsOneWidget);
   });
 
-  testWidgets('AD03: showingResult — expression line shows full expression', (
-    tester,
-  ) async {
+  testWidgets('AD03: showingResult keeps expression history on the first line', (tester) async {
     final keypad = KeypadState(
       amountMinorUnits: 1700,
       fractionalDigitsEntered: 0,
@@ -1072,26 +882,104 @@ void main() {
       operator: CalcOperator.add,
       showingResult: true,
       rightOperand: 500,
+      hasCurrentInput: false,
     );
+
+    await tester.pumpWidget(_wrap(AmountDisplay(keypad: keypad, currency: _usd)));
+
+    expect(find.textContaining('12.00 + 5.00 ='), findsOneWidget);
+  });
+
+  testWidgets('AD04: showingResult renders the main result at fixed precision', (tester) async {
+    final keypad = KeypadState(
+      amountMinorUnits: 1700,
+      fractionalDigitsEntered: 0,
+      isFractionalMode: false,
+      leftOperand: 1200,
+      operator: CalcOperator.add,
+      showingResult: true,
+      rightOperand: 500,
+      hasCurrentInput: false,
+    );
+
+    await tester.pumpWidget(_wrap(AmountDisplay(keypad: keypad, currency: _usd)));
+
+    expect(find.text('17.00'), findsOneWidget);
+  });
+
+  testWidgets('AD05: zero-decimal currencies keep zero-decimal formatting', (tester) async {
+    final keypad = KeypadState(
+      amountMinorUnits: 6,
+      fractionalDigitsEntered: 0,
+      isFractionalMode: false,
+      leftOperand: 12,
+      operator: CalcOperator.divide,
+      showingResult: true,
+      rightOperand: 2,
+      hasCurrentInput: false,
+    );
+
+    await tester.pumpWidget(_wrap(AmountDisplay(keypad: keypad, currency: _jpy)));
+
+    expect(find.textContaining('12 ÷ 2 ='), findsOneWidget);
+    expect(find.text('6'), findsOneWidget);
+  });
+
+  testWidgets('AD06: expression history and result remain visible at 2x text scale', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(430, 300));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final keypad = KeypadState(
+      amountMinorUnits: 1700,
+      fractionalDigitsEntered: 0,
+      isFractionalMode: false,
+      leftOperand: 1200,
+      operator: CalcOperator.add,
+      showingResult: true,
+      rightOperand: 500,
+      hasCurrentInput: false,
+    );
+
     await tester.pumpWidget(
-      _wrap(AmountDisplay(keypad: keypad, currency: _usd)),
+      _wrap(AmountDisplay(keypad: keypad, currency: _usd), textScale: 2.0),
     );
-    // Expression line should show "12 + 5 ="
-    expect(find.textContaining('12 + 5 ='), findsOneWidget);
+
+    expect(find.textContaining('12.00 + 5.00 ='), findsOneWidget);
+    expect(find.text('17.00'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }
 ```
 
-Note: The `Currency` model uses Freezed. Use minimal constructor: `Currency(code: 'USD', decimals: 2)`. The `symbol` and `nameL10nKey` are optional.
+- [ ] **Step 2: Run the tests to verify they fail**
 
-- [ ] **Step 2: Run tests to verify they fail**
+Run: `dart format . && flutter test test/widget/features/transactions/amount_display_test.dart`
+Expected: FAIL because `AmountDisplay` does not render expression history or fixed-precision evaluated results yet
 
-Run: `flutter test test/widget/features/transactions/amount_display_test.dart --name AD`
-Expected: FAIL — expression line not found
+---
 
-- [ ] **Step 3: Add expression line rendering to AmountDisplay**
+### Task 6: Render the expression line and fixed-precision evaluated result with `MoneyFormatter`
 
-In `lib/features/transactions/widgets/amount_display.dart`, add to the `build` method. Before the main amount `Row`, add a conditional expression line:
+**Files:**
+- Modify: `lib/features/transactions/widgets/amount_display.dart`
+- Reference: `lib/core/utils/money_formatter.dart`
+- Test: `test/widget/features/transactions/amount_display_test.dart`
+
+- [ ] **Step 1: Update `AmountDisplay` to use the shared formatter**
+
+In `lib/features/transactions/widgets/amount_display.dart` add:
+
+```dart
+import '../../../core/utils/money_formatter.dart';
+```
+
+Then change the render contract:
+- While typing (`showingResult == false`), keep the current `_renderAmountText()` preview behavior
+- While showing a result (`showingResult == true`), render the main amount with `MoneyFormatter.formatBare(...)`
+- The expression line ends at `=`; the main line carries the computed result
+- The currency-change placeholder must be suppressed whenever `keypad.hasExpression == true` so zero-valued calculator results remain visible
+
+Representative implementation shape:
 
 ```dart
 @override
@@ -1100,256 +988,561 @@ Widget build(BuildContext context) {
   final l10n = AppLocalizations.of(context);
   final code = currency?.code ?? '';
   final showPlaceholder =
-      currencyTouched && keypad.amountMinorUnits == 0 && code.isNotEmpty;
-
-  // Build expression line text
-  final expressionText = _buildExpressionText();
-
+      currencyTouched &&
+      keypad.amountMinorUnits == 0 &&
+      code.isNotEmpty &&
+      !keypad.hasExpression;
+  final expressionText = _buildExpressionText(locale: l10n.localeName);
   final text = showPlaceholder
       ? l10n.txAmountPlaceholderInCurrency(code)
-      : _renderAmountText();
-  final foreground = hasError
-      ? theme.colorScheme.error
-      : theme.colorScheme.onSurface;
-  final textColor = showPlaceholder
-      ? foreground.withValues(alpha: 0.5)
-      : foreground;
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-    decoration: BoxDecoration(
-      color: theme.colorScheme.surfaceContainerLow,
-      borderRadius: BorderRadius.circular(12),
-      border: hasError
-          ? Border.all(color: theme.colorScheme.error, width: 1.5)
-          : null,
-    ),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (expressionText != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Text(
-              expressionText,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: foreground.withValues(alpha: 0.5),
-              ),
-            ),
-          ),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Expanded(
-              child: FittedBox(
-                alignment: Alignment.centerLeft,
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  text,
-                  style: theme.textTheme.displaySmall?.copyWith(
-                    color: textColor,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-              ),
-            ),
-            if (code.isNotEmpty && !showPlaceholder)
-              Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: Text(
-                  code,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: foreground.withValues(alpha: 0.7),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ],
-    ),
-  );
+      : _renderAmountText(locale: l10n.localeName);
+  ...
 }
-```
 
-Add the expression text builder methods inside the `AmountDisplay` class (after the existing `_renderAmountText` and `_pow10` methods):
-
-```dart
-String? _buildExpressionText() {
-  final k = keypad;
-  final decimals = currency?.decimals ?? 2;
-  final unit = _pow10(decimals);
-
-  if (k.isEvaluating && k.leftOperand != null && k.operator != null) {
-    final leftStr = _formatMinorUnits(k.leftOperand!, unit, decimals);
-    final opStr = _operatorSymbol(k.operator!);
-    return '$leftStr $opStr';
+String _renderAmountText({required String locale}) {
+  final c = currency;
+  if (c != null && keypad.showingResult) {
+    return MoneyFormatter.formatBare(
+      amountMinorUnits: keypad.amountMinorUnits,
+      currency: c,
+      locale: locale,
+    );
   }
 
-  if (k.showingResult && k.leftOperand != null && k.operator != null && k.rightOperand != null) {
-    final leftStr = _formatMinorUnits(k.leftOperand!, unit, decimals);
-    final opStr = _operatorSymbol(k.operator!);
-    final rightStr = _formatMinorUnits(k.rightOperand!, unit, decimals);
-    return '$leftStr $opStr $rightStr =';
+  // Existing live-entry preview behavior for integer/fractional typing.
+}
+
+String? _buildExpressionText({required String locale}) {
+  final c = currency;
+  if (c == null) return null;
+
+  if (keypad.isEvaluating && keypad.leftOperand != null && keypad.operator != null) {
+    final left = MoneyFormatter.formatBare(
+      amountMinorUnits: keypad.leftOperand!,
+      currency: c,
+      locale: locale,
+    );
+    return '$left ${_operatorSymbol(keypad.operator!)}';
+  }
+
+  if (keypad.showingResult &&
+      keypad.leftOperand != null &&
+      keypad.operator != null &&
+      keypad.rightOperand != null) {
+    final left = MoneyFormatter.formatBare(
+      amountMinorUnits: keypad.leftOperand!,
+      currency: c,
+      locale: locale,
+    );
+    final right = MoneyFormatter.formatBare(
+      amountMinorUnits: keypad.rightOperand!,
+      currency: c,
+      locale: locale,
+    );
+    return '$left ${_operatorSymbol(keypad.operator!)} $right =';
   }
 
   return null;
 }
-
-static String _operatorSymbol(CalcOperator op) {
-  return switch (op) {
-    CalcOperator.add => '+',
-    CalcOperator.subtract => '−',
-    CalcOperator.multiply => '×',
-    CalcOperator.divide => '÷',
-  };
-}
-
-static String _formatMinorUnits(int minorUnits, int unit, int decimals) {
-  if (decimals == 0) return minorUnits.toString();
-  final whole = minorUnits ~/ unit;
-  final frac = (minorUnits % unit).toString().padLeft(decimals, '0');
-  return '$whole.$frac';
-}
 ```
 
-Add the import for `keypad_state.dart` at the top of the file if not already present.
+Keep the expression line single-line with ellipsis, but the large-text tests must still prove the line remains visible on a realistic width.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [ ] **Step 2: Run the display tests to verify they pass**
 
-Run: `flutter test test/widget/features/transactions/amount_display_test.dart`
-Expected: PASS
-
-- [ ] **Step 5: Run all existing tests to verify no regressions**
-
-Run: `flutter test test/widget/features/transactions/`
+Run: `dart format . && flutter test test/widget/features/transactions/amount_display_test.dart`
 Expected: ALL PASS
-
-- [ ] **Step 6: Commit**
-
-```bash
-git add lib/features/transactions/widgets/amount_display.dart test/widget/features/transactions/amount_display_test.dart
-git commit -m "feat: add expression line to AmountDisplay"
-```
 
 ---
 
-## Chunk 4: TransactionFormController — Wiring
+## Chunk 4: Controller And Screen Wiring
 
-### Task 9: Add applyOperator() to controller
+### Task 7: Add `applyOperator()` using the existing mock-based controller suite
 
 **Files:**
 - Modify: `lib/features/transactions/transaction_form_controller.dart`
+- Modify: `test/unit/controllers/transaction_form_controller_test.dart`
+- Modify: `lib/features/transactions/transaction_form_state.dart`
 
-- [ ] **Step 1: Add applyOperator() method**
+- [ ] **Step 1: Add failing controller tests to the existing suite**
 
-In `lib/features/transactions/transaction_form_controller.dart`, add after `clearAmount()`:
+In `test/unit/controllers/transaction_form_controller_test.dart` add:
 
 ```dart
-void applyOperator(CalcOperator op) {
-  final s = state;
-  if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
-  final decimals = s.displayCurrency?.decimals ?? 2;
-  _keypad = _keypad.pushOperator(op, decimals: decimals);
-  state = s.copyWith(
-    amountMinorUnits: _keypad.amountMinorUnits,
-    isDirty: true,
-  );
-}
+import 'package:ledgerly/features/transactions/keypad_state.dart';
 ```
 
-- [ ] **Step 2: Write controller tests**
-
-Add controller tests in `test/unit/controllers/transaction_form_controller_test.dart` (or the existing controller test file). Use the existing test setup pattern from `test/support/test_app.dart`:
-
 ```dart
-group('TransactionFormController — calculator operators', () {
-  late ProviderContainer container;
-  late TransactionFormController controller;
+group('calculator operators', () {
+  test('TC33: applyOperator stores the left operand and enters evaluating', () async {
+    final c = makeContainer();
+    addTearDown(c.dispose);
+    final controller = c.read(transactionFormControllerProvider.notifier);
 
-  setUp(() async {
-    final db = newTestAppDatabase();
-    await runTestSeed(db);
-    container = makeTestContainer(db);
-    controller = container.read(transactionFormControllerProvider.notifier);
-    // Hydrate into a valid form state
     await controller.hydrateForAdd();
-  });
-
-  tearDown(() => container.dispose());
-
-  test('applyOperator sets leftOperand and isEvaluating on keypad', () {
     controller.appendDigit(1);
     controller.appendDigit(2);
-    expect(controller.keypadSnapshot.amountMinorUnits, 1200);
     controller.applyOperator(CalcOperator.add);
+
     expect(controller.keypadSnapshot.leftOperand, 1200);
     expect(controller.keypadSnapshot.operator, CalcOperator.add);
     expect(controller.keypadSnapshot.isEvaluating, isTrue);
     expect(controller.keypadSnapshot.amountMinorUnits, 0);
   });
 
-  test('applyOperator on second tap evaluates and updates state', () {
+  test('TC34: repeating the operator evaluates and mirrors the result to state', () async {
+    final c = makeContainer();
+    addTearDown(c.dispose);
+    final controller = c.read(transactionFormControllerProvider.notifier);
+
+    await controller.hydrateForAdd();
     controller.appendDigit(1);
     controller.appendDigit(2);
     controller.applyOperator(CalcOperator.add);
     controller.appendDigit(5);
     controller.applyOperator(CalcOperator.add);
+
+    final data = c.read(transactionFormControllerProvider) as TransactionFormData;
     expect(controller.keypadSnapshot.amountMinorUnits, 1700);
     expect(controller.keypadSnapshot.showingResult, isTrue);
+    expect(data.amountMinorUnits, 1700);
   });
 
-  test('appendDigit during evaluating accumulates into right operand', () {
+  test('TC35: operator correction before right input replaces the pending operator', () async {
+    final c = makeContainer();
+    addTearDown(c.dispose);
+    final controller = c.read(transactionFormControllerProvider.notifier);
+
+    await controller.hydrateForAdd();
+    controller.appendDigit(1);
+    controller.applyOperator(CalcOperator.multiply);
+    controller.applyOperator(CalcOperator.subtract);
+
+    expect(controller.keypadSnapshot.leftOperand, 100);
+    expect(controller.keypadSnapshot.operator, CalcOperator.subtract);
+    expect(controller.keypadSnapshot.amountMinorUnits, 0);
+  });
+
+  test('TC35b: decimal-start while evaluating still increments the watched keypad revision', () async {
+    final c = makeContainer();
+    addTearDown(c.dispose);
+    final controller = c.read(transactionFormControllerProvider.notifier);
+
+    await controller.hydrateForAdd();
     controller.appendDigit(1);
     controller.applyOperator(CalcOperator.add);
-    controller.appendDigit(5);
-    expect(controller.keypadSnapshot.amountMinorUnits, 500);
-    expect(controller.keypadSnapshot.isEvaluating, isTrue);
+    final before = (c.read(transactionFormControllerProvider) as TransactionFormData).keypadRevision;
+
+    controller.appendDecimal();
+
+    final after = (c.read(transactionFormControllerProvider) as TransactionFormData).keypadRevision;
+    expect(after, greaterThan(before));
+    expect(controller.keypadSnapshot.hasCurrentInput, isTrue);
   });
 
-  test('backspace during evaluating with amount=0 cancels expression', () {
+  test('TC35c: chaining with a different operator starts the next expression from the evaluated result', () async {
+    final c = makeContainer();
+    addTearDown(c.dispose);
+    final controller = c.read(transactionFormControllerProvider.notifier);
+
+    await controller.hydrateForAdd();
     controller.appendDigit(1);
     controller.appendDigit(2);
     controller.applyOperator(CalcOperator.add);
-    controller.backspace();
-    expect(controller.keypadSnapshot.amountMinorUnits, 1200);
-    expect(controller.keypadSnapshot.leftOperand, isNull);
-  });
-
-  test('clearAmount resets expression state', () {
-    controller.appendDigit(1);
-    controller.applyOperator(CalcOperator.add);
     controller.appendDigit(5);
-    controller.clearAmount();
+    controller.applyOperator(CalcOperator.subtract);
+
+    expect(controller.keypadSnapshot.leftOperand, 1700);
+    expect(controller.keypadSnapshot.operator, CalcOperator.subtract);
+    expect(controller.keypadSnapshot.isEvaluating, isTrue);
     expect(controller.keypadSnapshot.amountMinorUnits, 0);
-    expect(controller.keypadSnapshot.leftOperand, isNull);
-    expect(controller.keypadSnapshot.operator, isNull);
-    expect(controller.keypadSnapshot.isEvaluating, isFalse);
   });
 });
 ```
 
-- [ ] **Step 3: Verify existing tests still pass**
+- [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `flutter test test/widget/features/transactions/transaction_form_screen_test.dart`
-Expected: ALL PASS
+Run: `dart format . && flutter test test/unit/controllers/transaction_form_controller_test.dart --name "TC33|TC34|TC35|TC35b|TC35c"`
+Expected: FAIL because `applyOperator()` does not exist yet and `TransactionFormData` does not expose `keypadRevision`
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 3: Implement `applyOperator()`**
 
-```bash
-git add lib/features/transactions/transaction_form_controller.dart
-git commit -m "feat: add applyOperator() to TransactionFormController"
+First add `keypadRevision` to `TransactionFormState.data` in `lib/features/transactions/transaction_form_state.dart`, default it to `0` in all hydrations, and include it in generated equality / `copyWith`.
+
+Because this changes a `@freezed` model, run codegen immediately after the field is added:
+
+Run: `dart run build_runner build --delete-conflicting-outputs`
+Expected: `transaction_form_state.freezed.dart` regenerates cleanly
+
+Then add a controller helper:
+
+```dart
+int _keypadRevision = 0;
+
+TransactionFormData _copyWithKeypad(
+  TransactionFormData s, {
+  required bool isDirty,
+}) {
+  _keypadRevision += 1;
+  return s.copyWith(
+    amountMinorUnits: _keypad.amountMinorUnits,
+    isDirty: isDirty,
+    keypadRevision: _keypadRevision,
+  );
+}
 ```
+
+Use `_copyWithKeypad(...)` from every keypad mutation (`appendDigit`, `appendDecimal`, `backspace`, `clearAmount`, `applyOperator`) so expression-only transitions still rebuild the screen.
+
+Representative `applyOperator()`:
+
+```dart
+void applyOperator(CalcOperator op) {
+  final s = state;
+  if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
+
+  final decimals = s.displayCurrency?.decimals ?? 2;
+  _keypad = _keypad.pushOperator(op, decimals: decimals);
+  state = _copyWithKeypad(s, isDirty: true);
+}
+```
+
+- [ ] **Step 4: Run the tests again**
+
+Run: `dart format . && flutter test test/unit/controllers/transaction_form_controller_test.dart --name "TC33|TC34|TC35"`
+Expected: PASS
 
 ---
 
-### Task 10: Wire onOperator to CalculatorKeypad in screen
+### Task 8: Treat active expressions as destructive unsaved input on currency changes
+
+**Files:**
+- Modify: `lib/features/transactions/transaction_form_controller.dart`
+- Modify: `test/unit/controllers/transaction_form_controller_test.dart`
+
+- [ ] **Step 1: Add failing controller tests for destructive-expression gating**
+
+Append to the same controller test file:
+
+```dart
+test('TC36: selectCurrency refuses without the clear flag when an expression is active and the visible amount is zero', () async {
+  const eur = Currency(
+    code: 'EUR',
+    decimals: 2,
+    symbol: '€',
+    nameL10nKey: 'currency.eur',
+  );
+
+  final c = makeContainer();
+  addTearDown(c.dispose);
+  final controller = c.read(transactionFormControllerProvider.notifier);
+
+  await controller.hydrateForAdd();
+  controller.appendDigit(1);
+  controller.applyOperator(CalcOperator.add); // amountMinorUnits == 0
+  controller.selectCurrency(eur);
+
+  final data = c.read(transactionFormControllerProvider) as TransactionFormData;
+  expect(data.displayCurrency?.code, 'USD');
+  expect(controller.keypadSnapshot.leftOperand, 100);
+  expect(controller.keypadSnapshot.operator, CalcOperator.add);
+});
+
+test('TC37: selectCurrency with the clear flag clears the active expression', () async {
+  const eur = Currency(
+    code: 'EUR',
+    decimals: 2,
+    symbol: '€',
+    nameL10nKey: 'currency.eur',
+  );
+
+  final c = makeContainer();
+  addTearDown(c.dispose);
+  final controller = c.read(transactionFormControllerProvider.notifier);
+
+  await controller.hydrateForAdd();
+  controller.appendDigit(1);
+  controller.applyOperator(CalcOperator.add);
+  controller.selectCurrency(eur, clearAmountOnChange: true);
+
+  final data = c.read(transactionFormControllerProvider) as TransactionFormData;
+  expect(data.displayCurrency?.code, 'EUR');
+  expect(data.amountMinorUnits, 0);
+  expect(controller.keypadSnapshot.hasExpression, isFalse);
+});
+
+test('TC38: selectAccount refuses without the clear flag when account reseeding would change displayCurrency during an active expression', () async {
+  final c = makeContainer();
+  addTearDown(c.dispose);
+  final controller = c.read(transactionFormControllerProvider.notifier);
+
+  await controller.hydrateForAdd();
+  controller.appendDigit(1);
+  controller.applyOperator(CalcOperator.add);
+  controller.selectAccount(_accountJpy);
+
+  final data = c.read(transactionFormControllerProvider) as TransactionFormData;
+  expect(data.displayCurrency?.code, 'USD');
+  expect(controller.keypadSnapshot.leftOperand, 100);
+  expect(controller.keypadSnapshot.operator, CalcOperator.add);
+});
+
+test('TC39: selectAccount with the clear flag clears the active expression after the currency reseed', () async {
+  final c = makeContainer();
+  addTearDown(c.dispose);
+  final controller = c.read(transactionFormControllerProvider.notifier);
+
+  await controller.hydrateForAdd();
+  controller.appendDigit(1);
+  controller.applyOperator(CalcOperator.add);
+  controller.selectAccount(_accountJpy, clearAmountOnCurrencyChange: true);
+
+  final data = c.read(transactionFormControllerProvider) as TransactionFormData;
+  expect(data.displayCurrency?.code, 'JPY');
+  expect(data.amountMinorUnits, 0);
+  expect(controller.keypadSnapshot.hasExpression, isFalse);
+});
+```
+
+- [ ] **Step 2: Run the tests to verify they fail**
+
+Run: `dart format . && flutter test test/unit/controllers/transaction_form_controller_test.dart --name "TC36|TC37|TC38|TC39"`
+Expected: FAIL because the controller only guards on `amountMinorUnits > 0`
+
+- [ ] **Step 3: Gate on amount or active expression in the controller**
+
+In both `selectAccount(...)` and `selectCurrency(...)`, compute:
+
+```dart
+final hasDestructiveInput = s.amountMinorUnits > 0 || _keypad.hasExpression;
+```
+
+Use that instead of `s.amountMinorUnits > 0` when deciding whether the clear flag is required.
+
+Leave the actual reset behavior unchanged after confirmation:
+- if the successful change also changes `displayCurrency`, set `_keypad = const KeypadState.initial()`
+- clear `amountMinorUnits` to `0`
+
+- [ ] **Step 4: Run the full controller suite**
+
+Run: `dart format . && flutter test test/unit/controllers/transaction_form_controller_test.dart`
+Expected: ALL PASS
+
+---
+
+### Task 9: Wire the screen and expand destructive-change dialogs to cover active expressions
 
 **Files:**
 - Modify: `lib/features/transactions/transaction_form_screen.dart`
+- Modify: `test/widget/features/transactions/transaction_form_screen_test.dart`
 
-- [ ] **Step 1: Add onOperator to CalculatorKeypad call**
+- [ ] **Step 1: Add failing screen tests**
 
-In `lib/features/transactions/transaction_form_screen.dart`, update the `CalculatorKeypad` construction in `_buildForm`:
+In `test/widget/features/transactions/transaction_form_screen_test.dart` add:
+
+```dart
+import 'package:ledgerly/features/transactions/widgets/amount_display.dart';
+```
+
+Then add these widget tests:
+
+```dart
+testWidgets('WS22: operator flow shows expression history and a fixed-precision result', (tester) async {
+  await tester.pumpWidget(mountAdd());
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('1'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('2'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('+'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('5'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('+'));
+  await tester.pumpAndSettle();
+
+  final display = find.byType(AmountDisplay);
+  expect(
+    find.descendant(
+      of: display,
+      matching: find.textContaining('12.00 + 5.00 ='),
+    ),
+    findsOneWidget,
+  );
+  expect(
+    find.descendant(of: display, matching: find.text('17.00')),
+    findsOneWidget,
+  );
+});
+
+testWidgets('WS23: changing currency during an active expression still shows the Change and Clear dialog even when the visible amount is zero', (tester) async {
+  await tester.binding.setSurfaceSize(const Size(400, 1000));
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+
+  await tester.pumpWidget(mountAdd());
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('1'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('+'));
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.byType(CurrencySelectorTile));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('JPY').first);
+  await tester.pumpAndSettle();
+
+  expect(
+    find.text('Changing the currency will clear the current amount or calculation.'),
+    findsOneWidget,
+  );
+  expect(find.text('Change and Clear'), findsOneWidget);
+});
+
+testWidgets('WS23b: changing account during an active expression shows the destructive dialog even when the visible amount is zero', (tester) async {
+  await tester.binding.setSurfaceSize(const Size(400, 1000));
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+
+  await tester.pumpWidget(mountAdd());
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('1'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('+'));
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.byType(AccountSelectorTile));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Yen').first);
+  await tester.pumpAndSettle();
+
+  expect(find.text('Switch currency?'), findsOneWidget);
+  expect(find.textContaining('amount or calculation'), findsOneWidget);
+});
+
+testWidgets('WS24: confirming the destructive dialog clears the active expression and updates currency', (tester) async {
+  await tester.binding.setSurfaceSize(const Size(400, 1000));
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+
+  await tester.pumpWidget(mountAdd());
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('1'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('+'));
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.byType(CurrencySelectorTile));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('JPY').first);
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Change and Clear'));
+  await tester.pumpAndSettle();
+
+  final tile = tester.widget<CurrencySelectorTile>(find.byType(CurrencySelectorTile));
+  expect(tile.currency?.code, 'JPY');
+
+  final display = find.byType(AmountDisplay);
+  expect(
+    find.descendant(of: display, matching: find.textContaining('1.00 +')),
+    findsNothing,
+  );
+});
+
+testWidgets('WS25: divide-by-zero leaves the form unsaveable and keeps the expression visible', (tester) async {
+  await tester.pumpWidget(mountAdd());
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('7'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('÷'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('0'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('÷'));
+  await tester.pumpAndSettle();
+
+  final saveButton = tester.widget<TextButton>(
+    find.widgetWithText(TextButton, 'Save'),
+  );
+  expect(saveButton.onPressed, isNull);
+
+  final display = find.byType(AmountDisplay);
+  expect(
+    find.descendant(
+      of: display,
+      matching: find.textContaining('7.00 ÷ 0.00 ='),
+    ),
+    findsOneWidget,
+  );
+});
+
+testWidgets('WS25b: zero-valued evaluated results stay visible after a manual currency pick', (tester) async {
+  await tester.binding.setSurfaceSize(const Size(400, 1000));
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+
+  await tester.pumpWidget(mountAdd());
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.byType(CurrencySelectorTile));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('EUR').first);
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('7'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('÷'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('0'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('÷'));
+  await tester.pumpAndSettle();
+
+  final display = find.byType(AmountDisplay);
+  expect(
+    find.descendant(
+      of: display,
+      matching: find.textContaining('7.00 ÷ 0.00 ='),
+    ),
+    findsOneWidget,
+  );
+  expect(find.descendant(of: display, matching: find.text('0.00')), findsOneWidget);
+});
+
+testWidgets('WS26: 2x text scale still shows the expression history and result', (tester) async {
+  await tester.binding.setSurfaceSize(const Size(400, 1400));
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+
+  await tester.pumpWidget(mountAdd(textScale: 2.0));
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('1'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('+'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('5'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('+'));
+  await tester.pumpAndSettle();
+
+  expect(find.text('+'), findsOneWidget);
+  expect(find.textContaining('1.00 + 5.00 ='), findsOneWidget);
+  expect(find.text('6.00'), findsOneWidget);
+  expect(tester.takeException(), isNull);
+});
+```
+
+- [ ] **Step 2: Run the screen tests to verify they fail**
+
+Run: `dart format . && flutter test test/widget/features/transactions/transaction_form_screen_test.dart --name "WS22|WS23|WS23b|WS24|WS25|WS25b|WS26"`
+Expected: FAIL because `CalculatorKeypad` is not wired to `applyOperator()`, the screen only treats non-zero amounts as destructive input, and zero-valued evaluated results can still hit the currency placeholder path
+
+- [ ] **Step 3: Wire `onOperator` and expand the destructive-input checks**
+
+In `lib/features/transactions/transaction_form_screen.dart`:
+
+1. Wire the keypad:
 
 ```dart
 CalculatorKeypad(
@@ -1359,95 +1552,80 @@ CalculatorKeypad(
   onBackspace: controller.backspace,
   onClear: controller.clearAmount,
   onOperator: controller.applyOperator,
-),
+)
 ```
 
-- [ ] **Step 2: Run integration tests**
+2. In `_onTapAccountTile(...)` and `_onTapCurrencyTile(...)`, replace the local `hasAmount` check with:
 
-Run: `flutter test test/integration/bootstrap_to_home_test.dart`
+```dart
+final hasDestructiveInput =
+    state.amountMinorUnits > 0 || controller.keypadSnapshot.hasExpression;
+```
+
+3. Update the dialog body copy so it covers both raw amount entry and active calculations. Change the existing l10n bodies in `app_en.arb`, `app_zh_CN.arb`, and `app_zh_TW.arb` to the equivalent of:
+
+```json
+"txCurrencyChangeConfirmBody": "Switching to this account changes the currency. The current amount or calculation will be cleared.",
+"txCurrencyPickerChangeConfirmBody": "Changing the currency will clear the current amount or calculation.",
+```
+
+Then run: `flutter gen-l10n`
+Expected: generated localization files update cleanly
+
+4. Update the pre-existing `WS18` assertion in `test/widget/features/transactions/transaction_form_screen_test.dart` so it expects the new body string instead of `Changing the currency will clear the entered amount.`
+
+5. Update `test/integration/transaction_mutation_flow_test.dart` to replace both `find.text('C')` taps with the new clear interaction. Prefer a small test helper that long-presses the backspace control so the duplicate/edit integration flow follows the shipped UI.
+
+- [ ] **Step 4: Run the targeted screen tests again**
+
+Run: `dart format . && flutter test test/widget/features/transactions/transaction_form_screen_test.dart --name "WS22|WS23|WS23b|WS24|WS25|WS25b|WS26"`
 Expected: PASS
 
-- [ ] **Step 3: Run all transaction tests**
+- [ ] **Step 5: Run the full transaction-form widget suite**
 
-Run: `flutter test test/widget/features/transactions/`
+Run: `dart format . && flutter test test/widget/features/transactions/transaction_form_screen_test.dart`
 Expected: ALL PASS
-
-- [ ] **Step 4: Commit**
-
-```bash
-git add lib/features/transactions/transaction_form_screen.dart
-git commit -m "feat: wire operator keys to controller in TransactionFormScreen"
-```
-
----
-
-### Task 11: Verify currency/account change mid-expression resets state
-
-**Files:**
-- None (verification only — no code changes needed)
-
-The existing `selectAccount()` and `selectCurrency()` methods in `transaction_form_controller.dart` already call `_keypad = const KeypadState.initial()` when the currency changes and the amount is cleared. Since `KeypadState.initial()` now includes the expression fields with default null/false values, this correctly resets expression state. No additional code or tests needed — the existing controller tests for currency change cover this path.
-
-- [ ] **Step 1: Verify by reading the code**
-
-Confirm that `selectAccount()` (line ~320 in `transaction_form_controller.dart`) and `selectCurrency()` (line ~352) both use `_keypad = const KeypadState.initial()` when `currencyChanged` is true.
-
-- [ ] **Step 2: Run existing controller tests**
-
-Run: `flutter test test/unit/controllers/transaction_form_controller_test.dart`
-Expected: ALL PASS
-
-No commit needed — no code changes.
-
----
-
-### Task 12: Update _keypadFromAmount for edit hydration
-
-**Files:**
-- Modify: `lib/features/transactions/transaction_form_controller.dart`
-
-- [ ] **Step 1: Verify _keypadFromAmount returns clean expression state**
-
-The existing `_keypadFromAmount` creates a `KeypadState` with only the 3 original fields (`amountMinorUnits`, `fractionalDigitsEntered`, `isFractionalMode`). Since the new fields have defaults (`null` / `false`), this already produces a clean expression state. No changes needed.
-
-- [ ] **Step 2: Verify edit/duplicate tests pass**
-
-Run: `flutter test test/widget/features/transactions/transaction_form_screen_test.dart`
-Expected: ALL PASS
-
-No commit needed — no code changes.
 
 ---
 
 ## Chunk 5: Final Verification
 
-### Task 13: Run full test suite and format
+### Task 10: Regenerate, verify, and stop
 
 **Files:**
 - None (verification only)
 
-- [ ] **Step 1: Format code**
+Chunk-level tests above already cover the targeted feature areas. Final verification should be one end-state sweep, not a second copy of the same targeted matrix.
+
+- [ ] **Step 1: Regenerate localizations**
+
+Run: `flutter gen-l10n`
+Expected: generated localization files update cleanly
+
+- [ ] **Step 2: Regenerate Freezed code after adding `keypadRevision`**
+
+Run: `dart run build_runner build --delete-conflicting-outputs`
+Expected: generated Freezed files update cleanly
+
+- [ ] **Step 3: Format the repo**
 
 Run: `dart format .`
 
-- [ ] **Step 2: Run analyzer**
+- [ ] **Step 4: Run analyzer**
 
 Run: `flutter analyze`
-Expected: No errors
+Expected: no errors
 
-- [ ] **Step 3: Run all tests**
+- [ ] **Step 5: Run the full test suite**
 
 Run: `flutter test`
 Expected: ALL PASS
 
-- [ ] **Step 4: Run import lint**
+- [ ] **Step 6: Run import lint**
 
 Run: `dart run import_lint`
 Expected: PASS
 
-- [ ] **Step 5: Final commit if any formatting changes**
+- [ ] **Step 7: Optional final commit**
 
-```bash
-git add -A
-git commit -m "chore: format and lint calculator keypad changes"
-```
+Create a final commit only if you want a clean handoff point after verification.
