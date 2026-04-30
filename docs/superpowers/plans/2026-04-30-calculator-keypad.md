@@ -6,14 +6,13 @@
 
 **Architecture:** `KeypadState` remains the single calculator state machine. Add expression fields plus `hasCurrentInput` so the reducer can distinguish an empty right operand from an explicitly entered `0`; this is required for operator correction (`12 ×` then `−`) and for true divide-by-zero behavior (`12 ÷ 0`). Arithmetic stays integer-only: `+` / `−` are direct minor-unit math, `×` rounds half-up `(left * right) / unit`, and `÷` rounds half-up `(left * unit) / right` with `BigInt` helpers only. Because expression-only transitions can leave `amountMinorUnits` unchanged, add a `keypadRevision` field to `TransactionFormState.data` and bump it on every keypad mutation so Riverpod still rebuilds the form for operator correction and decimal-start states. `AmountDisplay` keeps the current live-entry preview while typing, but once `showingResult == true` both the expression line and the main result use `MoneyFormatter.formatBare(...)` so evaluated math is locale-aware and fixed-precision; the currency-change placeholder is suppressed whenever calculator expression state is active.
 
-**Tech Stack:** Flutter, Riverpod, intl `MoneyFormatter`, mocktail-based unit/widget tests, Flutter l10n (`flutter gen-l10n`)
+**Tech Stack:** Flutter, Riverpod, shared `MoneyFormatter` (backed by `intl`), mocktail-based unit/widget tests, Flutter l10n (`flutter gen-l10n`)
 
 **Spec:** `docs/superpowers/specs/2026-04-30-calculator-keypad-design.md` (update this in the same change so it stays consistent with the plan)
 
 **Scope Notes:**
-- P0: `KeypadState` transitions, keypad layout, controller wiring, destructive-expression confirm paths when `displayCurrency` would change
-- P1: expression-line polish, localized operator semantics labels, 2x text-scale assertions
-- Before every `flutter test` or `flutter analyze` command below, run `dart format .`
+- This plan ships the full agreed calculator slice in one change: state-machine updates, keypad UI, display formatting, controller/screen wiring, localization, and verification.
+- Before each verification sequence below, run `dart format .`
 - Snippets below pin down the non-obvious contracts. Use smaller repo-native edits when possible; do not treat every snippet as a required literal patch if a simpler equivalent keeps the same invariants and tests green.
 - Intermediate commits are optional checkpoint boundaries, not required output of the plan.
 
@@ -21,22 +20,47 @@
 
 ## File Structure
 
-| File                                                                  | Responsibility                                                                                            |
-|-----------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
-| `lib/features/transactions/keypad_state.dart`                         | Pure calculator state machine: expression fields, empty-vs-zero operand tracking, integer-only evaluation |
-| `lib/features/transactions/widgets/calculator_keypad.dart`            | 4x4 keypad layout, operator buttons, localized semantics labels, long-press clear, text-scale clamp       |
-| `lib/features/transactions/widgets/amount_display.dart`               | Expression line + fixed-precision evaluated result rendering                                              |
-| `lib/features/transactions/transaction_form_controller.dart`          | `applyOperator()`, `keypadRevision` mirroring, destructive-input gating for account/currency changes      |
-| `lib/features/transactions/transaction_form_screen.dart`              | Wire `onOperator`, expand destructive dialogs to cover active expressions                                 |
-| `lib/features/transactions/transaction_form_state.dart`               | Add `keypadRevision` so expression-only keypad changes trigger rebuilds                                   |
-| `test/unit/utils/keypad_decimal_math_test.dart`                       | Calculator arithmetic and state-transition tests                                                          |
-| `test/widget/features/transactions/calculator_keypad_test.dart`       | Keypad layout, semantics, long-press clear, text-scale behavior                                           |
-| `test/widget/features/transactions/amount_display_test.dart`          | Expression-line and fixed-result formatting tests                                                         |
-| `test/unit/controllers/transaction_form_controller_test.dart`         | Controller command tests using the existing mocktail + `ProviderContainer` harness                        |
-| `test/widget/features/transactions/transaction_form_screen_test.dart` | Screen-level operator flow, invalid-op save gating, destructive-change dialogs                            |
-| `test/integration/transaction_mutation_flow_test.dart`                | Update duplicate/edit clear interactions away from the removed `C` key                                    |
-| `l10n/app_en.arb` / `l10n/app_zh_CN.arb` / `l10n/app_zh_TW.arb`       | Localized accessibility labels for operator buttons                                                       |
-| `lib/l10n/app_localizations*.dart`                                    | Generated after `flutter gen-l10n`                                                                        |
+| File                                                                                | Responsibility                                                                                            |
+|-------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| `lib/features/transactions/keypad_state.dart`                                       | Pure calculator state machine: expression fields, empty-vs-zero operand tracking, integer-only evaluation |
+| `lib/features/transactions/widgets/calculator_keypad.dart`                          | 4x4 keypad layout, operator buttons, localized semantics labels, long-press clear, text-scale clamp       |
+| `lib/features/transactions/widgets/amount_display.dart`                             | Expression line + fixed-precision evaluated result rendering                                              |
+| `lib/features/transactions/transaction_form_controller.dart`                        | `applyOperator()`, `keypadRevision` mirroring, destructive-input gating for account/currency changes      |
+| `lib/features/transactions/transaction_form_screen.dart`                            | Wire `onOperator`, expand destructive dialogs to cover active keypad input                                |
+| `lib/features/transactions/transaction_form_state.dart`                             | Add `keypadRevision` so expression-only keypad changes trigger rebuilds                                   |
+| `docs/superpowers/specs/2026-04-30-calculator-keypad-design.md`                     | Keep the referenced design spec aligned with the final calculator contract                                |
+| `test/unit/utils/keypad_decimal_math_test.dart`                                     | Calculator arithmetic and state-transition tests                                                          |
+| `test/widget/features/transactions/calculator_keypad_test.dart`                     | Keypad layout, semantics, long-press clear, text-scale behavior                                           |
+| `test/widget/features/transactions/amount_display_test.dart`                        | Expression-line and fixed-result formatting tests                                                         |
+| `test/unit/controllers/transaction_form_controller_test.dart`                       | Controller command tests using the existing mocktail + `ProviderContainer` harness                        |
+| `test/widget/features/transactions/transaction_form_screen_test.dart`               | Screen-level operator flow, invalid-op save gating, destructive-change dialogs                            |
+| `test/unit/l10n/arb_audit_test.dart`                                                | Keep the ARB inventory test aligned with new operator semantics keys                                      |
+| `test/integration/transaction_mutation_flow_test.dart`                              | Update duplicate/edit clear interactions away from the removed `C` key                                    |
+| `l10n/app_en.arb` / `l10n/app_zh.arb` / `l10n/app_zh_CN.arb` / `l10n/app_zh_TW.arb` | Localized semantics/dialog copy; keep the fallback `app_zh.arb` shim intact                               |
+| `lib/l10n/app_localizations*.dart`                                                  | Generated after `flutter gen-l10n`                                                                        |
+
+---
+
+## Chunk 0: Spec Sync
+
+### Task 0: Sync the referenced design spec first
+
+**Files:**
+- Modify: `docs/superpowers/specs/2026-04-30-calculator-keypad-design.md`
+
+- [ ] **Step 1: Update the spec to match the final contracts**
+
+Before changing code, sync the spec so it matches the implementation plan for:
+- `hasCurrentInput`
+- integer-only `×` / `÷` math
+- `keypadRevision`
+- placeholder suppression during calculator states
+- destructive dialog copy for active calculations
+- accessible full-clear behavior
+
+- [ ] **Step 2: Re-read the plan and spec together**
+
+Expected: no contradictions between this plan and `docs/superpowers/specs/2026-04-30-calculator-keypad-design.md`
 
 ---
 
@@ -64,6 +88,7 @@ group('KeypadState — calculator fields', () {
     expect(s.rightOperand, isNull);
     expect(s.hasCurrentInput, isFalse);
     expect(s.hasExpression, isFalse);
+    expect(s.hasVisibleInput, isFalse);
   });
 });
 ```
@@ -73,7 +98,7 @@ group('KeypadState — calculator fields', () {
 Run: `dart format . && flutter test test/unit/utils/keypad_decimal_math_test.dart --name K60`
 Expected: FAIL because `hasCurrentInput` / expression fields do not exist yet
 
-- [ ] **Step 3: Add `CalcOperator`, expression fields, `hasCurrentInput`, and `hasExpression`**
+- [ ] **Step 3: Add `CalcOperator`, expression fields, `hasCurrentInput`, `hasExpression`, and `hasVisibleInput`**
 
 In `lib/features/transactions/keypad_state.dart`:
 
@@ -120,10 +145,12 @@ class KeypadState {
       isEvaluating ||
       showingResult ||
       rightOperand != null;
+
+  bool get hasVisibleInput => hasExpression || hasCurrentInput;
 }
 ```
 
-Update `==`, `hashCode`, and `toString()` to include `hasCurrentInput`.
+Update `==`, `hashCode`, and `toString()` to include every new calculator field, not only `hasCurrentInput`.
 
 - [ ] **Step 4: Run the test to verify it passes**
 
@@ -144,6 +171,14 @@ Add to `test/unit/utils/keypad_decimal_math_test.dart`:
 
 ```dart
 group('KeypadState.pushOperator', () {
+  test('K69: operator on a truly untouched keypad is a no-op', () {
+    const s = KeypadState.initial();
+
+    final result = s.pushOperator(CalcOperator.add, decimals: 2);
+
+    expect(result, s);
+  });
+
   test('K70: first operator stores the left operand and clears the input', () {
     final s = const KeypadState.initial()
         .push(1, decimals: 2)
@@ -303,6 +338,10 @@ In `lib/features/transactions/keypad_state.dart`, add the operator reducer using
 
 ```dart
 KeypadState pushOperator(CalcOperator op, {required int decimals}) {
+  if (!hasCurrentInput && !showingResult && !hasExpression) {
+    return this;
+  }
+
   if (isEvaluating && operator != null && leftOperand != null) {
     if (!hasCurrentInput) {
       if (op == operator) return this;
@@ -411,6 +450,7 @@ static int _roundHalfUp(BigInt numerator, BigInt denominator) {
 ```
 
 Keep the zero-result policy for subtraction underflow and divide-by-zero. The expression stays visible and the form remains unsaveable because `TransactionFormState.canSave` still requires `amountMinorUnits > 0`.
+This untouched-state no-op relies on seeded non-zero amounts initializing `hasCurrentInput = true`; account for that when updating `_keypadFromAmount(...)` and any remaining direct `KeypadState(...)` constructors.
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
@@ -575,7 +615,7 @@ KeypadState _copyCurrentOperand({
 
 Then update the mutators with these rules:
 - `push(...)`: if `showingResult`, clear the old expression and start a fresh current operand; otherwise preserve `leftOperand` / `operator` while `isEvaluating == true`
-- `pushDecimal(...)`: when it successfully enters fractional mode, set `hasCurrentInput = true`; this is what makes `.0` different from “empty operand”
+- `pushDecimal(...)`: when it successfully enters fractional mode, set `hasCurrentInput = true`; this is what makes `.0` different from “empty operand” and keeps zero-valued in-progress input visible
 - `pop(...)`: if `showingResult`, first convert the result into a plain current operand and then backspace it; if `isEvaluating && !hasCurrentInput`, cancel the expression and restore `leftOperand`; if backspacing reduces the current operand to an empty zero state, set `hasCurrentInput = false`
 - `clear()`: still return `const KeypadState.initial()`
 
@@ -733,7 +773,8 @@ testWidgets('WK14: operator labels clamp at 1.5x text scale', (tester) async {
 });
 ```
 
-Also update the old WK01-WK04 constructor calls to pass `onOperator: (_) {}`.
+Also update any pre-existing keypad tests to pass `onOperator: (_) {}` and remove or rewrite the old `00`-key assertion instead of preserving it.
+Add one more regression for the non-touch clear path and one zero-decimal regression proving the `.` key is disabled or a no-op when `decimals == 0`.
 
 - [ ] **Step 2: Run the keypad tests to verify they fail**
 
@@ -752,6 +793,7 @@ In `l10n/app_en.arb` add:
 ```
 
 Add the matching translations to `l10n/app_zh_CN.arb` and `l10n/app_zh_TW.arb`.
+Keep `l10n/app_zh.arb` in the repo; add mirrored placeholders there only if the current `flutter gen-l10n` configuration requires them, but do not remove the fallback shim.
 
 Update `test/unit/l10n/arb_audit_test.dart` to add these four keys to `_expectedEnKeys` so the ARB inventory test stays aligned with the new localization surface.
 
@@ -784,6 +826,7 @@ Replace the old layout with:
 Implementation rules:
 - Remove `00`, `C`, and `_SpacerKey`
 - `_OperatorKey` uses `colorScheme.primaryContainer`
+- The `.` key keeps its grid slot but is disabled or a no-op when `decimals == 0`
 - `_DigitKey` and `_OperatorKey` clamp `MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.5)`
 - `_OperatorKey` wraps the visible glyph in `Semantics(label: semanticsLabel, button: true)` + `ExcludeSemantics`
 - `_IconKey` keeps the backspace tooltip, adds `onLongPressHint: l10n.txKeypadClear`, and exposes a `CustomSemanticsAction(label: l10n.txKeypadClear)` so full clear is reachable without requiring a touch long-press gesture
@@ -956,6 +999,8 @@ void main() {
 Run: `dart format . && flutter test test/widget/features/transactions/amount_display_test.dart`
 Expected: FAIL because `AmountDisplay` does not render expression history or fixed-precision evaluated results yet
 
+Also cover the zero-valued decimal-start case: once the keypad has visible input, the currency placeholder stays hidden even if `amountMinorUnits == 0`.
+
 ---
 
 ### Task 6: Render the expression line and fixed-precision evaluated result with `MoneyFormatter`
@@ -977,7 +1022,7 @@ Then change the render contract:
 - While typing (`showingResult == false`), keep the current `_renderAmountText()` preview behavior
 - While showing a result (`showingResult == true`), render the main amount with `MoneyFormatter.formatBare(...)`
 - The expression line ends at `=`; the main line carries the computed result
-- The currency-change placeholder must be suppressed whenever `keypad.hasExpression == true` so zero-valued calculator results remain visible
+- The currency-change placeholder must be suppressed whenever `keypad.hasVisibleInput == true` so zero-valued calculator results and decimal-start input remain visible
 
 Representative implementation shape:
 
@@ -991,7 +1036,7 @@ Widget build(BuildContext context) {
       currencyTouched &&
       keypad.amountMinorUnits == 0 &&
       code.isNotEmpty &&
-      !keypad.hasExpression;
+      !keypad.hasVisibleInput;
   final expressionText = _buildExpressionText(locale: l10n.localeName);
   final text = showPlaceholder
       ? l10n.txAmountPlaceholderInCurrency(code)
@@ -1168,6 +1213,7 @@ Expected: FAIL because `applyOperator()` does not exist yet and `TransactionForm
 - [ ] **Step 3: Implement `applyOperator()`**
 
 First add `keypadRevision` to `TransactionFormState.data` in `lib/features/transactions/transaction_form_state.dart`, default it to `0` in all hydrations, and include it in generated equality / `copyWith`.
+Update `_keypadFromAmount(...)` and any remaining direct `KeypadState(...)` call sites at the same time so the new calculator fields are initialized consistently; seeded non-zero amounts should set `hasCurrentInput = true` so edit/duplicate flows can start operators from the existing amount.
 
 Because this changes a `@freezed` model, run codegen immediately after the field is added:
 
@@ -1192,6 +1238,7 @@ TransactionFormData _copyWithKeypad(
 }
 ```
 
+Reset `_keypadRevision = 0` in every hydrate/reset path before returning fresh form state.
 Use `_copyWithKeypad(...)` from every keypad mutation (`appendDigit`, `appendDecimal`, `backspace`, `clearAmount`, `applyOperator`) so expression-only transitions still rebuild the screen.
 
 Representative `applyOperator()`:
@@ -1209,12 +1256,12 @@ void applyOperator(CalcOperator op) {
 
 - [ ] **Step 4: Run the tests again**
 
-Run: `dart format . && flutter test test/unit/controllers/transaction_form_controller_test.dart --name "TC33|TC34|TC35"`
+Run: `dart format . && flutter test test/unit/controllers/transaction_form_controller_test.dart --name "TC33|TC34|TC35|TC35b|TC35c"`
 Expected: PASS
 
 ---
 
-### Task 8: Treat active expressions as destructive unsaved input on currency changes
+### Task 8: Treat active keypad input as destructive unsaved input when display currency would change
 
 **Files:**
 - Modify: `lib/features/transactions/transaction_form_controller.dart`
@@ -1304,20 +1351,24 @@ test('TC39: selectAccount with the clear flag clears the active expression after
 });
 ```
 
+Add one same-currency account regression using an existing same-currency fixture so active keypad input does not trigger a destructive confirm when `displayCurrency` would stay the same.
+
 - [ ] **Step 2: Run the tests to verify they fail**
 
 Run: `dart format . && flutter test test/unit/controllers/transaction_form_controller_test.dart --name "TC36|TC37|TC38|TC39"`
 Expected: FAIL because the controller only guards on `amountMinorUnits > 0`
 
-- [ ] **Step 3: Gate on amount or active expression in the controller**
+- [ ] **Step 3: Gate on amount or active keypad input in the controller**
 
 In both `selectAccount(...)` and `selectCurrency(...)`, compute:
 
 ```dart
-final hasDestructiveInput = s.amountMinorUnits > 0 || _keypad.hasExpression;
+final hasDestructiveInput = s.amountMinorUnits > 0 || _keypad.hasVisibleInput;
+final willChangeDisplayCurrency = ...;
 ```
 
-Use that instead of `s.amountMinorUnits > 0` when deciding whether the clear flag is required.
+Only require the clear flag when `willChangeDisplayCurrency && hasDestructiveInput`.
+For account changes, this means same-currency switches must keep working without a destructive prompt even when the keypad has an active expression.
 
 Leave the actual reset behavior unchanged after confirmation:
 - if the successful change also changes `displayCurrency`, set `_keypad = const KeypadState.initial()`
@@ -1330,11 +1381,17 @@ Expected: ALL PASS
 
 ---
 
-### Task 9: Wire the screen and expand destructive-change dialogs to cover active expressions
+### Task 9: Wire the screen and expand destructive-change dialogs to cover active keypad input
 
 **Files:**
 - Modify: `lib/features/transactions/transaction_form_screen.dart`
 - Modify: `test/widget/features/transactions/transaction_form_screen_test.dart`
+- Modify: `l10n/app_en.arb`
+- Reference: `l10n/app_zh.arb` (fallback shim must remain in the repo)
+- Modify: `l10n/app_zh_CN.arb`
+- Modify: `l10n/app_zh_TW.arb`
+- Generated: `lib/l10n/app_localizations*.dart`
+- Modify: `test/integration/transaction_mutation_flow_test.dart`
 
 - [ ] **Step 1: Add failing screen tests**
 
@@ -1417,8 +1474,8 @@ testWidgets('WS23b: changing account during an active expression shows the destr
   await tester.tap(find.text('Yen').first);
   await tester.pumpAndSettle();
 
-  expect(find.text('Switch currency?'), findsOneWidget);
   expect(find.textContaining('amount or calculation'), findsOneWidget);
+  expect(find.textContaining('Clear'), findsOneWidget);
 });
 
 testWidgets('WS24: confirming the destructive dialog clears the active expression and updates currency', (tester) async {
@@ -1559,15 +1616,20 @@ CalculatorKeypad(
 
 ```dart
 final hasDestructiveInput =
-    state.amountMinorUnits > 0 || controller.keypadSnapshot.hasExpression;
+    state.amountMinorUnits > 0 || controller.keypadSnapshot.hasVisibleInput;
+final willChangeDisplayCurrency = ...;
 ```
 
-3. Update the dialog body copy so it covers both raw amount entry and active calculations. Change the existing l10n bodies in `app_en.arb`, `app_zh_CN.arb`, and `app_zh_TW.arb` to the equivalent of:
+Only show the destructive confirm when `willChangeDisplayCurrency && hasDestructiveInput`.
+
+3. Update the dialog copy so it covers both raw amount entry and active calculations. Keep the account-triggered dialog account-specific and the manual currency dialog currency-specific; both bodies should mention that the current amount or calculation will be cleared. Change the existing l10n bodies in `app_en.arb`, `app_zh_CN.arb`, and `app_zh_TW.arb` to the equivalent of:
 
 ```json
 "txCurrencyChangeConfirmBody": "Switching to this account changes the currency. The current amount or calculation will be cleared.",
 "txCurrencyPickerChangeConfirmBody": "Changing the currency will clear the current amount or calculation.",
 ```
+
+Do not remove `l10n/app_zh.arb`; keep the fallback shim in place even if it does not need every new key.
 
 Then run: `flutter gen-l10n`
 Expected: generated localization files update cleanly

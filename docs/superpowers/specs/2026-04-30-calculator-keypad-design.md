@@ -23,6 +23,7 @@ Changes from current:
 - Right column: `÷`, `×`, `−`, `+` replace the old spacer/backspace placement
 - Bottom row: `.` moves to row 4 col 1; `00` is removed
 - Visible `C` key is removed; long-press `⌫` performs full clear
+- For zero-decimal currencies, the `.` key keeps its slot but is disabled or a no-op
 - Operator keys use a distinct visual style (for example `colorScheme.primaryContainer`)
 
 Accessibility:
@@ -50,6 +51,12 @@ final bool hasCurrentInput;    // distinguishes empty right operand from explici
 enum CalcOperator { add, subtract, multiply, divide }
 ```
 
+Derived helper:
+
+```dart
+bool get hasVisibleInput => hasExpression || hasCurrentInput;
+```
+
 ### Why `hasCurrentInput` exists
 
 `amountMinorUnits == 0` is ambiguous:
@@ -64,22 +71,25 @@ The reducer must distinguish those states so that:
 
 ### `pushOperator()` rules
 
-1. No expression active:
+1. Truly untouched keypad (`!hasCurrentInput` and no prior result):
+   operator tap is a no-op
+2. No expression active:
    store the current amount as `leftOperand`, set `operator`, enter `isEvaluating`, clear the current input
-2. Evaluating with **no** current right operand:
+3. Evaluating with **no** current right operand:
    - same operator: no-op
    - different operator: replace the pending operator, do not evaluate
-3. Evaluating with a current right operand:
+4. Evaluating with a current right operand:
    evaluate the pending expression
    - same operator: enter `showingResult`
    - different operator: chain from the result into a new pending operator
-4. Showing a result:
+5. Showing a result:
    tapping an operator uses the result as `leftOperand` and starts a new pending expression
 
 ### Digit / decimal / backspace rules
 
 - Typing a digit while `isEvaluating == true` fills the right operand and preserves `leftOperand` / `operator`
 - Tapping decimal while `isEvaluating == true` marks the right operand as started even before a numeric digit is entered (`hasCurrentInput = true`)
+- Tapping decimal when `decimals == 0` is disabled or a no-op so zero-decimal currencies do not expose meaningless fractional input
 - Typing a digit while `showingResult == true` clears the old expression and starts a fresh amount
 - Backspace while `isEvaluating == true` and `hasCurrentInput == false` cancels the expression and restores `leftOperand`
 - Backspace while editing the right operand preserves the expression; if the current operand becomes empty again, set `hasCurrentInput = false`
@@ -155,7 +165,7 @@ Formatting rules:
 - Expression line and evaluated results use `MoneyFormatter.formatBare(...)`
 - Locale comes from `AppLocalizations.localeName`
 - Zero-decimal currencies stay zero-decimal (`12 ÷ 2 =` then `6`)
-- The currency-change placeholder is suppressed whenever calculator expression state is active so zero-valued results like `7 ÷ 0 = 0.00` remain visible after a manual currency pick
+- The currency-change placeholder is suppressed whenever `keypad.hasVisibleInput` is true so zero-valued results and decimal-start input remain visible after a manual currency pick
 
 Large text:
 - Expression line may be single-line + ellipsis, but at 2x scale it must still remain visible on a realistic phone width during tests
@@ -172,13 +182,14 @@ Behavior:
 - Mirrors `_keypad.amountMinorUnits` into `TransactionFormData.amountMinorUnits` after every operator action
 - Keeps `canSave` semantics unchanged (`amountMinorUnits > 0`)
 
-### Currency / account changes during an active expression
+### Currency / account changes during active keypad input
 
-Active expression state is destructive unsaved input, even when the visible amount is `0`.
+Active keypad input is destructive unsaved input, even when the visible amount is `0`.
+This includes active expressions and zero-valued in-progress input such as decimal-start states.
 
-That means the confirm-and-clear flow is required when either is true:
+That means the confirm-and-clear flow is required only when the attempted change would actually change `displayCurrency` and either is true:
 - `state.amountMinorUnits > 0`
-- `_keypad.hasExpression == true`
+- `_keypad.hasVisibleInput == true`
 
 After confirmation, if the successful account/currency change changes `displayCurrency`:
 - `_keypad = const KeypadState.initial()`
@@ -188,7 +199,9 @@ This applies to:
 - direct currency changes
 - account changes that would reseed `displayCurrency`
 
-Dialog copy must reflect both cases, not just raw amount entry. It should say the current amount or calculation will be cleared.
+Same-currency account switches do not require a destructive confirm.
+
+Dialog copy must reflect both cases, not just raw amount entry. The manual currency dialog should describe the currency change; the account-triggered dialog should describe the account switch while making the currency reseed clear. Both should say the current amount or calculation will be cleared.
 
 ### Invalid math + save behavior
 
@@ -200,6 +213,7 @@ Dialog copy must reflect both cases, not just raw amount entry. It should say th
 
 Must cover:
 - initial expression fields + `hasCurrentInput`
+- untouched-keypad operator no-op
 - operator correction before any right input
 - same-operator no-op with empty right operand
 - explicit integer `0` and explicit fractional zero
@@ -216,7 +230,9 @@ Must cover:
 - operator glyphs render and callbacks fire with the correct enum
 - `00` / `C` removed
 - long-press backspace triggers clear
+- non-touch clear path remains exposed through semantics
 - operator keys expose localized semantics labels
+- zero-decimal decimal-key behavior
 - 1.5x label clamp under requested 2x text scale
 
 ### Display tests (`test/widget/features/transactions/amount_display_test.dart`)
@@ -226,6 +242,7 @@ Must cover:
 - evaluating expression line
 - showing-result expression line
 - fixed-precision evaluated main result
+- zero-valued decimal-start input suppresses the currency placeholder
 - zero-decimal currencies
 - 2x text scale with expression history visible
 
@@ -234,7 +251,8 @@ Must cover:
 Must cover:
 - `applyOperator()`
 - operator correction before right input
-- destructive gating on active expression for account/currency changes
+- destructive gating on active keypad input for account/currency changes
+- same-currency account change does not prompt
 - confirmed reset path clears expression state
 
 ### Screen tests (`test/widget/features/transactions/transaction_form_screen_test.dart`)
@@ -260,4 +278,5 @@ Must cover:
 | `test/widget/features/transactions/amount_display_test.dart` | Add expression-line/result-format coverage |
 | `test/unit/controllers/transaction_form_controller_test.dart` | Add controller command + destructive gating coverage |
 | `test/widget/features/transactions/transaction_form_screen_test.dart` | Add end-to-end calculator flow coverage |
-| `l10n/app_en.arb` / `app_zh_CN.arb` / `app_zh_TW.arb` | Add localized operator semantics labels |
+| `test/integration/transaction_mutation_flow_test.dart` | Replace removed `C` interactions with the shipped clear behavior |
+| `l10n/app_en.arb` / `app_zh.arb` / `app_zh_CN.arb` / `app_zh_TW.arb` | Add localized operator semantics labels and destructive-dialog copy while preserving the fallback shim |
