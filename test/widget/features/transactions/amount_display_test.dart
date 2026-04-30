@@ -20,8 +20,8 @@ Widget _wrap(Widget child, {double? textScale}) => MaterialApp(
   home: Scaffold(body: child),
 );
 
-final _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
-final _jpy = Currency(code: 'JPY', decimals: 0, symbol: '¥');
+const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
+const _jpy = Currency(code: 'JPY', decimals: 0, symbol: '¥');
 
 void main() {
   testWidgets('AD01: no expression state renders no expression line', (
@@ -38,7 +38,7 @@ void main() {
   testWidgets('AD02: evaluating state shows the left operand and operator', (
     tester,
   ) async {
-    final keypad = KeypadState(
+    const keypad = KeypadState(
       amountMinorUnits: 500,
       fractionalDigitsEntered: 0,
       isFractionalMode: false,
@@ -49,7 +49,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      _wrap(AmountDisplay(keypad: keypad, currency: _usd)),
+      _wrap(const AmountDisplay(keypad: keypad, currency: _usd)),
     );
 
     expect(find.textContaining('12.00 +'), findsOneWidget);
@@ -58,7 +58,7 @@ void main() {
   testWidgets(
     'AD03: showingResult keeps expression history on the first line',
     (tester) async {
-      final keypad = KeypadState(
+      const keypad = KeypadState(
         amountMinorUnits: 1700,
         fractionalDigitsEntered: 0,
         isFractionalMode: false,
@@ -70,7 +70,7 @@ void main() {
       );
 
       await tester.pumpWidget(
-        _wrap(AmountDisplay(keypad: keypad, currency: _usd)),
+        _wrap(const AmountDisplay(keypad: keypad, currency: _usd)),
       );
 
       expect(find.textContaining('12.00 + 5.00 ='), findsOneWidget);
@@ -80,7 +80,7 @@ void main() {
   testWidgets(
     'AD04: showingResult renders the main result at fixed precision',
     (tester) async {
-      final keypad = KeypadState(
+      const keypad = KeypadState(
         amountMinorUnits: 1700,
         fractionalDigitsEntered: 0,
         isFractionalMode: false,
@@ -92,7 +92,7 @@ void main() {
       );
 
       await tester.pumpWidget(
-        _wrap(AmountDisplay(keypad: keypad, currency: _usd)),
+        _wrap(const AmountDisplay(keypad: keypad, currency: _usd)),
       );
 
       expect(find.text('17.00'), findsOneWidget);
@@ -102,7 +102,7 @@ void main() {
   testWidgets('AD05: zero-decimal currencies keep zero-decimal formatting', (
     tester,
   ) async {
-    final keypad = KeypadState(
+    const keypad = KeypadState(
       amountMinorUnits: 6,
       fractionalDigitsEntered: 0,
       isFractionalMode: false,
@@ -114,7 +114,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      _wrap(AmountDisplay(keypad: keypad, currency: _jpy)),
+      _wrap(const AmountDisplay(keypad: keypad, currency: _jpy)),
     );
 
     expect(find.textContaining('12 ÷ 2 ='), findsOneWidget);
@@ -127,7 +127,7 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(430, 300));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final keypad = KeypadState(
+      const keypad = KeypadState(
         amountMinorUnits: 1700,
         fractionalDigitsEntered: 0,
         isFractionalMode: false,
@@ -139,7 +139,10 @@ void main() {
       );
 
       await tester.pumpWidget(
-        _wrap(AmountDisplay(keypad: keypad, currency: _usd), textScale: 2.0),
+        _wrap(
+          const AmountDisplay(keypad: keypad, currency: _usd),
+          textScale: 2.0,
+        ),
       );
 
       expect(find.textContaining('12.00 + 5.00 ='), findsOneWidget);
@@ -152,7 +155,7 @@ void main() {
     'AD07: placeholder is suppressed when keypad has visible input even if amount is zero',
     (tester) async {
       // isEvaluating=true means hasVisibleInput=true — placeholder must not show.
-      final keypad = KeypadState(
+      const keypad = KeypadState(
         amountMinorUnits: 0,
         fractionalDigitsEntered: 0,
         isFractionalMode: false,
@@ -164,7 +167,7 @@ void main() {
 
       await tester.pumpWidget(
         _wrap(
-          AmountDisplay(
+          const AmountDisplay(
             keypad: keypad,
             currency: _usd,
             currencyTouched:
@@ -192,7 +195,7 @@ void main() {
   testWidgets(
     'AD07b: decimal-start input suppresses the placeholder after a manual currency pick',
     (tester) async {
-      final keypad = KeypadState(
+      const keypad = KeypadState(
         amountMinorUnits: 0,
         fractionalDigitsEntered: 0,
         isFractionalMode: true,
@@ -201,7 +204,11 @@ void main() {
 
       await tester.pumpWidget(
         _wrap(
-          AmountDisplay(keypad: keypad, currency: _usd, currencyTouched: true),
+          const AmountDisplay(
+            keypad: keypad,
+            currency: _usd,
+            currencyTouched: true,
+          ),
         ),
       );
 

@@ -409,7 +409,7 @@ void main() {
     test(
       'K92: digit during showingResult clears the old expression and starts fresh',
       () {
-        final s = KeypadState(
+        const s = KeypadState(
           amountMinorUnits: 1700,
           fractionalDigitsEntered: 0,
           isFractionalMode: false,
@@ -433,7 +433,7 @@ void main() {
     test(
       'K92b: decimal during showingResult clears the old expression and starts a fresh fractional input',
       () {
-        final s = KeypadState(
+        const s = KeypadState(
           amountMinorUnits: 1700,
           fractionalDigitsEntered: 0,
           isFractionalMode: false,
@@ -458,7 +458,7 @@ void main() {
     test(
       'K92c: operator during showingResult starts the next expression from the result',
       () {
-        final s = KeypadState(
+        const s = KeypadState(
           amountMinorUnits: 1700,
           fractionalDigitsEntered: 0,
           isFractionalMode: false,
@@ -551,7 +551,7 @@ void main() {
     test(
       'K97: pop on showingResult with non-zero result backtracks one digit',
       () {
-        final s = KeypadState(
+        const s = KeypadState(
           amountMinorUnits: 1700,
           fractionalDigitsEntered: 0,
           isFractionalMode: false,
@@ -575,7 +575,7 @@ void main() {
     test(
       'K98: pop on showingResult with zero result (e.g. div-by-zero) exits the result state',
       () {
-        final s = KeypadState(
+        const s = KeypadState(
           amountMinorUnits: 0,
           fractionalDigitsEntered: 0,
           isFractionalMode: false,

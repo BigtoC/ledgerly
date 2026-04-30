@@ -163,7 +163,7 @@ class KeypadState {
     if (isFractionalMode) return this;
     if (showingResult) {
       // Decimal after a result clears the expression and starts fresh.
-      return KeypadState(
+      return const KeypadState(
         amountMinorUnits: 0,
         fractionalDigitsEntered: 0,
         isFractionalMode: true,
