@@ -225,14 +225,18 @@ class TransactionFormController extends _$TransactionFormController {
     final s = state;
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
     final decimals = s.displayCurrency?.decimals ?? 2;
-    _keypad = _keypad.pop(decimals: decimals);
+    final next = _keypad.pop(decimals: decimals);
+    if (next == _keypad) return;
+    _keypad = next;
     state = _copyWithKeypad(s, isDirty: true);
   }
 
   void clearAmount() {
     final s = state;
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
-    _keypad = _keypad.clear();
+    final next = _keypad.clear();
+    if (next == _keypad) return;
+    _keypad = next;
     state = _copyWithKeypad(s, isDirty: true);
   }
 
@@ -240,7 +244,9 @@ class TransactionFormController extends _$TransactionFormController {
     final s = state;
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
     final decimals = s.displayCurrency?.decimals ?? 2;
-    _keypad = _keypad.pushOperator(op, decimals: decimals);
+    final next = _keypad.pushOperator(op, decimals: decimals);
+    if (next == _keypad) return;
+    _keypad = next;
     state = _copyWithKeypad(s, isDirty: true);
   }
 
