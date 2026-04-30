@@ -1,4 +1,5 @@
 import java.util.Properties
+import org.gradle.api.GradleException
 
 plugins {
     id("com.android.application")
@@ -12,6 +13,14 @@ val keystoreProperties = Properties()
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(keystorePropertiesFile.inputStream())
 }
+
+val hasReleaseSigningConfig =
+    keystorePropertiesFile.exists() &&
+        listOf("keyAlias", "keyPassword", "storeFile", "storePassword").all {
+            !keystoreProperties.getProperty(it).isNullOrBlank()
+        }
+val isReleaseTaskRequested =
+    gradle.startParameter.taskNames.any { it.lowercase().contains("release") }
 
 android {
     namespace = "com.example.ledgerly"
@@ -46,11 +55,12 @@ android {
 
     buildTypes {
         release {
-            signingConfig = if (keystorePropertiesFile.exists()) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
+            if (isReleaseTaskRequested && !hasReleaseSigningConfig) {
+                throw GradleException(
+                    "Release builds require android/key.properties with keyAlias, keyPassword, storeFile, and storePassword.",
+                )
             }
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }

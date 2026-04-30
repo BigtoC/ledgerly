@@ -58,7 +58,7 @@ jobs:
         run: flutter test --reporter expanded
 
   android-build:
-    name: Android release build
+    name: Android APK builds
     runs-on: ubuntu-latest
     needs: analyze-test
     steps:
@@ -83,8 +83,11 @@ jobs:
         id: check-secrets
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
         run: |
-          if [ -n "$KEYSTORE_BASE64" ]; then
+          if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ] && [ -n "$STORE_PASSWORD" ]; then
             echo "available=true" >> "$GITHUB_OUTPUT"
           else
             echo "available=false" >> "$GITHUB_OUTPUT"
@@ -103,7 +106,7 @@ jobs:
           storePassword=$STORE_PASSWORD
           keyPassword=$KEY_PASSWORD
           keyAlias=$KEY_ALIAS
-          storeFile=app/ledgerly-release.jks
+          storeFile=ledgerly-release.jks
           EOF
         env:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
@@ -111,10 +114,23 @@ jobs:
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
 
       - name: Build signed release APK
+        if: steps.check-secrets.outputs.available == 'true'
         run: flutter build apk --release
 
-      - name: Upload APK artifact
+      - name: Upload signed release APK artifact
+        if: steps.check-secrets.outputs.available == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: ledgerly-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Build debug APK
+        if: steps.check-secrets.outputs.available != 'true'
+        run: flutter build apk --debug
+
+      - name: Upload debug APK artifact
+        if: steps.check-secrets.outputs.available != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ledgerly-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
