@@ -919,7 +919,7 @@ abstract class AppLocalizations {
   /// Wave 2 risk #9. Confirm dialog body for the currency-change clear flow.
   ///
   /// In en, this message translates to:
-  /// **'Switching to this account changes the currency. The entered amount will be cleared.'**
+  /// **'Switching to this account changes the currency. The current amount or calculation will be cleared.'**
   String get txCurrencyChangeConfirmBody;
 
   /// Wave 2 §8. Tooltip / a11y label for the calculator keypad C key.
@@ -933,6 +933,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Backspace'**
   String get txKeypadBackspace;
+
+  /// Semantics label for the + (add) operator key on the calculator keypad.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get txKeypadAdd;
+
+  /// Semantics label for the − (subtract) operator key on the calculator keypad.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtract'**
+  String get txKeypadSubtract;
+
+  /// Semantics label for the × (multiply) operator key on the calculator keypad.
+  ///
+  /// In en, this message translates to:
+  /// **'Multiply'**
+  String get txKeypadMultiply;
+
+  /// Semantics label for the ÷ (divide) operator key on the calculator keypad.
+  ///
+  /// In en, this message translates to:
+  /// **'Divide'**
+  String get txKeypadDivide;
 
   /// Gap day empty card message shown when no transactions exist for the selected day but history exists.
   ///
@@ -1033,7 +1057,7 @@ abstract class AppLocalizations {
   /// Dialog body for the currency-change clear flow triggered from the transaction currency picker (distinct from account-swap flow).
   ///
   /// In en, this message translates to:
-  /// **'Changing the currency will clear the entered amount.'**
+  /// **'Changing the currency will clear the current amount or calculation.'**
   String get txCurrencyPickerChangeConfirmBody;
 
   /// Account tile balance overflow — '+N more' when an account has more than 3 currency groups.

@@ -191,6 +191,11 @@ const Set<String> _expectedEnKeys = <String>{
   // Wave 4 §3.2 renames: were commonDiscard / commonDone — only transactions used them.
   'txDiscardAction',
   'txKeypadDone',
+  // Task 4 — operator key semantics labels.
+  'txKeypadAdd',
+  'txKeypadSubtract',
+  'txKeypadMultiply',
+  'txKeypadDivide',
 
   // M5 Wave 3 — Home slice UI keys
   // (docs/plans/m5-ui-feature-slices/wave-3-home-plan.md §4.2).

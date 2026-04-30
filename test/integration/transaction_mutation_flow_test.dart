@@ -172,7 +172,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Add transaction'), findsOneWidget);
-      await tester.tap(find.text('C'));
+      await tester.longPress(find.byIcon(Icons.backspace_outlined));
       await tester.pumpAndSettle();
       await tester.tap(find.text('2'));
       await tester.pumpAndSettle();
@@ -302,7 +302,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Edit transaction'), findsOneWidget);
 
-      await tester.tap(find.text('C'));
+      await tester.longPress(find.byIcon(Icons.backspace_outlined));
       await tester.pumpAndSettle();
       await tester.tap(find.text('9'));
       await tester.pumpAndSettle();

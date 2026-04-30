@@ -34,6 +34,7 @@ import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
+import 'package:ledgerly/features/transactions/keypad_state.dart';
 import 'package:ledgerly/features/transactions/transaction_form_controller.dart';
 import 'package:ledgerly/features/transactions/transaction_form_state.dart';
 
@@ -56,6 +57,12 @@ const _accountJpy = Account(
   name: 'Yen',
   accountTypeId: 1,
   currency: _jpy,
+);
+const _accountUsd2 = Account(
+  id: 99,
+  name: 'USD Savings',
+  accountTypeId: 1,
+  currency: _usd,
 );
 
 const _expenseCategory = Category(
@@ -126,6 +133,7 @@ void main() {
       final id = inv.positionalArguments.first as int;
       if (id == _account.id) return _account;
       if (id == _accountJpy.id) return _accountJpy;
+      if (id == _accountUsd2.id) return _accountUsd2;
       return null;
     });
     when(() => categoryRepo.getById(any())).thenAnswer((inv) async {
@@ -410,6 +418,34 @@ void main() {
       controller.clearAmount();
       s = c.read(transactionFormControllerProvider) as TransactionFormData;
       expect(s.amountMinorUnits, 0);
+    });
+
+    test('TC32b: pristine keypad no-op commands keep the form clean', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+
+      await controller.hydrateForAdd();
+
+      void expectClean() {
+        final s =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(s.amountMinorUnits, 0);
+        expect(s.isDirty, isFalse);
+        expect(s.keypadRevision, 0);
+        expect(controller.keypadSnapshot, const KeypadState.initial());
+      }
+
+      expectClean();
+
+      controller.applyOperator(CalcOperator.add);
+      expectClean();
+
+      controller.backspace();
+      expectClean();
+
+      controller.clearAmount();
+      expectClean();
     });
   });
 
@@ -884,6 +920,234 @@ void main() {
         });
         await controller.save();
         expect(capturedTx?.currency.code, 'EUR');
+      },
+    );
+  });
+
+  group('destructive-input gating', () {
+    test(
+      'TC36: selectCurrency refuses without the clear flag when an expression is active and the visible amount is zero',
+      () async {
+        const eur = Currency(
+          code: 'EUR',
+          decimals: 2,
+          symbol: '€',
+          nameL10nKey: 'currency.eur',
+        );
+
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+
+        await controller.hydrateForAdd();
+        controller.appendDigit(1);
+        controller.applyOperator(CalcOperator.add); // amountMinorUnits == 0
+        controller.selectCurrency(eur);
+
+        final data =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(data.displayCurrency?.code, 'USD');
+        expect(controller.keypadSnapshot.leftOperand, 100);
+        expect(controller.keypadSnapshot.operator, CalcOperator.add);
+      },
+    );
+
+    test(
+      'TC37: selectCurrency with the clear flag clears the active expression',
+      () async {
+        const eur = Currency(
+          code: 'EUR',
+          decimals: 2,
+          symbol: '€',
+          nameL10nKey: 'currency.eur',
+        );
+
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+
+        await controller.hydrateForAdd();
+        controller.appendDigit(1);
+        controller.applyOperator(CalcOperator.add);
+        controller.selectCurrency(eur, clearAmountOnChange: true);
+
+        final data =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(data.displayCurrency?.code, 'EUR');
+        expect(data.amountMinorUnits, 0);
+        expect(controller.keypadSnapshot.hasExpression, isFalse);
+      },
+    );
+
+    test(
+      'TC38: selectAccount refuses without the clear flag when account reseeding would change displayCurrency during an active expression',
+      () async {
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+
+        await controller.hydrateForAdd();
+        controller.appendDigit(1);
+        controller.applyOperator(CalcOperator.add);
+        controller.selectAccount(_accountJpy);
+
+        final data =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(data.displayCurrency?.code, 'USD');
+        expect(controller.keypadSnapshot.leftOperand, 100);
+        expect(controller.keypadSnapshot.operator, CalcOperator.add);
+      },
+    );
+
+    test(
+      'TC39: selectAccount with the clear flag clears the active expression after the currency reseed',
+      () async {
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+
+        await controller.hydrateForAdd();
+        controller.appendDigit(1);
+        controller.applyOperator(CalcOperator.add);
+        controller.selectAccount(
+          _accountJpy,
+          clearAmountOnCurrencyChange: true,
+        );
+
+        final data =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(data.displayCurrency?.code, 'JPY');
+        expect(data.amountMinorUnits, 0);
+        expect(controller.keypadSnapshot.hasExpression, isFalse);
+      },
+    );
+
+    test(
+      'TC40: selectAccount same-currency switch does not refuse even when keypad has visible input',
+      () async {
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+
+        await controller.hydrateForAdd();
+        controller.appendDigit(1);
+        controller.applyOperator(CalcOperator.add);
+        // Switch to a second USD account (same currency)
+        controller.selectAccount(_accountUsd2);
+
+        final data =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(data.displayCurrency?.code, 'USD');
+        expect(data.selectedAccount?.id, _accountUsd2.id);
+        // Expression preserved because currency did not change
+        expect(controller.keypadSnapshot.leftOperand, 100);
+        expect(controller.keypadSnapshot.operator, CalcOperator.add);
+      },
+    );
+  });
+
+  group('calculator operators', () {
+    test(
+      'TC33: applyOperator stores the left operand and enters evaluating',
+      () async {
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+
+        await controller.hydrateForAdd();
+        controller.appendDigit(1);
+        controller.appendDigit(2);
+        controller.applyOperator(CalcOperator.add);
+
+        expect(controller.keypadSnapshot.leftOperand, 1200);
+        expect(controller.keypadSnapshot.operator, CalcOperator.add);
+        expect(controller.keypadSnapshot.isEvaluating, isTrue);
+        expect(controller.keypadSnapshot.amountMinorUnits, 0);
+      },
+    );
+
+    test(
+      'TC34: repeating the operator evaluates and mirrors the result to state',
+      () async {
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+
+        await controller.hydrateForAdd();
+        controller.appendDigit(1);
+        controller.appendDigit(2);
+        controller.applyOperator(CalcOperator.add);
+        controller.appendDigit(5);
+        controller.applyOperator(CalcOperator.add);
+
+        final data =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(controller.keypadSnapshot.amountMinorUnits, 1700);
+        expect(controller.keypadSnapshot.showingResult, isTrue);
+        expect(data.amountMinorUnits, 1700);
+      },
+    );
+
+    test(
+      'TC35: operator correction before right input replaces the pending operator',
+      () async {
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+
+        await controller.hydrateForAdd();
+        controller.appendDigit(1);
+        controller.applyOperator(CalcOperator.multiply);
+        controller.applyOperator(CalcOperator.subtract);
+
+        expect(controller.keypadSnapshot.leftOperand, 100);
+        expect(controller.keypadSnapshot.operator, CalcOperator.subtract);
+        expect(controller.keypadSnapshot.amountMinorUnits, 0);
+      },
+    );
+
+    test(
+      'TC35b: decimal-start while evaluating still increments the watched keypad revision',
+      () async {
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+
+        await controller.hydrateForAdd();
+        controller.appendDigit(1);
+        controller.applyOperator(CalcOperator.add);
+        final before =
+            (c.read(transactionFormControllerProvider) as TransactionFormData)
+                .keypadRevision;
+
+        controller.appendDecimal();
+
+        final after =
+            (c.read(transactionFormControllerProvider) as TransactionFormData)
+                .keypadRevision;
+        expect(after, greaterThan(before));
+        expect(controller.keypadSnapshot.hasCurrentInput, isTrue);
+      },
+    );
+
+    test(
+      'TC35c: chaining with a different operator starts the next expression from the evaluated result',
+      () async {
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+
+        await controller.hydrateForAdd();
+        controller.appendDigit(1);
+        controller.appendDigit(2);
+        controller.applyOperator(CalcOperator.add);
+        controller.appendDigit(5);
+        controller.applyOperator(CalcOperator.subtract);
+
+        expect(controller.keypadSnapshot.leftOperand, 1700);
+        expect(controller.keypadSnapshot.operator, CalcOperator.subtract);
+        expect(controller.keypadSnapshot.isEvaluating, isTrue);
+        expect(controller.keypadSnapshot.amountMinorUnits, 0);
       },
     );
   });

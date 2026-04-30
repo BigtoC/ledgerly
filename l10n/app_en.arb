@@ -565,7 +565,7 @@
   "@txCurrencyChangeConfirmTitle": {
     "description": "Wave 2 risk #9. Confirm dialog title when the user picks an account with a different currency after entering an amount."
   },
-  "txCurrencyChangeConfirmBody": "Switching to this account changes the currency. The entered amount will be cleared.",
+  "txCurrencyChangeConfirmBody": "Switching to this account changes the currency. The current amount or calculation will be cleared.",
   "@txCurrencyChangeConfirmBody": {
     "description": "Wave 2 risk #9. Confirm dialog body for the currency-change clear flow."
   },
@@ -576,6 +576,22 @@
   "txKeypadBackspace": "Backspace",
   "@txKeypadBackspace": {
     "description": "Wave 2 §8. Tooltip / a11y label for the calculator keypad ⌫ key."
+  },
+  "txKeypadAdd": "Add",
+  "@txKeypadAdd": {
+    "description": "Semantics label for the + (add) operator key on the calculator keypad."
+  },
+  "txKeypadSubtract": "Subtract",
+  "@txKeypadSubtract": {
+    "description": "Semantics label for the − (subtract) operator key on the calculator keypad."
+  },
+  "txKeypadMultiply": "Multiply",
+  "@txKeypadMultiply": {
+    "description": "Semantics label for the × (multiply) operator key on the calculator keypad."
+  },
+  "txKeypadDivide": "Divide",
+  "@txKeypadDivide": {
+    "description": "Semantics label for the ÷ (divide) operator key on the calculator keypad."
   },
 
   "homeEmptyDayMessage": "No transaction",
@@ -646,7 +662,7 @@
   "@txCurrencyPickerNoResults": {
     "description": "Empty state shown inside the transaction currency picker when the search filter matches nothing."
   },
-  "txCurrencyPickerChangeConfirmBody": "Changing the currency will clear the entered amount.",
+  "txCurrencyPickerChangeConfirmBody": "Changing the currency will clear the current amount or calculation.",
   "@txCurrencyPickerChangeConfirmBody": {
     "description": "Dialog body for the currency-change clear flow triggered from the transaction currency picker (distinct from account-swap flow)."
   },

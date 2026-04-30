@@ -430,13 +430,25 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get txCurrencyChangeConfirmBody =>
-      'Switching to this account changes the currency. The entered amount will be cleared.';
+      'Switching to this account changes the currency. The current amount or calculation will be cleared.';
 
   @override
   String get txKeypadClear => 'Clear amount';
 
   @override
   String get txKeypadBackspace => 'Backspace';
+
+  @override
+  String get txKeypadAdd => 'Add';
+
+  @override
+  String get txKeypadSubtract => 'Subtract';
+
+  @override
+  String get txKeypadMultiply => 'Multiply';
+
+  @override
+  String get txKeypadDivide => 'Divide';
 
   @override
   String get homeEmptyDayMessage => 'No transaction';
@@ -490,7 +502,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get txCurrencyPickerChangeConfirmBody =>
-      'Changing the currency will clear the entered amount.';
+      'Changing the currency will clear the current amount or calculation.';
 
   @override
   String accountsBalanceMore(int count) {
@@ -955,13 +967,25 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get txCurrencyChangeConfirmTitle => '切换币种?';
 
   @override
-  String get txCurrencyChangeConfirmBody => '切换到此账户会改变币种,当前输入的金额将被清除。';
+  String get txCurrencyChangeConfirmBody => '切换此账户将更改货币。当前金额或计算结果将被清除。';
 
   @override
   String get txKeypadClear => '清除金额';
 
   @override
   String get txKeypadBackspace => '退格';
+
+  @override
+  String get txKeypadAdd => '加';
+
+  @override
+  String get txKeypadSubtract => '减';
+
+  @override
+  String get txKeypadMultiply => '乘';
+
+  @override
+  String get txKeypadDivide => '除';
 
   @override
   String get homeEmptyDayMessage => '无交易';
@@ -1014,7 +1038,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get txCurrencyPickerNoResults => '未找到币种';
 
   @override
-  String get txCurrencyPickerChangeConfirmBody => '更换币种将清除已输入的金额。';
+  String get txCurrencyPickerChangeConfirmBody => '更改货币将清除当前金额或计算结果。';
 
   @override
   String accountsBalanceMore(int count) {
@@ -1473,13 +1497,25 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get txCurrencyChangeConfirmTitle => '切換幣別?';
 
   @override
-  String get txCurrencyChangeConfirmBody => '切換到此帳戶會改變幣別,目前輸入的金額將被清除。';
+  String get txCurrencyChangeConfirmBody => '切換此帳戶將更改貨幣。目前金額或計算結果將被清除。';
 
   @override
   String get txKeypadClear => '清除金額';
 
   @override
   String get txKeypadBackspace => '退格';
+
+  @override
+  String get txKeypadAdd => '加';
+
+  @override
+  String get txKeypadSubtract => '減';
+
+  @override
+  String get txKeypadMultiply => '乘';
+
+  @override
+  String get txKeypadDivide => '除';
 
   @override
   String get homeEmptyDayMessage => '無交易';
@@ -1532,7 +1568,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get txCurrencyPickerNoResults => '找不到幣別';
 
   @override
-  String get txCurrencyPickerChangeConfirmBody => '更換幣別將清除已輸入的金額。';
+  String get txCurrencyPickerChangeConfirmBody => '更改貨幣將清除目前金額或計算結果。';
 
   @override
   String accountsBalanceMore(int count) {
