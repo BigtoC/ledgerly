@@ -94,7 +94,7 @@ Required fields on conversion:
 Repository boundary:
 - `ShoppingListRepository` owns shopping-list CRUD and count/watch APIs
 - `TransactionRepository` remains the only writer for real transactions
-- the final transaction write should go through `TransactionRepository.save(...)`
+- the final transaction write should go through `TransactionRepository.save(...)`, the same standard save path used for normal transactions
 
 Deletion rule:
 - delete the shopping-list draft only after the transaction save succeeds
@@ -111,6 +111,10 @@ Recommended structure:
 - `AccountsScreen` remains the primary list host surface, but renders the shopping-list card from shopping-list providers/controllers
 - `HomeScreen` only reads a lightweight shopping-list count provider for the circle shortcut
 - the item editor/completion flow lives in its own screen/route
+
+Implementation notes:
+- register `ShoppingListItems` table and `ShoppingListDao` in the `@DriftDatabase` annotation in `lib/data/database/app_database.dart`, then run `dart run build_runner build --delete-conflicting-outputs` to regenerate `app_database.g.dart`
+- register `DriftShoppingListRepository` in `lib/app/providers/repository_providers.dart` as `@Riverpod(keepAlive: true, dependencies: [appDatabase])` and reference `shoppingListRepositoryProvider` in every controller that reads it
 
 Why this shape is preferred:
 - `AccountsScreen` already has enough responsibility; adding item editing ownership there would tangle unrelated concerns
@@ -148,60 +152,31 @@ Notable omissions:
 
 ### 3.1 Create draft from transaction form
 
-The controller should validate enough to save a shopping-list item:
-- category required
-- account required
-- memo may be empty
-- amount may be empty/zero
-- rapid repeated taps on `Add to shopping list` should be guarded against duplicate inserts by disabling the action or serializing the save
+See Section 1.1 for validation rules, repository behavior, and screen behavior for this flow.
 
-Repository behavior:
-- insert a `shopping_list_items` row
-- return success/failure to the controller
-
-Screen behavior:
-- on success, close the form immediately
-- on failure, remain on form and surface a snackbar
+Controller guard: the `addToShoppingList` command must check `if (s is! TransactionFormData) return;` before any validation or repository access, matching the existing `save()` guard pattern in `TransactionFormController`.
 
 ### 3.2 Edit existing draft
 
-The shopping-list item screen opens with:
-- category
-- account
-- memo
-- optional draft amount
+See Section 1.3 for the fields and actions available on the item screen.
 
-The shopping-list item screen should not expose a separate currency picker. When a draft amount is entered without an explicit draft currency from the transaction form, the screen should infer the draft currency from the selected account. The user should be able to save edits back to the shopping-list item independently from conversion.
+The item screen must not expose a separate currency picker. When a draft amount is entered without an explicit draft currency, the screen infers the draft currency from the selected account. The user may save edits back to the shopping-list item independently from conversion.
 
 ### 3.3 Draft amount and currency
 
-If the user enters a draft amount in a different currency from the selected account, the shopping-list item should preserve that chosen currency alongside the draft amount.
-
-Therefore:
-- `draftAmountMinorUnits` may be null
-- `draftCurrencyCode` may be null, but must be present whenever draft amount is present
-
-This keeps the feature aligned with Ledgerly's existing minor-unit money policy while still allowing the user to capture the intended transaction currency.
+See Section 1.4 for the draft amount and currency invariants.
 
 ### 3.4 Convert to transaction
 
-Conversion should build a normal `Transaction` from the shopping-list item.
+See Section 1.5 for conversion requirements, repository boundary, and deletion rule.
 
-Required fields on conversion:
-- amount > 0
-- category
-- account
-- currency (use draft currency when present, otherwise infer from account)
-- date = current local date automatically
+### 3.5 Schema migration
 
-Repository boundary:
-- `ShoppingListRepository` owns shopping-list CRUD and count/watch APIs
-- `TransactionRepository` remains the only writer for real transactions
-- the final transaction write should go through `TransactionRepository.save(...)`, the same standard save path used for normal transactions
-
-Deletion rule:
-- delete the shopping-list draft only after the transaction save succeeds
-- never delete the draft first
+Adding `shopping_list_items` requires a Drift schema version bump:
+- increment `schemaVersion` to 3 in `lib/data/database/app_database.dart`
+- add a `from < 3` branch in `onUpgrade` that calls `m.createTable(shoppingListItems)`
+- run `dart run drift_dev schema dump lib/data/database/app_database.dart drift_schemas/` to commit the v3 snapshot
+- add a migration test covering the v2 → v3 path on both empty and seeded databases
 
 ## 4. UI, Errors, and Testing
 
@@ -227,7 +202,7 @@ Card should show:
 - title
 - item count
 - compact item preview list (show up to 3 items, then truncate with a remaining-count label or overflow affordance)
-- empty state when no items exist
+- empty state when no items exist (the card is always rendered, even before the first item is created)
 
 Row interactions:
 - tap row -> open shopping-list item screen
@@ -307,7 +282,6 @@ Integration / path tests:
 ## 5. Open Decisions
 
 - `Add to shopping list` should be rendered as a secondary text-style action rather than a filled primary button; exact widget type can be finalized during implementation.
-- the shopping-list card on Accounts should remain visible even when empty, using the card's empty state rather than appearing only after the first item exists
 
 ## 6. Out of Scope
 
