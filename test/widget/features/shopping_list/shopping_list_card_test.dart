@@ -38,6 +38,8 @@ import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/features/accounts/accounts_controller.dart';
 import 'package:ledgerly/features/accounts/accounts_screen.dart';
 import 'package:ledgerly/features/accounts/accounts_state.dart';
+import 'package:ledgerly/features/shopping_list/shopping_list_controller.dart';
+import 'package:ledgerly/features/shopping_list/shopping_list_state.dart';
 import 'package:ledgerly/features/shopping_list/widgets/shopping_list_card.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
@@ -735,4 +737,85 @@ void main() {
       expect(find.textContaining('Old Account'), findsOneWidget);
     },
   );
+
+  // SL14 — Integration: preview rows do not subscribe to the controller.
+  //
+  // ShoppingListCard renders preview rows without ever reading from
+  // shoppingListControllerProvider, which owns the delete/undo logic and
+  // should only be instantiated by ShoppingListScreen.
+  testWidgets(
+    'ShoppingListCard never instantiates shoppingListControllerProvider',
+    (tester) async {
+      final shoppingListRepo = _MockShoppingListRepository();
+      final categoryRepo = _MockCategoryRepository();
+      final accountRepo = _MockAccountRepository();
+
+      when(
+        () => shoppingListRepo.watchAll(),
+      ).thenAnswer((_) => Stream.value([_item(id: 1, memo: 'Test')]));
+      when(
+        () => categoryRepo.getById(any()),
+      ).thenAnswer((_) async => _expenseCategory);
+      when(() => accountRepo.getById(any())).thenAnswer((_) async => _account);
+
+      var controllerWasBuilt = false;
+
+      final container = _makeCardContainer(
+        shoppingListRepo: shoppingListRepo,
+        categoryRepo: categoryRepo,
+        accountRepo: accountRepo,
+      );
+
+      // Re-create the container with the controller override on top.
+      container.dispose();
+
+      final typeRepo = _MockAccountTypeRepository();
+      when(
+        () => typeRepo.watchAll(includeArchived: any(named: 'includeArchived')),
+      ).thenAnswer((_) => Stream.value([]));
+      final prefs = _MockUserPreferencesRepository();
+      final currencyRepo = _MockCurrencyRepository();
+      when(
+        () => currencyRepo.watchAll(),
+      ).thenAnswer((_) => Stream.value([_usd]));
+      when(
+        () => currencyRepo.watchAll(includeTokens: any(named: 'includeTokens')),
+      ).thenAnswer((_) => Stream.value([_usd]));
+
+      final spyContainer = ProviderContainer(
+        overrides: [
+          shoppingListRepositoryProvider.overrideWithValue(shoppingListRepo),
+          categoryRepositoryProvider.overrideWithValue(categoryRepo),
+          accountRepositoryProvider.overrideWithValue(accountRepo),
+          accountTypeRepositoryProvider.overrideWithValue(typeRepo),
+          userPreferencesRepositoryProvider.overrideWithValue(prefs),
+          currencyRepositoryProvider.overrideWithValue(currencyRepo),
+          shoppingListControllerProvider.overrideWith(() {
+            controllerWasBuilt = true;
+            return _SpyShoppingListController();
+          }),
+        ],
+      );
+      addTearDown(spyContainer.dispose);
+
+      await tester.pumpWidget(_wrapCard(container: spyContainer));
+      await tester.pumpAndSettle();
+
+      expect(
+        controllerWasBuilt,
+        isFalse,
+        reason:
+            'ShoppingListCard must not subscribe to shoppingListControllerProvider',
+      );
+    },
+  );
+}
+
+// ── Spy controller used in SL14 ────────────────────────────────────────────
+
+class _SpyShoppingListController extends ShoppingListController {
+  @override
+  Stream<ShoppingListState> build() async* {
+    yield const ShoppingListState.empty();
+  }
 }

@@ -244,17 +244,25 @@ void main() {
         itemsCtrl.add([item]);
         await waitFor(container, (s) => s is ShoppingListData);
 
-        await container
-            .read(shoppingListControllerProvider.notifier)
-            .deleteItem(55);
-        await Future<void>.delayed(Duration.zero);
+        fakeAsync((fake) {
+          container
+              .read(shoppingListControllerProvider.notifier)
+              .deleteItem(55);
+          fake.flushMicrotasks();
 
-        await waitFor(
-          container,
-          (s) => s is ShoppingListData && s.pendingDelete?.itemId == 55,
-        );
+          final hiding =
+              container.read(shoppingListControllerProvider).requireValue
+                  as ShoppingListData;
+          expect(hiding.pendingDelete?.itemId, 55);
+          expect(hiding.items, isEmpty);
 
-        await Future<void>.delayed(const Duration(seconds: 5));
+          // Advance past the undo window so the timer fires and calls
+          // repo.delete(55), which throws → effect fires + row restores.
+          fake.elapse(kUndoWindow + const Duration(milliseconds: 1));
+          fake.flushMicrotasks();
+        });
+
+        // After fakeAsync exits, await the async repo.delete throw propagation.
         await pump();
 
         final recovered = await waitFor(

@@ -127,6 +127,10 @@ class ShoppingListController extends _$ShoppingListController {
         _pendingDelete = null;
         _composer?.setPendingDelete(null);
       } else {
+        // A second delete is already pending. The failed item's row must
+        // reappear regardless — force a stream re-emission so the restored
+        // row becomes visible (the pending state was not changed, but
+        // _scheduleEmit re-derives visible rows from the current state).
         _composer?.setPendingDelete(_pendingDelete);
       }
       _effectListener?.call(ShoppingListDeleteFailedEffect(error, stackTrace));

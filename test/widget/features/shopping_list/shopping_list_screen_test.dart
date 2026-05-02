@@ -20,7 +20,11 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
+import 'package:ledgerly/data/models/category.dart';
 import 'package:ledgerly/data/models/shopping_list_item.dart';
+import 'package:ledgerly/data/repositories/account_repository.dart';
+import 'package:ledgerly/data/repositories/category_repository.dart';
+import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/shopping_list_repository.dart';
 import 'package:ledgerly/features/shopping_list/shopping_list_controller.dart';
 import 'package:ledgerly/features/shopping_list/shopping_list_screen.dart';
@@ -29,6 +33,12 @@ import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockShoppingListRepository extends Mock
     implements ShoppingListRepository {}
+
+class _MockCategoryRepository extends Mock implements CategoryRepository {}
+
+class _MockAccountRepository extends Mock implements AccountRepository {}
+
+class _MockCurrencyRepository extends Mock implements CurrencyRepository {}
 
 ShoppingListItem _item({
   required int id,
@@ -93,9 +103,32 @@ ProviderContainer _makeContainer({
 }) {
   final r = repo ?? _MockShoppingListRepository();
   when(() => r.watchAll()).thenAnswer((_) => const Stream.empty());
+
+  // _ShoppingListRow is a ConsumerWidget that watches category/account/currency
+  // providers. Provide stub repositories so those providers don't throw.
+  final categoryRepo = _MockCategoryRepository();
+  when(() => categoryRepo.getById(any())).thenAnswer(
+    (_) async => const Category(
+      id: 1,
+      icon: 'food',
+      color: 0,
+      type: CategoryType.expense,
+      customName: 'Groceries',
+    ),
+  );
+
+  final accountRepo = _MockAccountRepository();
+  when(() => accountRepo.getById(any())).thenAnswer((_) async => null);
+
+  final currencyRepo = _MockCurrencyRepository();
+  when(() => currencyRepo.getByCode(any())).thenAnswer((_) async => null);
+
   return ProviderContainer(
     overrides: [
       shoppingListRepositoryProvider.overrideWithValue(r),
+      categoryRepositoryProvider.overrideWithValue(categoryRepo),
+      accountRepositoryProvider.overrideWithValue(accountRepo),
+      currencyRepositoryProvider.overrideWithValue(currencyRepo),
       shoppingListControllerProvider.overrideWith(
         () => _FakeShoppingListController(fixed),
       ),
