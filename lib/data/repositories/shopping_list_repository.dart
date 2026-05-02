@@ -45,7 +45,10 @@ class ShoppingListRepositoryException implements Exception {
 /// SSOT for `shopping_list_items`.
 abstract class ShoppingListRepository {
   /// Watch all items, newest `created_at` first.
-  Stream<List<ShoppingListItem>> watchAll();
+  Stream<List<ShoppingListItem>> watchAll({int limit = 10000});
+
+  /// Reactive total row count across all shopping-list items.
+  Stream<int> watchCount();
 
   /// One-shot read by id. Returns null when no row matches.
   Future<ShoppingListItem?> getById(int id);
@@ -128,10 +131,15 @@ final class DriftShoppingListRepository implements ShoppingListRepository {
   // ---------- Reads ----------
 
   @override
-  Stream<List<ShoppingListItem>> watchAll() {
-    return _shoppingListDao.watchAll().map(
-      (rows) => rows.map(_toDomain).toList(growable: false),
-    );
+  Stream<List<ShoppingListItem>> watchAll({int limit = 10000}) {
+    return _shoppingListDao
+        .watchAll(limit: limit)
+        .map((rows) => rows.map(_toDomain).toList(growable: false));
+  }
+
+  @override
+  Stream<int> watchCount() {
+    return _shoppingListDao.watchCount();
   }
 
   @override
@@ -151,7 +159,14 @@ final class DriftShoppingListRepository implements ShoppingListRepository {
     String? draftCurrencyCode,
     required DateTime draftDate,
   }) async {
-    _validateAmountCurrencyPair(draftAmountMinorUnits, draftCurrencyCode);
+    final normalizedDraft = _normalizeAmountCurrencyPair(
+      draftAmountMinorUnits,
+      draftCurrencyCode,
+    );
+    _validateAmountCurrencyPair(
+      normalizedDraft.amountMinorUnits,
+      normalizedDraft.currencyCode,
+    );
     await _validateExpenseCategory(categoryId);
 
     final now = _clock();
@@ -160,11 +175,11 @@ final class DriftShoppingListRepository implements ShoppingListRepository {
         categoryId: Value(categoryId),
         accountId: Value(accountId),
         memo: memo != null ? Value(memo) : const Value.absent(),
-        draftAmountMinorUnits: draftAmountMinorUnits != null
-            ? Value(draftAmountMinorUnits)
+        draftAmountMinorUnits: normalizedDraft.amountMinorUnits != null
+            ? Value(normalizedDraft.amountMinorUnits)
             : const Value.absent(),
-        draftCurrencyCode: draftCurrencyCode != null
-            ? Value(draftCurrencyCode)
+        draftCurrencyCode: normalizedDraft.currencyCode != null
+            ? Value(normalizedDraft.currencyCode)
             : const Value.absent(),
         draftDate: Value(draftDate),
         createdAt: Value(now),
@@ -183,9 +198,13 @@ final class DriftShoppingListRepository implements ShoppingListRepository {
 
   @override
   Future<ShoppingListItem> update(ShoppingListItem item) async {
-    _validateAmountCurrencyPair(
+    final normalizedDraft = _normalizeAmountCurrencyPair(
       item.draftAmountMinorUnits,
       item.draftCurrencyCode,
+    );
+    _validateAmountCurrencyPair(
+      normalizedDraft.amountMinorUnits,
+      normalizedDraft.currencyCode,
     );
     await _validateExpenseCategory(item.categoryId);
 
@@ -204,8 +223,8 @@ final class DriftShoppingListRepository implements ShoppingListRepository {
         categoryId: Value(item.categoryId),
         accountId: Value(item.accountId),
         memo: Value(item.memo),
-        draftAmountMinorUnits: Value(item.draftAmountMinorUnits),
-        draftCurrencyCode: Value(item.draftCurrencyCode),
+        draftAmountMinorUnits: Value(normalizedDraft.amountMinorUnits),
+        draftCurrencyCode: Value(normalizedDraft.currencyCode),
         draftDate: Value(item.draftDate),
         createdAt: Value(stored.createdAt), // Preserve stored createdAt
         updatedAt: Value(now),
@@ -238,6 +257,12 @@ final class DriftShoppingListRepository implements ShoppingListRepository {
     String? memo,
   }) async {
     return _db.transaction<Transaction>(() async {
+      if (amountMinorUnits <= 0) {
+        throw const ShoppingListRepositoryException(
+          'amountMinorUnits must be greater than zero for conversion',
+        );
+      }
+
       // Step 1: Confirm draft exists.
       final draft = await _shoppingListDao.findById(shoppingListItemId);
       if (draft == null) {
@@ -320,6 +345,20 @@ final class DriftShoppingListRepository implements ShoppingListRepository {
         'both non-null',
       );
     }
+  }
+
+  ({int? amountMinorUnits, String? currencyCode}) _normalizeAmountCurrencyPair(
+    int? draftAmountMinorUnits,
+    String? draftCurrencyCode,
+  ) {
+    if (draftAmountMinorUnits != null && draftAmountMinorUnits <= 0) {
+      return (amountMinorUnits: null, currencyCode: null);
+    }
+
+    return (
+      amountMinorUnits: draftAmountMinorUnits,
+      currencyCode: draftCurrencyCode,
+    );
   }
 
   Future<void> _validateExpenseCategory(int categoryId) async {

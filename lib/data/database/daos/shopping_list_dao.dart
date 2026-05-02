@@ -29,6 +29,13 @@ class ShoppingListDao extends DatabaseAccessor<AppDatabase>
         .watch();
   }
 
+  /// Reactive total row count across all shopping-list items.
+  Stream<int> watchCount() {
+    final countExp = shoppingListItems.id.count();
+    final query = selectOnly(shoppingListItems)..addColumns([countExp]);
+    return query.watchSingle().map((row) => row.read(countExp) ?? 0);
+  }
+
   /// One-shot read by id.
   Future<ShoppingListItemRow?> findById(int id) {
     return (select(
