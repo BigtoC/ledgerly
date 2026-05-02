@@ -548,8 +548,8 @@
 
 ### Shopping-list count button on Home
 
-- [ ] Add a provider `shoppingListTotalCountProvider` in `shopping_list_providers.dart` that watches the total row count from `ShoppingListRepository` and exposes `AsyncValue<int>`. Reuse the repository's `watchAll()` stream and derive the count from `list.length` — do not add a new DAO query.
-- [ ] In `HomeScreen`, render a mini `FloatingActionButton` to the **left** of the existing extended FAB using a `Row` with `mainAxisSize: MainAxisSize.min` as the `floatingActionButton` widget. Keep the same `floatingActionButtonLocation: FloatingActionButtonLocation.endFloat` (the default).
+- [x] Add a provider `shoppingListTotalCountProvider` in `shopping_list_providers.dart` that watches the total row count from `ShoppingListRepository` and exposes `AsyncValue<int>`. Reuse the repository's `watchAll()` stream and derive the count from `list.length` — do not add a new DAO query.
+- [x] In `HomeScreen`, render a mini `FloatingActionButton` to the **left** of the existing extended FAB using a `Row` with `mainAxisSize: MainAxisSize.min` as the `floatingActionButton` widget. Keep the same `floatingActionButtonLocation: FloatingActionButtonLocation.endFloat` (the default).
   - The mini FAB uses `heroTag: 'home_shopping_list_fab'`.
   - Icon: `Icons.shopping_cart_outlined` (or similar cart icon).
   - When the total count is `> 0`, overlay a `Badge` (Material 3 `Badge` widget) on the icon showing the count. Clamp the displayed number at 99 — show `"99+"` for counts above 99.
@@ -557,16 +557,16 @@
   - While the count is loading (`AsyncLoading`), show the icon without a badge (treat loading as 0 for badge visibility; do not show a spinner on the FAB).
   - On tap: `context.go('/accounts/shopping-list')`.
   - Maintain an 8 dp horizontal gap between the mini FAB and the extended FAB.
-- [ ] Do **not** remove, resize, or reposition the existing extended FAB. The layout must not break at the adaptive ≥600 dp breakpoint (both FABs remain visible in the wide layout).
+- [x] Do **not** remove, resize, or reposition the existing extended FAB. The layout must not break at the adaptive ≥600 dp breakpoint (both FABs remain visible in the wide layout).
 
 ### "Add" icon button in the non-empty ShoppingListCard header
 
-- [ ] In `ShoppingListCard`, add an `IconButton` (icon: `Icons.add`) to the card header row — positioned **between** the title and the `TextButton("View all")` — in **all** card states: loading, error, empty, and non-empty.
+- [x] In `ShoppingListCard`, add an `IconButton` (icon: `Icons.add`) to the card header row — positioned **between** the title and the `TextButton("View all")` — in **all** card states: loading, error, empty, and non-empty.
   - The button is always rendered (not conditional on `preview.isEmpty`).
   - On tap: `context.push('/home/add')` (push semantics, identical to the existing empty-state CTA).
   - Tooltip: `l10n.shoppingListEmptyCta` (reuse existing key; it already reads "Add to shopping list" or equivalent).
-- [ ] Keep the "View all" `TextButton` at the far right; the add `IconButton` sits immediately to its left.
-- [ ] Keep the `_EmptyBody` section intact — it provides body-level copy and CTA when no drafts exist; the header button is a supplementary shortcut, not a replacement.
+- [x] Keep the "View all" `TextButton` at the far right; the add `IconButton` sits immediately to its left.
+- [x] Keep the `_EmptyBody` section intact — it provides body-level copy and CTA when no drafts exist; the header button is a supplementary shortcut, not a replacement.
 
 **Patterns to follow:**
 - `lib/features/home/home_screen.dart` — FAB wiring and `floatingActionButtonLocation`
