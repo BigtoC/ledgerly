@@ -7,6 +7,8 @@
 //   - AddTransactionMode title matches existing txAddTitle l10n key
 //   - route pop with ShoppingListEditResult.savedDraft is distinct from null
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -210,8 +212,8 @@ void main() {
           GoRoute(
             path: '/form',
             builder: (_, state) {
-              return TransactionFormScreen(
-                mode: const EditShoppingListDraftMode(shoppingListItemId: 99),
+              return const TransactionFormScreen(
+                mode: EditShoppingListDraftMode(shoppingListItemId: 99),
               );
             },
           ),
@@ -242,9 +244,9 @@ void main() {
       );
 
       // Navigate to the form screen, capturing the pop result.
-      router.push<ShoppingListEditResult>('/form').then((result) {
+      unawaited(router.push<ShoppingListEditResult>('/form').then((result) {
         poppedResult = result;
-      });
+      }));
       await tester.pumpAndSettle();
 
       // After hydration finds the draft is missing, the screen should auto-pop
