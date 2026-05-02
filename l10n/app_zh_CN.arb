@@ -185,6 +185,24 @@
     }
   },
 
+  "shoppingListCardTitle": "购物清单",
+  "shoppingListViewAll": "查看全部",
+  "shoppingListEmptyBody": "暂无待支出",
+  "shoppingListEmptyCta": "加入购物清单",
+  "shoppingListItemsMore": "{count, plural, other{还有{count}条}}",
+  "@shoppingListItemsMore": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+
+  "shoppingListScreenTitle": "购物清单",
+  "shoppingListDeleteUndoSnackbar": "草稿已删除",
+  "shoppingListDeleteAction": "删除",
+  "shoppingListScreenEmptyBody": "暂无待支出",
+  "shoppingListScreenEmptyCta": "加入购物清单",
+  "shoppingListScreenRetry": "重试",
+
   "currencyUsd": "美元",
   "currencyEur": "欧元",
   "currencyJpy": "日元",
@@ -195,5 +213,18 @@
   "currencyCad": "加拿大元",
   "currencySgd": "新加坡元",
   "currencyAud": "澳元",
-  "currencyNzd": "新西兰元"
+  "currencyNzd": "新西兰元",
+
+  "shoppingListEditDraftTitle": "编辑草稿",
+  "shoppingListAddToListAction": "加入购物清单",
+  "shoppingListSaveDraftAction": "保存草稿",
+  "shoppingListSaveToTransactionAction": "保存为交易",
+  "shoppingListArchivedAccountWarning": "账户已存档——转换前请先更换",
+  "shoppingListArchivedCategoryWarning": "类别已存档——转换前请先更换",
+  "shoppingListSaveFailedSnackbar": "草稿保存失败",
+  "shoppingListConvertFailedSnackbar": "草稿转换失败",
+  "shoppingListDraftNotFoundSnackbar": "找不到草稿",
+
+  "shoppingListSavedDraftSnackbar": "草稿已保存",
+  "shoppingListConvertedSnackbar": "草稿已转换为交易"
 }

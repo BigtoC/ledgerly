@@ -11,7 +11,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/providers/repository_providers.dart';
 import '../../../data/models/account.dart';
 import '../../../l10n/app_localizations.dart';
 import '../transactions_providers.dart';
@@ -44,6 +46,16 @@ Future<Account?> showAccountPickerSheet(BuildContext context) {
 class _AccountPickerSheet extends ConsumerWidget {
   const _AccountPickerSheet();
 
+  Future<void> _onCreateAccount(BuildContext context, WidgetRef ref) async {
+    final savedId = await context.push<int>('/accounts/new');
+    if (!context.mounted || savedId == null) return;
+
+    final account = await ref.read(accountRepositoryProvider).getById(savedId);
+    if (!context.mounted || account == null || account.isArchived) return;
+
+    Navigator.of(context).pop(account);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
@@ -68,7 +80,17 @@ class _AccountPickerSheet extends ConsumerWidget {
                 child: Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
-                    child: Text(l10n.txAccountEmpty),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(l10n.txAccountEmpty, textAlign: TextAlign.center),
+                        const SizedBox(height: 16),
+                        FilledButton(
+                          onPressed: () => _onCreateAccount(context, ref),
+                          child: Text(l10n.txCreateAccountCta),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

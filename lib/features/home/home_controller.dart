@@ -33,6 +33,7 @@ import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../app/providers/repository_providers.dart';
+import '../../core/constants.dart';
 import '../../core/utils/date_helpers.dart';
 import '../../data/models/transaction.dart';
 import '../../data/repositories/transaction_repository.dart';
@@ -41,10 +42,6 @@ import 'home_state.dart';
 part 'home_controller.g.dart';
 
 typedef HomeEffectListener = void Function(HomeEffect effect);
-
-/// Length of the undo window. PRD: snackbar with `commonUndo` action;
-/// 4 s matches the Material `SnackBar` default duration.
-const Duration kUndoWindow = Duration(seconds: 4);
 
 sealed class HomeEffect {
   const HomeEffect();

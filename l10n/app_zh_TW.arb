@@ -185,6 +185,24 @@
     }
   },
 
+  "shoppingListCardTitle": "購物清單",
+  "shoppingListViewAll": "查看全部",
+  "shoppingListEmptyBody": "尚無待支出",
+  "shoppingListEmptyCta": "加入購物清單",
+  "shoppingListItemsMore": "{count, plural, other{還有{count}筆}}",
+  "@shoppingListItemsMore": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+
+  "shoppingListScreenTitle": "購物清單",
+  "shoppingListDeleteUndoSnackbar": "草稿已刪除",
+  "shoppingListDeleteAction": "刪除",
+  "shoppingListScreenEmptyBody": "尚無待支出",
+  "shoppingListScreenEmptyCta": "加入購物清單",
+  "shoppingListScreenRetry": "重試",
+
   "currencyUsd": "美元",
   "currencyEur": "歐元",
   "currencyJpy": "日圓",
@@ -195,5 +213,18 @@
   "currencyCad": "加拿大元",
   "currencySgd": "新加坡元",
   "currencyAud": "澳幣",
-  "currencyNzd": "紐西蘭元"
+  "currencyNzd": "紐西蘭元",
+
+  "shoppingListEditDraftTitle": "編輯草稿",
+  "shoppingListAddToListAction": "加入購物清單",
+  "shoppingListSaveDraftAction": "儲存草稿",
+  "shoppingListSaveToTransactionAction": "儲存為交易",
+  "shoppingListArchivedAccountWarning": "帳戶已封存——轉換前請先更換",
+  "shoppingListArchivedCategoryWarning": "類別已封存——轉換前請先更換",
+  "shoppingListSaveFailedSnackbar": "草稿儲存失敗",
+  "shoppingListConvertFailedSnackbar": "草稿轉換失敗",
+  "shoppingListDraftNotFoundSnackbar": "找不到草稿",
+
+  "shoppingListSavedDraftSnackbar": "草稿已儲存",
+  "shoppingListConvertedSnackbar": "草稿已轉換為交易"
 }

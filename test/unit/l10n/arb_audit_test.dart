@@ -232,6 +232,36 @@ const Set<String> _expectedEnKeys = <String>{
   'currencySgd',
   'currencyAud',
   'currencyNzd',
+
+  // Task 3 — Shopping list preview card (feature/shopping-list).
+  'shoppingListCardTitle',
+  'shoppingListViewAll',
+  'shoppingListEmptyBody',
+  'shoppingListEmptyCta',
+  'shoppingListItemsMore',
+
+  // Task 4 — Dedicated shopping list screen + delete/undo.
+  'shoppingListScreenTitle',
+  'shoppingListDeleteUndoSnackbar',
+  'shoppingListDeleteAction',
+  'shoppingListScreenEmptyBody',
+  'shoppingListScreenEmptyCta',
+  'shoppingListScreenRetry',
+
+  // Task 5 — Transaction form reuse for shopping-list drafts.
+  'shoppingListEditDraftTitle',
+  'shoppingListAddToListAction',
+  'shoppingListSaveDraftAction',
+  'shoppingListSaveToTransactionAction',
+  'shoppingListArchivedAccountWarning',
+  'shoppingListArchivedCategoryWarning',
+  'shoppingListSaveFailedSnackbar',
+  'shoppingListConvertFailedSnackbar',
+  'shoppingListDraftNotFoundSnackbar',
+
+  // Task 6 — Routing and localization.
+  'shoppingListSavedDraftSnackbar',
+  'shoppingListConvertedSnackbar',
 };
 
 Map<String, dynamic> _readArb(String fileName) {

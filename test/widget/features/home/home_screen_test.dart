@@ -27,6 +27,7 @@ import 'package:ledgerly/data/models/transaction.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
+import 'package:ledgerly/data/repositories/shopping_list_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/features/home/home_screen.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
@@ -38,6 +39,8 @@ class _MockCategoryRepo extends Mock implements CategoryRepository {}
 class _MockAccountRepo extends Mock implements AccountRepository {}
 
 class _MockCurrencyRepo extends Mock implements CurrencyRepository {}
+
+class _MockShoppingListRepo extends Mock implements ShoppingListRepository {}
 
 const _usd = Currency(
   code: 'USD',
@@ -100,6 +103,7 @@ void main() {
   late _MockCategoryRepo catRepo;
   late _MockAccountRepo accRepo;
   late _MockCurrencyRepo curRepo;
+  late _MockShoppingListRepo slRepo;
 
   late StreamController<List<Transaction>> dayCtrl;
   late StreamController<List<DateTime>> activityCtrl;
@@ -115,6 +119,8 @@ void main() {
     catRepo = _MockCategoryRepo();
     accRepo = _MockAccountRepo();
     curRepo = _MockCurrencyRepo();
+    slRepo = _MockShoppingListRepo();
+    when(() => slRepo.watchCount()).thenAnswer((_) => Stream.value(0));
     dayCtrl = StreamController.broadcast();
     activityCtrl = StreamController.broadcast();
     todayTotalsCtrl = StreamController.broadcast();
@@ -161,6 +167,7 @@ void main() {
         categoryRepositoryProvider.overrideWithValue(catRepo),
         accountRepositoryProvider.overrideWithValue(accRepo),
         currencyRepositoryProvider.overrideWithValue(curRepo),
+        shoppingListRepositoryProvider.overrideWithValue(slRepo),
       ],
       child: MaterialApp.router(
         localizationsDelegates: AppLocalizations.localizationsDelegates,

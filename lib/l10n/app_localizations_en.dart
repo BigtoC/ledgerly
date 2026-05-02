@@ -516,6 +516,47 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get shoppingListCardTitle => 'Shopping list';
+
+  @override
+  String get shoppingListViewAll => 'View all';
+
+  @override
+  String get shoppingListEmptyBody => 'No upcoming expenses saved';
+
+  @override
+  String get shoppingListEmptyCta => 'Add to shopping list';
+
+  @override
+  String shoppingListItemsMore(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count more',
+      one: '$count more',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get shoppingListScreenTitle => 'Shopping list';
+
+  @override
+  String get shoppingListDeleteUndoSnackbar => 'Draft deleted';
+
+  @override
+  String get shoppingListDeleteAction => 'Delete';
+
+  @override
+  String get shoppingListScreenEmptyBody => 'No upcoming expenses saved';
+
+  @override
+  String get shoppingListScreenEmptyCta => 'Add to shopping list';
+
+  @override
+  String get shoppingListScreenRetry => 'Retry';
+
+  @override
   String get currencyUsd => 'US Dollar';
 
   @override
@@ -547,4 +588,39 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get currencyNzd => 'New Zealand Dollar';
+
+  @override
+  String get shoppingListEditDraftTitle => 'Edit Draft';
+
+  @override
+  String get shoppingListAddToListAction => 'Add to shopping list';
+
+  @override
+  String get shoppingListSaveDraftAction => 'Save draft';
+
+  @override
+  String get shoppingListSaveToTransactionAction => 'Save to transaction';
+
+  @override
+  String get shoppingListArchivedAccountWarning =>
+      'Account is archived — replace before converting';
+
+  @override
+  String get shoppingListArchivedCategoryWarning =>
+      'Category is archived — replace before converting';
+
+  @override
+  String get shoppingListSaveFailedSnackbar => 'Failed to save draft';
+
+  @override
+  String get shoppingListConvertFailedSnackbar => 'Failed to convert draft';
+
+  @override
+  String get shoppingListDraftNotFoundSnackbar => 'Draft not found';
+
+  @override
+  String get shoppingListSavedDraftSnackbar => 'Draft saved';
+
+  @override
+  String get shoppingListConvertedSnackbar => 'Draft converted to transaction';
 }

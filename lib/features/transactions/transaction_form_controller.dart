@@ -1,10 +1,10 @@
-// Transaction-form controller — Wave 2 §4.1 / §5 / §6 / §9.
+// Transaction-form controller — Wave 2 §4.1 / §5 / §6 / §9 / Task 5.
 //
 // Owns the form's mutable state plus the keypad accumulator, drives all
-// three hydration entry points (Add / Duplicate / Edit), and exposes the
-// typed commands the screen widget binds to. Every command mutates the
-// `_Data` variant via `state = ...`; widgets never call repositories
-// directly.
+// four hydration entry points (Add / Duplicate / Edit / EditShoppingListDraft),
+// and exposes the typed commands the screen widget binds to. Every command
+// mutates the `_Data` variant via `state = ...`; widgets never call
+// repositories directly.
 //
 // Controller invariants:
 //   - `tx.currency = displayCurrency` on save — the transaction currency
@@ -16,6 +16,9 @@
 //     timestamp that `TransactionRepository.save` overwrites on insert.
 //   - `isSaving` / `isDeleting` serialize async commands so rapid double
 //     taps produce one repository write (Wave 2 risk #6).
+//   - `submissionAction` tracks in-flight shopping-list commands the same
+//     way `isSaving`/`isDeleting` track transaction commands — repeat calls
+//     during in-flight are ignored (Task 5 §10).
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -23,6 +26,7 @@ import '../../app/providers/repository_providers.dart';
 import '../../data/models/account.dart';
 import '../../data/models/category.dart';
 import '../../data/models/currency.dart';
+import '../../data/models/shopping_list_item.dart';
 import '../../data/models/transaction.dart';
 import '../../data/repositories/category_repository.dart';
 import 'keypad_state.dart';
@@ -30,14 +34,14 @@ import 'transaction_form_state.dart';
 
 part 'transaction_form_controller.g.dart';
 
-enum _HydrationMode { add, duplicate, edit }
-
 @Riverpod(
   dependencies: [
     transactionRepository,
     accountRepository,
     categoryRepository,
     userPreferencesRepository,
+    currencyRepository,
+    shoppingListRepository,
   ],
 )
 class TransactionFormController extends _$TransactionFormController {
@@ -48,9 +52,12 @@ class TransactionFormController extends _$TransactionFormController {
   /// state on each mutation.
   KeypadState _keypad = const KeypadState.initial();
   int _keypadRevision = 0;
-  _HydrationMode _resumeMode = _HydrationMode.add;
-  int? _resumeTargetId;
-  DateTime? _resumeAddInitialDate;
+  TransactionFormMode? _lastRequestedMode;
+
+  /// The current form mode — exposed read-only to the screen so it can
+  /// derive its title and CTA set without parsing route extras itself.
+  TransactionFormMode _formMode = const AddTransactionMode();
+  TransactionFormMode get formMode => _formMode;
 
   @override
   TransactionFormState build() {
@@ -68,9 +75,8 @@ class TransactionFormController extends _$TransactionFormController {
   /// normalized to local midnight so it round-trips through `setDate`.
   /// Omitting [initialDate] preserves the prior default of today.
   Future<void> hydrateForAdd({DateTime? initialDate}) async {
-    _resumeMode = _HydrationMode.add;
-    _resumeTargetId = null;
-    _resumeAddInitialDate = initialDate;
+    _formMode = AddTransactionMode(initialDate: initialDate);
+    _lastRequestedMode = AddTransactionMode(initialDate: initialDate);
     state = const TransactionFormState.loading();
     try {
       final account = await _resolveDefaultAccount();
@@ -106,8 +112,10 @@ class TransactionFormController extends _$TransactionFormController {
   }
 
   Future<void> hydrateForDuplicate(int sourceId) async {
-    _resumeMode = _HydrationMode.duplicate;
-    _resumeTargetId = sourceId;
+    _formMode = DuplicateTransactionMode(sourceTransactionId: sourceId);
+    _lastRequestedMode = DuplicateTransactionMode(
+      sourceTransactionId: sourceId,
+    );
     state = const TransactionFormState.loading();
     try {
       final txRepo = ref.read(transactionRepositoryProvider);
@@ -152,8 +160,8 @@ class TransactionFormController extends _$TransactionFormController {
   }
 
   Future<void> hydrateForEdit(int id) async {
-    _resumeMode = _HydrationMode.edit;
-    _resumeTargetId = id;
+    _formMode = EditTransactionMode(transactionId: id);
+    _lastRequestedMode = EditTransactionMode(transactionId: id);
     state = const TransactionFormState.loading();
     try {
       final txRepo = ref.read(transactionRepositoryProvider);
@@ -194,6 +202,91 @@ class TransactionFormController extends _$TransactionFormController {
         editingId: id,
         duplicateSourceId: null,
         originalCreatedAt: existing.createdAt,
+      );
+    } catch (e, st) {
+      state = TransactionFormState.error(e, st);
+    }
+  }
+
+  /// Hydrate for the EditShoppingListDraft flow.
+  ///
+  /// Fetches the draft via `ShoppingListRepository.getById(id)`.
+  ///   - If null: emits `TransactionFormEmpty.draftNotFound`.
+  ///   - Otherwise: hydrates account, category, memo, date, and — when
+  ///     the draft has a non-null amount/currency — resolves the currency
+  ///     from `CurrencyRepository`. When the draft amount/currency is null,
+  ///     seeds `displayCurrency` from the selected account.
+  Future<void> hydrateForShoppingListDraft(int shoppingListItemId) async {
+    _formMode = EditShoppingListDraftMode(
+      shoppingListItemId: shoppingListItemId,
+    );
+    _lastRequestedMode = EditShoppingListDraftMode(
+      shoppingListItemId: shoppingListItemId,
+    );
+    state = const TransactionFormState.loading();
+    try {
+      final slRepo = ref.read(shoppingListRepositoryProvider);
+      final draft = await slRepo.getById(shoppingListItemId);
+      if (draft == null) {
+        state = const TransactionFormState.empty(
+          reason: TransactionFormEmptyReason.draftNotFound,
+        );
+        return;
+      }
+
+      final accountRepo = ref.read(accountRepositoryProvider);
+      final categoryRepo = ref.read(categoryRepositoryProvider);
+
+      final account = await accountRepo.getById(draft.accountId);
+      if (account == null) {
+        state = const TransactionFormState.empty(
+          reason: TransactionFormEmptyReason.noActiveAccount,
+        );
+        return;
+      }
+
+      final category = await categoryRepo.getById(draft.categoryId);
+
+      // Resolve currency: use draft currency when present, otherwise
+      // seed from the selected account.
+      Currency displayCurrency = account.currency;
+      bool currencyTouched = false;
+      if (draft.draftCurrencyCode != null) {
+        final currencyRepo = ref.read(currencyRepositoryProvider);
+        final resolved = await currencyRepo.getByCode(draft.draftCurrencyCode!);
+        if (resolved != null) {
+          displayCurrency = resolved;
+          currencyTouched = true;
+        }
+      }
+
+      final amountMinorUnits = draft.draftAmountMinorUnits ?? 0;
+      _keypad = amountMinorUnits > 0
+          ? _keypadFromAmount(
+              amountMinorUnits,
+              decimals: displayCurrency.decimals,
+            )
+          : const KeypadState.initial();
+      _keypadRevision = 0;
+
+      state = TransactionFormState.data(
+        amountMinorUnits: amountMinorUnits,
+        selectedAccount: account,
+        displayCurrency: displayCurrency,
+        currencyTouched: currencyTouched,
+        selectedCategory: category,
+        pendingType: category?.type ?? CategoryType.expense,
+        date: draft.draftDate,
+        memo: draft.memo ?? '',
+        isDirty: false,
+        isSaving: false,
+        isDeleting: false,
+        editingId: null,
+        duplicateSourceId: null,
+        originalCreatedAt: null,
+        shoppingListItemId: shoppingListItemId,
+        selectedAccountIsArchived: account.isArchived,
+        selectedCategoryIsArchived: category?.isArchived ?? false,
       );
     } catch (e, st) {
       state = TransactionFormState.error(e, st);
@@ -277,10 +370,12 @@ class TransactionFormController extends _$TransactionFormController {
   void selectCategory(Category category) {
     final s = state;
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
+    if (s.submissionAction != TransactionFormSubmissionAction.none) return;
     state = s.copyWith(
       selectedCategory: category,
       pendingType: category.type,
       isDirty: true,
+      selectedCategoryIsArchived: category.isArchived,
     );
   }
 
@@ -326,11 +421,16 @@ class TransactionFormController extends _$TransactionFormController {
   }) {
     final s = state;
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
+    if (s.submissionAction != TransactionFormSubmissionAction.none) return;
 
     // If the user has manually selected a currency, account changes do not
     // re-seed displayCurrency — only selectedAccount changes.
     if (s.currencyTouched) {
-      state = s.copyWith(selectedAccount: account, isDirty: true);
+      state = s.copyWith(
+        selectedAccount: account,
+        isDirty: true,
+        selectedAccountIsArchived: account.isArchived,
+      );
       return;
     }
 
@@ -348,7 +448,11 @@ class TransactionFormController extends _$TransactionFormController {
     if (currencyChanged) {
       _keypad = const KeypadState.initial();
       state = _copyWithKeypad(
-        s.copyWith(selectedAccount: account, displayCurrency: newCurrency),
+        s.copyWith(
+          selectedAccount: account,
+          displayCurrency: newCurrency,
+          selectedAccountIsArchived: account.isArchived,
+        ),
         isDirty: true,
       );
     } else {
@@ -356,6 +460,7 @@ class TransactionFormController extends _$TransactionFormController {
         selectedAccount: account,
         displayCurrency: newCurrency,
         isDirty: true,
+        selectedAccountIsArchived: account.isArchived,
       );
     }
   }
@@ -471,14 +576,134 @@ class TransactionFormController extends _$TransactionFormController {
     }
   }
 
+  /// Saves the current form snapshot as a shopping-list draft.
+  ///
+  /// In [AddTransactionMode]: calls `ShoppingListRepository.insert(...)` and
+  /// pops with `null` (no transaction result, just closes the form).
+  ///
+  /// In [EditShoppingListDraftMode]: calls `ShoppingListRepository.update(...)`
+  /// and returns `ShoppingListEditResultSavedDraft` to the screen for popping.
+  ///
+  /// Returns `null` when `canSaveDraft` is false or a submission is already
+  /// in flight. Rethrows on repository failure after resetting
+  /// `submissionAction` to `none`.
+  Future<ShoppingListEditResult?> saveDraft() async {
+    final s = state;
+    if (s is! TransactionFormData) return null;
+    if (s.submissionAction != TransactionFormSubmissionAction.none) return null;
+    if (!s.canSaveDraft) return null;
+
+    state = s.copyWith(
+      submissionAction: TransactionFormSubmissionAction.saveDraft,
+    );
+    try {
+      final slRepo = ref.read(shoppingListRepositoryProvider);
+      final draftAmount = s.amountMinorUnits > 0 ? s.amountMinorUnits : null;
+      final draftCurrency = s.amountMinorUnits > 0
+          ? s.displayCurrency?.code
+          : null;
+
+      if (s.shoppingListItemId != null) {
+        // Edit mode: update the existing draft row.
+        final updatedItem = ShoppingListItem(
+          id: s.shoppingListItemId!,
+          categoryId: s.selectedCategory!.id,
+          accountId: s.selectedAccount!.id,
+          memo: s.memo.isEmpty ? null : s.memo,
+          draftAmountMinorUnits: draftAmount,
+          draftCurrencyCode: draftCurrency,
+          draftDate: s.date,
+          // createdAt / updatedAt are managed by the repository.
+          createdAt: DateTime.utc(0),
+          updatedAt: DateTime.utc(0),
+        );
+        await slRepo.update(updatedItem);
+        state = s.copyWith(
+          submissionAction: TransactionFormSubmissionAction.none,
+        );
+        return const ShoppingListEditResultSavedDraft();
+      } else {
+        // Add mode: insert a new draft row.
+        await slRepo.insert(
+          categoryId: s.selectedCategory!.id,
+          accountId: s.selectedAccount!.id,
+          memo: s.memo.isEmpty ? null : s.memo,
+          draftAmountMinorUnits: draftAmount,
+          draftCurrencyCode: draftCurrency,
+          draftDate: s.date,
+        );
+        state = s.copyWith(
+          submissionAction: TransactionFormSubmissionAction.none,
+        );
+        // Add mode: signal that the item was added to the list.
+        return const ShoppingListEditResultAddedToList();
+      }
+    } catch (e) {
+      state = s.copyWith(
+        submissionAction: TransactionFormSubmissionAction.none,
+      );
+      rethrow;
+    }
+  }
+
+  /// Converts the current shopping-list draft into a real transaction.
+  ///
+  /// Only available in [EditShoppingListDraftMode]. Calls
+  /// `ShoppingListRepository.convertToTransaction(...)` and returns
+  /// `ShoppingListEditResultSavedTransaction(tx)` to the screen for popping.
+  ///
+  /// Returns `null` when `canConvertDraft` is false or a submission is already
+  /// in flight. Rethrows on repository failure after resetting
+  /// `submissionAction` to `none`.
+  Future<ShoppingListEditResult?> convertDraft() async {
+    final s = state;
+    if (s is! TransactionFormData) return null;
+    if (s.submissionAction != TransactionFormSubmissionAction.none) return null;
+    if (!s.canConvertDraft) return null;
+    final itemId = s.shoppingListItemId;
+    if (itemId == null) return null;
+
+    state = s.copyWith(
+      submissionAction: TransactionFormSubmissionAction.convertDraft,
+    );
+    try {
+      final slRepo = ref.read(shoppingListRepositoryProvider);
+      final tx = await slRepo.convertToTransaction(
+        shoppingListItemId: itemId,
+        categoryId: s.selectedCategory!.id,
+        accountId: s.selectedAccount!.id,
+        currencyCode: s.displayCurrency!.code,
+        amountMinorUnits: s.amountMinorUnits,
+        date: s.date,
+        memo: s.memo.isEmpty ? null : s.memo,
+      );
+      state = s.copyWith(
+        submissionAction: TransactionFormSubmissionAction.none,
+      );
+      return ShoppingListEditResultSavedTransaction(transaction: tx);
+    } catch (e) {
+      state = s.copyWith(
+        submissionAction: TransactionFormSubmissionAction.none,
+      );
+      rethrow;
+    }
+  }
+
   /// Re-runs the last requested hydration mode after the user returns from
   /// dependency-recovery flows like `/accounts/new`.
-  Future<void> retryHydration() {
-    return switch (_resumeMode) {
-      _HydrationMode.add => hydrateForAdd(initialDate: _resumeAddInitialDate),
-      _HydrationMode.duplicate => hydrateForDuplicate(_resumeTargetId!),
-      _HydrationMode.edit => hydrateForEdit(_resumeTargetId!),
-    };
+  Future<void> retryHydration() async {
+    final mode = _lastRequestedMode;
+    if (mode == null) return;
+    switch (mode) {
+      case AddTransactionMode():
+        await hydrateForAdd(initialDate: mode.initialDate);
+      case DuplicateTransactionMode():
+        await hydrateForDuplicate(mode.sourceTransactionId);
+      case EditTransactionMode():
+        await hydrateForEdit(mode.transactionId);
+      case EditShoppingListDraftMode():
+        await hydrateForShoppingListDraft(mode.shoppingListItemId);
+    }
   }
 
   // ---------- Internals ----------

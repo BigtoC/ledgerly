@@ -13,6 +13,7 @@ import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
 import 'package:ledgerly/features/accounts/account_form_screen.dart';
 import 'package:ledgerly/features/accounts/accounts_screen.dart';
 import 'package:ledgerly/features/home/home_screen.dart';
+import 'package:ledgerly/features/shopping_list/shopping_list_screen.dart';
 import 'package:ledgerly/features/splash/splash_screen.dart';
 
 import '../../support/test_app.dart';
@@ -245,6 +246,104 @@ void main() {
       expect(find.byType(AccountFormScreen), findsNothing);
       expect(tester.takeException(), isNull);
     });
+
+    // RT01 — /accounts/shopping-list routes before /accounts/:id
+    testWidgets('RT01: /accounts/shopping-list renders ShoppingListScreen', (
+      tester,
+    ) async {
+      final db = newTestAppDatabase();
+      addTearDown(db.close);
+      await tester.runAsync(() => runTestSeed(db));
+      final container = makeTestContainer(
+        db: db,
+        extraOverrides: [
+          splashGateSnapshotProvider.overrideWithValue(
+            SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(routerProvider);
+      addTearDown(router.dispose);
+      router.go('/accounts/shopping-list');
+
+      await tester.pumpWidget(buildTestApp(container: container));
+      await tester.pumpAndSettle();
+
+      final leaf = router.routerDelegate.currentConfiguration.last;
+      expect(leaf.matchedLocation, '/accounts/shopping-list');
+      expect(find.byType(ShoppingListScreen), findsOneWidget);
+      expect(find.byType(AccountFormScreen), findsNothing);
+    });
+
+    // RT02 — /accounts/shopping-list/:id routes to the form (root navigator)
+    // We pump the widget first (so the router initialises), then navigate to
+    // the route, then pump once to apply the navigation — but before
+    // pumpAndSettle so the async draft-not-found pop hasn't fired yet.
+    testWidgets('RT02: /accounts/shopping-list/123 uses root navigator', (
+      tester,
+    ) async {
+      final db = newTestAppDatabase();
+      addTearDown(db.close);
+      final container = makeTestContainer(
+        db: db,
+        extraOverrides: [
+          splashGateSnapshotProvider.overrideWithValue(
+            SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(routerProvider);
+      addTearDown(router.dispose);
+
+      // Build the widget first so the router is initialised.
+      await tester.pumpWidget(buildTestApp(container: container));
+      // Navigate after the router is live.
+      router.go('/accounts/shopping-list/123');
+      // One pump to apply the navigation frame.
+      await tester.pump();
+
+      final leaf = router.routerDelegate.currentConfiguration.last;
+      expect(leaf.matchedLocation, '/accounts/shopping-list/123');
+      expect(leaf.route.parentNavigatorKey, isNotNull);
+    });
+
+    // RT03 — /accounts/shopping-list/abc (non-parsable) redirects
+    testWidgets(
+      'RT03: /accounts/shopping-list/abc redirects to /accounts/shopping-list',
+      (tester) async {
+        final db = newTestAppDatabase();
+        addTearDown(db.close);
+        await tester.runAsync(() => runTestSeed(db));
+        final container = makeTestContainer(
+          db: db,
+          extraOverrides: [
+            splashGateSnapshotProvider.overrideWithValue(
+              SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        final router = container.read(routerProvider);
+        addTearDown(router.dispose);
+        router.go('/accounts/shopping-list/abc');
+
+        await tester.pumpWidget(buildTestApp(container: container));
+        await tester.pumpAndSettle();
+
+        final leaf = router.routerDelegate.currentConfiguration.last;
+        expect(leaf.matchedLocation, '/accounts/shopping-list');
+        expect(find.byType(ShoppingListScreen), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    // RT04 — collapsed into RT02 (same route, different literal id; all
+    // three assertions are already covered by RT02).
 
     testWidgets(
       'splashEnabled=true with startDate set: /splash shows Enter CTA',

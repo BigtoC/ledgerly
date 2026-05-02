@@ -675,6 +675,55 @@
     }
   },
 
+  "shoppingListCardTitle": "Shopping list",
+  "@shoppingListCardTitle": {
+    "description": "Shopping list preview card title on the Accounts screen."
+  },
+  "shoppingListViewAll": "View all",
+  "@shoppingListViewAll": {
+    "description": "Shopping list card header CTA — navigates to the full shopping list screen."
+  },
+  "shoppingListEmptyBody": "No upcoming expenses saved",
+  "@shoppingListEmptyBody": {
+    "description": "Shopping list card empty-state body text."
+  },
+  "shoppingListEmptyCta": "Add to shopping list",
+  "@shoppingListEmptyCta": {
+    "description": "Shopping list card empty-state CTA — navigates to /home/add."
+  },
+  "shoppingListItemsMore": "{count, plural, one{{count} more} other{{count} more}}",
+  "@shoppingListItemsMore": {
+    "description": "Shopping list card overflow CTA — shown when more than 3 drafts exist.",
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+
+  "shoppingListScreenTitle": "Shopping list",
+  "@shoppingListScreenTitle": {
+    "description": "AppBar title for the dedicated shopping list screen."
+  },
+  "shoppingListDeleteUndoSnackbar": "Draft deleted",
+  "@shoppingListDeleteUndoSnackbar": {
+    "description": "SnackBar text shown after a shopping-list item is swiped / overflow deleted; pairs with commonUndo as the action label."
+  },
+  "shoppingListDeleteAction": "Delete",
+  "@shoppingListDeleteAction": {
+    "description": "Swipe-to-delete action label on a shopping-list row."
+  },
+  "shoppingListScreenEmptyBody": "No upcoming expenses saved",
+  "@shoppingListScreenEmptyBody": {
+    "description": "Empty state body text on the shopping list screen when no drafts exist."
+  },
+  "shoppingListScreenEmptyCta": "Add to shopping list",
+  "@shoppingListScreenEmptyCta": {
+    "description": "Empty state CTA on the shopping list screen — navigates to /home/add."
+  },
+  "shoppingListScreenRetry": "Retry",
+  "@shoppingListScreenRetry": {
+    "description": "Retry button shown on the shopping list error state."
+  },
+
   "currencyUsd": "US Dollar",
   "@currencyUsd": {
     "description": "Seeded currency full name. DB nameL10nKey: currency.usd."
@@ -718,5 +767,51 @@
   "currencyNzd": "New Zealand Dollar",
   "@currencyNzd": {
     "description": "Seeded currency full name. DB nameL10nKey: currency.nzd."
+  },
+
+  "shoppingListEditDraftTitle": "Edit Draft",
+  "@shoppingListEditDraftTitle": {
+    "description": "AppBar title for the transaction form when opened in EditShoppingListDraftMode."
+  },
+  "shoppingListAddToListAction": "Add to shopping list",
+  "@shoppingListAddToListAction": {
+    "description": "Inline CTA below MemoField in AddTransactionMode — saves the form as a draft."
+  },
+  "shoppingListSaveDraftAction": "Save draft",
+  "@shoppingListSaveDraftAction": {
+    "description": "Secondary inline CTA in EditShoppingListDraftMode — saves the draft without converting."
+  },
+  "shoppingListSaveToTransactionAction": "Save to transaction",
+  "@shoppingListSaveToTransactionAction": {
+    "description": "Primary inline CTA in EditShoppingListDraftMode — converts the draft to a real transaction."
+  },
+  "shoppingListArchivedAccountWarning": "Account is archived — replace before converting",
+  "@shoppingListArchivedAccountWarning": {
+    "description": "Inline warning shown in EditShoppingListDraftMode when the draft references an archived account."
+  },
+  "shoppingListArchivedCategoryWarning": "Category is archived — replace before converting",
+  "@shoppingListArchivedCategoryWarning": {
+    "description": "Inline warning shown in EditShoppingListDraftMode when the draft references an archived category."
+  },
+  "shoppingListSaveFailedSnackbar": "Failed to save draft",
+  "@shoppingListSaveFailedSnackbar": {
+    "description": "SnackBar shown when ShoppingListRepository.insert or .update throws."
+  },
+  "shoppingListConvertFailedSnackbar": "Failed to convert draft",
+  "@shoppingListConvertFailedSnackbar": {
+    "description": "SnackBar shown when ShoppingListRepository.convertToTransaction throws."
+  },
+  "shoppingListDraftNotFoundSnackbar": "Draft not found",
+  "@shoppingListDraftNotFoundSnackbar": {
+    "description": "SnackBar shown when EditShoppingListDraftMode cannot resolve the draft by id."
+  },
+
+  "shoppingListSavedDraftSnackbar": "Draft saved",
+  "@shoppingListSavedDraftSnackbar": {
+    "description": "SnackBar shown on the shopping list screen after a draft is saved without converting."
+  },
+  "shoppingListConvertedSnackbar": "Draft converted to transaction",
+  "@shoppingListConvertedSnackbar": {
+    "description": "SnackBar shown on the shopping list screen after a draft is converted to a real transaction."
   }
 }

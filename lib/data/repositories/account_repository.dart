@@ -27,6 +27,7 @@ import 'package:drift/drift.dart' show Value, Variable;
 import '../database/app_database.dart' as drift;
 import '../database/daos/account_dao.dart';
 import '../database/daos/account_type_dao.dart';
+import '../database/daos/shopping_list_dao.dart';
 import '../database/daos/transaction_dao.dart';
 import '../models/account.dart';
 import '../models/currency.dart';
@@ -79,6 +80,11 @@ abstract class AccountRepository {
 
   /// Cheap existence probe — returns true when any `transactions` row
   /// references this account.
+  ///
+  /// NOTE: isReferenced is intentionally transaction-only (not shopping-list-aware).
+  /// This is a documented design decision: the UI that shows archive vs delete affordances
+  /// must also handle CategoryInUseException from delete(), since an account can be
+  /// "in use" by shopping-list drafts even when isReferenced returns false.
   Future<bool> isReferenced(int id);
 
   /// Reactive existence probe — emits `true` whenever at least one
@@ -124,6 +130,7 @@ final class DriftAccountRepository implements AccountRepository {
   AccountDao get _dao => _db.accountDao;
   AccountTypeDao get _typeDao => _db.accountTypeDao;
   TransactionDao get _txDao => _db.transactionDao;
+  ShoppingListDao get _slDao => _db.shoppingListDao;
 
   // ---------- Reads ----------
 
@@ -203,10 +210,10 @@ final class DriftAccountRepository implements AccountRepository {
 
   @override
   Future<void> delete(int id) async {
+    final slCount = await _slDao.countByAccount(id);
+    if (slCount > 0) throw AccountInUseException(id);
     final count = await _txDao.countByAccount(id);
-    if (count > 0) {
-      throw AccountInUseException(id);
-    }
+    if (count > 0) throw AccountInUseException(id);
     await _dao.deleteById(id);
   }
 

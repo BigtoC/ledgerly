@@ -1066,6 +1066,72 @@ abstract class AppLocalizations {
   /// **'{count, plural, one {+{count} more} other {+{count} more}}'**
   String accountsBalanceMore(int count);
 
+  /// Shopping list preview card title on the Accounts screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping list'**
+  String get shoppingListCardTitle;
+
+  /// Shopping list card header CTA — navigates to the full shopping list screen.
+  ///
+  /// In en, this message translates to:
+  /// **'View all'**
+  String get shoppingListViewAll;
+
+  /// Shopping list card empty-state body text.
+  ///
+  /// In en, this message translates to:
+  /// **'No upcoming expenses saved'**
+  String get shoppingListEmptyBody;
+
+  /// Shopping list card empty-state CTA — navigates to /home/add.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to shopping list'**
+  String get shoppingListEmptyCta;
+
+  /// Shopping list card overflow CTA — shown when more than 3 drafts exist.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} more} other{{count} more}}'**
+  String shoppingListItemsMore(int count);
+
+  /// AppBar title for the dedicated shopping list screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping list'**
+  String get shoppingListScreenTitle;
+
+  /// SnackBar text shown after a shopping-list item is swiped / overflow deleted; pairs with commonUndo as the action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft deleted'**
+  String get shoppingListDeleteUndoSnackbar;
+
+  /// Swipe-to-delete action label on a shopping-list row.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get shoppingListDeleteAction;
+
+  /// Empty state body text on the shopping list screen when no drafts exist.
+  ///
+  /// In en, this message translates to:
+  /// **'No upcoming expenses saved'**
+  String get shoppingListScreenEmptyBody;
+
+  /// Empty state CTA on the shopping list screen — navigates to /home/add.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to shopping list'**
+  String get shoppingListScreenEmptyCta;
+
+  /// Retry button shown on the shopping list error state.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get shoppingListScreenRetry;
+
   /// Seeded currency full name. DB nameL10nKey: currency.usd.
   ///
   /// In en, this message translates to:
@@ -1131,6 +1197,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New Zealand Dollar'**
   String get currencyNzd;
+
+  /// AppBar title for the transaction form when opened in EditShoppingListDraftMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Draft'**
+  String get shoppingListEditDraftTitle;
+
+  /// Inline CTA below MemoField in AddTransactionMode — saves the form as a draft.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to shopping list'**
+  String get shoppingListAddToListAction;
+
+  /// Secondary inline CTA in EditShoppingListDraftMode — saves the draft without converting.
+  ///
+  /// In en, this message translates to:
+  /// **'Save draft'**
+  String get shoppingListSaveDraftAction;
+
+  /// Primary inline CTA in EditShoppingListDraftMode — converts the draft to a real transaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to transaction'**
+  String get shoppingListSaveToTransactionAction;
+
+  /// Inline warning shown in EditShoppingListDraftMode when the draft references an archived account.
+  ///
+  /// In en, this message translates to:
+  /// **'Account is archived — replace before converting'**
+  String get shoppingListArchivedAccountWarning;
+
+  /// Inline warning shown in EditShoppingListDraftMode when the draft references an archived category.
+  ///
+  /// In en, this message translates to:
+  /// **'Category is archived — replace before converting'**
+  String get shoppingListArchivedCategoryWarning;
+
+  /// SnackBar shown when ShoppingListRepository.insert or .update throws.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save draft'**
+  String get shoppingListSaveFailedSnackbar;
+
+  /// SnackBar shown when ShoppingListRepository.convertToTransaction throws.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to convert draft'**
+  String get shoppingListConvertFailedSnackbar;
+
+  /// SnackBar shown when EditShoppingListDraftMode cannot resolve the draft by id.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft not found'**
+  String get shoppingListDraftNotFoundSnackbar;
+
+  /// SnackBar shown on the shopping list screen after a draft is saved without converting.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft saved'**
+  String get shoppingListSavedDraftSnackbar;
+
+  /// SnackBar shown on the shopping list screen after a draft is converted to a real transaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft converted to transaction'**
+  String get shoppingListConvertedSnackbar;
 }
 
 class _AppLocalizationsDelegate

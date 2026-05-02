@@ -17,6 +17,7 @@ import 'package:drift/drift.dart' show Value;
 
 import '../database/app_database.dart';
 import '../database/daos/category_dao.dart';
+import '../database/daos/shopping_list_dao.dart';
 import '../database/daos/transaction_dao.dart';
 import '../models/category.dart';
 
@@ -132,6 +133,11 @@ abstract class CategoryRepository {
 
   /// Returns `true` when at least one row in `transactions` references
   /// this category.
+  ///
+  /// NOTE: isReferenced is intentionally transaction-only (not shopping-list-aware).
+  /// This is a documented design decision: the UI that shows archive vs delete affordances
+  /// must also handle CategoryInUseException from delete(), since a category can be
+  /// "in use" by shopping-list drafts even when isReferenced returns false.
   Future<bool> isReferenced(int id);
 }
 
@@ -143,6 +149,7 @@ final class DriftCategoryRepository implements CategoryRepository {
 
   CategoryDao get _dao => _db.categoryDao;
   TransactionDao get _txDao => _db.transactionDao;
+  ShoppingListDao get _slDao => _db.shoppingListDao;
 
   // ---------- Reads ----------
 
@@ -216,8 +223,9 @@ final class DriftCategoryRepository implements CategoryRepository {
 
     // Update path — enforce the same type-lock guard as `save`.
     if (existing.type != wireType) {
-      final refCount = await _txDao.countByCategory(existing.id);
-      if (refCount > 0) {
+      final txCount = await _txDao.countByCategory(existing.id);
+      final slCount = await _slDao.countByCategory(existing.id);
+      if (txCount > 0 || slCount > 0) {
         throw CategoryTypeLockedException(existing.id);
       }
     }
@@ -268,8 +276,9 @@ final class DriftCategoryRepository implements CategoryRepository {
     }
     final storedType = _typeFromWire(stored.type);
     if (category.type != storedType) {
-      final refCount = await _txDao.countByCategory(category.id);
-      if (refCount > 0) {
+      final txCount = await _txDao.countByCategory(category.id);
+      final slCount = await _slDao.countByCategory(category.id);
+      if (txCount > 0 || slCount > 0) {
         throw CategoryTypeLockedException(category.id);
       }
     }
@@ -352,6 +361,11 @@ final class DriftCategoryRepository implements CategoryRepository {
     final existing = await _dao.findById(id);
     if (existing == null) {
       return false;
+    }
+
+    final slCount = await _slDao.countByCategory(id);
+    if (slCount > 0) {
+      throw CategoryInUseException(id);
     }
 
     final refCount = await _txDao.countByCategory(id);

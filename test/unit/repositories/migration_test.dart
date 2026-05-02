@@ -1,24 +1,21 @@
-// Migration harness — activates the v1 snapshot checks.
+// Migration harness — covers v1, v2, and v3 snapshot checks.
 //
 // See `docs/plans/m3-repositories-seed/stream-c-preferences-seed-migration.md`
 // §3 for the full specification.
 //
-// MVP has only `drift_schemas/drift_schema_v1.json`, so the harness proves
-// that the snapshot and the live `AppDatabase` agree on the v1 shape on
-// both empty and seeded DBs. The Phase 2 slot (v1→v2) is marked with a
-// `TODO(phase-2):` comment rather than a `skip:`'d test so the file stays
-// compile-clean and grep-discoverable.
+// The harness proves that each committed snapshot agrees with the live
+// `AppDatabase` and that each upgrade path (v1→v3, v2→v3) runs cleanly on
+// both empty and seeded DBs. Snapshots live in `drift_schemas/`.
 //
-// Three non-trivial checks defend against "silently passing with only v1"
-// (Stream C plan §3.4):
-//   1. `schemaVersion` / snapshot parity — fails loudly when Phase 2
-//      bumps `AppDatabase.schemaVersion` without dumping a new snapshot.
+// Three non-trivial checks defend against "silently passing" regressions:
+//   1. `schemaVersion` / snapshot parity — fails loudly when a schema bump
+//      occurs without dumping a new snapshot.
 //   2. Seeded-DB open — runs the full first-run seed against the live
 //      `AppDatabase` and validates the schema via
 //      `GeneratedDatabase.validateDatabaseSchema`.
 //   3. `PRAGMA foreign_keys` stays ON after `beforeOpen` runs — a
-//      Phase-2 migration that temporarily disables FKs during a
-//      table-rebuild must restore the pragma.
+//      migration that temporarily disables FKs during a table-rebuild must
+//      restore the pragma.
 
 import 'package:drift/native.dart';
 import 'package:drift_dev/api/migrations_native.dart';
@@ -34,6 +31,7 @@ import 'package:ledgerly/data/services/locale_service.dart';
 
 import '_harness/generated/schema.dart';
 import '_harness/generated/schema_v1.dart' as v1;
+import '_harness/generated/schema_v2.dart' as v2;
 
 /// Fixed-locale stub for the migration test. The locale-dependent unit
 /// tests live in `test/unit/seed/first_run_seed_test.dart`; here we only
@@ -52,7 +50,7 @@ void main() {
       // snapshot" mistake next time Phase 2 touches the file.
       final db = AppDatabase(NativeDatabase.memory());
       addTearDown(() async => db.close());
-      expect(db.schemaVersion, 2);
+      expect(db.schemaVersion, 3);
       // The drift_dev-generated helper should advance with the new snapshot.
       expect(GeneratedHelper.versions, contains(db.schemaVersion));
       expect(GeneratedHelper.versions.last, db.schemaVersion);
@@ -175,8 +173,57 @@ void main() {
       });
     });
 
-    // TODO(phase-2): extend this to v2 -> v3 once Phase 2 adds a third snapshot.
+    group('v2 snapshot', () {
+      test('upgrades v2 DBs to the live schema', () async {
+        final verifier = SchemaVerifier(GeneratedHelper());
+        final schema = await verifier.schemaAt(2);
+        final legacyDb = v2.DatabaseAtV2(schema.newConnection());
+        addTearDown(() async => legacyDb.close());
+
+        await legacyDb.customStatement(
+          'INSERT INTO currencies (code, decimals, symbol, name_l10n_key, '
+          'is_token, sort_order) VALUES (?, ?, ?, ?, 0, ?)',
+          <Object?>['USD', 2, r'$', 'currency.usd', 1],
+        );
+        await legacyDb.close();
+
+        final db = AppDatabase(schema.newConnection());
+        addTearDown(() async => db.close());
+
+        await verifier.migrateAndValidate(db, db.schemaVersion);
+
+        // Existing currency row survived the migration.
+        final rows = await db.select(db.currencies).get();
+        expect(rows, hasLength(1));
+        expect(rows.single.code, 'USD');
+
+        // New table exists and is empty.
+        final itemRows = await db.select(db.shoppingListItems).get();
+        expect(itemRows, isEmpty);
+      });
+
+      test('upgrades empty v2 DB cleanly to v3 schema', () async {
+        final verifier = SchemaVerifier(GeneratedHelper());
+        final schema = await verifier.schemaAt(2);
+        final db = AppDatabase(schema.newConnection());
+        addTearDown(() async => db.close());
+        await db.customStatement('SELECT 1');
+        await verifier.migrateAndValidate(db, db.schemaVersion);
+      });
+
+      test('foreign_keys stays ON after a real upgrade run', () async {
+        final verifier = SchemaVerifier(GeneratedHelper());
+        final connection = await verifier.startAt(2);
+        final db = AppDatabase(connection.executor);
+        addTearDown(() async => db.close());
+
+        await verifier.migrateAndValidate(db, db.schemaVersion);
+
+        final result = await db.customSelect('PRAGMA foreign_keys').getSingle();
+        expect(result.read<int>('foreign_keys'), 1);
+      });
+    });
   });
 }
 
-const int dbVersionForOpenCheck = 2;
+const int dbVersionForOpenCheck = 3;

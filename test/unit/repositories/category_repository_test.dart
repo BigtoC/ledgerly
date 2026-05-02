@@ -21,6 +21,30 @@ import 'package:ledgerly/data/repositories/transaction_repository.dart';
 
 import '_harness/test_app_database.dart';
 
+// Inserts a minimal shopping-list item referencing the given category.
+// Drift stores DateTimes as Unix seconds; use integer timestamps.
+Future<void> _insertShoppingListItemRaw(
+  AppDatabase db, {
+  required int categoryId,
+  required int accountId,
+}) async {
+  final nowUnix = DateTime(2026, 1, 1).millisecondsSinceEpoch ~/ 1000;
+  final dateUnix = DateTime(2026, 5, 1).millisecondsSinceEpoch ~/ 1000;
+  await db.customInsert(
+    'INSERT INTO shopping_list_items '
+    '(category_id, account_id, draft_date, created_at, updated_at) '
+    'VALUES (?, ?, ?, ?, ?)',
+    variables: [
+      Variable<int>(categoryId),
+      Variable<int>(accountId),
+      Variable<int>(dateUnix),
+      Variable<int>(nowUnix),
+      Variable<int>(nowUnix),
+    ],
+    updates: {db.shoppingListItems},
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Shared fixtures (mirrors transaction_repository_test.dart)
 // ---------------------------------------------------------------------------
@@ -475,5 +499,79 @@ void main() {
       final refd = await catRepo.isReferenced(fixtures.expenseCategoryId);
       expect(refd, isTrue);
     });
+  });
+
+  // Shopping-list-aware guards.
+  group('shopping-list guards', () {
+    test('delete throws CategoryInUseException when category has shopping-list '
+        'drafts but no transactions', () async {
+      // Insert a custom (non-seeded) expense category so delete is allowed
+      // when unused.
+      const custom = Category(
+        id: 0,
+        icon: 'misc',
+        color: 2,
+        type: CategoryType.expense,
+      );
+      final inserted = await catRepo.save(custom);
+
+      await _insertShoppingListItemRaw(
+        db,
+        categoryId: inserted.id,
+        accountId: fixtures.accountId,
+      );
+
+      await expectLater(
+        catRepo.delete(inserted.id),
+        throwsA(
+          isA<CategoryInUseException>().having((e) => e.id, 'id', inserted.id),
+        ),
+      );
+
+      // Row still present.
+      expect(await catRepo.getById(inserted.id), isNotNull);
+    });
+
+    test('save category type change is blocked when category referenced by '
+        'shopping-list draft', () async {
+      // Use the seeded expense category — no transactions yet.
+      final cat = await catRepo.getById(fixtures.expenseCategoryId);
+      expect(cat, isNotNull);
+
+      await _insertShoppingListItemRaw(
+        db,
+        categoryId: fixtures.expenseCategoryId,
+        accountId: fixtures.accountId,
+      );
+
+      await expectLater(
+        catRepo.save(cat!.copyWith(type: CategoryType.income)),
+        throwsA(
+          isA<CategoryTypeLockedException>().having(
+            (e) => e.id,
+            'id',
+            fixtures.expenseCategoryId,
+          ),
+        ),
+      );
+
+      // Type still expense.
+      final stored = await catRepo.getById(fixtures.expenseCategoryId);
+      expect(stored!.type, CategoryType.expense);
+    });
+
+    test(
+      'isReferenced returns false for category with only shopping-list drafts',
+      () async {
+        await _insertShoppingListItemRaw(
+          db,
+          categoryId: fixtures.expenseCategoryId,
+          accountId: fixtures.accountId,
+        );
+
+        // isReferenced is transaction-only — shopping-list drafts don't count.
+        expect(await catRepo.isReferenced(fixtures.expenseCategoryId), isFalse);
+      },
+    );
   });
 }
