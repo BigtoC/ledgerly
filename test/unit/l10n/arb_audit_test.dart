@@ -239,6 +239,14 @@ const Set<String> _expectedEnKeys = <String>{
   'shoppingListEmptyBody',
   'shoppingListEmptyCta',
   'shoppingListItemsMore',
+
+  // Task 4 — Dedicated shopping list screen + delete/undo.
+  'shoppingListScreenTitle',
+  'shoppingListDeleteUndoSnackbar',
+  'shoppingListDeleteAction',
+  'shoppingListScreenEmptyBody',
+  'shoppingListScreenEmptyCta',
+  'shoppingListScreenRetry',
 };
 
 Map<String, dynamic> _readArb(String fileName) {

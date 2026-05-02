@@ -539,6 +539,24 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get shoppingListScreenTitle => 'Shopping list';
+
+  @override
+  String get shoppingListDeleteUndoSnackbar => 'Draft deleted';
+
+  @override
+  String get shoppingListDeleteAction => 'Delete';
+
+  @override
+  String get shoppingListScreenEmptyBody => 'No upcoming expenses saved';
+
+  @override
+  String get shoppingListScreenEmptyCta => 'Add to shopping list';
+
+  @override
+  String get shoppingListScreenRetry => 'Retry';
+
+  @override
   String get currencyUsd => 'US Dollar';
 
   @override

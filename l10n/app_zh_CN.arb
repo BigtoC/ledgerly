@@ -196,6 +196,13 @@
     }
   },
 
+  "shoppingListScreenTitle": "购物清单",
+  "shoppingListDeleteUndoSnackbar": "草稿已删除",
+  "shoppingListDeleteAction": "删除",
+  "shoppingListScreenEmptyBody": "暂无待支出",
+  "shoppingListScreenEmptyCta": "加入购物清单",
+  "shoppingListScreenRetry": "重试",
+
   "currencyUsd": "美元",
   "currencyEur": "欧元",
   "currencyJpy": "日元",

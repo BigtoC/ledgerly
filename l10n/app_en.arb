@@ -699,6 +699,31 @@
     }
   },
 
+  "shoppingListScreenTitle": "Shopping list",
+  "@shoppingListScreenTitle": {
+    "description": "AppBar title for the dedicated shopping list screen."
+  },
+  "shoppingListDeleteUndoSnackbar": "Draft deleted",
+  "@shoppingListDeleteUndoSnackbar": {
+    "description": "SnackBar text shown after a shopping-list item is swiped / overflow deleted; pairs with commonUndo as the action label."
+  },
+  "shoppingListDeleteAction": "Delete",
+  "@shoppingListDeleteAction": {
+    "description": "Swipe-to-delete action label on a shopping-list row."
+  },
+  "shoppingListScreenEmptyBody": "No upcoming expenses saved",
+  "@shoppingListScreenEmptyBody": {
+    "description": "Empty state body text on the shopping list screen when no drafts exist."
+  },
+  "shoppingListScreenEmptyCta": "Add to shopping list",
+  "@shoppingListScreenEmptyCta": {
+    "description": "Empty state CTA on the shopping list screen — navigates to /home/add."
+  },
+  "shoppingListScreenRetry": "Retry",
+  "@shoppingListScreenRetry": {
+    "description": "Retry button shown on the shopping list error state."
+  },
+
   "currencyUsd": "US Dollar",
   "@currencyUsd": {
     "description": "Seeded currency full name. DB nameL10nKey: currency.usd."

@@ -539,6 +539,24 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get shoppingListScreenTitle => '購物清單';
+
+  @override
+  String get shoppingListDeleteUndoSnackbar => '草稿已刪除';
+
+  @override
+  String get shoppingListDeleteAction => '刪除';
+
+  @override
+  String get shoppingListScreenEmptyBody => '尚無待支出';
+
+  @override
+  String get shoppingListScreenEmptyCta => '加入購物清單';
+
+  @override
+  String get shoppingListScreenRetry => '重試';
+
+  @override
   String get currencyUsd => 'US Dollar';
 
   @override
@@ -1091,6 +1109,24 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
+  String get shoppingListScreenTitle => '购物清单';
+
+  @override
+  String get shoppingListDeleteUndoSnackbar => '草稿已删除';
+
+  @override
+  String get shoppingListDeleteAction => '删除';
+
+  @override
+  String get shoppingListScreenEmptyBody => '暂无待支出';
+
+  @override
+  String get shoppingListScreenEmptyCta => '加入购物清单';
+
+  @override
+  String get shoppingListScreenRetry => '重试';
+
+  @override
   String get currencyUsd => '美元';
 
   @override
@@ -1641,6 +1677,24 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
     );
     return '$_temp0';
   }
+
+  @override
+  String get shoppingListScreenTitle => '購物清單';
+
+  @override
+  String get shoppingListDeleteUndoSnackbar => '草稿已刪除';
+
+  @override
+  String get shoppingListDeleteAction => '刪除';
+
+  @override
+  String get shoppingListScreenEmptyBody => '尚無待支出';
+
+  @override
+  String get shoppingListScreenEmptyCta => '加入購物清單';
+
+  @override
+  String get shoppingListScreenRetry => '重試';
 
   @override
   String get currencyUsd => '美元';

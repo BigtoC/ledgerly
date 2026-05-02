@@ -1096,6 +1096,42 @@ abstract class AppLocalizations {
   /// **'{count, plural, one{{count} more} other{{count} more}}'**
   String shoppingListItemsMore(int count);
 
+  /// AppBar title for the dedicated shopping list screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping list'**
+  String get shoppingListScreenTitle;
+
+  /// SnackBar text shown after a shopping-list item is swiped / overflow deleted; pairs with commonUndo as the action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft deleted'**
+  String get shoppingListDeleteUndoSnackbar;
+
+  /// Swipe-to-delete action label on a shopping-list row.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get shoppingListDeleteAction;
+
+  /// Empty state body text on the shopping list screen when no drafts exist.
+  ///
+  /// In en, this message translates to:
+  /// **'No upcoming expenses saved'**
+  String get shoppingListScreenEmptyBody;
+
+  /// Empty state CTA on the shopping list screen — navigates to /home/add.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to shopping list'**
+  String get shoppingListScreenEmptyCta;
+
+  /// Retry button shown on the shopping list error state.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get shoppingListScreenRetry;
+
   /// Seeded currency full name. DB nameL10nKey: currency.usd.
   ///
   /// In en, this message translates to:
