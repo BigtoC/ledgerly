@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a draft shopping list anchored in Accounts. Users can capture a future expense from the transaction form, review drafts from Accounts, open a draft into the existing transaction form, save draft changes without converting, and convert the draft into a real transaction when ready.
+**Goal:** Add a draft shopping list anchored in Accounts. Users can capture a future expense from the transaction form, review drafts from Accounts, open an existing draft into the existing transaction form, save draft changes without converting, and convert the draft into a real transaction when ready.
 
-**Architecture:** Add a new `shopping_list_items` Drift table (schema v3) plus a matching repository. Keep discovery in Accounts for this iteration; do **not** add a Home badge/FAB shortcut. Reuse `TransactionFormScreen` and `TransactionFormController` for shopping-list draft editing and conversion so date, currency, keypad, validation, and adaptive layout stay consistent with the existing transaction flow. `ShoppingListController` powers only the dedicated `/accounts/shopping-list` screen (list + delete/undo). Accounts preview uses lightweight providers, shows the three newest drafts, and exposes a non-empty header CTA plus overflow footer CTA into `/accounts/shopping-list`.
+**Architecture:** Add a new `shopping_list_items` Drift table (schema v3) plus a matching repository. Keep discovery in Accounts for this iteration; do **not** add a Home badge/FAB shortcut. Draft creation remains in the existing `/home/add` transaction form only. Reuse `TransactionFormScreen` and `TransactionFormController` for shopping-list draft editing and conversion so date, currency, keypad, validation, and adaptive layout stay consistent with the existing transaction flow. `ShoppingListController` powers only the dedicated `/accounts/shopping-list` screen (list + delete/undo). Accounts preview uses lightweight providers, shows the three newest drafts, and routes into `/accounts/shopping-list` for full review. Each `shopping_list_items` row represents one future transaction draft; this iteration does not introduce list-native grouping or multi-item workflows.
 
 **Tech Stack:** Flutter, Drift (SQLite ORM), Riverpod (`riverpod_annotation`), Freezed, go_router, flutter_slidable, mocktail, fake_async
 
@@ -12,11 +12,12 @@
 
 ## Review-Driven Changes
 
-- Accounts remains the only discovery surface in this version; the Home shortcut was removed from scope.
+- Accounts remains the review surface in this version; the Home shortcut was removed from scope.
 - The plan no longer introduces `ShoppingListFormController`, `ShoppingListItemController`, or `ShoppingListItemScreen`.
-- Shopping-list drafts now preserve both the original `displayCurrency` and planned `date` from the transaction form.
-- Account/category lifecycle rules explicitly treat shopping-list rows as references.
+- Shopping-list drafts now always preserve the planned `date`; they preserve `displayCurrency` only when an amount is stored, while zero-amount drafts intentionally reseed visible currency from the selected account on re-open.
+- Shopping-list rows participate in hard-delete guards for accounts/categories, while existing transaction-based `isReferenced` affordances remain unchanged in this iteration.
 - Accounts preview rows are no longer swipe-delete surfaces; delete + undo live only on the dedicated shopping-list screen.
+- Draft creation stays in the existing transaction add flow; Accounts does not introduce a separate `/accounts/shopping-list/new` route.
 - Preview/full-list rows now use a non-empty fallback label policy instead of rendering memo-only blank rows.
 
 ---
@@ -29,6 +30,7 @@
 - `lib/data/models/shopping_list_item.dart`
 - `lib/data/repositories/shopping_list_repository.dart`
 - `drift_schemas/drift_schema_v3.json` _(auto-generated)_
+- `test/unit/repositories/_harness/generated/schema.dart` _(auto-generated)_
 - `test/unit/repositories/_harness/generated/schema_v3.dart` _(auto-generated)_
 - `lib/features/shopping_list/shopping_list_state.dart`
 - `lib/features/shopping_list/shopping_list_controller.dart`
@@ -38,11 +40,10 @@
 - `test/unit/repositories/shopping_list_repository_test.dart`
 - `test/unit/controllers/shopping_list_controller_test.dart`
 - `test/unit/controllers/transaction_form_shopping_list_test.dart`
-- `test/widget/shopping_list_card_test.dart`
-- `test/widget/shopping_list_screen_test.dart`
-- `test/widget/transaction_form_shopping_list_button_test.dart`
-- `test/widget/transaction_form_shopping_list_mode_test.dart`
-- `test/unit/app/router_test.dart`
+- `test/widget/features/shopping_list/shopping_list_card_test.dart`
+- `test/widget/features/shopping_list/shopping_list_screen_test.dart`
+- `test/widget/features/transactions/transaction_form_shopping_list_button_test.dart`
+- `test/widget/features/transactions/transaction_form_shopping_list_mode_test.dart`
 - `test/integration/shopping_list_path_test.dart`
 
 **Modified files:**
@@ -68,7 +69,7 @@
 
 ## Task 1: Schema, DAO, and Migration
 
-**Goal:** Create durable storage for shopping-list drafts and preserve the original transaction date/currency when a form is saved as a draft.
+**Goal:** Create durable storage for shopping-list drafts and preserve the planned transaction date plus any amount-backed draft currency when a form is saved as a draft.
 
 **Files:**
 - Create: `lib/data/database/tables/shopping_list_items_table.dart`
@@ -76,6 +77,7 @@
 - Create: `lib/data/models/shopping_list_item.dart`
 - Modify: `lib/data/database/app_database.dart`
 - Modify: `test/unit/repositories/migration_test.dart`
+- Regenerate: `test/unit/repositories/_harness/generated/schema.dart`
 - Regenerate: `drift_schemas/drift_schema_v3.json`
 - Regenerate: `test/unit/repositories/_harness/generated/schema_v3.dart`
 
@@ -90,10 +92,10 @@
   - `created_at`
   - `updated_at`
 - [ ] Keep `draft_date` required so a saved draft round-trips the planned transaction date instead of silently switching to `DateTime.now()` later.
-- [ ] Keep `draft_currency_code` nullable only when `draft_amount_minor_units` is null. A non-null currency code must resolve through the existing `currencies` table.
+- [ ] Treat `draft_amount_minor_units` + `draft_currency_code` as an all-or-nothing nullable pair. Both fields are null for zero-amount drafts, or both are non-null for amount-bearing drafts. A non-null currency code must resolve through the existing `currencies` table.
 - [ ] Add DAO helpers for the main CRUD/read paths plus `countByAccount` and `countByCategory`, because account/category repositories need them for shopping-list-specific delete guards.
 - [ ] Register the table and DAO in `AppDatabase`, bump `schemaVersion` to 3, and create the table in `onUpgrade` for `from < 3`.
-- [ ] Regenerate Drift/codegen artifacts and the migration harness snapshot for schema v3.
+- [ ] Regenerate Drift/codegen artifacts and the full migration harness artifacts for schema v3, including the helper aggregator in `test/unit/repositories/_harness/generated/schema.dart`.
 - [ ] Extend migration tests to cover:
   - seeded v2 → v3 upgrade
   - empty v2 → v3 upgrade
@@ -116,7 +118,7 @@
 
 ## Task 2: ShoppingListRepository and Reference Semantics
 
-**Goal:** Implement the shopping-list repository and make account/category lifecycle rules count shopping-list drafts as references.
+**Goal:** Implement the shopping-list repository and make account/category hard-delete guards count shopping-list drafts.
 
 **Files:**
 - Create: `lib/data/repositories/shopping_list_repository.dart`
@@ -133,21 +135,48 @@
   - `insert(...)`
   - `update(...)`
   - `delete(int id)`
-- [ ] Enforce the cross-column invariant already implied by the original plan: `draft_amount_minor_units != null` requires `draft_currency_code != null`.
+  - `convertToTransaction(...)`
+- [ ] Wire `shoppingListRepositoryProvider` from `lib/app/providers/repository_providers.dart` with the shared `AppDatabase` plus the minimal same-layer collaborators needed for validation and conversion so draft CRUD and transaction conversion run against the same database instance.
+- [ ] Explicitly document one narrow repository-composition exception for this feature: `ShoppingListRepository` may depend on `TransactionRepository` for conversion because both live in the data layer and share the same `AppDatabase` override. This exception exists only to preserve transaction-write invariants in one place; it does not broaden controller/widget access or permit arbitrary cross-layer writes.
+- [ ] Enforce the cross-column invariant: `draft_amount_minor_units` and `draft_currency_code` must either both be null or both be non-null.
+- [ ] Define one canonical zero-amount mapping for draft persistence:
+  - when the current form amount is `0`, persist `draft_amount_minor_units = null`
+  - when the current form amount is `0`, persist `draft_currency_code = null`
+  - only persist amount + currency together when `amount > 0`
+  - when hydrating a draft with null amount/currency, reseed the visible `displayCurrency` from the selected account until the user enters an amount or manually changes currency
+  - this is the intentional boundary for currency preservation in this iteration: zero-amount drafts preserve account/category/date/memo only, not a separate preferred currency
 - [ ] Add explicit shopping-list-aware delete guards to `AccountRepository.delete` and `CategoryRepository.delete`, but **do not** broaden `isReferenced` / `watchIsReferenced`. Existing transaction-backed affordance and mutation semantics stay unchanged for now.
+- [ ] Explicitly decide that shopping-list drafts also participate in category-type locking for this iteration. Update the category repository guard/tests so a category referenced by either a transaction or a shopping-list draft cannot change from expense to income (or vice versa).
+- [ ] Make expense-only a repository-owned invariant too: `ShoppingListRepository.insert/update` must reject non-expense categories even if a caller bypasses the form-level guard.
+- [ ] Re-check conversion-only invariants in the repository too: `ShoppingListRepository.convertToTransaction(...)` must reject missing or archived account/category refs before calling `TransactionRepository.save(...)`, because the existing transaction repository does not own archive validation.
+- [ ] Make `ShoppingListRepository.convertToTransaction(...)` the single owner of draft conversion. Define the composition explicitly:
+  - the API accepts `shoppingListItemId` plus the current validated form snapshot, so `Save to transaction` converts the in-memory form state and does **not** require a preceding `saveDraft()` write
+  - inside one `AppDatabase.transaction`, first confirm the draft row still exists, then build a new domain `Transaction(id: 0, ...)` from the supplied snapshot
+  - call the injected `TransactionRepository.save(...)` to create the real transaction row so currency FK checks, timestamp behavior, read-back semantics, and future transaction-write fixes remain centralized in one place
+  - after `TransactionRepository.save(...)` succeeds, delete the draft row by id inside the same DB transaction; treat a zero-row delete as a failure that aborts the whole transaction
+  - return the saved `Transaction` from `convertToTransaction(...)`
+  - do **not** duplicate transaction insert SQL, timestamp logic, or row-to-domain mapping inside `ShoppingListRepository`
 - [ ] Update repository tests so an account/category with shopping-list rows but no transactions still cannot hard-delete, while existing `isReferenced`-driven affordances continue to mean "referenced by transactions" only.
 
 **Patterns to follow:**
 - `lib/data/repositories/account_repository.dart`
 - `lib/data/repositories/category_repository.dart`
+- `lib/data/repositories/transaction_repository.dart`
 - `test/unit/repositories/account_repository_test.dart`
 - `test/unit/repositories/category_repository_test.dart`
+- `test/unit/repositories/transaction_repository_test.dart`
 
 **Test scenarios:**
 - Happy path: insert/update/delete round-trip a shopping-list item with memo, amount, currency, and date intact.
+- Edge case: zero-amount draft persists as null amount/null currency and rehydrates with account-seeded display currency.
 - Error path: inserting an amount without a currency throws `ShoppingListRepositoryException`.
+- Error path: inserting/updating a draft with an income category is rejected at the repository layer.
+- Error path: converting a missing/deleted draft throws a typed repository error and leaves `transactions` unchanged.
+- Integration: `convertToTransaction(...)` converts the current form snapshot without requiring a prior draft-save, and the returned row round-trips through `TransactionRepository.getById` with the supplied date/currency/memo/account/category intact.
 - Integration: deleting an account referenced only by shopping-list drafts throws the same in-use exception path used for transactions.
 - Integration: deleting a category referenced only by shopping-list drafts is blocked and reported as referenced.
+- Integration: changing a category type that is referenced only by shopping-list drafts is blocked by the same repository invariant used for transaction-backed categories.
+- Integration: conversion is atomic; if draft deletion would fail, neither the new transaction nor the draft mutation commits.
 
 **Verification:**
 - Shopping-list repository tests cover CRUD and invariants.
@@ -163,7 +192,7 @@
 - Create: `lib/features/shopping_list/shopping_list_providers.dart`
 - Create: `lib/features/shopping_list/widgets/shopping_list_card.dart`
 - Modify: `lib/features/accounts/accounts_screen.dart`
-- Create: `test/widget/shopping_list_card_test.dart`
+- Create: `test/widget/features/shopping_list/shopping_list_card_test.dart`
 
 - [ ] Add slice-local providers for:
   - preview rows
@@ -174,14 +203,18 @@
 - [ ] Define the non-empty card IA explicitly:
   - sort by newest `created_at` first
   - show at most 3 preview rows
-  - row tap opens the reused draft form for that row
+  - row tap routes to `/accounts/shopping-list`
   - header CTA (`View all`) routes to `/accounts/shopping-list`
   - footer overflow CTA uses `shoppingListItemsMore(count)` and also routes to `/accounts/shopping-list`
 - [ ] Use a single, explicit row-content rule everywhere the plan references preview/full-list rows:
   - primary label: `memo` when present, otherwise category name
   - secondary metadata: category + account names
   - trailing metadata: always show the stored draft date; append formatted amount when present
-- [ ] Keep the empty-card CTA routed to `/accounts/shopping-list/new`.
+- [ ] Keep the empty-card CTA routed to `/home/add` so draft creation still starts in the existing transaction form.
+- [ ] Keep the card chrome visible in all preview states:
+  - loading: inline progress inside the card body
+  - error: inline generic error copy inside the card body, with the card still tappable to `/accounts/shopping-list`
+- [ ] Keep cross-screen delete state simple: Accounts preview stays on repository truth only. During the dedicated-list undo window, the preview may still show a row until delete commits or undo resolves.
 
 **Patterns to follow:**
 - `lib/features/accounts/accounts_screen.dart`
@@ -191,8 +224,10 @@
 - Happy path: Accounts always renders the shopping-list card before the account section.
 - Edge case: preview row falls back to category name when memo is empty.
 - Edge case: archived account/category still resolve names for preview rows.
+- Edge case: a row pending delete on `ShoppingListScreen` can remain visible in Accounts preview until the repository delete commits.
 - Integration: preview shows 3 newest rows and the overflow CTA text/count for additional rows.
-- Integration: tapping the empty CTA opens the new-draft route.
+- Integration: tapping a non-empty preview row opens `/accounts/shopping-list`, not the draft form directly.
+- Integration: tapping the empty CTA opens `/home/add`.
 
 **Verification:**
 - Accounts preview is always visible.
@@ -210,14 +245,32 @@
 - Create: `lib/features/shopping_list/shopping_list_screen.dart`
 - Modify: `lib/features/shopping_list/shopping_list_providers.dart`
 - Create: `test/unit/controllers/shopping_list_controller_test.dart`
-- Create: `test/widget/shopping_list_screen_test.dart`
+- Create: `test/widget/features/shopping_list/shopping_list_screen_test.dart`
 
-- [ ] Keep `ShoppingListController` focused on the dedicated screen only. It should watch all rows, manage a 4-second delete/undo window, and expose one listener/effect path because only `ShoppingListScreen` owns it.
+- [ ] Keep `ShoppingListController` focused on the dedicated screen only. Implement it as a route-owned `@riverpod` auto-dispose notifier that watches all rows, manages a 4-second delete/undo window, and exposes one listener/effect path because only `ShoppingListScreen` owns it.
 - [ ] Do not register `ShoppingListController` from `ShoppingListCard`; the preview card should stay on lightweight providers.
 - [ ] Reuse the same derived row-content policy from Task 3 so the dedicated list and preview card cannot drift.
 - [ ] Keep swipe-delete + undo snackbar only on `ShoppingListScreen`, and add a visible non-swipe delete affordance (for example an overflow/menu action) so delete is not gesture-only.
-- [ ] Preserve `keepAlive: true` only if the list screen still needs the timer to survive brief route overlays from its own draft-form push; do not rely on it for cross-screen Accounts/list coordination anymore.
+- [ ] Keep `ShoppingListController` screen-scoped to the dedicated shopping-list route, and define the lifetime contract explicitly around `StatefulShellRoute.indexedStack`:
+  - `/accounts/shopping-list` is the **only** route that watches the controller; Accounts preview and the nested draft-edit modal never create their own controller instance
+  - the auto-dispose lifetime is safe here because `StatefulShellRoute.indexedStack` keeps `/accounts/shopping-list` mounted while switching shell tabs, and the child `/accounts/shopping-list/:id` modal is presented on `_rootNavigatorKey`, leaving the list route mounted underneath
+  - while `/accounts/shopping-list` remains in the branch stack, the controller/timer survive ordinary rebuilds, tab switches, and the child `/accounts/shopping-list/:id` modal sitting above it
+  - pending delete is guaranteed to cancel only when the shopping-list route itself is popped/replaced and the controller disposes
+  - switching tabs or obscuring the route with preserved shell state does **not** implicitly cancel the timer
+  - `ShoppingListScreen` attaches and clears the controller effect listener from `initState` / `dispose`, mirroring `HomeScreen`, so snackbar ownership remains exclusive to the dedicated list
+  - add router/widget coverage that the controller is not disposed on tab switch or while `/accounts/shopping-list/:id` is open
+  - if the product later wants tab-switch cancellation, that needs a separate route-visibility hook outside this iteration
+- [ ] Resolve the modal-vs-undo interaction explicitly: do **not** allow opening `/accounts/shopping-list/:id` while a pending delete window is active on `ShoppingListScreen`. Whole-row taps are disabled until the timer commits or undo clears the pending delete, so the undo snackbar always remains actionable on the visible list surface.
 - [ ] Use the same delayed-delete model as `HomeController`: hide immediately, commit repository delete only when the timer expires, and make undo clear pending state before delete runs. Do not add reinsertion-based undo behavior to the repository API.
+- [ ] Make the dedicated list the only place that opens an existing draft into the reused transaction form.
+- [ ] Define the dedicated-list interaction model explicitly:
+  - sort by newest `created_at` first
+  - whole-row tap opens `/accounts/shopping-list/:id`
+  - delete uses swipe or the visible overflow/menu affordance, but never row tap
+- [ ] Define non-data states for the dedicated list explicitly:
+  - loading: centered progress
+  - empty: empty-state CTA to `/home/add`
+  - error: full-screen generic error copy with a primary Retry action; standard app-bar back navigation remains available
 
 **Patterns to follow:**
 - `lib/features/home/home_controller.dart`
@@ -227,9 +280,14 @@
 - Happy path: deleting a row hides it immediately and commits repository delete after the undo window expires.
 - Happy path: undo restores the row before repository delete runs.
 - Error path: repository delete failure surfaces one error event/snackbar on `ShoppingListScreen`.
-- Edge case: the screen empty state CTA opens `/accounts/shopping-list/new`.
+- Error path: repository delete failure restores the hidden row to the dedicated list so the UI returns to repository truth after the failed commit.
+- Error path: the dedicated-list error surface offers Retry and resumes streaming rows when the retry succeeds.
+- Edge case: the screen empty state CTA opens `/home/add`.
+- Edge case: while a pending delete window is active, row taps are disabled and cannot open the draft modal.
 - Integration: rows expose a non-gesture delete path in addition to swipe.
 - Integration: preview rows do not subscribe to the controller and therefore cannot clear or steal its effect listener.
+- Integration: popping the shopping-list route during the undo window cancels the pending delete; switching tabs does not rely on disposal-based cancellation.
+- Integration: the controller/provider is still alive after a shell tab switch and while the nested draft-edit modal is open.
 
 **Verification:**
 - `ShoppingListScreen` is the only screen that owns delete/undo effect wiring.
@@ -246,38 +304,94 @@
 - Modify: `lib/features/transactions/transaction_form_state.dart`
 - Modify: `lib/features/transactions/transaction_form_screen.dart`
 - Create: `test/unit/controllers/transaction_form_shopping_list_test.dart`
-- Create: `test/widget/transaction_form_shopping_list_button_test.dart`
-- Create: `test/widget/transaction_form_shopping_list_mode_test.dart`
+- Create: `test/widget/features/transactions/transaction_form_shopping_list_button_test.dart`
+- Create: `test/widget/features/transactions/transaction_form_shopping_list_mode_test.dart`
 
 - [ ] Extend `TransactionFormController` hydration modes so it can open in:
   - normal add
   - duplicate
   - edit existing transaction
-  - new shopping-list draft
   - edit existing shopping-list draft
+- [ ] Replace ad-hoc route parsing with one typed form-mode contract passed from `router.dart` into `_AdaptiveTransactionFormRoute` and then `TransactionFormScreen`:
+  - add transaction (`initialDate` optional)
+  - duplicate transaction (`sourceTransactionId`)
+  - edit transaction (`transactionId`)
+  - edit shopping-list draft (`shoppingListItemId`)
+- [ ] Derive hydration entrypoint, title, app-bar actions, inline shopping-list actions, delete visibility, and not-found handling from that single mode object instead of mixing `transactionId`, `widget.isEdit`, and raw `GoRouterState.extra` checks inside the screen.
 - [ ] Store shopping-list draft context inside `TransactionFormState` so the form knows whether it is editing a real transaction or a shopping-list draft.
 - [ ] Add draft-save commands directly to `TransactionFormController` instead of using a separate `ShoppingListFormController`.
+- [ ] Add explicit action-level capability flags and commands so draft and transaction validity cannot drift:
+  - `canSaveTransaction`
+  - `canSaveDraft`
+  - `canConvertDraft`
+  - `saveTransaction()`
+  - `saveDraft()`
+  - `convertDraft()`
+- [ ] Add an explicit submission-state contract for form actions:
+  - track `submissionAction = none | saveTransaction | saveDraft | convertDraft`
+  - while a submission is in flight, disable app-bar save, inline shopping-list actions, picker taps, and back/discard pop
+  - show progress only on the active CTA and ignore repeated taps until the async action resolves
 - [ ] Define the minimum valid shopping-list draft explicitly:
   - required: selected account, selected expense category, draft date
   - optional together: amount + currency
   - optional: memo
   - invalid: missing account, missing category, income category, amount without currency, currency without amount
-- [ ] In normal transaction mode, disable the "Add to shopping list" action until the minimum valid draft fields are present.
+- [ ] Keep validation and hint rules mode-aware:
+  - transaction save continues to use the existing `amount > 0` contract and is the only path that drives `txAmountRequired`
+  - draft save uses `canSaveDraft` and must not show transaction-only amount-required copy when a zero-amount draft is otherwise valid
+  - draft conversion uses `canConvertDraft` and layers archived-reference blocking on top of normal transaction validity
+- [ ] In brand-new add-transaction mode (`/home/add` without duplicate/edit context), disable the "Add to shopping list" action until the minimum valid draft fields are present.
+- [ ] Keep duplicate and edit-existing-transaction flows unchanged for this iteration; they do **not** expose the shopping-list action.
 - [ ] Show the income-category blocked hint only when the user is on an income category/type state and the shopping-list action is unavailable for that reason.
-- [ ] Preserve `TransactionFormData.displayCurrency` and `TransactionFormData.date` when saving/updating drafts.
-- [ ] When hydrating an existing draft, resolve the draft currency with `CurrencyRepository.getByCode(draftCurrencyCode)` instead of re-inferring decimals from the selected account.
+- [ ] Preserve `TransactionFormData.date` on every draft save/update and draft conversion.
+- [ ] Preserve `TransactionFormData.displayCurrency` only when saving/updating a draft with `amount > 0`; zero-amount drafts intentionally persist no amount/currency pair and therefore rehydrate visible currency from the selected account on next load.
+- [ ] When hydrating an existing draft with non-null `draft_currency_code`, resolve it with `CurrencyRepository.getByCode(draftCurrencyCode)` instead of re-inferring decimals from the selected account.
+- [ ] When hydrating an existing draft with null amount/currency, seed the visible currency from the selected account until the user enters an amount or manually changes currency.
+- [ ] Split missing-target handling by mode:
+  - missing transaction edit/duplicate targets keep using the existing `TransactionFormEmptyReason.notFound` / `TransactionFormEmpty` flow
+  - parsable-but-missing shopping-list draft ids do **not** render the empty state; they emit a one-shot draft-missing result token instead
+  - define that token explicitly as a shopping-list-edit modal result distinct from `Transaction?` success and from ordinary `null` cancel/dismiss
+  - `TransactionFormScreen` pops with that dedicated result token, and the parent `/accounts/shopping-list` screen awaits/interprets it to show the generic not-found snackbar after the modal closes
+- [ ] Use one exact router-to-form contract for shopping-list draft editing:
+  - `/accounts/shopping-list` is the parent review route
+  - `/accounts/shopping-list/:id` is a child modal route under that parent
+  - the router passes `shoppingListItemId` via constructor args into `_AdaptiveTransactionFormRoute`, then into `TransactionFormScreen`
+  - shopping-list draft routes do **not** use `GoRouterState.extra`; `extra` remains reserved for existing add/duplicate transaction flows
+  - because the draft-edit route is nested under `/accounts/shopping-list`, successful `context.pop()` always returns to the dedicated list
+- [ ] Define one explicit result/exit contract for every shopping-list-related action:
+  - `Add to shopping list` from `/home/add` or any other caller that pushed the add form: persists the draft, then `context.pop()` with no `Transaction` result so the route simply returns to the surface that opened it
+  - `Save draft` while editing `/accounts/shopping-list/:id`: persists the draft, then `context.pop(ShoppingListEditResult.savedDraft)` back to `/accounts/shopping-list`
+  - `Save to transaction` while editing `/accounts/shopping-list/:id`: converts the current in-memory form snapshot atomically without an intermediate draft-save, then `context.pop(ShoppingListEditResult.savedTransaction(savedTransaction))` back to `/accounts/shopping-list`
+  - cancel/discard from `/home/add`: keep existing transaction-form discard behavior and return to the caller unchanged
+  - cancel/discard from `/accounts/shopping-list/:id`: close the modal with `null`, which remains the ordinary no-mutation dismiss result
+  - parsable-but-missing draft id on `/accounts/shopping-list/:id`: `context.pop(ShoppingListEditResult.missingDraft)` and let the parent list show the generic not-found feedback
+- [ ] Define one exact launch contract for every CTA that opens `/home/add` for draft creation:
+  - Home FAB already uses `context.push<Transaction>` and remains unchanged
+  - Accounts empty-card CTA must also use push-style navigation so saving or discarding the form returns the user to Accounts
+  - ShoppingListScreen empty-state CTA must use push-style navigation so saving or discarding the form returns the user to `/accounts/shopping-list`
+  - when those non-Home callers use the normal transaction save path instead of draft save, the route still pops `Transaction`; the caller intentionally ignores that typed result and simply returns to the originating Accounts surface without auto-navigating to Home
 - [ ] When converting a draft to a transaction:
-  - save the transaction with the draft's `displayCurrency`
+  - call the repository-owned `ShoppingListRepository.convertToTransaction(...)` API from the form layer with the current in-memory form snapshot and `shoppingListItemId`
+  - let `ShoppingListRepository.convertToTransaction(...)` compose on top of `TransactionRepository.save(...)` instead of re-implementing transaction-row writes
+  - re-check archived/missing account/category refs in the repository immediately before conversion so UI gating is not the only enforcement layer
+  - save the transaction with the draft's current `displayCurrency`
   - save the transaction with the draft's `date`
-  - delete the draft only after `TransactionRepository.save` succeeds
-  - return the saved `Transaction` to the caller with the same `context.pop(saved)` pattern used by the existing transaction form when a caller is awaiting a result
-  - otherwise route back to `/accounts/shopping-list` as the fallback success destination for direct-entry shopping-list routes
+  - let the repository own the atomic DB transaction and rollback semantics
 - [ ] In shopping-list edit mode, show explicit inline warning text for archived account/category references. Keep the picker controls tappable so the user can replace archived references. Draft save stays allowed; conversion stays disabled until archived references are replaced.
+- [ ] Define the archived-account recovery path explicitly, mirroring the category escape hatch:
+  - if the draft references an archived account but active accounts still exist, the existing account picker remains the replacement path
+  - if the account picker has no active accounts to offer, keep the draft form mounted, replace the account picker body/CTA with inline recovery copy plus a `/accounts/new` launch action, and preserve `Save draft` while conversion remains disabled
+  - do **not** fall back to `TransactionFormEmptyReason.noActiveAccount` for this archived-draft case; that full-screen empty state remains reserved for add/duplicate flows that truly cannot hydrate any account context at all
+  - after `/accounts/new` closes, do **not** call the full retry-hydration path; instead re-check active-account availability and rebind only the account-specific fields/recovery state so in-progress memo/date/category/currency edits remain intact
+  - if `/accounts/new` returns a saved account id, auto-select that new active account for the still-open draft form and clear the archived-account warning; if the route returns `null`, keep the archived account selected and leave conversion disabled until the user resolves it manually
 - [ ] Define mode-specific transaction-form presentation so reuse stays understandable:
-  - normal add/edit transaction modes keep existing title + save action
-  - new shopping-list draft mode uses shopping-list title/copy and primary action = save draft
-  - edit shopping-list draft mode offers save draft + save to transaction, with delete available only for existing drafts
-  - all shopping-list modes keep the secondary/additional actions near the memo field or app-bar in one consistent location
+  - normal add/edit/duplicate transaction modes keep the existing app-bar title + app-bar `Save` as the primary transaction CTA
+  - brand-new add-transaction mode keeps that app-bar `Save` for transaction creation and adds a secondary inline `Add to shopping list` action
+  - edit shopping-list draft mode uses a shopping-list-specific title, removes the app-bar save/delete actions, and uses `Save to transaction` (primary) plus `Save draft` (secondary) in the inline action row as the only submit surface
+  - delete is **not** available in the reused form; deletion stays exclusive to `ShoppingListScreen`
+  - all shopping-list-specific actions live in one exact place: an inline action row directly below `MemoField`
+  - brand-new add-transaction mode uses that inline row for a single `Add to shopping list` action
+  - edit shopping-list draft mode uses that same inline row for `Save draft` and `Save to transaction`
 
 **Patterns to follow:**
 - `lib/features/transactions/transaction_form_controller.dart`
@@ -286,19 +400,30 @@
 
 **Test scenarios:**
 - Happy path: ordinary add-transaction form saves a draft and returns to the caller without creating a transaction.
+- Happy path: Accounts empty-card CTA opens `/home/add` via push semantics and returns to Accounts after save/discard.
+- Happy path: ShoppingListScreen empty-state CTA opens `/home/add` via push semantics and returns to `/accounts/shopping-list` after save/discard.
 - Happy path: shopping-list edit mode hydrates memo, amount, currency, date, account, and category from an existing draft.
 - Happy path: saving a draft preserves a user-selected currency that differs from the selected account currency.
 - Happy path: converting a draft creates a transaction with the stored date/currency and removes the draft afterward.
+- Happy path: typed route mode drives the correct hydration path, title, CTA set, and delete visibility for add, duplicate, edit-transaction, and edit-draft flows.
+- Happy path: `/accounts/shopping-list/:id` returns `ShoppingListEditResult.savedDraft` and `ShoppingListEditResult.savedTransaction(...)` distinctly from ordinary `null` dismiss.
 - Error path: conversion failure leaves the draft untouched.
 - Error path: invalid draft states keep the shopping-list action disabled or rejected with the documented inline hint.
+- Error path: while `submissionAction` is active, repeat taps and pop/discard attempts are ignored until the action resolves.
 - Edge case: archived category/account shows warning text, allows draft save, and blocks conversion.
+- Edge case: archived account with no active replacements routes the user through `/accounts/new`; a returned account id is auto-selected without wiping in-progress edits, while a `null` return leaves the archived account selected and conversion disabled.
 - Edge case: no active account still uses the existing transaction-form empty-state CTA.
+- Edge case: valid route id with a missing/deleted draft returns to `/accounts/shopping-list` with parent-surface not-found feedback instead of rendering the generic empty form.
 - Integration: no visible expense categories still follow the existing picker redirect to category management instead of creating a shopping-list-specific dead-end.
-- Integration: direct-entry draft routes fall back to `/accounts/shopping-list` after successful save/convert when no caller is awaiting a typed result.
+- Integration: `/accounts/shopping-list/:id` opens the reused form through constructor-arg draft mode and returns to `/accounts/shopping-list` on `context.pop()`.
+- Integration: the parent shopping-list screen distinguishes `null` dismiss from `ShoppingListEditResult.missingDraft` and only shows the not-found snackbar for the latter.
+- Integration: `Add to shopping list`, `Save draft`, and `Save to transaction` each follow the documented pop/result contract exactly.
 
 **Verification:**
 - The plan has one source of truth for keypad, date, currency, and form validation.
+- The plan has one source of truth for form mode selection; the screen no longer invents mode from scattered route checks.
 - `ShoppingListFormController`, `ShoppingListItemController`, and `ShoppingListItemScreen` are no longer part of the implementation.
+- Delete ownership is unambiguous: only `ShoppingListScreen` deletes drafts.
 
 ---
 
@@ -308,13 +433,20 @@
 
 **Files:**
 - Modify: `lib/app/router.dart`
+- Modify: `test/unit/app/router_test.dart`
 - Modify: `l10n/app_en.arb`
 - Modify: `l10n/app_zh.arb`
 - Modify: `l10n/app_zh_TW.arb`
 - Modify: `l10n/app_zh_CN.arb`
 
-- [ ] Add `/accounts/shopping-list`, `/accounts/shopping-list/new`, and `/accounts/shopping-list/:id` before the existing `/accounts/:id` catch-all.
+- [ ] Add `/accounts/shopping-list` and nested `/accounts/shopping-list/:id` routes before the existing `/accounts/:id` catch-all.
 - [ ] Reuse the same adaptive modal/dialog behavior already used by `_AdaptiveTransactionFormRoute` instead of creating a separate shopping-list-only screen shell.
+- [ ] Make navigator ownership explicit:
+  - `/accounts/shopping-list` stays on the Accounts branch navigator
+  - `/accounts/shopping-list/:id` uses `parentNavigatorKey: _rootNavigatorKey` and `_AdaptiveTransactionFormRoute(shoppingListItemId: ...)` so wide layouts reuse the existing dialog treatment and the dedicated list route remains mounted underneath
+- [ ] Split bad-id handling explicitly:
+  - non-parsable `/accounts/shopping-list/:id` values redirect in the router back to `/accounts/shopping-list`
+  - parsable-but-missing ids are handled by the form-mode draft-missing effect described in Task 5, with `/accounts/shopping-list` owning the snackbar after the modal returns
 - [ ] Add only the keys that remain necessary after this revision. At minimum, keep coverage for:
   - screen/card titles
   - add-to-shopping-list action
@@ -333,10 +465,11 @@
 - `lib/features/transactions/transaction_form_screen.dart`
 
 **Test scenarios:**
-- Happy path: `/accounts/shopping-list/new` and `/accounts/shopping-list/:id` route before `/accounts/:id`.
+- Happy path: `/accounts/shopping-list` and nested `/accounts/shopping-list/:id` route before `/accounts/:id`.
 - Edge case: invalid `shopping-list/:id` redirects back to `/accounts/shopping-list`.
 - Integration: wide layouts render shopping-list draft routes in the same constrained dialog treatment as `/home/add`.
-- Integration: router tests cover both pushed-caller and direct-entry shopping-list draft routes.
+- Integration: router tests cover the nested `/accounts/shopping-list/:id` stack returning to `/accounts/shopping-list` on pop.
+- Integration: router/widget tests prove `/accounts/shopping-list` stays mounted under the root-navigator modal route.
 - Integration: l10n generation succeeds with `app_zh.arb` present.
 
 **Verification:**
@@ -357,14 +490,15 @@
   - return to caller
   - navigate to Accounts
   - Accounts preview shows the saved draft row
-  - open dedicated shopping-list screen
-  - open draft into the reused transaction form
+  - open dedicated shopping-list screen from the Accounts card
+  - open draft into the reused transaction form from the dedicated list
   - convert draft to transaction
-  - return to caller/list screen
+  - return to dedicated list screen
   - draft disappears from the shopping list
   - manual navigation to Home shows the new transaction
 - [ ] Add a second row-display assertion path for a draft with no memo so the category-name fallback is tested explicitly.
 - [ ] Add an Accounts-preview assertion path that verifies preview ordering, 3-row truncation, and the overflow CTA into `/accounts/shopping-list`.
+- [ ] Add one route-state assertion path for a deleted/missing draft id so the app returns cleanly to `/accounts/shopping-list`.
 - [ ] Keep the file inventory aligned with the tasks above; do not list test files that are never authored.
 - [ ] Run full verification after codegen/formatting:
   - format
@@ -372,7 +506,7 @@
   - full `flutter test`
   - `flutter analyze`
 - [ ] Manual smoke test checklist:
-  - Add Transaction → Add to shopping list → form closes → Accounts card shows draft
+  - Add Transaction → Add to shopping list → form closes → navigate to Accounts → Accounts card shows draft
   - Accounts preview rows are tap-only and never show swipe actions
   - Shopping list screen supports swipe-delete + undo
   - Open draft → save draft changes without conversion
@@ -388,6 +522,7 @@
 - Edge case: preview/full-list row content stays consistent for memo and no-memo drafts.
 - Integration: preview overflow CTA and dedicated list entry behave as documented.
 - Integration: conversion returns to the caller instead of forcing implicit navigation to Home.
+- Integration: each shopping-list-related form action follows its documented exit/result behavior.
 
 **Verification:**
 - The plan's file inventory matches the actual implementation units.
