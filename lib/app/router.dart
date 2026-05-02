@@ -11,8 +11,10 @@ import '../features/categories/categories_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/settings/about_screen.dart';
 import '../features/settings/settings_screen.dart';
+import '../features/shopping_list/shopping_list_screen.dart';
 import '../features/splash/splash_screen.dart';
 import '../features/transactions/transaction_form_screen.dart';
+import '../features/transactions/transaction_form_state.dart';
 import 'providers/splash_redirect_provider.dart';
 import 'widgets/adaptive_shell.dart';
 
@@ -121,6 +123,30 @@ GoRouter router(Ref ref) {
                     ),
                   ),
                   GoRoute(
+                    path: 'shopping-list',
+                    builder: (_, _) => const ShoppingListScreen(),
+                    routes: [
+                      GoRoute(
+                        path: ':id',
+                        redirect: (_, state) =>
+                            int.tryParse(state.pathParameters['id'] ?? '') ==
+                                null
+                            ? '/accounts/shopping-list'
+                            : null,
+                        parentNavigatorKey: _rootNavigatorKey,
+                        pageBuilder: (ctx, state) => _modalPage(
+                          state,
+                          _AdaptiveTransactionFormRoute(
+                            shoppingListItemId: int.parse(
+                              state.pathParameters['id']!,
+                            ),
+                          ),
+                          fullscreenDialog: true,
+                        ),
+                      ),
+                    ],
+                  ),
+                  GoRoute(
                     path: ':id',
                     redirect: (_, state) =>
                         int.tryParse(state.pathParameters['id'] ?? '') == null
@@ -165,13 +191,23 @@ GoRouter router(Ref ref) {
 }
 
 class _AdaptiveTransactionFormRoute extends StatelessWidget {
-  const _AdaptiveTransactionFormRoute({this.transactionId});
+  const _AdaptiveTransactionFormRoute({
+    this.transactionId,
+    this.shoppingListItemId,
+  });
 
   final int? transactionId;
+  final int? shoppingListItemId;
 
   @override
   Widget build(BuildContext context) {
-    final form = TransactionFormScreen(transactionId: transactionId);
+    final TransactionFormMode? mode = shoppingListItemId != null
+        ? EditShoppingListDraftMode(shoppingListItemId: shoppingListItemId!)
+        : null;
+    final form = TransactionFormScreen(
+      transactionId: transactionId,
+      mode: mode,
+    );
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth < 600) {

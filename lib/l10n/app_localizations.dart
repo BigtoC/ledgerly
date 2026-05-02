@@ -1251,6 +1251,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Draft not found'**
   String get shoppingListDraftNotFoundSnackbar;
+
+  /// SnackBar shown on the shopping list screen after a draft is saved without converting.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft saved'**
+  String get shoppingListSavedDraftSnackbar;
+
+  /// SnackBar shown on the shopping list screen after a draft is converted to a real transaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft converted to transaction'**
+  String get shoppingListConvertedSnackbar;
 }
 
 class _AppLocalizationsDelegate

@@ -73,10 +73,23 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
     final result = await context.push<ShoppingListEditResult?>(
       '/accounts/shopping-list/$id',
     );
-    if (result is ShoppingListEditResultMissingDraft && mounted) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.shoppingListDraftNotFoundSnackbar)),
-      );
+    if (!mounted) return;
+    switch (result) {
+      case ShoppingListEditResultMissingDraft():
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.shoppingListDraftNotFoundSnackbar)),
+        );
+      case ShoppingListEditResultSavedDraft():
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.shoppingListSavedDraftSnackbar)),
+        );
+      case ShoppingListEditResultSavedTransaction():
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.shoppingListConvertedSnackbar)),
+        );
+      case ShoppingListEditResultAddedToList():
+      case null:
+        break;
     }
   }
 

@@ -804,5 +804,14 @@
   "shoppingListDraftNotFoundSnackbar": "Draft not found",
   "@shoppingListDraftNotFoundSnackbar": {
     "description": "SnackBar shown when EditShoppingListDraftMode cannot resolve the draft by id."
+  },
+
+  "shoppingListSavedDraftSnackbar": "Draft saved",
+  "@shoppingListSavedDraftSnackbar": {
+    "description": "SnackBar shown on the shopping list screen after a draft is saved without converting."
+  },
+  "shoppingListConvertedSnackbar": "Draft converted to transaction",
+  "@shoppingListConvertedSnackbar": {
+    "description": "SnackBar shown on the shopping list screen after a draft is converted to a real transaction."
   }
 }

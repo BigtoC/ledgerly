@@ -617,6 +617,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get shoppingListDraftNotFoundSnackbar => 'Draft not found';
+
+  @override
+  String get shoppingListSavedDraftSnackbar => 'Draft saved';
+
+  @override
+  String get shoppingListConvertedSnackbar => 'Draft converted to transaction';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -1214,6 +1220,12 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get shoppingListDraftNotFoundSnackbar => '找不到草稿';
+
+  @override
+  String get shoppingListSavedDraftSnackbar => '草稿已保存';
+
+  @override
+  String get shoppingListConvertedSnackbar => '草稿已转换为交易';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1811,4 +1823,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get shoppingListDraftNotFoundSnackbar => '找不到草稿';
+
+  @override
+  String get shoppingListSavedDraftSnackbar => '草稿已儲存';
+
+  @override
+  String get shoppingListConvertedSnackbar => '草稿已轉換為交易';
 }

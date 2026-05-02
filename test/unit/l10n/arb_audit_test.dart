@@ -247,6 +247,21 @@ const Set<String> _expectedEnKeys = <String>{
   'shoppingListScreenEmptyBody',
   'shoppingListScreenEmptyCta',
   'shoppingListScreenRetry',
+
+  // Task 5 — Transaction form reuse for shopping-list drafts.
+  'shoppingListEditDraftTitle',
+  'shoppingListAddToListAction',
+  'shoppingListSaveDraftAction',
+  'shoppingListSaveToTransactionAction',
+  'shoppingListArchivedAccountWarning',
+  'shoppingListArchivedCategoryWarning',
+  'shoppingListSaveFailedSnackbar',
+  'shoppingListConvertFailedSnackbar',
+  'shoppingListDraftNotFoundSnackbar',
+
+  // Task 6 — Routing and localization.
+  'shoppingListSavedDraftSnackbar',
+  'shoppingListConvertedSnackbar',
 };
 
 Map<String, dynamic> _readArb(String fileName) {

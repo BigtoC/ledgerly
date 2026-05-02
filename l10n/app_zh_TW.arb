@@ -223,5 +223,8 @@
   "shoppingListArchivedCategoryWarning": "類別已封存——轉換前請先更換",
   "shoppingListSaveFailedSnackbar": "草稿儲存失敗",
   "shoppingListConvertFailedSnackbar": "草稿轉換失敗",
-  "shoppingListDraftNotFoundSnackbar": "找不到草稿"
+  "shoppingListDraftNotFoundSnackbar": "找不到草稿",
+
+  "shoppingListSavedDraftSnackbar": "草稿已儲存",
+  "shoppingListConvertedSnackbar": "草稿已轉換為交易"
 }

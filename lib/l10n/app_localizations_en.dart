@@ -617,4 +617,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shoppingListDraftNotFoundSnackbar => 'Draft not found';
+
+  @override
+  String get shoppingListSavedDraftSnackbar => 'Draft saved';
+
+  @override
+  String get shoppingListConvertedSnackbar => 'Draft converted to transaction';
 }
