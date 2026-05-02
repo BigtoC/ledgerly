@@ -1,24 +1,21 @@
-// Migration harness — activates the v1 snapshot checks.
+// Migration harness — covers v1, v2, and v3 snapshot checks.
 //
 // See `docs/plans/m3-repositories-seed/stream-c-preferences-seed-migration.md`
 // §3 for the full specification.
 //
-// MVP has only `drift_schemas/drift_schema_v1.json`, so the harness proves
-// that the snapshot and the live `AppDatabase` agree on the v1 shape on
-// both empty and seeded DBs. The Phase 2 slot (v1→v2) is marked with a
-// `TODO(phase-2):` comment rather than a `skip:`'d test so the file stays
-// compile-clean and grep-discoverable.
+// The harness proves that each committed snapshot agrees with the live
+// `AppDatabase` and that each upgrade path (v1→v3, v2→v3) runs cleanly on
+// both empty and seeded DBs. Snapshots live in `drift_schemas/`.
 //
-// Three non-trivial checks defend against "silently passing with only v1"
-// (Stream C plan §3.4):
-//   1. `schemaVersion` / snapshot parity — fails loudly when Phase 2
-//      bumps `AppDatabase.schemaVersion` without dumping a new snapshot.
+// Three non-trivial checks defend against "silently passing" regressions:
+//   1. `schemaVersion` / snapshot parity — fails loudly when a schema bump
+//      occurs without dumping a new snapshot.
 //   2. Seeded-DB open — runs the full first-run seed against the live
 //      `AppDatabase` and validates the schema via
 //      `GeneratedDatabase.validateDatabaseSchema`.
 //   3. `PRAGMA foreign_keys` stays ON after `beforeOpen` runs — a
-//      Phase-2 migration that temporarily disables FKs during a
-//      table-rebuild must restore the pragma.
+//      migration that temporarily disables FKs during a table-rebuild must
+//      restore the pragma.
 
 import 'package:drift/native.dart';
 import 'package:drift_dev/api/migrations_native.dart';
@@ -205,15 +202,13 @@ void main() {
         expect(itemRows, isEmpty);
       });
 
-      test('opens cleanly on an empty DB', () async {
+      test('upgrades empty v2 DB cleanly to v3 schema', () async {
         final verifier = SchemaVerifier(GeneratedHelper());
-        final schema = await verifier.schemaAt(dbVersionForOpenCheck);
+        final schema = await verifier.schemaAt(2);
         final db = AppDatabase(schema.newConnection());
         addTearDown(() async => db.close());
-
         await db.customStatement('SELECT 1');
-        expect(db.schemaVersion, dbVersionForOpenCheck);
-        await db.validateDatabaseSchema();
+        await verifier.migrateAndValidate(db, db.schemaVersion);
       });
 
       test('foreign_keys stays ON after a real upgrade run', () async {

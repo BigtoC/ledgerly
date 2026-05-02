@@ -69,6 +69,8 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 3) {
         await m.createTable(shoppingListItems);
+        await m.createIndex(shoppingListItemsAccountIdx);
+        await m.createIndex(shoppingListItemsCategoryIdx);
       }
     },
     beforeOpen: (details) async {

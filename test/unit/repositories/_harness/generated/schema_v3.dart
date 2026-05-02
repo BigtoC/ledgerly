@@ -692,6 +692,14 @@ class DatabaseAtV3 extends GeneratedDatabase {
     'accounts_account_type_idx',
     'CREATE INDEX accounts_account_type_idx ON accounts (account_type_id)',
   );
+  late final Index shoppingListItemsAccountIdx = Index(
+    'shopping_list_items_account_idx',
+    'CREATE INDEX shopping_list_items_account_idx ON shopping_list_items (account_id)',
+  );
+  late final Index shoppingListItemsCategoryIdx = Index(
+    'shopping_list_items_category_idx',
+    'CREATE INDEX shopping_list_items_category_idx ON shopping_list_items (category_id)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -708,6 +716,8 @@ class DatabaseAtV3 extends GeneratedDatabase {
     transactionsAccountIdx,
     transactionsCategoryIdx,
     accountsAccountTypeIdx,
+    shoppingListItemsAccountIdx,
+    shoppingListItemsCategoryIdx,
   ];
   @override
   int get schemaVersion => 3;

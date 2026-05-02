@@ -17,6 +17,8 @@ import 'currencies_table.dart';
 /// `created_at` and `updated_at` are NOT NULL and populated by
 /// `ShoppingListRepository`, mirroring the pattern in `TransactionRepository`.
 @DataClassName('ShoppingListItemRow')
+@TableIndex(name: 'shopping_list_items_account_idx', columns: {#accountId})
+@TableIndex(name: 'shopping_list_items_category_idx', columns: {#categoryId})
 class ShoppingListItems extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get categoryId =>

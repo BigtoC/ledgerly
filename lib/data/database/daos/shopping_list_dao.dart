@@ -16,10 +16,16 @@ class ShoppingListDao extends DatabaseAccessor<AppDatabase>
   ShoppingListDao(super.db);
 
   /// Watch all items, newest `created_at` first.
-  Stream<List<ShoppingListItemRow>> watchAll() {
-    return (select(shoppingListItems)..orderBy([
-          (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
-        ]))
+  ///
+  /// [limit] caps the number of rows returned; defaults to 10,000 (the MVP
+  /// pagination cap — see `CLAUDE.md` → Pagination Cap).
+  Stream<List<ShoppingListItemRow>> watchAll({int limit = 10000}) {
+    return (select(shoppingListItems)
+          ..orderBy([
+            (t) =>
+                OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+          ])
+          ..limit(limit))
         .watch();
   }
 
