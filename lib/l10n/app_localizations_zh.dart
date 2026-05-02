@@ -539,22 +539,22 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get shoppingListScreenTitle => '購物清單';
+  String get shoppingListScreenTitle => 'Shopping list';
 
   @override
-  String get shoppingListDeleteUndoSnackbar => '草稿已刪除';
+  String get shoppingListDeleteUndoSnackbar => 'Draft deleted';
 
   @override
-  String get shoppingListDeleteAction => '刪除';
+  String get shoppingListDeleteAction => 'Delete';
 
   @override
-  String get shoppingListScreenEmptyBody => '尚無待支出';
+  String get shoppingListScreenEmptyBody => 'No upcoming expenses saved';
 
   @override
-  String get shoppingListScreenEmptyCta => '加入購物清單';
+  String get shoppingListScreenEmptyCta => 'Add to shopping list';
 
   @override
-  String get shoppingListScreenRetry => '重試';
+  String get shoppingListScreenRetry => 'Retry';
 
   @override
   String get currencyUsd => 'US Dollar';
@@ -588,6 +588,35 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get currencyNzd => 'New Zealand Dollar';
+
+  @override
+  String get shoppingListEditDraftTitle => 'Edit Draft';
+
+  @override
+  String get shoppingListAddToListAction => 'Add to shopping list';
+
+  @override
+  String get shoppingListSaveDraftAction => 'Save draft';
+
+  @override
+  String get shoppingListSaveToTransactionAction => 'Save to transaction';
+
+  @override
+  String get shoppingListArchivedAccountWarning =>
+      'Account is archived — replace before converting';
+
+  @override
+  String get shoppingListArchivedCategoryWarning =>
+      'Category is archived — replace before converting';
+
+  @override
+  String get shoppingListSaveFailedSnackbar => 'Failed to save draft';
+
+  @override
+  String get shoppingListConvertFailedSnackbar => 'Failed to convert draft';
+
+  @override
+  String get shoppingListDraftNotFoundSnackbar => 'Draft not found';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -1158,6 +1187,33 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get currencyNzd => '新西兰元';
+
+  @override
+  String get shoppingListEditDraftTitle => '编辑草稿';
+
+  @override
+  String get shoppingListAddToListAction => '加入购物清单';
+
+  @override
+  String get shoppingListSaveDraftAction => '保存草稿';
+
+  @override
+  String get shoppingListSaveToTransactionAction => '保存为交易';
+
+  @override
+  String get shoppingListArchivedAccountWarning => '账户已存档——转换前请先更换';
+
+  @override
+  String get shoppingListArchivedCategoryWarning => '类别已存档——转换前请先更换';
+
+  @override
+  String get shoppingListSaveFailedSnackbar => '草稿保存失败';
+
+  @override
+  String get shoppingListConvertFailedSnackbar => '草稿转换失败';
+
+  @override
+  String get shoppingListDraftNotFoundSnackbar => '找不到草稿';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1728,4 +1784,31 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get currencyNzd => '紐西蘭元';
+
+  @override
+  String get shoppingListEditDraftTitle => '編輯草稿';
+
+  @override
+  String get shoppingListAddToListAction => '加入購物清單';
+
+  @override
+  String get shoppingListSaveDraftAction => '儲存草稿';
+
+  @override
+  String get shoppingListSaveToTransactionAction => '儲存為交易';
+
+  @override
+  String get shoppingListArchivedAccountWarning => '帳戶已封存——轉換前請先更換';
+
+  @override
+  String get shoppingListArchivedCategoryWarning => '類別已封存——轉換前請先更換';
+
+  @override
+  String get shoppingListSaveFailedSnackbar => '草稿儲存失敗';
+
+  @override
+  String get shoppingListConvertFailedSnackbar => '草稿轉換失敗';
+
+  @override
+  String get shoppingListDraftNotFoundSnackbar => '找不到草稿';
 }

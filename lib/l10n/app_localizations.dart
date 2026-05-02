@@ -1197,6 +1197,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New Zealand Dollar'**
   String get currencyNzd;
+
+  /// AppBar title for the transaction form when opened in EditShoppingListDraftMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Draft'**
+  String get shoppingListEditDraftTitle;
+
+  /// Inline CTA below MemoField in AddTransactionMode — saves the form as a draft.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to shopping list'**
+  String get shoppingListAddToListAction;
+
+  /// Secondary inline CTA in EditShoppingListDraftMode — saves the draft without converting.
+  ///
+  /// In en, this message translates to:
+  /// **'Save draft'**
+  String get shoppingListSaveDraftAction;
+
+  /// Primary inline CTA in EditShoppingListDraftMode — converts the draft to a real transaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to transaction'**
+  String get shoppingListSaveToTransactionAction;
+
+  /// Inline warning shown in EditShoppingListDraftMode when the draft references an archived account.
+  ///
+  /// In en, this message translates to:
+  /// **'Account is archived — replace before converting'**
+  String get shoppingListArchivedAccountWarning;
+
+  /// Inline warning shown in EditShoppingListDraftMode when the draft references an archived category.
+  ///
+  /// In en, this message translates to:
+  /// **'Category is archived — replace before converting'**
+  String get shoppingListArchivedCategoryWarning;
+
+  /// SnackBar shown when ShoppingListRepository.insert or .update throws.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save draft'**
+  String get shoppingListSaveFailedSnackbar;
+
+  /// SnackBar shown when ShoppingListRepository.convertToTransaction throws.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to convert draft'**
+  String get shoppingListConvertFailedSnackbar;
+
+  /// SnackBar shown when EditShoppingListDraftMode cannot resolve the draft by id.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft not found'**
+  String get shoppingListDraftNotFoundSnackbar;
 }
 
 class _AppLocalizationsDelegate

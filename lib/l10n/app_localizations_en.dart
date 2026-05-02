@@ -588,4 +588,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get currencyNzd => 'New Zealand Dollar';
+
+  @override
+  String get shoppingListEditDraftTitle => 'Edit Draft';
+
+  @override
+  String get shoppingListAddToListAction => 'Add to shopping list';
+
+  @override
+  String get shoppingListSaveDraftAction => 'Save draft';
+
+  @override
+  String get shoppingListSaveToTransactionAction => 'Save to transaction';
+
+  @override
+  String get shoppingListArchivedAccountWarning =>
+      'Account is archived — replace before converting';
+
+  @override
+  String get shoppingListArchivedCategoryWarning =>
+      'Category is archived — replace before converting';
+
+  @override
+  String get shoppingListSaveFailedSnackbar => 'Failed to save draft';
+
+  @override
+  String get shoppingListConvertFailedSnackbar => 'Failed to convert draft';
+
+  @override
+  String get shoppingListDraftNotFoundSnackbar => 'Draft not found';
 }

@@ -213,5 +213,15 @@
   "currencyCad": "加拿大元",
   "currencySgd": "新加坡元",
   "currencyAud": "澳元",
-  "currencyNzd": "新西兰元"
+  "currencyNzd": "新西兰元",
+
+  "shoppingListEditDraftTitle": "编辑草稿",
+  "shoppingListAddToListAction": "加入购物清单",
+  "shoppingListSaveDraftAction": "保存草稿",
+  "shoppingListSaveToTransactionAction": "保存为交易",
+  "shoppingListArchivedAccountWarning": "账户已存档——转换前请先更换",
+  "shoppingListArchivedCategoryWarning": "类别已存档——转换前请先更换",
+  "shoppingListSaveFailedSnackbar": "草稿保存失败",
+  "shoppingListConvertFailedSnackbar": "草稿转换失败",
+  "shoppingListDraftNotFoundSnackbar": "找不到草稿"
 }

@@ -767,5 +767,42 @@
   "currencyNzd": "New Zealand Dollar",
   "@currencyNzd": {
     "description": "Seeded currency full name. DB nameL10nKey: currency.nzd."
+  },
+
+  "shoppingListEditDraftTitle": "Edit Draft",
+  "@shoppingListEditDraftTitle": {
+    "description": "AppBar title for the transaction form when opened in EditShoppingListDraftMode."
+  },
+  "shoppingListAddToListAction": "Add to shopping list",
+  "@shoppingListAddToListAction": {
+    "description": "Inline CTA below MemoField in AddTransactionMode — saves the form as a draft."
+  },
+  "shoppingListSaveDraftAction": "Save draft",
+  "@shoppingListSaveDraftAction": {
+    "description": "Secondary inline CTA in EditShoppingListDraftMode — saves the draft without converting."
+  },
+  "shoppingListSaveToTransactionAction": "Save to transaction",
+  "@shoppingListSaveToTransactionAction": {
+    "description": "Primary inline CTA in EditShoppingListDraftMode — converts the draft to a real transaction."
+  },
+  "shoppingListArchivedAccountWarning": "Account is archived — replace before converting",
+  "@shoppingListArchivedAccountWarning": {
+    "description": "Inline warning shown in EditShoppingListDraftMode when the draft references an archived account."
+  },
+  "shoppingListArchivedCategoryWarning": "Category is archived — replace before converting",
+  "@shoppingListArchivedCategoryWarning": {
+    "description": "Inline warning shown in EditShoppingListDraftMode when the draft references an archived category."
+  },
+  "shoppingListSaveFailedSnackbar": "Failed to save draft",
+  "@shoppingListSaveFailedSnackbar": {
+    "description": "SnackBar shown when ShoppingListRepository.insert or .update throws."
+  },
+  "shoppingListConvertFailedSnackbar": "Failed to convert draft",
+  "@shoppingListConvertFailedSnackbar": {
+    "description": "SnackBar shown when ShoppingListRepository.convertToTransaction throws."
+  },
+  "shoppingListDraftNotFoundSnackbar": "Draft not found",
+  "@shoppingListDraftNotFoundSnackbar": {
+    "description": "SnackBar shown when EditShoppingListDraftMode cannot resolve the draft by id."
   }
 }
