@@ -179,26 +179,23 @@ class _DataBody extends StatelessWidget {
       slivers: [
         SliverPadding(
           padding: cardPadding,
-          sliver: SliverToBoxAdapter(
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainer,
-                borderRadius: BorderRadius.circular(homePageCardBorderRadius),
-                boxShadow: [buildBoxShadow(homePageCardBorderRadius)],
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                children: [
-                  for (final item in items)
-                    _ShoppingListRow(
-                      item: item,
-                      canTap: canOpenItem,
-                      onDelete: () => onDeleteItem(item.id),
-                      onTap: () => onTapItem(item.id),
-                    ),
-                ],
-              ),
+          sliver: DecoratedSliver(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainer,
+              borderRadius: BorderRadius.circular(homePageCardBorderRadius),
+              boxShadow: [buildBoxShadow(homePageCardBorderRadius)],
+            ),
+            sliver: SliverList.builder(
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final item = items[index];
+                return _ShoppingListRow(
+                  item: item,
+                  canTap: canOpenItem,
+                  onDelete: () => onDeleteItem(item.id),
+                  onTap: () => onTapItem(item.id),
+                );
+              },
             ),
           ),
         ),
