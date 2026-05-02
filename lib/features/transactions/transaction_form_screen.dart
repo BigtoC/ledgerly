@@ -140,6 +140,20 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       appBarTitle = l10n.txAddTitle;
     }
 
+    // F1/F2: Auto-pop with ShoppingListEditResultMissingDraft when the draft
+    // is not found during EditShoppingListDraftMode hydration. A
+    // postFrameCallback is used to avoid calling context.pop() synchronously
+    // during build (which would throw a navigation assertion).
+    ref.listen(transactionFormControllerProvider, (prev, next) {
+      if (next is TransactionFormEmpty &&
+          next.reason == TransactionFormEmptyReason.draftNotFound &&
+          widget.mode is EditShoppingListDraftMode) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) context.pop(const ShoppingListEditResultMissingDraft());
+        });
+      }
+    });
+
     return PopScope(
       canPop: _canPop(state),
       onPopInvokedWithResult: (didPop, _) async {

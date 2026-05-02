@@ -246,6 +246,11 @@ sealed class TransactionFormState with _$TransactionFormState {
   /// Amount may be zero — zero-amount drafts are valid.
   ///
   /// Task 5 §8: archived refs do NOT block canSaveDraft.
+  ///
+  /// Note: `date` is always non-null (`required DateTime date`); the spec
+  /// invariant "canSaveDraft requires date != null" is trivially satisfied
+  /// because the field can never be null at runtime. No null check is added
+  /// here to avoid dead-code analyzer warnings.
   bool get canSaveDraft => switch (this) {
     TransactionFormData(
       :final selectedAccount,

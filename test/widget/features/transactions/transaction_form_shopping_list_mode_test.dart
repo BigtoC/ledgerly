@@ -193,4 +193,64 @@ void main() {
       expect(missing, isNot(equals(saved)));
     },
   );
+
+  testWidgets(
+    'TFSLM04: auto-pops with ShoppingListEditResultMissingDraft when draft not found',
+    (tester) async {
+      // Stub: draft id 99 does not exist.
+      when(() => slRepo.getById(99)).thenAnswer((_) async => null);
+
+      ShoppingListEditResult? poppedResult;
+
+      // Build a router that captures the pop result from the form screen.
+      final router = GoRouter(
+        initialLocation: '/',
+        routes: [
+          GoRoute(path: '/', builder: (_, _) => const _HomeStub()),
+          GoRoute(
+            path: '/form',
+            builder: (_, state) {
+              return TransactionFormScreen(
+                mode: const EditShoppingListDraftMode(shoppingListItemId: 99),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/settings/categories',
+            builder: (_, _) =>
+                Scaffold(appBar: AppBar(title: const Text('categories-stub'))),
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            transactionRepositoryProvider.overrideWithValue(txRepo),
+            accountRepositoryProvider.overrideWithValue(accountRepo),
+            categoryRepositoryProvider.overrideWithValue(categoryRepo),
+            userPreferencesRepositoryProvider.overrideWithValue(prefs),
+            currencyRepositoryProvider.overrideWithValue(currencyRepo),
+            shoppingListRepositoryProvider.overrideWithValue(slRepo),
+          ],
+          child: MaterialApp.router(
+            routerConfig: router,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+          ),
+        ),
+      );
+
+      // Navigate to the form screen, capturing the pop result.
+      router.push<ShoppingListEditResult>('/form').then((result) {
+        poppedResult = result;
+      });
+      await tester.pumpAndSettle();
+
+      // After hydration finds the draft is missing, the screen should auto-pop
+      // back to home-stub and supply ShoppingListEditResultMissingDraft.
+      expect(find.text('home-stub'), findsOneWidget);
+      expect(poppedResult, isA<ShoppingListEditResultMissingDraft>());
+    },
+  );
 }
