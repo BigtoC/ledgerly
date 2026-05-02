@@ -13,8 +13,10 @@ import 'package:intl/intl.dart';
 
 import '../../../core/constants.dart';
 import '../../../core/utils/box_shadow.dart';
+import '../../../core/utils/money_formatter.dart';
 import '../../../data/models/account.dart';
 import '../../../data/models/category.dart';
+import '../../../data/models/currency.dart';
 import '../../../data/models/shopping_list_item.dart';
 import '../../../l10n/app_localizations.dart';
 import '../shopping_list_providers.dart';
@@ -70,9 +72,12 @@ class ShoppingListCard extends ConsumerWidget {
                 padding: EdgeInsets.all(24),
                 child: Center(child: CircularProgressIndicator()),
               ),
-              error: (error, stack) => Padding(
-                padding: const EdgeInsets.all(24),
-                child: Center(child: Text(l10n.errorSnackbarGeneric)),
+              error: (error, stack) => InkWell(
+                onTap: () => context.go('/accounts/shopping-list'),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Center(child: Text(l10n.errorSnackbarGeneric)),
+                ),
               ),
               data: (items) {
                 if (items.isEmpty) {
@@ -166,12 +171,17 @@ class _PreviewRow extends ConsumerWidget {
       shoppingListAccountByIdProvider(item.accountId),
     );
 
+    final currencyAsync = item.draftCurrencyCode != null
+        ? ref.watch(shoppingListCurrencyByCodeProvider(item.draftCurrencyCode!))
+        : null;
+
     final category = categoryAsync.valueOrNull;
     final account = accountAsync.valueOrNull;
+    final currency = currencyAsync?.valueOrNull;
 
     final primaryLabel = _resolvePrimaryLabel(item, category);
     final secondaryLabel = _resolveSecondaryLabel(category, account);
-    final trailingLabel = _resolveTrailingLabel(item, context);
+    final trailingLabel = _resolveTrailingLabel(item, context, currency);
 
     return InkWell(
       onTap: () => context.go('/accounts/shopping-list'),
@@ -228,10 +238,24 @@ class _PreviewRow extends ConsumerWidget {
   }
 
   /// Returns formatted date + optionally amount+currency.
-  String _resolveTrailingLabel(ShoppingListItem item, BuildContext context) {
+  String _resolveTrailingLabel(
+    ShoppingListItem item,
+    BuildContext context,
+    Currency? currency,
+  ) {
     final locale = Localizations.localeOf(context).toString();
     final dateFmt = DateFormat.MMMd(locale);
     final date = dateFmt.format(item.draftDate);
+
+    if (item.draftAmountMinorUnits != null && currency != null) {
+      final amount = MoneyFormatter.format(
+        amountMinorUnits: item.draftAmountMinorUnits!,
+        currency: currency,
+        locale: locale,
+      );
+      return '$date\n$amount';
+    }
+
     return date;
   }
 }

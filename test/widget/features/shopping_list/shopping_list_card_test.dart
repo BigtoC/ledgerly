@@ -292,33 +292,40 @@ void main() {
   );
 
   // SL02
-  testWidgets('ShoppingListCard shows inline error text on repository error', (
-    tester,
-  ) async {
-    final shoppingListRepo = _MockShoppingListRepository();
-    final categoryRepo = _MockCategoryRepository();
-    final accountRepo = _MockAccountRepository();
+  testWidgets(
+    'ShoppingListCard shows inline error text on repository error and tapping navigates to /accounts/shopping-list',
+    (tester) async {
+      final shoppingListRepo = _MockShoppingListRepository();
+      final categoryRepo = _MockCategoryRepository();
+      final accountRepo = _MockAccountRepository();
 
-    when(
-      () => shoppingListRepo.watchAll(),
-    ).thenAnswer((_) => Stream.error(Exception('db failure')));
+      when(
+        () => shoppingListRepo.watchAll(),
+      ).thenAnswer((_) => Stream.error(Exception('db failure')));
 
-    final container = _makeCardContainer(
-      shoppingListRepo: shoppingListRepo,
-      categoryRepo: categoryRepo,
-      accountRepo: accountRepo,
-    );
-    addTearDown(container.dispose);
+      final container = _makeCardContainer(
+        shoppingListRepo: shoppingListRepo,
+        categoryRepo: categoryRepo,
+        accountRepo: accountRepo,
+      );
+      addTearDown(container.dispose);
 
-    await tester.pumpWidget(_wrapCard(container: container));
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(_wrapCard(container: container));
+      await tester.pumpAndSettle();
 
-    expect(
-      find.text('Something went wrong. Please try again.'),
-      findsOneWidget,
-    );
-    expect(find.text('Shopping list'), findsOneWidget);
-  });
+      expect(
+        find.text('Something went wrong. Please try again.'),
+        findsOneWidget,
+      );
+      expect(find.text('Shopping list'), findsOneWidget);
+
+      // Tapping the error body navigates to /accounts/shopping-list.
+      await tester.tap(find.text('Something went wrong. Please try again.'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('SHOPPING_LIST_SCREEN'), findsOneWidget);
+    },
+  );
 
   // SL03
   testWidgets(

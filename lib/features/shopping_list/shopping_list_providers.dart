@@ -9,6 +9,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../app/providers/repository_providers.dart';
 import '../../data/models/account.dart';
 import '../../data/models/category.dart';
+import '../../data/models/currency.dart';
 import '../../data/models/shopping_list_item.dart';
 
 part 'shopping_list_providers.g.dart';
@@ -47,4 +48,13 @@ Future<Category?> shoppingListCategoryById(Ref ref, int id) {
 @riverpod
 Future<Account?> shoppingListAccountById(Ref ref, int id) {
   return ref.watch(accountRepositoryProvider).getById(id);
+}
+
+/// One-shot currency lookup by code — used by preview rows to format amounts.
+///
+/// Returns null when the code is not registered (should not happen in practice
+/// since amounts always reference a seeded currency).
+@riverpod
+Future<Currency?> shoppingListCurrencyByCode(Ref ref, String code) {
+  return ref.watch(currencyRepositoryProvider).getByCode(code);
 }

@@ -378,5 +378,160 @@ class _ShoppingListAccountByIdProviderElement
   int get id => (origin as ShoppingListAccountByIdProvider).id;
 }
 
+String _$shoppingListCurrencyByCodeHash() =>
+    r'b380b0a5bb99d8c1717bcab1e0a75ddfbaf3e169';
+
+/// One-shot currency lookup by code — used by preview rows to format amounts.
+///
+/// Returns null when the code is not registered (should not happen in practice
+/// since amounts always reference a seeded currency).
+///
+/// Copied from [shoppingListCurrencyByCode].
+@ProviderFor(shoppingListCurrencyByCode)
+const shoppingListCurrencyByCodeProvider = ShoppingListCurrencyByCodeFamily();
+
+/// One-shot currency lookup by code — used by preview rows to format amounts.
+///
+/// Returns null when the code is not registered (should not happen in practice
+/// since amounts always reference a seeded currency).
+///
+/// Copied from [shoppingListCurrencyByCode].
+class ShoppingListCurrencyByCodeFamily extends Family<AsyncValue<Currency?>> {
+  /// One-shot currency lookup by code — used by preview rows to format amounts.
+  ///
+  /// Returns null when the code is not registered (should not happen in practice
+  /// since amounts always reference a seeded currency).
+  ///
+  /// Copied from [shoppingListCurrencyByCode].
+  const ShoppingListCurrencyByCodeFamily();
+
+  /// One-shot currency lookup by code — used by preview rows to format amounts.
+  ///
+  /// Returns null when the code is not registered (should not happen in practice
+  /// since amounts always reference a seeded currency).
+  ///
+  /// Copied from [shoppingListCurrencyByCode].
+  ShoppingListCurrencyByCodeProvider call(String code) {
+    return ShoppingListCurrencyByCodeProvider(code);
+  }
+
+  @override
+  ShoppingListCurrencyByCodeProvider getProviderOverride(
+    covariant ShoppingListCurrencyByCodeProvider provider,
+  ) {
+    return call(provider.code);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'shoppingListCurrencyByCodeProvider';
+}
+
+/// One-shot currency lookup by code — used by preview rows to format amounts.
+///
+/// Returns null when the code is not registered (should not happen in practice
+/// since amounts always reference a seeded currency).
+///
+/// Copied from [shoppingListCurrencyByCode].
+class ShoppingListCurrencyByCodeProvider
+    extends AutoDisposeFutureProvider<Currency?> {
+  /// One-shot currency lookup by code — used by preview rows to format amounts.
+  ///
+  /// Returns null when the code is not registered (should not happen in practice
+  /// since amounts always reference a seeded currency).
+  ///
+  /// Copied from [shoppingListCurrencyByCode].
+  ShoppingListCurrencyByCodeProvider(String code)
+    : this._internal(
+        (ref) => shoppingListCurrencyByCode(
+          ref as ShoppingListCurrencyByCodeRef,
+          code,
+        ),
+        from: shoppingListCurrencyByCodeProvider,
+        name: r'shoppingListCurrencyByCodeProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$shoppingListCurrencyByCodeHash,
+        dependencies: ShoppingListCurrencyByCodeFamily._dependencies,
+        allTransitiveDependencies:
+            ShoppingListCurrencyByCodeFamily._allTransitiveDependencies,
+        code: code,
+      );
+
+  ShoppingListCurrencyByCodeProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.code,
+  }) : super.internal();
+
+  final String code;
+
+  @override
+  Override overrideWith(
+    FutureOr<Currency?> Function(ShoppingListCurrencyByCodeRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: ShoppingListCurrencyByCodeProvider._internal(
+        (ref) => create(ref as ShoppingListCurrencyByCodeRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        code: code,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<Currency?> createElement() {
+    return _ShoppingListCurrencyByCodeProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ShoppingListCurrencyByCodeProvider && other.code == code;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, code.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin ShoppingListCurrencyByCodeRef on AutoDisposeFutureProviderRef<Currency?> {
+  /// The parameter `code` of this provider.
+  String get code;
+}
+
+class _ShoppingListCurrencyByCodeProviderElement
+    extends AutoDisposeFutureProviderElement<Currency?>
+    with ShoppingListCurrencyByCodeRef {
+  _ShoppingListCurrencyByCodeProviderElement(super.provider);
+
+  @override
+  String get code => (origin as ShoppingListCurrencyByCodeProvider).code;
+}
+
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
