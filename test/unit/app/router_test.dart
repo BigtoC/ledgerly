@@ -342,39 +342,8 @@ void main() {
       },
     );
 
-    // RT04 — /accounts/shopping-list/:id uses root navigator key
-    // Same pattern as RT02: build widget first, navigate, pump once.
-    testWidgets(
-      'RT04: /accounts/shopping-list/:id parentNavigatorKey is root',
-      (tester) async {
-        final db = newTestAppDatabase();
-        addTearDown(db.close);
-        final container = makeTestContainer(
-          db: db,
-          extraOverrides: [
-            splashGateSnapshotProvider.overrideWithValue(
-              SplashGateSnapshot.withInitial(enabled: false, startDate: null),
-            ),
-          ],
-        );
-        addTearDown(container.dispose);
-
-        final router = container.read(routerProvider);
-        addTearDown(router.dispose);
-
-        // Build the widget first so the router is initialised.
-        await tester.pumpWidget(buildTestApp(container: container));
-        // Navigate after the router is live.
-        router.go('/accounts/shopping-list/42');
-        // One pump to apply the navigation frame.
-        await tester.pump();
-
-        final leaf = router.routerDelegate.currentConfiguration.last;
-        expect(leaf.matchedLocation, '/accounts/shopping-list/42');
-        expect(leaf.route, isA<GoRoute>());
-        expect(leaf.route.parentNavigatorKey, isNotNull);
-      },
-    );
+    // RT04 — collapsed into RT02 (same route, different literal id; all
+    // three assertions are already covered by RT02).
 
     testWidgets(
       'splashEnabled=true with startDate set: /splash shows Enter CTA',

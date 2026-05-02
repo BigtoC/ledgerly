@@ -127,9 +127,11 @@ GoRouter router(Ref ref) {
                     builder: (_, _) => const ShoppingListScreen(),
                     routes: [
                       GoRoute(
-                        path: ':id',
+                        path: ':itemId',
                         redirect: (_, state) =>
-                            int.tryParse(state.pathParameters['id'] ?? '') ==
+                            int.tryParse(
+                                  state.pathParameters['itemId'] ?? '',
+                                ) ==
                                 null
                             ? '/accounts/shopping-list'
                             : null,
@@ -138,7 +140,7 @@ GoRouter router(Ref ref) {
                           state,
                           _AdaptiveTransactionFormRoute(
                             shoppingListItemId: int.parse(
-                              state.pathParameters['id']!,
+                              state.pathParameters['itemId']!,
                             ),
                           ),
                           fullscreenDialog: true,

@@ -87,6 +87,7 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
         messenger.showSnackBar(
           SnackBar(content: Text(l10n.shoppingListConvertedSnackbar)),
         );
+      // unreachable from this route; only emitted by AddTransactionMode
       case ShoppingListEditResultAddedToList():
       case null:
         break;
