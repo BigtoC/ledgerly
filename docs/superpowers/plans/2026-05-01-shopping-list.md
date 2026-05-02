@@ -4,7 +4,7 @@
 
 **Goal:** Add a draft shopping list anchored in Accounts. Users can capture a future expense from the transaction form, review drafts from Accounts, open an existing draft into the existing transaction form, save draft changes without converting, and convert the draft into a real transaction when ready.
 
-**Architecture:** Add a new `shopping_list_items` Drift table (schema v3) plus a matching repository. Keep discovery in Accounts for this iteration; do **not** add a Home badge/FAB shortcut. Draft creation remains in the existing `/home/add` transaction form only. Reuse `TransactionFormScreen` and `TransactionFormController` for shopping-list draft editing and conversion so date, currency, keypad, validation, and adaptive layout stay consistent with the existing transaction flow. `ShoppingListController` powers only the dedicated `/accounts/shopping-list` screen (list + delete/undo). Accounts preview uses lightweight providers, shows the three newest drafts, and routes into `/accounts/shopping-list` for full review. Each `shopping_list_items` row represents one future transaction draft; this iteration does not introduce list-native grouping or multi-item workflows.
+**Architecture:** Add a new `shopping_list_items` Drift table (schema v3) plus a matching repository. Keep discovery in Accounts for this iteration. Draft creation remains in the existing `/home/add` transaction form only. Reuse `TransactionFormScreen` and `TransactionFormController` for shopping-list draft editing and conversion so date, currency, keypad, validation, and adaptive layout stay consistent with the existing transaction flow. `ShoppingListController` powers only the dedicated `/accounts/shopping-list` screen (list + delete/undo). Accounts preview uses lightweight providers, shows the three newest drafts, and routes into `/accounts/shopping-list` for full review. Each `shopping_list_items` row represents one future transaction draft; this iteration does not introduce list-native grouping or multi-item workflows.
 
 **Tech Stack:** Flutter, Drift (SQLite ORM), Riverpod (`riverpod_annotation`), Freezed, go_router, flutter_slidable, mocktail, fake_async
 
@@ -12,7 +12,8 @@
 
 ## Review-Driven Changes
 
-- Accounts remains the review surface in this version; the Home shortcut was removed from scope.
+- Accounts remains the primary review surface. A Home shopping-list FAB button (Task 8) is now in scope.
+- The Accounts card "Add" affordance (Task 8) is now in scope — the non-empty card header always shows an "Add" icon button.
 - The plan no longer introduces `ShoppingListFormController`, `ShoppingListItemController`, or `ShoppingListItemScreen`.
 - Shopping-list drafts now always preserve the planned `date`; they preserve `displayCurrency` only when an amount is stored, while zero-amount drafts intentionally reseed visible currency from the selected account on re-open.
 - Shopping-list rows participate in hard-delete guards for accounts/categories, while existing transaction-based `isReferenced` affordances remain unchanged in this iteration.
@@ -45,6 +46,10 @@
 - `test/widget/features/transactions/transaction_form_shopping_list_button_test.dart`
 - `test/widget/features/transactions/transaction_form_shopping_list_mode_test.dart`
 - `test/integration/shopping_list_path_test.dart`
+
+**New files (Task 8):**
+- `test/widget/features/home/home_shopping_list_fab_test.dart`
+- `test/widget/features/shopping_list/shopping_list_card_add_button_test.dart`
 
 **Modified files:**
 - `lib/data/database/app_database.dart`
@@ -527,6 +532,60 @@
 **Verification:**
 - The plan's file inventory matches the actual implementation units.
 - Final smoke checklist matches the revised route behavior.
+
+---
+
+## Task 8: Home Shopping-List FAB and Card Add Button
+
+**Goal:** Let users reach and create shopping-list drafts without navigating away from their current surface — a persistent count button on Home and an always-visible "Add" affordance on the Accounts card.
+
+**Files:**
+- Modify: `lib/features/home/home_screen.dart`
+- Modify: `lib/features/shopping_list/widgets/shopping_list_card.dart`
+- Modify: `lib/features/shopping_list/shopping_list_providers.dart`
+- Create: `test/widget/features/home/home_shopping_list_fab_test.dart`
+- Create: `test/widget/features/shopping_list/shopping_list_card_add_button_test.dart`
+
+### Shopping-list count button on Home
+
+- [ ] Add a provider `shoppingListTotalCountProvider` in `shopping_list_providers.dart` that watches the total row count from `ShoppingListRepository` and exposes `AsyncValue<int>`. Reuse the repository's `watchAll()` stream and derive the count from `list.length` — do not add a new DAO query.
+- [ ] In `HomeScreen`, render a mini `FloatingActionButton` to the **left** of the existing extended FAB using a `Row` with `mainAxisSize: MainAxisSize.min` as the `floatingActionButton` widget. Keep the same `floatingActionButtonLocation: FloatingActionButtonLocation.endFloat` (the default).
+  - The mini FAB uses `heroTag: 'home_shopping_list_fab'`.
+  - Icon: `Icons.shopping_cart_outlined` (or similar cart icon).
+  - When the total count is `> 0`, overlay a `Badge` (Material 3 `Badge` widget) on the icon showing the count. Clamp the displayed number at 99 — show `"99+"` for counts above 99.
+  - When the total count is `0`, show no badge (render the icon without a `Badge` wrapper, or use `Badge(isLabelVisible: false, ...)`).
+  - While the count is loading (`AsyncLoading`), show the icon without a badge (treat loading as 0 for badge visibility; do not show a spinner on the FAB).
+  - On tap: `context.go('/accounts/shopping-list')`.
+  - Maintain an 8 dp horizontal gap between the mini FAB and the extended FAB.
+- [ ] Do **not** remove, resize, or reposition the existing extended FAB. The layout must not break at the adaptive ≥600 dp breakpoint (both FABs remain visible in the wide layout).
+
+### "Add" icon button in the non-empty ShoppingListCard header
+
+- [ ] In `ShoppingListCard`, add an `IconButton` (icon: `Icons.add`) to the card header row — positioned **between** the title and the `TextButton("View all")` — in **all** card states: loading, error, empty, and non-empty.
+  - The button is always rendered (not conditional on `preview.isEmpty`).
+  - On tap: `context.push('/home/add')` (push semantics, identical to the existing empty-state CTA).
+  - Tooltip: `l10n.shoppingListEmptyCta` (reuse existing key; it already reads "Add to shopping list" or equivalent).
+- [ ] Keep the "View all" `TextButton` at the far right; the add `IconButton` sits immediately to its left.
+- [ ] Keep the `_EmptyBody` section intact — it provides body-level copy and CTA when no drafts exist; the header button is a supplementary shortcut, not a replacement.
+
+**Patterns to follow:**
+- `lib/features/home/home_screen.dart` — FAB wiring and `floatingActionButtonLocation`
+- `lib/features/shopping_list/widgets/shopping_list_card.dart` — existing header `Row` layout
+- `lib/features/shopping_list/shopping_list_providers.dart` — existing preview provider pattern
+
+**Test scenarios:**
+- Happy path: when `shoppingListTotalCountProvider` emits `3`, the Home FAB badge shows "3".
+- Happy path: when count is `0`, the Home FAB renders with no visible badge label.
+- Happy path: when count exceeds 99, the badge label shows "99+".
+- Happy path: tapping the Home shopping-list FAB navigates to `/accounts/shopping-list`.
+- Happy path: the `Add` icon button in the `ShoppingListCard` header is always present regardless of preview state (empty, loading, non-empty).
+- Happy path: tapping the card header "Add" button opens `/home/add` via push (returns to Accounts on pop).
+- Integration: Home FAB `Row` layout does not overlap or displace the existing extended FAB at narrow or wide breakpoints.
+
+**Verification:**
+- Both FABs are visible simultaneously on the Home screen.
+- The "Add" icon appears in the card header in all preview states.
+- No new DAO SQL queries are introduced; `shoppingListTotalCountProvider` derives its value from the existing `watchAll()` stream.
 
 ---
 
