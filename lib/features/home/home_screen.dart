@@ -147,30 +147,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final count = countAsync.valueOrNull ?? 0;
     final badgeLabel = count > 99 ? '99+' : '$count';
 
+    // Wrap the FAB row in TextScaler.noScaling so the pair never overflows at
+    // large system text sizes. FABs are icon-primary touch targets; their label
+    // does not need to track the system text scale.
     return Scaffold(
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            key: const Key('homeShoppingListFab'),
-            heroTag: 'home_shopping_list_fab',
-            onPressed: () => context.go('/accounts/shopping-list'),
-            child: Badge(
-              isLabelVisible: count > 0,
-              label: Text(badgeLabel),
-              child: const Icon(Icons.shopping_cart_outlined),
+      floatingActionButton: MediaQuery(
+        data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FloatingActionButton(
+              key: const Key('homeShoppingListFab'),
+              heroTag: 'home_shopping_list_fab',
+              onPressed: () => context.go('/accounts/shopping-list'),
+              child: Badge(
+                isLabelVisible: count > 0,
+                label: Text(badgeLabel),
+                child: const Icon(Icons.shopping_cart_outlined),
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          FloatingActionButton.extended(
-            heroTag: 'home_fab',
-            onPressed: () => _onAddPressed(context),
-            icon: const Icon(Icons.add),
-            label: Text(l10n.homeFabLabel),
-            tooltip: l10n.homeFabLabel,
-          ),
-        ],
+            const SizedBox(width: 12),
+            FloatingActionButton.extended(
+              heroTag: 'home_fab',
+              onPressed: () => _onAddPressed(context),
+              icon: const Icon(Icons.add),
+              label: Text(l10n.homeFabLabel),
+              tooltip: l10n.homeFabLabel,
+            ),
+          ],
+        ),
       ),
       body: SlidableAutoCloseBehavior(
         child: switch (state) {
