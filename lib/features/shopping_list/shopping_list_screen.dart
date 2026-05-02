@@ -27,6 +27,7 @@ import '../../core/constants.dart';
 import '../../core/utils/box_shadow.dart';
 import '../../data/models/shopping_list_item.dart';
 import '../../l10n/app_localizations.dart';
+import '../transactions/transaction_form_state.dart';
 import 'shopping_list_controller.dart';
 import 'shopping_list_item_labels.dart';
 import 'shopping_list_providers.dart';
@@ -66,6 +67,19 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
     }
   }
 
+  Future<void> _onTapItem(BuildContext context, int id) async {
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final result = await context.push<ShoppingListEditResult?>(
+      '/accounts/shopping-list/$id',
+    );
+    if (result is ShoppingListEditResultMissingDraft && mounted) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.shoppingListDraftNotFoundSnackbar)),
+      );
+    }
+  }
+
   void _onDeleteItem(BuildContext context, int id) {
     final l10n = AppLocalizations.of(context);
     unawaited(_controller.deleteItem(id));
@@ -100,7 +114,7 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
               data: data,
               canOpenItem: data.pendingDelete == null,
               onDeleteItem: (id) => _onDeleteItem(context, id),
-              onTapItem: (id) => context.push('/accounts/shopping-list/$id'),
+              onTapItem: (id) => _onTapItem(context, id),
             ),
           AsyncData<ShoppingListState>(value: ShoppingListError()) =>
             _ErrorSurface(

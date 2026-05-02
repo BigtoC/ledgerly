@@ -93,6 +93,11 @@ class ShoppingListEditResultMissingDraft extends ShoppingListEditResult {
   const ShoppingListEditResultMissingDraft();
 }
 
+/// A new draft was added to the shopping list from AddTransactionMode.
+class ShoppingListEditResultAddedToList extends ShoppingListEditResult {
+  const ShoppingListEditResultAddedToList();
+}
+
 // ---------------------------------------------------------------------------
 // Submission-action tracking — Task 5 §3
 // ---------------------------------------------------------------------------

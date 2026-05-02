@@ -268,63 +268,67 @@ void main() {
     },
   );
 
-  group('TFSL03: saveDraft() in add mode calls insert and returns null', () {
-    test('calls ShoppingListRepository.insert with form snapshot', () async {
-      when(
-        () => slRepo.insert(
-          categoryId: any(named: 'categoryId'),
-          accountId: any(named: 'accountId'),
-          memo: any(named: 'memo'),
-          draftAmountMinorUnits: any(named: 'draftAmountMinorUnits'),
-          draftCurrencyCode: any(named: 'draftCurrencyCode'),
-          draftDate: any(named: 'draftDate'),
-        ),
-      ).thenAnswer((_) async => _draft());
+  group(
+    'TFSL03: saveDraft() in add mode calls insert and returns ShoppingListEditResultAddedToList',
+    () {
+      test('calls ShoppingListRepository.insert with form snapshot', () async {
+        when(
+          () => slRepo.insert(
+            categoryId: any(named: 'categoryId'),
+            accountId: any(named: 'accountId'),
+            memo: any(named: 'memo'),
+            draftAmountMinorUnits: any(named: 'draftAmountMinorUnits'),
+            draftCurrencyCode: any(named: 'draftCurrencyCode'),
+            draftDate: any(named: 'draftDate'),
+          ),
+        ).thenAnswer((_) async => _draft());
 
-      final c = makeContainer();
-      addTearDown(c.dispose);
-      final controller = c.read(transactionFormControllerProvider.notifier);
-      // Add mode hydration (not shopping list draft mode).
-      await controller.hydrateForAdd();
-      controller.selectCategory(_expenseCategory);
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+        // Add mode hydration (not shopping list draft mode).
+        await controller.hydrateForAdd();
+        controller.selectCategory(_expenseCategory);
 
-      final result = await controller.saveDraft();
+        final result = await controller.saveDraft();
 
-      // In add mode, saveDraft returns null (the screen pops with null).
-      expect(result, isNull);
-      verify(
-        () => slRepo.insert(
-          categoryId: _expenseCategory.id,
-          accountId: _account.id,
-          memo: null,
-          draftAmountMinorUnits: null,
-          draftCurrencyCode: null,
-          draftDate: any(named: 'draftDate'),
-        ),
-      ).called(1);
-      verifyNever(() => slRepo.update(any()));
-    });
+        // In add mode, saveDraft returns ShoppingListEditResultAddedToList
+        // so the screen can distinguish a successful add from a guard no-op.
+        expect(result, isA<ShoppingListEditResultAddedToList>());
+        verify(
+          () => slRepo.insert(
+            categoryId: _expenseCategory.id,
+            accountId: _account.id,
+            memo: null,
+            draftAmountMinorUnits: null,
+            draftCurrencyCode: null,
+            draftDate: any(named: 'draftDate'),
+          ),
+        ).called(1);
+        verifyNever(() => slRepo.update(any()));
+      });
 
-    test('saveDraft() returns null when canSaveDraft is false', () async {
-      final c = makeContainer();
-      addTearDown(c.dispose);
-      final controller = c.read(transactionFormControllerProvider.notifier);
-      await controller.hydrateForAdd();
-      // No category selected → canSaveDraft is false.
-      final result = await controller.saveDraft();
-      expect(result, isNull);
-      verifyNever(
-        () => slRepo.insert(
-          categoryId: any(named: 'categoryId'),
-          accountId: any(named: 'accountId'),
-          memo: any(named: 'memo'),
-          draftAmountMinorUnits: any(named: 'draftAmountMinorUnits'),
-          draftCurrencyCode: any(named: 'draftCurrencyCode'),
-          draftDate: any(named: 'draftDate'),
-        ),
-      );
-    });
-  });
+      test('saveDraft() returns null when canSaveDraft is false', () async {
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+        await controller.hydrateForAdd();
+        // No category selected → canSaveDraft is false.
+        final result = await controller.saveDraft();
+        expect(result, isNull);
+        verifyNever(
+          () => slRepo.insert(
+            categoryId: any(named: 'categoryId'),
+            accountId: any(named: 'accountId'),
+            memo: any(named: 'memo'),
+            draftAmountMinorUnits: any(named: 'draftAmountMinorUnits'),
+            draftCurrencyCode: any(named: 'draftCurrencyCode'),
+            draftDate: any(named: 'draftDate'),
+          ),
+        );
+      });
+    },
+  );
 
   group(
     'TFSL04: saveDraft() in edit mode calls update and returns savedDraft',

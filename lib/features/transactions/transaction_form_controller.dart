@@ -34,8 +34,6 @@ import 'transaction_form_state.dart';
 
 part 'transaction_form_controller.g.dart';
 
-enum _HydrationMode { add, duplicate, edit, editShoppingListDraft }
-
 @Riverpod(
   dependencies: [
     transactionRepository,
@@ -54,9 +52,7 @@ class TransactionFormController extends _$TransactionFormController {
   /// state on each mutation.
   KeypadState _keypad = const KeypadState.initial();
   int _keypadRevision = 0;
-  _HydrationMode _resumeMode = _HydrationMode.add;
-  int? _resumeTargetId;
-  DateTime? _resumeAddInitialDate;
+  TransactionFormMode? _lastRequestedMode;
 
   /// The current form mode — exposed read-only to the screen so it can
   /// derive its title and CTA set without parsing route extras itself.
@@ -80,9 +76,7 @@ class TransactionFormController extends _$TransactionFormController {
   /// Omitting [initialDate] preserves the prior default of today.
   Future<void> hydrateForAdd({DateTime? initialDate}) async {
     _formMode = AddTransactionMode(initialDate: initialDate);
-    _resumeMode = _HydrationMode.add;
-    _resumeTargetId = null;
-    _resumeAddInitialDate = initialDate;
+    _lastRequestedMode = AddTransactionMode(initialDate: initialDate);
     state = const TransactionFormState.loading();
     try {
       final account = await _resolveDefaultAccount();
@@ -119,8 +113,9 @@ class TransactionFormController extends _$TransactionFormController {
 
   Future<void> hydrateForDuplicate(int sourceId) async {
     _formMode = DuplicateTransactionMode(sourceTransactionId: sourceId);
-    _resumeMode = _HydrationMode.duplicate;
-    _resumeTargetId = sourceId;
+    _lastRequestedMode = DuplicateTransactionMode(
+      sourceTransactionId: sourceId,
+    );
     state = const TransactionFormState.loading();
     try {
       final txRepo = ref.read(transactionRepositoryProvider);
@@ -166,8 +161,7 @@ class TransactionFormController extends _$TransactionFormController {
 
   Future<void> hydrateForEdit(int id) async {
     _formMode = EditTransactionMode(transactionId: id);
-    _resumeMode = _HydrationMode.edit;
-    _resumeTargetId = id;
+    _lastRequestedMode = EditTransactionMode(transactionId: id);
     state = const TransactionFormState.loading();
     try {
       final txRepo = ref.read(transactionRepositoryProvider);
@@ -226,8 +220,9 @@ class TransactionFormController extends _$TransactionFormController {
     _formMode = EditShoppingListDraftMode(
       shoppingListItemId: shoppingListItemId,
     );
-    _resumeMode = _HydrationMode.editShoppingListDraft;
-    _resumeTargetId = shoppingListItemId;
+    _lastRequestedMode = EditShoppingListDraftMode(
+      shoppingListItemId: shoppingListItemId,
+    );
     state = const TransactionFormState.loading();
     try {
       final slRepo = ref.read(shoppingListRepositoryProvider);
@@ -640,8 +635,8 @@ class TransactionFormController extends _$TransactionFormController {
         state = s.copyWith(
           submissionAction: TransactionFormSubmissionAction.none,
         );
-        // Add mode: pop with null (no result type needed).
-        return null;
+        // Add mode: signal that the item was added to the list.
+        return const ShoppingListEditResultAddedToList();
       }
     } catch (e) {
       state = s.copyWith(
@@ -696,15 +691,19 @@ class TransactionFormController extends _$TransactionFormController {
 
   /// Re-runs the last requested hydration mode after the user returns from
   /// dependency-recovery flows like `/accounts/new`.
-  Future<void> retryHydration() {
-    return switch (_resumeMode) {
-      _HydrationMode.add => hydrateForAdd(initialDate: _resumeAddInitialDate),
-      _HydrationMode.duplicate => hydrateForDuplicate(_resumeTargetId!),
-      _HydrationMode.edit => hydrateForEdit(_resumeTargetId!),
-      _HydrationMode.editShoppingListDraft => hydrateForShoppingListDraft(
-        _resumeTargetId!,
-      ),
-    };
+  Future<void> retryHydration() async {
+    final mode = _lastRequestedMode;
+    if (mode == null) return;
+    switch (mode) {
+      case AddTransactionMode():
+        await hydrateForAdd(initialDate: mode.initialDate);
+      case DuplicateTransactionMode():
+        await hydrateForDuplicate(mode.sourceTransactionId);
+      case EditTransactionMode():
+        await hydrateForEdit(mode.transactionId);
+      case EditShoppingListDraftMode():
+        await hydrateForShoppingListDraft(mode.shoppingListItemId);
+    }
   }
 
   // ---------- Internals ----------

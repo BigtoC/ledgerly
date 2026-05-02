@@ -343,8 +343,9 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     AppLocalizations l10n,
     TransactionFormController controller,
   ) async {
+    ShoppingListEditResult? result;
     try {
-      await controller.saveDraft();
+      result = await controller.saveDraft();
     } catch (_) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -352,9 +353,13 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       );
       return;
     }
-    if (!context.mounted) return;
-    // Add mode: pop with null (no Transaction result).
-    context.pop();
+    // null means the guard prevented saving (canSaveDraft was false or a
+    // submission was already in flight) — do NOT pop.
+    if (result is ShoppingListEditResultAddedToList) {
+      if (!context.mounted) return;
+      // Add mode: close the form (pop with null — no Transaction result).
+      context.pop(null);
+    }
   }
 
   /// Called from EditShoppingListDraftMode — saves draft (update).
@@ -831,6 +836,13 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+
+    // draftNotFound: auto-pop is already in flight via the ref.listen in the
+    // parent screen — render nothing as a safe fallback.
+    if (reason == TransactionFormEmptyReason.draftNotFound) {
+      return const SizedBox.shrink();
+    }
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
