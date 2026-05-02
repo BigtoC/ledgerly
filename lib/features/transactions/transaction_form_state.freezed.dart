@@ -125,12 +125,12 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( TransactionFormEmptyReason reason)?  empty,TResult Function( int amountMinorUnits,  Account? selectedAccount,  Currency? displayCurrency,  bool currencyTouched,  Category? selectedCategory,  CategoryType pendingType,  DateTime date,  String memo,  bool isDirty,  bool isSaving,  bool isDeleting,  int? editingId,  int? duplicateSourceId,  DateTime? originalCreatedAt,  int keypadRevision)?  data,TResult Function( Object error,  StackTrace stack)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( TransactionFormEmptyReason reason)?  empty,TResult Function( int amountMinorUnits,  Account? selectedAccount,  Currency? displayCurrency,  bool currencyTouched,  Category? selectedCategory,  CategoryType pendingType,  DateTime date,  String memo,  bool isDirty,  bool isSaving,  bool isDeleting,  int? editingId,  int? duplicateSourceId,  DateTime? originalCreatedAt,  int keypadRevision,  int? shoppingListItemId,  TransactionFormSubmissionAction submissionAction,  bool selectedAccountIsArchived,  bool selectedCategoryIsArchived)?  data,TResult Function( Object error,  StackTrace stack)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case TransactionFormLoading() when loading != null:
 return loading();case TransactionFormEmpty() when empty != null:
 return empty(_that.reason);case TransactionFormData() when data != null:
-return data(_that.amountMinorUnits,_that.selectedAccount,_that.displayCurrency,_that.currencyTouched,_that.selectedCategory,_that.pendingType,_that.date,_that.memo,_that.isDirty,_that.isSaving,_that.isDeleting,_that.editingId,_that.duplicateSourceId,_that.originalCreatedAt,_that.keypadRevision);case TransactionFormError() when error != null:
+return data(_that.amountMinorUnits,_that.selectedAccount,_that.displayCurrency,_that.currencyTouched,_that.selectedCategory,_that.pendingType,_that.date,_that.memo,_that.isDirty,_that.isSaving,_that.isDeleting,_that.editingId,_that.duplicateSourceId,_that.originalCreatedAt,_that.keypadRevision,_that.shoppingListItemId,_that.submissionAction,_that.selectedAccountIsArchived,_that.selectedCategoryIsArchived);case TransactionFormError() when error != null:
 return error(_that.error,_that.stack);case _:
   return orElse();
 
@@ -149,12 +149,12 @@ return error(_that.error,_that.stack);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( TransactionFormEmptyReason reason)  empty,required TResult Function( int amountMinorUnits,  Account? selectedAccount,  Currency? displayCurrency,  bool currencyTouched,  Category? selectedCategory,  CategoryType pendingType,  DateTime date,  String memo,  bool isDirty,  bool isSaving,  bool isDeleting,  int? editingId,  int? duplicateSourceId,  DateTime? originalCreatedAt,  int keypadRevision)  data,required TResult Function( Object error,  StackTrace stack)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( TransactionFormEmptyReason reason)  empty,required TResult Function( int amountMinorUnits,  Account? selectedAccount,  Currency? displayCurrency,  bool currencyTouched,  Category? selectedCategory,  CategoryType pendingType,  DateTime date,  String memo,  bool isDirty,  bool isSaving,  bool isDeleting,  int? editingId,  int? duplicateSourceId,  DateTime? originalCreatedAt,  int keypadRevision,  int? shoppingListItemId,  TransactionFormSubmissionAction submissionAction,  bool selectedAccountIsArchived,  bool selectedCategoryIsArchived)  data,required TResult Function( Object error,  StackTrace stack)  error,}) {final _that = this;
 switch (_that) {
 case TransactionFormLoading():
 return loading();case TransactionFormEmpty():
 return empty(_that.reason);case TransactionFormData():
-return data(_that.amountMinorUnits,_that.selectedAccount,_that.displayCurrency,_that.currencyTouched,_that.selectedCategory,_that.pendingType,_that.date,_that.memo,_that.isDirty,_that.isSaving,_that.isDeleting,_that.editingId,_that.duplicateSourceId,_that.originalCreatedAt,_that.keypadRevision);case TransactionFormError():
+return data(_that.amountMinorUnits,_that.selectedAccount,_that.displayCurrency,_that.currencyTouched,_that.selectedCategory,_that.pendingType,_that.date,_that.memo,_that.isDirty,_that.isSaving,_that.isDeleting,_that.editingId,_that.duplicateSourceId,_that.originalCreatedAt,_that.keypadRevision,_that.shoppingListItemId,_that.submissionAction,_that.selectedAccountIsArchived,_that.selectedCategoryIsArchived);case TransactionFormError():
 return error(_that.error,_that.stack);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -169,12 +169,12 @@ return error(_that.error,_that.stack);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( TransactionFormEmptyReason reason)?  empty,TResult? Function( int amountMinorUnits,  Account? selectedAccount,  Currency? displayCurrency,  bool currencyTouched,  Category? selectedCategory,  CategoryType pendingType,  DateTime date,  String memo,  bool isDirty,  bool isSaving,  bool isDeleting,  int? editingId,  int? duplicateSourceId,  DateTime? originalCreatedAt,  int keypadRevision)?  data,TResult? Function( Object error,  StackTrace stack)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( TransactionFormEmptyReason reason)?  empty,TResult? Function( int amountMinorUnits,  Account? selectedAccount,  Currency? displayCurrency,  bool currencyTouched,  Category? selectedCategory,  CategoryType pendingType,  DateTime date,  String memo,  bool isDirty,  bool isSaving,  bool isDeleting,  int? editingId,  int? duplicateSourceId,  DateTime? originalCreatedAt,  int keypadRevision,  int? shoppingListItemId,  TransactionFormSubmissionAction submissionAction,  bool selectedAccountIsArchived,  bool selectedCategoryIsArchived)?  data,TResult? Function( Object error,  StackTrace stack)?  error,}) {final _that = this;
 switch (_that) {
 case TransactionFormLoading() when loading != null:
 return loading();case TransactionFormEmpty() when empty != null:
 return empty(_that.reason);case TransactionFormData() when data != null:
-return data(_that.amountMinorUnits,_that.selectedAccount,_that.displayCurrency,_that.currencyTouched,_that.selectedCategory,_that.pendingType,_that.date,_that.memo,_that.isDirty,_that.isSaving,_that.isDeleting,_that.editingId,_that.duplicateSourceId,_that.originalCreatedAt,_that.keypadRevision);case TransactionFormError() when error != null:
+return data(_that.amountMinorUnits,_that.selectedAccount,_that.displayCurrency,_that.currencyTouched,_that.selectedCategory,_that.pendingType,_that.date,_that.memo,_that.isDirty,_that.isSaving,_that.isDeleting,_that.editingId,_that.duplicateSourceId,_that.originalCreatedAt,_that.keypadRevision,_that.shoppingListItemId,_that.submissionAction,_that.selectedAccountIsArchived,_that.selectedCategoryIsArchived);case TransactionFormError() when error != null:
 return error(_that.error,_that.stack);case _:
   return null;
 
@@ -285,7 +285,7 @@ as TransactionFormEmptyReason,
 
 
 class TransactionFormData extends TransactionFormState {
-  const TransactionFormData({required this.amountMinorUnits, required this.selectedAccount, required this.displayCurrency, required this.currencyTouched, required this.selectedCategory, required this.pendingType, required this.date, required this.memo, required this.isDirty, required this.isSaving, required this.isDeleting, required this.editingId, required this.duplicateSourceId, required this.originalCreatedAt, this.keypadRevision = 0}): super._();
+  const TransactionFormData({required this.amountMinorUnits, required this.selectedAccount, required this.displayCurrency, required this.currencyTouched, required this.selectedCategory, required this.pendingType, required this.date, required this.memo, required this.isDirty, required this.isSaving, required this.isDeleting, required this.editingId, required this.duplicateSourceId, required this.originalCreatedAt, this.keypadRevision = 0, this.shoppingListItemId = null, this.submissionAction = TransactionFormSubmissionAction.none, this.selectedAccountIsArchived = false, this.selectedCategoryIsArchived = false}): super._();
   
 
 /// Keypad-accumulated integer in the active currency's minor units.
@@ -332,6 +332,18 @@ class TransactionFormData extends TransactionFormState {
 /// transitions that leave `amountMinorUnits` unchanged — so Riverpod
 /// rebuilds the form whenever the display state changes.
 @JsonKey() final  int keypadRevision;
+/// Non-null only in [EditShoppingListDraftMode]; stores the id of the
+/// draft being edited so `saveDraft` and `convertDraft` can reference it.
+@JsonKey() final  int? shoppingListItemId;
+/// Tracks which async submission is currently in-flight. Used to
+/// disable all CTAs and show a progress indicator on the active button.
+@JsonKey() final  TransactionFormSubmissionAction submissionAction;
+/// `true` when the selected account is archived. Only meaningful in
+/// [EditShoppingListDraftMode]; blocks `canConvertDraft`.
+@JsonKey() final  bool selectedAccountIsArchived;
+/// `true` when the selected category is archived. Only meaningful in
+/// [EditShoppingListDraftMode]; blocks `canConvertDraft`.
+@JsonKey() final  bool selectedCategoryIsArchived;
 
 /// Create a copy of TransactionFormState
 /// with the given fields replaced by the non-null parameter values.
@@ -343,16 +355,16 @@ $TransactionFormDataCopyWith<TransactionFormData> get copyWith => _$TransactionF
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TransactionFormData&&(identical(other.amountMinorUnits, amountMinorUnits) || other.amountMinorUnits == amountMinorUnits)&&(identical(other.selectedAccount, selectedAccount) || other.selectedAccount == selectedAccount)&&(identical(other.displayCurrency, displayCurrency) || other.displayCurrency == displayCurrency)&&(identical(other.currencyTouched, currencyTouched) || other.currencyTouched == currencyTouched)&&(identical(other.selectedCategory, selectedCategory) || other.selectedCategory == selectedCategory)&&(identical(other.pendingType, pendingType) || other.pendingType == pendingType)&&(identical(other.date, date) || other.date == date)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.isDirty, isDirty) || other.isDirty == isDirty)&&(identical(other.isSaving, isSaving) || other.isSaving == isSaving)&&(identical(other.isDeleting, isDeleting) || other.isDeleting == isDeleting)&&(identical(other.editingId, editingId) || other.editingId == editingId)&&(identical(other.duplicateSourceId, duplicateSourceId) || other.duplicateSourceId == duplicateSourceId)&&(identical(other.originalCreatedAt, originalCreatedAt) || other.originalCreatedAt == originalCreatedAt)&&(identical(other.keypadRevision, keypadRevision) || other.keypadRevision == keypadRevision));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TransactionFormData&&(identical(other.amountMinorUnits, amountMinorUnits) || other.amountMinorUnits == amountMinorUnits)&&(identical(other.selectedAccount, selectedAccount) || other.selectedAccount == selectedAccount)&&(identical(other.displayCurrency, displayCurrency) || other.displayCurrency == displayCurrency)&&(identical(other.currencyTouched, currencyTouched) || other.currencyTouched == currencyTouched)&&(identical(other.selectedCategory, selectedCategory) || other.selectedCategory == selectedCategory)&&(identical(other.pendingType, pendingType) || other.pendingType == pendingType)&&(identical(other.date, date) || other.date == date)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.isDirty, isDirty) || other.isDirty == isDirty)&&(identical(other.isSaving, isSaving) || other.isSaving == isSaving)&&(identical(other.isDeleting, isDeleting) || other.isDeleting == isDeleting)&&(identical(other.editingId, editingId) || other.editingId == editingId)&&(identical(other.duplicateSourceId, duplicateSourceId) || other.duplicateSourceId == duplicateSourceId)&&(identical(other.originalCreatedAt, originalCreatedAt) || other.originalCreatedAt == originalCreatedAt)&&(identical(other.keypadRevision, keypadRevision) || other.keypadRevision == keypadRevision)&&(identical(other.shoppingListItemId, shoppingListItemId) || other.shoppingListItemId == shoppingListItemId)&&(identical(other.submissionAction, submissionAction) || other.submissionAction == submissionAction)&&(identical(other.selectedAccountIsArchived, selectedAccountIsArchived) || other.selectedAccountIsArchived == selectedAccountIsArchived)&&(identical(other.selectedCategoryIsArchived, selectedCategoryIsArchived) || other.selectedCategoryIsArchived == selectedCategoryIsArchived));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,amountMinorUnits,selectedAccount,displayCurrency,currencyTouched,selectedCategory,pendingType,date,memo,isDirty,isSaving,isDeleting,editingId,duplicateSourceId,originalCreatedAt,keypadRevision);
+int get hashCode => Object.hashAll([runtimeType,amountMinorUnits,selectedAccount,displayCurrency,currencyTouched,selectedCategory,pendingType,date,memo,isDirty,isSaving,isDeleting,editingId,duplicateSourceId,originalCreatedAt,keypadRevision,shoppingListItemId,submissionAction,selectedAccountIsArchived,selectedCategoryIsArchived]);
 
 @override
 String toString() {
-  return 'TransactionFormState.data(amountMinorUnits: $amountMinorUnits, selectedAccount: $selectedAccount, displayCurrency: $displayCurrency, currencyTouched: $currencyTouched, selectedCategory: $selectedCategory, pendingType: $pendingType, date: $date, memo: $memo, isDirty: $isDirty, isSaving: $isSaving, isDeleting: $isDeleting, editingId: $editingId, duplicateSourceId: $duplicateSourceId, originalCreatedAt: $originalCreatedAt, keypadRevision: $keypadRevision)';
+  return 'TransactionFormState.data(amountMinorUnits: $amountMinorUnits, selectedAccount: $selectedAccount, displayCurrency: $displayCurrency, currencyTouched: $currencyTouched, selectedCategory: $selectedCategory, pendingType: $pendingType, date: $date, memo: $memo, isDirty: $isDirty, isSaving: $isSaving, isDeleting: $isDeleting, editingId: $editingId, duplicateSourceId: $duplicateSourceId, originalCreatedAt: $originalCreatedAt, keypadRevision: $keypadRevision, shoppingListItemId: $shoppingListItemId, submissionAction: $submissionAction, selectedAccountIsArchived: $selectedAccountIsArchived, selectedCategoryIsArchived: $selectedCategoryIsArchived)';
 }
 
 
@@ -363,7 +375,7 @@ abstract mixin class $TransactionFormDataCopyWith<$Res> implements $TransactionF
   factory $TransactionFormDataCopyWith(TransactionFormData value, $Res Function(TransactionFormData) _then) = _$TransactionFormDataCopyWithImpl;
 @useResult
 $Res call({
- int amountMinorUnits, Account? selectedAccount, Currency? displayCurrency, bool currencyTouched, Category? selectedCategory, CategoryType pendingType, DateTime date, String memo, bool isDirty, bool isSaving, bool isDeleting, int? editingId, int? duplicateSourceId, DateTime? originalCreatedAt, int keypadRevision
+ int amountMinorUnits, Account? selectedAccount, Currency? displayCurrency, bool currencyTouched, Category? selectedCategory, CategoryType pendingType, DateTime date, String memo, bool isDirty, bool isSaving, bool isDeleting, int? editingId, int? duplicateSourceId, DateTime? originalCreatedAt, int keypadRevision, int? shoppingListItemId, TransactionFormSubmissionAction submissionAction, bool selectedAccountIsArchived, bool selectedCategoryIsArchived
 });
 
 
@@ -380,7 +392,7 @@ class _$TransactionFormDataCopyWithImpl<$Res>
 
 /// Create a copy of TransactionFormState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? amountMinorUnits = null,Object? selectedAccount = freezed,Object? displayCurrency = freezed,Object? currencyTouched = null,Object? selectedCategory = freezed,Object? pendingType = null,Object? date = null,Object? memo = null,Object? isDirty = null,Object? isSaving = null,Object? isDeleting = null,Object? editingId = freezed,Object? duplicateSourceId = freezed,Object? originalCreatedAt = freezed,Object? keypadRevision = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? amountMinorUnits = null,Object? selectedAccount = freezed,Object? displayCurrency = freezed,Object? currencyTouched = null,Object? selectedCategory = freezed,Object? pendingType = null,Object? date = null,Object? memo = null,Object? isDirty = null,Object? isSaving = null,Object? isDeleting = null,Object? editingId = freezed,Object? duplicateSourceId = freezed,Object? originalCreatedAt = freezed,Object? keypadRevision = null,Object? shoppingListItemId = freezed,Object? submissionAction = null,Object? selectedAccountIsArchived = null,Object? selectedCategoryIsArchived = null,}) {
   return _then(TransactionFormData(
 amountMinorUnits: null == amountMinorUnits ? _self.amountMinorUnits : amountMinorUnits // ignore: cast_nullable_to_non_nullable
 as int,selectedAccount: freezed == selectedAccount ? _self.selectedAccount : selectedAccount // ignore: cast_nullable_to_non_nullable
@@ -397,7 +409,11 @@ as bool,editingId: freezed == editingId ? _self.editingId : editingId // ignore:
 as int?,duplicateSourceId: freezed == duplicateSourceId ? _self.duplicateSourceId : duplicateSourceId // ignore: cast_nullable_to_non_nullable
 as int?,originalCreatedAt: freezed == originalCreatedAt ? _self.originalCreatedAt : originalCreatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,keypadRevision: null == keypadRevision ? _self.keypadRevision : keypadRevision // ignore: cast_nullable_to_non_nullable
-as int,
+as int,shoppingListItemId: freezed == shoppingListItemId ? _self.shoppingListItemId : shoppingListItemId // ignore: cast_nullable_to_non_nullable
+as int?,submissionAction: null == submissionAction ? _self.submissionAction : submissionAction // ignore: cast_nullable_to_non_nullable
+as TransactionFormSubmissionAction,selectedAccountIsArchived: null == selectedAccountIsArchived ? _self.selectedAccountIsArchived : selectedAccountIsArchived // ignore: cast_nullable_to_non_nullable
+as bool,selectedCategoryIsArchived: null == selectedCategoryIsArchived ? _self.selectedCategoryIsArchived : selectedCategoryIsArchived // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
