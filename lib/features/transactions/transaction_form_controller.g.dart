@@ -7,7 +7,7 @@ part of 'transaction_form_controller.dart';
 // **************************************************************************
 
 String _$transactionFormControllerHash() =>
-    r'3303011074a1b44c46eccf19d71dcffcf12e8f00';
+    r'ef8acabe0f2af7680b707486d68ab8dc6c72a204';
 
 /// See also [TransactionFormController].
 @ProviderFor(TransactionFormController)
@@ -26,6 +26,8 @@ final transactionFormControllerProvider =
         accountRepositoryProvider,
         categoryRepositoryProvider,
         userPreferencesRepositoryProvider,
+        currencyRepositoryProvider,
+        shoppingListRepositoryProvider,
       },
       allTransitiveDependencies: <ProviderOrFamily>{
         transactionRepositoryProvider,
@@ -36,6 +38,10 @@ final transactionFormControllerProvider =
         ...?categoryRepositoryProvider.allTransitiveDependencies,
         userPreferencesRepositoryProvider,
         ...?userPreferencesRepositoryProvider.allTransitiveDependencies,
+        currencyRepositoryProvider,
+        ...?currencyRepositoryProvider.allTransitiveDependencies,
+        shoppingListRepositoryProvider,
+        ...?shoppingListRepositoryProvider.allTransitiveDependencies,
       },
     );
 
