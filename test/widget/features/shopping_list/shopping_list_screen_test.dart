@@ -201,9 +201,8 @@ void main() {
     tester,
   ) async {
     final items = [_item(id: 10, memo: 'Coffee')];
-    final pending = ShoppingListPendingDelete(
+    const pending = ShoppingListPendingDelete(
       itemId: 99, // a different item is pending — taps on id:10 still disabled
-      scheduledFor: DateTime.now().add(const Duration(seconds: 4)),
     );
     final container = _makeContainer(
       fixed: ShoppingListState.data(items: items, pendingDelete: pending),

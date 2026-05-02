@@ -21,6 +21,7 @@ import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../app/providers/repository_providers.dart';
+import '../../core/constants.dart';
 import '../../data/models/shopping_list_item.dart';
 import '../../data/repositories/shopping_list_repository.dart';
 import 'shopping_list_state.dart';
@@ -28,9 +29,6 @@ import 'shopping_list_state.dart';
 part 'shopping_list_controller.g.dart';
 
 typedef ShoppingListEffectListener = void Function(ShoppingListEffect effect);
-
-/// Length of the undo window — matches `kUndoWindow` in home_controller.dart.
-const Duration kUndoWindow = Duration(seconds: 4);
 
 sealed class ShoppingListEffect {
   const ShoppingListEffect();
@@ -67,11 +65,6 @@ class ShoppingListController extends _$ShoppingListController {
     return composer.stream;
   }
 
-  // ---------- Getters ----------
-
-  /// True when no delete is pending — row taps are safe to process.
-  bool get canOpenItem => _pendingDelete == null;
-
   // ---------- Commands ----------
 
   /// Visually hide the item and start the 4-second undo window.
@@ -86,12 +79,8 @@ class ShoppingListController extends _$ShoppingListController {
       if (!committed) return;
     }
 
-    final scheduledFor = DateTime.now().add(kUndoWindow);
-    _pendingDelete = ShoppingListPendingDelete(
-      itemId: id,
-      scheduledFor: scheduledFor,
-    );
-    _composer?.setPendingDelete(_pendingDelete);
+    _pendingDelete = ShoppingListPendingDelete(itemId: id);
+    _composer?.notifyPendingDeleteChanged();
 
     _undoTimer = Timer(kUndoWindow, () async {
       final pending = _pendingDelete;
@@ -106,7 +95,7 @@ class ShoppingListController extends _$ShoppingListController {
     _undoTimer?.cancel();
     _undoTimer = null;
     _pendingDelete = null;
-    _composer?.setPendingDelete(null);
+    _composer?.notifyPendingDeleteChanged();
   }
 
   void setEffectListener(ShoppingListEffectListener? listener) {
@@ -114,24 +103,24 @@ class ShoppingListController extends _$ShoppingListController {
   }
 
   Future<bool> _commitDelete(int id) async {
-    _composer?.setPendingDelete(_pendingDelete);
+    _composer?.notifyPendingDeleteChanged();
     try {
       await ref.read(shoppingListRepositoryProvider).delete(id);
       if (_pendingDelete?.itemId == id) {
         _pendingDelete = null;
-        _composer?.setPendingDelete(null);
+        _composer?.notifyPendingDeleteChanged();
       }
       return true;
     } catch (error, stackTrace) {
       if (_pendingDelete?.itemId == id) {
         _pendingDelete = null;
-        _composer?.setPendingDelete(null);
+        _composer?.notifyPendingDeleteChanged();
       } else {
         // A second delete is already pending. The failed item's row must
         // reappear regardless — force a stream re-emission so the restored
         // row becomes visible (the pending state was not changed, but
         // _scheduleEmit re-derives visible rows from the current state).
-        _composer?.setPendingDelete(_pendingDelete);
+        _composer?.notifyPendingDeleteChanged();
       }
       _effectListener?.call(ShoppingListDeleteFailedEffect(error, stackTrace));
       return false;
@@ -183,7 +172,7 @@ class _Composer {
     if (!_out.isClosed) await _out.close();
   }
 
-  void setPendingDelete(ShoppingListPendingDelete? pending) {
+  void notifyPendingDeleteChanged() {
     _scheduleEmit();
   }
 

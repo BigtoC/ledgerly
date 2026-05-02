@@ -11,13 +11,9 @@ part 'shopping_list_state.freezed.dart';
 /// Pending-delete record set during the 4-second undo window.
 /// Plain class (not Freezed) — controller swaps it out by reference.
 class ShoppingListPendingDelete {
-  const ShoppingListPendingDelete({
-    required this.itemId,
-    required this.scheduledFor,
-  });
+  const ShoppingListPendingDelete({required this.itemId});
 
   final int itemId;
-  final DateTime scheduledFor;
 }
 
 @freezed

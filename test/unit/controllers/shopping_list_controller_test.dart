@@ -9,7 +9,7 @@
 //   - timer expiry calls repo.delete
 //   - failed delete fires ShoppingListDeleteFailedEffect and restores hidden row
 //   - second delete commits first, opens new window
-//   - canOpenItem is false while pending delete is active
+//   - pendingDelete is non-null while delete is active (canOpen derived from state)
 //   - controller remains alive after simulated tab switch
 
 import 'dart:async';
@@ -20,6 +20,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
+import 'package:ledgerly/core/constants.dart';
 import 'package:ledgerly/data/models/shopping_list_item.dart';
 import 'package:ledgerly/data/repositories/shopping_list_repository.dart';
 import 'package:ledgerly/features/shopping_list/shopping_list_controller.dart';
@@ -311,7 +312,7 @@ void main() {
     });
 
     test(
-      'SLC09: canOpenItem is false while pending delete is active',
+      'SLC09: pendingDelete is non-null while delete is active (canOpen derived from state)',
       () async {
         final container = makeContainer();
         addTearDown(container.dispose);
@@ -324,22 +325,36 @@ void main() {
         itemsCtrl.add([item]);
         await waitFor(container, (s) => s is ShoppingListData);
 
+        // Before delete: pendingDelete is null → canOpen is true.
+        final before =
+            container.read(shoppingListControllerProvider).requireValue
+                as ShoppingListData;
+        expect(before.pendingDelete, isNull);
+
         final controller = container.read(
           shoppingListControllerProvider.notifier,
         );
-        expect(controller.canOpenItem, isTrue);
 
         fakeAsync((async) {
           controller.deleteItem(10);
           async.flushMicrotasks();
 
-          expect(controller.canOpenItem, isFalse);
+          // During delete: pendingDelete is set → canOpen is false.
+          final during =
+              container.read(shoppingListControllerProvider).requireValue
+                  as ShoppingListData;
+          expect(during.pendingDelete, isNotNull);
 
           controller.undoDelete();
           async.flushMicrotasks();
         });
 
-        expect(controller.canOpenItem, isTrue);
+        // After undo: pendingDelete is null → canOpen is true.
+        final after = await waitFor(
+          container,
+          (s) => s is ShoppingListData && s.pendingDelete == null,
+        );
+        expect((after as ShoppingListData).pendingDelete, isNull);
       },
     );
 
