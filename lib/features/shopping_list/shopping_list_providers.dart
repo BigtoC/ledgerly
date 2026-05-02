@@ -15,6 +15,14 @@ import '../../data/models/shopping_list_item.dart';
 
 part 'shopping_list_providers.g.dart';
 
+/// Reactive total count of all shopping-list drafts.
+///
+/// Used by the Home screen mini-FAB badge. Returns 0 on error/loading so
+/// the badge never breaks the Home screen layout.
+@riverpod
+Stream<int> shoppingListTotalCount(Ref ref) =>
+    ref.watch(shoppingListRepositoryProvider).watchCount();
+
 /// Combined preview + total-count stream.
 ///
 /// Watches [shoppingListRepositoryProvider.watchAll()] once and maps it into a

@@ -26,6 +26,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/utils/box_shadow.dart';
+import '../shopping_list/shopping_list_providers.dart';
 import '../../core/utils/date_helpers.dart';
 import '../../data/models/account.dart';
 import '../../data/models/category.dart';
@@ -142,13 +143,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       }
     });
 
+    final countAsync = ref.watch(shoppingListTotalCountProvider);
+    final count = countAsync.valueOrNull ?? 0;
+    final badgeLabel = count > 99 ? '99+' : '$count';
+
     return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'home_fab',
-        onPressed: () => _onAddPressed(context),
-        icon: const Icon(Icons.add),
-        label: Text(l10n.homeFabLabel),
-        tooltip: l10n.homeFabLabel,
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            key: const Key('homeShoppingListFab'),
+            heroTag: 'home_shopping_list_fab',
+            onPressed: () => context.go('/accounts/shopping-list'),
+            child: Badge(
+              isLabelVisible: count > 0,
+              label: Text(badgeLabel),
+              child: const Icon(Icons.shopping_cart_outlined),
+            ),
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton.extended(
+            heroTag: 'home_fab',
+            onPressed: () => _onAddPressed(context),
+            icon: const Icon(Icons.add),
+            label: Text(l10n.homeFabLabel),
+            tooltip: l10n.homeFabLabel,
+          ),
+        ],
       ),
       body: SlidableAutoCloseBehavior(
         child: switch (state) {

@@ -6,8 +6,31 @@ part of 'shopping_list_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+String _$shoppingListTotalCountHash() =>
+    r'31633fd56a86f063bbcc701316f86ec51ef7f527';
+
+/// Reactive total count of all shopping-list drafts.
+///
+/// Used by the Home screen mini-FAB badge. Returns 0 on error/loading so
+/// the badge never breaks the Home screen layout.
+///
+/// Copied from [shoppingListTotalCount].
+@ProviderFor(shoppingListTotalCount)
+final shoppingListTotalCountProvider = AutoDisposeStreamProvider<int>.internal(
+  shoppingListTotalCount,
+  name: r'shoppingListTotalCountProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$shoppingListTotalCountHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef ShoppingListTotalCountRef = AutoDisposeStreamProviderRef<int>;
 String _$shoppingListPreviewHash() =>
-    r'e39adf1a991f1f08d456a056f825eb24c7aa1caf';
+    r'7d44cf8230a586ac1da0ba545f08b84d348c4fc9';
 
 /// Combined preview + total-count stream.
 ///
