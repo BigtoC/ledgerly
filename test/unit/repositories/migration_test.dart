@@ -34,6 +34,7 @@ import 'package:ledgerly/data/services/locale_service.dart';
 
 import '_harness/generated/schema.dart';
 import '_harness/generated/schema_v1.dart' as v1;
+import '_harness/generated/schema_v2.dart' as v2;
 
 /// Fixed-locale stub for the migration test. The locale-dependent unit
 /// tests live in `test/unit/seed/first_run_seed_test.dart`; here we only
@@ -52,7 +53,7 @@ void main() {
       // snapshot" mistake next time Phase 2 touches the file.
       final db = AppDatabase(NativeDatabase.memory());
       addTearDown(() async => db.close());
-      expect(db.schemaVersion, 2);
+      expect(db.schemaVersion, 3);
       // The drift_dev-generated helper should advance with the new snapshot.
       expect(GeneratedHelper.versions, contains(db.schemaVersion));
       expect(GeneratedHelper.versions.last, db.schemaVersion);
@@ -175,8 +176,59 @@ void main() {
       });
     });
 
-    // TODO(phase-2): extend this to v2 -> v3 once Phase 2 adds a third snapshot.
+    group('v2 snapshot', () {
+      test('upgrades v2 DBs to the live schema', () async {
+        final verifier = SchemaVerifier(GeneratedHelper());
+        final schema = await verifier.schemaAt(2);
+        final legacyDb = v2.DatabaseAtV2(schema.newConnection());
+        addTearDown(() async => legacyDb.close());
+
+        await legacyDb.customStatement(
+          'INSERT INTO currencies (code, decimals, symbol, name_l10n_key, '
+          'is_token, sort_order) VALUES (?, ?, ?, ?, 0, ?)',
+          <Object?>['USD', 2, r'$', 'currency.usd', 1],
+        );
+        await legacyDb.close();
+
+        final db = AppDatabase(schema.newConnection());
+        addTearDown(() async => db.close());
+
+        await verifier.migrateAndValidate(db, db.schemaVersion);
+
+        // Existing currency row survived the migration.
+        final rows = await db.select(db.currencies).get();
+        expect(rows, hasLength(1));
+        expect(rows.single.code, 'USD');
+
+        // New table exists and is empty.
+        final itemRows = await db.select(db.shoppingListItems).get();
+        expect(itemRows, isEmpty);
+      });
+
+      test('opens cleanly on an empty DB', () async {
+        final verifier = SchemaVerifier(GeneratedHelper());
+        final schema = await verifier.schemaAt(dbVersionForOpenCheck);
+        final db = AppDatabase(schema.newConnection());
+        addTearDown(() async => db.close());
+
+        await db.customStatement('SELECT 1');
+        expect(db.schemaVersion, dbVersionForOpenCheck);
+        await db.validateDatabaseSchema();
+      });
+
+      test('foreign_keys stays ON after a real upgrade run', () async {
+        final verifier = SchemaVerifier(GeneratedHelper());
+        final connection = await verifier.startAt(2);
+        final db = AppDatabase(connection.executor);
+        addTearDown(() async => db.close());
+
+        await verifier.migrateAndValidate(db, db.schemaVersion);
+
+        final result = await db.customSelect('PRAGMA foreign_keys').getSingle();
+        expect(result.read<int>('foreign_keys'), 1);
+      });
+    });
   });
 }
 
-const int dbVersionForOpenCheck = 2;
+const int dbVersionForOpenCheck = 3;

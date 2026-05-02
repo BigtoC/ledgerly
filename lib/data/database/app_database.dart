@@ -4,12 +4,14 @@ import 'daos/account_dao.dart';
 import 'daos/account_type_dao.dart';
 import 'daos/category_dao.dart';
 import 'daos/currency_dao.dart';
+import 'daos/shopping_list_dao.dart';
 import 'daos/transaction_dao.dart';
 import 'daos/user_preferences_dao.dart';
 import 'tables/account_types_table.dart';
 import 'tables/accounts_table.dart';
 import 'tables/categories_table.dart';
 import 'tables/currencies_table.dart';
+import 'tables/shopping_list_items_table.dart';
 import 'tables/transactions_table.dart';
 import 'tables/user_preferences_table.dart';
 
@@ -40,6 +42,7 @@ part 'app_database.g.dart';
     AccountTypes,
     Accounts,
     UserPreferences,
+    ShoppingListItems,
   ],
   daos: [
     CurrencyDao,
@@ -48,13 +51,14 @@ part 'app_database.g.dart';
     AccountTypeDao,
     AccountDao,
     UserPreferencesDao,
+    ShoppingListDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -62,6 +66,9 @@ class AppDatabase extends _$AppDatabase {
     onUpgrade: (m, from, to) async {
       if (from < 2) {
         await m.addColumn(currencies, currencies.customName);
+      }
+      if (from < 3) {
+        await m.createTable(shoppingListItems);
       }
     },
     beforeOpen: (details) async {
