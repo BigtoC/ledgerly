@@ -133,6 +133,11 @@ abstract class CategoryRepository {
 
   /// Returns `true` when at least one row in `transactions` references
   /// this category.
+  ///
+  /// NOTE: isReferenced is intentionally transaction-only (not shopping-list-aware).
+  /// This is a documented design decision: the UI that shows archive vs delete affordances
+  /// must also handle CategoryInUseException from delete(), since a category can be
+  /// "in use" by shopping-list drafts even when isReferenced returns false.
   Future<bool> isReferenced(int id);
 }
 

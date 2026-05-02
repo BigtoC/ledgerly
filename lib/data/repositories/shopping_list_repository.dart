@@ -262,6 +262,13 @@ final class DriftShoppingListRepository implements ShoppingListRepository {
         );
       }
 
+      if (categoryRow.type == 'income') {
+        throw ShoppingListRepositoryException(
+          'Category $categoryId is an income category; only expense categories '
+          'are allowed for shopping-list drafts',
+        );
+      }
+
       // Step 4: Resolve currency for the Transaction value object.
       final currencyRow = await _currencyDao.findByCode(currencyCode);
       if (currencyRow == null) {

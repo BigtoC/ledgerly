@@ -261,6 +261,80 @@ void main() {
   // -------------------------------------------------------------------------
 
   group('update', () {
+    test(
+      'update with amount but no currency throws ShoppingListRepositoryException',
+      () async {
+        final item = await repo.insert(
+          categoryId: expenseCategoryId,
+          accountId: accountId,
+          draftDate: DateTime.utc(2026, 6, 1),
+        );
+
+        await expectLater(
+          repo.update(
+            item.copyWith(draftAmountMinorUnits: 100, draftCurrencyCode: null),
+          ),
+          throwsA(isA<ShoppingListRepositoryException>()),
+        );
+      },
+    );
+
+    test(
+      'update with currency but no amount throws ShoppingListRepositoryException',
+      () async {
+        final item = await repo.insert(
+          categoryId: expenseCategoryId,
+          accountId: accountId,
+          draftDate: DateTime.utc(2026, 6, 1),
+        );
+
+        await expectLater(
+          repo.update(
+            item.copyWith(
+              draftAmountMinorUnits: null,
+              draftCurrencyCode: 'USD',
+            ),
+          ),
+          throwsA(isA<ShoppingListRepositoryException>()),
+        );
+      },
+    );
+
+    test(
+      'update with income category throws ShoppingListRepositoryException',
+      () async {
+        final item = await repo.insert(
+          categoryId: expenseCategoryId,
+          accountId: accountId,
+          draftDate: DateTime.utc(2026, 6, 1),
+        );
+
+        await expectLater(
+          repo.update(item.copyWith(categoryId: incomeCategoryId)),
+          throwsA(isA<ShoppingListRepositoryException>()),
+        );
+      },
+    );
+
+    test(
+      'update when item id does not exist throws ShoppingListRepositoryException',
+      () async {
+        final item = await repo.insert(
+          categoryId: expenseCategoryId,
+          accountId: accountId,
+          draftDate: DateTime.utc(2026, 6, 1),
+        );
+
+        // Delete the item so the update target is gone.
+        await repo.delete(item.id);
+
+        await expectLater(
+          repo.update(item.copyWith(memo: 'ghost update')),
+          throwsA(isA<ShoppingListRepositoryException>()),
+        );
+      },
+    );
+
     test('update preserves createdAt and refreshes updatedAt', () async {
       // Use local (non-UTC) times because Drift stores as Unix seconds
       // and reads back as local DateTime.
@@ -506,20 +580,43 @@ void main() {
     );
 
     test(
-      'convertToTransaction rolls back when draft delete would fail',
+      'convertToTransaction with income category throws ShoppingListRepositoryException',
       () async {
-        // This test verifies the DB transaction is truly atomic.
-        // We insert a draft, start the convert, but we simulate a race by
-        // deleting the draft between the existence check and the delete step.
-        // In practice we test atomicity by verifying that if the draft is
-        // missing at the start, no transaction row is created.
+        // Seed a draft referencing the expense category (FK constraint prevents
+        // using the income category directly as the draft's category_id).
         final item = await repo.insert(
           categoryId: expenseCategoryId,
           accountId: accountId,
           draftDate: DateTime.utc(2026, 6, 1),
         );
 
-        // Pre-delete the draft so the convert will fail.
+        // Attempt to convert using the income category — must be rejected.
+        await expectLater(
+          repo.convertToTransaction(
+            shoppingListItemId: item.id,
+            categoryId: incomeCategoryId,
+            accountId: accountId,
+            currencyCode: 'USD',
+            amountMinorUnits: 1000,
+            date: DateTime.utc(2026, 6, 1),
+          ),
+          throwsA(isA<ShoppingListRepositoryException>()),
+        );
+      },
+    );
+
+    test(
+      // This tests the step-1 failure path (draft missing at existence check),
+      // not a savepoint rollback mid-transaction.
+      'convertToTransaction with pre-deleted draft creates no transaction row',
+      () async {
+        final item = await repo.insert(
+          categoryId: expenseCategoryId,
+          accountId: accountId,
+          draftDate: DateTime.utc(2026, 6, 1),
+        );
+
+        // Pre-delete the draft so the convert will fail at step 1.
         await repo.delete(item.id);
 
         // The convert should fail with exception.

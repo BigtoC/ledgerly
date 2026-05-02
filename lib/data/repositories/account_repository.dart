@@ -80,6 +80,11 @@ abstract class AccountRepository {
 
   /// Cheap existence probe — returns true when any `transactions` row
   /// references this account.
+  ///
+  /// NOTE: isReferenced is intentionally transaction-only (not shopping-list-aware).
+  /// This is a documented design decision: the UI that shows archive vs delete affordances
+  /// must also handle CategoryInUseException from delete(), since an account can be
+  /// "in use" by shopping-list drafts even when isReferenced returns false.
   Future<bool> isReferenced(int id);
 
   /// Reactive existence probe — emits `true` whenever at least one
