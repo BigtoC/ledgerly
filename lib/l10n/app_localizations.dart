@@ -1093,7 +1093,7 @@ abstract class AppLocalizations {
   /// Shopping list card overflow CTA — shown when more than 3 drafts exist.
   ///
   /// In en, this message translates to:
-  /// **'{count} more'**
+  /// **'{count, plural, one{{count} more} other{{count} more}}'**
   String shoppingListItemsMore(int count);
 
   /// Seeded currency full name. DB nameL10nKey: currency.usd.

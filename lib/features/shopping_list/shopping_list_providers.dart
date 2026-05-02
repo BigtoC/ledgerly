@@ -14,22 +14,19 @@ import '../../data/models/shopping_list_item.dart';
 
 part 'shopping_list_providers.g.dart';
 
-/// Preview rows: newest 3 drafts.
+/// Combined preview + total-count stream.
 ///
-/// Watches [shoppingListRepositoryProvider.watchAll()] and emits the first 3
-/// items. The full stream is still used by the card to compute overflow.
+/// Watches [shoppingListRepositoryProvider.watchAll()] once and maps it into a
+/// record with the first 3 items (`preview`) and the full list length
+/// (`totalCount`). Using a single stream avoids opening two live DB queries.
 @riverpod
-Stream<List<ShoppingListItem>> shoppingListPreview(Ref ref) {
+Stream<({List<ShoppingListItem> preview, int totalCount})> shoppingListPreview(
+  Ref ref,
+) {
   final repo = ref.watch(shoppingListRepositoryProvider);
-  return repo.watchAll().map((items) => items.take(3).toList());
-}
-
-/// Full count stream — used alongside [shoppingListPreviewProvider] to
-/// compute the overflow count shown in the card.
-@riverpod
-Stream<int> shoppingListTotalCount(Ref ref) {
-  final repo = ref.watch(shoppingListRepositoryProvider);
-  return repo.watchAll().map((items) => items.length);
+  return repo.watchAll().map(
+    (items) => (preview: items.take(3).toList(), totalCount: items.length),
+  );
 }
 
 /// One-shot read for archived-safe category name hydration.

@@ -529,7 +529,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String shoppingListItemsMore(int count) {
-    return '$count more';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count more',
+      one: '$count more',
+    );
+    return '$_temp0';
   }
 
   @override

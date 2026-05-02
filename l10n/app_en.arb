@@ -691,7 +691,7 @@
   "@shoppingListEmptyCta": {
     "description": "Shopping list card empty-state CTA — navigates to /home/add."
   },
-  "shoppingListItemsMore": "{count} more",
+  "shoppingListItemsMore": "{count, plural, one{{count} more} other{{count} more}}",
   "@shoppingListItemsMore": {
     "description": "Shopping list card overflow CTA — shown when more than 3 drafts exist.",
     "placeholders": {

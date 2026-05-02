@@ -189,7 +189,7 @@
   "shoppingListViewAll": "查看全部",
   "shoppingListEmptyBody": "尚無待支出",
   "shoppingListEmptyCta": "加入購物清單",
-  "shoppingListItemsMore": "還有{count}筆",
+  "shoppingListItemsMore": "{count, plural, other{還有{count}筆}}",
   "@shoppingListItemsMore": {
     "placeholders": {
       "count": {"type": "int"}

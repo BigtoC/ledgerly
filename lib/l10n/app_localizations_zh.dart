@@ -516,20 +516,26 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get shoppingListCardTitle => '购物清单';
+  String get shoppingListCardTitle => 'Shopping list';
 
   @override
-  String get shoppingListViewAll => '查看全部';
+  String get shoppingListViewAll => 'View all';
 
   @override
-  String get shoppingListEmptyBody => '暂无待支出';
+  String get shoppingListEmptyBody => 'No upcoming expenses saved';
 
   @override
-  String get shoppingListEmptyCta => '加入购物清单';
+  String get shoppingListEmptyCta => 'Add to shopping list';
 
   @override
   String shoppingListItemsMore(int count) {
-    return '还有$count条';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count more',
+      one: '$count more',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1076,7 +1082,12 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String shoppingListItemsMore(int count) {
-    return '还有$count条';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '还有$count条',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1623,7 +1634,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String shoppingListItemsMore(int count) {
-    return '還有$count筆';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '還有$count筆',
+    );
+    return '$_temp0';
   }
 
   @override

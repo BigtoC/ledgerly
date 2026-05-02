@@ -30,7 +30,6 @@ class ShoppingListCard extends ConsumerWidget {
     final theme = Theme.of(context);
 
     final previewAsync = ref.watch(shoppingListPreviewProvider);
-    final totalAsync = ref.watch(shoppingListTotalCountProvider);
 
     return Container(
       width: double.infinity,
@@ -79,15 +78,15 @@ class ShoppingListCard extends ConsumerWidget {
                   child: Center(child: Text(l10n.errorSnackbarGeneric)),
                 ),
               ),
-              data: (items) {
-                if (items.isEmpty) {
+              data: (data) {
+                final (:preview, :totalCount) = data;
+                if (preview.isEmpty) {
                   return _EmptyBody(l10n: l10n);
                 }
-                final totalCount = totalAsync.valueOrNull ?? items.length;
                 final overflowCount = totalCount > 3 ? totalCount - 3 : 0;
                 return Column(
                   children: [
-                    for (final item in items) _PreviewRow(item: item),
+                    for (final item in preview) _PreviewRow(item: item),
                     if (overflowCount > 0)
                       _OverflowCta(count: overflowCount, l10n: l10n),
                   ],

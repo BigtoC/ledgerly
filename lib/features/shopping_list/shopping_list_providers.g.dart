@@ -7,17 +7,20 @@ part of 'shopping_list_providers.dart';
 // **************************************************************************
 
 String _$shoppingListPreviewHash() =>
-    r'2fda7178ade35486f907ddb5d642b1c1c64546bb';
+    r'e39adf1a991f1f08d456a056f825eb24c7aa1caf';
 
-/// Preview rows: newest 3 drafts.
+/// Combined preview + total-count stream.
 ///
-/// Watches [shoppingListRepositoryProvider.watchAll()] and emits the first 3
-/// items. The full stream is still used by the card to compute overflow.
+/// Watches [shoppingListRepositoryProvider.watchAll()] once and maps it into a
+/// record with the first 3 items (`preview`) and the full list length
+/// (`totalCount`). Using a single stream avoids opening two live DB queries.
 ///
 /// Copied from [shoppingListPreview].
 @ProviderFor(shoppingListPreview)
 final shoppingListPreviewProvider =
-    AutoDisposeStreamProvider<List<ShoppingListItem>>.internal(
+    AutoDisposeStreamProvider<
+      ({List<ShoppingListItem> preview, int totalCount})
+    >.internal(
       shoppingListPreview,
       name: r'shoppingListPreviewProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -30,28 +33,9 @@ final shoppingListPreviewProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ShoppingListPreviewRef =
-    AutoDisposeStreamProviderRef<List<ShoppingListItem>>;
-String _$shoppingListTotalCountHash() =>
-    r'8077e05758c5a6146a5ded1be5c59dc3aa87902a';
-
-/// Full count stream — used alongside [shoppingListPreviewProvider] to
-/// compute the overflow count shown in the card.
-///
-/// Copied from [shoppingListTotalCount].
-@ProviderFor(shoppingListTotalCount)
-final shoppingListTotalCountProvider = AutoDisposeStreamProvider<int>.internal(
-  shoppingListTotalCount,
-  name: r'shoppingListTotalCountProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$shoppingListTotalCountHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef ShoppingListTotalCountRef = AutoDisposeStreamProviderRef<int>;
+    AutoDisposeStreamProviderRef<
+      ({List<ShoppingListItem> preview, int totalCount})
+    >;
 String _$shoppingListCategoryByIdHash() =>
     r'd65051e1e179e9ac49d30dd1c509d71fc1c85f08';
 

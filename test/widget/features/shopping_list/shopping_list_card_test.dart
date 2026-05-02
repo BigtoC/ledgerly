@@ -620,6 +620,71 @@ void main() {
     },
   );
 
+  // SL13
+  testWidgets(
+    'ShoppingListCard shows formatted amount in trailing text for amount-bearing draft',
+    (tester) async {
+      final shoppingListRepo = _MockShoppingListRepository();
+      final categoryRepo = _MockCategoryRepository();
+      final accountRepo = _MockAccountRepository();
+      final currencyRepo = _MockCurrencyRepository();
+
+      // Item with draftAmountMinorUnits=1200 (USD, decimals=2) → $12.00
+      final amountItem = ShoppingListItem(
+        id: 1,
+        categoryId: 10,
+        accountId: 20,
+        memo: 'Coffee',
+        draftDate: _now,
+        draftAmountMinorUnits: 1200,
+        draftCurrencyCode: 'USD',
+        createdAt: _now,
+        updatedAt: _now,
+      );
+
+      when(
+        () => shoppingListRepo.watchAll(),
+      ).thenAnswer((_) => Stream.value([amountItem]));
+      when(
+        () => categoryRepo.getById(10),
+      ).thenAnswer((_) async => _expenseCategory);
+      when(() => accountRepo.getById(20)).thenAnswer((_) async => _account);
+      when(() => currencyRepo.getByCode('USD')).thenAnswer((_) async => _usd);
+
+      // Override the currencyRepo used by shoppingListCurrencyByCodeProvider.
+      final typeRepo = _MockAccountTypeRepository();
+      when(
+        () => typeRepo.watchAll(includeArchived: any(named: 'includeArchived')),
+      ).thenAnswer((_) => Stream.value([]));
+      final prefs = _MockUserPreferencesRepository();
+      when(
+        () => currencyRepo.watchAll(),
+      ).thenAnswer((_) => Stream.value([_usd]));
+      when(
+        () => currencyRepo.watchAll(includeTokens: any(named: 'includeTokens')),
+      ).thenAnswer((_) => Stream.value([_usd]));
+
+      final container = ProviderContainer(
+        overrides: [
+          shoppingListRepositoryProvider.overrideWithValue(shoppingListRepo),
+          categoryRepositoryProvider.overrideWithValue(categoryRepo),
+          accountRepositoryProvider.overrideWithValue(accountRepo),
+          accountTypeRepositoryProvider.overrideWithValue(typeRepo),
+          userPreferencesRepositoryProvider.overrideWithValue(prefs),
+          currencyRepositoryProvider.overrideWithValue(currencyRepo),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrapCard(container: container));
+      await tester.pumpAndSettle();
+
+      // MoneyFormatter.format with USD (decimals=2, symbol='$') + 1200 minor
+      // units + locale='en' → '$12.00'.
+      expect(find.textContaining(r'$12.00'), findsOneWidget);
+    },
+  );
+
   // SL12
   testWidgets(
     'ShoppingListCard archived account/category still resolves names for preview rows',
