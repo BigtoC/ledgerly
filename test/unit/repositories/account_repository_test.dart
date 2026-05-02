@@ -24,6 +24,30 @@ import 'package:ledgerly/data/repositories/repository_exceptions.dart';
 
 import '_harness/test_app_database.dart';
 
+// Inserts a minimal shopping-list item referencing the given account.
+// Drift stores DateTimes as Unix seconds; use integer timestamps.
+Future<void> _insertShoppingListItemRaw(
+  AppDatabase db, {
+  required int categoryId,
+  required int accountId,
+}) async {
+  final nowUnix = DateTime(2026, 1, 1).millisecondsSinceEpoch ~/ 1000;
+  final dateUnix = DateTime(2026, 5, 1).millisecondsSinceEpoch ~/ 1000;
+  await db.customInsert(
+    'INSERT INTO shopping_list_items '
+    '(category_id, account_id, draft_date, created_at, updated_at) '
+    'VALUES (?, ?, ?, ?, ?)',
+    variables: [
+      Variable<int>(categoryId),
+      Variable<int>(accountId),
+      Variable<int>(dateUnix),
+      Variable<int>(nowUnix),
+      Variable<int>(nowUnix),
+    ],
+    updates: {db.shoppingListItems},
+  );
+}
+
 const Currency _usd = Currency(
   code: 'USD',
   decimals: 2,
@@ -745,6 +769,44 @@ void main() {
 
         expect(await repo.getLastUsedActiveAccount(), isNull);
       });
+    });
+
+    // Shopping-list-aware delete guard.
+    group('shopping-list delete guard', () {
+      test('delete throws AccountInUseException when account has shopping-list '
+          'drafts but no transactions', () async {
+        final id = await repo.save(buildCashAccount());
+        final categoryId = await _insertCategoryRaw(db);
+        await _insertShoppingListItemRaw(
+          db,
+          categoryId: categoryId,
+          accountId: id,
+        );
+
+        await expectLater(
+          repo.delete(id),
+          throwsA(isA<AccountInUseException>().having((e) => e.id, 'id', id)),
+        );
+
+        // Row still present.
+        expect(await repo.getById(id), isNotNull);
+      });
+
+      test(
+        'isReferenced returns false for account with only shopping-list drafts',
+        () async {
+          final id = await repo.save(buildCashAccount());
+          final categoryId = await _insertCategoryRaw(db);
+          await _insertShoppingListItemRaw(
+            db,
+            categoryId: categoryId,
+            accountId: id,
+          );
+
+          // isReferenced is transaction-only — shopping-list drafts don't count.
+          expect(await repo.isReferenced(id), isFalse);
+        },
+      );
     });
   });
 }

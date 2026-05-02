@@ -5,6 +5,7 @@ import '../../data/repositories/account_repository.dart';
 import '../../data/repositories/account_type_repository.dart';
 import '../../data/repositories/category_repository.dart';
 import '../../data/repositories/currency_repository.dart';
+import '../../data/repositories/shopping_list_repository.dart';
 import '../../data/repositories/transaction_repository.dart';
 import '../../data/repositories/user_preferences_repository.dart';
 import 'app_database_provider.dart';
@@ -44,3 +45,10 @@ TransactionRepository transactionRepository(Ref ref) =>
 @Riverpod(keepAlive: true, dependencies: [appDatabase])
 UserPreferencesRepository userPreferencesRepository(Ref ref) =>
     DriftUserPreferencesRepository(ref.watch(appDatabaseProvider));
+
+@Riverpod(keepAlive: true, dependencies: [appDatabase, transactionRepository])
+ShoppingListRepository shoppingListRepository(Ref ref) =>
+    DriftShoppingListRepository(
+      ref.watch(appDatabaseProvider),
+      ref.watch(transactionRepositoryProvider),
+    );

@@ -27,6 +27,7 @@ import 'package:drift/drift.dart' show Value, Variable;
 import '../database/app_database.dart' as drift;
 import '../database/daos/account_dao.dart';
 import '../database/daos/account_type_dao.dart';
+import '../database/daos/shopping_list_dao.dart';
 import '../database/daos/transaction_dao.dart';
 import '../models/account.dart';
 import '../models/currency.dart';
@@ -124,6 +125,7 @@ final class DriftAccountRepository implements AccountRepository {
   AccountDao get _dao => _db.accountDao;
   AccountTypeDao get _typeDao => _db.accountTypeDao;
   TransactionDao get _txDao => _db.transactionDao;
+  ShoppingListDao get _slDao => _db.shoppingListDao;
 
   // ---------- Reads ----------
 
@@ -203,10 +205,10 @@ final class DriftAccountRepository implements AccountRepository {
 
   @override
   Future<void> delete(int id) async {
+    final slCount = await _slDao.countByAccount(id);
+    if (slCount > 0) throw AccountInUseException(id);
     final count = await _txDao.countByAccount(id);
-    if (count > 0) {
-      throw AccountInUseException(id);
-    }
+    if (count > 0) throw AccountInUseException(id);
     await _dao.deleteById(id);
   }
 
