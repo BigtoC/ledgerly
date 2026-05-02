@@ -69,8 +69,7 @@ GoRouter _buildRouter({
       ),
       GoRoute(
         path: '/accounts/shopping-list',
-        builder: (_, _) =>
-            const Scaffold(body: Text('SHOPPING_LIST_SCREEN')),
+        builder: (_, _) => const Scaffold(body: Text('SHOPPING_LIST_SCREEN')),
       ),
       ...extra,
     ],
@@ -157,93 +156,89 @@ void main() {
     await monthNetCtrl.close();
   });
 
-  testWidgets(
-    'HSL01: badge shows count "3" when shopping list has 3 items',
-    (tester) async {
-      when(() => slRepo.watchCount()).thenAnswer((_) => Stream.value(3));
+  testWidgets('HSL01: badge shows count "3" when shopping list has 3 items', (
+    tester,
+  ) async {
+    when(() => slRepo.watchCount()).thenAnswer((_) => Stream.value(3));
 
-      await tester.pumpWidget(
-        _makeApp(
-          txRepo: txRepo,
-          catRepo: catRepo,
-          accRepo: accRepo,
-          curRepo: curRepo,
-          slRepo: slRepo,
-        ),
-      );
-      await tester.pump();
+    await tester.pumpWidget(
+      _makeApp(
+        txRepo: txRepo,
+        catRepo: catRepo,
+        accRepo: accRepo,
+        curRepo: curRepo,
+        slRepo: slRepo,
+      ),
+    );
+    await tester.pump();
 
-      expect(find.byKey(const Key('homeShoppingListFab')), findsOneWidget);
-      // Badge label text "3" is visible.
-      expect(find.text('3'), findsOneWidget);
-    },
-  );
+    expect(find.byKey(const Key('homeShoppingListFab')), findsOneWidget);
+    // Badge label text "3" is visible.
+    expect(find.text('3'), findsOneWidget);
+  });
 
-  testWidgets(
-    'HSL02: no badge label shown when shopping list count is 0',
-    (tester) async {
-      when(() => slRepo.watchCount()).thenAnswer((_) => Stream.value(0));
+  testWidgets('HSL02: no badge label shown when shopping list count is 0', (
+    tester,
+  ) async {
+    when(() => slRepo.watchCount()).thenAnswer((_) => Stream.value(0));
 
-      await tester.pumpWidget(
-        _makeApp(
-          txRepo: txRepo,
-          catRepo: catRepo,
-          accRepo: accRepo,
-          curRepo: curRepo,
-          slRepo: slRepo,
-        ),
-      );
-      await tester.pump();
+    await tester.pumpWidget(
+      _makeApp(
+        txRepo: txRepo,
+        catRepo: catRepo,
+        accRepo: accRepo,
+        curRepo: curRepo,
+        slRepo: slRepo,
+      ),
+    );
+    await tester.pump();
 
-      expect(find.byKey(const Key('homeShoppingListFab')), findsOneWidget);
-      // No numeric badge label should be visible.
-      expect(find.text('0'), findsNothing);
-    },
-  );
+    expect(find.byKey(const Key('homeShoppingListFab')), findsOneWidget);
+    // No numeric badge label should be visible.
+    expect(find.text('0'), findsNothing);
+  });
 
-  testWidgets(
-    'HSL03: badge shows "99+" when shopping list count exceeds 99',
-    (tester) async {
-      when(() => slRepo.watchCount()).thenAnswer((_) => Stream.value(100));
+  testWidgets('HSL03: badge shows "99+" when shopping list count exceeds 99', (
+    tester,
+  ) async {
+    when(() => slRepo.watchCount()).thenAnswer((_) => Stream.value(100));
 
-      await tester.pumpWidget(
-        _makeApp(
-          txRepo: txRepo,
-          catRepo: catRepo,
-          accRepo: accRepo,
-          curRepo: curRepo,
-          slRepo: slRepo,
-        ),
-      );
-      await tester.pump();
+    await tester.pumpWidget(
+      _makeApp(
+        txRepo: txRepo,
+        catRepo: catRepo,
+        accRepo: accRepo,
+        curRepo: curRepo,
+        slRepo: slRepo,
+      ),
+    );
+    await tester.pump();
 
-      expect(find.byKey(const Key('homeShoppingListFab')), findsOneWidget);
-      expect(find.text('99+'), findsOneWidget);
-    },
-  );
+    expect(find.byKey(const Key('homeShoppingListFab')), findsOneWidget);
+    expect(find.text('99+'), findsOneWidget);
+  });
 
-  testWidgets(
-    'HSL04: tapping mini FAB navigates to /accounts/shopping-list',
-    (tester) async {
-      when(() => slRepo.watchCount()).thenAnswer((_) => Stream.value(2));
+  testWidgets('HSL04: tapping mini FAB navigates to /accounts/shopping-list', (
+    tester,
+  ) async {
+    when(() => slRepo.watchCount()).thenAnswer((_) => Stream.value(2));
 
-      await tester.pumpWidget(
-        _makeApp(
-          txRepo: txRepo,
-          catRepo: catRepo,
-          accRepo: accRepo,
-          curRepo: curRepo,
-          slRepo: slRepo,
-        ),
-      );
-      await tester.pump();
+    await tester.pumpWidget(
+      _makeApp(
+        txRepo: txRepo,
+        catRepo: catRepo,
+        accRepo: accRepo,
+        curRepo: curRepo,
+        slRepo: slRepo,
+      ),
+    );
+    await tester.pump();
 
-      await tester.tap(find.byKey(const Key('homeShoppingListFab')));
-      await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('homeShoppingListFab')));
+    await tester.pumpAndSettle();
 
-      expect(find.text('SHOPPING_LIST_SCREEN'), findsOneWidget);
-    },
-  );
+    expect(find.text('SHOPPING_LIST_SCREEN'), findsOneWidget);
+  });
 
   testWidgets(
     'HSL05: both shopping-list mini FAB and add-transaction FAB are visible',

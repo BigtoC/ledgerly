@@ -42,7 +42,12 @@ class ShoppingListCard extends ConsumerWidget {
           children: [
             // ── Header ──────────────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.only(left: 16, right: 4, top: 4, bottom: 4),
+              padding: const EdgeInsets.only(
+                left: 16,
+                right: 4,
+                top: 4,
+                bottom: 4,
+              ),
               child: Row(
                 children: [
                   Expanded(

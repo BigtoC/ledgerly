@@ -71,7 +71,12 @@ const _category = Category(
   customName: 'Groceries',
 );
 
-const _account = Account(id: 20, name: 'Cash', accountTypeId: 1, currency: _usd);
+const _account = Account(
+  id: 20,
+  name: 'Cash',
+  accountTypeId: 1,
+  currency: _usd,
+);
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -167,7 +172,10 @@ void main() {
       await tester.pumpWidget(_wrap(container: container));
       await tester.pump();
 
-      expect(find.byKey(const Key('shoppingListCardAddButton')), findsOneWidget);
+      expect(
+        find.byKey(const Key('shoppingListCardAddButton')),
+        findsOneWidget,
+      );
     },
   );
 
@@ -181,7 +189,9 @@ void main() {
       when(
         () => slRepo.watchAll(),
       ).thenAnswer((_) => Stream.value([_item(memo: 'Milk')]));
-      when(() => categoryRepo.getById(any())).thenAnswer((_) async => _category);
+      when(
+        () => categoryRepo.getById(any()),
+      ).thenAnswer((_) async => _category);
       when(() => accountRepo.getById(any())).thenAnswer((_) async => _account);
 
       final container = _makeContainer(
@@ -197,7 +207,10 @@ void main() {
       // Row is visible.
       expect(find.text('Milk'), findsOneWidget);
       // Add button is still in the header.
-      expect(find.byKey(const Key('shoppingListCardAddButton')), findsOneWidget);
+      expect(
+        find.byKey(const Key('shoppingListCardAddButton')),
+        findsOneWidget,
+      );
     },
   );
 
@@ -223,37 +236,39 @@ void main() {
       // Empty-state body CTA is shown.
       expect(find.text('Add to shopping list'), findsAtLeast(1));
       // Header add button is also present.
-      expect(find.byKey(const Key('shoppingListCardAddButton')), findsOneWidget);
-    },
-  );
-
-  testWidgets(
-    'SLA04: tapping Add button in non-empty state pushes /home/add',
-    (tester) async {
-      final slRepo = _MockShoppingListRepository();
-      final categoryRepo = _MockCategoryRepository();
-      final accountRepo = _MockAccountRepository();
-
-      when(
-        () => slRepo.watchAll(),
-      ).thenAnswer((_) => Stream.value([_item(memo: 'Bread')]));
-      when(() => categoryRepo.getById(any())).thenAnswer((_) async => _category);
-      when(() => accountRepo.getById(any())).thenAnswer((_) async => _account);
-
-      final container = _makeContainer(
-        slRepo: slRepo,
-        categoryRepo: categoryRepo,
-        accountRepo: accountRepo,
+      expect(
+        find.byKey(const Key('shoppingListCardAddButton')),
+        findsOneWidget,
       );
-      addTearDown(container.dispose);
-
-      await tester.pumpWidget(_wrap(container: container));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.byKey(const Key('shoppingListCardAddButton')));
-      await tester.pumpAndSettle();
-
-      expect(find.text('ADD_TRANSACTION'), findsOneWidget);
     },
   );
+
+  testWidgets('SLA04: tapping Add button in non-empty state pushes /home/add', (
+    tester,
+  ) async {
+    final slRepo = _MockShoppingListRepository();
+    final categoryRepo = _MockCategoryRepository();
+    final accountRepo = _MockAccountRepository();
+
+    when(
+      () => slRepo.watchAll(),
+    ).thenAnswer((_) => Stream.value([_item(memo: 'Bread')]));
+    when(() => categoryRepo.getById(any())).thenAnswer((_) async => _category);
+    when(() => accountRepo.getById(any())).thenAnswer((_) async => _account);
+
+    final container = _makeContainer(
+      slRepo: slRepo,
+      categoryRepo: categoryRepo,
+      accountRepo: accountRepo,
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('shoppingListCardAddButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ADD_TRANSACTION'), findsOneWidget);
+  });
 }
