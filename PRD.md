@@ -24,6 +24,7 @@ Ledgerly is a local-first mobile expense tracker built with Flutter. It is aimed
 - Base multi-currency support with configurable default currency
 - Transaction memos
 - Quick repeat / duplicate existing transaction
+- **Shopping list drafts** — capture future expenses as drafts from the Add Transaction form; review, edit, and convert drafts to real transactions from the Accounts screen
 - Light/dark theme
 - English, Traditional Chinese, Simplified Chinese UI
 - **Splash screen with configurable day counter** — standalone feature, hnotes-style visual design
@@ -129,6 +130,7 @@ lib/
         accounts_table.dart
         currencies_table.dart
         user_preferences_table.dart
+        shopping_list_items_table.dart
         pending_transactions_table.dart    # Phase 2
         wallet_addresses_table.dart        # Phase 2
         exchange_rates_table.dart          # Phase 2
@@ -139,6 +141,7 @@ lib/
         account_dao.dart
         currency_dao.dart
         user_preferences_dao.dart
+        shopping_list_dao.dart
         pending_transaction_dao.dart       # Phase 2
         wallet_address_dao.dart            # Phase 2
         exchange_rate_dao.dart             # Phase 2
@@ -154,6 +157,7 @@ lib/
       account_repository.dart
       currency_repository.dart
       user_preferences_repository.dart
+      shopping_list_repository.dart
       pending_transaction_repository.dart  # Phase 2
       wallet_address_repository.dart       # Phase 2
       exchange_rate_repository.dart        # Phase 2
@@ -166,6 +170,7 @@ lib/
       account_type.dart
       account.dart
       currency.dart
+      shopping_list_item.dart
       pending_transaction.dart             # Phase 2
       wallet_address.dart                  # Phase 2
       exchange_rate.dart                   # Phase 2
@@ -198,6 +203,14 @@ lib/
       accounts_screen.dart
       accounts_controller.dart
       accounts_state.dart
+    shopping_list/
+      shopping_list_screen.dart
+      shopping_list_controller.dart
+      shopping_list_state.dart
+      shopping_list_providers.dart
+      shopping_list_item_labels.dart
+      widgets/
+        shopping_list_card.dart
     wallets/                               # Phase 2
       wallets_screen.dart
       wallets_controller.dart
@@ -445,10 +458,35 @@ Stores theme preference (light/dark), default account, default currency, locale,
 - `splash_display_text` — string, default uses l10n template
 - `splash_button_label` — string, default uses l10n "Enter"
 
+### shopping_list_items
+
+| Column                      | Type     | Constraints                                  |
+|-----------------------------|----------|----------------------------------------------|
+| id                          | INTEGER  | PRIMARY KEY AUTO                             |
+| category_id                 | INTEGER  | NOT NULL REFERENCES categories(id)           |
+| account_id                  | INTEGER  | NOT NULL REFERENCES accounts(id)             |
+| memo                        | TEXT     | nullable                                     |
+| draft_amount_minor_units    | INTEGER  | nullable — see Notes                         |
+| draft_currency_code         | TEXT     | nullable REFERENCES currencies(code)         |
+| draft_date                  | DATETIME | NOT NULL                                     |
+| created_at                  | DATETIME | NOT NULL                                     |
+| updated_at                  | DATETIME | NOT NULL                                     |
+
+Notes:
+- Each row represents one future transaction draft. Drafts are expense-only; income-category references are rejected at the repository layer.
+- `draft_amount_minor_units` and `draft_currency_code` are an all-or-nothing nullable pair: both null for zero-amount drafts, both non-null for amount-bearing drafts. A non-null currency code must resolve through the `currencies` table.
+- Zero-amount drafts intentionally persist no amount/currency pair. When a zero-amount draft is re-opened, the visible currency reseeds from the selected account. When a draft with `amount > 0` is re-opened, the stored `draft_currency_code` is resolved via `CurrencyRepository` and used as-is.
+- `draft_date` is required and round-trips the planned transaction date. Re-opening a draft never silently resets the date to today.
+- Shopping-list rows participate in hard-delete guards for accounts and categories: an account or category referenced by any draft cannot be hard-deleted (same behaviour as transaction references). Existing `isReferenced` affordances in the UI remain transaction-only; the guard fires only in the repository `delete` methods.
+- Shopping-list drafts also participate in category-type locking: a category type cannot be changed from expense to income (or vice versa) if it is referenced by any draft.
+- Indexed on `account_id` and `category_id` for the delete-guard count queries.
+- Conversion is atomic: `ShoppingListRepository.convertToTransaction(shoppingListItemId, formSnapshot)` opens a single `AppDatabase.transaction`, calls `TransactionRepository.save(tx)`, then deletes the draft row. Either both succeed or neither commits.
+
 ### Migration Strategy
 
 - MVP ships with `schemaVersion = 1`. All MVP tables (`currencies`, `transactions`, `categories`, `accounts`, `user_preferences`) exist at v1.
-- Phase 2 additions (`pending_transactions`, `wallet_addresses`, `exchange_rates`, plus token rows seeded into `currencies`) bump to `schemaVersion = 2` via `MigrationStrategy.onUpgrade`.
+- Shopping list additions (`shopping_list_items`) bump to `schemaVersion = 3` via `MigrationStrategy.onUpgrade`.
+- Phase 2 additions (`pending_transactions`, `wallet_addresses`, `exchange_rates`, plus token rows seeded into `currencies`) bump to `schemaVersion = 4` (previously 2; renumbered when shopping list landed) via `MigrationStrategy.onUpgrade`.
 - Each schema version has a committed snapshot in `drift_schemas/` (generated via `drift_dev schema dump`).
 - Migrations are tested by generating every historical schema and running the upgrade path on both an empty DB and a seeded DB (see Testing Strategy → Repository Tests).
 - Breaking schema changes (column type swaps, table splits) require a new version + a documented data-transform step — never rewrite existing migrations in place.
@@ -641,6 +679,8 @@ ShellRoute (bottom nav)
     /home/pending           Pending Transactions (Phase 2)
   /accounts                 Accounts tab
     /accounts/new           New Account
+    /accounts/shopping-list Shopping list screen
+    /accounts/shopping-list/:itemId  Edit draft (modal, root navigator)
     /accounts/:id           Edit Account
   /settings                 Settings tab
     /settings/categories    Manage Categories
@@ -649,6 +689,7 @@ ShellRoute (bottom nav)
 ```
 
 - Add/Edit Transaction is a full-screen modal push (`MaterialPage` / `CupertinoPage`) so the calculator keypad has full vertical space.
+- `/accounts/shopping-list/:itemId` uses `parentNavigatorKey: _rootNavigatorKey` so the shopping-list route stays mounted underneath the draft-edit modal. Non-parsable `:itemId` values redirect to `/accounts/shopping-list`. Parsable-but-missing ids pop the modal immediately with a `ShoppingListEditResultMissingDraft` result so the parent list shows the "Draft not found" snackbar.
 - Splash → Home transition uses a fade `CustomTransitionPage` to preserve the hnotes-style reveal.
 - Root `redirect:` reads `splash_enabled` from `user_preferences`; no splash route is visited when disabled.
 
@@ -676,8 +717,9 @@ ShellRoute (bottom nav)
 
 1. **Splash Screen** — Day counter with hnotes-style visual design, tap to enter Home
 2. **Home Screen** — Compact summary strip grouped by currency in MVP (`Today expense`, `Today income`, `Month net` per currency); Phase 2 can also show auto-converted totals in `default_currency`. Below the strip, the transaction list shows **one day at a time**, with prev/next day navigation to walk through days that have activity (empty gap days are skipped). Today is the default day on cold start. Empty-state CTA, FAB to add transaction, pending transaction badge (Phase 2).
-3. **Add/Edit Transaction** — Expense/Income segmented control, calculator-style keypad for amount, category picker (icon grid), account selector with currency indicator, date picker, memo field for optional free-form detail, save; delete only in edit mode
-4. **Accounts Screen** — List accounts with tracked balances in native currency, add account (pick from existing account types or create a new type inline with name + icon + color + default currency), manage account types, set default account, archive account
+3. **Add/Edit Transaction** — Expense/Income segmented control, calculator-style keypad for amount, category picker (icon grid), account selector with currency indicator, date picker, memo field for optional free-form detail, save; delete only in edit mode. In add mode, an inline "Add to shopping list" action below the memo field captures the current form state as a draft and returns to the caller without creating a transaction.
+4. **Accounts Screen** — Always shows a shopping-list preview card as the first item (visible even when no accounts exist) with up to 3 newest drafts and an overflow CTA; below it, the active accounts list with tracked balances in native currency. Add account, manage account types, set default account, archive account.
+4a. **Shopping List Screen** (`/accounts/shopping-list`) — Full draft list sorted newest first. Swipe-delete or icon-button delete with a 4-second undo snackbar. Tapping a row opens the draft in the reused transaction form. Empty-state CTA opens `/home/add`. Delete is the only mutation on this screen; draft creation happens in `/home/add` only.
 5. **Categories Screen** — List categories grouped by expense/income, add/edit/reorder/archive
 6. **Settings Screen** — Theme toggle (light/dark), language selector, default account, default currency, manage categories, splash screen settings
 7. **Pending Transactions Screen** (Phase 2) — Review/approve/reject auto-generated transactions, accessible from Home badge and Settings
@@ -694,6 +736,7 @@ ShellRoute (bottom nav)
 - Save stays disabled until amount is greater than zero and both category and account are selected
 - Leaving with unsaved changes shows a confirm-discard dialog
 - Save failure keeps the form open and shows an error snackbar; successful save returns to Home and places the new transaction at the top of the list
+- **Shopping-list draft rules:** the "Add to shopping list" action requires account + expense category + date (amount is optional). "Save draft" in edit mode follows the same minimum requirements. "Save to transaction" additionally requires amount > 0. Income-category drafts are rejected at the repository layer regardless of UI state. Archived account/category references show an inline warning; draft save remains allowed but conversion is blocked until archived references are replaced. Zero-amount drafts persist `draft_amount_minor_units = null` / `draft_currency_code = null`; the visible currency reseeds from the selected account on next open.
 
 ### Screen States
 
@@ -715,6 +758,27 @@ Home → tap FAB → Add Transaction screen
   → date defaults to today, tap to change
   → optional: add memo
   → tap Save → returns to Home with the day pinned to the new transaction's date and the new entry visible at the top of that day's list
+```
+
+### Shopping List Draft Flow
+
+```text
+Home → tap FAB → Add Transaction screen
+  → fill in category, account, optional amount, date
+  → tap "Add to shopping list" → draft saved, form closes, returns to caller
+
+Accounts tab → shopping-list preview card shows newest drafts
+  → tap "View all" or overflow CTA → Shopping List Screen
+  → tap a draft row → draft opens in Edit Draft form
+    → adjust fields as needed
+    → tap "Save draft" → draft updated, returns to list
+    — or —
+    → tap "Save to transaction" → draft converted atomically, transaction created, draft removed, returns to list
+  → convert appears on Home under the transaction's date
+
+Shopping List Screen → swipe or tap delete icon → row hidden immediately
+  → undo snackbar for 4 seconds → tap Undo → row restored, no repository write
+  → timer expires → repository delete commits
 ```
 
 ### Quick Repeat Flow
