@@ -1,4 +1,4 @@
-// `TransactionFormScreen` — Wave 2 §5 / §8 / §9 / §10.
+// `TransactionFormScreen` — Wave 2 §5 / §8 / §9 / §10 / Task 5.
 //
 // Required widget tree (PRD → Layout Primitives):
 //
@@ -6,13 +6,21 @@
 //     └─ SafeArea
 //         └─ Column
 //             ├─ Expanded → SingleChildScrollView (type, amount, category,
-//             │             account, date, memo)
+//             │             account, date, memo, [shopping-list actions])
 //             └─ CalculatorKeypad (fixed height)
 //
 // `resizeToAvoidBottomInset: false` is mandatory — the keypad must stay
 // visible while the memo field's soft keyboard is open. Save lives in
 // the AppBar (numeric-only keypad). Adaptive 600dp behavior is supplied
 // by the router (`fullscreenDialog: true` + parentNavigatorKey).
+//
+// Task 5 additions:
+//   - `mode` constructor parameter drives AppBar title and CTA set.
+//   - AddTransactionMode: inline "Add to shopping list" action below
+//     MemoField.
+//   - EditShoppingListDraftMode: no AppBar save/delete; inline action row
+//     with "Save to transaction" (primary) + "Save draft" (secondary) +
+//     archived-ref warning text.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,12 +45,17 @@ import 'widgets/memo_field.dart';
 import 'widgets/transaction_type_segmented_control.dart';
 
 class TransactionFormScreen extends ConsumerStatefulWidget {
-  const TransactionFormScreen({super.key, this.transactionId});
+  const TransactionFormScreen({super.key, this.transactionId, this.mode});
 
   /// Edit-mode target id, parsed from `/home/edit/:id`.
+  /// Retained for backward compat; prefer passing [mode] directly.
   final int? transactionId;
 
-  bool get isEdit => transactionId != null;
+  /// Typed form mode. When null, the screen falls back to the legacy
+  /// transactionId-based hydration (backward compat with Wave 2 routes).
+  final TransactionFormMode? mode;
+
+  bool get isEdit => transactionId != null && mode == null;
 
   @override
   ConsumerState<TransactionFormScreen> createState() =>
@@ -69,6 +82,24 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   void _hydrate() {
     if (!mounted) return;
     final controller = ref.read(transactionFormControllerProvider.notifier);
+
+    // Task 5: if a typed mode was passed directly, use it.
+    final typedMode = widget.mode;
+    if (typedMode != null) {
+      switch (typedMode) {
+        case AddTransactionMode(:final initialDate):
+          controller.hydrateForAdd(initialDate: initialDate);
+        case DuplicateTransactionMode(:final sourceTransactionId):
+          controller.hydrateForDuplicate(sourceTransactionId);
+        case EditTransactionMode(:final transactionId):
+          controller.hydrateForEdit(transactionId);
+        case EditShoppingListDraftMode(:final shoppingListItemId):
+          controller.hydrateForShoppingListDraft(shoppingListItemId);
+      }
+      return;
+    }
+
+    // Legacy Wave 2 hydration via route extras / transactionId.
     final extra = GoRouterState.of(context).extra;
     DateTime? initialDate;
     if (extra is Map) {
@@ -96,6 +127,18 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(transactionFormControllerProvider);
     final controller = ref.read(transactionFormControllerProvider.notifier);
+    final activeMode = widget.mode ?? controller.formMode;
+    final isShoppingListDraftMode = activeMode is EditShoppingListDraftMode;
+
+    // Derive app-bar title from mode.
+    final String appBarTitle;
+    if (isShoppingListDraftMode) {
+      appBarTitle = l10n.shoppingListEditDraftTitle;
+    } else if (widget.isEdit) {
+      appBarTitle = l10n.txEditTitle;
+    } else {
+      appBarTitle = l10n.txAddTitle;
+    }
 
     return PopScope(
       canPop: _canPop(state),
@@ -110,26 +153,28 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       child: Scaffold(
         resizeToAvoidBottomInset: false,
         appBar: AppBar(
-          title: Text(widget.isEdit ? l10n.txEditTitle : l10n.txAddTitle),
-          actions: [
-            if (widget.isEdit)
-              IconButton(
-                icon: const Icon(Icons.delete_outline),
-                tooltip: l10n.commonDelete,
-                onPressed:
-                    state is TransactionFormData &&
-                        !state.isDeleting &&
-                        !state.isSaving
-                    ? () => _delete(context, l10n, controller)
-                    : null,
-              ),
-            TextButton(
-              onPressed: state.canSave
-                  ? () => _save(context, l10n, controller)
-                  : null,
-              child: Text(l10n.commonSave),
-            ),
-          ],
+          title: Text(appBarTitle),
+          actions: isShoppingListDraftMode
+              ? const []
+              : [
+                  if (widget.isEdit)
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline),
+                      tooltip: l10n.commonDelete,
+                      onPressed:
+                          state is TransactionFormData &&
+                              !state.isDeleting &&
+                              !state.isSaving
+                          ? () => _delete(context, l10n, controller)
+                          : null,
+                    ),
+                  TextButton(
+                    onPressed: state.canSave
+                        ? () => _save(context, l10n, controller)
+                        : null,
+                    child: Text(l10n.commonSave),
+                  ),
+                ],
         ),
         body: SafeArea(
           child: switch (state) {
@@ -152,6 +197,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
               l10n,
               state,
               controller,
+              activeMode: activeMode,
             ),
           },
         ),
@@ -163,14 +209,20 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     BuildContext context,
     AppLocalizations l10n,
     TransactionFormData state,
-    TransactionFormController controller,
-  ) {
+    TransactionFormController controller, {
+    required TransactionFormMode activeMode,
+  }) {
     final showAmountError = _showValidationHints && state.amountMinorUnits == 0;
     final showCategoryError =
         _showValidationHints && state.selectedCategory == null;
     final showAccountError =
         _showValidationHints && state.selectedAccount == null;
-    final controlsLocked = state.isSaving || state.isDeleting;
+    final controlsLocked =
+        state.isSaving ||
+        state.isDeleting ||
+        state.submissionAction != TransactionFormSubmissionAction.none;
+
+    final isShoppingListDraftMode = activeMode is EditShoppingListDraftMode;
 
     return IgnorePointer(
       ignoring: controlsLocked,
@@ -233,6 +285,25 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                     initialValue: state.memo,
                     onChanged: controller.setMemo,
                   ),
+                  // Shopping-list inline action rows — shown below MemoField.
+                  if (isShoppingListDraftMode)
+                    _ShoppingListDraftActions(
+                      state: state,
+                      l10n: l10n,
+                      onSaveToTransaction: () =>
+                          _convertDraft(context, l10n, controller),
+                      onSaveDraft: () =>
+                          _saveDraftFromEditMode(context, l10n, controller),
+                    )
+                  else if (activeMode is AddTransactionMode)
+                    _AddToShoppingListAction(
+                      canSaveDraft: state.canSaveDraft,
+                      label: l10n.shoppingListAddToListAction,
+                      inFlight:
+                          state.submissionAction ==
+                          TransactionFormSubmissionAction.saveDraft,
+                      onPressed: () => _saveAsDraft(context, l10n, controller),
+                    ),
                 ],
               ),
             ),
@@ -250,6 +321,68 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     );
   }
 
+  // ---------- Shopping-list command wrappers ----------
+
+  /// Called from AddTransactionMode — saves as draft and pops with null.
+  Future<void> _saveAsDraft(
+    BuildContext context,
+    AppLocalizations l10n,
+    TransactionFormController controller,
+  ) async {
+    try {
+      await controller.saveDraft();
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.shoppingListSaveFailedSnackbar)),
+      );
+      return;
+    }
+    if (!context.mounted) return;
+    // Add mode: pop with null (no Transaction result).
+    context.pop();
+  }
+
+  /// Called from EditShoppingListDraftMode — saves draft (update).
+  Future<void> _saveDraftFromEditMode(
+    BuildContext context,
+    AppLocalizations l10n,
+    TransactionFormController controller,
+  ) async {
+    ShoppingListEditResult? result;
+    try {
+      result = await controller.saveDraft();
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.shoppingListSaveFailedSnackbar)),
+      );
+      return;
+    }
+    if (!context.mounted) return;
+    context.pop(result);
+  }
+
+  /// Called from EditShoppingListDraftMode — converts draft to transaction.
+  Future<void> _convertDraft(
+    BuildContext context,
+    AppLocalizations l10n,
+    TransactionFormController controller,
+  ) async {
+    ShoppingListEditResult? result;
+    try {
+      result = await controller.convertDraft();
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.shoppingListConvertFailedSnackbar)),
+      );
+      return;
+    }
+    if (!context.mounted) return;
+    context.pop(result);
+  }
+
   void _showValidationHintsIfPossible() {
     setState(() {
       _showValidationHints = true;
@@ -261,7 +394,10 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   }
 
   bool _blocksPopDuringMutation(TransactionFormState state) {
-    return state is TransactionFormData && (state.isSaving || state.isDeleting);
+    return state is TransactionFormData &&
+        (state.isSaving ||
+            state.isDeleting ||
+            state.submissionAction != TransactionFormSubmissionAction.none);
   }
 
   bool _canPop(TransactionFormState state) {
@@ -538,6 +674,132 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       if (!mounted) return;
       controller.retryHydration();
     });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Shopping-list inline action widgets — Task 5
+// ---------------------------------------------------------------------------
+
+/// "Add to shopping list" inline button shown in AddTransactionMode, below
+/// the MemoField. Disabled until [canSaveDraft] is true.
+class _AddToShoppingListAction extends StatelessWidget {
+  const _AddToShoppingListAction({
+    required this.canSaveDraft,
+    required this.label,
+    required this.inFlight,
+    required this.onPressed,
+  });
+
+  final bool canSaveDraft;
+  final String label;
+  final bool inFlight;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: OutlinedButton(
+        key: const Key('addToShoppingListButton'),
+        onPressed: canSaveDraft && !inFlight ? onPressed : null,
+        child: inFlight
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Text(label),
+      ),
+    );
+  }
+}
+
+/// Inline action row shown in EditShoppingListDraftMode, below the MemoField.
+/// Shows archived-ref warnings when applicable.
+class _ShoppingListDraftActions extends StatelessWidget {
+  const _ShoppingListDraftActions({
+    required this.state,
+    required this.l10n,
+    required this.onSaveToTransaction,
+    required this.onSaveDraft,
+  });
+
+  final TransactionFormData state;
+  final AppLocalizations l10n;
+  final VoidCallback onSaveToTransaction;
+  final VoidCallback onSaveDraft;
+
+  @override
+  Widget build(BuildContext context) {
+    final inFlight =
+        state.submissionAction != TransactionFormSubmissionAction.none;
+    final convertInFlight =
+        state.submissionAction == TransactionFormSubmissionAction.convertDraft;
+    final saveInFlight =
+        state.submissionAction == TransactionFormSubmissionAction.saveDraft;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Archived-ref warnings.
+        if (state.selectedAccountIsArchived)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              l10n.shoppingListArchivedAccountWarning,
+              key: const Key('archivedAccountWarning'),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.error,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        if (state.selectedCategoryIsArchived)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              l10n.shoppingListArchivedCategoryWarning,
+              key: const Key('archivedCategoryWarning'),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.error,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        const SizedBox(height: 12),
+        // "Save to transaction" — primary CTA.
+        FilledButton(
+          key: const Key('saveToTransactionButton'),
+          onPressed: state.canConvertDraft && !inFlight
+              ? onSaveToTransaction
+              : null,
+          child: convertInFlight
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Text(l10n.shoppingListSaveToTransactionAction),
+        ),
+        const SizedBox(height: 8),
+        // "Save draft" — secondary CTA.
+        OutlinedButton(
+          key: const Key('saveDraftButton'),
+          onPressed: state.canSaveDraft && !inFlight ? onSaveDraft : null,
+          child: saveInFlight
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(l10n.shoppingListSaveDraftAction),
+        ),
+      ],
+    );
   }
 }
 
