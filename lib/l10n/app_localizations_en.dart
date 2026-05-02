@@ -516,6 +516,23 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get shoppingListCardTitle => 'Shopping list';
+
+  @override
+  String get shoppingListViewAll => 'View all';
+
+  @override
+  String get shoppingListEmptyBody => 'No upcoming expenses saved';
+
+  @override
+  String get shoppingListEmptyCta => 'Add to shopping list';
+
+  @override
+  String shoppingListItemsMore(int count) {
+    return '$count more';
+  }
+
+  @override
   String get currencyUsd => 'US Dollar';
 
   @override

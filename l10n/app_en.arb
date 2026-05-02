@@ -675,6 +675,30 @@
     }
   },
 
+  "shoppingListCardTitle": "Shopping list",
+  "@shoppingListCardTitle": {
+    "description": "Shopping list preview card title on the Accounts screen."
+  },
+  "shoppingListViewAll": "View all",
+  "@shoppingListViewAll": {
+    "description": "Shopping list card header CTA — navigates to the full shopping list screen."
+  },
+  "shoppingListEmptyBody": "No upcoming expenses saved",
+  "@shoppingListEmptyBody": {
+    "description": "Shopping list card empty-state body text."
+  },
+  "shoppingListEmptyCta": "Add to shopping list",
+  "@shoppingListEmptyCta": {
+    "description": "Shopping list card empty-state CTA — navigates to /home/add."
+  },
+  "shoppingListItemsMore": "{count} more",
+  "@shoppingListItemsMore": {
+    "description": "Shopping list card overflow CTA — shown when more than 3 drafts exist.",
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+
   "currencyUsd": "US Dollar",
   "@currencyUsd": {
     "description": "Seeded currency full name. DB nameL10nKey: currency.usd."

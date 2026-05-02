@@ -232,6 +232,13 @@ const Set<String> _expectedEnKeys = <String>{
   'currencySgd',
   'currencyAud',
   'currencyNzd',
+
+  // Task 3 — Shopping list preview card (feature/shopping-list).
+  'shoppingListCardTitle',
+  'shoppingListViewAll',
+  'shoppingListEmptyBody',
+  'shoppingListEmptyCta',
+  'shoppingListItemsMore',
 };
 
 Map<String, dynamic> _readArb(String fileName) {

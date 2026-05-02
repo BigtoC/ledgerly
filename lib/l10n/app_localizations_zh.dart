@@ -516,6 +516,23 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get shoppingListCardTitle => '购物清单';
+
+  @override
+  String get shoppingListViewAll => '查看全部';
+
+  @override
+  String get shoppingListEmptyBody => '暂无待支出';
+
+  @override
+  String get shoppingListEmptyCta => '加入购物清单';
+
+  @override
+  String shoppingListItemsMore(int count) {
+    return '还有$count条';
+  }
+
+  @override
   String get currencyUsd => 'US Dollar';
 
   @override
@@ -1046,6 +1063,23 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
+  String get shoppingListCardTitle => '购物清单';
+
+  @override
+  String get shoppingListViewAll => '查看全部';
+
+  @override
+  String get shoppingListEmptyBody => '暂无待支出';
+
+  @override
+  String get shoppingListEmptyCta => '加入购物清单';
+
+  @override
+  String shoppingListItemsMore(int count) {
+    return '还有$count条';
+  }
+
+  @override
   String get currencyUsd => '美元';
 
   @override
@@ -1573,6 +1607,23 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String accountsBalanceMore(int count) {
     return '+$count 個更多';
+  }
+
+  @override
+  String get shoppingListCardTitle => '購物清單';
+
+  @override
+  String get shoppingListViewAll => '查看全部';
+
+  @override
+  String get shoppingListEmptyBody => '尚無待支出';
+
+  @override
+  String get shoppingListEmptyCta => '加入購物清單';
+
+  @override
+  String shoppingListItemsMore(int count) {
+    return '還有$count筆';
   }
 
   @override

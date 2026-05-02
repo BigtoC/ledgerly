@@ -20,6 +20,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants.dart';
 import '../../core/utils/box_shadow.dart';
 import '../../l10n/app_localizations.dart';
+import '../shopping_list/widgets/shopping_list_card.dart';
 import 'accounts_controller.dart';
 import 'accounts_providers.dart';
 import 'accounts_state.dart';
@@ -64,32 +65,6 @@ class _AccountsBody extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context).toString();
 
-    if (data.active.isEmpty && data.archived.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (data.active.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                l10n.accountsEmptyTitle,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                icon: const Icon(Icons.add),
-                label: Text(l10n.accountsEmptyCta),
-                onPressed: () => context.go('/accounts/new'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     const cardPadding = EdgeInsets.symmetric(
       horizontal: homePageCardHorizontalPadding - 16,
     );
@@ -99,17 +74,50 @@ class _AccountsBody extends ConsumerWidget {
 
     return CustomScrollView(
       slivers: [
+        // Shopping list card is always FIRST — visible even when no accounts.
         SliverPadding(
           padding: cardPadding.copyWith(top: 16),
-          sliver: SliverToBoxAdapter(
-            child: _AccountListCard(
-              accounts: data.active,
-              defaultAccountId: data.defaultAccountId,
-              locale: locale,
-              allActiveIds: allActiveIds,
+          sliver: const SliverToBoxAdapter(child: ShoppingListCard()),
+        ),
+
+        if (data.active.isNotEmpty)
+          SliverPadding(
+            padding: cardPadding.copyWith(top: 16),
+            sliver: SliverToBoxAdapter(
+              child: _AccountListCard(
+                accounts: data.active,
+                defaultAccountId: data.defaultAccountId,
+                locale: locale,
+                allActiveIds: allActiveIds,
+              ),
             ),
           ),
-        ),
+
+        if (data.active.isEmpty)
+          SliverPadding(
+            padding: cardPadding.copyWith(top: 16),
+            sliver: SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      l10n.accountsEmptyTitle,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      icon: const Icon(Icons.add),
+                      label: Text(l10n.accountsEmptyCta),
+                      onPressed: () => context.go('/accounts/new'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
         if (data.archived.isNotEmpty)
           SliverPadding(
             padding: cardPadding,
@@ -134,6 +142,7 @@ class _AccountsBody extends ConsumerWidget {
               ),
             ),
           ),
+
         const SliverPadding(padding: EdgeInsets.only(bottom: 96)),
       ],
     );

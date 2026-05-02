@@ -1066,6 +1066,36 @@ abstract class AppLocalizations {
   /// **'{count, plural, one {+{count} more} other {+{count} more}}'**
   String accountsBalanceMore(int count);
 
+  /// Shopping list preview card title on the Accounts screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping list'**
+  String get shoppingListCardTitle;
+
+  /// Shopping list card header CTA — navigates to the full shopping list screen.
+  ///
+  /// In en, this message translates to:
+  /// **'View all'**
+  String get shoppingListViewAll;
+
+  /// Shopping list card empty-state body text.
+  ///
+  /// In en, this message translates to:
+  /// **'No upcoming expenses saved'**
+  String get shoppingListEmptyBody;
+
+  /// Shopping list card empty-state CTA — navigates to /home/add.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to shopping list'**
+  String get shoppingListEmptyCta;
+
+  /// Shopping list card overflow CTA — shown when more than 3 drafts exist.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} more'**
+  String shoppingListItemsMore(int count);
+
   /// Seeded currency full name. DB nameL10nKey: currency.usd.
   ///
   /// In en, this message translates to:
