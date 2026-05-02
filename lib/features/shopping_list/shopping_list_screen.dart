@@ -41,19 +41,26 @@ class ShoppingListScreen extends ConsumerStatefulWidget {
 }
 
 class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
-  late final ShoppingListController _controller;
+  ShoppingListController? _controller;
+  ShoppingListPendingDelete? _lastShownPending;
 
   @override
   void initState() {
     super.initState();
-    _controller = ref.read(shoppingListControllerProvider.notifier);
-    _controller.setEffectListener(_onEffect);
+    _bindController(ref.read(shoppingListControllerProvider.notifier));
   }
 
   @override
   void dispose() {
-    _controller.setEffectListener(null);
+    _controller?.setEffectListener(null);
     super.dispose();
+  }
+
+  void _bindController(ShoppingListController controller) {
+    if (identical(_controller, controller)) return;
+    _controller?.setEffectListener(null);
+    _controller = controller;
+    _controller?.setEffectListener(_onEffect);
   }
 
   void _onEffect(ShoppingListEffect effect) {
@@ -67,6 +74,37 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
     }
   }
 
+  void _maybeShowUndoSnackbar(
+    BuildContext context,
+    ShoppingListPendingDelete? pending,
+  ) {
+    if (pending == null) {
+      _lastShownPending = null;
+      return;
+    }
+    if (_lastShownPending?.itemId == pending.itemId) return;
+
+    _lastShownPending = pending;
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    messenger
+      ?..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(l10n.shoppingListDeleteUndoSnackbar),
+          duration: kUndoWindow,
+          action: SnackBarAction(
+            label: l10n.commonUndo,
+            onPressed: () {
+              unawaited(
+                ref.read(shoppingListControllerProvider.notifier).undoDelete(),
+              );
+            },
+          ),
+        ),
+      );
+  }
+
   Future<void> _onTapItem(BuildContext context, int id) async {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
@@ -76,17 +114,23 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
     if (!mounted) return;
     switch (result) {
       case ShoppingListEditResultMissingDraft():
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.shoppingListDraftNotFoundSnackbar)),
-        );
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(content: Text(l10n.shoppingListDraftNotFoundSnackbar)),
+          );
       case ShoppingListEditResultSavedDraft():
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.shoppingListSavedDraftSnackbar)),
-        );
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(content: Text(l10n.shoppingListSavedDraftSnackbar)),
+          );
       case ShoppingListEditResultSavedTransaction():
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.shoppingListConvertedSnackbar)),
-        );
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(content: Text(l10n.shoppingListConvertedSnackbar)),
+          );
       // unreachable from this route; only emitted by AddTransactionMode
       case ShoppingListEditResultAddedToList():
       case null:
@@ -94,26 +138,28 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
     }
   }
 
-  void _onDeleteItem(BuildContext context, int id) {
-    final l10n = AppLocalizations.of(context);
-    unawaited(_controller.deleteItem(id));
-    ScaffoldMessenger.maybeOf(context)
-      ?..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(l10n.shoppingListDeleteUndoSnackbar),
-          action: SnackBarAction(
-            label: l10n.commonUndo,
-            onPressed: () => unawaited(_controller.undoDelete()),
-          ),
-        ),
-      );
+  void _onDeleteItem(int id) {
+    unawaited(ref.read(shoppingListControllerProvider.notifier).deleteItem(id));
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(shoppingListControllerProvider);
+    _bindController(ref.read(shoppingListControllerProvider.notifier));
+
+    ref.listen(shoppingListControllerProvider, (_, next) {
+      if (next case AsyncData<ShoppingListState>(value: final value)) {
+        switch (value) {
+          case ShoppingListData(:final pendingDelete):
+            _maybeShowUndoSnackbar(context, pendingDelete);
+          case ShoppingListLoading() ||
+              ShoppingListEmpty() ||
+              ShoppingListError():
+            _maybeShowUndoSnackbar(context, null);
+        }
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.shoppingListScreenTitle)),
@@ -127,7 +173,7 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
             _DataBody(
               data: data,
               canOpenItem: data.pendingDelete == null,
-              onDeleteItem: (id) => _onDeleteItem(context, id),
+              onDeleteItem: _onDeleteItem,
               onTapItem: (id) => _onTapItem(context, id),
             ),
           AsyncData<ShoppingListState>(value: ShoppingListError()) =>
@@ -267,8 +313,8 @@ class _ShoppingListRow extends ConsumerWidget {
     final currency = currencyAsync?.valueOrNull;
 
     final locale = Localizations.localeOf(context).toString();
-    final primaryLabel = resolvePrimaryLabel(item, category);
-    final secondaryLabel = resolveSecondaryLabel(category, account);
+    final primaryLabel = resolvePrimaryLabel(item, category, l10n);
+    final secondaryLabel = resolveSecondaryLabel(category, account, l10n);
     final trailingLabel = resolveTrailingLabel(item, currency, locale);
 
     return Slidable(

@@ -5,6 +5,7 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'dart:async';
 
 import '../../app/providers/repository_providers.dart';
 import '../../data/models/account.dart';
@@ -24,9 +25,49 @@ Stream<({List<ShoppingListItem> preview, int totalCount})> shoppingListPreview(
   Ref ref,
 ) {
   final repo = ref.watch(shoppingListRepositoryProvider);
-  return repo.watchAll().map(
-    (items) => (preview: items.take(3).toList(), totalCount: items.length),
-  );
+  late final StreamController<
+    ({List<ShoppingListItem> preview, int totalCount})
+  >
+  controller;
+  StreamSubscription<List<ShoppingListItem>>? previewSub;
+  StreamSubscription<int>? countSub;
+  List<ShoppingListItem>? preview;
+  int? totalCount;
+
+  void emitIfReady() {
+    if (controller.isClosed || preview == null || totalCount == null) return;
+    controller.add((preview: preview!, totalCount: totalCount!));
+  }
+
+  controller =
+      StreamController<
+        ({List<ShoppingListItem> preview, int totalCount})
+      >.broadcast(
+        onListen: () {
+          previewSub = repo.watchAll(limit: 3).listen((items) {
+            preview = items;
+            emitIfReady();
+          });
+          countSub = repo.watchCount().listen((count) {
+            totalCount = count;
+            emitIfReady();
+          });
+        },
+        onCancel: () async {
+          await previewSub?.cancel();
+          await countSub?.cancel();
+          previewSub = null;
+          countSub = null;
+        },
+      );
+
+  ref.onDispose(() async {
+    await previewSub?.cancel();
+    await countSub?.cancel();
+    await controller.close();
+  });
+
+  return controller.stream;
 }
 
 /// One-shot read for archived-safe category name hydration.

@@ -10,20 +10,28 @@ import '../../data/models/account.dart';
 import '../../data/models/category.dart';
 import '../../data/models/currency.dart';
 import '../../data/models/shopping_list_item.dart';
+import '../../l10n/app_localizations.dart';
+import '../categories/widgets/category_display.dart';
 
 /// Returns memo if present and non-empty, otherwise category's display name.
-String resolvePrimaryLabel(ShoppingListItem item, Category? category) {
+String resolvePrimaryLabel(
+  ShoppingListItem item,
+  Category? category,
+  AppLocalizations l10n,
+) {
   final memo = item.memo;
   if (memo != null && memo.isNotEmpty) return memo;
   if (category == null) return '';
-  return category.customName ?? category.l10nKey ?? '';
+  return categoryDisplayName(category, l10n);
 }
 
 /// Returns "category name · account name".
-String resolveSecondaryLabel(Category? category, Account? account) {
-  final catName = category == null
-      ? ''
-      : (category.customName ?? category.l10nKey ?? '');
+String resolveSecondaryLabel(
+  Category? category,
+  Account? account,
+  AppLocalizations l10n,
+) {
+  final catName = category == null ? '' : categoryDisplayName(category, l10n);
   final accName = account?.name ?? '';
   if (catName.isEmpty && accName.isEmpty) return '';
   if (catName.isEmpty) return accName;
