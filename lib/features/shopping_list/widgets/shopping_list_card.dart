@@ -159,6 +159,7 @@ class _PreviewRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final categoryAsync = ref.watch(
       shoppingListCategoryByIdProvider(item.categoryId),
     );
@@ -175,8 +176,8 @@ class _PreviewRow extends ConsumerWidget {
     final currency = currencyAsync?.valueOrNull;
 
     final locale = Localizations.localeOf(context).toString();
-    final primaryLabel = resolvePrimaryLabel(item, category);
-    final secondaryLabel = resolveSecondaryLabel(category, account);
+    final primaryLabel = resolvePrimaryLabel(item, category, l10n);
+    final secondaryLabel = resolveSecondaryLabel(category, account, l10n);
     final trailingLabel = resolveTrailingLabel(item, currency, locale);
 
     return InkWell(
