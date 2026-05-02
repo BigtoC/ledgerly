@@ -378,6 +378,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       );
       return;
     }
+    if (result == null) return;
     if (!context.mounted) return;
     context.pop(result);
   }
@@ -398,6 +399,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       );
       return;
     }
+    if (result == null) return;
     if (!context.mounted) return;
     context.pop(result);
   }
