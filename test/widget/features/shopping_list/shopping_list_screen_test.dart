@@ -40,6 +40,14 @@ class _MockAccountRepository extends Mock implements AccountRepository {}
 
 class _MockCurrencyRepository extends Mock implements CurrencyRepository {}
 
+const _seededFoodCategory = Category(
+  id: 2,
+  icon: 'food',
+  color: 0,
+  type: CategoryType.expense,
+  l10nKey: 'category.food',
+);
+
 ShoppingListItem _item({
   required int id,
   int categoryId = 1,
@@ -81,6 +89,10 @@ class _StubRouter {
             body: Text('SHOPPING_ITEM_${state.pathParameters['id']}'),
           ),
         ),
+        GoRoute(
+          path: '/accounts/new',
+          builder: (_, _) => const Scaffold(body: Text('ADD_ACCOUNT')),
+        ),
       ],
     );
   }
@@ -100,21 +112,25 @@ Widget _wrap({required ProviderContainer container}) {
 ProviderContainer _makeContainer({
   required ShoppingListState fixed,
   _MockShoppingListRepository? repo,
+  Category? category,
 }) {
   final r = repo ?? _MockShoppingListRepository();
   when(() => r.watchAll()).thenAnswer((_) => const Stream.empty());
+  when(() => r.watchCount()).thenAnswer((_) => const Stream.empty());
 
   // _ShoppingListRow is a ConsumerWidget that watches category/account/currency
   // providers. Provide stub repositories so those providers don't throw.
   final categoryRepo = _MockCategoryRepository();
   when(() => categoryRepo.getById(any())).thenAnswer(
-    (_) async => const Category(
-      id: 1,
-      icon: 'food',
-      color: 0,
-      type: CategoryType.expense,
-      customName: 'Groceries',
-    ),
+    (_) async =>
+        category ??
+        const Category(
+          id: 1,
+          icon: 'food',
+          color: 0,
+          type: CategoryType.expense,
+          customName: 'Groceries',
+        ),
   );
 
   final accountRepo = _MockAccountRepository();
@@ -178,6 +194,34 @@ void main() {
     expect(find.text('Apples'), findsOneWidget);
     expect(find.text('Bread'), findsOneWidget);
   });
+
+  testWidgets(
+    'SLS03b: localizes seeded category fallback when row memo is empty',
+    (tester) async {
+      final items = [
+        ShoppingListItem(
+          id: 2,
+          categoryId: 2,
+          accountId: 1,
+          memo: '',
+          draftDate: DateTime(2026, 5, 1),
+          createdAt: DateTime(2026, 5, 1),
+          updatedAt: DateTime(2026, 5, 1),
+        ),
+      ];
+      final container = _makeContainer(
+        fixed: ShoppingListState.data(items: items, pendingDelete: null),
+        category: _seededFoodCategory,
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Food'), findsAtLeastNWidgets(1));
+      expect(find.text('category.food'), findsNothing);
+    },
+  );
 
   testWidgets('SLS04: row tap navigates to /accounts/shopping-list/:id', (
     tester,
@@ -313,6 +357,97 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets(
+    'SLS08b: retry recreates controller and delete still uses the active instance',
+    (tester) async {
+      final repo = _MockShoppingListRepository();
+      final firstCtrl = StreamController<List<ShoppingListItem>>.broadcast();
+      final secondCtrl = StreamController<List<ShoppingListItem>>.broadcast();
+      var watchCount = 0;
+
+      when(() => repo.watchAll()).thenAnswer((_) {
+        watchCount += 1;
+        return watchCount == 1 ? firstCtrl.stream : secondCtrl.stream;
+      });
+      when(() => repo.delete(any())).thenAnswer((_) async => true);
+
+      final container = ProviderContainer(
+        overrides: [shoppingListRepositoryProvider.overrideWithValue(repo)],
+      );
+      addTearDown(container.dispose);
+      addTearDown(firstCtrl.close);
+      addTearDown(secondCtrl.close);
+
+      await tester.pumpWidget(_wrap(container: container));
+      await tester.pump();
+
+      firstCtrl.addError(StateError('fail'));
+      await tester.pumpAndSettle();
+      expect(find.text('Retry'), findsOneWidget);
+
+      await tester.tap(find.text('Retry'));
+      await tester.pump();
+
+      secondCtrl.add([_item(id: 12, memo: 'Recovered item')]);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Recovered item'), findsOneWidget);
+
+      await tester.drag(find.text('Recovered item'), const Offset(-300, 0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete').last);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Recovered item'), findsNothing);
+      expect(find.text('Draft deleted'), findsOneWidget);
+
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+
+      verifyNever(() => repo.delete(any()));
+    },
+  );
+
+  testWidgets(
+    'SLS08c: delete snackbar is not shown when committing prior delete fails',
+    (tester) async {
+      final repo = _MockShoppingListRepository();
+      final ctrl = StreamController<List<ShoppingListItem>>.broadcast();
+      when(() => repo.watchAll()).thenAnswer((_) => ctrl.stream);
+      when(() => repo.delete(1)).thenThrow(StateError('delete failed'));
+
+      final container = ProviderContainer(
+        overrides: [shoppingListRepositoryProvider.overrideWithValue(repo)],
+      );
+      addTearDown(container.dispose);
+      addTearDown(ctrl.close);
+
+      await tester.pumpWidget(_wrap(container: container));
+      await tester.pump();
+
+      ctrl.add([_item(id: 1, memo: 'First'), _item(id: 2, memo: 'Second')]);
+      await tester.pumpAndSettle();
+
+      await tester.drag(find.text('First'), const Offset(-300, 0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete').last);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Draft deleted'), findsOneWidget);
+
+      await tester.drag(find.text('Second'), const Offset(-300, 0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete').last);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Draft deleted'), findsNothing);
+      expect(
+        find.text('Something went wrong. Please try again.'),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets(
     'SLS09: rows have non-swipe delete affordance (overflow/trailing icon)',

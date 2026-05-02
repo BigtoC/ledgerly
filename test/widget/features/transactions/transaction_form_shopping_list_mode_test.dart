@@ -26,6 +26,7 @@ import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/shopping_list_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
+import 'package:ledgerly/features/transactions/transaction_form_controller.dart';
 import 'package:ledgerly/features/transactions/transaction_form_screen.dart';
 import 'package:ledgerly/features/transactions/transaction_form_state.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
@@ -82,6 +83,51 @@ class _HomeStub extends StatelessWidget {
   Widget build(BuildContext context) => const Scaffold(body: Text('home-stub'));
 }
 
+class _FakeTransactionFormController extends TransactionFormController {
+  _FakeTransactionFormController({
+    required this.fixed,
+    this.saveDraftResult,
+    this.convertDraftResult,
+  });
+
+  final TransactionFormState fixed;
+  final ShoppingListEditResult? saveDraftResult;
+  final ShoppingListEditResult? convertDraftResult;
+
+  @override
+  TransactionFormState build() => fixed;
+
+  @override
+  Future<void> hydrateForShoppingListDraft(int shoppingListItemId) async {
+    state = fixed;
+  }
+
+  @override
+  Future<ShoppingListEditResult?> saveDraft() async => saveDraftResult;
+
+  @override
+  Future<ShoppingListEditResult?> convertDraft() async => convertDraftResult;
+}
+
+TransactionFormState _editableDraftState({int shoppingListItemId = 77}) =>
+    TransactionFormState.data(
+      amountMinorUnits: 500,
+      selectedAccount: _account,
+      displayCurrency: _usd,
+      currencyTouched: false,
+      selectedCategory: _expenseCategory,
+      pendingType: CategoryType.expense,
+      date: DateTime(2026, 5, 1),
+      memo: 'Milk',
+      isDirty: false,
+      isSaving: false,
+      isDeleting: false,
+      editingId: null,
+      duplicateSourceId: null,
+      originalCreatedAt: null,
+      shoppingListItemId: shoppingListItemId,
+    );
+
 void main() {
   late _MockTransactionRepository txRepo;
   late _MockAccountRepository accountRepo;
@@ -115,6 +161,25 @@ void main() {
     when(() => currencyRepo.getByCode('USD')).thenAnswer((_) async => _usd);
   });
 
+  Widget mountWithRouter(GoRouter router, {List<Override> extra = const []}) {
+    return ProviderScope(
+      overrides: [
+        transactionRepositoryProvider.overrideWithValue(txRepo),
+        accountRepositoryProvider.overrideWithValue(accountRepo),
+        categoryRepositoryProvider.overrideWithValue(categoryRepo),
+        userPreferencesRepositoryProvider.overrideWithValue(prefs),
+        currencyRepositoryProvider.overrideWithValue(currencyRepo),
+        shoppingListRepositoryProvider.overrideWithValue(slRepo),
+        ...extra,
+      ],
+      child: MaterialApp.router(
+        routerConfig: router,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+      ),
+    );
+  }
+
   Widget mountWithMode(TransactionFormMode mode) {
     final router = GoRouter(
       initialLocation: '/form',
@@ -131,21 +196,26 @@ void main() {
         ),
       ],
     );
-    return ProviderScope(
-      overrides: [
-        transactionRepositoryProvider.overrideWithValue(txRepo),
-        accountRepositoryProvider.overrideWithValue(accountRepo),
-        categoryRepositoryProvider.overrideWithValue(categoryRepo),
-        userPreferencesRepositoryProvider.overrideWithValue(prefs),
-        currencyRepositoryProvider.overrideWithValue(currencyRepo),
-        shoppingListRepositoryProvider.overrideWithValue(slRepo),
+    return mountWithRouter(router);
+  }
+
+  GoRouter buildPushRouter(TransactionFormMode mode) {
+    final router = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(path: '/', builder: (_, _) => const _HomeStub()),
+        GoRoute(
+          path: '/form',
+          builder: (_, _) => TransactionFormScreen(mode: mode),
+        ),
+        GoRoute(
+          path: '/settings/categories',
+          builder: (_, _) =>
+              Scaffold(appBar: AppBar(title: const Text('categories-stub'))),
+        ),
       ],
-      child: MaterialApp.router(
-        routerConfig: router,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-      ),
     );
+    return router;
   }
 
   testWidgets(
@@ -205,54 +275,117 @@ void main() {
       ShoppingListEditResult? poppedResult;
 
       // Build a router that captures the pop result from the form screen.
-      final router = GoRouter(
-        initialLocation: '/',
-        routes: [
-          GoRoute(path: '/', builder: (_, _) => const _HomeStub()),
-          GoRoute(
-            path: '/form',
-            builder: (_, state) {
-              return const TransactionFormScreen(
-                mode: EditShoppingListDraftMode(shoppingListItemId: 99),
-              );
-            },
-          ),
-          GoRoute(
-            path: '/settings/categories',
-            builder: (_, _) =>
-                Scaffold(appBar: AppBar(title: const Text('categories-stub'))),
-          ),
-        ],
+      final router = buildPushRouter(
+        const EditShoppingListDraftMode(shoppingListItemId: 99),
       );
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            transactionRepositoryProvider.overrideWithValue(txRepo),
-            accountRepositoryProvider.overrideWithValue(accountRepo),
-            categoryRepositoryProvider.overrideWithValue(categoryRepo),
-            userPreferencesRepositoryProvider.overrideWithValue(prefs),
-            currencyRepositoryProvider.overrideWithValue(currencyRepo),
-            shoppingListRepositoryProvider.overrideWithValue(slRepo),
-          ],
-          child: MaterialApp.router(
-            routerConfig: router,
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-          ),
-        ),
-      );
+      await tester.pumpWidget(mountWithRouter(router));
 
       // Navigate to the form screen, capturing the pop result.
-      unawaited(router.push<ShoppingListEditResult>('/form').then((result) {
-        poppedResult = result;
-      }));
+      unawaited(
+        router.push<ShoppingListEditResult>('/form').then((result) {
+          poppedResult = result;
+        }),
+      );
       await tester.pumpAndSettle();
 
       // After hydration finds the draft is missing, the screen should auto-pop
       // back to home-stub and supply ShoppingListEditResultMissingDraft.
       expect(find.text('home-stub'), findsOneWidget);
       expect(poppedResult, isA<ShoppingListEditResultMissingDraft>());
+    },
+  );
+
+  testWidgets('TFSLM05: save draft null result does not pop edit-draft form', (
+    tester,
+  ) async {
+    var didPop = false;
+    ShoppingListEditResult? poppedResult;
+    final router = buildPushRouter(
+      const EditShoppingListDraftMode(shoppingListItemId: 77),
+    );
+    final fakeController = _FakeTransactionFormController(
+      fixed: _editableDraftState(),
+      saveDraftResult: null,
+    );
+
+    await tester.pumpWidget(
+      mountWithRouter(
+        router,
+        extra: [
+          transactionFormControllerProvider.overrideWith(() => fakeController),
+        ],
+      ),
+    );
+
+    unawaited(
+      router.push<ShoppingListEditResult?>('/form').then((result) {
+        didPop = true;
+        poppedResult = result;
+      }),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TransactionFormScreen), findsOneWidget);
+    expect(find.byKey(const Key('saveDraftButton')), findsOneWidget);
+
+    await tester.ensureVisible(find.byKey(const Key('saveDraftButton')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('saveDraftButton')));
+    await tester.pumpAndSettle();
+
+    expect(didPop, isFalse);
+    expect(poppedResult, isNull);
+    expect(find.byType(TransactionFormScreen), findsOneWidget);
+    expect(find.byKey(const Key('saveDraftButton')), findsOneWidget);
+  });
+
+  testWidgets(
+    'TFSLM06: convert draft null result does not pop edit-draft form',
+    (tester) async {
+      var didPop = false;
+      ShoppingListEditResult? poppedResult;
+      final router = buildPushRouter(
+        const EditShoppingListDraftMode(shoppingListItemId: 77),
+      );
+      final fakeController = _FakeTransactionFormController(
+        fixed: _editableDraftState(),
+        convertDraftResult: null,
+      );
+
+      await tester.pumpWidget(
+        mountWithRouter(
+          router,
+          extra: [
+            transactionFormControllerProvider.overrideWith(
+              () => fakeController,
+            ),
+          ],
+        ),
+      );
+
+      unawaited(
+        router.push<ShoppingListEditResult?>('/form').then((result) {
+          didPop = true;
+          poppedResult = result;
+        }),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TransactionFormScreen), findsOneWidget);
+      expect(find.byKey(const Key('saveToTransactionButton')), findsOneWidget);
+
+      await tester.ensureVisible(
+        find.byKey(const Key('saveToTransactionButton')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('saveToTransactionButton')));
+      await tester.pumpAndSettle();
+
+      expect(didPop, isFalse);
+      expect(poppedResult, isNull);
+      expect(find.byType(TransactionFormScreen), findsOneWidget);
+      expect(find.byKey(const Key('saveToTransactionButton')), findsOneWidget);
     },
   );
 }

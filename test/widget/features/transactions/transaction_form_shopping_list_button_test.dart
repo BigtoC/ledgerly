@@ -30,6 +30,7 @@ import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/features/transactions/transaction_form_screen.dart';
 import 'package:ledgerly/features/transactions/transaction_form_state.dart';
+import 'package:ledgerly/features/transactions/widgets/account_selector_tile.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 // ---------- Mocks ----------
@@ -162,6 +163,17 @@ void main() {
           builder: (_, _) =>
               Scaffold(appBar: AppBar(title: const Text('categories-stub'))),
         ),
+        GoRoute(
+          path: '/accounts/new',
+          builder: (context, _) => Scaffold(
+            body: Center(
+              child: FilledButton(
+                onPressed: () => GoRouter.of(context).pop(99),
+                child: const Text('finish-create-account'),
+              ),
+            ),
+          ),
+        ),
       ],
     );
     return ProviderScope(
@@ -261,6 +273,66 @@ void main() {
         find.byKey(const Key('saveToTransactionButton')),
       );
       expect(saveToTxBtn.onPressed, isNull);
+    },
+  );
+
+  testWidgets(
+    'TFSLW05: archived draft with no active replacements can create account without losing edits',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(400, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final draft = _draft(
+        id: 89,
+        categoryId: _expenseCategory.id,
+        accountId: _archivedAccount.id,
+        draftAmountMinorUnits: 500,
+        draftCurrencyCode: 'USD',
+      );
+      when(() => slRepo.getById(89)).thenAnswer((_) async => draft);
+      when(
+        () => accountRepo.watchAll(includeArchived: false),
+      ).thenAnswer((_) => Stream.value(const <Account>[]));
+      when(() => accountRepo.getById(99)).thenAnswer(
+        (_) async => const Account(
+          id: 99,
+          name: 'Fresh Cash',
+          accountTypeId: 1,
+          currency: _usd,
+        ),
+      );
+
+      await tester.pumpWidget(
+        mountWithMode(const EditShoppingListDraftMode(shoppingListItemId: 89)),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField).first, 'keep this memo');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(AccountSelectorTile));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Pick account'), findsOneWidget);
+      expect(
+        find.text('No active accounts — create one first'),
+        findsOneWidget,
+      );
+      expect(find.text('Create account'), findsOneWidget);
+
+      await tester.tap(find.text('Create account'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('finish-create-account'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TransactionFormScreen), findsOneWidget);
+      expect(find.text('Fresh Cash'), findsOneWidget);
+      expect(find.text('keep this memo'), findsOneWidget);
+
+      final saveToTxBtn = tester.widget<FilledButton>(
+        find.byKey(const Key('saveToTransactionButton')),
+      );
+      expect(saveToTxBtn.onPressed, isNotNull);
     },
   );
 }

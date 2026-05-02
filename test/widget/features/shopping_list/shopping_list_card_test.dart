@@ -39,6 +39,7 @@ import 'package:ledgerly/features/accounts/accounts_controller.dart';
 import 'package:ledgerly/features/accounts/accounts_screen.dart';
 import 'package:ledgerly/features/accounts/accounts_state.dart';
 import 'package:ledgerly/features/shopping_list/shopping_list_controller.dart';
+import 'package:ledgerly/features/shopping_list/shopping_list_providers.dart';
 import 'package:ledgerly/features/shopping_list/shopping_list_state.dart';
 import 'package:ledgerly/features/shopping_list/widgets/shopping_list_card.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
@@ -89,6 +90,14 @@ const _expenseCategory = Category(
   type: CategoryType.expense,
   l10nKey: 'category.food',
   customName: 'Groceries',
+);
+
+const _seededExpenseCategory = Category(
+  id: 11,
+  icon: 'food',
+  color: 1,
+  type: CategoryType.expense,
+  l10nKey: 'category.food',
 );
 
 const _account = Account(
@@ -190,6 +199,14 @@ ProviderContainer _makeCardContainer({
   return ProviderContainer(
     overrides: [
       shoppingListRepositoryProvider.overrideWithValue(shoppingListRepo),
+      shoppingListPreviewProvider.overrideWith((ref) {
+        return shoppingListRepo.watchAll().map(
+          (items) => (
+            preview: items.take(3).toList(growable: false),
+            totalCount: items.length,
+          ),
+        );
+      }),
       categoryRepositoryProvider.overrideWithValue(categoryRepo),
       accountRepositoryProvider.overrideWithValue(accountRepo),
       accountTypeRepositoryProvider.overrideWithValue(typeRepo),
@@ -221,6 +238,14 @@ ProviderContainer _makeAccountsContainer({
   return ProviderContainer(
     overrides: [
       shoppingListRepositoryProvider.overrideWithValue(shoppingListRepo),
+      shoppingListPreviewProvider.overrideWith((ref) {
+        return shoppingListRepo.watchAll().map(
+          (items) => (
+            preview: items.take(3).toList(growable: false),
+            totalCount: items.length,
+          ),
+        );
+      }),
       categoryRepositoryProvider.overrideWithValue(categoryRepo),
       accountRepositoryProvider.overrideWithValue(accountRepo),
       accountTypeRepositoryProvider.overrideWithValue(typeRepo),
@@ -417,6 +442,36 @@ void main() {
 
       // Falls back to customName 'Groceries'
       expect(find.text('Groceries'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'ShoppingListCard localizes seeded category fallback when memo is empty',
+    (tester) async {
+      final shoppingListRepo = _MockShoppingListRepository();
+      final categoryRepo = _MockCategoryRepository();
+      final accountRepo = _MockAccountRepository();
+
+      when(() => shoppingListRepo.watchAll()).thenAnswer(
+        (_) => Stream.value([_item(id: 11, categoryId: 11, memo: '')]),
+      );
+      when(
+        () => categoryRepo.getById(11),
+      ).thenAnswer((_) async => _seededExpenseCategory);
+      when(() => accountRepo.getById(20)).thenAnswer((_) async => _account);
+
+      final container = _makeCardContainer(
+        shoppingListRepo: shoppingListRepo,
+        categoryRepo: categoryRepo,
+        accountRepo: accountRepo,
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrapCard(container: container));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Food'), findsOneWidget);
+      expect(find.text('category.food'), findsNothing);
     },
   );
 
@@ -669,6 +724,14 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           shoppingListRepositoryProvider.overrideWithValue(shoppingListRepo),
+          shoppingListPreviewProvider.overrideWith((ref) {
+            return shoppingListRepo.watchAll().map(
+              (items) => (
+                preview: items.take(3).toList(growable: false),
+                totalCount: items.length,
+              ),
+            );
+          }),
           categoryRepositoryProvider.overrideWithValue(categoryRepo),
           accountRepositoryProvider.overrideWithValue(accountRepo),
           accountTypeRepositoryProvider.overrideWithValue(typeRepo),
@@ -785,6 +848,14 @@ void main() {
       final spyContainer = ProviderContainer(
         overrides: [
           shoppingListRepositoryProvider.overrideWithValue(shoppingListRepo),
+          shoppingListPreviewProvider.overrideWith((ref) {
+            return shoppingListRepo.watchAll().map(
+              (items) => (
+                preview: items.take(3).toList(growable: false),
+                totalCount: items.length,
+              ),
+            );
+          }),
           categoryRepositoryProvider.overrideWithValue(categoryRepo),
           accountRepositoryProvider.overrideWithValue(accountRepo),
           accountTypeRepositoryProvider.overrideWithValue(typeRepo),

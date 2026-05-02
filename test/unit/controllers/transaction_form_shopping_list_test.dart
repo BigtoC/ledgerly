@@ -155,6 +155,7 @@ void main() {
     prefs = _MockUserPreferencesRepository();
     currencyRepo = _MockCurrencyRepository();
     slRepo = _MockShoppingListRepository();
+    when(() => slRepo.watchCount()).thenAnswer((_) => const Stream.empty());
 
     // Default fallback stubs.
     when(() => prefs.getDefaultAccountId()).thenAnswer((_) async => null);

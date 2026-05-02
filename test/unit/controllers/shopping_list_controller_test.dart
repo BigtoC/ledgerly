@@ -54,6 +54,10 @@ void main() {
       itemsCtrl = StreamController<List<ShoppingListItem>>.broadcast();
 
       when(() => repo.watchAll()).thenAnswer((_) => itemsCtrl.stream);
+      when(
+        () => repo.watchAll(limit: any(named: 'limit')),
+      ).thenAnswer((_) => itemsCtrl.stream);
+      when(() => repo.watchCount()).thenAnswer((_) => const Stream.empty());
     });
 
     tearDown(() async {

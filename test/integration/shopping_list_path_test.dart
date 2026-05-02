@@ -2,12 +2,9 @@
 //
 // Covers four paths through the shopping-list feature:
 //
-//   Path 1 – Repository insert → Accounts preview card → ShoppingListScreen
-//             row visible. Full form interaction is not exercised here because
-//             the calculator-keypad / category-picker flow has complex modal
-//             timing that is already covered by transaction_mutation_flow_test.
-//             The path focuses on what IS reliably testable at integration
-//             level: repository state flowing to the two UI surfaces.
+//   Path 1 – Home add form → Add to shopping list → Accounts preview →
+//             ShoppingListScreen → save draft → convert to transaction →
+//             Home transaction row visible.
 //
 //   Path 2 – Category-name fallback when memo is absent.
 //
@@ -34,7 +31,10 @@ import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
 import 'package:ledgerly/data/repositories/shopping_list_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/features/accounts/accounts_screen.dart';
+import 'package:ledgerly/features/home/home_screen.dart';
+import 'package:ledgerly/features/home/widgets/transaction_tile.dart';
 import 'package:ledgerly/features/shopping_list/shopping_list_screen.dart';
+import 'package:ledgerly/features/transactions/widgets/category_chip.dart';
 
 import '../support/test_app.dart';
 
@@ -49,130 +49,143 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> enterAmountAndFood(WidgetTester tester, String digits) async {
+    for (final codeUnit in digits.codeUnits) {
+      await tester.tap(find.text(String.fromCharCode(codeUnit)));
+      await tester.pumpAndSettle();
+    }
+    await tester.tap(find.byType(CategoryChip));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Food').last);
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> settleAfterModalResult(WidgetTester tester) async {
+    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pumpAndSettle();
+  }
+
   // ---------------------------------------------------------------------------
-  // Path 1: Repository insert → preview card row → ShoppingListScreen row
-  //
-  // NOTE: Full e2e form interaction (Home FAB → fill → "Add to shopping list")
-  // requires live form interaction with modal sheets (category picker) that
-  // have complex async timing. That flow is covered at the controller unit
-  // level. This path asserts the downstream UI surfaces: once a draft exists
-  // in the repository, the Accounts preview card and ShoppingListScreen both
-  // reflect it correctly.
+  // Path 1: real form-driven capture → save-draft → convert flow
   // ---------------------------------------------------------------------------
 
-  group(
-    'Path 1: preview card and shopping list screen show inserted draft',
-    () {
-      testWidgets(
-        'draft inserted via repository is visible on Accounts preview card',
-        (tester) async {
-          final db = newTestAppDatabase();
-          addTearDown(db.close);
+  group('Path 1: real shopping-list capture and conversion flow', () {
+    testWidgets(
+      'Home add form saves a draft, dedicated list saves changes, and conversion creates a transaction',
+      (tester) async {
+        final db = newTestAppDatabase();
+        addTearDown(db.close);
+        await tester.runAsync(() => runTestSeed(db));
 
-          late int foodId;
-          late int cashAccountId;
+        final container = makeTestContainer(
+          db: db,
+          extraOverrides: [
+            splashGateSnapshotProvider.overrideWithValue(
+              SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
 
-          await tester.runAsync(() async {
-            await runTestSeed(db);
-            foodId = await getSeededCategoryId(db, 'category.food');
-            final cash = await getDefaultAccount(db);
-            cashAccountId = cash.id;
+        await tester.pumpWidget(buildTestApp(container: container));
+        await pumpToHome(tester);
 
-            // Insert a draft with a memo so we can find it by text.
-            final repo = DriftShoppingListRepository(
-              db,
-              DriftTransactionRepository(db),
-            );
-            await repo.insert(
-              categoryId: foodId,
-              accountId: cashAccountId,
-              memo: 'Grocery run',
-              draftAmountMinorUnits: 1500,
-              draftCurrencyCode: 'USD',
-              draftDate: DateTime.now(),
-            );
-          });
+        expect(find.byType(HomeScreen), findsOneWidget);
+        expect(find.byType(TransactionTile), findsNothing);
 
-          final container = makeTestContainer(
-            db: db,
-            extraOverrides: [
-              splashGateSnapshotProvider.overrideWithValue(
-                SplashGateSnapshot.withInitial(enabled: false, startDate: null),
-              ),
-            ],
-          );
-          addTearDown(container.dispose);
+        await tester.tap(find.byTooltip('Add transaction'));
+        await tester.pumpAndSettle();
+        expect(find.text('Add transaction'), findsOneWidget);
 
-          await tester.pumpWidget(buildTestApp(container: container));
-          await pumpToHome(tester);
+        await enterAmountAndFood(tester, '1');
+        await tester.enterText(
+          find.byType(TextField).first,
+          'Weekly groceries',
+        );
+        await tester.pumpAndSettle();
 
-          // Navigate to Accounts tab.
-          await tester.tap(find.text('Accounts'));
-          await tester.pumpAndSettle();
-          expect(find.byType(AccountsScreen), findsOneWidget);
+        await tester.ensureVisible(
+          find.byKey(const Key('addToShoppingListButton')),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('addToShoppingListButton')));
+        await tester.pumpAndSettle();
 
-          // Draft row should be visible in the ShoppingListCard preview.
-          expect(find.text('Grocery run'), findsOneWidget);
+        expect(find.byType(HomeScreen), findsOneWidget);
+        expect(find.byType(TransactionTile), findsNothing);
 
-          expect(tester.takeException(), isNull);
-        },
-      );
+        await tester.tap(find.text('Accounts'));
+        await tester.pumpAndSettle();
+        expect(find.byType(AccountsScreen), findsOneWidget);
+        expect(find.text('Weekly groceries'), findsOneWidget);
 
-      testWidgets(
-        'tapping preview row navigates to ShoppingListScreen with the draft',
-        (tester) async {
-          final db = newTestAppDatabase();
-          addTearDown(db.close);
+        await tester.tap(find.text('View all'));
+        await tester.pumpAndSettle();
+        expect(find.byType(ShoppingListScreen), findsOneWidget);
+        expect(find.text('Weekly groceries'), findsOneWidget);
 
-          await tester.runAsync(() async {
-            await runTestSeed(db);
-            final foodId = await getSeededCategoryId(db, 'category.food');
-            final cash = await getDefaultAccount(db);
+        await tester.tap(find.text('Weekly groceries'));
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('saveDraftButton')), findsOneWidget);
 
-            final repo = DriftShoppingListRepository(
-              db,
-              DriftTransactionRepository(db),
-            );
-            await repo.insert(
-              categoryId: foodId,
-              accountId: cash.id,
-              memo: 'Weekend shopping',
-              draftDate: DateTime.now(),
-            );
-          });
+        await tester.enterText(
+          find.byType(TextField).first,
+          'Weekly groceries updated',
+        );
+        await tester.pumpAndSettle();
 
-          final container = makeTestContainer(
-            db: db,
-            extraOverrides: [
-              splashGateSnapshotProvider.overrideWithValue(
-                SplashGateSnapshot.withInitial(enabled: false, startDate: null),
-              ),
-            ],
-          );
-          addTearDown(container.dispose);
+        await tester.ensureVisible(find.byKey(const Key('saveDraftButton')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('saveDraftButton')));
+        await settleAfterModalResult(tester);
 
-          await tester.pumpWidget(buildTestApp(container: container));
-          await pumpToHome(tester);
+        expect(find.byType(ShoppingListScreen), findsOneWidget);
+        expect(find.text('Draft saved'), findsOneWidget);
+        expect(find.text('Weekly groceries updated'), findsOneWidget);
 
-          // Navigate to Accounts tab.
-          await tester.tap(find.text('Accounts'));
-          await tester.pumpAndSettle();
-          expect(find.byType(AccountsScreen), findsOneWidget);
+        await tester.tap(find.text('Weekly groceries updated'));
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(const Key('saveToTransactionButton')),
+          findsOneWidget,
+        );
 
-          // Tap the "View all" button on the ShoppingListCard to navigate.
-          await tester.tap(find.text('View all'));
-          await tester.pumpAndSettle();
+        await tester.ensureVisible(
+          find.byKey(const Key('saveToTransactionButton')),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('saveToTransactionButton')));
+        await settleAfterModalResult(tester);
 
-          // Should now be on ShoppingListScreen.
-          expect(find.byType(ShoppingListScreen), findsOneWidget);
-          // Draft row shows its memo as the primary label.
-          expect(find.text('Weekend shopping'), findsOneWidget);
+        expect(find.byType(ShoppingListScreen), findsOneWidget);
+        expect(find.text('Draft converted to transaction'), findsOneWidget);
+        expect(find.text('No upcoming expenses saved'), findsOneWidget);
+        expect(find.text('Weekly groceries updated'), findsNothing);
 
-          expect(tester.takeException(), isNull);
-        },
-      );
-    },
-  );
+        await tester.tap(find.text('Home'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(HomeScreen), findsOneWidget);
+        expect(find.byType(TransactionTile), findsOneWidget);
+        expect(find.textContaining('Weekly groceries updated'), findsOneWidget);
+
+        final txRows = await tester.runAsync(
+          () => db.select(db.transactions).get(),
+        );
+        final draftRows = await tester.runAsync(
+          () => db.select(db.shoppingListItems).get(),
+        );
+
+        expect(txRows, hasLength(1));
+        expect(txRows!.single.amountMinorUnits, 100);
+        expect(txRows.single.memo, 'Weekly groceries updated');
+        expect(draftRows, isEmpty);
+
+        expect(tester.takeException(), isNull);
+      },
+    );
+  });
 
   // ---------------------------------------------------------------------------
   // Path 2: Category-name fallback when memo is absent

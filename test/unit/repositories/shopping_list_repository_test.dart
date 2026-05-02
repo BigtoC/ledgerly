@@ -210,6 +210,22 @@ void main() {
     );
 
     test(
+      'insert normalizes zero amount with currency to null amount/null currency',
+      () async {
+        final item = await repo.insert(
+          categoryId: expenseCategoryId,
+          accountId: accountId,
+          draftAmountMinorUnits: 0,
+          draftCurrencyCode: 'USD',
+          draftDate: DateTime.utc(2026, 6, 1),
+        );
+
+        expect(item.draftAmountMinorUnits, isNull);
+        expect(item.draftCurrencyCode, isNull);
+      },
+    );
+
+    test(
       'insert with amount but no currency throws ShoppingListRepositoryException',
       () async {
         await expectLater(
@@ -297,6 +313,26 @@ void main() {
           ),
           throwsA(isA<ShoppingListRepositoryException>()),
         );
+      },
+    );
+
+    test(
+      'update normalizes zero amount with currency to null amount/null currency',
+      () async {
+        final item = await repo.insert(
+          categoryId: expenseCategoryId,
+          accountId: accountId,
+          draftAmountMinorUnits: 100,
+          draftCurrencyCode: 'USD',
+          draftDate: DateTime.utc(2026, 6, 1),
+        );
+
+        final updated = await repo.update(
+          item.copyWith(draftAmountMinorUnits: 0, draftCurrencyCode: 'USD'),
+        );
+
+        expect(updated.draftAmountMinorUnits, isNull);
+        expect(updated.draftCurrencyCode, isNull);
       },
     );
 
@@ -437,6 +473,72 @@ void main() {
       expect(items[0].memo, 'newer');
       expect(items[1].memo, 'older');
     });
+
+    test('watchAll limit returns only the newest rows', () async {
+      await _insertShoppingListItemRaw(
+        db,
+        categoryId: expenseCategoryId,
+        accountId: accountId,
+        memo: 'first',
+        createdAt: DateTime.utc(2026, 1, 1),
+      );
+      await _insertShoppingListItemRaw(
+        db,
+        categoryId: expenseCategoryId,
+        accountId: accountId,
+        memo: 'second',
+        createdAt: DateTime.utc(2026, 2, 1),
+      );
+      await _insertShoppingListItemRaw(
+        db,
+        categoryId: expenseCategoryId,
+        accountId: accountId,
+        memo: 'third',
+        createdAt: DateTime.utc(2026, 3, 1),
+      );
+      await _insertShoppingListItemRaw(
+        db,
+        categoryId: expenseCategoryId,
+        accountId: accountId,
+        memo: 'fourth',
+        createdAt: DateTime.utc(2026, 4, 1),
+      );
+
+      final items = await repo.watchAll(limit: 3).first;
+      expect(items.map((item) => item.memo), ['fourth', 'third', 'second']);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // watchCount
+  // -------------------------------------------------------------------------
+
+  group('watchCount', () {
+    test(
+      'watchCount emits current count and updates after insert/delete',
+      () async {
+        final snapshots = <int>[];
+        final sub = repo.watchCount().listen(snapshots.add);
+        addTearDown(sub.cancel);
+
+        await Future<void>.delayed(Duration.zero);
+        expect(snapshots.last, 0);
+
+        final item = await repo.insert(
+          categoryId: expenseCategoryId,
+          accountId: accountId,
+          draftDate: DateTime.utc(2026, 6, 1),
+        );
+
+        await Future<void>.delayed(Duration.zero);
+        expect(snapshots.last, 1);
+
+        await repo.delete(item.id);
+
+        await Future<void>.delayed(Duration.zero);
+        expect(snapshots.last, 0);
+      },
+    );
   });
 
   // -------------------------------------------------------------------------
@@ -514,6 +616,35 @@ void main() {
           ),
           throwsA(isA<ShoppingListRepositoryException>()),
         );
+      },
+    );
+
+    test(
+      'convertToTransaction with zero amount throws and keeps the draft',
+      () async {
+        final item = await repo.insert(
+          categoryId: expenseCategoryId,
+          accountId: accountId,
+          draftDate: DateTime.utc(2026, 6, 1),
+        );
+
+        await expectLater(
+          repo.convertToTransaction(
+            shoppingListItemId: item.id,
+            categoryId: expenseCategoryId,
+            accountId: accountId,
+            currencyCode: 'USD',
+            amountMinorUnits: 0,
+            date: DateTime.utc(2026, 6, 1),
+          ),
+          throwsA(isA<ShoppingListRepositoryException>()),
+        );
+
+        expect(await repo.getById(item.id), isNotNull);
+        final txCount = await db
+            .customSelect('SELECT COUNT(*) AS n FROM transactions')
+            .get();
+        expect(txCount.first.read<int>('n'), 0);
       },
     );
 
