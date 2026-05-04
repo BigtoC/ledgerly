@@ -4,7 +4,7 @@
   "appTitle": "Ledgerly",
 
   "navHome": "首頁",
-  "navAccounts": "帳戶",
+  "navAnalysis": "分析",
   "navSettings": "設定",
 
   "commonSave": "儲存",
@@ -226,5 +226,21 @@
   "shoppingListDraftNotFoundSnackbar": "找不到草稿",
 
   "shoppingListSavedDraftSnackbar": "草稿已儲存",
-  "shoppingListConvertedSnackbar": "草稿已轉換為交易"
+  "shoppingListConvertedSnackbar": "草稿已轉換為交易",
+
+  "manageAccountsTitle": "管理帳戶",
+  "manageAccountsCreateCta": "建立帳戶",
+  "manageAccountsSetDefaultSuccess": "{name} 已設為預設帳戶。",
+  "manageAccountsSetDefaultFailed": "無法變更預設帳戶，請重試。",
+  "manageAccountsLoadError": "無法載入帳戶。",
+  "manageAccountsTileSubtitleMore": "{count, plural, =1{ +1 個} other{ +{count} 個}}",
+  "@manageAccountsTileSubtitleMore": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "manageAccountsTileSubtitleAddCta": "新增帳戶",
+  "manageAccountsBodyEmpty": "還沒有帳戶，建立一個開始吧。",
+  "analysisPlaceholderTitle": "分析功能將在第二階段推出",
+  "analysisPlaceholderBody": "圖表和摘要將在第二階段上線後顯示。"
 }

@@ -112,11 +112,11 @@ abstract class AppLocalizations {
   /// **'Home'**
   String get navHome;
 
-  /// PRD 656. Bottom-nav tab 2 label.
+  /// PRD 656. Bottom-nav tab 2 label. Renamed from Accounts to Analysis.
   ///
   /// In en, this message translates to:
-  /// **'Accounts'**
-  String get navAccounts;
+  /// **'Analysis'**
+  String get navAnalysis;
 
   /// PRD 656. Bottom-nav tab 3 label.
   ///
@@ -1263,6 +1263,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Draft converted to transaction'**
   String get shoppingListConvertedSnackbar;
+
+  /// Title for the Manage accounts surface (sheet/dialog) and the Settings entry-point row.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage accounts'**
+  String get manageAccountsTitle;
+
+  /// CTA button inside the Manage accounts surface to create a new account.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account'**
+  String get manageAccountsCreateCta;
+
+  /// SnackBar shown after successfully setting an account as default.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is now the default account.'**
+  String manageAccountsSetDefaultSuccess(String name);
+
+  /// SnackBar shown when setting default account fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t change default account. Try again.'**
+  String get manageAccountsSetDefaultFailed;
+
+  /// Inline error placeholder shown when the Manage accounts body fails to load.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load accounts.'**
+  String get manageAccountsLoadError;
+
+  /// Settings tile subtitle suffix when N≥2 active accounts exist. Concatenated after the default name.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{ +1 more} other{ +{count} more}}'**
+  String manageAccountsTileSubtitleMore(int count);
+
+  /// Settings tile subtitle when zero active accounts exist.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an account'**
+  String get manageAccountsTileSubtitleAddCta;
+
+  /// Empty-state body text inside the Manage accounts surface when no accounts exist.
+  ///
+  /// In en, this message translates to:
+  /// **'No accounts yet. Create one to get started.'**
+  String get manageAccountsBodyEmpty;
+
+  /// Title for the Analysis screen empty-state placeholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Analysis is coming in Phase 2'**
+  String get analysisPlaceholderTitle;
+
+  /// Body copy for the Analysis screen empty-state placeholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Charts and summaries will appear here once Phase 2 lands.'**
+  String get analysisPlaceholderBody;
 }
 
 class _AppLocalizationsDelegate

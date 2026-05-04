@@ -4,7 +4,7 @@
   "appTitle": "Ledgerly",
 
   "navHome": "首页",
-  "navAccounts": "账户",
+  "navAnalysis": "分析",
   "navSettings": "设置",
 
   "commonSave": "保存",
@@ -226,5 +226,21 @@
   "shoppingListDraftNotFoundSnackbar": "找不到草稿",
 
   "shoppingListSavedDraftSnackbar": "草稿已保存",
-  "shoppingListConvertedSnackbar": "草稿已转换为交易"
+  "shoppingListConvertedSnackbar": "草稿已转换为交易",
+
+  "manageAccountsTitle": "管理账户",
+  "manageAccountsCreateCta": "创建账户",
+  "manageAccountsSetDefaultSuccess": "{name} 已设为默认账户。",
+  "manageAccountsSetDefaultFailed": "无法更改默认账户，请重试。",
+  "manageAccountsLoadError": "无法加载账户。",
+  "manageAccountsTileSubtitleMore": "{count, plural, =1{ +1 个} other{ +{count} 个}}",
+  "@manageAccountsTileSubtitleMore": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "manageAccountsTileSubtitleAddCta": "添加账户",
+  "manageAccountsBodyEmpty": "还没有账户，创建一个开始吧。",
+  "analysisPlaceholderTitle": "分析功能将在第二阶段推出",
+  "analysisPlaceholderBody": "图表和摘要将在第二阶段上线后显示。"
 }
