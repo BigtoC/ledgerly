@@ -13,53 +13,53 @@
 ## File Structure
 
 ### New Files
-| File | Responsibility |
-|------|---------------|
-| `lib/features/analysis/analysis_screen.dart` | Phase 2 placeholder screen for the `/analysis` route |
+| File                                                      | Responsibility                                                                                                                                                             |
+|-----------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `lib/features/analysis/analysis_screen.dart`              | Phase 2 placeholder screen for the `/analysis` route                                                                                                                       |
 | `lib/features/accounts/widgets/manage_accounts_body.dart` | Relocated private classes from `accounts_screen.dart` (`_AccountsBody`, `_AccountTileWithLookups`, `_AccountListCard`) — body content for the Manage accounts sheet/dialog |
 
 ### Renamed Files
-| Old Path | New Path | Responsibility |
-|----------|----------|---------------|
-| `lib/features/settings/widgets/default_account_tile.dart` | `lib/features/settings/widgets/manage_accounts_tile.dart` | Settings list row — renamed from "Default account" to "Manage accounts" with count-aware subtitle |
-| `lib/features/settings/widgets/default_account_picker_sheet.dart` | `lib/features/settings/widgets/manage_accounts_sheet.dart` | Entry API (`showManageAccountsSheet`) — adaptive sheet/dialog hosting the body |
+| Old Path                                                          | New Path                                                   | Responsibility                                                                                    |
+|-------------------------------------------------------------------|------------------------------------------------------------|---------------------------------------------------------------------------------------------------|
+| `lib/features/settings/widgets/default_account_tile.dart`         | `lib/features/settings/widgets/manage_accounts_tile.dart`  | Settings list row — renamed from "Default account" to "Manage accounts" with count-aware subtitle |
+| `lib/features/settings/widgets/default_account_picker_sheet.dart` | `lib/features/settings/widgets/manage_accounts_sheet.dart` | Entry API (`showManageAccountsSheet`) — adaptive sheet/dialog hosting the body                    |
 
 ### Modified Files
-| File | Changes |
-|------|---------|
-| `lib/app/router.dart` | Replace `/accounts` branch with `/analysis`; add `/home/shopping-list*` routes; add `/settings/manage-accounts/*` routes; remove old `/accounts/*` routes |
-| `lib/app/widgets/adaptive_shell.dart` | Change middle tab label from `navAccounts` to `navAnalysis`; change icon from `account_balance_wallet` to `analytics_outlined` |
-| `lib/features/home/home_screen.dart` | Change shopping-cart FAB from `context.go('/accounts/shopping-list')` to `context.push('/home/shopping-list')` |
-| `lib/features/shopping_list/shopping_list_screen.dart` | Change row-tap from `/accounts/shopping-list/$id` to `/home/shopping-list/$id` |
-| `lib/features/transactions/transaction_form_screen.dart` | Change recovery flow from `/accounts/new` to `/settings/manage-accounts/new` |
-| `lib/features/transactions/widgets/account_picker_sheet.dart` | Change create-account from `/accounts/new` to `/settings/manage-accounts/new` |
-| `lib/features/accounts/account_form_screen.dart` | Change two fallback sites from `context.go('/accounts')` to `context.go('/settings')` |
-| `lib/features/accounts/widgets/account_tile.dart` | Add optional `onEdit` callback; replace archived-row `SizedBox.shrink()` with `PopupMenuButton` containing `Edit` |
-| `lib/features/settings/settings_screen.dart` | Replace `DefaultAccountTile` import/usage with `ManageAccountsTile` |
-| `lib/l10n/app_en.arb` | Add new keys; change `navAccounts` → `navAnalysis` |
-| `lib/l10n/app_zh.arb` | Mirror new keys |
-| `lib/l10n/app_zh_CN.arb` | Mirror new keys |
-| `lib/l10n/app_zh_TW.arb` | Mirror new keys |
-| `PRD.md` | Update all references from Accounts to Analysis/Manage accounts |
-| `README.md` | Update user-facing structure description |
+| File                                                          | Changes                                                                                                                                                   |
+|---------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `lib/app/router.dart`                                         | Replace `/accounts` branch with `/analysis`; add `/home/shopping-list*` routes; add `/settings/manage-accounts/*` routes; remove old `/accounts/*` routes |
+| `lib/app/widgets/adaptive_shell.dart`                         | Change middle tab label from `navAccounts` to `navAnalysis`; change icon from `account_balance_wallet` to `analytics_outlined`                            |
+| `lib/features/home/home_screen.dart`                          | Change shopping-cart FAB from `context.go('/accounts/shopping-list')` to `context.push('/home/shopping-list')`                                            |
+| `lib/features/shopping_list/shopping_list_screen.dart`        | Change row-tap from `/accounts/shopping-list/$id` to `/home/shopping-list/$id`                                                                            |
+| `lib/features/transactions/transaction_form_screen.dart`      | Change recovery flow from `/accounts/new` to `/settings/manage-accounts/new`                                                                              |
+| `lib/features/transactions/widgets/account_picker_sheet.dart` | Change create-account from `/accounts/new` to `/settings/manage-accounts/new`                                                                             |
+| `lib/features/accounts/account_form_screen.dart`              | Change two fallback sites from `context.go('/accounts')` to `context.go('/settings')`                                                                     |
+| `lib/features/accounts/widgets/account_tile.dart`             | Add optional `onEdit` callback; replace archived-row `SizedBox.shrink()` with `PopupMenuButton` containing `Edit`                                         |
+| `lib/features/settings/settings_screen.dart`                  | Replace `DefaultAccountTile` import/usage with `ManageAccountsTile`                                                                                       |
+| `l10n/app_en.arb`                                             | Add new keys; change `navAccounts` → `navAnalysis`                                                                                                        |
+| `l10n/app_zh.arb`                                             | Mirror new keys                                                                                                                                           |
+| `l10n/app_zh_CN.arb`                                          | Mirror new keys                                                                                                                                           |
+| `l10n/app_zh_TW.arb`                                          | Mirror new keys                                                                                                                                           |
+| `PRD.md`                                                      | Update all references from Accounts to Analysis/Manage accounts                                                                                           |
+| `README.md`                                                   | Update user-facing structure description                                                                                                                  |
 
 ### Deleted Files
-| File | Reason |
-|------|--------|
-| `lib/features/accounts/accounts_screen.dart` | Replaced by `manage_accounts_body.dart` + `manage_accounts_sheet.dart` |
-| `lib/features/shopping_list/widgets/shopping_list_card.dart` | Was only used by deleted `accounts_screen.dart`; no other callers |
-| `test/widget/features/shopping_list/shopping_list_card_test.dart` | Tests deleted widget |
-| `test/widget/features/shopping_list/shopping_list_card_add_button_test.dart` | Tests deleted widget |
+| File                                                                         | Reason                                                                 |
+|------------------------------------------------------------------------------|------------------------------------------------------------------------|
+| `lib/features/accounts/accounts_screen.dart`                                 | Replaced by `manage_accounts_body.dart` + `manage_accounts_sheet.dart` |
+| `lib/features/shopping_list/widgets/shopping_list_card.dart`                 | Was only used by deleted `accounts_screen.dart`; no other callers      |
+| `test/widget/features/shopping_list/shopping_list_card_test.dart`            | Tests deleted widget                                                   |
+| `test/widget/features/shopping_list/shopping_list_card_add_button_test.dart` | Tests deleted widget                                                   |
 
 ### Test Files
-| File | Changes |
-|------|---------|
-| `test/unit/app/router_test.dart` | Migrate all `/accounts*` assertions to `/analysis`, `/settings/manage-accounts/*`, `/home/shopping-list*` |
-| `test/widget/features/accounts/accounts_screen_test.dart` | Migrate to test `ManageAccountsBody` / `ManageAccountsSheet` instead of deleted `AccountsScreen` |
-| `test/widget/features/home/home_shopping_list_fab_test.dart` | Change expected route from `/accounts/shopping-list` to `/home/shopping-list` |
-| New: `test/widget/features/analysis/analysis_screen_test.dart` | Test AnalysisScreen renders placeholder |
-| New: `test/widget/features/accounts/manage_accounts_body_test.dart` | Test ManageAccountsBody rendering and interactions |
-| New: `test/widget/features/accounts/account_tile_on_edit_test.dart` | Test onEdit callback for active and archived rows |
+| File                                                                | Changes                                                                                                   |
+|---------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| `test/unit/app/router_test.dart`                                    | Migrate all `/accounts*` assertions to `/analysis`, `/settings/manage-accounts/*`, `/home/shopping-list*` |
+| `test/widget/features/accounts/accounts_screen_test.dart`           | Migrate to test `ManageAccountsBody` / `ManageAccountsSheet` instead of deleted `AccountsScreen`          |
+| `test/widget/features/home/home_shopping_list_fab_test.dart`        | Change expected route from `/accounts/shopping-list` to `/home/shopping-list`                             |
+| New: `test/widget/features/analysis/analysis_screen_test.dart`      | Test AnalysisScreen renders placeholder                                                                   |
+| New: `test/widget/features/accounts/manage_accounts_body_test.dart` | Test ManageAccountsBody rendering and interactions                                                        |
+| New: `test/widget/features/accounts/account_tile_on_edit_test.dart` | Test onEdit callback for active and archived rows                                                         |
 
 ---
 
@@ -184,10 +184,10 @@ For `app_zh_TW.arb`:
 "analysisPlaceholderBody": "圖表和摘要將在第二階段上線後顯示。"
 ```
 
-- [ ] **Step 5: Run codegen**
+- [ ] **Step 5: Run Flutter l10n codegen**
 
 ```bash
-dart run build_runner build --delete-conflicting-outputs
+flutter gen-l10n
 ```
 
 Verify `lib/l10n/app_localizations.dart` now contains `navAnalysis`, all `manageAccounts*` keys, and `analysisPlaceholder*` keys.
@@ -384,7 +384,7 @@ void main() {
 - [ ] **Step 3: Run the test**
 
 ```bash
-flutter test test/widget/features/analysis/analysis_screen_test.dart -v
+dart format . && flutter test test/widget/features/analysis/analysis_screen_test.dart -v
 ```
 
 Expected: PASS (all 3 tests).
@@ -757,7 +757,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 - [ ] **Step 6: Run the tests**
 
 ```bash
-flutter test test/widget/features/accounts/account_tile_on_edit_test.dart -v
+dart format . && flutter test test/widget/features/accounts/account_tile_on_edit_test.dart -v
 ```
 
 Expected: PASS.
@@ -1931,7 +1931,7 @@ testWidgets('/analysis renders AnalysisScreen', (tester) async {
 - [ ] **Step 8: Run the router tests**
 
 ```bash
-flutter test test/unit/app/router_test.dart -v
+dart format . && flutter test test/unit/app/router_test.dart -v
 ```
 
 Expected: PASS.
@@ -1974,7 +1974,7 @@ The test `'HSL04: tapping mini FAB navigates to /accounts/shopping-list'` should
 - [ ] **Step 3: Run the tests**
 
 ```bash
-flutter test test/widget/features/home/home_shopping_list_fab_test.dart -v
+dart format . && flutter test test/widget/features/home/home_shopping_list_fab_test.dart -v
 ```
 
 Expected: PASS.
@@ -2039,7 +2039,7 @@ The overflow menu now includes "Edit" as the first item. Update the tap target t
 - [ ] **Step 6: Run the tests**
 
 ```bash
-flutter test test/widget/features/accounts/accounts_screen_test.dart -v
+dart format . && flutter test test/widget/features/accounts/accounts_screen_test.dart -v
 ```
 
 Expected: PASS.
@@ -2058,10 +2058,10 @@ git commit -m "test(accounts): migrate accounts_screen_test to ManageAccountsBod
 **Files:**
 - Various — driven by test failures
 
-- [ ] **Step 1: Run the full test suite**
+- [ ] **Step 1: Run dart format and the full test suite**
 
 ```bash
-flutter test
+dart format . && flutter test
 ```
 
 - [ ] **Step 2: Fix any remaining test failures**
@@ -2240,6 +2240,7 @@ Verify all results are in allowed lists.
 - [ ] **Step 6: Run codegen to ensure generated files are fresh**
 
 ```bash
+flutter gen-l10n
 dart run build_runner build --delete-conflicting-outputs
 ```
 
@@ -2254,11 +2255,11 @@ git commit -m "chore: regenerate code after accounts-to-analysis refactor"
 
 ## Summary
 
-| Chunk | Tasks | Description |
-|-------|-------|-------------|
-| 1 | 1–3 | Localization keys, AdaptiveShell label, AnalysisScreen |
-| 2 | 4–7 | AccountTile onEdit, ManageAccountsBody, ManageAccountsSheet, ManageAccountsTile, SettingsScreen |
-| 3 | 8 | Router overhaul — replace /accounts branch |
-| 4 | 9–14 | Route migration — fix all callers, delete old files |
-| 5 | 15–18 | Test migration — update all test files |
-| 6 | 19–21 | Documentation updates and final verification |
+| Chunk | Tasks | Description                                                                                     |
+|-------|-------|-------------------------------------------------------------------------------------------------|
+| 1     | 1–3   | Localization keys, AdaptiveShell label, AnalysisScreen                                          |
+| 2     | 4–7   | AccountTile onEdit, ManageAccountsBody, ManageAccountsSheet, ManageAccountsTile, SettingsScreen |
+| 3     | 8     | Router overhaul — replace /accounts branch                                                      |
+| 4     | 9–14  | Route migration — fix all callers, delete old files                                             |
+| 5     | 15–18 | Test migration — update all test files                                                          |
+| 6     | 19–21 | Documentation updates and final verification                                                    |
