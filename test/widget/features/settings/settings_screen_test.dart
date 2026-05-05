@@ -6,6 +6,8 @@
 //   - Theme segmented control exercises the `setThemeMode` command.
 //   - ManageAccountsTile shows "Add an account" when there are no active accounts.
 //   - ManageAccountsTile shows account name when there is 1 active account.
+//   - ManageAccountsTile uses the accounts slice default for multi-account subtitles.
+//   - ManageAccountsTile falls back to the first active account when the default is absent.
 //   - "Manage Categories" tile navigates to `/settings/categories`.
 //   - Locale change via `setLocale` writes through the repo; a manual
 //     MaterialApp locale swap then verifies visible strings change
@@ -255,6 +257,96 @@ void main() {
 
       // The tile subtitle shows the account name.
       expect(find.text('Main Cash', skipOffstage: false), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'SS03b: ManageAccountsTile uses AccountsData.defaultAccountId for multi-account subtitle',
+    (tester) async {
+      final prefs = _MockUserPreferencesRepository();
+      final accountRepo = _MockAccountRepository();
+      final currencyRepo = _MockCurrencyRepository();
+
+      final container = _makeContainer(
+        prefs: prefs,
+        accountRepo: accountRepo,
+        currencyRepo: currencyRepo,
+        fixed: _data(defaultAccountId: 1),
+        accountsFixed: AccountsState.data(
+          active: [
+            AccountWithBalance(
+              account: _a(id: 1, name: 'Cash'),
+              balancesByCurrency: const {},
+              affordance: AccountRowAffordance.archive,
+            ),
+            AccountWithBalance(
+              account: _a(id: 2, name: 'Savings'),
+              balancesByCurrency: const {},
+              affordance: AccountRowAffordance.archive,
+            ),
+          ],
+          archived: const [],
+          defaultAccountId: 2,
+        ),
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container));
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('settingsManageAccountsTile')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Savings +1 more', skipOffstage: false), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'SS03c: ManageAccountsTile falls back to the first active account when default is missing',
+    (tester) async {
+      final prefs = _MockUserPreferencesRepository();
+      final accountRepo = _MockAccountRepository();
+      final currencyRepo = _MockCurrencyRepository();
+
+      final container = _makeContainer(
+        prefs: prefs,
+        accountRepo: accountRepo,
+        currencyRepo: currencyRepo,
+        fixed: _data(defaultAccountId: 99),
+        accountsFixed: AccountsState.data(
+          active: [
+            AccountWithBalance(
+              account: _a(id: 1, name: 'Cash'),
+              balancesByCurrency: const {},
+              affordance: AccountRowAffordance.archive,
+            ),
+            AccountWithBalance(
+              account: _a(id: 2, name: 'Savings'),
+              balancesByCurrency: const {},
+              affordance: AccountRowAffordance.archive,
+            ),
+          ],
+          archived: const [],
+          defaultAccountId: 99,
+        ),
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container));
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('settingsManageAccountsTile')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Cash +1 more', skipOffstage: false), findsOneWidget);
     },
   );
 

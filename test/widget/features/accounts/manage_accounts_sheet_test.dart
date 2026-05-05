@@ -10,6 +10,9 @@
 //   MAS04 - "Create account" CTA button navigates to /settings/manage-accounts/new
 //   MAS05 - close button dismisses the sheet
 //   MAS06 - row-tap routes to /settings/manage-accounts/:id
+//   MAS07 - narrow layout opens a bottom sheet instead of a dialog
+//   MAS08 - wide layout keeps the dialog mounted across create-account flow
+//   MAS09 - wide layout keeps the dialog mounted across edit-account flow
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -138,36 +141,66 @@ ProviderContainer _makeContainer({
   return ProviderContainer(overrides: overrides);
 }
 
-Widget _wrapWithOpener({required ProviderContainer container}) {
+Widget _wrapWithOpener({
+  required ProviderContainer container,
+  Size size = const Size(400, 800),
+}) {
   return UncontrolledProviderScope(
     container: container,
-    child: MaterialApp.router(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      routerConfig: GoRouter(
-        routes: [
-          GoRoute(
-            path: '/',
-            builder: (ctx, _) => Scaffold(
-              body: Builder(
-                builder: (context) => ElevatedButton(
-                  onPressed: () => showManageAccountsSheet(context),
-                  child: const Text('OPEN'),
+    child: MediaQuery(
+      data: MediaQueryData(size: size),
+      child: MaterialApp.router(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        routerConfig: GoRouter(
+          routes: [
+            GoRoute(
+              path: '/',
+              builder: (ctx, _) => Scaffold(
+                body: Builder(
+                  builder: (context) => ElevatedButton(
+                    onPressed: () => showManageAccountsSheet(context),
+                    child: const Text('OPEN'),
+                  ),
                 ),
               ),
             ),
-          ),
-          GoRoute(
-            path: '/settings/manage-accounts/new',
-            builder: (_, _) => const Scaffold(body: Text('ADD_ACCOUNT')),
-          ),
-          GoRoute(
-            path: '/settings/manage-accounts/:id',
-            builder: (ctx, state) => Scaffold(
-              body: Text('EDIT_ACCOUNT_${state.pathParameters['id']}'),
+            GoRoute(
+              path: '/settings/manage-accounts/new',
+              builder: (context, _) => Scaffold(
+                body: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('ADD_ACCOUNT'),
+                      FilledButton(
+                        onPressed: () => GoRouter.of(context).pop(),
+                        child: const Text('finish-create-account'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
-        ],
+            GoRoute(
+              path: '/settings/manage-accounts/:id',
+              builder: (context, state) => Scaffold(
+                body: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('EDIT_ACCOUNT_${state.pathParameters['id']}'),
+                      FilledButton(
+                        onPressed: () => GoRouter.of(context).pop(),
+                        child: const Text('finish-edit-account'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     ),
   );
@@ -313,4 +346,99 @@ void main() {
 
     expect(find.text('EDIT_ACCOUNT_42'), findsOneWidget);
   });
+
+  testWidgets('MAS07: narrow layout opens a bottom sheet', (tester) async {
+    final container = _makeContainer(
+      accountsFixed: AccountsState.data(
+        active: [_wb(_a(id: 1, name: 'Cash'))],
+        archived: const [],
+        defaultAccountId: 1,
+      ),
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      _wrapWithOpener(container: container, size: const Size(390, 844)),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('OPEN'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is FractionallySizedBox && widget.heightFactor == 0.75,
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Manage accounts'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'MAS08: wide layout keeps the dialog mounted across create-account flow',
+    (tester) async {
+      final container = _makeContainer(
+        accountsFixed: AccountsState.data(
+          active: [_wb(_a(id: 1, name: 'Cash'))],
+          archived: const [],
+          defaultAccountId: 1,
+        ),
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        _wrapWithOpener(container: container, size: const Size(1000, 800)),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('OPEN'));
+      await tester.pumpAndSettle();
+      expect(find.byType(Dialog), findsOneWidget);
+
+      await tester.tap(find.text('Create account'));
+      await tester.pumpAndSettle();
+      expect(find.text('ADD_ACCOUNT'), findsOneWidget);
+
+      await tester.tap(find.text('finish-create-account'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(Dialog), findsOneWidget);
+      expect(find.text('Manage accounts'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'MAS09: wide layout keeps the dialog mounted across edit-account flow',
+    (tester) async {
+      final container = _makeContainer(
+        accountsFixed: AccountsState.data(
+          active: [_wb(_a(id: 42, name: 'My Wallet'))],
+          archived: const [],
+          defaultAccountId: 42,
+        ),
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        _wrapWithOpener(container: container, size: const Size(1000, 800)),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('OPEN'));
+      await tester.pumpAndSettle();
+      expect(find.byType(Dialog), findsOneWidget);
+
+      await tester.tap(find.text('My Wallet'));
+      await tester.pumpAndSettle();
+      expect(find.text('EDIT_ACCOUNT_42'), findsOneWidget);
+
+      await tester.tap(find.text('finish-edit-account'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(Dialog), findsOneWidget);
+      expect(find.text('Manage accounts'), findsOneWidget);
+    },
+  );
 }

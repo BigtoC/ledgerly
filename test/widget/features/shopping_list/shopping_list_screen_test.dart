@@ -4,7 +4,7 @@
 //   - loading indicator in loading state
 //   - empty state CTA to /home/add
 //   - list of rows in data state
-//   - row tap navigates to /accounts/shopping-list/:id
+//   - row tap navigates to /home/shopping-list/:id
 //   - row tap is disabled while pending delete is active
 //   - delete action shows undo snackbar
 //   - undo snackbar action cancels delete

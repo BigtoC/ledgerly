@@ -9,7 +9,7 @@
 //     propagates into the outer form without blowing outer state away.
 //   - Edit mode hydrates from `accountRepository.getById(id)`.
 //   - Missing edit-mode row renders the recoverable not-found surface
-//     and pops back to `/accounts`.
+//     and either pops back to the caller or falls back to `/settings`.
 //   - Opening balance respects `currency.decimals` — "100.5" into a JPY
 //     field (`decimals = 0`) is rejected (Save remains disabled).
 
@@ -52,8 +52,13 @@ const _cashType = AccountType(
   defaultCurrency: _usd,
 );
 
-GoRouter _router({int? accountId, required VoidCallback? onPopped}) {
+GoRouter _router({
+  int? accountId,
+  required VoidCallback? onPopped,
+  String initialLocation = '/',
+}) {
   return GoRouter(
+    initialLocation: initialLocation,
     routes: [
       GoRoute(
         path: '/',
@@ -322,6 +327,89 @@ void main() {
     // pop we should be back at the root '/'.
     expect(find.text('open'), findsOneWidget);
   });
+
+  testWidgets(
+    'AF04b: Edit mode — missing row falls back to /settings when there is no stack to pop',
+    (tester) async {
+      final accountRepo = _MockAccountRepository();
+      final typeRepo = _MockAccountTypeRepository();
+      final currencyRepo = _MockCurrencyRepository();
+      final prefs = _MockUserPreferencesRepository();
+
+      when(() => accountRepo.getById(999)).thenAnswer((_) async => null);
+      when(
+        () => typeRepo.watchAll(),
+      ).thenAnswer((_) => Stream.value([_cashType]));
+      when(
+        () => currencyRepo.watchAll(),
+      ).thenAnswer((_) => Stream.value([_usd]));
+
+      final container = _makeContainer(
+        accountRepo: accountRepo,
+        typeRepo: typeRepo,
+        currencyRepo: currencyRepo,
+        prefs: prefs,
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        _hostApp(
+          container: container,
+          router: _router(
+            onPopped: null,
+            initialLocation: '/settings/manage-accounts/999',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('SETTINGS_SCREEN'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'AF04c: Add mode cancel falls back to /settings when there is no stack to pop',
+    (tester) async {
+      final accountRepo = _MockAccountRepository();
+      final typeRepo = _MockAccountTypeRepository();
+      final currencyRepo = _MockCurrencyRepository();
+      final prefs = _MockUserPreferencesRepository();
+
+      when(() => prefs.getDefaultCurrency()).thenAnswer((_) async => 'USD');
+      when(() => currencyRepo.getByCode('USD')).thenAnswer((_) async => _usd);
+      when(
+        () => typeRepo.watchAll(),
+      ).thenAnswer((_) => Stream.value([_cashType]));
+      when(
+        () => currencyRepo.watchAll(),
+      ).thenAnswer((_) => Stream.value([_usd, _jpy, _twd]));
+
+      final container = _makeContainer(
+        accountRepo: accountRepo,
+        typeRepo: typeRepo,
+        currencyRepo: currencyRepo,
+        prefs: prefs,
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        _hostApp(
+          container: container,
+          router: _router(
+            onPopped: null,
+            initialLocation: '/settings/manage-accounts/new',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Cancel'));
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('SETTINGS_SCREEN'), findsOneWidget);
+    },
+  );
 
   testWidgets('AF05: JPY opening-balance rejects fractional input', (
     tester,
