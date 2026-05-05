@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../features/accounts/account_form_screen.dart';
-import '../features/accounts/accounts_screen.dart';
+import '../features/analysis/analysis_screen.dart';
 import '../features/categories/categories_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/settings/about_screen.dart';
@@ -103,25 +103,6 @@ GoRouter router(Ref ref) {
                       fullscreenDialog: true,
                     ),
                   ),
-                ],
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/accounts',
-                builder: (_, _) => const AccountsScreen(),
-                routes: [
-                  GoRoute(
-                    path: 'new',
-                    parentNavigatorKey: _rootNavigatorKey,
-                    pageBuilder: (ctx, state) => _modalPage(
-                      state,
-                      const AccountFormScreen(),
-                      fullscreenDialog: true,
-                    ),
-                  ),
                   GoRoute(
                     path: 'shopping-list',
                     builder: (_, _) => const ShoppingListScreen(),
@@ -133,7 +114,7 @@ GoRouter router(Ref ref) {
                                   state.pathParameters['itemId'] ?? '',
                                 ) ==
                                 null
-                            ? '/accounts/shopping-list'
+                            ? '/home/shopping-list'
                             : null,
                         parentNavigatorKey: _rootNavigatorKey,
                         pageBuilder: (ctx, state) => _modalPage(
@@ -148,22 +129,15 @@ GoRouter router(Ref ref) {
                       ),
                     ],
                   ),
-                  GoRoute(
-                    path: ':id',
-                    redirect: (_, state) =>
-                        int.tryParse(state.pathParameters['id'] ?? '') == null
-                        ? '/accounts'
-                        : null,
-                    parentNavigatorKey: _rootNavigatorKey,
-                    pageBuilder: (ctx, state) => _modalPage(
-                      state,
-                      AccountFormScreen(
-                        accountId: int.parse(state.pathParameters['id']!),
-                      ),
-                      fullscreenDialog: true,
-                    ),
-                  ),
                 ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/analysis',
+                builder: (_, _) => const AnalysisScreen(),
               ),
             ],
           ),
@@ -181,6 +155,30 @@ GoRouter router(Ref ref) {
                     path: 'about',
                     parentNavigatorKey: _rootNavigatorKey,
                     builder: (_, _) => const AboutScreen(),
+                  ),
+                  GoRoute(
+                    path: 'manage-accounts/new',
+                    parentNavigatorKey: _rootNavigatorKey,
+                    pageBuilder: (ctx, state) => _modalPage(
+                      state,
+                      const AccountFormScreen(),
+                      fullscreenDialog: true,
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'manage-accounts/:id',
+                    redirect: (_, state) =>
+                        int.tryParse(state.pathParameters['id'] ?? '') == null
+                        ? '/settings'
+                        : null,
+                    parentNavigatorKey: _rootNavigatorKey,
+                    pageBuilder: (ctx, state) => _modalPage(
+                      state,
+                      AccountFormScreen(
+                        accountId: int.parse(state.pathParameters['id']!),
+                      ),
+                      fullscreenDialog: true,
+                    ),
                   ),
                 ],
               ),
