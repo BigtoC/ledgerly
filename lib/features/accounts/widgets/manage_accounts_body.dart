@@ -30,10 +30,6 @@ class ManageAccountsBody extends ConsumerWidget {
       horizontal: homePageCardHorizontalPadding - 16,
     );
 
-    final allActiveIds = data.active
-        .map((r) => r.account.id)
-        .toList(growable: false);
-
     return SlidableAutoCloseBehavior(
       child: CustomScrollView(
         slivers: [
@@ -45,7 +41,6 @@ class ManageAccountsBody extends ConsumerWidget {
                   accounts: data.active,
                   defaultAccountId: data.defaultAccountId,
                   locale: locale,
-                  allActiveIds: allActiveIds,
                 ),
               ),
             ),
@@ -81,7 +76,6 @@ class ManageAccountsBody extends ConsumerWidget {
                       accounts: data.archived,
                       defaultAccountId: null,
                       locale: locale,
-                      allActiveIds: allActiveIds,
                     ),
                   ],
                 ),
@@ -99,13 +93,11 @@ class _AccountTileWithLookups extends ConsumerWidget {
     required this.view,
     required this.isDefault,
     required this.locale,
-    required this.allActiveIds,
   });
 
   final AccountWithBalance view;
   final bool isDefault;
   final String locale;
-  final List<int> allActiveIds;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -278,13 +270,11 @@ class _AccountListCard extends StatelessWidget {
     required this.accounts,
     required this.defaultAccountId,
     required this.locale,
-    required this.allActiveIds,
   });
 
   final List<AccountWithBalance> accounts;
   final int? defaultAccountId;
   final String locale;
-  final List<int> allActiveIds;
 
   @override
   Widget build(BuildContext context) {
@@ -304,7 +294,6 @@ class _AccountListCard extends StatelessWidget {
               view: view,
               isDefault: defaultAccountId == view.account.id,
               locale: locale,
-              allActiveIds: allActiveIds,
             ),
         ],
       ),
