@@ -147,7 +147,7 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
           if (context.canPop()) {
             context.pop();
           } else {
-            context.go('/accounts');
+            context.go('/settings');
           }
         },
       );
@@ -303,7 +303,7 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
                                     if (context.canPop()) {
                                       context.pop();
                                     } else {
-                                      context.go('/accounts');
+                                      context.go('/settings');
                                     }
                                   },
                             child: Text(l10n.commonCancel),

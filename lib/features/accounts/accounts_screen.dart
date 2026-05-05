@@ -38,7 +38,7 @@ class AccountsScreen extends ConsumerWidget {
       appBar: AppBar(title: Text(l10n.accountsListTitle)),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'accounts_fab',
-        onPressed: () => context.go('/accounts/new'),
+        onPressed: () => context.go('/settings/manage-accounts/new'),
         icon: const Icon(Icons.add),
         label: Text(l10n.accountsAddCta),
       ),
@@ -110,7 +110,8 @@ class _AccountsBody extends ConsumerWidget {
                     FilledButton.icon(
                       icon: const Icon(Icons.add),
                       label: Text(l10n.accountsEmptyCta),
-                      onPressed: () => context.go('/accounts/new'),
+                      onPressed: () =>
+                          context.go('/settings/manage-accounts/new'),
                     ),
                   ],
                 ),
@@ -177,7 +178,7 @@ class _AccountTileWithLookups extends ConsumerWidget {
       isDefault: isDefault,
       locale: locale,
       accountTypeLabel: typeLabel,
-      onTap: () => context.go('/accounts/${view.account.id}'),
+      onTap: () => context.go('/settings/manage-accounts/${view.account.id}'),
       onSetDefault: () => _onSetDefault(context, ref, view.account.id),
       onArchive: () => _onArchive(context, ref, view.account.id),
       onDelete: () => _onDelete(context, ref, view.account.id),

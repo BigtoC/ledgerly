@@ -63,7 +63,7 @@ class ShoppingListCard extends ConsumerWidget {
                     onPressed: () => context.push('/home/add'),
                   ),
                   TextButton(
-                    onPressed: () => context.go('/accounts/shopping-list'),
+                    onPressed: () => context.go('/home/shopping-list'),
                     child: Text(l10n.shoppingListViewAll),
                   ),
                 ],
@@ -79,7 +79,7 @@ class ShoppingListCard extends ConsumerWidget {
                 child: Center(child: CircularProgressIndicator()),
               ),
               error: (error, stack) => InkWell(
-                onTap: () => context.go('/accounts/shopping-list'),
+                onTap: () => context.go('/home/shopping-list'),
                 child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: Center(child: Text(l10n.errorSnackbarGeneric)),
@@ -147,7 +147,7 @@ class _OverflowCta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => context.go('/accounts/shopping-list'),
+      onTap: () => context.go('/home/shopping-list'),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Center(
@@ -192,7 +192,7 @@ class _PreviewRow extends ConsumerWidget {
     final trailingLabel = resolveTrailingLabel(item, currency, locale);
 
     return InkWell(
-      onTap: () => context.go('/accounts/shopping-list'),
+      onTap: () => context.go('/home/shopping-list'),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(

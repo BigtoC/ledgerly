@@ -159,7 +159,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             FloatingActionButton(
               key: const Key('homeShoppingListFab'),
               heroTag: 'home_shopping_list_fab',
-              onPressed: () => context.go('/accounts/shopping-list'),
+              onPressed: () => context.push('/home/shopping-list'),
               child: Badge(
                 isLabelVisible: count > 0,
                 label: Text(badgeLabel),

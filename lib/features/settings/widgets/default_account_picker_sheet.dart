@@ -63,7 +63,7 @@ class _DefaultAccountPickerSheet extends ConsumerWidget {
                     ? _EmptyState(
                         onCreate: () {
                           Navigator.of(context).pop();
-                          context.go('/accounts/new');
+                          context.go('/settings/manage-accounts/new');
                         },
                       )
                     : ListView.builder(

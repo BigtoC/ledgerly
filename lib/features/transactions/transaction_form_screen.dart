@@ -689,9 +689,9 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     BuildContext context,
     TransactionFormController controller,
   ) {
-    // After /accounts/new pops, re-run the current hydration mode so add
+    // After /settings/manage-accounts/new pops, re-run the current hydration mode so add
     // and duplicate flows both recover correctly.
-    context.push('/accounts/new').then((_) {
+    context.push('/settings/manage-accounts/new').then((_) {
       if (!mounted) return;
       controller.retryHydration();
     });

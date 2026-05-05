@@ -109,7 +109,7 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final result = await context.push<ShoppingListEditResult?>(
-      '/accounts/shopping-list/$id',
+      '/home/shopping-list/$id',
     );
     if (!mounted) return;
     switch (result) {
