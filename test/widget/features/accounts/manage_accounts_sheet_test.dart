@@ -214,7 +214,9 @@ void main() {
   testWidgets('MAS01: loading state renders CircularProgressIndicator', (
     tester,
   ) async {
-    final container = _makeContainer(accountsFixed: AccountsState.loading());
+    final container = _makeContainer(
+      accountsFixed: const AccountsState.loading(),
+    );
     addTearDown(container.dispose);
 
     await tester.pumpWidget(_wrapWithOpener(container: container));

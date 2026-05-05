@@ -244,18 +244,17 @@ void main() {
         () => typeRepo.watchAll(includeArchived: true),
       ).thenAnswer((_) => Stream.value([cashType]));
 
-      final fixed = AccountsState.data(
-        active: const [],
-        archived: const [],
+      const data = AccountsData(
+        active: [],
+        archived: [],
         defaultAccountId: null,
       );
-      final data = fixed as AccountsData;
 
       final container = _makeContainer(
         accountRepo: accountRepo,
         typeRepo: typeRepo,
         prefs: prefs,
-        fixed: fixed,
+        fixed: data,
       );
       addTearDown(container.dispose);
 
