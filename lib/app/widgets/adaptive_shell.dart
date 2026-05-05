@@ -36,8 +36,8 @@ class AdaptiveShell extends StatelessWidget {
                       label: Text(l10n.navHome),
                     ),
                     NavigationRailDestination(
-                      icon: const Icon(Icons.account_balance_wallet),
-                      label: Text(l10n.navAccounts),
+                      icon: const Icon(Icons.analytics_outlined),
+                      label: Text(l10n.navAnalysis),
                     ),
                     NavigationRailDestination(
                       icon: const Icon(Icons.settings),
@@ -62,8 +62,8 @@ class AdaptiveShell extends StatelessWidget {
                 label: l10n.navHome,
               ),
               NavigationDestination(
-                icon: const Icon(Icons.account_balance_wallet),
-                label: l10n.navAccounts,
+                icon: const Icon(Icons.analytics_outlined),
+                label: l10n.navAnalysis,
               ),
               NavigationDestination(
                 icon: const Icon(Icons.settings),

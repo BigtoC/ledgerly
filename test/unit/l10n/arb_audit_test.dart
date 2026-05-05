@@ -33,7 +33,7 @@ const Set<String> _expectedEnKeys = <String>{
 
   // §5.2 Group S — Shell / Nav / Common.
   'navHome',
-  'navAccounts',
+  'navAnalysis',
   'navSettings',
   'commonSave',
   'commonCancel',
@@ -262,6 +262,19 @@ const Set<String> _expectedEnKeys = <String>{
   // Task 6 — Routing and localization.
   'shoppingListSavedDraftSnackbar',
   'shoppingListConvertedSnackbar',
+
+  // Refactor: rename Accounts tab → Analysis, relocate account management to Settings.
+  // (docs/superpowers/plans/2026-05-05-analysis-and-account-settings.md)
+  'manageAccountsTitle',
+  'manageAccountsCreateCta',
+  'manageAccountsSetDefaultSuccess',
+  'manageAccountsSetDefaultFailed',
+  'manageAccountsLoadError',
+  'manageAccountsTileSubtitleMore',
+  'manageAccountsTileSubtitleAddCta',
+  'manageAccountsBodyEmpty',
+  'analysisPlaceholderTitle',
+  'analysisPlaceholderBody',
 };
 
 Map<String, dynamic> _readArb(String fileName) {
