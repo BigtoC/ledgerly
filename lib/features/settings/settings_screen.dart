@@ -19,7 +19,7 @@ import '../../l10n/app_localizations.dart';
 import 'settings_controller.dart';
 import 'settings_providers.dart';
 import 'settings_state.dart';
-import 'widgets/default_account_tile.dart';
+import 'widgets/manage_accounts_tile.dart';
 import 'widgets/default_currency_tile.dart';
 import 'widgets/language_selector.dart';
 import 'widgets/manage_categories_tile.dart';
@@ -80,7 +80,7 @@ class _SettingsBody extends ConsumerWidget {
             child: SettingsSection(
               title: l10n.settingsSectionGeneral,
               children: [
-                DefaultAccountTile(defaultAccountId: data.defaultAccountId),
+                const ManageAccountsTile(),
                 DefaultCurrencyTile(defaultCurrency: data.defaultCurrency),
                 const ManageCategoriesTile(),
               ],
