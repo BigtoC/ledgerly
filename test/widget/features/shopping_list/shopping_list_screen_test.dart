@@ -84,13 +84,13 @@ class _StubRouter {
           builder: (_, _) => const Scaffold(body: Text('ADD_TRANSACTION')),
         ),
         GoRoute(
-          path: '/accounts/shopping-list/:id',
+          path: '/home/shopping-list/:id',
           builder: (ctx, state) => Scaffold(
             body: Text('SHOPPING_ITEM_${state.pathParameters['id']}'),
           ),
         ),
         GoRoute(
-          path: '/accounts/new',
+          path: '/settings/manage-accounts/new',
           builder: (_, _) => const Scaffold(body: Text('ADD_ACCOUNT')),
         ),
       ],
@@ -223,7 +223,7 @@ void main() {
     },
   );
 
-  testWidgets('SLS04: row tap navigates to /accounts/shopping-list/:id', (
+  testWidgets('SLS04: row tap navigates to /home/shopping-list/:id', (
     tester,
   ) async {
     final items = [_item(id: 42, memo: 'Milk')];

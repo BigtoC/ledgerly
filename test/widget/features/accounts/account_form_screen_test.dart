@@ -64,8 +64,8 @@ GoRouter _router({int? accountId, required VoidCallback? onPopped}) {
                 key: const ValueKey('open-form'),
                 onPressed: () async {
                   final path = accountId == null
-                      ? '/accounts/new'
-                      : '/accounts/$accountId';
+                      ? '/settings/manage-accounts/new'
+                      : '/settings/manage-accounts/$accountId';
                   await ctx.push<Object?>(path);
                   onPopped?.call();
                 },
@@ -76,15 +76,15 @@ GoRouter _router({int? accountId, required VoidCallback? onPopped}) {
         ),
       ),
       GoRoute(
-        path: '/accounts',
-        builder: (_, _) => const Scaffold(body: Text('ACCOUNTS_LIST')),
+        path: '/settings',
+        builder: (_, _) => const Scaffold(body: Text('SETTINGS_SCREEN')),
       ),
       GoRoute(
-        path: '/accounts/new',
+        path: '/settings/manage-accounts/new',
         builder: (_, _) => const AccountFormScreen(),
       ),
       GoRoute(
-        path: '/accounts/:id',
+        path: '/settings/manage-accounts/:id',
         builder: (ctx, state) => AccountFormScreen(
           accountId: int.parse(state.pathParameters['id']!),
         ),
@@ -287,44 +287,41 @@ void main() {
     expect(find.text('Edit account'), findsOneWidget);
   });
 
-  testWidgets(
-    'AF04: Edit mode — missing row shows not-found and pops to /accounts',
-    (tester) async {
-      final accountRepo = _MockAccountRepository();
-      final typeRepo = _MockAccountTypeRepository();
-      final currencyRepo = _MockCurrencyRepository();
-      final prefs = _MockUserPreferencesRepository();
+  testWidgets('AF04: Edit mode — missing row auto-pops back to caller', (
+    tester,
+  ) async {
+    final accountRepo = _MockAccountRepository();
+    final typeRepo = _MockAccountTypeRepository();
+    final currencyRepo = _MockCurrencyRepository();
+    final prefs = _MockUserPreferencesRepository();
 
-      when(() => accountRepo.getById(999)).thenAnswer((_) async => null);
-      when(
-        () => typeRepo.watchAll(),
-      ).thenAnswer((_) => Stream.value([_cashType]));
-      when(
-        () => currencyRepo.watchAll(),
-      ).thenAnswer((_) => Stream.value([_usd]));
+    when(() => accountRepo.getById(999)).thenAnswer((_) async => null);
+    when(
+      () => typeRepo.watchAll(),
+    ).thenAnswer((_) => Stream.value([_cashType]));
+    when(() => currencyRepo.watchAll()).thenAnswer((_) => Stream.value([_usd]));
 
-      final container = _makeContainer(
-        accountRepo: accountRepo,
-        typeRepo: typeRepo,
-        currencyRepo: currencyRepo,
-        prefs: prefs,
-      );
-      addTearDown(container.dispose);
+    final container = _makeContainer(
+      accountRepo: accountRepo,
+      typeRepo: typeRepo,
+      currencyRepo: currencyRepo,
+      prefs: prefs,
+    );
+    addTearDown(container.dispose);
 
-      await tester.pumpWidget(
-        _hostApp(
-          container: container,
-          router: _router(accountId: 999, onPopped: null),
-        ),
-      );
-      await tester.tap(find.byKey(const ValueKey('open-form')));
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(
+      _hostApp(
+        container: container,
+        router: _router(accountId: 999, onPopped: null),
+      ),
+    );
+    await tester.tap(find.byKey(const ValueKey('open-form')));
+    await tester.pumpAndSettle();
 
-      // The recoverable surface auto-dismisses; after the post-frame
-      // pop we should be back at the root '/'.
-      expect(find.text('open'), findsOneWidget);
-    },
-  );
+    // The recoverable surface auto-dismisses; after the post-frame
+    // pop we should be back at the root '/'.
+    expect(find.text('open'), findsOneWidget);
+  });
 
   testWidgets('AF05: JPY opening-balance rejects fractional input', (
     tester,

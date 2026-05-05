@@ -164,7 +164,7 @@ void main() {
               Scaffold(appBar: AppBar(title: const Text('categories-stub'))),
         ),
         GoRoute(
-          path: '/accounts/new',
+          path: '/settings/manage-accounts/new',
           builder: (context, _) => Scaffold(
             body: Center(
               child: FilledButton(

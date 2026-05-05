@@ -2,14 +2,13 @@
 //
 // Covers four paths through the shopping-list feature:
 //
-//   Path 1 – Home add form → Add to shopping list → Accounts preview →
+//   Path 1 – Home add form → Add to shopping list → Home shopping-cart FAB →
 //             ShoppingListScreen → save draft → convert to transaction →
 //             Home transaction row visible.
 //
 //   Path 2 – Category-name fallback when memo is absent.
 //
-//   Path 3 – Preview overflow CTA: 4 drafts → 3 rows shown, "1 more" CTA
-//             visible, tap CTA navigates to ShoppingListScreen.
+//   Path 3 – Home FAB navigates to ShoppingListScreen with multiple drafts.
 //
 //   Path 4 – Invalid (non-existent) draft id triggers auto-pop with
 //             ShoppingListEditResultMissingDraft and shows
@@ -30,7 +29,6 @@ import 'package:go_router/go_router.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
 import 'package:ledgerly/data/repositories/shopping_list_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
-import 'package:ledgerly/features/accounts/accounts_screen.dart';
 import 'package:ledgerly/features/home/home_screen.dart';
 import 'package:ledgerly/features/home/widgets/transaction_tile.dart';
 import 'package:ledgerly/features/shopping_list/shopping_list_screen.dart';
@@ -115,12 +113,9 @@ void main() {
         expect(find.byType(HomeScreen), findsOneWidget);
         expect(find.byType(TransactionTile), findsNothing);
 
-        await tester.tap(find.text('Accounts'));
-        await tester.pumpAndSettle();
-        expect(find.byType(AccountsScreen), findsOneWidget);
-        expect(find.text('Weekly groceries'), findsOneWidget);
-
-        await tester.tap(find.text('View all'));
+        // Home shopping-cart FAB leads to the ShoppingListScreen.
+        expect(find.byKey(const Key('homeShoppingListFab')), findsWidgets);
+        await tester.tap(find.byKey(const Key('homeShoppingListFab')).first);
         await tester.pumpAndSettle();
         expect(find.byType(ShoppingListScreen), findsOneWidget);
         expect(find.text('Weekly groceries'), findsOneWidget);
@@ -163,8 +158,16 @@ void main() {
         expect(find.text('No upcoming expenses saved'), findsOneWidget);
         expect(find.text('Weekly groceries updated'), findsNothing);
 
-        await tester.tap(find.text('Home'));
-        await tester.pumpAndSettle();
+        // Navigate back to Home by using go('/home') since ShoppingListScreen
+        // is a sub-route of Home (same shell branch) and tapping the nav tab
+        // won't pop sub-routes automatically.
+        final BuildContext ctx = tester.element(
+          find.byType(ShoppingListScreen),
+        );
+        GoRouter.of(ctx).go('/home');
+        // Pump the snackbar dismiss timer and then settle.
+        await tester.pump(const Duration(seconds: 5));
+        await tester.pump();
 
         expect(find.byType(HomeScreen), findsOneWidget);
         expect(find.byType(TransactionTile), findsOneWidget);
@@ -229,20 +232,16 @@ void main() {
       await tester.pumpWidget(buildTestApp(container: container));
       await pumpToHome(tester);
 
-      // Navigate to Accounts tab.
-      await tester.tap(find.text('Accounts'));
+      // Tap the shopping-cart FAB on Home to navigate to ShoppingListScreen.
+      expect(find.byKey(const Key('homeShoppingListFab')), findsWidgets);
+      await tester.tap(find.byKey(const Key('homeShoppingListFab')).first);
       await tester.pumpAndSettle();
-      expect(find.byType(AccountsScreen), findsOneWidget);
 
-      // The category l10nKey 'category.food' resolves to the stored key
-      // value. The seeded category has customName null and l10nKey
-      // 'category.food'; resolvePrimaryLabel returns the l10nKey when no
-      // customName is set. Verify the row is non-empty (not blank).
-      // The exact text depends on the seeded category's l10nKey value.
-      // We verify the card shows at least one non-empty ListTile / InkWell
-      // row — not an empty string — by checking the Card is in data state
-      // (no empty-state CTA visible).
+      expect(find.byType(ShoppingListScreen), findsOneWidget);
+      // The screen is in data state (not empty-state).
       expect(find.text('No upcoming expenses saved'), findsNothing);
+      // At least one ListTile is rendered (data state confirmed).
+      expect(find.byType(ListTile), findsAtLeastNWidgets(1));
 
       expect(tester.takeException(), isNull);
     });
@@ -283,10 +282,8 @@ void main() {
         await tester.pumpWidget(buildTestApp(container: container));
         await pumpToHome(tester);
 
-        // Navigate to Accounts → shopping list.
-        await tester.tap(find.text('Accounts'));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('View all'));
+        // Navigate to ShoppingListScreen via Home shopping-cart FAB.
+        await tester.tap(find.byKey(const Key('homeShoppingListFab')).first);
         await tester.pumpAndSettle();
 
         expect(find.byType(ShoppingListScreen), findsOneWidget);
@@ -304,115 +301,67 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
-  // Path 3: Preview overflow CTA — 4 drafts → 3 shown, "1 more" visible
+  // Path 3: Home FAB navigates to ShoppingListScreen with multiple drafts
   // ---------------------------------------------------------------------------
 
-  group('Path 3: preview overflow CTA and 3-row truncation', () {
-    testWidgets('4 drafts: preview shows 3 rows, overflow CTA shows "1 more"', (
-      tester,
-    ) async {
-      final db = newTestAppDatabase();
-      addTearDown(db.close);
+  group(
+    'Path 3: Home FAB navigates to ShoppingListScreen with multiple drafts',
+    () {
+      testWidgets(
+        'Home FAB navigates to ShoppingListScreen with multiple drafts visible',
+        (tester) async {
+          final db = newTestAppDatabase();
+          addTearDown(db.close);
 
-      await tester.runAsync(() async {
-        await runTestSeed(db);
-        final foodId = await getSeededCategoryId(db, 'category.food');
-        final cash = await getDefaultAccount(db);
-        final repo = DriftShoppingListRepository(
-          db,
-          DriftTransactionRepository(db),
-        );
-        // Insert 4 drafts; each gets a distinct memo.
-        for (var i = 1; i <= 4; i++) {
-          await repo.insert(
-            categoryId: foodId,
-            accountId: cash.id,
-            memo: 'Draft $i',
-            draftDate: DateTime.now(),
+          await tester.runAsync(() async {
+            await runTestSeed(db);
+            final foodId = await getSeededCategoryId(db, 'category.food');
+            final cash = await getDefaultAccount(db);
+            final repo = DriftShoppingListRepository(
+              db,
+              DriftTransactionRepository(db),
+            );
+            // Insert 4 drafts; each gets a distinct memo.
+            for (var i = 1; i <= 4; i++) {
+              await repo.insert(
+                categoryId: foodId,
+                accountId: cash.id,
+                memo: 'Draft $i',
+                draftDate: DateTime.now(),
+              );
+            }
+          });
+
+          final container = makeTestContainer(
+            db: db,
+            extraOverrides: [
+              splashGateSnapshotProvider.overrideWithValue(
+                SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+              ),
+            ],
           );
-        }
-      });
+          addTearDown(container.dispose);
 
-      final container = makeTestContainer(
-        db: db,
-        extraOverrides: [
-          splashGateSnapshotProvider.overrideWithValue(
-            SplashGateSnapshot.withInitial(enabled: false, startDate: null),
-          ),
-        ],
+          await tester.pumpWidget(buildTestApp(container: container));
+          await pumpToHome(tester);
+
+          // Tap the shopping-cart FAB on Home to navigate to ShoppingListScreen.
+          expect(find.byKey(const Key('homeShoppingListFab')), findsWidgets);
+          await tester.tap(find.byKey(const Key('homeShoppingListFab')).first);
+          await tester.pumpAndSettle();
+
+          expect(find.byType(ShoppingListScreen), findsOneWidget);
+          // All 4 drafts visible on the full screen.
+          expect(find.text('Draft 1'), findsOneWidget);
+          expect(find.text('Draft 2'), findsOneWidget);
+          expect(find.text('Draft 3'), findsOneWidget);
+          expect(find.text('Draft 4'), findsOneWidget);
+
+          expect(tester.takeException(), isNull);
+        },
       );
-      addTearDown(container.dispose);
-
-      await tester.pumpWidget(buildTestApp(container: container));
-      await pumpToHome(tester);
-
-      // Navigate to Accounts tab.
-      await tester.tap(find.text('Accounts'));
-      await tester.pumpAndSettle();
-      expect(find.byType(AccountsScreen), findsOneWidget);
-
-      // Only 3 preview rows visible (newest 3 by watchAll order).
-      // The ShoppingListCard shows preview items — verify overflow CTA.
-      expect(find.text('1 more'), findsOneWidget);
-
-      expect(tester.takeException(), isNull);
-    });
-
-    testWidgets('tapping overflow CTA navigates to ShoppingListScreen', (
-      tester,
-    ) async {
-      final db = newTestAppDatabase();
-      addTearDown(db.close);
-
-      await tester.runAsync(() async {
-        await runTestSeed(db);
-        final foodId = await getSeededCategoryId(db, 'category.food');
-        final cash = await getDefaultAccount(db);
-        final repo = DriftShoppingListRepository(
-          db,
-          DriftTransactionRepository(db),
-        );
-        for (var i = 1; i <= 4; i++) {
-          await repo.insert(
-            categoryId: foodId,
-            accountId: cash.id,
-            memo: 'Item $i',
-            draftDate: DateTime.now(),
-          );
-        }
-      });
-
-      final container = makeTestContainer(
-        db: db,
-        extraOverrides: [
-          splashGateSnapshotProvider.overrideWithValue(
-            SplashGateSnapshot.withInitial(enabled: false, startDate: null),
-          ),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      await tester.pumpWidget(buildTestApp(container: container));
-      await pumpToHome(tester);
-
-      await tester.tap(find.text('Accounts'));
-      await tester.pumpAndSettle();
-      expect(find.byType(AccountsScreen), findsOneWidget);
-
-      // Tap the "1 more" overflow CTA.
-      await tester.tap(find.text('1 more'));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(ShoppingListScreen), findsOneWidget);
-      // All 4 drafts visible on the full screen.
-      expect(find.text('Item 1'), findsOneWidget);
-      expect(find.text('Item 2'), findsOneWidget);
-      expect(find.text('Item 3'), findsOneWidget);
-      expect(find.text('Item 4'), findsOneWidget);
-
-      expect(tester.takeException(), isNull);
-    });
-  });
+    },
+  );
 
   // ---------------------------------------------------------------------------
   // Path 4: Invalid draft id auto-pops with ShoppingListEditResultMissingDraft
@@ -482,12 +431,8 @@ void main() {
         await tester.pumpWidget(buildTestApp(container: container));
         await pumpToHome(tester);
 
-        // Navigate to Accounts → shopping list.
-        await tester.tap(find.text('Accounts'));
-        await tester.pumpAndSettle();
-        expect(find.byType(AccountsScreen), findsOneWidget);
-
-        await tester.tap(find.text('View all'));
+        // Navigate to ShoppingListScreen via Home shopping-cart FAB.
+        await tester.tap(find.byKey(const Key('homeShoppingListFab')).first);
         await tester.pumpAndSettle();
         expect(find.byType(ShoppingListScreen), findsOneWidget);
 
@@ -502,7 +447,7 @@ void main() {
           find.byType(ShoppingListScreen),
         );
         // Push to non-existent draft id (the one we just deleted).
-        unawaited(GoRouter.of(ctx).push('/accounts/shopping-list/$draftId'));
+        unawaited(GoRouter.of(ctx).push('/home/shopping-list/$draftId'));
 
         // Allow the route to open, hydrate (finding the draft missing),
         // and auto-pop back to ShoppingListScreen.
@@ -565,10 +510,8 @@ void main() {
         await tester.pumpWidget(buildTestApp(container: container));
         await pumpToHome(tester);
 
-        // Navigate to shopping list screen.
-        await tester.tap(find.text('Accounts'));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('View all'));
+        // Navigate to shopping list screen via Home shopping-cart FAB.
+        await tester.tap(find.byKey(const Key('homeShoppingListFab')).first);
         await tester.pumpAndSettle();
         expect(find.byType(ShoppingListScreen), findsOneWidget);
         expect(find.text('Disappearing draft'), findsOneWidget);
