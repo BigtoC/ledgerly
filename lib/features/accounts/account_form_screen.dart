@@ -1,14 +1,15 @@
 // Account form screen — add/edit a single account (plan §3.1, §5).
 //
 // Route contract:
-//   - `/accounts/new`  → `AccountFormScreen()` (Add mode).
-//   - `/accounts/:id`  → `AccountFormScreen(accountId: id)` (Edit mode).
+//   - `/settings/manage-accounts/new`  → `AccountFormScreen()` (Add mode).
+//   - `/settings/manage-accounts/:id`  → `AccountFormScreen(accountId: id)`
+//     (Edit mode).
 //
 // Invalid `:id` path params are a router-level concern (Wave 0 §2.4)
 // and do not land here. If the edit-mode hydration cannot load the
 // requested row (e.g. deleted while the user was on another screen),
 // the screen renders a recoverable not-found message and pops back to
-// `/accounts`.
+// `/settings`.
 //
 // Save calls `accountRepository.save(Account(...))` with `id == 0` for
 // Add mode. On success the form calls `context.pop(savedAccountId)`
