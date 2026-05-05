@@ -97,17 +97,6 @@ const _cashType = AccountType(
   defaultCurrency: _usd,
 );
 
-SettingsData _settingsData({int? defaultAccountId}) => SettingsData(
-  themeMode: ThemeMode.light,
-  locale: null,
-  defaultCurrency: 'USD',
-  defaultAccountId: defaultAccountId,
-  splashEnabled: true,
-  splashStartDate: null,
-  splashDisplayText: null,
-  splashButtonLabel: null,
-);
-
 ProviderContainer _makeContainer({
   required AccountsState accountsFixed,
   SettingsState? settingsFixed,
