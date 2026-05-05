@@ -1,3 +1,5 @@
+// Caller is responsible for resolving data state; this widget renders only AccountsData.
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
