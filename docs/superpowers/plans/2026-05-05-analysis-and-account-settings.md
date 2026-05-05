@@ -13,62 +13,62 @@
 ## File Structure
 
 ### New Files
-| File                                                      | Responsibility                                                                                                                                                             |
-|-----------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `lib/features/analysis/analysis_screen.dart`              | Phase 2 placeholder screen for the `/analysis` route                                                                                                                       |
-| `lib/features/accounts/widgets/manage_accounts_body.dart` | Relocated data-state body from `accounts_screen.dart` — scrollable account-management content for the Manage accounts sheet/dialog                                         |
-| `lib/features/settings/widgets/manage_accounts_sheet.dart` | Settings-owned adaptive sheet/dialog that hosts `ManageAccountsBody` and the pinned create-account CTA                                                                    |
-| `lib/features/settings/widgets/manage_accounts_tile.dart` | Settings list row — renamed user-facing concept from "Default account" to "Manage accounts" with count-aware subtitle                                                  |
-| `test/widget/features/analysis/analysis_screen_test.dart` | Widget coverage for the Analysis placeholder screen                                                                                                                         |
-| `test/widget/features/accounts/manage_accounts_body_test.dart` | Widget coverage for `ManageAccountsBody` rendering and account-row interactions                                                                                             |
-| `test/widget/features/accounts/manage_accounts_sheet_test.dart` | Widget coverage for the Settings-owned Manage accounts sheet/dialog, including loading/error/data states and create CTA routing                                            |
+| File                                                            | Responsibility                                                                                                                     |
+|-----------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| `lib/features/analysis/analysis_screen.dart`                    | Phase 2 placeholder screen for the `/analysis` route                                                                               |
+| `lib/features/accounts/widgets/manage_accounts_body.dart`       | Relocated data-state body from `accounts_screen.dart` — scrollable account-management content for the Manage accounts sheet/dialog |
+| `lib/features/settings/widgets/manage_accounts_sheet.dart`      | Settings-owned adaptive sheet/dialog that hosts `ManageAccountsBody` and the pinned create-account CTA                             |
+| `lib/features/settings/widgets/manage_accounts_tile.dart`       | Settings list row — renamed user-facing concept from "Default account" to "Manage accounts" with count-aware subtitle              |
+| `test/widget/features/analysis/analysis_screen_test.dart`       | Widget coverage for the Analysis placeholder screen                                                                                |
+| `test/widget/features/accounts/manage_accounts_body_test.dart`  | Widget coverage for `ManageAccountsBody` rendering and account-row interactions                                                    |
+| `test/widget/features/accounts/manage_accounts_sheet_test.dart` | Widget coverage for the Settings-owned Manage accounts sheet/dialog, including loading/error/data states and create CTA routing    |
 
 ### Modified Files
-| File                                                          | Changes                                                                                                                                                   |
-|---------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| File                                                          | Changes                                                                                                                                                                                |
+|---------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `lib/app/router.dart`                                         | Replace `/accounts` branch with `/analysis`; add `/home/shopping-list*` routes; add `/settings/manage-accounts/new` + `/settings/manage-accounts/:id`; remove old `/accounts/*` routes |
-| `lib/app/widgets/adaptive_shell.dart`                         | Change middle tab label from `navAccounts` to `navAnalysis`; change icon from `account_balance_wallet` to `analytics_outlined`                            |
-| `lib/features/home/home_screen.dart`                          | Change shopping-cart FAB from `context.go('/accounts/shopping-list')` to `context.push('/home/shopping-list')`                                            |
-| `lib/features/shopping_list/shopping_list_screen.dart`        | Change row-tap from `/accounts/shopping-list/$id` to `/home/shopping-list/$id`                                                                            |
-| `lib/features/transactions/transaction_form_screen.dart`      | Change recovery flow from `/accounts/new` to `/settings/manage-accounts/new`                                                                              |
-| `lib/features/transactions/widgets/account_picker_sheet.dart` | Change create-account from `/accounts/new` to `/settings/manage-accounts/new`                                                                             |
-| `lib/features/accounts/account_form_screen.dart`              | Change the no-stack fallback target from `/accounts` to `/settings` while preserving the existing `context.canPop() ? pop() : go(...)` caller-flow behavior |
-| `lib/features/settings/settings_screen.dart`                  | Replace `DefaultAccountTile` import/usage with `ManageAccountsTile`                                                                                       |
-| `l10n/app_en.arb`                                             | Add new keys; change `navAccounts` → `navAnalysis`                                                                                                        |
-| `l10n/app_zh.arb`                                             | Mirror new keys                                                                                                                                           |
-| `l10n/app_zh_CN.arb`                                          | Mirror new keys                                                                                                                                           |
-| `l10n/app_zh_TW.arb`                                          | Mirror new keys                                                                                                                                           |
-| `AGENTS.md`                                                   | Update live route and screen references so agent-facing repo guidance matches the refactor                                                                |
-| `PRD.md`                                                      | Update all references from Accounts to Analysis/Manage accounts                                                                                           |
-| `README.md`                                                   | Update user-facing structure description                                                                                                                  |
+| `lib/app/widgets/adaptive_shell.dart`                         | Change middle tab label from `navAccounts` to `navAnalysis`; change icon from `account_balance_wallet` to `analytics_outlined`                                                         |
+| `lib/features/home/home_screen.dart`                          | Change shopping-cart FAB from `context.go('/accounts/shopping-list')` to `context.push('/home/shopping-list')`                                                                         |
+| `lib/features/shopping_list/shopping_list_screen.dart`        | Change row-tap from `/accounts/shopping-list/$id` to `/home/shopping-list/$id`                                                                                                         |
+| `lib/features/transactions/transaction_form_screen.dart`      | Change recovery flow from `/accounts/new` to `/settings/manage-accounts/new`                                                                                                           |
+| `lib/features/transactions/widgets/account_picker_sheet.dart` | Change create-account from `/accounts/new` to `/settings/manage-accounts/new`                                                                                                          |
+| `lib/features/accounts/account_form_screen.dart`              | Change the no-stack fallback target from `/accounts` to `/settings` while preserving the existing `context.canPop() ? pop() : go(...)` caller-flow behavior                            |
+| `lib/features/settings/settings_screen.dart`                  | Replace `DefaultAccountTile` import/usage with `ManageAccountsTile`                                                                                                                    |
+| `l10n/app_en.arb`                                             | Add new keys; change `navAccounts` → `navAnalysis`                                                                                                                                     |
+| `l10n/app_zh.arb`                                             | Mirror new keys                                                                                                                                                                        |
+| `l10n/app_zh_CN.arb`                                          | Mirror new keys                                                                                                                                                                        |
+| `l10n/app_zh_TW.arb`                                          | Mirror new keys                                                                                                                                                                        |
+| `AGENTS.md`                                                   | Update live route and screen references so agent-facing repo guidance matches the refactor                                                                                             |
+| `PRD.md`                                                      | Update all references from Accounts to Analysis/Manage accounts                                                                                                                        |
+| `README.md`                                                   | Update user-facing structure description                                                                                                                                               |
 
 ### Deleted Files
-| File                                                                         | Reason                                                                 |
-|------------------------------------------------------------------------------|------------------------------------------------------------------------|
-| `lib/features/accounts/accounts_screen.dart`                                 | Replaced by `manage_accounts_body.dart` + `manage_accounts_sheet.dart` |
-| `lib/features/settings/widgets/default_account_tile.dart`                    | Replaced by new `ManageAccountsTile` implementation                    |
-| `lib/features/settings/widgets/default_account_picker_sheet.dart`            | Replaced by new `ManageAccountsSheet` implementation                   |
+| File                                                                         | Reason                                                                                             |
+|------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------|
+| `lib/features/accounts/accounts_screen.dart`                                 | Replaced by `manage_accounts_body.dart` + `manage_accounts_sheet.dart`                             |
+| `lib/features/settings/widgets/default_account_tile.dart`                    | Replaced by new `ManageAccountsTile` implementation                                                |
+| `lib/features/settings/widgets/default_account_picker_sheet.dart`            | Replaced by new `ManageAccountsSheet` implementation                                               |
 | `lib/features/shopping_list/widgets/shopping_list_card.dart`                 | Intentional UX simplification: Home shopping-cart FAB is now the only draft rediscovery affordance |
-| `test/widget/features/accounts/accounts_screen_test.dart`                    | Replaced by focused `manage_accounts_body_test.dart` + `manage_accounts_sheet_test.dart` |
-| `test/widget/features/shopping_list/shopping_list_card_test.dart`            | Tests deleted widget                                                   |
-| `test/widget/features/shopping_list/shopping_list_card_add_button_test.dart` | Tests deleted widget                                                   |
+| `test/widget/features/accounts/accounts_screen_test.dart`                    | Replaced by focused `manage_accounts_body_test.dart` + `manage_accounts_sheet_test.dart`           |
+| `test/widget/features/shopping_list/shopping_list_card_test.dart`            | Tests deleted widget                                                                               |
+| `test/widget/features/shopping_list/shopping_list_card_add_button_test.dart` | Tests deleted widget                                                                               |
 
 ### Test Files
-| File                                                                | Changes                                                                                                   |
-|---------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
-| `test/unit/app/router_test.dart`                                    | Migrate all `/accounts*` assertions to `/analysis`, `/settings/manage-accounts/*`, `/home/shopping-list*` |
-| `test/widget/features/home/home_shopping_list_fab_test.dart`        | Change expected route from `/accounts/shopping-list` to `/home/shopping-list`                             |
-| `test/unit/l10n/arb_audit_test.dart`                                | Rename expected shell key from `navAccounts` to `navAnalysis`                                             |
-| `test/widget/smoke/app_localizations_groups_test.dart`              | Assert `navAnalysis` instead of `navAccounts`                                                             |
-| `test/widget/features/settings/settings_screen_test.dart`           | Replace Default-account tile expectations with Manage-accounts tile expectations                           |
-| `test/widget/features/shopping_list/shopping_list_screen_test.dart` | Change row-tap route from `/accounts/shopping-list/:id` to `/home/shopping-list/:id`                     |
-| `test/widget/features/transactions/transaction_form_shopping_list_button_test.dart` | Change create-account stub route to `/settings/manage-accounts/new`                           |
-| `test/widget/features/accounts/account_form_screen_test.dart`       | Change helper routes and copy from `/accounts*` to `/settings/manage-accounts*` / `/settings`            |
-| `test/integration/shopping_list_path_test.dart`                     | Replace Accounts-tab draft rediscovery with Home shopping-cart FAB flow                                    |
-| `test/integration/archive_flow_test.dart`                           | Replace Accounts-screen archived-section assertions with Settings > Manage accounts assertions             |
-| New: `test/widget/features/analysis/analysis_screen_test.dart`      | Test AnalysisScreen renders placeholder                                                                   |
-| New: `test/widget/features/accounts/manage_accounts_body_test.dart` | Test ManageAccountsBody rendering, archive undo, and row routing                                          |
-| New: `test/widget/features/accounts/manage_accounts_sheet_test.dart` | Test ManageAccountsSheet open/close, loading/error/data states, and create-account CTA                    |
+| File                                                                                | Changes                                                                                                   |
+|-------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| `test/unit/app/router_test.dart`                                                    | Migrate all `/accounts*` assertions to `/analysis`, `/settings/manage-accounts/*`, `/home/shopping-list*` |
+| `test/widget/features/home/home_shopping_list_fab_test.dart`                        | Change expected route from `/accounts/shopping-list` to `/home/shopping-list`                             |
+| `test/unit/l10n/arb_audit_test.dart`                                                | Rename expected shell key from `navAccounts` to `navAnalysis`                                             |
+| `test/widget/smoke/app_localizations_groups_test.dart`                              | Assert `navAnalysis` instead of `navAccounts`                                                             |
+| `test/widget/features/settings/settings_screen_test.dart`                           | Replace Default-account tile expectations with Manage-accounts tile expectations                          |
+| `test/widget/features/shopping_list/shopping_list_screen_test.dart`                 | Change row-tap route from `/accounts/shopping-list/:id` to `/home/shopping-list/:id`                      |
+| `test/widget/features/transactions/transaction_form_shopping_list_button_test.dart` | Change create-account stub route to `/settings/manage-accounts/new`                                       |
+| `test/widget/features/accounts/account_form_screen_test.dart`                       | Change helper routes and copy from `/accounts*` to `/settings/manage-accounts*` / `/settings`             |
+| `test/integration/shopping_list_path_test.dart`                                     | Replace Accounts-tab draft rediscovery with Home shopping-cart FAB flow                                   |
+| `test/integration/archive_flow_test.dart`                                           | Replace Accounts-screen archived-section assertions with Settings > Manage accounts assertions            |
+| New: `test/widget/features/analysis/analysis_screen_test.dart`                      | Test AnalysisScreen renders placeholder                                                                   |
+| New: `test/widget/features/accounts/manage_accounts_body_test.dart`                 | Test ManageAccountsBody rendering, archive undo, and row routing                                          |
+| New: `test/widget/features/accounts/manage_accounts_sheet_test.dart`                | Test ManageAccountsSheet open/close, loading/error/data states, and create-account CTA                    |
 
 ---
 
@@ -85,11 +85,11 @@
 - Modify: `lib/l10n/app_localizations_en.dart` (generated — will regenerate)
 - Modify: `lib/l10n/app_localizations_zh.dart` (generated — will regenerate)
 
-- [ ] **Step 1: Read current l10n files to understand structure**
+- [x] **Step 1: Read current l10n files to understand structure**
 
 Read `l10n/app_en.arb`, `l10n/app_zh.arb`, `l10n/app_zh_CN.arb`, `l10n/app_zh_TW.arb` to understand existing keys and structure.
 
-- [ ] **Step 2: Rename `navAccounts` to `navAnalysis` in app_en.arb**
+- [x] **Step 2: Rename `navAccounts` to `navAnalysis` in app_en.arb**
 
 In `l10n/app_en.arb`, change:
 ```json
@@ -106,7 +106,7 @@ to:
 }
 ```
 
-- [ ] **Step 3: Add new l10n keys to app_en.arb**
+- [x] **Step 3: Add new l10n keys to app_en.arb**
 
 Add these keys before the closing `}` in `l10n/app_en.arb`:
 
@@ -159,7 +159,7 @@ Add these keys before the closing `}` in `l10n/app_en.arb`:
 }
 ```
 
-- [ ] **Step 4: Mirror changes to app_zh.arb, app_zh_CN.arb, app_zh_TW.arb**
+- [x] **Step 4: Mirror changes to app_zh.arb, app_zh_CN.arb, app_zh_TW.arb**
 
 For `app_zh.arb` (fallback shim — bare `zh` resolves to English at runtime), add the same keys with English values (this file is a shim per CLAUDE.md).
 
@@ -193,7 +193,7 @@ For `app_zh_TW.arb`:
 "analysisPlaceholderBody": "圖表和摘要將在第二階段上線後顯示。"
 ```
 
-- [ ] **Step 5: Run Flutter l10n codegen**
+- [x] **Step 5: Run Flutter l10n codegen**
 
 ```bash
 flutter gen-l10n
@@ -201,7 +201,7 @@ flutter gen-l10n
 
 Verify `lib/l10n/app_localizations.dart` now contains `navAnalysis`, all `manageAccounts*` keys, and `analysisPlaceholder*` keys.
 
-- [ ] **Step 6: Fix any broken references to `navAccounts`**
+- [x] **Step 6: Fix any broken references to `navAccounts`**
 
 ```bash
 grep -rn "navAccounts" lib/
@@ -209,7 +209,7 @@ grep -rn "navAccounts" lib/
 
 Replace any remaining references to `navAccounts` with `navAnalysis`. Expected: only `adaptive_shell.dart` and generated files reference it.
 
-- [ ] **Step 7: Run dart format and analyze**
+- [x] **Step 7: Run dart format and analyze**
 
 ```bash
 dart format . && flutter analyze
@@ -217,7 +217,7 @@ dart format . && flutter analyze
 
 Expected: PASS (may have existing warnings but no new errors).
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add l10n/ lib/l10n/
@@ -231,7 +231,7 @@ git commit -m "feat(l10n): add manage-accounts and analysis keys, rename navAcco
 **Files:**
 - Modify: `lib/app/widgets/adaptive_shell.dart:44,61`
 
-- [ ] **Step 1: Change the middle tab label and icon**
+- [x] **Step 1: Change the middle tab label and icon**
 
 In `lib/app/widgets/adaptive_shell.dart`, change both the NavigationRail and NavigationBar destinations for the middle tab:
 
@@ -265,7 +265,7 @@ NavigationDestination(
 ),
 ```
 
-- [ ] **Step 2: Run dart format and analyze**
+- [x] **Step 2: Run dart format and analyze**
 
 ```bash
 dart format . && flutter analyze
@@ -273,7 +273,7 @@ dart format . && flutter analyze
 
 Expected: PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/app/widgets/adaptive_shell.dart
@@ -287,7 +287,7 @@ git commit -m "feat(ui): rename middle tab from Accounts to Analysis with analyt
 **Files:**
 - Create: `lib/features/analysis/analysis_screen.dart`
 
-- [ ] **Step 1: Create the AnalysisScreen**
+- [x] **Step 1: Create the AnalysisScreen**
 
 Create `lib/features/analysis/analysis_screen.dart`:
 
@@ -336,7 +336,7 @@ class AnalysisScreen extends StatelessWidget {
 }
 ```
 
-- [ ] **Step 2: Write a widget test for AnalysisScreen**
+- [x] **Step 2: Write a widget test for AnalysisScreen**
 
 Create `test/widget/features/analysis/analysis_screen_test.dart`:
 
@@ -390,7 +390,7 @@ void main() {
 }
 ```
 
-- [ ] **Step 3: Run the test**
+- [x] **Step 3: Run the test**
 
 ```bash
 dart format . && flutter test test/widget/features/analysis/analysis_screen_test.dart -v
@@ -398,7 +398,7 @@ dart format . && flutter test test/widget/features/analysis/analysis_screen_test
 
 Expected: PASS (all 3 tests).
 
-- [ ] **Step 4: Run dart format and analyze**
+- [x] **Step 4: Run dart format and analyze**
 
 ```bash
 dart format . && flutter analyze
@@ -406,7 +406,7 @@ dart format . && flutter analyze
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/features/analysis/analysis_screen.dart test/widget/features/analysis/analysis_screen_test.dart
@@ -422,18 +422,18 @@ git commit -m "feat(analysis): add AnalysisScreen with Phase 2 placeholder"
 **Files:**
 - Read only: `lib/features/accounts/widgets/account_tile.dart`
 
-- [ ] **Step 1: Read the current AccountTile behavior**
+- [x] **Step 1: Read the current AccountTile behavior**
 
 Read `lib/features/accounts/widgets/account_tile.dart` and confirm the current affordances:
 - row tap opens account edit
 - active rows keep the existing overflow and swipe actions
 - archived rows suppress swipe actions and trailing overflow
 
-- [ ] **Step 2: Do not add new Edit-only overflow behavior in this refactor**
+- [x] **Step 2: Do not add new Edit-only overflow behavior in this refactor**
 
 This plan is an information-architecture move, not an account-row affordance redesign. Reuse the existing row-tap edit path from the relocated Manage accounts surface.
 
-- [ ] **Step 3: Skip AccountTile edits and tests unless a later implementation blocker proves they are required**
+- [x] **Step 3: Skip AccountTile edits and tests unless a later implementation blocker proves they are required**
 
 Expected outcome for this task: no code changes.
 
@@ -443,7 +443,7 @@ Expected outcome for this task: no code changes.
 - Create: `lib/features/accounts/widgets/manage_accounts_body.dart`
 - Read: `lib/features/accounts/accounts_screen.dart` (will be deleted in Task 19)
 
-- [ ] **Step 1: Read the full accounts_screen.dart to understand classes to relocate**
+- [x] **Step 1: Read the full accounts_screen.dart to understand classes to relocate**
 
 Read `lib/features/accounts/accounts_screen.dart` (368 lines). The classes to relocate are:
 - `_AccountsBody` (~lines 68–155) — the main body with CustomScrollView
@@ -452,7 +452,7 @@ Read `lib/features/accounts/accounts_screen.dart` (368 lines). The classes to re
 
 Do **not** relocate `_ErrorSurface`. Error/loading handling will live in `ManageAccountsSheet`; `ManageAccountsBody` is a data-state-only widget.
 
-- [ ] **Step 2: Create manage_accounts_body.dart**
+- [x] **Step 2: Create manage_accounts_body.dart**
 
 Create `lib/features/accounts/widgets/manage_accounts_body.dart`:
 
@@ -788,7 +788,7 @@ class _AccountListCard extends StatelessWidget {
 }
 ```
 
-- [ ] **Step 3: Run dart format and analyze**
+- [x] **Step 3: Run dart format and analyze**
 
 ```bash
 dart format . && flutter analyze
@@ -796,7 +796,7 @@ dart format . && flutter analyze
 
 Expected: PASS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/features/accounts/widgets/manage_accounts_body.dart
@@ -813,7 +813,7 @@ git commit -m "feat(accounts): create ManageAccountsBody relocated from Accounts
 - Delete later: `lib/features/settings/widgets/default_account_picker_sheet.dart`
 - Delete later: `lib/features/settings/widgets/default_account_tile.dart`
 
-- [ ] **Step 1: Create manage_accounts_sheet.dart**
+- [x] **Step 1: Create manage_accounts_sheet.dart**
 
 Create `lib/features/settings/widgets/manage_accounts_sheet.dart`:
 
@@ -966,7 +966,7 @@ class _ErrorPlaceholder extends StatelessWidget {
 }
 ```
 
-- [ ] **Step 2: Create manage_accounts_tile.dart**
+- [x] **Step 2: Create manage_accounts_tile.dart**
 
 Create `lib/features/settings/widgets/manage_accounts_tile.dart`:
 
@@ -1033,7 +1033,7 @@ class ManageAccountsTile extends ConsumerWidget {
 }
 ```
 
-- [ ] **Step 3: Run dart format and analyze**
+- [x] **Step 3: Run dart format and analyze**
 
 ```bash
 dart format . && flutter analyze
@@ -1041,7 +1041,7 @@ dart format . && flutter analyze
 
 Expected: PASS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/features/settings/widgets/manage_accounts_sheet.dart lib/features/settings/widgets/manage_accounts_tile.dart
@@ -1057,7 +1057,7 @@ git commit -m "feat(settings): create ManageAccountsSheet and ManageAccountsTile
 - Delete later: `lib/features/settings/widgets/default_account_tile.dart`
 - Delete later: `lib/features/settings/widgets/default_account_picker_sheet.dart`
 
-- [ ] **Step 1: Replace DefaultAccountTile import and usage**
+- [x] **Step 1: Replace DefaultAccountTile import and usage**
 
 In `lib/features/settings/settings_screen.dart`:
 
@@ -1075,11 +1075,11 @@ Change the widget usage in the General section:
 const ManageAccountsTile(),
 ```
 
-- [ ] **Step 2: Leave file deletion to Task 19**
+- [x] **Step 2: Leave file deletion to Task 19**
 
 Do not delete `default_account_tile.dart` or `default_account_picker_sheet.dart` in this task. Cleanup happens in Task 19 after all callers and tests are migrated.
 
-- [ ] **Step 3: Run dart format and analyze**
+- [x] **Step 3: Run dart format and analyze**
 
 ```bash
 dart format . && flutter analyze
@@ -1087,7 +1087,7 @@ dart format . && flutter analyze
 
 Expected: PASS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/features/settings/settings_screen.dart lib/features/settings/widgets/manage_accounts_tile.dart lib/features/settings/widgets/manage_accounts_sheet.dart
@@ -1103,13 +1103,13 @@ git commit -m "feat(settings): move account management under Settings"
 **Files:**
 - Modify: `lib/app/router.dart`
 
-- [ ] **Step 1: Read the full router.dart to understand current structure**
+- [x] **Step 1: Read the full router.dart to understand current structure**
 
 Read `lib/app/router.dart` (255 lines). Key structure:
 - 3 StatefulShellBranch: `/home`, `/accounts`, `/settings`
 - `/accounts` branch has: `AccountsScreen`, `/accounts/new`, `/accounts/shopping-list`, `/accounts/shopping-list/:itemId`, `/accounts/:id`
 
-- [ ] **Step 2: Update imports**
+- [x] **Step 2: Update imports**
 
 Replace:
 ```dart
@@ -1122,7 +1122,7 @@ import '../features/analysis/analysis_screen.dart';
 
 Keep the `AccountFormScreen` import — it's still used.
 
-- [ ] **Step 3: Replace the middle branch**
+- [x] **Step 3: Replace the middle branch**
 
 Replace the entire second `StatefulShellBranch`:
 
@@ -1137,7 +1137,7 @@ StatefulShellBranch(
 ),
 ```
 
-- [ ] **Step 4: Add shopping-list routes under the Home branch**
+- [x] **Step 4: Add shopping-list routes under the Home branch**
 
 Inside the `/home` route's `routes` list, add after `edit/:id`:
 
@@ -1172,7 +1172,7 @@ already auto-pops `ShoppingListEditResultMissingDraft` when the id parses but
 the draft row no longer exists, and `ShoppingListScreen` already maps that
 result to the localized `shoppingListDraftNotFoundSnackbar`.
 
-- [ ] **Step 5: Add manage-accounts routes under the Settings branch**
+- [x] **Step 5: Add manage-accounts routes under the Settings branch**
 
 Inside the `/settings` route's `routes` list, add:
 
@@ -1209,18 +1209,18 @@ GoRoute(
 ),
 ```
 
-- [ ] **Step 6: Remove old /accounts routes**
+- [x] **Step 6: Remove old /accounts routes**
 
 Remove the entire old `/accounts` branch and its child routes. Do not add legacy redirects from `/accounts*` to the new locations. The `ShoppingListScreen` import should now point to the Home branch version.
 
-- [ ] **Step 7: Add ShoppingListScreen import if not already present**
+- [x] **Step 7: Add ShoppingListScreen import if not already present**
 
 Ensure this import exists:
 ```dart
 import '../features/shopping_list/shopping_list_screen.dart';
 ```
 
-- [ ] **Step 8: Run dart format and analyze**
+- [x] **Step 8: Run dart format and analyze**
 
 ```bash
 dart format . && flutter analyze
@@ -1228,13 +1228,13 @@ dart format . && flutter analyze
 
 Expected: analyze may fail here because other files can still reference old routes. Full analyzer pass is verified after the remaining route migrations land in Chunk 4.
 
-- [ ] **Step 9: Run codegen**
+- [x] **Step 9: Run codegen**
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add lib/app/router.dart lib/app/router.g.dart
@@ -1250,7 +1250,7 @@ git commit -m "feat(router): replace /accounts branch with /analysis, add /home/
 **Files:**
 - Modify: `lib/features/home/home_screen.dart:162`
 
-- [ ] **Step 1: Change the shopping-cart FAB navigation**
+- [x] **Step 1: Change the shopping-cart FAB navigation**
 
 In `lib/features/home/home_screen.dart`, line 162:
 
@@ -1263,13 +1263,13 @@ with:
 onPressed: () => context.push('/home/shopping-list'),
 ```
 
-- [ ] **Step 2: Run dart format**
+- [x] **Step 2: Run dart format**
 
 ```bash
 dart format lib/features/home/home_screen.dart
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/features/home/home_screen.dart
@@ -1283,7 +1283,7 @@ git commit -m "feat(home): change shopping-cart FAB to push /home/shopping-list"
 **Files:**
 - Modify: `lib/features/shopping_list/shopping_list_screen.dart:112`
 
-- [ ] **Step 1: Change the row-tap navigation**
+- [x] **Step 1: Change the row-tap navigation**
 
 In `lib/features/shopping_list/shopping_list_screen.dart`, line 112:
 
@@ -1296,13 +1296,13 @@ with:
 '/home/shopping-list/$id',
 ```
 
-- [ ] **Step 2: Run dart format**
+- [x] **Step 2: Run dart format**
 
 ```bash
 dart format lib/features/shopping_list/shopping_list_screen.dart
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/features/shopping_list/shopping_list_screen.dart
@@ -1316,7 +1316,7 @@ git commit -m "feat(shopping-list): change row-tap route to /home/shopping-list/
 **Files:**
 - Modify: `lib/features/transactions/transaction_form_screen.dart:694`
 
-- [ ] **Step 1: Find the /accounts/new reference**
+- [x] **Step 1: Find the /accounts/new reference**
 
 In `lib/features/transactions/transaction_form_screen.dart`, find the line that pushes `/accounts/new` in the recovery flow (around line 694):
 
@@ -1329,13 +1329,13 @@ Replace with:
 context.push('/settings/manage-accounts/new').then(...)
 ```
 
-- [ ] **Step 2: Run dart format**
+- [x] **Step 2: Run dart format**
 
 ```bash
 dart format lib/features/transactions/transaction_form_screen.dart
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/features/transactions/transaction_form_screen.dart
@@ -1349,7 +1349,7 @@ git commit -m "feat(transactions): change create-account recovery route to /sett
 **Files:**
 - Modify: `lib/features/transactions/widgets/account_picker_sheet.dart:50`
 
-- [ ] **Step 1: Change the create-account navigation**
+- [x] **Step 1: Change the create-account navigation**
 
 In `lib/features/transactions/widgets/account_picker_sheet.dart`, line 50:
 
@@ -1362,13 +1362,13 @@ with:
 final savedId = await context.push<int>('/settings/manage-accounts/new');
 ```
 
-- [ ] **Step 2: Run dart format**
+- [x] **Step 2: Run dart format**
 
 ```bash
 dart format lib/features/transactions/widgets/account_picker_sheet.dart
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/features/transactions/widgets/account_picker_sheet.dart
@@ -1382,7 +1382,7 @@ git commit -m "feat(transactions): change create-account route to /settings/mana
 **Files:**
 - Modify: `lib/features/accounts/account_form_screen.dart:150,306`
 
-- [ ] **Step 1: Change the _NotFoundSurface fallback**
+- [x] **Step 1: Change the _NotFoundSurface fallback**
 
 Preserve the existing caller-flow behavior: keep the surrounding
 `context.canPop() ? context.pop() : context.go(...)` contract in both places.
@@ -1399,7 +1399,7 @@ with:
 context.go('/settings');
 ```
 
-- [ ] **Step 2: Change the Cancel button fallback**
+- [x] **Step 2: Change the Cancel button fallback**
 
 In the same file, line 306:
 
@@ -1412,7 +1412,7 @@ with:
 context.go('/settings');
 ```
 
-- [ ] **Step 3: Verify no remaining /accounts references**
+- [x] **Step 3: Verify no remaining /accounts references**
 
 ```bash
 grep -n "/accounts" lib/features/accounts/account_form_screen.dart
@@ -1420,13 +1420,13 @@ grep -n "/accounts" lib/features/accounts/account_form_screen.dart
 
 Expected: zero matches outside import statements and generated code.
 
-- [ ] **Step 4: Run dart format**
+- [x] **Step 4: Run dart format**
 
 ```bash
 dart format lib/features/accounts/account_form_screen.dart
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/features/accounts/account_form_screen.dart
@@ -1443,7 +1443,7 @@ git commit -m "feat(accounts): change form fallback routes from /accounts to /se
 - Delete: `test/widget/features/shopping_list/shopping_list_card_test.dart`
 - Delete: `test/widget/features/shopping_list/shopping_list_card_add_button_test.dart`
 
-- [ ] **Step 1: Verify no remaining imports of deleted files**
+- [x] **Step 1: Verify no remaining imports of deleted files**
 
 ```bash
 grep -rn "accounts_screen.dart\|shopping_list_card.dart" lib/ test/
@@ -1451,11 +1451,11 @@ grep -rn "accounts_screen.dart\|shopping_list_card.dart" lib/ test/
 
 Expected: this will still show matches at this point. Use it as a baseline only.
 
-- [ ] **Step 2: Do not delete the files yet**
+- [x] **Step 2: Do not delete the files yet**
 
 This is an intentional behavior change, not a temporary gap: do not re-home `ShoppingListCard` onto Home in this refactor. Saved drafts are rediscovered only through the Home shopping-cart FAB. Actual file deletion moves to a later cleanup task after the explicit test migrations are complete.
 
-- [ ] **Step 3: Continue to the explicit test migrations in Chunk 5**
+- [x] **Step 3: Continue to the explicit test migrations in Chunk 5**
 
 Do not remove `accounts_screen.dart` or `shopping_list_card.dart` until Tasks 17-18 are complete.
 
@@ -1468,7 +1468,7 @@ Do not remove `accounts_screen.dart` or `shopping_list_card.dart` until Tasks 17
 **Files:**
 - Modify: `test/unit/app/router_test.dart`
 
-- [ ] **Step 1: Update imports**
+- [x] **Step 1: Update imports**
 
 Replace:
 ```dart
@@ -1481,7 +1481,7 @@ import 'package:ledgerly/features/analysis/analysis_screen.dart';
 
 Keep the `AccountFormScreen` and `ShoppingListScreen` imports.
 
-- [ ] **Step 2: Update /accounts/new test to /settings/manage-accounts/new**
+- [x] **Step 2: Update /accounts/new test to /settings/manage-accounts/new**
 
 Replace the test `'accounts/new uses a root modal route and renders the form'`:
 
@@ -1501,7 +1501,7 @@ expect(find.byType(AccountFormScreen), findsOneWidget);
 expect(find.byType(AnalysisScreen), findsNothing);
 ```
 
-- [ ] **Step 3: Update /accounts/:id invalid id test**
+- [x] **Step 3: Update /accounts/:id invalid id test**
 
 Replace the test `'accounts/:id rejects invalid ids safely'`:
 
@@ -1520,7 +1520,7 @@ expect(leaf.matchedLocation, '/settings');
 expect(find.byType(AnalysisScreen), findsNothing);
 ```
 
-- [ ] **Step 4: Update RT01 — shopping-list renders ShoppingListScreen**
+- [x] **Step 4: Update RT01 — shopping-list renders ShoppingListScreen**
 
 Change:
 ```dart
@@ -1536,7 +1536,7 @@ Update assertions:
 expect(leaf.matchedLocation, '/home/shopping-list');
 ```
 
-- [ ] **Step 5: Update RT02 — shopping-list/:id uses root navigator**
+- [x] **Step 5: Update RT02 — shopping-list/:id uses root navigator**
 
 Change:
 ```dart
@@ -1552,7 +1552,7 @@ Update assertions:
 expect(leaf.matchedLocation, '/home/shopping-list/123');
 ```
 
-- [ ] **Step 6: Update RT03 — invalid shopping-list item id redirects**
+- [x] **Step 6: Update RT03 — invalid shopping-list item id redirects**
 
 Change:
 ```dart
@@ -1568,7 +1568,7 @@ Update assertions:
 expect(leaf.matchedLocation, '/home/shopping-list');
 ```
 
-- [ ] **Step 7: Add new test for /analysis route**
+- [x] **Step 7: Add new test for /analysis route**
 
 Add a new test:
 
@@ -1597,7 +1597,7 @@ testWidgets('/analysis renders AnalysisScreen', (tester) async {
 });
 ```
 
-- [ ] **Step 8: Run the router tests**
+- [x] **Step 8: Run the router tests**
 
 ```bash
 dart format . && flutter test test/unit/app/router_test.dart -v
@@ -1605,7 +1605,7 @@ dart format . && flutter test test/unit/app/router_test.dart -v
 
 Expected: PASS.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add test/unit/app/router_test.dart
@@ -1619,7 +1619,7 @@ git commit -m "test(router): migrate all route assertions from /accounts to new 
 **Files:**
 - Modify: `test/widget/features/home/home_shopping_list_fab_test.dart`
 
-- [ ] **Step 1: Update the test router helper**
+- [x] **Step 1: Update the test router helper**
 
 In the `_buildRouter` function, change:
 ```dart
@@ -1636,11 +1636,11 @@ GoRoute(
 ),
 ```
 
-- [ ] **Step 2: Update HSL04 test assertion**
+- [x] **Step 2: Update HSL04 test assertion**
 
 The test `'HSL04: tapping mini FAB navigates to /accounts/shopping-list'` should now expect the route to be `/home/shopping-list`. Update the test name and any comments accordingly.
 
-- [ ] **Step 3: Run the tests**
+- [x] **Step 3: Run the tests**
 
 ```bash
 dart format . && flutter test test/widget/features/home/home_shopping_list_fab_test.dart -v
@@ -1648,7 +1648,7 @@ dart format . && flutter test test/widget/features/home/home_shopping_list_fab_t
 
 Expected: PASS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add test/widget/features/home/home_shopping_list_fab_test.dart
@@ -1664,7 +1664,7 @@ git commit -m "test(home): update shopping-list FAB test to expect /home/shoppin
 - Create: `test/widget/features/accounts/manage_accounts_body_test.dart`
 - Create: `test/widget/features/accounts/manage_accounts_sheet_test.dart`
 
-- [ ] **Step 1: Split body coverage into manage_accounts_body_test.dart**
+- [x] **Step 1: Split body coverage into manage_accounts_body_test.dart**
 
 Create `test/widget/features/accounts/manage_accounts_body_test.dart` by migrating the existing body-centric assertions from `accounts_screen_test.dart`:
 - active rows render with the default badge
@@ -1674,7 +1674,7 @@ Create `test/widget/features/accounts/manage_accounts_body_test.dart` by migrati
 - native-currency balances still render correctly
 - 2x text scale survives
 
-- [ ] **Step 2: Split surface/CTA coverage into manage_accounts_sheet_test.dart**
+- [x] **Step 2: Split surface/CTA coverage into manage_accounts_sheet_test.dart**
 
 Create `test/widget/features/accounts/manage_accounts_sheet_test.dart` for the Settings-owned surface and move the old FAB-equivalent coverage here:
 - opening the sheet from `ManageAccountsTile`
@@ -1683,11 +1683,11 @@ Create `test/widget/features/accounts/manage_accounts_sheet_test.dart` for the S
 - row-tap/edit routes to `/settings/manage-accounts/:id`
 - close button dismisses the sheet/dialog
 
-- [ ] **Step 3: Delete the old accounts_screen_test.dart**
+- [x] **Step 3: Delete the old accounts_screen_test.dart**
 
 Delete `test/widget/features/accounts/accounts_screen_test.dart` after the new body/sheet tests are green.
 
-- [ ] **Step 4: Run the split account-management tests**
+- [x] **Step 4: Run the split account-management tests**
 
 ```bash
 dart format . && flutter test test/widget/features/accounts/manage_accounts_body_test.dart -v && flutter test test/widget/features/accounts/manage_accounts_sheet_test.dart -v
@@ -1695,7 +1695,7 @@ dart format . && flutter test test/widget/features/accounts/manage_accounts_body
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add test/widget/features/accounts/manage_accounts_body_test.dart test/widget/features/accounts/manage_accounts_sheet_test.dart test/widget/features/accounts/accounts_screen_test.dart
@@ -1716,45 +1716,45 @@ git commit -m "test(accounts): split AccountsScreen coverage into manage account
 - Modify: `test/unit/l10n/arb_audit_test.dart`
 - Modify: `test/widget/smoke/app_localizations_groups_test.dart`
 
-- [ ] **Step 1: Update SettingsScreen tests to the Manage accounts entrypoint**
+- [x] **Step 1: Update SettingsScreen tests to the Manage accounts entrypoint**
 
 In `test/widget/features/settings/settings_screen_test.dart`:
 - change the stub route from `/accounts/new` to `/settings/manage-accounts/new`
 - rename the old default-account tile assertions to Manage-accounts tile assertions
 - update keys/text to `settingsManageAccountsTile` and the new subtitle behavior
 
-- [ ] **Step 2: Update ShoppingListScreen tests to `/home/shopping-list/:id`**
+- [x] **Step 2: Update ShoppingListScreen tests to `/home/shopping-list/:id`**
 
 In `test/widget/features/shopping_list/shopping_list_screen_test.dart`:
 - change the row-tap stub route from `/accounts/shopping-list/:id` to `/home/shopping-list/:id`
 - update the SLS04 test name/comments accordingly
 
-- [ ] **Step 3: Update transaction-form shopping-list tests to the new create-account route**
+- [x] **Step 3: Update transaction-form shopping-list tests to the new create-account route**
 
 In `test/widget/features/transactions/transaction_form_shopping_list_button_test.dart`, change the create-account stub route from `/accounts/new` to `/settings/manage-accounts/new`.
 
-- [ ] **Step 4: Update account-form tests to the new helper routes and fallback copy**
+- [x] **Step 4: Update account-form tests to the new helper routes and fallback copy**
 
 In `test/widget/features/accounts/account_form_screen_test.dart`:
 - change helper routes from `/accounts/new` and `/accounts/:id` to `/settings/manage-accounts/new` and `/settings/manage-accounts/:id`
 - change the root list/fallback route from `/accounts` to `/settings`
 - rename the not-found expectation from `pops to /accounts` to `goes to /settings when no route is left on the stack`
 
-- [ ] **Step 5: Update the shopping-list integration flow to use Home-owned rediscovery**
+- [x] **Step 5: Update the shopping-list integration flow to use Home-owned rediscovery**
 
 In `test/integration/shopping_list_path_test.dart`:
 - remove `AccountsScreen` imports/assertions
 - replace taps on the `Accounts` tab with the Home shopping-cart FAB
 - change direct pushes from `/accounts/shopping-list/$draftId` to `/home/shopping-list/$draftId`
 
-- [ ] **Step 6: Update archived-account integration assertions to Settings > Manage accounts**
+- [x] **Step 6: Update archived-account integration assertions to Settings > Manage accounts**
 
 In `test/integration/archive_flow_test.dart`:
 - remove the `AccountsScreen` import
 - replace the `Accounts` tab navigation/assertion with the Settings tab, then open `Manage accounts`
 - assert the archived account appears in the Manage accounts archived section
 
-- [ ] **Step 7: Update l10n regression tests for `navAnalysis`**
+- [x] **Step 7: Update l10n regression tests for `navAnalysis`**
 
 In:
 - `test/unit/l10n/arb_audit_test.dart`
@@ -1762,7 +1762,7 @@ In:
 
 Replace `navAccounts` expectations with `navAnalysis`.
 
-- [ ] **Step 8: Run the targeted migration tests**
+- [x] **Step 8: Run the targeted migration tests**
 
 ```bash
 dart format . && flutter test test/widget/features/settings/settings_screen_test.dart -v && flutter test test/widget/features/shopping_list/shopping_list_screen_test.dart -v && flutter test test/widget/features/transactions/transaction_form_shopping_list_button_test.dart -v && flutter test test/widget/features/accounts/account_form_screen_test.dart -v && flutter test test/integration/shopping_list_path_test.dart -v && flutter test test/integration/archive_flow_test.dart -v && flutter test test/unit/l10n/arb_audit_test.dart -v && flutter test test/widget/smoke/app_localizations_groups_test.dart -v
@@ -1770,7 +1770,7 @@ dart format . && flutter test test/widget/features/settings/settings_screen_test
 
 Expected: PASS.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add test/widget/features/settings/settings_screen_test.dart test/widget/features/shopping_list/shopping_list_screen_test.dart test/widget/features/transactions/transaction_form_shopping_list_button_test.dart test/widget/features/accounts/account_form_screen_test.dart test/integration/shopping_list_path_test.dart test/integration/archive_flow_test.dart test/unit/l10n/arb_audit_test.dart test/widget/smoke/app_localizations_groups_test.dart
@@ -1789,7 +1789,7 @@ git commit -m "test: migrate remaining route and localization tests for analysis
 - Delete: `test/widget/features/shopping_list/shopping_list_card_test.dart`
 - Delete: `test/widget/features/shopping_list/shopping_list_card_add_button_test.dart`
 
-- [ ] **Step 1: Verify no remaining imports of deleted files**
+- [x] **Step 1: Verify no remaining imports of deleted files**
 
 ```bash
 grep -rn "accounts_screen.dart\|shopping_list_card.dart\|default_account_tile.dart\|default_account_picker_sheet.dart" lib/ test/
@@ -1797,7 +1797,7 @@ grep -rn "accounts_screen.dart\|shopping_list_card.dart\|default_account_tile.da
 
 Expected: zero matches.
 
-- [ ] **Step 2: Delete the files**
+- [x] **Step 2: Delete the files**
 
 ```bash
 rm lib/features/accounts/accounts_screen.dart
@@ -1808,7 +1808,7 @@ rm test/widget/features/shopping_list/shopping_list_card_test.dart
 rm test/widget/features/shopping_list/shopping_list_card_add_button_test.dart
 ```
 
-- [ ] **Step 3: Run dart format and analyze**
+- [x] **Step 3: Run dart format and analyze**
 
 ```bash
 dart format . && flutter analyze
@@ -1816,7 +1816,7 @@ dart format . && flutter analyze
 
 Expected: PASS. Fix any remaining import errors.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A
@@ -1830,20 +1830,20 @@ git commit -m "refactor: delete obsolete accounts and shopping-list surfaces"
 **Files:**
 - Various — driven by test failures
 
-- [ ] **Step 1: Run dart format and the full test suite**
+- [x] **Step 1: Run dart format and the full test suite**
 
 ```bash
 dart format . && flutter test
 ```
 
-- [ ] **Step 2: Fix any remaining test failures**
+- [x] **Step 2: Fix any remaining test failures**
 
 Common issues:
 - Tests referencing `/accounts/*` routes
 - Tests importing deleted files
 - Tests asserting old nav labels
 
-- [ ] **Step 3: Run the global /accounts route grep**
+- [x] **Step 3: Run the global /accounts route grep**
 
 ```bash
 grep -rn "'/accounts" lib/ test/
@@ -1851,7 +1851,7 @@ grep -rn "'/accounts" lib/ test/
 
 Expected: zero matches for product-route paths. The `accounts` feature-slice directory name is allowed.
 
-- [ ] **Step 4: Run dart format and analyze**
+- [x] **Step 4: Run dart format and analyze**
 
 ```bash
 dart format . && flutter analyze
@@ -1859,7 +1859,7 @@ dart format . && flutter analyze
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A
@@ -1875,18 +1875,18 @@ git commit -m "test: fix remaining test failures from accounts-to-analysis refac
 **Files:**
 - Modify: `PRD.md`
 
-- [ ] **Step 1: Read the full PRD.md**
+- [x] **Step 1: Read the full PRD.md**
 
 Read the file to understand all sections that reference `Accounts`.
 
-- [ ] **Step 2: Run the greps to find both prose and route references**
+- [x] **Step 2: Run the greps to find both prose and route references**
 
 ```bash
 grep -nE "Accounts(/| |$|\.|,|:)" PRD.md
 grep -n "/accounts" PRD.md
 ```
 
-- [ ] **Step 3: Update all references**
+- [x] **Step 3: Update all references**
 
 Required changes (line numbers approximate):
 - `~27`: Shopping list drafts description — change "Accounts screen" to "Home shopping-cart button" (the only draft rediscovery affordance)
@@ -1906,7 +1906,7 @@ Ensure the grep after changes returns only:
 - Feature-slice name references (e.g., "the accounts feature slice")
 - Intentional historical references
 
-- [ ] **Step 4: Verify the grep**
+- [x] **Step 4: Verify the grep**
 
 ```bash
 grep -nE "Accounts(/| |$|\.|,|:)" PRD.md
@@ -1915,13 +1915,13 @@ grep -n "/accounts" PRD.md
 
 Manually review each match to confirm it's in the allowed list.
 
-- [ ] **Step 5: Run dart format**
+- [x] **Step 5: Run dart format**
 
 ```bash
 dart format PRD.md 2>/dev/null || true
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add PRD.md
@@ -1935,21 +1935,21 @@ git commit -m "docs(prd): update all Accounts references to Analysis/Manage acco
 **Files:**
 - Modify: `README.md`
 
-- [ ] **Step 1: Run the greps**
+- [x] **Step 1: Run the greps**
 
 ```bash
 grep -nE "Accounts(/| |$|\.|,|:)" README.md
 grep -n "/accounts" README.md
 ```
 
-- [ ] **Step 2: Update all references**
+- [x] **Step 2: Update all references**
 
 Ensure the README explains:
 - `Analysis` exists but is intentionally empty in MVP
 - Accounts are managed from `Settings > Manage accounts`
 - Shopping list is entered and rediscovered only from the Home shopping-cart button
 
-- [ ] **Step 3: Verify the grep**
+- [x] **Step 3: Verify the grep**
 
 ```bash
 grep -nE "Accounts(/| |$|\.|,|:)" README.md
@@ -1958,7 +1958,7 @@ grep -n "/accounts" README.md
 
 Remaining matches should be: feature-slice name in project layout, or other intentional historical references that still contain capitalized `Accounts`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add README.md
@@ -1972,7 +1972,7 @@ git commit -m "docs(readme): update structure to reflect Analysis/Manage account
 **Files:**
 - Modify: `AGENTS.md`
 
-- [ ] **Step 1: Update the live route summary**
+- [x] **Step 1: Update the live route summary**
 
 Update the current-runtime summary so it reflects the new router shape:
 - `/analysis` instead of `/accounts`
@@ -1980,11 +1980,11 @@ Update the current-runtime summary so it reflects the new router shape:
 - `/settings/manage-accounts/new`
 - `/settings/manage-accounts/:id`
 
-- [ ] **Step 2: Update any stale top-level Accounts-screen references**
+- [x] **Step 2: Update any stale top-level Accounts-screen references**
 
 Keep feature-slice directory references like `lib/features/accounts/`, but remove any guidance that still describes `AccountsScreen` or `/accounts*` as live user-facing routes.
 
-- [ ] **Step 3: Verify there are no stale `/accounts` route references**
+- [x] **Step 3: Verify there are no stale `/accounts` route references**
 
 ```bash
 grep -n "/accounts" AGENTS.md
@@ -1992,7 +1992,7 @@ grep -n "/accounts" AGENTS.md
 
 Expected: no live user-facing `/accounts` route references remain. Feature-slice directory references such as `lib/features/accounts/` are allowed and should be reviewed manually if matched.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add AGENTS.md
@@ -2006,20 +2006,20 @@ git commit -m "docs(agents): update route guidance for analysis and manage accou
 **Files:**
 - None (verification only)
 
-- [ ] **Step 1: Run dart format**
+- [x] **Step 1: Run dart format**
 
 ```bash
 dart format .
 ```
 
-- [ ] **Step 2: Run codegen to ensure generated files are fresh**
+- [x] **Step 2: Run codegen to ensure generated files are fresh**
 
 ```bash
 flutter gen-l10n
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-- [ ] **Step 3: Run flutter analyze**
+- [x] **Step 3: Run flutter analyze**
 
 ```bash
 flutter analyze
@@ -2027,7 +2027,7 @@ flutter analyze
 
 Expected: PASS.
 
-- [ ] **Step 4: Run the full test suite**
+- [x] **Step 4: Run the full test suite**
 
 ```bash
 flutter test
@@ -2035,7 +2035,7 @@ flutter test
 
 Expected: PASS.
 
-- [ ] **Step 5: Run import lint**
+- [x] **Step 5: Run import lint**
 
 ```bash
 dart run import_lint
@@ -2043,7 +2043,7 @@ dart run import_lint
 
 Expected: PASS.
 
-- [ ] **Step 6: Run the release-gate greps**
+- [x] **Step 6: Run the release-gate greps**
 
 ```bash
 grep -rn "'/accounts" lib/ test/
@@ -2057,7 +2057,7 @@ grep -n "/accounts" AGENTS.md
 
 Verify all results are in allowed lists.
 
-- [ ] **Step 7: Final commit if any generated files changed**
+- [x] **Step 7: Final commit if any generated files changed**
 
 ```bash
 git add -A
