@@ -691,7 +691,6 @@ ShellRoute (bottom nav)
   /analysis                 Analysis tab (Phase 2 placeholder)
   /settings                 Settings tab
     /settings/categories    Manage Categories
-    /settings/manage-accounts         Manage Accounts sheet/dialog
     /settings/manage-accounts/new     New Account
     /settings/manage-accounts/:id     Edit Account
     /settings/wallets       Wallet Management (Phase 2)
@@ -699,6 +698,7 @@ ShellRoute (bottom nav)
 ```
 
 - Add/Edit Transaction is a full-screen modal push (`MaterialPage` / `CupertinoPage`) so the calculator keypad has full vertical space.
+- Manage accounts is opened imperatively from Settings via the Manage accounts tile and adaptive sheet/dialog; only `/settings/manage-accounts/new` and `/settings/manage-accounts/:id` are route-addressable.
 - `/home/shopping-list/:itemId` uses `parentNavigatorKey: _rootNavigatorKey` so the shopping-list route stays mounted underneath the draft-edit modal. Non-parsable `:itemId` values redirect to `/home/shopping-list`. Parsable-but-missing ids pop the modal immediately with a `ShoppingListEditResultMissingDraft` result so the parent list shows the "Draft not found" snackbar.
 - The Home shopping-cart FAB is the only entry point to `ShoppingListScreen`; there is no ShoppingListCard on the Analysis tab.
 - Splash → Home transition uses a fade `CustomTransitionPage` to preserve the hnotes-style reveal.
