@@ -345,11 +345,11 @@
   },
   "accountsFormAddTitle": "New account",
   "@accountsFormAddTitle": {
-    "description": "PRD 643. AppBar title for /accounts/new (Add mode)."
+    "description": "PRD 643. AppBar title for /settings/manage-accounts/new (Add mode)."
   },
   "accountsFormEditTitle": "Edit account",
   "@accountsFormEditTitle": {
-    "description": "PRD 644. AppBar title for /accounts/:id (Edit mode)."
+    "description": "PRD 644. AppBar title for /settings/manage-accounts/:id (Edit mode)."
   },
   "accountsFormName": "Name",
   "@accountsFormName": {
@@ -385,7 +385,7 @@
   },
   "accountsFormNotFound": "This account no longer exists.",
   "@accountsFormNotFound": {
-    "description": "Accounts plan §5. Recoverable not-found state shown when /accounts/:id targets a row that has been deleted."
+    "description": "Accounts plan §5. Recoverable not-found state shown when /settings/manage-accounts/:id targets a row that has been deleted."
   },
   "accountsTypePickerTitle": "Pick account type",
   "@accountsTypePickerTitle": {
@@ -470,7 +470,7 @@
   },
   "settingsDefaultAccountCreateCta": "Create account",
   "@settingsDefaultAccountCreateCta": {
-    "description": "Settings plan §7. CTA shown when no active accounts exist — routes to /accounts/new."
+    "description": "Settings plan §7. CTA shown when no active accounts exist — routes to /settings/manage-accounts/new."
   },
   "settingsDefaultCurrencyLabel": "Default currency",
   "@settingsDefaultCurrencyLabel": {
@@ -531,7 +531,7 @@
   },
   "txCreateAccountCta": "Create account",
   "@txCreateAccountCta": {
-    "description": "Wave 2 §6. CTA shown on the no-active-account empty state. Navigates to /accounts/new."
+    "description": "Wave 2 §6. CTA shown on the no-active-account empty state. Navigates to /settings/manage-accounts/new."
   },
   "txTransactionNotFound": "Transaction not found",
   "@txTransactionNotFound": {

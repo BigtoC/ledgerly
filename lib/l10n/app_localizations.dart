@@ -586,13 +586,13 @@ abstract class AppLocalizations {
   /// **'Choose another default account before deleting this one.'**
   String get accountsDeleteDefaultBlockedBody;
 
-  /// PRD 643. AppBar title for /accounts/new (Add mode).
+  /// PRD 643. AppBar title for /settings/manage-accounts/new (Add mode).
   ///
   /// In en, this message translates to:
   /// **'New account'**
   String get accountsFormAddTitle;
 
-  /// PRD 644. AppBar title for /accounts/:id (Edit mode).
+  /// PRD 644. AppBar title for /settings/manage-accounts/:id (Edit mode).
   ///
   /// In en, this message translates to:
   /// **'Edit account'**
@@ -646,7 +646,7 @@ abstract class AppLocalizations {
   /// **'Pick currency'**
   String get accountsFormPickCurrency;
 
-  /// Accounts plan §5. Recoverable not-found state shown when /accounts/:id targets a row that has been deleted.
+  /// Accounts plan §5. Recoverable not-found state shown when /settings/manage-accounts/:id targets a row that has been deleted.
   ///
   /// In en, this message translates to:
   /// **'This account no longer exists.'**
@@ -772,7 +772,7 @@ abstract class AppLocalizations {
   /// **'Pick default account'**
   String get settingsDefaultAccountPickerTitle;
 
-  /// Settings plan §7. CTA shown when no active accounts exist — routes to /accounts/new.
+  /// Settings plan §7. CTA shown when no active accounts exist — routes to /settings/manage-accounts/new.
   ///
   /// In en, this message translates to:
   /// **'Create account'**
@@ -862,7 +862,7 @@ abstract class AppLocalizations {
   /// **'Enter an amount'**
   String get txAmountRequired;
 
-  /// Wave 2 §6. CTA shown on the no-active-account empty state. Navigates to /accounts/new.
+  /// Wave 2 §6. CTA shown on the no-active-account empty state. Navigates to /settings/manage-accounts/new.
   ///
   /// In en, this message translates to:
   /// **'Create account'**
