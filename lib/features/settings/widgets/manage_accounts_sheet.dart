@@ -1,3 +1,9 @@
+// Manage accounts sheet — Settings-owned entry point.
+//
+// Adaptive: bottom sheet (<600dp) or dialog (>=600dp). Hosts ManageAccountsBody.
+// The sheet remains mounted behind create/edit routes so AccountFormScreen's
+// canPop behavior returns callers to the sheet correctly.
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
