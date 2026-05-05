@@ -6,7 +6,7 @@
 //   - HSL01: badge shows count when count > 0
 //   - HSL02: no badge label when count == 0
 //   - HSL03: badge shows "99+" when count > 99
-//   - HSL04: tapping mini FAB navigates to /accounts/shopping-list
+//   - HSL04: tapping mini FAB navigates to /home/shopping-list
 //   - HSL05: both mini FAB and extended FAB are visible simultaneously
 
 import 'dart:async';
@@ -68,7 +68,7 @@ GoRouter _buildRouter({
         ],
       ),
       GoRoute(
-        path: '/accounts/shopping-list',
+        path: '/home/shopping-list',
         builder: (_, _) => const Scaffold(body: Text('SHOPPING_LIST_SCREEN')),
       ),
       ...extra,
@@ -218,7 +218,7 @@ void main() {
     expect(find.text('99+'), findsOneWidget);
   });
 
-  testWidgets('HSL04: tapping mini FAB navigates to /accounts/shopping-list', (
+  testWidgets('HSL04: tapping mini FAB navigates to /home/shopping-list', (
     tester,
   ) async {
     when(() => slRepo.watchCount()).thenAnswer((_) => Stream.value(2));
