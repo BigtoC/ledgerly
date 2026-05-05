@@ -65,9 +65,12 @@ class _ManageAccountsContent extends ConsumerWidget {
                   onPressed: () => Navigator.of(context).pop(),
                 ),
                 const SizedBox(width: 4),
-                Text(
-                  l10n.manageAccountsTitle,
-                  style: Theme.of(context).textTheme.titleMedium,
+                Expanded(
+                  child: Text(
+                    l10n.manageAccountsTitle,
+                    style: Theme.of(context).textTheme.titleMedium,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),
