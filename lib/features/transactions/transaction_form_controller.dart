@@ -690,7 +690,7 @@ class TransactionFormController extends _$TransactionFormController {
   }
 
   /// Re-runs the last requested hydration mode after the user returns from
-  /// dependency-recovery flows like `/accounts/new`.
+  /// dependency-recovery flows like `/settings/manage-accounts/new`.
   Future<void> retryHydration() async {
     final mode = _lastRequestedMode;
     if (mode == null) return;

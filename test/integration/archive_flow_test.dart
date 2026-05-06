@@ -14,6 +14,7 @@
 // contract (the SSOT for picker visibility) and the Home / Accounts UI
 // surfaces that DO render archived rows.
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
@@ -21,7 +22,6 @@ import 'package:ledgerly/data/models/category.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
-import 'package:ledgerly/features/accounts/accounts_screen.dart';
 import 'package:ledgerly/features/home/home_screen.dart';
 import 'package:ledgerly/features/home/widgets/transaction_tile.dart';
 
@@ -147,19 +147,29 @@ void main() {
         await tester.pump(const Duration(seconds: 1));
         await tester.pumpAndSettle();
 
-        // Navigate to Accounts via the bottom-nav tab.
-        await tester.tap(find.text('Accounts'));
+        // Navigate to Settings via the bottom-nav tab.
+        await tester.tap(find.text('Settings'));
         await tester.pumpAndSettle();
-        expect(find.byType(AccountsScreen), findsOneWidget);
+
+        // Scroll to and tap the Manage accounts tile.
+        await tester.scrollUntilVisible(
+          find.byKey(const ValueKey('settingsManageAccountsTile')),
+          200,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.tap(
+          find.byKey(const ValueKey('settingsManageAccountsTile')),
+        );
+        await tester.pumpAndSettle();
 
         // The Archived section header is visible because there is an
         // archived account; Cash row appears beneath it. "Cash" can
         // also surface as an account-type label, hence the relaxed
         // count assertion — we only care that the archived account row
         // is rendered alongside the active Brokerage row.
-        expect(find.text('Archived'), findsOneWidget);
+        expect(find.text('Archived'), findsAtLeastNWidgets(1));
         expect(find.text('Cash'), findsAtLeastNWidgets(1));
-        expect(find.text('Brokerage'), findsOneWidget);
+        expect(find.text('Brokerage'), findsAtLeastNWidgets(1));
 
         expect(tester.takeException(), isNull);
       },

@@ -4,7 +4,7 @@
 //   - loading indicator in loading state
 //   - empty state CTA to /home/add
 //   - list of rows in data state
-//   - row tap navigates to /accounts/shopping-list/:id
+//   - row tap navigates to /home/shopping-list/:id
 //   - row tap is disabled while pending delete is active
 //   - delete action shows undo snackbar
 //   - undo snackbar action cancels delete
@@ -84,13 +84,13 @@ class _StubRouter {
           builder: (_, _) => const Scaffold(body: Text('ADD_TRANSACTION')),
         ),
         GoRoute(
-          path: '/accounts/shopping-list/:id',
+          path: '/home/shopping-list/:id',
           builder: (ctx, state) => Scaffold(
             body: Text('SHOPPING_ITEM_${state.pathParameters['id']}'),
           ),
         ),
         GoRoute(
-          path: '/accounts/new',
+          path: '/settings/manage-accounts/new',
           builder: (_, _) => const Scaffold(body: Text('ADD_ACCOUNT')),
         ),
       ],
@@ -223,7 +223,7 @@ void main() {
     },
   );
 
-  testWidgets('SLS04: row tap navigates to /accounts/shopping-list/:id', (
+  testWidgets('SLS04: row tap navigates to /home/shopping-list/:id', (
     tester,
   ) async {
     final items = [_item(id: 42, memo: 'Milk')];

@@ -9,7 +9,7 @@
 //     propagates into the outer form without blowing outer state away.
 //   - Edit mode hydrates from `accountRepository.getById(id)`.
 //   - Missing edit-mode row renders the recoverable not-found surface
-//     and pops back to `/accounts`.
+//     and either pops back to the caller or falls back to `/settings`.
 //   - Opening balance respects `currency.decimals` — "100.5" into a JPY
 //     field (`decimals = 0`) is rejected (Save remains disabled).
 
@@ -52,8 +52,13 @@ const _cashType = AccountType(
   defaultCurrency: _usd,
 );
 
-GoRouter _router({int? accountId, required VoidCallback? onPopped}) {
+GoRouter _router({
+  int? accountId,
+  required VoidCallback? onPopped,
+  String initialLocation = '/',
+}) {
   return GoRouter(
+    initialLocation: initialLocation,
     routes: [
       GoRoute(
         path: '/',
@@ -64,8 +69,8 @@ GoRouter _router({int? accountId, required VoidCallback? onPopped}) {
                 key: const ValueKey('open-form'),
                 onPressed: () async {
                   final path = accountId == null
-                      ? '/accounts/new'
-                      : '/accounts/$accountId';
+                      ? '/settings/manage-accounts/new'
+                      : '/settings/manage-accounts/$accountId';
                   await ctx.push<Object?>(path);
                   onPopped?.call();
                 },
@@ -76,15 +81,15 @@ GoRouter _router({int? accountId, required VoidCallback? onPopped}) {
         ),
       ),
       GoRoute(
-        path: '/accounts',
-        builder: (_, _) => const Scaffold(body: Text('ACCOUNTS_LIST')),
+        path: '/settings',
+        builder: (_, _) => const Scaffold(body: Text('SETTINGS_SCREEN')),
       ),
       GoRoute(
-        path: '/accounts/new',
+        path: '/settings/manage-accounts/new',
         builder: (_, _) => const AccountFormScreen(),
       ),
       GoRoute(
-        path: '/accounts/:id',
+        path: '/settings/manage-accounts/:id',
         builder: (ctx, state) => AccountFormScreen(
           accountId: int.parse(state.pathParameters['id']!),
         ),
@@ -287,8 +292,44 @@ void main() {
     expect(find.text('Edit account'), findsOneWidget);
   });
 
+  testWidgets('AF04: Edit mode — missing row auto-pops back to caller', (
+    tester,
+  ) async {
+    final accountRepo = _MockAccountRepository();
+    final typeRepo = _MockAccountTypeRepository();
+    final currencyRepo = _MockCurrencyRepository();
+    final prefs = _MockUserPreferencesRepository();
+
+    when(() => accountRepo.getById(999)).thenAnswer((_) async => null);
+    when(
+      () => typeRepo.watchAll(),
+    ).thenAnswer((_) => Stream.value([_cashType]));
+    when(() => currencyRepo.watchAll()).thenAnswer((_) => Stream.value([_usd]));
+
+    final container = _makeContainer(
+      accountRepo: accountRepo,
+      typeRepo: typeRepo,
+      currencyRepo: currencyRepo,
+      prefs: prefs,
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      _hostApp(
+        container: container,
+        router: _router(accountId: 999, onPopped: null),
+      ),
+    );
+    await tester.tap(find.byKey(const ValueKey('open-form')));
+    await tester.pumpAndSettle();
+
+    // The recoverable surface auto-dismisses; after the post-frame
+    // pop we should be back at the root '/'.
+    expect(find.text('open'), findsOneWidget);
+  });
+
   testWidgets(
-    'AF04: Edit mode — missing row shows not-found and pops to /accounts',
+    'AF04b: Edit mode — missing row falls back to /settings when there is no stack to pop',
     (tester) async {
       final accountRepo = _MockAccountRepository();
       final typeRepo = _MockAccountTypeRepository();
@@ -314,15 +355,59 @@ void main() {
       await tester.pumpWidget(
         _hostApp(
           container: container,
-          router: _router(accountId: 999, onPopped: null),
+          router: _router(
+            onPopped: null,
+            initialLocation: '/settings/manage-accounts/999',
+          ),
         ),
       );
-      await tester.tap(find.byKey(const ValueKey('open-form')));
       await tester.pumpAndSettle();
 
-      // The recoverable surface auto-dismisses; after the post-frame
-      // pop we should be back at the root '/'.
-      expect(find.text('open'), findsOneWidget);
+      expect(find.text('SETTINGS_SCREEN'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'AF04c: Add mode cancel falls back to /settings when there is no stack to pop',
+    (tester) async {
+      final accountRepo = _MockAccountRepository();
+      final typeRepo = _MockAccountTypeRepository();
+      final currencyRepo = _MockCurrencyRepository();
+      final prefs = _MockUserPreferencesRepository();
+
+      when(() => prefs.getDefaultCurrency()).thenAnswer((_) async => 'USD');
+      when(() => currencyRepo.getByCode('USD')).thenAnswer((_) async => _usd);
+      when(
+        () => typeRepo.watchAll(),
+      ).thenAnswer((_) => Stream.value([_cashType]));
+      when(
+        () => currencyRepo.watchAll(),
+      ).thenAnswer((_) => Stream.value([_usd, _jpy, _twd]));
+
+      final container = _makeContainer(
+        accountRepo: accountRepo,
+        typeRepo: typeRepo,
+        currencyRepo: currencyRepo,
+        prefs: prefs,
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        _hostApp(
+          container: container,
+          router: _router(
+            onPopped: null,
+            initialLocation: '/settings/manage-accounts/new',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Cancel'));
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('SETTINGS_SCREEN'), findsOneWidget);
     },
   );
 

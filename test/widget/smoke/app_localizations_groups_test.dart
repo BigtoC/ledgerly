@@ -51,7 +51,7 @@ void main() {
 
         // Nav sentinels.
         expect(l10n.navHome, isNotEmpty);
-        expect(l10n.navAccounts, isNotEmpty);
+        expect(l10n.navAnalysis, isNotEmpty);
         expect(l10n.navSettings, isNotEmpty);
 
         // Common verbs (post Wave 4 §3.2: only keys used by ≥2 slices remain

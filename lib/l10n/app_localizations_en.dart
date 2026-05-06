@@ -15,7 +15,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navHome => 'Home';
 
   @override
-  String get navAccounts => 'Accounts';
+  String get navAnalysis => 'Analysis';
 
   @override
   String get navSettings => 'Settings';
@@ -623,4 +623,47 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shoppingListConvertedSnackbar => 'Draft converted to transaction';
+
+  @override
+  String get manageAccountsTitle => 'Manage accounts';
+
+  @override
+  String get manageAccountsCreateCta => 'Create account';
+
+  @override
+  String manageAccountsSetDefaultSuccess(String name) {
+    return '$name is now the default account.';
+  }
+
+  @override
+  String get manageAccountsSetDefaultFailed =>
+      'Couldn\'t change default account. Try again.';
+
+  @override
+  String get manageAccountsLoadError => 'Couldn\'t load accounts.';
+
+  @override
+  String manageAccountsTileSubtitleMore(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: ' +$count more',
+      one: ' +1 more',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get manageAccountsTileSubtitleAddCta => 'Add an account';
+
+  @override
+  String get manageAccountsBodyEmpty =>
+      'No accounts yet. Create one to get started.';
+
+  @override
+  String get analysisPlaceholderTitle => 'Analysis is coming in Phase 2';
+
+  @override
+  String get analysisPlaceholderBody =>
+      'Charts and summaries will appear here once Phase 2 lands.';
 }

@@ -15,7 +15,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navHome => 'Home';
 
   @override
-  String get navAccounts => 'Accounts';
+  String get navAnalysis => 'Analysis';
 
   @override
   String get navSettings => 'Settings';
@@ -623,6 +623,49 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get shoppingListConvertedSnackbar => 'Draft converted to transaction';
+
+  @override
+  String get manageAccountsTitle => 'Manage accounts';
+
+  @override
+  String get manageAccountsCreateCta => 'Create account';
+
+  @override
+  String manageAccountsSetDefaultSuccess(String name) {
+    return '$name is now the default account.';
+  }
+
+  @override
+  String get manageAccountsSetDefaultFailed =>
+      'Couldn\'t change default account. Try again.';
+
+  @override
+  String get manageAccountsLoadError => 'Couldn\'t load accounts.';
+
+  @override
+  String manageAccountsTileSubtitleMore(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: ' +$count more',
+      one: ' +1 more',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get manageAccountsTileSubtitleAddCta => 'Add an account';
+
+  @override
+  String get manageAccountsBodyEmpty =>
+      'No accounts yet. Create one to get started.';
+
+  @override
+  String get analysisPlaceholderTitle => 'Analysis is coming in Phase 2';
+
+  @override
+  String get analysisPlaceholderBody =>
+      'Charts and summaries will appear here once Phase 2 lands.';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -636,7 +679,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get navHome => '首页';
 
   @override
-  String get navAccounts => '账户';
+  String get navAnalysis => '分析';
 
   @override
   String get navSettings => '设置';
@@ -1226,6 +1269,46 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get shoppingListConvertedSnackbar => '草稿已转换为交易';
+
+  @override
+  String get manageAccountsTitle => '管理账户';
+
+  @override
+  String get manageAccountsCreateCta => '创建账户';
+
+  @override
+  String manageAccountsSetDefaultSuccess(String name) {
+    return '$name 已设为默认账户。';
+  }
+
+  @override
+  String get manageAccountsSetDefaultFailed => '无法更改默认账户，请重试。';
+
+  @override
+  String get manageAccountsLoadError => '无法加载账户。';
+
+  @override
+  String manageAccountsTileSubtitleMore(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: ' +$count 个',
+      one: ' +1 个',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get manageAccountsTileSubtitleAddCta => '添加账户';
+
+  @override
+  String get manageAccountsBodyEmpty => '还没有账户，创建一个开始吧。';
+
+  @override
+  String get analysisPlaceholderTitle => '分析功能将在第二阶段推出';
+
+  @override
+  String get analysisPlaceholderBody => '图表和摘要将在第二阶段上线后显示。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1239,7 +1322,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get navHome => '首頁';
 
   @override
-  String get navAccounts => '帳戶';
+  String get navAnalysis => '分析';
 
   @override
   String get navSettings => '設定';
@@ -1829,4 +1912,44 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get shoppingListConvertedSnackbar => '草稿已轉換為交易';
+
+  @override
+  String get manageAccountsTitle => '管理帳戶';
+
+  @override
+  String get manageAccountsCreateCta => '建立帳戶';
+
+  @override
+  String manageAccountsSetDefaultSuccess(String name) {
+    return '$name 已設為預設帳戶。';
+  }
+
+  @override
+  String get manageAccountsSetDefaultFailed => '無法變更預設帳戶，請重試。';
+
+  @override
+  String get manageAccountsLoadError => '無法載入帳戶。';
+
+  @override
+  String manageAccountsTileSubtitleMore(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: ' +$count 個',
+      one: ' +1 個',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get manageAccountsTileSubtitleAddCta => '新增帳戶';
+
+  @override
+  String get manageAccountsBodyEmpty => '還沒有帳戶，建立一個開始吧。';
+
+  @override
+  String get analysisPlaceholderTitle => '分析功能將在第二階段推出';
+
+  @override
+  String get analysisPlaceholderBody => '圖表和摘要將在第二階段上線後顯示。';
 }

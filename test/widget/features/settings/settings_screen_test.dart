@@ -4,15 +4,15 @@
 //   - Data state renders all sections (Appearance, General, Splash)
 //     with their labels localized via AppLocalizations.
 //   - Theme segmented control exercises the `setThemeMode` command.
-//   - Default-account tile shows the "Not set" placeholder when no
-//     default is configured.
+//   - ManageAccountsTile shows "Add an account" when there are no active accounts.
+//   - ManageAccountsTile shows account name when there is 1 active account.
+//   - ManageAccountsTile uses the accounts slice default for multi-account subtitles.
+//   - ManageAccountsTile falls back to the first active account when the default is absent.
 //   - "Manage Categories" tile navigates to `/settings/categories`.
 //   - Locale change via `setLocale` writes through the repo; a manual
 //     MaterialApp locale swap then verifies visible strings change
 //     without re-navigating.
 //   - 2× text scale survives.
-
-import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,6 +26,8 @@ import 'package:ledgerly/data/models/currency.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
+import 'package:ledgerly/features/accounts/accounts_controller.dart';
+import 'package:ledgerly/features/accounts/accounts_state.dart';
 import 'package:ledgerly/features/settings/settings_controller.dart';
 import 'package:ledgerly/features/settings/settings_screen.dart';
 import 'package:ledgerly/features/settings/settings_state.dart';
@@ -48,6 +50,16 @@ class _FakeSettingsController extends SettingsController {
   }
 }
 
+class _FakeAccountsController extends AccountsController {
+  _FakeAccountsController(this._fixed);
+  final AccountsState _fixed;
+
+  @override
+  Stream<AccountsState> build() async* {
+    yield _fixed;
+  }
+}
+
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 
 Account _a({required int id, required String name}) =>
@@ -59,7 +71,7 @@ class _StubRouter {
       routes: [
         GoRoute(path: '/', builder: (_, _) => home),
         GoRoute(
-          path: '/accounts/new',
+          path: '/settings/manage-accounts/new',
           builder: (_, _) => const Scaffold(body: Text('ADD_ACCOUNT')),
         ),
         GoRoute(
@@ -98,7 +110,15 @@ ProviderContainer _makeContainer({
   required AccountRepository accountRepo,
   required CurrencyRepository currencyRepo,
   required SettingsState fixed,
+  AccountsState? accountsFixed,
 }) {
+  final defaultAccountsState =
+      accountsFixed ??
+      const AccountsState.data(
+        active: [],
+        archived: [],
+        defaultAccountId: null,
+      );
   return ProviderContainer(
     overrides: [
       userPreferencesRepositoryProvider.overrideWithValue(prefs),
@@ -106,6 +126,9 @@ ProviderContainer _makeContainer({
       currencyRepositoryProvider.overrideWithValue(currencyRepo),
       settingsControllerProvider.overrideWith(
         () => _FakeSettingsController(fixed),
+      ),
+      accountsControllerProvider.overrideWith(
+        () => _FakeAccountsController(defaultAccountsState),
       ),
     ],
   );
@@ -160,88 +183,170 @@ void main() {
     expect(find.text('Splash screen', skipOffstage: false), findsOneWidget);
   });
 
-  testWidgets('SS02: default-account tile shows "Not set" when id is null', (
-    tester,
-  ) async {
-    final prefs = _MockUserPreferencesRepository();
-    final accountRepo = _MockAccountRepository();
-    final currencyRepo = _MockCurrencyRepository();
-
-    final container = _makeContainer(
-      prefs: prefs,
-      accountRepo: accountRepo,
-      currencyRepo: currencyRepo,
-      fixed: _data(),
-    );
-    addTearDown(container.dispose);
-
-    await tester.pumpWidget(_wrap(container: container));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Not set'), findsOneWidget);
-  });
-
-  testWidgets('SS03: default-account tile shows account name when set', (
-    tester,
-  ) async {
-    final prefs = _MockUserPreferencesRepository();
-    final accountRepo = _MockAccountRepository();
-    final currencyRepo = _MockCurrencyRepository();
-    when(
-      () => accountRepo.getById(7),
-    ).thenAnswer((_) async => _a(id: 7, name: 'Main Cash'));
-    when(
-      () => accountRepo.watchById(7),
-    ).thenAnswer((_) => Stream.value(_a(id: 7, name: 'Main Cash')));
-
-    final container = _makeContainer(
-      prefs: prefs,
-      accountRepo: accountRepo,
-      currencyRepo: currencyRepo,
-      fixed: _data(defaultAccountId: 7),
-    );
-    addTearDown(container.dispose);
-
-    await tester.pumpWidget(_wrap(container: container));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Main Cash'), findsOneWidget);
-  });
-
   testWidgets(
-    'SS03b: default-account subtitle updates when the account name changes',
+    'SS02: ManageAccountsTile shows "Add an account" when there are no active accounts',
     (tester) async {
       final prefs = _MockUserPreferencesRepository();
       final accountRepo = _MockAccountRepository();
       final currencyRepo = _MockCurrencyRepository();
-      final accountCtrl = StreamController<Account?>.broadcast();
-      addTearDown(accountCtrl.close);
-
-      when(
-        () => accountRepo.watchById(7),
-      ).thenAnswer((_) => accountCtrl.stream);
 
       final container = _makeContainer(
         prefs: prefs,
         accountRepo: accountRepo,
         currencyRepo: currencyRepo,
-        fixed: _data(defaultAccountId: 7),
+        fixed: _data(defaultAccountId: null),
+        accountsFixed: const AccountsState.data(
+          active: [],
+          archived: [],
+          defaultAccountId: null,
+        ),
       );
       addTearDown(container.dispose);
 
       await tester.pumpWidget(_wrap(container: container));
       await tester.pumpAndSettle();
 
-      accountCtrl.add(_a(id: 7, name: 'Main Cash'));
+      // Scroll the ManageAccountsTile into view before asserting.
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('settingsManageAccountsTile')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.pumpAndSettle();
 
-      expect(find.text('Main Cash'), findsOneWidget);
+      expect(find.text('Add an account', skipOffstage: false), findsOneWidget);
+    },
+  );
 
-      accountCtrl.add(_a(id: 7, name: 'Renamed Cash'));
+  testWidgets(
+    'SS03: ManageAccountsTile shows account name when there is 1 active account',
+    (tester) async {
+      final prefs = _MockUserPreferencesRepository();
+      final accountRepo = _MockAccountRepository();
+      final currencyRepo = _MockCurrencyRepository();
+
+      final container = _makeContainer(
+        prefs: prefs,
+        accountRepo: accountRepo,
+        currencyRepo: currencyRepo,
+        fixed: _data(defaultAccountId: 7),
+        accountsFixed: AccountsState.data(
+          active: [
+            AccountWithBalance(
+              account: _a(id: 7, name: 'Main Cash'),
+              balancesByCurrency: const {},
+              affordance: AccountRowAffordance.archive,
+            ),
+          ],
+          archived: const [],
+          defaultAccountId: 7,
+        ),
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container));
       await tester.pumpAndSettle();
 
-      expect(find.text('Renamed Cash'), findsOneWidget);
-      expect(find.text('Main Cash'), findsNothing);
+      // Scroll the ManageAccountsTile into view before asserting.
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('settingsManageAccountsTile')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      // The tile subtitle shows the account name.
+      expect(find.text('Main Cash', skipOffstage: false), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'SS03b: ManageAccountsTile uses AccountsData.defaultAccountId for multi-account subtitle',
+    (tester) async {
+      final prefs = _MockUserPreferencesRepository();
+      final accountRepo = _MockAccountRepository();
+      final currencyRepo = _MockCurrencyRepository();
+
+      final container = _makeContainer(
+        prefs: prefs,
+        accountRepo: accountRepo,
+        currencyRepo: currencyRepo,
+        fixed: _data(defaultAccountId: 1),
+        accountsFixed: AccountsState.data(
+          active: [
+            AccountWithBalance(
+              account: _a(id: 1, name: 'Cash'),
+              balancesByCurrency: const {},
+              affordance: AccountRowAffordance.archive,
+            ),
+            AccountWithBalance(
+              account: _a(id: 2, name: 'Savings'),
+              balancesByCurrency: const {},
+              affordance: AccountRowAffordance.archive,
+            ),
+          ],
+          archived: const [],
+          defaultAccountId: 2,
+        ),
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container));
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('settingsManageAccountsTile')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Savings +1 more', skipOffstage: false), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'SS03c: ManageAccountsTile falls back to the first active account when default is missing',
+    (tester) async {
+      final prefs = _MockUserPreferencesRepository();
+      final accountRepo = _MockAccountRepository();
+      final currencyRepo = _MockCurrencyRepository();
+
+      final container = _makeContainer(
+        prefs: prefs,
+        accountRepo: accountRepo,
+        currencyRepo: currencyRepo,
+        fixed: _data(defaultAccountId: 99),
+        accountsFixed: AccountsState.data(
+          active: [
+            AccountWithBalance(
+              account: _a(id: 1, name: 'Cash'),
+              balancesByCurrency: const {},
+              affordance: AccountRowAffordance.archive,
+            ),
+            AccountWithBalance(
+              account: _a(id: 2, name: 'Savings'),
+              balancesByCurrency: const {},
+              affordance: AccountRowAffordance.archive,
+            ),
+          ],
+          archived: const [],
+          defaultAccountId: 99,
+        ),
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container));
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('settingsManageAccountsTile')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Cash +1 more', skipOffstage: false), findsOneWidget);
     },
   );
 

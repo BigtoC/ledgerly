@@ -47,7 +47,7 @@ class _AccountPickerSheet extends ConsumerWidget {
   const _AccountPickerSheet();
 
   Future<void> _onCreateAccount(BuildContext context, WidgetRef ref) async {
-    final savedId = await context.push<int>('/accounts/new');
+    final savedId = await context.push<int>('/settings/manage-accounts/new');
     if (!context.mounted || savedId == null) return;
 
     final account = await ref.read(accountRepositoryProvider).getById(savedId);

@@ -14,7 +14,7 @@ PRD disagree, the PRD wins. The milestone sequencing lives in
 ## Status
 
 M5 complete — all six feature slices (Splash, Home, Transactions, Categories,
-Accounts, Settings) plus Wave 4 integration are on `main`. M6 (integration
+Analysis, Settings) plus Wave 4 integration are on `main`. M6 (integration
 polish, a11y, release prep) is next.
 
 ## User handbook
@@ -97,9 +97,14 @@ Typical flow:
 You can also open an existing transaction to edit it or duplicate it for quick
 repeat entry.
 
-#### Accounts
+#### Analysis
 
-Use `Accounts` to organize where money is stored.
+`Analysis` is a Phase 2 placeholder for spending charts and trends. In the MVP
+it shows a coming-soon message.
+
+#### Manage Accounts
+
+Use `Settings > Manage Accounts` to organize where money is stored.
 
 - Create additional accounts beyond the default cash account.
 - Assign an account type and currency.
@@ -209,8 +214,9 @@ lib/
     home/           # day-at-a-time transaction list with summary strip
     transactions/   # add/edit form with calculator keypad
     categories/     # category list + form sheet with icon/color pickers
-    accounts/       # account list + form with currency/type pickers
-    settings/       # language, theme, default currency/account, splash toggle
+    analysis/       # Phase 2 placeholder (Analysis tab)
+    accounts/       # account list + form with currency/type pickers (opened from Settings)
+    settings/       # language, theme, default currency/account, splash toggle; Manage Accounts sheet
 l10n/         # Source ARB files (app_en, app_zh, app_zh_CN, app_zh_TW)
 test/
   unit/       # services / repositories / controllers / utils

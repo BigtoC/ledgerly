@@ -24,7 +24,7 @@ Ledgerly is a local-first mobile expense tracker built with Flutter. It is aimed
 - Base multi-currency support with configurable default currency
 - Transaction memos
 - Quick repeat / duplicate existing transaction
-- **Shopping list drafts** — capture future expenses as drafts from the Add Transaction form; review, edit, and convert drafts to real transactions from the Accounts screen
+- **Shopping list drafts** — capture future expenses as drafts from the Add Transaction form; review, edit, and convert drafts to real transactions from the Home shopping-cart button
 - Light/dark theme
 - English, Traditional Chinese, Simplified Chinese UI
 - **Splash screen with configurable day counter** — standalone feature, hnotes-style visual design
@@ -199,18 +199,24 @@ lib/
       categories_screen.dart
       categories_controller.dart
       categories_state.dart
+    analysis/
+      analysis_screen.dart
     accounts/
-      accounts_screen.dart
+      account_form_screen.dart
       accounts_controller.dart
       accounts_state.dart
+      widgets/
+        manage_accounts_body.dart
+        account_tile.dart
+        account_type_display.dart
+        account_type_picker_sheet.dart
+        currency_picker_sheet.dart
     shopping_list/
       shopping_list_screen.dart
       shopping_list_controller.dart
       shopping_list_state.dart
       shopping_list_providers.dart
       shopping_list_item_labels.dart
-      widgets/
-        shopping_list_card.dart
     wallets/                               # Phase 2
       wallets_screen.dart
       wallets_controller.dart
@@ -219,6 +225,9 @@ lib/
       settings_screen.dart
       settings_controller.dart
       settings_state.dart
+      widgets/
+        manage_accounts_sheet.dart   # adaptive sheet/dialog for account management
+        manage_accounts_tile.dart    # Settings list tile that opens the sheet
 test/
   unit/
     services/
@@ -374,7 +383,7 @@ Notes:
 - New accounts default currency from `account_types.default_currency`; if NULL, fall back to `user_preferences.default_currency`. User can override on creation.
 - `account_type_id` is required; archiving an account type does not cascade-archive accounts, but new-account creation hides archived types from the picker.
 - Tracked balance is derived in the account's native currency from transactions assigned to that account.
-- MVP Home and Accounts surfaces group totals by original currency. Phase 2 can also show auto-converted totals in `default_currency`.
+- MVP Home and Analysis surfaces group totals by original currency. Phase 2 can also show auto-converted totals in `default_currency`.
 - Accounts with existing transactions can be archived but not hard-deleted.
 - Transfers, reconciliation, and credit-card payoff flows are deferred to Phase 2.
 
@@ -544,7 +553,7 @@ Seeded categories use stable `l10n_key` values so locale changes do not create d
 
 Account type tiles deliberately use a shared neutral tint — account types are visually distinguished by their **icon**, not by color. Users creating custom account types can pick any other palette color if they want color-coded account types. Icon keys (`'wallet'`, `'trending_up'`) resolve via `core/utils/icon_registry.dart` at render time to `Icons.wallet` and `Icons.trending_up` from Flutter's built-in `material` library.
 
-Seeded account types follow the same identity rules as seeded categories: `l10n_key` stays stable across renames; user renames write `custom_name` only. Users can add custom account types from the Accounts screen (name + icon + color + default currency). Archiving / deletion rules match categories: archive when referenced, hard-delete only when unused.
+Seeded account types follow the same identity rules as seeded categories: `l10n_key` stays stable across renames; user renames write `custom_name` only. Users can add custom account types from Settings > Manage Accounts (name + icon + color + default currency). Archiving / deletion rules match categories: archive when referenced, hard-delete only when unused.
 
 Phase 2 token wallets will be another account type (seeded when the wallet sync milestone lands) — the table shape above is forward-compatible.
 
@@ -667,7 +676,7 @@ App open (or manual refresh tap) → WalletsController.sync() → WalletSyncUseC
 
 ## Routing Structure
 
-Navigation uses `go_router` with a `StatefulShellRoute` for the bottom navigation, so Home / Accounts / Settings preserve independent state when switching tabs.
+Navigation uses `go_router` with a `StatefulShellRoute` for the bottom navigation, so Home / Analysis / Settings preserve independent state when switching tabs.
 
 ```text
 /                           redirect → /splash if splash_enabled else /home
@@ -677,19 +686,21 @@ ShellRoute (bottom nav)
     /home/add               Add Transaction (modal push)
     /home/edit/:id          Edit Transaction (modal push)
     /home/pending           Pending Transactions (Phase 2)
-  /accounts                 Accounts tab
-    /accounts/new           New Account
-    /accounts/shopping-list Shopping list screen
-    /accounts/shopping-list/:itemId  Edit draft (modal, root navigator)
-    /accounts/:id           Edit Account
+    /home/shopping-list     Shopping list screen
+    /home/shopping-list/:itemId  Edit draft (modal, root navigator)
+  /analysis                 Analysis tab (Phase 2 placeholder)
   /settings                 Settings tab
     /settings/categories    Manage Categories
+    /settings/manage-accounts/new     New Account
+    /settings/manage-accounts/:id     Edit Account
     /settings/wallets       Wallet Management (Phase 2)
     /settings/ankr-key      Ankr API Key (Phase 2)
 ```
 
 - Add/Edit Transaction is a full-screen modal push (`MaterialPage` / `CupertinoPage`) so the calculator keypad has full vertical space.
-- `/accounts/shopping-list/:itemId` uses `parentNavigatorKey: _rootNavigatorKey` so the shopping-list route stays mounted underneath the draft-edit modal. Non-parsable `:itemId` values redirect to `/accounts/shopping-list`. Parsable-but-missing ids pop the modal immediately with a `ShoppingListEditResultMissingDraft` result so the parent list shows the "Draft not found" snackbar.
+- Manage accounts is opened imperatively from Settings via the Manage accounts tile and adaptive sheet/dialog; only `/settings/manage-accounts/new` and `/settings/manage-accounts/:id` are route-addressable.
+- `/home/shopping-list/:itemId` uses `parentNavigatorKey: _rootNavigatorKey` so the shopping-list route stays mounted underneath the draft-edit modal. Non-parsable `:itemId` values redirect to `/home/shopping-list`. Parsable-but-missing ids pop the modal immediately with a `ShoppingListEditResultMissingDraft` result so the parent list shows the "Draft not found" snackbar.
+- The Home shopping-cart FAB is the only entry point to `ShoppingListScreen`; there is no ShoppingListCard on the Analysis tab.
 - Splash → Home transition uses a fade `CustomTransitionPage` to preserve the hnotes-style reveal.
 - Root `redirect:` reads `splash_enabled` from `user_preferences`; no splash route is visited when disabled.
 
@@ -699,7 +710,7 @@ ShellRoute (bottom nav)
 
 ### Navigation
 
-- Bottom navigation on phone: Home, Accounts, Settings (switches to `NavigationRail` on ≥600dp — see Adaptive Layouts)
+- Bottom navigation on phone: Home, Analysis, Settings (switches to `NavigationRail` on ≥600dp — see Adaptive Layouts)
 - Home FAB opens Add Transaction
 - Categories is a secondary management screen opened from Add/Edit Transaction or Settings > Manage Categories
 - Splash screen is the initial route when enabled (before bottom navigation)
@@ -708,18 +719,19 @@ ShellRoute (bottom nav)
 
 - On first launch, seed common fiat entries into `currencies`, all default account types (Cash, Investment), one `Cash` account (type = `accountType.cash`) with `opening_balance_minor_units = 0`, and all default categories
 - `default_currency` starts from device locale (resolved via `LocaleService`), can be changed in Settings, and is used for new account defaults
-- `default_account_id` is seeded to the id of the Cash account created during first-run seeding, so the user's first Add Transaction entry auto-selects the Cash account without requiring a visit to the Accounts screen
+- `default_account_id` is seeded to the id of the Cash account created during first-run seeding, so the user's first Add Transaction entry auto-selects the Cash account without requiring a visit to Settings > Manage Accounts
 - `splash_enabled = true` by default; first launch redirects to date picker before showing splash
 - After splash, Home opens in an empty state with primary CTA `Log first transaction`
-- Users can complete their first transaction without visiting Accounts, Categories, or Settings
+- Users can complete their first transaction without visiting Analysis, Categories, or Settings
 
 ### Screens
 
 1. **Splash Screen** — Day counter with hnotes-style visual design, tap to enter Home
 2. **Home Screen** — Compact summary strip grouped by currency in MVP (`Today expense`, `Today income`, `Month net` per currency); Phase 2 can also show auto-converted totals in `default_currency`. Below the strip, the transaction list shows **one day at a time**, with prev/next day navigation to walk through days that have activity (empty gap days are skipped). Today is the default day on cold start. Empty-state CTA, FAB to add transaction, pending transaction badge (Phase 2).
 3. **Add/Edit Transaction** — Expense/Income segmented control, calculator-style keypad for amount, category picker (icon grid), account selector with currency indicator, date picker, memo field for optional free-form detail, save; delete only in edit mode. In add mode, an inline "Add to shopping list" action below the memo field captures the current form state as a draft and returns to the caller without creating a transaction.
-4. **Accounts Screen** — Always shows a shopping-list preview card as the first item (visible even when no accounts exist) with up to 3 newest drafts and an overflow CTA; below it, the active accounts list with tracked balances in native currency. Add account, manage account types, set default account, archive account.
-4a. **Shopping List Screen** (`/accounts/shopping-list`) — Full draft list sorted newest first. Swipe-delete or icon-button delete with a 4-second undo snackbar. Tapping a row opens the draft in the reused transaction form. Empty-state CTA opens `/home/add`. Delete is the only mutation on this screen; draft creation happens in `/home/add` only.
+4. **Analysis Screen** — Phase 2 placeholder for spending analysis and charts. Account management has moved to Settings > Manage Accounts.
+4a. **Manage Accounts** (Settings > Manage Accounts, adaptive sheet/dialog) — Active accounts list with tracked balances in native currency. Add account, manage account types, set default account, archive account. Opened via the ManageAccountsTile in Settings. New and edit routes are `/settings/manage-accounts/new` and `/settings/manage-accounts/:id`.
+4b. **Shopping List Screen** (`/home/shopping-list`) — Full draft list sorted newest first. Accessed from the Home shopping-cart FAB. Swipe-delete or icon-button delete with a 4-second undo snackbar. Tapping a row opens the draft in the reused transaction form. Empty-state CTA opens `/home/add`. Delete is the only mutation on this screen; draft creation happens in `/home/add` only.
 5. **Categories Screen** — List categories grouped by expense/income, add/edit/reorder/archive
 6. **Settings Screen** — Theme toggle (light/dark), language selector, default account, default currency, manage categories, splash screen settings
 7. **Pending Transactions Screen** (Phase 2) — Review/approve/reject auto-generated transactions, accessible from Home badge and Settings
@@ -743,7 +755,7 @@ ShellRoute (bottom nav)
 - **Splash:** shows day count when configured, date picker redirect when no start date set, skipped when disabled
 - **Home:** cold start pins the day to today and shows a skeleton row; `No transactions yet` empty state on first run; per-day empty card (`No transaction`) on a day with no activity when the user lands on a gap day; grouped summary chips when multiple currencies are present with a `Multiple currencies` note when more than 2 groups are present; `Jump to today` button appears when the selected day differs from today; undo snackbar after delete; pending transaction badge (Phase 2); prev/next advance by one calendar day; prev disables at the date-picker floor (year 1900), next disables at today
 - **Add/Edit Transaction:** inline validation for missing amount/category/account, confirm-discard dialog, save-error snackbar
-- **Accounts:** if no active account exists, show `Create account` CTA and block transaction save until one exists
+- **Manage Accounts (Settings):** if no active account exists, show `Create account` CTA and block transaction save until one exists
 - **Categories:** if a type has no visible categories, show `Create category` CTA; used categories can be archived but not deleted
 - **Pending Transactions (Phase 2):** list with approve/reject actions, empty state when no pending items, grouped by source
 
@@ -767,8 +779,7 @@ Home → tap FAB → Add Transaction screen
   → fill in category, account, optional amount, date
   → tap "Add to shopping list" → draft saved, form closes, returns to caller
 
-Accounts tab → shopping-list preview card shows newest drafts
-  → tap "View all" or overflow CTA → Shopping List Screen
+Home → tap shopping-cart FAB → Shopping List Screen
   → tap a draft row → draft opens in Edit Draft form
     → adjust fields as needed
     → tap "Save draft" → draft updated, returns to list

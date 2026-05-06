@@ -10,9 +10,9 @@
   "@navHome": {
     "description": "PRD 656. Bottom-nav tab 1 label."
   },
-  "navAccounts": "Accounts",
-  "@navAccounts": {
-    "description": "PRD 656. Bottom-nav tab 2 label."
+  "navAnalysis": "Analysis",
+  "@navAnalysis": {
+    "description": "PRD 656. Bottom-nav tab 2 label. Renamed from Accounts to Analysis."
   },
   "navSettings": "Settings",
   "@navSettings": {
@@ -345,11 +345,11 @@
   },
   "accountsFormAddTitle": "New account",
   "@accountsFormAddTitle": {
-    "description": "PRD 643. AppBar title for /accounts/new (Add mode)."
+    "description": "PRD 643. AppBar title for /settings/manage-accounts/new (Add mode)."
   },
   "accountsFormEditTitle": "Edit account",
   "@accountsFormEditTitle": {
-    "description": "PRD 644. AppBar title for /accounts/:id (Edit mode)."
+    "description": "PRD 644. AppBar title for /settings/manage-accounts/:id (Edit mode)."
   },
   "accountsFormName": "Name",
   "@accountsFormName": {
@@ -385,7 +385,7 @@
   },
   "accountsFormNotFound": "This account no longer exists.",
   "@accountsFormNotFound": {
-    "description": "Accounts plan §5. Recoverable not-found state shown when /accounts/:id targets a row that has been deleted."
+    "description": "Accounts plan §5. Recoverable not-found state shown when /settings/manage-accounts/:id targets a row that has been deleted."
   },
   "accountsTypePickerTitle": "Pick account type",
   "@accountsTypePickerTitle": {
@@ -470,7 +470,7 @@
   },
   "settingsDefaultAccountCreateCta": "Create account",
   "@settingsDefaultAccountCreateCta": {
-    "description": "Settings plan §7. CTA shown when no active accounts exist — routes to /accounts/new."
+    "description": "Settings plan §7. CTA shown when no active accounts exist — routes to /settings/manage-accounts/new."
   },
   "settingsDefaultCurrencyLabel": "Default currency",
   "@settingsDefaultCurrencyLabel": {
@@ -531,7 +531,7 @@
   },
   "txCreateAccountCta": "Create account",
   "@txCreateAccountCta": {
-    "description": "Wave 2 §6. CTA shown on the no-active-account empty state. Navigates to /accounts/new."
+    "description": "Wave 2 §6. CTA shown on the no-active-account empty state. Navigates to /settings/manage-accounts/new."
   },
   "txTransactionNotFound": "Transaction not found",
   "@txTransactionNotFound": {
@@ -813,5 +813,52 @@
   "shoppingListConvertedSnackbar": "Draft converted to transaction",
   "@shoppingListConvertedSnackbar": {
     "description": "SnackBar shown on the shopping list screen after a draft is converted to a real transaction."
+  },
+
+  "manageAccountsTitle": "Manage accounts",
+  "@manageAccountsTitle": {
+    "description": "Title for the Manage accounts surface (sheet/dialog) and the Settings entry-point row."
+  },
+  "manageAccountsCreateCta": "Create account",
+  "@manageAccountsCreateCta": {
+    "description": "CTA button inside the Manage accounts surface to create a new account."
+  },
+  "manageAccountsSetDefaultSuccess": "{name} is now the default account.",
+  "@manageAccountsSetDefaultSuccess": {
+    "description": "SnackBar shown after successfully setting an account as default.",
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "manageAccountsSetDefaultFailed": "Couldn't change default account. Try again.",
+  "@manageAccountsSetDefaultFailed": {
+    "description": "SnackBar shown when setting default account fails."
+  },
+  "manageAccountsLoadError": "Couldn't load accounts.",
+  "@manageAccountsLoadError": {
+    "description": "Inline error placeholder shown when the Manage accounts body fails to load."
+  },
+  "manageAccountsTileSubtitleMore": "{count, plural, =1{ +1 more} other{ +{count} more}}",
+  "@manageAccountsTileSubtitleMore": {
+    "description": "Settings tile subtitle suffix when N≥2 active accounts exist. Concatenated after the default name.",
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "manageAccountsTileSubtitleAddCta": "Add an account",
+  "@manageAccountsTileSubtitleAddCta": {
+    "description": "Settings tile subtitle when zero active accounts exist."
+  },
+  "manageAccountsBodyEmpty": "No accounts yet. Create one to get started.",
+  "@manageAccountsBodyEmpty": {
+    "description": "Empty-state body text inside the Manage accounts surface when no accounts exist."
+  },
+  "analysisPlaceholderTitle": "Analysis is coming in Phase 2",
+  "@analysisPlaceholderTitle": {
+    "description": "Title for the Analysis screen empty-state placeholder."
+  },
+  "analysisPlaceholderBody": "Charts and summaries will appear here once Phase 2 lands.",
+  "@analysisPlaceholderBody": {
+    "description": "Body copy for the Analysis screen empty-state placeholder."
   }
 }

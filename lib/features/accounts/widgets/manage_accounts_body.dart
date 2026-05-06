@@ -1,14 +1,4 @@
-// Accounts list screen (plan §3.1, §4).
-//
-// Layout (PRD → Layout Primitives): `Scaffold` with a `CustomScrollView`
-// containing a title header sliver, the active-accounts sliver list,
-// an optional archived-accounts sliver section, and an FAB-clearance
-// pad. FAB routes to `/accounts/new`. Tapping a tile routes to
-// `/accounts/:id`.
-//
-// Swipe + overflow actions (set default / archive / delete) are
-// rendered by `AccountTile`; the screen owns the async plumbing
-// (undo snackbar, confirm-delete dialog, pick-new-default dialog).
+// Caller is responsible for resolving data state; this widget renders only AccountsData.
 
 import 'dart:async';
 
@@ -17,46 +7,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/constants.dart';
-import '../../core/utils/box_shadow.dart';
-import '../../l10n/app_localizations.dart';
-import '../shopping_list/widgets/shopping_list_card.dart';
-import 'accounts_controller.dart';
-import 'accounts_providers.dart';
-import 'accounts_state.dart';
-import 'widgets/account_tile.dart';
-import 'widgets/account_type_display.dart';
+import '../../../core/constants.dart';
+import '../../../core/utils/box_shadow.dart';
+import '../../../l10n/app_localizations.dart';
+import '../accounts_controller.dart';
+import '../accounts_providers.dart';
+import '../accounts_state.dart';
+import 'account_tile.dart';
+import 'account_type_display.dart';
 
-class AccountsScreen extends ConsumerWidget {
-  const AccountsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final state = ref.watch(accountsControllerProvider);
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.accountsListTitle)),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'accounts_fab',
-        onPressed: () => context.go('/accounts/new'),
-        icon: const Icon(Icons.add),
-        label: Text(l10n.accountsAddCta),
-      ),
-      body: SlidableAutoCloseBehavior(
-        child: switch (state) {
-          AsyncData<AccountsState>(value: final AccountsData data) =>
-            _AccountsBody(data: data),
-          AsyncData<AccountsState>(value: AccountsError()) ||
-          AsyncError() => const _ErrorSurface(),
-          _ => const Center(child: CircularProgressIndicator()),
-        },
-      ),
-    );
-  }
-}
-
-class _AccountsBody extends ConsumerWidget {
-  const _AccountsBody({required this.data});
+class ManageAccountsBody extends ConsumerWidget {
+  const ManageAccountsBody({super.key, required this.data});
 
   final AccountsData data;
 
@@ -68,83 +29,61 @@ class _AccountsBody extends ConsumerWidget {
     const cardPadding = EdgeInsets.symmetric(
       horizontal: homePageCardHorizontalPadding - 16,
     );
-    final allActiveIds = data.active
-        .map((r) => r.account.id)
-        .toList(growable: false);
 
-    return CustomScrollView(
-      slivers: [
-        // Shopping list card is always FIRST — visible even when no accounts.
-        SliverPadding(
-          padding: cardPadding.copyWith(top: 16),
-          sliver: const SliverToBoxAdapter(child: ShoppingListCard()),
-        ),
-
-        if (data.active.isNotEmpty)
-          SliverPadding(
-            padding: cardPadding.copyWith(top: 16),
-            sliver: SliverToBoxAdapter(
-              child: _AccountListCard(
-                accounts: data.active,
-                defaultAccountId: data.defaultAccountId,
-                locale: locale,
-                allActiveIds: allActiveIds,
+    return SlidableAutoCloseBehavior(
+      child: CustomScrollView(
+        slivers: [
+          if (data.active.isNotEmpty)
+            SliverPadding(
+              padding: cardPadding.copyWith(top: 16),
+              sliver: SliverToBoxAdapter(
+                child: _AccountListCard(
+                  accounts: data.active,
+                  defaultAccountId: data.defaultAccountId,
+                  locale: locale,
+                ),
               ),
             ),
-          ),
-
-        if (data.active.isEmpty)
-          SliverPadding(
-            padding: cardPadding.copyWith(top: 16),
-            sliver: SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
+          if (data.active.isEmpty && data.archived.isEmpty)
+            SliverPadding(
+              padding: cardPadding.copyWith(top: 16),
+              sliver: SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    l10n.manageAccountsBodyEmpty,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+          if (data.archived.isNotEmpty)
+            SliverPadding(
+              padding: cardPadding,
+              sliver: SliverToBoxAdapter(
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      l10n.accountsEmptyTitle,
-                      style: Theme.of(context).textTheme.titleMedium,
+                    Padding(
+                      padding: const EdgeInsets.only(top: 24, bottom: 8),
+                      child: Text(
+                        l10n.accountsArchivedSectionLabel,
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
                     ),
-                    const SizedBox(height: 16),
-                    FilledButton.icon(
-                      icon: const Icon(Icons.add),
-                      label: Text(l10n.accountsEmptyCta),
-                      onPressed: () => context.go('/accounts/new'),
+                    _AccountListCard(
+                      accounts: data.archived,
+                      defaultAccountId: null,
+                      locale: locale,
                     ),
                   ],
                 ),
               ),
             ),
-          ),
-
-        if (data.archived.isNotEmpty)
-          SliverPadding(
-            padding: cardPadding,
-            sliver: SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 24, bottom: 8),
-                    child: Text(
-                      l10n.accountsArchivedSectionLabel,
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                  ),
-                  _AccountListCard(
-                    accounts: data.archived,
-                    defaultAccountId: null,
-                    locale: locale,
-                    allActiveIds: allActiveIds,
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-        const SliverPadding(padding: EdgeInsets.only(bottom: 96)),
-      ],
+          const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
+        ],
+      ),
     );
   }
 }
@@ -154,13 +93,11 @@ class _AccountTileWithLookups extends ConsumerWidget {
     required this.view,
     required this.isDefault,
     required this.locale,
-    required this.allActiveIds,
   });
 
   final AccountWithBalance view;
   final bool isDefault;
   final String locale;
-  final List<int> allActiveIds;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -177,8 +114,9 @@ class _AccountTileWithLookups extends ConsumerWidget {
       isDefault: isDefault,
       locale: locale,
       accountTypeLabel: typeLabel,
-      onTap: () => context.go('/accounts/${view.account.id}'),
-      onSetDefault: () => _onSetDefault(context, ref, view.account.id),
+      onTap: () => context.push('/settings/manage-accounts/${view.account.id}'),
+      onSetDefault: () =>
+          _onSetDefault(context, ref, view.account.id, view.account.name),
       onArchive: () => _onArchive(context, ref, view.account.id),
       onDelete: () => _onDelete(context, ref, view.account.id),
       onArchiveBlocked: () => _onArchiveBlocked(context),
@@ -189,15 +127,25 @@ class _AccountTileWithLookups extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     int id,
+    String name,
   ) async {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     try {
       await ref.read(accountsControllerProvider.notifier).setDefault(id);
+      if (context.mounted) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.manageAccountsSetDefaultSuccess(name))),
+        );
+      }
     } catch (_) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.errorSnackbarGeneric)),
-      );
+      if (context.mounted) {
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(content: Text(l10n.manageAccountsSetDefaultFailed)),
+          );
+      }
     }
   }
 
@@ -208,9 +156,11 @@ class _AccountTileWithLookups extends ConsumerWidget {
       await ref.read(accountsControllerProvider.notifier).archive(id);
     } on AccountsOperationException catch (e) {
       if (e.kind == AccountsOperationError.lastActiveAccount) {
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.accountsArchiveLastActiveBlocked)),
-        );
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(content: Text(l10n.accountsArchiveLastActiveBlocked)),
+          );
         return;
       }
       if (e.kind == AccountsOperationError.defaultAccount) {
@@ -230,14 +180,14 @@ class _AccountTileWithLookups extends ConsumerWidget {
         );
         return;
       }
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.errorSnackbarGeneric)),
-      );
+      messenger
+        ..clearSnackBars()
+        ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
       return;
     } catch (_) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.errorSnackbarGeneric)),
-      );
+      messenger
+        ..clearSnackBars()
+        ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
       return;
     }
     messenger.showSnackBar(
@@ -295,21 +245,23 @@ class _AccountTileWithLookups extends ConsumerWidget {
         );
         return;
       }
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.errorSnackbarGeneric)),
-      );
+      messenger
+        ..clearSnackBars()
+        ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
     } catch (_) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.errorSnackbarGeneric)),
-      );
+      messenger
+        ..clearSnackBars()
+        ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
     }
   }
 
   void _onArchiveBlocked(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.accountsArchiveLastActiveBlocked)),
-    );
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(content: Text(l10n.accountsArchiveLastActiveBlocked)),
+      );
   }
 }
 
@@ -318,13 +270,11 @@ class _AccountListCard extends StatelessWidget {
     required this.accounts,
     required this.defaultAccountId,
     required this.locale,
-    required this.allActiveIds,
   });
 
   final List<AccountWithBalance> accounts;
   final int? defaultAccountId;
   final String locale;
-  final List<int> allActiveIds;
 
   @override
   Widget build(BuildContext context) {
@@ -344,24 +294,8 @@ class _AccountListCard extends StatelessWidget {
               view: view,
               isDefault: defaultAccountId == view.account.id,
               locale: locale,
-              allActiveIds: allActiveIds,
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _ErrorSurface extends StatelessWidget {
-  const _ErrorSurface();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Text(l10n.errorSnackbarGeneric),
       ),
     );
   }
