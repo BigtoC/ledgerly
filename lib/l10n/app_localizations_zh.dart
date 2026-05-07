@@ -666,6 +666,130 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get analysisPlaceholderBody =>
       'Charts and summaries will appear here once Phase 2 lands.';
+
+  @override
+  String get settingsRecurringTile => 'Recurring transactions';
+
+  @override
+  String get recurringRulesTitle => 'Recurring transactions';
+
+  @override
+  String get recurringEmptyHeading => 'No recurring rules yet';
+
+  @override
+  String get recurringEmptyBody =>
+      'Set up a rule for rent, subscriptions, or any expense that repeats. Ledgerly will create a pending transaction for you on the due date.';
+
+  @override
+  String get recurringEmptyCta => 'Create rule';
+
+  @override
+  String get recurringFabNew => 'New rule';
+
+  @override
+  String get recurringRulesLoadError => 'Couldn\'t load your rules.';
+
+  @override
+  String get recurringRulesLoadRetry => 'Retry';
+
+  @override
+  String recurringTileNextDue(String date) {
+    return 'Next: $date';
+  }
+
+  @override
+  String get recurringTilePaused => 'Paused';
+
+  @override
+  String get recurringSwipePause => 'Pause';
+
+  @override
+  String get recurringSwipeResume => 'Resume';
+
+  @override
+  String get recurringSwipeDelete => 'Delete';
+
+  @override
+  String recurringPausedSnack(String ruleName) {
+    return 'Paused — $ruleName';
+  }
+
+  @override
+  String recurringResumedSnack(String ruleName, String date) {
+    return 'Resumed — $ruleName, next due $date. Missed periods are not generated on resume.';
+  }
+
+  @override
+  String get recurringDeletedSnack => 'Rule deleted';
+
+  @override
+  String get recurringFormCreateTitle => 'New rule';
+
+  @override
+  String get recurringFormEditTitle => 'Edit rule';
+
+  @override
+  String get recurringFormNamePlaceholder => 'Rule name';
+
+  @override
+  String get recurringFrequencyDaily => 'Daily';
+
+  @override
+  String get recurringFrequencyWeekly => 'Weekly';
+
+  @override
+  String get recurringFrequencyMonthly => 'Monthly';
+
+  @override
+  String get recurringFrequencyYearly => 'Yearly';
+
+  @override
+  String get recurringDailyHelper =>
+      'Generates one pending transaction every day from today.';
+
+  @override
+  String get recurringDayOfMonthHint =>
+      'If the month is shorter, the rule uses the last day of that month.';
+
+  @override
+  String get recurringFieldRequired => 'Required';
+
+  @override
+  String get recurringSaveCreate => 'Create';
+
+  @override
+  String get recurringSaveUpdate => 'Save';
+
+  @override
+  String get recurringSavedCreate => 'Rule created';
+
+  @override
+  String get recurringSavedUpdate => 'Rule updated';
+
+  @override
+  String get recurringDeleteRule => 'Delete rule';
+
+  @override
+  String get recurringDeleteConfirm =>
+      'Delete this rule? Pending items already generated will remain in Pending Transactions.';
+
+  @override
+  String recurringEditWillNotAffectPending(int count) {
+    final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
+      locale: localeName,
+    );
+    final String countString = countNumberFormat.format(count);
+
+    return 'You have $countString pending item(s) from this rule. Edits below won\'t change them — approve or skip them on Home.';
+  }
+
+  @override
+  String get recurringRuleHasError =>
+      'This rule had a problem on the last sync.';
+
+  @override
+  String get recurringSavedButGenerationFailed =>
+      'Saved — but the first run hit an issue. We\'ll retry on the next launch.';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -1309,6 +1433,126 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get analysisPlaceholderBody => '图表和摘要将在第二阶段上线后显示。';
+
+  @override
+  String get settingsRecurringTile => '周期性交易';
+
+  @override
+  String get recurringRulesTitle => '周期性交易';
+
+  @override
+  String get recurringEmptyHeading => '还没有周期性规则';
+
+  @override
+  String get recurringEmptyBody =>
+      '为房租、订阅或任何重复的支出设置一条规则，Ledgerly 会在到期日为你创建一笔待处理交易。';
+
+  @override
+  String get recurringEmptyCta => '创建规则';
+
+  @override
+  String get recurringFabNew => '新规则';
+
+  @override
+  String get recurringRulesLoadError => '无法加载规则。';
+
+  @override
+  String get recurringRulesLoadRetry => '重试';
+
+  @override
+  String recurringTileNextDue(String date) {
+    return '下次：$date';
+  }
+
+  @override
+  String get recurringTilePaused => '已暂停';
+
+  @override
+  String get recurringSwipePause => '暂停';
+
+  @override
+  String get recurringSwipeResume => '继续';
+
+  @override
+  String get recurringSwipeDelete => '删除';
+
+  @override
+  String recurringPausedSnack(String ruleName) {
+    return '已暂停 — $ruleName';
+  }
+
+  @override
+  String recurringResumedSnack(String ruleName, String date) {
+    return '已恢复 — $ruleName，下次到期 $date。暂停期间错过的周期不会补生成。';
+  }
+
+  @override
+  String get recurringDeletedSnack => '规则已删除';
+
+  @override
+  String get recurringFormCreateTitle => '新规则';
+
+  @override
+  String get recurringFormEditTitle => '编辑规则';
+
+  @override
+  String get recurringFormNamePlaceholder => '规则名称';
+
+  @override
+  String get recurringFrequencyDaily => '每日';
+
+  @override
+  String get recurringFrequencyWeekly => '每周';
+
+  @override
+  String get recurringFrequencyMonthly => '每月';
+
+  @override
+  String get recurringFrequencyYearly => '每年';
+
+  @override
+  String get recurringDailyHelper => '从今天起每天生成一笔待处理交易。';
+
+  @override
+  String get recurringDayOfMonthHint => '如果该月较短，规则会使用该月最后一天。';
+
+  @override
+  String get recurringFieldRequired => '必填';
+
+  @override
+  String get recurringSaveCreate => '创建';
+
+  @override
+  String get recurringSaveUpdate => '保存';
+
+  @override
+  String get recurringSavedCreate => '规则已创建';
+
+  @override
+  String get recurringSavedUpdate => '规则已更新';
+
+  @override
+  String get recurringDeleteRule => '删除规则';
+
+  @override
+  String get recurringDeleteConfirm => '删除此规则？已生成的待处理项目仍会保留在「待处理交易」中。';
+
+  @override
+  String recurringEditWillNotAffectPending(int count) {
+    final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
+      locale: localeName,
+    );
+    final String countString = countNumberFormat.format(count);
+
+    return '此规则目前有 $countString 笔待处理项目，以下编辑不会更改它们 — 请在主屏审核或跳过。';
+  }
+
+  @override
+  String get recurringRuleHasError => '此规则上次同步时出现问题。';
+
+  @override
+  String get recurringSavedButGenerationFailed =>
+      '已保存 — 但首次执行遇到问题，我们会在下次启动时重试。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1952,4 +2196,124 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get analysisPlaceholderBody => '圖表和摘要將在第二階段上線後顯示。';
+
+  @override
+  String get settingsRecurringTile => '週期性交易';
+
+  @override
+  String get recurringRulesTitle => '週期性交易';
+
+  @override
+  String get recurringEmptyHeading => '尚未建立週期性規則';
+
+  @override
+  String get recurringEmptyBody =>
+      '為房租、訂閱或任何重複的支出設定一條規則，Ledgerly 會在到期日為你建立一筆待處理交易。';
+
+  @override
+  String get recurringEmptyCta => '建立規則';
+
+  @override
+  String get recurringFabNew => '新規則';
+
+  @override
+  String get recurringRulesLoadError => '無法載入規則。';
+
+  @override
+  String get recurringRulesLoadRetry => '重試';
+
+  @override
+  String recurringTileNextDue(String date) {
+    return '下次：$date';
+  }
+
+  @override
+  String get recurringTilePaused => '已暫停';
+
+  @override
+  String get recurringSwipePause => '暫停';
+
+  @override
+  String get recurringSwipeResume => '繼續';
+
+  @override
+  String get recurringSwipeDelete => '刪除';
+
+  @override
+  String recurringPausedSnack(String ruleName) {
+    return '已暫停 — $ruleName';
+  }
+
+  @override
+  String recurringResumedSnack(String ruleName, String date) {
+    return '已恢復 — $ruleName，下次到期 $date。暫停期間錯過的週期不會補產生。';
+  }
+
+  @override
+  String get recurringDeletedSnack => '規則已刪除';
+
+  @override
+  String get recurringFormCreateTitle => '新規則';
+
+  @override
+  String get recurringFormEditTitle => '編輯規則';
+
+  @override
+  String get recurringFormNamePlaceholder => '規則名稱';
+
+  @override
+  String get recurringFrequencyDaily => '每日';
+
+  @override
+  String get recurringFrequencyWeekly => '每週';
+
+  @override
+  String get recurringFrequencyMonthly => '每月';
+
+  @override
+  String get recurringFrequencyYearly => '每年';
+
+  @override
+  String get recurringDailyHelper => '從今天起每天產生一筆待處理交易。';
+
+  @override
+  String get recurringDayOfMonthHint => '若該月較短，規則會使用該月最後一天。';
+
+  @override
+  String get recurringFieldRequired => '必填';
+
+  @override
+  String get recurringSaveCreate => '建立';
+
+  @override
+  String get recurringSaveUpdate => '儲存';
+
+  @override
+  String get recurringSavedCreate => '規則已建立';
+
+  @override
+  String get recurringSavedUpdate => '規則已更新';
+
+  @override
+  String get recurringDeleteRule => '刪除規則';
+
+  @override
+  String get recurringDeleteConfirm => '刪除此規則？已產生的待處理項目仍會保留在「待處理交易」中。';
+
+  @override
+  String recurringEditWillNotAffectPending(int count) {
+    final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
+      locale: localeName,
+    );
+    final String countString = countNumberFormat.format(count);
+
+    return '此規則目前有 $countString 筆待處理項目，以下編輯不會更改它們 — 請在主畫面審核或略過。';
+  }
+
+  @override
+  String get recurringRuleHasError => '此規則上次同步時發生問題。';
+
+  @override
+  String get recurringSavedButGenerationFailed =>
+      '已儲存 — 但首次執行遇到問題，我們會在下次啟動時重試。';
 }

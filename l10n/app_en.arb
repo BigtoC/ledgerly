@@ -860,5 +860,122 @@
   "analysisPlaceholderBody": "Charts and summaries will appear here once Phase 2 lands.",
   "@analysisPlaceholderBody": {
     "description": "Body copy for the Analysis screen empty-state placeholder."
-  }
+  },
+
+  "settingsRecurringTile": "Recurring transactions",
+  "@settingsRecurringTile": { "description": "Settings entry-point label for the recurring rules screen." },
+
+  "recurringRulesTitle": "Recurring transactions",
+  "@recurringRulesTitle": { "description": "Management screen app-bar title." },
+
+  "recurringEmptyHeading": "No recurring rules yet",
+  "@recurringEmptyHeading": { "description": "Empty state heading on the recurring rules screen." },
+
+  "recurringEmptyBody": "Set up a rule for rent, subscriptions, or any expense that repeats. Ledgerly will create a pending transaction for you on the due date.",
+  "@recurringEmptyBody": { "description": "Empty state body on the recurring rules screen." },
+
+  "recurringEmptyCta": "Create rule",
+  "@recurringEmptyCta": { "description": "Empty state CTA button label." },
+
+  "recurringFabNew": "New rule",
+  "@recurringFabNew": { "description": "FAB tooltip / wide-layout app-bar action label." },
+
+  "recurringRulesLoadError": "Couldn't load your rules.",
+  "@recurringRulesLoadError": { "description": "Error state text on the recurring rules screen." },
+
+  "recurringRulesLoadRetry": "Retry",
+  "@recurringRulesLoadRetry": { "description": "Error state retry button label." },
+
+  "recurringTileNextDue": "Next: {date}",
+  "@recurringTileNextDue": {
+    "description": "Subtitle on a recurring rule tile showing the next due date.",
+    "placeholders": { "date": { "type": "String" } }
+  },
+
+  "recurringTilePaused": "Paused",
+  "@recurringTilePaused": { "description": "Paused chip label / semantics text on a paused rule tile." },
+
+  "recurringSwipePause": "Pause",
+  "@recurringSwipePause": { "description": "Swipe action label." },
+
+  "recurringSwipeResume": "Resume",
+  "@recurringSwipeResume": { "description": "Swipe action label." },
+
+  "recurringSwipeDelete": "Delete",
+  "@recurringSwipeDelete": { "description": "Swipe action label." },
+
+  "recurringPausedSnack": "Paused — {ruleName}",
+  "@recurringPausedSnack": {
+    "description": "Snackbar after pausing a rule.",
+    "placeholders": { "ruleName": { "type": "String" } }
+  },
+
+  "recurringResumedSnack": "Resumed — {ruleName}, next due {date}. Missed periods are not generated on resume.",
+  "@recurringResumedSnack": {
+    "description": "Snackbar after resuming a rule. Discloses that periods missed while paused are not back-generated.",
+    "placeholders": { "ruleName": { "type": "String" }, "date": { "type": "String" } }
+  },
+
+  "recurringDeletedSnack": "Rule deleted",
+  "@recurringDeletedSnack": { "description": "Snackbar after deleting a rule." },
+
+  "recurringFormCreateTitle": "New rule",
+  "@recurringFormCreateTitle": { "description": "Create form app-bar title." },
+
+  "recurringFormEditTitle": "Edit rule",
+  "@recurringFormEditTitle": { "description": "Edit form app-bar title." },
+
+  "recurringFormNamePlaceholder": "Rule name",
+  "@recurringFormNamePlaceholder": { "description": "Name field placeholder." },
+
+  "recurringFrequencyDaily": "Daily",
+  "@recurringFrequencyDaily": { "description": "Frequency dropdown item." },
+
+  "recurringFrequencyWeekly": "Weekly",
+  "@recurringFrequencyWeekly": { "description": "Frequency dropdown item." },
+
+  "recurringFrequencyMonthly": "Monthly",
+  "@recurringFrequencyMonthly": { "description": "Frequency dropdown item." },
+
+  "recurringFrequencyYearly": "Yearly",
+  "@recurringFrequencyYearly": { "description": "Frequency dropdown item." },
+
+  "recurringDailyHelper": "Generates one pending transaction every day from today.",
+  "@recurringDailyHelper": { "description": "Daily frequency helper text shown under the dropdown." },
+
+  "recurringDayOfMonthHint": "If the month is shorter, the rule uses the last day of that month.",
+  "@recurringDayOfMonthHint": { "description": "Always-visible hint shown under the day-of-month stepper." },
+
+  "recurringFieldRequired": "Required",
+  "@recurringFieldRequired": { "description": "Generic field validation copy." },
+
+  "recurringSaveCreate": "Create",
+  "@recurringSaveCreate": { "description": "Save action label in create mode." },
+
+  "recurringSaveUpdate": "Save",
+  "@recurringSaveUpdate": { "description": "Save action label in edit mode." },
+
+  "recurringSavedCreate": "Rule created",
+  "@recurringSavedCreate": { "description": "Snackbar after creating a rule." },
+
+  "recurringSavedUpdate": "Rule updated",
+  "@recurringSavedUpdate": { "description": "Snackbar after updating a rule." },
+
+  "recurringDeleteRule": "Delete rule",
+  "@recurringDeleteRule": { "description": "Destructive button label inside the form." },
+
+  "recurringDeleteConfirm": "Delete this rule? Pending items already generated will remain in Pending Transactions.",
+  "@recurringDeleteConfirm": { "description": "Delete confirmation dialog body." },
+
+  "recurringEditWillNotAffectPending": "You have {count} pending item(s) from this rule. Edits below won't change them — approve or skip them on Home.",
+  "@recurringEditWillNotAffectPending": {
+    "description": "Inline notice in the edit form when there are existing pending items.",
+    "placeholders": { "count": { "type": "int", "format": "compact" } }
+  },
+
+  "recurringRuleHasError": "This rule had a problem on the last sync.",
+  "@recurringRuleHasError": { "description": "Badge subtitle on a rule tile when its last_error is non-null." },
+
+  "recurringSavedButGenerationFailed": "Saved — but the first run hit an issue. We'll retry on the next launch.",
+  "@recurringSavedButGenerationFailed": { "description": "Snackbar shown when a rule is saved but its inline post-save generation returned `failed`." }
 }

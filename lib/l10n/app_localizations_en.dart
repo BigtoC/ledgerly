@@ -666,4 +666,128 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get analysisPlaceholderBody =>
       'Charts and summaries will appear here once Phase 2 lands.';
+
+  @override
+  String get settingsRecurringTile => 'Recurring transactions';
+
+  @override
+  String get recurringRulesTitle => 'Recurring transactions';
+
+  @override
+  String get recurringEmptyHeading => 'No recurring rules yet';
+
+  @override
+  String get recurringEmptyBody =>
+      'Set up a rule for rent, subscriptions, or any expense that repeats. Ledgerly will create a pending transaction for you on the due date.';
+
+  @override
+  String get recurringEmptyCta => 'Create rule';
+
+  @override
+  String get recurringFabNew => 'New rule';
+
+  @override
+  String get recurringRulesLoadError => 'Couldn\'t load your rules.';
+
+  @override
+  String get recurringRulesLoadRetry => 'Retry';
+
+  @override
+  String recurringTileNextDue(String date) {
+    return 'Next: $date';
+  }
+
+  @override
+  String get recurringTilePaused => 'Paused';
+
+  @override
+  String get recurringSwipePause => 'Pause';
+
+  @override
+  String get recurringSwipeResume => 'Resume';
+
+  @override
+  String get recurringSwipeDelete => 'Delete';
+
+  @override
+  String recurringPausedSnack(String ruleName) {
+    return 'Paused — $ruleName';
+  }
+
+  @override
+  String recurringResumedSnack(String ruleName, String date) {
+    return 'Resumed — $ruleName, next due $date. Missed periods are not generated on resume.';
+  }
+
+  @override
+  String get recurringDeletedSnack => 'Rule deleted';
+
+  @override
+  String get recurringFormCreateTitle => 'New rule';
+
+  @override
+  String get recurringFormEditTitle => 'Edit rule';
+
+  @override
+  String get recurringFormNamePlaceholder => 'Rule name';
+
+  @override
+  String get recurringFrequencyDaily => 'Daily';
+
+  @override
+  String get recurringFrequencyWeekly => 'Weekly';
+
+  @override
+  String get recurringFrequencyMonthly => 'Monthly';
+
+  @override
+  String get recurringFrequencyYearly => 'Yearly';
+
+  @override
+  String get recurringDailyHelper =>
+      'Generates one pending transaction every day from today.';
+
+  @override
+  String get recurringDayOfMonthHint =>
+      'If the month is shorter, the rule uses the last day of that month.';
+
+  @override
+  String get recurringFieldRequired => 'Required';
+
+  @override
+  String get recurringSaveCreate => 'Create';
+
+  @override
+  String get recurringSaveUpdate => 'Save';
+
+  @override
+  String get recurringSavedCreate => 'Rule created';
+
+  @override
+  String get recurringSavedUpdate => 'Rule updated';
+
+  @override
+  String get recurringDeleteRule => 'Delete rule';
+
+  @override
+  String get recurringDeleteConfirm =>
+      'Delete this rule? Pending items already generated will remain in Pending Transactions.';
+
+  @override
+  String recurringEditWillNotAffectPending(int count) {
+    final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
+      locale: localeName,
+    );
+    final String countString = countNumberFormat.format(count);
+
+    return 'You have $countString pending item(s) from this rule. Edits below won\'t change them — approve or skip them on Home.';
+  }
+
+  @override
+  String get recurringRuleHasError =>
+      'This rule had a problem on the last sync.';
+
+  @override
+  String get recurringSavedButGenerationFailed =>
+      'Saved — but the first run hit an issue. We\'ll retry on the next launch.';
 }
