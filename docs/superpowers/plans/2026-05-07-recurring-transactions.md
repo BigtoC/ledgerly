@@ -12,6 +12,18 @@
 
 ---
 
+## Post-implementation amendments (2026-05-08)
+
+After the original plan shipped, the form was revised in response to real usage. These changes did **not** require any DB migration; the `recurring_rules` schema is unchanged.
+
+1. **Memo doubles as the rule name.** The form no longer surfaces a separate "Rule name" field. The user types into one input that drives `state.memo`; on save, the trimmed memo is copied verbatim into both `recurring_rules.name` and `recurring_rules.memo`. List tiles read `memo ?? name` so legacy rows still render. Validation key `nameRequired` now applies to the memo input. The `recurringFormNamePlaceholder` l10n key is retained ("Rule name" copy still applies to the merged input).
+2. **Category tile shows icon + name.** Replaced the placeholder `ListTile` ("Category #N") with the shared `CategoryChip` widget from the transactions slice — same icon avatar + localized name affordance the transaction form uses. The form watches `categoriesByTypeProvider(expense)` to resolve `state.categoryId` into a `Category` for display.
+3. **Account picker added.** The original form had no account selector at all, which silently blocked save (`canSave` returned false because `state.accountId` was null with no UI to fix it). The form now exposes `_AccountPickerTile` wrapping the shared `AccountSelectorTile` + `showAccountPickerSheet` from the transactions slice.
+4. **Calculator keypad replaces the amount TextField.** The amount input now uses the same `AmountDisplay` + `CalculatorKeypad` pair the transaction form uses (operators `+ − × ÷`, expression history, fixed-precision results, currency-aware decimals). The form layout switched to `Scaffold(resizeToAvoidBottomInset: false)` → `Column` with an `Expanded` scroll region above a fixed-height keypad. `RecurringRuleFormController` gained `appendDigit` / `appendDecimal` / `backspace` / `clearAmount` / `applyOperator` mirroring `TransactionFormController`, plus a `_keypadFromAmount` helper for edit-mode hydration. `RecurringRuleFormState` has a new `keypadRevision` counter so the screen rebuilds on operator/decimal presses that don't change `amountMinorUnits`.
+5. **`updateAmount(int)` removed.** The form is keypad-driven now, so the imperative amount setter on the controller is gone. Tests exercise the keypad commands directly when they need to drive amounts.
+
+---
+
 ## File Structure
 
 **New files:**
