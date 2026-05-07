@@ -68,7 +68,7 @@
 - Create: `lib/data/database/tables/pending_transactions_table.dart`
 - Test: `test/unit/repositories/migration_test.dart` (extend later in Task 3)
 
-- [ ] **Step 1: Create the `PendingTransactions` Drift table definition**
+- [x] **Step 1: Create the `PendingTransactions` Drift table definition**
 
 ```dart
 // lib/data/database/tables/pending_transactions_table.dart
@@ -123,12 +123,12 @@ class PendingTransactions extends Table {
 }
 ```
 
-- [ ] **Step 2: Verify the file compiles**
+- [x] **Step 2: Verify the file compiles**
 
 Run: `dart analyze lib/data/database/tables/pending_transactions_table.dart`
 Expected: No errors (will warn about unused import of RecurringRules until Task 2)
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/data/database/tables/pending_transactions_table.dart
@@ -142,7 +142,7 @@ git commit -m "feat: add pending_transactions Drift table definition"
 **Files:**
 - Create: `lib/data/database/tables/recurring_rules_table.dart`
 
-- [ ] **Step 1: Create the `RecurringRules` Drift table definition**
+- [x] **Step 1: Create the `RecurringRules` Drift table definition**
 
 ```dart
 // lib/data/database/tables/recurring_rules_table.dart
@@ -214,12 +214,12 @@ class RecurringRules extends Table {
 }
 ```
 
-- [ ] **Step 2: Verify the file compiles**
+- [x] **Step 2: Verify the file compiles**
 
 Run: `dart analyze lib/data/database/tables/recurring_rules_table.dart`
 Expected: No errors
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/data/database/tables/recurring_rules_table.dart
@@ -236,7 +236,7 @@ git commit -m "feat: add recurring_rules Drift table definition"
 - Modify: `lib/data/database/app_database.dart`
 - Modify: `test/unit/repositories/migration_test.dart`
 
-- [ ] **Step 1: Create `RecurringRuleDao`**
+- [x] **Step 1: Create `RecurringRuleDao`**
 
 ```dart
 // lib/data/database/daos/recurring_rule_dao.dart
@@ -363,7 +363,7 @@ class RecurringRuleDao extends DatabaseAccessor<AppDatabase>
 }
 ```
 
-- [ ] **Step 2: Create `PendingTransactionDao`**
+- [x] **Step 2: Create `PendingTransactionDao`**
 
 ```dart
 // lib/data/database/daos/pending_transaction_dao.dart
@@ -415,12 +415,12 @@ class PendingTransactionDao extends DatabaseAccessor<AppDatabase>
 }
 ```
 
-- [ ] **Step 3: Run codegen for the new DAOs**
+- [x] **Step 3: Run codegen for the new DAOs**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: Generates `recurring_rule_dao.g.dart` and `pending_transaction_dao.g.dart`
 
-- [ ] **Step 4: Update `AppDatabase` — register tables, DAOs, bump schema, add migration**
+- [x] **Step 4: Update `AppDatabase` — register tables, DAOs, bump schema, add migration**
 
 In `lib/data/database/app_database.dart`:
 - Import the two new table files and two new DAO files
@@ -471,7 +471,7 @@ if (from < 4) {
 }
 ```
 
-- [ ] **Step 5: Update migration tests**
+- [x] **Step 5: Update migration tests**
 
 In `test/unit/repositories/migration_test.dart`:
 - Update `expect(db.schemaVersion, 3)` → `expect(db.schemaVersion, 4)`
@@ -512,7 +512,7 @@ test('upgrades v3 DBs to v4 and preserves rows', () async {
 });
 ```
 
-- [ ] **Step 6: Regenerate Drift schema snapshot and harness**
+- [x] **Step 6: Regenerate Drift schema snapshot and harness**
 
 Run:
 ```bash
@@ -523,12 +523,12 @@ dart run drift_dev schema generate drift_schemas/ test/unit/repositories/_harnes
 
 Expected: `drift_schemas/drift_schema_v4.json` created, harness files updated.
 
-- [ ] **Step 7: Run migration tests to verify**
+- [x] **Step 7: Run migration tests to verify**
 
 Run: `flutter test test/unit/repositories/migration_test.dart`
 Expected: PASS
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add lib/data/database/ lib/data/database/daos/ lib/data/database/tables/ \
@@ -545,7 +545,7 @@ git commit -m "feat: add v4 schema migration with pending_transactions and recur
 - Create: `lib/data/models/recurring_rule_draft.dart`
 - Create: `lib/data/models/pending_transaction.dart`
 
-- [ ] **Step 1: Create `RecurringRule` Freezed model**
+- [x] **Step 1: Create `RecurringRule` Freezed model**
 
 ```dart
 // lib/data/models/recurring_rule.dart
@@ -580,7 +580,7 @@ abstract class RecurringRule with _$RecurringRule {
 }
 ```
 
-- [ ] **Step 2: Create `RecurringRuleDraft` Freezed model**
+- [x] **Step 2: Create `RecurringRuleDraft` Freezed model**
 
 ```dart
 // lib/data/models/recurring_rule_draft.dart
@@ -610,7 +610,7 @@ abstract class RecurringRuleDraft with _$RecurringRuleDraft {
 }
 ```
 
-- [ ] **Step 3: Create `PendingTransaction` Freezed model**
+- [x] **Step 3: Create `PendingTransaction` Freezed model**
 
 ```dart
 // lib/data/models/pending_transaction.dart
@@ -637,12 +637,12 @@ abstract class PendingTransaction with _$PendingTransaction {
 }
 ```
 
-- [ ] **Step 4: Run codegen**
+- [x] **Step 4: Run codegen**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: Generates `.freezed.dart` files for all three models.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/data/models/recurring_rule.dart lib/data/models/recurring_rule_draft.dart \
@@ -657,7 +657,7 @@ git commit -m "feat: add RecurringRule, RecurringRuleDraft, PendingTransaction d
 **Files:**
 - Create: `lib/data/repositories/pending_transaction_repository.dart`
 
-- [ ] **Step 1: Create the repository**
+- [x] **Step 1: Create the repository**
 
 This is a minimal implementation — only the methods needed by the recurring generation use case. The full PendingTransactionRepository will be expanded by the Pending Transactions UI plan.
 
@@ -758,12 +758,12 @@ final class DriftPendingTransactionRepository
 }
 ```
 
-- [ ] **Step 2: Verify compilation**
+- [x] **Step 2: Verify compilation**
 
 Run: `dart analyze lib/data/repositories/pending_transaction_repository.dart`
 Expected: No errors
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/data/repositories/pending_transaction_repository.dart
@@ -778,7 +778,7 @@ git commit -m "feat: add minimal PendingTransactionRepository for recurring gene
 - Create: `lib/data/repositories/recurring_rules_repository.dart`
 - Create: `test/unit/repositories/recurring_rules_repository_test.dart`
 
-- [ ] **Step 1: Write repository tests — initial `next_due_date` calculation**
+- [x] **Step 1: Write repository tests — initial `next_due_date` calculation**
 
 ```dart
 // test/unit/repositories/recurring_rules_repository_test.dart
@@ -941,12 +941,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `flutter test test/unit/repositories/recurring_rules_repository_test.dart`
 Expected: FAIL — `DriftRecurringRulesRepository` doesn't exist yet.
 
-- [ ] **Step 3: Implement `RecurringRulesRepository`**
+- [x] **Step 3: Implement `RecurringRulesRepository`**
 
 ```dart
 // lib/data/repositories/recurring_rules_repository.dart
@@ -1436,12 +1436,12 @@ final class DriftRecurringRulesRepository implements RecurringRulesRepository {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `flutter test test/unit/repositories/recurring_rules_repository_test.dart`
 Expected: PASS
 
-- [ ] **Step 5: Add more repository tests**
+- [x] **Step 5: Add more repository tests**
 
 Extend the test file with:
 - Pause/resume: `is_active` toggle, `next_due_date` recalculation on resume
@@ -1451,12 +1451,12 @@ Extend the test file with:
 - Stream emissions: `watchActive` emits sorted list
 - Day-of-month anchor: insert with `day_of_month=31` in March → Mar 31; advance to April → Apr 30; advance to May → May 31
 
-- [ ] **Step 6: Run all repository tests**
+- [x] **Step 6: Run all repository tests**
 
 Run: `flutter test test/unit/repositories/recurring_rules_repository_test.dart`
 Expected: PASS
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add lib/data/repositories/recurring_rules_repository.dart \
@@ -1471,7 +1471,7 @@ git commit -m "feat: add RecurringRulesRepository with next-due-date computation
 **Files:**
 - Create: `test/unit/repositories/pending_transaction_repository_test.dart`
 
-- [ ] **Step 1: Write tests for PendingTransactionRepository**
+- [x] **Step 1: Write tests for PendingTransactionRepository**
 
 ```dart
 // test/unit/repositories/pending_transaction_repository_test.dart
@@ -1588,12 +1588,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run tests**
+- [x] **Step 2: Run tests**
 
 Run: `flutter test test/unit/repositories/pending_transaction_repository_test.dart`
 Expected: PASS
 
-- [ ] **Step 3: Register providers in `repository_providers.dart`**
+- [x] **Step 3: Register providers in `repository_providers.dart`**
 
 Add to `lib/app/providers/repository_providers.dart`:
 
@@ -1626,7 +1626,7 @@ RecurringGenerationUseCase recurringGenerationUseCase(Ref ref) {
 }
 ```
 
-- [ ] **Step 4: Run codegen and verify**
+- [x] **Step 4: Run codegen and verify**
 
 Run:
 ```bash
@@ -1635,7 +1635,7 @@ dart analyze lib/app/providers/repository_providers.dart
 ```
 Expected: No errors
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/app/providers/repository_providers.dart \
@@ -1653,7 +1653,7 @@ git commit -m "feat: add PendingTransactionRepository tests and wire providers"
 - Create: `lib/data/use_cases/recurring_generation_use_case.dart`
 - Create: `test/unit/use_cases/recurring_generation_use_case_test.dart`
 
-- [ ] **Step 1: Write use case tests — happy path**
+- [x] **Step 1: Write use case tests — happy path**
 
 The use case calls `db.transaction(() async { ... })`, which a Mocktail mock cannot honor without elaborate stubs. Use a real in-memory `AppDatabase` (the same `newTestAppDatabase()` harness as the repository tests) and mock only the two repositories.
 
@@ -1779,12 +1779,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `flutter test test/unit/use_cases/recurring_generation_use_case_test.dart`
 Expected: FAIL — `RecurringGenerationUseCase` doesn't exist yet.
 
-- [ ] **Step 3: Implement `RecurringGenerationUseCase`**
+- [x] **Step 3: Implement `RecurringGenerationUseCase`**
 
 The use case is constructed manually in `bootstrap.dart` and in the form controller (after a `save`). It deliberately does **not** use `@Riverpod` — that would require importing `app/providers/repository_providers.dart` from a `data/` file, inverting the layer boundary. Manual construction is the same pattern bootstrap already uses for `DriftCurrencyRepository` etc.
 
@@ -2020,17 +2020,17 @@ final lastGenerationResultProvider = Provider<RecurringGenerationResult>(
 );
 ```
 
-- [ ] **Step 4: Run codegen**
+- [x] **Step 4: Run codegen**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: Generates `recurring_generation_use_case.g.dart`
 
-- [ ] **Step 6: Run use case tests**
+- [x] **Step 6: Run use case tests**
 
 Run: `flutter test test/unit/use_cases/recurring_generation_use_case_test.dart`
 Expected: PASS
 
-- [ ] **Step 7: Add more use case tests**
+- [x] **Step 7: Add more use case tests**
 
 Extend the test file with:
 - Idempotency: same rule, same date, run twice → only one pending row
@@ -2040,12 +2040,12 @@ Extend the test file with:
 - Archived rules skipped
 - Multiple rules: exception in rule A does not abort rule B (rule A's outcome is `failed`, rule B's outcome is normal)
 
-- [ ] **Step 8: Run all use case tests**
+- [x] **Step 8: Run all use case tests**
 
 Run: `flutter test test/unit/use_cases/recurring_generation_use_case_test.dart`
 Expected: PASS
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add lib/data/use_cases/ lib/data/repositories/recurring_rules_repository.dart \
@@ -2065,7 +2065,7 @@ git commit -m "feat: add RecurringGenerationUseCase with catch-up cap and idempo
 
 The bootstrap sequence (per `PRD.md` → *Bootstrap Sequence*) is the documented place for ordered async init: open DB → init locale → read prefs → seed-if-empty → build `ProviderScope` with overrides. We add recurring generation as a post-seed step so generated rows are present in the DB when the first widget builds — Home (Wave 3) will render them inline alongside approved transactions on first paint.
 
-- [ ] **Step 1: Add a post-seed generation step to `bootstrap()`**
+- [x] **Step 1: Add a post-seed generation step to `bootstrap()`**
 
 Construct the use case manually — same pattern bootstrap already uses for the seed-time repositories. **No transient `ProviderContainer`**: that pattern risked closing the open `AppDatabase` if `appDatabaseProvider`'s body registered an `onDispose` callback, and added a layer of indirection for what is a three-argument constructor call.
 
@@ -2106,16 +2106,16 @@ The provider is `Provider<RecurringGenerationResult>` with a body that throws `U
 
 **Latency budget:** generation runs inside a single outer `db.transaction`, so the entire pass amortizes to one fsync regardless of rule count. For a baseline Pixel 4a, 50 active rules at the 12-period cap should complete in well under 200ms. If the bootstrap-time integration test exceeds 500ms on the test bench, treat as a regression.
 
-- [ ] **Step 2: Verify compilation**
+- [x] **Step 2: Verify compilation**
 
 Run: `dart analyze lib/app/bootstrap.dart`
 Expected: No errors.
 
-- [ ] **Step 3: Add a bootstrap integration test**
+- [x] **Step 3: Add a bootstrap integration test**
 
 Test that after `bootstrap()` returns, due rules have produced pending rows and `next_due_date` has advanced. Use the same pattern as `test/integration/bootstrap_to_home_test.dart`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/app/bootstrap.dart test/integration/
@@ -2133,7 +2133,7 @@ git commit -m "feat: run recurring generation during bootstrap sequence"
 - Modify: `l10n/app_zh_TW.arb`
 - Modify: `l10n/app_zh_CN.arb`
 
-- [ ] **Step 1: Add recurring-related strings to `app_en.arb`**
+- [x] **Step 1: Add recurring-related strings to `app_en.arb`**
 
 Add the following entries at the end of `l10n/app_en.arb` (before the closing `}`):
 
@@ -2278,16 +2278,16 @@ Add the following entries at the end of `l10n/app_en.arb` (before the closing `}
   "@recurringSavedButGenerationFailed": { "description": "Snackbar shown after a rule is saved but its inline post-save generation returned `failed`. Non-blocking; the rule persisted." }
 ```
 
-- [ ] **Step 2: Add corresponding strings to `app_zh_TW.arb` and `app_zh_CN.arb`**
+- [x] **Step 2: Add corresponding strings to `app_zh_TW.arb` and `app_zh_CN.arb`**
 
 Add Traditional Chinese and Simplified Chinese translations. For now, use English as placeholders (translators will fill in later).
 
-- [ ] **Step 3: Regenerate l10n code**
+- [x] **Step 3: Regenerate l10n code**
 
 Run: `flutter gen-l10n` (or `flutter pub run build_runner build` if l10n is integrated)
 Expected: `AppLocalizations` class includes all new getters.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add l10n/
@@ -2303,7 +2303,7 @@ git commit -m "feat: add l10n strings for recurring transactions feature"
 - Create: `lib/features/recurring/recurring_rules_controller.dart`
 - Create: `test/unit/controllers/recurring_rules_controller_test.dart`
 
-- [ ] **Step 1: Create `RecurringRulesState` Freezed model**
+- [x] **Step 1: Create `RecurringRulesState` Freezed model**
 
 ```dart
 // lib/features/recurring/recurring_rules_state.dart
@@ -2331,11 +2331,11 @@ sealed class RecurringRulesState with _$RecurringRulesState {
 }
 ```
 
-- [ ] **Step 2: Run codegen**
+- [x] **Step 2: Run codegen**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 
-- [ ] **Step 3: Write controller tests**
+- [x] **Step 3: Write controller tests**
 
 Create `test/unit/controllers/recurring_rules_controller_test.dart` with tests for:
 - Loading → data when stream emits rules
@@ -2350,7 +2350,7 @@ Create `test/unit/controllers/recurring_rules_controller_test.dart` with tests f
 
 Follow the pattern from `test/unit/controllers/shopping_list_controller_test.dart`.
 
-- [ ] **Step 4: Implement `RecurringRulesController`**
+- [x] **Step 4: Implement `RecurringRulesController`**
 
 ```dart
 // lib/features/recurring/recurring_rules_controller.dart
@@ -2544,16 +2544,16 @@ class _Composer {
 }
 ```
 
-- [ ] **Step 5: Run codegen**
+- [x] **Step 5: Run codegen**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 
-- [ ] **Step 6: Run controller tests**
+- [x] **Step 6: Run controller tests**
 
 Run: `flutter test test/unit/controllers/recurring_rules_controller_test.dart`
 Expected: PASS
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add lib/features/recurring/recurring_rules_state.dart \
@@ -2571,7 +2571,7 @@ git commit -m "feat: add RecurringRulesController with pause/resume/delete-undo"
 - Modify: `lib/features/settings/settings_screen.dart`
 - Modify: `test/unit/app/router_test.dart`
 
-- [ ] **Step 1: Add routes to `router.dart`**
+- [x] **Step 1: Add routes to `router.dart`**
 
 Add the three new routes inside the Settings branch's `routes` list, after the existing `manage-accounts/:id` route:
 
@@ -2621,7 +2621,7 @@ No new wrapper class is needed — the shared helper covers both transaction and
 
 Add imports for `RecurringRulesScreen` and `RecurringRuleFormScreen`.
 
-- [ ] **Step 2: Add "Recurring Transactions" tile to Settings**
+- [x] **Step 2: Add "Recurring Transactions" tile to Settings**
 
 In `lib/features/settings/settings_screen.dart`, add a new tile in the "General" section:
 
@@ -2635,7 +2635,7 @@ ListTile(
 ),
 ```
 
-- [ ] **Step 3: Run codegen and verify**
+- [x] **Step 3: Run codegen and verify**
 
 Run:
 ```bash
@@ -2644,7 +2644,7 @@ dart analyze lib/app/router.dart lib/features/settings/settings_screen.dart
 ```
 Expected: No errors
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/app/router.dart lib/features/settings/settings_screen.dart
@@ -2694,9 +2694,9 @@ class _AdaptiveFormRoute extends StatelessWidget {
 
 Then both `_AdaptiveTransactionFormRoute` and the new recurring route reduce to: `_AdaptiveFormRoute(child: TransactionFormScreen(...))` / `_AdaptiveFormRoute(child: RecurringRuleFormScreen(ruleId: ...))`.
 
-- [ ] **Step 1: Extract `_AdaptiveFormRoute`**
-- [ ] **Step 2: Replace existing `_AdaptiveTransactionFormRoute` call sites with `_AdaptiveFormRoute`**
-- [ ] **Step 3: Verify existing transaction-form route widget tests still pass**
+- [x] **Step 1: Extract `_AdaptiveFormRoute`**
+- [x] **Step 2: Replace existing `_AdaptiveTransactionFormRoute` call sites with `_AdaptiveFormRoute`**
+- [x] **Step 3: Verify existing transaction-form route widget tests still pass**
 
 ```bash
 git add lib/app/router.dart
@@ -2712,7 +2712,7 @@ git commit -m "refactor: extract _AdaptiveFormRoute shared helper"
 - Create: `lib/features/recurring/recurring_rules_providers.dart`
 - Create: `test/widget/features/recurring/recurring_rules_screen_test.dart`
 
-- [ ] **Step 1: Create `recurring_rules_providers.dart`**
+- [x] **Step 1: Create `recurring_rules_providers.dart`**
 
 ```dart
 // lib/features/recurring/recurring_rules_providers.dart
@@ -2734,11 +2734,11 @@ Future<int> pendingCountForRule(Ref ref, int ruleId) {
 }
 ```
 
-- [ ] **Step 2: Run codegen**
+- [x] **Step 2: Run codegen**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 
-- [ ] **Step 3: Write widget tests for the management screen**
+- [x] **Step 3: Write widget tests for the management screen**
 
 Create `test/widget/features/recurring/recurring_rules_screen_test.dart`:
 - Renders rule list with correct tiles
@@ -2751,7 +2751,7 @@ Create `test/widget/features/recurring/recurring_rules_screen_test.dart`:
 - FAB opens create route
 - Tile has correct semantics label
 
-- [ ] **Step 4: Implement `RecurringRulesScreen`**
+- [x] **Step 4: Implement `RecurringRulesScreen`**
 
 The screen follows the same pattern as `ShoppingListScreen`:
 - Uses `ConsumerWidget` watching `recurringRulesControllerProvider`
@@ -2764,12 +2764,12 @@ The screen follows the same pattern as `ShoppingListScreen`:
 - FAB: `recurringFabNew`
 - ≥600dp: FAB replaced by app-bar "+" action
 
-- [ ] **Step 5: Run widget tests**
+- [x] **Step 5: Run widget tests**
 
 Run: `flutter test test/widget/features/recurring/recurring_rules_screen_test.dart`
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/features/recurring/recurring_rules_screen.dart \
@@ -2788,7 +2788,7 @@ git commit -m "feat: add RecurringRulesScreen with swipe actions and empty state
 - Create: `lib/features/recurring/recurring_rule_form_screen.dart`
 - Create: `test/widget/features/recurring/recurring_rule_form_screen_test.dart`
 
-- [ ] **Step 1: Create `RecurringRuleFormState`**
+- [x] **Step 1: Create `RecurringRuleFormState`**
 
 ```dart
 // lib/features/recurring/recurring_rule_form_state.dart
@@ -2885,11 +2885,11 @@ abstract class RecurringRuleFormState with _$RecurringRuleFormState {
 }
 ```
 
-- [ ] **Step 2: Run codegen**
+- [x] **Step 2: Run codegen**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 
-- [ ] **Step 3: Create `RecurringRuleFormController`**
+- [x] **Step 3: Create `RecurringRuleFormController`**
 
 ```dart
 // lib/features/recurring/recurring_rule_form_controller.dart
@@ -3146,11 +3146,11 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
 }
 ```
 
-- [ ] **Step 4: Run codegen**
+- [x] **Step 4: Run codegen**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 
-- [ ] **Step 5: Write widget tests for the form screen**
+- [x] **Step 5: Write widget tests for the form screen**
 
 Create `test/widget/features/recurring/recurring_rule_form_screen_test.dart`:
 - Frequency dropdown swap renders correct conditional fields
@@ -3163,7 +3163,7 @@ Create `test/widget/features/recurring/recurring_rule_form_screen_test.dart`:
 - Delete confirmation modal + post-delete snackbar with undo
 - Adaptive: ≥600dp opens as constrained dialog
 
-- [ ] **Step 6: Implement `RecurringRuleFormScreen`**
+- [x] **Step 6: Implement `RecurringRuleFormScreen`**
 
 The form screen follows the same structural pattern as `TransactionFormScreen`:
 - `Scaffold(resizeToAvoidBottomInset: false)` with `SafeArea` → `Column`
@@ -3195,12 +3195,12 @@ The form screen follows the same structural pattern as `TransactionFormScreen`:
 
 Why `TextField` + `+`/`-` (not a `Slider`, drum, or 31-step stepper): typing the day directly is fastest for power users who know the date; the buttons handle short adjustments; the input keyboard is the OS standard, accessible, RTL-safe, and respects text scaling. A 31-step single-tap stepper is a discoverability anti-pattern (27 taps to reach the 28th).
 
-- [ ] **Step 7: Run widget tests**
+- [x] **Step 7: Run widget tests**
 
 Run: `flutter test test/widget/features/recurring/recurring_rule_form_screen_test.dart`
 Expected: PASS
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add lib/features/recurring/recurring_rule_form_state.dart \
@@ -3217,7 +3217,7 @@ git commit -m "feat: add RecurringRuleFormScreen with frequency-conditional fiel
 **Files:**
 - Create: `test/integration/recurring_transaction_test.dart`
 
-- [ ] **Step 1: Write integration tests**
+- [x] **Step 1: Write integration tests**
 
 Cover the full user flow:
 - Create rule with frequency=monthly day=15 on Mar 5 → `next_due_date` is Mar 15. Cold-start app on Mar 16 → pending row exists; approve → visible in Home; rule's `next_due_date` is Apr 15
@@ -3228,12 +3228,12 @@ Cover the full user flow:
 
 Follow the pattern from `test/integration/bootstrap_to_home_test.dart`.
 
-- [ ] **Step 2: Run integration tests**
+- [x] **Step 2: Run integration tests**
 
 Run: `flutter test test/integration/recurring_transaction_test.dart`
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add test/integration/recurring_transaction_test.dart
@@ -3244,26 +3244,26 @@ git commit -m "test: add recurring transaction integration tests"
 
 ### Task 16: Final Verification
 
-- [ ] **Step 1: Run codegen**
+- [x] **Step 1: Run codegen**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: All `.g.dart` and `.freezed.dart` files generated
 
-- [ ] **Step 2: Format**
+- [x] **Step 2: Format**
 
 Run: `dart format .`
 
-- [ ] **Step 3: Analyze**
+- [x] **Step 3: Analyze**
 
 Run: `flutter analyze`
 Expected: No errors
 
-- [ ] **Step 4: Run all tests**
+- [x] **Step 4: Run all tests**
 
 Run: `flutter test`
 Expected: All tests pass
 
-- [ ] **Step 5: Final commit (if any formatting changes)**
+- [x] **Step 5: Final commit (if any formatting changes)**
 
 ```bash
 git add -A
