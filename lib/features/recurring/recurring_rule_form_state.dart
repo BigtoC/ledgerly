@@ -49,6 +49,11 @@ abstract class RecurringRuleFormState with _$RecurringRuleFormState {
     @Default(false) bool isEdit,
     @Default(false) bool isLoading,
     int? pendingItemCount,
+
+    /// Bumped on every keypad mutation (digit, decimal, backspace,
+    /// operator) so the screen rebuilds even when `amountMinorUnits`
+    /// itself didn't change (decimal-start, operator press).
+    @Default(0) int keypadRevision,
     RecurringFormErrorKey? nameError,
     RecurringFormErrorKey? categoryError,
     RecurringFormErrorKey? accountError,

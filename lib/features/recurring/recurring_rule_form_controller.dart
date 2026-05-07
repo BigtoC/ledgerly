@@ -4,6 +4,7 @@ import '../../app/providers/repository_providers.dart';
 import '../../data/models/currency.dart';
 import '../../data/models/recurring_rule_draft.dart';
 import '../../data/repositories/recurring_rules_repository.dart';
+import '../transactions/keypad_state.dart';
 import 'recurring_rule_form_state.dart';
 
 part 'recurring_rule_form_controller.g.dart';
@@ -18,6 +19,16 @@ part 'recurring_rule_form_controller.g.dart';
   ],
 )
 class RecurringRuleFormController extends _$RecurringRuleFormController {
+  /// Calculator keypad state. Mirrors `state.amountMinorUnits` and bumps
+  /// `keypadRevision` on every press so the screen rebuilds even when
+  /// `amountMinorUnits` doesn't change (decimal-start, operator press).
+  KeypadState _keypad = const KeypadState.initial();
+  int _keypadRevision = 0;
+
+  /// Read-only accessor for the screen — `AmountDisplay` reads this to
+  /// render the calculator's expression history and current input.
+  KeypadState get keypadSnapshot => _keypad;
+
   @override
   Future<RecurringRuleFormState> build({int? ruleId}) async {
     final userPrefs = ref.watch(userPreferencesRepositoryProvider);
@@ -38,6 +49,10 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
       final memo = (rule.memo?.trim().isNotEmpty ?? false)
           ? rule.memo!
           : rule.name;
+      _keypad = _keypadFromAmount(
+        rule.amountMinorUnits,
+        decimals: rule.currency.decimals,
+      );
       return RecurringRuleFormState(
         memo: memo,
         amountMinorUnits: rule.amountMinorUnits,
@@ -53,6 +68,7 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
       );
     }
 
+    _keypad = const KeypadState.initial();
     return RecurringRuleFormState(
       currency: defaultCurrency ?? const Currency(code: 'USD', decimals: 2),
     );
@@ -72,8 +88,53 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
     ),
   );
 
-  void updateAmount(int minorUnits) =>
-      _update((s) => s.copyWith(amountMinorUnits: minorUnits));
+  // ---------- Keypad commands ----------
+
+  void appendDigit(int digit) {
+    final s = state.valueOrNull;
+    if (s == null || s.isLoading) return;
+    _keypad = _keypad.push(digit, decimals: s.currency.decimals);
+    _emitKeypad();
+  }
+
+  void appendDecimal() {
+    final s = state.valueOrNull;
+    if (s == null || s.isLoading) return;
+    _keypad = _keypad.pushDecimal(decimals: s.currency.decimals);
+    _emitKeypad();
+  }
+
+  void backspace() {
+    final s = state.valueOrNull;
+    if (s == null || s.isLoading) return;
+    final next = _keypad.pop(decimals: s.currency.decimals);
+    if (next == _keypad) return;
+    _keypad = next;
+    _emitKeypad();
+  }
+
+  void clearAmount() {
+    final s = state.valueOrNull;
+    if (s == null || s.isLoading) return;
+    final next = _keypad.clear();
+    if (next == _keypad) return;
+    _keypad = next;
+    _emitKeypad();
+  }
+
+  void applyOperator(CalcOperator op) {
+    final s = state.valueOrNull;
+    if (s == null || s.isLoading) return;
+    final next = _keypad.pushOperator(op, decimals: s.currency.decimals);
+    if (next == _keypad) return;
+    _keypad = next;
+    _emitKeypad();
+  }
+
+  void _emitKeypad() {
+    _keypadRevision += 1;
+    _update((s) => s.copyWith(amountMinorUnits: _keypad.amountMinorUnits));
+  }
 
   void updateCurrency(Currency currency) =>
       _update((s) => s.copyWith(currency: currency));
@@ -218,6 +279,45 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
   void _update(RecurringRuleFormState Function(RecurringRuleFormState) fn) {
     final current = state.valueOrNull;
     if (current == null) return;
-    state = AsyncData(fn(current));
+    state = AsyncData(fn(current).copyWith(keypadRevision: _keypadRevision));
+  }
+
+  /// Reconstructs a [KeypadState] from a stored amount so backspace on a
+  /// hydrated edit value walks back through the visible digits rather
+  /// than dropping the whole amount in one press. Mirrors the equivalent
+  /// helper on `TransactionFormController`.
+  KeypadState _keypadFromAmount(int amountMinorUnits, {required int decimals}) {
+    if (amountMinorUnits == 0 || decimals == 0) {
+      return KeypadState(
+        amountMinorUnits: amountMinorUnits,
+        fractionalDigitsEntered: 0,
+        isFractionalMode: false,
+        hasCurrentInput: amountMinorUnits != 0,
+      );
+    }
+    final unit = _pow10(decimals);
+    final fractionalRemainder = amountMinorUnits % unit;
+    if (fractionalRemainder == 0) {
+      return KeypadState(
+        amountMinorUnits: amountMinorUnits,
+        fractionalDigitsEntered: 0,
+        isFractionalMode: false,
+        hasCurrentInput: true,
+      );
+    }
+    return KeypadState(
+      amountMinorUnits: amountMinorUnits,
+      fractionalDigitsEntered: decimals,
+      isFractionalMode: true,
+      hasCurrentInput: true,
+    );
+  }
+
+  static int _pow10(int exponent) {
+    var result = 1;
+    for (var i = 0; i < exponent; i++) {
+      result *= 10;
+    }
+    return result;
   }
 }

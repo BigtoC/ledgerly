@@ -18,6 +18,8 @@ import '../categories/categories_controller.dart';
 import '../categories/widgets/category_picker.dart';
 import '../transactions/widgets/account_picker_sheet.dart';
 import '../transactions/widgets/account_selector_tile.dart';
+import '../transactions/widgets/amount_display.dart';
+import '../transactions/widgets/calculator_keypad.dart';
 import '../transactions/widgets/category_chip.dart';
 import 'recurring_rule_form_controller.dart';
 import 'recurring_rule_form_state.dart';
@@ -35,7 +37,6 @@ class RecurringRuleFormScreen extends ConsumerStatefulWidget {
 class _RecurringRuleFormScreenState
     extends ConsumerState<RecurringRuleFormScreen> {
   late final TextEditingController _memoCtl;
-  late final TextEditingController _amountCtl;
   late final TextEditingController _dayOfMonthCtl;
   bool _hydrated = false;
 
@@ -43,14 +44,12 @@ class _RecurringRuleFormScreenState
   void initState() {
     super.initState();
     _memoCtl = TextEditingController();
-    _amountCtl = TextEditingController();
     _dayOfMonthCtl = TextEditingController();
   }
 
   @override
   void dispose() {
     _memoCtl.dispose();
-    _amountCtl.dispose();
     _dayOfMonthCtl.dispose();
     super.dispose();
   }
@@ -58,30 +57,10 @@ class _RecurringRuleFormScreenState
   void _hydrate(RecurringRuleFormState s) {
     if (_hydrated) return;
     _memoCtl.text = s.memo;
-    if (s.amountMinorUnits > 0) {
-      _amountCtl.text = (s.amountMinorUnits / _scale(s.currency.decimals))
-          .toStringAsFixed(s.currency.decimals);
-    }
     if (s.dayOfMonth != null) {
       _dayOfMonthCtl.text = s.dayOfMonth!.toString();
     }
     _hydrated = true;
-  }
-
-  num _scale(int decimals) {
-    var n = 1;
-    for (var i = 0; i < decimals; i++) {
-      n *= 10;
-    }
-    return n;
-  }
-
-  int _parseAmount(String input, int decimals) {
-    final clean = input.replaceAll(',', '.').trim();
-    if (clean.isEmpty) return 0;
-    final parsed = double.tryParse(clean);
-    if (parsed == null) return 0;
-    return (parsed * _scale(decimals)).round();
   }
 
   @override
@@ -107,9 +86,7 @@ class _RecurringRuleFormScreenState
           controller: controller,
           providerKey: provider,
           memoCtl: _memoCtl,
-          amountCtl: _amountCtl,
           dayOfMonthCtl: _dayOfMonthCtl,
-          parseAmount: _parseAmount,
         );
       },
     );
@@ -122,18 +99,14 @@ class _FormBody extends ConsumerWidget {
     required this.controller,
     required this.providerKey,
     required this.memoCtl,
-    required this.amountCtl,
     required this.dayOfMonthCtl,
-    required this.parseAmount,
   });
 
   final RecurringRuleFormState state;
   final RecurringRuleFormController controller;
   final RecurringRuleFormControllerProvider providerKey;
   final TextEditingController memoCtl;
-  final TextEditingController amountCtl;
   final TextEditingController dayOfMonthCtl;
-  final int Function(String, int) parseAmount;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -158,117 +131,128 @@ class _FormBody extends ConsumerWidget {
         ],
       ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+        child: Column(
           children: [
-            if (state.formError != null)
-              _FormErrorBanner(error: state.formError!),
-            if (state.isEdit && (state.pendingItemCount ?? 0) > 0) ...[
-              Card(
-                color: Theme.of(context).colorScheme.secondaryContainer,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    l10n.recurringEditWillNotAffectPending(
-                      state.pendingItemCount!,
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  if (state.formError != null)
+                    _FormErrorBanner(error: state.formError!),
+                  if (state.isEdit && (state.pendingItemCount ?? 0) > 0) ...[
+                    Card(
+                      color: Theme.of(context).colorScheme.secondaryContainer,
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Text(
+                          l10n.recurringEditWillNotAffectPending(
+                            state.pendingItemCount!,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  // The "Name" field is the rule's memo — recurring rules don't
+                  // have a separate display name (PRD: memo doubles as label).
+                  Focus(
+                    onFocusChange: (has) {
+                      if (!has) controller.touchMemo();
+                    },
+                    child: TextField(
+                      controller: memoCtl,
+                      decoration: InputDecoration(
+                        labelText: l10n.recurringFormNamePlaceholder,
+                        errorText: state.nameError != null
+                            ? l10n.recurringFieldRequired
+                            : null,
+                      ),
+                      onChanged: controller.updateMemo,
                     ),
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  // Calculator-driven amount display. The keypad lives at the
+                  // bottom of the screen (outside this ListView) so it can't
+                  // be dismissed mid-entry by the soft keyboard.
+                  AmountDisplay(
+                    keypad: controller.keypadSnapshot,
+                    currency: state.currency,
+                  ),
+                  const SizedBox(height: 16),
+                  _CategoryPickerTile(
+                    state: state,
+                    onPick: (cat) => controller.updateCategory(cat.id),
+                  ),
+                  const SizedBox(height: 8),
+                  _AccountPickerTile(
+                    state: state,
+                    onPick: (acc) => controller.updateAccount(acc.id),
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    initialValue: state.frequency,
+                    decoration: const InputDecoration(labelText: 'Frequency'),
+                    items: [
+                      DropdownMenuItem(
+                        value: 'daily',
+                        child: Text(l10n.recurringFrequencyDaily),
+                      ),
+                      DropdownMenuItem(
+                        value: 'weekly',
+                        child: Text(l10n.recurringFrequencyWeekly),
+                      ),
+                      DropdownMenuItem(
+                        value: 'monthly',
+                        child: Text(l10n.recurringFrequencyMonthly),
+                      ),
+                      DropdownMenuItem(
+                        value: 'yearly',
+                        child: Text(l10n.recurringFrequencyYearly),
+                      ),
+                    ],
+                    onChanged: (v) {
+                      if (v == null) return;
+                      controller.updateFrequency(v);
+                      // The controller's `updateFrequency` may default
+                      // dayOfMonth to today.day (clamped to 28) when switching
+                      // into monthly/yearly. Sync the visible TextEditingController.
+                      if (v == 'monthly' || v == 'yearly') {
+                        final today = DateTime.now();
+                        final defaulted = today.day > 28 ? 28 : today.day;
+                        final next = state.dayOfMonth ?? defaulted;
+                        dayOfMonthCtl.text = next.toString();
+                      } else {
+                        dayOfMonthCtl.clear();
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _FrequencyFields(
+                    state: state,
+                    controller: controller,
+                    dayOfMonthCtl: dayOfMonthCtl,
+                  ),
+                  const SizedBox(height: 24),
+                  if (state.isEdit)
+                    OutlinedButton.icon(
+                      onPressed: () => _confirmDelete(context),
+                      icon: const Icon(Icons.delete_outline),
+                      label: Text(l10n.recurringDeleteRule),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                ],
               ),
-              const SizedBox(height: 12),
-            ],
-            // The "Name" field is the rule's memo — recurring rules don't
-            // have a separate display name (PRD: memo doubles as label).
-            Focus(
-              onFocusChange: (has) {
-                if (!has) controller.touchMemo();
-              },
-              child: TextField(
-                controller: memoCtl,
-                decoration: InputDecoration(
-                  labelText: l10n.recurringFormNamePlaceholder,
-                  errorText: state.nameError != null
-                      ? l10n.recurringFieldRequired
-                      : null,
-                ),
-                onChanged: controller.updateMemo,
-              ),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: amountCtl,
-              decoration: const InputDecoration(labelText: 'Amount'),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              onChanged: (v) => controller.updateAmount(
-                parseAmount(v, state.currency.decimals),
-              ),
+            CalculatorKeypad(
+              decimals: state.currency.decimals,
+              onDigit: controller.appendDigit,
+              onDecimal: controller.appendDecimal,
+              onBackspace: controller.backspace,
+              onClear: controller.clearAmount,
+              onOperator: controller.applyOperator,
             ),
-            const SizedBox(height: 16),
-            _CategoryPickerTile(
-              state: state,
-              onPick: (cat) => controller.updateCategory(cat.id),
-            ),
-            const SizedBox(height: 8),
-            _AccountPickerTile(
-              state: state,
-              onPick: (acc) => controller.updateAccount(acc.id),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              initialValue: state.frequency,
-              decoration: const InputDecoration(labelText: 'Frequency'),
-              items: [
-                DropdownMenuItem(
-                  value: 'daily',
-                  child: Text(l10n.recurringFrequencyDaily),
-                ),
-                DropdownMenuItem(
-                  value: 'weekly',
-                  child: Text(l10n.recurringFrequencyWeekly),
-                ),
-                DropdownMenuItem(
-                  value: 'monthly',
-                  child: Text(l10n.recurringFrequencyMonthly),
-                ),
-                DropdownMenuItem(
-                  value: 'yearly',
-                  child: Text(l10n.recurringFrequencyYearly),
-                ),
-              ],
-              onChanged: (v) {
-                if (v == null) return;
-                controller.updateFrequency(v);
-                // The controller's `updateFrequency` may default
-                // dayOfMonth to today.day (clamped to 28) when switching
-                // into monthly/yearly. Sync the visible TextEditingController.
-                if (v == 'monthly' || v == 'yearly') {
-                  final today = DateTime.now();
-                  final defaulted = today.day > 28 ? 28 : today.day;
-                  final next = state.dayOfMonth ?? defaulted;
-                  dayOfMonthCtl.text = next.toString();
-                } else {
-                  dayOfMonthCtl.clear();
-                }
-              },
-            ),
-            const SizedBox(height: 12),
-            _FrequencyFields(
-              state: state,
-              controller: controller,
-              dayOfMonthCtl: dayOfMonthCtl,
-            ),
-            const SizedBox(height: 24),
-            if (state.isEdit)
-              OutlinedButton.icon(
-                onPressed: () => _confirmDelete(context),
-                icon: const Icon(Icons.delete_outline),
-                label: Text(l10n.recurringDeleteRule),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.error,
-                ),
-              ),
           ],
         ),
       ),
