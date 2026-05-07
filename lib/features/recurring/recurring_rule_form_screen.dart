@@ -532,3 +532,43 @@ class _CategoryPickerTile extends ConsumerWidget {
     );
   }
 }
+
+/// Tile that opens the shared account picker and renders the selected
+/// account once chosen. Reuses [AccountSelectorTile] from the
+/// transactions slice for visual parity.
+class _AccountPickerTile extends ConsumerWidget {
+  const _AccountPickerTile({required this.state, required this.onPick});
+
+  final RecurringRuleFormState state;
+  final void Function(Account) onPick;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncAccounts = ref.watch(accountRepositoryProvider).watchAll();
+    return StreamBuilder<List<Account>>(
+      stream: asyncAccounts,
+      builder: (ctx, snapshot) {
+        final list = snapshot.data ?? const <Account>[];
+        Account? selected;
+        final id = state.accountId;
+        if (id != null) {
+          for (final a in list) {
+            if (a.id == id) {
+              selected = a;
+              break;
+            }
+          }
+        }
+        return AccountSelectorTile(
+          key: const ValueKey('recurringForm:accountPicker'),
+          account: selected,
+          hasError: state.accountError != null,
+          onTap: () async {
+            final picked = await showAccountPickerSheet(context);
+            if (picked != null) onPick(picked);
+          },
+        );
+      },
+    );
+  }
+}
