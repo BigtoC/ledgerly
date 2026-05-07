@@ -25,29 +25,34 @@ class RecurringRulesScreen extends ConsumerStatefulWidget {
 }
 
 class _RecurringRulesScreenState extends ConsumerState<RecurringRulesScreen> {
+  RecurringRulesController? _controller;
+
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      if (!mounted) return;
-      ref
-          .read(recurringRulesControllerProvider.notifier)
-          .setEffectListener(_onEffect);
-    });
+    _bindController(ref.read(recurringRulesControllerProvider.notifier));
   }
 
   @override
   void dispose() {
-    ref.read(recurringRulesControllerProvider.notifier).setEffectListener(null);
+    _controller?.setEffectListener(null);
     super.dispose();
+  }
+
+  void _bindController(RecurringRulesController controller) {
+    if (identical(_controller, controller)) return;
+    _controller?.setEffectListener(null);
+    _controller = controller;
+    _controller?.setEffectListener(_onEffect);
   }
 
   void _onEffect(RecurringRulesEffect effect) {
     if (!mounted) return;
+    final l10n = AppLocalizations.of(context);
     if (effect is RecurringRulesDeleteFailedEffect) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Delete failed')));
+      ScaffoldMessenger.maybeOf(context)
+        ?..clearSnackBars()
+        ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
     }
   }
 
