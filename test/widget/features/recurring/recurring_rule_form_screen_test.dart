@@ -9,12 +9,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 
+import 'package:ledgerly/app/providers/repository_providers.dart';
+import 'package:ledgerly/data/models/account.dart';
+import 'package:ledgerly/data/models/category.dart';
 import 'package:ledgerly/data/models/currency.dart';
+import 'package:ledgerly/data/repositories/account_repository.dart';
+import 'package:ledgerly/data/repositories/category_repository.dart';
+import 'package:ledgerly/features/categories/categories_controller.dart';
 import 'package:ledgerly/features/recurring/recurring_rule_form_controller.dart';
 import 'package:ledgerly/features/recurring/recurring_rule_form_screen.dart';
 import 'package:ledgerly/features/recurring/recurring_rule_form_state.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
+
+class _MockAccountRepository extends Mock implements AccountRepository {}
+
+class _MockCategoryRepository extends Mock implements CategoryRepository {}
 
 const _usd = Currency(code: 'USD', decimals: 2);
 
@@ -54,11 +65,35 @@ ProviderContainer _makeContainer({
   required RecurringRuleFormState initial,
   int? ruleId,
 }) {
+  // The form's category and account picker tiles watch the repos so they
+  // can render the picked entity's name + icon. Stub both with empty
+  // streams; tests that exercise the picker UI itself live in their own
+  // widget tests.
+  final accountRepo = _MockAccountRepository();
+  when(
+    () => accountRepo.watchAll(includeArchived: any(named: 'includeArchived')),
+  ).thenAnswer((_) => const Stream<List<Account>>.empty());
+  when(
+    () => accountRepo.watchAll(),
+  ).thenAnswer((_) => const Stream<List<Account>>.empty());
+  final categoryRepo = _MockCategoryRepository();
+  when(
+    () => categoryRepo.watchAll(
+      includeArchived: any(named: 'includeArchived'),
+      type: any(named: 'type'),
+    ),
+  ).thenAnswer((_) => const Stream<List<Category>>.empty());
+
   return ProviderContainer(
     overrides: [
       recurringRuleFormControllerProvider(
         ruleId: ruleId,
       ).overrideWith(() => _FakeFormController(initial)),
+      accountRepositoryProvider.overrideWithValue(accountRepo),
+      categoryRepositoryProvider.overrideWithValue(categoryRepo),
+      categoriesByTypeProvider(
+        CategoryType.expense,
+      ).overrideWith((_) => const Stream<List<Category>>.empty()),
     ],
   );
 }
@@ -86,7 +121,7 @@ void main() {
       initial: const RecurringRuleFormState(
         currency: _usd,
         isEdit: true,
-        name: 'Netflix',
+        memo: 'Netflix',
         amountMinorUnits: 1599,
         categoryId: 1,
         accountId: 1,
@@ -176,7 +211,7 @@ void main() {
       initial: const RecurringRuleFormState(
         currency: _usd,
         isEdit: true,
-        name: 'Netflix',
+        memo: 'Netflix',
         amountMinorUnits: 1599,
         categoryId: 1,
         accountId: 1,
