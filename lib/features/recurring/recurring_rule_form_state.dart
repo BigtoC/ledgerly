@@ -1,0 +1,78 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+import '../../data/models/currency.dart';
+
+part 'recurring_rule_form_state.freezed.dart';
+
+/// Typed validation-error keys. Decouples controller from l10n.
+enum RecurringFormErrorKey {
+  nameRequired,
+  amountRequired,
+  categoryRequired,
+  accountRequired,
+  frequencyFieldRequired,
+}
+
+/// Save-time error surfaced on the form's banner.
+sealed class RecurringFormError {
+  const RecurringFormError();
+  const factory RecurringFormError.archivedRef(String detail) = ArchivedRefErr;
+  const factory RecurringFormError.unknown(String detail) = UnknownErr;
+}
+
+class ArchivedRefErr extends RecurringFormError {
+  const ArchivedRefErr(this.detail);
+  final String detail;
+}
+
+class UnknownErr extends RecurringFormError {
+  const UnknownErr(this.detail);
+  final String detail;
+}
+
+@freezed
+abstract class RecurringRuleFormState with _$RecurringRuleFormState {
+  const factory RecurringRuleFormState({
+    @Default('') String name,
+    @Default(0) int amountMinorUnits,
+    required Currency currency,
+    int? categoryId,
+    int? accountId,
+    String? memo,
+    @Default('monthly') String frequency,
+    int? dayOfWeek,
+    int? dayOfMonth,
+    int? monthOfYear,
+    @Default(false) bool isEdit,
+    @Default(false) bool isLoading,
+    int? pendingItemCount,
+    RecurringFormErrorKey? nameError,
+    RecurringFormErrorKey? categoryError,
+    RecurringFormErrorKey? accountError,
+    RecurringFormErrorKey? frequencyFieldError,
+    RecurringFormError? formError,
+    @Default(false) bool postSaveGenerationFailed,
+  }) = _RecurringRuleFormState;
+
+  const RecurringRuleFormState._();
+
+  bool get hasFrequencyFieldError {
+    switch (frequency) {
+      case 'weekly':
+        return dayOfWeek == null;
+      case 'monthly':
+        return dayOfMonth == null;
+      case 'yearly':
+        return monthOfYear == null || dayOfMonth == null;
+      default:
+        return false;
+    }
+  }
+
+  bool get canSave =>
+      name.trim().isNotEmpty &&
+      amountMinorUnits > 0 &&
+      categoryId != null &&
+      accountId != null &&
+      !hasFrequencyFieldError;
+}
