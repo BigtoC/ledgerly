@@ -33,13 +33,17 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
       }
       final pendingRepo = ref.watch(pendingTransactionRepositoryProvider);
       final pendingCount = await pendingRepo.countByRecurringRule(ruleId);
+      // Memo doubles as the rule name. Prefer the stored memo so user
+      // edits round-trip; fall back to `rule.name` for legacy rows.
+      final memo = (rule.memo?.trim().isNotEmpty ?? false)
+          ? rule.memo!
+          : rule.name;
       return RecurringRuleFormState(
-        name: rule.name,
+        memo: memo,
         amountMinorUnits: rule.amountMinorUnits,
         currency: rule.currency,
         categoryId: rule.categoryId,
         accountId: rule.accountId,
-        memo: rule.memo,
         frequency: rule.frequency,
         dayOfWeek: rule.dayOfWeek,
         dayOfMonth: rule.dayOfMonth,
@@ -56,13 +60,13 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
 
   // ---------- Field updates ----------
 
-  void updateName(String name) =>
-      _update((s) => s.copyWith(name: name, nameError: null));
+  void updateMemo(String memo) =>
+      _update((s) => s.copyWith(memo: memo, nameError: null));
 
-  /// Called from the name field's `onEditingComplete`.
-  void touchName() => _update(
+  /// Called from the memo field's focus-loss handler.
+  void touchMemo() => _update(
     (s) => s.copyWith(
-      nameError: s.name.trim().isEmpty
+      nameError: s.memo.trim().isEmpty
           ? RecurringFormErrorKey.nameRequired
           : null,
     ),
@@ -79,8 +83,6 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
 
   void updateAccount(int accountId) =>
       _update((s) => s.copyWith(accountId: accountId, accountError: null));
-
-  void updateMemo(String? memo) => _update((s) => s.copyWith(memo: memo));
 
   void updateFrequency(String frequency) {
     _update((s) {
@@ -144,7 +146,7 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
     if (!current.canSave) {
       _update(
         (s) => s.copyWith(
-          nameError: s.name.trim().isEmpty
+          nameError: s.memo.trim().isEmpty
               ? RecurringFormErrorKey.nameRequired
               : null,
           categoryError: s.categoryId == null
@@ -163,13 +165,17 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
 
     _update((s) => s.copyWith(isLoading: true, formError: null));
     try {
+      // Memo doubles as the rule's user-visible name; both columns get
+      // the same trimmed value so list tiles and pending-row memos stay
+      // in sync.
+      final memo = current.memo.trim();
       final draft = RecurringRuleDraft(
-        name: current.name.trim(),
+        name: memo,
         amountMinorUnits: current.amountMinorUnits,
         currency: current.currency,
         categoryId: current.categoryId!,
         accountId: current.accountId!,
-        memo: current.memo,
+        memo: memo,
         frequency: current.frequency,
         dayOfWeek: current.dayOfWeek,
         dayOfMonth: current.dayOfMonth,

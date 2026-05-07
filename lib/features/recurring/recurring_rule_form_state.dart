@@ -6,6 +6,7 @@ part 'recurring_rule_form_state.freezed.dart';
 
 /// Typed validation-error keys. Decouples controller from l10n.
 enum RecurringFormErrorKey {
+  /// Memo doubles as the rule's user-visible name; required.
   nameRequired,
   amountRequired,
   categoryRequired,
@@ -33,12 +34,14 @@ class UnknownErr extends RecurringFormError {
 @freezed
 abstract class RecurringRuleFormState with _$RecurringRuleFormState {
   const factory RecurringRuleFormState({
-    @Default('') String name,
+    /// User-visible label for the rule. Stored in `recurring_rules.memo`
+    /// and copied verbatim into `recurring_rules.name` on save (the form
+    /// no longer surfaces a separate Name field).
+    @Default('') String memo,
     @Default(0) int amountMinorUnits,
     required Currency currency,
     int? categoryId,
     int? accountId,
-    String? memo,
     @Default('monthly') String frequency,
     int? dayOfWeek,
     int? dayOfMonth,
@@ -70,7 +73,7 @@ abstract class RecurringRuleFormState with _$RecurringRuleFormState {
   }
 
   bool get canSave =>
-      name.trim().isNotEmpty &&
+      memo.trim().isNotEmpty &&
       amountMinorUnits > 0 &&
       categoryId != null &&
       accountId != null &&

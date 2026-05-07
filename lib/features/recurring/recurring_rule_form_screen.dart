@@ -10,9 +10,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/providers/repository_providers.dart';
+import '../../data/models/account.dart';
 import '../../data/models/category.dart';
 import '../../l10n/app_localizations.dart';
+import '../categories/categories_controller.dart';
 import '../categories/widgets/category_picker.dart';
+import '../transactions/widgets/account_picker_sheet.dart';
+import '../transactions/widgets/account_selector_tile.dart';
+import '../transactions/widgets/category_chip.dart';
 import 'recurring_rule_form_controller.dart';
 import 'recurring_rule_form_state.dart';
 
@@ -28,38 +34,34 @@ class RecurringRuleFormScreen extends ConsumerStatefulWidget {
 
 class _RecurringRuleFormScreenState
     extends ConsumerState<RecurringRuleFormScreen> {
-  late final TextEditingController _nameCtl;
-  late final TextEditingController _amountCtl;
   late final TextEditingController _memoCtl;
+  late final TextEditingController _amountCtl;
   late final TextEditingController _dayOfMonthCtl;
   bool _hydrated = false;
 
   @override
   void initState() {
     super.initState();
-    _nameCtl = TextEditingController();
-    _amountCtl = TextEditingController();
     _memoCtl = TextEditingController();
+    _amountCtl = TextEditingController();
     _dayOfMonthCtl = TextEditingController();
   }
 
   @override
   void dispose() {
-    _nameCtl.dispose();
-    _amountCtl.dispose();
     _memoCtl.dispose();
+    _amountCtl.dispose();
     _dayOfMonthCtl.dispose();
     super.dispose();
   }
 
   void _hydrate(RecurringRuleFormState s) {
     if (_hydrated) return;
-    _nameCtl.text = s.name;
+    _memoCtl.text = s.memo;
     if (s.amountMinorUnits > 0) {
       _amountCtl.text = (s.amountMinorUnits / _scale(s.currency.decimals))
           .toStringAsFixed(s.currency.decimals);
     }
-    _memoCtl.text = s.memo ?? '';
     if (s.dayOfMonth != null) {
       _dayOfMonthCtl.text = s.dayOfMonth!.toString();
     }
@@ -104,9 +106,8 @@ class _RecurringRuleFormScreenState
           state: state,
           controller: controller,
           providerKey: provider,
-          nameCtl: _nameCtl,
-          amountCtl: _amountCtl,
           memoCtl: _memoCtl,
+          amountCtl: _amountCtl,
           dayOfMonthCtl: _dayOfMonthCtl,
           parseAmount: _parseAmount,
         );
@@ -120,9 +121,8 @@ class _FormBody extends ConsumerWidget {
     required this.state,
     required this.controller,
     required this.providerKey,
-    required this.nameCtl,
-    required this.amountCtl,
     required this.memoCtl,
+    required this.amountCtl,
     required this.dayOfMonthCtl,
     required this.parseAmount,
   });
@@ -130,9 +130,8 @@ class _FormBody extends ConsumerWidget {
   final RecurringRuleFormState state;
   final RecurringRuleFormController controller;
   final RecurringRuleFormControllerProvider providerKey;
-  final TextEditingController nameCtl;
-  final TextEditingController amountCtl;
   final TextEditingController memoCtl;
+  final TextEditingController amountCtl;
   final TextEditingController dayOfMonthCtl;
   final int Function(String, int) parseAmount;
 
@@ -178,19 +177,21 @@ class _FormBody extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
             ],
+            // The "Name" field is the rule's memo — recurring rules don't
+            // have a separate display name (PRD: memo doubles as label).
             Focus(
               onFocusChange: (has) {
-                if (!has) controller.touchName();
+                if (!has) controller.touchMemo();
               },
               child: TextField(
-                controller: nameCtl,
+                controller: memoCtl,
                 decoration: InputDecoration(
                   labelText: l10n.recurringFormNamePlaceholder,
                   errorText: state.nameError != null
                       ? l10n.recurringFieldRequired
                       : null,
                 ),
-                onChanged: controller.updateName,
+                onChanged: controller.updateMemo,
               ),
             ),
             const SizedBox(height: 16),
@@ -205,23 +206,14 @@ class _FormBody extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 16),
-            ListTile(
-              key: const ValueKey('recurringForm:categoryPicker'),
-              leading: const Icon(Icons.category),
-              title: Text(
-                state.categoryId == null
-                    ? (state.categoryError != null
-                          ? l10n.recurringFieldRequired
-                          : 'Pick category')
-                    : 'Category #${state.categoryId}',
-              ),
-              onTap: () async {
-                final picked = await showCategoryPicker(
-                  context,
-                  type: CategoryType.expense,
-                );
-                if (picked != null) controller.updateCategory(picked.id);
-              },
+            _CategoryPickerTile(
+              state: state,
+              onPick: (cat) => controller.updateCategory(cat.id),
+            ),
+            const SizedBox(height: 8),
+            _AccountPickerTile(
+              state: state,
+              onPick: (acc) => controller.updateAccount(acc.id),
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
@@ -266,12 +258,6 @@ class _FormBody extends ConsumerWidget {
               state: state,
               controller: controller,
               dayOfMonthCtl: dayOfMonthCtl,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: memoCtl,
-              decoration: const InputDecoration(labelText: 'Memo'),
-              onChanged: (v) => controller.updateMemo(v.isEmpty ? null : v),
             ),
             const SizedBox(height: 24),
             if (state.isEdit)
@@ -502,6 +488,47 @@ class _DayOfMonthRow extends StatelessWidget {
           style: Theme.of(context).textTheme.bodySmall,
         ),
       ],
+    );
+  }
+}
+
+/// Tile that opens the category picker and renders the selected category
+/// (icon + localized name) once chosen. Reuses [CategoryChip] from the
+/// transactions slice — both forms pick from the same expense-category
+/// universe and want the same affordance.
+class _CategoryPickerTile extends ConsumerWidget {
+  const _CategoryPickerTile({required this.state, required this.onPick});
+
+  final RecurringRuleFormState state;
+  final void Function(Category) onPick;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncCategories = ref.watch(
+      categoriesByTypeProvider(CategoryType.expense),
+    );
+    final selected = asyncCategories.maybeWhen(
+      data: (list) {
+        final id = state.categoryId;
+        if (id == null) return null;
+        for (final c in list) {
+          if (c.id == id) return c;
+        }
+        return null;
+      },
+      orElse: () => null,
+    );
+    return CategoryChip(
+      key: const ValueKey('recurringForm:categoryPicker'),
+      category: selected,
+      hasError: state.categoryError != null,
+      onTap: () async {
+        final picked = await showCategoryPicker(
+          context,
+          type: CategoryType.expense,
+        );
+        if (picked != null) onPick(picked);
+      },
     );
   }
 }

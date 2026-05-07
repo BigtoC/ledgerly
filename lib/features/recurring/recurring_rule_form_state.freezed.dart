@@ -14,7 +14,10 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$RecurringRuleFormState {
 
- String get name; int get amountMinorUnits; Currency get currency; int? get categoryId; int? get accountId; String? get memo; String get frequency; int? get dayOfWeek; int? get dayOfMonth; int? get monthOfYear; bool get isEdit; bool get isLoading; int? get pendingItemCount; RecurringFormErrorKey? get nameError; RecurringFormErrorKey? get categoryError; RecurringFormErrorKey? get accountError; RecurringFormErrorKey? get frequencyFieldError; RecurringFormError? get formError; bool get postSaveGenerationFailed;
+/// User-visible label for the rule. Stored in `recurring_rules.memo`
+/// and copied verbatim into `recurring_rules.name` on save (the form
+/// no longer surfaces a separate Name field).
+ String get memo; int get amountMinorUnits; Currency get currency; int? get categoryId; int? get accountId; String get frequency; int? get dayOfWeek; int? get dayOfMonth; int? get monthOfYear; bool get isEdit; bool get isLoading; int? get pendingItemCount; RecurringFormErrorKey? get nameError; RecurringFormErrorKey? get categoryError; RecurringFormErrorKey? get accountError; RecurringFormErrorKey? get frequencyFieldError; RecurringFormError? get formError; bool get postSaveGenerationFailed;
 /// Create a copy of RecurringRuleFormState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +28,16 @@ $RecurringRuleFormStateCopyWith<RecurringRuleFormState> get copyWith => _$Recurr
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringRuleFormState&&(identical(other.name, name) || other.name == name)&&(identical(other.amountMinorUnits, amountMinorUnits) || other.amountMinorUnits == amountMinorUnits)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.frequency, frequency) || other.frequency == frequency)&&(identical(other.dayOfWeek, dayOfWeek) || other.dayOfWeek == dayOfWeek)&&(identical(other.dayOfMonth, dayOfMonth) || other.dayOfMonth == dayOfMonth)&&(identical(other.monthOfYear, monthOfYear) || other.monthOfYear == monthOfYear)&&(identical(other.isEdit, isEdit) || other.isEdit == isEdit)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.pendingItemCount, pendingItemCount) || other.pendingItemCount == pendingItemCount)&&(identical(other.nameError, nameError) || other.nameError == nameError)&&(identical(other.categoryError, categoryError) || other.categoryError == categoryError)&&(identical(other.accountError, accountError) || other.accountError == accountError)&&(identical(other.frequencyFieldError, frequencyFieldError) || other.frequencyFieldError == frequencyFieldError)&&(identical(other.formError, formError) || other.formError == formError)&&(identical(other.postSaveGenerationFailed, postSaveGenerationFailed) || other.postSaveGenerationFailed == postSaveGenerationFailed));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringRuleFormState&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.amountMinorUnits, amountMinorUnits) || other.amountMinorUnits == amountMinorUnits)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.frequency, frequency) || other.frequency == frequency)&&(identical(other.dayOfWeek, dayOfWeek) || other.dayOfWeek == dayOfWeek)&&(identical(other.dayOfMonth, dayOfMonth) || other.dayOfMonth == dayOfMonth)&&(identical(other.monthOfYear, monthOfYear) || other.monthOfYear == monthOfYear)&&(identical(other.isEdit, isEdit) || other.isEdit == isEdit)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.pendingItemCount, pendingItemCount) || other.pendingItemCount == pendingItemCount)&&(identical(other.nameError, nameError) || other.nameError == nameError)&&(identical(other.categoryError, categoryError) || other.categoryError == categoryError)&&(identical(other.accountError, accountError) || other.accountError == accountError)&&(identical(other.frequencyFieldError, frequencyFieldError) || other.frequencyFieldError == frequencyFieldError)&&(identical(other.formError, formError) || other.formError == formError)&&(identical(other.postSaveGenerationFailed, postSaveGenerationFailed) || other.postSaveGenerationFailed == postSaveGenerationFailed));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,name,amountMinorUnits,currency,categoryId,accountId,memo,frequency,dayOfWeek,dayOfMonth,monthOfYear,isEdit,isLoading,pendingItemCount,nameError,categoryError,accountError,frequencyFieldError,formError,postSaveGenerationFailed]);
+int get hashCode => Object.hash(runtimeType,memo,amountMinorUnits,currency,categoryId,accountId,frequency,dayOfWeek,dayOfMonth,monthOfYear,isEdit,isLoading,pendingItemCount,nameError,categoryError,accountError,frequencyFieldError,formError,postSaveGenerationFailed);
 
 @override
 String toString() {
-  return 'RecurringRuleFormState(name: $name, amountMinorUnits: $amountMinorUnits, currency: $currency, categoryId: $categoryId, accountId: $accountId, memo: $memo, frequency: $frequency, dayOfWeek: $dayOfWeek, dayOfMonth: $dayOfMonth, monthOfYear: $monthOfYear, isEdit: $isEdit, isLoading: $isLoading, pendingItemCount: $pendingItemCount, nameError: $nameError, categoryError: $categoryError, accountError: $accountError, frequencyFieldError: $frequencyFieldError, formError: $formError, postSaveGenerationFailed: $postSaveGenerationFailed)';
+  return 'RecurringRuleFormState(memo: $memo, amountMinorUnits: $amountMinorUnits, currency: $currency, categoryId: $categoryId, accountId: $accountId, frequency: $frequency, dayOfWeek: $dayOfWeek, dayOfMonth: $dayOfMonth, monthOfYear: $monthOfYear, isEdit: $isEdit, isLoading: $isLoading, pendingItemCount: $pendingItemCount, nameError: $nameError, categoryError: $categoryError, accountError: $accountError, frequencyFieldError: $frequencyFieldError, formError: $formError, postSaveGenerationFailed: $postSaveGenerationFailed)';
 }
 
 
@@ -45,7 +48,7 @@ abstract mixin class $RecurringRuleFormStateCopyWith<$Res>  {
   factory $RecurringRuleFormStateCopyWith(RecurringRuleFormState value, $Res Function(RecurringRuleFormState) _then) = _$RecurringRuleFormStateCopyWithImpl;
 @useResult
 $Res call({
- String name, int amountMinorUnits, Currency currency, int? categoryId, int? accountId, String? memo, String frequency, int? dayOfWeek, int? dayOfMonth, int? monthOfYear, bool isEdit, bool isLoading, int? pendingItemCount, RecurringFormErrorKey? nameError, RecurringFormErrorKey? categoryError, RecurringFormErrorKey? accountError, RecurringFormErrorKey? frequencyFieldError, RecurringFormError? formError, bool postSaveGenerationFailed
+ String memo, int amountMinorUnits, Currency currency, int? categoryId, int? accountId, String frequency, int? dayOfWeek, int? dayOfMonth, int? monthOfYear, bool isEdit, bool isLoading, int? pendingItemCount, RecurringFormErrorKey? nameError, RecurringFormErrorKey? categoryError, RecurringFormErrorKey? accountError, RecurringFormErrorKey? frequencyFieldError, RecurringFormError? formError, bool postSaveGenerationFailed
 });
 
 
@@ -62,15 +65,14 @@ class _$RecurringRuleFormStateCopyWithImpl<$Res>
 
 /// Create a copy of RecurringRuleFormState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? amountMinorUnits = null,Object? currency = null,Object? categoryId = freezed,Object? accountId = freezed,Object? memo = freezed,Object? frequency = null,Object? dayOfWeek = freezed,Object? dayOfMonth = freezed,Object? monthOfYear = freezed,Object? isEdit = null,Object? isLoading = null,Object? pendingItemCount = freezed,Object? nameError = freezed,Object? categoryError = freezed,Object? accountError = freezed,Object? frequencyFieldError = freezed,Object? formError = freezed,Object? postSaveGenerationFailed = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? memo = null,Object? amountMinorUnits = null,Object? currency = null,Object? categoryId = freezed,Object? accountId = freezed,Object? frequency = null,Object? dayOfWeek = freezed,Object? dayOfMonth = freezed,Object? monthOfYear = freezed,Object? isEdit = null,Object? isLoading = null,Object? pendingItemCount = freezed,Object? nameError = freezed,Object? categoryError = freezed,Object? accountError = freezed,Object? frequencyFieldError = freezed,Object? formError = freezed,Object? postSaveGenerationFailed = null,}) {
   return _then(_self.copyWith(
-name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+memo: null == memo ? _self.memo : memo // ignore: cast_nullable_to_non_nullable
 as String,amountMinorUnits: null == amountMinorUnits ? _self.amountMinorUnits : amountMinorUnits // ignore: cast_nullable_to_non_nullable
 as int,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
 as Currency,categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as int?,accountId: freezed == accountId ? _self.accountId : accountId // ignore: cast_nullable_to_non_nullable
-as int?,memo: freezed == memo ? _self.memo : memo // ignore: cast_nullable_to_non_nullable
-as String?,frequency: null == frequency ? _self.frequency : frequency // ignore: cast_nullable_to_non_nullable
+as int?,frequency: null == frequency ? _self.frequency : frequency // ignore: cast_nullable_to_non_nullable
 as String,dayOfWeek: freezed == dayOfWeek ? _self.dayOfWeek : dayOfWeek // ignore: cast_nullable_to_non_nullable
 as int?,dayOfMonth: freezed == dayOfMonth ? _self.dayOfMonth : dayOfMonth // ignore: cast_nullable_to_non_nullable
 as int?,monthOfYear: freezed == monthOfYear ? _self.monthOfYear : monthOfYear // ignore: cast_nullable_to_non_nullable
@@ -177,10 +179,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  int amountMinorUnits,  Currency currency,  int? categoryId,  int? accountId,  String? memo,  String frequency,  int? dayOfWeek,  int? dayOfMonth,  int? monthOfYear,  bool isEdit,  bool isLoading,  int? pendingItemCount,  RecurringFormErrorKey? nameError,  RecurringFormErrorKey? categoryError,  RecurringFormErrorKey? accountError,  RecurringFormErrorKey? frequencyFieldError,  RecurringFormError? formError,  bool postSaveGenerationFailed)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String memo,  int amountMinorUnits,  Currency currency,  int? categoryId,  int? accountId,  String frequency,  int? dayOfWeek,  int? dayOfMonth,  int? monthOfYear,  bool isEdit,  bool isLoading,  int? pendingItemCount,  RecurringFormErrorKey? nameError,  RecurringFormErrorKey? categoryError,  RecurringFormErrorKey? accountError,  RecurringFormErrorKey? frequencyFieldError,  RecurringFormError? formError,  bool postSaveGenerationFailed)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _RecurringRuleFormState() when $default != null:
-return $default(_that.name,_that.amountMinorUnits,_that.currency,_that.categoryId,_that.accountId,_that.memo,_that.frequency,_that.dayOfWeek,_that.dayOfMonth,_that.monthOfYear,_that.isEdit,_that.isLoading,_that.pendingItemCount,_that.nameError,_that.categoryError,_that.accountError,_that.frequencyFieldError,_that.formError,_that.postSaveGenerationFailed);case _:
+return $default(_that.memo,_that.amountMinorUnits,_that.currency,_that.categoryId,_that.accountId,_that.frequency,_that.dayOfWeek,_that.dayOfMonth,_that.monthOfYear,_that.isEdit,_that.isLoading,_that.pendingItemCount,_that.nameError,_that.categoryError,_that.accountError,_that.frequencyFieldError,_that.formError,_that.postSaveGenerationFailed);case _:
   return orElse();
 
 }
@@ -198,10 +200,10 @@ return $default(_that.name,_that.amountMinorUnits,_that.currency,_that.categoryI
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  int amountMinorUnits,  Currency currency,  int? categoryId,  int? accountId,  String? memo,  String frequency,  int? dayOfWeek,  int? dayOfMonth,  int? monthOfYear,  bool isEdit,  bool isLoading,  int? pendingItemCount,  RecurringFormErrorKey? nameError,  RecurringFormErrorKey? categoryError,  RecurringFormErrorKey? accountError,  RecurringFormErrorKey? frequencyFieldError,  RecurringFormError? formError,  bool postSaveGenerationFailed)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String memo,  int amountMinorUnits,  Currency currency,  int? categoryId,  int? accountId,  String frequency,  int? dayOfWeek,  int? dayOfMonth,  int? monthOfYear,  bool isEdit,  bool isLoading,  int? pendingItemCount,  RecurringFormErrorKey? nameError,  RecurringFormErrorKey? categoryError,  RecurringFormErrorKey? accountError,  RecurringFormErrorKey? frequencyFieldError,  RecurringFormError? formError,  bool postSaveGenerationFailed)  $default,) {final _that = this;
 switch (_that) {
 case _RecurringRuleFormState():
-return $default(_that.name,_that.amountMinorUnits,_that.currency,_that.categoryId,_that.accountId,_that.memo,_that.frequency,_that.dayOfWeek,_that.dayOfMonth,_that.monthOfYear,_that.isEdit,_that.isLoading,_that.pendingItemCount,_that.nameError,_that.categoryError,_that.accountError,_that.frequencyFieldError,_that.formError,_that.postSaveGenerationFailed);case _:
+return $default(_that.memo,_that.amountMinorUnits,_that.currency,_that.categoryId,_that.accountId,_that.frequency,_that.dayOfWeek,_that.dayOfMonth,_that.monthOfYear,_that.isEdit,_that.isLoading,_that.pendingItemCount,_that.nameError,_that.categoryError,_that.accountError,_that.frequencyFieldError,_that.formError,_that.postSaveGenerationFailed);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -218,10 +220,10 @@ return $default(_that.name,_that.amountMinorUnits,_that.currency,_that.categoryI
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  int amountMinorUnits,  Currency currency,  int? categoryId,  int? accountId,  String? memo,  String frequency,  int? dayOfWeek,  int? dayOfMonth,  int? monthOfYear,  bool isEdit,  bool isLoading,  int? pendingItemCount,  RecurringFormErrorKey? nameError,  RecurringFormErrorKey? categoryError,  RecurringFormErrorKey? accountError,  RecurringFormErrorKey? frequencyFieldError,  RecurringFormError? formError,  bool postSaveGenerationFailed)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String memo,  int amountMinorUnits,  Currency currency,  int? categoryId,  int? accountId,  String frequency,  int? dayOfWeek,  int? dayOfMonth,  int? monthOfYear,  bool isEdit,  bool isLoading,  int? pendingItemCount,  RecurringFormErrorKey? nameError,  RecurringFormErrorKey? categoryError,  RecurringFormErrorKey? accountError,  RecurringFormErrorKey? frequencyFieldError,  RecurringFormError? formError,  bool postSaveGenerationFailed)?  $default,) {final _that = this;
 switch (_that) {
 case _RecurringRuleFormState() when $default != null:
-return $default(_that.name,_that.amountMinorUnits,_that.currency,_that.categoryId,_that.accountId,_that.memo,_that.frequency,_that.dayOfWeek,_that.dayOfMonth,_that.monthOfYear,_that.isEdit,_that.isLoading,_that.pendingItemCount,_that.nameError,_that.categoryError,_that.accountError,_that.frequencyFieldError,_that.formError,_that.postSaveGenerationFailed);case _:
+return $default(_that.memo,_that.amountMinorUnits,_that.currency,_that.categoryId,_that.accountId,_that.frequency,_that.dayOfWeek,_that.dayOfMonth,_that.monthOfYear,_that.isEdit,_that.isLoading,_that.pendingItemCount,_that.nameError,_that.categoryError,_that.accountError,_that.frequencyFieldError,_that.formError,_that.postSaveGenerationFailed);case _:
   return null;
 
 }
@@ -233,15 +235,17 @@ return $default(_that.name,_that.amountMinorUnits,_that.currency,_that.categoryI
 
 
 class _RecurringRuleFormState extends RecurringRuleFormState {
-  const _RecurringRuleFormState({this.name = '', this.amountMinorUnits = 0, required this.currency, this.categoryId, this.accountId, this.memo, this.frequency = 'monthly', this.dayOfWeek, this.dayOfMonth, this.monthOfYear, this.isEdit = false, this.isLoading = false, this.pendingItemCount, this.nameError, this.categoryError, this.accountError, this.frequencyFieldError, this.formError, this.postSaveGenerationFailed = false}): super._();
+  const _RecurringRuleFormState({this.memo = '', this.amountMinorUnits = 0, required this.currency, this.categoryId, this.accountId, this.frequency = 'monthly', this.dayOfWeek, this.dayOfMonth, this.monthOfYear, this.isEdit = false, this.isLoading = false, this.pendingItemCount, this.nameError, this.categoryError, this.accountError, this.frequencyFieldError, this.formError, this.postSaveGenerationFailed = false}): super._();
   
 
-@override@JsonKey() final  String name;
+/// User-visible label for the rule. Stored in `recurring_rules.memo`
+/// and copied verbatim into `recurring_rules.name` on save (the form
+/// no longer surfaces a separate Name field).
+@override@JsonKey() final  String memo;
 @override@JsonKey() final  int amountMinorUnits;
 @override final  Currency currency;
 @override final  int? categoryId;
 @override final  int? accountId;
-@override final  String? memo;
 @override@JsonKey() final  String frequency;
 @override final  int? dayOfWeek;
 @override final  int? dayOfMonth;
@@ -266,16 +270,16 @@ _$RecurringRuleFormStateCopyWith<_RecurringRuleFormState> get copyWith => __$Rec
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RecurringRuleFormState&&(identical(other.name, name) || other.name == name)&&(identical(other.amountMinorUnits, amountMinorUnits) || other.amountMinorUnits == amountMinorUnits)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.frequency, frequency) || other.frequency == frequency)&&(identical(other.dayOfWeek, dayOfWeek) || other.dayOfWeek == dayOfWeek)&&(identical(other.dayOfMonth, dayOfMonth) || other.dayOfMonth == dayOfMonth)&&(identical(other.monthOfYear, monthOfYear) || other.monthOfYear == monthOfYear)&&(identical(other.isEdit, isEdit) || other.isEdit == isEdit)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.pendingItemCount, pendingItemCount) || other.pendingItemCount == pendingItemCount)&&(identical(other.nameError, nameError) || other.nameError == nameError)&&(identical(other.categoryError, categoryError) || other.categoryError == categoryError)&&(identical(other.accountError, accountError) || other.accountError == accountError)&&(identical(other.frequencyFieldError, frequencyFieldError) || other.frequencyFieldError == frequencyFieldError)&&(identical(other.formError, formError) || other.formError == formError)&&(identical(other.postSaveGenerationFailed, postSaveGenerationFailed) || other.postSaveGenerationFailed == postSaveGenerationFailed));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RecurringRuleFormState&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.amountMinorUnits, amountMinorUnits) || other.amountMinorUnits == amountMinorUnits)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.frequency, frequency) || other.frequency == frequency)&&(identical(other.dayOfWeek, dayOfWeek) || other.dayOfWeek == dayOfWeek)&&(identical(other.dayOfMonth, dayOfMonth) || other.dayOfMonth == dayOfMonth)&&(identical(other.monthOfYear, monthOfYear) || other.monthOfYear == monthOfYear)&&(identical(other.isEdit, isEdit) || other.isEdit == isEdit)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.pendingItemCount, pendingItemCount) || other.pendingItemCount == pendingItemCount)&&(identical(other.nameError, nameError) || other.nameError == nameError)&&(identical(other.categoryError, categoryError) || other.categoryError == categoryError)&&(identical(other.accountError, accountError) || other.accountError == accountError)&&(identical(other.frequencyFieldError, frequencyFieldError) || other.frequencyFieldError == frequencyFieldError)&&(identical(other.formError, formError) || other.formError == formError)&&(identical(other.postSaveGenerationFailed, postSaveGenerationFailed) || other.postSaveGenerationFailed == postSaveGenerationFailed));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,name,amountMinorUnits,currency,categoryId,accountId,memo,frequency,dayOfWeek,dayOfMonth,monthOfYear,isEdit,isLoading,pendingItemCount,nameError,categoryError,accountError,frequencyFieldError,formError,postSaveGenerationFailed]);
+int get hashCode => Object.hash(runtimeType,memo,amountMinorUnits,currency,categoryId,accountId,frequency,dayOfWeek,dayOfMonth,monthOfYear,isEdit,isLoading,pendingItemCount,nameError,categoryError,accountError,frequencyFieldError,formError,postSaveGenerationFailed);
 
 @override
 String toString() {
-  return 'RecurringRuleFormState(name: $name, amountMinorUnits: $amountMinorUnits, currency: $currency, categoryId: $categoryId, accountId: $accountId, memo: $memo, frequency: $frequency, dayOfWeek: $dayOfWeek, dayOfMonth: $dayOfMonth, monthOfYear: $monthOfYear, isEdit: $isEdit, isLoading: $isLoading, pendingItemCount: $pendingItemCount, nameError: $nameError, categoryError: $categoryError, accountError: $accountError, frequencyFieldError: $frequencyFieldError, formError: $formError, postSaveGenerationFailed: $postSaveGenerationFailed)';
+  return 'RecurringRuleFormState(memo: $memo, amountMinorUnits: $amountMinorUnits, currency: $currency, categoryId: $categoryId, accountId: $accountId, frequency: $frequency, dayOfWeek: $dayOfWeek, dayOfMonth: $dayOfMonth, monthOfYear: $monthOfYear, isEdit: $isEdit, isLoading: $isLoading, pendingItemCount: $pendingItemCount, nameError: $nameError, categoryError: $categoryError, accountError: $accountError, frequencyFieldError: $frequencyFieldError, formError: $formError, postSaveGenerationFailed: $postSaveGenerationFailed)';
 }
 
 
@@ -286,7 +290,7 @@ abstract mixin class _$RecurringRuleFormStateCopyWith<$Res> implements $Recurrin
   factory _$RecurringRuleFormStateCopyWith(_RecurringRuleFormState value, $Res Function(_RecurringRuleFormState) _then) = __$RecurringRuleFormStateCopyWithImpl;
 @override @useResult
 $Res call({
- String name, int amountMinorUnits, Currency currency, int? categoryId, int? accountId, String? memo, String frequency, int? dayOfWeek, int? dayOfMonth, int? monthOfYear, bool isEdit, bool isLoading, int? pendingItemCount, RecurringFormErrorKey? nameError, RecurringFormErrorKey? categoryError, RecurringFormErrorKey? accountError, RecurringFormErrorKey? frequencyFieldError, RecurringFormError? formError, bool postSaveGenerationFailed
+ String memo, int amountMinorUnits, Currency currency, int? categoryId, int? accountId, String frequency, int? dayOfWeek, int? dayOfMonth, int? monthOfYear, bool isEdit, bool isLoading, int? pendingItemCount, RecurringFormErrorKey? nameError, RecurringFormErrorKey? categoryError, RecurringFormErrorKey? accountError, RecurringFormErrorKey? frequencyFieldError, RecurringFormError? formError, bool postSaveGenerationFailed
 });
 
 
@@ -303,15 +307,14 @@ class __$RecurringRuleFormStateCopyWithImpl<$Res>
 
 /// Create a copy of RecurringRuleFormState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? amountMinorUnits = null,Object? currency = null,Object? categoryId = freezed,Object? accountId = freezed,Object? memo = freezed,Object? frequency = null,Object? dayOfWeek = freezed,Object? dayOfMonth = freezed,Object? monthOfYear = freezed,Object? isEdit = null,Object? isLoading = null,Object? pendingItemCount = freezed,Object? nameError = freezed,Object? categoryError = freezed,Object? accountError = freezed,Object? frequencyFieldError = freezed,Object? formError = freezed,Object? postSaveGenerationFailed = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? memo = null,Object? amountMinorUnits = null,Object? currency = null,Object? categoryId = freezed,Object? accountId = freezed,Object? frequency = null,Object? dayOfWeek = freezed,Object? dayOfMonth = freezed,Object? monthOfYear = freezed,Object? isEdit = null,Object? isLoading = null,Object? pendingItemCount = freezed,Object? nameError = freezed,Object? categoryError = freezed,Object? accountError = freezed,Object? frequencyFieldError = freezed,Object? formError = freezed,Object? postSaveGenerationFailed = null,}) {
   return _then(_RecurringRuleFormState(
-name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+memo: null == memo ? _self.memo : memo // ignore: cast_nullable_to_non_nullable
 as String,amountMinorUnits: null == amountMinorUnits ? _self.amountMinorUnits : amountMinorUnits // ignore: cast_nullable_to_non_nullable
 as int,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
 as Currency,categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as int?,accountId: freezed == accountId ? _self.accountId : accountId // ignore: cast_nullable_to_non_nullable
-as int?,memo: freezed == memo ? _self.memo : memo // ignore: cast_nullable_to_non_nullable
-as String?,frequency: null == frequency ? _self.frequency : frequency // ignore: cast_nullable_to_non_nullable
+as int?,frequency: null == frequency ? _self.frequency : frequency // ignore: cast_nullable_to_non_nullable
 as String,dayOfWeek: freezed == dayOfWeek ? _self.dayOfWeek : dayOfWeek // ignore: cast_nullable_to_non_nullable
 as int?,dayOfMonth: freezed == dayOfMonth ? _self.dayOfMonth : dayOfMonth // ignore: cast_nullable_to_non_nullable
 as int?,monthOfYear: freezed == monthOfYear ? _self.monthOfYear : monthOfYear // ignore: cast_nullable_to_non_nullable
