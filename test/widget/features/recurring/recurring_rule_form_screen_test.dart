@@ -98,6 +98,15 @@ ProviderContainer _makeContainer({
   );
 }
 
+/// Pushes the test viewport tall enough that the bottom-fixed
+/// `CalculatorKeypad` doesn't push frequency-specific fields offstage.
+void _useTallViewport(WidgetTester tester) {
+  tester.view.physicalSize = const Size(400 * 3, 1200 * 3);
+  tester.view.devicePixelRatio = 3.0;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+}
+
 void main() {
   testWidgets('RFS01: create-mode app bar title and Create action label', (
     tester,
@@ -148,6 +157,7 @@ void main() {
   });
 
   testWidgets('RFS03: weekly frequency renders weekday chips', (tester) async {
+    _useTallViewport(tester);
     final container = _makeContainer(
       initial: const RecurringRuleFormState(
         currency: _usd,
@@ -167,6 +177,7 @@ void main() {
   testWidgets('RFS04: monthly frequency shows the day-of-month hint', (
     tester,
   ) async {
+    _useTallViewport(tester);
     final container = _makeContainer(
       initial: const RecurringRuleFormState(
         currency: _usd,
@@ -190,6 +201,7 @@ void main() {
   testWidgets('RFS05: daily helper text is shown when frequency=daily', (
     tester,
   ) async {
+    _useTallViewport(tester);
     final container = _makeContainer(
       initial: const RecurringRuleFormState(currency: _usd, frequency: 'daily'),
     );
@@ -258,6 +270,7 @@ void main() {
   testWidgets('RFS08: yearly frequency renders a month dropdown', (
     tester,
   ) async {
+    _useTallViewport(tester);
     final container = _makeContainer(
       initial: const RecurringRuleFormState(
         currency: _usd,
