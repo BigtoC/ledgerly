@@ -9,6 +9,8 @@ import '../features/accounts/account_form_screen.dart';
 import '../features/analysis/analysis_screen.dart';
 import '../features/categories/categories_screen.dart';
 import '../features/home/home_screen.dart';
+import '../features/recurring/recurring_rule_form_screen.dart';
+import '../features/recurring/recurring_rules_screen.dart';
 import '../features/settings/about_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/shopping_list/shopping_list_screen.dart';
@@ -176,6 +178,34 @@ GoRouter router(Ref ref) {
                       state,
                       AccountFormScreen(
                         accountId: int.parse(state.pathParameters['id']!),
+                      ),
+                      fullscreenDialog: true,
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'recurring',
+                    builder: (_, _) => const RecurringRulesScreen(),
+                  ),
+                  GoRoute(
+                    path: 'recurring/new',
+                    parentNavigatorKey: _rootNavigatorKey,
+                    pageBuilder: (ctx, state) => _modalPage(
+                      state,
+                      const RecurringRuleFormScreen(),
+                      fullscreenDialog: true,
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'recurring/:id',
+                    redirect: (_, state) =>
+                        int.tryParse(state.pathParameters['id'] ?? '') == null
+                        ? '/settings'
+                        : null,
+                    parentNavigatorKey: _rootNavigatorKey,
+                    pageBuilder: (ctx, state) => _modalPage(
+                      state,
+                      RecurringRuleFormScreen(
+                        ruleId: int.parse(state.pathParameters['id']!),
                       ),
                       fullscreenDialog: true,
                     ),

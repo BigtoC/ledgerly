@@ -9,9 +9,12 @@ import '../data/repositories/account_repository.dart';
 import '../data/repositories/account_type_repository.dart';
 import '../data/repositories/category_repository.dart';
 import '../data/repositories/currency_repository.dart';
+import '../data/repositories/pending_transaction_repository.dart';
+import '../data/repositories/recurring_rules_repository.dart';
 import '../data/repositories/user_preferences_repository.dart';
 import '../data/seed/first_run_seed.dart';
 import '../data/services/locale_service.dart';
+import '../data/use_cases/recurring_generation_use_case.dart';
 import 'app.dart';
 import 'providers/app_database_provider.dart';
 import 'providers/locale_provider.dart';
@@ -37,6 +40,8 @@ typedef RunFirstRunSeedFn =
       required UserPreferencesRepository preferences,
       required LocaleService localeService,
     });
+typedef RunRecurringGenerationFn =
+    Future<RecurringGenerationResult> Function(AppDatabase db);
 
 Future<void> _initializeDateFormattingForLocale(String locale) =>
     initializeDateFormatting(locale);
@@ -71,6 +76,15 @@ Future<void> _runSeed({
   localeService: localeService,
 );
 
+Future<RecurringGenerationResult> _runRecurringGeneration(AppDatabase db) {
+  final useCase = RecurringGenerationUseCase(
+    recurringRepo: DriftRecurringRulesRepository(db),
+    pendingRepo: DriftPendingTransactionRepository(db),
+    db: db,
+  );
+  return useCase.execute();
+}
+
 Future<void> bootstrap() => bootstrapFor(
   openDatabase: () async => AppDatabase(driftDatabase(name: 'ledgerly')),
   localeService: const LocaleService(),
@@ -88,6 +102,7 @@ Future<void> bootstrapFor({
   ReadSplashEnabledFn getSplashEnabledFn = _readSplashEnabled,
   ReadSplashStartDateFn getSplashStartDateFn = _readSplashStartDate,
   RunFirstRunSeedFn runFirstRunSeedFn = _runSeed,
+  RunRecurringGenerationFn runRecurringGenerationFn = _runRecurringGeneration,
   List<Override> extraOverrides = const [],
 }) async {
   // Step 1 — Framework binding.
@@ -123,13 +138,20 @@ Future<void> bootstrapFor({
     localeService: localeService,
   );
 
-  // Step 7 — ProviderScope with DB override + pre-seeded splash gate.
+  // Step 7 — Run recurring-rule generation (post-seed). This populates
+  // pending_transactions for due rules so Home (Wave 3) renders them on
+  // first paint without a refresh. Single outer transaction amortizes
+  // fsync to one regardless of rule count.
+  final generationResult = await runRecurringGenerationFn(db);
+
+  // Step 8 — ProviderScope with DB override + pre-seeded splash gate.
   (runAppFn ?? runApp)(
     ProviderScope(
       overrides: [
         appDatabaseProvider.overrideWithValue(db),
         initialThemeModeProvider.overrideWithValue(initialThemeMode),
         initialPreferredLocaleProvider.overrideWithValue(initialLocale),
+        lastGenerationResultProvider.overrideWithValue(generationResult),
         splashGateSnapshotProvider.overrideWith((ref) {
           final notifier = SplashGateSnapshot.withInitial(
             enabled: splashEnabled,
