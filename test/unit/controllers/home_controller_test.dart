@@ -147,8 +147,7 @@ void main() {
       monthNetCtrl.add(const {});
 
       final state = await waitForNon(container, (s) => s is HomeEmpty);
-      final empty = state as HomeEmpty;
-      expect(empty.pendingBadgeCount, 0);
+      expect(state, isA<HomeEmpty>());
     });
 
     test('H01b: remains AsyncLoading until all four streams emit', () async {

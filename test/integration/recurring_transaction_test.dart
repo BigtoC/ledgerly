@@ -20,6 +20,7 @@ import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/pending_transaction_repository.dart';
 import 'package:ledgerly/data/repositories/recurring_rules_repository.dart';
+import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/services/locale_service.dart';
 import 'package:ledgerly/data/use_cases/recurring_generation_use_case.dart';
 
@@ -56,7 +57,10 @@ void main() {
 
       final basics = await _seedBasics(db);
       final repo = DriftRecurringRulesRepository(db);
-      final pendingRepo = DriftPendingTransactionRepository(db);
+      final pendingRepo = DriftPendingTransactionRepository(
+        db,
+        txRepo: DriftTransactionRepository(db),
+      );
       final useCase = RecurringGenerationUseCase(
         recurringRepo: repo,
         pendingRepo: pendingRepo,
@@ -106,7 +110,10 @@ void main() {
 
       final basics = await _seedBasics(db);
       final repo = DriftRecurringRulesRepository(db);
-      final pendingRepo = DriftPendingTransactionRepository(db);
+      final pendingRepo = DriftPendingTransactionRepository(
+        db,
+        txRepo: DriftTransactionRepository(db),
+      );
       final useCase = RecurringGenerationUseCase(
         recurringRepo: repo,
         pendingRepo: pendingRepo,
@@ -142,7 +149,10 @@ void main() {
 
       final basics = await _seedBasics(db);
       final repo = DriftRecurringRulesRepository(db);
-      final pendingRepo = DriftPendingTransactionRepository(db);
+      final pendingRepo = DriftPendingTransactionRepository(
+        db,
+        txRepo: DriftTransactionRepository(db),
+      );
       final useCase = RecurringGenerationUseCase(
         recurringRepo: repo,
         pendingRepo: pendingRepo,
@@ -213,7 +223,10 @@ void main() {
 
       final basics = await _seedBasics(db);
       final repo = DriftRecurringRulesRepository(db);
-      final pendingRepo = DriftPendingTransactionRepository(db);
+      final pendingRepo = DriftPendingTransactionRepository(
+        db,
+        txRepo: DriftTransactionRepository(db),
+      );
       final useCase = RecurringGenerationUseCase(
         recurringRepo: repo,
         pendingRepo: pendingRepo,
@@ -295,7 +308,10 @@ void main() {
         final app = ((launched as ProviderScope).child as App);
         app.onFirstFrame!.call();
         for (var i = 0; i < 50; i++) {
-          final pendingRepo = DriftPendingTransactionRepository(db);
+          final pendingRepo = DriftPendingTransactionRepository(
+            db,
+            txRepo: DriftTransactionRepository(db),
+          );
           final repo = DriftRecurringRulesRepository(db);
           final rule = await repo.getById(ruleId);
           if (await pendingRepo.countByRecurringRule(ruleId) > 0 &&
@@ -312,7 +328,10 @@ void main() {
       // row exists, and the rule's next_due_date advanced past the
       // pre-bootstrap value.
       await tester.runAsync(() async {
-        final pendingRepo = DriftPendingTransactionRepository(db);
+        final pendingRepo = DriftPendingTransactionRepository(
+          db,
+          txRepo: DriftTransactionRepository(db),
+        );
         final repo = DriftRecurringRulesRepository(db);
         final rule = await repo.getById(ruleId);
         expect(await pendingRepo.countByRecurringRule(ruleId), greaterThan(0));
