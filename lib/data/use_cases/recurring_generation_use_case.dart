@@ -146,6 +146,7 @@ class RecurringGenerationUseCase {
         today,
         safetyCap: _fastForwardSafetyCap,
       );
+      currentDue = recurringRepo.advanceDateByFrequency(rule, currentDue);
       capped = true;
     }
 
