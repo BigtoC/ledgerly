@@ -10,13 +10,23 @@ Ledgerly is a local-first mobile expense tracker built with Flutter. It is aimed
 - **Languages:** English, Traditional Chinese (zh-TW), Simplified Chinese (zh-CN)
 - **Target user:** People who prefer manual expense tracking over automation-heavy finance apps
 - **Product wedge:** Fast local-first entry with seeded defaults and no sign-in requirement
-- **MVP non-goals:** Bank sync, recurring automation, credit-card payoff flows, account transfers, automatic FX price fetching / auto-conversion, charts, budgets, cloud sync, wallet transaction sync
+- **MVP non-goals:** Bank sync, credit-card payoff flows, account transfers, automatic FX price fetching / auto-conversion, charts, budgets, cloud sync, wallet transaction sync. Recurring transaction rules ship as Phase 2 — see *recurring_rules* table.
+
+---
+
+## Project Status (as of 2026-05-08)
+
+**MVP — Complete.** All MVP features have shipped: manual entry, seeded + custom categories, multi-account / multi-currency, shopping list drafts, splash screen, theming, l10n.
+
+**Phase 2 — In progress.** First Phase 2 feature shipped: **Recurring transactions** (rule management + automatic pending-row generation on cold start; see [`recurring_rules`](#recurring_rules-phase-2--shipped-2026-05-08) table). Remaining Phase 2 work: pending-transaction review/approve UI on Home, wallet sync (Ankr integration), extended multi-currency conversion, charts, search, CSV import, credit-card / transfer flows.
+
+Inline `# Phase 2` annotations throughout the rest of the document mark code paths and surfaces that have **not** yet shipped. The recurring-rules slice is the canonical example of how a Phase 2 feature lands: data layer first (DAOs, repos, migration), then a use case in `lib/data/use_cases/` (Phase 2's `domain/` layer is reserved for cross-feature orchestration), then UI.
 
 ---
 
 ## Phased Roadmap
 
-### MVP
+### MVP — Complete (shipped 2026-05-08)
 - Fast manual expense/income recording
 - Seeded categories
 - Optional custom categories
@@ -29,16 +39,17 @@ Ledgerly is a local-first mobile expense tracker built with Flutter. It is aimed
 - English, Traditional Chinese, Simplified Chinese UI
 - **Splash screen with configurable day counter** — standalone feature, hnotes-style visual design
 
-### Phase 2
-- Recurring transactions (auto-generate pending transactions for user approval)
-- Credit card accounts
-- Account transfers / payoff flows
-- Basic charts (pie, bar)
-- Fortune City CSV import
-- Transaction search
-- Extended multi-currency — fetch currency prices and auto-convert balances, summaries, and charts to the user's default currency
-- **Wallet transaction sync** — EVM wallet addresses linked to accounts, Ankr API integration, pending transaction review/approve/reject flow
-- **Pending transaction management screen**
+### Phase 2 — In progress
+- **[Shipped 2026-05-08] Recurring transactions** — auto-generate pending transactions for user approval on a daily/weekly/monthly/yearly schedule. Rule management UI lives at `/settings/recurring`. Approval UI on Home is the next Phase 2 milestone.
+- **[Pending] Pending-row approval on Home** — the inline approve/skip affordance for recurring (and later blockchain) pending rows. Repository + use case shipped in the recurring slice; Home UI extension is next.
+- [Pending] Credit card accounts
+- [Pending] Account transfers / payoff flows
+- [Pending] Basic charts (pie, bar)
+- [Pending] Fortune City CSV import
+- [Pending] Transaction search
+- [Pending] Extended multi-currency — fetch currency prices and auto-convert balances, summaries, and charts to the user's default currency
+- **[Pending] Wallet transaction sync** — EVM wallet addresses linked to accounts, Ankr API integration, pending transaction review/approve/reject flow
+- **[Pending] Pending transaction management screen**
 
 ### Phase 3
 - Detailed monthly summary
@@ -426,8 +437,6 @@ Notes:
 | blockchain         | TEXT     | nullable, blockchain-specific                                                       |
 | recurring_rule_id  | INTEGER  | REFERENCES recurring_rules, nullable                                                |
 
-Note: `recurring_rules` table schema will be defined when recurring transactions are designed in Phase 2.
-
 Notes:
 - Universal staging table for auto-generated transactions from any source.
 - Shared fields (`amount_minor_units`, `currency`, `category_id`, `account_id`, `memo`, `date`) are common to all sources.
@@ -436,6 +445,53 @@ Notes:
 - `tx_hash` UNIQUE constraint prevents blockchain duplicates.
 - Approve: validate required fields, insert into `transactions` with original `currency` and `amount_minor_units`, delete from `pending_transactions`.
 - Reject: delete from `pending_transactions`.
+
+### recurring_rules (Phase 2 — shipped 2026-05-08)
+
+| Column             | Type     | Constraints                                                            |
+|--------------------|----------|------------------------------------------------------------------------|
+| id                 | INTEGER  | PRIMARY KEY AUTO                                                       |
+| name               | TEXT     | NOT NULL — mirrored from `memo` on save (see *Rule label*, below)      |
+| amount_minor_units | INTEGER  | NOT NULL — fixed amount per occurrence; see Money Storage Policy       |
+| currency           | TEXT     | NOT NULL REFERENCES currencies(code)                                   |
+| category_id        | INTEGER  | NOT NULL REFERENCES categories                                         |
+| account_id         | INTEGER  | NOT NULL REFERENCES accounts                                           |
+| memo               | TEXT     | nullable — user-visible rule label, copied into generated pending rows |
+| frequency          | TEXT     | NOT NULL — `'daily' \| 'weekly' \| 'monthly' \| 'yearly'`              |
+| day_of_week        | INTEGER  | nullable — 0=Sun..6=Sat; required when `frequency='weekly'`            |
+| day_of_month       | INTEGER  | nullable — 1-31; required when `frequency='monthly'` or `'yearly'`     |
+| month_of_year      | INTEGER  | nullable — 1-12; required when `frequency='yearly'`                    |
+| is_active          | BOOL     | DEFAULT true — `false` = paused                                        |
+| is_archived        | BOOL     | DEFAULT false — `true` = soft-deleted                                  |
+| next_due_date      | DATETIME | NOT NULL — denormalized for fast "which rules are due?" queries        |
+| last_error         | TEXT     | nullable — most recent generation failure                              |
+| last_error_at      | DATETIME | nullable — when `last_error` was recorded                              |
+| created_at         | DATETIME | NOT NULL                                                               |
+| updated_at         | DATETIME | NOT NULL                                                               |
+
+Indexes:
+- `idx_recurring_active_due (is_active, next_due_date)` — drives the cold-start "which rules are due?" lookup.
+- `idx_recurring_archived (is_archived)` — filters the management list.
+- Partial UNIQUE index `idx_pending_recurring_unique_partial ON pending_transactions(recurring_rule_id, date) WHERE source = 'recurring' AND recurring_rule_id IS NOT NULL` — DB-level idempotency backstop for the catch-up loop.
+
+Notes:
+- **Rule label.** `recurring_rules.memo` is the user-visible label ("Netflix", "Rent"). The form has no separate Name field — the user types into one input that drives both columns. On save the repository copies the trimmed memo verbatim into `name` (NOT NULL legacy column) and `memo`. List tiles read `memo ?? name` for forward compatibility.
+- **Initial `next_due_date`** computed from `frequency` + creation date, with month-end clamping (Feb 5 + `day_of_month=31` → Feb 28) and leap-year clamping (Feb 29 on a non-leap year → Feb 28).
+- **Day-of-month anchor.** Subsequent advances always anchor on `day_of_month`, not on the previously fired date. After clamping `day_of_month=31` to Feb 28, the next advance returns to Mar 31, not Mar 28.
+- **Pause/resume.** Pausing flips `is_active=false`. Resuming recomputes `next_due_date` from today using the same formula as initial calculation. Periods missed while paused are **not** back-generated.
+- **Archive-instead-of-delete.** Soft-delete sets `is_archived=true` and `is_active=false`; existing pending items survive. No hard-delete UI.
+- **Generation cap.** `RecurringGenerationUseCase` generates at most 12 occurrences per rule per pass; rules >12 periods stale fast-forward to the most recent occurrence and surface a cap-hit signal in the result.
+- **Edit propagation.** Edits to a rule affect future generations only. Already-generated pending rows are untouched; the form surfaces a non-blocking notice when `pending_transactions.countByRecurringRule(id) > 0`.
+
+### Recurring Rule Form composition
+
+The create/edit form lives at `/settings/recurring/new` and `/settings/recurring/:id` and reuses transaction-form widgets for visual parity:
+- **Name** input → backed by `state.memo`; the only free-text field.
+- **Amount** display + `CalculatorKeypad` — same widget as the transaction form. Decimals come from the selected account's currency. Operators (`+ − × ÷`) are supported; long-press ⌫ clears.
+- **Category** picker → `CategoryChip` opens `showCategoryPicker(type: expense)`; v1 supports expense rules only.
+- **Account** picker → `AccountSelectorTile` opens `showAccountPickerSheet`.
+- **Frequency** dropdown with conditional sub-fields (weekday chips for weekly, day-of-month stepper for monthly, month dropdown + day-of-month stepper for yearly).
+- **Delete** outlined button (edit mode only) → confirmation dialog → archive.
 
 ### wallet_addresses (Phase 2)
 
