@@ -49,7 +49,6 @@ Inline `# Phase 2` annotations throughout the rest of the document mark code pat
 - [Pending] Transaction search
 - [Pending] Extended multi-currency — fetch currency prices and auto-convert balances, summaries, and charts to the user's default currency
 - **[Pending] Wallet transaction sync** — EVM wallet addresses linked to accounts, Ankr API integration, pending transaction review/approve/reject flow
-- **[Pending] Pending transaction management screen**
 
 ### Phase 3
 - Detailed monthly summary
