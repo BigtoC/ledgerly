@@ -8,6 +8,8 @@
 // debounces rapid taps. Swipe-left reveals a Skip action via
 // flutter_slidable.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -43,6 +45,7 @@ class PendingSection extends ConsumerStatefulWidget {
 class _PendingSectionState extends ConsumerState<PendingSection> {
   PendingController? _controller;
   bool _expanded = false;
+  bool _skipUndoVisible = false;
 
   @override
   void dispose() {
@@ -64,6 +67,7 @@ class _PendingSectionState extends ConsumerState<PendingSection> {
     final l10n = AppLocalizations.of(context);
     switch (effect) {
       case PendingSkipStartedEffect():
+        _skipUndoVisible = true;
         messenger
           ..clearSnackBars()
           ..showSnackBar(
@@ -73,12 +77,21 @@ class _PendingSectionState extends ConsumerState<PendingSection> {
               action: SnackBarAction(
                 label: l10n.commonUndo,
                 onPressed: () {
-                  ref.read(pendingControllerProvider.notifier).undoSkip();
+                  unawaited(
+                    ref.read(pendingControllerProvider.notifier).undoSkip(),
+                  );
                 },
               ),
             ),
-          );
+          ).closed.then((_) {
+            if (mounted) {
+              _skipUndoVisible = false;
+            }
+          });
       case PendingApproveSucceededEffect(:final ruleName):
+        if (_skipUndoVisible) {
+          return;
+        }
         messenger
           ..clearSnackBars()
           ..showSnackBar(
@@ -86,6 +99,7 @@ class _PendingSectionState extends ConsumerState<PendingSection> {
           );
       case PendingApproveFailedEffect():
       case PendingSkipFailedEffect():
+        _skipUndoVisible = false;
         messenger
           ..clearSnackBars()
           ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
@@ -181,7 +195,9 @@ class _PendingSectionState extends ConsumerState<PendingSection> {
                     account: accounts[item.accountId],
                     locale: locale,
                     onApprove: () => notifier.approve(item.id),
-                    onSkip: () => notifier.skip(item.id),
+                    onSkip: () {
+                      unawaited(notifier.skip(item.id));
+                    },
                   ),
               ],
             ),
@@ -442,7 +458,9 @@ class _ApproveCircleButtonState extends State<_ApproveCircleButton>
       child: Padding(
         padding: const EdgeInsets.all(4),
         child: GestureDetector(
-          onTap: _onTap,
+          onTap: () {
+            unawaited(_onTap());
+          },
           child: AnimatedBuilder(
             animation: _animController,
             builder: (context, child) {
