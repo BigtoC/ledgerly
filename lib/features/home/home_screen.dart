@@ -36,6 +36,8 @@ import '../../core/constants.dart';
 import 'home_controller.dart';
 import 'home_providers.dart';
 import 'home_state.dart';
+import 'pending_controller.dart';
+import 'pending_state.dart';
 import 'widgets/day_navigation_header.dart';
 import 'widgets/pending_section.dart';
 import 'widgets/summary_strip.dart';
@@ -127,6 +129,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(homeControllerProvider);
+    final pendingState = ref.watch(pendingControllerProvider);
+    final hasVisiblePending = switch (pendingState) {
+      AsyncData<PendingState>(value: final PendingData data) => data.items.any(
+        (item) => item.id != data.skipScheduled?.pendingId,
+      ),
+      _ => false,
+    };
 
     // Auto-pin the day after a save round-trip from the form: the
     // route push returns a `Transaction`; we rely on
@@ -203,9 +212,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 ref.read(homeControllerProvider.notifier).deleteTransaction(id),
             daySwitchAnimation: _incomingOffset,
           ),
-          AsyncData<HomeState>(value: HomeEmpty()) => _EmptyState(
-            onAdd: () => _onAddPressed(context),
-          ),
+          AsyncData<HomeState>(value: final HomeEmpty empty) =>
+            hasVisiblePending
+                ? _PendingOnlyBody(selectedDay: empty.selectedDay)
+                : _EmptyState(onAdd: () => _onAddPressed(context)),
           AsyncData<HomeState>(value: HomeError()) ||
           AsyncError() => _ErrorSurface(message: l10n.errorSnackbarGeneric),
           _ => const Center(child: CircularProgressIndicator()),
@@ -513,6 +523,34 @@ class _EmptyState extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PendingOnlyBody extends StatelessWidget {
+  const _PendingOnlyBody({required this.selectedDay});
+
+  final DateTime selectedDay;
+
+  @override
+  Widget build(BuildContext context) {
+    final locale = Localizations.localeOf(context).toString();
+    return CustomScrollView(
+      slivers: [
+        const SliverPadding(padding: EdgeInsets.only(top: 38)),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            child: Text(
+              DateHelpers.formatDayHeader(selectedDay, locale),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ),
+        ),
+        const PendingSection(),
+        const SliverPadding(padding: EdgeInsets.only(bottom: 96)),
+      ],
     );
   }
 }
