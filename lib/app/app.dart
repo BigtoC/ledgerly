@@ -7,11 +7,43 @@ import 'providers/locale_provider.dart';
 import 'providers/theme_provider.dart';
 import 'router.dart';
 
-class App extends ConsumerWidget {
-  const App({super.key});
+typedef SchedulePostFrameCallbackFn = void Function(VoidCallback callback);
+
+void _defaultSchedulePostFrameCallback(VoidCallback callback) {
+  WidgetsBinding.instance.addPostFrameCallback((_) => callback());
+}
+
+class App extends ConsumerStatefulWidget {
+  const App({
+    super.key,
+    this.onFirstFrame,
+    this.schedulePostFrameCallback = _defaultSchedulePostFrameCallback,
+  });
+
+  final VoidCallback? onFirstFrame;
+  final SchedulePostFrameCallbackFn schedulePostFrameCallback;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<App> createState() => _AppState();
+}
+
+class _AppState extends ConsumerState<App> {
+  bool _ranFirstFrameCallback = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.schedulePostFrameCallback(_runFirstFrameCallback);
+  }
+
+  void _runFirstFrameCallback() {
+    if (_ranFirstFrameCallback || !mounted) return;
+    _ranFirstFrameCallback = true;
+    widget.onFirstFrame?.call();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
     final preferredLocale = ref.watch(userLocalePreferenceProvider);

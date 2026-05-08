@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter/widgets.dart';
@@ -138,20 +140,18 @@ Future<void> bootstrapFor({
     localeService: localeService,
   );
 
-  // Step 7 — Run recurring-rule generation (post-seed). This populates
-  // pending_transactions for due rules so Home (Wave 3) renders them on
-  // first paint without a refresh. Single outer transaction amortizes
-  // fsync to one regardless of rule count.
-  final generationResult = await runRecurringGenerationFn(db);
-
-  // Step 8 — ProviderScope with DB override + pre-seeded splash gate.
+  // Step 7 — ProviderScope with DB override + pre-seeded splash gate.
+  // Recurring generation is scheduled from the App's first-frame callback
+  // so startup is not blocked by due-rule processing.
   (runAppFn ?? runApp)(
     ProviderScope(
       overrides: [
         appDatabaseProvider.overrideWithValue(db),
         initialThemeModeProvider.overrideWithValue(initialThemeMode),
         initialPreferredLocaleProvider.overrideWithValue(initialLocale),
-        lastGenerationResultProvider.overrideWithValue(generationResult),
+        lastGenerationResultProvider.overrideWithValue(
+          const RecurringGenerationResult(outcomes: []),
+        ),
         splashGateSnapshotProvider.overrideWith((ref) {
           final notifier = SplashGateSnapshot.withInitial(
             enabled: splashEnabled,
@@ -172,7 +172,17 @@ Future<void> bootstrapFor({
         }),
         ...extraOverrides,
       ],
-      child: const App(),
+      child: App(
+        onFirstFrame: () {
+          unawaited(() async {
+            try {
+              await runRecurringGenerationFn(db);
+            } on Object {
+              // Generation failures must not crash or block startup.
+            }
+          }());
+        },
+      ),
     ),
   );
 }
