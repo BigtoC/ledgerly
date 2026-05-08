@@ -41,9 +41,7 @@ Inline `# Phase 2` annotations throughout the rest of the document mark code pat
 
 ### Phase 2 — In progress
 - **[Shipped 2026-05-08] Recurring transactions** — auto-generate pending transactions for user approval on a daily/weekly/monthly/yearly schedule. Rule management UI lives at `/settings/recurring`. Approval UI on Home is the next Phase 2 milestone.
-- **[Pending] Pending-row approval on Home** — the inline approve/skip affordance for recurring (and later blockchain) pending rows. Repository + use case shipped in the recurring slice; Home UI extension is next.
-- [Pending] Credit card accounts
-- [Pending] Account transfers / payoff flows
+- **[Shipped 2026-05-08] Pending-row approval on Home** — the inline approve/skip affordance for recurring (and later blockchain) pending rows. Repository + use case shipped in the recurring slice; Home UI extension is next.
 - [Pending] Basic charts (pie, bar)
 - [Pending] Fortune City CSV import
 - [Pending] Transaction search
