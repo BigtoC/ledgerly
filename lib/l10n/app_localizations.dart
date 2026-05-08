@@ -1533,6 +1533,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Saved — but the first run hit an issue. We\'ll retry on the next launch.'**
   String get recurringSavedButGenerationFailed;
+
+  /// Section header label for pending approval items on Home
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get homePendingSectionTitle;
+
+  /// Semantics label on the circle approve button
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get homePendingApprove;
+
+  /// Swipe action label for skipping a single occurrence of a pending recurring item. Phrased as 'Skip once' (not 'Skip') to signal that the rule continues to generate next time.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip once'**
+  String get homePendingSkip;
+
+  /// Success snackbar after approving a pending item
+  ///
+  /// In en, this message translates to:
+  /// **'Approved — {ruleName}'**
+  String homePendingApprovedSnack(String ruleName);
+
+  /// Snackbar shown after a swipe-skip on a pending recurring item. The companion action button uses commonUndo. The copy emphasises 'this occurrence' so users understand the parent rule is unaffected.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped this occurrence'**
+  String get homePendingSkippedSnack;
+
+  /// Error banner when pending items fail to load
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load pending items.'**
+  String get homePendingLoadError;
+
+  /// TextButton label that expands the pending section beyond its visible-tile cap. {count} is the number of additional pending items hidden behind the cap.
+  ///
+  /// In en, this message translates to:
+  /// **'Show {count} more'**
+  String homePendingShowMore(int count);
+
+  /// TextButton label that collapses the pending section back to its visible-tile cap.
+  ///
+  /// In en, this message translates to:
+  /// **'Show fewer'**
+  String get homePendingShowFewer;
 }
 
 class _AppLocalizationsDelegate

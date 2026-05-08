@@ -282,5 +282,16 @@
   "recurringEditWillNotAffectPending": "此規則目前有 {count} 筆待處理項目，以下編輯不會更改它們 — 請在主畫面審核或略過。",
   "@recurringEditWillNotAffectPending": { "placeholders": { "count": { "type": "int", "format": "compact" } } },
   "recurringRuleHasError": "此規則上次同步時發生問題。",
-  "recurringSavedButGenerationFailed": "已儲存 — 但首次執行遇到問題，我們會在下次啟動時重試。"
+  "recurringSavedButGenerationFailed": "已儲存 — 但首次執行遇到問題，我們會在下次啟動時重試。",
+
+  "homePendingSectionTitle": "待處理",
+  "homePendingApprove": "核准",
+  "homePendingSkip": "略過此次",
+  "homePendingApprovedSnack": "已核准 — {ruleName}",
+  "@homePendingApprovedSnack": { "placeholders": { "ruleName": { "type": "String" } } },
+  "homePendingSkippedSnack": "已略過此次",
+  "homePendingLoadError": "無法載入待處理項目。",
+  "homePendingShowMore": "再顯示 {count} 項",
+  "@homePendingShowMore": { "placeholders": { "count": { "type": "int" } } },
+  "homePendingShowFewer": "顯示較少"
 }

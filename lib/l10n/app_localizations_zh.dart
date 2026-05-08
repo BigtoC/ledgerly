@@ -790,6 +790,34 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get recurringSavedButGenerationFailed =>
       'Saved — but the first run hit an issue. We\'ll retry on the next launch.';
+
+  @override
+  String get homePendingSectionTitle => 'Pending';
+
+  @override
+  String get homePendingApprove => 'Approve';
+
+  @override
+  String get homePendingSkip => 'Skip once';
+
+  @override
+  String homePendingApprovedSnack(String ruleName) {
+    return 'Approved — $ruleName';
+  }
+
+  @override
+  String get homePendingSkippedSnack => 'Skipped this occurrence';
+
+  @override
+  String get homePendingLoadError => 'Couldn\'t load pending items.';
+
+  @override
+  String homePendingShowMore(int count) {
+    return 'Show $count more';
+  }
+
+  @override
+  String get homePendingShowFewer => 'Show fewer';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -1553,6 +1581,34 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   @override
   String get recurringSavedButGenerationFailed =>
       '已保存 — 但首次执行遇到问题，我们会在下次启动时重试。';
+
+  @override
+  String get homePendingSectionTitle => '待处理';
+
+  @override
+  String get homePendingApprove => '批准';
+
+  @override
+  String get homePendingSkip => '跳过此次';
+
+  @override
+  String homePendingApprovedSnack(String ruleName) {
+    return '已批准 — $ruleName';
+  }
+
+  @override
+  String get homePendingSkippedSnack => '已跳过此次';
+
+  @override
+  String get homePendingLoadError => '无法加载待处理项目。';
+
+  @override
+  String homePendingShowMore(int count) {
+    return '再显示 $count 项';
+  }
+
+  @override
+  String get homePendingShowFewer => '显示更少';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -2316,4 +2372,32 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get recurringSavedButGenerationFailed =>
       '已儲存 — 但首次執行遇到問題，我們會在下次啟動時重試。';
+
+  @override
+  String get homePendingSectionTitle => '待處理';
+
+  @override
+  String get homePendingApprove => '核准';
+
+  @override
+  String get homePendingSkip => '略過此次';
+
+  @override
+  String homePendingApprovedSnack(String ruleName) {
+    return '已核准 — $ruleName';
+  }
+
+  @override
+  String get homePendingSkippedSnack => '已略過此次';
+
+  @override
+  String get homePendingLoadError => '無法載入待處理項目。';
+
+  @override
+  String homePendingShowMore(int count) {
+    return '再顯示 $count 項';
+  }
+
+  @override
+  String get homePendingShowFewer => '顯示較少';
 }
