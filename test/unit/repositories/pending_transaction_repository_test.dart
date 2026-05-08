@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart' show Variable;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/data/database/app_database.dart' show AppDatabase;
+import 'package:ledgerly/data/models/pending_transaction.dart';
 import 'package:ledgerly/data/repositories/pending_transaction_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 
@@ -387,6 +388,50 @@ void main() {
     });
 
     test(
+      'watchAll active subscription re-emits across account archive toggles',
+      () async {
+        final pendingId = await repo.insert(
+          source: 'recurring',
+          amountMinorUnits: 100,
+          currencyCode: 'USD',
+          categoryId: categoryId,
+          accountId: accountId,
+          date: DateTime(2026, 5, 8),
+          fetchedAt: DateTime(2026, 5, 8),
+          recurringRuleId: ruleId,
+        );
+
+        final emissions = <List<PendingTransaction>>[];
+        final sub = repo.watchAll().listen(emissions.add);
+        addTearDown(sub.cancel);
+
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        expect(emissions.last, hasLength(1));
+        expect(emissions.last.first.id, pendingId);
+
+        await db.customUpdate(
+          'UPDATE accounts SET is_archived = 1 WHERE id = ?',
+          variables: [Variable.withInt(accountId)],
+          updates: {db.accounts},
+        );
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        expect(emissions.last, isEmpty);
+
+        await db.customUpdate(
+          'UPDATE accounts SET is_archived = 0 WHERE id = ?',
+          variables: [Variable.withInt(accountId)],
+          updates: {db.accounts},
+        );
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        expect(emissions.last, hasLength(1));
+        expect(emissions.last.first.id, pendingId);
+      },
+    );
+
+    test(
       'approve does NOT modify parent recurring rule next_due_date',
       () async {
         final ruleBefore = await db
@@ -472,6 +517,53 @@ void main() {
           .getSingle();
       expect(ruleAfter.read<DateTime>('next_due_date'), originalDueDate);
     });
+
+    test(
+      'approve with multiple pending rows for same rule keeps the others',
+      () async {
+        // Regression: a daily recurring rule with N catch-up rows should
+        // only have the approved row removed; the other dates stay pending.
+        final id1 = await repo.insert(
+          source: 'recurring',
+          amountMinorUnits: 100,
+          currencyCode: 'USD',
+          categoryId: categoryId,
+          accountId: accountId,
+          memo: 'Day 1',
+          date: DateTime(2026, 5, 6),
+          fetchedAt: DateTime(2026, 5, 6),
+          recurringRuleId: ruleId,
+        );
+        final id2 = await repo.insert(
+          source: 'recurring',
+          amountMinorUnits: 100,
+          currencyCode: 'USD',
+          categoryId: categoryId,
+          accountId: accountId,
+          memo: 'Day 2',
+          date: DateTime(2026, 5, 7),
+          fetchedAt: DateTime(2026, 5, 7),
+          recurringRuleId: ruleId,
+        );
+        final id3 = await repo.insert(
+          source: 'recurring',
+          amountMinorUnits: 100,
+          currencyCode: 'USD',
+          categoryId: categoryId,
+          accountId: accountId,
+          memo: 'Day 3',
+          date: DateTime(2026, 5, 8),
+          fetchedAt: DateTime(2026, 5, 8),
+          recurringRuleId: ruleId,
+        );
+
+        await repo.approve(id2);
+
+        final remaining = await repo.watchAll().first;
+        expect(remaining, hasLength(2));
+        expect(remaining.map((r) => r.id), containsAll(<int>[id1, id3]));
+      },
+    );
 
     test('watchAll re-emits after approve', () async {
       await repo.insert(

@@ -283,6 +283,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Netflix'), findsOneWidget);
+    expect(find.textContaining('Food'), findsOneWidget);
+    expect(find.textContaining('Cash'), findsOneWidget);
     expect(find.byIcon(Icons.check), findsOneWidget);
   });
 

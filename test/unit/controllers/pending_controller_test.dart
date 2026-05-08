@@ -266,7 +266,7 @@ void main() {
     });
 
     test(
-      'PC09: failed reject fires PendingSkipFailedEffect and restores row',
+      'PC09: failed reject fires PendingSkipFailedEffect and makes row visible again',
       () {
         fakeAsync((async) {
           when(() => repo.reject(any())).thenThrow(StateError('disk full'));
@@ -298,11 +298,7 @@ void main() {
 
           state = container.read(pendingControllerProvider).valueOrNull;
           expect(state, isA<PendingData>());
-          expect(
-            (state as PendingData).skipScheduled?.pendingId,
-            1,
-            reason: 'failed commit should restore skipScheduled',
-          );
+          expect((state as PendingData).skipScheduled, isNull);
           expect(state.items.any((p) => p.id == 1), isTrue);
         });
       },

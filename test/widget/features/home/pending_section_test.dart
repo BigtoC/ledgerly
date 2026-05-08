@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/account.dart';
@@ -59,10 +60,19 @@ class _FakeController extends PendingController {
 Widget _wrap(ProviderContainer container) {
   return UncontrolledProviderScope(
     container: container,
-    child: const MaterialApp(
+    child: MaterialApp.router(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(body: CustomScrollView(slivers: [PendingSection()])),
+      routerConfig: GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, _) => const Scaffold(
+              body: CustomScrollView(slivers: [PendingSection()]),
+            ),
+          ),
+        ],
+      ),
     ),
   );
 }
@@ -158,6 +168,9 @@ void main() {
 
     await tester.tap(find.text('Netflix'));
     await tester.pump();
+
+    expect(find.byType(SnackBar), findsNothing);
+    expect(find.text('Netflix'), findsOneWidget);
   });
 
   testWidgets('PS05: error variant renders inline banner', (tester) async {
