@@ -393,13 +393,17 @@ class _ApproveCircleButtonState extends State<_ApproveCircleButton>
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
   }
 
+  /// Explicit green confirmation color — independent of `ColorScheme.tertiary`
+  /// so the approve feedback reads as "success" regardless of theme.
+  static const Color _kApproveGreen = Color(0xFF2E7D32); // Material green 800
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final scheme = Theme.of(context).colorScheme;
     _colorAnimation = ColorTween(
       begin: scheme.surfaceContainerHighest,
-      end: scheme.tertiary,
+      end: _kApproveGreen,
     ).animate(_animController);
   }
 
@@ -457,7 +461,7 @@ class _ApproveCircleButtonState extends State<_ApproveCircleButton>
                     Icons.check,
                     size: 20,
                     color: _animController.value > 0.5
-                        ? scheme.onTertiary
+                        ? Colors.white
                         : scheme.onSurface,
                   ),
                 ),
