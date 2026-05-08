@@ -56,9 +56,12 @@ ShoppingListRepository shoppingListRepository(Ref ref) =>
       ref.watch(transactionRepositoryProvider),
     );
 
-@Riverpod(keepAlive: true, dependencies: [appDatabase])
+@Riverpod(keepAlive: true, dependencies: [appDatabase, transactionRepository])
 PendingTransactionRepository pendingTransactionRepository(Ref ref) =>
-    DriftPendingTransactionRepository(ref.watch(appDatabaseProvider));
+    DriftPendingTransactionRepository(
+      ref.watch(appDatabaseProvider),
+      txRepo: ref.watch(transactionRepositoryProvider),
+    );
 
 @Riverpod(keepAlive: true, dependencies: [appDatabase])
 RecurringRulesRepository recurringRulesRepository(Ref ref) =>
