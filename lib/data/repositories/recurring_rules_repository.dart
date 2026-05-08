@@ -165,6 +165,15 @@ final class DriftRecurringRulesRepository implements RecurringRulesRepository {
     }
 
     final now = _clock();
+    final effectiveToday = DateTime(now.year, now.month, now.day);
+    final scheduleChanged =
+        stored.frequency != draft.frequency ||
+        stored.dayOfWeek != draft.dayOfWeek ||
+        stored.dayOfMonth != draft.dayOfMonth ||
+        stored.monthOfYear != draft.monthOfYear;
+    final nextDueDate = scheduleChanged
+        ? _computeInitialNextDue(draft, effectiveToday)
+        : stored.nextDueDate;
     await _dao.updateRow(
       drift.RecurringRulesCompanion(
         id: Value(id),
@@ -186,7 +195,7 @@ final class DriftRecurringRulesRepository implements RecurringRulesRepository {
             : const Value.absent(),
         isActive: Value(stored.isActive),
         isArchived: Value(stored.isArchived),
-        nextDueDate: Value(stored.nextDueDate),
+        nextDueDate: Value(nextDueDate),
         createdAt: Value(stored.createdAt),
         updatedAt: Value(now),
       ),

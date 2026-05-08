@@ -27,6 +27,7 @@ import 'package:drift/drift.dart' show Value, Variable;
 import '../database/app_database.dart' as drift;
 import '../database/daos/account_dao.dart';
 import '../database/daos/account_type_dao.dart';
+import '../database/daos/recurring_rule_dao.dart';
 import '../database/daos/shopping_list_dao.dart';
 import '../database/daos/transaction_dao.dart';
 import '../models/account.dart';
@@ -74,21 +75,22 @@ abstract class AccountRepository {
   Future<void> archive(int id);
 
   /// Hard-delete. Only succeeds when no `transactions` row references
-  /// this account; otherwise throws [AccountInUseException]. Callers
-  /// are expected to call [archive] instead.
+  /// this account and no active recurring rule references it; otherwise
+  /// throws [AccountInUseException]. Callers are expected to call
+  /// [archive] instead.
   Future<void> delete(int id);
 
   /// Cheap existence probe — returns true when any `transactions` row
-  /// references this account.
+  /// or active recurring rule references this account.
   ///
-  /// NOTE: isReferenced is intentionally transaction-only (not shopping-list-aware).
-  /// This is a documented design decision: the UI that shows archive vs delete affordances
-  /// must also handle CategoryInUseException from delete(), since an account can be
-  /// "in use" by shopping-list drafts even when isReferenced returns false.
+  /// NOTE: shopping-list drafts are intentionally excluded. The UI that
+  /// shows archive vs delete affordances must still handle
+  /// [AccountInUseException] from [delete], since an account can be "in
+  /// use" by shopping-list drafts even when [isReferenced] returns false.
   Future<bool> isReferenced(int id);
 
   /// Reactive existence probe — emits `true` whenever at least one
-  /// transaction references this account.
+  /// transaction or active recurring rule references this account.
   Stream<bool> watchIsReferenced(int id);
 
   /// Grouped balance for `accountId`, keyed by currency code (uppercase).
@@ -131,6 +133,7 @@ final class DriftAccountRepository implements AccountRepository {
   AccountTypeDao get _typeDao => _db.accountTypeDao;
   TransactionDao get _txDao => _db.transactionDao;
   ShoppingListDao get _slDao => _db.shoppingListDao;
+  RecurringRuleDao get _recurringDao => _db.recurringRuleDao;
 
   // ---------- Reads ----------
 
@@ -205,6 +208,10 @@ final class DriftAccountRepository implements AccountRepository {
 
   @override
   Future<void> archive(int id) async {
+    final recurringCount = await _recurringDao.countActiveByAccount(id);
+    if (recurringCount > 0) {
+      throw AccountHasRecurringRuleException(id);
+    }
     await _dao.archiveById(id);
   }
 
@@ -214,18 +221,33 @@ final class DriftAccountRepository implements AccountRepository {
     if (slCount > 0) throw AccountInUseException(id);
     final count = await _txDao.countByAccount(id);
     if (count > 0) throw AccountInUseException(id);
+    final recurringCount = await _recurringDao.countActiveByAccount(id);
+    if (recurringCount > 0) throw AccountInUseException(id);
     await _dao.deleteById(id);
   }
 
   @override
   Future<bool> isReferenced(int id) async {
-    final count = await _txDao.countByAccount(id);
-    return count > 0;
+    final txCount = await _txDao.countByAccount(id);
+    if (txCount > 0) return true;
+    final recurringCount = await _recurringDao.countActiveByAccount(id);
+    return recurringCount > 0;
   }
 
   @override
   Stream<bool> watchIsReferenced(int id) {
-    return _txDao.watchCountByAccount(id).map((count) => count > 0);
+    return _db
+        .customSelect(
+          'SELECT ('
+          '  (SELECT COUNT(*) FROM transactions WHERE account_id = ?) + '
+          '  (SELECT COUNT(*) FROM recurring_rules '
+          '     WHERE account_id = ? AND is_active = 1 AND is_archived = 0)'
+          ') AS ref_count',
+          variables: [Variable<int>(id), Variable<int>(id)],
+          readsFrom: {_db.transactions, _db.recurringRules},
+        )
+        .watchSingle()
+        .map((row) => row.read<int>('ref_count') > 0);
   }
 
   @override
