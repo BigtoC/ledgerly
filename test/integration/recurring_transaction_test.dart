@@ -11,6 +11,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:ledgerly/app/app.dart';
 import 'package:ledgerly/app/bootstrap.dart';
 import 'package:ledgerly/data/database/app_database.dart' show AppDatabase;
 import 'package:ledgerly/data/models/currency.dart';
@@ -242,9 +243,9 @@ void main() {
         await pendingRepo.countByRecurringRule(ruleId),
         RecurringGenerationUseCase.catchUpCap,
       );
-      // next_due fast-forwarded to today.
+      // next_due now points to the first un-generated occurrence after today.
       final rule = await repo.getById(ruleId);
-      expect(rule!.nextDueDate, DateTime(2026, 5, 7));
+      expect(rule!.nextDueDate, DateTime(2026, 5, 8));
     });
 
     testWidgets('bootstrapFor() runs recurring generation as a post-seed step', (
@@ -289,6 +290,23 @@ void main() {
         );
       });
       expect(launched, isA<ProviderScope>());
+
+      await tester.runAsync(() async {
+        final app = ((launched as ProviderScope).child as App);
+        app.onFirstFrame!.call();
+        for (var i = 0; i < 50; i++) {
+          final pendingRepo = DriftPendingTransactionRepository(db);
+          final repo = DriftRecurringRulesRepository(db);
+          final rule = await repo.getById(ruleId);
+          if (await pendingRepo.countByRecurringRule(ruleId) > 0 &&
+              rule != null &&
+              rule.nextDueDate.isAfter(preBootstrapNextDue)) {
+            return;
+          }
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+        }
+        fail('Timed out waiting for deferred recurring generation');
+      });
 
       // After bootstrap, generation must have fired: at least one pending
       // row exists, and the rule's next_due_date advanced past the

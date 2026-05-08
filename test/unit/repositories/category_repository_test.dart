@@ -15,8 +15,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/data/database/app_database.dart' show AppDatabase;
 import 'package:ledgerly/data/models/category.dart';
 import 'package:ledgerly/data/models/currency.dart';
+import 'package:ledgerly/data/models/recurring_rule_draft.dart';
 import 'package:ledgerly/data/models/transaction.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
+import 'package:ledgerly/data/repositories/recurring_rules_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 
 import '_harness/test_app_database.dart';
@@ -158,6 +160,27 @@ class _Fixtures {
   final int incomeCategoryId;
   final int accountTypeId;
   final int accountId;
+}
+
+Future<int> _insertRecurringRuleRaw(
+  AppDatabase db, {
+  required int categoryId,
+  required int accountId,
+}) {
+  return DriftRecurringRulesRepository(
+    db,
+    clock: () => DateTime(2026, 5, 7),
+  ).insert(
+    const RecurringRuleDraft(
+      name: 'Rule',
+      amountMinorUnits: 100,
+      currency: _usd,
+      categoryId: 0,
+      accountId: 0,
+      frequency: 'daily',
+    ).copyWith(categoryId: categoryId, accountId: accountId),
+    today: DateTime(2026, 5, 7),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -403,6 +426,33 @@ void main() {
       expect(second.id, first.id);
       expect(second.isArchived, isTrue);
     });
+
+    test(
+      'C-archive-03: archive blocked when recurring rule references category',
+      () async {
+        await _insertRecurringRuleRaw(
+          db,
+          categoryId: fixtures.expenseCategoryId,
+          accountId: fixtures.accountId,
+        );
+
+        await expectLater(
+          catRepo.archive(fixtures.expenseCategoryId),
+          throwsA(
+            predicate(
+              (error) =>
+                  error.runtimeType.toString() ==
+                  'CategoryHasRecurringRuleException',
+            ),
+          ),
+        );
+
+        expect(
+          (await catRepo.getById(fixtures.expenseCategoryId))!.isArchived,
+          isFalse,
+        );
+      },
+    );
   });
 
   group('delete (G6)', () {
@@ -438,6 +488,37 @@ void main() {
       final row = await catRepo.getById(fixtures.expenseCategoryId);
       expect(row, isNotNull);
     });
+
+    test(
+      'C-delete-02b: recurring-rule-referenced category → CategoryInUseException',
+      () async {
+        const custom = Category(
+          id: 0,
+          icon: 'misc',
+          color: 2,
+          type: CategoryType.expense,
+        );
+        final inserted = await catRepo.save(custom);
+        await _insertRecurringRuleRaw(
+          db,
+          categoryId: inserted.id,
+          accountId: fixtures.accountId,
+        );
+
+        await expectLater(
+          catRepo.delete(inserted.id),
+          throwsA(
+            isA<CategoryInUseException>().having(
+              (e) => e.id,
+              'id',
+              inserted.id,
+            ),
+          ),
+        );
+
+        expect(await catRepo.getById(inserted.id), isNotNull);
+      },
+    );
 
     test(
       'C-delete-03: unused seeded category cannot be hard-deleted',
@@ -496,6 +577,17 @@ void main() {
 
     test('C-isref-02: one referencing transaction → true', () async {
       await txRepo.save(sampleTx(categoryId: fixtures.expenseCategoryId));
+      final refd = await catRepo.isReferenced(fixtures.expenseCategoryId);
+      expect(refd, isTrue);
+    });
+
+    test('C-isref-03: recurring rule reference → true', () async {
+      await _insertRecurringRuleRaw(
+        db,
+        categoryId: fixtures.expenseCategoryId,
+        accountId: fixtures.accountId,
+      );
+
       final refd = await catRepo.isReferenced(fixtures.expenseCategoryId);
       expect(refd, isTrue);
     });

@@ -197,6 +197,19 @@ void main() {
     });
 
     group('lifecycle', () {
+      test('update recomputes next_due_date when schedule changes', () async {
+        final id = await repo.insert(
+          draft(frequency: 'monthly', dayOfMonth: 15),
+          today: DateTime(2026, 5, 10),
+        );
+
+        await repo.update(id, draft(frequency: 'monthly', dayOfMonth: 20));
+
+        final rule = await repo.getById(id);
+        expect(rule!.dayOfMonth, 20);
+        expect(rule.nextDueDate, DateTime(2026, 5, 20));
+      });
+
       test('archive sets is_archived and is_active false', () async {
         final id = await repo.insert(
           draft(frequency: 'daily'),

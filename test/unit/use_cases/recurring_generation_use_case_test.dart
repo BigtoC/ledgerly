@@ -250,6 +250,9 @@ void main() {
           safetyCap: any(named: 'safetyCap'),
         ),
       ).called(1);
+      verify(
+        () => recurringRepo.advanceAfterGeneration(1, DateTime(2026, 5, 16)),
+      ).called(1);
     });
 
     test('paused rule never reaches the loop (filtered by findDue)', () async {

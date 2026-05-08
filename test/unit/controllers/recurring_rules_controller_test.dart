@@ -150,9 +150,11 @@ void main() {
     });
 
     test('RRC05: resumeRule calls setActive(active: true)', () async {
+      final resumedRule = _rule(id: 1, isActive: true);
       when(
         () => repo.setActive(any(), active: any(named: 'active')),
       ).thenAnswer((_) async {});
+      when(() => repo.getById(1)).thenAnswer((_) async => resumedRule);
 
       final container = makeContainer();
       addTearDown(container.dispose);
@@ -161,11 +163,13 @@ void main() {
       rulesCtrl.add([_rule(id: 1, isActive: false)]);
       await waitFor(container, (s) => s is RecurringRulesData);
 
-      await container
+      final result = await container
           .read(recurringRulesControllerProvider.notifier)
           .resumeRule(1);
 
       verify(() => repo.setActive(1, active: true)).called(1);
+      verify(() => repo.getById(1)).called(1);
+      expect(result, resumedRule);
     });
 
     test(
