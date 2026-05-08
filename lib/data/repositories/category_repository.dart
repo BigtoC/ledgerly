@@ -17,6 +17,7 @@ import 'package:drift/drift.dart' show Value;
 
 import '../database/app_database.dart';
 import '../database/daos/category_dao.dart';
+import '../database/daos/recurring_rule_dao.dart';
 import '../database/daos/shopping_list_dao.dart';
 import '../database/daos/transaction_dao.dart';
 import '../models/category.dart';
@@ -66,6 +67,18 @@ class CategoryInUseException implements Exception {
 
   @override
   String toString() => 'CategoryInUseException: $message';
+}
+
+class CategoryHasRecurringRuleException implements Exception {
+  const CategoryHasRecurringRuleException(this.id);
+
+  final int id;
+
+  String get message =>
+      'Category $id is referenced by an active recurring rule and cannot be archived.';
+
+  @override
+  String toString() => 'CategoryHasRecurringRuleException: $message';
 }
 
 /// SSOT for `categories`. Owns every write path to the Drift
@@ -128,16 +141,17 @@ abstract class CategoryRepository {
   Future<Category> archive(int id);
 
   /// Hard-delete. Only allowed for unused custom categories. Throws
-  /// [CategoryInUseException] when at least one transaction references the id.
+  /// [CategoryInUseException] when at least one transaction or active
+  /// recurring rule references the id.
   Future<bool> delete(int id);
 
-  /// Returns `true` when at least one row in `transactions` references
-  /// this category.
+  /// Returns `true` when at least one row in `transactions` or an active
+  /// recurring rule references this category.
   ///
-  /// NOTE: isReferenced is intentionally transaction-only (not shopping-list-aware).
-  /// This is a documented design decision: the UI that shows archive vs delete affordances
-  /// must also handle CategoryInUseException from delete(), since a category can be
-  /// "in use" by shopping-list drafts even when isReferenced returns false.
+  /// NOTE: shopping-list drafts are intentionally excluded. The UI that
+  /// shows archive vs delete affordances must still handle
+  /// [CategoryInUseException] from [delete], since a category can be "in
+  /// use" by shopping-list drafts even when [isReferenced] returns false.
   Future<bool> isReferenced(int id);
 }
 
@@ -150,6 +164,7 @@ final class DriftCategoryRepository implements CategoryRepository {
   CategoryDao get _dao => _db.categoryDao;
   TransactionDao get _txDao => _db.transactionDao;
   ShoppingListDao get _slDao => _db.shoppingListDao;
+  RecurringRuleDao get _recurringDao => _db.recurringRuleDao;
 
   // ---------- Reads ----------
 
@@ -346,6 +361,10 @@ final class DriftCategoryRepository implements CategoryRepository {
       // Idempotent.
       return _toDomain(existing);
     }
+    final recurringCount = await _recurringDao.countActiveByCategory(id);
+    if (recurringCount > 0) {
+      throw CategoryHasRecurringRuleException(id);
+    }
     await _dao.archiveById(id);
     final updated = await _dao.findById(id);
     if (updated == null) {
@@ -372,6 +391,10 @@ final class DriftCategoryRepository implements CategoryRepository {
     if (refCount > 0) {
       throw CategoryInUseException(id);
     }
+    final recurringCount = await _recurringDao.countActiveByCategory(id);
+    if (recurringCount > 0) {
+      throw CategoryInUseException(id);
+    }
     if (existing.l10nKey != null) {
       throw CategoryRepositoryException(
         'Seeded category $id cannot be deleted; archive it instead',
@@ -384,8 +407,10 @@ final class DriftCategoryRepository implements CategoryRepository {
 
   @override
   Future<bool> isReferenced(int id) async {
-    final count = await _txDao.countByCategory(id);
-    return count > 0;
+    final txCount = await _txDao.countByCategory(id);
+    if (txCount > 0) return true;
+    final recurringCount = await _recurringDao.countActiveByCategory(id);
+    return recurringCount > 0;
   }
 
   // ---------- Private mapping ----------

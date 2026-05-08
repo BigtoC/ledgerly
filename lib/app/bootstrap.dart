@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter/widgets.dart';
@@ -9,9 +11,12 @@ import '../data/repositories/account_repository.dart';
 import '../data/repositories/account_type_repository.dart';
 import '../data/repositories/category_repository.dart';
 import '../data/repositories/currency_repository.dart';
+import '../data/repositories/pending_transaction_repository.dart';
+import '../data/repositories/recurring_rules_repository.dart';
 import '../data/repositories/user_preferences_repository.dart';
 import '../data/seed/first_run_seed.dart';
 import '../data/services/locale_service.dart';
+import '../data/use_cases/recurring_generation_use_case.dart';
 import 'app.dart';
 import 'providers/app_database_provider.dart';
 import 'providers/locale_provider.dart';
@@ -37,6 +42,8 @@ typedef RunFirstRunSeedFn =
       required UserPreferencesRepository preferences,
       required LocaleService localeService,
     });
+typedef RunRecurringGenerationFn =
+    Future<RecurringGenerationResult> Function(AppDatabase db);
 
 Future<void> _initializeDateFormattingForLocale(String locale) =>
     initializeDateFormatting(locale);
@@ -71,6 +78,15 @@ Future<void> _runSeed({
   localeService: localeService,
 );
 
+Future<RecurringGenerationResult> _runRecurringGeneration(AppDatabase db) {
+  final useCase = RecurringGenerationUseCase(
+    recurringRepo: DriftRecurringRulesRepository(db),
+    pendingRepo: DriftPendingTransactionRepository(db),
+    db: db,
+  );
+  return useCase.execute();
+}
+
 Future<void> bootstrap() => bootstrapFor(
   openDatabase: () async => AppDatabase(driftDatabase(name: 'ledgerly')),
   localeService: const LocaleService(),
@@ -88,6 +104,7 @@ Future<void> bootstrapFor({
   ReadSplashEnabledFn getSplashEnabledFn = _readSplashEnabled,
   ReadSplashStartDateFn getSplashStartDateFn = _readSplashStartDate,
   RunFirstRunSeedFn runFirstRunSeedFn = _runSeed,
+  RunRecurringGenerationFn runRecurringGenerationFn = _runRecurringGeneration,
   List<Override> extraOverrides = const [],
 }) async {
   // Step 1 — Framework binding.
@@ -124,12 +141,17 @@ Future<void> bootstrapFor({
   );
 
   // Step 7 — ProviderScope with DB override + pre-seeded splash gate.
+  // Recurring generation is scheduled from the App's first-frame callback
+  // so startup is not blocked by due-rule processing.
   (runAppFn ?? runApp)(
     ProviderScope(
       overrides: [
         appDatabaseProvider.overrideWithValue(db),
         initialThemeModeProvider.overrideWithValue(initialThemeMode),
         initialPreferredLocaleProvider.overrideWithValue(initialLocale),
+        lastGenerationResultProvider.overrideWithValue(
+          const RecurringGenerationResult(outcomes: []),
+        ),
         splashGateSnapshotProvider.overrideWith((ref) {
           final notifier = SplashGateSnapshot.withInitial(
             enabled: splashEnabled,
@@ -150,7 +172,17 @@ Future<void> bootstrapFor({
         }),
         ...extraOverrides,
       ],
-      child: const App(),
+      child: App(
+        onFirstFrame: () {
+          unawaited(() async {
+            try {
+              await runRecurringGenerationFn(db);
+            } on Object {
+              // Generation failures must not crash or block startup.
+            }
+          }());
+        },
+      ),
     ),
   );
 }

@@ -9,6 +9,8 @@ import '../features/accounts/account_form_screen.dart';
 import '../features/analysis/analysis_screen.dart';
 import '../features/categories/categories_screen.dart';
 import '../features/home/home_screen.dart';
+import '../features/recurring/recurring_rule_form_screen.dart';
+import '../features/recurring/recurring_rules_screen.dart';
 import '../features/settings/about_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/shopping_list/shopping_list_screen.dart';
@@ -180,6 +182,38 @@ GoRouter router(Ref ref) {
                       fullscreenDialog: true,
                     ),
                   ),
+                  GoRoute(
+                    path: 'recurring',
+                    builder: (_, _) => const RecurringRulesScreen(),
+                  ),
+                  GoRoute(
+                    path: 'recurring/new',
+                    parentNavigatorKey: _rootNavigatorKey,
+                    pageBuilder: (ctx, state) => _modalPage(
+                      state,
+                      const _AdaptiveFormRoute(
+                        child: RecurringRuleFormScreen(),
+                      ),
+                      fullscreenDialog: true,
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'recurring/:id',
+                    redirect: (_, state) =>
+                        int.tryParse(state.pathParameters['id'] ?? '') == null
+                        ? '/settings'
+                        : null,
+                    parentNavigatorKey: _rootNavigatorKey,
+                    pageBuilder: (ctx, state) => _modalPage(
+                      state,
+                      _AdaptiveFormRoute(
+                        child: RecurringRuleFormScreen(
+                          ruleId: int.parse(state.pathParameters['id']!),
+                        ),
+                      ),
+                      fullscreenDialog: true,
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -204,14 +238,28 @@ class _AdaptiveTransactionFormRoute extends StatelessWidget {
     final TransactionFormMode? mode = shoppingListItemId != null
         ? EditShoppingListDraftMode(shoppingListItemId: shoppingListItemId!)
         : null;
-    final form = TransactionFormScreen(
-      transactionId: transactionId,
-      mode: mode,
+    return _AdaptiveFormRoute(
+      child: TransactionFormScreen(transactionId: transactionId, mode: mode),
     );
+  }
+}
+
+/// Adaptive layout for full-screen form routes (transactions, recurring
+/// rules, etc.). On <600dp the child renders edge-to-edge; on >=600dp it
+/// renders inside a centered, max-560-wide constrained `Dialog` with a
+/// dimmed scrim. Single source of truth for the breakpoint constants —
+/// every form route uses this wrapper.
+class _AdaptiveFormRoute extends StatelessWidget {
+  const _AdaptiveFormRoute({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth < 600) {
-          return form;
+          return child;
         }
         return Scaffold(
           backgroundColor: Colors.black54,
@@ -222,7 +270,7 @@ class _AdaptiveTransactionFormRoute extends StatelessWidget {
                 child: Dialog(
                   insetPadding: const EdgeInsets.all(24),
                   clipBehavior: Clip.antiAlias,
-                  child: SizedBox.expand(child: form),
+                  child: SizedBox.expand(child: child),
                 ),
               ),
             ),

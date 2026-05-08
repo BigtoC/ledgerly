@@ -83,6 +83,12 @@ class _SettingsBody extends ConsumerWidget {
                 const ManageAccountsTile(),
                 DefaultCurrencyTile(defaultCurrency: data.defaultCurrency),
                 const ManageCategoriesTile(),
+                ListTile(
+                  key: const ValueKey('settingsRecurringTile'),
+                  title: Text(l10n.settingsRecurringTile),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/settings/recurring'),
+                ),
               ],
             ),
           ),

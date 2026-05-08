@@ -10,13 +10,16 @@
 import 'dart:io' show File;
 
 import 'package:drift/native.dart';
+import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:ledgerly/app/app.dart';
 import 'package:ledgerly/app/bootstrap.dart';
 import 'package:ledgerly/data/database/app_database.dart';
 import 'package:ledgerly/data/services/locale_service.dart';
+import 'package:ledgerly/data/use_cases/recurring_generation_use_case.dart';
 
 /// Fixed-locale stub — keeps the seed from reading the OS locale.
 class _StubLocaleService implements LocaleService {
@@ -27,6 +30,14 @@ class _StubLocaleService implements LocaleService {
 }
 
 void main() {
+  setUpAll(() {
+    driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+  });
+
+  tearDownAll(() {
+    driftRuntimeOptions.dontWarnAboutMultipleDatabases = false;
+  });
+
   group('bootstrapFor ordering', () {
     test('openDatabase is called before runApp', () async {
       final log = <String>[];
@@ -121,6 +132,41 @@ void main() {
         );
       },
     );
+
+    testWidgets('recurring generation is deferred until after runApp', (
+      tester,
+    ) async {
+      final log = <String>[];
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      Widget? launched;
+
+      await tester.runAsync(() async {
+        await bootstrapFor(
+          openDatabase: () async => db,
+          localeService: const _StubLocaleService(),
+          runRecurringGenerationFn: (_) async {
+            log.add('runRecurringGeneration');
+            return const RecurringGenerationResult(outcomes: []);
+          },
+          runAppFn: (widget) {
+            log.add('runApp');
+            launched = widget;
+          },
+        );
+      });
+
+      expect(log, ['runApp']);
+      expect(launched, isNotNull);
+
+      final app = ((launched as ProviderScope).child as App);
+      app.onFirstFrame!.call();
+      await tester.runAsync(() async {
+        await Future<void>.delayed(Duration.zero);
+      });
+
+      expect(log, ['runApp', 'runRecurringGeneration']);
+    });
 
     test('main.dart has only one await (G9 guardrail)', () {
       // Static assertion — reads lib/main.dart and checks that the sole

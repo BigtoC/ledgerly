@@ -100,3 +100,13 @@ class AccountInUseException extends RepositoryException {
   /// The account id whose deletion is blocked.
   final int id;
 }
+
+/// Archive of an `accounts` row blocked by an active recurring rule.
+class AccountHasRecurringRuleException extends RepositoryException {
+  const AccountHasRecurringRuleException(this.id)
+    : super(
+        'Account $id is referenced by an active recurring rule and cannot be archived.',
+      );
+
+  final int id;
+}

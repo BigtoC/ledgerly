@@ -17,9 +17,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/data/database/app_database.dart' show AppDatabase;
 import 'package:ledgerly/data/models/account.dart';
 import 'package:ledgerly/data/models/currency.dart';
+import 'package:ledgerly/data/models/recurring_rule_draft.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/account_type_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
+import 'package:ledgerly/data/repositories/recurring_rules_repository.dart';
 import 'package:ledgerly/data/repositories/repository_exceptions.dart';
 
 import '_harness/test_app_database.dart';
@@ -121,6 +123,27 @@ Future<int> _insertCategoryRaw(
       .customSelect('SELECT id FROM categories ORDER BY id DESC LIMIT 1')
       .get();
   return rows.first.read<int>('id');
+}
+
+Future<int> _insertRecurringRuleRaw(
+  AppDatabase db, {
+  required int categoryId,
+  required int accountId,
+}) {
+  return DriftRecurringRulesRepository(
+    db,
+    clock: () => DateTime(2026, 5, 7),
+  ).insert(
+    RecurringRuleDraft(
+      name: 'Rule',
+      amountMinorUnits: 100,
+      currency: _usd,
+      categoryId: categoryId,
+      accountId: accountId,
+      frequency: 'daily',
+    ),
+    today: DateTime(2026, 5, 7),
+  );
 }
 
 void main() {
@@ -323,6 +346,26 @@ void main() {
     );
 
     test(
+      'AC10b: delete with a referencing recurring rule → AccountInUseException',
+      () async {
+        final id = await repo.save(buildCashAccount());
+        final categoryId = await _insertCategoryRaw(db);
+        await _insertRecurringRuleRaw(
+          db,
+          categoryId: categoryId,
+          accountId: id,
+        );
+
+        await expectLater(
+          repo.delete(id),
+          throwsA(isA<AccountInUseException>().having((e) => e.id, 'id', id)),
+        );
+
+        expect(await repo.getById(id), isNotNull);
+      },
+    );
+
+    test(
       'AC11: isReferenced true when transaction exists; false otherwise',
       () async {
         final id = await repo.save(buildCashAccount());
@@ -331,6 +374,64 @@ void main() {
         final categoryId = await _insertCategoryRaw(db);
         await _insertTransactionRaw(db, accountId: id, categoryId: categoryId);
         expect(await repo.isReferenced(id), isTrue);
+      },
+    );
+
+    test('AC11c: isReferenced true when recurring rule exists', () async {
+      final id = await repo.save(buildCashAccount());
+      final categoryId = await _insertCategoryRaw(db);
+
+      expect(await repo.isReferenced(id), isFalse);
+      await _insertRecurringRuleRaw(db, categoryId: categoryId, accountId: id);
+      expect(await repo.isReferenced(id), isTrue);
+    });
+
+    test(
+      'AC11d: watchIsReferenced emits true when recurring rule exists',
+      () async {
+        final id = await repo.save(buildCashAccount());
+        final categoryId = await _insertCategoryRaw(db);
+
+        final snapshots = <bool>[];
+        final sub = repo.watchIsReferenced(id).listen(snapshots.add);
+        await Future<void>.delayed(Duration.zero);
+        expect(snapshots.last, isFalse);
+
+        await _insertRecurringRuleRaw(
+          db,
+          categoryId: categoryId,
+          accountId: id,
+        );
+        await Future<void>.delayed(Duration.zero);
+        expect(snapshots.last, isTrue);
+
+        await sub.cancel();
+      },
+    );
+
+    test(
+      'AC11e: archive blocked when recurring rule references account',
+      () async {
+        final id = await repo.save(buildCashAccount());
+        final categoryId = await _insertCategoryRaw(db);
+        await _insertRecurringRuleRaw(
+          db,
+          categoryId: categoryId,
+          accountId: id,
+        );
+
+        await expectLater(
+          repo.archive(id),
+          throwsA(
+            predicate(
+              (error) =>
+                  error.runtimeType.toString() ==
+                  'AccountHasRecurringRuleException',
+            ),
+          ),
+        );
+
+        expect((await repo.getById(id))!.isArchived, isFalse);
       },
     );
 

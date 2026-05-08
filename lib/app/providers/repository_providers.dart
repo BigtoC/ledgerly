@@ -5,9 +5,12 @@ import '../../data/repositories/account_repository.dart';
 import '../../data/repositories/account_type_repository.dart';
 import '../../data/repositories/category_repository.dart';
 import '../../data/repositories/currency_repository.dart';
+import '../../data/repositories/pending_transaction_repository.dart';
+import '../../data/repositories/recurring_rules_repository.dart';
 import '../../data/repositories/shopping_list_repository.dart';
 import '../../data/repositories/transaction_repository.dart';
 import '../../data/repositories/user_preferences_repository.dart';
+import '../../data/use_cases/recurring_generation_use_case.dart';
 import 'app_database_provider.dart';
 
 part 'repository_providers.g.dart';
@@ -52,3 +55,31 @@ ShoppingListRepository shoppingListRepository(Ref ref) =>
       ref.watch(appDatabaseProvider),
       ref.watch(transactionRepositoryProvider),
     );
+
+@Riverpod(keepAlive: true, dependencies: [appDatabase])
+PendingTransactionRepository pendingTransactionRepository(Ref ref) =>
+    DriftPendingTransactionRepository(ref.watch(appDatabaseProvider));
+
+@Riverpod(keepAlive: true, dependencies: [appDatabase])
+RecurringRulesRepository recurringRulesRepository(Ref ref) =>
+    DriftRecurringRulesRepository(ref.watch(appDatabaseProvider));
+
+/// Use-case provider. Lives here so that controllers in
+/// `lib/features/.../*_controller.dart` can `ref.read` the use case
+/// without importing `data/database/...` (forbidden by
+/// `controllers_forbid_db_and_services` in import_analysis_options.yaml).
+@Riverpod(
+  keepAlive: true,
+  dependencies: [
+    appDatabase,
+    recurringRulesRepository,
+    pendingTransactionRepository,
+  ],
+)
+RecurringGenerationUseCase recurringGenerationUseCase(Ref ref) {
+  return RecurringGenerationUseCase(
+    recurringRepo: ref.watch(recurringRulesRepositoryProvider),
+    pendingRepo: ref.watch(pendingTransactionRepositoryProvider),
+    db: ref.watch(appDatabaseProvider),
+  );
+}

@@ -21,7 +21,8 @@ part 'accounts_state.freezed.dart';
 
 /// Per-row swipe affordance derived by the controller (plan §7).
 ///
-/// - `isReferenced(id) == true` → archive (delete not allowed).
+/// - `isReferenced(id) == true` (transactions or active recurring rules)
+///   → archive (delete not allowed).
 /// - Only one non-archived account remaining → archive blocked; widget
 ///   renders a disabled affordance with a tooltip.
 /// - Unused custom account (no transactions, `opening_balance_minor_units

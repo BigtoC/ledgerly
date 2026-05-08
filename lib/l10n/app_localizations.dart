@@ -1323,6 +1323,216 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Charts and summaries will appear here once Phase 2 lands.'**
   String get analysisPlaceholderBody;
+
+  /// Settings entry-point label for the recurring rules screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring transactions'**
+  String get settingsRecurringTile;
+
+  /// Management screen app-bar title.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring transactions'**
+  String get recurringRulesTitle;
+
+  /// Empty state heading on the recurring rules screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No recurring rules yet'**
+  String get recurringEmptyHeading;
+
+  /// Empty state body on the recurring rules screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up a rule for rent, subscriptions, or any expense that repeats. Ledgerly will create a pending transaction for you on the due date.'**
+  String get recurringEmptyBody;
+
+  /// Empty state CTA button label.
+  ///
+  /// In en, this message translates to:
+  /// **'Create rule'**
+  String get recurringEmptyCta;
+
+  /// FAB tooltip / wide-layout app-bar action label.
+  ///
+  /// In en, this message translates to:
+  /// **'New rule'**
+  String get recurringFabNew;
+
+  /// Error state text on the recurring rules screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load your rules.'**
+  String get recurringRulesLoadError;
+
+  /// Error state retry button label.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get recurringRulesLoadRetry;
+
+  /// Subtitle on a recurring rule tile showing the next due date.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: {date}'**
+  String recurringTileNextDue(String date);
+
+  /// Paused chip label / semantics text on a paused rule tile.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get recurringTilePaused;
+
+  /// Swipe action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get recurringSwipePause;
+
+  /// Swipe action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get recurringSwipeResume;
+
+  /// Swipe action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get recurringSwipeDelete;
+
+  /// Snackbar after pausing a rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused — {ruleName}'**
+  String recurringPausedSnack(String ruleName);
+
+  /// Snackbar after resuming a rule. Discloses that periods missed while paused are not back-generated.
+  ///
+  /// In en, this message translates to:
+  /// **'Resumed — {ruleName}, next due {date}. Missed periods are not generated on resume.'**
+  String recurringResumedSnack(String ruleName, String date);
+
+  /// Snackbar after deleting a rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Rule deleted'**
+  String get recurringDeletedSnack;
+
+  /// Create form app-bar title.
+  ///
+  /// In en, this message translates to:
+  /// **'New rule'**
+  String get recurringFormCreateTitle;
+
+  /// Edit form app-bar title.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit rule'**
+  String get recurringFormEditTitle;
+
+  /// Name field placeholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Rule name'**
+  String get recurringFormNamePlaceholder;
+
+  /// Frequency dropdown item.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get recurringFrequencyDaily;
+
+  /// Frequency dropdown item.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get recurringFrequencyWeekly;
+
+  /// Frequency dropdown item.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get recurringFrequencyMonthly;
+
+  /// Frequency dropdown item.
+  ///
+  /// In en, this message translates to:
+  /// **'Yearly'**
+  String get recurringFrequencyYearly;
+
+  /// Daily frequency helper text shown under the dropdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Generates one pending transaction every day from today.'**
+  String get recurringDailyHelper;
+
+  /// Always-visible hint shown under the day-of-month stepper.
+  ///
+  /// In en, this message translates to:
+  /// **'If the month is shorter, the rule uses the last day of that month.'**
+  String get recurringDayOfMonthHint;
+
+  /// Generic field validation copy.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get recurringFieldRequired;
+
+  /// Save action label in create mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get recurringSaveCreate;
+
+  /// Save action label in edit mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get recurringSaveUpdate;
+
+  /// Snackbar after creating a rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Rule created'**
+  String get recurringSavedCreate;
+
+  /// Snackbar after updating a rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Rule updated'**
+  String get recurringSavedUpdate;
+
+  /// Destructive button label inside the form.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete rule'**
+  String get recurringDeleteRule;
+
+  /// Delete confirmation dialog body.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this rule? Pending items already generated will remain in Pending Transactions.'**
+  String get recurringDeleteConfirm;
+
+  /// Inline notice in the edit form when there are existing pending items.
+  ///
+  /// In en, this message translates to:
+  /// **'You have {count} pending item(s) from this rule. Edits below won\'t change them — approve or skip them on Home.'**
+  String recurringEditWillNotAffectPending(int count);
+
+  /// Badge subtitle on a rule tile when its last_error is non-null.
+  ///
+  /// In en, this message translates to:
+  /// **'This rule had a problem on the last sync.'**
+  String get recurringRuleHasError;
+
+  /// Snackbar shown when a rule is saved but its inline post-save generation returned `failed`.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved — but the first run hit an issue. We\'ll retry on the next launch.'**
+  String get recurringSavedButGenerationFailed;
 }
 
 class _AppLocalizationsDelegate
