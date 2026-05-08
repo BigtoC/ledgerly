@@ -123,7 +123,7 @@ The duplication cost is roughly: one `_Composer` (~70 LOC mirrored), one skip-un
 - Modify: `lib/data/database/daos/pending_transaction_dao.dart`
 - Modify: `lib/data/database/app_database.dart` (if TransactionRepository.save is needed inside approve)
 
-- [ ] **Step 1: Add `watchAll()` to PendingTransactionDao**
+- [x] **Step 1: Add `watchAll()` to PendingTransactionDao**
 
 Add to `lib/data/database/daos/pending_transaction_dao.dart`:
 
@@ -153,12 +153,12 @@ Future<int> rejectRow(int id) {
 }
 ```
 
-- [ ] **Step 2: Verify the file still compiles**
+- [x] **Step 2: Verify the file still compiles**
 
 Run: `flutter analyze lib/data/database/daos/pending_transaction_dao.dart`
 Expected: No errors
 
-- [ ] **Step 3: Run codegen for Drift**
+- [x] **Step 3: Run codegen for Drift**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: `pending_transaction_dao.g.dart` regenerated
@@ -169,7 +169,7 @@ Expected: `pending_transaction_dao.g.dart` regenerated
 - Modify: `lib/data/repositories/pending_transaction_repository.dart`
 - Test: `test/unit/repositories/pending_transaction_repository_test.dart`
 
-- [ ] **Step 1: Write failing tests for watchAll, approve, reject**
+- [x] **Step 1: Write failing tests for watchAll, approve, reject**
 
 Add to `test/unit/repositories/pending_transaction_repository_test.dart`:
 
@@ -516,12 +516,12 @@ test('watchAll re-emits after reject', () async {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `flutter test test/unit/repositories/pending_transaction_repository_test.dart`
 Expected: FAIL — `watchAll`, `approve`, `reject` not found on repository
 
-- [ ] **Step 3: Implement `watchAll` in PendingTransactionRepository**
+- [x] **Step 3: Implement `watchAll` in PendingTransactionRepository**
 
 Add to the `PendingTransactionRepository` abstract class:
 
@@ -543,7 +543,7 @@ Future<Transaction> approve(int pendingId);
 Future<void> reject(int pendingId);
 ```
 
-- [ ] **Step 4: Implement `watchAll` in DriftPendingTransactionRepository**
+- [x] **Step 4: Implement `watchAll` in DriftPendingTransactionRepository**
 
 ```dart
 @override
@@ -686,7 +686,7 @@ import '../models/pending_transaction.dart';
 import '../models/transaction.dart';
 ```
 
-- [ ] **Step 5: Implement `approve` in DriftPendingTransactionRepository**
+- [x] **Step 5: Implement `approve` in DriftPendingTransactionRepository**
 
 ```dart
 @override
@@ -797,7 +797,7 @@ Add these files to the File Structure table under Modify:
 - `lib/app/bootstrap.dart` — Pass `txRepo:` to `DriftPendingTransactionRepository(...)` constructor in `_runRecurringGeneration`
 - `test/integration/recurring_transaction_test.dart` — Pass `txRepo:` to `DriftPendingTransactionRepository(...)` constructor (six call sites)
 
-- [ ] **Step 6: Implement `reject` in DriftPendingTransactionRepository**
+- [x] **Step 6: Implement `reject` in DriftPendingTransactionRepository**
 
 ```dart
 @override
@@ -806,7 +806,7 @@ Future<void> reject(int pendingId) async {
 }
 ```
 
-- [ ] **Step 7: Add `findById` to PendingTransactionDao**
+- [x] **Step 7: Add `findById` to PendingTransactionDao**
 
 The `approve` method needs to load a pending row by id. Add to `PendingTransactionDao`:
 
@@ -818,7 +818,7 @@ Future<PendingTransactionRow?> findById(int id) {
 }
 ```
 
-- [ ] **Step 8: Verify `findById` on account/category DAOs exist**
+- [x] **Step 8: Verify `findById` on account/category DAOs exist**
 
 The `approve` method calls `_db.accountDao.findById` and `_db.categoryDao.findById`. Verify these methods exist:
 
@@ -832,17 +832,17 @@ Future<AccountRow?> findById(int id) {
 }
 ```
 
-- [ ] **Step 9: Run codegen**
+- [x] **Step 9: Run codegen**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: Success
 
-- [ ] **Step 10: Run tests to verify they pass**
+- [x] **Step 10: Run tests to verify they pass**
 
 Run: `flutter test test/unit/repositories/pending_transaction_repository_test.dart`
 Expected: All tests PASS
 
-- [ ] **Step 11: Run format + analyze**
+- [x] **Step 11: Run format + analyze**
 
 Run: `dart format lib/data/ test/unit/repositories/ && flutter analyze`
 Expected: No errors
@@ -866,7 +866,7 @@ git commit -m "feat(data): add watchAll, approve, reject to PendingTransactionRe
 **Files:**
 - Create: `lib/features/home/pending_state.dart`
 
-- [ ] **Step 1: Create PendingState with Freezed**
+- [x] **Step 1: Create PendingState with Freezed**
 
 Create `lib/features/home/pending_state.dart`:
 
@@ -914,12 +914,12 @@ sealed class PendingState with _$PendingState {
 }
 ```
 
-- [ ] **Step 2: Run codegen**
+- [x] **Step 2: Run codegen**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: `pending_state.freezed.dart` generated
 
-- [ ] **Step 3: Verify compiles**
+- [x] **Step 3: Verify compiles**
 
 Run: `flutter analyze lib/features/home/pending_state.dart`
 Expected: No errors
@@ -930,7 +930,7 @@ Expected: No errors
 - Create: `lib/features/home/pending_controller.dart`
 - Create: `test/unit/controllers/pending_controller_test.dart`
 
-- [ ] **Step 1: Write failing controller tests (PC01–PC11)**
+- [x] **Step 1: Write failing controller tests (PC01–PC11)**
 
 Create `test/unit/controllers/pending_controller_test.dart`:
 
@@ -1317,12 +1317,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `flutter test test/unit/controllers/pending_controller_test.dart`
 Expected: FAIL — `pendingControllerProvider` not found
 
-- [ ] **Step 3: Implement PendingController**
+- [x] **Step 3: Implement PendingController**
 
 Create `lib/features/home/pending_controller.dart`:
 
@@ -1583,17 +1583,17 @@ class _Composer {
 }
 ```
 
-- [ ] **Step 4: Run codegen**
+- [x] **Step 4: Run codegen**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: `pending_controller.g.dart` generated
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
 Run: `flutter test test/unit/controllers/pending_controller_test.dart`
 Expected: All tests PASS
 
-- [ ] **Step 6: Run format + analyze**
+- [x] **Step 6: Run format + analyze**
 
 Run: `dart format lib/features/home/pending_controller.dart lib/features/home/pending_state.dart test/unit/controllers/pending_controller_test.dart && flutter analyze`
 Expected: No errors
@@ -1619,7 +1619,7 @@ git commit -m "feat(home): add PendingState and PendingController with approve/s
 - Modify: `l10n/app_zh_CN.arb`
 - Modify: `test/unit/l10n/arb_audit_test.dart`
 
-- [ ] **Step 1: Add 6 keys to `l10n/app_en.arb`**
+- [x] **Step 1: Add 6 keys to `l10n/app_en.arb`**
 
 Add these entries (before the closing `}`):
 
@@ -1642,7 +1642,7 @@ Add these entries (before the closing `}`):
 "@homePendingShowFewer": { "description": "TextButton label that collapses the pending section back to its visible-tile cap." },
 ```
 
-- [ ] **Step 2: Add 6 keys to `l10n/app_zh_TW.arb`**
+- [x] **Step 2: Add 6 keys to `l10n/app_zh_TW.arb`**
 
 ```json
 "homePendingSectionTitle": "待處理",
@@ -1655,7 +1655,7 @@ Add these entries (before the closing `}`):
 "homePendingShowFewer": "顯示較少",
 ```
 
-- [ ] **Step 3: Add 6 keys to `l10n/app_zh_CN.arb`**
+- [x] **Step 3: Add 6 keys to `l10n/app_zh_CN.arb`**
 
 ```json
 "homePendingSectionTitle": "待处理",
@@ -1668,7 +1668,7 @@ Add these entries (before the closing `}`):
 "homePendingShowFewer": "显示更少",
 ```
 
-- [ ] **Step 4: Add 8 keys to `_expectedEnKeys` in `test/unit/l10n/arb_audit_test.dart`**
+- [x] **Step 4: Add 8 keys to `_expectedEnKeys` in `test/unit/l10n/arb_audit_test.dart`**
 
 Add to the `_expectedEnKeys` set (after the recurring transactions section):
 
@@ -1685,12 +1685,12 @@ Add to the `_expectedEnKeys` set (after the recurring transactions section):
   'homePendingShowFewer',
 ```
 
-- [ ] **Step 5: Run ARB audit test**
+- [x] **Step 5: Run ARB audit test**
 
 Run: `flutter test test/unit/l10n/arb_audit_test.dart`
 Expected: PASS
 
-- [ ] **Step 6: Run format + analyze**
+- [x] **Step 6: Run format + analyze**
 
 Run: `dart format test/unit/l10n/ && flutter analyze`
 Expected: No errors
@@ -1711,7 +1711,7 @@ git commit -m "feat(l10n): add pending approval home keys to all locales"
 
 PendingTile reuses the existing `homeCategoriesByIdProvider` / `homeAccountsByIdProvider` from `lib/features/home/home_providers.dart` for its category-icon / account-name lookups. Don't create a parallel `pending_providers.dart` file — the home providers already serve this exact purpose (lookup maps including archived rows for historical-row resolution) and are already mounted by the surrounding HomeScreen, so reusing them avoids duplicate `watchAll` subscriptions.
 
-- [ ] **Step 1: Write PendingSection widget tests (PS01–PS05)**
+- [x] **Step 1: Write PendingSection widget tests (PS01–PS05)**
 
 Create `test/widget/features/home/pending_section_test.dart`:
 
@@ -1879,7 +1879,7 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Write PendingTile + ApproveCircleButton tests (PT01–PT07)**
+- [x] **Step 2: Write PendingTile + ApproveCircleButton tests (PT01–PT07)**
 
 Create `test/widget/features/home/pending_tile_test.dart`:
 
@@ -2197,12 +2197,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 3: Run tests to verify they fail**
+- [x] **Step 3: Run tests to verify they fail**
 
 Run: `flutter test test/widget/features/home/pending_section_test.dart test/widget/features/home/pending_tile_test.dart`
 Expected: FAIL — `PendingSection` not found
 
-- [ ] **Step 4: Implement PendingSection, PendingTile, _ApproveCircleButton**
+- [x] **Step 4: Implement PendingSection, PendingTile, _ApproveCircleButton**
 
 Create `lib/features/home/widgets/pending_section.dart`:
 
@@ -2698,17 +2698,17 @@ class _ApproveCircleButtonState extends State<_ApproveCircleButton>
 }
 ```
 
-- [ ] **Step 5: Run codegen**
+- [x] **Step 5: Run codegen**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: Success
 
-- [ ] **Step 6: Run tests**
+- [x] **Step 6: Run tests**
 
 Run: `flutter test test/widget/features/home/pending_section_test.dart test/widget/features/home/pending_tile_test.dart`
 Expected: All tests PASS
 
-- [ ] **Step 7: Run format + analyze**
+- [x] **Step 7: Run format + analyze**
 
 Run: `dart format lib/features/home/ test/widget/features/home/ && flutter analyze`
 Expected: No errors
@@ -2734,7 +2734,7 @@ git commit -m "feat(home): add PendingSection, PendingTile, ApproveCircleButton 
 - Modify: `lib/features/home/home_controller.dart`
 - Modify: `lib/features/home/home_state.freezed.dart` (codegen)
 
-- [ ] **Step 1: Add PendingSection to HomeScreen sliver list**
+- [x] **Step 1: Add PendingSection to HomeScreen sliver list**
 
 In `lib/features/home/home_screen.dart`, import the new widget and insert it between the `DayNavigationHeader` and the transaction list:
 
@@ -2775,24 +2775,24 @@ slivers: [
 
 Also remove the `trailing: PendingBadge(count: data.pendingBadgeCount)` from the `DayNavigationHeader` and remove the `PendingBadge` import if no longer used.
 
-- [ ] **Step 2: Remove `pendingBadgeCount` from HomeState**
+- [x] **Step 2: Remove `pendingBadgeCount` from HomeState**
 
 In `lib/features/home/home_state.dart`:
 - Remove `required int pendingBadgeCount` from `HomeEmpty`
 - Remove `required int pendingBadgeCount` from `HomeData`
 
-- [ ] **Step 3: Remove `pendingBadgeCount` from HomeController emissions**
+- [x] **Step 3: Remove `pendingBadgeCount` from HomeController emissions**
 
 In `lib/features/home/home_controller.dart`:
 - Remove `pendingBadgeCount: 0` from `HomeState.empty(...)` at line 384
 - Remove `pendingBadgeCount: 0` from `HomeState.data(...)` at line 412
 
-- [ ] **Step 4: Run codegen**
+- [x] **Step 4: Run codegen**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: `home_state.freezed.dart` regenerated
 
-- [ ] **Step 5: Update existing HomeState references in tests**
+- [x] **Step 5: Update existing HomeState references in tests**
 
 Search the entire `test/` tree for `pendingBadgeCount` and remove it from all `HomeState.data(...)`, `HomeState.empty(...)` constructors, and any direct field assertions.
 
@@ -2804,12 +2804,12 @@ Run `grep -rn pendingBadgeCount test/` to surface anything else added since.
 Add this file to the File Structure table under Modify:
 - `test/unit/controllers/home_controller_test.dart` — Remove `pendingBadgeCount` assertion(s)
 
-- [ ] **Step 6: Run format + analyze**
+- [x] **Step 6: Run format + analyze**
 
 Run: `dart format lib/features/home/ test/widget/features/home/ && flutter analyze`
 Expected: No errors
 
-- [ ] **Step 7: Run all home tests**
+- [x] **Step 7: Run all home tests**
 
 Run: `flutter test test/widget/features/home/`
 Expected: All tests PASS
@@ -2829,7 +2829,7 @@ git commit -m "feat(home): wire PendingSection into HomeScreen, remove pendingBa
 **Files:**
 - Create: `test/integration/pending_approval_flow_test.dart`
 
-- [ ] **Step 1: Write integration test**
+- [x] **Step 1: Write integration test**
 
 Create `test/integration/pending_approval_flow_test.dart`:
 
@@ -2953,12 +2953,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run the integration test**
+- [x] **Step 2: Run the integration test**
 
 Run: `flutter test test/integration/pending_approval_flow_test.dart`
 Expected: PASS
 
-- [ ] **Step 3: Run format + analyze**
+- [x] **Step 3: Run format + analyze**
 
 Run: `dart format test/integration/ && flutter analyze`
 Expected: No errors
@@ -2985,17 +2985,17 @@ The following are intentionally not in v1. Each lists a concrete tripwire so the
 
 ### Task 9: Final verification
 
-- [ ] **Step 1: Run the full test suite**
+- [x] **Step 1: Run the full test suite**
 
 Run: `flutter test`
 Expected: All tests PASS
 
-- [ ] **Step 2: Run format check**
+- [x] **Step 2: Run format check**
 
 Run: `dart format --output=none --set-exit-if-changed .`
 Expected: No formatting issues
 
-- [ ] **Step 3: Run import lint**
+- [x] **Step 3: Run import lint**
 
 Run: `dart run import_lint`
 Expected: No violations
