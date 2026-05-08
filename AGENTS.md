@@ -106,6 +106,7 @@ After resolving a non-trivial problem, run `/ce:compound` to persist the solutio
 
 - `docs/solutions/` is already present; keep future solution docs there (current subfolders include `database-issues/` and `logic-errors/`).
 - Keep future solution docs under `docs/solutions/` so planning/review workflows have a stable place to search.
+- `docs/solutions/` is a searchable prior-solutions store organized by category; solution docs use YAML frontmatter like `module`, `tags`, and `problem_type`, which is useful when implementing or debugging in documented areas.
 - Each solution document includes: problem description, root cause, fix applied, and tags for search
 
 When to invoke `/ce:compound`:
