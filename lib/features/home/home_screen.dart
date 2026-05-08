@@ -37,7 +37,7 @@ import 'home_controller.dart';
 import 'home_providers.dart';
 import 'home_state.dart';
 import 'widgets/day_navigation_header.dart';
-import 'widgets/pending_badge.dart';
+import 'widgets/pending_section.dart';
 import 'widgets/summary_strip.dart';
 import 'widgets/transaction_tile.dart';
 
@@ -422,9 +422,9 @@ class _SinglePane extends ConsumerWidget {
             onPickDay: () => onPickDay(data.selectedDay),
             canGoPrev: data.canGoPrev,
             canGoNext: data.canGoNext,
-            trailing: PendingBadge(count: data.pendingBadgeCount),
           ),
         ),
+        const PendingSection(),
         if (data.transactionsForDay.isEmpty)
           SliverToBoxAdapter(
             child: Padding(

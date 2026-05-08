@@ -30,10 +30,7 @@ sealed class HomeState with _$HomeState {
   const factory HomeState.loading() = HomeLoading;
 
   /// First-run / no-history terminal state. Renders empty CTA.
-  const factory HomeState.empty({
-    required DateTime selectedDay,
-    required int pendingBadgeCount,
-  }) = HomeEmpty;
+  const factory HomeState.empty({required DateTime selectedDay}) = HomeEmpty;
 
   /// Populated state. Covers both days with rows and gap-day empties
   /// (when `transactionsForDay.isEmpty`).
@@ -45,7 +42,6 @@ sealed class HomeState with _$HomeState {
     required Map<String, int> monthNetByCurrency,
     required bool canGoPrev,
     required bool canGoNext,
-    required int pendingBadgeCount,
     required PendingDelete? pendingDelete,
   }) = HomeData;
 
