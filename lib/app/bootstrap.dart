@@ -13,6 +13,7 @@ import '../data/repositories/category_repository.dart';
 import '../data/repositories/currency_repository.dart';
 import '../data/repositories/pending_transaction_repository.dart';
 import '../data/repositories/recurring_rules_repository.dart';
+import '../data/repositories/transaction_repository.dart';
 import '../data/repositories/user_preferences_repository.dart';
 import '../data/seed/first_run_seed.dart';
 import '../data/services/locale_service.dart';
@@ -81,7 +82,10 @@ Future<void> _runSeed({
 Future<RecurringGenerationResult> _runRecurringGeneration(AppDatabase db) {
   final useCase = RecurringGenerationUseCase(
     recurringRepo: DriftRecurringRulesRepository(db),
-    pendingRepo: DriftPendingTransactionRepository(db),
+    pendingRepo: DriftPendingTransactionRepository(
+      db,
+      txRepo: DriftTransactionRepository(db),
+    ),
     db: db,
   );
   return useCase.execute();
