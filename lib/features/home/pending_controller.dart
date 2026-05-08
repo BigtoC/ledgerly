@@ -28,9 +28,8 @@ sealed class PendingEffect {
 /// a SnackBar with `homePendingSkippedSnack` text and an Undo action that
 /// calls `notifier.undoSkip()`.
 final class PendingSkipStartedEffect extends PendingEffect {
-  const PendingSkipStartedEffect({required this.pendingId, this.ruleName});
+  const PendingSkipStartedEffect({required this.pendingId});
   final int pendingId;
-  final String? ruleName;
 }
 
 /// Fired after a successful approve. The widget shows a SnackBar with
@@ -52,7 +51,7 @@ final class PendingSkipFailedEffect extends PendingEffect {
   final StackTrace stackTrace;
 }
 
-@Riverpod(dependencies: [pendingTransactionRepository])
+@Riverpod(keepAlive: true, dependencies: [pendingTransactionRepository])
 class PendingController extends _$PendingController {
   PendingSkipScheduled? _skipScheduled;
   Timer? _undoTimer;
@@ -111,12 +110,7 @@ class PendingController extends _$PendingController {
     );
     _composer?.notifySkipChanged();
 
-    _effectListener?.call(
-      PendingSkipStartedEffect(
-        pendingId: pendingId,
-        ruleName: _findRuleName(pendingId),
-      ),
-    );
+    _effectListener?.call(PendingSkipStartedEffect(pendingId: pendingId));
 
     _undoTimer = Timer(kUndoWindow, () async {
       final pending = _skipScheduled;
@@ -152,11 +146,6 @@ class PendingController extends _$PendingController {
     try {
       await ref.read(pendingTransactionRepositoryProvider).reject(pendingId);
     } catch (error, stackTrace) {
-      _skipScheduled = PendingSkipScheduled(
-        pendingId: pendingId,
-        scheduledFor: DateTime.now(),
-      );
-      _composer?.notifySkipChanged();
       _effectListener?.call(PendingSkipFailedEffect(error, stackTrace));
     }
   }
