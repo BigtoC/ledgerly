@@ -10,7 +10,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../app/providers/repository_providers.dart';
 import '../../data/models/account.dart';
 import '../../data/models/category.dart';
 import '../../l10n/app_localizations.dart';
@@ -23,6 +22,7 @@ import '../transactions/widgets/calculator_keypad.dart';
 import '../transactions/widgets/category_chip.dart';
 import 'recurring_rule_form_controller.dart';
 import 'recurring_rule_form_state.dart';
+import 'recurring_rules_providers.dart';
 
 class RecurringRuleFormScreen extends ConsumerStatefulWidget {
   const RecurringRuleFormScreen({super.key, this.ruleId});
@@ -528,30 +528,25 @@ class _AccountPickerTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncAccounts = ref.watch(accountRepositoryProvider).watchAll();
-    return StreamBuilder<List<Account>>(
-      stream: asyncAccounts,
-      builder: (ctx, snapshot) {
-        final list = snapshot.data ?? const <Account>[];
-        Account? selected;
+    final asyncAccounts = ref.watch(recurringActiveAccountsProvider);
+    final selected = asyncAccounts.maybeWhen(
+      data: (list) {
         final id = state.accountId;
-        if (id != null) {
-          for (final a in list) {
-            if (a.id == id) {
-              selected = a;
-              break;
-            }
-          }
+        if (id == null) return null;
+        for (final account in list) {
+          if (account.id == id) return account;
         }
-        return AccountSelectorTile(
-          key: const ValueKey('recurringForm:accountPicker'),
-          account: selected,
-          hasError: state.accountError != null,
-          onTap: () async {
-            final picked = await showAccountPickerSheet(context);
-            if (picked != null) onPick(picked);
-          },
-        );
+        return null;
+      },
+      orElse: () => null,
+    );
+    return AccountSelectorTile(
+      key: const ValueKey('recurringForm:accountPicker'),
+      account: selected,
+      hasError: state.accountError != null,
+      onTap: () async {
+        final picked = await showAccountPickerSheet(context);
+        if (picked != null) onPick(picked);
       },
     );
   }
