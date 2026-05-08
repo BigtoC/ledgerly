@@ -17,7 +17,8 @@ part 'categories_state.freezed.dart';
 
 /// Affordance hint computed by the controller for a row (plan §7).
 ///
-/// - `isReferenced(id) == true` → archive
+/// - `isReferenced(id) == true` (transactions or active recurring rules)
+///   → archive
 /// - `l10nKey != null` (seeded row), referenced or not → archive
 /// - `l10nKey == null` AND `isReferenced(id) == false` (custom unused) →
 ///   delete
