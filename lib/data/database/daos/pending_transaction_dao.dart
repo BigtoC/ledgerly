@@ -59,13 +59,17 @@ class PendingTransactionDao extends DatabaseAccessor<AppDatabase>
   /// not render correctly for blockchain rows. Wallet sync (Phase 2) will
   /// either drop this filter or replace this stream with a `watchAllForUI`.
   Stream<List<PendingTransactionRow>> watchAll() {
-    return (select(pendingTransactions)
-          ..where((t) => t.source.equals('recurring'))
-          ..orderBy([
-            (t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc),
-            (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
-          ]))
-        .watch();
+    return customSelect(
+      'SELECT p.* '
+      'FROM pending_transactions p '
+      'LEFT JOIN accounts a ON a.id = p.account_id '
+      'LEFT JOIN categories c ON c.id = p.category_id '
+      "WHERE p.source = 'recurring' "
+      'ORDER BY p.date DESC, p.id DESC',
+      readsFrom: {pendingTransactions, accounts, categories},
+    ).watch().map(
+      (rows) => rows.map((row) => pendingTransactions.map(row.data)).toList(),
+    );
   }
 
   /// Load a single pending row by id, or null if not found.

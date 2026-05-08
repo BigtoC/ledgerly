@@ -68,14 +68,10 @@ final class DriftPendingTransactionRepository
   DriftPendingTransactionRepository(
     this._db, {
     required TransactionRepository txRepo,
-    DateTime Function()? clock,
-  }) : _txRepo = txRepo,
-       _clock = clock ?? DateTime.now;
+  }) : _txRepo = txRepo;
 
   final drift.AppDatabase _db;
   final TransactionRepository _txRepo;
-  // ignore: unused_field
-  final DateTime Function() _clock;
 
   PendingTransactionDao get _dao => _db.pendingTransactionDao;
 
