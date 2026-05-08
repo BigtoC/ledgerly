@@ -35,6 +35,14 @@ class CurrencyDao extends DatabaseAccessor<AppDatabase>
     )..where((c) => c.code.equals(code))).getSingleOrNull();
   }
 
+  /// Fetch every currency row whose code is in [codes]. Returns a list — the
+  /// caller is expected to index by `code` since SQLite IN queries do not
+  /// preserve input order.
+  Future<List<Currency>> findByCodes(List<String> codes) {
+    if (codes.isEmpty) return Future.value(const []);
+    return (select(currencies)..where((c) => c.code.isIn(codes))).get();
+  }
+
   /// Bulk upsert used by the M3 seed. Inserts with
   /// `InsertMode.insertOrIgnore` so re-seed passes do not duplicate.
   /// Returns the number of rows processed.
