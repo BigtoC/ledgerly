@@ -123,18 +123,16 @@ class _RuleList extends ConsumerWidget {
             );
           },
           onResume: () async {
-            await controller.resumeRule(rule.id);
+            final updated = await controller.resumeRule(rule.id);
             if (!ctx.mounted) return;
-            final updated = rules.firstWhere(
-              (r) => r.id == rule.id,
-              orElse: () => rule,
-            );
             ScaffoldMessenger.of(ctx).showSnackBar(
               SnackBar(
                 content: Text(
                   l10n.recurringResumedSnack(
                     rule.name,
-                    DateFormat.yMMMd().format(updated.nextDueDate),
+                    DateFormat.yMMMd().format(
+                      updated?.nextDueDate ?? rule.nextDueDate,
+                    ),
                   ),
                 ),
               ),

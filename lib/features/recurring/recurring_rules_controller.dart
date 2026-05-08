@@ -66,10 +66,10 @@ class RecurringRulesController extends _$RecurringRulesController {
         .setActive(id, active: false);
   }
 
-  Future<void> resumeRule(int id) async {
-    await ref
-        .read(recurringRulesRepositoryProvider)
-        .setActive(id, active: true);
+  Future<RecurringRule?> resumeRule(int id) async {
+    final repo = ref.read(recurringRulesRepositoryProvider);
+    await repo.setActive(id, active: true);
+    return repo.getById(id);
   }
 
   Future<void> deleteRule(int id) async {
