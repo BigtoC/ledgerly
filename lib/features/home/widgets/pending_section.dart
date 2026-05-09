@@ -17,6 +17,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/constants.dart';
 import '../../../core/utils/color_palette.dart';
+import '../../../core/utils/date_helpers.dart';
 import '../../../core/utils/icon_registry.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../../../data/models/account.dart';
@@ -24,7 +25,9 @@ import '../../../data/models/category.dart';
 import '../../../data/models/pending_transaction.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../categories/widgets/category_display.dart';
+import '../home_controller.dart';
 import '../home_providers.dart';
+import '../home_state.dart';
 import '../pending_controller.dart';
 import '../pending_state.dart';
 import 'pending_badge.dart';
@@ -134,10 +137,22 @@ class _PendingSectionState extends ConsumerState<PendingSection> {
 
     final l10n = AppLocalizations.of(context);
 
+    final selectedDay = _selectedDay(ref);
     final skipId = data.skipScheduled?.pendingId;
-    final visible = skipId == null
-        ? data.items
-        : data.items.where((item) => item.id != skipId).toList();
+    final visible = data.items
+        .where((item) {
+          if (item.id == skipId) return false;
+          // Day-scope: only show pending rows whose date matches the day the
+          // user is currently viewing on Home. A globally rendered section
+          // misled users into approving today-dated tiles while looking at a
+          // past day's view (see plan doc → "Pin PendingSection to selectedDay").
+          if (selectedDay != null &&
+              !DateHelpers.isSameDay(item.date, selectedDay)) {
+            return false;
+          }
+          return true;
+        })
+        .toList(growable: false);
 
     if (visible.isEmpty) {
       return const SliverToBoxAdapter(child: SizedBox.shrink());
@@ -194,7 +209,15 @@ class _PendingSectionState extends ConsumerState<PendingSection> {
                         : null,
                     account: accounts[item.accountId],
                     locale: locale,
-                    onApprove: () => notifier.approve(item.id),
+                    onApprove: () async {
+                      final success = await notifier.approve(item.id);
+                      if (success && mounted) {
+                        await ref
+                            .read(homeControllerProvider.notifier)
+                            .pinDay(item.date);
+                      }
+                      return success;
+                    },
                     onSkip: () {
                       unawaited(notifier.skip(item.id));
                     },
@@ -217,6 +240,21 @@ class _PendingSectionState extends ConsumerState<PendingSection> {
         ),
       ),
     );
+  }
+
+  /// The day Home is currently focused on. Returns the stored
+  /// `selectedDay` for `HomeData` and `HomeEmpty` states; otherwise null
+  /// (loading/error), which disables the day-scope filter.
+  DateTime? _selectedDay(WidgetRef ref) {
+    final s = ref.watch(homeControllerProvider);
+    if (s is AsyncData<HomeState>) {
+      return switch (s.value) {
+        HomeData(:final selectedDay) => selectedDay,
+        HomeEmpty(:final selectedDay) => selectedDay,
+        _ => null,
+      };
+    }
+    return null;
   }
 }
 
