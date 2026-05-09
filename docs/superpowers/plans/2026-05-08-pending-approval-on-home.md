@@ -63,17 +63,21 @@ Approve has **no undo**. Skip has a 4-second `kUndoWindow` undo via SnackBar. Th
 
 **Reverse this if:** support reports of accidental approves exceed reports of "approve felt scary / I wish it confirmed first." The fallback is to mirror skip's pattern: insert immediately + show "Approved — Undo" snack for `kUndoWindow`; on undo, delete the inserted tx and re-insert the pending row.
 
-### PendingSection placement (global section in day-scoped scroll — accepted)
+### PendingSection scopes to selectedDay (REVERSED 2026-05-09 — was global)
 
-`PendingSection` mounts inside the same `CustomScrollView` as the day-filtered transaction list, but its content is global — it shows all pending rows regardless of `selectedDay`. The visual model says "everything in this scroll is the day's data" but the section breaks that invariant.
+`PendingSection` now filters tiles to the day Home is currently viewing: a row is rendered only when `pending.date` matches `homeControllerProvider.state.selectedDay`. The previous v1 design rendered all pending rows globally regardless of which day the user was on.
 
-We accept this for v1 because:
+We reversed the global design after a user report on 2026-05-09 (rule "每天" / `feature/home-page-pending-tx`) hit exactly the failure mode the original decision flagged as the reverse trigger: **"I thought these were yesterday's transactions."** The user navigated to a past day's Home view, saw a (today-dated) pending tile still rendered, mistook it for a past-day pending, tapped approve, and received a tx dated today. The day-scope filter eliminates that misread:
 
-1. The section auto-hides when there are no pending rows (most days for most users), so the inconsistency is invisible.
-2. The PendingBadge in the header carries the count, signalling the section is its own scope.
-3. Mounting outside the scroll (e.g., as a persistent header) would either eat vertical space when empty or require a separate layout pass.
+- Today view → only today's pendings.
+- A past-day view → only that day's pendings (commonly empty for fresh rules, since daily rules don't backfill before creation).
+- The recording then naturally lands on the day the user is already looking at, because they had to navigate there to see and approve the tile.
 
-**Reverse this if:** N pending rows persistently >= the cap (`_kPendingCollapseThreshold = 5`) for a meaningful share of users, or usability testing surfaces "I thought these were yesterday's transactions." Fallback: filter pending rows by `selectedDay`, OR mount above the day-nav header in a structural location.
+**Reverse this if:** users report wanting a single overview of all overdue pendings without navigating day-by-day. Fallback: add a separate "All pending" sheet route (e.g., from a count badge) and keep the home-screen section day-scoped.
+
+### Pin-day-after-approve (kept as a defensive no-op)
+
+`PendingSection.onApprove` still calls `homeControllerProvider.notifier.pinDay(item.date)` after a successful approve. With day-scoping, `item.date` already equals `selectedDay`, so the call is a no-op. Kept because (a) it's one line, (b) it makes the post-approve invariant explicit, and (c) it survives any future code path that lets the user approve a tile from a non-matching day (e.g., a search affordance, an "All pending" sheet).
 
 ### Visible-tile cap (5 with "Show N more" — chosen, simple)
 
@@ -2979,7 +2983,7 @@ The following are intentionally not in v1. Each lists a concrete tripwire so the
 - **Home-level surface for cold-start generation failures.** If `runRecurringGenerationFn` throws, the failure is silent — discoverable only via the rule's error icon at `/settings/recurring`. *Tripwire:* the first user-reported missed-rule incident, OR Sentry/local crash logs (Phase 2) show `RecurringGenerationException` rate exceed 0.5% of cold starts. *Lightweight fallback:* a one-line `MaterialBanner` at the top of HomeScreen reading "Some recurring entries didn't generate. Tap to review." linking to `/settings/recurring`.
 - **Approve undo.** See *Decisions and Trade-offs → Approve reversibility*. *Tripwire:* support reports of accidental approves exceed reports of "approve felt scary." *Fallback:* mirror the skip pattern with insert-then-delete-on-undo.
 - **Source-aware blockchain pending tile.** `watchAll` filters `source = 'recurring'` for v1. Wallet sync (Phase 2) ships its own UI design.
-- **Per-day pending anchoring.** PendingSection is global within HomeScreen. *Tripwire:* see *Decisions and Trade-offs → PendingSection placement*.
+- **Per-day pending anchoring.** PendingSection now scopes tiles to `selectedDay` (reversed 2026-05-09 from the original global design). See *Decisions and Trade-offs → PendingSection scopes to selectedDay*. The remaining open question: provide an "All pending" overview (e.g., a count badge that opens a sheet listing every pending row) for users who don't want to navigate day-by-day.
 
 ---
 
