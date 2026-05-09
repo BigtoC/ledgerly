@@ -244,6 +244,17 @@
   "analysisPlaceholderTitle": "分析功能将在第二阶段推出",
   "analysisPlaceholderBody": "图表和摘要将在第二阶段上线后显示。",
 
+  "analysisTitle": "分析",
+  "analysisSearchHint": "搜索交易记录…",
+  "analysisSearchPrompt": "搜索备注以查找过往交易",
+  "analysisNoResults": "未找到交易记录",
+  "analysisTransactionCount": "{count} 笔交易",
+  "@analysisTransactionCount": {
+    "placeholders": {"count": {"type": "int", "format": "decimalPattern"}}
+  },
+  "analysisSearchTotal": "总计",
+  "analysisErrorMessage": "搜索时发生错误",
+
   "settingsRecurringTile": "周期性交易",
   "recurringRulesTitle": "周期性交易",
   "recurringEmptyHeading": "还没有周期性规则",

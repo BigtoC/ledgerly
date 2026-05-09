@@ -1324,6 +1324,48 @@ abstract class AppLocalizations {
   /// **'Charts and summaries will appear here once Phase 2 lands.'**
   String get analysisPlaceholderBody;
 
+  /// Analysis tab AppBar title
+  ///
+  /// In en, this message translates to:
+  /// **'Analysis'**
+  String get analysisTitle;
+
+  /// SearchBar placeholder on Analysis
+  ///
+  /// In en, this message translates to:
+  /// **'Search transactions…'**
+  String get analysisSearchHint;
+
+  /// Idle-state copy under the search icon
+  ///
+  /// In en, this message translates to:
+  /// **'Search memos to find past transactions'**
+  String get analysisSearchPrompt;
+
+  /// Empty-state copy when query has no matches
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions found'**
+  String get analysisNoResults;
+
+  /// Count of matching transactions in a category card
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{{count} transaction} other{{count} transactions}}'**
+  String analysisTransactionCount(int count);
+
+  /// Header label for the overall sum on the detail page
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get analysisSearchTotal;
+
+  /// User-facing error copy when the search stream errors (Drift error, schema corruption, etc.)
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong while searching'**
+  String get analysisErrorMessage;
+
   /// Settings entry-point label for the recurring rules screen.
   ///
   /// In en, this message translates to:
