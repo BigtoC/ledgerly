@@ -16,7 +16,7 @@ The Analysis tab is currently a Phase 2 placeholder showing a "coming soon" icon
 - **Idle state:** Current placeholder remains until the user types.
 - **Results (Level 1):** Grouped by (category, currency) — each card shows count + total sum for that category+currency pair. A category with transactions in multiple currencies appears as multiple cards (consistent with Home's per-currency grouping).
 - **Drill-down (Level 2):** Tap category → new page with matching transactions for that category grouped by date, with overall sum header.
-- **Navigation:** Route carries `categoryId` as path param and `memo` query as query param.
+- **Navigation:** Route path is `/analysis/search/:categoryId` (path param). The search string is passed as the URL query parameter `?q=<query>`.
 
 No DB migration is required. The search feature adds one DAO method, one repository method, one controller, one state file, two screens, and l10n keys.
 
@@ -92,8 +92,8 @@ abstract class CategorySearchResult with _$CategorySearchResult {
   const factory CategorySearchResult({
     required int categoryId,
     required String categoryName,
-    required IconData categoryIcon,
-    required Color categoryColor,
+    required String categoryIconKey,    // resolved at the widget via iconForKey()
+    required int categoryColorIndex,    // resolved at the widget via colorForIndex()
     required CategoryType categoryType, // expense | income (Freezed enum)
     required int transactionCount,
     required int totalAmountMinorUnits,
@@ -106,7 +106,8 @@ abstract class CategorySearchResult with _$CategorySearchResult {
 
 `lib/features/analysis/analysis_controller.dart` — Riverpod `StreamNotifier<AnalysisState>`:
 
-- **Dependencies:** `TransactionRepository`, `CategoryRepository`, `CurrencyRepository` (for symbol on the sum display)
+- **Annotation:** `@Riverpod(keepAlive: true, dependencies: [transactionRepository, categoryRepository])` — `keepAlive: true` is required so the typed query and result list survive navigation to the detail screen and back (matches `HomeController`'s pattern).
+- **Dependencies:** `TransactionRepository`, `CategoryRepository`. (Currency display data is already populated on `Transaction.currency` by `_rowsToDomain`, so `CurrencyRepository` is not needed here.)
 - **Command:** `updateQuery(String query)` — called by the search bar's `onChanged`
 - **Behavior:**
   1. Empty/whitespace query → emit `AnalysisState.idle()`
@@ -117,7 +118,20 @@ abstract class CategorySearchResult with _$CategorySearchResult {
 
 **Debounce implementation:** Use a `Timer` field in the controller. On each `updateQuery` call, cancel the previous timer and start a new 300ms timer that triggers the stream subscription. This avoids creating Drift stream subscriptions on every keystroke. `ref.onDispose` must cancel the timer to avoid leaks, matching the pattern in `HomeController` (`_undoTimer`).
 
-**Category resolution:** The controller batches category lookups — collects all `categoryId` values from the transaction list, calls `CategoryRepository.getById` for each (or uses a pre-cached map from `analysisProviders.dart`), and assembles `CategorySearchResult` with the resolved display name, icon, and color. Archived categories are included in results (transactions referencing archived categories still exist and should be searchable). Display name uses `customName ?? l10n(l10nKey)` following the existing pattern.
+**Category resolution:** The controller `ref.watch`es `analysisCategoriesByIdProvider` (defined in `analysis_providers.dart`, see below) — a `StreamProvider<Map<int, Category>>` backed by `categoryRepository.watchAll(includeArchived: true)`. It composes this map with the transaction stream so renames/archives flow through reactively. For each transaction in the result set, it looks up the category in the map and assembles `CategorySearchResult` with `categoryIconKey` (the registry key) and `categoryColorIndex` (the palette index) — the widget resolves these to `IconData`/`Color` at render time via `iconForKey` / `colorForIndex`. Archived categories are included in results (transactions referencing archived categories still exist and should be searchable). Display name uses `customName ?? l10n(l10nKey)` following the existing pattern.
+
+### Slice-local providers (`analysis_providers.dart`)
+
+```dart
+@Riverpod(keepAlive: true)
+Stream<Map<int, Category>> analysisCategoriesById(Ref ref) {
+  return ref.watch(categoryRepositoryProvider)
+      .watchAll(includeArchived: true)
+      .map((cats) => {for (final c in cats) c.id: c});
+}
+```
+
+Mirrors `homeCategoriesByIdProvider` in `lib/features/home/home_providers.dart`. Live stream means category renames or archive toggles propagate to active search results without restarting the search.
 
 ---
 
@@ -157,7 +171,7 @@ Card / ListTile
   Trailing: formatted total sum (with currency symbol, sign derived from category type)
 ```
 
-- Tapping navigates to `/analysis/search/:categoryId?q=<memo>`
+- Tapping navigates to `/analysis/search/:categoryId` with the search string passed as the URL query parameter `?q=<query>`
 - Amount sign: expense → negative (red), income → positive (green) — using existing color conventions from Home
 
 ---
@@ -168,10 +182,10 @@ Card / ListTile
 
 ### Route
 
-`/analysis/search/:categoryId?q=<memo>` — pushed onto the shell route navigator.
+Path: `/analysis/search/:categoryId` (registered as a child route of the `/analysis` shell branch). The search string is passed as a URL query parameter (`?q=<query>`), not as part of the path.
 
 - `:categoryId` — int path parameter
-- `?q=<memo>` — query parameter (URL-encoded by go_router automatically)
+- `?q=<query>` — URL query parameter (URL-encoded by go_router automatically)
 
 ### Layout
 
@@ -216,11 +230,11 @@ abstract class DatedTransactionGroup with _$DatedTransactionGroup {
 }
 ```
 
-`lib/features/analysis/category_search_detail_controller.dart` — `@riverpod` `StreamNotifier` family keyed on `(int categoryId, String memo)`:
+`lib/features/analysis/category_search_detail_controller.dart` — `@riverpod` `StreamNotifier` family keyed on `(int categoryId, String query)`:
 
 - **Dependencies:** `TransactionRepository`, `AccountRepository` (for tile display)
 - **Behavior:**
-  1. Subscribe to `TransactionRepository.watchByMemo(memo)`
+  1. Subscribe to `TransactionRepository.watchByMemo(query)`
   2. Filter to `transaction.categoryId == categoryId`
   3. Group by `DateHelpers.startOfDay(transaction.date)`
   4. Compute per-day sums and overall sum
@@ -242,10 +256,10 @@ GoRoute(
   builder: (context, state) {
     final categoryId = int.tryParse(state.pathParameters['categoryId'] ?? '');
     if (categoryId == null) return const AnalysisScreen(); // guard
-    final memo = state.uri.queryParameters['q'] ?? '';
+    final query = state.uri.queryParameters['q'] ?? '';
     return CategorySearchDetailScreen(
       categoryId: categoryId,
-      query: memo,
+      query: query,
     );
   },
 ),
@@ -278,7 +292,7 @@ New keys in `app_en.arb`, `app_zh_TW.arb`, `app_zh_CN.arb`:
 |-------------------------------------------------------------------------|-------------|--------------------------------------|
 | `lib/features/analysis/analysis_state.dart`                             | UI / state  | Freezed state union                  |
 | `lib/features/analysis/analysis_controller.dart`                        | UI / state  | StreamNotifier with debounce         |
-| `lib/features/analysis/analysis_providers.dart`                         | UI / state  | Slice-local category lookup provider |
+| `lib/features/analysis/analysis_providers.dart`                         | UI / state  | `analysisCategoriesByIdProvider` (live category map) |
 | `lib/features/analysis/category_search_detail_state.dart`               | UI / state  | Detail screen Freezed state          |
 | `lib/features/analysis/category_search_detail_controller.dart`          | UI / state  | Detail screen family StreamNotifier  |
 | `lib/features/analysis/category_search_detail_screen.dart`              | UI / widget | Drill-down page                      |
