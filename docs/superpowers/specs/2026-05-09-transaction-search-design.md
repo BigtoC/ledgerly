@@ -246,7 +246,7 @@ Scaffold
             Color matches Level 1 (expense → red, income → green).
     ListView (grouped by date)
       Date header: DateFormat.yMMMd(locale).format(date)
-      Transaction tiles (Home's TransactionTile, see below)
+      Transaction rows (read-only TransactionSearchRow, see below)
       Per-day subtotal: signForType * day.daySumMinorUnits formatted in state.currency,
                         same sign/color rules as Level 1
 ```
@@ -282,7 +282,7 @@ abstract class DatedTransactionGroup with _$DatedTransactionGroup {
 `lib/features/analysis/category_search_detail_controller.dart` — `@riverpod` family keyed on `(int categoryId, String query, String currencyCode)`:
 
 - **Annotation:** `@Riverpod(dependencies: [transactionRepository])`. Family members are short-lived (tied to the detail page navigation), so `keepAlive: true` is unnecessary — the page is rebuilt fresh on each push.
-- **Dependencies (runtime):** `transactionRepositoryProvider` (direct watch). The detail controller does *not* depend on `AccountRepository` or `CategoryRepository` — both are widget-side concerns: `TransactionTile` takes `Account?` / `Category?` directly, and the detail screen resolves them via `analysisAccountsByIdProvider` and `analysisCategoriesByIdProvider`. The detail controller only needs `Transaction` rows.
+- **Dependencies (runtime):** `transactionRepositoryProvider` (direct watch). The detail controller does *not* depend on `AccountRepository` or `CategoryRepository` — both are widget-side concerns: `TransactionSearchRow` takes `Account?` / `Category?` directly, and the detail screen resolves them via `analysisAccountsByIdProvider` and `analysisCategoriesByIdProvider`. The detail controller only needs `Transaction` rows.
 - **Currency in state:** the route's `currencyCode` string is upgraded to a full `Currency` value object inside the controller by reading the first emission's `transaction.currency` (every matching transaction shares the currency by construction of step 2's filter). If no transaction matches, the state is `DetailEmpty` and the AppBar header carries no sum.
 - **Behavior:**
   1. Subscribe to `TransactionRepository.watchByMemo(query)`. Guard: if `query` is empty/whitespace at family-key time, the controller emits `DetailEmpty` immediately and never subscribes (matches the router's empty-`q` guard, defense-in-depth).
@@ -293,26 +293,44 @@ abstract class DatedTransactionGroup with _$DatedTransactionGroup {
 
 ### Transaction tiles
 
-Reuse `TransactionTile` from `lib/features/home/widgets/transaction_tile.dart`. The widget already accepts resolved `Category?` / `Account?` and a `locale`, so the detail screen feeds it directly:
+Search-result rows are **read-only** — no tap, no swipe, no overflow menu. Editing, duplicating, and deleting are deliberately out of scope from the search-detail context: a search result is a *view* over transactions, and mutations from a filtered view would silently change the result set under the user.
+
+Home's `TransactionTile` (`lib/features/home/widgets/transaction_tile.dart`) is built around the interactive model — `Slidable` wrapper, `DismissiblePane`, `PopupMenuButton` with edit/duplicate/delete — so reusing it would require nullable-callbacks plumbing that fights its own documentation ("Primary tap → edit. Overflow → Edit / Duplicate / Delete."). A separate read-only widget is cleaner.
+
+`lib/features/analysis/widgets/transaction_search_row.dart` — new presentational widget:
 
 ```dart
-TransactionTile(
-  transaction: tx,
-  category:    categoriesById[tx.categoryId],   // analysisCategoriesByIdProvider
-  account:     accountsById[tx.accountId],      // analysisAccountsByIdProvider
-  locale:      Localizations.localeOf(context).toLanguageTag(),
-  onTap:       () => context.push('/home/edit/${tx.id}'),
-  onDuplicate: () => context.push('/home/edit?duplicate=${tx.id}'),  // same as Home
-  onDelete:    null,  // see below
-);
+class TransactionSearchRow extends StatelessWidget {
+  const TransactionSearchRow({
+    super.key,
+    required this.transaction,
+    required this.category,
+    required this.account,
+    required this.locale,
+  });
+
+  final Transaction transaction;
+  final Category? category; // resolved via analysisCategoriesByIdProvider
+  final Account?  account;  // resolved via analysisAccountsByIdProvider
+  final String    locale;
+
+  @override
+  Widget build(BuildContext context) {
+    // ListTile only — no Slidable, no PopupMenuButton, no onTap.
+    // Visual layout (leading icon, title, subtitle = "account • memo",
+    // trailing signed amount with type-driven color) matches Home's
+    // TransactionTile so the two screens feel consistent.
+    // Amount formatting reuses MoneyFormatter.formatSigned with
+    // sign derived from category.type (same switch as TransactionTile).
+  }
+}
 ```
 
-`TransactionTile` requires `onDelete` as non-nullable today — which is correct for Home (swipe-to-delete is a primary gesture there) but wrong for a search-results context where deletion would silently mutate the result set under the user. Two options:
+The amount-formatting logic is identical to `TransactionTile`'s `switch (cat?.type)` block. Either:
+- Duplicate the 10-line switch (acceptable — three lines is not abstraction-worthy, ten arguably is) — **preferred for now**, or
+- Extract `MoneyFormatter.signedAmount(transaction, category, locale)` and call it from both. Defer until a third caller appears.
 
-1. **Preferred:** Make `TransactionTile.onDelete` nullable; when null, the widget hides the swipe action and the overflow menu's Delete entry. Small refactor on the Home tile, no behavior change for Home (which always passes a callback).
-2. **Fallback if (1) is rejected in review:** Forward `onDelete` to the same handler Home uses (`TransactionRepository.delete` + 4-second undo) and live with the UX wart. This couples Analysis to Home's `PendingDelete` plumbing and is not recommended.
-
-Spec assumes option (1). Pull request that lands this feature must include the `TransactionTile` signature change and a Home-side regression test confirming swipe-to-delete still works there.
+No changes required to `TransactionTile` or to the Home feature.
 
 ---
 
@@ -378,6 +396,7 @@ New keys in `app_en.arb`, `app_zh.arb`, `app_zh_TW.arb`, `app_zh_CN.arb` (the ba
 | `lib/features/analysis/category_search_detail_controller.dart`          | UI / state  | Detail screen family `StreamNotifier`                                  |
 | `lib/features/analysis/category_search_detail_screen.dart`              | UI / widget | Drill-down page                                                        |
 | `lib/features/analysis/widgets/category_search_tile.dart`               | UI / widget | Category result card                                                   |
+| `lib/features/analysis/widgets/transaction_search_row.dart`             | UI / widget | Read-only transaction row for the detail screen                        |
 | `lib/features/analysis/widgets/analysis_search_placeholder.dart`        | UI / widget | Idle-state prompt (replaces Phase 2 placeholder)                       |
 | `test/unit/controllers/analysis_controller_test.dart`                   | Test        | Controller unit tests                                                  |
 | `test/unit/controllers/category_search_detail_controller_test.dart`     | Test        | Detail controller unit tests                                           |
@@ -392,7 +411,6 @@ New keys in `app_en.arb`, `app_zh.arb`, `app_zh_TW.arb`, `app_zh_CN.arb` (the ba
 | `lib/data/database/daos/transaction_dao.dart` | Add `watchByMemo` (with empty-query short-circuit) |
 | `lib/data/repositories/transaction_repository.dart` | Add `watchByMemo` returning `Stream<List<Transaction>>` |
 | `lib/features/analysis/analysis_screen.dart` | Rewrite (SearchBar + state-driven body) |
-| `lib/features/home/widgets/transaction_tile.dart` | Make `onDelete` nullable; hide swipe + overflow Delete when null |
 | `lib/app/router.dart` | Add `search/:categoryId` route under `/analysis` with `q`/`c` guards |
 | `l10n/app_en.arb` | Add 6 new keys (`analysisTitle`, `analysisSearchHint`, `analysisSearchPrompt`, `analysisNoResults`, `analysisTransactionCount`, `analysisSearchTotal`) |
 | `l10n/app_zh.arb` | Add same 6 keys (base zh required by `flutter_localizations`) |
