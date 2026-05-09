@@ -2,9 +2,9 @@
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../app/providers/repository_providers.dart';
-import '../../core/utils/date_helpers.dart';
-import '../../data/models/transaction.dart';
+import '../../../app/providers/repository_providers.dart';
+import '../../../core/utils/date_helpers.dart';
+import '../../../data/models/transaction.dart';
 import 'category_search_detail_state.dart';
 
 part 'category_search_detail_controller.g.dart';

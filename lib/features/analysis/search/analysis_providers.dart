@@ -7,9 +7,9 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../app/providers/repository_providers.dart';
-import '../../data/models/account.dart';
-import '../../data/models/category.dart';
+import '../../../app/providers/repository_providers.dart';
+import '../../../data/models/account.dart';
+import '../../../data/models/category.dart';
 
 /// `id → Category` lookup (active + archived) for search-result tiles.
 final analysisCategoriesByIdProvider =

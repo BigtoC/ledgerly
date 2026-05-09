@@ -5,10 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
-import 'analysis_controller.dart';
-import 'analysis_state.dart';
-import 'widgets/analysis_search_placeholder.dart';
-import 'widgets/category_search_tile.dart';
+import 'search/analysis_controller.dart';
+import 'search/analysis_state.dart';
+import 'search/widgets/analysis_search_placeholder.dart';
+import 'search/widgets/category_search_tile.dart';
 
 /// Material 3 SearchBar default height (56dp).
 const double _kSearchBarBaseHeight = 56;

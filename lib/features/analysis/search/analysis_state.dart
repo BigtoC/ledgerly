@@ -8,8 +8,8 @@
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../data/models/category.dart';
-import '../../data/models/currency.dart';
+import '../../../data/models/category.dart';
+import '../../../data/models/currency.dart';
 
 part 'analysis_state.freezed.dart';
 

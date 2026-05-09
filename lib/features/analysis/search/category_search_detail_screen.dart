@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../core/utils/money_formatter.dart';
-import '../../data/models/category.dart';
-import '../../l10n/app_localizations.dart';
-import '../categories/widgets/category_display.dart';
+import '../../../core/utils/money_formatter.dart';
+import '../../../data/models/category.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../categories/widgets/category_display.dart';
 import 'analysis_providers.dart';
 import 'category_search_detail_controller.dart';
 import 'category_search_detail_state.dart';

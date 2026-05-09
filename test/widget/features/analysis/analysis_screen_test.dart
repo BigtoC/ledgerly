@@ -12,8 +12,8 @@ import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/features/analysis/analysis_screen.dart';
-import 'package:ledgerly/features/analysis/category_search_detail_screen.dart';
-import 'package:ledgerly/features/analysis/widgets/analysis_search_placeholder.dart';
+import 'package:ledgerly/features/analysis/search/category_search_detail_screen.dart';
+import 'package:ledgerly/features/analysis/search/widgets/analysis_search_placeholder.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockTransactionRepository extends Mock

@@ -8,14 +8,14 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../core/utils/color_palette.dart';
-import '../../../core/utils/icon_registry.dart';
-import '../../../core/utils/money_formatter.dart';
-import '../../../data/models/account.dart';
-import '../../../data/models/category.dart';
-import '../../../data/models/transaction.dart';
-import '../../../l10n/app_localizations.dart';
-import '../../categories/widgets/category_display.dart';
+import '../../../../core/utils/color_palette.dart';
+import '../../../../core/utils/icon_registry.dart';
+import '../../../../core/utils/money_formatter.dart';
+import '../../../../data/models/account.dart';
+import '../../../../data/models/category.dart';
+import '../../../../data/models/transaction.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../categories/widgets/category_display.dart';
 
 class TransactionSearchRow extends StatelessWidget {
   const TransactionSearchRow({

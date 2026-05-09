@@ -7,7 +7,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../features/accounts/account_form_screen.dart';
 import '../features/analysis/analysis_screen.dart';
-import '../features/analysis/category_search_detail_screen.dart';
+import '../features/analysis/search/category_search_detail_screen.dart';
 import '../features/categories/categories_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/recurring/recurring_rule_form_screen.dart';
