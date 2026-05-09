@@ -790,4 +790,32 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get recurringSavedButGenerationFailed =>
       'Saved — but the first run hit an issue. We\'ll retry on the next launch.';
+
+  @override
+  String get homePendingSectionTitle => 'Pending';
+
+  @override
+  String get homePendingApprove => 'Approve';
+
+  @override
+  String get homePendingSkip => 'Skip once';
+
+  @override
+  String homePendingApprovedSnack(String ruleName) {
+    return 'Approved — $ruleName';
+  }
+
+  @override
+  String get homePendingSkippedSnack => 'Skipped this occurrence';
+
+  @override
+  String get homePendingLoadError => 'Couldn\'t load pending items.';
+
+  @override
+  String homePendingShowMore(int count) {
+    return 'Show $count more';
+  }
+
+  @override
+  String get homePendingShowFewer => 'Show fewer';
 }

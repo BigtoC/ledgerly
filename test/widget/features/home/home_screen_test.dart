@@ -23,10 +23,12 @@ import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/account.dart';
 import 'package:ledgerly/data/models/category.dart';
 import 'package:ledgerly/data/models/currency.dart';
+import 'package:ledgerly/data/models/pending_transaction.dart';
 import 'package:ledgerly/data/models/transaction.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
+import 'package:ledgerly/data/repositories/pending_transaction_repository.dart';
 import 'package:ledgerly/data/repositories/shopping_list_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/features/home/home_screen.dart';
@@ -41,6 +43,8 @@ class _MockAccountRepo extends Mock implements AccountRepository {}
 class _MockCurrencyRepo extends Mock implements CurrencyRepository {}
 
 class _MockShoppingListRepo extends Mock implements ShoppingListRepository {}
+
+class _MockPendingRepo extends Mock implements PendingTransactionRepository {}
 
 const _usd = Currency(
   code: 'USD',
@@ -104,6 +108,7 @@ void main() {
   late _MockAccountRepo accRepo;
   late _MockCurrencyRepo curRepo;
   late _MockShoppingListRepo slRepo;
+  late _MockPendingRepo pendingRepo;
 
   late StreamController<List<Transaction>> dayCtrl;
   late StreamController<List<DateTime>> activityCtrl;
@@ -120,7 +125,15 @@ void main() {
     accRepo = _MockAccountRepo();
     curRepo = _MockCurrencyRepo();
     slRepo = _MockShoppingListRepo();
+    pendingRepo = _MockPendingRepo();
     when(() => slRepo.watchCount()).thenAnswer((_) => Stream.value(0));
+    when(
+      () => pendingRepo.watchAll(),
+    ).thenAnswer((_) => Stream.value(const []));
+    when(
+      () => pendingRepo.approve(any()),
+    ).thenAnswer((_) async => throw UnimplementedError());
+    when(() => pendingRepo.reject(any())).thenAnswer((_) async {});
     dayCtrl = StreamController.broadcast();
     activityCtrl = StreamController.broadcast();
     todayTotalsCtrl = StreamController.broadcast();
@@ -168,6 +181,7 @@ void main() {
         accountRepositoryProvider.overrideWithValue(accRepo),
         currencyRepositoryProvider.overrideWithValue(curRepo),
         shoppingListRepositoryProvider.overrideWithValue(slRepo),
+        pendingTransactionRepositoryProvider.overrideWithValue(pendingRepo),
       ],
       child: MaterialApp.router(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -253,6 +267,45 @@ void main() {
       // Summary strip renders the expense label and amount; the
       // label changed from "Today expense" to "Expense" to be day-neutral.
       expect(find.text('Expense: '), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'WH02b: no-history Home still shows pending section when rows exist',
+    (tester) async {
+      // Pending date must match today's view (PendingSection is day-scoped
+      // since 2026-05-09); a past-dated row would correctly be hidden on
+      // today's default Home view and break this test's intent.
+      final today = DateTime.now();
+      final todayMidnight = DateTime(today.year, today.month, today.day);
+      when(() => pendingRepo.watchAll()).thenAnswer(
+        (_) => Stream.value([
+          PendingTransaction(
+            id: 1,
+            source: 'recurring',
+            amountMinorUnits: 1599,
+            currency: _usd,
+            categoryId: 1,
+            accountId: 1,
+            memo: 'Netflix',
+            date: todayMidnight,
+            fetchedAt: todayMidnight,
+            recurringRuleId: 1,
+          ),
+        ]),
+      );
+
+      await tester.pumpWidget(makeApp());
+      await seedAll(tester);
+      dayCtrl.add(const []);
+      activityCtrl.add(const []);
+      todayTotalsCtrl.add(const {});
+      monthNetCtrl.add(const {});
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(find.text('Netflix'), findsOneWidget);
+      expect(find.text('Pending'), findsOneWidget);
+      expect(find.text('No transactions yet'), findsNothing);
     },
   );
 

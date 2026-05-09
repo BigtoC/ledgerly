@@ -170,7 +170,7 @@ final shoppingListRepositoryProvider =
 // ignore: unused_element
 typedef ShoppingListRepositoryRef = ProviderRef<ShoppingListRepository>;
 String _$pendingTransactionRepositoryHash() =>
-    r'800478b460c3c65248a0a6b23188c1672be5f3b8';
+    r'5875072a19c741255f8c4b202cc39121822fdc82';
 
 /// See also [pendingTransactionRepository].
 @ProviderFor(pendingTransactionRepository)
@@ -181,10 +181,15 @@ final pendingTransactionRepositoryProvider =
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
           ? null
           : _$pendingTransactionRepositoryHash,
-      dependencies: <ProviderOrFamily>[appDatabaseProvider],
+      dependencies: <ProviderOrFamily>[
+        appDatabaseProvider,
+        transactionRepositoryProvider,
+      ],
       allTransitiveDependencies: <ProviderOrFamily>{
         appDatabaseProvider,
         ...?appDatabaseProvider.allTransitiveDependencies,
+        transactionRepositoryProvider,
+        ...?transactionRepositoryProvider.allTransitiveDependencies,
       },
     );
 

@@ -381,7 +381,7 @@ class _Composer {
     // transaction exists → HomeData (even if transactionsForDay is empty
     // for the selected gap day).
     if (activity.isEmpty) {
-      _out.add(HomeState.empty(selectedDay: selectedDay, pendingBadgeCount: 0));
+      _out.add(HomeState.empty(selectedDay: selectedDay));
       return;
     }
 
@@ -409,7 +409,6 @@ class _Composer {
         monthNetByCurrency: _monthNet!,
         canGoPrev: canGoPrev,
         canGoNext: canGoNext,
-        pendingBadgeCount: 0,
         pendingDelete: pending,
       ),
     );

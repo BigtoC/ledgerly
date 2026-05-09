@@ -50,4 +50,37 @@ class PendingTransactionDao extends DatabaseAccessor<AppDatabase>
             .getSingle();
     return row.read(countExp) ?? 0;
   }
+
+  /// Stream pending rows produced by recurring rules, ordered by date DESC,
+  /// id DESC.
+  ///
+  /// Filtered to `source = 'recurring'` for v1. PendingTile is shaped around
+  /// recurring-row fields (memo as title, category icon as leading) and would
+  /// not render correctly for blockchain rows. Wallet sync (Phase 2) will
+  /// either drop this filter or replace this stream with a `watchAllForUI`.
+  Stream<List<PendingTransactionRow>> watchAll() {
+    return customSelect(
+      'SELECT p.* '
+      'FROM pending_transactions p '
+      'LEFT JOIN accounts a ON a.id = p.account_id '
+      'LEFT JOIN categories c ON c.id = p.category_id '
+      "WHERE p.source = 'recurring' "
+      'ORDER BY p.date DESC, p.id DESC',
+      readsFrom: {pendingTransactions, accounts, categories},
+    ).watch().map(
+      (rows) => rows.map((row) => pendingTransactions.map(row.data)).toList(),
+    );
+  }
+
+  /// Load a single pending row by id, or null if not found.
+  Future<PendingTransactionRow?> findById(int id) {
+    return (select(
+      pendingTransactions,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
+  }
+
+  /// Delete a pending row by id. Returns the number of rows affected.
+  Future<int> rejectRow(int id) {
+    return (delete(pendingTransactions)..where((t) => t.id.equals(id))).go();
+  }
 }

@@ -313,6 +313,16 @@ const Set<String> _expectedEnKeys = <String>{
   'recurringEditWillNotAffectPending',
   'recurringRuleHasError',
   'recurringSavedButGenerationFailed',
+  // Pending approval on Home
+  // (docs/superpowers/specs/2026-05-08-pending-approval-on-home-design.md).
+  'homePendingSectionTitle',
+  'homePendingApprove',
+  'homePendingSkip',
+  'homePendingApprovedSnack',
+  'homePendingSkippedSnack',
+  'homePendingLoadError',
+  'homePendingShowMore',
+  'homePendingShowFewer',
 };
 
 Map<String, dynamic> _readArb(String fileName) {

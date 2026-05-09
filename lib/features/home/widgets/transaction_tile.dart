@@ -11,7 +11,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:intl/intl.dart';
 
 import '../../../core/utils/color_palette.dart';
 import '../../../core/utils/icon_registry.dart';
@@ -78,7 +77,6 @@ class TransactionTile extends StatelessWidget {
       ),
     };
 
-    final timeText = DateFormat.Hm(locale).format(transaction.date);
     final memo = transaction.memo;
 
     return Slidable(
@@ -104,73 +102,64 @@ class TransactionTile extends StatelessWidget {
           backgroundColor: color.withValues(alpha: 0.15),
           child: Icon(icon, color: color),
         ),
-        title: Row(
+        title: Text(
+          cat == null ? '' : categoryDisplayName(cat, l10n),
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Text(
+          memo == null || memo.isEmpty
+              ? (acc?.name ?? '')
+              : '${acc?.name ?? ''} • $memo',
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.bodySmall,
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: Text(
-                cat == null ? '' : categoryDisplayName(cat, l10n),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
             Text(
               amountText,
-              style: theme.textTheme.bodyMedium?.copyWith(
+              style: theme.textTheme.titleMedium?.copyWith(
                 color: isIncome
                     ? theme.colorScheme.primary
                     : theme.colorScheme.onSurface,
                 fontWeight: FontWeight.w600,
               ),
             ),
-          ],
-        ),
-        subtitle: Row(
-          children: [
-            Expanded(
-              child: Text(
-                memo == null || memo.isEmpty
-                    ? (acc?.name ?? '')
-                    : '${acc?.name ?? ''} • $memo',
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodySmall,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(timeText, style: theme.textTheme.bodySmall),
-          ],
-        ),
-        trailing: PopupMenuButton<_RowAction>(
-          key: ValueKey('homeTile:${transaction.id}:menu'),
-          icon: const Icon(Icons.more_vert),
-          onSelected: (action) {
-            switch (action) {
-              case _RowAction.edit:
-                onTap();
-              case _RowAction.duplicate:
-                onDuplicate();
-              case _RowAction.delete:
-                onDelete();
-            }
-          },
-          itemBuilder: (ctx) => [
-            PopupMenuItem(
-              value: _RowAction.edit,
-              child: Text(l10n.homeEditAction),
-            ),
-            PopupMenuItem(
-              value: _RowAction.duplicate,
-              child: Semantics(
-                button: true,
-                label: l10n.homeDuplicateAction,
-                child: Text(l10n.homeDuplicateAction),
-              ),
-            ),
-            PopupMenuItem(
-              value: _RowAction.delete,
-              child: Semantics(
-                button: true,
-                label: l10n.commonDelete,
-                child: Text(l10n.commonDelete),
-              ),
+            PopupMenuButton<_RowAction>(
+              key: ValueKey('homeTile:${transaction.id}:menu'),
+              icon: const Icon(Icons.more_vert),
+              onSelected: (action) {
+                switch (action) {
+                  case _RowAction.edit:
+                    onTap();
+                  case _RowAction.duplicate:
+                    onDuplicate();
+                  case _RowAction.delete:
+                    onDelete();
+                }
+              },
+              itemBuilder: (ctx) => [
+                PopupMenuItem(
+                  value: _RowAction.edit,
+                  child: Text(l10n.homeEditAction),
+                ),
+                PopupMenuItem(
+                  value: _RowAction.duplicate,
+                  child: Semantics(
+                    button: true,
+                    label: l10n.homeDuplicateAction,
+                    child: Text(l10n.homeDuplicateAction),
+                  ),
+                ),
+                PopupMenuItem(
+                  value: _RowAction.delete,
+                  child: Semantics(
+                    button: true,
+                    label: l10n.commonDelete,
+                    child: Text(l10n.commonDelete),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

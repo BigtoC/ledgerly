@@ -282,5 +282,16 @@
   "recurringEditWillNotAffectPending": "此规则目前有 {count} 笔待处理项目，以下编辑不会更改它们 — 请在主屏审核或跳过。",
   "@recurringEditWillNotAffectPending": { "placeholders": { "count": { "type": "int", "format": "compact" } } },
   "recurringRuleHasError": "此规则上次同步时出现问题。",
-  "recurringSavedButGenerationFailed": "已保存 — 但首次执行遇到问题，我们会在下次启动时重试。"
+  "recurringSavedButGenerationFailed": "已保存 — 但首次执行遇到问题，我们会在下次启动时重试。",
+
+  "homePendingSectionTitle": "待处理",
+  "homePendingApprove": "批准",
+  "homePendingSkip": "跳过此次",
+  "homePendingApprovedSnack": "已批准 — {ruleName}",
+  "@homePendingApprovedSnack": { "placeholders": { "ruleName": { "type": "String" } } },
+  "homePendingSkippedSnack": "已跳过此次",
+  "homePendingLoadError": "无法加载待处理项目。",
+  "homePendingShowMore": "再显示 {count} 项",
+  "@homePendingShowMore": { "placeholders": { "count": { "type": "int" } } },
+  "homePendingShowFewer": "显示更少"
 }

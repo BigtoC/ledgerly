@@ -7,7 +7,7 @@ part of 'recurring_rules_controller.dart';
 // **************************************************************************
 
 String _$recurringRulesControllerHash() =>
-    r'3ffa7b9b9af860d105b47a7a3fcb6e1affda15b9';
+    r'b18d5d03042b32f65cfb50e1a43fc04d834a1e1c';
 
 /// See also [RecurringRulesController].
 @ProviderFor(RecurringRulesController)

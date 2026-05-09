@@ -20,6 +20,7 @@ import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/pending_transaction_repository.dart';
 import 'package:ledgerly/data/repositories/recurring_rules_repository.dart';
+import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/services/locale_service.dart';
 import 'package:ledgerly/data/use_cases/recurring_generation_use_case.dart';
 
@@ -56,7 +57,10 @@ void main() {
 
       final basics = await _seedBasics(db);
       final repo = DriftRecurringRulesRepository(db);
-      final pendingRepo = DriftPendingTransactionRepository(db);
+      final pendingRepo = DriftPendingTransactionRepository(
+        db,
+        txRepo: DriftTransactionRepository(db),
+      );
       final useCase = RecurringGenerationUseCase(
         recurringRepo: repo,
         pendingRepo: pendingRepo,
@@ -98,6 +102,70 @@ void main() {
       expect(await pendingRepo.countByRecurringRule(ruleId), 1);
     });
 
+    test('approve on a yesterday-dated pending row records the transaction '
+        'with yesterday\'s date, not today\'s', () async {
+      // Bug repro: a daily rule has been active since yesterday. Today,
+      // the user opens the app and approves the yesterday-dated pending
+      // row from Home. The persisted Transaction must carry yesterday's
+      // date — never today's.
+      final db = newTestAppDatabase();
+      addTearDown(db.close);
+      await runTestSeed(db);
+
+      final basics = await _seedBasics(db);
+      final repo = DriftRecurringRulesRepository(db);
+      final txRepo = DriftTransactionRepository(db);
+      final pendingRepo = DriftPendingTransactionRepository(db, txRepo: txRepo);
+      final useCase = RecurringGenerationUseCase(
+        recurringRepo: repo,
+        pendingRepo: pendingRepo,
+        db: db,
+      );
+
+      final yesterday = DateTime(2026, 5, 8);
+      final today = DateTime(2026, 5, 9);
+
+      // Rule created yesterday → nextDueDate = yesterday.
+      await repo.insert(
+        RecurringRuleDraft(
+          name: 'Daily',
+          amountMinorUnits: 1599,
+          currency: basics.currency,
+          categoryId: basics.categoryId,
+          accountId: basics.accountId,
+          frequency: 'daily',
+        ),
+        today: yesterday,
+      );
+
+      // Cold-start today: generates pending rows for yesterday + today.
+      await useCase.execute(clock: () => today);
+
+      final pendingRows = await pendingRepo.watchAll().first;
+      final yesterdayPending = pendingRows.firstWhere(
+        (p) => p.date == yesterday,
+      );
+
+      // User taps approve on the yesterday-dated tile.
+      final saved = await pendingRepo.approve(yesterdayPending.id);
+
+      expect(
+        saved.date,
+        yesterday,
+        reason: 'returned Transaction must carry yesterday\'s date',
+      );
+
+      // Verify the persisted DB row directly to bypass any in-memory
+      // transformation.
+      final row = await db.transactionDao.findById(saved.id);
+      expect(row, isNotNull);
+      expect(
+        row!.date,
+        yesterday,
+        reason: 'persisted transactions row must carry yesterday\'s date',
+      );
+    });
+
     test('idempotency: running execute() twice on same day does not '
         'duplicate pending rows', () async {
       final db = newTestAppDatabase();
@@ -106,7 +174,10 @@ void main() {
 
       final basics = await _seedBasics(db);
       final repo = DriftRecurringRulesRepository(db);
-      final pendingRepo = DriftPendingTransactionRepository(db);
+      final pendingRepo = DriftPendingTransactionRepository(
+        db,
+        txRepo: DriftTransactionRepository(db),
+      );
       final useCase = RecurringGenerationUseCase(
         recurringRepo: repo,
         pendingRepo: pendingRepo,
@@ -142,7 +213,10 @@ void main() {
 
       final basics = await _seedBasics(db);
       final repo = DriftRecurringRulesRepository(db);
-      final pendingRepo = DriftPendingTransactionRepository(db);
+      final pendingRepo = DriftPendingTransactionRepository(
+        db,
+        txRepo: DriftTransactionRepository(db),
+      );
       final useCase = RecurringGenerationUseCase(
         recurringRepo: repo,
         pendingRepo: pendingRepo,
@@ -173,6 +247,88 @@ void main() {
       final rule = await repo.getById(ruleId);
       expect(rule!.nextDueDate, DateTime(2026, 5, 15));
     });
+
+    test(
+      'catch-up: 3-day-stale daily rule generates 3 dated pending rows; '
+      'approving the oldest leaves the other two intact and dated correctly',
+      () async {
+        // Bug repro from device DB 2026-05-09: a daily rule that hasn't
+        // run for 2 days catches up to today by generating one pending
+        // per missed day (May 7, May 8, May 9). Approving the May 7 tile
+        // must (a) save a transaction dated May 7, and (b) leave the
+        // May 8 and May 9 pending rows visible. Anything else means the
+        // user's "all daily pending are gone after approving one"
+        // observation has a real cause in code.
+        final db = newTestAppDatabase();
+        addTearDown(db.close);
+        await runTestSeed(db);
+
+        final basics = await _seedBasics(db);
+        final repo = DriftRecurringRulesRepository(db);
+        final txRepo = DriftTransactionRepository(db);
+        final pendingRepo = DriftPendingTransactionRepository(
+          db,
+          txRepo: txRepo,
+        );
+        final useCase = RecurringGenerationUseCase(
+          recurringRepo: repo,
+          pendingRepo: pendingRepo,
+          db: db,
+        );
+
+        // Rule starts as if created on May 7 (nextDueDate = May 7).
+        final ruleId = await repo.insert(
+          RecurringRuleDraft(
+            name: '每天',
+            amountMinorUnits: 1599,
+            currency: basics.currency,
+            categoryId: basics.categoryId,
+            accountId: basics.accountId,
+            frequency: 'daily',
+          ),
+          today: DateTime(2026, 5, 7),
+        );
+
+        // First run on May 7 — generates the May 7 pending and advances
+        // nextDueDate to May 8.
+        await useCase.execute(clock: () => DateTime(2026, 5, 7));
+
+        // Cold-start on May 9 — generation catches up: emits pending for
+        // May 8 and May 9 (May 7 already exists, idempotent skip). Three
+        // pending rows now exist for this single rule.
+        await useCase.execute(clock: () => DateTime(2026, 5, 9));
+        expect(await pendingRepo.countByRecurringRule(ruleId), 3);
+
+        final pendingRows = await pendingRepo.watchAll().first;
+        final may7 = pendingRows.firstWhere(
+          (p) => p.date == DateTime(2026, 5, 7),
+        );
+
+        // Approve the May 7 tile.
+        final saved = await pendingRepo.approve(may7.id);
+
+        expect(
+          saved.date,
+          DateTime(2026, 5, 7),
+          reason: 'returned tx must carry May 7',
+        );
+        final row = await db.transactionDao.findById(saved.id);
+        expect(
+          row!.date,
+          DateTime(2026, 5, 7),
+          reason: 'persisted transactions row must carry May 7',
+        );
+
+        // The other two pending rows must remain — sibling rows belonging
+        // to the same rule are NOT cascaded by approving one.
+        final remaining = await pendingRepo.watchAll().first;
+        expect(remaining, hasLength(2));
+        expect(remaining.map((p) => p.date).toSet(), {
+          DateTime(2026, 5, 8),
+          DateTime(2026, 5, 9),
+        });
+      },
+    );
 
     test(
       'archive: rule no longer surfaces in watchActive nor in findDue',
@@ -213,7 +369,10 @@ void main() {
 
       final basics = await _seedBasics(db);
       final repo = DriftRecurringRulesRepository(db);
-      final pendingRepo = DriftPendingTransactionRepository(db);
+      final pendingRepo = DriftPendingTransactionRepository(
+        db,
+        txRepo: DriftTransactionRepository(db),
+      );
       final useCase = RecurringGenerationUseCase(
         recurringRepo: repo,
         pendingRepo: pendingRepo,
@@ -295,7 +454,10 @@ void main() {
         final app = ((launched as ProviderScope).child as App);
         app.onFirstFrame!.call();
         for (var i = 0; i < 50; i++) {
-          final pendingRepo = DriftPendingTransactionRepository(db);
+          final pendingRepo = DriftPendingTransactionRepository(
+            db,
+            txRepo: DriftTransactionRepository(db),
+          );
           final repo = DriftRecurringRulesRepository(db);
           final rule = await repo.getById(ruleId);
           if (await pendingRepo.countByRecurringRule(ruleId) > 0 &&
@@ -312,7 +474,10 @@ void main() {
       // row exists, and the rule's next_due_date advanced past the
       // pre-bootstrap value.
       await tester.runAsync(() async {
-        final pendingRepo = DriftPendingTransactionRepository(db);
+        final pendingRepo = DriftPendingTransactionRepository(
+          db,
+          txRepo: DriftTransactionRepository(db),
+        );
         final repo = DriftRecurringRulesRepository(db);
         final rule = await repo.getById(ruleId);
         expect(await pendingRepo.countByRecurringRule(ruleId), greaterThan(0));
