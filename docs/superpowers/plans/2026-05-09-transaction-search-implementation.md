@@ -76,7 +76,7 @@ The screens we build later reference `l10n.analysisTitle`, `l10n.analysisSearchH
 
 The existing analysis screen uses `l10n.navAnalysis`, `l10n.analysisPlaceholderTitle`, `l10n.analysisPlaceholderBody` — leave those keys in place; we override only the screen body, not the AppBar title key. (The spec uses `analysisTitle` as the new AppBar title. Keep both: `navAnalysis` is the bottom-nav label; `analysisTitle` is the AppBar title — they may have different copy.)
 
-- [ ] **Step 1: Add 7 keys to `l10n/app_en.arb`**
+- [x] **Step 1: Add 7 keys to `l10n/app_en.arb`**
 
 Insert into the JSON object (before the closing brace, but valid order doesn't matter for ARB):
 
@@ -106,7 +106,7 @@ Insert into the JSON object (before the closing brace, but valid order doesn't m
 "@analysisErrorMessage": {"description": "User-facing error copy when the search stream errors (Drift error, schema corruption, etc.)"}
 ```
 
-- [ ] **Step 2: Add 7 keys to `l10n/app_zh.arb`**
+- [x] **Step 2: Add 7 keys to `l10n/app_zh.arb`**
 
 Chinese has no plural distinction — `analysisTransactionCount` uses a simple `{count}` placeholder. Per CLAUDE.md "Dependency Pins", `app_zh.arb` is the required base — keep it populated.
 
@@ -123,7 +123,7 @@ Chinese has no plural distinction — `analysisTransactionCount` uses a simple `
 "analysisErrorMessage": "搜尋時發生錯誤"
 ```
 
-- [ ] **Step 3: Add 7 keys to `l10n/app_zh_TW.arb`**
+- [x] **Step 3: Add 7 keys to `l10n/app_zh_TW.arb`**
 
 ```json
 "analysisTitle": "分析",
@@ -138,7 +138,7 @@ Chinese has no plural distinction — `analysisTransactionCount` uses a simple `
 "analysisErrorMessage": "搜尋時發生錯誤"
 ```
 
-- [ ] **Step 4: Add 7 keys to `l10n/app_zh_CN.arb`**
+- [x] **Step 4: Add 7 keys to `l10n/app_zh_CN.arb`**
 
 ```json
 "analysisTitle": "分析",
@@ -153,17 +153,17 @@ Chinese has no plural distinction — `analysisTransactionCount` uses a simple `
 "analysisErrorMessage": "搜索时发生错误"
 ```
 
-- [ ] **Step 5: Regenerate l10n bindings**
+- [x] **Step 5: Regenerate l10n bindings**
 
 Run: `flutter pub get`
 Expected: regenerates `lib/l10n/app_localizations*.dart`. No errors. If it complains about missing `app_zh.arb`, double-check the file exists.
 
-- [ ] **Step 6: Verify keys are codegen'd**
+- [x] **Step 6: Verify keys are codegen'd**
 
 Run: `grep -n "analysisTransactionCount\|analysisSearchPrompt" lib/l10n/app_localizations.dart`
 Expected: both keys appear as `String get analysisSearchPrompt;` and `String analysisTransactionCount(int count);`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 dart format l10n/
@@ -181,7 +181,7 @@ git commit -m "feat(l10n): add analysis-search localization keys"
 
 The DAO returns Drift `TransactionRow`s ordered `date DESC, id DESC`. Empty/whitespace queries short-circuit to `Stream.value(const [])` — without it, `LIKE '%%'` matches every memoed row and a deep-linked `/analysis/search/5?q=&c=USD` would dump every USD row in category 5.
 
-- [ ] **Step 1: Create the test file with the empty-query test**
+- [x] **Step 1: Create the test file with the empty-query test**
 
 Create `test/unit/repositories/transaction_repository_search_test.dart`:
 
@@ -269,12 +269,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run the test, expect failure (method not defined)**
+- [x] **Step 2: Run the test, expect failure (method not defined)**
 
 Run: `flutter test test/unit/repositories/transaction_repository_search_test.dart`
 Expected: FAIL — compile error "The method 'watchByMemo' isn't defined for the type 'TransactionDao'."
 
-- [ ] **Step 3: Add the DAO method with empty-query short-circuit only**
+- [x] **Step 3: Add the DAO method with empty-query short-circuit only**
 
 Open `lib/data/database/daos/transaction_dao.dart`. Add this method after `watchByCategory` (find an analogous `watchBy*` method to anchor it):
 
@@ -303,12 +303,12 @@ Stream<List<TransactionRow>> watchByMemo(String query) {
 
 Use the typed query builder (matches every other `watch*` method in this DAO — `watchAll`, `watchByDateRange`, `watchByAccount`, `watchByCategory`, `watchById`). Case-insensitivity is handled via `t.memo.lower().like(...)` against a lowercased pattern, which is identical to `COLLATE NOCASE` for ASCII (the only case-variant alphabet that matters here — Chinese/Japanese have no case). No raw SQL string, no `Variable<String>` import, no manual row-mapping bug to write.
 
-- [ ] **Step 4: Run the empty-query test, expect pass**
+- [x] **Step 4: Run the empty-query test, expect pass**
 
 Run: `flutter test test/unit/repositories/transaction_repository_search_test.dart -p vm`
 Expected: PASS (1 test).
 
-- [ ] **Step 5: Add the case-insensitive match test**
+- [x] **Step 5: Add the case-insensitive match test**
 
 Append inside the `group('TransactionDao.watchByMemo', ...)`:
 
@@ -325,12 +325,12 @@ test('case-insensitive substring match; NULL memo excluded', () async {
 });
 ```
 
-- [ ] **Step 6: Run all DAO tests, expect pass**
+- [x] **Step 6: Run all DAO tests, expect pass**
 
 Run: `flutter test test/unit/repositories/transaction_repository_search_test.dart`
 Expected: PASS (2 tests).
 
-- [ ] **Step 7: Add the ordering test**
+- [x] **Step 7: Add the ordering test**
 
 Append:
 
@@ -347,12 +347,12 @@ test('orders by date DESC, id DESC', () async {
 });
 ```
 
-- [ ] **Step 8: Run, expect pass**
+- [x] **Step 8: Run, expect pass**
 
 Run: `flutter test test/unit/repositories/transaction_repository_search_test.dart`
 Expected: PASS (3 tests).
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 dart format lib/data/database/daos/transaction_dao.dart \
@@ -372,7 +372,7 @@ git commit -m "feat(data): add TransactionDao.watchByMemo with empty-query guard
 
 Returns domain `Transaction`s by delegating to the DAO and reusing the existing `_rowsToDomain` helper.
 
-- [ ] **Step 1: Add the repository test**
+- [x] **Step 1: Add the repository test**
 
 Append inside `void main()` of `transaction_repository_search_test.dart`, AFTER the existing `group('TransactionDao.watchByMemo', ...)` block:
 
@@ -410,12 +410,12 @@ group('TransactionRepository.watchByMemo', () {
 });
 ```
 
-- [ ] **Step 2: Run, expect failure (method not defined on repository)**
+- [x] **Step 2: Run, expect failure (method not defined on repository)**
 
 Run: `flutter test test/unit/repositories/transaction_repository_search_test.dart`
 Expected: FAIL — `The method 'watchByMemo' isn't defined for ...TransactionRepository`.
 
-- [ ] **Step 3: Declare the abstract method**
+- [x] **Step 3: Declare the abstract method**
 
 In `lib/data/repositories/transaction_repository.dart`, inside the `abstract class TransactionRepository` block (near other `watch*` declarations, e.g. after `watchForCategory`):
 
@@ -426,7 +426,7 @@ In `lib/data/repositories/transaction_repository.dart`, inside the `abstract cla
 Stream<List<Transaction>> watchByMemo(String query);
 ```
 
-- [ ] **Step 4: Implement on `DriftTransactionRepository`**
+- [x] **Step 4: Implement on `DriftTransactionRepository`**
 
 Inside `final class DriftTransactionRepository`, near `watchForCategory`:
 
@@ -437,17 +437,17 @@ Stream<List<Transaction>> watchByMemo(String query) {
 }
 ```
 
-- [ ] **Step 5: Run all search-test cases**
+- [x] **Step 5: Run all search-test cases**
 
 Run: `flutter test test/unit/repositories/transaction_repository_search_test.dart`
 Expected: PASS (5 tests).
 
-- [ ] **Step 6: Run the full repo test suite to confirm no regression**
+- [x] **Step 6: Run the full repo test suite to confirm no regression**
 
 Run: `flutter test test/unit/repositories/`
 Expected: all PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 dart format lib/data/repositories/transaction_repository.dart \
@@ -466,7 +466,7 @@ git commit -m "feat(data): add TransactionRepository.watchByMemo"
 
 Defines `AnalysisState` (idle / loading / results / empty) and the `CategorySearchResult` value class.
 
-- [ ] **Step 1: Write the file**
+- [x] **Step 1: Write the file**
 
 Create `lib/features/analysis/analysis_state.dart`:
 
@@ -527,17 +527,17 @@ abstract class CategorySearchResult with _$CategorySearchResult {
 }
 ```
 
-- [ ] **Step 2: Run codegen**
+- [x] **Step 2: Run codegen**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: generates `lib/features/analysis/analysis_state.freezed.dart`.
 
-- [ ] **Step 3: Verify it analyzes**
+- [x] **Step 3: Verify it analyzes**
 
 Run: `flutter analyze lib/features/analysis/analysis_state.dart`
 Expected: No issues found.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 dart format lib/features/analysis/analysis_state.dart
@@ -553,7 +553,7 @@ git commit -m "feat(analysis): add AnalysisState and CategorySearchResult"
 **Files:**
 - Create: `lib/features/analysis/category_search_detail_state.dart`
 
-- [ ] **Step 1: Write the file**
+- [x] **Step 1: Write the file**
 
 Create `lib/features/analysis/category_search_detail_state.dart`:
 
@@ -595,17 +595,17 @@ abstract class DatedTransactionGroup with _$DatedTransactionGroup {
 }
 ```
 
-- [ ] **Step 2: Run codegen**
+- [x] **Step 2: Run codegen**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: generates `category_search_detail_state.freezed.dart`.
 
-- [ ] **Step 3: Analyze**
+- [x] **Step 3: Analyze**
 
 Run: `flutter analyze lib/features/analysis/category_search_detail_state.dart`
 Expected: clean.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 dart format lib/features/analysis/category_search_detail_state.dart
@@ -625,7 +625,7 @@ Mirrors `home_providers.dart` exactly. Plain `StreamProvider.autoDispose` (not `
 
 > **Why duplicate `homeAccountsByIdProvider` instead of importing it?** The duplication is intentional, but the rationale is honest: today no `import_lint` rule blocks `lib/features/analysis/*_providers.dart` from importing `lib/features/home/*_providers.dart`, so this is a *convention*, not an enforced boundary. Two reasons we still keep them separate: (a) the Analysis slice should not implicitly depend on the Home slice's lifecycle — if Home renames or restructures `homeAccountsByIdProvider`, Analysis breaks for no architectural reason; (b) both slices ultimately call the same `accountRepository.watchAll(...)`, so Drift de-duplicates the underlying SQL query — there's no double-subscription cost. If we ever introduce a third caller, promote both lookup providers to a shared location (e.g. `app/providers/lookup_providers.dart`) rather than triplicate.
 
-- [ ] **Step 1: Write the file**
+- [x] **Step 1: Write the file**
 
 Create `lib/features/analysis/analysis_providers.dart`:
 
@@ -663,12 +663,12 @@ final analysisAccountsByIdProvider =
 });
 ```
 
-- [ ] **Step 2: Analyze**
+- [x] **Step 2: Analyze**
 
 Run: `flutter analyze lib/features/analysis/analysis_providers.dart`
 Expected: clean.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 dart format lib/features/analysis/analysis_providers.dart
@@ -698,7 +698,7 @@ The controller composes two streams:
 
 **Test the controller end-to-end with a mocked repository.** Use `fake_async` to drive the 300ms debounce deterministically (see `home_controller_test.dart` for the established pattern).
 
-- [ ] **Step 1: Write the controller skeleton**
+- [x] **Step 1: Write the controller skeleton**
 
 Create `lib/features/analysis/analysis_controller.dart`:
 
@@ -907,12 +907,12 @@ class _Bucket {
 
 > **Note on display name:** `CategorySearchResult` carries the full `Category` so the widget can call `categoryDisplayName(category, l10n)` exactly like Home's `TransactionTile`. The controller can't resolve l10n itself (no `BuildContext`), and storing `customName ?? l10nKey` as a raw string would surface keys like `cat.food` for unrenamed seeded categories.
 
-- [ ] **Step 2: Run codegen**
+- [x] **Step 2: Run codegen**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: generates `analysis_controller.g.dart`.
 
-- [ ] **Step 3: Write the controller test scaffolding**
+- [x] **Step 3: Write the controller test scaffolding**
 
 Create `test/unit/controllers/analysis_controller_test.dart`:
 
@@ -1037,12 +1037,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 4: Run, expect pass**
+- [x] **Step 4: Run, expect pass**
 
 Run: `flutter test test/unit/controllers/analysis_controller_test.dart`
 Expected: PASS (1 test). The controller's idle/empty path doesn't subscribe.
 
-- [ ] **Step 5: Add the debounce + grouping test**
+- [x] **Step 5: Add the debounce + grouping test**
 
 Append inside `group('AnalysisController', ...)`:
 
@@ -1082,14 +1082,14 @@ test('debounces to 300ms then groups by (category, currency)', () {
 });
 ```
 
-- [ ] **Step 6: Run; verify the test fails meaningfully if any step is wrong, otherwise passes**
+- [x] **Step 6: Run; verify the test fails meaningfully if any step is wrong, otherwise passes**
 
 Run: `flutter test test/unit/controllers/analysis_controller_test.dart`
 Expected: PASS.
 
 If FAIL: read the failure carefully. Common issue is `verifyNever` triggering early because the timer wasn't actually deferred — re-check the controller's `updateQuery` cancels the old timer.
 
-- [ ] **Step 7: Add the sort-key test (date desc, categoryId asc tiebreak)**
+- [x] **Step 7: Add the sort-key test (date desc, categoryId asc tiebreak)**
 
 Append:
 
@@ -1129,12 +1129,12 @@ test('sorts by mostRecentDate desc; tiebreak by categoryId asc', () {
 });
 ```
 
-- [ ] **Step 8: Run, expect pass**
+- [x] **Step 8: Run, expect pass**
 
 Run: `flutter test test/unit/controllers/analysis_controller_test.dart`
 Expected: PASS.
 
-- [ ] **Step 9: Add the subscription-cancellation test**
+- [x] **Step 9: Add the subscription-cancellation test**
 
 Append:
 
@@ -1175,12 +1175,12 @@ test('cancels prior watchByMemo subscription on new query', () {
 });
 ```
 
-- [ ] **Step 10: Run, expect pass**
+- [x] **Step 10: Run, expect pass**
 
 Run: `flutter test test/unit/controllers/analysis_controller_test.dart`
 Expected: PASS.
 
-- [ ] **Step 11: Add the loading-carries-previous and empty-result tests**
+- [x] **Step 11: Add the loading-carries-previous and empty-result tests**
 
 Append:
 
@@ -1332,19 +1332,19 @@ test('empty result emits AnalysisEmpty', () {
 });
 ```
 
-- [ ] **Step 12: Run, expect pass**
+- [x] **Step 12: Run, expect pass**
 
 Run: `flutter test test/unit/controllers/analysis_controller_test.dart`
 Expected: PASS (6 tests total).
 
-- [ ] **Step 13: Verify riverpod_lint accepts the dependencies list**
+- [x] **Step 13: Verify riverpod_lint accepts the dependencies list**
 
 Run: `flutter analyze lib/features/analysis/analysis_controller.dart`
 Expected: clean — no `scoped_providers_should_specify_dependencies` warning.
 
 If the lint flags `analysisCategoriesByIdProvider` (a plain `StreamProvider`, not `@Riverpod`-annotated), the codebase convention is that `dependencies:` lists generator-annotated direct watch targets only — see `repository_providers.dart` for precedent. If the warning appears anyway, add an inline `// ignore: scoped_providers_should_specify_dependencies` with a comment pointing at this rationale. Do NOT add the plain provider to the `dependencies:` list — `riverpod_generator` rejects non-annotated entries there.
 
-- [ ] **Step 14: Commit**
+- [x] **Step 14: Commit**
 
 ```bash
 dart format lib/features/analysis/analysis_controller.dart \
@@ -1367,7 +1367,7 @@ Family controller keyed on `(int categoryId, String query, String currencyCode)`
 
 > **Why filter in Dart, not SQL:** the parent `AnalysisController` already needs every memo-match across categories and currencies (to render Level 1's per-pair cards). Re-using the same `watchByMemo` stream for the detail page avoids a second Drift subscription on the same table when the user drills down. Within MVP's documented 10k-transactions cap, the worst-case in-memory scan is O(N) over the bounded memo-match set — fast and predictable. If profiling at production scale ever shows this is hot, add `watchByMemoInCategory(query, categoryId, currencyCode)` to `TransactionDao` and switch the family to that.
 
-- [ ] **Step 1: Write the controller**
+- [x] **Step 1: Write the controller**
 
 Create `lib/features/analysis/category_search_detail_controller.dart`:
 
@@ -1439,12 +1439,12 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
 }
 ```
 
-- [ ] **Step 2: Run codegen**
+- [x] **Step 2: Run codegen**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: generates `category_search_detail_controller.g.dart`.
 
-- [ ] **Step 3: Write the test file**
+- [x] **Step 3: Write the test file**
 
 Create `test/unit/controllers/category_search_detail_controller_test.dart`:
 
@@ -1581,12 +1581,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 4: Run all detail-controller tests**
+- [x] **Step 4: Run all detail-controller tests**
 
 Run: `flutter test test/unit/controllers/category_search_detail_controller_test.dart`
 Expected: PASS (3 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 dart format lib/features/analysis/category_search_detail_controller.dart \
@@ -1606,7 +1606,7 @@ git commit -m "feat(analysis): add CategorySearchDetailController family"
 
 Read-only row — `ListTile` only. No `Slidable`, no `PopupMenuButton`, no `onTap`. Visual layout matches `TransactionTile` (icon, title, "account • memo" subtitle, signed amount with type-driven color).
 
-- [ ] **Step 1: Write the widget**
+- [x] **Step 1: Write the widget**
 
 Create `lib/features/analysis/widgets/transaction_search_row.dart`:
 
@@ -1704,12 +1704,12 @@ class TransactionSearchRow extends StatelessWidget {
 }
 ```
 
-- [ ] **Step 2: Analyze**
+- [x] **Step 2: Analyze**
 
 Run: `flutter analyze lib/features/analysis/widgets/transaction_search_row.dart`
 Expected: clean.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 dart format lib/features/analysis/widgets/transaction_search_row.dart
@@ -1726,7 +1726,7 @@ git commit -m "feat(analysis): add read-only TransactionSearchRow widget"
 
 Level 1 result card. Tap → `context.push('/analysis/search/:categoryId?q=…&c=…')`.
 
-- [ ] **Step 1: Write the widget**
+- [x] **Step 1: Write the widget**
 
 Create `lib/features/analysis/widgets/category_search_tile.dart`:
 
@@ -1802,12 +1802,12 @@ class CategorySearchTile extends StatelessWidget {
 
 The full `Category` arrives on `result.category`, so display name uses the project-wide `categoryDisplayName(cat, l10n)` helper — same call site `TransactionTile` and every other category-rendering screen makes. No raw `cat.food` keys ever surface to users.
 
-- [ ] **Step 2: Analyze**
+- [x] **Step 2: Analyze**
 
 Run: `flutter analyze lib/features/analysis/widgets/category_search_tile.dart`
 Expected: clean.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 dart format lib/features/analysis/widgets/category_search_tile.dart
@@ -1824,7 +1824,7 @@ git commit -m "feat(analysis): add CategorySearchTile widget"
 
 Idle-state copy: search icon + `analysisSearchPrompt`. Replaces the Phase 2 placeholder body.
 
-- [ ] **Step 1: Write the widget**
+- [x] **Step 1: Write the widget**
 
 Create `lib/features/analysis/widgets/analysis_search_placeholder.dart`:
 
@@ -1866,12 +1866,12 @@ class AnalysisSearchPlaceholder extends StatelessWidget {
 }
 ```
 
-- [ ] **Step 2: Analyze**
+- [x] **Step 2: Analyze**
 
 Run: `flutter analyze lib/features/analysis/widgets/analysis_search_placeholder.dart`
 Expected: clean.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 dart format lib/features/analysis/widgets/analysis_search_placeholder.dart
@@ -1889,7 +1889,7 @@ git commit -m "feat(analysis): add AnalysisSearchPlaceholder idle widget"
 
 Material 3 inline `SearchBar` in `AppBar.bottom` + state-driven body.
 
-- [ ] **Step 1: Replace the screen body**
+- [x] **Step 1: Replace the screen body**
 
 Open `lib/features/analysis/analysis_screen.dart`. Replace the entire file contents:
 
@@ -2038,12 +2038,12 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
 }
 ```
 
-- [ ] **Step 2: Analyze**
+- [x] **Step 2: Analyze**
 
 Run: `flutter analyze lib/features/analysis/analysis_screen.dart`
 Expected: clean. If `import_lint` complains about a forbidden import, the screen should only import `app/providers/...` and feature-local files — re-check imports.
 
-- [ ] **Step 3: Write a basic widget test**
+- [x] **Step 3: Write a basic widget test**
 
 Create `test/widget/features/analysis/analysis_screen_test.dart`:
 
@@ -2134,12 +2134,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 4: Run, expect pass**
+- [x] **Step 4: Run, expect pass**
 
 Run: `flutter test test/widget/features/analysis/analysis_screen_test.dart`
 Expected: PASS (2 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 dart format lib/features/analysis/analysis_screen.dart \
@@ -2159,7 +2159,7 @@ git commit -m "feat(analysis): rewrite AnalysisScreen with state-driven SearchBa
 
 Header (overall sum) + grouped-by-date `ListView` of `TransactionSearchRow`s with per-day subtotals.
 
-- [ ] **Step 1: Write the screen**
+- [x] **Step 1: Write the screen**
 
 Create `lib/features/analysis/category_search_detail_screen.dart`:
 
@@ -2307,12 +2307,12 @@ class CategorySearchDetailScreen extends ConsumerWidget {
 }
 ```
 
-- [ ] **Step 2: Analyze**
+- [x] **Step 2: Analyze**
 
 Run: `flutter analyze lib/features/analysis/category_search_detail_screen.dart`
 Expected: clean.
 
-- [ ] **Step 3: Write a smoke widget test**
+- [x] **Step 3: Write a smoke widget test**
 
 Create `test/widget/features/analysis/category_search_detail_screen_test.dart`:
 
@@ -2508,12 +2508,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 4: Run, expect pass**
+- [x] **Step 4: Run, expect pass**
 
 Run: `flutter test test/widget/features/analysis/category_search_detail_screen_test.dart`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 dart format lib/features/analysis/category_search_detail_screen.dart \
@@ -2535,7 +2535,7 @@ Add a child route under `/analysis` with all three guards (`categoryId` int, non
 
 **Shell-branch behavior:** `/analysis` lives inside the bottom-nav `StatefulShellBranch`. The detail screen is a *navigational drill-down within the Analysis tab*, not a modal that should hide the bottom nav — so the new child route stays in-shell (no `parentNavigatorKey: _rootNavigatorKey`). Tapping a result card pushes within the Analysis branch, the bottom nav stays visible, and `context.pop()` returns to the Analysis list. This matches how `/home/edit/:id` would behave if it kept the shell (compare to other routes that explicitly opt into `_rootNavigatorKey` for full-screen modal presentation — those choose to hide the shell on purpose).
 
-- [ ] **Step 1: Add the import**
+- [x] **Step 1: Add the import**
 
 Open `lib/app/router.dart`. Near the existing `import '../features/analysis/analysis_screen.dart';` (line 9), add:
 
@@ -2543,7 +2543,7 @@ Open `lib/app/router.dart`. Near the existing `import '../features/analysis/anal
 import '../features/analysis/category_search_detail_screen.dart';
 ```
 
-- [ ] **Step 2: Add the child route**
+- [x] **Step 2: Add the child route**
 
 Find the `/analysis` `GoRoute` (currently:
 
@@ -2582,7 +2582,7 @@ GoRoute(
 ),
 ```
 
-- [ ] **Step 3: Add router-guard widget tests**
+- [x] **Step 3: Add router-guard widget tests**
 
 Append to `test/widget/features/analysis/analysis_screen_test.dart`:
 
@@ -2695,17 +2695,17 @@ void _routerGuardTests() {
 
 Then call `_routerGuardTests();` from `void main()` after the existing tests. The harness duplicates the route table from `router.dart` so the tests don't need the real shell — the guard logic is the same pure function either way.
 
-- [ ] **Step 4: Analyze**
+- [x] **Step 4: Analyze**
 
 Run: `dart format lib/app/router.dart && flutter analyze lib/app/router.dart`
 Expected: clean.
 
-- [ ] **Step 5: Run the full test suite**
+- [x] **Step 5: Run the full test suite**
 
 Run: `flutter test`
 Expected: all PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/app/router.dart \
@@ -2719,7 +2719,7 @@ git commit -m "feat(routing): add /analysis/search/:categoryId child route with 
 
 **Files:** none — runtime only.
 
-- [ ] **Step 1: Run codegen one final time and analyze**
+- [x] **Step 1: Run codegen one final time and analyze**
 
 Run:
 ```bash
@@ -2729,12 +2729,12 @@ flutter analyze
 ```
 Expected: no issues.
 
-- [ ] **Step 2: Run the full test suite**
+- [x] **Step 2: Run the full test suite**
 
 Run: `flutter test`
 Expected: all PASS.
 
-- [ ] **Step 3: Manual smoke on a simulator**
+- [x] **Step 3: Manual smoke on a simulator**
 
 Run: `flutter run` and exercise:
 
@@ -2746,7 +2746,7 @@ Run: `flutter run` and exercise:
 6. Clear the search bar via the trailing × → returns to placeholder, no spinner or stale list.
 7. Multi-currency: search a memo that has matches in USD and JPY → confirm two cards (one per `(category, currency)` pair) for each matching category. Tap into each; verify the overall sum stays in that single currency.
 
-- [ ] **Step 4: Test broken deep-links manually (router guards)**
+- [x] **Step 4: Test broken deep-links manually (router guards)**
 
 In a debug console or via `adb shell am start` / iOS deeplink, test:
 - `/analysis/search/abc?q=coffee&c=USD` (non-int id) → falls back to `AnalysisScreen`.
@@ -2755,7 +2755,7 @@ In a debug console or via `adb shell am start` / iOS deeplink, test:
 
 (If the project's deep-link harness isn't ready, eyeball the guard logic in `router.dart` line for line — it's a pure function.)
 
-- [ ] **Step 5: Commit (only if anything changed during smoke)**
+- [x] **Step 5: Commit (only if anything changed during smoke)**
 
 If the smoke surfaced fixes:
 
