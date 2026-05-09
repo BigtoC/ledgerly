@@ -273,6 +273,11 @@ void main() {
   testWidgets(
     'WH02b: no-history Home still shows pending section when rows exist',
     (tester) async {
+      // Pending date must match today's view (PendingSection is day-scoped
+      // since 2026-05-09); a past-dated row would correctly be hidden on
+      // today's default Home view and break this test's intent.
+      final today = DateTime.now();
+      final todayMidnight = DateTime(today.year, today.month, today.day);
       when(() => pendingRepo.watchAll()).thenAnswer(
         (_) => Stream.value([
           PendingTransaction(
@@ -283,8 +288,8 @@ void main() {
             categoryId: 1,
             accountId: 1,
             memo: 'Netflix',
-            date: DateTime(2026, 5, 8),
-            fetchedAt: DateTime(2026, 5, 8),
+            date: todayMidnight,
+            fetchedAt: todayMidnight,
             recurringRuleId: 1,
           ),
         ]),
