@@ -7,7 +7,7 @@ part of 'category_search_detail_controller.dart';
 // **************************************************************************
 
 String _$categorySearchDetailControllerHash() =>
-    r'd1eea648e3b53d325b0209763c865b453baefffa';
+    r'f2b50da64b68ec3e8c65e4176657e2932c014ebc';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -31,7 +31,7 @@ class _SystemHash {
 }
 
 abstract class _$CategorySearchDetailController
-    extends BuildlessAutoDisposeStreamNotifier<CategorySearchDetailState> {
+    extends BuildlessStreamNotifier<CategorySearchDetailState> {
   late final int categoryId;
   late final String query;
   late final String currencyCode;
@@ -80,6 +80,7 @@ class CategorySearchDetailControllerFamily
 
   static final Iterable<ProviderOrFamily> _dependencies = <ProviderOrFamily>[
     transactionRepositoryProvider,
+    analysisControllerProvider,
   ];
 
   @override
@@ -89,6 +90,8 @@ class CategorySearchDetailControllerFamily
       <ProviderOrFamily>{
         transactionRepositoryProvider,
         ...?transactionRepositoryProvider.allTransitiveDependencies,
+        analysisControllerProvider,
+        ...?analysisControllerProvider.allTransitiveDependencies,
       };
 
   @override
@@ -102,7 +105,7 @@ class CategorySearchDetailControllerFamily
 /// See also [CategorySearchDetailController].
 class CategorySearchDetailControllerProvider
     extends
-        AutoDisposeStreamNotifierProviderImpl<
+        StreamNotifierProviderImpl<
           CategorySearchDetailController,
           CategorySearchDetailState
         > {
@@ -178,7 +181,7 @@ class CategorySearchDetailControllerProvider
   }
 
   @override
-  AutoDisposeStreamNotifierProviderElement<
+  StreamNotifierProviderElement<
     CategorySearchDetailController,
     CategorySearchDetailState
   >
@@ -208,7 +211,7 @@ class CategorySearchDetailControllerProvider
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 mixin CategorySearchDetailControllerRef
-    on AutoDisposeStreamNotifierProviderRef<CategorySearchDetailState> {
+    on StreamNotifierProviderRef<CategorySearchDetailState> {
   /// The parameter `categoryId` of this provider.
   int get categoryId;
 
@@ -221,7 +224,7 @@ mixin CategorySearchDetailControllerRef
 
 class _CategorySearchDetailControllerProviderElement
     extends
-        AutoDisposeStreamNotifierProviderElement<
+        StreamNotifierProviderElement<
           CategorySearchDetailController,
           CategorySearchDetailState
         >

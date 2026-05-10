@@ -11,7 +11,10 @@ import 'category_search_detail_state.dart';
 
 part 'category_search_detail_controller.g.dart';
 
-@Riverpod(keepAlive: true, dependencies: [transactionRepository])
+@Riverpod(
+  keepAlive: true,
+  dependencies: [transactionRepository, AnalysisController],
+)
 class CategorySearchDetailController extends _$CategorySearchDetailController {
   @override
   Stream<CategorySearchDetailState> build({
@@ -26,23 +29,14 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
     }
 
     if (ref.exists(analysisControllerProvider)) {
-      final analysis = ref.read(analysisControllerProvider);
-      if (analysis.hasError) {
-        return Stream.error(
-          analysis.error!,
-          analysis.stackTrace ?? StackTrace.current,
-        );
-      }
-
-      final state = analysis.valueOrNull;
-      final matchesActiveQuery = switch (state) {
-        AnalysisLoading(:final query) => query == trimmed,
+      final state = ref.read(analysisControllerProvider).valueOrNull;
+      final matchesSettledQuery = switch (state) {
         AnalysisResults(:final query) => query == trimmed,
         AnalysisEmpty(:final query) => query == trimmed,
         _ => false,
       };
 
-      if (matchesActiveQuery && state is! AnalysisLoading) {
+      if (matchesSettledQuery) {
         final all = ref
             .read(analysisControllerProvider.notifier)
             .lastTransactions;
