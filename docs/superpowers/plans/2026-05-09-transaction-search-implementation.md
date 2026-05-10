@@ -34,16 +34,16 @@
 
 **Modified files:**
 
-| Path                                                | Change                                                                     |
-|-----------------------------------------------------|----------------------------------------------------------------------------|
-| `lib/data/database/daos/transaction_dao.dart`       | Add `watchByMemo` (with empty-query short-circuit)                         |
-| `lib/data/repositories/transaction_repository.dart` | Add `watchByMemo` returning `Stream<List<Transaction>>`                    |
-| `lib/features/analysis/analysis_screen.dart`        | Rewrite (SearchBar + state-driven body)                                    |
-| `lib/app/router.dart`                               | Add `search/:categoryId` child route under `/analysis` with `q`/`c` guards |
-| `l10n/app_en.arb`                                   | Add 6 keys (see Task 1)                                                    |
-| `l10n/app_zh.arb`                                   | Add same 6 keys (base zh required by `flutter_localizations`)              |
-| `l10n/app_zh_TW.arb`                                | Add same 6 keys                                                            |
-| `l10n/app_zh_CN.arb`                                | Add same 6 keys                                                            |
+| Path                                                | Change                                                                           |
+|-----------------------------------------------------|----------------------------------------------------------------------------------|
+| `lib/data/database/daos/transaction_dao.dart`       | Add `watchByMemo` (with empty-query short-circuit)                               |
+| `lib/data/repositories/transaction_repository.dart` | Add `watchByMemo` returning `Stream<List<Transaction>>`                          |
+| `lib/features/analysis/analysis_screen.dart`        | Rewrite (SearchBar + state-driven body)                                          |
+| `lib/app/router.dart`                               | Add `search/:categoryId` child route under `/analysis` with `q`/`c` guards       |
+| `l10n/app_en.arb`                                   | Add 6 keys (see Task 1)                                                          |
+| `l10n/app_zh.arb`                                   | Keep the fallback shim untouched except for `appTitle`; do not add Analysis keys |
+| `l10n/app_zh_TW.arb`                                | Add same 6 keys                                                                  |
+| `l10n/app_zh_CN.arb`                                | Add same 6 keys                                                                  |
 
 **New test files:**
 
@@ -68,7 +68,6 @@
 
 **Files:**
 - Modify: `l10n/app_en.arb`
-- Modify: `l10n/app_zh.arb`
 - Modify: `l10n/app_zh_TW.arb`
 - Modify: `l10n/app_zh_CN.arb`
 
@@ -106,22 +105,9 @@ Insert into the JSON object (before the closing brace, but valid order doesn't m
 "@analysisErrorMessage": {"description": "User-facing error copy when the search stream errors (Drift error, schema corruption, etc.)"}
 ```
 
-- [x] **Step 2: Add 7 keys to `l10n/app_zh.arb`**
+- [x] **Step 2: Leave `l10n/app_zh.arb` as the required fallback shim**
 
-Chinese has no plural distinction — `analysisTransactionCount` uses a simple `{count}` placeholder. Per CLAUDE.md "Dependency Pins", `app_zh.arb` is the required base — keep it populated.
-
-```json
-"analysisTitle": "分析",
-"analysisSearchHint": "搜尋交易…",
-"analysisSearchPrompt": "搜尋備註以尋找過往交易",
-"analysisNoResults": "找不到交易",
-"analysisTransactionCount": "{count} 筆交易",
-"@analysisTransactionCount": {
-  "placeholders": {"count": {"type": "int", "format": "decimalPattern"}}
-},
-"analysisSearchTotal": "總計",
-"analysisErrorMessage": "搜尋時發生錯誤"
-```
+Per the current repo contract (`test/unit/l10n/arb_audit_test.dart` and `AGENTS.md`), `app_zh.arb` must continue to contain exactly one non-metadata key: `appTitle`. Keep the file present so Flutter localizations can resolve the bare `zh` locale, but do not add feature keys there. Analysis-search strings belong only in `app_en.arb`, `app_zh_TW.arb`, and `app_zh_CN.arb`.
 
 - [x] **Step 3: Add 7 keys to `l10n/app_zh_TW.arb`**
 
@@ -156,7 +142,7 @@ Chinese has no plural distinction — `analysisTransactionCount` uses a simple `
 - [x] **Step 5: Regenerate l10n bindings**
 
 Run: `flutter pub get`
-Expected: regenerates `lib/l10n/app_localizations*.dart`. No errors. If it complains about missing `app_zh.arb`, double-check the file exists.
+Expected: regenerates `lib/l10n/app_localizations*.dart`. No errors. `app_zh.arb` must still exist, but it remains the one-key fallback shim.
 
 - [x] **Step 6: Verify keys are codegen'd**
 
@@ -2785,7 +2771,7 @@ Otherwise, no-op — the feature is ready for review.
   - `AnalysisScreen` rewrite — IME-composition guard, focus + clear unfocus, adaptive `PreferredSize`, `Semantics(liveRegion: true)`, localized error → Task 12 ✅
   - `CategorySearchDetailScreen` (uses `categoryDisplayName`, localized error) → Task 13 ✅
   - Router guards (3 widget tests, in-shell push, no `parentNavigatorKey`) → Task 14 ✅
-  - l10n keys (7 keys × 4 ARBs, including `analysisErrorMessage`) → Task 1 ✅
+  - l10n keys (7 keys in `app_en.arb`, `app_zh_TW.arb`, and `app_zh_CN.arb`; `app_zh.arb` remains the fallback shim) → Task 1 ✅
   - Widget tests — idle, empty, results, **back-navigation `keepAlive`**, router guards → Tasks 12, 13, 14 ✅
   - Spec § Decisions and Trade-offs is documentation-only; nothing to implement.
 

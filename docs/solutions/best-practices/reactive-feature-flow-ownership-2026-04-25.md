@@ -38,11 +38,11 @@ If a screen must behave like a root modal from anywhere in the app shell, declar
 
 ```dart
 GoRoute(
-  path: '/accounts',
-  builder: (_, _) => const AccountsScreen(),
+  path: '/settings',
+  builder: (_, _) => const SettingsScreen(),
   routes: [
     GoRoute(
-      path: 'new',
+      path: 'manage-accounts/new',
       parentNavigatorKey: _rootNavigatorKey,
       pageBuilder: (ctx, state) => _modalPage(
         state,
@@ -51,10 +51,10 @@ GoRoute(
       ),
     ),
     GoRoute(
-      path: ':id',
+      path: 'manage-accounts/:id',
       redirect: (_, state) =>
           int.tryParse(state.pathParameters['id'] ?? '') == null
-          ? '/accounts'
+          ? '/settings'
           : null,
       parentNavigatorKey: _rootNavigatorKey,
       pageBuilder: (ctx, state) => _modalPage(
