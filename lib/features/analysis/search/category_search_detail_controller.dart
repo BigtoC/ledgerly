@@ -95,10 +95,10 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
       return controller.stream;
     }
 
-    // Hot-path cache: when AnalysisController has settled results for the
-    // same query, reuse the cached transactions instead of opening a fresh
-    // repo subscription. The repo stream is opened below as a fallback
-    // when the cache is unavailable.
+    // Synchronous pre-fill from the parent's cache so the detail page
+    // renders the row instantly without a frame of `DetailLoading` while
+    // Drift fetches the same data we already have in memory. Drift's
+    // first emission on the live subscription below replaces it.
     if (ref.exists(analysisControllerProvider)) {
       final settled = ref.read(analysisControllerProvider).valueOrNull;
       final matchesSettledQuery = switch (settled) {
@@ -119,11 +119,15 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
               currencyCode: trimmedCurrencyCode,
             ),
           );
-          return controller.stream;
         }
       }
     }
 
+    // Always subscribe so live updates flow through after the user edits
+    // or deletes a transaction in the modal edit screen and pops back.
+    // Drift shares the underlying query execution across multiple
+    // subscribers, so the second subscription on top of `AnalysisController`'s
+    // own is cheap.
     final repo = ref.watch(transactionRepositoryProvider);
     _subscription = repo
         .watchByMemo(trimmedQuery)
@@ -253,6 +257,19 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
         .toList();
 
     if (filtered.isEmpty) {
+      // When the only matching row is the one being deleted, fall through
+      // to a `DetailData` with empty days so the screen keeps its
+      // `pendingDelete` signal (which drives the undo SnackBar). Going
+      // straight to `DetailEmpty` here would silently drop the undo
+      // affordance for a user deleting their last matching transaction.
+      if (_pendingDelete != null) {
+        return CategorySearchDetailState.data(
+          days: const [],
+          overallSumMinorUnits: 0,
+          currency: _pendingDelete!.transaction.currency,
+          pendingDelete: _pendingDelete,
+        );
+      }
       return const CategorySearchDetailState.empty();
     }
 

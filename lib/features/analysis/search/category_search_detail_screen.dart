@@ -98,6 +98,9 @@ class _CategorySearchDetailScreenState
           data: (s) => switch (s) {
             DetailLoading() => const Center(child: CircularProgressIndicator()),
             DetailEmpty() => Center(child: Text(l10n.analysisNoResults)),
+            DetailData(:final days) when days.isEmpty => Center(
+              child: Text(l10n.analysisNoResults),
+            ),
             DetailData(
               :final days,
               :final overallSumMinorUnits,
