@@ -668,6 +668,39 @@ class AppLocalizationsZh extends AppLocalizations {
       'Charts and summaries will appear here once Phase 2 lands.';
 
   @override
+  String get analysisTitle => 'Analysis';
+
+  @override
+  String get analysisSearchHint => 'Search transactions…';
+
+  @override
+  String get analysisSearchPrompt => 'Search memos to find past transactions';
+
+  @override
+  String get analysisNoResults => 'No transactions found';
+
+  @override
+  String analysisTransactionCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString transactions',
+      one: '$countString transaction',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get analysisSearchTotal => 'Total';
+
+  @override
+  String get analysisErrorMessage => 'Something went wrong while searching';
+
+  @override
   String get settingsRecurringTile => 'Recurring transactions';
 
   @override
@@ -1463,6 +1496,33 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get analysisPlaceholderBody => '图表和摘要将在第二阶段上线后显示。';
 
   @override
+  String get analysisTitle => '分析';
+
+  @override
+  String get analysisSearchHint => '搜索交易记录…';
+
+  @override
+  String get analysisSearchPrompt => '搜索备注以查找过往交易';
+
+  @override
+  String get analysisNoResults => '未找到交易记录';
+
+  @override
+  String analysisTransactionCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$countString 笔交易';
+  }
+
+  @override
+  String get analysisSearchTotal => '总计';
+
+  @override
+  String get analysisErrorMessage => '搜索时发生错误';
+
+  @override
   String get settingsRecurringTile => '周期性交易';
 
   @override
@@ -2252,6 +2312,33 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get analysisPlaceholderBody => '圖表和摘要將在第二階段上線後顯示。';
+
+  @override
+  String get analysisTitle => '分析';
+
+  @override
+  String get analysisSearchHint => '搜尋交易紀錄…';
+
+  @override
+  String get analysisSearchPrompt => '搜尋備註以尋找過往交易';
+
+  @override
+  String get analysisNoResults => '找不到交易紀錄';
+
+  @override
+  String analysisTransactionCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$countString 筆交易';
+  }
+
+  @override
+  String get analysisSearchTotal => '總計';
+
+  @override
+  String get analysisErrorMessage => '搜尋時發生錯誤';
 
   @override
   String get settingsRecurringTile => '週期性交易';

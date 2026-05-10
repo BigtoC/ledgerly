@@ -134,6 +134,27 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
         .watch();
   }
 
+  /// Watch transactions whose memo contains [query] (case-insensitive
+  /// substring), ordered `date DESC, id DESC`. Memos that are NULL are
+  /// excluded (`isNotNull()` filter; LIKE on NULL never matches anyway).
+  /// Empty/whitespace queries short-circuit to `[]` — without this,
+  /// `LIKE '%%'` matches every memoed row and would silently dump the
+  /// table on a broken deep link.
+  Stream<List<TransactionRow>> watchByMemo(String query) {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) {
+      return Stream<List<TransactionRow>>.value(const []);
+    }
+    final like = '%${trimmed.toLowerCase()}%';
+    return (select(transactions)
+          ..where((t) => t.memo.isNotNull() & t.memo.lower().like(like))
+          ..orderBy([
+            (t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc),
+            (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
+          ]))
+        .watch();
+  }
+
   /// Watch a single transaction by id (Edit screen).
   Stream<TransactionRow?> watchById(int id) {
     return (select(

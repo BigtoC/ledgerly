@@ -7,6 +7,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../features/accounts/account_form_screen.dart';
 import '../features/analysis/analysis_screen.dart';
+import '../features/analysis/search/category_search_detail_screen.dart';
 import '../features/categories/categories_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/recurring/recurring_rule_form_screen.dart';
@@ -140,6 +141,40 @@ GoRouter router(Ref ref) {
               GoRoute(
                 path: '/analysis',
                 builder: (_, _) => const AnalysisScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'search/:categoryId',
+                    redirect: (_, state) {
+                      final categoryId = int.tryParse(
+                        state.pathParameters['categoryId'] ?? '',
+                      );
+                      final query =
+                          state.uri.queryParameters['q']?.trim() ?? '';
+                      final currencyCode =
+                          state.uri.queryParameters['c']?.trim() ?? '';
+                      if (categoryId == null ||
+                          query.isEmpty ||
+                          currencyCode.isEmpty) {
+                        return '/analysis';
+                      }
+                      return null;
+                    },
+                    builder: (context, state) {
+                      final categoryId = int.parse(
+                        state.pathParameters['categoryId']!,
+                      );
+                      final query =
+                          state.uri.queryParameters['q']?.trim() ?? '';
+                      final currencyCode = state.uri.queryParameters['c']!
+                          .trim();
+                      return CategorySearchDetailScreen(
+                        categoryId: categoryId,
+                        query: query,
+                        currencyCode: currencyCode,
+                      );
+                    },
+                  ),
+                ],
               ),
             ],
           ),

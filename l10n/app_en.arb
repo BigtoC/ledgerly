@@ -862,6 +862,30 @@
     "description": "Body copy for the Analysis screen empty-state placeholder."
   },
 
+  "analysisTitle": "Analysis",
+  "@analysisTitle": {"description": "Analysis tab AppBar title"},
+
+  "analysisSearchHint": "Search transactions…",
+  "@analysisSearchHint": {"description": "SearchBar placeholder on Analysis"},
+
+  "analysisSearchPrompt": "Search memos to find past transactions",
+  "@analysisSearchPrompt": {"description": "Idle-state copy under the search icon"},
+
+  "analysisNoResults": "No transactions found",
+  "@analysisNoResults": {"description": "Empty-state copy when query has no matches"},
+
+  "analysisTransactionCount": "{count, plural, =1{{count} transaction} other{{count} transactions}}",
+  "@analysisTransactionCount": {
+    "description": "Count of matching transactions in a category card",
+    "placeholders": {"count": {"type": "int", "format": "decimalPattern"}}
+  },
+
+  "analysisSearchTotal": "Total",
+  "@analysisSearchTotal": {"description": "Header label for the overall sum on the detail page"},
+
+  "analysisErrorMessage": "Something went wrong while searching",
+  "@analysisErrorMessage": {"description": "User-facing error copy when the search stream errors (Drift error, schema corruption, etc.)"},
+
   "settingsRecurringTile": "Recurring transactions",
   "@settingsRecurringTile": { "description": "Settings entry-point label for the recurring rules screen." },
 

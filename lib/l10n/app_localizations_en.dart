@@ -668,6 +668,39 @@ class AppLocalizationsEn extends AppLocalizations {
       'Charts and summaries will appear here once Phase 2 lands.';
 
   @override
+  String get analysisTitle => 'Analysis';
+
+  @override
+  String get analysisSearchHint => 'Search transactions…';
+
+  @override
+  String get analysisSearchPrompt => 'Search memos to find past transactions';
+
+  @override
+  String get analysisNoResults => 'No transactions found';
+
+  @override
+  String analysisTransactionCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString transactions',
+      one: '$countString transaction',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get analysisSearchTotal => 'Total';
+
+  @override
+  String get analysisErrorMessage => 'Something went wrong while searching';
+
+  @override
   String get settingsRecurringTile => 'Recurring transactions';
 
   @override

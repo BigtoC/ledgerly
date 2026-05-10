@@ -99,6 +99,11 @@ abstract class TransactionRepository {
   /// Transactions for a single category, reverse-chronological.
   Stream<List<Transaction>> watchForCategory(int categoryId, {int limit = 200});
 
+  /// Transactions whose memo contains [query] (case-insensitive
+  /// substring). Returns domain models ordered `date DESC, id DESC`.
+  /// Empty/whitespace queries emit `[]` (DAO short-circuits).
+  Stream<List<Transaction>> watchByMemo(String query);
+
   /// One-shot read by id. Returns null when no row matches.
   Future<Transaction?> getById(int id);
 
@@ -251,6 +256,11 @@ final class DriftTransactionRepository implements TransactionRepository {
     return _dao
         .watchByCategory(categoryId, limit: limit)
         .asyncMap(_rowsToDomain);
+  }
+
+  @override
+  Stream<List<Transaction>> watchByMemo(String query) {
+    return _dao.watchByMemo(query).asyncMap(_rowsToDomain);
   }
 
   @override

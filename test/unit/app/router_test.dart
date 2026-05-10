@@ -373,6 +373,86 @@ void main() {
       expect(find.byType(AnalysisScreen), findsOneWidget);
     });
 
+    testWidgets('invalid analysis detail id redirects to /analysis', (
+      tester,
+    ) async {
+      final db = newTestAppDatabase();
+      addTearDown(db.close);
+      final container = makeTestContainer(
+        db: db,
+        extraOverrides: [
+          splashGateSnapshotProvider.overrideWithValue(
+            SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(routerProvider);
+      addTearDown(router.dispose);
+      router.go('/analysis/search/abc?q=coffee&c=USD');
+
+      await tester.pumpWidget(buildTestApp(container: container));
+      await tester.pumpAndSettle();
+
+      final leaf = router.routerDelegate.currentConfiguration.last;
+      expect(leaf.matchedLocation, '/analysis');
+      expect(find.byType(AnalysisScreen), findsOneWidget);
+    });
+
+    testWidgets('empty analysis detail query redirects to /analysis', (
+      tester,
+    ) async {
+      final db = newTestAppDatabase();
+      addTearDown(db.close);
+      final container = makeTestContainer(
+        db: db,
+        extraOverrides: [
+          splashGateSnapshotProvider.overrideWithValue(
+            SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(routerProvider);
+      addTearDown(router.dispose);
+      router.go('/analysis/search/5?q=&c=USD');
+
+      await tester.pumpWidget(buildTestApp(container: container));
+      await tester.pumpAndSettle();
+
+      final leaf = router.routerDelegate.currentConfiguration.last;
+      expect(leaf.matchedLocation, '/analysis');
+    });
+
+    testWidgets(
+      'whitespace-only analysis detail currency redirects to /analysis',
+      (tester) async {
+        final db = newTestAppDatabase();
+        addTearDown(db.close);
+        final container = makeTestContainer(
+          db: db,
+          extraOverrides: [
+            splashGateSnapshotProvider.overrideWithValue(
+              SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        final router = container.read(routerProvider);
+        addTearDown(router.dispose);
+        router.go('/analysis/search/5?q=coffee&c=%20%20');
+
+        await tester.pumpWidget(buildTestApp(container: container));
+        await tester.pumpAndSettle();
+
+        final leaf = router.routerDelegate.currentConfiguration.last;
+        expect(leaf.matchedLocation, '/analysis');
+      },
+    );
+
     testWidgets(
       'splashEnabled=true with startDate set: /splash shows Enter CTA',
       (tester) async {

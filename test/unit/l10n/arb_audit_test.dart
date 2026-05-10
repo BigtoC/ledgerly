@@ -323,6 +323,16 @@ const Set<String> _expectedEnKeys = <String>{
   'homePendingLoadError',
   'homePendingShowMore',
   'homePendingShowFewer',
+
+  // Transaction search on Analysis tab
+  // (docs/superpowers/plans/2026-05-09-transaction-search-implementation.md).
+  'analysisTitle',
+  'analysisSearchHint',
+  'analysisSearchPrompt',
+  'analysisNoResults',
+  'analysisTransactionCount',
+  'analysisSearchTotal',
+  'analysisErrorMessage',
 };
 
 Map<String, dynamic> _readArb(String fileName) {
