@@ -80,12 +80,14 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
               ? const Center(child: CircularProgressIndicator())
               : Stack(
                   children: [
-                    ListView.builder(
-                      itemCount: previous.length,
-                      itemBuilder: (_, i) => CategorySearchTile(
-                        result: previous[i],
-                        query: query,
-                        locale: locale,
+                    IgnorePointer(
+                      child: ListView.builder(
+                        itemCount: previous.length,
+                        itemBuilder: (_, i) => CategorySearchTile(
+                          result: previous[i],
+                          query: query,
+                          locale: locale,
+                        ),
                       ),
                     ),
                     const Center(child: CircularProgressIndicator()),
