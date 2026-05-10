@@ -122,11 +122,11 @@ return empty(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( List<DatedTransactionGroup> days,  int overallSumMinorUnits,  Currency currency)?  data,TResult Function()?  empty,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( List<DatedTransactionGroup> days,  int overallSumMinorUnits,  Currency currency,  CategorySearchPendingDelete? pendingDelete)?  data,TResult Function()?  empty,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case DetailLoading() when loading != null:
 return loading();case DetailData() when data != null:
-return data(_that.days,_that.overallSumMinorUnits,_that.currency);case DetailEmpty() when empty != null:
+return data(_that.days,_that.overallSumMinorUnits,_that.currency,_that.pendingDelete);case DetailEmpty() when empty != null:
 return empty();case _:
   return orElse();
 
@@ -145,11 +145,11 @@ return empty();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( List<DatedTransactionGroup> days,  int overallSumMinorUnits,  Currency currency)  data,required TResult Function()  empty,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( List<DatedTransactionGroup> days,  int overallSumMinorUnits,  Currency currency,  CategorySearchPendingDelete? pendingDelete)  data,required TResult Function()  empty,}) {final _that = this;
 switch (_that) {
 case DetailLoading():
 return loading();case DetailData():
-return data(_that.days,_that.overallSumMinorUnits,_that.currency);case DetailEmpty():
+return data(_that.days,_that.overallSumMinorUnits,_that.currency,_that.pendingDelete);case DetailEmpty():
 return empty();}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -164,11 +164,11 @@ return empty();}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( List<DatedTransactionGroup> days,  int overallSumMinorUnits,  Currency currency)?  data,TResult? Function()?  empty,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( List<DatedTransactionGroup> days,  int overallSumMinorUnits,  Currency currency,  CategorySearchPendingDelete? pendingDelete)?  data,TResult? Function()?  empty,}) {final _that = this;
 switch (_that) {
 case DetailLoading() when loading != null:
 return loading();case DetailData() when data != null:
-return data(_that.days,_that.overallSumMinorUnits,_that.currency);case DetailEmpty() when empty != null:
+return data(_that.days,_that.overallSumMinorUnits,_that.currency,_that.pendingDelete);case DetailEmpty() when empty != null:
 return empty();case _:
   return null;
 
@@ -213,7 +213,7 @@ String toString() {
 
 
 class DetailData implements CategorySearchDetailState {
-  const DetailData({required final  List<DatedTransactionGroup> days, required this.overallSumMinorUnits, required this.currency}): _days = days;
+  const DetailData({required final  List<DatedTransactionGroup> days, required this.overallSumMinorUnits, required this.currency, this.pendingDelete}): _days = days;
   
 
  final  List<DatedTransactionGroup> _days;
@@ -225,6 +225,7 @@ class DetailData implements CategorySearchDetailState {
 
  final  int overallSumMinorUnits;
  final  Currency currency;
+ final  CategorySearchPendingDelete? pendingDelete;
 
 /// Create a copy of CategorySearchDetailState
 /// with the given fields replaced by the non-null parameter values.
@@ -236,16 +237,16 @@ $DetailDataCopyWith<DetailData> get copyWith => _$DetailDataCopyWithImpl<DetailD
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DetailData&&const DeepCollectionEquality().equals(other._days, _days)&&(identical(other.overallSumMinorUnits, overallSumMinorUnits) || other.overallSumMinorUnits == overallSumMinorUnits)&&(identical(other.currency, currency) || other.currency == currency));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DetailData&&const DeepCollectionEquality().equals(other._days, _days)&&(identical(other.overallSumMinorUnits, overallSumMinorUnits) || other.overallSumMinorUnits == overallSumMinorUnits)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.pendingDelete, pendingDelete) || other.pendingDelete == pendingDelete));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_days),overallSumMinorUnits,currency);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_days),overallSumMinorUnits,currency,pendingDelete);
 
 @override
 String toString() {
-  return 'CategorySearchDetailState.data(days: $days, overallSumMinorUnits: $overallSumMinorUnits, currency: $currency)';
+  return 'CategorySearchDetailState.data(days: $days, overallSumMinorUnits: $overallSumMinorUnits, currency: $currency, pendingDelete: $pendingDelete)';
 }
 
 
@@ -256,7 +257,7 @@ abstract mixin class $DetailDataCopyWith<$Res> implements $CategorySearchDetailS
   factory $DetailDataCopyWith(DetailData value, $Res Function(DetailData) _then) = _$DetailDataCopyWithImpl;
 @useResult
 $Res call({
- List<DatedTransactionGroup> days, int overallSumMinorUnits, Currency currency
+ List<DatedTransactionGroup> days, int overallSumMinorUnits, Currency currency, CategorySearchPendingDelete? pendingDelete
 });
 
 
@@ -273,12 +274,13 @@ class _$DetailDataCopyWithImpl<$Res>
 
 /// Create a copy of CategorySearchDetailState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? days = null,Object? overallSumMinorUnits = null,Object? currency = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? days = null,Object? overallSumMinorUnits = null,Object? currency = null,Object? pendingDelete = freezed,}) {
   return _then(DetailData(
 days: null == days ? _self._days : days // ignore: cast_nullable_to_non_nullable
 as List<DatedTransactionGroup>,overallSumMinorUnits: null == overallSumMinorUnits ? _self.overallSumMinorUnits : overallSumMinorUnits // ignore: cast_nullable_to_non_nullable
 as int,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
-as Currency,
+as Currency,pendingDelete: freezed == pendingDelete ? _self.pendingDelete : pendingDelete // ignore: cast_nullable_to_non_nullable
+as CategorySearchPendingDelete?,
   ));
 }
 

@@ -7,7 +7,7 @@ part of 'category_search_detail_controller.dart';
 // **************************************************************************
 
 String _$categorySearchDetailControllerHash() =>
-    r'f2b50da64b68ec3e8c65e4176657e2932c014ebc';
+    r'97390efb48ad8bd7f65f90649a6b63f5e9e33c24';
 
 /// Copied from Dart SDK
 class _SystemHash {
