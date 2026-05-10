@@ -265,6 +265,15 @@ void main() {
 
     verifyNever(() => tx.watchByMemo('coffee'));
     expect(find.byType(CategorySearchDetailScreen), findsOneWidget);
+    // Detail must render the row from cached data, not the error state.
+    // Without this assertion, a Riverpod `dependencies` violation in the
+    // detail controller (which surfaces as `AsyncError`) would silently
+    // pass — the widget tree still contains `CategorySearchDetailScreen`.
+    expect(find.byType(TransactionSearchRow), findsOneWidget);
+    final l10n = AppLocalizations.of(
+      tester.element(find.byType(CategorySearchDetailScreen)),
+    );
+    expect(find.text(l10n.analysisErrorMessage), findsNothing);
   });
 
   testWidgets(
