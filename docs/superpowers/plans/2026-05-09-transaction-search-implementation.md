@@ -2,17 +2,20 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build memo-based transaction search on the Analysis tab — a two-level drill-down (search results grouped by `(category, currency)` → category detail grouped by date), search-as-you-type with 300ms debounce, and read-only result rows.
+**Goal:** Build memo-based transaction search on the Analysis tab — a two-level drill-down (search results grouped by `(category, currency)` → category detail grouped by date), search-as-you-type with 300ms debounce, and Level 2 rows that mirror Home's tap-to-edit + swipe-to-delete UX.
 
-**Architecture:** Strict 3-layer (Data → UI). One DAO/repo addition (`watchByMemo`) returns a Drift stream of domain `Transaction`s; an `AnalysisController` (Riverpod `StreamNotifier`, `keepAlive: true`) debounces and groups results, composing live category metadata via a slice-local `analysisCategoriesByIdProvider`; a `CategorySearchDetailController` family handles the drill-down. Search-result rows are pure presentational — no tap, swipe, or overflow menu.
+**Architecture:** Strict 3-layer (Data → UI). One DAO/repo addition (`watchByMemo`) returns a Drift stream of domain `Transaction`s; an `AnalysisController` (Riverpod `StreamNotifier`, `keepAlive: true`) debounces and groups results, composing live category metadata via a slice-local `analysisCategoriesByIdProvider`; a `CategorySearchDetailController` family handles the drill-down and owns the 4-second undo timer for swipe-to-delete. The Level 1 search list (per-`(category, currency)` cards) is read-only — only Level 2 transaction rows are interactive.
+
+> **Plan history:** Tasks 1–15 shipped on `feature/search-transactions` describing read-only Level 2 rows (the original spec position). Task 16 reverses that decision and describes the in-place changes to the controller, state, row widget, and screen needed to support tap-to-edit + swipe-to-delete with a 4-second undo window. Read Task 16 in conjunction with Tasks 8, 9, and 13 — the historical bodies are preserved for context, but the current code on `main` matches Task 16.
 
 **Tech Stack:** Flutter 3.41.7, Drift (schema v4, no migration), Riverpod with `riverpod_generator`, Freezed sealed unions, `go_router`, ARB-based l10n with ICU plurals.
 
 **Spec:** [`docs/superpowers/specs/2026-05-09-transaction-search-design.md`](../specs/2026-05-09-transaction-search-design.md)
 
-**Memory invariants** (already saved to feedback memory — propagate to any future search-style feature):
+**Memory invariants** (saved to feedback memory — propagate to any future search-style feature):
 - Search results sort by `max(transaction.date)` desc per group (not amount, not currency-bucketed).
-- Search-result transaction rows are read-only — build a dedicated row widget; do not reuse Home's `TransactionTile`.
+- Level 2 transaction rows mirror Home's UX (tap → edit, swipe → delete with 4s undo) but live in a *dedicated* row widget — do not reuse Home's `TransactionTile`. The dedicated widget keeps the analysis slice's interaction surface independently controllable and avoids `TransactionTile`'s `onDuplicate` requirement (the detail screen has no duplicate affordance) and its `groupTag: 'home'` (which would conflict with `SlidableAutoCloseBehavior` when both screens are stacked on the navigator).
+- The Level 1 search tile (per-`(category, currency)` card) remains read-only — interactivity lives only on Level 2 rows.
 
 ---
 
@@ -2817,3 +2820,187 @@ Otherwise, no-op — the feature is ready for review.
 **2. Inline Execution** — Execute tasks in this session using executing-plans, batch execution with checkpoints.
 
 **Which approach?**
+
+---
+
+## Task 16: Make detail rows tap-to-edit + swipe-to-delete (post-merge enhancement)
+
+**Files:**
+- Modify: `lib/features/analysis/search/category_search_detail_state.dart`
+- Modify: `lib/features/analysis/search/category_search_detail_controller.dart`
+- Modify: `lib/features/analysis/search/widgets/transaction_search_row.dart`
+- Modify: `lib/features/analysis/search/category_search_detail_screen.dart`
+
+**Why this task exists:** the original Tasks 8 / 9 / 13 shipped read-only Level 2 rows on the rationale that "search results are a *view*, mutations would silently change the result set." In practice, search-then-fix is the dominant flow — users search ("coffee") to *find* a row to correct — and the result-set-changing-under-the-user concern is illusory because the underlying memo stream is reactive (the row visibly drops out when its memo no longer matches). This task documents the changes that bring Level 2 rows in line with Home's tap-to-edit + swipe-to-delete UX, with a 4-second undo window.
+
+This task does NOT touch the Level 1 search list — per-`(category, currency)` cards remain read-only.
+
+- [x] **Step 1: Add `CategorySearchPendingDelete` and `pendingDelete` field to state**
+
+In `category_search_detail_state.dart`:
+
+1. Add a plain `CategorySearchPendingDelete` class at the top (mirrors `home/home_state.dart`'s `PendingDelete`):
+
+   ```dart
+   class CategorySearchPendingDelete {
+     const CategorySearchPendingDelete({
+       required this.transaction,
+       required this.scheduledFor,
+     });
+     final Transaction transaction;
+     final DateTime scheduledFor;
+   }
+   ```
+
+2. Add a nullable `pendingDelete` field to `DetailData`:
+
+   ```dart
+   const factory CategorySearchDetailState.data({
+     required List<DatedTransactionGroup> days,
+     required int overallSumMinorUnits,
+     required Currency currency,
+     CategorySearchPendingDelete? pendingDelete,
+   }) = DetailData;
+   ```
+
+3. Run `dart run build_runner build --delete-conflicting-outputs` to regenerate `category_search_detail_state.freezed.dart`.
+
+**Why declare the class locally** rather than importing the `PendingDelete` from `home_state.dart`: cross-feature imports break the slice boundary (every other slice that uses an undo window — `recurring_rules_controller.dart`, `shopping_list_controller.dart` — declares its own `*PendingDelete`). The duplication is intentional.
+
+- [x] **Step 2: Convert the controller to StreamController-driven emission**
+
+The original `build()` returns `repo.watchByMemo(...).map(...)` directly. That style cannot inject an optimistic-hide because the only way to re-emit is when the upstream emits. Convert to a `StreamController<CategorySearchDetailState>` so `deleteTransaction` / `undoDelete` can re-emit synchronously from `_lastTransactions`. The pattern mirrors `AnalysisController`.
+
+In `category_search_detail_controller.dart`:
+
+1. Bump the annotation: `@Riverpod(keepAlive: true, dependencies: [transactionRepository, AnalysisController])`. `keepAlive: true` is required so the 4-second timer survives trivial rebuilds.
+
+2. Add internal state:
+
+   ```dart
+   StreamController<CategorySearchDetailState>? _emitter;
+   StreamSubscription<List<Transaction>>? _subscription;
+   Timer? _undoTimer;
+   CategorySearchPendingDelete? _pendingDelete;
+   final Set<int> _committedDeleteIds = <int>{};
+   List<Transaction>? _lastTransactions;
+   CategorySearchDetailEffectListener? _effectListener;
+   ```
+
+3. Define the effect type (mirrors `HomeDeleteFailedEffect`):
+
+   ```dart
+   typedef CategorySearchDetailEffectListener =
+       void Function(CategorySearchDetailEffect effect);
+   sealed class CategorySearchDetailEffect { const CategorySearchDetailEffect(); }
+   final class CategorySearchDetailDeleteFailedEffect extends CategorySearchDetailEffect {
+     const CategorySearchDetailDeleteFailedEffect(this.error, this.stackTrace);
+     final Object error;
+     final StackTrace stackTrace;
+   }
+   ```
+
+4. Rewrite `build()` to:
+   - Close any prior `_emitter`, cancel `_subscription`, cancel `_undoTimer`, clear `_pendingDelete`, `_committedDeleteIds`, `_lastTransactions` (rebuild safety — same pattern as `AnalysisController`).
+   - Open a new `StreamController`. Register `ref.onDispose` to cancel everything and close the controller.
+   - On empty `query` / `currencyCode`: emit `DetailEmpty`, return the stream.
+   - Hot-path cache: when `analysisControllerProvider` exists and its current value's `query` matches the trimmed query, read `analysisControllerProvider.notifier.lastTransactions` and emit synchronously from that — saves opening a duplicate Drift subscription on the same `watchByMemo`.
+   - Otherwise: subscribe to `repo.watchByMemo(query)`. On each emission, cache `_lastTransactions = txs` and call `_emitter?.add(_buildState(...))`.
+
+5. Add the commands:
+
+   ```dart
+   Future<void> deleteTransaction(int id) async {
+     if (_pendingDelete != null) {
+       _undoTimer?.cancel();
+       _undoTimer = null;
+       final committed = await _commitDelete(_pendingDelete!.transaction.id);
+       if (!committed) return;
+     }
+     final tx = _findTransaction(id);
+     if (tx == null) return;
+     _pendingDelete = CategorySearchPendingDelete(
+       transaction: tx, scheduledFor: DateTime.now().add(kUndoWindow),
+     );
+     _emitFromCache();
+     _undoTimer = Timer(kUndoWindow, () async {
+       final pending = _pendingDelete;
+       if (pending == null) return;
+       await _commitDelete(pending.transaction.id);
+     });
+   }
+
+   Future<void> undoDelete() async {
+     _undoTimer?.cancel();
+     _undoTimer = null;
+     _pendingDelete = null;
+     _emitFromCache();
+   }
+
+   void setEffectListener(CategorySearchDetailEffectListener? l) {
+     _effectListener = l;
+   }
+   ```
+
+6. Add `_commitDelete(id)` (mirrors `HomeController._commitDelete`): adds to `_committedDeleteIds` then `repo.delete(id)`; on success clears `_pendingDelete` if it still matches; on failure removes the id from `_committedDeleteIds`, restores `_pendingDelete = null`, fires `CategorySearchDetailDeleteFailedEffect` via the listener.
+
+7. Update `_buildState` to filter `t.id != _pendingDelete?.transaction.id && !_committedDeleteIds.contains(t.id)` so the row hides instantly. The `overallSumMinorUnits` is computed from the filtered list, so it stays consistent with the visible rows during the undo window.
+
+- [x] **Step 3: Make `TransactionSearchRow` interactive**
+
+In `widgets/transaction_search_row.dart`:
+
+1. Add two nullable fields: `final VoidCallback? onTap` and `final VoidCallback? onDelete`.
+2. Pass `onTap` through to `ListTile.onTap`.
+3. When `onDelete != null`, wrap the `ListTile` in a `Slidable` with `groupTag: 'analysis_search'` (NOT `'home'`), `BehindMotion`, `extentRatio: 0.3`, `DismissiblePane(onDismissed: onDelete!)`, and a `SlidableAction` using `theme.colorScheme.errorContainer` / `Icons.delete_outline` / `l10n.commonDelete`. Visual parity with `TransactionTile` is intentional.
+4. When `onDelete == null`, return the bare `ListTile` — the widget degrades gracefully to fully read-only for tests or future contexts.
+
+- [x] **Step 4: Wire the detail screen to the new commands**
+
+In `category_search_detail_screen.dart`:
+
+1. Convert from `ConsumerWidget` to `ConsumerStatefulWidget` so the screen can hold `_lastShownPending` (snackbar dedup), register an effect listener in `initState`, and tear it down in `dispose`.
+2. Wrap the body in `SlidableAutoCloseBehavior` (matches Home's pattern at `home_screen.dart:189`).
+3. Pass per-row callbacks: `onTap: () => context.push('/home/edit/${tx.id}')` and `onDelete: () => _controller.deleteTransaction(tx.id)`. The route already exists under the home branch with `parentNavigatorKey: _rootNavigatorKey` — pushing it from the analysis branch overlays correctly.
+4. Add a `ref.listen` block that fires `_maybeShowUndoSnackbar(context, value.pendingDelete)` on every `DetailData` emission. The snackbar reuses `l10n.homeDeleteUndoSnackbar` ("Transaction deleted") and `l10n.commonUndo`; the action calls `_controller.undoDelete()`. Dedup via `_lastShownPending` so a re-emit during the same undo window does not stack snackbars.
+5. Surface `CategorySearchDetailDeleteFailedEffect` as a generic `errorSnackbarGeneric` snackbar (mirrors Home).
+
+- [x] **Step 5: Codegen, format, analyze**
+
+```bash
+dart run build_runner build --delete-conflicting-outputs
+dart format lib/features/analysis/search/
+flutter analyze
+```
+
+Expected: clean.
+
+- [x] **Step 6: Update the spec doc**
+
+In `docs/superpowers/specs/2026-05-09-transaction-search-design.md`:
+- Replace the "Transaction tiles" subsection so it documents tap+swipe rather than read-only.
+- Update the "Detail Screen State & Controller" subsection to add `pendingDelete` to `DetailData`, declare `CategorySearchPendingDelete`, and add the `deleteTransaction` / `undoDelete` / `setEffectListener` commands and the `_committedDeleteIds` lifecycle.
+- Update the layout block to mention `SlidableAutoCloseBehavior`, the snackbar, and the optimistic-hide behavior of `overallSumMinorUnits`.
+- Add a "Why interactive rows" decision under Decisions and Trade-offs explaining the reversal.
+
+- [x] **Step 7: Tests to add (out of scope for this task — file as TODO)**
+
+The original Task 8 tests don't cover the new commands. The follow-up work (NOT done in this task) is to add tests for:
+- Optimistic delete: `deleteTransaction(id)` immediately re-emits with the row hidden and `pendingDelete` non-null; `repo.delete` not called yet.
+- Undo cancels: `undoDelete()` re-emits with the row restored and `repo.delete` is never called.
+- Commit on timer: after `kUndoWindow`, `repo.delete(id)` is called once. A throw surfaces a `CategorySearchDetailDeleteFailedEffect` and the row is restored.
+- Second-delete-commits-prior: while one delete is pending, `deleteTransaction(otherId)` commits the prior delete immediately and starts a fresh timer for `otherId`.
+- Widget test: tapping a row pushes `/home/edit/$id` (assert via a navigator observer); end-swipe shows the undo snackbar; tapping UNDO restores the row before any repo write.
+
+- [x] **Step 8: Update memory**
+
+Reverse `feedback_search_results_read_only.md`: future search-style features should default to "interactive Level 2 rows mirror Home's UX (tap-to-edit + swipe-to-delete with 4s undo)." The Level 1 search-list cards (per-`(category, currency)`) remain read-only.
+
+- [x] **Step 9: Commit**
+
+```bash
+git add lib/features/analysis/search/ \
+        docs/superpowers/specs/2026-05-09-transaction-search-design.md \
+        docs/superpowers/plans/2026-05-09-transaction-search-implementation.md
+git commit -m "feat(analysis): make search-detail rows tap-to-edit and swipe-to-delete with 4s undo"
+```

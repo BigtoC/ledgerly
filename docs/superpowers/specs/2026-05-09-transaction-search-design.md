@@ -240,16 +240,28 @@ Scaffold
   AppBar
     Title: category name
     Back button
-  Body
+  Body (wrapped in SlidableAutoCloseBehavior so an open swipe-action
+        on one row collapses when another row's swipe begins)
     Header: signForType * overallSumMinorUnits formatted via MoneyFormatter
             using state.currency (single-currency by construction).
             Color matches Level 1 (expense → red, income → green).
+            The pending-delete row is excluded from this sum during the
+            4-second undo window so the header stays consistent with what
+            the user can see.
     ListView (grouped by date)
       Date header: DateFormat.yMMMd(locale).format(date)
-      Transaction rows (read-only TransactionSearchRow, see below)
+      Transaction rows (TransactionSearchRow with onTap → push
+        `/home/edit/$id` and onDelete → controller.deleteTransaction(id)).
       Per-day subtotal: signForType * day.daySumMinorUnits formatted in state.currency,
-                        same sign/color rules as Level 1
+                        same sign/color rules as Level 1.
+
+  SnackBar (transient, surfaced by the screen on pendingDelete null→set transitions)
+    "Transaction deleted" + UNDO action (kUndoWindow = 4s).
 ```
+
+**Edit gesture:** primary tap pushes `/home/edit/$id`. The route is registered under the home branch with `parentNavigatorKey: _rootNavigatorKey`, so it overlays the analysis branch correctly. The detail screen does *not* re-pin or re-query on return — the underlying memo stream re-emits naturally, and a saved transaction whose memo no longer matches the active query simply drops out of the list.
+
+**Delete gesture:** end-swipe (or tapping the swipe action) calls `deleteTransaction(id)` on the detail controller, which sets `pendingDelete`, hides the row optimistically, schedules a `kUndoWindow` timer, and surfaces the undo SnackBar. The repository write only happens when the timer fires; tapping UNDO before then cancels the timer with no DB write. A delete-failure surfaces a generic-error SnackBar via `setEffectListener` (mirrors Home).
 
 ### Detail Screen State & Controller
 
@@ -263,8 +275,11 @@ sealed class CategorySearchDetailState with _$CategorySearchDetailState {
     required List<DatedTransactionGroup> days,
     required int overallSumMinorUnits,
     required Currency currency, // full descriptor — formatter needs decimals + symbol
-    required String query,
-    required int categoryId,
+    /// Non-null while a row is in its 4-second undo window. The matching
+    /// transaction is filtered out of [days] and excluded from
+    /// [overallSumMinorUnits] so the UI hides it optimistically until
+    /// the timer commits or the user taps Undo.
+    CategorySearchPendingDelete? pendingDelete,
   }) = DetailData;
   const factory CategorySearchDetailState.empty() = DetailEmpty;
 }
@@ -277,27 +292,50 @@ abstract class DatedTransactionGroup with _$DatedTransactionGroup {
     required int daySumMinorUnits,
   }) = _DatedTransactionGroup;
 }
+
+/// Plain class — controller swaps it out by reference. Mirrors
+/// `home/home_state.dart`'s `PendingDelete`; declared locally so the
+/// analysis slice does not import from the home feature.
+class CategorySearchPendingDelete {
+  const CategorySearchPendingDelete({
+    required this.transaction,
+    required this.scheduledFor,
+  });
+
+  final Transaction transaction;
+  final DateTime scheduledFor;
+}
 ```
 
 `lib/features/analysis/category_search_detail_controller.dart` — `@riverpod` family keyed on `(int categoryId, String query, String currencyCode)`:
 
-- **Annotation:** `@Riverpod(dependencies: [transactionRepository])`. Family members are short-lived (tied to the detail page navigation), so `keepAlive: true` is unnecessary — the page is rebuilt fresh on each push.
-- **Dependencies (runtime):** `transactionRepositoryProvider` (direct watch). The detail controller does *not* depend on `AccountRepository` or `CategoryRepository` — both are widget-side concerns: `TransactionSearchRow` takes `Account?` / `Category?` directly, and the detail screen resolves them via `analysisAccountsByIdProvider` and `analysisCategoriesByIdProvider`. The detail controller only needs `Transaction` rows.
+- **Annotation:** `@Riverpod(keepAlive: true, dependencies: [transactionRepository, AnalysisController])`. `keepAlive: true` is required because the controller owns a 4-second undo timer that must survive trivial rebuilds while the user considers tapping Undo on the snackbar.
+- **Dependencies (runtime):** `transactionRepositoryProvider` (direct watch) and `analysisControllerProvider` (read-only, for the hot-path cache of `lastTransactions` when navigating from a settled search). The detail controller does *not* depend on `AccountRepository` or `CategoryRepository` — both are widget-side concerns: `TransactionSearchRow` takes `Account?` / `Category?` directly, and the detail screen resolves them via `analysisAccountsByIdProvider` and `analysisCategoriesByIdProvider`. The detail controller only needs `Transaction` rows.
 - **Currency in state:** the route's `currencyCode` string is upgraded to a full `Currency` value object inside the controller by reading the first emission's `transaction.currency` (every matching transaction shares the currency by construction of step 2's filter). If no transaction matches, the state is `DetailEmpty` and the AppBar header carries no sum.
+- **Internal state held across rebuilds:** `_emitter` (StreamController), `_subscription` (the active `watchByMemo` subscription), `_undoTimer`, `_pendingDelete`, `_committedDeleteIds` (suppresses the about-to-be-removed row between commit-time and the next stream emission), `_lastTransactions` (cache so `_emitFromCache` can re-emit synchronously on `deleteTransaction` / `undoDelete` without waiting for a fresh repo emission), `_effectListener` (set by the screen for one-shot delete-failure notifications). All resources are cancelled / cleared in `ref.onDispose` and at the top of `build()` to prevent leaks across rebuilds.
 - **Behavior:**
-  1. Subscribe to `TransactionRepository.watchByMemo(query)`. Guard: if `query` is empty/whitespace at family-key time, the controller emits `DetailEmpty` immediately and never subscribes (matches the router's empty-`q` guard, defense-in-depth).
-  2. Filter to `transaction.categoryId == categoryId && transaction.currency.code == currencyCode`.
+  1. Subscribe to `TransactionRepository.watchByMemo(query)` (or reuse `analysisControllerProvider.notifier.lastTransactions` when the parent screen has settled results for the same query). Guard: if `query` is empty/whitespace at family-key time, the controller emits `DetailEmpty` immediately and never subscribes (matches the router's empty-`q` guard, defense-in-depth).
+  2. Filter to `transaction.categoryId == categoryId && transaction.currency.code == currencyCode && !committedDeleteIds.contains(t.id) && t.id != pendingDelete?.transaction.id`. The pending-delete and committed-delete filters are belt-and-suspenders: they hide the row optimistically the instant the user swipes, even before the repo's next emission lands.
   3. Group by `DateHelpers.startOfDay(transaction.date)`.
   4. Compute per-day sums and overall sum (single-currency by construction — step 2 already filtered).
   5. Emit `DetailData` with sorted day groups, or `DetailEmpty` if no matches. Days are sorted by date descending (most recent first), matching DAO ordering and the Level 1 sort. Within each day, transactions retain DAO order (`date DESC, id DESC`).
+- **Commands:**
+  - `deleteTransaction(int id)` — sets `_pendingDelete`, re-emits the (filtered) state immediately, and starts a `kUndoWindow` timer. On expiry, calls `repo.delete(id)`. A second `deleteTransaction` call while a delete is already pending commits the prior one immediately and starts a fresh timer for the new id (mirrors `HomeController.deleteTransaction`). On commit failure, surfaces a `CategorySearchDetailDeleteFailedEffect` via `_effectListener` and re-emits with the row restored.
+  - `undoDelete()` — cancels the pending timer, clears `_pendingDelete`, and re-emits from `_lastTransactions` so the row reappears synchronously. Repository is never touched.
+  - `setEffectListener(listener)` — single-listener slot used by the screen to hook delete-failure SnackBars (mirrors `HomeController.setEffectListener`).
 
 ### Transaction tiles
 
-Search-result rows are **read-only** — no tap, no swipe, no overflow menu. Editing, duplicating, and deleting are deliberately out of scope from the search-detail context: a search result is a *view* over transactions, and mutations from a filtered view would silently change the result set under the user.
+Search-result rows on the detail screen support **primary tap → edit** and **swipe → delete with 4-second undo**, mirroring Home's `TransactionTile` UX so the two surfaces feel consistent. They deliberately do **not** expose the duplicate / overflow-menu surface — duplicating from a filtered view is rarely meaningful, and adding it would balloon the row's affordances. The Level 1 search tile (the per-`(category, currency)` card on the search list) remains read-only — only Level 2 transaction rows are interactive.
 
-Home's `TransactionTile` (`lib/features/home/widgets/transaction_tile.dart`) is built around the interactive model — `Slidable` wrapper, `DismissiblePane`, `PopupMenuButton` with edit/duplicate/delete — so reusing it would require nullable-callbacks plumbing that fights its own documentation ("Primary tap → edit. Overflow → Edit / Duplicate / Delete."). A separate read-only widget is cleaner.
+Reusing Home's `TransactionTile` directly is rejected because:
+1. `TransactionTile` requires a non-null `onDuplicate`, but the detail screen has no duplicate affordance.
+2. `TransactionTile`'s `Slidable` uses `groupTag: 'home'`, which would couple `SlidableAutoCloseBehavior` across the two surfaces and produce bugs when both screens stack on the navigator.
+3. The detail row's edit gesture pushes `/home/edit/$id` onto the root navigator and discards the returned `Transaction` (the underlying memo stream re-emits naturally), whereas Home pins the saved day on return — the callbacks are not interchangeable.
 
-`lib/features/analysis/widgets/transaction_search_row.dart` — new presentational widget:
+A dedicated `TransactionSearchRow` keeps the analysis slice's interaction surface independently controllable.
+
+`lib/features/analysis/widgets/transaction_search_row.dart` — interactive presentational widget:
 
 ```dart
 class TransactionSearchRow extends StatelessWidget {
@@ -307,6 +345,8 @@ class TransactionSearchRow extends StatelessWidget {
     required this.category,
     required this.account,
     required this.locale,
+    this.onTap,
+    this.onDelete,
   });
 
   final Transaction transaction;
@@ -314,17 +354,27 @@ class TransactionSearchRow extends StatelessWidget {
   final Account?  account;  // resolved via analysisAccountsByIdProvider
   final String    locale;
 
+  /// Primary tap. When null the row renders without an `onTap` (read-only).
+  final VoidCallback? onTap;
+
+  /// End-swipe gesture. When null the swipe affordance is omitted entirely.
+  final VoidCallback? onDelete;
+
   @override
   Widget build(BuildContext context) {
-    // ListTile only — no Slidable, no PopupMenuButton, no onTap.
-    // Visual layout (leading icon, title, subtitle = "account • memo",
-    // trailing signed amount with type-driven color) matches Home's
-    // TransactionTile so the two screens feel consistent.
-    // Amount formatting reuses MoneyFormatter.formatSigned with
-    // sign derived from category.type (same switch as TransactionTile).
+    // ListTile (with optional onTap), wrapped in a Slidable when onDelete
+    // is provided. groupTag: 'analysis_search' so SlidableAutoCloseBehavior
+    // is scoped to the detail screen and does not cross-fight Home's
+    // `groupTag: 'home'`. Visual layout (leading icon, title, subtitle =
+    // "account • memo", trailing signed amount with type-driven color)
+    // matches Home's TransactionTile.
+    // Amount formatting reuses MoneyFormatter.formatSigned with sign
+    // derived from category.type (same switch as TransactionTile).
   }
 }
 ```
+
+Both callbacks are nullable so the widget can degrade to a fully read-only tile in tests or future contexts (e.g. a settings preview) without forking the implementation.
 
 The amount-formatting logic is identical to `TransactionTile`'s `switch (cat?.type)` block. Either:
 - Duplicate the 10-line switch (acceptable — three lines is not abstraction-worthy, ten arguably is) — **preferred for now**, or
@@ -392,11 +442,11 @@ New keys in `app_en.arb`, `app_zh.arb`, `app_zh_TW.arb`, `app_zh_CN.arb` (the ba
 | `lib/features/analysis/analysis_state.dart`                             | UI / state  | Freezed state union (`idle`, `loading{previous?}`, `results`, `empty`) |
 | `lib/features/analysis/analysis_controller.dart`                        | UI / state  | `StreamNotifier` with debounce + stream-subscription cancellation      |
 | `lib/features/analysis/analysis_providers.dart`                         | UI / state  | `analysisCategoriesByIdProvider`, `analysisAccountsByIdProvider`       |
-| `lib/features/analysis/category_search_detail_state.dart`               | UI / state  | Detail screen Freezed state                                            |
-| `lib/features/analysis/category_search_detail_controller.dart`          | UI / state  | Detail screen family `StreamNotifier`                                  |
-| `lib/features/analysis/category_search_detail_screen.dart`              | UI / widget | Drill-down page                                                        |
-| `lib/features/analysis/widgets/category_search_tile.dart`               | UI / widget | Category result card                                                   |
-| `lib/features/analysis/widgets/transaction_search_row.dart`             | UI / widget | Read-only transaction row for the detail screen                        |
+| `lib/features/analysis/category_search_detail_state.dart`               | UI / state  | Detail screen Freezed state + `CategorySearchPendingDelete` plain class |
+| `lib/features/analysis/category_search_detail_controller.dart`          | UI / state  | Detail screen family `StreamNotifier` with 4s undo window               |
+| `lib/features/analysis/category_search_detail_screen.dart`              | UI / widget | Drill-down page (tap → edit, swipe → delete with undo)                  |
+| `lib/features/analysis/widgets/category_search_tile.dart`               | UI / widget | Category result card                                                    |
+| `lib/features/analysis/widgets/transaction_search_row.dart`             | UI / widget | Transaction row with optional `onTap` / `onDelete` for the detail screen |
 | `lib/features/analysis/widgets/analysis_search_placeholder.dart`        | UI / widget | Idle-state prompt (replaces Phase 2 placeholder)                       |
 | `test/unit/controllers/analysis_controller_test.dart`                   | Test        | Controller unit tests                                                  |
 | `test/unit/controllers/category_search_detail_controller_test.dart`     | Test        | Detail controller unit tests                                           |
@@ -446,11 +496,15 @@ No schema migration. No new dependencies.
   - Empty `query` family-key emits `DetailEmpty` and never subscribes.
   - Per-day grouping uses `DateHelpers.startOfDay`; transactions at 23:59 and 00:01 of different days fall into different groups.
   - Day groups are date-desc; within a day, transaction order matches DAO order.
+  - **Optimistic delete:** `deleteTransaction(id)` immediately re-emits a `DetailData` whose `days` exclude `id`, whose `overallSumMinorUnits` excludes that transaction's amount, and whose `pendingDelete` is non-null. The repository's `delete` is NOT called synchronously.
+  - **Undo cancels:** `undoDelete()` before the timer expires re-emits with the row restored and never calls `repo.delete`.
+  - **Commit on timer:** after `kUndoWindow` with no Undo, `repo.delete(id)` is called exactly once. A failed commit (mock throws) surfaces a `CategorySearchDetailDeleteFailedEffect` via the registered `_effectListener` and re-emits with the row restored.
+  - **Second delete commits prior:** while a delete is pending, calling `deleteTransaction(otherId)` commits the prior pending delete immediately and starts a fresh timer for `otherId` (no clobber).
 
 ### Widget tests
 
 - **AnalysisScreen:** search bar renders in `AppBar.bottom`; idle shows `analysisSearchPrompt` placeholder; loading-with-previous shows the previous list under a centered spinner; results list renders one tile per `(category, currency)` pair; empty shows `analysisNoResults`; category tile tap calls `context.push('/analysis/search/:id?q=…&c=…')`.
-- **CategorySearchDetailScreen:** grouped-by-date layout; overall sum header uses `state.currency` for symbol+decimals; per-day subtotal sign matches Level 1; back navigation returns to `AnalysisResults` with the same query (verifies `keepAlive` on the list controller).
+- **CategorySearchDetailScreen:** grouped-by-date layout; overall sum header uses `state.currency` for symbol+decimals; per-day subtotal sign matches Level 1; back navigation returns to `AnalysisResults` with the same query (verifies `keepAlive` on the list controller). Tapping a row pushes `/home/edit/$id` (assert via a `MockGoRouter` or `Navigator` observer). End-swiping a row hides it from the list and surfaces the undo SnackBar with `commonUndo` action; tapping UNDO restores the row before any repo write; letting the SnackBar expire commits the delete.
 - **Router guards:** push `/analysis/search/abc?q=coffee&c=USD` (bad id) → falls back to `AnalysisScreen`; push `/analysis/search/5?q=&c=USD` (empty q) → falls back; push `/analysis/search/5?q=coffee&c=` (empty c) → falls back.
 
 ### Integration tests
@@ -482,3 +536,15 @@ Currency is a query param (`?c=USD`) rather than a second path segment to keep t
 ### Why no result count limit?
 
 The search is user-driven (they type a specific query) and the results are grouped by category (typically 1-5 categories match a query). There's no need for pagination at either level. If the user has thousands of transactions matching "coffee," the category grouping naturally compresses them into a handful of category cards.
+
+### Why interactive rows on the detail screen (reversal of the original "read-only" decision)
+
+The original design called for read-only Level 2 rows on the grounds that a search result is a *view* over transactions and that mutations from a filtered view would silently change the result set under the user. In practice, this proved to be the wrong default:
+
+1. **Search-then-fix is the dominant flow.** Users typically search ("coffee") to *find* a row whose memo, category, or amount they want to correct. Forcing them to dismiss the search, navigate Home to the right day, and locate the row again breaks the use case the search bar is built for.
+2. **The "result set silently changes" concern is illusory.** The result set is reactive — the underlying memo stream re-emits on every transaction insert / update / delete. The user can already see the row drop out of the list when they edit its memo to no longer match the query; there is no hidden state to be surprised by.
+3. **The Level 1 sum is preserved.** Optimistic-hide during the 4-second undo window subtracts the row from `overallSumMinorUnits`, so the header stays consistent with the visible rows during the undo window.
+
+The Level 1 search tile (the per-`(category, currency)` card on the search list) remains read-only — tapping it drills into the detail screen, and there is no "edit category" or "delete category" affordance from the search list. Only Level 2 transaction rows are interactive.
+
+This decision reverses the prior `feedback_search_results_read_only` memory; future search-style features should default to "interactive rows mirror Home's UX" unless there is a slice-specific reason to make them read-only.
