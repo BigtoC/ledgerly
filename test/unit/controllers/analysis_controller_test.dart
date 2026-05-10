@@ -333,6 +333,108 @@ void main() {
       },
     );
 
+    test('stays loading until category metadata arrives for matching rows', () {
+      fakeAsync((async) {
+        final cats = StreamController<Map<int, Category>>.broadcast();
+        addTearDown(cats.close);
+        final container = _makeContainer(
+          repo: repo,
+          categoriesStream: cats.stream,
+        );
+        addTearDown(container.dispose);
+        container.listen(analysisControllerProvider, (_, _) {});
+
+        container
+            .read(analysisControllerProvider.notifier)
+            .updateQuery('coffee');
+        async.elapse(const Duration(milliseconds: 350));
+
+        txCtrl.add([_tx(id: 1, date: DateTime.utc(2026, 5, 1), categoryId: 1)]);
+        async.flushMicrotasks();
+
+        final interim = container.read(analysisControllerProvider).valueOrNull;
+        expect(interim, isA<AnalysisLoading>());
+
+        cats.add({1: _cat(id: 1)});
+        async.flushMicrotasks();
+
+        expect(
+          container.read(analysisControllerProvider).valueOrNull,
+          isA<AnalysisResults>(),
+        );
+      });
+    });
+
+    test('category metadata errors are forwarded instead of showing empty', () {
+      fakeAsync((async) {
+        final cats = StreamController<Map<int, Category>>.broadcast();
+        addTearDown(cats.close);
+        final container = _makeContainer(
+          repo: repo,
+          categoriesStream: cats.stream,
+        );
+        addTearDown(container.dispose);
+        container.listen(analysisControllerProvider, (_, _) {});
+
+        container
+            .read(analysisControllerProvider.notifier)
+            .updateQuery('coffee');
+        async.elapse(const Duration(milliseconds: 350));
+
+        cats.addError(StateError('categories failed'));
+        async.flushMicrotasks();
+
+        txCtrl.add([_tx(id: 1, date: DateTime.utc(2026, 5, 1), categoryId: 1)]);
+        async.flushMicrotasks();
+
+        expect(container.read(analysisControllerProvider).hasError, isTrue);
+      });
+    });
+
+    test(
+      'rebuild cancels the old search subscription before resubscribing',
+      () {
+        fakeAsync((async) {
+          var subscriptionCount = 0;
+          var firstCancelled = false;
+          final first = StreamController<List<Transaction>>(
+            onListen: () => subscriptionCount++,
+            onCancel: () => firstCancelled = true,
+          );
+          final second = StreamController<List<Transaction>>.broadcast(
+            onListen: () => subscriptionCount++,
+          );
+
+          when(() => repo.watchByMemo('coffee')).thenAnswer((_) {
+            return subscriptionCount == 0 ? first.stream : second.stream;
+          });
+
+          final container = _makeContainer(
+            repo: repo,
+            categoriesStream: Stream.value({1: _cat(id: 1)}),
+          );
+          addTearDown(container.dispose);
+          addTearDown(() async {
+            await first.close();
+            await second.close();
+          });
+          container.listen(analysisControllerProvider, (_, _) {});
+
+          container
+              .read(analysisControllerProvider.notifier)
+              .updateQuery('coffee');
+          async.elapse(const Duration(milliseconds: 350));
+          verify(() => repo.watchByMemo('coffee')).called(1);
+
+          container.invalidate(analysisControllerProvider);
+          async.flushMicrotasks();
+
+          verifyNever(() => repo.watchByMemo('coffee'));
+          expect(firstCancelled, isTrue);
+        });
+      },
+    );
+
     test('Drift stream errors are forwarded to AsyncValue.error', () {
       fakeAsync((async) {
         final errCtrl = StreamController<List<Transaction>>.broadcast();
