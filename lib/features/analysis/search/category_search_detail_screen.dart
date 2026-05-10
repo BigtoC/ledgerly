@@ -47,6 +47,7 @@ class CategorySearchDetailScreen extends ConsumerWidget {
     final appBarTitle = category == null
         ? ''
         : categoryDisplayName(category, l10n);
+    final lookupsReady = categoriesAsync.hasValue && accountsAsync.hasValue;
 
     return Scaffold(
       appBar: AppBar(title: Text(appBarTitle)),
@@ -61,83 +62,94 @@ class CategorySearchDetailScreen extends ConsumerWidget {
             :final overallSumMinorUnits,
             :final currency,
           ) =>
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            !lookupsReady || category == null
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text(
-                        l10n.analysisSearchTotal,
-                        style: theme.textTheme.titleMedium,
-                      ),
-                      Text(
-                        MoneyFormatter.formatSigned(
-                          amountMinorUnits:
-                              category?.type == CategoryType.income
-                              ? overallSumMinorUnits
-                              : -overallSumMinorUnits,
-                          currency: currency,
-                          locale: locale,
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              l10n.analysisSearchTotal,
+                              style: theme.textTheme.titleMedium,
+                            ),
+                            Text(
+                              MoneyFormatter.formatSigned(
+                                amountMinorUnits:
+                                    category.type == CategoryType.income
+                                    ? overallSumMinorUnits
+                                    : -overallSumMinorUnits,
+                                currency: currency,
+                                locale: locale,
+                              ),
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: category.type == CategoryType.income
+                                    ? theme.colorScheme.primary
+                                    : theme.colorScheme.onSurface,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: category?.type == CategoryType.income
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.onSurface,
-                          fontWeight: FontWeight.w600,
+                      ),
+                      const Divider(height: 1),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: days.length,
+                          itemBuilder: (ctx, dayIdx) {
+                            final day = days[dayIdx];
+                            final daySigned =
+                                category.type == CategoryType.income
+                                ? day.daySumMinorUnits
+                                : -day.daySumMinorUnits;
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    16,
+                                    16,
+                                    16,
+                                    4,
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        DateFormat.yMMMd(
+                                          locale,
+                                        ).format(day.date),
+                                        style: theme.textTheme.labelMedium,
+                                      ),
+                                      Text(
+                                        MoneyFormatter.formatSigned(
+                                          amountMinorUnits: daySigned,
+                                          currency: currency,
+                                          locale: locale,
+                                        ),
+                                        style: theme.textTheme.labelMedium,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                for (final tx in day.transactions)
+                                  TransactionSearchRow(
+                                    transaction: tx,
+                                    category: categoriesById[tx.categoryId],
+                                    account: accountsById[tx.accountId],
+                                    locale: locale,
+                                  ),
+                              ],
+                            );
+                          },
                         ),
                       ),
                     ],
                   ),
-                ),
-                const Divider(height: 1),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: days.length,
-                    itemBuilder: (ctx, dayIdx) {
-                      final day = days[dayIdx];
-                      final daySigned = category?.type == CategoryType.income
-                          ? day.daySumMinorUnits
-                          : -day.daySumMinorUnits;
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  DateFormat.yMMMd(locale).format(day.date),
-                                  style: theme.textTheme.labelMedium,
-                                ),
-                                Text(
-                                  MoneyFormatter.formatSigned(
-                                    amountMinorUnits: daySigned,
-                                    currency: currency,
-                                    locale: locale,
-                                  ),
-                                  style: theme.textTheme.labelMedium,
-                                ),
-                              ],
-                            ),
-                          ),
-                          for (final tx in day.transactions)
-                            TransactionSearchRow(
-                              transaction: tx,
-                              category: categoriesById[tx.categoryId],
-                              account: accountsById[tx.accountId],
-                              locale: locale,
-                            ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
         },
       ),
     );

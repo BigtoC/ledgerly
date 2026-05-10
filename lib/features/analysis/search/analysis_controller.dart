@@ -42,6 +42,8 @@ class AnalysisController extends _$AnalysisController {
   List<Transaction>? _lastTransactions;
   StreamController<AnalysisState>? _emitter;
 
+  List<Transaction>? get lastTransactions => _lastTransactions;
+
   @override
   Stream<AnalysisState> build() {
     // Close any prior emitter from a previous `build()` run — `keepAlive: true`
@@ -63,18 +65,23 @@ class AnalysisController extends _$AnalysisController {
       next,
     ) {
       final txs = _lastTransactions;
-      final cats = next.valueOrNull;
-      if (txs == null || cats == null || _activeQuery.isEmpty) return;
-      final results = _group(txs, cats);
-      if (results.isEmpty) {
-        _lastResults = null;
-        _emitter?.add(AnalysisState.empty(query: _activeQuery));
-      } else {
-        _lastResults = results;
-        _emitter?.add(
-          AnalysisState.results(categories: results, query: _activeQuery),
-        );
+      if (txs == null || _activeQuery.isEmpty) return;
+      if (next.hasError) {
+        _emitter?.addError(next.error!, next.stackTrace ?? StackTrace.current);
+        return;
       }
+
+      final cats = next.valueOrNull;
+      if (cats == null) {
+        if (txs.isNotEmpty) {
+          _emitter?.add(
+            AnalysisState.loading(query: _activeQuery, previous: _lastResults),
+          );
+        }
+        return;
+      }
+
+      _emitGroupedState(txs, cats, _activeQuery);
     });
 
     ref.onDispose(() {
@@ -122,25 +129,52 @@ class AnalysisController extends _$AnalysisController {
           (txs) {
             if (gen != _generation) return;
             _lastTransactions = txs;
-            final categoriesById =
-                ref.read(analysisCategoriesByIdProvider).valueOrNull ??
-                const <int, Category>{};
-            final results = _group(txs, categoriesById);
-            if (results.isEmpty) {
+            if (txs.isEmpty) {
               _lastResults = null;
               _emitter?.add(AnalysisState.empty(query: query));
-            } else {
-              _lastResults = results;
-              _emitter?.add(
-                AnalysisState.results(categories: results, query: query),
-              );
+              return;
             }
+
+            final categoriesAsync = ref.read(analysisCategoriesByIdProvider);
+            if (categoriesAsync.hasError) {
+              _emitter?.addError(
+                categoriesAsync.error!,
+                categoriesAsync.stackTrace ?? StackTrace.current,
+              );
+              return;
+            }
+
+            final categoriesById = categoriesAsync.valueOrNull;
+            if (categoriesById == null) {
+              _emitter?.add(
+                AnalysisState.loading(query: query, previous: _lastResults),
+              );
+              return;
+            }
+
+            _emitGroupedState(txs, categoriesById, query);
           },
           onError: (Object e, StackTrace st) {
             if (gen != _generation) return;
             _emitter?.addError(e, st);
           },
         );
+  }
+
+  void _emitGroupedState(
+    List<Transaction> txs,
+    Map<int, Category> categoriesById,
+    String query,
+  ) {
+    final results = _group(txs, categoriesById);
+    if (results.isEmpty) {
+      _lastResults = null;
+      _emitter?.add(AnalysisState.empty(query: query));
+      return;
+    }
+
+    _lastResults = results;
+    _emitter?.add(AnalysisState.results(categories: results, query: query));
   }
 
   List<CategorySearchResult> _group(
