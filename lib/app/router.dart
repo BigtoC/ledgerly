@@ -144,18 +144,29 @@ GoRouter router(Ref ref) {
                 routes: [
                   GoRoute(
                     path: 'search/:categoryId',
-                    builder: (context, state) {
+                    redirect: (_, state) {
                       final categoryId = int.tryParse(
                         state.pathParameters['categoryId'] ?? '',
                       );
                       final query =
                           state.uri.queryParameters['q']?.trim() ?? '';
-                      final currencyCode = state.uri.queryParameters['c'] ?? '';
+                      final currencyCode =
+                          state.uri.queryParameters['c']?.trim() ?? '';
                       if (categoryId == null ||
                           query.isEmpty ||
                           currencyCode.isEmpty) {
-                        return const AnalysisScreen();
+                        return '/analysis';
                       }
+                      return null;
+                    },
+                    builder: (context, state) {
+                      final categoryId = int.parse(
+                        state.pathParameters['categoryId']!,
+                      );
+                      final query =
+                          state.uri.queryParameters['q']?.trim() ?? '';
+                      final currencyCode = state.uri.queryParameters['c']!
+                          .trim();
                       return CategorySearchDetailScreen(
                         categoryId: categoryId,
                         query: query,
