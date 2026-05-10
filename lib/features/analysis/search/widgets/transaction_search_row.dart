@@ -1,12 +1,13 @@
-// Read-only transaction row for search results — see spec
-// § Transaction tiles.
+// Transaction row for search results — see spec § Transaction tiles.
 //
-// Search results are a *view* over transactions, not an action surface.
-// Mutations from a filtered view would silently change the result set
-// under the user, so this widget is intentionally presentational only —
-// no tap, no swipe, no overflow menu.
+// Visual layout matches Home's `TransactionTile` (icon, title,
+// "account • memo" subtitle, signed amount with type-driven color).
+// Primary tap → edit (delegates to caller). Swipe → delete with a 4s
+// undo window (delegates to caller; the detail controller owns the
+// optimistic-hide + commit timer).
 
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 import '../../../../core/utils/color_palette.dart';
 import '../../../../core/utils/icon_registry.dart';
@@ -24,12 +25,20 @@ class TransactionSearchRow extends StatelessWidget {
     required this.category,
     required this.account,
     required this.locale,
+    this.onTap,
+    this.onDelete,
   });
 
   final Transaction transaction;
   final Category? category;
   final Account? account;
   final String locale;
+
+  /// Primary tap. When null the row renders without an `onTap` (read-only).
+  final VoidCallback? onTap;
+
+  /// End-swipe gesture. When null the swipe affordance is omitted entirely.
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +71,8 @@ class TransactionSearchRow extends StatelessWidget {
 
     final memo = transaction.memo;
 
-    return ListTile(
+    final tile = ListTile(
+      onTap: onTap,
       leading: CircleAvatar(
         backgroundColor: color.withValues(alpha: 0.15),
         child: Icon(icon, color: color),
@@ -87,6 +97,28 @@ class TransactionSearchRow extends StatelessWidget {
           fontWeight: FontWeight.w600,
         ),
       ),
+    );
+
+    if (onDelete == null) return tile;
+
+    return Slidable(
+      key: ValueKey<int>(transaction.id),
+      groupTag: 'analysis_search',
+      endActionPane: ActionPane(
+        motion: const BehindMotion(),
+        extentRatio: 0.3,
+        dismissible: DismissiblePane(onDismissed: onDelete!),
+        children: [
+          SlidableAction(
+            onPressed: (_) => onDelete!(),
+            backgroundColor: theme.colorScheme.errorContainer,
+            foregroundColor: theme.colorScheme.onErrorContainer,
+            icon: Icons.delete_outline,
+            label: l10n.commonDelete,
+          ),
+        ],
+      ),
+      child: tile,
     );
   }
 }
