@@ -93,8 +93,9 @@ New currency mid-session
 
 UI (any surface)
   → subscribes to exchangeRatesProvider (Stream)
-  → calls CurrencyConverter.convertMinorUnits() with cached rate
-  → formats via existing MoneyFormatter
+  → repo.getRate(from, to) → returns cached rate (or null)
+  → CurrencyConverter.convertMinorUnits(amount, from, to, rate, fromDecimals, toDecimals)
+  → MoneyFormatter.format(convertedMinorUnits, toCurrency)
 ```
 
 ---
@@ -142,7 +143,7 @@ Future<List<ExchangeRate>> fetchRates(List<({String from, String to})> pairs)
 - Builds ticker string: `pairs.map((p) => '${p.from.toLowerCase()}${p.to.toLowerCase()}').join(',')`
 - GETs the endpoint with `?tickers={tickers}`
 - Parses response array into `List<ExchangeRate>`
-- Throws on network errors (caught by repository)
+- Throws on network or HTTP errors (`DioException` — caught by repository)
 
 **Partial response handling:** The service returns only successfully parsed entries. The repository compares returned pairs against requested pairs to detect missing rates — missing pairs simply don't get updated in the cache or DB, preserving any existing cached rate.
 
@@ -211,6 +212,8 @@ Decimal values come from existing `Currency.decimals` via `CurrencyRepository`. 
 
 ## Provider Wiring
 
+All new providers follow the existing `@riverpod` annotation pattern with code generation (same as `repository_providers.dart:23-88`).
+
 ### Bootstrap — `lib/app/bootstrap.dart`
 
 `init()` is called in `onFirstFrame` (non-blocking), same pattern as `RecurringGenerationUseCase`. It must not block `runApp`.
@@ -221,46 +224,56 @@ final exchangeRateRepo = container.read(exchangeRateRepositoryProvider);
 unawaited(exchangeRateRepo.init(defaultCurrency).catchError((_) {}));
 ```
 
-The repository is constructed and injected as a ProviderScope override before `runApp`, but the network fetch is deferred.
+The repository is constructed via its provider (auto-disposed by Riverpod) before `runApp`. The network fetch inside `init()` is deferred to `onFirstFrame`.
 
 ### Repository Provider — `lib/app/providers/repository_providers.dart`
 
 ```dart
-final exchangeRateRepositoryProvider = Provider<ExchangeRateRepository>((ref) {
+@Riverpod(keepAlive: true, dependencies: [appDatabase, exchangeRateService])
+ExchangeRateRepository exchangeRateRepository(ExchangeRateRepositoryRef ref) {
   return DriftExchangeRateRepository(
     ref.watch(appDatabaseProvider),
     ref.watch(exchangeRateServiceProvider),
   );
-});
+}
 ```
 
 ### Exchange Rate Service Provider — `lib/app/providers/repository_providers.dart`
 
 ```dart
-final exchangeRateServiceProvider = Provider<ExchangeRateService>((ref) {
-  return ExchangeRateService(Dio());
-});
+@Riverpod(keepAlive: true, dependencies: [])
+ExchangeRateService exchangeRateService(ExchangeRateServiceRef ref) {
+  return ExchangeRateService(Dio(BaseOptions(connectTimeout: Duration(seconds: 10))));
+}
 ```
+
+Adding this service import to `repository_providers.dart` requires verifying that `import_analysis_options.yaml` allows `data/services/` imports in `app/providers/`. If not, the service provider can be co-located with the service file.
 
 ### Exchange Rates Stream Provider — `lib/app/providers/repository_providers.dart`
 
 ```dart
-final exchangeRatesProvider = StreamProvider<Map<String, double>>((ref) {
+@Riverpod(keepAlive: true, dependencies: [exchangeRateRepository])
+Stream<Map<String, double>> exchangeRates(ExchangeRatesRef ref) {
   return ref.watch(exchangeRateRepositoryProvider).watchRates();
-});
+}
 ```
+
+`watchRates()` uses a `StreamController` that emits the full current cache map on every mutation. New subscribers immediately receive the latest map (replay behavior) — the stream controller emits on listen via `onListen` or uses `addStream` with the current state.
 
 Placed in `app/providers/` (not a feature slice) because it's consumed by multiple features (home, accounts).
 
 ### Default Currency Provider — `lib/features/settings/settings_providers.dart`
 
 ```dart
-final defaultCurrencyProvider = StreamProvider<String>((ref) {
+@Riverpod(keepAlive: true, dependencies: [userPreferencesRepository])
+Stream<String> defaultCurrency(DefaultCurrencyRef ref) {
   return ref.watch(userPreferencesRepositoryProvider).watchDefaultCurrency();
-});
+}
 ```
 
-### On-Demand Fetch — in relevant controllers
+`watchDefaultCurrency()` returns `Stream<String>` emitting the ISO code (e.g., `"USD"`). Defaults to `'USD'` when the preference hasn't been set yet (handled inside the repository).
+
+### On-Demand Fetch — `AccountFormController` and `TransactionFormController`
 
 After saving a new account or transaction in a non-default currency:
 
@@ -271,6 +284,10 @@ if (newCurrency != defaultCurrency) {
   unawaited(repo.fetchRate(newCurrency, defaultCurrency));
 }
 ```
+
+Controllers to modify:
+- `lib/features/accounts/account_form_controller.dart` — after account creation when currency differs from default
+- `lib/features/transactions/transaction_form_controller.dart` — after transaction save when currency differs from default
 
 ---
 
@@ -326,7 +343,8 @@ When `getRate()` returns null for a currency pair:
 
 | Scenario | Behavior |
 |----------|----------|
-| API unreachable on startup | Silent catch, use cached rates from DB |
+| API unreachable on startup | Silent catch (DioException), use cached rates from DB |
+| HTTP 500 / 429 / non-200 | Treated same as network error — silent catch, use cached rates |
 | Partial API response | Upsert available pairs; missing pairs retain any existing cached rate |
 | Malformed response entry | Skip, log to debug console |
 | First launch + no network | No conversions shown, app functions normally |
@@ -362,7 +380,8 @@ When `getRate()` returns null for a currency pair:
 ### Migration Test
 
 Extend `test/unit/repositories/migration_test.dart` with v5 schema helpers:
-- Generate v5 schema helper via `dart run drift_dev schema dump`
+- Generate v5 schema helper via `dart run drift_dev schema dump lib/data/database/app_database.dart drift_schemas/`
+- Create `test/unit/repositories/_harness/generated/schema_v5.dart` from the dump
 - Validate v4→v5 upgrade creates `exchange_rates` table and unique index
 - Validate `PRAGMA foreign_keys` remains enabled after upgrade
 
