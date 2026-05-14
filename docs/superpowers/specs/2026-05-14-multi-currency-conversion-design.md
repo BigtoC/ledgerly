@@ -247,7 +247,7 @@ ExchangeRateService exchangeRateService(ExchangeRateServiceRef ref) {
 }
 ```
 
-Adding this service import to `repository_providers.dart` requires verifying that `import_analysis_options.yaml` allows `data/services/` imports in `app/providers/`. If not, the service provider can be co-located with the service file.
+Adding this service provider to `repository_providers.dart` requires importing `data/services/exchange_rate_service.dart`. Verified: no import-analysis rule blocks `data/services/` imports in `app/providers/`.
 
 ### Exchange Rates Stream Provider — `lib/app/providers/repository_providers.dart`
 
@@ -258,7 +258,7 @@ Stream<Map<String, double>> exchangeRates(ExchangeRatesRef ref) {
 }
 ```
 
-`watchRates()` uses a `StreamController` that emits the full current cache map on every mutation. New subscribers immediately receive the latest map (replay behavior) — the stream controller emits on listen via `onListen` or uses `addStream` with the current state.
+`watchRates()` uses a `StreamController<Map<String, double>>` with a manual replay pattern: the repository stores `_lastEmitted` as the latest cache snapshot. In the `onListen` callback, it synchronously adds `_lastEmitted` to the stream, so new subscribers immediately receive the current rates without waiting for the next mutation. No `rxdart` dependency needed.
 
 Placed in `app/providers/` (not a feature slice) because it's consumed by multiple features (home, accounts).
 
@@ -273,7 +273,7 @@ Stream<String> defaultCurrency(DefaultCurrencyRef ref) {
 
 `watchDefaultCurrency()` returns `Stream<String>` emitting the ISO code (e.g., `"USD"`). Defaults to `'USD'` when the preference hasn't been set yet (handled inside the repository).
 
-### On-Demand Fetch — `AccountFormController` and `TransactionFormController`
+### On-Demand Fetch — `AccountFormActions` and `TransactionFormController`
 
 After saving a new account or transaction in a non-default currency:
 
@@ -285,9 +285,9 @@ if (newCurrency != defaultCurrency) {
 }
 ```
 
-Controllers to modify:
-- `lib/features/accounts/account_form_controller.dart` — after account creation when currency differs from default
-- `lib/features/transactions/transaction_form_controller.dart` — after transaction save when currency differs from default
+Locations to modify:
+- `lib/features/accounts/accounts_providers.dart` — `AccountFormActions.save()` method, after successful account creation when currency differs from default
+- `lib/features/transactions/transaction_form_controller.dart` — `TransactionFormController`, after successful transaction save when currency differs from default
 
 ---
 
