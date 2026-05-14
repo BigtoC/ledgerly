@@ -12,11 +12,17 @@ Fetch live exchange rates from a hosted API on app startup, cache them in-memory
 
 ---
 
+## Prerequisites
+
+- `dio` package must be added to `pubspec.yaml` (already listed in PRD as a Phase 2 dependency).
+
+---
+
 ## Goals
 
 - Fetch exchange rates for all non-default currencies in a single API call on startup.
 - Persist rates to the local DB for instant display on next launch (in-memory + DB cache).
-- Display converted amounts in the user's default currency on: SummaryStrip, TransactionTile, AccountTile, CategorySearchTile.
+- Display converted amounts in the user's default currency on: SummaryStrip, TransactionTile, AccountTile.
 - SummaryStrip simplifies from per-currency groups to a single unified total in the default currency.
 - Fetch on demand when a new currency appears mid-session (e.g., user creates an account in a new currency).
 - Rates never expire — cached rates are always usable, even if days or weeks old.
@@ -26,7 +32,7 @@ Fetch live exchange rates from a hosted API on app startup, cache them in-memory
 - Cross-rate chaining — the API supports arbitrary pairs directly.
 - User-facing rate staleness indicators or expiration warnings.
 - Persisting converted amounts into transaction or account rows.
-- Charts and analysis breakdowns in default currency (future work).
+- Analysis surfaces (CategorySearchTile, charts) in default currency — deferred to follow-up work. These require changes to `analysis_state.dart` / `analysis_controller.dart` to carry per-transaction currency data through to the search result model.
 
 ---
 
@@ -65,15 +71,15 @@ The API accepts arbitrary pairs (e.g., `cnyusd`, `usdcny`) — no cross-rate cha
 | Model | `data/models/exchange_rate.dart` | Freezed domain model |
 | Table | `data/database/tables/exchange_rates_table.dart` | Drift table with REAL rate column |
 | DAO | `data/database/daos/exchange_rate_dao.dart` | `upsertAll()`, `findByPair()`, `findAll()` |
-| Service | `data/services/exchange_rate_service.dart` | HTTP client, calls the conversion API |
+| Service | `data/services/exchange_rate_service.dart` | HTTP client via Dio, calls the conversion API |
 | Repository | `data/repositories/exchange_rate_repository.dart` | Orchestrates DB + service + in-memory cache |
 | Converter | `core/utils/currency_converter.dart` | Pure function for minor-unit conversion |
-| Providers | `app/providers/repository_providers.dart` (extend) | `exchangeRateRepositoryProvider` |
+| Providers | `app/providers/repository_providers.dart` (extend) | `exchangeRateRepositoryProvider`, `exchangeRatesProvider` |
 
 ### Data Flow
 
 ```
-Bootstrap
+Bootstrap (onFirstFrame, non-blocking)
   → ExchangeRateRepository.init(defaultCurrency)
     → load all rates from DB into in-memory cache
     → collect distinct currencies from accounts + transactions
@@ -127,7 +133,7 @@ Unique index on `(base_currency, quote_currency)` — one rate per pair. Upsert 
 
 ## API Integration — `data/services/exchange_rate_service.dart`
 
-Injects `Dio` (same pattern as `AnkrService`). Single method:
+Injects `Dio` via constructor. Single method:
 
 ```dart
 Future<List<ExchangeRate>> fetchRates(List<({String from, String to})> pairs)
@@ -137,6 +143,8 @@ Future<List<ExchangeRate>> fetchRates(List<({String from, String to})> pairs)
 - GETs the endpoint with `?tickers={tickers}`
 - Parses response array into `List<ExchangeRate>`
 - Throws on network errors (caught by repository)
+
+**Partial response handling:** The service returns only successfully parsed entries. The repository compares returned pairs against requested pairs to detect missing rates — missing pairs simply don't get updated in the cache or DB, preserving any existing cached rate.
 
 ---
 
@@ -149,13 +157,15 @@ abstract class ExchangeRateRepository {
   Future<void> init(String defaultCurrency);
   Future<void> fetchRate(String from, String defaultCurrency);
   double? getRate(String from, String to);
-  Stream<Map<(String, String), double>> watchRates();
+  Stream<Map<String, double>> watchRates();
 }
 ```
 
+Rate map key format: `"FROM→TO"` (e.g., `"HKD→USD"`). This avoids Riverpod equality concerns with Dart record types.
+
 ### In-Memory Cache
 
-`Map<(String, String), double> _cache` — keyed by `(baseCurrency, quoteCurrency)`.
+`Map<String, double> _cache` — keyed by `"FROM→TO"` string.
 
 **Inverse rates:** When the API returns `HKD→USD: 0.1277`, the repository also stores `USD→HKD: 1/0.1277 = 7.828`. This lets `getRate()` work for any direction without knowing which way the API returned.
 
@@ -203,27 +213,50 @@ Decimal values come from existing `Currency.decimals` via `CurrencyRepository`. 
 
 ### Bootstrap — `lib/app/bootstrap.dart`
 
-```dart
-final exchangeRateRepo = DriftExchangeRateRepository(db, exchangeRateService);
-await exchangeRateRepo.init(defaultCurrency);
+`init()` is called in `onFirstFrame` (non-blocking), same pattern as `RecurringGenerationUseCase`. It must not block `runApp`.
 
-// Inject as override in ProviderScope
-exchangeRateRepositoryProvider.overrideWithValue(exchangeRateRepo),
+```dart
+// In onFirstFrame callback:
+final exchangeRateRepo = container.read(exchangeRateRepositoryProvider);
+unawaited(exchangeRateRepo.init(defaultCurrency).catchError((_) {}));
 ```
+
+The repository is constructed and injected as a ProviderScope override before `runApp`, but the network fetch is deferred.
 
 ### Repository Provider — `lib/app/providers/repository_providers.dart`
 
 ```dart
 final exchangeRateRepositoryProvider = Provider<ExchangeRateRepository>((ref) {
-  throw UnimplementedError('Must be overridden in bootstrap');
+  return DriftExchangeRateRepository(
+    ref.watch(appDatabaseProvider),
+    ref.watch(exchangeRateServiceProvider),
+  );
 });
 ```
 
-### Feature Provider — `lib/features/home/home_providers.dart`
+### Exchange Rate Service Provider — `lib/app/providers/repository_providers.dart`
 
 ```dart
-final exchangeRatesProvider = StreamProvider<Map<(String, String), double>>((ref) {
+final exchangeRateServiceProvider = Provider<ExchangeRateService>((ref) {
+  return ExchangeRateService(Dio());
+});
+```
+
+### Exchange Rates Stream Provider — `lib/app/providers/repository_providers.dart`
+
+```dart
+final exchangeRatesProvider = StreamProvider<Map<String, double>>((ref) {
   return ref.watch(exchangeRateRepositoryProvider).watchRates();
+});
+```
+
+Placed in `app/providers/` (not a feature slice) because it's consumed by multiple features (home, accounts).
+
+### Default Currency Provider — `lib/features/settings/settings_providers.dart`
+
+```dart
+final defaultCurrencyProvider = StreamProvider<String>((ref) {
+  return ref.watch(userPreferencesRepositoryProvider).watchDefaultCurrency();
 });
 ```
 
@@ -233,7 +266,7 @@ After saving a new account or transaction in a non-default currency:
 
 ```dart
 final repo = ref.read(exchangeRateRepositoryProvider);
-final defaultCurrency = ref.read(defaultCurrencyProvider);
+final defaultCurrency = ref.read(defaultCurrencyProvider).valueOrNull ?? 'USD';
 if (newCurrency != defaultCurrency) {
   unawaited(repo.fetchRate(newCurrency, defaultCurrency));
 }
@@ -281,15 +314,11 @@ USD: $340.00
 - Hidden when no rates available
 - Uses muted color + `≈` prefix
 
-### CategorySearchTile — `lib/features/analysis/search/widgets/category_search_tile.dart`
-
-Same pattern as TransactionTile — original primary, converted secondary with `≈` prefix.
-
 ### "No Rate Available" Fallback
 
 When `getRate()` returns null for a currency pair:
 - SummaryStrip: fall back to per-currency MVP display
-- TransactionTile / AccountTile / CategorySearchTile: show "No rate available" in muted text below the original amount
+- TransactionTile / AccountTile: converted line is simply hidden (no "No rate available" text — avoids clutter)
 
 ---
 
@@ -298,7 +327,7 @@ When `getRate()` returns null for a currency pair:
 | Scenario | Behavior |
 |----------|----------|
 | API unreachable on startup | Silent catch, use cached rates from DB |
-| Partial API response | Upsert available pairs, skip missing |
+| Partial API response | Upsert available pairs; missing pairs retain any existing cached rate |
 | Malformed response entry | Skip, log to debug console |
 | First launch + no network | No conversions shown, app functions normally |
 | Rate is 0 or negative | Skip, don't cache, keep existing cached rate |
@@ -313,22 +342,29 @@ When `getRate()` returns null for a currency pair:
 | Test | File | Coverage |
 |------|------|----------|
 | `exchange_rate_service_test.dart` | `test/unit/services/` | HTTP call construction, ticker formatting, response parsing, error handling. Mock `Dio`. |
-| `exchange_rate_repository_test.dart` | `test/unit/repositories/` | DB load on init, cache population, upsert, inverse rate computation, on-demand fetch, stream emissions. In-memory Drift DB + mock service. |
+| `exchange_rate_repository_test.dart` | `test/unit/repositories/` | DB load on init, cache population, upsert, inverse rate computation, on-demand fetch, stream emissions, partial response handling. In-memory Drift DB + mock service. |
 | `currency_converter_test.dart` | `test/unit/utils/` | Minor-unit conversion with different decimal pairs (USD→USD, JPY→USD, EUR→CNY), null when rate missing, rounding. |
 
 ### Widget Tests
 
 | Test | File | Coverage |
 |------|------|----------|
-| `summary_strip_conversion_test.dart` | `test/widget/features/home/` | Unified total display, multi-currency aggregation, "No rate available" fallback to MVP behavior. |
+| `summary_strip_conversion_test.dart` | `test/widget/features/home/` | Unified total display, multi-currency aggregation, fallback to MVP behavior when no rates. |
 | `transaction_tile_conversion_test.dart` | `test/widget/features/home/` | Secondary converted line appears, hidden when rate missing. |
-| `account_tile_conversion_test.dart` | `test/widget/features/accounts/` | Converted total line below per-currency balances. |
+| `account_tile_conversion_test.dart` | `test/widget/features/accounts/` | Converted total line below per-currency balances, hidden when no rates. |
 
 ### Integration Test
 
 | Test | File | Coverage |
 |------|------|----------|
 | `currency_conversion_flow_test.dart` | `test/integration/` | Bootstrap → rates loaded from DB → API called → UI shows converted amounts → add new currency → on-demand fetch → UI updates. |
+
+### Migration Test
+
+Extend `test/unit/repositories/migration_test.dart` with v5 schema helpers:
+- Generate v5 schema helper via `dart run drift_dev schema dump`
+- Validate v4→v5 upgrade creates `exchange_rates` table and unique index
+- Validate `PRAGMA foreign_keys` remains enabled after upgrade
 
 ### Mocking Strategy
 
@@ -347,12 +383,13 @@ The following sections of `PRD.md` should be updated to reflect this design:
 2. **Folder structure** — update `exchange_rate_service.dart` and `exchange_rate_repository.dart` descriptions.
 3. **Phase 2 roadmap** — mark this feature as "in progress" or "shipped".
 4. **MVP Currency Policy** — update to note that Phase 2 conversion is now live.
+5. **Dependencies table** — mark `dio` as in-use.
 
 ---
 
 ## Migration Strategy
 
-Drift schema bump to `schemaVersion = 5`. `onUpgrade` creates the `exchange_rates` table:
+Drift schema bump from `schemaVersion = 4` to `schemaVersion = 5`. `onUpgrade` creates the `exchange_rates` table for installs upgrading from v4:
 
 ```sql
 CREATE TABLE exchange_rates (
@@ -365,4 +402,4 @@ CREATE TABLE exchange_rates (
 CREATE UNIQUE INDEX idx_exchange_rates_pair ON exchange_rates(base_currency, quote_currency);
 ```
 
-No data migration needed — new table, no existing data affected.
+Fresh installs at v5 get the table from the main schema creation. No data migration needed — new table, no existing data affected.
