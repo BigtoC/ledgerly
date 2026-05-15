@@ -851,4 +851,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homePendingShowFewer => 'Show fewer';
+
+  @override
+  String get approximatelyPrefix => 'approximately';
+
+  @override
+  String get convertedTotalLabel => 'total';
+
+  @override
+  String get homeSummaryUnconvertedHeader => 'Unconverted';
 }

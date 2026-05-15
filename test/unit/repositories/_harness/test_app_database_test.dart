@@ -32,7 +32,7 @@ void main() {
       addTearDown(() async => db.close());
 
       expect(db, isA<AppDatabase>());
-      expect(db.schemaVersion, 4);
+      expect(db.schemaVersion, 5);
     });
 
     test('has foreign_keys = ON (the beforeOpen pragma is applied)', () async {

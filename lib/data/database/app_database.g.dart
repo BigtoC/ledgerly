@@ -5545,6 +5545,381 @@ class PendingTransactionsCompanion
   }
 }
 
+class $ExchangeRatesTable extends ExchangeRates
+    with TableInfo<$ExchangeRatesTable, ExchangeRateRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ExchangeRatesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _baseCurrencyMeta = const VerificationMeta(
+    'baseCurrency',
+  );
+  @override
+  late final GeneratedColumn<String> baseCurrency = GeneratedColumn<String>(
+    'base_currency',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES currencies (code)',
+    ),
+  );
+  static const VerificationMeta _quoteCurrencyMeta = const VerificationMeta(
+    'quoteCurrency',
+  );
+  @override
+  late final GeneratedColumn<String> quoteCurrency = GeneratedColumn<String>(
+    'quote_currency',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES currencies (code)',
+    ),
+  );
+  static const VerificationMeta _rateScaledE9Meta = const VerificationMeta(
+    'rateScaledE9',
+  );
+  @override
+  late final GeneratedColumn<int> rateScaledE9 = GeneratedColumn<int>(
+    'rate_scaled_e9',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'CHECK(rate_scaled_e9 > 0) NOT NULL',
+  );
+  static const VerificationMeta _fetchedAtMeta = const VerificationMeta(
+    'fetchedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> fetchedAt = GeneratedColumn<DateTime>(
+    'fetched_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    baseCurrency,
+    quoteCurrency,
+    rateScaledE9,
+    fetchedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'exchange_rates';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ExchangeRateRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('base_currency')) {
+      context.handle(
+        _baseCurrencyMeta,
+        baseCurrency.isAcceptableOrUnknown(
+          data['base_currency']!,
+          _baseCurrencyMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_baseCurrencyMeta);
+    }
+    if (data.containsKey('quote_currency')) {
+      context.handle(
+        _quoteCurrencyMeta,
+        quoteCurrency.isAcceptableOrUnknown(
+          data['quote_currency']!,
+          _quoteCurrencyMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_quoteCurrencyMeta);
+    }
+    if (data.containsKey('rate_scaled_e9')) {
+      context.handle(
+        _rateScaledE9Meta,
+        rateScaledE9.isAcceptableOrUnknown(
+          data['rate_scaled_e9']!,
+          _rateScaledE9Meta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_rateScaledE9Meta);
+    }
+    if (data.containsKey('fetched_at')) {
+      context.handle(
+        _fetchedAtMeta,
+        fetchedAt.isAcceptableOrUnknown(data['fetched_at']!, _fetchedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fetchedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ExchangeRateRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ExchangeRateRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      baseCurrency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}base_currency'],
+      )!,
+      quoteCurrency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}quote_currency'],
+      )!,
+      rateScaledE9: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}rate_scaled_e9'],
+      )!,
+      fetchedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}fetched_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ExchangeRatesTable createAlias(String alias) {
+    return $ExchangeRatesTable(attachedDatabase, alias);
+  }
+}
+
+class ExchangeRateRow extends DataClass implements Insertable<ExchangeRateRow> {
+  final int id;
+  final String baseCurrency;
+  final String quoteCurrency;
+  final int rateScaledE9;
+  final DateTime fetchedAt;
+  const ExchangeRateRow({
+    required this.id,
+    required this.baseCurrency,
+    required this.quoteCurrency,
+    required this.rateScaledE9,
+    required this.fetchedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['base_currency'] = Variable<String>(baseCurrency);
+    map['quote_currency'] = Variable<String>(quoteCurrency);
+    map['rate_scaled_e9'] = Variable<int>(rateScaledE9);
+    map['fetched_at'] = Variable<DateTime>(fetchedAt);
+    return map;
+  }
+
+  ExchangeRatesCompanion toCompanion(bool nullToAbsent) {
+    return ExchangeRatesCompanion(
+      id: Value(id),
+      baseCurrency: Value(baseCurrency),
+      quoteCurrency: Value(quoteCurrency),
+      rateScaledE9: Value(rateScaledE9),
+      fetchedAt: Value(fetchedAt),
+    );
+  }
+
+  factory ExchangeRateRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ExchangeRateRow(
+      id: serializer.fromJson<int>(json['id']),
+      baseCurrency: serializer.fromJson<String>(json['baseCurrency']),
+      quoteCurrency: serializer.fromJson<String>(json['quoteCurrency']),
+      rateScaledE9: serializer.fromJson<int>(json['rateScaledE9']),
+      fetchedAt: serializer.fromJson<DateTime>(json['fetchedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'baseCurrency': serializer.toJson<String>(baseCurrency),
+      'quoteCurrency': serializer.toJson<String>(quoteCurrency),
+      'rateScaledE9': serializer.toJson<int>(rateScaledE9),
+      'fetchedAt': serializer.toJson<DateTime>(fetchedAt),
+    };
+  }
+
+  ExchangeRateRow copyWith({
+    int? id,
+    String? baseCurrency,
+    String? quoteCurrency,
+    int? rateScaledE9,
+    DateTime? fetchedAt,
+  }) => ExchangeRateRow(
+    id: id ?? this.id,
+    baseCurrency: baseCurrency ?? this.baseCurrency,
+    quoteCurrency: quoteCurrency ?? this.quoteCurrency,
+    rateScaledE9: rateScaledE9 ?? this.rateScaledE9,
+    fetchedAt: fetchedAt ?? this.fetchedAt,
+  );
+  ExchangeRateRow copyWithCompanion(ExchangeRatesCompanion data) {
+    return ExchangeRateRow(
+      id: data.id.present ? data.id.value : this.id,
+      baseCurrency: data.baseCurrency.present
+          ? data.baseCurrency.value
+          : this.baseCurrency,
+      quoteCurrency: data.quoteCurrency.present
+          ? data.quoteCurrency.value
+          : this.quoteCurrency,
+      rateScaledE9: data.rateScaledE9.present
+          ? data.rateScaledE9.value
+          : this.rateScaledE9,
+      fetchedAt: data.fetchedAt.present ? data.fetchedAt.value : this.fetchedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExchangeRateRow(')
+          ..write('id: $id, ')
+          ..write('baseCurrency: $baseCurrency, ')
+          ..write('quoteCurrency: $quoteCurrency, ')
+          ..write('rateScaledE9: $rateScaledE9, ')
+          ..write('fetchedAt: $fetchedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, baseCurrency, quoteCurrency, rateScaledE9, fetchedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ExchangeRateRow &&
+          other.id == this.id &&
+          other.baseCurrency == this.baseCurrency &&
+          other.quoteCurrency == this.quoteCurrency &&
+          other.rateScaledE9 == this.rateScaledE9 &&
+          other.fetchedAt == this.fetchedAt);
+}
+
+class ExchangeRatesCompanion extends UpdateCompanion<ExchangeRateRow> {
+  final Value<int> id;
+  final Value<String> baseCurrency;
+  final Value<String> quoteCurrency;
+  final Value<int> rateScaledE9;
+  final Value<DateTime> fetchedAt;
+  const ExchangeRatesCompanion({
+    this.id = const Value.absent(),
+    this.baseCurrency = const Value.absent(),
+    this.quoteCurrency = const Value.absent(),
+    this.rateScaledE9 = const Value.absent(),
+    this.fetchedAt = const Value.absent(),
+  });
+  ExchangeRatesCompanion.insert({
+    this.id = const Value.absent(),
+    required String baseCurrency,
+    required String quoteCurrency,
+    required int rateScaledE9,
+    required DateTime fetchedAt,
+  }) : baseCurrency = Value(baseCurrency),
+       quoteCurrency = Value(quoteCurrency),
+       rateScaledE9 = Value(rateScaledE9),
+       fetchedAt = Value(fetchedAt);
+  static Insertable<ExchangeRateRow> custom({
+    Expression<int>? id,
+    Expression<String>? baseCurrency,
+    Expression<String>? quoteCurrency,
+    Expression<int>? rateScaledE9,
+    Expression<DateTime>? fetchedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (baseCurrency != null) 'base_currency': baseCurrency,
+      if (quoteCurrency != null) 'quote_currency': quoteCurrency,
+      if (rateScaledE9 != null) 'rate_scaled_e9': rateScaledE9,
+      if (fetchedAt != null) 'fetched_at': fetchedAt,
+    });
+  }
+
+  ExchangeRatesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? baseCurrency,
+    Value<String>? quoteCurrency,
+    Value<int>? rateScaledE9,
+    Value<DateTime>? fetchedAt,
+  }) {
+    return ExchangeRatesCompanion(
+      id: id ?? this.id,
+      baseCurrency: baseCurrency ?? this.baseCurrency,
+      quoteCurrency: quoteCurrency ?? this.quoteCurrency,
+      rateScaledE9: rateScaledE9 ?? this.rateScaledE9,
+      fetchedAt: fetchedAt ?? this.fetchedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (baseCurrency.present) {
+      map['base_currency'] = Variable<String>(baseCurrency.value);
+    }
+    if (quoteCurrency.present) {
+      map['quote_currency'] = Variable<String>(quoteCurrency.value);
+    }
+    if (rateScaledE9.present) {
+      map['rate_scaled_e9'] = Variable<int>(rateScaledE9.value);
+    }
+    if (fetchedAt.present) {
+      map['fetched_at'] = Variable<DateTime>(fetchedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExchangeRatesCompanion(')
+          ..write('id: $id, ')
+          ..write('baseCurrency: $baseCurrency, ')
+          ..write('quoteCurrency: $quoteCurrency, ')
+          ..write('rateScaledE9: $rateScaledE9, ')
+          ..write('fetchedAt: $fetchedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -5561,6 +5936,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $RecurringRulesTable recurringRules = $RecurringRulesTable(this);
   late final $PendingTransactionsTable pendingTransactions =
       $PendingTransactionsTable(this);
+  late final $ExchangeRatesTable exchangeRates = $ExchangeRatesTable(this);
   late final Index transactionsDateIdx = Index(
     'transactions_date_idx',
     'CREATE INDEX transactions_date_idx ON transactions (date)',
@@ -5601,6 +5977,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'idx_pending_account',
     'CREATE INDEX idx_pending_account ON pending_transactions (account_id)',
   );
+  late final Index idxExchangeRatesPair = Index(
+    'idx_exchange_rates_pair',
+    'CREATE UNIQUE INDEX idx_exchange_rates_pair ON exchange_rates (base_currency, quote_currency)',
+  );
   late final CurrencyDao currencyDao = CurrencyDao(this as AppDatabase);
   late final TransactionDao transactionDao = TransactionDao(
     this as AppDatabase,
@@ -5621,6 +6001,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final PendingTransactionDao pendingTransactionDao =
       PendingTransactionDao(this as AppDatabase);
+  late final ExchangeRateDao exchangeRateDao = ExchangeRateDao(
+    this as AppDatabase,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5635,6 +6018,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     shoppingListItems,
     recurringRules,
     pendingTransactions,
+    exchangeRates,
     transactionsDateIdx,
     transactionsAccountIdx,
     transactionsCategoryIdx,
@@ -5645,6 +6029,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     idxRecurringArchived,
     idxPendingSource,
     idxPendingAccount,
+    idxExchangeRatesPair,
   ];
 }
 
@@ -11620,6 +12005,422 @@ typedef $$PendingTransactionsTableProcessedTableManager =
         bool recurringRuleId,
       })
     >;
+typedef $$ExchangeRatesTableCreateCompanionBuilder =
+    ExchangeRatesCompanion Function({
+      Value<int> id,
+      required String baseCurrency,
+      required String quoteCurrency,
+      required int rateScaledE9,
+      required DateTime fetchedAt,
+    });
+typedef $$ExchangeRatesTableUpdateCompanionBuilder =
+    ExchangeRatesCompanion Function({
+      Value<int> id,
+      Value<String> baseCurrency,
+      Value<String> quoteCurrency,
+      Value<int> rateScaledE9,
+      Value<DateTime> fetchedAt,
+    });
+
+final class $$ExchangeRatesTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $ExchangeRatesTable, ExchangeRateRow> {
+  $$ExchangeRatesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $CurrenciesTable _baseCurrencyTable(_$AppDatabase db) =>
+      db.currencies.createAlias(
+        $_aliasNameGenerator(db.exchangeRates.baseCurrency, db.currencies.code),
+      );
+
+  $$CurrenciesTableProcessedTableManager get baseCurrency {
+    final $_column = $_itemColumn<String>('base_currency')!;
+
+    final manager = $$CurrenciesTableTableManager(
+      $_db,
+      $_db.currencies,
+    ).filter((f) => f.code.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_baseCurrencyTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $CurrenciesTable _quoteCurrencyTable(_$AppDatabase db) =>
+      db.currencies.createAlias(
+        $_aliasNameGenerator(
+          db.exchangeRates.quoteCurrency,
+          db.currencies.code,
+        ),
+      );
+
+  $$CurrenciesTableProcessedTableManager get quoteCurrency {
+    final $_column = $_itemColumn<String>('quote_currency')!;
+
+    final manager = $$CurrenciesTableTableManager(
+      $_db,
+      $_db.currencies,
+    ).filter((f) => f.code.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_quoteCurrencyTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ExchangeRatesTableFilterComposer
+    extends Composer<_$AppDatabase, $ExchangeRatesTable> {
+  $$ExchangeRatesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get rateScaledE9 => $composableBuilder(
+    column: $table.rateScaledE9,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$CurrenciesTableFilterComposer get baseCurrency {
+    final $$CurrenciesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.baseCurrency,
+      referencedTable: $db.currencies,
+      getReferencedColumn: (t) => t.code,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CurrenciesTableFilterComposer(
+            $db: $db,
+            $table: $db.currencies,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$CurrenciesTableFilterComposer get quoteCurrency {
+    final $$CurrenciesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.quoteCurrency,
+      referencedTable: $db.currencies,
+      getReferencedColumn: (t) => t.code,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CurrenciesTableFilterComposer(
+            $db: $db,
+            $table: $db.currencies,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ExchangeRatesTableOrderingComposer
+    extends Composer<_$AppDatabase, $ExchangeRatesTable> {
+  $$ExchangeRatesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get rateScaledE9 => $composableBuilder(
+    column: $table.rateScaledE9,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$CurrenciesTableOrderingComposer get baseCurrency {
+    final $$CurrenciesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.baseCurrency,
+      referencedTable: $db.currencies,
+      getReferencedColumn: (t) => t.code,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CurrenciesTableOrderingComposer(
+            $db: $db,
+            $table: $db.currencies,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$CurrenciesTableOrderingComposer get quoteCurrency {
+    final $$CurrenciesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.quoteCurrency,
+      referencedTable: $db.currencies,
+      getReferencedColumn: (t) => t.code,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CurrenciesTableOrderingComposer(
+            $db: $db,
+            $table: $db.currencies,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ExchangeRatesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ExchangeRatesTable> {
+  $$ExchangeRatesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get rateScaledE9 => $composableBuilder(
+    column: $table.rateScaledE9,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get fetchedAt =>
+      $composableBuilder(column: $table.fetchedAt, builder: (column) => column);
+
+  $$CurrenciesTableAnnotationComposer get baseCurrency {
+    final $$CurrenciesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.baseCurrency,
+      referencedTable: $db.currencies,
+      getReferencedColumn: (t) => t.code,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CurrenciesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.currencies,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$CurrenciesTableAnnotationComposer get quoteCurrency {
+    final $$CurrenciesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.quoteCurrency,
+      referencedTable: $db.currencies,
+      getReferencedColumn: (t) => t.code,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CurrenciesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.currencies,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ExchangeRatesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ExchangeRatesTable,
+          ExchangeRateRow,
+          $$ExchangeRatesTableFilterComposer,
+          $$ExchangeRatesTableOrderingComposer,
+          $$ExchangeRatesTableAnnotationComposer,
+          $$ExchangeRatesTableCreateCompanionBuilder,
+          $$ExchangeRatesTableUpdateCompanionBuilder,
+          (ExchangeRateRow, $$ExchangeRatesTableReferences),
+          ExchangeRateRow,
+          PrefetchHooks Function({bool baseCurrency, bool quoteCurrency})
+        > {
+  $$ExchangeRatesTableTableManager(_$AppDatabase db, $ExchangeRatesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ExchangeRatesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ExchangeRatesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ExchangeRatesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> baseCurrency = const Value.absent(),
+                Value<String> quoteCurrency = const Value.absent(),
+                Value<int> rateScaledE9 = const Value.absent(),
+                Value<DateTime> fetchedAt = const Value.absent(),
+              }) => ExchangeRatesCompanion(
+                id: id,
+                baseCurrency: baseCurrency,
+                quoteCurrency: quoteCurrency,
+                rateScaledE9: rateScaledE9,
+                fetchedAt: fetchedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String baseCurrency,
+                required String quoteCurrency,
+                required int rateScaledE9,
+                required DateTime fetchedAt,
+              }) => ExchangeRatesCompanion.insert(
+                id: id,
+                baseCurrency: baseCurrency,
+                quoteCurrency: quoteCurrency,
+                rateScaledE9: rateScaledE9,
+                fetchedAt: fetchedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ExchangeRatesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({baseCurrency = false, quoteCurrency = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (baseCurrency) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.baseCurrency,
+                                    referencedTable:
+                                        $$ExchangeRatesTableReferences
+                                            ._baseCurrencyTable(db),
+                                    referencedColumn:
+                                        $$ExchangeRatesTableReferences
+                                            ._baseCurrencyTable(db)
+                                            .code,
+                                  )
+                                  as T;
+                        }
+                        if (quoteCurrency) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.quoteCurrency,
+                                    referencedTable:
+                                        $$ExchangeRatesTableReferences
+                                            ._quoteCurrencyTable(db),
+                                    referencedColumn:
+                                        $$ExchangeRatesTableReferences
+                                            ._quoteCurrencyTable(db)
+                                            .code,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$ExchangeRatesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ExchangeRatesTable,
+      ExchangeRateRow,
+      $$ExchangeRatesTableFilterComposer,
+      $$ExchangeRatesTableOrderingComposer,
+      $$ExchangeRatesTableAnnotationComposer,
+      $$ExchangeRatesTableCreateCompanionBuilder,
+      $$ExchangeRatesTableUpdateCompanionBuilder,
+      (ExchangeRateRow, $$ExchangeRatesTableReferences),
+      ExchangeRateRow,
+      PrefetchHooks Function({bool baseCurrency, bool quoteCurrency})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -11642,4 +12443,6 @@ class $AppDatabaseManager {
       $$RecurringRulesTableTableManager(_db, _db.recurringRules);
   $$PendingTransactionsTableTableManager get pendingTransactions =>
       $$PendingTransactionsTableTableManager(_db, _db.pendingTransactions);
+  $$ExchangeRatesTableTableManager get exchangeRates =>
+      $$ExchangeRatesTableTableManager(_db, _db.exchangeRates);
 }

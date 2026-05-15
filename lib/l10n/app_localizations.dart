@@ -1623,6 +1623,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Show fewer'**
   String get homePendingShowFewer;
+
+  /// Screen-reader label for the ≈ prefix on converted amounts. The visible glyph is Unicode; this key is read aloud by accessibility tools.
+  ///
+  /// In en, this message translates to:
+  /// **'approximately'**
+  String get approximatelyPrefix;
+
+  /// Suffix after the converted total in AccountTile (e.g. '≈ $1,802.50 total').
+  ///
+  /// In en, this message translates to:
+  /// **'total'**
+  String get convertedTotalLabel;
+
+  /// Label on the separator between SummaryStrip's unified converted total and the per-currency fallback groups (for currencies whose rates are not yet cached).
+  ///
+  /// In en, this message translates to:
+  /// **'Unconverted'**
+  String get homeSummaryUnconvertedHeader;
 }
 
 class _AppLocalizationsDelegate

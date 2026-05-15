@@ -25,6 +25,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/providers/default_currency_provider.dart';
 import '../../core/utils/box_shadow.dart';
 import '../shopping_list/shopping_list_providers.dart';
 import '../../core/utils/date_helpers.dart';
@@ -404,6 +405,9 @@ class _SinglePane extends ConsumerWidget {
         ref.watch(homeCategoriesByIdProvider).valueOrNull ?? const {};
     final accounts =
         ref.watch(homeAccountsByIdProvider).valueOrNull ?? const {};
+    final initialDefault = ref.read(initialDefaultCurrencyProvider);
+    final defaultCurrency =
+        ref.watch(defaultCurrencyProvider).valueOrNull ?? initialDefault;
     final l10n = AppLocalizations.of(context);
     const double transactionPadding = 24;
 
@@ -416,6 +420,7 @@ class _SinglePane extends ConsumerWidget {
             monthNetByCurrency: data.monthNetByCurrency,
             currenciesByCode: currencies,
             locale: locale,
+            defaultCurrency: defaultCurrency,
             showJumpToToday: !DateHelpers.isSameDay(
               data.selectedDay,
               data.today,
@@ -457,6 +462,7 @@ class _SinglePane extends ConsumerWidget {
                 categories: categories,
                 accounts: accounts,
                 locale: locale,
+                defaultCurrency: defaultCurrency,
                 onTapRow: onTapRow,
                 onDuplicateRow: onDuplicateRow,
                 onDeleteRow: onDeleteRow,
@@ -617,6 +623,7 @@ class _TransactionListCard extends StatelessWidget {
     required this.categories,
     required this.accounts,
     required this.locale,
+    required this.defaultCurrency,
     required this.onTapRow,
     required this.onDuplicateRow,
     required this.onDeleteRow,
@@ -626,6 +633,7 @@ class _TransactionListCard extends StatelessWidget {
   final Map<int, Category> categories;
   final Map<int, Account> accounts;
   final String locale;
+  final String defaultCurrency;
   final void Function(int id) onTapRow;
   final void Function(int id) onDuplicateRow;
   final void Function(int id) onDeleteRow;
@@ -649,6 +657,7 @@ class _TransactionListCard extends StatelessWidget {
               category: categories[tx.categoryId],
               account: accounts[tx.accountId],
               locale: locale,
+              defaultCurrency: defaultCurrency,
               onTap: () => onTapRow(tx.id),
               onDuplicate: () => onDuplicateRow(tx.id),
               onDelete: () => onDeleteRow(tx.id),

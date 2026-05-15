@@ -4,6 +4,7 @@ import 'daos/account_dao.dart';
 import 'daos/account_type_dao.dart';
 import 'daos/category_dao.dart';
 import 'daos/currency_dao.dart';
+import 'daos/exchange_rate_dao.dart';
 import 'daos/pending_transaction_dao.dart';
 import 'daos/recurring_rule_dao.dart';
 import 'daos/shopping_list_dao.dart';
@@ -13,6 +14,7 @@ import 'tables/account_types_table.dart';
 import 'tables/accounts_table.dart';
 import 'tables/categories_table.dart';
 import 'tables/currencies_table.dart';
+import 'tables/exchange_rates_table.dart';
 import 'tables/pending_transactions_table.dart';
 import 'tables/recurring_rules_table.dart';
 import 'tables/shopping_list_items_table.dart';
@@ -53,6 +55,7 @@ part 'app_database.g.dart';
     ShoppingListItems,
     RecurringRules,
     PendingTransactions,
+    ExchangeRates,
   ],
   daos: [
     CurrencyDao,
@@ -64,13 +67,14 @@ part 'app_database.g.dart';
     ShoppingListDao,
     RecurringRuleDao,
     PendingTransactionDao,
+    ExchangeRateDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -98,6 +102,10 @@ class AppDatabase extends _$AppDatabase {
         await m.createIndex(idxPendingAccount);
 
         await _addRecurringPartialUniqueIndex();
+      }
+      if (from < 5) {
+        await m.createTable(exchangeRates);
+        await m.createIndex(idxExchangeRatesPair);
       }
     },
     beforeOpen: (details) async {

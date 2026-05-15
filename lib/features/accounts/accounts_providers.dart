@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/providers/default_currency_provider.dart';
 import '../../app/providers/repository_providers.dart';
 import '../../data/models/account.dart';
 import '../../data/models/account_type.dart';
@@ -91,15 +94,41 @@ final accountFormSeedDataProvider = FutureProvider.autoDispose
     });
 
 class AccountFormActions {
-  AccountFormActions(this._accountRepository);
+  AccountFormActions(this._accountRepository, this._ref);
 
   final AccountRepository _accountRepository;
+  final Ref _ref;
 
-  Future<int> save(Account draft) => _accountRepository.save(draft);
+  final _pendingCodes = <String>{};
+  Timer? _debounce;
+  static const _debounceWindow = Duration(seconds: 30);
+
+  Future<int> save(Account draft) async {
+    final id = await _accountRepository.save(draft);
+
+    final initialDefault = _ref.read(initialDefaultCurrencyProvider);
+    final currentDefault =
+        _ref.read(defaultCurrencyProvider).valueOrNull ?? initialDefault;
+
+    if (draft.currency.code != currentDefault) {
+      _pendingCodes.add(draft.currency.code);
+      _debounce?.cancel();
+      _debounce = Timer(_debounceWindow, () {
+        final repo = _ref.read(exchangeRateRepositoryProvider);
+        for (final code in _pendingCodes) {
+          unawaited(repo.fetchRate(code, currentDefault));
+        }
+        _pendingCodes.clear();
+      });
+    }
+    return id;
+  }
 }
 
 final accountFormActionsProvider = Provider<AccountFormActions>((ref) {
-  return AccountFormActions(ref.read(accountRepositoryProvider));
+  final actions = AccountFormActions(ref.read(accountRepositoryProvider), ref);
+  ref.onDispose(() => actions._debounce?.cancel());
+  return actions;
 });
 
 class AccountTypeCreationActions {

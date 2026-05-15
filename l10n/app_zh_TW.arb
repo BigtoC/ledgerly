@@ -304,5 +304,9 @@
   "homePendingLoadError": "無法載入待處理項目。",
   "homePendingShowMore": "再顯示 {count} 項",
   "@homePendingShowMore": { "placeholders": { "count": { "type": "int" } } },
-  "homePendingShowFewer": "顯示較少"
+  "homePendingShowFewer": "顯示較少",
+
+  "approximatelyPrefix": "約",
+  "convertedTotalLabel": "總計",
+  "homeSummaryUnconvertedHeader": "未換算"
 }

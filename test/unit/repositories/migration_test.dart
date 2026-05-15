@@ -33,6 +33,7 @@ import '_harness/generated/schema.dart';
 import '_harness/generated/schema_v1.dart' as v1;
 import '_harness/generated/schema_v2.dart' as v2;
 import '_harness/generated/schema_v3.dart' as v3;
+import '_harness/generated/schema_v4.dart' as v4;
 
 /// Fixed-locale stub for the migration test. The locale-dependent unit
 /// tests live in `test/unit/seed/first_run_seed_test.dart`; here we only
@@ -51,7 +52,7 @@ void main() {
       // snapshot" mistake next time Phase 2 touches the file.
       final db = AppDatabase(NativeDatabase.memory());
       addTearDown(() async => db.close());
-      expect(db.schemaVersion, 4);
+      expect(db.schemaVersion, 5);
       // The drift_dev-generated helper should advance with the new snapshot.
       expect(GeneratedHelper.versions, contains(db.schemaVersion));
       expect(GeneratedHelper.versions.last, db.schemaVersion);
@@ -355,7 +356,115 @@ void main() {
         expect(result.read<int>('foreign_keys'), 1);
       });
     });
+
+    group('v5 snapshot', () {
+      test('upgrades v4 DBs to v5 and creates exchange_rates table', () async {
+        final verifier = SchemaVerifier(GeneratedHelper());
+        final schema = await verifier.schemaAt(4);
+        // Open a v4 DB with seeded data.
+        final legacyDb = v4.DatabaseAtV4(schema.newConnection());
+        addTearDown(() async => legacyDb.close());
+
+        // Seed minimal currency fixtures so FK references are valid.
+        await legacyDb.customStatement(
+          'INSERT INTO currencies (code, decimals, symbol, name_l10n_key, '
+          'is_token, sort_order) VALUES (?, ?, ?, ?, 0, ?)',
+          <Object?>['USD', 2, r'$', 'currency.usd', 1],
+        );
+        await legacyDb.customStatement(
+          'INSERT INTO currencies (code, decimals, symbol, name_l10n_key, '
+          'is_token, sort_order) VALUES (?, ?, ?, ?, 0, ?)',
+          <Object?>['EUR', 2, '€', 'currency.eur', 2],
+        );
+        await legacyDb.close();
+
+        final db = AppDatabase(schema.newConnection());
+        addTearDown(() async => db.close());
+
+        await verifier.migrateAndValidate(db, db.schemaVersion);
+
+        // Verify the exchange_rates table exists and is empty.
+        final rows = await db.select(db.exchangeRates).get();
+        expect(rows, isEmpty);
+      });
+
+      test('v5 upgrade on empty DB succeeds', () async {
+        final verifier = SchemaVerifier(GeneratedHelper());
+        final schema = await verifier.schemaAt(4);
+        // Don't seed anything — upgrade an empty v4 DB.
+        final db = AppDatabase(schema.newConnection());
+        addTearDown(() async => db.close());
+
+        await verifier.migrateAndValidate(db, db.schemaVersion);
+      });
+
+      test(
+        'exchange_rates FK to currencies is enforced after upgrade',
+        () async {
+          final verifier = SchemaVerifier(GeneratedHelper());
+          final connection = await verifier.startAt(4);
+          final db = AppDatabase(connection.executor);
+          addTearDown(() async => db.close());
+
+          await verifier.migrateAndValidate(db, db.schemaVersion);
+
+          // Inserting a rate with a non-existent currency code must fail.
+          expect(
+            () async => db.customStatement(
+              'INSERT INTO exchange_rates (base_currency, quote_currency, '
+              'rate_scaled_e9, fetched_at) VALUES (?, ?, ?, ?)',
+              <Object?>['USD', 'ZZZ', 1000000000, 0],
+            ),
+            throwsA(anything),
+          );
+        },
+      );
+
+      test('exchange_rates CHECK(rate_scaled_e9 > 0) is enforced', () async {
+        final verifier = SchemaVerifier(GeneratedHelper());
+        final connection = await verifier.startAt(4);
+        final db = AppDatabase(connection.executor);
+        addTearDown(() async => db.close());
+
+        await verifier.migrateAndValidate(db, db.schemaVersion);
+
+        await db.customStatement(
+          'INSERT INTO currencies (code, decimals, symbol, name_l10n_key, '
+          'is_token, sort_order) VALUES (?, ?, ?, ?, 0, ?)',
+          <Object?>['USD', 2, r'$', 'currency.usd', 1],
+        );
+        await db.customStatement(
+          'INSERT INTO currencies (code, decimals, symbol, name_l10n_key, '
+          'is_token, sort_order) VALUES (?, ?, ?, ?, 0, ?)',
+          <Object?>['EUR', 2, '€', 'currency.eur', 2],
+        );
+
+        // rate_scaled_e9 = 0 must fail.
+        expect(
+          () async => db.customStatement(
+            'INSERT INTO exchange_rates (base_currency, quote_currency, '
+            'rate_scaled_e9, fetched_at) VALUES (?, ?, ?, ?)',
+            <Object?>['USD', 'EUR', 0, 0],
+          ),
+          throwsA(anything),
+        );
+      });
+
+      test('PRAGMA foreign_keys remains ON after v5 upgrade', () async {
+        final verifier = SchemaVerifier(GeneratedHelper());
+        final connection = await verifier.startAt(4);
+        final db = AppDatabase(connection.executor);
+        addTearDown(() async => db.close());
+
+        await verifier.migrateAndValidate(db, db.schemaVersion);
+
+        final fkResult = await db
+            .customSelect('PRAGMA foreign_keys')
+            .getSingle();
+        expect(fkResult.read<int>('foreign_keys'), 1);
+      });
+    });
   });
 }
 
-const int dbVersionForOpenCheck = 4;
+const int dbVersionForOpenCheck = 5;

@@ -333,6 +333,12 @@ const Set<String> _expectedEnKeys = <String>{
   'analysisTransactionCount',
   'analysisSearchTotal',
   'analysisErrorMessage',
+
+  // Multi-currency conversion (Phase 2)
+  // (docs/superpowers/plans/2026-05-15-multi-currency-conversion.md).
+  'approximatelyPrefix',
+  'convertedTotalLabel',
+  'homeSummaryUnconvertedHeader',
 };
 
 Map<String, dynamic> _readArb(String fileName) {

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/app_localizations.dart';
 import '../core/theme/app_theme.dart';
 import 'providers/locale_provider.dart';
+import 'providers/repository_providers.dart';
 import 'providers/theme_provider.dart';
 import 'router.dart';
 
@@ -47,6 +48,9 @@ class _AppState extends ConsumerState<App> {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
     final preferredLocale = ref.watch(userLocalePreferenceProvider);
+    // Force instantiation of the keep-alive exchange-rate repository so
+    // its DAO + defaultCurrency listeners register on first build.
+    ref.watch(exchangeRateRepositoryProvider);
     return MaterialApp.router(
       onGenerateTitle: (ctx) => AppLocalizations.of(ctx).appTitle,
       theme: lightTheme,
