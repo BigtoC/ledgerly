@@ -32,13 +32,18 @@ final defaultCurrencyProvider = StreamProvider<String>.internal(
 // ignore: unused_element
 typedef DefaultCurrencyRef = StreamProviderRef<String>;
 String _$initialDefaultCurrencyHash() =>
-    r'4ea9f26675180c80f7a41fb6f6e35c35e31b2655';
+    r'd96062f6de5f3795d858097d4fd712a620ad1580';
 
 /// Bootstrap-provided initial value of the default currency. Overridden
 /// in `bootstrap.dart` with the value read from `UserPreferencesRepository`
 /// before `runApp`, so UI tiles can synchronously resolve the default
 /// currency on first frame without going through the AsyncValue
 /// loading state.
+///
+/// Defaults to `'USD'` so widget tests that do not exercise the bootstrap
+/// path do not need to override it; production paths always override.
+/// Pattern mirrors `initialThemeModeProvider` and
+/// `initialPreferredLocaleProvider`.
 ///
 /// Copied from [initialDefaultCurrency].
 @ProviderFor(initialDefaultCurrency)

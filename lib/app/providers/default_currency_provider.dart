@@ -19,9 +19,10 @@ Stream<String> defaultCurrency(Ref ref) {
 /// before `runApp`, so UI tiles can synchronously resolve the default
 /// currency on first frame without going through the AsyncValue
 /// loading state.
+///
+/// Defaults to `'USD'` so widget tests that do not exercise the bootstrap
+/// path do not need to override it; production paths always override.
+/// Pattern mirrors `initialThemeModeProvider` and
+/// `initialPreferredLocaleProvider`.
 @Riverpod(keepAlive: true, dependencies: [])
-String initialDefaultCurrency(Ref ref) {
-  throw UnimplementedError(
-    'initialDefaultCurrencyProvider must be overridden in bootstrap',
-  );
-}
+String initialDefaultCurrency(Ref ref) => 'USD';

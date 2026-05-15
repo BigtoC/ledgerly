@@ -462,6 +462,7 @@ class _SinglePane extends ConsumerWidget {
                 categories: categories,
                 accounts: accounts,
                 locale: locale,
+                defaultCurrency: defaultCurrency,
                 onTapRow: onTapRow,
                 onDuplicateRow: onDuplicateRow,
                 onDeleteRow: onDeleteRow,
@@ -622,6 +623,7 @@ class _TransactionListCard extends StatelessWidget {
     required this.categories,
     required this.accounts,
     required this.locale,
+    required this.defaultCurrency,
     required this.onTapRow,
     required this.onDuplicateRow,
     required this.onDeleteRow,
@@ -631,6 +633,7 @@ class _TransactionListCard extends StatelessWidget {
   final Map<int, Category> categories;
   final Map<int, Account> accounts;
   final String locale;
+  final String defaultCurrency;
   final void Function(int id) onTapRow;
   final void Function(int id) onDuplicateRow;
   final void Function(int id) onDeleteRow;
@@ -654,6 +657,7 @@ class _TransactionListCard extends StatelessWidget {
               category: categories[tx.categoryId],
               account: accounts[tx.accountId],
               locale: locale,
+              defaultCurrency: defaultCurrency,
               onTap: () => onTapRow(tx.id),
               onDuplicate: () => onDuplicateRow(tx.id),
               onDelete: () => onDeleteRow(tx.id),

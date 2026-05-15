@@ -6,28 +6,39 @@
 // Delete. Swipe-to-delete is the destructive gesture (handled by
 // `flutter_slidable`); swipe and overflow share `onDelete`.
 //
+// Phase 2: when the transaction's currency differs from the user's
+// default currency, a secondary muted line shows the approximate
+// converted amount (`≈ $X.XX`). The `≈` glyph is read aloud by screen
+// readers as the localized "approximately" prefix via Semantics.
+//
 // Archived category / account rows still render with their archived
 // metadata so historical rows stay readable (Wave 3 §2 requirements).
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
+import '../../../app/providers/repository_providers.dart';
 import '../../../core/utils/color_palette.dart';
+import '../../../core/utils/currency_converter.dart';
 import '../../../core/utils/icon_registry.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../../../data/models/account.dart';
 import '../../../data/models/category.dart';
+import '../../../data/models/currency.dart';
 import '../../../data/models/transaction.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../categories/widgets/category_display.dart';
+import '../home_providers.dart';
 
-class TransactionTile extends StatelessWidget {
+class TransactionTile extends ConsumerWidget {
   const TransactionTile({
     super.key,
     required this.transaction,
     required this.category,
     required this.account,
     required this.locale,
+    required this.defaultCurrency,
     required this.onTap,
     required this.onDuplicate,
     required this.onDelete,
@@ -44,12 +55,18 @@ class TransactionTile extends StatelessWidget {
   final Account? account;
 
   final String locale;
+
+  /// ISO 4217 code of the user's preferred default currency. Provided
+  /// synchronously by the parent so the tile does not flicker through a
+  /// `'USD'` fallback on cold start.
+  final String defaultCurrency;
+
   final VoidCallback onTap;
   final VoidCallback onDuplicate;
   final VoidCallback onDelete;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final cat = category;
@@ -77,6 +94,44 @@ class TransactionTile extends StatelessWidget {
       ),
     };
 
+    // Convert to default currency when the transaction is in a foreign
+    // currency and a rate is available. Otherwise render only the
+    // primary line.
+    String? convertedText;
+    final txCurrency = transaction.currency;
+    if (txCurrency.code != defaultCurrency) {
+      final ratesMap =
+          ref.watch(exchangeRatesProvider).valueOrNull ?? const <String, int>{};
+      final rateScaledE9 = ratesMap['${txCurrency.code}→$defaultCurrency'];
+      if (rateScaledE9 != null) {
+        final currenciesByCode =
+            ref.watch(homeCurrenciesByCodeProvider).valueOrNull ??
+            const <String, Currency>{};
+        final toCurrency =
+            currenciesByCode[defaultCurrency] ??
+            Currency(
+              code: defaultCurrency,
+              decimals: 2,
+              symbol: defaultCurrency,
+            );
+        final convertedMinorUnits = CurrencyConverter.convertMinorUnits(
+          amountMinorUnits: transaction.amountMinorUnits,
+          rateScaledE9: rateScaledE9,
+          fromDecimals: txCurrency.decimals,
+          toDecimals: toCurrency.decimals,
+        );
+        final signedConverted = isIncome
+            ? convertedMinorUnits
+            : -convertedMinorUnits;
+        final formatted = MoneyFormatter.formatSigned(
+          amountMinorUnits: signedConverted,
+          currency: toCurrency,
+          locale: locale,
+        );
+        convertedText = '≈ $formatted';
+      }
+    }
+
     final memo = transaction.memo;
 
     return Slidable(
@@ -98,6 +153,7 @@ class TransactionTile extends StatelessWidget {
       ),
       child: ListTile(
         onTap: onTap,
+        isThreeLine: convertedText != null,
         leading: CircleAvatar(
           backgroundColor: color.withValues(alpha: 0.15),
           child: Icon(icon, color: color),
@@ -115,15 +171,36 @@ class TransactionTile extends StatelessWidget {
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(
-              amountText,
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: isIncome
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  amountText,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: isIncome
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (convertedText != null)
+                  Semantics(
+                    label:
+                        '${l10n.approximatelyPrefix} '
+                        '${convertedText.substring(2)}',
+                    excludeSemantics: true,
+                    child: Text(
+                      convertedText,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.outline,
+                      ),
+                    ),
+                  ),
+              ],
             ),
             PopupMenuButton<_RowAction>(
               key: ValueKey('homeTile:${transaction.id}:menu'),
