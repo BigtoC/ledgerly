@@ -42,14 +42,18 @@ class ExchangeRateDao extends DatabaseAccessor<AppDatabase>
   /// instead of failing silently at runtime.
   Future<Set<String>> distinctCurrenciesAcrossAllTables() async {
     final results = await Future.wait([
-      (selectOnly(accounts, distinct: true)..addColumns([accounts.currency]))
-          .get(),
-      (selectOnly(transactions, distinct: true)
-            ..addColumns([transactions.currency]))
-          .get(),
-      (selectOnly(pendingTransactions, distinct: true)
-            ..addColumns([pendingTransactions.currency]))
-          .get(),
+      (selectOnly(
+        accounts,
+        distinct: true,
+      )..addColumns([accounts.currency])).get(),
+      (selectOnly(
+        transactions,
+        distinct: true,
+      )..addColumns([transactions.currency])).get(),
+      (selectOnly(
+        pendingTransactions,
+        distinct: true,
+      )..addColumns([pendingTransactions.currency])).get(),
     ]);
     final codes = <String>{};
     codes.addAll(results[0].map((r) => r.read(accounts.currency)!));

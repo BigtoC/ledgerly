@@ -286,9 +286,7 @@ class AccountTile extends ConsumerWidget {
         ExcludeSemantics(
           child: Divider(
             thickness: 1,
-            color: Theme.of(
-              context,
-            ).colorScheme.outline.withValues(alpha: 0.4),
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.4),
           ),
         ),
       );

@@ -91,7 +91,9 @@ void main() {
     testWidgets('hides converted total for single-currency account', (
       tester,
     ) async {
-      await tester.pumpWidget(buildTile(balancesByCurrency: const {'USD': 34000}));
+      await tester.pumpWidget(
+        buildTile(balancesByCurrency: const {'USD': 34000}),
+      );
       await tester.pumpAndSettle();
       expect(find.textContaining('≈'), findsNothing);
     });

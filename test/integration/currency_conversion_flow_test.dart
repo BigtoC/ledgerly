@@ -42,37 +42,40 @@ void main() {
   });
 
   group('Currency conversion flow', () {
-    test('repository snapshot updates after API fetch (forward only)', () async {
-      await seedDbWithEurAccount();
-      final repo = ExchangeRateRepository(
-        db,
-        mockService,
-        defaultCurrencyController.stream,
-      );
-      when(() => mockService.fetchRates(any())).thenAnswer(
-        (_) async => [
-          (
-            from: 'EUR',
-            to: 'USD',
-            rate: 1.08,
-            fetchedAt: DateTime(2026, 5, 14),
-          ),
-        ],
-      );
-      await repo.refreshAll('USD');
-      // Drift's watch() emits asynchronously after the upsert commits;
-      // wait until the snapshot picks it up.
-      for (var i = 0; i < 20; i++) {
-        await Future<void>.delayed(const Duration(milliseconds: 20));
-        if (repo.getRate('EUR', 'USD') != null) break;
-      }
+    test(
+      'repository snapshot updates after API fetch (forward only)',
+      () async {
+        await seedDbWithEurAccount();
+        final repo = ExchangeRateRepository(
+          db,
+          mockService,
+          defaultCurrencyController.stream,
+        );
+        when(() => mockService.fetchRates(any())).thenAnswer(
+          (_) async => [
+            (
+              from: 'EUR',
+              to: 'USD',
+              rate: 1.08,
+              fetchedAt: DateTime(2026, 5, 14),
+            ),
+          ],
+        );
+        await repo.refreshAll('USD');
+        // Drift's watch() emits asynchronously after the upsert commits;
+        // wait until the snapshot picks it up.
+        for (var i = 0; i < 20; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 20));
+          if (repo.getRate('EUR', 'USD') != null) break;
+        }
 
-      expect(repo.getRate('EUR', 'USD'), (1.08 * 1000000000).round());
-      // Inverse is NOT stored — UI never looks it up.
-      expect(repo.getRate('USD', 'EUR'), isNull);
+        expect(repo.getRate('EUR', 'USD'), (1.08 * 1000000000).round());
+        // Inverse is NOT stored — UI never looks it up.
+        expect(repo.getRate('USD', 'EUR'), isNull);
 
-      repo.dispose();
-    });
+        repo.dispose();
+      },
+    );
 
     test('default currency change triggers re-fetch', () async {
       await seedDbWithEurAccount();

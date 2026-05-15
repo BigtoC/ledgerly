@@ -45,10 +45,7 @@ void main() {
     currency: Currency(code: 'EUR', decimals: 2, symbol: '€'),
   );
 
-  Widget buildTile({
-    required String defaultCurrency,
-    Map<String, int>? rates,
-  }) {
+  Widget buildTile({required String defaultCurrency, Map<String, int>? rates}) {
     return ProviderScope(
       overrides: [
         exchangeRatesProvider.overrideWith(
@@ -127,7 +124,9 @@ void main() {
       // true` children consistently across Flutter versions.
       final semantics = tester
           .widgetList<Semantics>(find.byType(Semantics))
-          .where((s) => s.properties.label?.startsWith('approximately') ?? false)
+          .where(
+            (s) => s.properties.label?.startsWith('approximately') ?? false,
+          )
           .toList();
       expect(semantics, isNotEmpty);
     });

@@ -398,25 +398,27 @@ void main() {
         await verifier.migrateAndValidate(db, db.schemaVersion);
       });
 
-      test('exchange_rates FK to currencies is enforced after upgrade',
-          () async {
-        final verifier = SchemaVerifier(GeneratedHelper());
-        final connection = await verifier.startAt(4);
-        final db = AppDatabase(connection.executor);
-        addTearDown(() async => db.close());
+      test(
+        'exchange_rates FK to currencies is enforced after upgrade',
+        () async {
+          final verifier = SchemaVerifier(GeneratedHelper());
+          final connection = await verifier.startAt(4);
+          final db = AppDatabase(connection.executor);
+          addTearDown(() async => db.close());
 
-        await verifier.migrateAndValidate(db, db.schemaVersion);
+          await verifier.migrateAndValidate(db, db.schemaVersion);
 
-        // Inserting a rate with a non-existent currency code must fail.
-        expect(
-          () async => db.customStatement(
-            'INSERT INTO exchange_rates (base_currency, quote_currency, '
-            'rate_scaled_e9, fetched_at) VALUES (?, ?, ?, ?)',
-            <Object?>['USD', 'ZZZ', 1000000000, 0],
-          ),
-          throwsA(anything),
-        );
-      });
+          // Inserting a rate with a non-existent currency code must fail.
+          expect(
+            () async => db.customStatement(
+              'INSERT INTO exchange_rates (base_currency, quote_currency, '
+              'rate_scaled_e9, fetched_at) VALUES (?, ?, ?, ?)',
+              <Object?>['USD', 'ZZZ', 1000000000, 0],
+            ),
+            throwsA(anything),
+          );
+        },
+      );
 
       test('exchange_rates CHECK(rate_scaled_e9 > 0) is enforced', () async {
         final verifier = SchemaVerifier(GeneratedHelper());

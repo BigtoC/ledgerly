@@ -91,28 +91,31 @@ void main() {
       expect(repo.getRate('USD', 'EUR'), isNull);
     });
 
-    test('refreshAll fetches, upserts, and builds snapshot (forward only)', () async {
-      await seedAccount('EUR');
+    test(
+      'refreshAll fetches, upserts, and builds snapshot (forward only)',
+      () async {
+        await seedAccount('EUR');
 
-      when(() => mockService.fetchRates(any())).thenAnswer(
-        (_) async => [
-          (
-            from: 'EUR',
-            to: 'USD',
-            rate: 1.08,
-            fetchedAt: DateTime(2026, 5, 14),
-          ),
-        ],
-      );
+        when(() => mockService.fetchRates(any())).thenAnswer(
+          (_) async => [
+            (
+              from: 'EUR',
+              to: 'USD',
+              rate: 1.08,
+              fetchedAt: DateTime(2026, 5, 14),
+            ),
+          ],
+        );
 
-      await repo.refreshAll('USD');
-      // Allow the DAO watch() to emit so the snapshot updates.
-      await Future<void>.delayed(Duration.zero);
+        await repo.refreshAll('USD');
+        // Allow the DAO watch() to emit so the snapshot updates.
+        await Future<void>.delayed(Duration.zero);
 
-      expect(repo.getRate('EUR', 'USD'), (1.08 * 1000000000).round());
-      // Inverse not stored — UI never looks it up.
-      expect(repo.getRate('USD', 'EUR'), isNull);
-    });
+        expect(repo.getRate('EUR', 'USD'), (1.08 * 1000000000).round());
+        // Inverse not stored — UI never looks it up.
+        expect(repo.getRate('USD', 'EUR'), isNull);
+      },
+    );
 
     test('refreshAll rejects rate <= 0', () async {
       await seedAccount('EUR');
@@ -185,37 +188,40 @@ void main() {
       ).called(greaterThanOrEqualTo(1));
     });
 
-    test('single-flight: concurrent refreshAll calls coalesce to one fetch', () async {
-      await seedAccount('EUR');
-      final completer =
-          Completer<
-            List<({String from, String to, double rate, DateTime fetchedAt})>
-          >();
-      when(
-        () => mockService.fetchRates(any()),
-      ).thenAnswer((_) => completer.future);
+    test(
+      'single-flight: concurrent refreshAll calls coalesce to one fetch',
+      () async {
+        await seedAccount('EUR');
+        final completer =
+            Completer<
+              List<({String from, String to, double rate, DateTime fetchedAt})>
+            >();
+        when(
+          () => mockService.fetchRates(any()),
+        ).thenAnswer((_) => completer.future);
 
-      // Fire three refreshAll calls in parallel for the same default currency.
-      final f1 = repo.refreshAll('USD');
-      final f2 = repo.refreshAll('USD');
-      final f3 = repo.refreshAll('USD');
+        // Fire three refreshAll calls in parallel for the same default currency.
+        final f1 = repo.refreshAll('USD');
+        final f2 = repo.refreshAll('USD');
+        final f3 = repo.refreshAll('USD');
 
-      // Allow microtasks to run.
-      await Future<void>.delayed(Duration.zero);
+        // Allow microtasks to run.
+        await Future<void>.delayed(Duration.zero);
 
-      completer.complete([
-        (
-          from: 'EUR',
-          to: 'USD',
-          rate: 1.08,
-          fetchedAt: DateTime(2026, 5, 14),
-        ),
-      ]);
-      await Future.wait([f1, f2, f3]);
+        completer.complete([
+          (
+            from: 'EUR',
+            to: 'USD',
+            rate: 1.08,
+            fetchedAt: DateTime(2026, 5, 14),
+          ),
+        ]);
+        await Future.wait([f1, f2, f3]);
 
-      // The mock was only invoked once thanks to single-flight.
-      verify(() => mockService.fetchRates(any())).called(1);
-    });
+        // The mock was only invoked once thanks to single-flight.
+        verify(() => mockService.fetchRates(any())).called(1);
+      },
+    );
 
     test('fetchRate handles service errors silently (no rethrow)', () async {
       when(

@@ -70,11 +70,7 @@ class SummaryStrip extends ConsumerWidget {
 
     final toCurrency =
         currenciesByCode[defaultCurrency] ??
-        Currency(
-          code: defaultCurrency,
-          decimals: 2,
-          symbol: defaultCurrency,
-        );
+        Currency(code: defaultCurrency, decimals: 2, symbol: defaultCurrency);
 
     int convertedExpense = 0;
     int convertedIncome = 0;
@@ -309,11 +305,7 @@ class _CurrencyGroup extends StatelessWidget {
 }
 
 class _Chip extends StatelessWidget {
-  const _Chip({
-    required this.label,
-    required this.value,
-    this.semanticValue,
-  });
+  const _Chip({required this.label, required this.value, this.semanticValue});
 
   final String label;
   final String value;

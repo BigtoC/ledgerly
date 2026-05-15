@@ -132,10 +132,7 @@ void main() {
       // At least one Semantics node should carry the "approximately" label.
       // The label format is "approximately <amount>" — the literal en US
       // copy is set via `AppLocalizations.approximatelyPrefix`.
-      expect(
-        find.bySemanticsLabel(RegExp(r'^approximately ')),
-        findsWidgets,
-      );
+      expect(find.bySemanticsLabel(RegExp(r'^approximately ')), findsWidgets);
     });
   });
 }
