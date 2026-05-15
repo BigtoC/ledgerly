@@ -17,6 +17,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ledgerly/app/app.dart';
 import 'package:ledgerly/app/bootstrap.dart';
+import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/data/database/app_database.dart';
 import 'package:ledgerly/data/services/locale_service.dart';
 import 'package:ledgerly/data/use_cases/recurring_generation_use_case.dart';
@@ -130,6 +131,39 @@ void main() {
             'runApp',
           ]),
         );
+      },
+    );
+
+    test(
+      'first frame uses the seeded default currency after first-run seed',
+      () async {
+        Widget? launched;
+        final db = AppDatabase(NativeDatabase.memory());
+        addTearDown(db.close);
+
+        await bootstrapFor(
+          openDatabase: () async => db,
+          localeService: const _StubLocaleService(),
+          runFirstRunSeedFn:
+              ({
+                required db,
+                required currencies,
+                required categories,
+                required accountTypes,
+                required accounts,
+                required preferences,
+                required localeService,
+              }) async {
+                await preferences.setDefaultCurrency('JPY');
+              },
+          runAppFn: (widget) => launched = widget,
+        );
+
+        final scope = launched as ProviderScope;
+        final container = ProviderContainer(overrides: scope.overrides);
+        addTearDown(container.dispose);
+
+        expect(container.read(initialDefaultCurrencyProvider), 'JPY');
       },
     );
 

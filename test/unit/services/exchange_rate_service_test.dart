@@ -77,6 +77,33 @@ void main() {
       expect(results[0].to, 'USD');
     });
 
+    test('accepts integer JSON rates', () async {
+      when(
+        () => mockDio.get<List<dynamic>>(
+          any(),
+          queryParameters: any(named: 'queryParameters'),
+        ),
+      ).thenAnswer(
+        (_) async => Response(
+          data: [
+            {
+              'rate': 160,
+              'from': 'JPY',
+              'to': 'USD',
+              'fetched_at': '2026-05-14T06:35:14.459Z',
+            },
+          ],
+          statusCode: 200,
+          requestOptions: RequestOptions(path: ''),
+        ),
+      );
+
+      final results = await service.fetchRates([(from: 'JPY', to: 'USD')]);
+
+      expect(results, hasLength(1));
+      expect(results[0].rate, 160.0);
+    });
+
     test('skips malformed entries', () async {
       when(
         () => mockDio.get<List<dynamic>>(

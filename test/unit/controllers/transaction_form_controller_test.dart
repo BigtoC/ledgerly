@@ -21,19 +21,25 @@
 
 import 'dart:async';
 
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
+import 'package:ledgerly/data/database/app_database.dart' as drift;
+import 'package:ledgerly/data/database/daos/exchange_rate_dao.dart';
 import 'package:ledgerly/data/models/account.dart';
 import 'package:ledgerly/data/models/category.dart';
 import 'package:ledgerly/data/models/currency.dart';
 import 'package:ledgerly/data/models/transaction.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
+import 'package:ledgerly/data/repositories/exchange_rate_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
+import 'package:ledgerly/data/services/exchange_rate_service.dart';
 import 'package:ledgerly/features/transactions/keypad_state.dart';
 import 'package:ledgerly/features/transactions/transaction_form_controller.dart';
 import 'package:ledgerly/features/transactions/transaction_form_state.dart';
@@ -48,8 +54,20 @@ class _MockCategoryRepository extends Mock implements CategoryRepository {}
 class _MockUserPreferencesRepository extends Mock
     implements UserPreferencesRepository {}
 
+class _MockAppDatabase extends Mock implements drift.AppDatabase {}
+
+class _MockExchangeRateDao extends Mock implements ExchangeRateDao {}
+
+class _MockExchangeRateService extends Mock implements ExchangeRateService {}
+
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 const _jpy = Currency(code: 'JPY', decimals: 0, symbol: '¥');
+const _eur = Currency(
+  code: 'EUR',
+  decimals: 2,
+  symbol: '€',
+  nameL10nKey: 'currency.eur',
+);
 
 const _account = Account(id: 1, name: 'Cash', accountTypeId: 1, currency: _usd);
 const _accountJpy = Account(
@@ -114,15 +132,20 @@ void main() {
   late _MockAccountRepository accountRepo;
   late _MockCategoryRepository categoryRepo;
   late _MockUserPreferencesRepository prefs;
+  late StreamController<String> defaultCurrencyCtrl;
 
   setUp(() {
     txRepo = _MockTransactionRepository();
     accountRepo = _MockAccountRepository();
     categoryRepo = _MockCategoryRepository();
     prefs = _MockUserPreferencesRepository();
+    defaultCurrencyCtrl = StreamController<String>.broadcast();
 
     // Fallback-chain stubs: no preference, no last-used, single active.
     when(() => prefs.getDefaultAccountId()).thenAnswer((_) async => null);
+    when(
+      () => prefs.watchDefaultCurrency(),
+    ).thenAnswer((_) => defaultCurrencyCtrl.stream);
     when(
       () => accountRepo.getLastUsedActiveAccount(),
     ).thenAnswer((_) async => null);
@@ -142,6 +165,10 @@ void main() {
       if (id == _incomeCategory.id) return _incomeCategory;
       return null;
     });
+  });
+
+  tearDown(() async {
+    await defaultCurrencyCtrl.close();
   });
 
   ProviderContainer makeContainer() {
@@ -592,6 +619,82 @@ void main() {
             c.read(transactionFormControllerProvider) as TransactionFormData;
         expect(s.isSaving, isFalse);
         expect(s, isA<TransactionFormData>()); // not pushed into .error
+      },
+    );
+
+    test(
+      'TC61b: post-save FX fetch still runs after the auto-dispose controller is popped',
+      () async {
+        final db = _MockAppDatabase();
+        final dao = _MockExchangeRateDao();
+        final exchangeService = _MockExchangeRateService();
+        when(() => db.exchangeRateDao).thenReturn(dao);
+        when(
+          () => dao.watchAll(),
+        ).thenAnswer((_) => Stream.value(const <drift.ExchangeRateRow>[]));
+        when(() => dao.upsertAll(any())).thenAnswer((_) async {});
+
+        final exchangeRepo = ExchangeRateRepository(
+          db,
+          exchangeService,
+          const Stream<String>.empty(),
+        );
+        addTearDown(exchangeRepo.dispose);
+
+        final c = ProviderContainer(
+          overrides: [
+            transactionRepositoryProvider.overrideWithValue(txRepo),
+            accountRepositoryProvider.overrideWithValue(accountRepo),
+            categoryRepositoryProvider.overrideWithValue(categoryRepo),
+            userPreferencesRepositoryProvider.overrideWithValue(prefs),
+            defaultCurrencyProvider.overrideWith(
+              (ref) => const Stream<String>.empty(),
+            ),
+            initialDefaultCurrencyProvider.overrideWithValue('USD'),
+            exchangeRateRepositoryProvider.overrideWithValue(exchangeRepo),
+          ],
+        );
+        addTearDown(c.dispose);
+
+        final sub = c.listen(transactionFormControllerProvider, (_, _) {});
+        final controller = c.read(transactionFormControllerProvider.notifier);
+        await controller.hydrateForAdd();
+        controller.selectCurrency(_eur);
+        controller
+          ..appendDigit(1)
+          ..selectCategory(_expenseCategory);
+
+        when(() => txRepo.save(any())).thenAnswer(
+          (_) async => _persistedTx(amountMinorUnits: 100, currency: _eur),
+        );
+        when(
+          () => exchangeService.fetchRates(any()),
+        ).thenAnswer((_) async => []);
+
+        var saveCompleted = false;
+        Object? saveError;
+        var disposeCompleted = false;
+        fakeAsync((async) {
+          controller.save().then((_) => saveCompleted = true).catchError((
+            Object e,
+          ) {
+            saveError = e;
+          });
+          async.flushMicrotasks();
+
+          sub.close();
+          c.pump().then((_) => disposeCompleted = true);
+          async.flushMicrotasks();
+
+          async.elapse(const Duration(seconds: 31));
+          async.flushMicrotasks();
+        });
+
+        expect(saveError, isNull);
+        expect(saveCompleted, isTrue);
+        expect(disposeCompleted, isTrue);
+
+        verify(() => exchangeService.fetchRates(any())).called(1);
       },
     );
 
