@@ -17,7 +17,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
+import '../../../app/providers/default_currency_provider.dart';
+import '../../../app/providers/repository_providers.dart';
 import '../../../core/utils/color_palette.dart';
+import '../../../core/utils/currency_converter.dart';
 import '../../../core/utils/icon_registry.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../../../data/models/currency.dart';
@@ -61,6 +64,64 @@ class AccountTile extends ConsumerWidget {
       data: (m) => m,
       orElse: () => <String, Currency>{},
     );
+
+    // Phase 2: converted-total line when the account holds multiple
+    // currencies AND every non-default currency has a cached rate.
+    final ratesMap =
+        ref.watch(exchangeRatesProvider).valueOrNull ?? const <String, int>{};
+    final initialDefault = ref.read(initialDefaultCurrencyProvider);
+    final defaultCurrency =
+        ref.watch(defaultCurrencyProvider).valueOrNull ?? initialDefault;
+
+    final hasMultipleCurrencies = view.balancesByCurrency.length > 1;
+    String? convertedTotalFormatted;
+    if (hasMultipleCurrencies) {
+      int total = 0;
+      bool allRatesPresent = true;
+      for (final entry in view.balancesByCurrency.entries) {
+        final code = entry.key;
+        final amount = entry.value;
+        if (code == defaultCurrency) {
+          total += amount;
+        } else {
+          final rateScaledE9 = ratesMap['$code→$defaultCurrency'];
+          if (rateScaledE9 == null) {
+            allRatesPresent = false;
+            break;
+          }
+          final fromCurrency =
+              currenciesByCode[code] ??
+              Currency(code: code, decimals: 2, symbol: code);
+          final toCurrency =
+              currenciesByCode[defaultCurrency] ??
+              Currency(
+                code: defaultCurrency,
+                decimals: 2,
+                symbol: defaultCurrency,
+              );
+          total += CurrencyConverter.convertMinorUnits(
+            amountMinorUnits: amount,
+            rateScaledE9: rateScaledE9,
+            fromDecimals: fromCurrency.decimals,
+            toDecimals: toCurrency.decimals,
+          );
+        }
+      }
+      if (allRatesPresent) {
+        final toCurrency =
+            currenciesByCode[defaultCurrency] ??
+            Currency(
+              code: defaultCurrency,
+              decimals: 2,
+              symbol: defaultCurrency,
+            );
+        convertedTotalFormatted = MoneyFormatter.format(
+          amountMinorUnits: total,
+          currency: toCurrency,
+          locale: locale,
+        );
+      }
+    }
 
     final startActions = <Widget>[
       if (!a.isArchived && !isDefault)
@@ -149,6 +210,7 @@ class AccountTile extends ConsumerWidget {
           view.balancesByCurrency,
           currenciesByCode,
           l10n,
+          convertedTotalFormatted: convertedTotalFormatted,
         ),
         trailing: _TrailingActions(
           view: view,
@@ -174,8 +236,9 @@ class AccountTile extends ConsumerWidget {
     String accountTypeLabel,
     Map<String, int> balancesByCurrency,
     Map<String, Currency> currenciesByCode,
-    AppLocalizations l10n,
-  ) {
+    AppLocalizations l10n, {
+    String? convertedTotalFormatted,
+  }) {
     if (balancesByCurrency.isEmpty) {
       return Text(accountTypeLabel);
     }
@@ -213,6 +276,33 @@ class AccountTile extends ConsumerWidget {
           l10n.accountsBalanceMore(overflowCount),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      );
+    }
+
+    if (convertedTotalFormatted != null) {
+      lines.add(
+        ExcludeSemantics(
+          child: Divider(
+            thickness: 1,
+            color: Theme.of(
+              context,
+            ).colorScheme.outline.withValues(alpha: 0.4),
+          ),
+        ),
+      );
+      lines.add(
+        Semantics(
+          label:
+              '${l10n.approximatelyPrefix} $convertedTotalFormatted '
+              '${l10n.convertedTotalLabel}',
+          excludeSemantics: true,
+          child: Text(
+            '≈ $convertedTotalFormatted ${l10n.convertedTotalLabel}',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.outline,
+            ),
           ),
         ),
       );
