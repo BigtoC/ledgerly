@@ -851,6 +851,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get homePendingShowFewer => 'Show fewer';
+
+  @override
+  String get approximatelyPrefix => 'approximately';
+
+  @override
+  String get convertedTotalLabel => 'total';
+
+  @override
+  String get homeSummaryUnconvertedHeader => 'Unconverted';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -1669,6 +1678,15 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get homePendingShowFewer => '显示更少';
+
+  @override
+  String get approximatelyPrefix => '约';
+
+  @override
+  String get convertedTotalLabel => '总计';
+
+  @override
+  String get homeSummaryUnconvertedHeader => '未换算';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -2487,4 +2505,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get homePendingShowFewer => '顯示較少';
+
+  @override
+  String get approximatelyPrefix => '約';
+
+  @override
+  String get convertedTotalLabel => '總計';
+
+  @override
+  String get homeSummaryUnconvertedHeader => '未換算';
 }

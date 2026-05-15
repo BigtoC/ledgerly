@@ -304,5 +304,9 @@
   "homePendingLoadError": "无法加载待处理项目。",
   "homePendingShowMore": "再显示 {count} 项",
   "@homePendingShowMore": { "placeholders": { "count": { "type": "int" } } },
-  "homePendingShowFewer": "显示更少"
+  "homePendingShowFewer": "显示更少",
+
+  "approximatelyPrefix": "约",
+  "convertedTotalLabel": "总计",
+  "homeSummaryUnconvertedHeader": "未换算"
 }

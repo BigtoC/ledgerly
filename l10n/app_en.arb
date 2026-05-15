@@ -1031,5 +1031,20 @@
   },
 
   "homePendingShowFewer": "Show fewer",
-  "@homePendingShowFewer": { "description": "TextButton label that collapses the pending section back to its visible-tile cap." }
+  "@homePendingShowFewer": { "description": "TextButton label that collapses the pending section back to its visible-tile cap." },
+
+  "approximatelyPrefix": "approximately",
+  "@approximatelyPrefix": {
+    "description": "Screen-reader label for the ≈ prefix on converted amounts. The visible glyph is Unicode; this key is read aloud by accessibility tools."
+  },
+
+  "convertedTotalLabel": "total",
+  "@convertedTotalLabel": {
+    "description": "Suffix after the converted total in AccountTile (e.g. '≈ $1,802.50 total')."
+  },
+
+  "homeSummaryUnconvertedHeader": "Unconverted",
+  "@homeSummaryUnconvertedHeader": {
+    "description": "Label on the separator between SummaryStrip's unified converted total and the per-currency fallback groups (for currencies whose rates are not yet cached)."
+  }
 }
