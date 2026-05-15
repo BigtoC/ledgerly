@@ -20,8 +20,11 @@
 //     way `isSaving`/`isDeleting` track transaction commands — repeat calls
 //     during in-flight are ignored (Task 5 §10).
 
+import 'dart:async';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../app/providers/default_currency_provider.dart';
 import '../../app/providers/repository_providers.dart';
 import '../../data/models/account.dart';
 import '../../data/models/category.dart';
@@ -42,6 +45,9 @@ part 'transaction_form_controller.g.dart';
     userPreferencesRepository,
     currencyRepository,
     shoppingListRepository,
+    defaultCurrency,
+    exchangeRateRepository,
+    initialDefaultCurrency,
   ],
 )
 class TransactionFormController extends _$TransactionFormController {
@@ -59,11 +65,21 @@ class TransactionFormController extends _$TransactionFormController {
   TransactionFormMode _formMode = const AddTransactionMode();
   TransactionFormMode get formMode => _formMode;
 
+  /// Debouncer for the on-demand exchange-rate fetch after a transaction
+  /// in a non-default currency is saved. The 30s window absorbs several
+  /// rapid saves into one network call and breaks the 1:1 timing
+  /// correlation between a financial action and an outbound API request.
+  Timer? _rateFetchDebounce;
+  final Set<String> _pendingRateCodes = <String>{};
+
   @override
   TransactionFormState build() {
     // Hydration is explicit (Wave 2 §10): the screen calls one of the
     // three `hydrateFor*` entry points after reading route extras / path
     // params. `build` only sets up the loading placeholder.
+    ref.onDispose(() {
+      _rateFetchDebounce?.cancel();
+    });
     return const TransactionFormState.loading();
   }
 
@@ -541,6 +557,24 @@ class TransactionFormController extends _$TransactionFormController {
       );
       final repo = ref.read(transactionRepositoryProvider);
       final saved = await repo.save(tx);
+
+      // Debounced on-demand exchange-rate fetch for non-default-currency
+      // transactions. 30s window absorbs rapid saves into one call.
+      final initialDefault = ref.read(initialDefaultCurrencyProvider);
+      final currentDefault =
+          ref.read(defaultCurrencyProvider).valueOrNull ?? initialDefault;
+      if (tx.currency.code != currentDefault) {
+        _pendingRateCodes.add(tx.currency.code);
+        _rateFetchDebounce?.cancel();
+        _rateFetchDebounce = Timer(const Duration(seconds: 30), () {
+          final repoX = ref.read(exchangeRateRepositoryProvider);
+          for (final code in _pendingRateCodes) {
+            unawaited(repoX.fetchRate(code, currentDefault));
+          }
+          _pendingRateCodes.clear();
+        });
+      }
+
       // Clear isSaving on the path back to the widget; pop occurs in
       // the screen layer so navigation stays widget-owned.
       state = s.copyWith(isSaving: false);
