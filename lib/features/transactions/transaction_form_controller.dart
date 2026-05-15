@@ -22,6 +22,7 @@
 
 import 'dart:async';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart' show KeepAliveLink;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../app/providers/default_currency_provider.dart';
@@ -71,6 +72,7 @@ class TransactionFormController extends _$TransactionFormController {
   /// correlation between a financial action and an outbound API request.
   Timer? _rateFetchDebounce;
   final Set<String> _pendingRateCodes = <String>{};
+  KeepAliveLink? _rateFetchKeepAlive;
 
   @override
   TransactionFormState build() {
@@ -79,6 +81,7 @@ class TransactionFormController extends _$TransactionFormController {
     // params. `build` only sets up the loading placeholder.
     ref.onDispose(() {
       _rateFetchDebounce?.cancel();
+      _rateFetchKeepAlive?.close();
     });
     return const TransactionFormState.loading();
   }
@@ -565,6 +568,7 @@ class TransactionFormController extends _$TransactionFormController {
           ref.read(defaultCurrencyProvider).valueOrNull ?? initialDefault;
       if (tx.currency.code != currentDefault) {
         _pendingRateCodes.add(tx.currency.code);
+        _rateFetchKeepAlive ??= ref.keepAlive();
         _rateFetchDebounce?.cancel();
         _rateFetchDebounce = Timer(const Duration(seconds: 30), () {
           final repoX = ref.read(exchangeRateRepositoryProvider);
@@ -572,6 +576,9 @@ class TransactionFormController extends _$TransactionFormController {
             unawaited(repoX.fetchRate(code, currentDefault));
           }
           _pendingRateCodes.clear();
+          _rateFetchDebounce = null;
+          _rateFetchKeepAlive?.close();
+          _rateFetchKeepAlive = null;
         });
       }
 
