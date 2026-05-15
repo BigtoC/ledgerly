@@ -60,38 +60,39 @@ void main() {
     expect(find.textContaining('≈'), findsNothing);
   });
 
-  testWidgets('SS02a: multi-currency with rates available — unified USD group', (
-    tester,
-  ) async {
-    // USD: today expense 100 = $1.00, monthNet -100 = -$1.00
-    // JPY: today expense 500 = ¥500 → at 0.01 USD/JPY = 500 JPY minor units
-    // (JPY has 0 decimals) converted to USD (2 decimals):
-    //   500 * 0.01 = 5 USD → scale-shift +2 → 500 USD minor units = $5.00.
-    // monthNet -500 JPY → -$5.00.
-    // Unified totals: expense = $1.00 + $5.00 = $6.00; monthNet = -$6.00.
-    await tester.pumpWidget(
-      _wrap(
-        SummaryStrip(
-          todayTotalsByCurrency: const {
-            'USD': (expense: 100, income: 0),
-            'JPY': (expense: 500, income: 0),
-          },
-          monthNetByCurrency: const {'USD': -100, 'JPY': -500},
-          currenciesByCode: const {'USD': _usd, 'JPY': _jpy},
-          locale: 'en_US',
-          defaultCurrency: 'USD',
+  testWidgets(
+    'SS02a: multi-currency with rates available — unified USD group',
+    (tester) async {
+      // USD: today expense 100 = $1.00, monthNet -100 = -$1.00
+      // JPY: today expense 500 = ¥500 → at 0.01 USD/JPY = 500 JPY minor units
+      // (JPY has 0 decimals) converted to USD (2 decimals):
+      //   500 * 0.01 = 5 USD → scale-shift +2 → 500 USD minor units = $5.00.
+      // monthNet -500 JPY → -$5.00.
+      // Unified totals: expense = $1.00 + $5.00 = $6.00; monthNet = -$6.00.
+      await tester.pumpWidget(
+        _wrap(
+          SummaryStrip(
+            todayTotalsByCurrency: const {
+              'USD': (expense: 100, income: 0),
+              'JPY': (expense: 500, income: 0),
+            },
+            monthNetByCurrency: const {'USD': -100, 'JPY': -500},
+            currenciesByCode: const {'USD': _usd, 'JPY': _jpy},
+            locale: 'en_US',
+            defaultCurrency: 'USD',
+          ),
+          rates: {'JPY→USD': (0.01 * 1000000000).round()},
         ),
-        rates: {'JPY→USD': (0.01 * 1000000000).round()},
-      ),
-    );
-    await tester.pumpAndSettle();
-    // Unified group with the ≈ prefix.
-    expect(find.textContaining('≈'), findsWidgets);
-    expect(find.text(r'≈ $6.00'), findsOneWidget);
-    expect(find.text(r'≈ -$6.00'), findsOneWidget);
-    // No JPY fallback group because the JPY→USD rate is available.
-    expect(find.text('¥500'), findsNothing);
-  });
+      );
+      await tester.pumpAndSettle();
+      // Unified group with the ≈ prefix.
+      expect(find.textContaining('≈'), findsWidgets);
+      expect(find.text(r'≈ $6.00'), findsOneWidget);
+      expect(find.text(r'≈ -$6.00'), findsOneWidget);
+      // No JPY fallback group because the JPY→USD rate is available.
+      expect(find.text('¥500'), findsNothing);
+    },
+  );
 
   testWidgets('SS02b: multi-currency with rates missing — fallback groups', (
     tester,
@@ -192,36 +193,25 @@ void main() {
     },
   );
 
-  testWidgets(
-    'SS06: multi-currency with default present + others missing — '
-    'unified default + fallback for others',
-    (tester) async {
-      // USD is the default — convertible (identity).
-      // AUD/CAD have no rates — fallback to per-currency groups.
-      await tester.pumpWidget(
-        _wrap(
-          SummaryStrip(
-            todayTotalsByCurrency: const {'USD': (expense: 100, income: 0)},
-            monthNetByCurrency: const {
-              'AUD': -100,
-              'CAD': -200,
-              'USD': -300,
-            },
-            currenciesByCode: const {
-              'USD': _usd,
-              'JPY': _jpy,
-              'EUR': _eur,
-            },
-            locale: 'en_US',
-            defaultCurrency: 'USD',
-          ),
+  testWidgets('SS06: multi-currency with default present + others missing — '
+      'unified default + fallback for others', (tester) async {
+    // USD is the default — convertible (identity).
+    // AUD/CAD have no rates — fallback to per-currency groups.
+    await tester.pumpWidget(
+      _wrap(
+        SummaryStrip(
+          todayTotalsByCurrency: const {'USD': (expense: 100, income: 0)},
+          monthNetByCurrency: const {'AUD': -100, 'CAD': -200, 'USD': -300},
+          currenciesByCode: const {'USD': _usd, 'JPY': _jpy, 'EUR': _eur},
+          locale: 'en_US',
+          defaultCurrency: 'USD',
         ),
-      );
-      await tester.pumpAndSettle();
-      // Default USD group totals: expense $1.00, monthNet -$3.00.
-      expect(find.textContaining(r'-$3.00'), findsOneWidget);
-      // Two fallback groups: AUD and CAD.
-      expect(find.text('Unconverted'), findsOneWidget);
-    },
-  );
+      ),
+    );
+    await tester.pumpAndSettle();
+    // Default USD group totals: expense $1.00, monthNet -$3.00.
+    expect(find.textContaining(r'-$3.00'), findsOneWidget);
+    // Two fallback groups: AUD and CAD.
+    expect(find.text('Unconverted'), findsOneWidget);
+  });
 }
