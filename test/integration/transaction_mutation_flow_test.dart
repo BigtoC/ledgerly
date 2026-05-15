@@ -7,14 +7,19 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
+import 'package:mocktail/mocktail.dart';
 
+import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
+import 'package:ledgerly/data/services/exchange_rate_service.dart';
 import 'package:ledgerly/features/home/home_screen.dart';
 import 'package:ledgerly/features/home/widgets/transaction_tile.dart';
 import 'package:ledgerly/features/transactions/widgets/category_chip.dart';
 import 'package:ledgerly/features/transactions/widgets/currency_selector_tile.dart';
 
 import '../support/test_app.dart';
+
+class _NoopExchangeRateService extends Mock implements ExchangeRateService {}
 
 void main() {
   group('transaction mutation integration', () {
@@ -88,12 +93,21 @@ void main() {
         addTearDown(db.close);
         await tester.runAsync(() => runTestSeed(db));
 
+        // Saving a non-default-currency transaction schedules a 30s debounced
+        // rate-fetch via `keepAlive()` on the form controller. Override the
+        // network service so the eventual fetch is a no-op, then pump fake
+        // time past the debounce window before the test ends so the timer
+        // cancels and `_verifyInvariants` doesn't trip on a pending timer.
+        final noopService = _NoopExchangeRateService();
+        when(() => noopService.fetchRates(any())).thenAnswer((_) async => []);
+
         final container = makeTestContainer(
           db: db,
           extraOverrides: [
             splashGateSnapshotProvider.overrideWithValue(
               SplashGateSnapshot.withInitial(enabled: false, startDate: null),
             ),
+            exchangeRateServiceProvider.overrideWithValue(noopService),
           ],
         );
         addTearDown(container.dispose);
@@ -131,6 +145,10 @@ void main() {
         expect(rows!.single.currency, 'JPY');
         expect(rows.single.amountMinorUnits, 5);
         expect(tester.takeException(), isNull);
+
+        // Fire the debounced rate-fetch timer so it doesn't outlive the test.
+        await tester.pump(const Duration(seconds: 31));
+        await tester.pumpAndSettle();
       },
     );
 
