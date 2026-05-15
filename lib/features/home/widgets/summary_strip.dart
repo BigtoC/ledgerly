@@ -1,28 +1,36 @@
-// Home summary strip — Wave 3 §4.1, §7.
+// Home summary strip — Wave 3 §4.1, §7 (extended with multi-currency
+// conversion in Phase 2).
 //
-// Three labelled tiles per currency: `Today expense`, `Today income`,
-// `Month net`. Multiple currencies stack inside a `Wrap` so the strip
-// reflows under 2× text scale and on narrow phones.
+// When exchange rates are available for every in-use currency, the strip
+// renders a single unified total in the user's default currency
+// (today's expense / income, month-to-date net). When rates are missing
+// for some currencies, the strip shows the unified total plus a separator
+// labelled "Unconverted" plus a fallback per-currency group for each
+// missing-rate currency, in stable ascending currency-code order.
 //
 // All values are integer minor units, scaled at the UI boundary by
 // `MoneyFormatter` per Wave 0 §2.7 / PRD Money Storage Policy.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:ledgerly/core/utils/box_shadow.dart';
+import '../../../app/providers/repository_providers.dart';
+import '../../../core/constants.dart';
+import '../../../core/utils/currency_converter.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../../../data/models/currency.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../../core/constants.dart';
 import '../home_state.dart';
 
-class SummaryStrip extends StatelessWidget {
+class SummaryStrip extends ConsumerWidget {
   const SummaryStrip({
     super.key,
     required this.todayTotalsByCurrency,
     required this.monthNetByCurrency,
     required this.currenciesByCode,
     required this.locale,
+    required this.defaultCurrency,
     this.showJumpToToday = false,
     this.onJumpToToday,
   });
@@ -41,37 +49,83 @@ class SummaryStrip extends StatelessWidget {
 
   final String locale;
 
+  /// ISO 4217 code of the user's preferred default currency. Provided
+  /// synchronously by the parent so the strip does not flicker through a
+  /// `'USD'` fallback on cold start.
+  final String defaultCurrency;
+
   /// When true, renders a "Jump to today" button at the top of the strip.
   final bool showJumpToToday;
 
   /// Called when the "Jump to today" button is tapped.
   final VoidCallback? onJumpToToday;
 
-  /// Maximum number of currency groups to render before showing the note.
-  static const int _kMaxCurrencyGroups = 2;
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
-    final todayCodes = todayTotalsByCurrency.keys.toSet();
-    final allCodes =
-        <String>{...todayCodes, ...monthNetByCurrency.keys}.toList()
-          ..sort((a, b) {
-            final aToday = todayCodes.contains(a);
-            final bToday = todayCodes.contains(b);
-            if (aToday && !bToday) return -1;
-            if (!aToday && bToday) return 1;
-            return a.compareTo(b);
-          });
+    final ratesMap =
+        ref.watch(exchangeRatesProvider).valueOrNull ?? const <String, int>{};
 
-    final hasMultiCurrency = allCodes.length > _kMaxCurrencyGroups;
-    final codes = hasMultiCurrency
-        ? allCodes.sublist(0, _kMaxCurrencyGroups)
-        : allCodes;
+    final toCurrency =
+        currenciesByCode[defaultCurrency] ??
+        Currency(
+          code: defaultCurrency,
+          decimals: 2,
+          symbol: defaultCurrency,
+        );
 
-    Widget content;
+    int convertedExpense = 0;
+    int convertedIncome = 0;
+    int convertedMonthNet = 0;
+    final missingRatesFor = <String>{};
+
+    int? convert(int amount, String fromCode) {
+      if (fromCode == defaultCurrency) return amount;
+      final rateScaledE9 = ratesMap['$fromCode→$defaultCurrency'];
+      if (rateScaledE9 == null) return null;
+      final fromCurrency =
+          currenciesByCode[fromCode] ??
+          Currency(code: fromCode, decimals: 2, symbol: fromCode);
+      return CurrencyConverter.convertMinorUnits(
+        amountMinorUnits: amount,
+        rateScaledE9: rateScaledE9,
+        fromDecimals: fromCurrency.decimals,
+        toDecimals: toCurrency.decimals,
+      );
+    }
+
+    final allCodes = <String>{
+      ...todayTotalsByCurrency.keys,
+      ...monthNetByCurrency.keys,
+    };
+
+    for (final code in allCodes) {
+      final today = todayTotalsByCurrency[code];
+      final month = monthNetByCurrency[code] ?? 0;
+      final expenseConverted = today == null ? 0 : convert(today.expense, code);
+      final incomeConverted = today == null ? 0 : convert(today.income, code);
+      final monthConverted = convert(month, code);
+      if (expenseConverted == null ||
+          incomeConverted == null ||
+          monthConverted == null) {
+        missingRatesFor.add(code);
+        continue;
+      }
+      convertedExpense += expenseConverted;
+      convertedIncome += incomeConverted;
+      convertedMonthNet += monthConverted;
+    }
+
+    final convertibleCount = allCodes.length - missingRatesFor.length;
+    final canShowUnified = convertibleCount > 0;
+    final missingRatesSorted = missingRatesFor.toList()..sort();
+    final hasAnyNonDefaultConvertible = allCodes.any(
+      (c) => c != defaultCurrency && !missingRatesFor.contains(c),
+    );
+
+    final Widget content;
     if (allCodes.isEmpty) {
       content = _PlaceholderBox(
         theme: theme,
@@ -82,35 +136,77 @@ class SummaryStrip extends StatelessWidget {
         ],
       );
     } else {
-      content = Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (var i = 0; i < codes.length; i++) ...[
-            if (i > 0) const SizedBox(height: 12),
-            _CurrencyGroup(
-              currency:
-                  currenciesByCode[codes[i]] ??
-                  Currency(code: codes[i], decimals: 2, symbol: codes[i]),
-              expense: todayTotalsByCurrency[codes[i]]?.expense ?? 0,
-              income: todayTotalsByCurrency[codes[i]]?.income ?? 0,
-              monthNet: monthNetByCurrency[codes[i]] ?? 0,
-              locale: locale,
-              labels: (
-                expense: l10n.homeSummaryTodayExpense,
-                income: l10n.homeSummaryTodayIncome,
-                monthNet: l10n.homeSummaryMonthNet,
+      content = AnimatedSize(
+        duration: const Duration(milliseconds: 150),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (canShowUnified)
+              _CurrencyGroup(
+                currency: toCurrency,
+                expense: convertedExpense,
+                income: convertedIncome,
+                monthNet: convertedMonthNet,
+                locale: locale,
+                labels: (
+                  expense: l10n.homeSummaryTodayExpense,
+                  income: l10n.homeSummaryTodayIncome,
+                  monthNet: l10n.homeSummaryMonthNet,
+                ),
+                isApproximate: hasAnyNonDefaultConvertible,
+                approximatelyPrefixLabel: l10n.approximatelyPrefix,
               ),
-            ),
+            if (canShowUnified && missingRatesSorted.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Divider(
+                        thickness: 1,
+                        color: theme.colorScheme.outline.withValues(alpha: 0.4),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      l10n.homeSummaryUnconvertedHeader,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.outline,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Divider(
+                        thickness: 1,
+                        color: theme.colorScheme.outline.withValues(alpha: 0.4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            for (final code in missingRatesSorted) ...[
+              const SizedBox(height: 8),
+              _CurrencyGroup(
+                currency:
+                    currenciesByCode[code] ??
+                    Currency(code: code, decimals: 2, symbol: code),
+                expense: todayTotalsByCurrency[code]?.expense ?? 0,
+                income: todayTotalsByCurrency[code]?.income ?? 0,
+                monthNet: monthNetByCurrency[code] ?? 0,
+                locale: locale,
+                labels: (
+                  expense: l10n.homeSummaryTodayExpense,
+                  income: l10n.homeSummaryTodayIncome,
+                  monthNet: l10n.homeSummaryMonthNet,
+                ),
+                isApproximate: false,
+                approximatelyPrefixLabel: l10n.approximatelyPrefix,
+              ),
+            ],
           ],
-          if (hasMultiCurrency) ...[
-            const SizedBox(height: 8),
-            Text(
-              l10n.homeSummaryMultiCurrencyNote,
-              style: theme.textTheme.bodySmall,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ],
+        ),
       );
     }
 
@@ -119,7 +215,6 @@ class SummaryStrip extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // (1) Jump-to-today button — always visible; disabled when on today.
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
@@ -127,7 +222,6 @@ class SummaryStrip extends StatelessWidget {
               child: Text(l10n.homeJumpToToday),
             ),
           ),
-          // (2) Currency groups + (3) month-net + (4) multi-currency note
           content,
         ],
       ),
@@ -143,6 +237,8 @@ class _CurrencyGroup extends StatelessWidget {
     required this.monthNet,
     required this.locale,
     required this.labels,
+    required this.isApproximate,
+    required this.approximatelyPrefixLabel,
   });
 
   final Currency currency;
@@ -151,10 +247,28 @@ class _CurrencyGroup extends StatelessWidget {
   final int monthNet;
   final String locale;
   final ({String expense, String income, String monthNet}) labels;
+  final bool isApproximate;
+  final String approximatelyPrefixLabel;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final expenseStr = MoneyFormatter.format(
+      amountMinorUnits: expense,
+      currency: currency,
+      locale: locale,
+    );
+    final incomeStr = MoneyFormatter.format(
+      amountMinorUnits: income,
+      currency: currency,
+      locale: locale,
+    );
+    final monthNetStr = MoneyFormatter.formatSigned(
+      amountMinorUnits: monthNet,
+      currency: currency,
+      locale: locale,
+    );
+    final prefix = isApproximate ? '≈ ' : '';
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -167,32 +281,26 @@ class _CurrencyGroup extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Currency identity is conveyed by the symbol that
-          // `MoneyFormatter` prefixes onto each amount, so the row no
-          // longer carries a separate code header.
           _Chip(
             label: labels.expense,
-            value: MoneyFormatter.format(
-              amountMinorUnits: expense,
-              currency: currency,
-              locale: locale,
-            ),
+            value: '$prefix$expenseStr',
+            semanticValue: isApproximate
+                ? '$approximatelyPrefixLabel $expenseStr'
+                : null,
           ),
           _Chip(
             label: labels.income,
-            value: MoneyFormatter.format(
-              amountMinorUnits: income,
-              currency: currency,
-              locale: locale,
-            ),
+            value: '$prefix$incomeStr',
+            semanticValue: isApproximate
+                ? '$approximatelyPrefixLabel $incomeStr'
+                : null,
           ),
           _Chip(
             label: labels.monthNet,
-            value: MoneyFormatter.formatSigned(
-              amountMinorUnits: monthNet,
-              currency: currency,
-              locale: locale,
-            ),
+            value: '$prefix$monthNetStr',
+            semanticValue: isApproximate
+                ? '$approximatelyPrefixLabel $monthNetStr'
+                : null,
           ),
         ],
       ),
@@ -201,28 +309,37 @@ class _CurrencyGroup extends StatelessWidget {
 }
 
 class _Chip extends StatelessWidget {
-  const _Chip({required this.label, required this.value});
+  const _Chip({
+    required this.label,
+    required this.value,
+    this.semanticValue,
+  });
 
   final String label;
   final String value;
+  final String? semanticValue;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final valueText = Text(
+      value,
+      style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+    );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
-      // Wrap so the label + value reflow onto multiple lines under
-      // 2× text scale instead of overflowing the chip's row width.
       child: Wrap(
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           Text('$label: ', style: theme.textTheme.bodySmall),
-          Text(
-            value,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          if (semanticValue != null)
+            Semantics(
+              label: semanticValue,
+              excludeSemantics: true,
+              child: valueText,
+            )
+          else
+            valueText,
         ],
       ),
     );
@@ -251,7 +368,6 @@ class _PlaceholderBox extends StatelessWidget {
           for (final label in labels)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 2),
-              // Wrap mirrors `_Chip`'s 2× text-scale reflow.
               child: Wrap(
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
