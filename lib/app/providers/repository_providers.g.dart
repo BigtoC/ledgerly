@@ -254,5 +254,85 @@ final recurringGenerationUseCaseProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef RecurringGenerationUseCaseRef = ProviderRef<RecurringGenerationUseCase>;
+String _$exchangeRateServiceHash() =>
+    r'01da3d2facd8c002cace687fbd6691d79a961325';
+
+/// Exchange-rate HTTP service. Constructs its own `Dio` with conservative
+/// timeouts — there is no standalone `dioProvider`, since the rate service
+/// is the only consumer of Dio in the codebase. If a second HTTP consumer
+/// appears later, extract `dioProvider` at that point.
+///
+/// Copied from [exchangeRateService].
+@ProviderFor(exchangeRateService)
+final exchangeRateServiceProvider = Provider<ExchangeRateService>.internal(
+  exchangeRateService,
+  name: r'exchangeRateServiceProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$exchangeRateServiceHash,
+  dependencies: const <ProviderOrFamily>[],
+  allTransitiveDependencies: const <ProviderOrFamily>{},
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef ExchangeRateServiceRef = ProviderRef<ExchangeRateService>;
+String _$exchangeRateRepositoryHash() =>
+    r'7a8676191b0d14d7795671a782b9c6ccd28b7d6f';
+
+/// Exchange-rate repository. The constructor subscribes to DAO changes
+/// and default-currency changes immediately — so simply reading this
+/// provider is enough to start the cache pipeline.
+///
+/// Copied from [exchangeRateRepository].
+@ProviderFor(exchangeRateRepository)
+final exchangeRateRepositoryProvider =
+    Provider<ExchangeRateRepository>.internal(
+      exchangeRateRepository,
+      name: r'exchangeRateRepositoryProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$exchangeRateRepositoryHash,
+      dependencies: <ProviderOrFamily>[
+        appDatabaseProvider,
+        exchangeRateServiceProvider,
+        defaultCurrencyProvider,
+      ],
+      allTransitiveDependencies: <ProviderOrFamily>{
+        appDatabaseProvider,
+        ...?appDatabaseProvider.allTransitiveDependencies,
+        exchangeRateServiceProvider,
+        ...?exchangeRateServiceProvider.allTransitiveDependencies,
+        defaultCurrencyProvider,
+        ...?defaultCurrencyProvider.allTransitiveDependencies,
+      },
+    );
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef ExchangeRateRepositoryRef = ProviderRef<ExchangeRateRepository>;
+String _$exchangeRatesHash() => r'90a7e84860a077c637713b43a1bcc7e8c461ea09';
+
+/// Stream of the exchange-rate snapshot map (scaled-e9 integer values
+/// keyed by `from→to`). Consumed by UI tiles via `ref.watch`.
+///
+/// Copied from [exchangeRates].
+@ProviderFor(exchangeRates)
+final exchangeRatesProvider = StreamProvider<Map<String, int>>.internal(
+  exchangeRates,
+  name: r'exchangeRatesProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$exchangeRatesHash,
+  dependencies: <ProviderOrFamily>[exchangeRateRepositoryProvider],
+  allTransitiveDependencies: <ProviderOrFamily>{
+    exchangeRateRepositoryProvider,
+    ...?exchangeRateRepositoryProvider.allTransitiveDependencies,
+  },
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef ExchangeRatesRef = StreamProviderRef<Map<String, int>>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
