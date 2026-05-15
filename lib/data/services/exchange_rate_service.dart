@@ -73,13 +73,13 @@ class ExchangeRateService {
       final from = entry['from'];
       final to = entry['to'];
       final fetchedAt = entry['fetched_at'];
-      if (rate is! double || from is! String || to is! String) continue;
+      if (rate is! num || from is! String || to is! String) continue;
       if (!_iso4217.hasMatch(from) || !_iso4217.hasMatch(to)) continue;
       if (rate <= 0) continue;
       results.add((
         from: from.toUpperCase(),
         to: to.toUpperCase(),
-        rate: rate,
+        rate: rate.toDouble(),
         fetchedAt: fetchedAt is String
             ? DateTime.tryParse(fetchedAt) ?? DateTime.timestamp()
             : DateTime.timestamp(),
