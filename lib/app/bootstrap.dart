@@ -20,6 +20,7 @@ import '../data/services/locale_service.dart';
 import '../data/use_cases/recurring_generation_use_case.dart';
 import 'app.dart';
 import 'providers/app_database_provider.dart';
+import 'providers/default_currency_provider.dart';
 import 'providers/locale_provider.dart';
 import 'providers/splash_redirect_provider.dart';
 import 'providers/theme_provider.dart';
@@ -131,6 +132,7 @@ Future<void> bootstrapFor({
   final initialLocale = await getLocaleFn(preferencesRepo);
   final splashEnabled = await getSplashEnabledFn(preferencesRepo);
   final splashStartDate = await getSplashStartDateFn(preferencesRepo);
+  final initialDefaultCurrency = await preferencesRepo.getDefaultCurrency();
 
   // Step 6 — First-run seed (idempotent; short-circuits if already run).
   final currenciesRepo = DriftCurrencyRepository(db);
@@ -153,6 +155,9 @@ Future<void> bootstrapFor({
         appDatabaseProvider.overrideWithValue(db),
         initialThemeModeProvider.overrideWithValue(initialThemeMode),
         initialPreferredLocaleProvider.overrideWithValue(initialLocale),
+        initialDefaultCurrencyProvider.overrideWithValue(
+          initialDefaultCurrency,
+        ),
         lastGenerationResultProvider.overrideWithValue(
           const RecurringGenerationResult(outcomes: []),
         ),
