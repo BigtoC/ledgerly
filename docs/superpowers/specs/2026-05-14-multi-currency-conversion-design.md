@@ -66,15 +66,15 @@ The API accepts arbitrary pairs (e.g., `cnyusd`, `usdcny`) — no cross-rate cha
 
 ### Components
 
-| Layer | File | Purpose |
-|-------|------|---------|
-| Model | `data/models/exchange_rate.dart` | Freezed domain model |
-| Table | `data/database/tables/exchange_rates_table.dart` | Drift table with REAL rate column |
-| DAO | `data/database/daos/exchange_rate_dao.dart` | `upsertAll()`, `findByPair()`, `findAll()` |
-| Service | `data/services/exchange_rate_service.dart` | HTTP client via Dio, calls the conversion API |
-| Repository | `data/repositories/exchange_rate_repository.dart` | Orchestrates DB + service + in-memory cache |
-| Converter | `core/utils/currency_converter.dart` | Pure function for minor-unit conversion |
-| Providers | `app/providers/repository_providers.dart` (extend) | `exchangeRateRepositoryProvider`, `exchangeRatesProvider` |
+| Layer      | File                                               | Purpose                                                   |
+|------------|----------------------------------------------------|-----------------------------------------------------------|
+| Model      | `data/models/exchange_rate.dart`                   | Freezed domain model                                      |
+| Table      | `data/database/tables/exchange_rates_table.dart`   | Drift table with REAL rate column                         |
+| DAO        | `data/database/daos/exchange_rate_dao.dart`        | `upsertAll()`, `findByPair()`, `findAll()`                |
+| Service    | `data/services/exchange_rate_service.dart`         | HTTP client via Dio, calls the conversion API             |
+| Repository | `data/repositories/exchange_rate_repository.dart`  | Orchestrates DB + service + in-memory cache               |
+| Converter  | `core/utils/currency_converter.dart`               | Pure function for minor-unit conversion                   |
+| Providers  | `app/providers/repository_providers.dart` (extend) | `exchangeRateRepositoryProvider`, `exchangeRatesProvider` |
 
 ### Data Flow
 
@@ -137,15 +137,21 @@ Unique index on `(base_currency, quote_currency)` — one rate per pair. Upsert 
 Injects `Dio` via constructor. Single method:
 
 ```dart
-Future<List<ExchangeRate>> fetchRates(List<({String from, String to})> pairs)
+Future<List<({String from, String to, double rate, DateTime fetchedAt})>> fetchRates(
+  List<({String from, String to})> pairs,
+)
 ```
+
+Returns raw parsed data as a record list — not `ExchangeRate` domain models. The `services_forbid_upstream_and_siblings` import rule in `import_analysis_options.yaml` forbids `data/services/` from importing `data/models/`. The repository maps records into `ExchangeRate` after receiving them.
 
 - Builds ticker string: `pairs.map((p) => '${p.from.toLowerCase()}${p.to.toLowerCase()}').join(',')`
 - GETs the endpoint with `?tickers={tickers}`
-- Parses response array into `List<ExchangeRate>`
+- Parses response array into record list
 - Throws on network or HTTP errors (`DioException` — caught by repository)
 
 **Partial response handling:** The service returns only successfully parsed entries. The repository compares returned pairs against requested pairs to detect missing rates — missing pairs simply don't get updated in the cache or DB, preserving any existing cached rate.
+
+**Default currency change mid-session:** When the user changes their default currency in Settings, `defaultCurrencyProvider` emits the new code. The UI automatically re-renders with converted amounts in the new default. However, the in-memory cache still holds rates keyed to the old default. The repository should listen for default currency changes and trigger a re-fetch for the new default. Alternatively, an app restart recovers — acceptable if documented.
 
 ---
 
@@ -341,15 +347,15 @@ When `getRate()` returns null for a currency pair:
 
 ## Error Handling
 
-| Scenario | Behavior |
-|----------|----------|
-| API unreachable on startup | Silent catch (DioException), use cached rates from DB |
-| HTTP 500 / 429 / non-200 | Treated same as network error — silent catch, use cached rates |
-| Partial API response | Upsert available pairs; missing pairs retain any existing cached rate |
-| Malformed response entry | Skip, log to debug console |
-| First launch + no network | No conversions shown, app functions normally |
-| Rate is 0 or negative | Skip, don't cache, keep existing cached rate |
-| Currency not in `currencies` table | FK constraint rejects, skipped silently |
+| Scenario                           | Behavior                                                              |
+|------------------------------------|-----------------------------------------------------------------------|
+| API unreachable on startup         | Silent catch (DioException), use cached rates from DB                 |
+| HTTP 500 / 429 / non-200           | Treated same as network error — silent catch, use cached rates        |
+| Partial API response               | Upsert available pairs; missing pairs retain any existing cached rate |
+| Malformed response entry           | Skip, log to debug console                                            |
+| First launch + no network          | No conversions shown, app functions normally                          |
+| Rate is 0 or negative              | Skip, don't cache, keep existing cached rate                          |
+| Currency not in `currencies` table | FK constraint rejects, skipped silently                               |
 
 ---
 
@@ -357,24 +363,24 @@ When `getRate()` returns null for a currency pair:
 
 ### Unit Tests
 
-| Test | File | Coverage |
-|------|------|----------|
-| `exchange_rate_service_test.dart` | `test/unit/services/` | HTTP call construction, ticker formatting, response parsing, error handling. Mock `Dio`. |
+| Test                                 | File                      | Coverage                                                                                                                                                              |
+|--------------------------------------|---------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `exchange_rate_service_test.dart`    | `test/unit/services/`     | HTTP call construction, ticker formatting, response parsing, error handling. Mock `Dio`.                                                                              |
 | `exchange_rate_repository_test.dart` | `test/unit/repositories/` | DB load on init, cache population, upsert, inverse rate computation, on-demand fetch, stream emissions, partial response handling. In-memory Drift DB + mock service. |
-| `currency_converter_test.dart` | `test/unit/utils/` | Minor-unit conversion with different decimal pairs (USD→USD, JPY→USD, EUR→CNY), null when rate missing, rounding. |
+| `currency_converter_test.dart`       | `test/unit/utils/`        | Minor-unit conversion with different decimal pairs (USD→USD, JPY→USD, EUR→CNY), null when rate missing, rounding.                                                     |
 
 ### Widget Tests
 
-| Test | File | Coverage |
-|------|------|----------|
-| `summary_strip_conversion_test.dart` | `test/widget/features/home/` | Unified total display, multi-currency aggregation, fallback to MVP behavior when no rates. |
-| `transaction_tile_conversion_test.dart` | `test/widget/features/home/` | Secondary converted line appears, hidden when rate missing. |
-| `account_tile_conversion_test.dart` | `test/widget/features/accounts/` | Converted total line below per-currency balances, hidden when no rates. |
+| Test                                    | File                             | Coverage                                                                                   |
+|-----------------------------------------|----------------------------------|--------------------------------------------------------------------------------------------|
+| `summary_strip_conversion_test.dart`    | `test/widget/features/home/`     | Unified total display, multi-currency aggregation, fallback to MVP behavior when no rates. |
+| `transaction_tile_conversion_test.dart` | `test/widget/features/home/`     | Secondary converted line appears, hidden when rate missing.                                |
+| `account_tile_conversion_test.dart`     | `test/widget/features/accounts/` | Converted total line below per-currency balances, hidden when no rates.                    |
 
 ### Integration Test
 
-| Test | File | Coverage |
-|------|------|----------|
+| Test                                 | File                | Coverage                                                                                                                      |
+|--------------------------------------|---------------------|-------------------------------------------------------------------------------------------------------------------------------|
 | `currency_conversion_flow_test.dart` | `test/integration/` | Bootstrap → rates loaded from DB → API called → UI shows converted amounts → add new currency → on-demand fetch → UI updates. |
 
 ### Migration Test
@@ -421,4 +427,4 @@ CREATE TABLE exchange_rates (
 CREATE UNIQUE INDEX idx_exchange_rates_pair ON exchange_rates(base_currency, quote_currency);
 ```
 
-Fresh installs at v5 get the table from the main schema creation. No data migration needed — new table, no existing data affected.
+Fresh installations at v5 get the table from the main schema creation. No data migration needed — new table, no existing data affected.
