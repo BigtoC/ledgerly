@@ -42,10 +42,10 @@ void main() {
   ) async {
     await tester.pumpWidget(
       _wrap(
-        SummaryStrip(
-          todayTotalsByCurrency: const {'USD': (expense: 1500, income: 500)},
-          monthNetByCurrency: const {'USD': -1000},
-          currenciesByCode: const {'USD': _usd},
+        const SummaryStrip(
+          todayTotalsByCurrency: {'USD': (expense: 1500, income: 500)},
+          monthNetByCurrency: {'USD': -1000},
+          currenciesByCode: {'USD': _usd},
           locale: 'en_US',
           defaultCurrency: 'USD',
         ),
@@ -71,13 +71,13 @@ void main() {
       // Unified totals: expense = $1.00 + $5.00 = $6.00; monthNet = -$6.00.
       await tester.pumpWidget(
         _wrap(
-          SummaryStrip(
-            todayTotalsByCurrency: const {
+          const SummaryStrip(
+            todayTotalsByCurrency: {
               'USD': (expense: 100, income: 0),
               'JPY': (expense: 500, income: 0),
             },
-            monthNetByCurrency: const {'USD': -100, 'JPY': -500},
-            currenciesByCode: const {'USD': _usd, 'JPY': _jpy},
+            monthNetByCurrency: {'USD': -100, 'JPY': -500},
+            currenciesByCode: {'USD': _usd, 'JPY': _jpy},
             locale: 'en_US',
             defaultCurrency: 'USD',
           ),
@@ -99,13 +99,13 @@ void main() {
   ) async {
     await tester.pumpWidget(
       _wrap(
-        SummaryStrip(
-          todayTotalsByCurrency: const {
+        const SummaryStrip(
+          todayTotalsByCurrency: {
             'USD': (expense: 100, income: 0),
             'JPY': (expense: 500, income: 0),
           },
-          monthNetByCurrency: const {'USD': -100, 'JPY': -500},
-          currenciesByCode: const {'USD': _usd, 'JPY': _jpy},
+          monthNetByCurrency: {'USD': -100, 'JPY': -500},
+          currenciesByCode: {'USD': _usd, 'JPY': _jpy},
           locale: 'en_US',
           defaultCurrency: 'USD',
         ),
@@ -127,10 +127,10 @@ void main() {
   ) async {
     await tester.pumpWidget(
       _wrap(
-        SummaryStrip(
-          todayTotalsByCurrency: const {},
-          monthNetByCurrency: const {},
-          currenciesByCode: const {},
+        const SummaryStrip(
+          todayTotalsByCurrency: {},
+          monthNetByCurrency: {},
+          currenciesByCode: {},
           locale: 'en_US',
           defaultCurrency: 'USD',
         ),
@@ -171,10 +171,10 @@ void main() {
     (tester) async {
       await tester.pumpWidget(
         _wrap(
-          SummaryStrip(
-            todayTotalsByCurrency: const {'USD': (expense: 100, income: 0)},
-            monthNetByCurrency: const {'USD': -100},
-            currenciesByCode: const {'USD': _usd},
+          const SummaryStrip(
+            todayTotalsByCurrency: {'USD': (expense: 100, income: 0)},
+            monthNetByCurrency: {'USD': -100},
+            currenciesByCode: {'USD': _usd},
             locale: 'en_US',
             defaultCurrency: 'USD',
             showJumpToToday: false,
@@ -199,10 +199,10 @@ void main() {
     // AUD/CAD have no rates — fallback to per-currency groups.
     await tester.pumpWidget(
       _wrap(
-        SummaryStrip(
-          todayTotalsByCurrency: const {'USD': (expense: 100, income: 0)},
-          monthNetByCurrency: const {'AUD': -100, 'CAD': -200, 'USD': -300},
-          currenciesByCode: const {'USD': _usd, 'JPY': _jpy, 'EUR': _eur},
+        const SummaryStrip(
+          todayTotalsByCurrency: {'USD': (expense: 100, income: 0)},
+          monthNetByCurrency: {'AUD': -100, 'CAD': -200, 'USD': -300},
+          currenciesByCode: {'USD': _usd, 'JPY': _jpy, 'EUR': _eur},
           locale: 'en_US',
           defaultCurrency: 'USD',
         ),

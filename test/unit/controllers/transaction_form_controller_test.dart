@@ -679,6 +679,7 @@ void main() {
             Object e,
           ) {
             saveError = e;
+            return false;
           });
           async.flushMicrotasks();
 
