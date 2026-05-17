@@ -43,7 +43,7 @@ void main() {
 
       verify(
         () => mockDio.get<List<dynamic>>(
-          'https://ledgerly-api.bigto-fintech.workers.dev/api/conversion',
+          any(),
           queryParameters: {'tickers': 'hkdusd,eurusd'},
         ),
       ).called(1);

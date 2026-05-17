@@ -45,7 +45,7 @@ jobs:
             "$STORE_PASSWORD" "$KEY_PASSWORD" "$KEY_ALIAS" > android/key.properties
 
       - name: Build split release APKs
-        run: flutter build apk --release --split-per-abi
+        run: flutter build apk --release --split-per-abi --dart-define=FOREX_API_URL=${{ vars.FOREX_API_URL }}
 
       - name: Prepare release assets
         shell: bash
