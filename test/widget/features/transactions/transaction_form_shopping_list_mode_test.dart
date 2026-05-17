@@ -26,6 +26,7 @@ import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/shopping_list_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
+import 'package:ledgerly/features/transactions/keypad_state.dart';
 import 'package:ledgerly/features/transactions/transaction_form_controller.dart';
 import 'package:ledgerly/features/transactions/transaction_form_screen.dart';
 import 'package:ledgerly/features/transactions/transaction_form_state.dart';
@@ -111,7 +112,16 @@ class _FakeTransactionFormController extends TransactionFormController {
 
 TransactionFormState _editableDraftState({int shoppingListItemId = 77}) =>
     TransactionFormState.data(
+      formMode: EditShoppingListDraftMode(
+        shoppingListItemId: shoppingListItemId,
+      ),
       amountMinorUnits: 500,
+      keypad: const KeypadState(
+        amountMinorUnits: 500,
+        fractionalDigitsEntered: 0,
+        isFractionalMode: false,
+        hasCurrentInput: true,
+      ),
       selectedAccount: _account,
       displayCurrency: _usd,
       currencyTouched: false,

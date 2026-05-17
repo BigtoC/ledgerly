@@ -167,9 +167,9 @@ final class ExchangeRateRepository {
   }
 
   /// Fetches a single pair on demand (used after creating a non-default-
-  /// currency account or transaction). Errors swallowed with sanitized
-  /// logging. Callers in form controllers should debounce to avoid 1:1
-  /// timing correlation with financial actions.
+  /// currency account or transaction). Errors are swallowed with sanitized
+  /// logging so callers can trigger an opportunistic refresh without
+  /// disturbing their primary save flow.
   Future<void> fetchRate(String from, String defaultCurrency) async {
     try {
       final results = await _service.fetchRates([

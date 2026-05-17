@@ -29,8 +29,7 @@ class ExchangeRateService {
   final Dio _dio;
   final String _baseUrl;
 
-  static const _defaultBaseUrl =
-      'https://ledgerly-api.bigto-fintech.workers.dev/api/conversion';
+  static const _defaultBaseUrl = String.fromEnvironment('FOREX_API_URL');
 
   static final _iso4217 = RegExp(r'^[A-Za-z]{3}$');
 

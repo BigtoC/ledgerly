@@ -21,7 +21,6 @@
 
 import 'dart:async';
 
-import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -460,7 +459,7 @@ void main() {
         expect(s.amountMinorUnits, 0);
         expect(s.isDirty, isFalse);
         expect(s.keypadRevision, 0);
-        expect(controller.keypadSnapshot, const KeypadState.initial());
+        expect(s.keypad, const KeypadState.initial());
       }
 
       expectClean();
@@ -623,7 +622,7 @@ void main() {
     );
 
     test(
-      'TC61b: post-save FX fetch still runs after the auto-dispose controller is popped',
+      'TC61b: post-save FX fetch starts immediately and still runs after the auto-dispose controller is popped',
       () async {
         final db = _MockAppDatabase();
         final dao = _MockExchangeRateDao();
@@ -674,22 +673,21 @@ void main() {
         var saveCompleted = false;
         Object? saveError;
         var disposeCompleted = false;
-        fakeAsync((async) {
-          controller.save().then((_) => saveCompleted = true).catchError((
-            Object e,
-          ) {
-            saveError = e;
-            return false;
-          });
-          async.flushMicrotasks();
+        final saveFuture = controller
+            .save()
+            .then((_) => saveCompleted = true)
+            .catchError((Object e) {
+              saveError = e;
+              return false;
+            });
+        await pumpEventQueue();
 
-          sub.close();
-          c.pump().then((_) => disposeCompleted = true);
-          async.flushMicrotasks();
+        sub.close();
+        await c.pump();
+        disposeCompleted = true;
 
-          async.elapse(const Duration(seconds: 31));
-          async.flushMicrotasks();
-        });
+        await pumpEventQueue();
+        await saveFuture;
 
         expect(saveError, isNull);
         expect(saveCompleted, isTrue);
@@ -1010,7 +1008,37 @@ void main() {
           symbol: '€',
           nameL10nKey: 'currency.eur',
         );
-        final c = makeContainer();
+        final db = _MockAppDatabase();
+        final dao = _MockExchangeRateDao();
+        final exchangeService = _MockExchangeRateService();
+        when(() => db.exchangeRateDao).thenReturn(dao);
+        when(
+          () => dao.watchAll(),
+        ).thenAnswer((_) => Stream.value(const <drift.ExchangeRateRow>[]));
+        when(() => dao.upsertAll(any())).thenAnswer((_) async {});
+        when(
+          () => exchangeService.fetchRates(any()),
+        ).thenAnswer((_) async => []);
+        final exchangeRepo = ExchangeRateRepository(
+          db,
+          exchangeService,
+          const Stream<String>.empty(),
+        );
+        addTearDown(exchangeRepo.dispose);
+
+        final c = ProviderContainer(
+          overrides: [
+            transactionRepositoryProvider.overrideWithValue(txRepo),
+            accountRepositoryProvider.overrideWithValue(accountRepo),
+            categoryRepositoryProvider.overrideWithValue(categoryRepo),
+            userPreferencesRepositoryProvider.overrideWithValue(prefs),
+            defaultCurrencyProvider.overrideWith(
+              (ref) => const Stream<String>.empty(),
+            ),
+            initialDefaultCurrencyProvider.overrideWithValue('USD'),
+            exchangeRateRepositoryProvider.overrideWithValue(exchangeRepo),
+          ],
+        );
         addTearDown(c.dispose);
         final controller = c.read(transactionFormControllerProvider.notifier);
         await controller.hydrateForAdd();
@@ -1051,8 +1079,8 @@ void main() {
         final data =
             c.read(transactionFormControllerProvider) as TransactionFormData;
         expect(data.displayCurrency?.code, 'USD');
-        expect(controller.keypadSnapshot.leftOperand, 100);
-        expect(controller.keypadSnapshot.operator, CalcOperator.add);
+        expect(data.keypad.leftOperand, 100);
+        expect(data.keypad.operator, CalcOperator.add);
       },
     );
 
@@ -1079,7 +1107,7 @@ void main() {
             c.read(transactionFormControllerProvider) as TransactionFormData;
         expect(data.displayCurrency?.code, 'EUR');
         expect(data.amountMinorUnits, 0);
-        expect(controller.keypadSnapshot.hasExpression, isFalse);
+        expect(data.keypad.hasExpression, isFalse);
       },
     );
 
@@ -1098,8 +1126,8 @@ void main() {
         final data =
             c.read(transactionFormControllerProvider) as TransactionFormData;
         expect(data.displayCurrency?.code, 'USD');
-        expect(controller.keypadSnapshot.leftOperand, 100);
-        expect(controller.keypadSnapshot.operator, CalcOperator.add);
+        expect(data.keypad.leftOperand, 100);
+        expect(data.keypad.operator, CalcOperator.add);
       },
     );
 
@@ -1122,7 +1150,7 @@ void main() {
             c.read(transactionFormControllerProvider) as TransactionFormData;
         expect(data.displayCurrency?.code, 'JPY');
         expect(data.amountMinorUnits, 0);
-        expect(controller.keypadSnapshot.hasExpression, isFalse);
+        expect(data.keypad.hasExpression, isFalse);
       },
     );
 
@@ -1144,8 +1172,8 @@ void main() {
         expect(data.displayCurrency?.code, 'USD');
         expect(data.selectedAccount?.id, _accountUsd2.id);
         // Expression preserved because currency did not change
-        expect(controller.keypadSnapshot.leftOperand, 100);
-        expect(controller.keypadSnapshot.operator, CalcOperator.add);
+        expect(data.keypad.leftOperand, 100);
+        expect(data.keypad.operator, CalcOperator.add);
       },
     );
   });
@@ -1163,10 +1191,12 @@ void main() {
         controller.appendDigit(2);
         controller.applyOperator(CalcOperator.add);
 
-        expect(controller.keypadSnapshot.leftOperand, 1200);
-        expect(controller.keypadSnapshot.operator, CalcOperator.add);
-        expect(controller.keypadSnapshot.isEvaluating, isTrue);
-        expect(controller.keypadSnapshot.amountMinorUnits, 0);
+        final data =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(data.keypad.leftOperand, 1200);
+        expect(data.keypad.operator, CalcOperator.add);
+        expect(data.keypad.isEvaluating, isTrue);
+        expect(data.keypad.amountMinorUnits, 0);
       },
     );
 
@@ -1186,8 +1216,8 @@ void main() {
 
         final data =
             c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(controller.keypadSnapshot.amountMinorUnits, 1700);
-        expect(controller.keypadSnapshot.showingResult, isTrue);
+        expect(data.keypad.amountMinorUnits, 1700);
+        expect(data.keypad.showingResult, isTrue);
         expect(data.amountMinorUnits, 1700);
       },
     );
@@ -1204,9 +1234,11 @@ void main() {
         controller.applyOperator(CalcOperator.multiply);
         controller.applyOperator(CalcOperator.subtract);
 
-        expect(controller.keypadSnapshot.leftOperand, 100);
-        expect(controller.keypadSnapshot.operator, CalcOperator.subtract);
-        expect(controller.keypadSnapshot.amountMinorUnits, 0);
+        final data =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(data.keypad.leftOperand, 100);
+        expect(data.keypad.operator, CalcOperator.subtract);
+        expect(data.keypad.amountMinorUnits, 0);
       },
     );
 
@@ -1229,8 +1261,10 @@ void main() {
         final after =
             (c.read(transactionFormControllerProvider) as TransactionFormData)
                 .keypadRevision;
+        final data =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
         expect(after, greaterThan(before));
-        expect(controller.keypadSnapshot.hasCurrentInput, isTrue);
+        expect(data.keypad.hasCurrentInput, isTrue);
       },
     );
 
@@ -1248,10 +1282,12 @@ void main() {
         controller.appendDigit(5);
         controller.applyOperator(CalcOperator.subtract);
 
-        expect(controller.keypadSnapshot.leftOperand, 1700);
-        expect(controller.keypadSnapshot.operator, CalcOperator.subtract);
-        expect(controller.keypadSnapshot.isEvaluating, isTrue);
-        expect(controller.keypadSnapshot.amountMinorUnits, 0);
+        final data =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(data.keypad.leftOperand, 1700);
+        expect(data.keypad.operator, CalcOperator.subtract);
+        expect(data.keypad.isEvaluating, isTrue);
+        expect(data.keypad.amountMinorUnits, 0);
       },
     );
   });

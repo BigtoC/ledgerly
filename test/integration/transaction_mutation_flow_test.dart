@@ -93,11 +93,9 @@ void main() {
         addTearDown(db.close);
         await tester.runAsync(() => runTestSeed(db));
 
-        // Saving a non-default-currency transaction schedules a 30s debounced
-        // rate-fetch via `keepAlive()` on the form controller. Override the
-        // network service so the eventual fetch is a no-op, then pump fake
-        // time past the debounce window before the test ends so the timer
-        // cancels and `_verifyInvariants` doesn't trip on a pending timer.
+        // Saving a non-default-currency transaction kicks off an immediate
+        // background FX fetch. Override the network service so the fetch is a
+        // harmless no-op during this integration flow.
         final noopService = _NoopExchangeRateService();
         when(() => noopService.fetchRates(any())).thenAnswer((_) async => []);
 
@@ -145,10 +143,6 @@ void main() {
         expect(rows!.single.currency, 'JPY');
         expect(rows.single.amountMinorUnits, 5);
         expect(tester.takeException(), isNull);
-
-        // Fire the debounced rate-fetch timer so it doesn't outlive the test.
-        await tester.pump(const Duration(seconds: 31));
-        await tester.pumpAndSettle();
       },
     );
 

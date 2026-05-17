@@ -127,18 +127,13 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(transactionFormControllerProvider);
     final controller = ref.read(transactionFormControllerProvider.notifier);
-    final activeMode = widget.mode ?? controller.formMode;
-    final isShoppingListDraftMode = activeMode is EditShoppingListDraftMode;
+    final activeMode = widget.mode ?? state.formMode;
 
-    // Derive app-bar title from mode.
-    final String appBarTitle;
-    if (isShoppingListDraftMode) {
-      appBarTitle = l10n.shoppingListEditDraftTitle;
-    } else if (widget.isEdit) {
-      appBarTitle = l10n.txEditTitle;
-    } else {
-      appBarTitle = l10n.txAddTitle;
-    }
+    final appBarTitle = switch (activeMode) {
+      EditShoppingListDraftMode() => l10n.shoppingListEditDraftTitle,
+      EditTransactionMode() => l10n.txEditTitle,
+      AddTransactionMode() || DuplicateTransactionMode() => l10n.txAddTitle,
+    };
 
     // F1/F2: Auto-pop with ShoppingListEditResultMissingDraft when the draft
     // is not found during EditShoppingListDraftMode hydration. A
@@ -168,27 +163,35 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
         resizeToAvoidBottomInset: false,
         appBar: AppBar(
           title: Text(appBarTitle),
-          actions: isShoppingListDraftMode
-              ? const []
-              : [
-                  if (widget.isEdit)
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      tooltip: l10n.commonDelete,
-                      onPressed:
-                          state is TransactionFormData &&
-                              !state.isDeleting &&
-                              !state.isSaving
-                          ? () => _delete(context, l10n, controller)
-                          : null,
-                    ),
-                  TextButton(
-                    onPressed: state.canSave
-                        ? () => _save(context, l10n, controller)
-                        : null,
-                    child: Text(l10n.commonSave),
-                  ),
-                ],
+          actions: switch (activeMode) {
+            EditShoppingListDraftMode() => const <Widget>[],
+            EditTransactionMode() => <Widget>[
+              IconButton(
+                icon: const Icon(Icons.delete_outline),
+                tooltip: l10n.commonDelete,
+                onPressed:
+                    state is TransactionFormData &&
+                        !state.isDeleting &&
+                        !state.isSaving
+                    ? () => _delete(context, l10n, controller)
+                    : null,
+              ),
+              TextButton(
+                onPressed: state.canSave
+                    ? () => _save(context, l10n, controller)
+                    : null,
+                child: Text(l10n.commonSave),
+              ),
+            ],
+            AddTransactionMode() || DuplicateTransactionMode() => <Widget>[
+              TextButton(
+                onPressed: state.canSave
+                    ? () => _save(context, l10n, controller)
+                    : null,
+                child: Text(l10n.commonSave),
+              ),
+            ],
+          },
         ),
         body: SafeArea(
           child: switch (state) {
@@ -255,7 +258,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                   ),
                   const SizedBox(height: 16),
                   AmountDisplay(
-                    keypad: controller.keypadSnapshot,
+                    keypad: state.keypad,
                     currency: state.displayCurrency,
                     currencyTouched: state.currencyTouched,
                     hasError: showAmountError,
@@ -564,7 +567,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     final newCode = picked.currency.code;
     final currencyChanges = currentCode != null && currentCode != newCode;
     final hasDestructiveInput =
-        state.amountMinorUnits > 0 || controller.keypadSnapshot.hasVisibleInput;
+        state.amountMinorUnits > 0 || state.keypad.hasVisibleInput;
 
     if (currencyChanges && hasDestructiveInput) {
       final confirmed = await _confirmCurrencyChange(context, l10n);
@@ -587,7 +590,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     final currentCode = state.displayCurrency?.code;
     final currencyChanges = currentCode != null && currentCode != picked.code;
     final hasDestructiveInput =
-        state.amountMinorUnits > 0 || controller.keypadSnapshot.hasVisibleInput;
+        state.amountMinorUnits > 0 || state.keypad.hasVisibleInput;
 
     if (currencyChanges && hasDestructiveInput) {
       final confirmed = await _confirmPickerCurrencyChange(context, l10n);
