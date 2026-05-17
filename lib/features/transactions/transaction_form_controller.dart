@@ -52,11 +52,10 @@ part 'transaction_form_controller.g.dart';
   ],
 )
 class TransactionFormController extends _$TransactionFormController {
-  /// Pure-helper accumulator that backs the keypad commands. Kept outside
-  /// `TransactionFormState` because every keystroke would otherwise
-  /// require a `copyWith` of the helper for no observable widget effect —
-  /// the form only renders `amountMinorUnits`, which is mirrored into the
-  /// state on each mutation.
+  /// Pure-helper accumulator that backs the keypad commands. It stays as a
+  /// private mutation engine on the notifier, but every user-visible snapshot
+  /// is mirrored into `TransactionFormState.data.keypad` so widgets never read
+  /// public properties from the notifier itself.
   KeypadState _keypad = const KeypadState.initial();
   int _keypadRevision = 0;
   TransactionFormMode? _lastRequestedMode;
@@ -64,7 +63,6 @@ class TransactionFormController extends _$TransactionFormController {
   /// The current form mode — exposed read-only to the screen so it can
   /// derive its title and CTA set without parsing route extras itself.
   TransactionFormMode _formMode = const AddTransactionMode();
-  TransactionFormMode get formMode => _formMode;
 
   /// Debouncer for the on-demand exchange-rate fetch after a transaction
   /// in a non-default currency is saved. The 30s window absorbs several
@@ -83,7 +81,7 @@ class TransactionFormController extends _$TransactionFormController {
       _rateFetchDebounce?.cancel();
       _rateFetchKeepAlive?.close();
     });
-    return const TransactionFormState.loading();
+    return TransactionFormState.loading(formMode: _formMode);
   }
 
   // ---------- Hydration ----------
@@ -96,19 +94,22 @@ class TransactionFormController extends _$TransactionFormController {
   Future<void> hydrateForAdd({DateTime? initialDate}) async {
     _formMode = AddTransactionMode(initialDate: initialDate);
     _lastRequestedMode = AddTransactionMode(initialDate: initialDate);
-    state = const TransactionFormState.loading();
+    state = TransactionFormState.loading(formMode: _formMode);
     try {
       final account = await _resolveDefaultAccount();
       if (account == null) {
-        state = const TransactionFormState.empty(
+        state = TransactionFormState.empty(
           reason: TransactionFormEmptyReason.noActiveAccount,
+          formMode: _formMode,
         );
         return;
       }
       _keypad = const KeypadState.initial();
       _keypadRevision = 0;
       state = TransactionFormState.data(
+        formMode: _formMode,
         amountMinorUnits: 0,
+        keypad: _keypad,
         selectedAccount: account,
         displayCurrency: account.currency,
         currencyTouched: false,
@@ -126,7 +127,7 @@ class TransactionFormController extends _$TransactionFormController {
         originalCreatedAt: null,
       );
     } catch (e, st) {
-      state = TransactionFormState.error(e, st);
+      state = TransactionFormState.error(e, st, formMode: _formMode);
     }
   }
 
@@ -135,13 +136,14 @@ class TransactionFormController extends _$TransactionFormController {
     _lastRequestedMode = DuplicateTransactionMode(
       sourceTransactionId: sourceId,
     );
-    state = const TransactionFormState.loading();
+    state = TransactionFormState.loading(formMode: _formMode);
     try {
       final txRepo = ref.read(transactionRepositoryProvider);
       final source = await txRepo.getById(sourceId);
       if (source == null) {
-        state = const TransactionFormState.empty(
+        state = TransactionFormState.empty(
           reason: TransactionFormEmptyReason.notFound,
+          formMode: _formMode,
         );
         return;
       }
@@ -154,8 +156,9 @@ class TransactionFormController extends _$TransactionFormController {
         // amount/category/memo prefilled.
         final fallback = await _resolveDefaultAccount();
         if (fallback == null) {
-          state = const TransactionFormState.empty(
+          state = TransactionFormState.empty(
             reason: TransactionFormEmptyReason.noActiveAccount,
+            formMode: _formMode,
           );
           return;
         }
@@ -174,20 +177,21 @@ class TransactionFormController extends _$TransactionFormController {
         duplicateSourceId: sourceId,
       );
     } catch (e, st) {
-      state = TransactionFormState.error(e, st);
+      state = TransactionFormState.error(e, st, formMode: _formMode);
     }
   }
 
   Future<void> hydrateForEdit(int id) async {
     _formMode = EditTransactionMode(transactionId: id);
     _lastRequestedMode = EditTransactionMode(transactionId: id);
-    state = const TransactionFormState.loading();
+    state = TransactionFormState.loading(formMode: _formMode);
     try {
       final txRepo = ref.read(transactionRepositoryProvider);
       final existing = await txRepo.getById(id);
       if (existing == null) {
-        state = const TransactionFormState.empty(
+        state = TransactionFormState.empty(
           reason: TransactionFormEmptyReason.notFound,
+          formMode: _formMode,
         );
         return;
       }
@@ -195,8 +199,9 @@ class TransactionFormController extends _$TransactionFormController {
       final categoryRepo = ref.read(categoryRepositoryProvider);
       final account = await accountRepo.getById(existing.accountId);
       if (account == null) {
-        state = const TransactionFormState.empty(
+        state = TransactionFormState.empty(
           reason: TransactionFormEmptyReason.notFound,
+          formMode: _formMode,
         );
         return;
       }
@@ -207,7 +212,9 @@ class TransactionFormController extends _$TransactionFormController {
       );
       _keypadRevision = 0;
       state = TransactionFormState.data(
+        formMode: _formMode,
         amountMinorUnits: existing.amountMinorUnits,
+        keypad: _keypad,
         selectedAccount: account,
         displayCurrency: existing.currency,
         currencyTouched: true,
@@ -223,7 +230,7 @@ class TransactionFormController extends _$TransactionFormController {
         originalCreatedAt: existing.createdAt,
       );
     } catch (e, st) {
-      state = TransactionFormState.error(e, st);
+      state = TransactionFormState.error(e, st, formMode: _formMode);
     }
   }
 
@@ -242,13 +249,14 @@ class TransactionFormController extends _$TransactionFormController {
     _lastRequestedMode = EditShoppingListDraftMode(
       shoppingListItemId: shoppingListItemId,
     );
-    state = const TransactionFormState.loading();
+    state = TransactionFormState.loading(formMode: _formMode);
     try {
       final slRepo = ref.read(shoppingListRepositoryProvider);
       final draft = await slRepo.getById(shoppingListItemId);
       if (draft == null) {
-        state = const TransactionFormState.empty(
+        state = TransactionFormState.empty(
           reason: TransactionFormEmptyReason.draftNotFound,
+          formMode: _formMode,
         );
         return;
       }
@@ -258,8 +266,9 @@ class TransactionFormController extends _$TransactionFormController {
 
       final account = await accountRepo.getById(draft.accountId);
       if (account == null) {
-        state = const TransactionFormState.empty(
+        state = TransactionFormState.empty(
           reason: TransactionFormEmptyReason.noActiveAccount,
+          formMode: _formMode,
         );
         return;
       }
@@ -289,7 +298,9 @@ class TransactionFormController extends _$TransactionFormController {
       _keypadRevision = 0;
 
       state = TransactionFormState.data(
+        formMode: _formMode,
         amountMinorUnits: amountMinorUnits,
+        keypad: _keypad,
         selectedAccount: account,
         displayCurrency: displayCurrency,
         currencyTouched: currencyTouched,
@@ -308,7 +319,7 @@ class TransactionFormController extends _$TransactionFormController {
         selectedCategoryIsArchived: category?.isArchived ?? false,
       );
     } catch (e, st) {
-      state = TransactionFormState.error(e, st);
+      state = TransactionFormState.error(e, st, formMode: _formMode);
     }
   }
 
@@ -373,16 +384,11 @@ class TransactionFormController extends _$TransactionFormController {
     _keypadRevision += 1;
     return s.copyWith(
       amountMinorUnits: _keypad.amountMinorUnits,
+      keypad: _keypad,
       isDirty: isDirty,
       keypadRevision: _keypadRevision,
     );
   }
-
-  /// Read-only accessor for widgets / tests that need to know whether
-  /// the decimal-point key should be enabled, or whether the keypad is
-  /// currently showing a fractional partial like "1." (no digits after
-  /// dot yet).
-  KeypadState get keypadSnapshot => _keypad;
 
   // ---------- Field commands ----------
 
@@ -790,7 +796,9 @@ class TransactionFormController extends _$TransactionFormController {
     // account default; account changes will re-seed currency if the user
     // has not yet manually selected a currency.
     state = TransactionFormState.data(
+      formMode: _formMode,
       amountMinorUnits: amountMinorUnits,
+      keypad: _keypad,
       selectedAccount: account,
       displayCurrency: account.currency,
       currencyTouched: false,

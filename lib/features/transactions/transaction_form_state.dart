@@ -22,6 +22,7 @@ import '../../data/models/account.dart';
 import '../../data/models/category.dart';
 import '../../data/models/currency.dart';
 import '../../data/models/transaction.dart';
+import 'keypad_state.dart';
 
 part 'transaction_form_state.freezed.dart';
 
@@ -138,15 +139,26 @@ enum TransactionFormEmptyReason {
 sealed class TransactionFormState with _$TransactionFormState {
   const TransactionFormState._();
 
-  const factory TransactionFormState.loading() = TransactionFormLoading;
+  const factory TransactionFormState.loading({
+    @Default(AddTransactionMode()) TransactionFormMode formMode,
+  }) = TransactionFormLoading;
 
   const factory TransactionFormState.empty({
     required TransactionFormEmptyReason reason,
+    @Default(AddTransactionMode()) TransactionFormMode formMode,
   }) = TransactionFormEmpty;
 
   const factory TransactionFormState.data({
+    /// Discriminates which entry point opened the form so widgets can derive
+    /// titles, CTAs, and recovery behavior directly from state.
+    required TransactionFormMode formMode,
+
     /// Keypad-accumulated integer in the active currency's minor units.
     required int amountMinorUnits,
+
+    /// Full calculator snapshot used by the amount display and by widgets that
+    /// need to know whether a currency/account change would discard input.
+    required KeypadState keypad,
 
     /// `null` only during `noActiveAccount` recovery flows; in normal
     /// `.data` states an account is always selected.
@@ -222,8 +234,11 @@ sealed class TransactionFormState with _$TransactionFormState {
     @Default(false) bool selectedCategoryIsArchived,
   }) = TransactionFormData;
 
-  const factory TransactionFormState.error(Object error, StackTrace stack) =
-      TransactionFormError;
+  const factory TransactionFormState.error(
+    Object error,
+    StackTrace stack, {
+    @Default(AddTransactionMode()) TransactionFormMode formMode,
+  }) = TransactionFormError;
 
   /// Computed-on-demand validity flag. PRD: amount > 0 AND category AND
   /// account AND displayCurrency, plus no in-flight save/delete.
