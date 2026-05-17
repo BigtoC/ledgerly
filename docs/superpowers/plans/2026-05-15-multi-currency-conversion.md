@@ -1216,7 +1216,7 @@ git commit -m "feat: debounced on-demand exchange-rate fetch after account save"
 
 ---
 
-### Task 13: Add debounced on-demand fetch to TransactionFormController
+### Task 13: Add immediate on-demand fetch to TransactionFormController
 
 **Files:**
 - Modify: `lib/features/transactions/transaction_form_controller.dart`
@@ -1255,9 +1255,9 @@ class TransactionFormController extends _$TransactionFormController { ... }
 
 Re-run `dart run build_runner build --delete-conflicting-outputs` after the edit.
 
-- [ ] **Step 3: Add post-save debounced fetch in the save() method**
+- [ ] **Step 3: Add post-save immediate fetch in the save() method**
 
-Hold a single `Timer? _rateFetchDebounce` field on the controller and a `Set<String> _pendingRateCodes = {}`. In the `save()` method, after `final saved = await repo.save(tx);` and before `state = s.copyWith(isSaving: false);`, add:
+In the `save()` method, after `final saved = await repo.save(tx);` and before `state = s.copyWith(isSaving: false);`, add:
 
 ```dart
       final initialDefault = ref.read(initialDefaultCurrencyProvider);
@@ -1265,19 +1265,14 @@ Hold a single `Timer? _rateFetchDebounce` field on the controller and a `Set<Str
           .read(defaultCurrencyProvider)
           .valueOrNull ?? initialDefault;
       if (tx.currency.code != currentDefault) {
-        _pendingRateCodes.add(tx.currency.code);
-        _rateFetchDebounce?.cancel();
-        _rateFetchDebounce = Timer(const Duration(seconds: 30), () {
-          final repoX = ref.read(exchangeRateRepositoryProvider);
-          for (final code in _pendingRateCodes) {
-            unawaited(repoX.fetchRate(code, currentDefault));
-          }
-          _pendingRateCodes.clear();
-        });
+        final repoX = ref.read(exchangeRateRepositoryProvider);
+        unawaited(repoX.fetchRate(tx.currency.code, currentDefault));
       }
 ```
 
-Also override `dispose()` (or use `ref.onDispose` in `build()`) to cancel `_rateFetchDebounce` on controller disposal.
+This fetch is intentionally fire-and-forget: it starts immediately after the
+transaction save succeeds, but it does not block the navigation path back to
+Home.
 
 - [ ] **Step 4: Verify compilation**
 
@@ -1288,7 +1283,7 @@ Expected: No errors.
 
 ```bash
 git add lib/features/transactions/transaction_form_controller.dart lib/features/transactions/transaction_form_controller.g.dart
-git commit -m "feat: debounced on-demand exchange-rate fetch after transaction save"
+git commit -m "feat: immediate on-demand exchange-rate fetch after transaction save"
 ```
 
 ---
@@ -2977,6 +2972,7 @@ Rates carry `fetched_at` but the plan does not enforce a TTL — the `≈` glyph
 |--------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Brand-new install, empty DB                | `distinctCurrenciesAcrossAllTables()` returns empty → `refreshAll` is a no-op. SummaryStrip shows the empty placeholder.                                               |
 | First non-default-currency account created | `AccountFormActions.save()` queues a debounced on-demand fetch (Task 12). UI shows per-currency render until the debounce window fires; then ≈ converted line appears. |
+| First non-default-currency transaction saved | `TransactionFormController.save()` starts an immediate on-demand fetch (Task 13). UI can continue to render the original currency right away; converted displays update when the fetched rate lands. |
 | Default currency changed in Settings       | `defaultCurrencyProvider` stream emits → repo's `_currencySub` triggers `refreshAll` (single-flight). UI shows per-currency render until the new rates land.           |
 | Network failure after some rates cached    | Cached rates remain in the snapshot; UI renders ≈ totals from cache. No error indicator.                                                                               |
 | Network failure with no rates cached       | `_snapshot` stays empty; UI renders the per-currency fallback path (no ≈ totals).                                                                                      |

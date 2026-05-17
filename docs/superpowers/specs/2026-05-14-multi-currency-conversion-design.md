@@ -387,7 +387,8 @@ Stream<String> defaultCurrency(Ref ref) {
 
 ### On-Demand Fetch — `AccountFormActions` and `TransactionFormController`
 
-After saving an account or transaction in a non-default currency:
+After saving an account or transaction in a non-default currency, kick off an
+opportunistic background fetch for that one pair:
 
 ```dart
 final repo = ref.read(exchangeRateRepositoryProvider);
@@ -399,8 +400,8 @@ if (newCurrency != defaultCurrency) {
 
 Locations to modify:
 
-- `lib/features/accounts/accounts_providers.dart` — wrap the existing `AccountFormActions.save()` pass-through so the post-save fetch fires after the underlying `_accountRepository.save(draft)` resolves with the new account ID.
-- `lib/features/transactions/transaction_form_controller.dart` — inside `TransactionFormController`'s save command, after the successful insert.
+- `lib/features/accounts/accounts_providers.dart` — wrap the existing `AccountFormActions.save()` pass-through so the post-save fetch fires after the underlying `_accountRepository.save(draft)` resolves with the new account ID. This path may still coalesce rapid account-save requests behind its own debounce window.
+- `lib/features/transactions/transaction_form_controller.dart` — inside `TransactionFormController`'s save command, after the successful insert. This path now starts the single-pair fetch immediately.
 
 The form action is the right hook because it has access to both the just-saved currency and the Riverpod `ref`. Restore/import flows that bulk-add transactions in new currencies are out of scope for on-demand fetch; they fall through to the next `refreshAll` on the following app launch.
 
