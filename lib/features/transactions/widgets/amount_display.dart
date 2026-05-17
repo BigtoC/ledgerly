@@ -40,7 +40,7 @@ class AmountDisplay extends StatelessWidget {
   });
 
   /// Source of truth for what to render. The screen reads it from the
-  /// controller's `keypadSnapshot` getter on each rebuild — a value-typed
+  /// form state's `keypad` snapshot on each rebuild — a value-typed
   /// snapshot keeps the widget free of controller-instance coupling.
   final KeypadState keypad;
 
