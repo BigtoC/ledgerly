@@ -570,7 +570,7 @@ class TransactionFormController extends _$TransactionFormController {
         _pendingRateCodes.add(tx.currency.code);
         _rateFetchKeepAlive ??= ref.keepAlive();
         _rateFetchDebounce?.cancel();
-        _rateFetchDebounce = Timer(const Duration(seconds: 30), () {
+        _rateFetchDebounce = Timer(const Duration(seconds: 5), () {
           final repoX = ref.read(exchangeRateRepositoryProvider);
           for (final code in _pendingRateCodes) {
             unawaited(repoX.fetchRate(code, currentDefault));
