@@ -22,7 +22,6 @@
 
 import 'dart:async';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart' show KeepAliveLink;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../app/providers/default_currency_provider.dart';
@@ -64,23 +63,11 @@ class TransactionFormController extends _$TransactionFormController {
   /// derive its title and CTA set without parsing route extras itself.
   TransactionFormMode _formMode = const AddTransactionMode();
 
-  /// Debouncer for the on-demand exchange-rate fetch after a transaction
-  /// in a non-default currency is saved. The 30s window absorbs several
-  /// rapid saves into one network call and breaks the 1:1 timing
-  /// correlation between a financial action and an outbound API request.
-  Timer? _rateFetchDebounce;
-  final Set<String> _pendingRateCodes = <String>{};
-  KeepAliveLink? _rateFetchKeepAlive;
-
   @override
   TransactionFormState build() {
     // Hydration is explicit (Wave 2 §10): the screen calls one of the
     // three `hydrateFor*` entry points after reading route extras / path
     // params. `build` only sets up the loading placeholder.
-    ref.onDispose(() {
-      _rateFetchDebounce?.cancel();
-      _rateFetchKeepAlive?.close();
-    });
     return TransactionFormState.loading(formMode: _formMode);
   }
 
@@ -567,25 +554,15 @@ class TransactionFormController extends _$TransactionFormController {
       final repo = ref.read(transactionRepositoryProvider);
       final saved = await repo.save(tx);
 
-      // Debounced on-demand exchange-rate fetch for non-default-currency
-      // transactions. 30s window absorbs rapid saves into one call.
+      // On-demand exchange-rate fetch for non-default-currency transactions.
+      // Fire immediately after save without blocking the navigation path back
+      // to the caller.
       final initialDefault = ref.read(initialDefaultCurrencyProvider);
       final currentDefault =
           ref.read(defaultCurrencyProvider).valueOrNull ?? initialDefault;
       if (tx.currency.code != currentDefault) {
-        _pendingRateCodes.add(tx.currency.code);
-        _rateFetchKeepAlive ??= ref.keepAlive();
-        _rateFetchDebounce?.cancel();
-        _rateFetchDebounce = Timer(const Duration(seconds: 5), () {
-          final repoX = ref.read(exchangeRateRepositoryProvider);
-          for (final code in _pendingRateCodes) {
-            unawaited(repoX.fetchRate(code, currentDefault));
-          }
-          _pendingRateCodes.clear();
-          _rateFetchDebounce = null;
-          _rateFetchKeepAlive?.close();
-          _rateFetchKeepAlive = null;
-        });
+        final rateRepo = ref.read(exchangeRateRepositoryProvider);
+        unawaited(rateRepo.fetchRate(tx.currency.code, currentDefault));
       }
 
       // Clear isSaving on the path back to the widget; pop occurs in

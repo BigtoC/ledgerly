@@ -21,7 +21,6 @@
 
 import 'dart:async';
 
-import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -623,7 +622,7 @@ void main() {
     );
 
     test(
-      'TC61b: post-save FX fetch still runs after the auto-dispose controller is popped',
+      'TC61b: post-save FX fetch starts immediately and still runs after the auto-dispose controller is popped',
       () async {
         final db = _MockAppDatabase();
         final dao = _MockExchangeRateDao();
@@ -674,22 +673,21 @@ void main() {
         var saveCompleted = false;
         Object? saveError;
         var disposeCompleted = false;
-        fakeAsync((async) {
-          controller.save().then((_) => saveCompleted = true).catchError((
-            Object e,
-          ) {
-            saveError = e;
-            return false;
-          });
-          async.flushMicrotasks();
+        final saveFuture = controller
+            .save()
+            .then((_) => saveCompleted = true)
+            .catchError((Object e) {
+              saveError = e;
+              return false;
+            });
+        await pumpEventQueue();
 
-          sub.close();
-          c.pump().then((_) => disposeCompleted = true);
-          async.flushMicrotasks();
+        sub.close();
+        await c.pump();
+        disposeCompleted = true;
 
-          async.elapse(const Duration(seconds: 31));
-          async.flushMicrotasks();
-        });
+        await pumpEventQueue();
+        await saveFuture;
 
         expect(saveError, isNull);
         expect(saveCompleted, isTrue);
@@ -1010,7 +1008,37 @@ void main() {
           symbol: '€',
           nameL10nKey: 'currency.eur',
         );
-        final c = makeContainer();
+        final db = _MockAppDatabase();
+        final dao = _MockExchangeRateDao();
+        final exchangeService = _MockExchangeRateService();
+        when(() => db.exchangeRateDao).thenReturn(dao);
+        when(
+          () => dao.watchAll(),
+        ).thenAnswer((_) => Stream.value(const <drift.ExchangeRateRow>[]));
+        when(() => dao.upsertAll(any())).thenAnswer((_) async {});
+        when(
+          () => exchangeService.fetchRates(any()),
+        ).thenAnswer((_) async => []);
+        final exchangeRepo = ExchangeRateRepository(
+          db,
+          exchangeService,
+          const Stream<String>.empty(),
+        );
+        addTearDown(exchangeRepo.dispose);
+
+        final c = ProviderContainer(
+          overrides: [
+            transactionRepositoryProvider.overrideWithValue(txRepo),
+            accountRepositoryProvider.overrideWithValue(accountRepo),
+            categoryRepositoryProvider.overrideWithValue(categoryRepo),
+            userPreferencesRepositoryProvider.overrideWithValue(prefs),
+            defaultCurrencyProvider.overrideWith(
+              (ref) => const Stream<String>.empty(),
+            ),
+            initialDefaultCurrencyProvider.overrideWithValue('USD'),
+            exchangeRateRepositoryProvider.overrideWithValue(exchangeRepo),
+          ],
+        );
         addTearDown(c.dispose);
         final controller = c.read(transactionFormControllerProvider.notifier);
         await controller.hydrateForAdd();
