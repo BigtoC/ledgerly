@@ -460,7 +460,7 @@ void main() {
         expect(s.amountMinorUnits, 0);
         expect(s.isDirty, isFalse);
         expect(s.keypadRevision, 0);
-        expect(controller.keypadSnapshot, const KeypadState.initial());
+        expect(s.keypad, const KeypadState.initial());
       }
 
       expectClean();
@@ -1051,8 +1051,8 @@ void main() {
         final data =
             c.read(transactionFormControllerProvider) as TransactionFormData;
         expect(data.displayCurrency?.code, 'USD');
-        expect(controller.keypadSnapshot.leftOperand, 100);
-        expect(controller.keypadSnapshot.operator, CalcOperator.add);
+        expect(data.keypad.leftOperand, 100);
+        expect(data.keypad.operator, CalcOperator.add);
       },
     );
 
@@ -1079,7 +1079,7 @@ void main() {
             c.read(transactionFormControllerProvider) as TransactionFormData;
         expect(data.displayCurrency?.code, 'EUR');
         expect(data.amountMinorUnits, 0);
-        expect(controller.keypadSnapshot.hasExpression, isFalse);
+        expect(data.keypad.hasExpression, isFalse);
       },
     );
 
@@ -1098,8 +1098,8 @@ void main() {
         final data =
             c.read(transactionFormControllerProvider) as TransactionFormData;
         expect(data.displayCurrency?.code, 'USD');
-        expect(controller.keypadSnapshot.leftOperand, 100);
-        expect(controller.keypadSnapshot.operator, CalcOperator.add);
+        expect(data.keypad.leftOperand, 100);
+        expect(data.keypad.operator, CalcOperator.add);
       },
     );
 
@@ -1122,7 +1122,7 @@ void main() {
             c.read(transactionFormControllerProvider) as TransactionFormData;
         expect(data.displayCurrency?.code, 'JPY');
         expect(data.amountMinorUnits, 0);
-        expect(controller.keypadSnapshot.hasExpression, isFalse);
+        expect(data.keypad.hasExpression, isFalse);
       },
     );
 
@@ -1144,8 +1144,8 @@ void main() {
         expect(data.displayCurrency?.code, 'USD');
         expect(data.selectedAccount?.id, _accountUsd2.id);
         // Expression preserved because currency did not change
-        expect(controller.keypadSnapshot.leftOperand, 100);
-        expect(controller.keypadSnapshot.operator, CalcOperator.add);
+        expect(data.keypad.leftOperand, 100);
+        expect(data.keypad.operator, CalcOperator.add);
       },
     );
   });
@@ -1163,10 +1163,12 @@ void main() {
         controller.appendDigit(2);
         controller.applyOperator(CalcOperator.add);
 
-        expect(controller.keypadSnapshot.leftOperand, 1200);
-        expect(controller.keypadSnapshot.operator, CalcOperator.add);
-        expect(controller.keypadSnapshot.isEvaluating, isTrue);
-        expect(controller.keypadSnapshot.amountMinorUnits, 0);
+        final data =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(data.keypad.leftOperand, 1200);
+        expect(data.keypad.operator, CalcOperator.add);
+        expect(data.keypad.isEvaluating, isTrue);
+        expect(data.keypad.amountMinorUnits, 0);
       },
     );
 
@@ -1186,8 +1188,8 @@ void main() {
 
         final data =
             c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(controller.keypadSnapshot.amountMinorUnits, 1700);
-        expect(controller.keypadSnapshot.showingResult, isTrue);
+        expect(data.keypad.amountMinorUnits, 1700);
+        expect(data.keypad.showingResult, isTrue);
         expect(data.amountMinorUnits, 1700);
       },
     );
@@ -1204,9 +1206,11 @@ void main() {
         controller.applyOperator(CalcOperator.multiply);
         controller.applyOperator(CalcOperator.subtract);
 
-        expect(controller.keypadSnapshot.leftOperand, 100);
-        expect(controller.keypadSnapshot.operator, CalcOperator.subtract);
-        expect(controller.keypadSnapshot.amountMinorUnits, 0);
+        final data =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(data.keypad.leftOperand, 100);
+        expect(data.keypad.operator, CalcOperator.subtract);
+        expect(data.keypad.amountMinorUnits, 0);
       },
     );
 
@@ -1229,8 +1233,10 @@ void main() {
         final after =
             (c.read(transactionFormControllerProvider) as TransactionFormData)
                 .keypadRevision;
+        final data =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
         expect(after, greaterThan(before));
-        expect(controller.keypadSnapshot.hasCurrentInput, isTrue);
+        expect(data.keypad.hasCurrentInput, isTrue);
       },
     );
 
@@ -1248,10 +1254,12 @@ void main() {
         controller.appendDigit(5);
         controller.applyOperator(CalcOperator.subtract);
 
-        expect(controller.keypadSnapshot.leftOperand, 1700);
-        expect(controller.keypadSnapshot.operator, CalcOperator.subtract);
-        expect(controller.keypadSnapshot.isEvaluating, isTrue);
-        expect(controller.keypadSnapshot.amountMinorUnits, 0);
+        final data =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(data.keypad.leftOperand, 1700);
+        expect(data.keypad.operator, CalcOperator.subtract);
+        expect(data.keypad.isEvaluating, isTrue);
+        expect(data.keypad.amountMinorUnits, 0);
       },
     );
   });
