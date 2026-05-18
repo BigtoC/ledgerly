@@ -251,17 +251,13 @@ lib/features/analysis/
 
 ### AnalysisScreen Integration
 
-The `AnalysisScreen` becomes a `CustomScrollView` replacing the current `Scaffold > body: ListView`:
+The `AnalysisScreen` becomes a `CustomScrollView` replacing the current `Scaffold > body: ListView`, and mounts `ChartsSection` above the existing search UI:
 
 ```dart
 CustomScrollView(
   slivers: [
     // Charts section
-    SliverToBoxAdapter(child: PeriodSelector()),
-    SliverToBoxAdapter(child: TypeToggle()),
-    SliverToBoxAdapter(child: DimensionToggle()),
-    SliverToBoxAdapter(child: PieChartWithLegend()),
-    SliverToBoxAdapter(child: BarChart()),
+    SliverToBoxAdapter(child: ChartsSection()),
     // Search section (existing)
     SliverToBoxAdapter(child: SearchBar(...)),
     // Search results (existing, now as sliver)
@@ -269,6 +265,8 @@ CustomScrollView(
   ],
 )
 ```
+
+`ChartsSection` owns the period selector, type toggle, dimension toggle, pie chart, legend, and bar chart.
 
 The existing `SearchBar` and search results remain below the charts. The `ChartsController` and `AnalysisController` are independent — no shared state.
 
@@ -353,7 +351,7 @@ Uses [`fl_chart`](https://pub.dev/packages/fl_chart) for both pie and bar charts
 
 ## Localization
 
-New ARB entries for all three locales (en, zh_TW, zh_CN):
+Chart-related ARB keys for all three locales (en, zh_TW, zh_CN); reuse the existing `chartsTitle` key and add the new entries below:
 
 | Key                       | English                           | Notes                                      |
 |---------------------------|-----------------------------------|--------------------------------------------|
