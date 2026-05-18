@@ -44,15 +44,15 @@ Inline `# Phase 2` annotations throughout the rest of the document mark code pat
 - **[Shipped 2026-05-08] Pending-row approval on Home** — the inline approve/skip affordance for recurring (and later blockchain) pending rows. Repository + use case shipped in the recurring slice; Home UI extension is next.
 - [Pending] Basic charts (pie, bar)
 - [Pending] Fortune City CSV import
-- [Pending] Transaction search
-- [Pending] Extended multi-currency — fetch currency prices and auto-convert balances, summaries, and charts to the user's default currency
-- **[Pending] Wallet transaction sync** — EVM wallet addresses linked to accounts, Ankr API integration, pending transaction review/approve/reject flow
+- **[Shipped 2026-05-010]** Transaction search
+- **[Shipped 2026-05-17]** Extended multi-currency — fetch currency prices and auto-convert balances, summaries, and charts to the user's default currency
 
 ### Phase 3
-- Detailed monthly summary
-- Budget management (weekly/monthly/yearly)
-- Data export (CSV)
-- Cloud backup & sync
+- **[Pending]** Detailed monthly summary
+- **[Pending]** Wallet transaction sync** — EVM wallet addresses linked to accounts, Ankr API integration, pending transaction review/approve/reject flow
+- **[Pending]** Budget management (weekly/monthly/yearly)
+- **[Pending]** Data export (CSV)
+- **[Pending]** Cloud backup & sync
 
 ### Future (Good to Have)
 - App lock / password protection
