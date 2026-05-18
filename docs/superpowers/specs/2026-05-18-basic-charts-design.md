@@ -236,17 +236,17 @@ Reuse existing `analysisCategoriesByIdProvider` and `analysisAccountsByIdProvide
 ```
 lib/features/analysis/
   charts/
-    charts_section.dart
-    charts_controller.dart
-    charts_state.dart
-    charts_providers.dart
+    charts_section.dart          # Main widget, wraps fl_chart widgets with controls
+    charts_controller.dart       # StreamNotifier
+    charts_state.dart            # Freezed state
+    charts_providers.dart        # Co-located providers
     widgets/
-      pie_chart.dart
-      bar_chart.dart
-      chart_legend.dart
-      period_selector.dart
-      dimension_toggle.dart
-      type_toggle.dart
+      category_pie_chart.dart    # fl_chart PieChart wrapper
+      daily_bar_chart.dart       # fl_chart BarChart wrapper
+      chart_legend.dart          # Color-coded legend below pie
+      period_selector.dart       # Month/year toggle + prev/next arrows
+      dimension_toggle.dart      # Category | Account | Currency chips
+      type_toggle.dart           # Expense | Income segmented control
 ```
 
 ### AnalysisScreen Integration
@@ -274,20 +274,22 @@ The existing `SearchBar` and search results remain below the charts. The `Charts
 
 ### Chart Rendering
 
-Uses `CustomPainter` (Flutter built-in canvas API). No `fl_chart` dependency.
+Uses [`fl_chart`](https://pub.dev/packages/fl_chart) for both pie and bar charts. Provides built-in animations, touch interactions (future-proofing), and Material Design styling.
 
-**Pie chart (`PieChartPainter`):**
-- Draws filled arc segments from `ChartSlice.fraction`
+**Pie chart (`fl_chart` `PieChart`):**
+- `PieChartData` entries from `ChartSlice` list
 - Colors from `color_palette.dart` indices
-- Inner white circle for donut style (optional)
-- Animates on data change (lerp between old/new fractions)
+- Donut style with `sectionsSpace: 2` and `centerSpaceRadius: 40`
+- Built-in animation on data change (`swapAnimationDuration`)
+- `PieTouchData` configured as no-op for now (view-only); enables future drill-down
 
-**Bar chart (`BarChartPainter`):**
-- Month view: 28–31 bars (one per calendar day), x-axis shows day numbers
-- Year view: 12 bars (one per month), x-axis shows month abbreviations
-- Future days/months rendered with dimmed color
-- Y-axis auto-scales to max value
-- Bars animate on data change (height lerp)
+**Bar chart (`fl_chart` `BarChart`):**
+- Month view: 28–31 `BarChartGroupData` (one per calendar day), x-axis shows day numbers
+- Year view: 12 `BarChartGroupData` (one per month), x-axis shows month abbreviations
+- Future days/months rendered with `color.withOpacity(0.3)` for dimmed appearance
+- `BarTouchData` configured as no-op for now
+- `maxY` auto-scaled to max value with 10% headroom
+- Built-in animation on data change
 
 **Legend (`ChartLegend`):**
 - Below pie chart
@@ -353,20 +355,20 @@ Uses `CustomPainter` (Flutter built-in canvas API). No `fl_chart` dependency.
 
 New ARB entries for all three locales (en, zh_TW, zh_CN):
 
-| Key | English | Notes |
-|-----|---------|-------|
-| `chartsTitle` | Analysis | App bar title (already exists from search) |
-| `chartsPeriodMonth` | Month | Period toggle label |
-| `chartsPeriodYear` | Year | Period toggle label |
-| `chartsTypeExpense` | Expense | Type toggle label |
-| `chartsTypeIncome` | Income | Type toggle label |
-| `chartsDimensionCategory` | Category | Dimension toggle label |
-| `chartsDimensionAccount` | Account | Dimension toggle label |
-| `chartsDimensionCurrency` | Currency | Dimension toggle label |
-| `chartsNoData` | No transactions yet | Empty state |
-| `chartsMixedCurrencies` | Showing original currency amounts | Banner when rates unavailable |
-| `chartsTotal` | Total | Grand total label |
-| `chartsOther` | Other | Aggregated remaining slices |
+| Key                       | English                           | Notes                                      |
+|---------------------------|-----------------------------------|--------------------------------------------|
+| `chartsTitle`             | Analysis                          | App bar title (already exists from search) |
+| `chartsPeriodMonth`       | Month                             | Period toggle label                        |
+| `chartsPeriodYear`        | Year                              | Period toggle label                        |
+| `chartsTypeExpense`       | Expense                           | Type toggle label                          |
+| `chartsTypeIncome`        | Income                            | Type toggle label                          |
+| `chartsDimensionCategory` | Category                          | Dimension toggle label                     |
+| `chartsDimensionAccount`  | Account                           | Dimension toggle label                     |
+| `chartsDimensionCurrency` | Currency                          | Dimension toggle label                     |
+| `chartsNoData`            | No transactions yet               | Empty state                                |
+| `chartsMixedCurrencies`   | Showing original currency amounts | Banner when rates unavailable              |
+| `chartsTotal`             | Total                             | Grand total label                          |
+| `chartsOther`             | Other                             | Aggregated remaining slices                |
 
 ---
 
@@ -415,7 +417,8 @@ New ARB entries for all three locales (en, zh_TW, zh_CN):
 
 ## Dependencies
 
-No new external dependencies. Charts use Flutter's built-in `CustomPainter`. `fl_chart` remains deferred.
+New external dependency:
+- [`fl_chart`](https://pub.dev/packages/fl_chart) — `^0.70.2` (latest stable as of 2026-05-18). Material 3 compatible, built-in animations, touch support. Add to `pubspec.yaml` under `dependencies`.
 
 New internal imports:
 - `data/models/` — 4 new Freezed models
@@ -438,8 +441,8 @@ New internal imports:
 - `lib/features/analysis/charts/charts_controller.dart` + `.g.dart`
 - `lib/features/analysis/charts/charts_state.dart` + `.freezed.dart`
 - `lib/features/analysis/charts/charts_providers.dart`
-- `lib/features/analysis/charts/widgets/pie_chart.dart`
-- `lib/features/analysis/charts/widgets/bar_chart.dart`
+- `lib/features/analysis/charts/widgets/category_pie_chart.dart`
+- `lib/features/analysis/charts/widgets/daily_bar_chart.dart`
 - `lib/features/analysis/charts/widgets/chart_legend.dart`
 - `lib/features/analysis/charts/widgets/period_selector.dart`
 - `lib/features/analysis/charts/widgets/dimension_toggle.dart`
