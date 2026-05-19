@@ -23,7 +23,12 @@ import '../../core/utils/date_helpers.dart';
 import '../database/app_database.dart' as drift;
 import '../database/daos/currency_dao.dart';
 import '../database/daos/transaction_dao.dart';
+import '../models/account_slice.dart';
+import '../models/category.dart' show CategoryType;
+import '../models/category_slice.dart';
 import '../models/currency.dart';
+import '../models/currency_slice.dart';
+import '../models/time_bucket_slice.dart';
 import '../models/transaction.dart';
 import 'repository_exceptions.dart';
 
@@ -103,6 +108,42 @@ abstract class TransactionRepository {
   /// substring). Returns domain models ordered `date DESC, id DESC`.
   /// Empty/whitespace queries emit `[]` (DAO short-circuits).
   Stream<List<Transaction>> watchByMemo(String query);
+
+  /// Per-(category, currency) subtotal in `[start, end)` filtered by
+  /// transaction type. Emits one row per pair so chart controllers can
+  /// run currency conversion before regrouping. See basic-charts spec
+  /// § Data Layer / Query Examples.
+  Stream<List<CategorySlice>> watchByCategoryInRange({
+    required DateTime start,
+    required DateTime end,
+    required CategoryType type,
+  });
+
+  /// Per-(account, currency) subtotal in `[start, end)` filtered by
+  /// transaction type.
+  Stream<List<AccountSlice>> watchByAccountInRange({
+    required DateTime start,
+    required DateTime end,
+    required CategoryType type,
+  });
+
+  /// Per-currency total in `[start, end)` filtered by transaction type.
+  Stream<List<CurrencySlice>> watchByCurrencyInRange({
+    required DateTime start,
+    required DateTime end,
+    required CategoryType type,
+  });
+
+  /// Per-(bucketStart, currency) subtotal in `[start, end)` filtered by
+  /// transaction type, with [granularity] selecting hour/day/month
+  /// buckets. Local bucket math uses `DateHelpers` so midnight + DST
+  /// behaviour matches the rest of the app.
+  Stream<List<TimeBucketSlice>> watchTimeBucketsInRange({
+    required DateTime start,
+    required DateTime end,
+    required CategoryType type,
+    required TimeBucketGranularity granularity,
+  });
 
   /// One-shot read by id. Returns null when no row matches.
   Future<Transaction?> getById(int id);
@@ -261,6 +302,121 @@ final class DriftTransactionRepository implements TransactionRepository {
   @override
   Stream<List<Transaction>> watchByMemo(String query) {
     return _dao.watchByMemo(query).asyncMap(_rowsToDomain);
+  }
+
+  String _typeWire(CategoryType type) =>
+      type == CategoryType.expense ? 'expense' : 'income';
+
+  @override
+  Stream<List<CategorySlice>> watchByCategoryInRange({
+    required DateTime start,
+    required DateTime end,
+    required CategoryType type,
+  }) {
+    return _dao
+        .watchCategoryTotalsInRange(
+          start: start,
+          end: end,
+          type: _typeWire(type),
+        )
+        .map(
+          (rows) => rows
+              .map(
+                (r) => CategorySlice(
+                  categoryId: r.categoryId,
+                  currencyCode: r.currency,
+                  totalMinorUnits: r.total,
+                ),
+              )
+              .toList(growable: false),
+        );
+  }
+
+  @override
+  Stream<List<AccountSlice>> watchByAccountInRange({
+    required DateTime start,
+    required DateTime end,
+    required CategoryType type,
+  }) {
+    return _dao
+        .watchAccountTotalsInRange(
+          start: start,
+          end: end,
+          type: _typeWire(type),
+        )
+        .map(
+          (rows) => rows
+              .map(
+                (r) => AccountSlice(
+                  accountId: r.accountId,
+                  currencyCode: r.currency,
+                  totalMinorUnits: r.total,
+                ),
+              )
+              .toList(growable: false),
+        );
+  }
+
+  @override
+  Stream<List<CurrencySlice>> watchByCurrencyInRange({
+    required DateTime start,
+    required DateTime end,
+    required CategoryType type,
+  }) {
+    return _dao
+        .watchCurrencyTotalsInRange(
+          start: start,
+          end: end,
+          type: _typeWire(type),
+        )
+        .map(
+          (rows) => rows
+              .map(
+                (r) => CurrencySlice(
+                  currencyCode: r.currency,
+                  totalMinorUnits: r.total,
+                ),
+              )
+              .toList(growable: false),
+        );
+  }
+
+  @override
+  Stream<List<TimeBucketSlice>> watchTimeBucketsInRange({
+    required DateTime start,
+    required DateTime end,
+    required CategoryType type,
+    required TimeBucketGranularity granularity,
+  }) {
+    return _dao
+        .watchChartRowsInRange(start: start, end: end, type: _typeWire(type))
+        .map((rows) {
+          // Bucket locally so DST / midnight semantics match DateHelpers.
+          final acc = <(DateTime, String), int>{};
+          for (final r in rows) {
+            final bucketStart = switch (granularity) {
+              TimeBucketGranularity.hour => DateTime(
+                r.date.year,
+                r.date.month,
+                r.date.day,
+                r.date.hour,
+              ),
+              TimeBucketGranularity.day => DateHelpers.startOfDay(r.date),
+              TimeBucketGranularity.month => DateHelpers.startOfMonth(r.date),
+            };
+            final key = (bucketStart, r.currency);
+            acc[key] = (acc[key] ?? 0) + r.amountMinorUnits;
+          }
+          return acc.entries
+              .map(
+                (e) => TimeBucketSlice(
+                  bucketStart: e.key.$1,
+                  currencyCode: e.key.$2,
+                  totalMinorUnits: e.value,
+                ),
+              )
+              .toList(growable: false);
+        });
   }
 
   @override
