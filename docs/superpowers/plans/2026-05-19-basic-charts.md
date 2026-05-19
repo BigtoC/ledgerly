@@ -55,9 +55,9 @@ lib/data/database/daos/transaction_dao.dart          # + 4 chart query methods
 lib/data/repositories/transaction_repository.dart    # + 4 range methods returning Slice streams
 lib/data/repositories/exchange_rate_repository.dart  # + watchRatesMetadata()
 lib/features/analysis/analysis_screen.dart           # CustomScrollView w/ conditional ChartsSection
-l10n/app_en.arb                                      # + chart keys (15)
-l10n/app_zh_TW.arb                                   # + chart keys (15)
-l10n/app_zh_CN.arb                                   # + chart keys (15)
+l10n/app_en.arb                                      # + chart keys (19)
+l10n/app_zh_TW.arb                                   # + chart keys (19)
+l10n/app_zh_CN.arb                                   # + chart keys (19)
 ```
 
 ### New test files
@@ -1295,6 +1295,13 @@ abstract class ChartsData with _$ChartsData {
     /// missing rates).
     required String? displayCurrencyCode,
     @Default(false) bool mixedCurrencies,
+
+    /// True when Task 12's cold-start fallback auto-switched the active
+    /// dimension from `category` to `currency` because category view was
+    /// blocked by missing FX rates. `ChartsSection` reads this flag to
+    /// render an explanatory banner above the chart body. Cleared when
+    /// the user manually changes dimension or dismisses the banner.
+    @Default(false) bool autoSwitchedFromCategoryDimension,
   }) = _ChartsData;
 }
 
@@ -2658,6 +2665,10 @@ Replace the entire `_emitIfReady` method (and add helpers) with:
       grandTotalMinorUnits: grandTotal,
       displayCurrencyCode: fx.defaultCurrencyCode,
       mixedCurrencies: false,
+      // Threaded only by the currency-dimension path; always false for
+      // category/account because Task 12's auto-switch only points at
+      // currency view.
+      autoSwitchedFromCategoryDimension: false,
     );
     _lastEmittedData = data;
     _emitter?.add(ChartsState.data(chartData: data));
@@ -2769,6 +2780,10 @@ Replace the entire `_emitIfReady` method (and add helpers) with:
       grandTotalMinorUnits: missingRate ? null : grandTotal,
       displayCurrencyCode: missingRate ? null : fx.defaultCurrencyCode,
       mixedCurrencies: missingRate,
+      // Surfaces Task 12's one-shot fallback to the banner in
+      // ChartsSection. Stays sticky until the user toggles dimension or
+      // dismisses the banner explicitly.
+      autoSwitchedFromCategoryDimension: _autoSwitchedToCurrency,
     );
     _lastEmittedData = data;
     _emitter?.add(ChartsState.data(chartData: data));
@@ -2818,6 +2833,8 @@ git commit -m "feat(charts): multi-currency conversion + blocked state in Charts
 
 Spec § Multi-Currency Conversion: "If the active dimension is `category`, automatically select Currency view for the first empty-query render when Week + Category would otherwise open into a blocked state." This is a one-shot fallback that only fires on cold-start.
 
+**Resolved during 2026-05-19 review:** the auto-switch is retained but is no longer silent — the controller now surfaces an `autoSwitchedFromCategoryDimension` flag in `ChartsData`. `ChartsSection` renders a banner explaining why category view is not shown (Task 19). The flag is sticky until the user either toggles dimension manually (cleared automatically) or dismisses the banner via `dismissAutoSwitchBanner()`.
+
 - [ ] **Step 1: Add the fallback flag and trigger**
 
 Inside `class ChartsController`, near the other private fields, add:
@@ -2840,6 +2857,40 @@ In `_emitIfReady`, immediately before the `if (missingRate)` block that emits `C
       _resubscribe();
       return;
     }
+```
+
+- [ ] **Step 1b: Clear the flag when the user changes dimension manually**
+
+Modify `toggleDimension` so manually switching dimensions clears the banner — the user has acknowledged the auto-switch by making their own choice:
+
+```dart
+  void toggleDimension(ChartDimension d) {
+    if (_dimension == d) return;
+    _dimension = d;
+    _autoSwitchedToCurrency = false; // user took over; banner no longer relevant
+    _resubscribe();
+  }
+```
+
+- [ ] **Step 1c: Add an explicit `dismissAutoSwitchBanner()` command**
+
+Add a public command so the banner's close affordance has a way to clear the flag without changing dimension:
+
+```dart
+  void dismissAutoSwitchBanner() {
+    if (!_autoSwitchedToCurrency) return;
+    _autoSwitchedToCurrency = false;
+    // Re-emit the last data so ChartsSection re-reads
+    // `autoSwitchedFromCategoryDimension: false`.
+    final last = _lastEmittedData;
+    if (last != null) {
+      final cleared = last.copyWith(
+        autoSwitchedFromCategoryDimension: false,
+      );
+      _lastEmittedData = cleared;
+      _emitter?.add(ChartsState.data(chartData: cleared));
+    }
+  }
 ```
 
 - [ ] **Step 2: Add the failing test**
@@ -2889,9 +2940,62 @@ Append to `test/unit/controllers/charts_controller_test.dart` inside the existin
       await Future<void>.delayed(const Duration(milliseconds: 50));
       sub.close();
 
-      // After auto-switch, state should be ChartsDataState in currency dim.
+      // After auto-switch, state should be ChartsDataState in currency dim
+      // with the banner flag set so ChartsSection can explain the switch.
       expect(latest, isA<ChartsDataState>());
       final data = (latest! as ChartsDataState).chartData;
+      expect(data.dimension, ChartDimension.currency);
+      expect(data.autoSwitchedFromCategoryDimension, isTrue);
+    });
+
+    test('dismissAutoSwitchBanner re-emits with the flag cleared', () async {
+      when(() => repo.watchByCategoryInRange(
+            start: any(named: 'start'),
+            end: any(named: 'end'),
+            type: any(named: 'type'),
+          )).thenAnswer((_) => Stream.value(<CategorySlice>[
+                const CategorySlice(
+                  categoryId: 1, currencyCode: 'EUR', totalMinorUnits: 1000),
+              ]));
+      when(() => repo.watchByCurrencyInRange(
+            start: any(named: 'start'),
+            end: any(named: 'end'),
+            type: any(named: 'type'),
+          )).thenAnswer((_) => Stream.value(<CurrencySlice>[
+                const CurrencySlice(
+                  currencyCode: 'EUR', totalMinorUnits: 1000),
+              ]));
+      when(() => repo.watchTimeBucketsInRange(
+            start: any(named: 'start'),
+            end: any(named: 'end'),
+            type: any(named: 'type'),
+            granularity: any(named: 'granularity'),
+          )).thenAnswer((_) => Stream.value(const <TimeBucketSlice>[]));
+
+      final container = make(
+        ratesScaledE9: const {},
+        defaultCurrency: 'USD',
+      );
+      addTearDown(container.dispose);
+      container.listen(chartsControllerProvider, (_, _) {});
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      // Sanity: auto-switch happened.
+      var data = (container.read(chartsControllerProvider).valueOrNull!
+              as ChartsDataState)
+          .chartData;
+      expect(data.autoSwitchedFromCategoryDimension, isTrue);
+
+      // User dismisses the banner; controller re-emits with flag cleared.
+      container
+          .read(chartsControllerProvider.notifier)
+          .dismissAutoSwitchBanner();
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      data = (container.read(chartsControllerProvider).valueOrNull!
+              as ChartsDataState)
+          .chartData;
+      expect(data.autoSwitchedFromCategoryDimension, isFalse);
+      // Dimension stays as currency — dismiss doesn't move the user back.
       expect(data.dimension, ChartDimension.currency);
     });
 ```
@@ -2948,6 +3052,8 @@ git commit -m "docs(charts): mark warm-start optimization as deferred"
 - Create: `test/widget/features/analysis/widgets/period_selector_test.dart`
 
 Pure-presentation widget: takes `PeriodType` and anchor `DateTime`, renders prev arrow + period label + next arrow (next disabled at current period) + a 4-way segmented toggle. Calls back to the parent on every interaction.
+
+**Layout (resolved 2026-05-19 review):** the period selector is rendered full-width at **every screen width**. There is no `LayoutBuilder` switch at 600dp for the toggle row — the 4-way `SegmentedButton` always stretches edge-to-edge. The 600dp shell-level adaptivity referenced in `CLAUDE.md` applies to the bottom-nav-vs-NavigationRail switch at the app shell, not to chart controls. Localized labels (zh_TW / zh_CN: 日/週/月/年) are short enough that the segmented control does not overflow at the supported 1.5× text scale on a 320dp viewport.
 
 - [ ] **Step 1: Write the failing widget test**
 
@@ -3169,6 +3275,8 @@ git commit -m "feat(charts): add PeriodSelector widget"
 
 Both are MD3 SegmentedButtons that emit callbacks. Stateless; no tests needed beyond the umbrella `ChartsSection` widget test (Task 19).
 
+**Layout (resolved 2026-05-19 review):** both toggles also render full-width and stacked at every screen width — same rule as the period selector in Task 14. The three control rows (Period, Type, Dimension) form a vertical stack in `ChartsSection` (Task 19) and do not collapse to a row at ≥600dp. Implementers must not add a `LayoutBuilder` here; this layout is intentional and shared across phone and tablet.
+
 - [ ] **Step 1: Create `dimension_toggle.dart`**
 
 ```dart
@@ -3273,6 +3381,8 @@ git commit -m "feat(charts): add DimensionToggle + TypeToggle widgets"
 
 Stateless `fl_chart` `PieChart` wrapper. Accepts a list of `ChartSlice` and renders donut sections. Hides percentage labels when `fraction == null`. View-only `PieTouchData`.
 
+**Accessibility (resolved 2026-05-19 review):** the chart canvas is wrapped in a `Semantics` node with a generated `label` that enumerates each slice (display label + percentage when known, otherwise raw amount) and the grand total. Without this, the `fl_chart` canvas is opaque to TalkBack / VoiceOver. The widget takes the parent's `displayCurrencyCode` / `grandTotalMinorUnits` / `currenciesByCode` and a locale so it can format amounts via `MoneyFormatter`. The legend below (Task 18) remains independently readable — it does not need to be excluded from semantics.
+
 - [ ] **Step 1: Create the widget**
 
 ```dart
@@ -3280,15 +3390,26 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/utils/color_palette.dart';
+import '../../../../core/utils/money_formatter.dart';
+import '../../../../data/models/currency.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../charts_state.dart';
 
 class CategoryPieChart extends StatelessWidget {
   const CategoryPieChart({
     super.key,
     required this.slices,
+    required this.currenciesByCode,
+    required this.locale,
+    this.grandTotalMinorUnits,
+    this.displayCurrencyCode,
   });
 
   final List<ChartSlice> slices;
+  final Map<String, Currency> currenciesByCode;
+  final String locale;
+  final int? grandTotalMinorUnits;
+  final String? displayCurrencyCode;
 
   @override
   Widget build(BuildContext context) {
@@ -3296,32 +3417,73 @@ class CategoryPieChart extends StatelessWidget {
       return const SizedBox(height: 200);
     }
     final showLabels = slices.first.fraction != null;
-    return AspectRatio(
-      aspectRatio: 1.4,
-      child: PieChart(
-        PieChartData(
-          sectionsSpace: 2,
-          centerSpaceRadius: 40,
-          pieTouchData: PieTouchData(enabled: false),
-          sections: [
-            for (final s in slices)
-              PieChartSectionData(
-                value: s.totalMinorUnits.abs().toDouble(),
-                color: colorForIndex(s.colorIndex),
-                title: showLabels
-                    ? '${(s.fraction! * 100).round()}%'
-                    : '',
-                radius: 60,
-                titleStyle: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white,
+    final l10n = AppLocalizations.of(context);
+
+    return Semantics(
+      label: _semanticsLabel(l10n),
+      // The canvas itself is not interactive; mark as image so screen
+      // readers announce the generated summary instead of trying to
+      // traverse fl_chart's internal nodes.
+      image: true,
+      excludeSemantics: true,
+      child: AspectRatio(
+        aspectRatio: 1.4,
+        child: PieChart(
+          PieChartData(
+            sectionsSpace: 2,
+            centerSpaceRadius: 40,
+            pieTouchData: PieTouchData(enabled: false),
+            sections: [
+              for (final s in slices)
+                PieChartSectionData(
+                  value: s.totalMinorUnits.abs().toDouble(),
+                  color: colorForIndex(s.colorIndex),
+                  title: showLabels
+                      ? '${(s.fraction! * 100).round()}%'
+                      : '',
+                  radius: 60,
+                  titleStyle: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  String _semanticsLabel(AppLocalizations l10n) {
+    final parts = <String>[l10n.chartsPieChart];
+    for (final s in slices) {
+      final currency = currenciesByCode[s.currencyCode] ??
+          Currency(code: s.currencyCode, decimals: 2);
+      final amount = MoneyFormatter.format(
+        amountMinorUnits: s.totalMinorUnits,
+        currency: currency,
+        locale: locale,
+      );
+      if (s.fraction != null) {
+        parts.add(
+          '${s.label} ${(s.fraction! * 100).round()}%, $amount',
+        );
+      } else {
+        parts.add('${s.label}: $amount');
+      }
+    }
+    if (grandTotalMinorUnits != null && displayCurrencyCode != null) {
+      final currency = currenciesByCode[displayCurrencyCode!] ??
+          Currency(code: displayCurrencyCode!, decimals: 2);
+      final total = MoneyFormatter.format(
+        amountMinorUnits: grandTotalMinorUnits!,
+        currency: currency,
+        locale: locale,
+      );
+      parts.add('${l10n.chartsTotal} $total');
+    }
+    return parts.join('. ');
   }
 }
 ```
@@ -3347,6 +3509,8 @@ git commit -m "feat(charts): add CategoryPieChart fl_chart wrapper"
 
 Single widget that renders bar charts for all granularities. Caller passes the pre-bucketed `ChartBucketTotal` list plus the `PeriodType` and the period range so the widget can zero-fill missing buckets and dim future ones.
 
+**Accessibility (resolved 2026-05-19 review):** like Task 16, the bar chart canvas is wrapped in a `Semantics` node with a generated `label` that enumerates each populated bucket as `<bucket-label>: <amount>`. Empty (zero-filled) buckets are skipped so the announcement stays manageable on month/year views. The widget takes a `displayCurrencyCode` + `currenciesByCode` so amounts format correctly; future-dated buckets are still skipped because they are always zero.
+
 - [ ] **Step 1: Create the widget**
 
 ```dart
@@ -3354,6 +3518,9 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/utils/money_formatter.dart';
+import '../../../../data/models/currency.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../charts_state.dart';
 
 class DailyBarChart extends StatelessWidget {
@@ -3363,12 +3530,16 @@ class DailyBarChart extends StatelessWidget {
     required this.anchorDate,
     required this.bucketTotals,
     required this.locale,
+    required this.currenciesByCode,
+    this.displayCurrencyCode,
   });
 
   final PeriodType period;
   final DateTime anchorDate;
   final List<ChartBucketTotal> bucketTotals;
   final String locale;
+  final Map<String, Currency> currenciesByCode;
+  final String? displayCurrencyCode;
 
   @override
   Widget build(BuildContext context) {
@@ -3379,8 +3550,13 @@ class DailyBarChart extends StatelessWidget {
         .map((b) => b.totalMinorUnits.abs())
         .fold<int>(0, (a, b) => a > b ? a : b);
     final headroom = (maxY * 1.1).round();
+    final l10n = AppLocalizations.of(context);
 
-    return AspectRatio(
+    return Semantics(
+      label: _semanticsLabel(l10n, filledBuckets),
+      image: true,
+      excludeSemantics: true,
+      child: AspectRatio(
       aspectRatio: 1.6,
       child: BarChart(
         BarChartData(
@@ -3435,7 +3611,31 @@ class DailyBarChart extends StatelessWidget {
           ],
         ),
       ),
+      ),
     );
+  }
+
+  String _semanticsLabel(
+    AppLocalizations l10n,
+    List<ChartBucketTotal> filledBuckets,
+  ) {
+    final parts = <String>[l10n.chartsBarChart];
+    final currency = displayCurrencyCode == null
+        ? null
+        : (currenciesByCode[displayCurrencyCode!] ??
+            Currency(code: displayCurrencyCode!, decimals: 2));
+    for (final b in filledBuckets) {
+      if (b.totalMinorUnits == 0) continue; // skip zero-filled empties
+      final amount = currency == null
+          ? b.totalMinorUnits.toString()
+          : MoneyFormatter.format(
+              amountMinorUnits: b.totalMinorUnits,
+              currency: currency,
+              locale: locale,
+            );
+      parts.add('${_axisLabel(b.bucketStart)}: $amount');
+    }
+    return parts.join('. ');
   }
 
   List<ChartBucketTotal> _zeroFill(
@@ -3519,6 +3719,8 @@ git commit -m "feat(charts): add DailyBarChart with zero-fill + future-bucket di
 
 Legend caps at 8 visible entries (top-7 + "Other"). Tapping the "Other" trailing affordance opens a modal sheet listing every slice.
 
+**"Other" bucket in mixed-currency mode (resolved 2026-05-19 review):** when `mixedCurrencies` is true the legend slices are still denominated in their **source** currencies, so summing leftover slices into one numeric `Other` value would either misstate the total (if labelled as one currency) or be unreadable (if amounts are added across currencies). The legend therefore takes a `mixedCurrencies` flag from the caller (`ChartsSection` passes `ChartsData.mixedCurrencies` through). When the flag is true, the `Other` row renders as a localized item-count (`chartsOtherCount` plural key, e.g. "Other (3 items)") instead of an amount. The "View all" sheet is unchanged — each row in that sheet keeps its own currency code, so it stays correct.
+
 - [ ] **Step 1: Create the legend file**
 
 ```dart
@@ -3537,11 +3739,17 @@ class ChartLegend extends StatelessWidget {
     required this.slices,
     required this.currenciesByCode,
     required this.locale,
+    this.mixedCurrencies = false,
   });
 
   final List<ChartSlice> slices;
   final Map<String, Currency> currenciesByCode;
   final String locale;
+
+  /// When true, the legend's `Other` bucket renders an item count instead
+  /// of a summed amount, because the leftover slices are in different
+  /// source currencies and cannot be added meaningfully.
+  final bool mixedCurrencies;
 
   static const int _maxVisible = 8;
 
@@ -3553,6 +3761,7 @@ class ChartLegend extends StatelessWidget {
 
     final visible = <ChartSlice>[];
     int otherTotal = 0;
+    int otherCount = 0;
     String otherCurrencyCode = sorted.isNotEmpty
         ? sorted.first.currencyCode
         : 'USD';
@@ -3562,6 +3771,7 @@ class ChartLegend extends StatelessWidget {
       visible.addAll(sorted.take(_maxVisible - 1));
       for (final s in sorted.skip(_maxVisible - 1)) {
         otherTotal += s.totalMinorUnits;
+        otherCount++;
       }
     }
     final hasOther = sorted.length > _maxVisible;
@@ -3571,16 +3781,12 @@ class ChartLegend extends StatelessWidget {
       children: [
         for (final s in visible) _row(context, s),
         if (hasOther)
-          _row(
+          _otherRow(
             context,
-            ChartSlice(
-              label: l10n.chartsOther,
-              currencyCode: otherCurrencyCode,
-              totalMinorUnits: otherTotal,
-              colorIndex: CategoryPaletteIndex.neutralVariant50,
-              iconKey: '',
-              fraction: null,
-            ),
+            l10n: l10n,
+            total: otherTotal,
+            count: otherCount,
+            currencyCode: otherCurrencyCode,
           ),
         if (hasOther)
           Align(
@@ -3624,6 +3830,52 @@ class ChartLegend extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _otherRow(
+    BuildContext context, {
+    required AppLocalizations l10n,
+    required int total,
+    required int count,
+    required String currencyCode,
+  }) {
+    // In mixed-currency mode, summing minor units across different
+    // currencies is meaningless. Show a localized item count instead.
+    if (mixedCurrencies) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                color: colorForIndex(CategoryPaletteIndex.neutralVariant50),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                l10n.chartsOtherCount(count),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return _row(
+      context,
+      ChartSlice(
+        label: l10n.chartsOther,
+        currencyCode: currencyCode,
+        totalMinorUnits: total,
+        colorIndex: CategoryPaletteIndex.neutralVariant50,
+        iconKey: '',
+        fraction: null,
       ),
     );
   }
@@ -3883,6 +4135,22 @@ class ChartsSection extends ConsumerWidget {
           onChanged: controller.toggleDimension,
         ),
         const SizedBox(height: 16),
+        if (chartData?.autoSwitchedFromCategoryDimension ?? false)
+          // Banner explaining Task 12's one-shot cold-start fallback.
+          // The close action calls dismissAutoSwitchBanner() so users who
+          // want to keep the currency view but hide the message can.
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: MaterialBanner(
+              content: Text(l10n.chartsAutoSwitchedToCurrency),
+              actions: [
+                TextButton(
+                  onPressed: controller.dismissAutoSwitchBanner,
+                  child: Text(MaterialLocalizations.of(context).closeButtonLabel),
+                ),
+              ],
+            ),
+          ),
         if (chartData?.mixedCurrencies ?? false)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
@@ -3942,12 +4210,19 @@ class _ChartBody extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        CategoryPieChart(slices: data.slices),
+        CategoryPieChart(
+          slices: data.slices,
+          currenciesByCode: currenciesTyped,
+          locale: locale,
+          grandTotalMinorUnits: data.grandTotalMinorUnits,
+          displayCurrencyCode: data.displayCurrencyCode,
+        ),
         const SizedBox(height: 12),
         ChartLegend(
           slices: data.slices,
           currenciesByCode: currenciesTyped,
           locale: locale,
+          mixedCurrencies: data.mixedCurrencies,
         ),
         if (showBar) ...[
           const SizedBox(height: 16),
@@ -3956,6 +4231,8 @@ class _ChartBody extends StatelessWidget {
             anchorDate: data.anchorDate,
             bucketTotals: data.bucketTotals,
             locale: locale,
+            currenciesByCode: currenciesTyped,
+            displayCurrencyCode: data.displayCurrencyCode,
           ),
         ],
       ],
@@ -4100,7 +4377,7 @@ git commit -m "feat(charts): add ChartsSection wiring pie + legend + bar"
 - Modify: `l10n/app_zh_TW.arb`
 - Modify: `l10n/app_zh_CN.arb`
 
-Fifteen new keys per spec § Localization. Keep alphabetical-ish grouping consistent with the rest of the ARB file (existing analysis keys cluster together — append the chart keys to that group). The `zh.arb` fallback only carries `appTitle` — no edits required.
+Nineteen new keys (15 from the spec § Localization plus 4 added during the 2026-05-19 review: `chartsAutoSwitchedToCurrency`, `chartsOtherCount`, `chartsPieChart`, `chartsBarChart`). Keep alphabetical-ish grouping consistent with the rest of the ARB file (existing analysis keys cluster together — append the chart keys to that group). The `zh.arb` fallback only carries `appTitle` — no edits required.
 
 **Execution note:** Even though this remains numbered Task 20 for traceability, run it immediately after Task 13 before starting Task 14.
 
@@ -4139,6 +4416,17 @@ Append next to the existing `analysis*` keys (preserve the trailing `}` of the J
   "@chartsTotal": {"description": "Grand-total label"},
   "chartsOther": "Other",
   "@chartsOther": {"description": "Aggregated remainder legend entry"},
+  "chartsOtherCount": "{count, plural, =1{Other (1 item)} other{Other ({count} items)}}",
+  "@chartsOtherCount": {
+    "description": "Other-bucket legend label when slices are in mixed currencies and amounts cannot be summed; shows item count instead",
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "chartsAutoSwitchedToCurrency": "Showing by currency — no exchange rates yet for category view.",
+  "@chartsAutoSwitchedToCurrency": {"description": "Banner shown when ChartsController auto-switched from category to currency on cold-start because FX rates were missing"},
+  "chartsPieChart": "Pie chart",
+  "@chartsPieChart": {"description": "Accessibility prefix announced before pie chart contents"},
+  "chartsBarChart": "Bar chart",
+  "@chartsBarChart": {"description": "Accessibility prefix announced before bar chart contents"},
 ```
 
 - [ ] **Step 2: Add Traditional Chinese translations to `l10n/app_zh_TW.arb`**
@@ -4159,6 +4447,10 @@ Append next to the existing `analysis*` keys (preserve the trailing `}` of the J
   "chartsViewAll": "查看全部",
   "chartsTotal": "總計",
   "chartsOther": "其他",
+  "chartsOtherCount": "{count, plural, =1{其他（1 項）} other{其他（{count} 項）}}",
+  "chartsAutoSwitchedToCurrency": "改以幣別檢視 — 尚未取得類別檢視所需的匯率。",
+  "chartsPieChart": "圓餅圖",
+  "chartsBarChart": "長條圖",
 ```
 
 - [ ] **Step 3: Add Simplified Chinese translations to `l10n/app_zh_CN.arb`**
@@ -4179,6 +4471,10 @@ Append next to the existing `analysis*` keys (preserve the trailing `}` of the J
   "chartsViewAll": "查看全部",
   "chartsTotal": "总计",
   "chartsOther": "其他",
+  "chartsOtherCount": "{count, plural, =1{其他（1 项）} other{其他（{count} 项）}}",
+  "chartsAutoSwitchedToCurrency": "改用币种视图 — 类别视图所需的汇率尚未就绪。",
+  "chartsPieChart": "饼图",
+  "chartsBarChart": "条形图",
 ```
 
 - [ ] **Step 4: Regenerate localization classes**
@@ -4485,34 +4781,21 @@ Capture any visual or behavioral gaps as TODO comments in `docs/superpowers/spec
 
 ## Deferred / Open Questions
 
-### From 2026-05-19 review
+### Resolved during 2026-05-19 review
 
-- **Default chart behavior conflicts with the plan's own cold-start fallback** — Task 11 / Task 12 / Task 23 (P1, product-lens, confidence 100)
+All five P1/P2 questions raised in the 2026-05-19 review have been resolved in this plan revision. Decisions and the tasks where each landed:
 
-  The plan defines two different empty-query entry experiences for Analysis. Weekly category is described as the default, but Task 12 silently flips cold-start users into currency view when rates are missing, so the first-run experience becomes data-dependent instead of predictable.
+1. **Default chart behavior vs. cold-start fallback** (P1) — *Decision: keep Task 12's auto-switch, but make it visible.* `ChartsData` gained an `autoSwitchedFromCategoryDimension` flag; Task 12 sets and threads it; Task 19 renders a `MaterialBanner` above the chart body when it is true, with a Close action that calls a new `dismissAutoSwitchBanner()` controller command. Manually toggling dimension also clears the flag. ARB: `chartsAutoSwitchedToCurrency`. The first-run experience is now predictable on the data side (auto-switch still fires) and on the UX side (the user is told why).
 
-  <!-- dedup-key: section="task 11 task 12 task 23" title="default chart behavior conflicts with the plans own coldstart fallback" evidence="### Task 12: Auto-switch to Currency dimension on first empty-query render when Week+Category would otherwise open into" -->
+2. **Mixed-currency "Other" bucket sums incompatible currencies** (P1) — *Decision: show count, not amount.* Task 18 takes a new `mixedCurrencies` flag (passed through from `ChartsData.mixedCurrencies` in Task 19's `_ChartBody`). When true, the `Other` legend row renders `Other (N items)` via the new plural ARB key `chartsOtherCount` instead of a misleading summed amount. The "View all" sheet is unchanged — its rows are per-slice and stay in source currencies.
 
-- **Mixed-currency "Other" bucket sums incompatible currencies** — Task 11 / Task 18 (P1, design-lens, confidence 100)
+3. **First release scope is broad for a search-secondary surface** (P2) — *Decision: ship full scope as planned.* The user confirmed the current "one chart at a time, three toggles" model is intentional. The page renders one chart based on Period × Dimension × Type, so the visible surface area at any moment is small; the spec already settled the combo matrix. No descope.
 
-  The mixed-currency fallback keeps source-currency amounts separate, but the legend later aggregates leftover slices into one numeric `Other` amount with a single currency code. That can misstate totals and make the amount unreadable as money.
+4. **Control layout leaves 600dp behavior unspecified** (P2) — *Decision: always stack at all widths.* Tasks 14 and 15 now state explicitly that the period selector, type toggle, and dimension toggle render as a full-width vertical stack at every width. The 600dp shell-level adaptivity (bottom-nav ↔ NavigationRail) does not apply to chart controls. The note at line 20 of this plan (`adaptive 600dp behaviour remain binding`) refers to the existing app-shell behaviour, not to the chart controls.
 
-  <!-- dedup-key: section="task 11 task 18" title="mixedcurrency other bucket sums incompatible currencies" evidence="currency dimension renders source-currency slices when rates missing" -->
+5. **Charts lack an explicit non-visual summary path** (P2) — *Decision: wrap each chart in `Semantics` with a generated label.* Task 16 wraps `CategoryPieChart` in `Semantics(image: true, excludeSemantics: true)` with a label that lists each slice (with percentage when known) and the grand total. Task 17 does the same for `DailyBarChart`, listing each non-zero bucket. Both widgets now take `currenciesByCode` + locale + an optional `displayCurrencyCode` so amounts format via `MoneyFormatter`. ARB: `chartsPieChart`, `chartsBarChart`. The legend below is independently readable and does not need exclusion.
 
-- **The first release scope is broad for a search-secondary surface** — Goal / Architecture / Task List (P2, scope-guardian, product-lens, confidence 100)
+### Still deferred (not in this release)
 
-  This release is supposed to preserve a search-first Analysis tab, but the plan bundles twelve chart combinations, FX conversion rules, blocked states, auto-switching, legend overflow, and a full new feature slice into the first shipment. That is a large implementation and maintenance surface for a secondary view-only entrypoint.
-
-  <!-- dedup-key: section="goal architecture task list" title="the first release scope is broad for a searchsecondary surface" evidence="**Goal:** Add a pie + bar chart surface to the Analysis tab so users can see expense/income breakdowns by category," -->
-
-- **Control layout leaves 600dp behavior unspecified** — Task 14 / Task 15 / Task 19 (P2, design-lens, confidence 75)
-
-  The plan says adaptive 600dp behavior is binding, but the widget tasks only specify fixed stacked segmented controls. On narrow phones, localized labels, or wider layouts, implementers still have to guess whether those controls wrap, scroll, split, or rearrange.
-
-  <!-- dedup-key: section="task 14 task 15 task 19" title="control layout leaves 600dp behavior unspecified" evidence="Everything else in the spec is binding — except the warm-start optimization explicitly deferred in Task 13. Blocked-state s" -->
-
-- **Charts lack an explicit non-visual summary path** — Task 16 / Task 17 / Task 19 (P2, design-lens, confidence 75)
-
-  The plan defines pie and bar charts as visual outputs, but it never specifies a textual summary or semantics path for screen-reader users. Without an explicit non-visual fallback, the feature is likely to ship analytics that are sighted-only.
-
-  <!-- dedup-key: section="task 16 task 17 task 19" title="charts lack an explicit nonvisual summary path" evidence="Stateless `fl_chart` `PieChart` wrapper." -->
+- **Warm-start optimization** (Task 13) — Sub-frame cold-path performance under Drift `.watch()` makes this an unnecessary complication today. Re-evaluate if cold-start jank is observed in practice.
+- **Chart → transaction drill-down** — Tapping a slice / bar to filter the transaction list is intentionally out of scope; `PieTouchData(enabled: false)` and `BarTouchData(enabled: false)` lock both charts to view-only for v1.
