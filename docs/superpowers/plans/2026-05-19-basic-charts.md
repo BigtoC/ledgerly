@@ -1853,6 +1853,28 @@ class ChartsController extends _$ChartsController {
     final controller = StreamController<ChartsState>();
     _emitter = controller;
 
+    // Re-resolve the current chart when FX or label metadata changes.
+    ref.listen(chartsFxStatusProvider, (_, __) {
+      if (_lastSlices != null && _lastBuckets != null) {
+        _emitIfReady();
+      }
+    });
+    ref.listen(chartsCurrenciesByCodeProvider, (_, __) {
+      if (_lastSlices != null && _lastBuckets != null) {
+        _emitIfReady();
+      }
+    });
+    ref.listen(analysisCategoriesByIdProvider, (_, __) {
+      if (_lastSlices != null && _lastBuckets != null) {
+        _emitIfReady();
+      }
+    });
+    ref.listen(analysisAccountsByIdProvider, (_, __) {
+      if (_lastSlices != null && _lastBuckets != null) {
+        _emitIfReady();
+      }
+    });
+
     controller.add(const ChartsState.idle());
     _resubscribe();
 
@@ -1900,6 +1922,10 @@ class ChartsController extends _$ChartsController {
     _resubscribe();
   }
 
+  void retry() {
+    _resubscribe();
+  }
+
   // ---------- Subscription wiring ----------
 
   ({DateTime start, DateTime end}) _currentRange() {
@@ -1918,6 +1944,8 @@ class ChartsController extends _$ChartsController {
   void _resubscribe() {
     _sliceSub?.cancel();
     _bucketsSub?.cancel();
+    _lastSlices = null;
+    _lastBuckets = null;
     final myGen = ++_generation;
     _emitter?.add(ChartsState.loading(previous: _lastEmittedData));
 
@@ -1940,7 +1968,7 @@ class ChartsController extends _$ChartsController {
           },
           onError: (Object e, StackTrace st) {
             if (myGen != _generation) return;
-            _emitter?.addError(e, st);
+            _emitter?.add(ChartsState.error(e, st));
           },
         );
 
@@ -1957,7 +1985,7 @@ class ChartsController extends _$ChartsController {
               (slices) => _onSlices(myGen, slices),
               onError: (Object e, StackTrace st) {
                 if (myGen != _generation) return;
-                _emitter?.addError(e, st);
+                _emitter?.add(ChartsState.error(e, st));
               },
             );
       case ChartDimension.account:
@@ -1971,7 +1999,7 @@ class ChartsController extends _$ChartsController {
               (slices) => _onSlices(myGen, slices),
               onError: (Object e, StackTrace st) {
                 if (myGen != _generation) return;
-                _emitter?.addError(e, st);
+                _emitter?.add(ChartsState.error(e, st));
               },
             );
       case ChartDimension.currency:
@@ -1985,7 +2013,7 @@ class ChartsController extends _$ChartsController {
               (slices) => _onSlices(myGen, slices),
               onError: (Object e, StackTrace st) {
                 if (myGen != _generation) return;
-                _emitter?.addError(e, st);
+                _emitter?.add(ChartsState.error(e, st));
               },
             );
     }
@@ -2131,6 +2159,8 @@ class ChartsController extends _$ChartsController {
   }
 }
 ```
+
+**Regression note:** Extend the controller test group with a case that changes period or dimension, lets only one of the new streams emit first, and asserts the controller does not combine that emission with stale `_lastSlices` / `_lastBuckets` from the prior subscription.
 
 **Important note on the controller's imports:** `categoryDisplayName` import looks unused above — the controller resolves labels without an `AppLocalizations` instance. If `flutter analyze` flags it as unused, remove the import; otherwise leaving the comment-link to it documents intent.
 
@@ -2428,6 +2458,8 @@ Append to `test/unit/controllers/charts_controller_test.dart`:
 ```
 
 (Import `dart:async` and `ExchangeRateMetadata` at the top of the test file if not already.)
+
+Also add a reactive regression test using a `StreamController<ChartsFxStatus>` override so a chart that starts blocked by missing rates transitions to `ChartsDataState` when FX metadata arrives without calling any controller command. This verifies the provider listeners added in Task 9.
 
 - [ ] **Step 2: Run tests to verify failure**
 
@@ -2907,6 +2939,8 @@ git commit -m "docs(charts): mark warm-start optimization as deferred"
 
 ---
 
+> **Execution order note:** Complete Task 20 immediately after Task 13, then return to Task 14. Tasks 14-19 assume the chart ARB keys and generated `AppLocalizations` getters already exist.
+
 ### Task 14: Period selector widget
 
 **Files:**
@@ -3105,18 +3139,14 @@ class PeriodSelector extends StatelessWidget {
 }
 ```
 
-**Note:** Test asserts `find.text('Day')`. That literal will not exist until Task 20 adds the ARB keys. Either skip the period-toggle assertion until then, or run Task 20 (l10n) first. The plan keeps tasks in this order; mark this widget test as expected-to-fail-on-l10n and revisit after Task 20. To keep CI green, comment out the `find.text('Day')` block with a `// TODO(task 20): re-enable once chartsPeriod ARB keys land.` until ARB keys are added, then uncomment.
+**Note:** Task 20 is a hard prerequisite for this widget. Complete Task 20 immediately after Task 13, then return here with the generated `chartsPeriod*` getters already available. Do not use placeholder strings or comment out assertions; the intended execution order is Task 20 -> Task 14 -> Task 15.
 
-- [ ] **Step 4: Verify the widget compiles even without l10n keys**
+- [ ] **Step 4: Verify the widget compiles**
 
 Run: `dart format . && flutter analyze`
-Expected: `l10n.chartsPeriodDay` (etc.) will be undefined. Either:
-- Block on Task 20 first (recommended — swap the order in your worktree)
-- Or use placeholder string literals + a `TODO(task 20)` comment until ARB lands
+Expected: clean — Task 20's ARB keys and generated getters are already present.
 
-If you skip ahead to Task 20 in the same branch, return here, replace the placeholders, and verify both this test and the widget render with the localized labels.
-
-- [ ] **Step 5: Run the test (after l10n is wired)**
+- [ ] **Step 5: Run the test**
 
 Run: `flutter test test/widget/features/analysis/widgets/period_selector_test.dart`
 Expected: PASS.
@@ -3681,18 +3711,51 @@ class ChartsSection extends ConsumerWidget {
           context,
           ref,
           controller,
-          body: Text(l10n.analysisErrorMessage),
+          body: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('$e'),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: controller.retry,
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
           l10n: l10n,
         ),
         data: (state) => switch (state) {
-          ChartsIdle() ||
-          ChartsLoading() => _frame(
+          ChartsIdle() => _frame(
               context,
               ref,
               controller,
               body: const Center(child: CircularProgressIndicator()),
               l10n: l10n,
-              chartData: state is ChartsLoading ? state.previous : null,
+            ),
+          ChartsLoading(:final previous) => _frame(
+              context,
+              ref,
+              controller,
+              body: previous == null
+                  ? const Center(child: CircularProgressIndicator())
+                  : Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        _ChartBody(
+                          data: previous,
+                          locale: locale,
+                          currencies: currenciesAsync.valueOrNull ?? const {},
+                        ),
+                        const Positioned.fill(
+                          child: IgnorePointer(
+                            child: ColoredBox(color: Color(0x33000000)),
+                          ),
+                        ),
+                        const CircularProgressIndicator(),
+                      ],
+                    ),
+              l10n: l10n,
+              chartData: previous,
               locale: locale,
               currencies: currenciesAsync.valueOrNull ?? const {},
             ),
@@ -3710,10 +3773,30 @@ class ChartsSection extends ConsumerWidget {
               context,
               ref,
               controller,
-              body: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 24),
-                child: Center(child: Text(l10n.chartsRatesRequired)),
-              ),
+              body: previous == null
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Center(child: Text(l10n.chartsRatesRequired)),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        MaterialBanner(
+                          content: Text(l10n.chartsRatesRequired),
+                          actions: [
+                            TextButton(
+                              onPressed: controller.retry,
+                              child: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                        _ChartBody(
+                          data: previous,
+                          locale: locale,
+                          currencies: currenciesAsync.valueOrNull ?? const {},
+                        ),
+                      ],
+                    ),
               l10n: l10n,
               chartData: previous,
               locale: locale,
@@ -3737,7 +3820,17 @@ class ChartsSection extends ConsumerWidget {
               context,
               ref,
               controller,
-              body: Text('$error'),
+              body: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('$error'),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: controller.retry,
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
               l10n: l10n,
             ),
         },
@@ -4008,6 +4101,8 @@ git commit -m "feat(charts): add ChartsSection wiring pie + legend + bar"
 - Modify: `l10n/app_zh_CN.arb`
 
 Fifteen new keys per spec § Localization. Keep alphabetical-ish grouping consistent with the rest of the ARB file (existing analysis keys cluster together — append the chart keys to that group). The `zh.arb` fallback only carries `appTitle` — no edits required.
+
+**Execution note:** Even though this remains numbered Task 20 for traceability, run it immediately after Task 13 before starting Task 14.
 
 - [ ] **Step 1: Add the keys to `l10n/app_en.arb`**
 
@@ -4387,3 +4482,37 @@ Capture any visual or behavioral gaps as TODO comments in `docs/superpowers/spec
 - Warm-start chart reuse (Task 13).
 - Per-period chart→transaction drill-down (spec § Deferred — already tracked).
 - Graceful degradation when one currency in an otherwise-converted chart lacks a rate (spec § Deferred).
+
+## Deferred / Open Questions
+
+### From 2026-05-19 review
+
+- **Default chart behavior conflicts with the plan's own cold-start fallback** — Task 11 / Task 12 / Task 23 (P1, product-lens, confidence 100)
+
+  The plan defines two different empty-query entry experiences for Analysis. Weekly category is described as the default, but Task 12 silently flips cold-start users into currency view when rates are missing, so the first-run experience becomes data-dependent instead of predictable.
+
+  <!-- dedup-key: section="task 11 task 12 task 23" title="default chart behavior conflicts with the plans own coldstart fallback" evidence="### Task 12: Auto-switch to Currency dimension on first empty-query render when Week+Category would otherwise open into" -->
+
+- **Mixed-currency "Other" bucket sums incompatible currencies** — Task 11 / Task 18 (P1, design-lens, confidence 100)
+
+  The mixed-currency fallback keeps source-currency amounts separate, but the legend later aggregates leftover slices into one numeric `Other` amount with a single currency code. That can misstate totals and make the amount unreadable as money.
+
+  <!-- dedup-key: section="task 11 task 18" title="mixedcurrency other bucket sums incompatible currencies" evidence="currency dimension renders source-currency slices when rates missing" -->
+
+- **The first release scope is broad for a search-secondary surface** — Goal / Architecture / Task List (P2, scope-guardian, product-lens, confidence 100)
+
+  This release is supposed to preserve a search-first Analysis tab, but the plan bundles twelve chart combinations, FX conversion rules, blocked states, auto-switching, legend overflow, and a full new feature slice into the first shipment. That is a large implementation and maintenance surface for a secondary view-only entrypoint.
+
+  <!-- dedup-key: section="goal architecture task list" title="the first release scope is broad for a searchsecondary surface" evidence="**Goal:** Add a pie + bar chart surface to the Analysis tab so users can see expense/income breakdowns by category," -->
+
+- **Control layout leaves 600dp behavior unspecified** — Task 14 / Task 15 / Task 19 (P2, design-lens, confidence 75)
+
+  The plan says adaptive 600dp behavior is binding, but the widget tasks only specify fixed stacked segmented controls. On narrow phones, localized labels, or wider layouts, implementers still have to guess whether those controls wrap, scroll, split, or rearrange.
+
+  <!-- dedup-key: section="task 14 task 15 task 19" title="control layout leaves 600dp behavior unspecified" evidence="Everything else in the spec is binding — except the warm-start optimization explicitly deferred in Task 13. Blocked-state s" -->
+
+- **Charts lack an explicit non-visual summary path** — Task 16 / Task 17 / Task 19 (P2, design-lens, confidence 75)
+
+  The plan defines pie and bar charts as visual outputs, but it never specifies a textual summary or semantics path for screen-reader users. Without an explicit non-visual fallback, the feature is likely to ship analytics that are sighted-only.
+
+  <!-- dedup-key: section="task 16 task 17 task 19" title="charts lack an explicit nonvisual summary path" evidence="Stateless `fl_chart` `PieChart` wrapper." -->
