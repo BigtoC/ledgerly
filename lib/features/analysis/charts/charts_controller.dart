@@ -12,6 +12,7 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../app/providers/repository_providers.dart';
@@ -58,6 +59,10 @@ class ChartsController extends _$ChartsController {
   // sub-frame in practice. Revisit if cold-start jank surfaces.
   @override
   Stream<ChartsState> build() {
+    debugPrint(
+      '[ChartsController] build() — period=$_period type=$_type '
+      'dimension=$_dimension anchor=$_anchor',
+    );
     _emitter?.close();
     _sliceSub?.cancel();
     _bucketsSub?.cancel();
@@ -104,24 +109,34 @@ class ChartsController extends _$ChartsController {
   // ---------- Commands ----------
 
   void setPeriod(PeriodType period) {
-    if (_period == period) return;
+    debugPrint('[ChartsController] setPeriod($period) current=$_period');
+    if (_period == period) {
+      debugPrint('[ChartsController] setPeriod no-op (same period)');
+      return;
+    }
     _period = period;
     _anchor = _normalizeAnchor(_anchor, period);
     _resubscribe();
   }
 
   void previousPeriod() {
+    debugPrint('[ChartsController] previousPeriod() from anchor=$_anchor');
     _anchor = _shiftAnchor(_anchor, _period, -1);
     _resubscribe();
   }
 
   void nextPeriod() {
-    if (_isAtCurrentPeriod()) return; // Disabled at current period.
+    debugPrint('[ChartsController] nextPeriod() from anchor=$_anchor');
+    if (_isAtCurrentPeriod()) {
+      debugPrint('[ChartsController] nextPeriod no-op (at current period)');
+      return;
+    }
     _anchor = _shiftAnchor(_anchor, _period, 1);
     _resubscribe();
   }
 
   void toggleType() {
+    debugPrint('[ChartsController] toggleType() current=$_type');
     _type = _type == CategoryType.expense
         ? CategoryType.income
         : CategoryType.expense;
@@ -129,7 +144,11 @@ class ChartsController extends _$ChartsController {
   }
 
   void toggleDimension(ChartDimension d) {
-    if (_dimension == d) return;
+    debugPrint('[ChartsController] toggleDimension($d) current=$_dimension');
+    if (_dimension == d) {
+      debugPrint('[ChartsController] toggleDimension no-op (same dimension)');
+      return;
+    }
     _dimension = d;
     // User took over; the auto-switch banner is no longer relevant.
     _autoSwitchedToCurrency = false;
@@ -137,6 +156,7 @@ class ChartsController extends _$ChartsController {
   }
 
   void retry() {
+    debugPrint('[ChartsController] retry()');
     _resubscribe();
   }
 
@@ -173,10 +193,16 @@ class ChartsController extends _$ChartsController {
     _lastSlices = null;
     _lastBuckets = null;
     final myGen = ++_generation;
+    final range = _currentRange();
+    debugPrint(
+      '[ChartsController] _resubscribe gen=$myGen period=$_period '
+      'dimension=$_dimension type=$_type '
+      'range=[${range.start.toIso8601String()}, ${range.end.toIso8601String()}) '
+      'previousData=${_lastEmittedData != null}',
+    );
     _emitter?.add(ChartsState.loading(previous: _lastEmittedData));
 
     final repo = ref.read(transactionRepositoryProvider);
-    final range = _currentRange();
 
     _bucketsSub = repo
         .watchTimeBucketsInRange(
@@ -187,11 +213,19 @@ class ChartsController extends _$ChartsController {
         )
         .listen(
           (buckets) {
-            if (myGen != _generation) return;
+            debugPrint(
+              '[ChartsController] buckets emit gen=$myGen '
+              '(active=$_generation) count=${buckets.length}',
+            );
+            if (myGen != _generation) {
+              debugPrint('[ChartsController] buckets dropped — stale gen');
+              return;
+            }
             _lastBuckets = buckets;
             _emitIfReady();
           },
           onError: (Object e, StackTrace st) {
+            debugPrint('[ChartsController] buckets error gen=$myGen: $e');
             if (myGen != _generation) return;
             _emitter?.add(ChartsState.error(e, st));
           },
@@ -208,6 +242,9 @@ class ChartsController extends _$ChartsController {
             .listen(
               (slices) => _onSlices(myGen, slices),
               onError: (Object e, StackTrace st) {
+                debugPrint(
+                  '[ChartsController] category slice error gen=$myGen: $e',
+                );
                 if (myGen != _generation) return;
                 _emitter?.add(ChartsState.error(e, st));
               },
@@ -222,6 +259,9 @@ class ChartsController extends _$ChartsController {
             .listen(
               (slices) => _onSlices(myGen, slices),
               onError: (Object e, StackTrace st) {
+                debugPrint(
+                  '[ChartsController] account slice error gen=$myGen: $e',
+                );
                 if (myGen != _generation) return;
                 _emitter?.add(ChartsState.error(e, st));
               },
@@ -236,6 +276,9 @@ class ChartsController extends _$ChartsController {
             .listen(
               (slices) => _onSlices(myGen, slices),
               onError: (Object e, StackTrace st) {
+                debugPrint(
+                  '[ChartsController] currency slice error gen=$myGen: $e',
+                );
                 if (myGen != _generation) return;
                 _emitter?.add(ChartsState.error(e, st));
               },
@@ -244,7 +287,14 @@ class ChartsController extends _$ChartsController {
   }
 
   void _onSlices(int myGen, List<Object> slices) {
-    if (myGen != _generation) return;
+    debugPrint(
+      '[ChartsController] slices emit gen=$myGen '
+      '(active=$_generation) dimension=$_dimension count=${slices.length}',
+    );
+    if (myGen != _generation) {
+      debugPrint('[ChartsController] slices dropped — stale gen');
+      return;
+    }
     _lastSlices = slices;
     _emitIfReady();
   }
@@ -252,8 +302,16 @@ class ChartsController extends _$ChartsController {
   void _emitIfReady() {
     final slices = _lastSlices;
     final buckets = _lastBuckets;
-    if (slices == null || buckets == null) return;
+    if (slices == null || buckets == null) {
+      debugPrint(
+        '[ChartsController] _emitIfReady waiting — '
+        'slices=${slices == null ? "null" : slices.length} '
+        'buckets=${buckets == null ? "null" : buckets.length}',
+      );
+      return;
+    }
     if (slices.isEmpty && buckets.isEmpty) {
+      debugPrint('[ChartsController] emit → ChartsEmpty');
       _lastEmittedData = null;
       _emitter?.add(const ChartsState.empty());
       return;
@@ -263,7 +321,9 @@ class ChartsController extends _$ChartsController {
     final currencies =
         ref.read(chartsCurrenciesByCodeProvider).valueOrNull ?? const {};
     if (fx == null) {
-      // FX status still resolving — keep prior data visible.
+      debugPrint(
+        '[ChartsController] emit → ChartsLoading (fx null, hold prior)',
+      );
       _emitter?.add(ChartsState.loading(previous: _lastEmittedData));
       return;
     }
@@ -282,7 +342,13 @@ class ChartsController extends _$ChartsController {
         activeCurrencies.isNotEmpty &&
         missingCurrencies.length == activeCurrencies.length;
 
-    // Background refresh trigger (single-flight guard collapses dupes).
+    debugPrint(
+      '[ChartsController] _emitIfReady active=$activeCurrencies '
+      'default=${fx.defaultCurrencyCode} '
+      'missing=$missingCurrencies allMissing=$allMissing '
+      'cats=${cats.length} accts=${accts.length}',
+    );
+
     if (missingRate) {
       final repo = ref.read(exchangeRateRepositoryProvider);
       unawaited(repo.refreshAll(fx.defaultCurrencyCode));
@@ -298,9 +364,6 @@ class ChartsController extends _$ChartsController {
       return;
     }
 
-    // Task 12 auto-switch: only on cold-start, week+category, when EVERY
-    // currency lacks a rate. Partial-missing cases fall through to the
-    // partial-conversion path.
     final shouldAutoSwitch =
         !_autoSwitchedToCurrency &&
         _dimension == ChartDimension.category &&
@@ -308,6 +371,7 @@ class ChartsController extends _$ChartsController {
         allMissing &&
         _lastEmittedData == null;
     if (shouldAutoSwitch) {
+      debugPrint('[ChartsController] auto-switch → currency dimension');
       _autoSwitchedToCurrency = true;
       _dimension = ChartDimension.currency;
       _resubscribe();
@@ -315,6 +379,10 @@ class ChartsController extends _$ChartsController {
     }
 
     if (allMissing) {
+      debugPrint(
+        '[ChartsController] emit → ChartsBlockedByMissingRates '
+        '(prior=${_lastEmittedData != null})',
+      );
       _emitter?.add(
         ChartsState.blockedByMissingRates(previous: _lastEmittedData),
       );
@@ -445,6 +513,11 @@ class ChartsController extends _$ChartsController {
       autoSwitchedFromCategoryDimension: false,
       excludedCurrencyCodes: missingCurrencies.toList()..sort(),
     );
+    debugPrint(
+      '[ChartsController] emit → ChartsDataState (${_dimension.name}) '
+      'slices=${chartSlices.length} buckets=${bucketTotals.length} '
+      'grand=$grandTotal excluded=${data.excludedCurrencyCodes}',
+    );
     _lastEmittedData = data;
     _emitter?.add(ChartsState.data(chartData: data));
   }
@@ -543,6 +616,12 @@ class ChartsController extends _$ChartsController {
       displayCurrencyCode: missingRate ? null : fx.defaultCurrencyCode,
       mixedCurrencies: missingRate,
       autoSwitchedFromCategoryDimension: _autoSwitchedToCurrency,
+    );
+    debugPrint(
+      '[ChartsController] emit → ChartsDataState (currency) '
+      'slices=${chartSlices.length} buckets=${bucketTotals.length} '
+      'mixed=$missingRate grand=${data.grandTotalMinorUnits} '
+      'autoSwitched=$_autoSwitchedToCurrency',
     );
     _lastEmittedData = data;
     _emitter?.add(ChartsState.data(chartData: data));

@@ -25,6 +25,11 @@ class ChartsSection extends ConsumerWidget {
     final controller = ref.read(chartsControllerProvider.notifier);
     final currenciesAsync = ref.watch(chartsCurrenciesByCodeProvider);
     final locale = Localizations.localeOf(context).toLanguageTag();
+    debugPrint(
+      '[ChartsSection] build state=${stateAsync.runtimeType} '
+      'value=${stateAsync.valueOrNull?.runtimeType} '
+      'currencies=${currenciesAsync.valueOrNull?.length}',
+    );
     // Touch the provider to keep it warm in tests + production.
     // ignore: unused_local_variable
     final defaultCurrency = ref.watch(initialDefaultCurrencyProvider);
