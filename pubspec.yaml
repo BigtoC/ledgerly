@@ -48,6 +48,9 @@ dependencies:
   # HTTP client (Phase 2 exchange-rate fetch)
   dio: ^5.7.0
 
+  # Charts (Analysis tab pie + bar charts).
+  fl_chart: ^0.70.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
