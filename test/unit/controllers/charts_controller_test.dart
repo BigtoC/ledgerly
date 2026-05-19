@@ -553,10 +553,7 @@ void main() {
           ),
         ).thenAnswer((_) => Stream.value(const <TimeBucketSlice>[]));
 
-        final container = _container(
-          repo: repo,
-          fxStatus: fx(const {}, 'USD'),
-        );
+        final container = _container(repo: repo, fxStatus: fx(const {}, 'USD'));
         addTearDown(container.dispose);
         container.listen(chartsControllerProvider, (_, _) {});
         await Future<void>.delayed(const Duration(milliseconds: 20));
@@ -614,10 +611,7 @@ void main() {
           ),
         ).thenAnswer((_) => Stream.value(const <TimeBucketSlice>[]));
 
-        final container = _container(
-          repo: repo,
-          fxStatus: fx(const {}, 'USD'),
-        );
+        final container = _container(repo: repo, fxStatus: fx(const {}, 'USD'));
         addTearDown(container.dispose);
 
         ChartsState? latest;

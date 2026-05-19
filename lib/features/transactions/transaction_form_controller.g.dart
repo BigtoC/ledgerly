@@ -7,7 +7,7 @@ part of 'transaction_form_controller.dart';
 // **************************************************************************
 
 String _$transactionFormControllerHash() =>
-    r'05ca2d6bfdb6a742fcdeeb1a47ddaf661dbcbba0';
+    r'f61b2a0a03b0d8d19b50311e768d885dd3dd036b';
 
 /// See also [TransactionFormController].
 @ProviderFor(TransactionFormController)
