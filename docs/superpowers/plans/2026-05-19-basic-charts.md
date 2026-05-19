@@ -55,9 +55,9 @@ lib/data/database/daos/transaction_dao.dart          # + 4 chart query methods
 lib/data/repositories/transaction_repository.dart    # + 4 range methods returning Slice streams
 lib/data/repositories/exchange_rate_repository.dart  # + watchRatesMetadata()
 lib/features/analysis/analysis_screen.dart           # CustomScrollView w/ conditional ChartsSection
-l10n/app_en.arb                                      # + chart keys (19)
-l10n/app_zh_TW.arb                                   # + chart keys (19)
-l10n/app_zh_CN.arb                                   # + chart keys (19)
+l10n/app_en.arb                                      # + chart keys (20)
+l10n/app_zh_TW.arb                                   # + chart keys (20)
+l10n/app_zh_CN.arb                                   # + chart keys (20)
 ```
 
 ### New test files
@@ -1302,6 +1302,13 @@ abstract class ChartsData with _$ChartsData {
     /// render an explanatory banner above the chart body. Cleared when
     /// the user manually changes dimension or dismisses the banner.
     @Default(false) bool autoSwitchedFromCategoryDimension,
+
+    /// Currency codes whose subtotals were dropped from this chart
+    /// because their FX rate was missing at emit time. Empty in the
+    /// all-rates-present case. When non-empty, `ChartsSection` renders
+    /// a ribbon listing them above the chart body. Category/account
+    /// dimension only — currency dimension shows source amounts inline.
+    @Default(<String>[]) List<String> excludedCurrencyCodes,
   }) = _ChartsData;
 }
 
@@ -2378,16 +2385,19 @@ Append to `test/unit/controllers/charts_controller_test.dart`:
       expect(data.slices.first.fraction, closeTo(1.0, 0.0001));
     });
 
-    test('category dimension blocks when an EUR rate is missing', () async {
+    test('category dimension blocks only when ALL rates are missing',
+        () async {
+      // Both slices in non-default currencies with no rates at all →
+      // every active currency is unrateable → blocked state.
       when(() => repo.watchByCategoryInRange(
             start: any(named: 'start'),
             end: any(named: 'end'),
             type: any(named: 'type'),
           )).thenAnswer((_) => Stream.value(<CategorySlice>[
                 const CategorySlice(
-                  categoryId: 1, currencyCode: 'USD', totalMinorUnits: 1000),
-                const CategorySlice(
                   categoryId: 1, currencyCode: 'EUR', totalMinorUnits: 1000),
+                const CategorySlice(
+                  categoryId: 1, currencyCode: 'JPY', totalMinorUnits: 1000),
               ]));
       when(() => repo.watchTimeBucketsInRange(
             start: any(named: 'start'),
@@ -2419,6 +2429,61 @@ Append to `test/unit/controllers/charts_controller_test.dart`:
         const Duration(seconds: 1),
       );
       expect(result, isA<ChartsBlockedByMissingRates>());
+    });
+
+    test(
+        'category dimension partial-converts when only some rates missing',
+        () async {
+      // USD (default → identity) is rateable; EUR has no rate. Expect a
+      // ChartsDataState with the USD slice only and excludedCurrencyCodes
+      // listing EUR.
+      when(() => repo.watchByCategoryInRange(
+            start: any(named: 'start'),
+            end: any(named: 'end'),
+            type: any(named: 'type'),
+          )).thenAnswer((_) => Stream.value(<CategorySlice>[
+                const CategorySlice(
+                  categoryId: 1, currencyCode: 'USD', totalMinorUnits: 1000),
+                const CategorySlice(
+                  categoryId: 1, currencyCode: 'EUR', totalMinorUnits: 1000),
+              ]));
+      when(() => repo.watchTimeBucketsInRange(
+            start: any(named: 'start'),
+            end: any(named: 'end'),
+            type: any(named: 'type'),
+            granularity: any(named: 'granularity'),
+          )).thenAnswer((_) => Stream.value(<TimeBucketSlice>[
+                TimeBucketSlice(
+                  bucketStart: DateTime(2026, 5, 18),
+                  currencyCode: 'USD',
+                  totalMinorUnits: 1000,
+                ),
+                TimeBucketSlice(
+                  bucketStart: DateTime(2026, 5, 18),
+                  currencyCode: 'EUR',
+                  totalMinorUnits: 1000,
+                ),
+              ]));
+
+      final container = make(
+        ratesScaledE9: const {}, // only USD identity works
+        defaultCurrency: 'USD',
+      );
+      addTearDown(container.dispose);
+      container.listen(chartsControllerProvider, (_, _) {});
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+
+      final state = container.read(chartsControllerProvider).valueOrNull;
+      expect(state, isA<ChartsDataState>());
+      final data = (state! as ChartsDataState).chartData;
+      // Only USD slice survives → fraction is 1.0, total is 1000.
+      expect(data.slices, hasLength(1));
+      expect(data.slices.first.totalMinorUnits, 1000);
+      expect(data.grandTotalMinorUnits, 1000);
+      expect(data.excludedCurrencyCodes, equals(<String>['EUR']));
+      // Bucket total reflects the convertible bucket only.
+      expect(data.bucketTotals, hasLength(1));
+      expect(data.bucketTotals.first.totalMinorUnits, 1000);
     });
 
     test('currency dimension renders source-currency slices when rates missing',
@@ -2531,7 +2596,18 @@ Replace the entire `_emitIfReady` method (and add helpers) with:
       return;
     }
 
-    if (missingRate) {
+    // Partial-conversion gate (2026-05-19): block only when EVERY active
+    // currency lacks a rate. If at least one is convertible, render that
+    // subset and let the ribbon in ChartsSection disclose the excluded
+    // currencies. `allMissing` is what Task 12's auto-switch trigger
+    // reads — see that task.
+    final missingCurrencies = activeCurrencies
+        .where((code) => fx.scaledRate(code) == null)
+        .toSet();
+    final allMissing = activeCurrencies.isNotEmpty &&
+        missingCurrencies.length == activeCurrencies.length;
+
+    if (allMissing) {
       _emitter?.add(
         ChartsState.blockedByMissingRates(previous: _lastEmittedData),
       );
@@ -2545,6 +2621,7 @@ Replace the entire `_emitIfReady` method (and add helpers) with:
       currencies: currencies,
       cats: cats,
       accts: accts,
+      missingCurrencies: missingCurrencies,
     );
   }
 
@@ -2575,8 +2652,11 @@ Replace the entire `_emitIfReady` method (and add helpers) with:
     required Map<String, dynamic> currencies,
     required Map<int, Category> cats,
     required Map<int, Account> accts,
+    required Set<String> missingCurrencies,
   }) {
-    // Step 1 — convert + regroup pie slices.
+    // Step 1 — convert + regroup pie slices. Slices whose currency lacks
+    // a rate are skipped here; they are surfaced via
+    // ChartsData.excludedCurrencyCodes and shown in the ribbon.
     final regrouped = <int, int>{}; // id → converted minor units
     for (final s in slices) {
       final (id, code, amount) = switch (s) {
@@ -2585,6 +2665,7 @@ Replace the entire `_emitIfReady` method (and add helpers) with:
         _ => (-1, '', 0),
       };
       if (id < 0) continue;
+      if (missingCurrencies.contains(code)) continue;
       final fromDecimals =
           (currencies[code] as dynamic)?.decimals as int? ?? 2;
       final toDecimals =
@@ -2629,9 +2710,12 @@ Replace the entire `_emitIfReady` method (and add helpers) with:
     });
     chartSlices.sort((a, b) => b.totalMinorUnits.compareTo(a.totalMinorUnits));
 
-    // Step 2 — convert + regroup buckets.
+    // Step 2 — convert + regroup buckets. Same exclusion rule: buckets
+    // whose currency lacks a rate are skipped so the bar chart mirrors
+    // the pie chart's data.
     final convertedBuckets = <DateTime, int>{};
     for (final b in buckets) {
+      if (missingCurrencies.contains(b.currencyCode)) continue;
       final fromDecimals =
           (currencies[b.currencyCode] as dynamic)?.decimals as int? ?? 2;
       final toDecimals =
@@ -2669,6 +2753,8 @@ Replace the entire `_emitIfReady` method (and add helpers) with:
       // category/account because Task 12's auto-switch only points at
       // currency view.
       autoSwitchedFromCategoryDimension: false,
+      // Sorted list of excluded currency codes (deterministic ribbon).
+      excludedCurrencyCodes: missingCurrencies.toList()..sort(),
     );
     _lastEmittedData = data;
     _emitter?.add(ChartsState.data(chartData: data));
@@ -2843,13 +2929,13 @@ Inside `class ChartsController`, near the other private fields, add:
   bool _autoSwitchedToCurrency = false;
 ```
 
-In `_emitIfReady`, immediately before the `if (missingRate)` block that emits `ChartsBlockedByMissingRates`, insert:
+In `_emitIfReady`, immediately before the `if (allMissing)` block that emits `ChartsBlockedByMissingRates` (Task 11's partial-conversion gate), insert:
 
 ```dart
     final shouldAutoSwitch = !_autoSwitchedToCurrency &&
         _dimension == ChartDimension.category &&
         _period == PeriodType.week &&
-        missingRate &&
+        allMissing &&
         _lastEmittedData == null;
     if (shouldAutoSwitch) {
       _autoSwitchedToCurrency = true;
@@ -2858,6 +2944,8 @@ In `_emitIfReady`, immediately before the `if (missingRate)` block that emits `C
       return;
     }
 ```
+
+**Note (partial-conversion interaction):** with Task 11's partial-conversion gate, the auto-switch trigger is `allMissing`, not `missingRate`. The category view now renders a partial chart whenever *any* currency is convertible, so the auto-switch only fires when *every* currency lacks a rate. Users with partial-missing rates see the category chart with an excluded-currencies ribbon (Task 19) instead of being silently moved to currency view.
 
 - [ ] **Step 1b: Clear the flag when the user changes dimension manually**
 
@@ -3432,6 +3520,9 @@ class CategoryPieChart extends StatelessWidget {
           PieChartData(
             sectionsSpace: 2,
             centerSpaceRadius: 40,
+            // TODO(charts/drill-down): re-enable PieTouchData and route
+            // slice taps to a filtered transaction list. View-only for
+            // v1 — see plan § Still deferred.
             pieTouchData: PieTouchData(enabled: false),
             sections: [
               for (final s in slices)
@@ -3561,6 +3652,9 @@ class DailyBarChart extends StatelessWidget {
       child: BarChart(
         BarChartData(
           maxY: headroom == 0 ? 1 : headroom.toDouble(),
+          // TODO(charts/drill-down): re-enable BarTouchData and route
+          // bucket taps to a transaction list scoped to that bucket.
+          // View-only for v1 — see plan § Still deferred.
           barTouchData: BarTouchData(enabled: false),
           gridData: const FlGridData(show: false),
           borderData: FlBorderData(show: false),
@@ -4151,6 +4245,23 @@ class ChartsSection extends ConsumerWidget {
               ],
             ),
           ),
+        if ((chartData?.excludedCurrencyCodes ?? const <String>[]).isNotEmpty)
+          // Partial-conversion ribbon: lists currencies whose subtotals
+          // were dropped because their FX rate was missing. No dismiss
+          // action — the ribbon reflects live data state and clears
+          // automatically once rates are available.
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: MaterialBanner(
+              content: Text(
+                l10n.chartsExcludedCurrencies(
+                  chartData!.excludedCurrencyCodes.join(', '),
+                ),
+              ),
+              // No actions slot — banner is informational.
+              actions: const [SizedBox.shrink()],
+            ),
+          ),
         if (chartData?.mixedCurrencies ?? false)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
@@ -4377,7 +4488,7 @@ git commit -m "feat(charts): add ChartsSection wiring pie + legend + bar"
 - Modify: `l10n/app_zh_TW.arb`
 - Modify: `l10n/app_zh_CN.arb`
 
-Nineteen new keys (15 from the spec § Localization plus 4 added during the 2026-05-19 review: `chartsAutoSwitchedToCurrency`, `chartsOtherCount`, `chartsPieChart`, `chartsBarChart`). Keep alphabetical-ish grouping consistent with the rest of the ARB file (existing analysis keys cluster together — append the chart keys to that group). The `zh.arb` fallback only carries `appTitle` — no edits required.
+Twenty new keys (15 from the spec § Localization plus 5 added during the 2026-05-19 review: `chartsAutoSwitchedToCurrency`, `chartsOtherCount`, `chartsPieChart`, `chartsBarChart`, `chartsExcludedCurrencies`). Keep alphabetical-ish grouping consistent with the rest of the ARB file (existing analysis keys cluster together — append the chart keys to that group). The `zh.arb` fallback only carries `appTitle` — no edits required.
 
 **Execution note:** Even though this remains numbered Task 20 for traceability, run it immediately after Task 13 before starting Task 14.
 
@@ -4427,6 +4538,11 @@ Append next to the existing `analysis*` keys (preserve the trailing `}` of the J
   "@chartsPieChart": {"description": "Accessibility prefix announced before pie chart contents"},
   "chartsBarChart": "Bar chart",
   "@chartsBarChart": {"description": "Accessibility prefix announced before bar chart contents"},
+  "chartsExcludedCurrencies": "Excluded: {codes} — no exchange rate yet",
+  "@chartsExcludedCurrencies": {
+    "description": "Ribbon shown above a category/account chart when some currencies were dropped because their FX rate was missing. {codes} is a comma-separated currency-code list (e.g. 'EUR, JPY').",
+    "placeholders": {"codes": {"type": "String"}}
+  },
 ```
 
 - [ ] **Step 2: Add Traditional Chinese translations to `l10n/app_zh_TW.arb`**
@@ -4451,6 +4567,7 @@ Append next to the existing `analysis*` keys (preserve the trailing `}` of the J
   "chartsAutoSwitchedToCurrency": "改以幣別檢視 — 尚未取得類別檢視所需的匯率。",
   "chartsPieChart": "圓餅圖",
   "chartsBarChart": "長條圖",
+  "chartsExcludedCurrencies": "已排除：{codes} — 尚未取得匯率",
 ```
 
 - [ ] **Step 3: Add Simplified Chinese translations to `l10n/app_zh_CN.arb`**
@@ -4475,6 +4592,7 @@ Append next to the existing `analysis*` keys (preserve the trailing `}` of the J
   "chartsAutoSwitchedToCurrency": "改用币种视图 — 类别视图所需的汇率尚未就绪。",
   "chartsPieChart": "饼图",
   "chartsBarChart": "条形图",
+  "chartsExcludedCurrencies": "已排除：{codes} — 汇率尚未就绪",
 ```
 
 - [ ] **Step 4: Regenerate localization classes**
@@ -4776,14 +4894,13 @@ Capture any visual or behavioral gaps as TODO comments in `docs/superpowers/spec
 ## Open Items (carry forward to the spec's Deferred section)
 
 - Warm-start chart reuse (Task 13).
-- Per-period chart→transaction drill-down (spec § Deferred — already tracked).
-- Graceful degradation when one currency in an otherwise-converted chart lacks a rate (spec § Deferred).
+- Per-period chart→transaction drill-down (spec § Deferred — already tracked; v1 ships view-only with `// TODO(charts/drill-down)` markers in Tasks 16 + 17).
 
 ## Deferred / Open Questions
 
 ### Resolved during 2026-05-19 review
 
-All five P1/P2 questions raised in the 2026-05-19 review have been resolved in this plan revision. Decisions and the tasks where each landed:
+All P1/P2 questions raised in the 2026-05-19 review (plus one P3 originally tagged for spec § Deferred and resolved in the same pass) have been resolved in this plan revision. Decisions and the tasks where each landed:
 
 1. **Default chart behavior vs. cold-start fallback** (P1) — *Decision: keep Task 12's auto-switch, but make it visible.* `ChartsData` gained an `autoSwitchedFromCategoryDimension` flag; Task 12 sets and threads it; Task 19 renders a `MaterialBanner` above the chart body when it is true, with a Close action that calls a new `dismissAutoSwitchBanner()` controller command. Manually toggling dimension also clears the flag. ARB: `chartsAutoSwitchedToCurrency`. The first-run experience is now predictable on the data side (auto-switch still fires) and on the UX side (the user is told why).
 
@@ -4795,7 +4912,9 @@ All five P1/P2 questions raised in the 2026-05-19 review have been resolved in t
 
 5. **Charts lack an explicit non-visual summary path** (P2) — *Decision: wrap each chart in `Semantics` with a generated label.* Task 16 wraps `CategoryPieChart` in `Semantics(image: true, excludeSemantics: true)` with a label that lists each slice (with percentage when known) and the grand total. Task 17 does the same for `DailyBarChart`, listing each non-zero bucket. Both widgets now take `currenciesByCode` + locale + an optional `displayCurrencyCode` so amounts format via `MoneyFormatter`. ARB: `chartsPieChart`, `chartsBarChart`. The legend below is independently readable and does not need exclusion.
 
+6. **Graceful degradation when one currency lacks a rate** (P3, originally tagged for spec § Deferred) — *Decision: implement partial conversion + warning ribbon.* The category/account dimension now blocks **only** when every active currency lacks a rate. When at least one is convertible, Task 11's `_emitCategoryOrAccountDimension` emits a `ChartsDataState` whose slices and bucket totals reflect only the convertible currencies, and the excluded codes are surfaced via the new `ChartsData.excludedCurrencyCodes` field. `ChartsSection` renders a `MaterialBanner` ribbon listing the excluded codes (`chartsExcludedCurrencies` ARB key). Task 12's auto-switch trigger was tightened from `missingRate` to `allMissing` so users with partial rates stay on the category view they expected. Bucket totals mirror the same exclusion rule so the bar chart matches the pie chart.
+
 ### Still deferred (not in this release)
 
 - **Warm-start optimization** (Task 13) — Sub-frame cold-path performance under Drift `.watch()` makes this an unnecessary complication today. Re-evaluate if cold-start jank is observed in practice.
-- **Chart → transaction drill-down** — Tapping a slice / bar to filter the transaction list is intentionally out of scope; `PieTouchData(enabled: false)` and `BarTouchData(enabled: false)` lock both charts to view-only for v1.
+- **Chart → transaction drill-down** — Tapping a slice / bar to filter the transaction list is intentionally out of scope; `PieTouchData(enabled: false)` and `BarTouchData(enabled: false)` lock both charts to view-only for v1. Tasks 16 and 17 include `// TODO(charts/drill-down)` markers so the extension point is discoverable to future contributors.
