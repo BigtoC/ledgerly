@@ -52,6 +52,16 @@ class ChartsController extends _$ChartsController {
   ChartsData? _lastEmittedData;
   bool _autoSwitchedToCurrency = false;
 
+  // Live selection getters — the UI reads these so toggles stay in sync
+  // with the *requested* selection regardless of which state variant the
+  // controller is emitting (loading / empty / blocked all reflect the
+  // user's latest tap, not the previously-emitted data).
+  PeriodType get currentPeriod => _period;
+  CategoryType get currentType => _type;
+  ChartDimension get currentDimension => _dimension;
+  DateTime get currentAnchor => _anchor;
+  bool get isAtCurrentPeriod => _isAtCurrentPeriod();
+
   // TODO(charts/warm-start): per the spec, week+expense+category may seed
   // from a warmed snapshot when FX freshness < 1h, default currency
   // unchanged, locale unchanged, and no transaction/category/account

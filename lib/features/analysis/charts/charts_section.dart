@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/providers/default_currency_provider.dart';
-import '../../../data/models/category.dart' show CategoryType;
 import '../../../data/models/currency.dart';
 import '../../../l10n/app_localizations.dart';
 import 'charts_controller.dart';
@@ -185,17 +184,22 @@ class ChartsSection extends ConsumerWidget {
     String? locale,
     Map<String, Currency> currencies = const {},
   }) {
-    final dimension = chartData?.dimension ?? ChartDimension.category;
-    final type = chartData?.type ?? CategoryType.expense;
-    final period = chartData?.period ?? PeriodType.week;
-    final anchor = chartData?.anchorDate ?? DateTime.now();
+    // Toggles bind to the controller's live selection, not `chartData`.
+    // During loading the `previous` data still has the *old* period; in
+    // the empty/blocked/error variants `chartData` is null. Either way,
+    // reading from the controller keeps the segmented buttons in sync
+    // with whatever the user just tapped.
+    final dimension = controller.currentDimension;
+    final type = controller.currentType;
+    final period = controller.currentPeriod;
+    final anchor = controller.currentAnchor;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         PeriodSelector(
           period: period,
           anchorDate: anchor,
-          isAtCurrent: _isAtCurrent(period, anchor),
+          isAtCurrent: controller.isAtCurrentPeriod,
           locale: locale ?? 'en',
           onPrevious: controller.previousPeriod,
           onNext: controller.nextPeriod,
@@ -258,24 +262,6 @@ class ChartsSection extends ConsumerWidget {
         body,
       ],
     );
-  }
-
-  bool _isAtCurrent(PeriodType period, DateTime anchor) {
-    final now = DateTime.now();
-    switch (period) {
-      case PeriodType.day:
-        return anchor.year == now.year &&
-            anchor.month == now.month &&
-            anchor.day == now.day;
-      case PeriodType.week:
-        return !anchor
-            .add(const Duration(days: 7))
-            .isBefore(DateTime(now.year, now.month, now.day));
-      case PeriodType.month:
-        return anchor.year == now.year && anchor.month == now.month;
-      case PeriodType.year:
-        return anchor.year == now.year;
-    }
   }
 }
 
