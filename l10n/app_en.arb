@@ -1046,5 +1046,52 @@
   "homeSummaryUnconvertedHeader": "Unconverted",
   "@homeSummaryUnconvertedHeader": {
     "description": "Label on the separator between SummaryStrip's unified converted total and the per-currency fallback groups (for currencies whose rates are not yet cached)."
+  },
+
+  "chartsPeriodDay": "Day",
+  "@chartsPeriodDay": { "description": "Charts period toggle — day" },
+  "chartsPeriodWeek": "Week",
+  "@chartsPeriodWeek": { "description": "Charts period toggle — week (default)" },
+  "chartsPeriodMonth": "Month",
+  "@chartsPeriodMonth": { "description": "Charts period toggle — month" },
+  "chartsPeriodYear": "Year",
+  "@chartsPeriodYear": { "description": "Charts period toggle — year" },
+  "chartsTypeExpense": "Expense",
+  "@chartsTypeExpense": { "description": "Charts type toggle — expense" },
+  "chartsTypeIncome": "Income",
+  "@chartsTypeIncome": { "description": "Charts type toggle — income" },
+  "chartsDimensionCategory": "Category",
+  "@chartsDimensionCategory": { "description": "Charts dimension toggle — category" },
+  "chartsDimensionAccount": "Account",
+  "@chartsDimensionAccount": { "description": "Charts dimension toggle — account" },
+  "chartsDimensionCurrency": "Currency",
+  "@chartsDimensionCurrency": { "description": "Charts dimension toggle — currency" },
+  "chartsNoData": "No transactions yet",
+  "@chartsNoData": { "description": "Charts empty state copy" },
+  "chartsMixedCurrencies": "Showing original currency amounts",
+  "@chartsMixedCurrencies": { "description": "Banner for currency-dimension chart when some FX rates are missing" },
+  "chartsRatesRequired": "Waiting for exchange rates",
+  "@chartsRatesRequired": { "description": "Blocked-state copy for category/account charts when FX rates are missing" },
+  "chartsViewAll": "View all",
+  "@chartsViewAll": { "description": "Full-legend bottom sheet affordance" },
+  "chartsTotal": "Total",
+  "@chartsTotal": { "description": "Grand-total label" },
+  "chartsOther": "Other",
+  "@chartsOther": { "description": "Aggregated remainder legend entry" },
+  "chartsOtherCount": "{count, plural, =1{Other (1 item)} other{Other ({count} items)}}",
+  "@chartsOtherCount": {
+    "description": "Other-bucket legend label when slices are in mixed currencies and amounts cannot be summed; shows item count instead",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "chartsAutoSwitchedToCurrency": "Showing by currency — no exchange rates yet for category view.",
+  "@chartsAutoSwitchedToCurrency": { "description": "Banner shown when ChartsController auto-switched from category to currency on cold-start because FX rates were missing" },
+  "chartsPieChart": "Pie chart",
+  "@chartsPieChart": { "description": "Accessibility prefix announced before pie chart contents" },
+  "chartsBarChart": "Bar chart",
+  "@chartsBarChart": { "description": "Accessibility prefix announced before bar chart contents" },
+  "chartsExcludedCurrencies": "Excluded: {codes} — no exchange rate yet",
+  "@chartsExcludedCurrencies": {
+    "description": "Ribbon shown above a category/account chart when some currencies were dropped because their FX rate was missing. {codes} is a comma-separated currency-code list (e.g. 'EUR, JPY').",
+    "placeholders": { "codes": { "type": "String" } }
   }
 }

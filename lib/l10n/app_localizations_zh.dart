@@ -860,6 +860,77 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get homeSummaryUnconvertedHeader => 'Unconverted';
+
+  @override
+  String get chartsPeriodDay => 'Day';
+
+  @override
+  String get chartsPeriodWeek => 'Week';
+
+  @override
+  String get chartsPeriodMonth => 'Month';
+
+  @override
+  String get chartsPeriodYear => 'Year';
+
+  @override
+  String get chartsTypeExpense => 'Expense';
+
+  @override
+  String get chartsTypeIncome => 'Income';
+
+  @override
+  String get chartsDimensionCategory => 'Category';
+
+  @override
+  String get chartsDimensionAccount => 'Account';
+
+  @override
+  String get chartsDimensionCurrency => 'Currency';
+
+  @override
+  String get chartsNoData => 'No transactions yet';
+
+  @override
+  String get chartsMixedCurrencies => 'Showing original currency amounts';
+
+  @override
+  String get chartsRatesRequired => 'Waiting for exchange rates';
+
+  @override
+  String get chartsViewAll => 'View all';
+
+  @override
+  String get chartsTotal => 'Total';
+
+  @override
+  String get chartsOther => 'Other';
+
+  @override
+  String chartsOtherCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Other ($count items)',
+      one: 'Other (1 item)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get chartsAutoSwitchedToCurrency =>
+      'Showing by currency — no exchange rates yet for category view.';
+
+  @override
+  String get chartsPieChart => 'Pie chart';
+
+  @override
+  String get chartsBarChart => 'Bar chart';
+
+  @override
+  String chartsExcludedCurrencies(String codes) {
+    return 'Excluded: $codes — no exchange rate yet';
+  }
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -1687,6 +1758,76 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get homeSummaryUnconvertedHeader => '未换算';
+
+  @override
+  String get chartsPeriodDay => '日';
+
+  @override
+  String get chartsPeriodWeek => '周';
+
+  @override
+  String get chartsPeriodMonth => '月';
+
+  @override
+  String get chartsPeriodYear => '年';
+
+  @override
+  String get chartsTypeExpense => '支出';
+
+  @override
+  String get chartsTypeIncome => '收入';
+
+  @override
+  String get chartsDimensionCategory => '类别';
+
+  @override
+  String get chartsDimensionAccount => '账户';
+
+  @override
+  String get chartsDimensionCurrency => '币种';
+
+  @override
+  String get chartsNoData => '暂无交易';
+
+  @override
+  String get chartsMixedCurrencies => '显示原始币种金额';
+
+  @override
+  String get chartsRatesRequired => '等待汇率数据';
+
+  @override
+  String get chartsViewAll => '查看全部';
+
+  @override
+  String get chartsTotal => '总计';
+
+  @override
+  String get chartsOther => '其他';
+
+  @override
+  String chartsOtherCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '其他（$count 项）',
+      one: '其他（1 项）',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get chartsAutoSwitchedToCurrency => '改用币种视图 — 类别视图所需的汇率尚未就绪。';
+
+  @override
+  String get chartsPieChart => '饼图';
+
+  @override
+  String get chartsBarChart => '条形图';
+
+  @override
+  String chartsExcludedCurrencies(String codes) {
+    return '已排除：$codes — 汇率尚未就绪';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -2514,4 +2655,74 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get homeSummaryUnconvertedHeader => '未換算';
+
+  @override
+  String get chartsPeriodDay => '日';
+
+  @override
+  String get chartsPeriodWeek => '週';
+
+  @override
+  String get chartsPeriodMonth => '月';
+
+  @override
+  String get chartsPeriodYear => '年';
+
+  @override
+  String get chartsTypeExpense => '支出';
+
+  @override
+  String get chartsTypeIncome => '收入';
+
+  @override
+  String get chartsDimensionCategory => '類別';
+
+  @override
+  String get chartsDimensionAccount => '帳戶';
+
+  @override
+  String get chartsDimensionCurrency => '幣別';
+
+  @override
+  String get chartsNoData => '尚無交易';
+
+  @override
+  String get chartsMixedCurrencies => '顯示原始幣別金額';
+
+  @override
+  String get chartsRatesRequired => '等待匯率資料';
+
+  @override
+  String get chartsViewAll => '查看全部';
+
+  @override
+  String get chartsTotal => '總計';
+
+  @override
+  String get chartsOther => '其他';
+
+  @override
+  String chartsOtherCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '其他（$count 項）',
+      one: '其他（1 項）',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get chartsAutoSwitchedToCurrency => '改以幣別檢視 — 尚未取得類別檢視所需的匯率。';
+
+  @override
+  String get chartsPieChart => '圓餅圖';
+
+  @override
+  String get chartsBarChart => '長條圖';
+
+  @override
+  String chartsExcludedCurrencies(String codes) {
+    return '已排除：$codes — 尚未取得匯率';
+  }
 }

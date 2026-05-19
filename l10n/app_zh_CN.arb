@@ -308,5 +308,28 @@
 
   "approximatelyPrefix": "约",
   "convertedTotalLabel": "总计",
-  "homeSummaryUnconvertedHeader": "未换算"
+  "homeSummaryUnconvertedHeader": "未换算",
+
+  "chartsPeriodDay": "日",
+  "chartsPeriodWeek": "周",
+  "chartsPeriodMonth": "月",
+  "chartsPeriodYear": "年",
+  "chartsTypeExpense": "支出",
+  "chartsTypeIncome": "收入",
+  "chartsDimensionCategory": "类别",
+  "chartsDimensionAccount": "账户",
+  "chartsDimensionCurrency": "币种",
+  "chartsNoData": "暂无交易",
+  "chartsMixedCurrencies": "显示原始币种金额",
+  "chartsRatesRequired": "等待汇率数据",
+  "chartsViewAll": "查看全部",
+  "chartsTotal": "总计",
+  "chartsOther": "其他",
+  "chartsOtherCount": "{count, plural, =1{其他（1 项）} other{其他（{count} 项）}}",
+  "@chartsOtherCount": { "placeholders": { "count": { "type": "int" } } },
+  "chartsAutoSwitchedToCurrency": "改用币种视图 — 类别视图所需的汇率尚未就绪。",
+  "chartsPieChart": "饼图",
+  "chartsBarChart": "条形图",
+  "chartsExcludedCurrencies": "已排除：{codes} — 汇率尚未就绪",
+  "@chartsExcludedCurrencies": { "placeholders": { "codes": { "type": "String" } } }
 }
