@@ -17,7 +17,7 @@ The spec at `docs/superpowers/specs/2026-05-18-basic-charts-design.md` is author
 1. **Exchange-rate storage.** The spec says rates are stored as `numerator/denominator` fractions. They aren't — `lib/data/database/tables/exchange_rates_table.dart` stores `rate_scaled_e9 = round(rate × 10⁹)`. The conversion helper `lib/core/utils/currency_converter.dart` is the SSOT; use `CurrencyConverter.convertMinorUnits(...)` everywhere the spec writes `(originalMinor * rateNumerator) ~/ rateDenominator`. Same direction: `baseCurrency = source`, `quoteCurrency = default`. There is no inverse-rate lookup.
 2. **`chartsFxStatusProvider` shape.** The spec describes the provider exposing `per-pair fetchedAt`. Controllers cannot import DAOs (see `import_analysis_options.yaml` → `controllers_forbid_db_and_services`). Task 6 adds a repo-level `watchRatesMetadata()` that exposes `(rateScaledE9, fetchedAt)` pairs; the provider builds `ChartsFxStatus` from that stream + `defaultCurrencyProvider`.
 
-Everything else in the spec is binding — including warm-start invalidation, blocked-state semantics, "Other" bucket rules, View-all sheet, and adaptive 600dp behaviour.
+Everything else in the spec is binding — except the warm-start optimization explicitly deferred in Task 13. Blocked-state semantics, "Other" bucket rules, View-all sheet, and adaptive 600dp behaviour remain binding.
 
 ---
 
@@ -55,9 +55,9 @@ lib/data/database/daos/transaction_dao.dart          # + 4 chart query methods
 lib/data/repositories/transaction_repository.dart    # + 4 range methods returning Slice streams
 lib/data/repositories/exchange_rate_repository.dart  # + watchRatesMetadata()
 lib/features/analysis/analysis_screen.dart           # CustomScrollView w/ conditional ChartsSection
-l10n/app_en.arb                                      # + chart keys (12)
-l10n/app_zh_TW.arb                                   # + chart keys (12)
-l10n/app_zh_CN.arb                                   # + chart keys (12)
+l10n/app_en.arb                                      # + chart keys (15)
+l10n/app_zh_TW.arb                                   # + chart keys (15)
+l10n/app_zh_CN.arb                                   # + chart keys (15)
 ```
 
 ### New test files
@@ -2784,7 +2784,7 @@ git commit -m "feat(charts): multi-currency conversion + blocked state in Charts
 **Files:**
 - Modify: `lib/features/analysis/charts/charts_controller.dart`
 
-Spec § Multi-Currency Conversion: "If the active dimension is `currency`, automatically select Currency view for the first empty-query render when Week + Category would otherwise open into a blocked state." This is a one-shot fallback that only fires on cold-start.
+Spec § Multi-Currency Conversion: "If the active dimension is `category`, automatically select Currency view for the first empty-query render when Week + Category would otherwise open into a blocked state." This is a one-shot fallback that only fires on cold-start.
 
 - [ ] **Step 1: Add the fallback flag and trigger**
 
@@ -4007,7 +4007,7 @@ git commit -m "feat(charts): add ChartsSection wiring pie + legend + bar"
 - Modify: `l10n/app_zh_TW.arb`
 - Modify: `l10n/app_zh_CN.arb`
 
-Twelve new keys per spec § Localization. Keep alphabetical-ish grouping consistent with the rest of the ARB file (existing analysis keys cluster together — append the chart keys to that group). The `zh.arb` fallback only carries `appTitle` — no edits required.
+Fifteen new keys per spec § Localization. Keep alphabetical-ish grouping consistent with the rest of the ARB file (existing analysis keys cluster together — append the chart keys to that group). The `zh.arb` fallback only carries `appTitle` — no edits required.
 
 - [ ] **Step 1: Add the keys to `l10n/app_en.arb`**
 
