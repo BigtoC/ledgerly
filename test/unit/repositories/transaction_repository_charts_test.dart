@@ -26,29 +26,29 @@ Future<void> _seedFixtures(AppDatabase db) async {
   );
   // Two expense categories, one income category.
   await db.customStatement(
-    "INSERT INTO categories (id, type, l10n_key, icon, color, sort_order, "
+    'INSERT INTO categories (id, type, l10n_key, icon, color, sort_order, '
     "is_archived) VALUES (1, 'expense', 'cat.food', 'restaurant', 0, 1, 0)",
   );
   await db.customStatement(
-    "INSERT INTO categories (id, type, l10n_key, icon, color, sort_order, "
+    'INSERT INTO categories (id, type, l10n_key, icon, color, sort_order, '
     "is_archived) VALUES (2, 'expense', 'cat.transport', 'car', 1, 2, 0)",
   );
   await db.customStatement(
-    "INSERT INTO categories (id, type, l10n_key, icon, color, sort_order, "
+    'INSERT INTO categories (id, type, l10n_key, icon, color, sort_order, '
     "is_archived) VALUES (3, 'income', 'cat.salary', 'work', 2, 3, 0)",
   );
   await db.customStatement(
-    "INSERT INTO account_types (id, l10n_key, icon, color, sort_order, "
+    'INSERT INTO account_types (id, l10n_key, icon, color, sort_order, '
     "is_archived) VALUES (1, 'acct.cash', 'wallet', 0, 1, 0)",
   );
   await db.customStatement(
-    "INSERT INTO accounts (id, account_type_id, name, currency, "
-    "opening_balance_minor_units, sort_order, is_archived) VALUES "
+    'INSERT INTO accounts (id, account_type_id, name, currency, '
+    'opening_balance_minor_units, sort_order, is_archived) VALUES '
     "(1, 1, 'Cash', 'USD', 0, 1, 0)",
   );
   await db.customStatement(
-    "INSERT INTO accounts (id, account_type_id, name, currency, "
-    "opening_balance_minor_units, sort_order, is_archived) VALUES "
+    'INSERT INTO accounts (id, account_type_id, name, currency, '
+    'opening_balance_minor_units, sort_order, is_archived) VALUES '
     "(2, 1, 'EUR Cash', 'EUR', 0, 2, 0)",
   );
 }
