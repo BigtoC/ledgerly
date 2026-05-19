@@ -12,6 +12,21 @@ class DateHelpers {
   static DateTime startOfDay(DateTime dt) =>
       DateTime(dt.year, dt.month, dt.day);
 
+  /// Local-midnight of Monday for the week containing [dt].
+  /// `DateTime.weekday` is 1=Mon..7=Sun, so subtracting `(weekday - 1)`
+  /// days lands on the Monday. DST-safe: operates on the calendar day
+  /// component, not on `Duration`-based subtraction.
+  static DateTime startOfWeek(DateTime dt) {
+    final base = startOfDay(dt);
+    return DateTime(base.year, base.month, base.day - (base.weekday - 1));
+  }
+
+  /// Local-midnight of the first day of the month containing [dt].
+  static DateTime startOfMonth(DateTime dt) => DateTime(dt.year, dt.month, 1);
+
+  /// Local-midnight of Jan 1 of the year containing [dt].
+  static DateTime startOfYear(DateTime dt) => DateTime(dt.year, 1, 1);
+
   /// Returns true if [a] and [b] land on the same calendar day in
   /// [a]'s time zone.
   static bool isSameDay(DateTime a, DateTime b) =>
