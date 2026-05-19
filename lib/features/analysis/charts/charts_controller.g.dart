@@ -6,7 +6,7 @@ part of 'charts_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$chartsControllerHash() => r'8ba29f5686c12a3b7e26090ba6d7eab3ddf014d7';
+String _$chartsControllerHash() => r'41199efc9d8dd7ae2409f6610737cee2b0b6e7f4';
 
 /// See also [ChartsController].
 @ProviderFor(ChartsController)
@@ -17,10 +17,15 @@ final chartsControllerProvider =
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
           ? null
           : _$chartsControllerHash,
-      dependencies: <ProviderOrFamily>[transactionRepositoryProvider],
+      dependencies: <ProviderOrFamily>[
+        transactionRepositoryProvider,
+        exchangeRateRepositoryProvider,
+      ],
       allTransitiveDependencies: <ProviderOrFamily>{
         transactionRepositoryProvider,
         ...?transactionRepositoryProvider.allTransitiveDependencies,
+        exchangeRateRepositoryProvider,
+        ...?exchangeRateRepositoryProvider.allTransitiveDependencies,
       },
     );
 
