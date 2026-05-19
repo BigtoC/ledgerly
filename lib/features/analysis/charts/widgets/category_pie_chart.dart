@@ -5,6 +5,7 @@ import '../../../../core/utils/color_palette.dart';
 import '../../../../core/utils/money_formatter.dart';
 import '../../../../data/models/currency.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../categories/widgets/category_display.dart';
 import '../charts_state.dart';
 
 class CategoryPieChart extends StatelessWidget {
@@ -73,10 +74,13 @@ class CategoryPieChart extends StatelessWidget {
         currency: currency,
         locale: locale,
       );
+      final displayLabel = s.label.startsWith('category.')
+          ? categoryDisplayNameForKey(s.label, l10n)
+          : s.label;
       if (s.fraction != null) {
-        parts.add('${s.label} ${(s.fraction! * 100).round()}%, $amount');
+        parts.add('$displayLabel ${(s.fraction! * 100).round()}%, $amount');
       } else {
-        parts.add('${s.label}: $amount');
+        parts.add('$displayLabel: $amount');
       }
     }
     if (grandTotalMinorUnits != null && displayCurrencyCode != null) {

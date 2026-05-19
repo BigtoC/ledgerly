@@ -5,6 +5,7 @@ import '../../../../core/utils/icon_registry.dart';
 import '../../../../core/utils/money_formatter.dart';
 import '../../../../data/models/currency.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../categories/widgets/category_display.dart';
 import '../charts_state.dart';
 
 class ChartLegend extends StatelessWidget {
@@ -75,9 +76,16 @@ class ChartLegend extends StatelessWidget {
   }
 
   Widget _row(BuildContext context, ChartSlice s) {
+    final l10n = AppLocalizations.of(context);
     final currency =
         currenciesByCode[s.currencyCode] ??
         Currency(code: s.currencyCode, decimals: 2);
+    // The controller serializes seeded categories as their `category.*`
+    // l10n key (no BuildContext available there). Re-resolve at render
+    // time so the legend shows the localized name.
+    final displayLabel = s.label.startsWith('category.')
+        ? categoryDisplayNameForKey(s.label, l10n)
+        : s.label;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -96,7 +104,7 @@ class ChartLegend extends StatelessWidget {
               padding: const EdgeInsetsDirectional.only(end: 6),
               child: Icon(iconForKey(s.iconKey), size: 16),
             ),
-          Expanded(child: Text(s.label, overflow: TextOverflow.ellipsis)),
+          Expanded(child: Text(displayLabel, overflow: TextOverflow.ellipsis)),
           Text(
             MoneyFormatter.format(
               amountMinorUnits: s.totalMinorUnits,
