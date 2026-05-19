@@ -216,4 +216,141 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
       ..where(transactions.accountId.equals(accountId));
     return query.watchSingle().map((row) => row.read(countExp) ?? 0);
   }
+
+  /// Per `(category_id, currency)` subtotal in `[start, end)`, filtered by
+  /// `categories.type`. Emits ONE row per pair so the repository can run
+  /// currency conversion before regrouping into final chart slices.
+  Stream<List<({int categoryId, String currency, int total})>>
+  watchCategoryTotalsInRange({
+    required DateTime start,
+    required DateTime end,
+    required String type,
+  }) {
+    final query = attachedDatabase.customSelect(
+      'SELECT t.category_id AS cat_id, t.currency AS code, '
+      'SUM(t.amount_minor_units) AS total '
+      'FROM transactions t '
+      'JOIN categories c ON c.id = t.category_id '
+      'WHERE t.date >= ? AND t.date < ? AND c.type = ? '
+      'GROUP BY t.category_id, t.currency',
+      variables: [
+        Variable<DateTime>(start),
+        Variable<DateTime>(end),
+        Variable<String>(type),
+      ],
+      readsFrom: {transactions, attachedDatabase.categories},
+    );
+    return query.watch().map(
+      (rows) => rows
+          .map(
+            (r) => (
+              categoryId: r.read<int>('cat_id'),
+              currency: r.read<String>('code'),
+              total: r.read<int>('total'),
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+
+  /// Per `(account_id, currency)` subtotal in `[start, end)`, filtered by
+  /// `categories.type`.
+  Stream<List<({int accountId, String currency, int total})>>
+  watchAccountTotalsInRange({
+    required DateTime start,
+    required DateTime end,
+    required String type,
+  }) {
+    final query = attachedDatabase.customSelect(
+      'SELECT t.account_id AS acct_id, t.currency AS code, '
+      'SUM(t.amount_minor_units) AS total '
+      'FROM transactions t '
+      'JOIN categories c ON c.id = t.category_id '
+      'WHERE t.date >= ? AND t.date < ? AND c.type = ? '
+      'GROUP BY t.account_id, t.currency',
+      variables: [
+        Variable<DateTime>(start),
+        Variable<DateTime>(end),
+        Variable<String>(type),
+      ],
+      readsFrom: {transactions, attachedDatabase.categories},
+    );
+    return query.watch().map(
+      (rows) => rows
+          .map(
+            (r) => (
+              accountId: r.read<int>('acct_id'),
+              currency: r.read<String>('code'),
+              total: r.read<int>('total'),
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+
+  /// Per `currency` total in `[start, end)`, filtered by `categories.type`.
+  Stream<List<({String currency, int total})>> watchCurrencyTotalsInRange({
+    required DateTime start,
+    required DateTime end,
+    required String type,
+  }) {
+    final query = attachedDatabase.customSelect(
+      'SELECT t.currency AS code, SUM(t.amount_minor_units) AS total '
+      'FROM transactions t '
+      'JOIN categories c ON c.id = t.category_id '
+      'WHERE t.date >= ? AND t.date < ? AND c.type = ? '
+      'GROUP BY t.currency',
+      variables: [
+        Variable<DateTime>(start),
+        Variable<DateTime>(end),
+        Variable<String>(type),
+      ],
+      readsFrom: {transactions, attachedDatabase.categories},
+    );
+    return query.watch().map(
+      (rows) => rows
+          .map(
+            (r) =>
+                (currency: r.read<String>('code'), total: r.read<int>('total')),
+          )
+          .toList(growable: false),
+    );
+  }
+
+  /// Raw `(date, currency, amount_minor_units)` rows in `[start, end)`
+  /// filtered by `categories.type`, ordered by date ascending. The
+  /// repository runs local-time bucket math on top so midnight/DST
+  /// semantics stay aligned with `DateHelpers`.
+  Stream<List<({DateTime date, String currency, int amountMinorUnits})>>
+  watchChartRowsInRange({
+    required DateTime start,
+    required DateTime end,
+    required String type,
+  }) {
+    final query = attachedDatabase.customSelect(
+      'SELECT t.date AS d, t.currency AS code, '
+      't.amount_minor_units AS amt '
+      'FROM transactions t '
+      'JOIN categories c ON c.id = t.category_id '
+      'WHERE t.date >= ? AND t.date < ? AND c.type = ? '
+      'ORDER BY t.date ASC',
+      variables: [
+        Variable<DateTime>(start),
+        Variable<DateTime>(end),
+        Variable<String>(type),
+      ],
+      readsFrom: {transactions, attachedDatabase.categories},
+    );
+    return query.watch().map(
+      (rows) => rows
+          .map(
+            (r) => (
+              date: r.read<DateTime>('d'),
+              currency: r.read<String>('code'),
+              amountMinorUnits: r.read<int>('amt'),
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
 }
