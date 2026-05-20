@@ -287,15 +287,18 @@ class _AccountListCard extends StatelessWidget {
         boxShadow: [buildBoxShadow(homePageCardBorderRadius)],
       ),
       clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          for (final view in accounts)
-            _AccountTileWithLookups(
-              view: view,
-              isDefault: defaultAccountId == view.account.id,
-              locale: locale,
-            ),
-        ],
+      child: Material(
+        type: MaterialType.transparency,
+        child: Column(
+          children: [
+            for (final view in accounts)
+              _AccountTileWithLookups(
+                view: view,
+                isDefault: defaultAccountId == view.account.id,
+                locale: locale,
+              ),
+          ],
+        ),
       ),
     );
   }

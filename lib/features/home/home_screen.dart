@@ -649,20 +649,23 @@ class _TransactionListCard extends StatelessWidget {
         boxShadow: [buildBoxShadow(homePageCardBorderRadius)],
       ),
       clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          for (final tx in transactions)
-            TransactionTile(
-              transaction: tx,
-              category: categories[tx.categoryId],
-              account: accounts[tx.accountId],
-              locale: locale,
-              defaultCurrency: defaultCurrency,
-              onTap: () => onTapRow(tx.id),
-              onDuplicate: () => onDuplicateRow(tx.id),
-              onDelete: () => onDeleteRow(tx.id),
-            ),
-        ],
+      child: Material(
+        type: MaterialType.transparency,
+        child: Column(
+          children: [
+            for (final tx in transactions)
+              TransactionTile(
+                transaction: tx,
+                category: categories[tx.categoryId],
+                account: accounts[tx.accountId],
+                locale: locale,
+                defaultCurrency: defaultCurrency,
+                onTap: () => onTapRow(tx.id),
+                onDuplicate: () => onDuplicateRow(tx.id),
+                onDelete: () => onDeleteRow(tx.id),
+              ),
+          ],
+        ),
       ),
     );
   }
