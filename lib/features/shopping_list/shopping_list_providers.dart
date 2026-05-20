@@ -19,7 +19,7 @@ part 'shopping_list_providers.g.dart';
 ///
 /// Used by the Home screen mini-FAB badge. Returns 0 on error/loading so
 /// the badge never breaks the Home screen layout.
-@riverpod
+@Riverpod(dependencies: [shoppingListRepository])
 Stream<int> shoppingListTotalCount(Ref ref) =>
     ref.watch(shoppingListRepositoryProvider).watchCount();
 
@@ -28,7 +28,7 @@ Stream<int> shoppingListTotalCount(Ref ref) =>
 /// Watches [shoppingListRepositoryProvider.watchAll()] once and maps it into a
 /// record with the first 3 items (`preview`) and the full list length
 /// (`totalCount`). Using a single stream avoids opening two live DB queries.
-@riverpod
+@Riverpod(dependencies: [shoppingListRepository])
 Stream<({List<ShoppingListItem> preview, int totalCount})> shoppingListPreview(
   Ref ref,
 ) {
@@ -82,7 +82,7 @@ Stream<({List<ShoppingListItem> preview, int totalCount})> shoppingListPreview(
 ///
 /// Calls [getById] which returns the row even if archived, so archived names
 /// still display in preview rows.
-@riverpod
+@Riverpod(dependencies: [categoryRepository])
 Future<Category?> shoppingListCategoryById(Ref ref, int id) {
   return ref.watch(categoryRepositoryProvider).getById(id);
 }
@@ -91,7 +91,7 @@ Future<Category?> shoppingListCategoryById(Ref ref, int id) {
 ///
 /// Calls [getById] which returns the row even if archived, so archived names
 /// still display in preview rows.
-@riverpod
+@Riverpod(dependencies: [accountRepository])
 Future<Account?> shoppingListAccountById(Ref ref, int id) {
   return ref.watch(accountRepositoryProvider).getById(id);
 }
@@ -100,7 +100,7 @@ Future<Account?> shoppingListAccountById(Ref ref, int id) {
 ///
 /// Returns null when the code is not registered (should not happen in practice
 /// since amounts always reference a seeded currency).
-@riverpod
+@Riverpod(dependencies: [currencyRepository])
 Future<Currency?> shoppingListCurrencyByCode(Ref ref, String code) {
   return ref.watch(currencyRepositoryProvider).getByCode(code);
 }

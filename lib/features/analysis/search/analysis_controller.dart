@@ -32,17 +32,22 @@ part 'analysis_controller.g.dart';
 
 const Duration _kDebounce = Duration(milliseconds: 300);
 
-@Riverpod(keepAlive: true, dependencies: [transactionRepository])
+@Riverpod(
+  keepAlive: true,
+  dependencies: [transactionRepository, analysisCategoriesById],
+)
 class AnalysisController extends _$AnalysisController {
   Timer? _debounceTimer;
   StreamSubscription<List<Transaction>>? _subscription;
   String _activeQuery = '';
   int _generation = 0;
   List<CategorySearchResult>? _lastResults;
+  // Private re-group cache for category-map changes — paired with
+  // `AnalysisResults.transactions` so external readers (e.g. the detail
+  // controller's synchronous pre-fill) go through `state`, not a notifier
+  // getter.
   List<Transaction>? _lastTransactions;
   StreamController<AnalysisState>? _emitter;
-
-  List<Transaction>? get lastTransactions => _lastTransactions;
 
   @override
   Stream<AnalysisState> build() {
@@ -174,7 +179,13 @@ class AnalysisController extends _$AnalysisController {
     }
 
     _lastResults = results;
-    _emitter?.add(AnalysisState.results(categories: results, query: query));
+    _emitter?.add(
+      AnalysisState.results(
+        categories: results,
+        transactions: txs,
+        query: query,
+      ),
+    );
   }
 
   List<CategorySearchResult> _group(

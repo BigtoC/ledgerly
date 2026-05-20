@@ -7,7 +7,7 @@ part of 'shopping_list_providers.dart';
 // **************************************************************************
 
 String _$shoppingListTotalCountHash() =>
-    r'31633fd56a86f063bbcc701316f86ec51ef7f527';
+    r'7b6cbe4a5fa4c1a4f29c0c2a88193749df077a36';
 
 /// Reactive total count of all shopping-list drafts.
 ///
@@ -22,15 +22,18 @@ final shoppingListTotalCountProvider = AutoDisposeStreamProvider<int>.internal(
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
       : _$shoppingListTotalCountHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
+  dependencies: <ProviderOrFamily>[shoppingListRepositoryProvider],
+  allTransitiveDependencies: <ProviderOrFamily>{
+    shoppingListRepositoryProvider,
+    ...?shoppingListRepositoryProvider.allTransitiveDependencies,
+  },
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ShoppingListTotalCountRef = AutoDisposeStreamProviderRef<int>;
 String _$shoppingListPreviewHash() =>
-    r'7d44cf8230a586ac1da0ba545f08b84d348c4fc9';
+    r'f1ada95a3aac101d0525a97fafc7e7be788324c0';
 
 /// Combined preview + total-count stream.
 ///
@@ -49,8 +52,11 @@ final shoppingListPreviewProvider =
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
           ? null
           : _$shoppingListPreviewHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
+      dependencies: <ProviderOrFamily>[shoppingListRepositoryProvider],
+      allTransitiveDependencies: <ProviderOrFamily>{
+        shoppingListRepositoryProvider,
+        ...?shoppingListRepositoryProvider.allTransitiveDependencies,
+      },
     );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
@@ -60,7 +66,7 @@ typedef ShoppingListPreviewRef =
       ({List<ShoppingListItem> preview, int totalCount})
     >;
 String _$shoppingListCategoryByIdHash() =>
-    r'd65051e1e179e9ac49d30dd1c509d71fc1c85f08';
+    r'563f779b2ffc71271256f4f4e2e0ba437d3e00b1';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -124,12 +130,18 @@ class ShoppingListCategoryByIdFamily extends Family<AsyncValue<Category?>> {
     return call(provider.id);
   }
 
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
+  static final Iterable<ProviderOrFamily> _dependencies = <ProviderOrFamily>[
+    categoryRepositoryProvider,
+  ];
 
   @override
   Iterable<ProviderOrFamily>? get dependencies => _dependencies;
 
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+  static final Iterable<ProviderOrFamily> _allTransitiveDependencies =
+      <ProviderOrFamily>{
+        categoryRepositoryProvider,
+        ...?categoryRepositoryProvider.allTransitiveDependencies,
+      };
 
   @override
   Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
@@ -234,7 +246,7 @@ class _ShoppingListCategoryByIdProviderElement
 }
 
 String _$shoppingListAccountByIdHash() =>
-    r'ee52afda856fc3d51061f4412251f80a459696d2';
+    r'0fa0fa15c43a9442daebf5e082a3d7837cd4e712';
 
 /// One-shot read for archived-safe account name hydration.
 ///
@@ -277,12 +289,18 @@ class ShoppingListAccountByIdFamily extends Family<AsyncValue<Account?>> {
     return call(provider.id);
   }
 
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
+  static final Iterable<ProviderOrFamily> _dependencies = <ProviderOrFamily>[
+    accountRepositoryProvider,
+  ];
 
   @override
   Iterable<ProviderOrFamily>? get dependencies => _dependencies;
 
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+  static final Iterable<ProviderOrFamily> _allTransitiveDependencies =
+      <ProviderOrFamily>{
+        accountRepositoryProvider,
+        ...?accountRepositoryProvider.allTransitiveDependencies,
+      };
 
   @override
   Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
@@ -386,7 +404,7 @@ class _ShoppingListAccountByIdProviderElement
 }
 
 String _$shoppingListCurrencyByCodeHash() =>
-    r'b380b0a5bb99d8c1717bcab1e0a75ddfbaf3e169';
+    r'576bb91096444722a47e4e7fdd3ef3271b31d134';
 
 /// One-shot currency lookup by code — used by preview rows to format amounts.
 ///
@@ -429,12 +447,18 @@ class ShoppingListCurrencyByCodeFamily extends Family<AsyncValue<Currency?>> {
     return call(provider.code);
   }
 
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
+  static final Iterable<ProviderOrFamily> _dependencies = <ProviderOrFamily>[
+    currencyRepositoryProvider,
+  ];
 
   @override
   Iterable<ProviderOrFamily>? get dependencies => _dependencies;
 
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+  static final Iterable<ProviderOrFamily> _allTransitiveDependencies =
+      <ProviderOrFamily>{
+        currencyRepositoryProvider,
+        ...?currencyRepositoryProvider.allTransitiveDependencies,
+      };
 
   @override
   Iterable<ProviderOrFamily>? get allTransitiveDependencies =>

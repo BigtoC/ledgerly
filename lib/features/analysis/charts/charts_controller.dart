@@ -1,14 +1,14 @@
-// ChartsController — Analysis-tab chart slice owner.
+// ChartsController — Analysis-tab chart slice data pipeline.
 //
-// Mirrors `AnalysisController` (search slice) in structure: a private
-// `StreamController<ChartsState>` is opened in `build()` and re-opened
-// on every Riverpod rebuild; subscriptions use a generation counter so
-// stale emissions from a prior period/dimension/type cannot leak into
+// Pure projection: watches `ChartsSelectionController` for the live
+// user selection, then subscribes to repository streams and emits a
+// converted/grouped `ChartsState`. Selection mutations land on the
+// selection notifier; ref.watch() in `build()` re-runs the pipeline.
+//
+// A private `StreamController<ChartsState>` is opened in `build()` and
+// re-opened on every Riverpod rebuild; subscriptions use a generation
+// counter so stale emissions from a prior selection cannot leak into
 // the active state.
-//
-// Tasks 9–10: skeleton (range computation, command surface, raw emission).
-// Task 11 layers in currency conversion.
-// Tasks 12–13 add blocked-state handling and warm-start reuse.
 
 import 'dart:async';
 
@@ -18,7 +18,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../app/providers/repository_providers.dart';
 import '../../../core/utils/color_palette.dart';
 import '../../../core/utils/currency_converter.dart';
-import '../../../core/utils/date_helpers.dart';
 import '../../../data/models/account.dart';
 import '../../../data/models/account_slice.dart';
 import '../../../data/models/category.dart';
@@ -28,19 +27,25 @@ import '../../../data/models/currency_slice.dart';
 import '../../../data/models/time_bucket_slice.dart';
 import '../search/analysis_providers.dart';
 import 'charts_providers.dart';
+import 'charts_selection_controller.dart';
 import 'charts_state.dart';
 
 part 'charts_controller.g.dart';
 
 @Riverpod(
   keepAlive: true,
-  dependencies: [transactionRepository, exchangeRateRepository],
+  dependencies: [
+    transactionRepository,
+    exchangeRateRepository,
+    chartsFxStatus,
+    chartsCurrenciesByCode,
+    analysisCategoriesById,
+    analysisAccountsById,
+    ChartsSelectionController,
+  ],
 )
 class ChartsController extends _$ChartsController {
-  PeriodType _period = PeriodType.week;
-  DateTime _anchor = DateTime.now();
-  CategoryType _type = CategoryType.expense;
-  ChartDimension _dimension = ChartDimension.category;
+  late ChartsSelection _selection;
 
   int _generation = 0;
   StreamSubscription<List<Object>>? _sliceSub;
@@ -52,16 +57,6 @@ class ChartsController extends _$ChartsController {
   ChartsData? _lastEmittedData;
   bool _autoSwitchedToCurrency = false;
 
-  // Live selection getters — the UI reads these so toggles stay in sync
-  // with the *requested* selection regardless of which state variant the
-  // controller is emitting (loading / empty / blocked all reflect the
-  // user's latest tap, not the previously-emitted data).
-  PeriodType get currentPeriod => _period;
-  CategoryType get currentType => _type;
-  ChartDimension get currentDimension => _dimension;
-  DateTime get currentAnchor => _anchor;
-  bool get isAtCurrentPeriod => _isAtCurrentPeriod();
-
   // TODO(charts/warm-start): per the spec, week+expense+category may seed
   // from a warmed snapshot when FX freshness < 1h, default currency
   // unchanged, locale unchanged, and no transaction/category/account
@@ -69,9 +64,11 @@ class ChartsController extends _$ChartsController {
   // sub-frame in practice. Revisit if cold-start jank surfaces.
   @override
   Stream<ChartsState> build() {
+    _selection = ref.watch(chartsSelectionControllerProvider);
     debugPrint(
-      '[ChartsController] build() — period=$_period type=$_type '
-      'dimension=$_dimension anchor=$_anchor',
+      '[ChartsController] build() — period=${_selection.period} '
+      'type=${_selection.type} dimension=${_selection.dimension} '
+      'anchor=${_selection.anchorDate}',
     );
     _emitter?.close();
     _sliceSub?.cancel();
@@ -118,53 +115,6 @@ class ChartsController extends _$ChartsController {
 
   // ---------- Commands ----------
 
-  void setPeriod(PeriodType period) {
-    debugPrint('[ChartsController] setPeriod($period) current=$_period');
-    if (_period == period) {
-      debugPrint('[ChartsController] setPeriod no-op (same period)');
-      return;
-    }
-    _period = period;
-    _anchor = _normalizeAnchor(_anchor, period);
-    _resubscribe();
-  }
-
-  void previousPeriod() {
-    debugPrint('[ChartsController] previousPeriod() from anchor=$_anchor');
-    _anchor = _shiftAnchor(_anchor, _period, -1);
-    _resubscribe();
-  }
-
-  void nextPeriod() {
-    debugPrint('[ChartsController] nextPeriod() from anchor=$_anchor');
-    if (_isAtCurrentPeriod()) {
-      debugPrint('[ChartsController] nextPeriod no-op (at current period)');
-      return;
-    }
-    _anchor = _shiftAnchor(_anchor, _period, 1);
-    _resubscribe();
-  }
-
-  void toggleType() {
-    debugPrint('[ChartsController] toggleType() current=$_type');
-    _type = _type == CategoryType.expense
-        ? CategoryType.income
-        : CategoryType.expense;
-    _resubscribe();
-  }
-
-  void toggleDimension(ChartDimension d) {
-    debugPrint('[ChartsController] toggleDimension($d) current=$_dimension');
-    if (_dimension == d) {
-      debugPrint('[ChartsController] toggleDimension no-op (same dimension)');
-      return;
-    }
-    _dimension = d;
-    // User took over; the auto-switch banner is no longer relevant.
-    _autoSwitchedToCurrency = false;
-    _resubscribe();
-  }
-
   void retry() {
     debugPrint('[ChartsController] retry()');
     _resubscribe();
@@ -185,12 +135,12 @@ class ChartsController extends _$ChartsController {
   // ---------- Subscription wiring ----------
 
   ({DateTime start, DateTime end}) _currentRange() {
-    final start = _normalizeAnchor(_anchor, _period);
-    final end = _shiftAnchor(start, _period, 1);
+    final start = normalizeAnchor(_selection.anchorDate, _selection.period);
+    final end = shiftAnchor(start, _selection.period, 1);
     return (start: start, end: end);
   }
 
-  TimeBucketGranularity _granularity() => switch (_period) {
+  TimeBucketGranularity _granularity() => switch (_selection.period) {
     PeriodType.day => TimeBucketGranularity.hour,
     PeriodType.week => TimeBucketGranularity.day,
     PeriodType.month => TimeBucketGranularity.day,
@@ -205,8 +155,8 @@ class ChartsController extends _$ChartsController {
     final myGen = ++_generation;
     final range = _currentRange();
     debugPrint(
-      '[ChartsController] _resubscribe gen=$myGen period=$_period '
-      'dimension=$_dimension type=$_type '
+      '[ChartsController] _resubscribe gen=$myGen period=${_selection.period} '
+      'dimension=${_selection.dimension} type=${_selection.type} '
       'range=[${range.start.toIso8601String()}, ${range.end.toIso8601String()}) '
       'previousData=${_lastEmittedData != null}',
     );
@@ -218,7 +168,7 @@ class ChartsController extends _$ChartsController {
         .watchTimeBucketsInRange(
           start: range.start,
           end: range.end,
-          type: _type,
+          type: _selection.type,
           granularity: _granularity(),
         )
         .listen(
@@ -241,13 +191,13 @@ class ChartsController extends _$ChartsController {
           },
         );
 
-    switch (_dimension) {
+    switch (_selection.dimension) {
       case ChartDimension.category:
         _sliceSub = repo
             .watchByCategoryInRange(
               start: range.start,
               end: range.end,
-              type: _type,
+              type: _selection.type,
             )
             .listen(
               (slices) => _onSlices(myGen, slices),
@@ -264,7 +214,7 @@ class ChartsController extends _$ChartsController {
             .watchByAccountInRange(
               start: range.start,
               end: range.end,
-              type: _type,
+              type: _selection.type,
             )
             .listen(
               (slices) => _onSlices(myGen, slices),
@@ -281,7 +231,7 @@ class ChartsController extends _$ChartsController {
             .watchByCurrencyInRange(
               start: range.start,
               end: range.end,
-              type: _type,
+              type: _selection.type,
             )
             .listen(
               (slices) => _onSlices(myGen, slices),
@@ -299,7 +249,8 @@ class ChartsController extends _$ChartsController {
   void _onSlices(int myGen, List<Object> slices) {
     debugPrint(
       '[ChartsController] slices emit gen=$myGen '
-      '(active=$_generation) dimension=$_dimension count=${slices.length}',
+      '(active=$_generation) dimension=${_selection.dimension} '
+      'count=${slices.length}',
     );
     if (myGen != _generation) {
       debugPrint('[ChartsController] slices dropped — stale gen');
@@ -364,7 +315,7 @@ class ChartsController extends _$ChartsController {
       unawaited(repo.refreshAll(fx.defaultCurrencyCode));
     }
 
-    if (_dimension == ChartDimension.currency) {
+    if (_selection.dimension == ChartDimension.currency) {
       _emitCurrencyDimension(
         slices: slices.cast<CurrencySlice>(),
         buckets: buckets,
@@ -376,15 +327,20 @@ class ChartsController extends _$ChartsController {
 
     final shouldAutoSwitch =
         !_autoSwitchedToCurrency &&
-        _dimension == ChartDimension.category &&
-        _period == PeriodType.week &&
+        _selection.dimension == ChartDimension.category &&
+        _selection.period == PeriodType.week &&
         allMissing &&
         _lastEmittedData == null;
     if (shouldAutoSwitch) {
       debugPrint('[ChartsController] auto-switch → currency dimension');
       _autoSwitchedToCurrency = true;
-      _dimension = ChartDimension.currency;
-      _resubscribe();
+      // Mutate selection out-of-band so build() re-runs cleanly via the
+      // selection notifier; mutating during stream emission is unsafe.
+      Future.microtask(() {
+        ref
+            .read(chartsSelectionControllerProvider.notifier)
+            .setDimension(ChartDimension.currency);
+      });
       return;
     }
 
@@ -467,7 +423,7 @@ class ChartsController extends _$ChartsController {
       String label;
       int colorIndex;
       String iconKey;
-      if (_dimension == ChartDimension.category) {
+      if (_selection.dimension == ChartDimension.category) {
         final c = cats[id];
         label = _categoryLabel(id, cats);
         colorIndex = c?.color ?? CategoryPaletteIndex.neutralVariant50;
@@ -511,10 +467,10 @@ class ChartsController extends _$ChartsController {
     ]..sort((a, b) => a.bucketStart.compareTo(b.bucketStart));
 
     final data = ChartsData(
-      period: _period,
-      anchorDate: _normalizeAnchor(_anchor, _period),
-      type: _type,
-      dimension: _dimension,
+      period: _selection.period,
+      anchorDate: normalizeAnchor(_selection.anchorDate, _selection.period),
+      type: _selection.type,
+      dimension: _selection.dimension,
       slices: chartSlices,
       bucketTotals: bucketTotals,
       grandTotalMinorUnits: grandTotal,
@@ -524,7 +480,7 @@ class ChartsController extends _$ChartsController {
       excludedCurrencyCodes: missingCurrencies.toList()..sort(),
     );
     debugPrint(
-      '[ChartsController] emit → ChartsDataState (${_dimension.name}) '
+      '[ChartsController] emit → ChartsDataState (${_selection.dimension.name}) '
       'slices=${chartSlices.length} buckets=${bucketTotals.length} '
       'grand=$grandTotal excluded=${data.excludedCurrencyCodes}',
     );
@@ -616,10 +572,10 @@ class ChartsController extends _$ChartsController {
     chartSlices.sort((a, b) => b.totalMinorUnits.compareTo(a.totalMinorUnits));
 
     final data = ChartsData(
-      period: _period,
-      anchorDate: _normalizeAnchor(_anchor, _period),
-      type: _type,
-      dimension: _dimension,
+      period: _selection.period,
+      anchorDate: normalizeAnchor(_selection.anchorDate, _selection.period),
+      type: _selection.type,
+      dimension: _selection.dimension,
       slices: chartSlices,
       bucketTotals: bucketTotals,
       grandTotalMinorUnits: missingRate ? null : grandTotal,
@@ -652,40 +608,4 @@ class ChartsController extends _$ChartsController {
 
   int _currencyColorIndex(String code) =>
       code.hashCode.abs() % kCategoryColorPalette.length;
-
-  // ---------- Period math ----------
-
-  DateTime _normalizeAnchor(DateTime anchor, PeriodType period) {
-    switch (period) {
-      case PeriodType.day:
-        return DateHelpers.startOfDay(anchor);
-      case PeriodType.week:
-        return DateHelpers.startOfWeek(anchor);
-      case PeriodType.month:
-        return DateHelpers.startOfMonth(anchor);
-      case PeriodType.year:
-        return DateHelpers.startOfYear(anchor);
-    }
-  }
-
-  DateTime _shiftAnchor(DateTime anchor, PeriodType period, int delta) {
-    final base = _normalizeAnchor(anchor, period);
-    switch (period) {
-      case PeriodType.day:
-        return DateTime(base.year, base.month, base.day + delta);
-      case PeriodType.week:
-        return DateTime(base.year, base.month, base.day + 7 * delta);
-      case PeriodType.month:
-        return DateTime(base.year, base.month + delta, 1);
-      case PeriodType.year:
-        return DateTime(base.year + delta, 1, 1);
-    }
-  }
-
-  bool _isAtCurrentPeriod() {
-    final now = DateTime.now();
-    final currentAnchor = _normalizeAnchor(now, _period);
-    final myAnchor = _normalizeAnchor(_anchor, _period);
-    return !myAnchor.isBefore(currentAnchor);
-  }
 }

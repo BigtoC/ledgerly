@@ -8,11 +8,14 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../app/providers/default_currency_provider.dart';
 import '../../../app/providers/repository_providers.dart';
 import '../../../data/models/currency.dart';
 import '../../../data/repositories/exchange_rate_repository.dart';
+
+part 'charts_providers.g.dart';
 
 /// FX readiness + freshness snapshot for the active default currency.
 class ChartsFxStatus {
@@ -51,9 +54,14 @@ class ChartsFxStatus {
 /// currency or the per-pair rate metadata changes. Uses an internal
 /// `StreamController` so both inputs feed the same output without
 /// dropping events from whichever input wasn't last awaited.
-final chartsFxStatusProvider = StreamProvider.autoDispose<ChartsFxStatus>((
-  ref,
-) {
+@Riverpod(
+  dependencies: [
+    initialDefaultCurrency,
+    defaultCurrency,
+    exchangeRateRepository,
+  ],
+)
+Stream<ChartsFxStatus> chartsFxStatus(Ref ref) {
   final initialDefault = ref.watch(initialDefaultCurrencyProvider);
   // `.stream` is the correct primitive for combining two streams into
   // one. AsyncValue listening would force a re-watch on every emission.
@@ -93,15 +101,15 @@ final chartsFxStatusProvider = StreamProvider.autoDispose<ChartsFxStatus>((
   });
 
   return controller.stream;
-});
+}
 
 /// `code → Currency` for `MoneyFormatter` lookups in chart widgets.
 /// Mirrors `homeCurrenciesByCodeProvider` shape so chart code can format
 /// amounts identically to the Home summary strip.
-final chartsCurrenciesByCodeProvider =
-    StreamProvider.autoDispose<Map<String, Currency>>((ref) {
-      final repo = ref.watch(currencyRepositoryProvider);
-      return repo
-          .watchAll(includeTokens: true)
-          .map((rows) => {for (final c in rows) c.code: c});
-    });
+@Riverpod(dependencies: [currencyRepository])
+Stream<Map<String, Currency>> chartsCurrenciesByCode(Ref ref) {
+  final repo = ref.watch(currencyRepositoryProvider);
+  return repo
+      .watchAll(includeTokens: true)
+      .map((rows) => {for (final c in rows) c.code: c});
+}

@@ -125,12 +125,12 @@ return empty(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  idle,TResult Function( String query,  List<CategorySearchResult>? previous)?  loading,TResult Function( List<CategorySearchResult> categories,  String query)?  results,TResult Function( String query)?  empty,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  idle,TResult Function( String query,  List<CategorySearchResult>? previous)?  loading,TResult Function( List<CategorySearchResult> categories,  List<Transaction> transactions,  String query)?  results,TResult Function( String query)?  empty,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case AnalysisIdle() when idle != null:
 return idle();case AnalysisLoading() when loading != null:
 return loading(_that.query,_that.previous);case AnalysisResults() when results != null:
-return results(_that.categories,_that.query);case AnalysisEmpty() when empty != null:
+return results(_that.categories,_that.transactions,_that.query);case AnalysisEmpty() when empty != null:
 return empty(_that.query);case _:
   return orElse();
 
@@ -149,12 +149,12 @@ return empty(_that.query);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  idle,required TResult Function( String query,  List<CategorySearchResult>? previous)  loading,required TResult Function( List<CategorySearchResult> categories,  String query)  results,required TResult Function( String query)  empty,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  idle,required TResult Function( String query,  List<CategorySearchResult>? previous)  loading,required TResult Function( List<CategorySearchResult> categories,  List<Transaction> transactions,  String query)  results,required TResult Function( String query)  empty,}) {final _that = this;
 switch (_that) {
 case AnalysisIdle():
 return idle();case AnalysisLoading():
 return loading(_that.query,_that.previous);case AnalysisResults():
-return results(_that.categories,_that.query);case AnalysisEmpty():
+return results(_that.categories,_that.transactions,_that.query);case AnalysisEmpty():
 return empty(_that.query);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -169,12 +169,12 @@ return empty(_that.query);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  idle,TResult? Function( String query,  List<CategorySearchResult>? previous)?  loading,TResult? Function( List<CategorySearchResult> categories,  String query)?  results,TResult? Function( String query)?  empty,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  idle,TResult? Function( String query,  List<CategorySearchResult>? previous)?  loading,TResult? Function( List<CategorySearchResult> categories,  List<Transaction> transactions,  String query)?  results,TResult? Function( String query)?  empty,}) {final _that = this;
 switch (_that) {
 case AnalysisIdle() when idle != null:
 return idle();case AnalysisLoading() when loading != null:
 return loading(_that.query,_that.previous);case AnalysisResults() when results != null:
-return results(_that.categories,_that.query);case AnalysisEmpty() when empty != null:
+return results(_that.categories,_that.transactions,_that.query);case AnalysisEmpty() when empty != null:
 return empty(_that.query);case _:
   return null;
 
@@ -295,7 +295,7 @@ as List<CategorySearchResult>?,
 
 
 class AnalysisResults implements AnalysisState {
-  const AnalysisResults({required final  List<CategorySearchResult> categories, required this.query}): _categories = categories;
+  const AnalysisResults({required final  List<CategorySearchResult> categories, required final  List<Transaction> transactions, required this.query}): _categories = categories,_transactions = transactions;
   
 
  final  List<CategorySearchResult> _categories;
@@ -303,6 +303,13 @@ class AnalysisResults implements AnalysisState {
   if (_categories is EqualUnmodifiableListView) return _categories;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_categories);
+}
+
+ final  List<Transaction> _transactions;
+ List<Transaction> get transactions {
+  if (_transactions is EqualUnmodifiableListView) return _transactions;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_transactions);
 }
 
  final  String query;
@@ -317,16 +324,16 @@ $AnalysisResultsCopyWith<AnalysisResults> get copyWith => _$AnalysisResultsCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnalysisResults&&const DeepCollectionEquality().equals(other._categories, _categories)&&(identical(other.query, query) || other.query == query));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnalysisResults&&const DeepCollectionEquality().equals(other._categories, _categories)&&const DeepCollectionEquality().equals(other._transactions, _transactions)&&(identical(other.query, query) || other.query == query));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_categories),query);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_categories),const DeepCollectionEquality().hash(_transactions),query);
 
 @override
 String toString() {
-  return 'AnalysisState.results(categories: $categories, query: $query)';
+  return 'AnalysisState.results(categories: $categories, transactions: $transactions, query: $query)';
 }
 
 
@@ -337,7 +344,7 @@ abstract mixin class $AnalysisResultsCopyWith<$Res> implements $AnalysisStateCop
   factory $AnalysisResultsCopyWith(AnalysisResults value, $Res Function(AnalysisResults) _then) = _$AnalysisResultsCopyWithImpl;
 @useResult
 $Res call({
- List<CategorySearchResult> categories, String query
+ List<CategorySearchResult> categories, List<Transaction> transactions, String query
 });
 
 
@@ -354,10 +361,11 @@ class _$AnalysisResultsCopyWithImpl<$Res>
 
 /// Create a copy of AnalysisState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? categories = null,Object? query = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? categories = null,Object? transactions = null,Object? query = null,}) {
   return _then(AnalysisResults(
 categories: null == categories ? _self._categories : categories // ignore: cast_nullable_to_non_nullable
-as List<CategorySearchResult>,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
+as List<CategorySearchResult>,transactions: null == transactions ? _self._transactions : transactions // ignore: cast_nullable_to_non_nullable
+as List<Transaction>,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }

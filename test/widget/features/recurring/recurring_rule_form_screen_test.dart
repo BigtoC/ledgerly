@@ -33,18 +33,13 @@ class _FakeFormController extends RecurringRuleFormController {
   _FakeFormController(this._initial);
   final RecurringRuleFormState _initial;
 
-  int saveCallCount = 0;
-
   @override
   Future<RecurringRuleFormState> build({int? ruleId}) async {
     return _initial;
   }
 
   @override
-  Future<int?> save() async {
-    saveCallCount++;
-    return null;
-  }
+  Future<int?> save() async => null;
 
   @override
   Future<void> deleteRule() async {}

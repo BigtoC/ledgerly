@@ -7,11 +7,11 @@ part of 'splash_redirect_provider.dart';
 // **************************************************************************
 
 String _$splashGateSnapshotHash() =>
-    r'281035d9bdb515023036bd97227870ce5be9ecb5';
+    r'355664651509c3555b9c3228fe20d62c9116f16a';
 
 /// See also [splashGateSnapshot].
 @ProviderFor(splashGateSnapshot)
-final splashGateSnapshotProvider = Provider<SplashGateSnapshot>.internal(
+final splashGateSnapshotProvider = Provider<Raw<SplashGateSnapshot>>.internal(
   splashGateSnapshot,
   name: r'splashGateSnapshotProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -26,7 +26,7 @@ final splashGateSnapshotProvider = Provider<SplashGateSnapshot>.internal(
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef SplashGateSnapshotRef = ProviderRef<SplashGateSnapshot>;
+typedef SplashGateSnapshotRef = ProviderRef<Raw<SplashGateSnapshot>>;
 String _$splashEnabledHash() => r'5d023f161ca598447425b44eba53ab1067969e57';
 
 /// Stream of `splash_enabled` for reactive UI (e.g. `SettingsScreen`).

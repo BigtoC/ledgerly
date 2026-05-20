@@ -10,6 +10,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../data/models/category.dart';
 import '../../../data/models/currency.dart';
+import '../../../data/models/transaction.dart';
 
 part 'analysis_state.freezed.dart';
 
@@ -26,8 +27,15 @@ sealed class AnalysisState with _$AnalysisState {
 
   /// Query has matching transactions. Categories sorted by most-recent
   /// matching transaction date (descending), tiebreak `categoryId` asc.
+  ///
+  /// `transactions` carries the raw matching rows that produced
+  /// `categories`. `CategorySearchDetailController` reads it for the
+  /// synchronous detail-screen pre-fill so we avoid a frame of
+  /// `DetailLoading` on navigation when Drift would re-fetch the same
+  /// rows the parent already has in memory.
   const factory AnalysisState.results({
     required List<CategorySearchResult> categories,
+    required List<Transaction> transactions,
     required String query,
   }) = AnalysisResults;
 

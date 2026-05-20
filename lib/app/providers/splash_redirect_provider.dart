@@ -45,7 +45,7 @@ class SplashGateSnapshot extends ChangeNotifier {
 // directly (no `ref.watch`), so the override path is not bound by this
 // declaration in production.
 @Riverpod(keepAlive: true, dependencies: [userPreferencesRepository])
-SplashGateSnapshot splashGateSnapshot(Ref ref) {
+Raw<SplashGateSnapshot> splashGateSnapshot(Ref ref) {
   final notifier = SplashGateSnapshot._();
   final repo = ref.watch(userPreferencesRepositoryProvider);
 

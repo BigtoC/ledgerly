@@ -23,6 +23,7 @@ import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/services/exchange_rate_service.dart';
 import 'package:ledgerly/features/analysis/charts/charts_controller.dart';
 import 'package:ledgerly/features/analysis/charts/charts_providers.dart';
+import 'package:ledgerly/features/analysis/charts/charts_selection_controller.dart';
 import 'package:ledgerly/features/analysis/charts/charts_state.dart';
 import 'package:ledgerly/features/analysis/search/analysis_providers.dart';
 import 'package:mocktail/mocktail.dart';
@@ -177,7 +178,7 @@ void main() {
       clearInteractions(repo);
 
       container
-          .read(chartsControllerProvider.notifier)
+          .read(chartsSelectionControllerProvider.notifier)
           .setPeriod(PeriodType.day);
 
       await Future<void>.delayed(const Duration(milliseconds: 20));
@@ -205,7 +206,9 @@ void main() {
               as ChartsDataState;
       final initialAnchor = initial.chartData.anchorDate;
 
-      container.read(chartsControllerProvider.notifier).previousPeriod();
+      container
+          .read(chartsSelectionControllerProvider.notifier)
+          .previousPeriod();
       await Future<void>.delayed(const Duration(milliseconds: 20));
       final after =
           (container.read(chartsControllerProvider).valueOrNull
@@ -221,7 +224,7 @@ void main() {
       container.listen(chartsControllerProvider, (_, _) {});
       await Future<void>.delayed(const Duration(milliseconds: 20));
 
-      container.read(chartsControllerProvider.notifier).toggleType();
+      container.read(chartsSelectionControllerProvider.notifier).toggleType();
       await Future<void>.delayed(const Duration(milliseconds: 20));
 
       verify(
@@ -256,8 +259,8 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 20));
 
       container
-          .read(chartsControllerProvider.notifier)
-          .toggleDimension(ChartDimension.account);
+          .read(chartsSelectionControllerProvider.notifier)
+          .setDimension(ChartDimension.account);
       await Future<void>.delayed(const Duration(milliseconds: 20));
 
       verify(
@@ -560,8 +563,8 @@ void main() {
 
         // Switch to currency dimension (this also clears auto-switch flag).
         container
-            .read(chartsControllerProvider.notifier)
-            .toggleDimension(ChartDimension.currency);
+            .read(chartsSelectionControllerProvider.notifier)
+            .setDimension(ChartDimension.currency);
         await Future<void>.delayed(const Duration(milliseconds: 30));
 
         final state = container.read(chartsControllerProvider).valueOrNull;
@@ -718,8 +721,10 @@ void main() {
       container.listen(chartsControllerProvider, (_, _) {});
 
       await Future<void>.delayed(const Duration(milliseconds: 20));
-      final controller = container.read(chartsControllerProvider.notifier);
-      controller.nextPeriod();
+      final selection = container.read(
+        chartsSelectionControllerProvider.notifier,
+      );
+      selection.nextPeriod();
       await Future<void>.delayed(const Duration(milliseconds: 20));
 
       final state = container.read(chartsControllerProvider).valueOrNull;
