@@ -86,28 +86,30 @@ class _HomeStub extends StatelessWidget {
 
 class _FakeTransactionFormController extends TransactionFormController {
   _FakeTransactionFormController({
-    required this.fixed,
-    this.saveDraftResult,
-    this.convertDraftResult,
-  });
+    required TransactionFormState fixed,
+    ShoppingListEditResult? saveDraftResult,
+    ShoppingListEditResult? convertDraftResult,
+  }) : _fixed = fixed,
+       _saveDraftResult = saveDraftResult,
+       _convertDraftResult = convertDraftResult;
 
-  final TransactionFormState fixed;
-  final ShoppingListEditResult? saveDraftResult;
-  final ShoppingListEditResult? convertDraftResult;
+  final TransactionFormState _fixed;
+  final ShoppingListEditResult? _saveDraftResult;
+  final ShoppingListEditResult? _convertDraftResult;
 
   @override
-  TransactionFormState build() => fixed;
+  TransactionFormState build() => _fixed;
 
   @override
   Future<void> hydrateForShoppingListDraft(int shoppingListItemId) async {
-    state = fixed;
+    state = _fixed;
   }
 
   @override
-  Future<ShoppingListEditResult?> saveDraft() async => saveDraftResult;
+  Future<ShoppingListEditResult?> saveDraft() async => _saveDraftResult;
 
   @override
-  Future<ShoppingListEditResult?> convertDraft() async => convertDraftResult;
+  Future<ShoppingListEditResult?> convertDraft() async => _convertDraftResult;
 }
 
 TransactionFormState _editableDraftState({int shoppingListItemId = 77}) =>
