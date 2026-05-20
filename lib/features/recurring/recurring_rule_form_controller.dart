@@ -19,15 +19,13 @@ part 'recurring_rule_form_controller.g.dart';
   ],
 )
 class RecurringRuleFormController extends _$RecurringRuleFormController {
-  /// Calculator keypad state. Mirrors `state.amountMinorUnits` and bumps
+  /// Calculator keypad accumulator. Mirrored into
+  /// `RecurringRuleFormState.keypad` on every `_update` call so widgets
+  /// read keypad data through `state`, not off the notifier. Bumps
   /// `keypadRevision` on every press so the screen rebuilds even when
   /// `amountMinorUnits` doesn't change (decimal-start, operator press).
   KeypadState _keypad = const KeypadState.initial();
   int _keypadRevision = 0;
-
-  /// Read-only accessor for the screen — `AmountDisplay` reads this to
-  /// render the calculator's expression history and current input.
-  KeypadState get keypadSnapshot => _keypad;
 
   @override
   Future<RecurringRuleFormState> build({int? ruleId}) async {
@@ -65,12 +63,14 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
         monthOfYear: rule.monthOfYear,
         isEdit: true,
         pendingItemCount: pendingCount,
+        keypad: _keypad,
       );
     }
 
     _keypad = const KeypadState.initial();
     return RecurringRuleFormState(
       currency: defaultCurrency ?? const Currency(code: 'USD', decimals: 2),
+      keypad: _keypad,
     );
   }
 
@@ -279,7 +279,9 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
   void _update(RecurringRuleFormState Function(RecurringRuleFormState) fn) {
     final current = state.valueOrNull;
     if (current == null) return;
-    state = AsyncData(fn(current).copyWith(keypadRevision: _keypadRevision));
+    state = AsyncData(
+      fn(current).copyWith(keypad: _keypad, keypadRevision: _keypadRevision),
+    );
   }
 
   /// Reconstructs a [KeypadState] from a stored amount so backspace on a

@@ -7,7 +7,7 @@ part of 'charts_selection_controller.dart';
 // **************************************************************************
 
 String _$chartsSelectionControllerHash() =>
-    r'6b43f8565835ad37b0fd87de80a09f1e66026357';
+    r'd02889c80d3b76d093eed574ef313b0ef1d424db';
 
 /// See also [ChartsSelectionController].
 @ProviderFor(ChartsSelectionController)
@@ -18,8 +18,8 @@ final chartsSelectionControllerProvider =
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
           ? null
           : _$chartsSelectionControllerHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
+      dependencies: const <ProviderOrFamily>[],
+      allTransitiveDependencies: const <ProviderOrFamily>{},
     );
 
 typedef _$ChartsSelectionController = Notifier<ChartsSelection>;
