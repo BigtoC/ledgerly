@@ -7,7 +7,7 @@ import '../../../../data/models/currency.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../charts_state.dart';
 
-class DailyBarChart extends StatelessWidget {
+class DailyBarChart extends StatefulWidget {
   const DailyBarChart({
     super.key,
     required this.period,
@@ -26,15 +26,45 @@ class DailyBarChart extends StatelessWidget {
   final String? displayCurrencyCode;
 
   @override
+  State<DailyBarChart> createState() => _DailyBarChartState();
+}
+
+class _DailyBarChartState extends State<DailyBarChart> {
+  int? _touchedIndex;
+
+  @override
+  void didUpdateWidget(covariant DailyBarChart oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Drop the highlight when the bucket set changes — the previously
+    // touched index points at a different time bucket after a period or
+    // dimension swap and would mislead the reader.
+    if (oldWidget.period != widget.period ||
+        oldWidget.anchorDate != widget.anchorDate ||
+        oldWidget.bucketTotals.length != widget.bucketTotals.length) {
+      _touchedIndex = null;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.primary;
+    final scheme = Theme.of(context).colorScheme;
+    final baseColor = scheme.primary;
+    final highlightColor = scheme.tertiary;
     final now = DateTime.now();
-    final filledBuckets = _zeroFill(anchorDate, period, bucketTotals);
+    final filledBuckets = _zeroFill(
+      widget.anchorDate,
+      widget.period,
+      widget.bucketTotals,
+    );
     final maxY = filledBuckets
         .map((b) => b.totalMinorUnits.abs())
         .fold<int>(0, (a, b) => a > b ? a : b);
     final headroom = (maxY * 1.1).round();
     final l10n = AppLocalizations.of(context);
+    final currency = widget.displayCurrencyCode == null
+        ? null
+        : (widget.currenciesByCode[widget.displayCurrencyCode!] ??
+              Currency(code: widget.displayCurrencyCode!, decimals: 2));
 
     return Semantics(
       label: _semanticsLabel(l10n, filledBuckets),
@@ -45,7 +75,64 @@ class DailyBarChart extends StatelessWidget {
         child: BarChart(
           BarChartData(
             maxY: headroom == 0 ? 1 : headroom.toDouble(),
-            barTouchData: BarTouchData(enabled: false),
+            barTouchData: BarTouchData(
+              enabled: true,
+              handleBuiltInTouches: true,
+              touchTooltipData: BarTouchTooltipData(
+                tooltipRoundedRadius: 8,
+                tooltipPadding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                tooltipMargin: 8,
+                fitInsideHorizontally: true,
+                fitInsideVertically: true,
+                getTooltipColor: (_) =>
+                    scheme.inverseSurface.withValues(alpha: 0.92),
+                getTooltipItem: (group, _, rod, rodIdx) {
+                  final idx = group.x;
+                  if (idx < 0 || idx >= filledBuckets.length) return null;
+                  final bucket = filledBuckets[idx];
+                  final amount = currency == null
+                      ? bucket.totalMinorUnits.toString()
+                      : MoneyFormatter.format(
+                          amountMinorUnits: bucket.totalMinorUnits,
+                          currency: currency,
+                          locale: widget.locale,
+                        );
+                  final label = _axisLabel(bucket.bucketStart);
+                  return BarTooltipItem(
+                    '$label\n',
+                    TextStyle(
+                      color: scheme.onInverseSurface,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 11,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: amount,
+                        style: TextStyle(
+                          color: scheme.onInverseSurface,
+                          fontWeight: FontWeight.w400,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+              touchCallback: (event, response) {
+                if (!event.isInterestedForInteractions ||
+                    response == null ||
+                    response.spot == null) {
+                  setState(() => _touchedIndex = null);
+                  return;
+                }
+                setState(
+                  () => _touchedIndex = response.spot!.touchedBarGroupIndex,
+                );
+              },
+            ),
             gridData: const FlGridData(show: false),
             borderData: FlBorderData(show: false),
             titlesData: FlTitlesData(
@@ -66,11 +153,18 @@ class DailyBarChart extends StatelessWidget {
                     if (idx < 0 || idx >= filledBuckets.length) {
                       return const SizedBox.shrink();
                     }
+                    final selected = idx == _touchedIndex;
                     return Padding(
                       padding: const EdgeInsets.only(top: 6),
                       child: Text(
                         _axisLabel(filledBuckets[idx].bucketStart),
-                        style: const TextStyle(fontSize: 10),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: selected
+                              ? FontWeight.w700
+                              : FontWeight.w400,
+                          color: selected ? scheme.tertiary : null,
+                        ),
                       ),
                     );
                   },
@@ -84,19 +178,44 @@ class DailyBarChart extends StatelessWidget {
                   barRods: [
                     BarChartRodData(
                       toY: filledBuckets[i].totalMinorUnits.abs().toDouble(),
-                      color: filledBuckets[i].bucketStart.isAfter(now)
-                          ? color.withValues(alpha: 0.3)
-                          : color,
-                      width: 8,
-                      borderRadius: BorderRadius.circular(2),
+                      color: _rodColor(
+                        index: i,
+                        bucket: filledBuckets[i],
+                        now: now,
+                        baseColor: baseColor,
+                        highlightColor: highlightColor,
+                      ),
+                      width: i == _touchedIndex ? 12 : 8,
+                      borderRadius: BorderRadius.circular(
+                        i == _touchedIndex ? 4 : 2,
+                      ),
                     ),
                   ],
                 ),
             ],
           ),
+          duration: const Duration(milliseconds: 450),
+          curve: Curves.easeOutCubic,
         ),
       ),
     );
+  }
+
+  Color _rodColor({
+    required int index,
+    required ChartBucketTotal bucket,
+    required DateTime now,
+    required Color baseColor,
+    required Color highlightColor,
+  }) {
+    if (index == _touchedIndex) return highlightColor;
+    if (bucket.bucketStart.isAfter(now)) {
+      return baseColor.withValues(alpha: 0.3);
+    }
+    if (_touchedIndex != null) {
+      return baseColor.withValues(alpha: 0.45);
+    }
+    return baseColor;
   }
 
   String _semanticsLabel(
@@ -104,10 +223,10 @@ class DailyBarChart extends StatelessWidget {
     List<ChartBucketTotal> filledBuckets,
   ) {
     final parts = <String>[l10n.chartsBarChart];
-    final currency = displayCurrencyCode == null
+    final currency = widget.displayCurrencyCode == null
         ? null
-        : (currenciesByCode[displayCurrencyCode!] ??
-              Currency(code: displayCurrencyCode!, decimals: 2));
+        : (widget.currenciesByCode[widget.displayCurrencyCode!] ??
+              Currency(code: widget.displayCurrencyCode!, decimals: 2));
     for (final b in filledBuckets) {
       if (b.totalMinorUnits == 0) continue;
       final amount = currency == null
@@ -115,7 +234,7 @@ class DailyBarChart extends StatelessWidget {
           : MoneyFormatter.format(
               amountMinorUnits: b.totalMinorUnits,
               currency: currency,
-              locale: locale,
+              locale: widget.locale,
             );
       parts.add('${_axisLabel(b.bucketStart)}: $amount');
     }
@@ -167,15 +286,15 @@ class DailyBarChart extends StatelessWidget {
   }
 
   String _axisLabel(DateTime bucketStart) {
-    switch (period) {
+    switch (widget.period) {
       case PeriodType.day:
         return bucketStart.hour.toString().padLeft(2, '0');
       case PeriodType.week:
-        return DateFormat.E(locale).format(bucketStart);
+        return DateFormat.E(widget.locale).format(bucketStart);
       case PeriodType.month:
         return bucketStart.day.toString();
       case PeriodType.year:
-        return DateFormat.MMM(locale).format(bucketStart);
+        return DateFormat.MMM(widget.locale).format(bucketStart);
     }
   }
 }

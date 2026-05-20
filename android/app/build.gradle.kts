@@ -3,8 +3,9 @@ import org.gradle.api.GradleException
 
 plugins {
     id("com.android.application")
-    id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    // The Flutter Gradle Plugin must be applied after the Android Gradle plugin.
+    // Kotlin support comes from Built-in Kotlin (android.builtInKotlin=true in
+    // gradle.properties), so we no longer apply org.jetbrains.kotlin.android.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
