@@ -121,6 +121,7 @@ class _Section extends ConsumerWidget {
           onDelete: () => _onDelete(context, ref, view.category),
         );
       },
+      // ignore: deprecated_member_use
       onReorder: (oldIndex, newIndex) {
         final reordered = [...rows];
         final adjusted = newIndex > oldIndex ? newIndex - 1 : newIndex;
