@@ -101,25 +101,15 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
     // first emission on the live subscription below replaces it.
     if (ref.exists(analysisControllerProvider)) {
       final settled = ref.read(analysisControllerProvider).valueOrNull;
-      final matchesSettledQuery = switch (settled) {
-        AnalysisResults(:final query) => query == trimmedQuery,
-        AnalysisEmpty(:final query) => query == trimmedQuery,
-        _ => false,
-      };
-      if (matchesSettledQuery) {
-        final all = ref
-            .read(analysisControllerProvider.notifier)
-            .lastTransactions;
-        if (all != null) {
-          _lastTransactions = all;
-          controller.add(
-            _buildState(
-              all: all,
-              categoryId: categoryId,
-              currencyCode: trimmedCurrencyCode,
-            ),
-          );
-        }
+      if (settled is AnalysisResults && settled.query == trimmedQuery) {
+        _lastTransactions = settled.transactions;
+        controller.add(
+          _buildState(
+            all: settled.transactions,
+            categoryId: categoryId,
+            currencyCode: trimmedCurrencyCode,
+          ),
+        );
       }
     }
 
