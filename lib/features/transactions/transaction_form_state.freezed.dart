@@ -31,26 +31,29 @@ bool operator ==(Object other) {
 }
 
 
- @override
- int get hashCode => Object.hash(runtimeType, formMode);
+@override
+int get hashCode => Object.hash(runtimeType,formMode);
 
- @override
- String toString() {
-   return 'TransactionFormState(formMode: $formMode)';
- }
+@override
+String toString() {
+  return 'TransactionFormState(formMode: $formMode)';
+}
+
+
 }
 
 /// @nodoc
-abstract mixin class $TransactionFormStateCopyWith<$Res> {
-  factory $TransactionFormStateCopyWith(TransactionFormState value,
-      $Res Function(TransactionFormState) _then) = _$TransactionFormStateCopyWithImpl;
+abstract mixin class $TransactionFormStateCopyWith<$Res>  {
+  factory $TransactionFormStateCopyWith(TransactionFormState value, $Res Function(TransactionFormState) _then) = _$TransactionFormStateCopyWithImpl;
+@useResult
+$Res call({
+ TransactionFormMode formMode
+});
 
-  @useResult
-  $Res call({
-    TransactionFormMode formMode
-  });
+
+
+
 }
-
 /// @nodoc
 class _$TransactionFormStateCopyWithImpl<$Res>
     implements $TransactionFormStateCopyWith<$Res> {
@@ -59,18 +62,15 @@ class _$TransactionFormStateCopyWithImpl<$Res>
   final TransactionFormState _self;
   final $Res Function(TransactionFormState) _then;
 
-  /// Create a copy of TransactionFormState
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({Object? formMode = null,}) {
-    return _then(_self.copyWith(
-      formMode: null == formMode
-          ? _self.formMode
-          : formMode // ignore: cast_nullable_to_non_nullable
-      as TransactionFormMode,
-    ));
-  }
+/// Create a copy of TransactionFormState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? formMode = null,}) {
+  return _then(_self.copyWith(
+formMode: null == formMode ? _self.formMode : formMode // ignore: cast_nullable_to_non_nullable
+as TransactionFormMode,
+  ));
+}
+
 }
 
 
@@ -96,7 +96,7 @@ return loading(_that);case TransactionFormEmpty() when empty != null:
 return empty(_that);case TransactionFormData() when data != null:
 return data(_that);case TransactionFormError() when error != null:
 return error(_that);case _:
-return orElse();
+  return orElse();
 
 }
 }
@@ -221,7 +221,7 @@ return error(_that.error,_that.stack,_that.formMode);case _:
 
 class TransactionFormLoading extends TransactionFormState {
   const TransactionFormLoading({this.formMode = const AddTransactionMode()}): super._();
-
+  
 
 @override@JsonKey() final  TransactionFormMode formMode;
 
@@ -257,6 +257,10 @@ abstract mixin class $TransactionFormLoadingCopyWith<$Res> implements $Transacti
 $Res call({
  TransactionFormMode formMode
 });
+
+
+
+
 }
 /// @nodoc
 class _$TransactionFormLoadingCopyWithImpl<$Res>
@@ -274,6 +278,8 @@ formMode: null == formMode ? _self.formMode : formMode // ignore: cast_nullable_
 as TransactionFormMode,
   ));
 }
+
+
 }
 
 /// @nodoc
@@ -281,7 +287,7 @@ as TransactionFormMode,
 
 class TransactionFormEmpty extends TransactionFormState {
   const TransactionFormEmpty({required this.reason, this.formMode = const AddTransactionMode()}): super._();
-
+  
 
  final  TransactionFormEmptyReason reason;
 @override@JsonKey() final  TransactionFormMode formMode;
@@ -349,7 +355,7 @@ as TransactionFormMode,
 
 class TransactionFormData extends TransactionFormState {
   const TransactionFormData({required this.formMode, required this.amountMinorUnits, required this.keypad, required this.selectedAccount, required this.displayCurrency, required this.currencyTouched, required this.selectedCategory, required this.pendingType, required this.date, required this.memo, required this.isDirty, required this.isSaving, required this.isDeleting, required this.editingId, required this.duplicateSourceId, required this.originalCreatedAt, this.keypadRevision = 0, this.shoppingListItemId = null, this.submissionAction = TransactionFormSubmissionAction.none, this.selectedAccountIsArchived = false, this.selectedCategoryIsArchived = false}): super._();
-
+  
 
 /// Discriminates which entry point opened the form so widgets can derive
 /// titles, CTAs, and recovery behavior directly from state.
@@ -532,7 +538,7 @@ $CategoryCopyWith<$Res>? get selectedCategory {
 
 class TransactionFormError extends TransactionFormState {
   const TransactionFormError(this.error, this.stack, {this.formMode = const AddTransactionMode()}): super._();
-
+  
 
  final  Object error;
  final  StackTrace stack;

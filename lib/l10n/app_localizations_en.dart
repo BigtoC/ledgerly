@@ -860,4 +860,75 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeSummaryUnconvertedHeader => 'Unconverted';
+
+  @override
+  String get chartsPeriodDay => 'Day';
+
+  @override
+  String get chartsPeriodWeek => 'Week';
+
+  @override
+  String get chartsPeriodMonth => 'Month';
+
+  @override
+  String get chartsPeriodYear => 'Year';
+
+  @override
+  String get chartsTypeExpense => 'Expense';
+
+  @override
+  String get chartsTypeIncome => 'Income';
+
+  @override
+  String get chartsDimensionCategory => 'Category';
+
+  @override
+  String get chartsDimensionAccount => 'Account';
+
+  @override
+  String get chartsDimensionCurrency => 'Currency';
+
+  @override
+  String get chartsNoData => 'No transactions yet';
+
+  @override
+  String get chartsMixedCurrencies => 'Showing original currency amounts';
+
+  @override
+  String get chartsRatesRequired => 'Waiting for exchange rates';
+
+  @override
+  String get chartsViewAll => 'View all';
+
+  @override
+  String get chartsTotal => 'Total';
+
+  @override
+  String get chartsOther => 'Other';
+
+  @override
+  String chartsOtherCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Other ($count items)',
+      one: 'Other (1 item)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get chartsAutoSwitchedToCurrency =>
+      'Showing by currency — no exchange rates yet for category view.';
+
+  @override
+  String get chartsPieChart => 'Pie chart';
+
+  @override
+  String get chartsBarChart => 'Bar chart';
+
+  @override
+  String chartsExcludedCurrencies(String codes) {
+    return 'Excluded: $codes — no exchange rate yet';
+  }
 }

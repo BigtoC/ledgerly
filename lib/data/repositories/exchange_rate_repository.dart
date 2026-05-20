@@ -7,6 +7,20 @@ import '../database/app_database.dart' as drift;
 import '../database/daos/exchange_rate_dao.dart';
 import '../services/exchange_rate_service.dart';
 
+/// Per-pair rate metadata exposed to consumers that need both the rate
+/// and the `fetchedAt` timestamp (e.g. the chart warm-start gate). Keyed
+/// by `from→to` in the snapshot map returned by
+/// [ExchangeRateRepository.watchRatesMetadata].
+class ExchangeRateMetadata {
+  const ExchangeRateMetadata({
+    required this.rateScaledE9,
+    required this.fetchedAt,
+  });
+
+  final int rateScaledE9;
+  final DateTime fetchedAt;
+}
+
 /// Concrete Drift-backed exchange-rate repository.
 ///
 /// Single implementation — no abstract base. If a second backend is ever
@@ -110,6 +124,24 @@ final class ExchangeRateRepository {
       for (final row in rows) {
         final key = '${row.baseCurrency}→${row.quoteCurrency}';
         map[key] = row.rateScaledE9;
+      }
+      return map;
+    });
+  }
+
+  /// Stream of `from→to` → [ExchangeRateMetadata] snapshots. Re-emits on
+  /// every DAO change (insert / update / delete). Used by the chart slice
+  /// (`chartsFxStatusProvider`) so the controller can derive the
+  /// most-recent-fetch timestamp without importing the DAO directly.
+  Stream<Map<String, ExchangeRateMetadata>> watchRatesMetadata() {
+    return _dao.watchAll().map((rows) {
+      final map = <String, ExchangeRateMetadata>{};
+      for (final row in rows) {
+        final key = '${row.baseCurrency}→${row.quoteCurrency}';
+        map[key] = ExchangeRateMetadata(
+          rateScaledE9: row.rateScaledE9,
+          fetchedAt: row.fetchedAt,
+        );
       }
       return map;
     });

@@ -1641,6 +1641,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unconverted'**
   String get homeSummaryUnconvertedHeader;
+
+  /// Charts period toggle — day
+  ///
+  /// In en, this message translates to:
+  /// **'Day'**
+  String get chartsPeriodDay;
+
+  /// Charts period toggle — week (default)
+  ///
+  /// In en, this message translates to:
+  /// **'Week'**
+  String get chartsPeriodWeek;
+
+  /// Charts period toggle — month
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get chartsPeriodMonth;
+
+  /// Charts period toggle — year
+  ///
+  /// In en, this message translates to:
+  /// **'Year'**
+  String get chartsPeriodYear;
+
+  /// Charts type toggle — expense
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get chartsTypeExpense;
+
+  /// Charts type toggle — income
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get chartsTypeIncome;
+
+  /// Charts dimension toggle — category
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get chartsDimensionCategory;
+
+  /// Charts dimension toggle — account
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get chartsDimensionAccount;
+
+  /// Charts dimension toggle — currency
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get chartsDimensionCurrency;
+
+  /// Charts empty state copy
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions yet'**
+  String get chartsNoData;
+
+  /// Banner for currency-dimension chart when some FX rates are missing
+  ///
+  /// In en, this message translates to:
+  /// **'Showing original currency amounts'**
+  String get chartsMixedCurrencies;
+
+  /// Blocked-state copy for category/account charts when FX rates are missing
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for exchange rates'**
+  String get chartsRatesRequired;
+
+  /// Full-legend bottom sheet affordance
+  ///
+  /// In en, this message translates to:
+  /// **'View all'**
+  String get chartsViewAll;
+
+  /// Grand-total label
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get chartsTotal;
+
+  /// Aggregated remainder legend entry
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get chartsOther;
+
+  /// Other-bucket legend label when slices are in mixed currencies and amounts cannot be summed; shows item count instead
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Other (1 item)} other{Other ({count} items)}}'**
+  String chartsOtherCount(int count);
+
+  /// Banner shown when ChartsController auto-switched from category to currency on cold-start because FX rates were missing
+  ///
+  /// In en, this message translates to:
+  /// **'Showing by currency — no exchange rates yet for category view.'**
+  String get chartsAutoSwitchedToCurrency;
+
+  /// Accessibility prefix announced before pie chart contents
+  ///
+  /// In en, this message translates to:
+  /// **'Pie chart'**
+  String get chartsPieChart;
+
+  /// Accessibility prefix announced before bar chart contents
+  ///
+  /// In en, this message translates to:
+  /// **'Bar chart'**
+  String get chartsBarChart;
+
+  /// Ribbon shown above a category/account chart when some currencies were dropped because their FX rate was missing. {codes} is a comma-separated currency-code list (e.g. 'EUR, JPY').
+  ///
+  /// In en, this message translates to:
+  /// **'Excluded: {codes} — no exchange rate yet'**
+  String chartsExcludedCurrencies(String codes);
 }
 
 class _AppLocalizationsDelegate

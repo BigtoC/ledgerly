@@ -372,39 +372,42 @@ class PendingTile extends StatelessWidget {
             left: BorderSide(color: theme.colorScheme.tertiary, width: 3),
           ),
         ),
-        child: ListTile(
-          leading: Icon(categoryIcon, color: categoryColor, size: 24),
-          title: Text(
-            item.memo ?? '',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: Text(
-            subtitle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodySmall,
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: Text(
-                  amountStr,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+        child: Material(
+          type: MaterialType.transparency,
+          child: ListTile(
+            leading: Icon(categoryIcon, color: categoryColor, size: 24),
+            title: Text(
+              item.memo ?? '',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Text(
+              subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall,
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    amountStr,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              const SizedBox(width: 8),
-              _ApproveCircleButton(
-                onApproveAsync: onApprove,
-                semanticsLabel: l10n.homePendingApprove,
-              ),
-            ],
+                const SizedBox(width: 8),
+                _ApproveCircleButton(
+                  onApproveAsync: onApprove,
+                  semanticsLabel: l10n.homePendingApprove,
+                ),
+              ],
+            ),
+            onTap: null,
           ),
-          onTap: null,
         ),
       ),
     );

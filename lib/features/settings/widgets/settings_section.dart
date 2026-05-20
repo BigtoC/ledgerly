@@ -35,7 +35,10 @@ class SettingsSection extends StatelessWidget {
             boxShadow: [buildBoxShadow(homePageCardBorderRadius)],
           ),
           clipBehavior: Clip.antiAlias,
-          child: Column(children: children),
+          child: Material(
+            type: MaterialType.transparency,
+            child: Column(children: children),
+          ),
         ),
       ],
     );

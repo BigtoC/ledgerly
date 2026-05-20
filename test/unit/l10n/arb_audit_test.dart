@@ -339,6 +339,29 @@ const Set<String> _expectedEnKeys = <String>{
   'approximatelyPrefix',
   'convertedTotalLabel',
   'homeSummaryUnconvertedHeader',
+
+  // Basic charts (Phase 2)
+  // (docs/superpowers/plans/2026-05-19-basic-charts.md).
+  'chartsPeriodDay',
+  'chartsPeriodWeek',
+  'chartsPeriodMonth',
+  'chartsPeriodYear',
+  'chartsTypeExpense',
+  'chartsTypeIncome',
+  'chartsDimensionCategory',
+  'chartsDimensionAccount',
+  'chartsDimensionCurrency',
+  'chartsNoData',
+  'chartsMixedCurrencies',
+  'chartsRatesRequired',
+  'chartsViewAll',
+  'chartsTotal',
+  'chartsOther',
+  'chartsOtherCount',
+  'chartsAutoSwitchedToCurrency',
+  'chartsPieChart',
+  'chartsBarChart',
+  'chartsExcludedCurrencies',
 };
 
 Map<String, dynamic> _readArb(String fileName) {

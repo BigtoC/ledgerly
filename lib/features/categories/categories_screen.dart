@@ -121,11 +121,10 @@ class _Section extends ConsumerWidget {
           onDelete: () => _onDelete(context, ref, view.category),
         );
       },
-      onReorder: (oldIndex, newIndex) {
+      onReorderItem: (oldIndex, newIndex) {
         final reordered = [...rows];
-        final adjusted = newIndex > oldIndex ? newIndex - 1 : newIndex;
         final moved = reordered.removeAt(oldIndex);
-        reordered.insert(adjusted, moved);
+        reordered.insert(newIndex, moved);
         unawaited(
           ref
               .read(categoriesControllerProvider.notifier)

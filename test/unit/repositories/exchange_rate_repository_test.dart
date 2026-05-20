@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:drift/drift.dart' hide isNull;
+import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/data/database/app_database.dart';
 import 'package:ledgerly/data/repositories/exchange_rate_repository.dart';
@@ -229,6 +229,52 @@ void main() {
       ).thenThrow(Exception('network error'));
       await repo.fetchRate('EUR', 'USD'); // must not throw
       expect(repo.getRate('EUR', 'USD'), isNull);
+    });
+  });
+
+  group('watchRatesMetadata', () {
+    test('emits per-pair (rate, fetchedAt) keyed by from→to', () async {
+      final eurFetchedAt = DateTime(2026, 5, 19, 10);
+      final jpyFetchedAt = DateTime(2026, 5, 19, 11);
+      // Insert JPY currency so the FK passes.
+      await db
+          .into(db.currencies)
+          .insert(
+            CurrenciesCompanion.insert(
+              code: 'JPY',
+              decimals: 0,
+              symbol: const Value('¥'),
+              nameL10nKey: const Value('currency.jpy'),
+              sortOrder: const Value(3),
+            ),
+          );
+      await db
+          .into(db.exchangeRates)
+          .insert(
+            ExchangeRatesCompanion.insert(
+              baseCurrency: 'EUR',
+              quoteCurrency: 'USD',
+              rateScaledE9: 1100000000,
+              fetchedAt: eurFetchedAt,
+            ),
+          );
+      await db
+          .into(db.exchangeRates)
+          .insert(
+            ExchangeRatesCompanion.insert(
+              baseCurrency: 'JPY',
+              quoteCurrency: 'USD',
+              rateScaledE9: 6700000,
+              fetchedAt: jpyFetchedAt,
+            ),
+          );
+
+      final snapshot = await repo.watchRatesMetadata().first;
+      expect(snapshot['EUR→USD'], isNotNull);
+      expect(snapshot['EUR→USD']!.rateScaledE9, 1100000000);
+      expect(snapshot['EUR→USD']!.fetchedAt, eurFetchedAt);
+      expect(snapshot['JPY→USD']!.rateScaledE9, 6700000);
+      expect(snapshot['JPY→USD']!.fetchedAt, jpyFetchedAt);
     });
   });
 }

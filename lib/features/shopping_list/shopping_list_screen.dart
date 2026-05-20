@@ -317,41 +317,44 @@ class _ShoppingListRow extends ConsumerWidget {
     final secondaryLabel = resolveSecondaryLabel(category, account, l10n);
     final trailingLabel = resolveTrailingLabel(item, currency, locale);
 
-    return Slidable(
-      key: ValueKey('shoppingListRow:${item.id}'),
-      endActionPane: ActionPane(
-        motion: const DrawerMotion(),
-        extentRatio: 0.25,
-        children: [
-          SlidableAction(
-            onPressed: (_) => onDelete(),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            foregroundColor: Theme.of(context).colorScheme.onError,
-            icon: Icons.delete,
-            label: l10n.shoppingListDeleteAction,
-          ),
-        ],
-      ),
-      child: ListTile(
-        title: Text(primaryLabel),
-        subtitle: secondaryLabel.isNotEmpty ? Text(secondaryLabel) : null,
-        onTap: canTap ? onTap : null,
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
+    return Material(
+      type: MaterialType.transparency,
+      child: Slidable(
+        key: ValueKey('shoppingListRow:${item.id}'),
+        endActionPane: ActionPane(
+          motion: const DrawerMotion(),
+          extentRatio: 0.25,
           children: [
-            if (trailingLabel.isNotEmpty)
-              Text(
-                trailingLabel,
-                style: Theme.of(context).textTheme.bodySmall,
-                textAlign: TextAlign.end,
-              ),
-            IconButton(
-              key: ValueKey('shoppingListItem:${item.id}:delete'),
-              icon: const Icon(Icons.delete_outline),
-              tooltip: l10n.shoppingListDeleteAction,
-              onPressed: onDelete,
+            SlidableAction(
+              onPressed: (_) => onDelete(),
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+              icon: Icons.delete,
+              label: l10n.shoppingListDeleteAction,
             ),
           ],
+        ),
+        child: ListTile(
+          title: Text(primaryLabel),
+          subtitle: secondaryLabel.isNotEmpty ? Text(secondaryLabel) : null,
+          onTap: canTap ? onTap : null,
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (trailingLabel.isNotEmpty)
+                Text(
+                  trailingLabel,
+                  style: Theme.of(context).textTheme.bodySmall,
+                  textAlign: TextAlign.end,
+                ),
+              IconButton(
+                key: ValueKey('shoppingListItem:${item.id}:delete'),
+                icon: const Icon(Icons.delete_outline),
+                tooltip: l10n.shoppingListDeleteAction,
+                onPressed: onDelete,
+              ),
+            ],
+          ),
         ),
       ),
     );

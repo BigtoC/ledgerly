@@ -18,6 +18,15 @@ String categoryDisplayName(Category category, AppLocalizations l10n) {
   final key = category.l10nKey;
   if (key == null) return '';
 
+  return categoryDisplayNameForKey(key, l10n);
+}
+
+/// Resolves a seeded `category.*` l10n key to its localized display name.
+/// Used by chart widgets where only the key string is available (the
+/// controller serializes labels without an `AppLocalizations` instance).
+/// Unknown keys fall through to the raw string so orphaned rows still
+/// render something.
+String categoryDisplayNameForKey(String key, AppLocalizations l10n) {
   return switch (key) {
     'category.food' => l10n.categoryFood,
     'category.drinks' => l10n.categoryDrinks,

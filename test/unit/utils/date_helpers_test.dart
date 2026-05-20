@@ -214,4 +214,68 @@ void main() {
       );
     });
   });
+
+  group('DateHelpers.startOfWeek', () {
+    test('Monday returns the same midnight', () {
+      // 2026-05-18 is a Monday.
+      final monday = DateTime(2026, 5, 18, 14, 30, 22, 500);
+      expect(DateHelpers.startOfWeek(monday), DateTime(2026, 5, 18));
+    });
+
+    test('mid-week returns the previous Monday midnight', () {
+      // 2026-05-21 is a Thursday.
+      final thursday = DateTime(2026, 5, 21, 9);
+      expect(DateHelpers.startOfWeek(thursday), DateTime(2026, 5, 18));
+    });
+
+    test('Sunday returns the previous Monday (six days back)', () {
+      // 2026-05-24 is a Sunday.
+      final sunday = DateTime(2026, 5, 24, 23, 59);
+      expect(DateHelpers.startOfWeek(sunday), DateTime(2026, 5, 18));
+    });
+
+    test('crosses a month boundary correctly', () {
+      // 2026-06-03 is a Wednesday → Monday is 2026-06-01.
+      expect(
+        DateHelpers.startOfWeek(DateTime(2026, 6, 3, 12)),
+        DateTime(2026, 6, 1),
+      );
+      expect(
+        DateHelpers.startOfWeek(DateTime(2026, 6, 1)),
+        DateTime(2026, 6, 1),
+      );
+    });
+  });
+
+  group('DateHelpers.startOfMonth', () {
+    test('first-of-month returns same midnight', () {
+      expect(
+        DateHelpers.startOfMonth(DateTime(2026, 5, 1, 10)),
+        DateTime(2026, 5, 1),
+      );
+    });
+
+    test('mid-month returns first-of-month midnight', () {
+      expect(
+        DateHelpers.startOfMonth(DateTime(2026, 5, 18, 14, 30)),
+        DateTime(2026, 5, 1),
+      );
+    });
+  });
+
+  group('DateHelpers.startOfYear', () {
+    test('Jan 1 returns same midnight', () {
+      expect(
+        DateHelpers.startOfYear(DateTime(2026, 1, 1, 10)),
+        DateTime(2026, 1, 1),
+      );
+    });
+
+    test('arbitrary day returns Jan 1 midnight of that year', () {
+      expect(
+        DateHelpers.startOfYear(DateTime(2026, 7, 4, 23, 59)),
+        DateTime(2026, 1, 1),
+      );
+    });
+  });
 }

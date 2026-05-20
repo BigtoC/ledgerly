@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
+import 'charts/charts_section.dart';
 import 'search/analysis_controller.dart';
 import 'search/analysis_state.dart';
 import 'search/widgets/analysis_search_placeholder.dart';
@@ -74,7 +75,14 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text(l10n.analysisErrorMessage)),
       data: (s) => switch (s) {
-        AnalysisIdle() => const AnalysisSearchPlaceholder(),
+        // No active search query: place the charts under the search bar.
+        // The placeholder lives above the chart as a subtle "search hint";
+        // charts render the full breakdown.
+        AnalysisIdle() => const SingleChildScrollView(
+          child: Column(
+            children: [AnalysisSearchPlaceholder(), ChartsSection()],
+          ),
+        ),
         AnalysisLoading(:final previous, :final query) =>
           previous == null
               ? const Center(child: CircularProgressIndicator())
