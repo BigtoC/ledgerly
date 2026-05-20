@@ -8,7 +8,7 @@ void main() {
     late String gradleSource;
 
     setUpAll(() {
-      workflowSource = File('.github/workflows/ci.yml').readAsStringSync();
+      workflowSource = File('.github/workflows/check.yml').readAsStringSync();
       gradleSource = File('android/app/build.gradle.kts').readAsStringSync();
     });
 
