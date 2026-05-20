@@ -9,6 +9,7 @@ import '../../../data/models/currency.dart';
 import '../../../l10n/app_localizations.dart';
 import 'charts_controller.dart';
 import 'charts_providers.dart';
+import 'charts_selection_controller.dart';
 import 'charts_state.dart';
 import 'widgets/category_pie_chart.dart';
 import 'widgets/chart_legend.dart';
@@ -77,14 +78,14 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
   }
 
   Future<void> _runQueuedTransitions() async {
-    final controller = ref.read(chartsControllerProvider.notifier);
+    final selection = ref.read(chartsSelectionControllerProvider.notifier);
     while (_directionQueue.isNotEmpty) {
       final direction = _directionQueue.removeFirst();
       if (direction > 0) {
-        if (controller.isAtCurrentPeriod) continue;
-        controller.nextPeriod();
+        if (selection.isAtCurrentPeriod()) continue;
+        selection.nextPeriod();
       } else {
-        controller.previousPeriod();
+        selection.previousPeriod();
       }
       _incomingOffset = _buildOffsetAnimation(direction);
       _switchController.reset();
@@ -96,10 +97,10 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
     final dx = details.velocity.pixelsPerSecond.dx;
     final dy = details.velocity.pixelsPerSecond.dy;
     if (dx.abs() < _kSwipeVelocity || dx.abs() <= dy.abs()) return;
-    final controller = ref.read(chartsControllerProvider.notifier);
+    final selection = ref.read(chartsSelectionControllerProvider.notifier);
     if (dx > 0) {
       _enqueuePeriodStep(-1);
-    } else if (!controller.isAtCurrentPeriod) {
+    } else if (!selection.isAtCurrentPeriod()) {
       _enqueuePeriodStep(1);
     }
   }
@@ -109,6 +110,10 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
     final l10n = AppLocalizations.of(context);
     final stateAsync = ref.watch(chartsControllerProvider);
     final controller = ref.read(chartsControllerProvider.notifier);
+    final selection = ref.watch(chartsSelectionControllerProvider);
+    final selectionNotifier = ref.read(
+      chartsSelectionControllerProvider.notifier,
+    );
     final currenciesAsync = ref.watch(chartsCurrenciesByCodeProvider);
     final locale = Localizations.localeOf(context).toLanguageTag();
     debugPrint(
@@ -127,6 +132,8 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
           context,
           ref,
           controller,
+          selection,
+          selectionNotifier,
           body: const Center(child: CircularProgressIndicator()),
           l10n: l10n,
         ),
@@ -134,6 +141,8 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
           context,
           ref,
           controller,
+          selection,
+          selectionNotifier,
           body: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -152,6 +161,8 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
             context,
             ref,
             controller,
+            selection,
+            selectionNotifier,
             body: const Center(child: CircularProgressIndicator()),
             l10n: l10n,
           ),
@@ -159,6 +170,8 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
             context,
             ref,
             controller,
+            selection,
+            selectionNotifier,
             body: previous == null
                 ? const Center(child: CircularProgressIndicator())
                 : Stack(
@@ -186,6 +199,8 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
             context,
             ref,
             controller,
+            selection,
+            selectionNotifier,
             body: Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Center(child: Text(l10n.chartsNoData)),
@@ -196,6 +211,8 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
             context,
             ref,
             controller,
+            selection,
+            selectionNotifier,
             body: previous == null
                 ? Padding(
                     padding: const EdgeInsets.symmetric(vertical: 24),
@@ -229,6 +246,8 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
             context,
             ref,
             controller,
+            selection,
+            selectionNotifier,
             body: _ChartBody(
               data: chartData,
               locale: locale,
@@ -243,6 +262,8 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
             context,
             ref,
             controller,
+            selection,
+            selectionNotifier,
             body: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -264,22 +285,24 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
   Widget _frame(
     BuildContext context,
     WidgetRef ref,
-    ChartsController controller, {
+    ChartsController controller,
+    ChartsSelection selection,
+    ChartsSelectionController selectionNotifier, {
     required Widget body,
     required AppLocalizations l10n,
     ChartsData? chartData,
     String? locale,
     Map<String, Currency> currencies = const {},
   }) {
-    // Toggles bind to the controller's live selection, not `chartData`.
-    // During loading the `previous` data still has the *old* period; in
-    // the empty/blocked/error variants `chartData` is null. Either way,
-    // reading from the controller keeps the segmented buttons in sync
-    // with whatever the user just tapped.
-    final dimension = controller.currentDimension;
-    final type = controller.currentType;
-    final period = controller.currentPeriod;
-    final anchor = controller.currentAnchor;
+    // Toggles bind to the live selection, not `chartData`. During loading the
+    // `previous` data still has the *old* period; in the empty/blocked/error
+    // variants `chartData` is null. Either way, reading from the selection
+    // notifier keeps the segmented buttons in sync with whatever the user
+    // just tapped.
+    final dimension = selection.dimension;
+    final type = selection.type;
+    final period = selection.period;
+    final anchor = selection.anchorDate;
 
     // Wrap the chart body in a SlideTransition keyed on (period, anchor)
     // so the body slides in from the swipe direction every time those
@@ -298,11 +321,11 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
         PeriodSelector(
           period: period,
           anchorDate: anchor,
-          isAtCurrent: controller.isAtCurrentPeriod,
+          isAtCurrent: selectionNotifier.isAtCurrentPeriod(),
           locale: locale ?? 'en',
           onPrevious: () => _enqueuePeriodStep(-1),
           onNext: () => _enqueuePeriodStep(1),
-          onPeriodChanged: controller.setPeriod,
+          onPeriodChanged: selectionNotifier.setPeriod,
         ),
         const SizedBox(height: 12),
         Row(
@@ -311,7 +334,7 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
               child: TypeToggle(
                 type: type,
                 onChanged: (t) {
-                  if (t != type) controller.toggleType();
+                  if (t != type) selectionNotifier.toggleType();
                 },
               ),
             ),
@@ -320,7 +343,7 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
         const SizedBox(height: 8),
         DimensionToggle(
           dimension: dimension,
-          onChanged: controller.toggleDimension,
+          onChanged: selectionNotifier.setDimension,
         ),
         const SizedBox(height: 16),
         if (chartData?.autoSwitchedFromCategoryDimension ?? false)

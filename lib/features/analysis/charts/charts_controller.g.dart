@@ -6,7 +6,7 @@ part of 'charts_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$chartsControllerHash() => r'a82c3ac9ab508de22158cd55d5159fc844500383';
+String _$chartsControllerHash() => r'cbd62e7437e3fa94f0dd5962bc02d27a838a9621';
 
 /// See also [ChartsController].
 @ProviderFor(ChartsController)
@@ -24,6 +24,7 @@ final chartsControllerProvider =
         chartsCurrenciesByCodeProvider,
         analysisCategoriesByIdProvider,
         analysisAccountsByIdProvider,
+        chartsSelectionControllerProvider,
       },
       allTransitiveDependencies: <ProviderOrFamily>{
         transactionRepositoryProvider,
@@ -38,6 +39,8 @@ final chartsControllerProvider =
         ...?analysisCategoriesByIdProvider.allTransitiveDependencies,
         analysisAccountsByIdProvider,
         ...?analysisAccountsByIdProvider.allTransitiveDependencies,
+        chartsSelectionControllerProvider,
+        ...?chartsSelectionControllerProvider.allTransitiveDependencies,
       },
     );
 
