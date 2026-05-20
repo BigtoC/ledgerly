@@ -265,7 +265,7 @@ class ChartsSection extends ConsumerWidget {
   }
 }
 
-class _ChartBody extends StatelessWidget {
+class _ChartBody extends StatefulWidget {
   const _ChartBody({
     required this.data,
     required this.locale,
@@ -277,7 +277,29 @@ class _ChartBody extends StatelessWidget {
   final Map<String, Currency> currencies;
 
   @override
+  State<_ChartBody> createState() => _ChartBodyState();
+}
+
+class _ChartBodyState extends State<_ChartBody> {
+  int? _selectedSliceIndex;
+
+  @override
+  void didUpdateWidget(covariant _ChartBody oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Drop selection when the slice list changes — the index is no longer
+    // referentially valid after a period/dimension/type swap.
+    if (oldWidget.data.slices.length != widget.data.slices.length ||
+        oldWidget.data.dimension != widget.data.dimension ||
+        oldWidget.data.type != widget.data.type ||
+        oldWidget.data.period != widget.data.period ||
+        oldWidget.data.anchorDate != widget.data.anchorDate) {
+      _selectedSliceIndex = null;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final data = widget.data;
     final showBar =
         data.bucketTotals.isNotEmpty &&
         !(data.dimension == ChartDimension.currency && data.mixedCurrencies);
@@ -286,17 +308,21 @@ class _ChartBody extends StatelessWidget {
       children: [
         CategoryPieChart(
           slices: data.slices,
-          currenciesByCode: currencies,
-          locale: locale,
+          currenciesByCode: widget.currencies,
+          locale: widget.locale,
           grandTotalMinorUnits: data.grandTotalMinorUnits,
           displayCurrencyCode: data.displayCurrencyCode,
+          selectedIndex: _selectedSliceIndex,
+          onSelectionChanged: (i) => setState(() => _selectedSliceIndex = i),
         ),
         const SizedBox(height: 12),
         ChartLegend(
           slices: data.slices,
-          currenciesByCode: currencies,
-          locale: locale,
+          currenciesByCode: widget.currencies,
+          locale: widget.locale,
           mixedCurrencies: data.mixedCurrencies,
+          selectedSliceIndex: _selectedSliceIndex,
+          onSelectSlice: (i) => setState(() => _selectedSliceIndex = i),
         ),
         if (showBar) ...[
           const SizedBox(height: 16),
@@ -304,8 +330,8 @@ class _ChartBody extends StatelessWidget {
             period: data.period,
             anchorDate: data.anchorDate,
             bucketTotals: data.bucketTotals,
-            locale: locale,
-            currenciesByCode: currencies,
+            locale: widget.locale,
+            currenciesByCode: widget.currencies,
             displayCurrencyCode: data.displayCurrencyCode,
           ),
         ],
