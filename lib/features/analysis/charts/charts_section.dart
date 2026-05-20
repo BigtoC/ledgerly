@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:collection';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -14,11 +17,95 @@ import 'widgets/dimension_toggle.dart';
 import 'widgets/period_selector.dart';
 import 'widgets/type_toggle.dart';
 
-class ChartsSection extends ConsumerWidget {
+class ChartsSection extends ConsumerStatefulWidget {
   const ChartsSection({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ChartsSection> createState() => _ChartsSectionState();
+}
+
+class _ChartsSectionState extends ConsumerState<ChartsSection>
+    with SingleTickerProviderStateMixin {
+  // Matches Home's day-switch animation so the two surfaces feel the same
+  // when the user swipes — same duration, same curve, same offset shape.
+  static const _kPeriodSwitchDuration = Duration(milliseconds: 360);
+  static const _kPeriodSwitchCurve = Curves.easeInOut;
+  // Velocity threshold for treating a horizontal fling as a period swipe.
+  // Mirrors Home's 300 px/s gate.
+  static const _kSwipeVelocity = 300.0;
+
+  late final AnimationController _switchController;
+  late Animation<Offset> _incomingOffset;
+  final Queue<int> _directionQueue = Queue<int>();
+
+  @override
+  void initState() {
+    super.initState();
+    _switchController = AnimationController(
+      duration: _kPeriodSwitchDuration,
+      vsync: this,
+    );
+    _incomingOffset = _buildOffsetAnimation(0);
+    _switchController.value = 1.0; // start fully visible
+  }
+
+  @override
+  void dispose() {
+    _switchController.dispose();
+    super.dispose();
+  }
+
+  Animation<Offset> _buildOffsetAnimation(int direction) {
+    // direction +1 → newer period, new content enters from the right.
+    // direction -1 → older period, new content enters from the left.
+    // direction  0 → no slide (used for the initial mount).
+    final begin = direction > 0
+        ? const Offset(1.0, 0.0)
+        : direction < 0
+        ? const Offset(-1.0, 0.0)
+        : Offset.zero;
+    return Tween<Offset>(begin: begin, end: Offset.zero).animate(
+      CurvedAnimation(parent: _switchController, curve: _kPeriodSwitchCurve),
+    );
+  }
+
+  void _enqueuePeriodStep(int delta) {
+    _directionQueue.add(delta > 0 ? 1 : -1);
+    if (!_switchController.isAnimating) {
+      unawaited(_runQueuedTransitions());
+    }
+  }
+
+  Future<void> _runQueuedTransitions() async {
+    final controller = ref.read(chartsControllerProvider.notifier);
+    while (_directionQueue.isNotEmpty) {
+      final direction = _directionQueue.removeFirst();
+      if (direction > 0) {
+        if (controller.isAtCurrentPeriod) continue;
+        controller.nextPeriod();
+      } else {
+        controller.previousPeriod();
+      }
+      _incomingOffset = _buildOffsetAnimation(direction);
+      _switchController.reset();
+      await _switchController.forward();
+    }
+  }
+
+  void _onHorizontalFling(DragEndDetails details) {
+    final dx = details.velocity.pixelsPerSecond.dx;
+    final dy = details.velocity.pixelsPerSecond.dy;
+    if (dx.abs() < _kSwipeVelocity || dx.abs() <= dy.abs()) return;
+    final controller = ref.read(chartsControllerProvider.notifier);
+    if (dx > 0) {
+      _enqueuePeriodStep(-1);
+    } else if (!controller.isAtCurrentPeriod) {
+      _enqueuePeriodStep(1);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final stateAsync = ref.watch(chartsControllerProvider);
     final controller = ref.read(chartsControllerProvider.notifier);
@@ -193,6 +280,18 @@ class ChartsSection extends ConsumerWidget {
     final type = controller.currentType;
     final period = controller.currentPeriod;
     final anchor = controller.currentAnchor;
+
+    // Wrap the chart body in a SlideTransition keyed on (period, anchor)
+    // so the body slides in from the swipe direction every time those
+    // values change. Mirrors `home_screen.dart`'s day-switch animation.
+    final animatedBody = SlideTransition(
+      position: _incomingOffset,
+      child: KeyedSubtree(
+        key: ValueKey<String>('${period.name}|${anchor.toIso8601String()}'),
+        child: body,
+      ),
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -201,8 +300,8 @@ class ChartsSection extends ConsumerWidget {
           anchorDate: anchor,
           isAtCurrent: controller.isAtCurrentPeriod,
           locale: locale ?? 'en',
-          onPrevious: controller.previousPeriod,
-          onNext: controller.nextPeriod,
+          onPrevious: () => _enqueuePeriodStep(-1),
+          onNext: () => _enqueuePeriodStep(1),
           onPeriodChanged: controller.setPeriod,
         ),
         const SizedBox(height: 12),
@@ -259,7 +358,11 @@ class ChartsSection extends ConsumerWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
-        body,
+        GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onHorizontalDragEnd: _onHorizontalFling,
+          child: animatedBody,
+        ),
       ],
     );
   }
