@@ -7,7 +7,7 @@ part of 'analysis_controller.dart';
 // **************************************************************************
 
 String _$analysisControllerHash() =>
-    r'791b43afb0335644a7db102347f13a33d2e2ba6d';
+    r'2e4351670947ea2b51b73a5a66c7806acbbf0dae';
 
 /// See also [AnalysisController].
 @ProviderFor(AnalysisController)
@@ -18,10 +18,15 @@ final analysisControllerProvider =
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
           ? null
           : _$analysisControllerHash,
-      dependencies: <ProviderOrFamily>[transactionRepositoryProvider],
+      dependencies: <ProviderOrFamily>[
+        transactionRepositoryProvider,
+        analysisCategoriesByIdProvider,
+      ],
       allTransitiveDependencies: <ProviderOrFamily>{
         transactionRepositoryProvider,
         ...?transactionRepositoryProvider.allTransitiveDependencies,
+        analysisCategoriesByIdProvider,
+        ...?analysisCategoriesByIdProvider.allTransitiveDependencies,
       },
     );
 

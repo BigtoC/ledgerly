@@ -32,7 +32,10 @@ part 'analysis_controller.g.dart';
 
 const Duration _kDebounce = Duration(milliseconds: 300);
 
-@Riverpod(keepAlive: true, dependencies: [transactionRepository])
+@Riverpod(
+  keepAlive: true,
+  dependencies: [transactionRepository, analysisCategoriesById],
+)
 class AnalysisController extends _$AnalysisController {
   Timer? _debounceTimer;
   StreamSubscription<List<Transaction>>? _subscription;

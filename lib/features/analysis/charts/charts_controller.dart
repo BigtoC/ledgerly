@@ -34,7 +34,14 @@ part 'charts_controller.g.dart';
 
 @Riverpod(
   keepAlive: true,
-  dependencies: [transactionRepository, exchangeRateRepository],
+  dependencies: [
+    transactionRepository,
+    exchangeRateRepository,
+    chartsFxStatus,
+    chartsCurrenciesByCode,
+    analysisCategoriesById,
+    analysisAccountsById,
+  ],
 )
 class ChartsController extends _$ChartsController {
   PeriodType _period = PeriodType.week;
