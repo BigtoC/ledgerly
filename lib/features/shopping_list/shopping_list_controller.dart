@@ -41,7 +41,7 @@ final class ShoppingListDeleteFailedEffect extends ShoppingListEffect {
   final StackTrace stackTrace;
 }
 
-@riverpod
+@Riverpod(dependencies: [shoppingListRepository])
 class ShoppingListController extends _$ShoppingListController {
   ShoppingListPendingDelete? _pendingDelete;
   Timer? _undoTimer;
