@@ -7,7 +7,7 @@ The authoritative spec is **[`PRD.md`](PRD.md)**. When this file and the
 PRD disagree, the PRD wins. The milestone sequencing lives in
 [`docs/plans/implementation-plan.md`](docs/plans/implementation-plan.md).
 
-[![CI](https://github.com/BigtoC/ledgerly/actions/workflows/ci.yml/badge.svg)](https://github.com/BigtoC/ledgerly/actions/workflows/ci.yml)
+[![Check](https://github.com/BigtoC/ledgerly/actions/workflows/check.yml/badge.svg)](https://github.com/BigtoC/ledgerly/actions/workflows/check.yml)
 [![Android release](https://github.com/BigtoC/ledgerly/actions/workflows/android-release.yml/badge.svg)](https://github.com/BigtoC/ledgerly/actions/workflows/android-release.yml)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/BigtoC/ledgerly)
 
