@@ -48,8 +48,6 @@ class _DailyBarChartState extends State<DailyBarChart> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final baseColor = scheme.primary;
-    final highlightColor = scheme.tertiary;
     final now = DateTime.now();
     final filledBuckets = _zeroFill(
       widget.anchorDate,
@@ -66,6 +64,23 @@ class _DailyBarChartState extends State<DailyBarChart> {
         : (widget.currenciesByCode[widget.displayCurrencyCode!] ??
               Currency(code: widget.displayCurrencyCode!, decimals: 2));
 
+    final gradientBottom =
+        Color.lerp(scheme.primary, Colors.black, 0.2) ?? scheme.primary;
+    final gradientTop = scheme.secondary;
+    final barsGradient = LinearGradient(
+      colors: [gradientBottom, gradientTop],
+      begin: Alignment.bottomCenter,
+      end: Alignment.topCenter,
+    );
+    final futureGradient = LinearGradient(
+      colors: [
+        gradientBottom.withValues(alpha: 0.3),
+        gradientTop.withValues(alpha: 0.3),
+      ],
+      begin: Alignment.bottomCenter,
+      end: Alignment.topCenter,
+    );
+
     return Semantics(
       label: _semanticsLabel(l10n, filledBuckets),
       image: true,
@@ -75,6 +90,7 @@ class _DailyBarChartState extends State<DailyBarChart> {
         child: BarChart(
           BarChartData(
             maxY: headroom == 0 ? 1 : headroom.toDouble(),
+            alignment: BarChartAlignment.spaceAround,
             barTouchData: BarTouchData(
               enabled: true,
               handleBuiltInTouches: true,
@@ -136,6 +152,7 @@ class _DailyBarChartState extends State<DailyBarChart> {
             gridData: const FlGridData(show: false),
             borderData: FlBorderData(show: false),
             titlesData: FlTitlesData(
+              show: true,
               leftTitles: const AxisTitles(
                 sideTitles: SideTitles(showTitles: false),
               ),
@@ -148,22 +165,24 @@ class _DailyBarChartState extends State<DailyBarChart> {
               bottomTitles: AxisTitles(
                 sideTitles: SideTitles(
                   showTitles: true,
+                  reservedSize: 30,
                   getTitlesWidget: (value, meta) {
                     final idx = value.toInt();
                     if (idx < 0 || idx >= filledBuckets.length) {
                       return const SizedBox.shrink();
                     }
                     final selected = idx == _touchedIndex;
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 6),
+                    return SideTitleWidget(
+                      meta: meta,
+                      space: 4,
                       child: Text(
                         _axisLabel(filledBuckets[idx].bucketStart),
                         style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: selected
-                              ? FontWeight.w700
-                              : FontWeight.w400,
-                          color: selected ? scheme.tertiary : null,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: selected
+                              ? gradientTop
+                              : gradientBottom.withValues(alpha: 0.8),
                         ),
                       ),
                     );
@@ -178,44 +197,24 @@ class _DailyBarChartState extends State<DailyBarChart> {
                   barRods: [
                     BarChartRodData(
                       toY: filledBuckets[i].totalMinorUnits.abs().toDouble(),
-                      color: _rodColor(
-                        index: i,
-                        bucket: filledBuckets[i],
-                        now: now,
-                        baseColor: baseColor,
-                        highlightColor: highlightColor,
-                      ),
-                      width: i == _touchedIndex ? 12 : 8,
-                      borderRadius: BorderRadius.circular(
-                        i == _touchedIndex ? 4 : 2,
+                      gradient: filledBuckets[i].bucketStart.isAfter(now)
+                          ? futureGradient
+                          : barsGradient,
+                      width: i == _touchedIndex ? 14 : 10,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(4),
+                        topRight: Radius.circular(4),
                       ),
                     ),
                   ],
                 ),
             ],
           ),
-          duration: const Duration(milliseconds: 450),
-          curve: Curves.easeOutCubic,
+          duration: const Duration(milliseconds: 100),
+          curve: Curves.easeOutQuad,
         ),
       ),
     );
-  }
-
-  Color _rodColor({
-    required int index,
-    required ChartBucketTotal bucket,
-    required DateTime now,
-    required Color baseColor,
-    required Color highlightColor,
-  }) {
-    if (index == _touchedIndex) return highlightColor;
-    if (bucket.bucketStart.isAfter(now)) {
-      return baseColor.withValues(alpha: 0.3);
-    }
-    if (_touchedIndex != null) {
-      return baseColor.withValues(alpha: 0.45);
-    }
-    return baseColor;
   }
 
   String _semanticsLabel(
