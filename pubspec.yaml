@@ -43,7 +43,10 @@ dependencies:
   package_info_plus: ^8.3.0
 
   # In-app browser
-  webview_flutter: ^4.13.0
+  webview_flutter: ^4.13.1
+
+  # System browser launcher (About page → "Open in browser" action)
+  url_launcher: ^6.3.2
 
   # HTTP client (Phase 2 exchange-rate fetch)
   dio: ^5.7.0
