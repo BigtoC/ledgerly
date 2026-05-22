@@ -270,4 +270,46 @@ void main() {
       expect(find.text('Start date'), findsWidgets);
     },
   );
+
+  testWidgets(
+    'SSS08: display-text field accepts multi-line input and persists newlines',
+    (tester) async {
+      final prefs = _MockUserPreferencesRepository();
+      when(() => prefs.setSplashDisplayText(any())).thenAnswer((_) async {});
+      final container = _makeContainer(prefs);
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container, splashEnabled: true));
+      await tester.pumpAndSettle();
+
+      // The field must allow unbounded line growth so long templates wrap
+      // and so users can split the splash text across visual lines with
+      // explicit `\n` separators (e.g. "{date}\nstart of journey").
+      final fieldWidget = tester.widget<TextField>(
+        find.byKey(const ValueKey('splashSettings:displayTextField')),
+      );
+      expect(
+        fieldWidget.maxLines,
+        isNull,
+        reason: 'maxLines must be null so the field grows with content',
+      );
+      expect(
+        fieldWidget.keyboardType,
+        TextInputType.multiline,
+        reason: 'soft keyboard must offer a return key for new lines',
+      );
+
+      final field = find.byKey(
+        const ValueKey('splashSettings:displayTextField'),
+      );
+      await tester.enterText(field, 'On {date}\nstart of journey');
+      // Submit via the same focus-loss pathway settings already relies on.
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      verify(
+        () => prefs.setSplashDisplayText('On {date}\nstart of journey'),
+      ).called(1);
+    },
+  );
 }

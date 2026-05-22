@@ -180,7 +180,17 @@ class _SplashDisplayTextFieldState
         key: const ValueKey('splashSettings:displayTextField'),
         controller: _controller,
         focusNode: _focusNode,
-        textInputAction: TextInputAction.done,
+        // Multi-line input so users can split the splash text across visual
+        // lines with explicit `\n` separators (the splash renders via
+        // `Text.rich`, which honours newlines). `maxLines: null` lets the
+        // field grow with content; `keyboardType: multiline` makes the soft
+        // keyboard's return key insert a newline. Save still happens on
+        // focus-out via the `_onFocusChange` listener — `onSubmitted` is
+        // retained so programmatic submissions and platforms that surface
+        // a "done" affordance continue to persist.
+        maxLines: null,
+        minLines: 1,
+        keyboardType: TextInputType.multiline,
         onSubmitted: (_) => _submit(),
         decoration: InputDecoration(
           labelText: l10n.settingsSplashDisplayText,
