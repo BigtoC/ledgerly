@@ -910,7 +910,14 @@ mixin _$ChartSlice {
  double? get fraction;/// Index into `core/utils/color_palette.dart`.
  int get colorIndex;/// `core/utils/icon_registry.dart` key for legend icon. Empty string
 /// for currency-dimension slices.
- String get iconKey;
+ String get iconKey;/// Drill-down identity for this slice. Null for the synthetic "Other"
+/// aggregate — that row stays non-interactive.
+///
+/// Named `selectionKey` (not `key`) to avoid confusion with Flutter's
+/// `Widget.key`. `ChartSlice` is a Freezed data class, not a widget,
+/// so there is no name collision — but readers scanning the call
+/// sites should not have to wonder.
+ SelectedSlice? get selectionKey;
 /// Create a copy of ChartSlice
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -921,16 +928,16 @@ $ChartSliceCopyWith<ChartSlice> get copyWith => _$ChartSliceCopyWithImpl<ChartSl
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartSlice&&(identical(other.label, label) || other.label == label)&&(identical(other.currencyCode, currencyCode) || other.currencyCode == currencyCode)&&(identical(other.totalMinorUnits, totalMinorUnits) || other.totalMinorUnits == totalMinorUnits)&&(identical(other.fraction, fraction) || other.fraction == fraction)&&(identical(other.colorIndex, colorIndex) || other.colorIndex == colorIndex)&&(identical(other.iconKey, iconKey) || other.iconKey == iconKey));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartSlice&&(identical(other.label, label) || other.label == label)&&(identical(other.currencyCode, currencyCode) || other.currencyCode == currencyCode)&&(identical(other.totalMinorUnits, totalMinorUnits) || other.totalMinorUnits == totalMinorUnits)&&(identical(other.fraction, fraction) || other.fraction == fraction)&&(identical(other.colorIndex, colorIndex) || other.colorIndex == colorIndex)&&(identical(other.iconKey, iconKey) || other.iconKey == iconKey)&&(identical(other.selectionKey, selectionKey) || other.selectionKey == selectionKey));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,label,currencyCode,totalMinorUnits,fraction,colorIndex,iconKey);
+int get hashCode => Object.hash(runtimeType,label,currencyCode,totalMinorUnits,fraction,colorIndex,iconKey,selectionKey);
 
 @override
 String toString() {
-  return 'ChartSlice(label: $label, currencyCode: $currencyCode, totalMinorUnits: $totalMinorUnits, fraction: $fraction, colorIndex: $colorIndex, iconKey: $iconKey)';
+  return 'ChartSlice(label: $label, currencyCode: $currencyCode, totalMinorUnits: $totalMinorUnits, fraction: $fraction, colorIndex: $colorIndex, iconKey: $iconKey, selectionKey: $selectionKey)';
 }
 
 
@@ -941,11 +948,11 @@ abstract mixin class $ChartSliceCopyWith<$Res>  {
   factory $ChartSliceCopyWith(ChartSlice value, $Res Function(ChartSlice) _then) = _$ChartSliceCopyWithImpl;
 @useResult
 $Res call({
- String label, String currencyCode, int totalMinorUnits, double? fraction, int colorIndex, String iconKey
+ String label, String currencyCode, int totalMinorUnits, double? fraction, int colorIndex, String iconKey, SelectedSlice? selectionKey
 });
 
 
-
+$SelectedSliceCopyWith<$Res>? get selectionKey;
 
 }
 /// @nodoc
@@ -958,7 +965,7 @@ class _$ChartSliceCopyWithImpl<$Res>
 
 /// Create a copy of ChartSlice
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? label = null,Object? currencyCode = null,Object? totalMinorUnits = null,Object? fraction = freezed,Object? colorIndex = null,Object? iconKey = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? label = null,Object? currencyCode = null,Object? totalMinorUnits = null,Object? fraction = freezed,Object? colorIndex = null,Object? iconKey = null,Object? selectionKey = freezed,}) {
   return _then(_self.copyWith(
 label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
 as String,currencyCode: null == currencyCode ? _self.currencyCode : currencyCode // ignore: cast_nullable_to_non_nullable
@@ -966,10 +973,23 @@ as String,totalMinorUnits: null == totalMinorUnits ? _self.totalMinorUnits : tot
 as int,fraction: freezed == fraction ? _self.fraction : fraction // ignore: cast_nullable_to_non_nullable
 as double?,colorIndex: null == colorIndex ? _self.colorIndex : colorIndex // ignore: cast_nullable_to_non_nullable
 as int,iconKey: null == iconKey ? _self.iconKey : iconKey // ignore: cast_nullable_to_non_nullable
-as String,
+as String,selectionKey: freezed == selectionKey ? _self.selectionKey : selectionKey // ignore: cast_nullable_to_non_nullable
+as SelectedSlice?,
   ));
 }
+/// Create a copy of ChartSlice
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$SelectedSliceCopyWith<$Res>? get selectionKey {
+    if (_self.selectionKey == null) {
+    return null;
+  }
 
+  return $SelectedSliceCopyWith<$Res>(_self.selectionKey!, (value) {
+    return _then(_self.copyWith(selectionKey: value));
+  });
+}
 }
 
 
@@ -1051,10 +1071,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String label,  String currencyCode,  int totalMinorUnits,  double? fraction,  int colorIndex,  String iconKey)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String label,  String currencyCode,  int totalMinorUnits,  double? fraction,  int colorIndex,  String iconKey,  SelectedSlice? selectionKey)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ChartSlice() when $default != null:
-return $default(_that.label,_that.currencyCode,_that.totalMinorUnits,_that.fraction,_that.colorIndex,_that.iconKey);case _:
+return $default(_that.label,_that.currencyCode,_that.totalMinorUnits,_that.fraction,_that.colorIndex,_that.iconKey,_that.selectionKey);case _:
   return orElse();
 
 }
@@ -1072,10 +1092,10 @@ return $default(_that.label,_that.currencyCode,_that.totalMinorUnits,_that.fract
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String label,  String currencyCode,  int totalMinorUnits,  double? fraction,  int colorIndex,  String iconKey)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String label,  String currencyCode,  int totalMinorUnits,  double? fraction,  int colorIndex,  String iconKey,  SelectedSlice? selectionKey)  $default,) {final _that = this;
 switch (_that) {
 case _ChartSlice():
-return $default(_that.label,_that.currencyCode,_that.totalMinorUnits,_that.fraction,_that.colorIndex,_that.iconKey);case _:
+return $default(_that.label,_that.currencyCode,_that.totalMinorUnits,_that.fraction,_that.colorIndex,_that.iconKey,_that.selectionKey);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1092,10 +1112,10 @@ return $default(_that.label,_that.currencyCode,_that.totalMinorUnits,_that.fract
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String label,  String currencyCode,  int totalMinorUnits,  double? fraction,  int colorIndex,  String iconKey)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String label,  String currencyCode,  int totalMinorUnits,  double? fraction,  int colorIndex,  String iconKey,  SelectedSlice? selectionKey)?  $default,) {final _that = this;
 switch (_that) {
 case _ChartSlice() when $default != null:
-return $default(_that.label,_that.currencyCode,_that.totalMinorUnits,_that.fraction,_that.colorIndex,_that.iconKey);case _:
+return $default(_that.label,_that.currencyCode,_that.totalMinorUnits,_that.fraction,_that.colorIndex,_that.iconKey,_that.selectionKey);case _:
   return null;
 
 }
@@ -1107,7 +1127,7 @@ return $default(_that.label,_that.currencyCode,_that.totalMinorUnits,_that.fract
 
 
 class _ChartSlice implements ChartSlice {
-  const _ChartSlice({required this.label, required this.currencyCode, required this.totalMinorUnits, this.fraction, required this.colorIndex, required this.iconKey});
+  const _ChartSlice({required this.label, required this.currencyCode, required this.totalMinorUnits, this.fraction, required this.colorIndex, required this.iconKey, this.selectionKey});
   
 
 /// Resolved display label (category name, account name, or currency
@@ -1126,6 +1146,14 @@ class _ChartSlice implements ChartSlice {
 /// `core/utils/icon_registry.dart` key for legend icon. Empty string
 /// for currency-dimension slices.
 @override final  String iconKey;
+/// Drill-down identity for this slice. Null for the synthetic "Other"
+/// aggregate — that row stays non-interactive.
+///
+/// Named `selectionKey` (not `key`) to avoid confusion with Flutter's
+/// `Widget.key`. `ChartSlice` is a Freezed data class, not a widget,
+/// so there is no name collision — but readers scanning the call
+/// sites should not have to wonder.
+@override final  SelectedSlice? selectionKey;
 
 /// Create a copy of ChartSlice
 /// with the given fields replaced by the non-null parameter values.
@@ -1137,16 +1165,16 @@ _$ChartSliceCopyWith<_ChartSlice> get copyWith => __$ChartSliceCopyWithImpl<_Cha
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChartSlice&&(identical(other.label, label) || other.label == label)&&(identical(other.currencyCode, currencyCode) || other.currencyCode == currencyCode)&&(identical(other.totalMinorUnits, totalMinorUnits) || other.totalMinorUnits == totalMinorUnits)&&(identical(other.fraction, fraction) || other.fraction == fraction)&&(identical(other.colorIndex, colorIndex) || other.colorIndex == colorIndex)&&(identical(other.iconKey, iconKey) || other.iconKey == iconKey));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChartSlice&&(identical(other.label, label) || other.label == label)&&(identical(other.currencyCode, currencyCode) || other.currencyCode == currencyCode)&&(identical(other.totalMinorUnits, totalMinorUnits) || other.totalMinorUnits == totalMinorUnits)&&(identical(other.fraction, fraction) || other.fraction == fraction)&&(identical(other.colorIndex, colorIndex) || other.colorIndex == colorIndex)&&(identical(other.iconKey, iconKey) || other.iconKey == iconKey)&&(identical(other.selectionKey, selectionKey) || other.selectionKey == selectionKey));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,label,currencyCode,totalMinorUnits,fraction,colorIndex,iconKey);
+int get hashCode => Object.hash(runtimeType,label,currencyCode,totalMinorUnits,fraction,colorIndex,iconKey,selectionKey);
 
 @override
 String toString() {
-  return 'ChartSlice(label: $label, currencyCode: $currencyCode, totalMinorUnits: $totalMinorUnits, fraction: $fraction, colorIndex: $colorIndex, iconKey: $iconKey)';
+  return 'ChartSlice(label: $label, currencyCode: $currencyCode, totalMinorUnits: $totalMinorUnits, fraction: $fraction, colorIndex: $colorIndex, iconKey: $iconKey, selectionKey: $selectionKey)';
 }
 
 
@@ -1157,11 +1185,11 @@ abstract mixin class _$ChartSliceCopyWith<$Res> implements $ChartSliceCopyWith<$
   factory _$ChartSliceCopyWith(_ChartSlice value, $Res Function(_ChartSlice) _then) = __$ChartSliceCopyWithImpl;
 @override @useResult
 $Res call({
- String label, String currencyCode, int totalMinorUnits, double? fraction, int colorIndex, String iconKey
+ String label, String currencyCode, int totalMinorUnits, double? fraction, int colorIndex, String iconKey, SelectedSlice? selectionKey
 });
 
 
-
+@override $SelectedSliceCopyWith<$Res>? get selectionKey;
 
 }
 /// @nodoc
@@ -1174,7 +1202,7 @@ class __$ChartSliceCopyWithImpl<$Res>
 
 /// Create a copy of ChartSlice
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? label = null,Object? currencyCode = null,Object? totalMinorUnits = null,Object? fraction = freezed,Object? colorIndex = null,Object? iconKey = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? label = null,Object? currencyCode = null,Object? totalMinorUnits = null,Object? fraction = freezed,Object? colorIndex = null,Object? iconKey = null,Object? selectionKey = freezed,}) {
   return _then(_ChartSlice(
 label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
 as String,currencyCode: null == currencyCode ? _self.currencyCode : currencyCode // ignore: cast_nullable_to_non_nullable
@@ -1182,11 +1210,24 @@ as String,totalMinorUnits: null == totalMinorUnits ? _self.totalMinorUnits : tot
 as int,fraction: freezed == fraction ? _self.fraction : fraction // ignore: cast_nullable_to_non_nullable
 as double?,colorIndex: null == colorIndex ? _self.colorIndex : colorIndex // ignore: cast_nullable_to_non_nullable
 as int,iconKey: null == iconKey ? _self.iconKey : iconKey // ignore: cast_nullable_to_non_nullable
-as String,
+as String,selectionKey: freezed == selectionKey ? _self.selectionKey : selectionKey // ignore: cast_nullable_to_non_nullable
+as SelectedSlice?,
   ));
 }
 
+/// Create a copy of ChartSlice
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$SelectedSliceCopyWith<$Res>? get selectionKey {
+    if (_self.selectionKey == null) {
+    return null;
+  }
 
+  return $SelectedSliceCopyWith<$Res>(_self.selectionKey!, (value) {
+    return _then(_self.copyWith(selectionKey: value));
+  });
+}
 }
 
 /// @nodoc

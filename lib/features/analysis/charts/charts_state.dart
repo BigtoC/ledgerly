@@ -9,6 +9,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../data/models/category.dart' show CategoryType;
+import 'selected_slice.dart';
 
 part 'charts_state.freezed.dart';
 
@@ -108,6 +109,15 @@ abstract class ChartSlice with _$ChartSlice {
     /// `core/utils/icon_registry.dart` key for legend icon. Empty string
     /// for currency-dimension slices.
     required String iconKey,
+
+    /// Drill-down identity for this slice. Null for the synthetic "Other"
+    /// aggregate — that row stays non-interactive.
+    ///
+    /// Named `selectionKey` (not `key`) to avoid confusion with Flutter's
+    /// `Widget.key`. `ChartSlice` is a Freezed data class, not a widget,
+    /// so there is no name collision — but readers scanning the call
+    /// sites should not have to wonder.
+    SelectedSlice? selectionKey,
   }) = _ChartSlice;
 }
 

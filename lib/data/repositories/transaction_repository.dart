@@ -138,11 +138,30 @@ abstract class TransactionRepository {
   /// transaction type, with [granularity] selecting hour/day/month
   /// buckets. Local bucket math uses `DateHelpers` so midnight + DST
   /// behaviour matches the rest of the app.
+  ///
+  /// Optional plain filters scope the buckets for drill-down refiltering.
+  /// All-null behaves identically to today (regression-protected).
   Stream<List<TimeBucketSlice>> watchTimeBucketsInRange({
     required DateTime start,
     required DateTime end,
     required CategoryType type,
     required TimeBucketGranularity granularity,
+    int? categoryId,
+    int? accountId,
+    String? currencyCode,
+  });
+
+  /// Transactions matching the optional drill-down filters within
+  /// `[start, end)`, of [type]. Ordered `date DESC, id DESC` to match
+  /// Home / Search Level 2 row conventions. Backs the chart drill-down
+  /// items list.
+  Stream<List<Transaction>> watchTransactionsForSliceInRange({
+    required DateTime start,
+    required DateTime end,
+    required CategoryType type,
+    int? categoryId,
+    int? accountId,
+    String? currencyCode,
   });
 
   /// One-shot read by id. Returns null when no row matches.
@@ -387,9 +406,19 @@ final class DriftTransactionRepository implements TransactionRepository {
     required DateTime end,
     required CategoryType type,
     required TimeBucketGranularity granularity,
+    int? categoryId,
+    int? accountId,
+    String? currencyCode,
   }) {
     return _dao
-        .watchChartRowsInRange(start: start, end: end, type: _typeWire(type))
+        .watchChartRowsInRange(
+          start: start,
+          end: end,
+          type: _typeWire(type),
+          categoryId: categoryId,
+          accountId: accountId,
+          currencyCode: currencyCode,
+        )
         .map((rows) {
           // Bucket locally so DST / midnight semantics match DateHelpers.
           final acc = <(DateTime, String), int>{};
@@ -417,6 +446,27 @@ final class DriftTransactionRepository implements TransactionRepository {
               )
               .toList(growable: false);
         });
+  }
+
+  @override
+  Stream<List<Transaction>> watchTransactionsForSliceInRange({
+    required DateTime start,
+    required DateTime end,
+    required CategoryType type,
+    int? categoryId,
+    int? accountId,
+    String? currencyCode,
+  }) {
+    return _dao
+        .watchTransactionRowsForSliceInRange(
+          start: start,
+          end: end,
+          type: _typeWire(type),
+          categoryId: categoryId,
+          accountId: accountId,
+          currencyCode: currencyCode,
+        )
+        .asyncMap(_rowsToDomain);
   }
 
   @override

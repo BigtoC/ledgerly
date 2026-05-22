@@ -7,7 +7,7 @@ part of 'charts_selection_controller.dart';
 // **************************************************************************
 
 String _$chartsSelectionControllerHash() =>
-    r'd02889c80d3b76d093eed574ef313b0ef1d424db';
+    r'173e07176bacc221cbda9cc3339c42d11910015d';
 
 /// See also [ChartsSelectionController].
 @ProviderFor(ChartsSelectionController)

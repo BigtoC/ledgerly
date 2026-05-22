@@ -8,7 +8,6 @@ import '../../l10n/app_localizations.dart';
 import 'charts/charts_section.dart';
 import 'search/analysis_controller.dart';
 import 'search/analysis_state.dart';
-import 'search/widgets/analysis_search_placeholder.dart';
 import 'search/widgets/category_search_tile.dart';
 
 /// Material 3 SearchBar default height (56dp).
@@ -79,9 +78,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
         // The placeholder lives above the chart as a subtle "search hint";
         // charts render the full breakdown.
         AnalysisIdle() => const SingleChildScrollView(
-          child: Column(
-            children: [AnalysisSearchPlaceholder(), ChartsSection()],
-          ),
+          child: Column(children: [ChartsSection()]),
         ),
         AnalysisLoading(:final previous, :final query) =>
           previous == null
@@ -126,7 +123,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
             child: SearchBar(
               controller: _searchController,
               focusNode: _searchFocus,
-              hintText: l10n.analysisSearchHint,
+              hintText: l10n.analysisSearchPrompt,
               leading: const Icon(Icons.search),
               trailing: [
                 if (_searchController.text.isNotEmpty)

@@ -671,10 +671,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get analysisTitle => 'Analysis';
 
   @override
-  String get analysisSearchHint => 'Search transactions…';
-
-  @override
-  String get analysisSearchPrompt => 'Search memos to find past transactions';
+  String get analysisSearchPrompt => 'Search memos to find transactions';
 
   @override
   String get analysisNoResults => 'No transactions found';
@@ -699,6 +696,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get analysisErrorMessage => 'Something went wrong while searching';
+
+  @override
+  String get analysisDrilldownEmpty => 'No transactions in this period';
+
+  @override
+  String get analysisOriginalAmount => 'Original amount';
+
+  @override
+  String get analysisRatesStale => 'Using last known exchange rates';
 
   @override
   String get settingsRecurringTile => 'Recurring transactions';

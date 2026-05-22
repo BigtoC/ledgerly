@@ -318,27 +318,49 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// Raw `(date, currency, amount_minor_units)` rows in `[start, end)`
-  /// filtered by `categories.type`, ordered by date ascending. The
-  /// repository runs local-time bucket math on top so midnight/DST
-  /// semantics stay aligned with `DateHelpers`.
+  /// filtered by `categories.type`, ordered by date ascending. Optional
+  /// `categoryId` / `accountId` / `currencyCode` parameters apply
+  /// additional `AND` predicates — used by the drill-down bar-chart
+  /// refilter. All three default to `null` (no extra filter), which keeps
+  /// the original behavior bit-for-bit.
   Stream<List<({DateTime date, String currency, int amountMinorUnits})>>
   watchChartRowsInRange({
     required DateTime start,
     required DateTime end,
     required String type,
+    int? categoryId,
+    int? accountId,
+    String? currencyCode,
   }) {
-    final query = attachedDatabase.customSelect(
+    final buf = StringBuffer(
       'SELECT t.date AS d, t.currency AS code, '
       't.amount_minor_units AS amt '
       'FROM transactions t '
       'JOIN categories c ON c.id = t.category_id '
-      'WHERE t.date >= ? AND t.date < ? AND c.type = ? '
-      'ORDER BY t.date ASC',
-      variables: [
-        Variable<DateTime>(start),
-        Variable<DateTime>(end),
-        Variable<String>(type),
-      ],
+      'WHERE t.date >= ? AND t.date < ? AND c.type = ?',
+    );
+    final variables = <Variable<Object>>[
+      Variable<DateTime>(start),
+      Variable<DateTime>(end),
+      Variable<String>(type),
+    ];
+    if (categoryId != null) {
+      buf.write(' AND t.category_id = ?');
+      variables.add(Variable<int>(categoryId));
+    }
+    if (accountId != null) {
+      buf.write(' AND t.account_id = ?');
+      variables.add(Variable<int>(accountId));
+    }
+    if (currencyCode != null) {
+      buf.write(' AND t.currency = ?');
+      variables.add(Variable<String>(currencyCode));
+    }
+    buf.write(' ORDER BY t.date ASC');
+
+    final query = attachedDatabase.customSelect(
+      buf.toString(),
+      variables: variables,
       readsFrom: {transactions, attachedDatabase.categories},
     );
     return query.watch().map(
@@ -351,6 +373,50 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
             ),
           )
           .toList(growable: false),
+    );
+  }
+
+  /// Full `TransactionRow` objects in `[start, end)` filtered by
+  /// `categories.type` and optional slice predicates. Ordered
+  /// `date DESC, id DESC`. Backs the chart drill-down items list — the
+  /// repository wraps the rows into `Transaction` domain models. No hard
+  /// cap is applied in MVP because the drill-down count must reflect the
+  /// full selected slice rather than a silent truncation.
+  Stream<List<TransactionRow>> watchTransactionRowsForSliceInRange({
+    required DateTime start,
+    required DateTime end,
+    required String type,
+    int? categoryId,
+    int? accountId,
+    String? currencyCode,
+  }) {
+    var stmt =
+        select(transactions).join([
+          innerJoin(
+            attachedDatabase.categories,
+            attachedDatabase.categories.id.equalsExp(transactions.categoryId),
+          ),
+        ])..where(
+          transactions.date.isBiggerOrEqualValue(start) &
+              transactions.date.isSmallerThanValue(end) &
+              attachedDatabase.categories.type.equals(type),
+        );
+    if (categoryId != null) {
+      stmt = stmt..where(transactions.categoryId.equals(categoryId));
+    }
+    if (accountId != null) {
+      stmt = stmt..where(transactions.accountId.equals(accountId));
+    }
+    if (currencyCode != null) {
+      stmt = stmt..where(transactions.currency.equals(currencyCode));
+    }
+    stmt = stmt
+      ..orderBy([
+        OrderingTerm(expression: transactions.date, mode: OrderingMode.desc),
+        OrderingTerm(expression: transactions.id, mode: OrderingMode.desc),
+      ]);
+    return stmt.watch().map(
+      (rows) => rows.map((r) => r.readTable(transactions)).toList(),
     );
   }
 }

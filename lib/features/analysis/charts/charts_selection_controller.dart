@@ -14,6 +14,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/utils/date_helpers.dart';
 import '../../../data/models/category.dart' show CategoryType;
 import 'charts_state.dart' show ChartDimension, PeriodType;
+import 'selected_slice.dart';
 
 part 'charts_selection_controller.freezed.dart';
 part 'charts_selection_controller.g.dart';
@@ -26,6 +27,7 @@ abstract class ChartsSelection with _$ChartsSelection {
     required CategoryType type,
     required ChartDimension dimension,
     required DateTime anchorDate,
+    SelectedSlice? selectedSlice,
   }) = _ChartsSelection;
 }
 
@@ -38,6 +40,7 @@ class ChartsSelectionController extends _$ChartsSelectionController {
       type: CategoryType.expense,
       dimension: ChartDimension.category,
       anchorDate: normalizeAnchor(DateTime.now(), PeriodType.week),
+      selectedSlice: null,
     );
   }
 
@@ -47,6 +50,7 @@ class ChartsSelectionController extends _$ChartsSelectionController {
     state = state.copyWith(
       period: period,
       anchorDate: normalizeAnchor(state.anchorDate, period),
+      selectedSlice: null,
     );
   }
 
@@ -56,6 +60,7 @@ class ChartsSelectionController extends _$ChartsSelectionController {
     );
     state = state.copyWith(
       anchorDate: shiftAnchor(state.anchorDate, state.period, -1),
+      selectedSlice: null,
     );
   }
 
@@ -66,6 +71,7 @@ class ChartsSelectionController extends _$ChartsSelectionController {
     if (isAtCurrentPeriod()) return;
     state = state.copyWith(
       anchorDate: shiftAnchor(state.anchorDate, state.period, 1),
+      selectedSlice: null,
     );
   }
 
@@ -75,6 +81,7 @@ class ChartsSelectionController extends _$ChartsSelectionController {
       type: state.type == CategoryType.expense
           ? CategoryType.income
           : CategoryType.expense,
+      selectedSlice: null,
     );
   }
 
@@ -83,7 +90,22 @@ class ChartsSelectionController extends _$ChartsSelectionController {
       '[ChartsSelection] setDimension($dimension) current=${state.dimension}',
     );
     if (state.dimension == dimension) return;
-    state = state.copyWith(dimension: dimension);
+    state = state.copyWith(dimension: dimension, selectedSlice: null);
+  }
+
+  /// Tap-toggle semantics: same slice clears, different slice replaces.
+  void toggleSlice(SelectedSlice slice) {
+    debugPrint('[ChartsSelection] toggleSlice($slice)');
+    state = state.copyWith(
+      selectedSlice: state.selectedSlice == slice ? null : slice,
+    );
+  }
+
+  /// Clear an active drill-down selection. No-op when already null. Used
+  /// by the stale-selection self-heal listener in `ChartsSection`.
+  void clearSlice() {
+    if (state.selectedSlice == null) return;
+    state = state.copyWith(selectedSlice: null);
   }
 
   bool isAtCurrentPeriod() {
