@@ -156,6 +156,12 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
     return Padding(
       padding: const EdgeInsets.all(16),
       child: stateAsync.when(
+        // Skip the AsyncLoading flash that fires between Stream swaps when
+        // ChartsController.build() re-runs (e.g. on slice toggle). Without
+        // this the chart area briefly shrinks to a bare spinner, which
+        // collapses the outer SingleChildScrollView and clamps its offset.
+        skipLoadingOnReload: true,
+        skipLoadingOnRefresh: true,
         loading: () => _frame(
           context,
           ref,
@@ -200,23 +206,17 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
             controller,
             selection,
             selectionNotifier,
+            // Render the prior chart directly (no Stack + dim overlay) so
+            // the _ChartBody element stays put across Loading↔DataState.
+            // The dim/spinner overlay was structurally different from the
+            // DataState body, which forced fl_chart's pie/bar StatefulWidget
+            // state to remount on every slice tap.
             body: previous == null
                 ? const Center(child: CircularProgressIndicator())
-                : Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      _ChartBody(
-                        data: previous,
-                        locale: locale,
-                        currencies: currenciesAsync.valueOrNull ?? const {},
-                      ),
-                      const Positioned.fill(
-                        child: IgnorePointer(
-                          child: ColoredBox(color: Color(0x33000000)),
-                        ),
-                      ),
-                      const CircularProgressIndicator(),
-                    ],
+                : _ChartBody(
+                    data: previous,
+                    locale: locale,
+                    currencies: currenciesAsync.valueOrNull ?? const {},
                   ),
             l10n: l10n,
             chartData: previous,

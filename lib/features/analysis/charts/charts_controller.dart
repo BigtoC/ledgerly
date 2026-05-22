@@ -103,7 +103,10 @@ class ChartsController extends _$ChartsController {
       }
     });
 
-    controller.add(const ChartsState.idle());
+    // No explicit Idle emission — _resubscribe() emits Loading(previous:
+    // _lastEmittedData), which renders the prior chart while new streams
+    // re-emit. Emitting Idle on every rebuild flashes a full spinner and
+    // (combined with the outer SingleChildScrollView) clamps scroll offset.
     _resubscribe();
 
     ref.onDispose(() {
