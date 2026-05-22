@@ -29,8 +29,9 @@ class CategoryPieChart extends StatefulWidget {
   final int? grandTotalMinorUnits;
   final String? displayCurrencyCode;
 
-  /// Externally-controlled selection (e.g. from legend taps). When null the
-  /// chart maintains its own internal selection state.
+  /// Externally-controlled selection (e.g. from legend taps). Null means
+  /// no slice is highlighted. The chart is fully controlled — there is no
+  /// internal fallback selection.
   final int? selectedIndex;
 
   /// Fired when the user taps a slice. Null means "deselect". Receivers
@@ -42,27 +43,8 @@ class CategoryPieChart extends StatefulWidget {
 }
 
 class _CategoryPieChartState extends State<CategoryPieChart> {
-  int? _internalSelection;
-
-  int? get _effectiveSelection => widget.selectedIndex ?? _internalSelection;
-
-  @override
-  void didUpdateWidget(covariant CategoryPieChart oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Reset selection if the slice set changes — indices are no longer
-    // meaningful after a period/dimension swap.
-    if (oldWidget.slices.length != widget.slices.length) {
-      _internalSelection = null;
-    }
-  }
-
   void _select(int? index) {
-    if (widget.onSelectionChanged != null) {
-      widget.onSelectionChanged!(index);
-    }
-    if (widget.selectedIndex == null) {
-      setState(() => _internalSelection = index);
-    }
+    widget.onSelectionChanged?.call(index);
   }
 
   @override
@@ -72,7 +54,7 @@ class _CategoryPieChartState extends State<CategoryPieChart> {
     }
     final showLabels = widget.slices.first.fraction != null;
     final l10n = AppLocalizations.of(context);
-    final selection = _effectiveSelection;
+    final selection = widget.selectedIndex;
     final scheme = Theme.of(context).colorScheme;
 
     return Semantics(

@@ -391,7 +391,7 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
   }
 }
 
-class _ChartBody extends StatefulWidget {
+class _ChartBody extends ConsumerWidget {
   const _ChartBody({
     required this.data,
     required this.locale,
@@ -403,29 +403,18 @@ class _ChartBody extends StatefulWidget {
   final Map<String, Currency> currencies;
 
   @override
-  State<_ChartBody> createState() => _ChartBodyState();
-}
-
-class _ChartBodyState extends State<_ChartBody> {
-  int? _selectedSliceIndex;
-
-  @override
-  void didUpdateWidget(covariant _ChartBody oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Drop selection when the slice list changes — the index is no longer
-    // referentially valid after a period/dimension/type swap.
-    if (oldWidget.data.slices.length != widget.data.slices.length ||
-        oldWidget.data.dimension != widget.data.dimension ||
-        oldWidget.data.type != widget.data.type ||
-        oldWidget.data.period != widget.data.period ||
-        oldWidget.data.anchorDate != widget.data.anchorDate) {
-      _selectedSliceIndex = null;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final data = widget.data;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selection = ref
+        .watch(chartsSelectionControllerProvider)
+        .selectedSlice;
+    final selectedIndex = selection == null
+        ? null
+        : (() {
+            final i = data.slices.indexWhere(
+              (s) => s.selectionKey == selection,
+            );
+            return i == -1 ? null : i;
+          })();
     final showBar =
         data.bucketTotals.isNotEmpty &&
         !(data.dimension == ChartDimension.currency && data.mixedCurrencies);
@@ -434,21 +423,43 @@ class _ChartBodyState extends State<_ChartBody> {
       children: [
         CategoryPieChart(
           slices: data.slices,
-          currenciesByCode: widget.currencies,
-          locale: widget.locale,
+          currenciesByCode: currencies,
+          locale: locale,
           grandTotalMinorUnits: data.grandTotalMinorUnits,
           displayCurrencyCode: data.displayCurrencyCode,
-          selectedIndex: _selectedSliceIndex,
-          onSelectionChanged: (i) => setState(() => _selectedSliceIndex = i),
+          selectedIndex: selectedIndex,
+          onSelectionChanged: (i) {
+            if (i == null) {
+              ref.read(chartsSelectionControllerProvider.notifier).clearSlice();
+              return;
+            }
+            final key = data.slices[i].selectionKey;
+            if (key != null) {
+              ref
+                  .read(chartsSelectionControllerProvider.notifier)
+                  .toggleSlice(key);
+            }
+          },
         ),
         const SizedBox(height: 12),
         ChartLegend(
           slices: data.slices,
-          currenciesByCode: widget.currencies,
-          locale: widget.locale,
+          currenciesByCode: currencies,
+          locale: locale,
           mixedCurrencies: data.mixedCurrencies,
-          selectedSliceIndex: _selectedSliceIndex,
-          onSelectSlice: (i) => setState(() => _selectedSliceIndex = i),
+          selectedSliceIndex: selectedIndex,
+          onSelectSlice: (i) {
+            if (i == null) {
+              ref.read(chartsSelectionControllerProvider.notifier).clearSlice();
+              return;
+            }
+            final key = data.slices[i].selectionKey;
+            if (key != null) {
+              ref
+                  .read(chartsSelectionControllerProvider.notifier)
+                  .toggleSlice(key);
+            }
+          },
         ),
         if (showBar) ...[
           const SizedBox(height: 16),
@@ -456,8 +467,8 @@ class _ChartBodyState extends State<_ChartBody> {
             period: data.period,
             anchorDate: data.anchorDate,
             bucketTotals: data.bucketTotals,
-            locale: widget.locale,
-            currenciesByCode: widget.currencies,
+            locale: locale,
+            currenciesByCode: currencies,
             displayCurrencyCode: data.displayCurrencyCode,
           ),
         ],
