@@ -1,5 +1,13 @@
 import 'package:intl/intl.dart';
 
+/// A piece of the resolved splash display text. The splash widget renders
+/// segments back-to-back in a single line, applying the rainbow gradient
+/// only to spans where [isDate] is `true`. Plain `{days}` substitutions
+/// and surrounding literal text live in `isDate: false` segments. Empty
+/// runs are elided so an unbroken adjacent date / plain pair does not
+/// produce a zero-length plain segment between them.
+typedef SplashTextSegment = ({String text, bool isDate});
+
 /// Day-boundary math + locale-aware date formatting used by the Home
 /// day-grouped list and the splash day counter. No Flutter imports,
 /// no state. See PRD.md 510-552 (splash) and 864-887 (i18n).
@@ -82,7 +90,7 @@ class DateHelpers {
   /// - `{days}` → `daysSince(...)` rendered with locale-aware grouping
   ///   via `NumberFormat.decimalPattern(locale)`.
   /// Unknown `{placeholder}` tokens pass through unchanged. Default
-  /// template is the ARB-supplied `"Since {date}"` (PRD.md 526, 551).
+  /// template is the seed-supplied `"On {date} start using Ledgerly"`.
   static String applySplashTemplate({
     required String template,
     required DateTime startDate,
@@ -93,5 +101,47 @@ class DateHelpers {
     final daysStr = NumberFormat.decimalPattern(locale).format(days);
     final dateStr = formatDisplayDate(startDate, locale);
     return template.replaceAll('{days}', daysStr).replaceAll('{date}', dateStr);
+  }
+
+  /// Same grammar as [applySplashTemplate] but returns the resolved text
+  /// split into segments so the widget can style `{date}` substitutions
+  /// independently (rainbow gradient) from the surrounding plain run.
+  /// `{days}` is substituted inline into its enclosing plain segment.
+  /// Empty plain runs at segment boundaries are dropped.
+  static List<SplashTextSegment> applySplashTemplateSegments({
+    required String template,
+    required DateTime startDate,
+    required DateTime now,
+    required String locale,
+  }) {
+    if (template.isEmpty) return const <SplashTextSegment>[];
+    final days = daysSince(startDate: startDate, now: now);
+    final daysStr = NumberFormat.decimalPattern(locale).format(days);
+    final dateStr = formatDisplayDate(startDate, locale);
+
+    final segments = <SplashTextSegment>[];
+    var i = 0;
+    final buffer = StringBuffer();
+    void flushPlain() {
+      if (buffer.isEmpty) return;
+      segments.add((text: buffer.toString(), isDate: false));
+      buffer.clear();
+    }
+
+    while (i < template.length) {
+      if (template.startsWith('{date}', i)) {
+        flushPlain();
+        segments.add((text: dateStr, isDate: true));
+        i += '{date}'.length;
+      } else if (template.startsWith('{days}', i)) {
+        buffer.write(daysStr);
+        i += '{days}'.length;
+      } else {
+        buffer.write(template[i]);
+        i += 1;
+      }
+    }
+    flushPlain();
+    return segments;
   }
 }
