@@ -66,6 +66,9 @@ class ChartsController extends _$ChartsController {
   @override
   Stream<ChartsState> build() {
     _selection = ref.watch(chartsSelectionControllerProvider);
+    if (_selection.dimension != ChartDimension.currency) {
+      _autoSwitchedToCurrency = false;
+    }
     debugPrint(
       '[ChartsController] build() — period=${_selection.period} '
       'type=${_selection.type} dimension=${_selection.dimension} '
