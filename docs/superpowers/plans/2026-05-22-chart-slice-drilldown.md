@@ -2,27 +2,40 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Wire the Analysis pie/legend taps to a coordinated bar-chart refilter and a per-slice items list with edit + swipe-to-delete (with 4 s undo), preserving the existing pie/legend selection visuals.
+**Goal:** Wire the Analysis pie/legend taps to a coordinated bar-chart refilter and a per-slice items list with edit + delete (4 s undo), preserving synchronized pie/legend selection visuals and showing FX-converted primary amounts with original booked amounts plus stale-rate messaging whenever the selected slice is displayed in converted currency.
 
-**Architecture:** Selection identity is hoisted from a local `_selectedSliceIndex` (`charts_section.dart:410`) into the Riverpod `ChartsSelectionController` as a typed `SelectedSlice` (sealed: category | account | currency). `ChartsController` carries that selection through `watchTimeBucketsInRange` to refilter the bar chart and stamps each `ChartSlice.selectionKey` so a tap can translate to the selection without a parallel lookup. A new `SliceDrilldownController` streams matching `Transaction` rows for the selection + range + type, owning the same `kUndoWindow` delete contract as `CategorySearchDetailController`. The list is a sibling of `_ChartBody` inside `ChartsSection`, rendered outside the period-fling `GestureDetector` so row swipes don't fight period swipes.
+**Architecture:** Selection identity is hoisted from a local `_selectedSliceIndex` (`charts_section.dart:410`) into the Riverpod `ChartsSelectionController` as a typed `SelectedSlice` (sealed: category | account | currency). `SelectedSlice` stays in the analysis layer: `ChartsController` translates the active selection into plain `{categoryId, accountId, currencyCode}` filters before calling repository and DAO reads, so the data layer stays filter-based. `CategoryPieChart` becomes fully controlled by the Riverpod selection state (no internal fallback selection). A new `SliceDrilldownController` streams one drill-down state model for the active filters and mirrors the app's existing single-pending-delete contract: a second delete commits the prior pending row immediately, while selection / period / type / dimension changes cancel the pending delete and dismiss the undo affordance before the list resubscribes. `SelectedSliceItemsList` renders outside the period-fling `GestureDetector`, shows a snackbar Undo action, dims and disables the pending row, and computes converted/original row amounts plus stale-rate copy from `chartsFxStatusProvider`.
 
-**Tech Stack:** Flutter 3.41.7, Riverpod (`riverpod_annotation`, `StreamNotifier`), Drift (in-memory for tests), Freezed sealed unions, `flutter_slidable` for swipe actions, `go_router` for edit navigation, `intl` for date formatting, `mocktail` for controller tests, `MaterialApp` + `flutter_test` + golden_toolkit-style fixed-viewport goldens.
+**Tech Stack:** Flutter 3.41.7, Riverpod (`riverpod_annotation`, `StreamNotifier`), Drift (in-memory for tests), Freezed data classes, `flutter_slidable` for swipe actions, `go_router` for edit navigation, `intl` for date formatting, `mocktail` for controller tests, `MaterialApp` + `flutter_test` + golden_toolkit-style fixed-viewport goldens.
+
+**MVP boundary:**
+- **Ship-blocking:** tap selection from pie or legend, synchronized highlight state, refiltered bar chart, drill-down list render, edit, delete + snackbar undo, pending-row disabled state, FX converted/original row amounts, stale-rate message, and a minimal accessibility contract (legend rows remain the non-touch selection path; delete never requires swipe alone).
+- **Follow-up if schedule pressure hits:** extra goldens can land after the core slice as long as final verification still runs for the code that ships.
+- **Explicitly out of MVP:** a chart path that emits separate category slices per `(category, currency)` when FX is missing. `SelectedSlice.category(currencyCode: ...)` stays as lower-layer future-proofing only.
 
 ---
 
 ## File Structure
 
 **New files:**
-- `lib/data/models/selected_slice.dart` — Freezed sealed `SelectedSlice` (category | account | currency).
-- `lib/features/analysis/charts/slice_drilldown_state.dart` — Freezed sealed `SliceDrilldownState` (loading | data | error).
-- `lib/features/analysis/charts/slice_drilldown_controller.dart` — `StreamNotifier` driving the items list (mirrors `CategorySearchDetailController`'s undo contract).
-- `lib/features/analysis/charts/widgets/selected_slice_items_list.dart` — `ConsumerWidget` rendering the header + rows, with an inlined private `_ListHeader`.
+- `lib/features/analysis/charts/selected_slice.dart` — Freezed sealed `SelectedSlice` (category | account | currency).
+- `lib/features/analysis/charts/slice_drilldown_data.dart` — Freezed `SliceDrilldownData` payload (`rows`, `pendingDeleteId`) consumed through the provider's `AsyncValue`.
+- `lib/features/analysis/charts/slice_drilldown_controller.dart` — `StreamNotifier` driving the items list (mirrors `CategorySearchDetailController`'s undo contract and exposes a delete-failure effect callback for snackbar fallback).
+- `lib/features/analysis/charts/widgets/selected_slice_items_list.dart` — `ConsumerStatefulWidget` rendering the header + rows, with an inlined private `_ListHeader` and snackbar/effect wiring.
+- `test/unit/charts/selected_slice_test.dart`
+- `test/unit/charts/chart_slice_selection_key_test.dart`
+- `test/unit/repositories/transaction_dao_slice_test.dart`
 - `test/unit/repositories/transaction_repository_slice_drilldown_test.dart`
 - `test/unit/controllers/charts_selection_controller_slice_test.dart`
 - `test/unit/controllers/charts_controller_slice_test.dart`
+- `test/unit/controllers/slice_drilldown_data_test.dart`
 - `test/unit/controllers/slice_drilldown_controller_test.dart`
+- `test/unit/l10n/drilldown_l10n_test.dart`
+- `test/widget/features/analysis/transaction_search_row_delete_mode_test.dart`
 - `test/widget/features/analysis/selected_slice_items_list_test.dart`
+- `test/widget/features/analysis/chart_legend_view_all_pop_test.dart`
 - `test/widget/features/analysis/chart_slice_selection_interaction_test.dart`
+- `test/widget/features/analysis/chart_slice_stale_selfheal_test.dart`
 - `test/widget/features/analysis/goldens/selected_slice_items_list_zh.png`
 - `test/widget/features/analysis/goldens/chart_with_selected_slice_light.png`
 - `test/integration/analysis_drilldown_test.dart`
@@ -30,11 +43,12 @@
 **Modified files:**
 - `lib/features/analysis/charts/charts_state.dart` — add `ChartSlice.selectionKey`.
 - `lib/features/analysis/charts/charts_selection_controller.dart` — add `selectedSlice`, `toggleSlice`, `clearSlice`; mutators clear selection.
-- `lib/features/analysis/charts/charts_controller.dart` — fill `selectionKey`, pass `selection.selectedSlice` to `watchTimeBucketsInRange`, clear selectedSlice on non-data states.
+- `lib/features/analysis/charts/charts_controller.dart` — fill `selectionKey`, translate `selectedSlice` into plain repository filters, and clear stale selection on non-data states.
 - `lib/features/analysis/charts/charts_section.dart` — convert `_ChartBody` to `ConsumerWidget`, render `SelectedSliceItemsList` as sibling of `_ChartBody`, host stale-selection-self-heal `ref.listen`.
+- `lib/features/analysis/charts/widgets/category_pie_chart.dart` — remove the local fallback selection so external clears fully clear the pie highlight.
 - `lib/features/analysis/charts/widgets/chart_legend.dart` — close the "View all" sheet on row tap.
-- `lib/features/analysis/search/widgets/transaction_search_row.dart` — add `TransactionSearchRowDeleteMode` (`dismissible` | `actionOnly`), `convertedAmount`, `originalAmountLabel` parameters.
-- `lib/data/repositories/transaction_repository.dart` — new abstract + concrete `watchTransactionsForSliceInRange`; extend `watchTimeBucketsInRange` with optional `selection`.
+- `lib/features/analysis/search/widgets/transaction_search_row.dart` — add `TransactionSearchRowDeleteMode` (`dismissible` | `actionOnly`), `convertedAmount`, `originalAmountLabel` parameters, while keeping an explicit delete action in the action-only path.
+- `lib/data/repositories/transaction_repository.dart` — keep the repository boundary filter-based by extending `watchTimeBucketsInRange` and `watchTransactionsForSliceInRange` with optional `{categoryId, accountId, currencyCode}` filters.
 - `lib/data/database/daos/transaction_dao.dart` — extend `watchChartRowsInRange` with optional `{categoryId, accountId, currencyCode}`; new `watchTransactionRowsForSliceInRange`.
 - `l10n/app_en.arb`, `l10n/app_zh.arb`, `l10n/app_zh_CN.arb`, `l10n/app_zh_TW.arb` — `analysisDrilldownEmpty`, `analysisOriginalAmount`, `analysisRatesStale`.
 
@@ -48,7 +62,8 @@
 - **Money**: integer minor units everywhere; `MoneyFormatter` only at the UI boundary.
 - **Range semantics**: half-open `[start, end)`. `start = normalizeAnchor(anchor, period)`, `end = shiftAnchor(start, period, 1)`.
 - **No Drift types outside repos**: DAO returns row records (`({...})`); repository maps to `Transaction` domain model.
-- **TDD loop per step that introduces code**: (a) write failing test, (b) run to confirm fail, (c) write minimum code, (d) run test to confirm pass, (e) commit.
+- **TDD loop per step that introduces code**: (a) write failing test, (b) run to confirm fail, (c) write minimum code, (d) run test to confirm pass.
+- **Milestone commits**: batch commits at three checkpoints instead of one commit per task: after Task 4 (data/repository filters), after Task 14 (UI behavior + accessibility + delete/undo wiring), and after Task 16 (verification / cleanup). The per-task `git commit` snippets below are message references only, not mandatory stop points.
 - **Commit style** (mirrors `feat(charts): add slice drill-down items list with delete and FX support`): `feat(<scope>): <imperative summary>`. Scope = layer name (`data`, `charts`, `analysis`, `l10n`, `tests`).
 
 ---
@@ -56,16 +71,16 @@
 ## Task 1: `SelectedSlice` Freezed sealed model
 
 **Files:**
-- Create: `lib/data/models/selected_slice.dart`
-- Test: `test/unit/models/selected_slice_test.dart` (will be new — create alongside model file in same task because the test is mostly equality smoke).
+- Create: `lib/features/analysis/charts/selected_slice.dart`
+- Test: `test/unit/charts/selected_slice_test.dart` (new — keep the type beside the other chart-layer coverage because `SelectedSlice` is analysis-only state identity now).
 
 - [ ] **Step 1: Write the failing test**
 
-Create `test/unit/models/selected_slice_test.dart` (this directory exists per `test/unit/utils`; create the `models/` subdir if needed):
+Create `test/unit/charts/selected_slice_test.dart`:
 
 ```dart
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ledgerly/data/models/selected_slice.dart';
+import 'package:ledgerly/features/analysis/charts/selected_slice.dart';
 
 void main() {
   group('SelectedSlice equality', () {
@@ -89,8 +104,8 @@ void main() {
     });
 
     test('SelectedAccountSlice equality', () {
-      const a = SelectedSlice.account(3, currencyCode: 'EUR');
-      const b = SelectedSlice.account(3, currencyCode: 'EUR');
+      const a = SelectedSlice.account(3);
+      const b = SelectedSlice.account(3);
       expect(a, equals(b));
     });
 
@@ -116,12 +131,12 @@ void main() {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `flutter test test/unit/models/selected_slice_test.dart`
-Expected: FAIL with "Target of URI doesn't exist: 'package:ledgerly/data/models/selected_slice.dart'".
+Run: `flutter test test/unit/charts/selected_slice_test.dart`
+Expected: FAIL with "Target of URI doesn't exist: 'package:ledgerly/features/analysis/charts/selected_slice.dart'".
 
 - [ ] **Step 3: Write minimal implementation**
 
-Create `lib/data/models/selected_slice.dart`:
+Create `lib/features/analysis/charts/selected_slice.dart`:
 
 ```dart
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -131,28 +146,24 @@ part 'selected_slice.freezed.dart';
 /// Drill-down selection identity. Sealed because the chart's three
 /// dimensions (category, account, currency) each have a distinct payload
 /// that downstream consumers (repository filter, header label resolution)
-/// must pattern-switch on. Lives in `data/models/` because it crosses the
-/// data ↔ controller boundary.
+/// must pattern-switch on. Lives in the analysis layer because this typed
+/// selection never crosses the repository boundary; `ChartsController`
+/// translates it into plain filter args before data access.
 @freezed
 sealed class SelectedSlice with _$SelectedSlice {
-  /// Drill-down into a category. `currencyCode` is set ONLY when the chart
-  /// was showing a per-(category, currency) slice — i.e., FX was missing
-  /// and Food USD / Food EUR appeared as separate pie slices. When
-  /// `currencyCode` is null (FX-converted slice), the list aggregates all
-  /// currencies for that category.
+  /// Drill-down into a category. `currencyCode` is reserved for a future
+  /// lower-layer filter path when a later UI may emit per-(category,
+  /// currency) slices. In this MVP's chart UI, category selection stays
+  /// currency-less and aggregates all currencies for that category.
   const factory SelectedSlice.category(
     int categoryId, {
     String? currencyCode,
   }) = SelectedCategorySlice;
 
-  /// Drill-down into an account. Account chart slices are emitted per
-  /// `(account, currency)`, so `currencyCode` stays part of the selection
-  /// identity even though the account record itself has a default
-  /// currency.
-  const factory SelectedSlice.account(
-    int accountId, {
-    String? currencyCode,
-  }) = SelectedAccountSlice;
+  /// Drill-down into an account. In this MVP the selection identity is the
+  /// account id only; account-level currency splitting can be added later
+  /// if the chart ever emits per-(account, currency) slices.
+  const factory SelectedSlice.account(int accountId) = SelectedAccountSlice;
 
   /// Drill-down into a currency.
   const factory SelectedSlice.currency(String currencyCode) =
@@ -163,18 +174,19 @@ sealed class SelectedSlice with _$SelectedSlice {
 - [ ] **Step 4: Run code generation**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
-Expected: success, generates `lib/data/models/selected_slice.freezed.dart`.
+Expected: success, generates `lib/features/analysis/charts/selected_slice.freezed.dart`.
 
 - [ ] **Step 5: Run test to verify pass**
 
-Run: `dart format . && flutter test test/unit/models/selected_slice_test.dart`
+Run: `dart format . && flutter test test/unit/charts/selected_slice_test.dart`
 Expected: PASS — all six tests green.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Record optional commit title**
+
+If you choose to commit more finely than the milestone checkpoints, use:
 
 ```bash
-git add lib/data/models/selected_slice.dart lib/data/models/selected_slice.freezed.dart test/unit/models/selected_slice_test.dart
-git commit -m "feat(data): add SelectedSlice sealed model for chart drill-down"
+feat(charts): add SelectedSlice sealed model for chart drill-down
 ```
 
 ---
@@ -190,7 +202,7 @@ Append to `test/unit/repositories/transaction_repository_charts_test.dart` is to
 
 ```dart
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ledgerly/data/models/selected_slice.dart';
+import 'package:ledgerly/features/analysis/charts/selected_slice.dart';
 import 'package:ledgerly/features/analysis/charts/charts_state.dart';
 
 void main() {
@@ -252,7 +264,7 @@ Expected: FAIL — `selectionKey` not defined on `ChartSlice`.
 Edit `lib/features/analysis/charts/charts_state.dart`. Add the import at the top:
 
 ```dart
-import '../../../data/models/selected_slice.dart';
+import 'selected_slice.dart';
 ```
 
 Replace the `ChartSlice` definition (lines 88-112) with:
@@ -309,11 +321,12 @@ Expected: PASS — all three tests green.
 Run: `flutter test test/unit/repositories/transaction_repository_charts_test.dart test/widget/features/analysis/charts_section_test.dart`
 Expected: PASS — existing call sites construct `ChartSlice` without `selectionKey`, which defaults to null.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 7: Record optional commit title**
+
+If you choose to commit more finely than the milestone checkpoints, use:
 
 ```bash
-git add lib/features/analysis/charts/charts_state.dart lib/features/analysis/charts/charts_state.freezed.dart test/unit/charts/chart_slice_selection_key_test.dart
-git commit -m "feat(charts): add ChartSlice.selectionKey for drill-down dispatch"
+feat(charts): add ChartSlice.selectionKey for drill-down dispatch
 ```
 
 ---
@@ -619,9 +632,9 @@ Append inside the `TransactionDao` class:
   /// Full `TransactionRow` objects in `[start, end)` filtered by
   /// `categories.type` and optional slice predicates. Ordered
   /// `date DESC, id DESC`. Backs the chart drill-down items list — the
-  /// repository wraps the rows into `Transaction` domain models. The
-  /// 10,000-row MVP cap is applied so a pathological dataset cannot blow
-  /// the buffer.
+  /// repository wraps the rows into `Transaction` domain models. No hard
+  /// cap is applied in MVP because the drill-down count must reflect the
+  /// full selected slice rather than a silent truncation.
   Stream<List<TransactionRow>> watchTransactionRowsForSliceInRange({
     required DateTime start,
     required DateTime end,
@@ -649,12 +662,10 @@ Append inside the `TransactionDao` class:
     if (currencyCode != null) {
       stmt = stmt..where(transactions.currency.equals(currencyCode));
     }
-    stmt = stmt
-      ..orderBy([
-        OrderingTerm(expression: transactions.date, mode: OrderingMode.desc),
-        OrderingTerm(expression: transactions.id, mode: OrderingMode.desc),
-      ])
-      ..limit(10000);
+    stmt = stmt..orderBy([
+      OrderingTerm(expression: transactions.date, mode: OrderingMode.desc),
+      OrderingTerm(expression: transactions.id, mode: OrderingMode.desc),
+    ]);
     return stmt.watch().map(
       (rows) => rows.map((r) => r.readTable(transactions)).toList(),
     );
@@ -671,11 +682,12 @@ Expected: PASS — all eight tests green.
 Run: `flutter test test/unit/repositories/transaction_repository_charts_test.dart`
 Expected: PASS — original `watchChartRowsInRange` calls without filter params still behave identically.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 7: Record optional commit title**
+
+If you choose to commit more finely than the milestone checkpoints, use:
 
 ```bash
-git add lib/data/database/daos/transaction_dao.dart test/unit/repositories/transaction_dao_slice_test.dart
-git commit -m "feat(data): extend transaction DAO with slice filter and rows-for-slice query"
+feat(data): extend transaction DAO with slice filter and rows-for-slice query
 ```
 
 ---
@@ -693,7 +705,7 @@ Create `test/unit/repositories/transaction_repository_slice_drilldown_test.dart`
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/data/database/app_database.dart' hide Currency;
 import 'package:ledgerly/data/models/category.dart';
-import 'package:ledgerly/data/models/selected_slice.dart';
+import 'package:ledgerly/features/analysis/charts/selected_slice.dart';
 import 'package:ledgerly/data/models/time_bucket_slice.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 
@@ -754,50 +766,52 @@ void main() {
   group('watchTransactionsForSliceInRange', () {
     test('category selection returns matching rows date DESC, id DESC', () async {
       final txs = await repo.watchTransactionsForSliceInRange(
-        selection: const SelectedSlice.category(1),
         start: DateTime(2026, 5, 18),
         end: DateTime(2026, 5, 20),
         type: CategoryType.expense,
+        categoryId: 1,
       ).first;
       expect(txs.map((t) => t.id).toList(), [3, 2, 1]);
     });
 
     test('category + currencyCode filters both', () async {
       final txs = await repo.watchTransactionsForSliceInRange(
-        selection: const SelectedSlice.category(1, currencyCode: 'USD'),
         start: DateTime(2026, 5, 18),
         end: DateTime(2026, 5, 20),
         type: CategoryType.expense,
+        categoryId: 1,
+        currencyCode: 'USD',
       ).first;
       expect(txs.map((t) => t.id).toList(), [2, 1]);
     });
 
     test('currency selection scopes to that currency', () async {
       final txs = await repo.watchTransactionsForSliceInRange(
-        selection: const SelectedSlice.currency('EUR'),
         start: DateTime(2026, 5, 18),
         end: DateTime(2026, 5, 20),
         type: CategoryType.expense,
+        currencyCode: 'EUR',
       ).first;
       expect(txs.map((t) => t.id).toList(), [3]);
     });
 
     test('account selection scopes to that account', () async {
       final txs = await repo.watchTransactionsForSliceInRange(
-        selection: const SelectedSlice.account(1),
         start: DateTime(2026, 5, 18),
         end: DateTime(2026, 5, 20),
         type: CategoryType.expense,
+        accountId: 1,
       ).first;
       expect(txs, hasLength(4));
     });
 
     test('stream re-emits after insert / delete', () async {
       final stream = repo.watchTransactionsForSliceInRange(
-        selection: const SelectedSlice.category(1, currencyCode: 'USD'),
         start: DateTime(2026, 5, 18),
         end: DateTime(2026, 5, 20),
         type: CategoryType.expense,
+        categoryId: 1,
+        currencyCode: 'USD',
       );
       final emissions = <int>[];
       final sub = stream.listen((rows) => emissions.add(rows.length));
@@ -829,8 +843,8 @@ void main() {
     });
   });
 
-  group('watchTimeBucketsInRange with selection', () {
-    test('selection: null preserves current behavior', () async {
+  group('watchTimeBucketsInRange with filters', () {
+    test('null filters preserve current behavior', () async {
       final stream = repo.watchTimeBucketsInRange(
         start: DateTime(2026, 5, 18),
         end: DateTime(2026, 5, 20),
@@ -851,13 +865,13 @@ void main() {
       expect(totalsByDay[DateTime(2026, 5, 18)], equals(10000));
     });
 
-    test('selection: category filters buckets to that category', () async {
+    test('categoryId filters buckets to that category', () async {
       final buckets = await repo.watchTimeBucketsInRange(
         start: DateTime(2026, 5, 18),
         end: DateTime(2026, 5, 20),
         type: CategoryType.expense,
         granularity: TimeBucketGranularity.day,
-        selection: const SelectedSlice.category(1),
+        categoryId: 1,
       ).first;
       final totalsByDay = <DateTime, int>{};
       for (final b in buckets) {
@@ -869,25 +883,26 @@ void main() {
       expect(totalsByDay[DateTime(2026, 5, 19)], equals(500));
     });
 
-    test('selection: currency filters buckets to that currency', () async {
+    test('currencyCode filters buckets to that currency', () async {
       final buckets = await repo.watchTimeBucketsInRange(
         start: DateTime(2026, 5, 18),
         end: DateTime(2026, 5, 20),
         type: CategoryType.expense,
         granularity: TimeBucketGranularity.day,
-        selection: const SelectedSlice.currency('EUR'),
+        currencyCode: 'EUR',
       ).first;
       expect(buckets, hasLength(1));
       expect(buckets.first.totalMinorUnits, equals(500));
     });
 
-    test('selection: category with currencyCode applies both', () async {
+    test('categoryId + currencyCode apply both', () async {
       final buckets = await repo.watchTimeBucketsInRange(
         start: DateTime(2026, 5, 18),
         end: DateTime(2026, 5, 20),
         type: CategoryType.expense,
         granularity: TimeBucketGranularity.day,
-        selection: const SelectedSlice.category(1, currencyCode: 'USD'),
+        categoryId: 1,
+        currencyCode: 'USD',
       ).first;
       final totalsByDay = <DateTime, int>{};
       for (final b in buckets) {
@@ -909,11 +924,7 @@ Expected: FAIL — `watchTransactionsForSliceInRange` not defined; `watchTimeBuc
 
 - [ ] **Step 3: Update repository abstract interface**
 
-Edit `lib/data/repositories/transaction_repository.dart`. Add the import at top:
-
-```dart
-import '../models/selected_slice.dart';
-```
+Edit `lib/data/repositories/transaction_repository.dart`.
 
 Replace the `watchTimeBucketsInRange` declaration (lines 141-146 in the abstract class) with:
 
@@ -923,24 +934,29 @@ Replace the `watchTimeBucketsInRange` declaration (lines 141-146 in the abstract
   /// buckets. Local bucket math uses `DateHelpers` so midnight + DST
   /// behaviour matches the rest of the app.
   ///
-  /// When [selection] is non-null, buckets count only rows matching the
-  /// slice. Null behaves identically to today (regression-protected).
+  /// Optional plain filters scope the buckets for drill-down refiltering.
+  /// All-null behaves identically to today (regression-protected).
   Stream<List<TimeBucketSlice>> watchTimeBucketsInRange({
     required DateTime start,
     required DateTime end,
     required CategoryType type,
     required TimeBucketGranularity granularity,
-    SelectedSlice? selection,
+    int? categoryId,
+    int? accountId,
+    String? currencyCode,
   });
 
-  /// Transactions matching [selection] within `[start, end)`, of [type].
-  /// Ordered `date DESC, id DESC` to match Home / Search Level 2 row
-  /// conventions. Backs the chart drill-down items list.
+  /// Transactions matching the optional drill-down filters within
+  /// `[start, end)`, of [type]. Ordered `date DESC, id DESC` to match
+  /// Home / Search Level 2 row conventions. Backs the chart drill-down
+  /// items list.
   Stream<List<Transaction>> watchTransactionsForSliceInRange({
-    required SelectedSlice selection,
     required DateTime start,
     required DateTime end,
     required CategoryType type,
+    int? categoryId,
+    int? accountId,
+    String? currencyCode,
   });
 ```
 
@@ -955,9 +971,10 @@ Replace the existing `watchTimeBucketsInRange` implementation (lines 384-420) wi
     required DateTime end,
     required CategoryType type,
     required TimeBucketGranularity granularity,
-    SelectedSlice? selection,
+    int? categoryId,
+    int? accountId,
+    String? currencyCode,
   }) {
-    final (categoryId, accountId, currencyCode) = _sliceToFilters(selection);
     return _dao
         .watchChartRowsInRange(
           start: start,
@@ -997,12 +1014,13 @@ Replace the existing `watchTimeBucketsInRange` implementation (lines 384-420) wi
 
   @override
   Stream<List<Transaction>> watchTransactionsForSliceInRange({
-    required SelectedSlice selection,
     required DateTime start,
     required DateTime end,
     required CategoryType type,
+    int? categoryId,
+    int? accountId,
+    String? currencyCode,
   }) {
-    final (categoryId, accountId, currencyCode) = _sliceToFilters(selection);
     return _dao
         .watchTransactionRowsForSliceInRange(
           start: start,
@@ -1013,23 +1031,6 @@ Replace the existing `watchTimeBucketsInRange` implementation (lines 384-420) wi
           currencyCode: currencyCode,
         )
         .asyncMap(_rowsToDomain);
-  }
-
-  (int?, int?, String?) _sliceToFilters(SelectedSlice? selection) {
-    return switch (selection) {
-      null => (null, null, null),
-      SelectedCategorySlice(:final categoryId, :final currencyCode) => (
-        categoryId,
-        null,
-        currencyCode,
-      ),
-      SelectedAccountSlice(:final accountId, :final currencyCode) => (
-        null,
-        accountId,
-        currencyCode,
-      ),
-      SelectedCurrencySlice(:final currencyCode) => (null, null, currencyCode),
-    };
   }
 ```
 
@@ -1043,11 +1044,13 @@ Expected: PASS — all nine tests green.
 Run: `flutter test test/unit/repositories/transaction_repository_charts_test.dart test/unit/repositories/transaction_repository_test.dart`
 Expected: PASS — null `selection` keeps `watchTimeBucketsInRange` behaviour intact.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 7: Milestone commit checkpoint**
+
+At this checkpoint, batch Tasks 1-4 into the first milestone commit:
 
 ```bash
-git add lib/data/repositories/transaction_repository.dart test/unit/repositories/transaction_repository_slice_drilldown_test.dart
-git commit -m "feat(data): add watchTransactionsForSliceInRange and selection-aware buckets"
+git add lib/features/analysis/charts/selected_slice.dart lib/features/analysis/charts/selected_slice.freezed.dart lib/features/analysis/charts/charts_state.dart lib/features/analysis/charts/charts_state.freezed.dart lib/data/database/daos/transaction_dao.dart lib/data/repositories/transaction_repository.dart test/unit/charts/selected_slice_test.dart test/unit/charts/chart_slice_selection_key_test.dart test/unit/repositories/transaction_dao_slice_test.dart test/unit/repositories/transaction_repository_slice_drilldown_test.dart
+git commit -m "feat(data): add slice drill-down repository filters"
 ```
 
 ---
@@ -1066,7 +1069,7 @@ Create `test/unit/controllers/charts_selection_controller_slice_test.dart`:
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ledgerly/data/models/category.dart';
-import 'package:ledgerly/data/models/selected_slice.dart';
+import 'package:ledgerly/features/analysis/charts/selected_slice.dart';
 import 'package:ledgerly/features/analysis/charts/charts_selection_controller.dart';
 import 'package:ledgerly/features/analysis/charts/charts_state.dart';
 
@@ -1122,13 +1125,10 @@ void main() {
       expect(state().selectedSlice, isNull);
     });
 
-    test('setPeriod with same period still clears (still touched)', () {
-      // The selection clear semantics: if the user taps the period that is
-      // already active, that's still an explicit "user interacted with
-      // period control" event — and per spec the selection clears on any
-      // period change. The current `setPeriod` early-returns when the
-      // period matches; the spec keeps that behavior because no actual
-      // mutation occurred.
+    test('setPeriod with same period does not clear', () {
+      // Selection only clears when the period actually changes. If the
+      // user taps the already-active period, `setPeriod` early-returns and
+      // leaves the current selection intact.
       final before = state().selectedSlice;
       notifier().setPeriod(state().period);
       expect(state().selectedSlice, equals(before));
@@ -1171,7 +1171,7 @@ Expected: FAIL — `selectedSlice` field missing on `ChartsSelection`; `toggleSl
 Edit `lib/features/analysis/charts/charts_selection_controller.dart`. Add the import:
 
 ```dart
-import '../../../data/models/selected_slice.dart';
+import 'selected_slice.dart';
 ```
 
 Replace the `ChartsSelection` definition (lines 22-30):
@@ -1293,11 +1293,12 @@ Expected: PASS — all 11 tests green.
 Run: `flutter test test/unit/controllers/charts_controller_test.dart test/widget/features/analysis/charts_section_test.dart`
 Expected: PASS — existing flows that never touch `selectedSlice` keep working.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 7: Record optional commit title**
+
+If you choose to commit more finely than the milestone checkpoints, use:
 
 ```bash
-git add lib/features/analysis/charts/charts_selection_controller.dart lib/features/analysis/charts/charts_selection_controller.freezed.dart test/unit/controllers/charts_selection_controller_slice_test.dart
-git commit -m "feat(charts): hoist drill-down selection into ChartsSelectionController"
+feat(charts): hoist drill-down selection into ChartsSelectionController
 ```
 
 ---
@@ -1322,7 +1323,7 @@ import 'package:ledgerly/data/models/category.dart';
 import 'package:ledgerly/data/models/category_slice.dart';
 import 'package:ledgerly/data/models/currency.dart';
 import 'package:ledgerly/data/models/currency_slice.dart';
-import 'package:ledgerly/data/models/selected_slice.dart';
+import 'package:ledgerly/features/analysis/charts/selected_slice.dart';
 import 'package:ledgerly/data/models/time_bucket_slice.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/features/analysis/charts/charts_controller.dart';
@@ -1401,7 +1402,9 @@ void main() {
         end: any(named: 'end'),
         type: any(named: 'type'),
         granularity: any(named: 'granularity'),
-        selection: any(named: 'selection'),
+        categoryId: any(named: 'categoryId'),
+        accountId: any(named: 'accountId'),
+        currencyCode: any(named: 'currencyCode'),
       ),
     ).thenAnswer(
       (_) => Stream.value(<TimeBucketSlice>[
@@ -1445,7 +1448,9 @@ void main() {
         end: any(named: 'end'),
         type: any(named: 'type'),
         granularity: any(named: 'granularity'),
-        selection: any(named: 'selection'),
+        categoryId: any(named: 'categoryId'),
+        accountId: any(named: 'accountId'),
+        currencyCode: any(named: 'currencyCode'),
       ),
     ).thenAnswer(
       (_) => Stream.value(<TimeBucketSlice>[
@@ -1468,7 +1473,7 @@ void main() {
         .firstWhere((s) => s is ChartsDataState) as ChartsDataState;
     expect(
       data.chartData.slices.first.selectionKey,
-      equals(const SelectedSlice.account(1, currencyCode: 'USD')),
+      equals(const SelectedSlice.account(1)),
     );
   });
 
@@ -1492,7 +1497,9 @@ void main() {
         end: any(named: 'end'),
         type: any(named: 'type'),
         granularity: any(named: 'granularity'),
-        selection: any(named: 'selection'),
+        categoryId: any(named: 'categoryId'),
+        accountId: any(named: 'accountId'),
+        currencyCode: any(named: 'currencyCode'),
       ),
     ).thenAnswer(
       (_) => Stream.value(<TimeBucketSlice>[
@@ -1520,7 +1527,7 @@ void main() {
     ]));
   });
 
-  test('bucket query receives selectedSlice when set', () async {
+  test('bucket query receives translated filters when selectedSlice is set', () async {
     final repo = _MockRepo();
     when(
       () => repo.watchByCategoryInRange(
@@ -1539,7 +1546,9 @@ void main() {
         end: any(named: 'end'),
         type: any(named: 'type'),
         granularity: any(named: 'granularity'),
-        selection: any(named: 'selection'),
+        categoryId: any(named: 'categoryId'),
+        accountId: any(named: 'accountId'),
+        currencyCode: any(named: 'currencyCode'),
       ),
     ).thenAnswer(
       (_) => Stream.value(<TimeBucketSlice>[
@@ -1569,10 +1578,13 @@ void main() {
         end: any(named: 'end'),
         type: any(named: 'type'),
         granularity: any(named: 'granularity'),
-        selection: captureAny(named: 'selection'),
+        categoryId: captureAny(named: 'categoryId'),
+        accountId: captureAny(named: 'accountId'),
+        currencyCode: captureAny(named: 'currencyCode'),
       ),
     ).captured;
-    expect(capt, contains(const SelectedSlice.category(1)));
+    expect(capt, contains(1));
+    expect(capt, contains(null));
   });
 }
 ```
@@ -1580,7 +1592,7 @@ void main() {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `flutter test test/unit/controllers/charts_controller_slice_test.dart`
-Expected: FAIL — `selectionKey` is null on every slice; `watchTimeBucketsInRange` mock won't be called with `selection`.
+Expected: FAIL — `selectionKey` is null on every slice; `watchTimeBucketsInRange` mock won't be called with translated filter args.
 
 - [ ] **Step 3: Update `ChartsController`**
 
@@ -1589,19 +1601,25 @@ Edit `lib/features/analysis/charts/charts_controller.dart`.
 1. Add the import:
 
 ```dart
-import '../../../data/models/selected_slice.dart';
+import 'selected_slice.dart';
 ```
 
-2. Replace the `watchTimeBucketsInRange` call in `_resubscribe` (lines 167-192) to pass `selection`:
+2. Replace the `watchTimeBucketsInRange` call in `_resubscribe` (lines 167-192) to translate `selectedSlice` into plain filters:
 
 ```dart
+    final (categoryId, accountId, currencyCode) = _selectionFilters(
+      _selection.selectedSlice,
+    );
+
     _bucketsSub = repo
         .watchTimeBucketsInRange(
           start: range.start,
           end: range.end,
           type: _selection.type,
           granularity: _granularity(),
-          selection: _selection.selectedSlice,
+          categoryId: categoryId,
+          accountId: accountId,
+          currencyCode: currencyCode,
         )
         .listen(
           (buckets) {
@@ -1669,6 +1687,24 @@ In `_emitCategoryOrAccountDimension`, slices are FX-converted and aggregated by 
       );
 ```
 
+6. Add a private feature-local filter translator near `_granularity()` so
+   `SelectedSlice` does not cross the repository boundary:
+
+```dart
+  (int?, int?, String?) _selectionFilters(SelectedSlice? selection) {
+    return switch (selection) {
+      null => (null, null, null),
+      SelectedCategorySlice(:final categoryId, :final currencyCode) => (
+        categoryId,
+        null,
+        currencyCode,
+      ),
+      SelectedAccountSlice(:final accountId) => (null, accountId, null),
+      SelectedCurrencySlice(:final currencyCode) => (null, null, currencyCode),
+    };
+  }
+```
+
 4. In `_emitCurrencyDimension`, replace BOTH `chartSlices.add(...)` blocks. First the converted branch (lines 518-530):
 
 ```dart
@@ -1716,35 +1752,33 @@ Expected: PASS — all four tests green.
 Run: `flutter test test/unit/controllers/charts_controller_test.dart test/widget/features/analysis/charts_section_test.dart`
 Expected: PASS — slices now carry `selectionKey`, which existing assertions ignore.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Record optional commit title**
+
+If you choose to commit more finely than the milestone checkpoints, use:
 
 ```bash
-git add lib/features/analysis/charts/charts_controller.dart test/unit/controllers/charts_controller_slice_test.dart
-git commit -m "feat(charts): stamp selectionKey on slices and pass selection to bucket query"
+feat(charts): stamp selectionKey on slices and pass selection to bucket query
 ```
 
 ---
 
-## Task 7: `SliceDrilldownState` Freezed sealed type
+## Task 7: `SliceDrilldownData` payload type
 
 **Files:**
-- Create: `lib/features/analysis/charts/slice_drilldown_state.dart`
+- Create: `lib/features/analysis/charts/slice_drilldown_data.dart`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `test/unit/controllers/slice_drilldown_state_test.dart`:
+Create `test/unit/controllers/slice_drilldown_data_test.dart`:
 
 ```dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/data/models/currency.dart';
 import 'package:ledgerly/data/models/transaction.dart';
-import 'package:ledgerly/features/analysis/charts/slice_drilldown_state.dart';
+import 'package:ledgerly/features/analysis/charts/slice_drilldown_data.dart';
 
 void main() {
-  test('SliceDrilldownState variants', () {
-    const loading = SliceDrilldownState.loading();
-    expect(loading, isA<SliceDrilldownLoading>());
-
+  test('SliceDrilldownData stores rows + pendingDeleteId', () {
     final usd = const Currency(code: 'USD', decimals: 2);
     final tx = Transaction(
       id: 1,
@@ -1756,73 +1790,81 @@ void main() {
       createdAt: DateTime(2026, 5, 18),
       updatedAt: DateTime(2026, 5, 18),
     );
-    final data = SliceDrilldownState.data(rows: [tx]);
-    expect(data, isA<SliceDrilldownData>());
-    expect((data as SliceDrilldownData).rows, hasLength(1));
+    final data = SliceDrilldownData(rows: [tx]);
+    expect(data.rows, hasLength(1));
     expect(data.pendingDeleteId, isNull);
+  });
 
-    final err = SliceDrilldownState.error('boom', StackTrace.empty);
-    expect(err, isA<SliceDrilldownError>());
+  test('copyWith updates pendingDeleteId without dropping rows', () {
+    final usd = const Currency(code: 'USD', decimals: 2);
+    final tx = Transaction(
+      id: 7,
+      amountMinorUnits: 700,
+      currency: usd,
+      categoryId: 1,
+      accountId: 1,
+      date: DateTime(2026, 5, 18),
+      createdAt: DateTime(2026, 5, 18),
+      updatedAt: DateTime(2026, 5, 18),
+    );
+    final data = SliceDrilldownData(rows: [tx]);
+    final pending = data.copyWith(pendingDeleteId: 7);
+
+    expect(pending.pendingDeleteId, 7);
+    expect(pending.rows.single.id, 7);
   });
 }
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `flutter test test/unit/controllers/slice_drilldown_state_test.dart`
+Run: `flutter test test/unit/controllers/slice_drilldown_data_test.dart`
 Expected: FAIL — file missing.
 
 - [ ] **Step 3: Write implementation**
 
-Create `lib/features/analysis/charts/slice_drilldown_state.dart`:
+Create `lib/features/analysis/charts/slice_drilldown_data.dart`:
 
 ```dart
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../data/models/transaction.dart';
 
-part 'slice_drilldown_state.freezed.dart';
+part 'slice_drilldown_data.freezed.dart';
 
 @freezed
-sealed class SliceDrilldownState with _$SliceDrilldownState {
-  /// Pre-first-emission. The list renders an inline centered spinner.
-  const factory SliceDrilldownState.loading() = SliceDrilldownLoading;
-
+abstract class SliceDrilldownData with _$SliceDrilldownData {
   /// Latest matching transactions. [pendingDeleteId] is non-null while a
-  /// row is in its `kUndoWindow` window — the row stays visible until
-  /// commit so the count/header stay in lockstep with the chart.
-  const factory SliceDrilldownState.data({
+  /// row is in its `kUndoWindow` window. The row stays visible until commit
+  /// so the list/header remain aligned with the selected chart slice.
+  const factory SliceDrilldownData({
     required List<Transaction> rows,
     int? pendingDeleteId,
-  }) = SliceDrilldownData;
-
-  /// Stream error. The list renders inline error copy without retry — it
-  /// is a subordinate panel under a live chart surface.
-  const factory SliceDrilldownState.error(Object error, StackTrace stack) =
-      SliceDrilldownError;
+  }) = _SliceDrilldownData;
 }
 ```
 
 - [ ] **Step 4: Regenerate code**
 
 Run: `dart run build_runner build --delete-conflicting-outputs`
-Expected: success — `slice_drilldown_state.freezed.dart` generated.
+Expected: success — `slice_drilldown_data.freezed.dart` generated.
 
 - [ ] **Step 5: Run test to verify pass**
 
-Run: `dart format . && flutter test test/unit/controllers/slice_drilldown_state_test.dart`
+Run: `dart format . && flutter test test/unit/controllers/slice_drilldown_data_test.dart`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Record optional commit title**
+
+If you choose to commit more finely than the milestone checkpoints, use:
 
 ```bash
-git add lib/features/analysis/charts/slice_drilldown_state.dart lib/features/analysis/charts/slice_drilldown_state.freezed.dart test/unit/controllers/slice_drilldown_state_test.dart
-git commit -m "feat(charts): add SliceDrilldownState sealed type"
+feat(charts): add SliceDrilldownData payload type
 ```
 
 ---
 
-## Task 8: `SliceDrilldownController` — stream notifier with undo
+## Task 8: `SliceDrilldownController` — async controller with single pending delete
 
 **Files:**
 - Create: `lib/features/analysis/charts/slice_drilldown_controller.dart`
@@ -1839,13 +1881,13 @@ import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/core/constants.dart';
 import 'package:ledgerly/data/models/category.dart';
 import 'package:ledgerly/data/models/currency.dart';
-import 'package:ledgerly/data/models/selected_slice.dart';
+import 'package:ledgerly/features/analysis/charts/selected_slice.dart';
 import 'package:ledgerly/data/models/transaction.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/features/analysis/charts/charts_selection_controller.dart';
 import 'package:ledgerly/features/analysis/charts/charts_state.dart';
 import 'package:ledgerly/features/analysis/charts/slice_drilldown_controller.dart';
-import 'package:ledgerly/features/analysis/charts/slice_drilldown_state.dart';
+import 'package:ledgerly/features/analysis/charts/slice_drilldown_data.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockRepo extends Mock implements TransactionRepository {}
@@ -1887,67 +1929,108 @@ void main() {
   test('emits SliceDrilldownData with rows from the repo stream', () async {
     when(
       () => repo.watchTransactionsForSliceInRange(
-        selection: any(named: 'selection'),
         start: any(named: 'start'),
         end: any(named: 'end'),
         type: any(named: 'type'),
+        categoryId: any(named: 'categoryId'),
+        accountId: any(named: 'accountId'),
+        currencyCode: any(named: 'currencyCode'),
       ),
     ).thenAnswer((_) => Stream.value([_tx(1), _tx(2)]));
 
     final state = await container
         .read(sliceDrilldownControllerProvider.stream)
-        .firstWhere((s) => s is SliceDrilldownData);
-    expect((state as SliceDrilldownData).rows, hasLength(2));
+        .first;
+    expect(state.rows, hasLength(2));
   });
 
-  test('no selection → controller stays in loading state', () async {
+  test('no selection leaves provider in loading without touching the repo', () async {
     container
         .read(chartsSelectionControllerProvider.notifier)
         .clearSlice();
-    // The controller emits a single Loading until a selection arrives.
-    expectLater(
-      container.read(sliceDrilldownControllerProvider.stream),
-      emitsThrough(isA<SliceDrilldownLoading>()),
+
+    expect(container.read(sliceDrilldownControllerProvider).isLoading, isTrue);
+    verifyNever(
+      () => repo.watchTransactionsForSliceInRange(
+        start: any(named: 'start'),
+        end: any(named: 'end'),
+        type: any(named: 'type'),
+        categoryId: any(named: 'categoryId'),
+        accountId: any(named: 'accountId'),
+        currencyCode: any(named: 'currencyCode'),
+      ),
     );
   });
 
   test('delete records pendingDeleteId, keeps row in list until commit', () async {
     when(
       () => repo.watchTransactionsForSliceInRange(
-        selection: any(named: 'selection'),
         start: any(named: 'start'),
         end: any(named: 'end'),
         type: any(named: 'type'),
+        categoryId: any(named: 'categoryId'),
+        accountId: any(named: 'accountId'),
+        currencyCode: any(named: 'currencyCode'),
       ),
     ).thenAnswer((_) => Stream.value([_tx(1), _tx(2)]));
     when(() => repo.delete(any())).thenAnswer((_) async => true);
 
     await container
         .read(sliceDrilldownControllerProvider.stream)
-        .firstWhere((s) => s is SliceDrilldownData);
+        .first;
     container.read(sliceDrilldownControllerProvider.notifier).delete(1);
-    // Same micro-tick re-emission with pendingDeleteId set, row still present.
+
     await Future<void>.delayed(Duration.zero);
-    final pending = container.read(sliceDrilldownControllerProvider).valueOrNull;
-    expect(pending, isA<SliceDrilldownData>());
-    expect((pending! as SliceDrilldownData).pendingDeleteId, equals(1));
-    expect((pending).rows.map((t) => t.id), contains(1));
+    final pending = container.read(sliceDrilldownControllerProvider).valueOrNull!;
+    expect(pending.pendingDeleteId, equals(1));
+    expect(pending.rows.map((t) => t.id), contains(1));
+  });
+
+  test('second delete commits the prior pending row immediately', () async {
+    when(
+      () => repo.watchTransactionsForSliceInRange(
+        start: any(named: 'start'),
+        end: any(named: 'end'),
+        type: any(named: 'type'),
+        categoryId: any(named: 'categoryId'),
+        accountId: any(named: 'accountId'),
+        currencyCode: any(named: 'currencyCode'),
+      ),
+    ).thenAnswer((_) => Stream.value([_tx(1), _tx(2)]));
+    when(() => repo.delete(any())).thenAnswer((_) async => true);
+
+    await container
+        .read(sliceDrilldownControllerProvider.stream)
+        .first;
+    final notifier = container.read(sliceDrilldownControllerProvider.notifier);
+    notifier.delete(1);
+    await Future<void>.delayed(Duration.zero);
+    notifier.delete(2);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+
+    verify(() => repo.delete(1)).called(1);
+    expect(
+      container.read(sliceDrilldownControllerProvider).valueOrNull!.pendingDeleteId,
+      2,
+    );
   });
 
   test('commit fires repo.delete after kUndoWindow', () async {
     when(
       () => repo.watchTransactionsForSliceInRange(
-        selection: any(named: 'selection'),
         start: any(named: 'start'),
         end: any(named: 'end'),
         type: any(named: 'type'),
+        categoryId: any(named: 'categoryId'),
+        accountId: any(named: 'accountId'),
+        currencyCode: any(named: 'currencyCode'),
       ),
     ).thenAnswer((_) => Stream.value([_tx(1)]));
     when(() => repo.delete(any())).thenAnswer((_) async => true);
 
     await container
         .read(sliceDrilldownControllerProvider.stream)
-        .firstWhere((s) => s is SliceDrilldownData);
+        .first;
     container.read(sliceDrilldownControllerProvider.notifier).delete(1);
     await Future<void>.delayed(kUndoWindow + const Duration(milliseconds: 200));
     verify(() => repo.delete(1)).called(1);
@@ -1956,20 +2039,50 @@ void main() {
   test('undoDelete cancels commit — repo.delete never called', () async {
     when(
       () => repo.watchTransactionsForSliceInRange(
-        selection: any(named: 'selection'),
         start: any(named: 'start'),
         end: any(named: 'end'),
         type: any(named: 'type'),
+        categoryId: any(named: 'categoryId'),
+        accountId: any(named: 'accountId'),
+        currencyCode: any(named: 'currencyCode'),
       ),
     ).thenAnswer((_) => Stream.value([_tx(1)]));
     when(() => repo.delete(any())).thenAnswer((_) async => true);
 
     await container
         .read(sliceDrilldownControllerProvider.stream)
-        .firstWhere((s) => s is SliceDrilldownData);
+        .first;
     container.read(sliceDrilldownControllerProvider.notifier).delete(1);
-    container.read(sliceDrilldownControllerProvider.notifier).undoDelete(1);
+    container.read(sliceDrilldownControllerProvider.notifier).undoDelete();
     await Future<void>.delayed(kUndoWindow + const Duration(milliseconds: 200));
+    verifyNever(() => repo.delete(any()));
+  });
+
+  test('selection change clears pending delete before resubscribe', () async {
+    when(
+      () => repo.watchTransactionsForSliceInRange(
+        start: any(named: 'start'),
+        end: any(named: 'end'),
+        type: any(named: 'type'),
+        categoryId: any(named: 'categoryId'),
+        accountId: any(named: 'accountId'),
+        currencyCode: any(named: 'currencyCode'),
+      ),
+    ).thenAnswer((_) => Stream.value([_tx(1)]));
+
+    await container
+        .read(sliceDrilldownControllerProvider.stream)
+        .first;
+    final notifier = container.read(sliceDrilldownControllerProvider.notifier);
+    notifier.delete(1);
+    await Future<void>.delayed(Duration.zero);
+
+    container
+        .read(chartsSelectionControllerProvider.notifier)
+        .setDimension(ChartDimension.currency);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(container.read(sliceDrilldownControllerProvider).isLoading, isTrue);
     verifyNever(() => repo.delete(any()));
   });
 }
@@ -1991,11 +2104,13 @@ Create `lib/features/analysis/charts/slice_drilldown_controller.dart`:
 //
 // Mirrors the delete/undo contract from `CategorySearchDetailController`:
 // `delete(id)` records `pendingDeleteId`, keeps the row visible until
-// `kUndoWindow` elapses, then commits to the repository. `undoDelete(id)`
-// cancels the timer; the repository is never touched.
+// `kUndoWindow` elapses, then commits to the repository. A second delete
+// commits the prior pending row immediately. `undoDelete()` cancels the
+// timer; the repository is never touched.
 //
-// Watches `ChartsSelectionController` so a selection change re-runs
-// `build()` cleanly via Riverpod.
+// The provider emits plain `SliceDrilldownData`; Riverpod wraps it in
+// `AsyncValue` for widgets, so the UI gets loading/error handling without
+// nesting a second sealed state type inside `AsyncValue`.
 
 import 'dart:async';
 
@@ -2004,25 +2119,40 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../app/providers/repository_providers.dart';
 import '../../../core/constants.dart';
+import 'selected_slice.dart';
 import '../../../data/models/transaction.dart';
 import 'charts_selection_controller.dart';
-import 'slice_drilldown_state.dart';
+import 'slice_drilldown_data.dart';
 
 part 'slice_drilldown_controller.g.dart';
+
+typedef SliceDrilldownEffectListener = void Function(SliceDrilldownEffect effect);
+
+sealed class SliceDrilldownEffect {
+  const SliceDrilldownEffect();
+}
+
+final class SliceDrilldownDeleteFailedEffect extends SliceDrilldownEffect {
+  const SliceDrilldownDeleteFailedEffect(this.error, this.stackTrace);
+
+  final Object error;
+  final StackTrace stackTrace;
+}
 
 @Riverpod(
   keepAlive: true,
   dependencies: [transactionRepository, ChartsSelectionController],
 )
 class SliceDrilldownController extends _$SliceDrilldownController {
-  StreamController<SliceDrilldownState>? _emitter;
+  StreamController<SliceDrilldownData>? _emitter;
   StreamSubscription<List<Transaction>>? _subscription;
   Timer? _undoTimer;
   int? _pendingDeleteId;
   List<Transaction> _lastRows = const [];
+  SliceDrilldownEffectListener? _effectListener;
 
   @override
-  Stream<SliceDrilldownState> build() {
+  Stream<SliceDrilldownData> build() {
     _emitter?.close();
     _subscription?.cancel();
     _subscription = null;
@@ -2031,7 +2161,7 @@ class SliceDrilldownController extends _$SliceDrilldownController {
     _pendingDeleteId = null;
     _lastRows = const [];
 
-    final controller = StreamController<SliceDrilldownState>();
+    final controller = StreamController<SliceDrilldownData>();
     _emitter = controller;
 
     ref.onDispose(() {
@@ -2046,21 +2176,22 @@ class SliceDrilldownController extends _$SliceDrilldownController {
     final selection = ref.watch(chartsSelectionControllerProvider);
     final selected = selection.selectedSlice;
     if (selected == null) {
-      controller.add(const SliceDrilldownState.loading());
       return controller.stream;
     }
 
-    controller.add(const SliceDrilldownState.loading());
     final start = normalizeAnchor(selection.anchorDate, selection.period);
     final end = shiftAnchor(start, selection.period, 1);
+    final (categoryId, accountId, currencyCode) = _selectionFilters(selected);
     final repo = ref.read(transactionRepositoryProvider);
 
     _subscription = repo
         .watchTransactionsForSliceInRange(
-          selection: selected,
           start: start,
           end: end,
           type: selection.type,
+          categoryId: categoryId,
+          accountId: accountId,
+          currencyCode: currencyCode,
         )
         .listen(
           (rows) {
@@ -2069,11 +2200,15 @@ class SliceDrilldownController extends _$SliceDrilldownController {
           },
           onError: (Object e, StackTrace st) {
             debugPrint('[SliceDrilldown] stream error: $e');
-            _emitter?.add(SliceDrilldownState.error(e, st));
+            _emitter?.addError(e, st);
           },
         );
 
     return controller.stream;
+  }
+
+  void setEffectListener(SliceDrilldownEffectListener? listener) {
+    _effectListener = listener;
   }
 
   /// Start the 4-second undo window for [id]. The row stays visible in
@@ -2083,8 +2218,6 @@ class SliceDrilldownController extends _$SliceDrilldownController {
     if (_pendingDeleteId != null) {
       _undoTimer?.cancel();
       final prior = _pendingDeleteId!;
-      // Fire-and-forget commit of the prior pending row before starting
-      // a new window for [id].
       unawaited(_commit(prior));
     }
     _pendingDeleteId = id;
@@ -2096,9 +2229,8 @@ class SliceDrilldownController extends _$SliceDrilldownController {
     });
   }
 
-  /// Cancel the undo window for [id]. The repository is never touched.
-  void undoDelete(int id) {
-    if (_pendingDeleteId != id) return;
+  /// Cancel the undo window. The repository is never touched.
+  void undoDelete() {
     _undoTimer?.cancel();
     _undoTimer = null;
     _pendingDeleteId = null;
@@ -2110,7 +2242,7 @@ class SliceDrilldownController extends _$SliceDrilldownController {
       await ref.read(transactionRepositoryProvider).delete(id);
     } catch (e, st) {
       debugPrint('[SliceDrilldown] commit failed: $e');
-      _emitter?.add(SliceDrilldownState.error(e, st));
+      _effectListener?.call(SliceDrilldownDeleteFailedEffect(e, st));
     } finally {
       if (_pendingDeleteId == id) {
         _pendingDeleteId = null;
@@ -2122,11 +2254,23 @@ class SliceDrilldownController extends _$SliceDrilldownController {
 
   void _emitFromCache() {
     _emitter?.add(
-      SliceDrilldownState.data(
+      SliceDrilldownData(
         rows: _lastRows,
         pendingDeleteId: _pendingDeleteId,
       ),
     );
+  }
+
+  (int?, int?, String?) _selectionFilters(SelectedSlice selection) {
+    return switch (selection) {
+      SelectedCategorySlice(:final categoryId, :final currencyCode) => (
+        categoryId,
+        null,
+        currencyCode,
+      ),
+      SelectedAccountSlice(:final accountId) => (null, accountId, null),
+      SelectedCurrencySlice(:final currencyCode) => (null, null, currencyCode),
+    };
   }
 }
 ```
@@ -2139,13 +2283,14 @@ Expected: success — `slice_drilldown_controller.g.dart` generated.
 - [ ] **Step 5: Run test to verify pass**
 
 Run: `dart format . && flutter test test/unit/controllers/slice_drilldown_controller_test.dart`
-Expected: PASS — all five tests green.
+Expected: PASS — all seven tests green.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Record optional commit title**
+
+If you choose to commit more finely than the milestone checkpoints, use:
 
 ```bash
-git add lib/features/analysis/charts/slice_drilldown_controller.dart lib/features/analysis/charts/slice_drilldown_controller.g.dart test/unit/controllers/slice_drilldown_controller_test.dart
-git commit -m "feat(charts): add SliceDrilldownController with optimistic delete + undo"
+feat(charts): add SliceDrilldownController with optimistic delete + undo
 ```
 
 ---
@@ -2274,11 +2419,12 @@ Expected: `lib/l10n/app_localizations*.dart` regenerates with new getters.
 Run: `dart format . && flutter test test/unit/l10n/drilldown_l10n_test.dart`
 Expected: PASS — all four tests green.
 
-- [ ] **Step 9: Commit**
+- [ ] **Step 9: Record optional commit title**
+
+If you choose to commit more finely than the milestone checkpoints, use:
 
 ```bash
-git add l10n/app_en.arb l10n/app_zh.arb l10n/app_zh_CN.arb l10n/app_zh_TW.arb lib/l10n/ test/unit/l10n/drilldown_l10n_test.dart
-git commit -m "feat(l10n): add drilldown empty, original amount, and stale rates copy"
+feat(l10n): add drilldown empty, original amount, and stale rates copy
 ```
 
 ---
@@ -2608,11 +2754,12 @@ Expected: PASS — all three tests green.
 Run: `flutter test test/widget/features/analysis/category_search_detail_screen_test.dart`
 Expected: PASS — default `deleteMode` keeps the dismissible behaviour Level 2 search relies on.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Record optional commit title**
+
+If you choose to commit more finely than the milestone checkpoints, use:
 
 ```bash
-git add lib/features/analysis/search/widgets/transaction_search_row.dart test/widget/features/analysis/transaction_search_row_delete_mode_test.dart
-git commit -m "feat(analysis): extend TransactionSearchRow with action-only delete + FX trailing"
+feat(analysis): extend TransactionSearchRow with action-only delete + FX trailing
 ```
 
 ---
@@ -2636,7 +2783,7 @@ import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/account.dart';
 import 'package:ledgerly/data/models/category.dart';
 import 'package:ledgerly/data/models/currency.dart';
-import 'package:ledgerly/data/models/selected_slice.dart';
+import 'package:ledgerly/features/analysis/charts/selected_slice.dart';
 import 'package:ledgerly/data/models/transaction.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/features/analysis/charts/charts_selection_controller.dart';
@@ -2665,8 +2812,9 @@ Widget _harness({
   required _MockRepo repo,
   required ChartSlice slice,
   SelectedSlice? activeSelection,
+  void Function(ProviderContainer container)? onContainer,
 }) {
-  return ProviderScope(
+  final container = ProviderContainer(
     overrides: [
       transactionRepositoryProvider.overrideWithValue(repo),
       analysisCategoriesByIdProvider.overrideWith(
@@ -2684,28 +2832,28 @@ Widget _harness({
         (ref) => Stream.value(const <int, Account>{}),
       ),
     ],
-    child: Consumer(
-      builder: (ctx, ref, _) {
-        if (activeSelection != null) {
-          ref
-              .read(chartsSelectionControllerProvider.notifier)
-              .toggleSlice(activeSelection);
-        }
-        return MaterialApp(
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: SelectedSliceItemsList(slice: slice, locale: 'en'),
-            ),
-          ),
-        );
-      },
+  );
+  if (activeSelection != null) {
+    container
+        .read(chartsSelectionControllerProvider.notifier)
+        .toggleSlice(activeSelection);
+  }
+  onContainer?.call(container);
+  return UncontrolledProviderScope(
+    container: container,
+    child: MaterialApp(
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(
+        body: SingleChildScrollView(
+          child: SelectedSliceItemsList(slice: slice, locale: 'en'),
+        ),
+      ),
     ),
   );
 }
@@ -2728,7 +2876,15 @@ void main() {
 
   testWidgets('returns SizedBox.shrink when no selection', (tester) async {
     final repo = _MockRepo();
-    await tester.pumpWidget(_harness(repo: repo, slice: _slice(const SelectedSlice.category(1))));
+    late ProviderContainer container;
+    await tester.pumpWidget(
+      _harness(
+        repo: repo,
+        slice: _slice(const SelectedSlice.category(1)),
+        onContainer: (value) => container = value,
+      ),
+    );
+    addTearDown(container.dispose);
     await tester.pump();
     // Header copy must NOT appear because parent's selection is null.
     expect(find.text('Food'), findsNothing);
@@ -2736,12 +2892,15 @@ void main() {
 
   testWidgets('renders header + rows when selection active', (tester) async {
     final repo = _MockRepo();
+    late ProviderContainer container;
     when(
       () => repo.watchTransactionsForSliceInRange(
-        selection: any(named: 'selection'),
         start: any(named: 'start'),
         end: any(named: 'end'),
         type: any(named: 'type'),
+        categoryId: any(named: 'categoryId'),
+        accountId: any(named: 'accountId'),
+        currencyCode: any(named: 'currencyCode'),
       ),
     ).thenAnswer((_) => Stream.value([_tx(1), _tx(2)]));
 
@@ -2749,7 +2908,9 @@ void main() {
       repo: repo,
       slice: _slice(const SelectedSlice.category(1)),
       activeSelection: const SelectedSlice.category(1),
+      onContainer: (value) => container = value,
     ));
+    addTearDown(container.dispose);
     await tester.pumpAndSettle();
     // The header label resolves "category.food" → "Food" via categoryDisplayNameForKey.
     expect(find.text('Food'), findsOneWidget);
@@ -2759,12 +2920,15 @@ void main() {
 
   testWidgets('inline empty placeholder when rows == []', (tester) async {
     final repo = _MockRepo();
+    late ProviderContainer container;
     when(
       () => repo.watchTransactionsForSliceInRange(
-        selection: any(named: 'selection'),
         start: any(named: 'start'),
         end: any(named: 'end'),
         type: any(named: 'type'),
+        categoryId: any(named: 'categoryId'),
+        accountId: any(named: 'accountId'),
+        currencyCode: any(named: 'currencyCode'),
       ),
     ).thenAnswer((_) => Stream.value(const <Transaction>[]));
 
@@ -2772,9 +2936,45 @@ void main() {
       repo: repo,
       slice: _slice(const SelectedSlice.category(1)),
       activeSelection: const SelectedSlice.category(1),
+      onContainer: (value) => container = value,
     ));
+    addTearDown(container.dispose);
     await tester.pumpAndSettle();
     expect(find.text('No transactions in this period'), findsOneWidget);
+  });
+
+  testWidgets('pending delete keeps row visible and shows snackbar undo', (
+    tester,
+  ) async {
+    final repo = _MockRepo();
+    late ProviderContainer container;
+    when(
+      () => repo.watchTransactionsForSliceInRange(
+        start: any(named: 'start'),
+        end: any(named: 'end'),
+        type: any(named: 'type'),
+        categoryId: any(named: 'categoryId'),
+        accountId: any(named: 'accountId'),
+        currencyCode: any(named: 'currencyCode'),
+      ),
+    ).thenAnswer((_) => Stream.value([_tx(1)]));
+
+    await tester.pumpWidget(_harness(
+      repo: repo,
+      slice: _slice(const SelectedSlice.category(1)),
+      activeSelection: const SelectedSlice.category(1),
+      onContainer: (value) => container = value,
+    ));
+    addTearDown(container.dispose);
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(Slidable), const Offset(-300, 0));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pump();
+
+    expect(find.text('Transaction deleted'), findsOneWidget);
+    expect(find.text('Undo'), findsOneWidget);
+    expect(find.byType(ListTile), findsOneWidget);
   });
 }
 ```
@@ -2799,11 +2999,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants.dart';
+import '../../../../core/utils/currency_converter.dart';
 import '../../../../core/utils/money_formatter.dart';
 import '../../../../data/models/account.dart';
 import '../../../../data/models/category.dart';
 import '../../../../data/models/currency.dart';
-import '../../../../data/models/selected_slice.dart';
+import '../selected_slice.dart';
 import '../../../../data/models/transaction.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../categories/widgets/category_display.dart';
@@ -2813,9 +3015,9 @@ import '../charts_providers.dart';
 import '../charts_selection_controller.dart';
 import '../charts_state.dart';
 import '../slice_drilldown_controller.dart';
-import '../slice_drilldown_state.dart';
+import '../slice_drilldown_data.dart';
 
-class SelectedSliceItemsList extends ConsumerWidget {
+class SelectedSliceItemsList extends ConsumerStatefulWidget {
   const SelectedSliceItemsList({
     super.key,
     required this.slice,
@@ -2829,21 +3031,66 @@ class SelectedSliceItemsList extends ConsumerWidget {
   final String locale;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SelectedSliceItemsList> createState() =>
+      _SelectedSliceItemsListState();
+}
+
+class _SelectedSliceItemsListState
+    extends ConsumerState<SelectedSliceItemsList> {
+  int? _lastShownPendingDeleteId;
+  late final SliceDrilldownController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = ref.read(sliceDrilldownControllerProvider.notifier);
+    _controller.setEffectListener(_onEffect);
+  }
+
+  @override
+  void dispose() {
+    _controller.setEffectListener(null);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final selection =
         ref.watch(chartsSelectionControllerProvider).selectedSlice;
     if (selection == null) return const SizedBox.shrink();
 
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(sliceDrilldownControllerProvider);
-    final controller =
-        ref.read(sliceDrilldownControllerProvider.notifier);
     final categoriesById =
         ref.watch(analysisCategoriesByIdProvider).valueOrNull ?? const {};
     final accountsById =
         ref.watch(analysisAccountsByIdProvider).valueOrNull ?? const {};
     final currenciesByCode =
         ref.watch(chartsCurrenciesByCodeProvider).valueOrNull ?? const {};
+    final fxStatus = ref.watch(chartsFxStatusProvider).valueOrNull;
+
+    ref.listen(sliceDrilldownControllerProvider, (_, next) {
+      final pendingId = next.valueOrNull?.pendingDeleteId;
+      if (pendingId == null) {
+        _lastShownPendingDeleteId = null;
+        return;
+      }
+      if (_lastShownPendingDeleteId == pendingId) return;
+      _lastShownPendingDeleteId = pendingId;
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      messenger
+        ?..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(l10n.homeDeleteUndoSnackbar),
+            duration: kUndoWindow,
+            action: SnackBarAction(
+              label: l10n.commonUndo,
+              onPressed: _controller.undoDelete,
+            ),
+          ),
+        );
+    });
 
     return AnimatedSize(
       duration: const Duration(milliseconds: 220),
@@ -2857,59 +3104,138 @@ class SelectedSliceItemsList extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(vertical: 16),
           child: Center(child: Text(l10n.analysisErrorMessage)),
         ),
-        data: (s) => switch (s) {
-          SliceDrilldownLoading() => const Padding(
-            padding: EdgeInsets.symmetric(vertical: 24),
-            child: Center(child: CircularProgressIndicator()),
-          ),
-          SliceDrilldownError() => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Center(child: Text(l10n.analysisErrorMessage)),
-          ),
-          SliceDrilldownData(:final rows, :final pendingDeleteId) =>
-            SlidableAutoCloseBehavior(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _ListHeader(
-                    label: _labelFor(
-                      selection: selection,
-                      slice: slice,
-                      categoriesById: categoriesById,
-                      accountsById: accountsById,
-                      l10n: l10n,
-                    ),
-                    count: rows.length,
-                    totalMinorUnits: slice.totalMinorUnits,
-                    currencyCode: slice.currencyCode,
-                    currenciesByCode: currenciesByCode,
-                    locale: locale,
-                    l10n: l10n,
-                  ),
-                  if (rows.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Center(child: Text(l10n.analysisDrilldownEmpty)),
-                    )
-                  else
-                    for (final tx in rows)
-                      TransactionSearchRow(
+        data: (data) => SlidableAutoCloseBehavior(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _ListHeader(
+                label: _labelFor(
+                  selection: selection,
+                  slice: widget.slice,
+                  categoriesById: categoriesById,
+                  accountsById: accountsById,
+                  l10n: l10n,
+                ),
+                count: data.rows.length,
+                totalMinorUnits: widget.slice.totalMinorUnits,
+                currencyCode: widget.slice.currencyCode,
+                currenciesByCode: currenciesByCode,
+                locale: widget.locale,
+                l10n: l10n,
+                showStaleRates: _showStaleRates(
+                  fxStatus: fxStatus,
+                  rows: data.rows,
+                  slice: widget.slice,
+                ),
+              ),
+              if (data.rows.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: Text(l10n.analysisDrilldownEmpty)),
+                )
+              else
+                for (final tx in data.rows)
+                  Opacity(
+                    opacity: data.pendingDeleteId == tx.id ? 0.55 : 1,
+                    child: IgnorePointer(
+                      ignoring: data.pendingDeleteId == tx.id,
+                      child: TransactionSearchRow(
                         key: ValueKey<int>(tx.id),
                         transaction: tx,
                         category: categoriesById[tx.categoryId],
                         account: accountsById[tx.accountId],
-                        locale: locale,
-                        deleteMode:
-                            TransactionSearchRowDeleteMode.actionOnly,
+                        locale: widget.locale,
+                        deleteMode: TransactionSearchRowDeleteMode.actionOnly,
+                        convertedAmount: _convertedAmount(
+                          tx: tx,
+                          category: categoriesById[tx.categoryId],
+                          slice: widget.slice,
+                          currenciesByCode: currenciesByCode,
+                          fxStatus: fxStatus,
+                        ),
+                        originalAmountLabel: _shouldShowOriginalAmount(
+                              tx: tx,
+                              slice: widget.slice,
+                              fxStatus: fxStatus,
+                            )
+                            ? l10n.analysisOriginalAmount
+                            : null,
                         onTap: () => context.push('/home/edit/${tx.id}'),
-                        onDelete: () => controller.delete(tx.id),
+                        onDelete: () => _controller.delete(tx.id),
                       ),
-                ],
-              ),
-            ),
-        },
+                    ),
+                  ),
+            ],
+          ),
+        ),
       ),
     );
+  }
+
+  void _onEffect(SliceDrilldownEffect effect) {
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final l10n = AppLocalizations.of(context);
+    switch (effect) {
+      case SliceDrilldownDeleteFailedEffect():
+        messenger
+          ?..clearSnackBars()
+          ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
+    }
+  }
+
+  bool _shouldShowOriginalAmount({
+    required Transaction tx,
+    required ChartSlice slice,
+    required ChartsFxStatus? fxStatus,
+  }) {
+    if (fxStatus == null) return false;
+    return tx.currency.code != slice.currencyCode &&
+        slice.currencyCode == fxStatus.defaultCurrencyCode;
+  }
+
+  String? _convertedAmount({
+    required Transaction tx,
+    required Category? category,
+    required ChartSlice slice,
+    required Map<String, Currency> currenciesByCode,
+    required ChartsFxStatus? fxStatus,
+  }) {
+    if (!_shouldShowOriginalAmount(tx: tx, slice: slice, fxStatus: fxStatus)) {
+      return null;
+    }
+    final rate = fxStatus!.scaledRate(tx.currency.code);
+    if (rate == null) return null;
+    final fromCurrency = currenciesByCode[tx.currency.code] ?? tx.currency;
+    final toCurrency = currenciesByCode[slice.currencyCode] ??
+        Currency(code: slice.currencyCode, decimals: 2);
+    final signedMinorUnits = category?.type == CategoryType.income
+        ? tx.amountMinorUnits
+        : -tx.amountMinorUnits;
+    final convertedMinorUnits = CurrencyConverter.convertMinorUnits(
+      amountMinorUnits: signedMinorUnits,
+      rateScaledE9: rate,
+      fromDecimals: fromCurrency.decimals,
+      toDecimals: toCurrency.decimals,
+    );
+    return MoneyFormatter.formatSigned(
+      amountMinorUnits: convertedMinorUnits,
+      currency: toCurrency,
+      locale: widget.locale,
+    );
+  }
+
+  bool _showStaleRates({
+    required ChartsFxStatus? fxStatus,
+    required List<Transaction> rows,
+    required ChartSlice slice,
+  }) {
+    if (fxStatus == null || rows.isEmpty) return false;
+    final latest = fxStatus.mostRecentFetchedAt();
+    if (latest == null) return false;
+    final hasConvertedRow = rows.any((tx) => tx.currency.code != slice.currencyCode);
+    if (!hasConvertedRow) return false;
+    return DateTime.now().difference(latest) > const Duration(hours: 1);
   }
 
   String _labelFor({
@@ -2940,6 +3266,7 @@ class _ListHeader extends StatelessWidget {
     required this.currenciesByCode,
     required this.locale,
     required this.l10n,
+    required this.showStaleRates,
   });
 
   final String label;
@@ -2949,6 +3276,7 @@ class _ListHeader extends StatelessWidget {
   final Map<String, Currency> currenciesByCode;
   final String locale;
   final AppLocalizations l10n;
+  final bool showStaleRates;
 
   @override
   Widget build(BuildContext context) {
@@ -2979,6 +3307,13 @@ class _ListHeader extends StatelessWidget {
                     l10n.analysisTransactionCount(count),
                     style: theme.textTheme.bodySmall,
                   ),
+                  if (showStaleRates)
+                    Text(
+                      l10n.analysisRatesStale,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -2999,13 +3334,14 @@ class _ListHeader extends StatelessWidget {
 - [ ] **Step 4: Run test to verify pass**
 
 Run: `dart format . && flutter test test/widget/features/analysis/selected_slice_items_list_test.dart`
-Expected: PASS — all three tests green.
+Expected: PASS — all four tests green.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Record optional commit title**
+
+If you choose to commit more finely than the milestone checkpoints, use:
 
 ```bash
-git add lib/features/analysis/charts/widgets/selected_slice_items_list.dart test/widget/features/analysis/selected_slice_items_list_test.dart
-git commit -m "feat(charts): add SelectedSliceItemsList with header, rows, and inline states"
+feat(charts): add SelectedSliceItemsList with undo snackbar and FX rows
 ```
 
 ---
@@ -3024,7 +3360,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/data/models/currency.dart';
-import 'package:ledgerly/data/models/selected_slice.dart';
+import 'package:ledgerly/features/analysis/charts/selected_slice.dart';
 import 'package:ledgerly/features/analysis/charts/charts_state.dart';
 import 'package:ledgerly/features/analysis/charts/widgets/chart_legend.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
@@ -3160,11 +3496,12 @@ Expected: PASS.
 Run: `flutter test test/widget/features/analysis/charts_section_test.dart`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Record optional commit title**
+
+If you choose to commit more finely than the milestone checkpoints, use:
 
 ```bash
-git add lib/features/analysis/charts/widgets/chart_legend.dart test/widget/features/analysis/chart_legend_view_all_pop_test.dart
-git commit -m "feat(charts): pop View all sheet after legend row tap"
+feat(charts): pop View all sheet after legend row tap
 ```
 
 ---
@@ -3189,7 +3526,7 @@ import 'package:ledgerly/data/models/account.dart';
 import 'package:ledgerly/data/models/category.dart';
 import 'package:ledgerly/data/models/category_slice.dart';
 import 'package:ledgerly/data/models/currency.dart';
-import 'package:ledgerly/data/models/selected_slice.dart';
+import 'package:ledgerly/features/analysis/charts/selected_slice.dart';
 import 'package:ledgerly/data/models/time_bucket_slice.dart';
 import 'package:ledgerly/data/repositories/exchange_rate_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
@@ -3241,7 +3578,9 @@ void main() {
         end: any(named: 'end'),
         type: any(named: 'type'),
         granularity: any(named: 'granularity'),
-        selection: any(named: 'selection'),
+        categoryId: any(named: 'categoryId'),
+        accountId: any(named: 'accountId'),
+        currencyCode: any(named: 'currencyCode'),
       ),
     ).thenAnswer(
       (_) => Stream.value(<TimeBucketSlice>[
@@ -3254,10 +3593,12 @@ void main() {
     );
     when(
       () => repo.watchTransactionsForSliceInRange(
-        selection: any(named: 'selection'),
         start: any(named: 'start'),
         end: any(named: 'end'),
         type: any(named: 'type'),
+        categoryId: any(named: 'categoryId'),
+        accountId: any(named: 'accountId'),
+        currencyCode: any(named: 'currencyCode'),
       ),
     ).thenAnswer((_) => Stream.value(const []));
 
@@ -3332,7 +3673,7 @@ void main() {
 Run: `flutter test test/widget/features/analysis/chart_slice_selection_interaction_test.dart`
 Expected: FAIL — `_ChartBody` still uses local `setState`; selection never reaches Riverpod.
 
-- [ ] **Step 3: Convert `_ChartBody`**
+- [ ] **Step 3: Convert `_ChartBody` and make `CategoryPieChart` fully controlled**
 
 Edit `lib/features/analysis/charts/charts_section.dart`. Replace the `_ChartBody` class (lines 394-467) with a `ConsumerWidget` reading selection from Riverpod and dispatching taps via `toggleSlice`:
 
@@ -3425,6 +3766,8 @@ class _ChartBody extends ConsumerWidget {
 }
 ```
 
+Then edit `lib/features/analysis/charts/widgets/category_pie_chart.dart` so the external `selectedIndex` is authoritative. Remove `_internalSelection`, `_effectiveSelection`, and the fallback branch inside `_select`; the widget should always render from `widget.selectedIndex` and only report taps upward via `onSelectionChanged`. This prevents the hidden local highlight from surviving after `ChartsSelectionController.clearSlice()`.
+
 - [ ] **Step 4: Run test to verify pass**
 
 Run: `dart format . && flutter test test/widget/features/analysis/chart_slice_selection_interaction_test.dart`
@@ -3433,13 +3776,14 @@ Expected: PASS.
 - [ ] **Step 5: Confirm existing widget tests still pass**
 
 Run: `flutter test test/widget/features/analysis/charts_section_test.dart`
-Expected: PASS.
+Expected: PASS — existing chart interaction tests keep passing after the selection source moves fully into Riverpod.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Record optional commit title**
+
+If you choose to commit more finely than the milestone checkpoints, use:
 
 ```bash
-git add lib/features/analysis/charts/charts_section.dart test/widget/features/analysis/chart_slice_selection_interaction_test.dart
-git commit -m "feat(charts): drive pie/legend selection through Riverpod (consumer body)"
+feat(charts): drive pie selection from Riverpod state
 ```
 
 ---
@@ -3464,7 +3808,7 @@ import 'package:ledgerly/data/models/account.dart';
 import 'package:ledgerly/data/models/category.dart';
 import 'package:ledgerly/data/models/category_slice.dart';
 import 'package:ledgerly/data/models/currency.dart';
-import 'package:ledgerly/data/models/selected_slice.dart';
+import 'package:ledgerly/features/analysis/charts/selected_slice.dart';
 import 'package:ledgerly/data/models/time_bucket_slice.dart';
 import 'package:ledgerly/data/repositories/exchange_rate_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
@@ -3508,7 +3852,9 @@ void main() {
         end: any(named: 'end'),
         type: any(named: 'type'),
         granularity: any(named: 'granularity'),
-        selection: any(named: 'selection'),
+        categoryId: any(named: 'categoryId'),
+        accountId: any(named: 'accountId'),
+        currencyCode: any(named: 'currencyCode'),
       ),
     ).thenAnswer(
       (_) => Stream.value(<TimeBucketSlice>[
@@ -3521,10 +3867,12 @@ void main() {
     );
     when(
       () => repo.watchTransactionsForSliceInRange(
-        selection: any(named: 'selection'),
         start: any(named: 'start'),
         end: any(named: 'end'),
         type: any(named: 'type'),
+        categoryId: any(named: 'categoryId'),
+        accountId: any(named: 'accountId'),
+        currencyCode: any(named: 'currencyCode'),
       ),
     ).thenAnswer((_) => Stream.value(const []));
 
@@ -3689,6 +4037,8 @@ import 'widgets/selected_slice_items_list.dart';
       ],
 ```
 
+The list widget now owns its snackbar/effect wiring and pending-row disabled state internally, so `ChartsSection` only needs to pass the resolved `ChartSlice` and locale; no extra delete/snackbar plumbing belongs in `_frame`.
+
 - [ ] **Step 4: Run test to verify pass**
 
 Run: `dart format . && flutter test test/widget/features/analysis/chart_slice_stale_selfheal_test.dart`
@@ -3699,11 +4049,13 @@ Expected: PASS.
 Run: `flutter test test/widget/features/analysis/`
 Expected: PASS for all analysis widget tests.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Milestone commit checkpoint**
+
+At this checkpoint, batch Tasks 5-14 into the second milestone commit:
 
 ```bash
-git add lib/features/analysis/charts/charts_section.dart test/widget/features/analysis/chart_slice_stale_selfheal_test.dart
-git commit -m "feat(charts): wire drill-down list + stale-selection self-heal in ChartsSection"
+git add lib/features/analysis/charts/charts_selection_controller.dart lib/features/analysis/charts/charts_selection_controller.g.dart lib/features/analysis/charts/charts_controller.dart lib/features/analysis/charts/charts_controller.g.dart lib/features/analysis/charts/slice_drilldown_data.dart lib/features/analysis/charts/slice_drilldown_data.freezed.dart lib/features/analysis/charts/slice_drilldown_controller.dart lib/features/analysis/charts/slice_drilldown_controller.g.dart lib/features/analysis/charts/widgets/selected_slice_items_list.dart lib/features/analysis/charts/widgets/chart_legend.dart lib/features/analysis/charts/widgets/category_pie_chart.dart lib/features/analysis/charts/charts_section.dart lib/features/analysis/search/widgets/transaction_search_row.dart l10n/app_en.arb l10n/app_zh.arb l10n/app_zh_CN.arb l10n/app_zh_TW.arb lib/l10n/app_localizations.dart lib/l10n/app_localizations_en.dart lib/l10n/app_localizations_zh.dart lib/l10n/app_localizations_zh_CN.dart lib/l10n/app_localizations_zh_TW.dart test/unit/controllers/charts_selection_controller_slice_test.dart test/unit/controllers/charts_controller_slice_test.dart test/unit/controllers/slice_drilldown_data_test.dart test/unit/controllers/slice_drilldown_controller_test.dart test/unit/l10n/drilldown_l10n_test.dart test/widget/features/analysis/transaction_search_row_delete_mode_test.dart test/widget/features/analysis/selected_slice_items_list_test.dart test/widget/features/analysis/chart_legend_view_all_pop_test.dart test/widget/features/analysis/chart_slice_selection_interaction_test.dart test/widget/features/analysis/chart_slice_stale_selfheal_test.dart
+git commit -m "feat(charts): add slice drill-down UI and controller flow"
 ```
 
 ---
@@ -3725,7 +4077,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/database/app_database.dart' as drift;
-import 'package:ledgerly/data/models/selected_slice.dart';
+import 'package:ledgerly/features/analysis/charts/selected_slice.dart';
 import 'package:ledgerly/data/repositories/exchange_rate_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/services/exchange_rate_service.dart';
@@ -3850,22 +4202,23 @@ void main() {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `flutter test test/integration/analysis_drilldown_test.dart`
-Expected: FAIL — at first run the test may fail for setup reasons; iterate until the assertions match the implementation.
+Expected: FAIL — list toggle or drill-down render path is not wired yet.
 
-- [ ] **Step 3: Iterate as necessary**
+- [ ] **Step 3: Iterate only for harness wiring mismatches**
 
-If the test fails due to provider scoping (e.g. `analysisCategoriesByIdProvider` needs the override the analysis screen reads), add explicit overrides for `analysisCategoriesByIdProvider`, `analysisAccountsByIdProvider`, `chartsCurrenciesByCodeProvider`, `chartsFxStatusProvider` as in earlier widget tests. Stop iterating when assertions match.
+If the test fails due to provider scoping (e.g. `analysisCategoriesByIdProvider` needs the override the analysis screen reads), add explicit overrides for `analysisCategoriesByIdProvider`, `analysisAccountsByIdProvider`, `chartsCurrenciesByCodeProvider`, `chartsFxStatusProvider` as in earlier widget tests. Stop iterating as soon as the test is green; the integration test is in MVP, not a follow-up.
 
 - [ ] **Step 4: Run test to verify pass**
 
 Run: `dart format . && flutter test test/integration/analysis_drilldown_test.dart`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Record optional commit title**
+
+If you choose to commit more finely than the milestone checkpoints, use:
 
 ```bash
-git add test/integration/analysis_drilldown_test.dart
-git commit -m "test(integration): drill-down toggle end-to-end on Analysis tab"
+test(integration): drill-down toggle end-to-end on Analysis tab
 ```
 
 ---
@@ -3889,14 +4242,15 @@ Expected: all green. `flutter analyze` runs `custom_lint` (Riverpod lint) + `imp
 Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: idempotent — no generated file should diff after this run. If there is drift, commit the regenerated files.
 
-- [ ] **Step 3: Commit any housekeeping**
+- [ ] **Step 3: Final milestone commit / housekeeping**
 
-If `build_runner` regenerated anything (e.g. order of `.g.dart` exports) or `dart format` reflowed prior commits, commit it:
+If `build_runner` regenerated anything (e.g. order of `.g.dart` exports) or `dart format` reflowed prior work, include that with the final milestone commit for Tasks 15-16:
 
 ```bash
 git status
-git add -A   # only if every changed path was expected
-git commit -m "chore(charts): regen build_runner outputs and format"
+git add test/integration/analysis_drilldown_test.dart
+git add -A   # only if every changed path was expected and belongs to this slice
+git commit -m "test(integration): cover chart slice drill-down end to end"
 ```
 
 - [ ] **Step 4: Skim spec for unimplemented edge cases**
@@ -3906,7 +4260,7 @@ Re-read the spec's *Edge Cases* table (lines 386-399). Confirm each row is cover
 - Stale selection: Task 14 self-heal listener ✓
 - "Other" aggregate: `selectionKey: null` is default, _otherRow leaves it null (no code change needed, but confirm `ChartLegend._otherRow` still passes `originalIndex` only when it is real) ✓
 - "View all" sheet pop: Task 12 ✓
-- Mixed currencies in category dim (FX missing): category slices emit per-(category, currency) and would use `SelectedSlice.category(id, currencyCode: ...)`. The current `_emitCategoryOrAccountDimension` aggregates by `id`; in the all-rates-missing case, control flows through `ChartsBlockedByMissingRates` and slices are not selectable. **Verify** by re-reading `charts_controller.dart` — if there is a per-(category, currency) emission path in the unblocked-but-missing case (e.g. via `excludedCurrencyCodes`), the `selectionKey` for those slices should also carry the currency. As of this plan we treat category-dim slices as currency-less (FX-converted). If the spec's "Food USD / Food EUR appear as separate pie slices" branch needs a different code path, file a follow-up — it is **not** in this MVP.
+- Mixed currencies in category dim (FX missing): verify the current code still blocks or excludes rather than emitting selectable per-(category, currency) slices in MVP. `SelectedSlice.category(id, currencyCode: ...)` remains lower-layer future-proofing only; no separate category-currency chart path is part of this slice.
 - Period swipe / type toggle / dimension change with active selection: Task 5 ✓
 - Chart transitions to Empty/Error: Task 14 listener clears ✓
 
@@ -3922,7 +4276,7 @@ If any row above is uncovered, file the follow-up directly in `docs/superpowers/
    - UI Layer: Tasks 10–14 (TransactionSearchRow, SelectedSliceItemsList, _ChartBody, ChartsSection, ChartLegend)
    - Localization: Task 9
    - Edge cases: Task 14 + Task 16
-2. **No placeholders:** Every step contains the actual code, command, or precise file location.
+2. **No vague placeholders:** Every step contains the actual code, command, or precise file location; Task 15 Step 3 is the one intentional iteration checkpoint for provider-scoping fixes if the integration harness needs extra overrides.
 3. **Type consistency:** `SelectedSlice.category(int)`, `SelectedSlice.account(int)`, `SelectedSlice.currency(String)` used identically across all task examples. `toggleSlice` / `clearSlice` / `selectedSlice` names match across tasks 5, 6, 8, 13, 14. `SliceDrilldownData.pendingDeleteId` (int?, not int) is the same across Task 7 and Task 8. `TransactionSearchRowDeleteMode.actionOnly` is the same across Task 10 and Task 11.
 
 ---
