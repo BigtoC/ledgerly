@@ -29,6 +29,7 @@ import '../search/analysis_providers.dart';
 import 'charts_providers.dart';
 import 'charts_selection_controller.dart';
 import 'charts_state.dart';
+import 'selected_slice.dart';
 
 part 'charts_controller.g.dart';
 
@@ -147,6 +148,22 @@ class ChartsController extends _$ChartsController {
     PeriodType.year => TimeBucketGranularity.month,
   };
 
+  /// Translates the typed `SelectedSlice?` into plain filter args for the
+  /// repository. Keeps `SelectedSlice` inside the analysis layer — this is
+  /// the only place it crosses into data-access territory.
+  (int?, int?, String?) _selectionFilters(SelectedSlice? selection) {
+    return switch (selection) {
+      null => (null, null, null),
+      SelectedCategorySlice(:final categoryId, :final currencyCode) => (
+        categoryId,
+        null,
+        currencyCode,
+      ),
+      SelectedAccountSlice(:final accountId) => (null, accountId, null),
+      SelectedCurrencySlice(:final currencyCode) => (null, null, currencyCode),
+    };
+  }
+
   void _resubscribe() {
     _sliceSub?.cancel();
     _bucketsSub?.cancel();
@@ -164,12 +181,19 @@ class ChartsController extends _$ChartsController {
 
     final repo = ref.read(transactionRepositoryProvider);
 
+    final (categoryId, accountId, currencyCode) = _selectionFilters(
+      _selection.selectedSlice,
+    );
+
     _bucketsSub = repo
         .watchTimeBucketsInRange(
           start: range.start,
           end: range.end,
           type: _selection.type,
           granularity: _granularity(),
+          categoryId: categoryId,
+          accountId: accountId,
+          currencyCode: currencyCode,
         )
         .listen(
           (buckets) {
@@ -441,6 +465,9 @@ class ChartsController extends _$ChartsController {
           colorIndex: colorIndex,
           iconKey: iconKey,
           fraction: grandTotal == 0 ? 0 : total / grandTotal,
+          selectionKey: _selection.dimension == ChartDimension.category
+              ? SelectedSlice.category(id)
+              : SelectedSlice.account(id),
         ),
       );
     });
@@ -525,6 +552,7 @@ class ChartsController extends _$ChartsController {
             colorIndex: _currencyColorIndex(s.currencyCode),
             iconKey: '',
             fraction: grandTotal == 0 ? 0 : amount / grandTotal!,
+            selectionKey: SelectedSlice.currency(s.currencyCode),
           ),
         );
       }
@@ -538,6 +566,7 @@ class ChartsController extends _$ChartsController {
             colorIndex: _currencyColorIndex(s.currencyCode),
             iconKey: '',
             fraction: null,
+            selectionKey: SelectedSlice.currency(s.currencyCode),
           ),
         );
       }
