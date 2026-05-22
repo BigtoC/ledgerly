@@ -20,7 +20,7 @@ Tapping the same slice again clears the selection (toggle). Tapping a different 
 - Category dimension — tap a category slice → drill into that category's transactions
 - Account dimension — tap an account slice → drill into that account's transactions
 - Currency dimension — tap a currency slice → drill into that currency's transactions
-- Items list rows reuse `TransactionSearchRow` (tap-to-edit, swipe-to-delete with 4 s undo)
+- Items list rows reuse `TransactionSearchRow`, extended with a non-dismissible/action-only delete mode for drill-down (tap-to-edit, swipe-to-delete with 4 s undo)
 - Bar chart refilters to the selected slice's daily/weekly/monthly buckets
 
 **Out of scope:**
@@ -35,20 +35,20 @@ Tapping the same slice again clears the selection (toggle). Tapping a different 
 
 ## User-Facing Behavior
 
-| Action | Outcome |
-| --- | --- |
-| Tap a pie slice | Selection set; pie slice elevates; legend dims others; bar chart refilters; items list renders below chart |
-| Tap the same slice (pie or legend) | Selection cleared; everything returns to the unselected view |
-| Tap a different slice | Selection replaced; visuals/list update to the new slice |
-| Tap the "Other" aggregate row | No-op (the bucket has no single underlying ID) |
-| Tap "View all" → tap any row inside the sheet | Selection set; modal sheet auto-closes so the user sees the items list |
-| Swipe horizontally on the chart (prev/next period) | Selection cleared; list disappears |
-| Toggle expense ↔ income | Selection cleared |
-| Switch dimension (Category/Account/Currency) | Selection cleared |
-| Change period (day/week/month/year) via the selector | Selection cleared |
-| Edit a transaction from the items list | Navigate to the existing edit screen (`go_router`); on save, stream re-emits |
-| Swipe a row to delete | Optimistic hide; 4 s undo snackbar (project's `kUndoWindow`); on timeout, commit `repo.delete(id)` |
-| The selected slice's last matching transaction is deleted / edited away | Slice disappears from the next `slices` emission; controller auto-clears the stale selection; list collapses |
+| Action                                                                  | Outcome                                                                                                                                                                                      |
+|-------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Tap a pie slice                                                         | Selection set; pie slice elevates; legend dims others; bar chart refilters; items list renders below chart                                                                                   |
+| Tap the same slice (pie or legend)                                      | Selection cleared; everything returns to the unselected view                                                                                                                                 |
+| Tap a different slice                                                   | Selection replaced; visuals/list update to the new slice                                                                                                                                     |
+| Tap the "Other" aggregate row                                           | No-op (the bucket has no single underlying ID)                                                                                                                                               |
+| Tap "View all" → tap any row inside the sheet                           | Selection toggles using the same semantics as pie/legend taps; modal sheet auto-closes afterward                                                                                             |
+| Swipe horizontally on the chart (prev/next period)                      | Selection cleared; list disappears                                                                                                                                                           |
+| Toggle expense ↔ income                                                 | Selection cleared                                                                                                                                                                            |
+| Switch dimension (Category/Account/Currency)                            | Selection cleared                                                                                                                                                                            |
+| Change period (day/week/month/year) via the selector                    | Selection cleared                                                                                                                                                                            |
+| Edit a transaction from the items list                                  | Navigate to the existing edit screen (`go_router`); on save, stream re-emits                                                                                                                 |
+| Swipe a row to delete                                                   | 4 s undo snackbar appears immediately, but the row stays visible until the delete commits; on timeout, `repo.delete(id)` runs and the list/header/chart update from the next stream emission |
+| The selected slice's last matching transaction is deleted / edited away | Slice disappears from the next `slices` emission; controller auto-clears the stale selection; list collapses                                                                                 |
 
 ---
 
@@ -65,15 +65,20 @@ sealed class SelectedSlice with _$SelectedSlice {
   /// was showing a per-(category, currency) slice — i.e., FX was missing and
   /// Food USD / Food EUR appeared as separate pie slices. When `currencyCode`
   /// is null (FX-converted slice), the list aggregates all currencies for
-  /// that category.
+  /// that category. The UI shows converted per-row values in the chart's
+  /// display currency so the header total reconciles with the visible rows.
   const factory SelectedSlice.category(
     int categoryId, {
     String? currencyCode,
   }) = SelectedCategorySlice;
 
-  /// Drill-down into an account. Accounts have exactly one currency so no
-  /// extra currency filter is needed.
-  const factory SelectedSlice.account(int accountId) = SelectedAccountSlice;
+  /// Drill-down into an account. Account chart slices are emitted per
+  /// `(account, currency)`, so `currencyCode` stays part of the selection
+  /// identity even though the account record itself has a default currency.
+  const factory SelectedSlice.account(
+    int accountId, {
+    String? currencyCode,
+  }) = SelectedAccountSlice;
 
   /// Drill-down into a currency.
   const factory SelectedSlice.currency(String currencyCode) =
@@ -120,8 +125,9 @@ abstract class ChartSlice with _$ChartSlice {
 ///   SelectedCategorySlice(id, currencyCode?) →
 ///     WHERE category_id = id AND type = type AND date IN range
 ///     [AND currency = currencyCode]   // applied only when set
-///   SelectedAccountSlice(id) →
+///   SelectedAccountSlice(id, currencyCode?) →
 ///     WHERE account_id = id AND type = type AND date IN range
+///     [AND currency = currencyCode]   // applied only when set
 ///   SelectedCurrencySlice(code) →
 ///     WHERE currency = code AND type = type AND date IN range
 ///
@@ -244,32 +250,13 @@ final bucketStream = repo.watchTimeBucketsInRange(
 
 **Stale-selection self-heal**: after `ChartsController` emits a new `ChartsData`, if `selection.selectedSlice != null` and no slice has a matching `selectionKey`, the selection must be cleared (covers "user deleted the last Food tx while drilled into Food").
 
-Implementation note: calling `ref.read(chartsSelectionControllerProvider.notifier).clearSlice()` from *inside* `ChartsController.build()` re-enters its own dependency graph and is brittle. Instead, mount a small `ref.listen(chartsControllerProvider, (_, next) { … })` in `ChartsSection` (the widget already consumes both providers) — when the new data lands, check membership and clear if stale. The planning phase will fix the exact location.
-
-### New provider: `selectedSliceTransactionsProvider`
-
-```dart
-@riverpod
-Stream<List<Transaction>> selectedSliceTransactions(Ref ref) {
-  final selection = ref.watch(chartsSelectionControllerProvider);
-  final slice = selection.selectedSlice;
-  if (slice == null) return Stream.value(const []);
-  final (start, end) = chartDateRange(selection);
-  final repo = ref.watch(transactionRepositoryProvider);
-  return repo.watchTransactionsForSliceInRange(
-    selection: slice,
-    start: start,
-    end: end,
-    type: selection.type,
-  );
-}
-```
-
-`keepAlive: false` (default). When `selectedSlice` becomes null the items list widget unmounts and the subscription auto-disposes.
+Implementation note: calling `ref.read(chartsSelectionControllerProvider.notifier).clearSlice()` from *inside* `ChartsController.build()` re-enters its own dependency graph and is brittle. Instead, mount a small `ref.listen(chartsControllerProvider, (_, next) { … })` in `ChartsSection` (the widget already consumes both providers) — when the new data lands, check membership and clear if stale.
 
 ### Items list controller
 
-A small notifier wrapping the provider above with the 4-second optimistic-delete UX. The row widget `TransactionSearchRow` already delegates `onTap` and `onDelete` to the caller; this controller owns the timer machinery.
+Reuse-first decision: model this controller directly on the shipped `lib/features/analysis/search/category_search_detail_controller.dart`. That controller already owns the same `TransactionSearchRow` delete/undo contract (`kUndoWindow`, timer ownership, delete-failure effect callback, and synchronous re-emission from cached data), so the drill-down list should adapt that pattern rather than inventing a second one.
+
+`SliceDrilldownController` is the sole state owner for the list panel. It should consume the repository stream directly as a `StreamNotifier`, rather than layering a separate `selectedSliceTransactionsProvider` underneath it.
 
 ```dart
 @freezed
@@ -277,7 +264,7 @@ sealed class SliceDrilldownState with _$SliceDrilldownState {
   const factory SliceDrilldownState.loading() = SliceDrilldownLoading;
   const factory SliceDrilldownState.data({
     required List<Transaction> rows,
-    required ISet<int> pendingDeleteIds,
+    int? pendingDeleteId,
   }) = SliceDrilldownData;
   const factory SliceDrilldownState.error(Object error, StackTrace stack) =
       SliceDrilldownError;
@@ -286,17 +273,15 @@ sealed class SliceDrilldownState with _$SliceDrilldownState {
 @riverpod
 class SliceDrilldownController extends _$SliceDrilldownController {
   @override
-  SliceDrilldownState build() {
-    ref.listen(selectedSliceTransactionsProvider, _onTxStream);
-    return const SliceDrilldownState.loading();
+  Stream<SliceDrilldownState> build() {
+    // Stream rows directly from the repository for the active selection/range,
+    // mirroring the ownership pattern used by CategorySearchDetailController.
   }
 
-  void delete(int id) { /* add to pendingDeleteIds, start kUndoWindow timer */ }
-  void undoDelete(int id) { /* cancel timer, remove from pendingDeleteIds */ }
+  void delete(int id) { /* start kUndoWindow timer; keep row visible until commit */ }
+  void undoDelete(int id) { /* cancel timer, clear pendingDeleteId */ }
 }
 ```
-
-**Planning-phase decision deferred**: if the existing search-Level-2 controller (which uses the same 4 s undo + optimistic-hide pattern) is general enough, reuse it; otherwise build the controller above. The row widget itself is already shared.
 
 ---
 
@@ -336,23 +321,34 @@ SelectedSliceItemsList
 └── AnimatedSize (220 ms, Curves.easeOut)
     └── Column
         ├── _ListHeader(label, count, totalMinorUnits, currency)
-        └── for (tx in rows where id not in pendingDeleteIds)
-              TransactionSearchRow(
-                transaction: tx,
-                category: categoriesById[tx.categoryId],
-                account:  accountsById[tx.accountId],
-                locale: locale,
-                onTap:    () => context.push('/transactions/${tx.id}/edit'),
-                onDelete: () => controller.delete(tx.id),
-              )
+        └── for (tx in rows)
+               TransactionSearchRow(
+                 transaction: tx,
+                 category: categoriesById[tx.categoryId],
+                 account:  accountsById[tx.accountId],
+                 locale: locale,
+                 convertedAmount: fxConvertedAmountFor(tx),
+                 originalAmountLabel: l10n.analysisOriginalAmount,
+                 deleteMode: TransactionSearchRowDeleteMode.actionOnly,
+                 onTap:    () => context.push('/home/edit/${tx.id}'),
+                 onDelete: () => controller.delete(tx.id),
+               )
 ```
 
 **Header** (private widget inlined in `selected_slice_items_list.dart` — no separate file):
 - Label: resolved slice display name (category name via existing `categoryDisplayName(...)`; account name; currency code).
-- Count: localized plural, computed from the items list rows the widget actually receives (`rows.length`, excluding `pendingDeleteIds`). This is the count the user *sees*; if a delete is mid-undo-window, the header reflects the optimistic state.
-- Total: taken directly from the selected `ChartSlice.totalMinorUnits` (which is already in the chart's chosen display unit) — **not** re-summed from the items list rows. This avoids two formatting paths and keeps the header total in lockstep with the pie slice's labeled amount.
+- Count: localized plural, computed from the rows currently rendered by the widget (`rows.length`). During the undo window the row stays visible, so the count remains aligned with the chart/header until the delete commits.
+- Total: taken directly from the selected `ChartSlice.totalMinorUnits` (which is already in the chart's chosen display unit) — **not** re-summed from the items list rows. This stays in lockstep with the pie slice's labeled amount.
   - Format via `MoneyFormatter` using `slice.currencyCode` (already on every slice — equals the source currency for mixed-currency-without-FX slices and equals `displayCurrencyCode` for FX-converted slices).
+  - For FX-converted category slices (`selectionKey` is category with `currencyCode == null`), each row renders the converted display-currency amount as the primary amount because it reconciles with the header total.
+  - The original booked amount remains visible as a secondary labeled value (`analysisOriginalAmount` / original-currency caption) so users can still inspect the stored transaction currency.
+  - Non-converted slices keep the existing single-amount `TransactionSearchRow` layout.
   - To get the slice into the header widget, `ChartsSection` passes the currently selected `ChartSlice` (looked up by `selectionKey`) down to `SelectedSliceItemsList`.
+
+**Async states**: match the shipped analysis detail-screen precedent in `lib/features/analysis/search/category_search_detail_screen.dart`.
+- First load while a selection is active: render an inline centered `CircularProgressIndicator` in place of the rows.
+- Empty data: render the inline `analysisDrilldownEmpty` placeholder.
+- Error: render inline `analysisErrorMessage` text in place of the rows. No extra Retry button — this list is a subordinate panel under an already-live chart surface.
 
 **Animation**: `AnimatedSize` (220 ms, matching the legend's dim transition). Selection clear → list collapses smoothly.
 
@@ -362,7 +358,7 @@ SelectedSliceItemsList
 
 ### "View all" modal sheet change
 
-In `ChartLegend._openFullLegend`, the row tap currently calls `onSelectSlice` only. Update it to also call `Navigator.pop(sheetCtx)` so the sheet closes and the items list becomes visible:
+In `ChartLegend._openFullLegend`, the row tap currently calls `onSelectSlice` only. Update it to also call `Navigator.pop(sheetCtx)` so the sheet closes after the selection toggles:
 
 ```dart
 // Inside _openFullLegend's row construction:
@@ -380,25 +376,27 @@ No special handling. The 600 dp breakpoint per CLAUDE.md only switches bottom-na
 
 `analysis_screen.dart` already wraps the body in `Semantics(liveRegion: true, container: true)`. The items list inherits this — screen readers announce changes when the selection updates. Each `TransactionSearchRow` is already semantically labeled (ListTile + currency-formatted amount). Header gets a `Semantics(header: true)`.
 
+Legend rows are the canonical accessible drill-down control. Keep `CategoryPieChart` as a descriptive semantic image, but make each interactive legend row expose button semantics plus selected/not-selected state so the full drill-down remains operable without the chart gesture surface. The synthetic `Other` row remains non-interactive and should be exposed as plain text, not a button.
+
 **Text scaling**: per CLAUDE.md, all scrollable regions must survive 2× scale. The items list reflows naturally; the header uses `TextOverflow.ellipsis` on the label. No fixed-height widgets in the list, so 2× scale just reflows.
 
 ---
 
 ## Edge Cases
 
-| Case | Handling |
-| --- | --- |
-| Stale selection (slice disappears from new emission) | A `ref.listen` on `chartsControllerProvider` in `ChartsSection` calls `clearSlice()` when no `slice.selectionKey` matches the active `selectedSlice`. List collapses cleanly. |
-| "Other" aggregate row | `selectionKey: null` on the synthetic slice; tap is a no-op. Status quo. |
-| "View all" sheet row tap | Calls `toggleSlice` AND `Navigator.pop(sheetCtx)` so the sheet closes and the items list becomes visible. |
-| Mixed currencies in category dim (FX missing) | Multiple pie slices per category, each carrying its `currencyCode`. Tapping "Food (USD)" drills into Food + USD only. Tapping a different (category, currency) replaces. |
-| Pending recurring transactions | Excluded. Items list queries `transactions` only — matches what the chart counts. `PendingSection` remains Home-only per CLAUDE.md. |
-| Items list empty despite live selection (race between stream emits) | Inline "No transactions in this period" placeholder. With the self-heal path above, this should be transient. |
-| `ChartsBlockedByMissingRates` | Items list works independently of FX (queries raw transactions). Previous chart + banner render; if a previous-data slice is still selected, the list continues to display correctly. |
-| Type toggle change with active selection | `toggleType()` clears `selectedSlice`. |
-| Dimension change with active selection | `setDimension()` clears `selectedSlice`. |
-| Period change via prev/next or selector | `previousPeriod()` / `nextPeriod()` / `setPeriod()` clear `selectedSlice`. |
-| Concurrent stream updates from `ChartsController` and `selectedSliceTransactionsProvider` | Riverpod's natural ordering applies. No special coordination. |
+| Case                                                                                        | Handling                                                                                                                                                                                                                                                                                                                                                                                                     |
+|---------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Stale selection (slice disappears from new emission)                                        | A `ref.listen` on `chartsControllerProvider` in `ChartsSection` calls `clearSlice()` when no `slice.selectionKey` matches the active `selectedSlice`. List collapses cleanly.                                                                                                                                                                                                                                |
+| "Other" aggregate row                                                                       | `selectionKey: null` on the synthetic slice; tap is a no-op. Status quo.                                                                                                                                                                                                                                                                                                                                     |
+| "View all" sheet row tap                                                                    | Calls `toggleSlice` AND `Navigator.pop(sheetCtx)` so the sheet closes after the selection toggles.                                                                                                                                                                                                                                                                                                           |
+| Mixed currencies in category dim (FX missing)                                               | Multiple pie slices per category, each carrying its `currencyCode`. Tapping "Food (USD)" drills into Food + USD only. Tapping a different (category, currency) replaces.                                                                                                                                                                                                                                     |
+| Pending recurring transactions                                                              | Excluded. Items list queries `transactions` only — matches what the chart counts. `PendingSection` remains Home-only per CLAUDE.md.                                                                                                                                                                                                                                                                          |
+| Items list empty despite live selection (race between stream emits)                         | Inline "No transactions in this period" placeholder. With the self-heal path above, this should be transient.                                                                                                                                                                                                                                                                                                |
+| `ChartsBlockedByMissingRates`                                                               | Items list works independently of FX (queries raw transactions). Previous chart + banner render; if a previous-data slice is still selected, the list continues to display correctly. FX-converted per-row values reuse the same last-known display currency until fresh rates land, and the row/header treatment adds an explicit stale-rates label so those converted values are not presented as current. |
+| Type toggle change with active selection                                                    | `toggleType()` clears `selectedSlice`.                                                                                                                                                                                                                                                                                                                                                                       |
+| Dimension change with active selection                                                      | `setDimension()` clears `selectedSlice`.                                                                                                                                                                                                                                                                                                                                                                     |
+| Period change via prev/next or selector                                                     | `previousPeriod()` / `nextPeriod()` / `setPeriod()` clear `selectedSlice`.                                                                                                                                                                                                                                                                                                                                   |
+| Chart transitions to `ChartsEmpty`, `ChartsError`, or any state without current `chartData` | Clear `selectedSlice` immediately so the items list/header never outlive the chart slice metadata they depend on.                                                                                                                                                                                                                                                                                            |
 
 ---
 
@@ -407,12 +405,20 @@ No special handling. The 600 dp breakpoint per CLAUDE.md only switches bottom-na
 **Reuse existing key** for the row count:
 - `analysisTransactionCount` ([`app_en.arb:877`](l10n/app_en.arb)) — already defined as `{count, plural, =1{{count} transaction} other{{count} transactions}}` and used by Level 1 search result cards in `CategorySearchTile`. Same semantics, same copy.
 
-**One new key** added to all four ARB files (`l10n/app_en.arb`, `l10n/app_zh.arb`, `l10n/app_zh_CN.arb`, `l10n/app_zh_TW.arb`):
+**New keys** added to all four ARB files (`l10n/app_en.arb`, `l10n/app_zh.arb`, `l10n/app_zh_CN.arb`, `l10n/app_zh_TW.arb`):
 
 ```jsonc
 "analysisDrilldownEmpty": "No transactions in this period",
 "@analysisDrilldownEmpty": {
   "description": "Inline placeholder in the slice drill-down items list when the live emission has zero rows (transient race between selection toggle and stream emit)"
+},
+"analysisOriginalAmount": "Original amount",
+"@analysisOriginalAmount": {
+  "description": "Label for the booked transaction amount shown as the secondary amount on FX-converted drill-down rows"
+},
+"analysisRatesStale": "Using last known exchange rates",
+"@analysisRatesStale": {
+  "description": "Inline label shown when drill-down converted amounts are derived from stale cached FX rates"
 }
 ```
 
@@ -426,7 +432,7 @@ The slice **label** resolves via existing helpers (`categoryDisplayName(...)` fo
 
 Organized by architectural layer per CLAUDE.md.
 
-### Repository tests (`test/unit/repositories/transaction_repository_test.dart`)
+### Repository tests (`test/unit/repositories/transaction_repository_slice_drilldown_test.dart`)
 
 In-memory Drift.
 
@@ -452,21 +458,28 @@ In-memory Drift.
   - `selectedSlice == null` → bucket query called with `selection: null` (regression).
   - `selectedSlice` set → bucket query called with that selection.
   - Slices list shape unchanged across selection state (pie still shows all).
+  - Non-data chart states (`ChartsEmpty`, `ChartsError`, blocked-without-previous) clear `selectedSlice`.
   - All three dimensions covered.
 - `SliceDrilldownController`:
-  - `delete(id)` adds id to `pendingDeleteIds` and schedules commit at `kUndoWindow`.
+  - Reuses the delete/undo mechanics proven in `CategorySearchDetailController`.
+  - Owns the transaction stream directly as a `StreamNotifier`; no separate `selectedSliceTransactionsProvider` remains.
+  - `delete(id)` records `pendingDeleteId` and schedules commit at `kUndoWindow`, but does not hide the row before commit.
   - Commit fires `repo.delete(id)` after the window if not cancelled.
   - `undoDelete(id)` cancels the timer; `repo.delete` never called.
-  - Transitions through `loading → data → data (with pending)`.
+  - Transitions through `loading → data → data (with pending) → error` as appropriate.
 
 ### Widget tests (`test/widget/`)
 
-- `SelectedSliceItemsList` renders header + rows in `data`; renders inline empty when `rows` is empty; renders nothing when parent's selection is null.
+- `SelectedSliceItemsList` renders inline loading, error, header + rows in `data`, inline empty when `rows` is empty, and nothing when parent's selection is null.
 - **Stale-selection self-heal**: `ChartsSection`'s `ref.listen` clears `selectedSlice` when a new `ChartsData` emission contains no slice whose `selectionKey` matches the current selection. Verified by pumping a sequence where the selected slice exists in emission N but not in emission N+1.
 - Pie tap with non-null `selectionKey` → `chartsSelectionControllerProvider.notifier.toggleSlice` called with the correct typed slice.
 - Legend row tap → same.
 - "Other" row tap → no `toggleSlice` call.
 - "View all" sheet row tap → `toggleSlice` called AND sheet closes (`Navigator.pop` invoked).
+- FX-converted drill-down rows show converted per-row values in the display currency so the header total reconciles with the visible list.
+- FX-converted drill-down rows keep converted amount primary and original amount secondary/labeled.
+- `TransactionSearchRow` drill-down mode uses a non-dismissible delete action rather than immediate row dismissal.
+- Legend rows expose selected-state semantics; the "Other" row exposes no tap action.
 - Visual selection treatment regression: selected slice elevates and others dim (preserve the existing 220 ms transitions).
 - 2× text scale: items list reflows; no overflow.
 
@@ -474,12 +487,7 @@ In-memory Drift.
 
 Each pumped with a fixed seed dataset (deterministic dates / IDs / amounts), `MaterialApp` + `MediaQuery(size: Size(390, 844))` for a stable mobile viewport, and the actual app theme so colors resolve through `colorForIndex(...)`.
 
-- `selected_slice_items_list_light.png` — header + 3 rows + bottom padding, light theme, English.
-- `selected_slice_items_list_dark.png` — same in dark theme.
 - `selected_slice_items_list_zh.png` — Chinese locale; verifies the new ARB keys land and the header does not overflow.
-- `selected_slice_items_list_empty.png` — inline "No transactions in this period" placeholder.
-- `selected_slice_items_list_mixed_currency.png` — drill-down where the slice carries a `currencyCode` (category dim, FX missing); header total in source currency.
-- `selected_slice_items_list_long_name.png` — a category whose name truncates with `TextOverflow.ellipsis`.
 - `chart_with_selected_slice_light.png` — full chart section with a slice selected: elevated pie slice + dimmed legend + refiltered bar chart + items list together. This is the headline new visual artifact.
 
 ### Integration tests (`test/integration/`)
@@ -490,7 +498,7 @@ Each pumped with a fixed seed dataset (deterministic dates / IDs / amounts), `Ma
 - Bar chart refilter visible after selection (assert via the bucket data exposed through the provider, not via pixel goldens).
 - Period swipe with active selection → list disappears (auto-clear path).
 - Edit row → navigates to edit screen.
-- Swipe-delete row → row hides → wait `kUndoWindow` + small buffer → repo confirms deletion.
+- Swipe-delete row → undo snackbar appears while the row remains visible → wait `kUndoWindow` + small buffer → repo confirms deletion and the row disappears on the next stream emission.
 
 ### What is **not** tested
 
@@ -506,7 +514,7 @@ Per CLAUDE.md non-negotiables:
 
 - New repository method (`watchTransactionsForSliceInRange`) lives in `lib/data/repositories/transaction_repository.dart` and its abstract interface; DAO query changes stay in `lib/data/database/`. **Repositories remain the only writers of Drift queries.**
 - `SelectedSlice` lives in `lib/data/models/selected_slice.dart` as a Freezed sealed class — it's a typed value that crosses the data ↔ controller boundary.
-- `ChartsSelectionController`, `ChartsController`, `selectedSliceTransactionsProvider`, and `SliceDrilldownController` expose state + commands; widgets read state and invoke commands.
+- `ChartsSelectionController`, `ChartsController`, and `SliceDrilldownController` expose state + commands; widgets read state and invoke commands.
 - Repositories return `Stream<T>` backed by Drift `.watch()`; controllers consume via Riverpod `StreamNotifier` / `AsyncNotifier`. **Reactive by default.**
 - Money: all totals stay in integer minor units; `MoneyFormatter` is the only formatter at the UI boundary.
 - Categories: drill-down by `categoryId` — `l10n_key` / `custom_name` distinction handled at the display layer through existing `categoryDisplayName(...)`.
@@ -519,7 +527,7 @@ Per CLAUDE.md non-negotiables:
 **New:**
 - `lib/data/models/selected_slice.dart`
 - `lib/features/analysis/charts/widgets/selected_slice_items_list.dart` (includes the private `_ListHeader` widget — no separate file)
-- `lib/features/analysis/charts/slice_drilldown_controller.dart` (if not reusing search Level 2 controller)
+- `lib/features/analysis/charts/slice_drilldown_controller.dart`
 - `lib/features/analysis/charts/slice_drilldown_state.dart`
 - `test/unit/repositories/transaction_repository_slice_drilldown_test.dart`
 - `test/unit/controllers/charts_selection_controller_slice_test.dart`
@@ -527,7 +535,7 @@ Per CLAUDE.md non-negotiables:
 - `test/unit/controllers/slice_drilldown_controller_test.dart`
 - `test/widget/selected_slice_items_list_test.dart`
 - `test/widget/chart_slice_selection_interaction_test.dart`
-- `test/widget/golden/*.png` (7 goldens listed above)
+- `test/widget/golden/*.png` (2 goldens listed above)
 - `test/integration/analysis_drilldown_test.dart`
 
 **Modified:**
@@ -536,10 +544,10 @@ Per CLAUDE.md non-negotiables:
 - `lib/features/analysis/charts/charts_controller.dart` — pass selection into bucket query
 - `lib/features/analysis/charts/charts_section.dart` — render `SelectedSliceItemsList` as sibling of `_ChartBody`; host the stale-selection-self-heal `ref.listen` on `chartsControllerProvider`
 - `lib/features/analysis/charts/widgets/chart_legend.dart` — `_openFullLegend` row tap also pops the sheet
-- `lib/features/analysis/charts/charts_providers.dart` — register `selectedSliceTransactionsProvider`
+- `lib/features/analysis/charts/charts_providers.dart` — no new selected-slice row provider; FX/supporting chart providers remain here
 - `lib/data/repositories/transaction_repository.dart` — abstract + concrete `watchTransactionsForSliceInRange`; extend `watchTimeBucketsInRange` with optional `selection`
 - `lib/data/database/` — DAO query for `watchChartRowsInRange` gains optional filter params; new method backs `watchTransactionsForSliceInRange`
-- `l10n/app_en.arb`, `l10n/app_zh.arb`, `l10n/app_zh_CN.arb`, `l10n/app_zh_TW.arb` — `analysisDrilldownEmpty` (the count copy reuses the existing `analysisTransactionCount`)
+- `l10n/app_en.arb`, `l10n/app_zh.arb`, `l10n/app_zh_CN.arb`, `l10n/app_zh_TW.arb` — `analysisDrilldownEmpty`, `analysisOriginalAmount`, and stale-rates drill-down copy (the count copy reuses the existing `analysisTransactionCount`)
 
 ---
 
