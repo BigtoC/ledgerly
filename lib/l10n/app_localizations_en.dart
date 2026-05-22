@@ -674,7 +674,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get analysisSearchHint => 'Search transactions…';
 
   @override
-  String get analysisSearchPrompt => 'Search memos to find past transactions';
+  String get analysisSearchPrompt => 'Search memos to find transactions';
 
   @override
   String get analysisNoResults => 'No transactions found';

@@ -674,7 +674,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get analysisSearchHint => 'Search transactions…';
 
   @override
-  String get analysisSearchPrompt => 'Search memos to find past transactions';
+  String get analysisSearchPrompt => 'Search memos to find transactions';
 
   @override
   String get analysisNoResults => 'No transactions found';
@@ -701,13 +701,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get analysisErrorMessage => 'Something went wrong while searching';
 
   @override
-  String get analysisDrilldownEmpty => '此期間沒有交易';
+  String get analysisDrilldownEmpty => 'No transactions in this period';
 
   @override
-  String get analysisOriginalAmount => '原始金額';
+  String get analysisOriginalAmount => 'Original amount';
 
   @override
-  String get analysisRatesStale => '使用上次取得的匯率';
+  String get analysisRatesStale => 'Using last known exchange rates';
 
   @override
   String get settingsRecurringTile => 'Recurring transactions';
@@ -1588,10 +1588,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get analysisTitle => '分析';
 
   @override
-  String get analysisSearchHint => '搜索交易记录…';
-
-  @override
-  String get analysisSearchPrompt => '搜索备注以查找过往交易';
+  String get analysisSearchPrompt => '搜索备注以查找交易';
 
   @override
   String get analysisNoResults => '未找到交易记录';
@@ -2494,10 +2491,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get analysisTitle => '分析';
 
   @override
-  String get analysisSearchHint => '搜尋交易紀錄…';
-
-  @override
-  String get analysisSearchPrompt => '搜尋備註以尋找過往交易';
+  String get analysisSearchPrompt => '搜尋備註以尋找交易';
 
   @override
   String get analysisNoResults => '找不到交易紀錄';

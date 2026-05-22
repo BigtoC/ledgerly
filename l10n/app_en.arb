@@ -865,10 +865,7 @@
   "analysisTitle": "Analysis",
   "@analysisTitle": {"description": "Analysis tab AppBar title"},
 
-  "analysisSearchHint": "Search transactions…",
-  "@analysisSearchHint": {"description": "SearchBar placeholder on Analysis"},
-
-  "analysisSearchPrompt": "Search memos to find past transactions",
+  "analysisSearchPrompt": "Search memos to find transactions",
   "@analysisSearchPrompt": {"description": "Idle-state copy under the search icon"},
 
   "analysisNoResults": "No transactions found",

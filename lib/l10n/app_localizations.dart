@@ -1339,7 +1339,7 @@ abstract class AppLocalizations {
   /// Idle-state copy under the search icon
   ///
   /// In en, this message translates to:
-  /// **'Search memos to find past transactions'**
+  /// **'Search memos to find transactions'**
   String get analysisSearchPrompt;
 
   /// Empty-state copy when query has no matches

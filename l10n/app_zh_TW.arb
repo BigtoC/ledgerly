@@ -245,8 +245,7 @@
   "analysisPlaceholderBody": "圖表和摘要將在第二階段上線後顯示。",
 
   "analysisTitle": "分析",
-  "analysisSearchHint": "搜尋交易紀錄…",
-  "analysisSearchPrompt": "搜尋備註以尋找過往交易",
+  "analysisSearchPrompt": "搜尋備註以尋找交易",
   "analysisNoResults": "找不到交易紀錄",
   "analysisTransactionCount": "{count} 筆交易",
   "@analysisTransactionCount": {

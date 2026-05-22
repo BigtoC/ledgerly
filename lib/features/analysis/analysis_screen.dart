@@ -126,7 +126,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
             child: SearchBar(
               controller: _searchController,
               focusNode: _searchFocus,
-              hintText: l10n.analysisSearchHint,
+              hintText: l10n.analysisSearchPrompt,
               leading: const Icon(Icons.search),
               trailing: [
                 if (_searchController.text.isNotEmpty)
