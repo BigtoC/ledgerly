@@ -48,6 +48,7 @@ class _SelectedSliceItemsListState
     extends ConsumerState<SelectedSliceItemsList> {
   int? _lastShownPendingDeleteId;
   late final SliceDrilldownController _controller;
+  ScaffoldMessengerState? _messenger;
 
   @override
   void initState() {
@@ -57,7 +58,14 @@ class _SelectedSliceItemsListState
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _messenger = ScaffoldMessenger.maybeOf(context);
+  }
+
+  @override
   void dispose() {
+    _messenger?.clearSnackBars();
     _controller.setEffectListener(null);
     super.dispose();
   }
@@ -82,13 +90,15 @@ class _SelectedSliceItemsListState
     ref.listen(sliceDrilldownControllerProvider, (_, next) {
       final pendingId = next.valueOrNull?.pendingDeleteId;
       if (pendingId == null) {
+        if (!next.hasValue) {
+          _messenger?.clearSnackBars();
+        }
         _lastShownPendingDeleteId = null;
         return;
       }
       if (_lastShownPendingDeleteId == pendingId) return;
       _lastShownPendingDeleteId = pendingId;
-      final messenger = ScaffoldMessenger.maybeOf(context);
-      messenger
+      _messenger
         ?..clearSnackBars()
         ..showSnackBar(
           SnackBar(
@@ -185,11 +195,10 @@ class _SelectedSliceItemsListState
 
   void _onEffect(SliceDrilldownEffect effect) {
     if (!mounted) return;
-    final messenger = ScaffoldMessenger.maybeOf(context);
     final l10n = AppLocalizations.of(context);
     switch (effect) {
       case SliceDrilldownDeleteFailedEffect():
-        messenger
+        _messenger
           ?..clearSnackBars()
           ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
     }
