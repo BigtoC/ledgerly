@@ -20,6 +20,7 @@ import '../../../app/providers/repository_providers.dart';
 import '../../../core/constants.dart';
 import 'selected_slice.dart';
 import '../../../data/models/transaction.dart';
+import 'charts_providers.dart';
 import 'charts_selection_controller.dart';
 import 'slice_drilldown_data.dart';
 
@@ -41,24 +42,36 @@ final class SliceDrilldownDeleteFailedEffect extends SliceDrilldownEffect {
 
 @Riverpod(
   keepAlive: true,
-  dependencies: [transactionRepository, ChartsSelectionController],
+  dependencies: [
+    transactionRepository,
+    chartsFxStatus,
+    ChartsSelectionController,
+  ],
 )
 class SliceDrilldownController extends _$SliceDrilldownController {
+  int _generation = 0;
   StreamController<SliceDrilldownData>? _emitter;
   StreamSubscription<List<Transaction>>? _subscription;
   Timer? _undoTimer;
   int? _pendingDeleteId;
+  final Set<int> _committedDeleteIds = <int>{};
+  Future<bool>? _commitInFlight;
+  int? _commitInFlightId;
   List<Transaction> _lastRows = const [];
   SliceDrilldownEffectListener? _effectListener;
 
   @override
   Stream<SliceDrilldownData> build() {
+    final myGeneration = ++_generation;
     _emitter?.close();
     _subscription?.cancel();
     _subscription = null;
     _undoTimer?.cancel();
     _undoTimer = null;
     _pendingDeleteId = null;
+    _committedDeleteIds.clear();
+    _commitInFlight = null;
+    _commitInFlightId = null;
     _lastRows = const [];
 
     final controller = StreamController<SliceDrilldownData>();
@@ -70,7 +83,16 @@ class SliceDrilldownController extends _$SliceDrilldownController {
       _subscription?.cancel();
       _subscription = null;
       _pendingDeleteId = null;
+      _committedDeleteIds.clear();
+      _commitInFlight = null;
+      _commitInFlightId = null;
       controller.close();
+    });
+
+    ref.listen(chartsFxStatusProvider, (_, _) {
+      if (myGeneration != _generation) return;
+      if (_lastRows.isEmpty && _pendingDeleteId == null) return;
+      _emitFromCache();
     });
 
     final selection = ref.watch(chartsSelectionControllerProvider);
@@ -95,10 +117,16 @@ class SliceDrilldownController extends _$SliceDrilldownController {
         )
         .listen(
           (rows) {
+            if (myGeneration != _generation) return;
+            if (_committedDeleteIds.isNotEmpty) {
+              final visibleIds = rows.map((row) => row.id).toSet();
+              _committedDeleteIds.removeWhere((id) => !visibleIds.contains(id));
+            }
             _lastRows = rows;
             _emitFromCache();
           },
           onError: (Object e, StackTrace st) {
+            if (myGeneration != _generation) return;
             debugPrint('[SliceDrilldown] stream error: $e');
             _emitter?.addError(e, st);
           },
@@ -114,18 +142,22 @@ class SliceDrilldownController extends _$SliceDrilldownController {
   /// Start the 4-second undo window for [id]. The row stays visible in
   /// the emitted list until either commit or undo fires; the count and
   /// header total remain consistent with the chart slice.
-  void delete(int id) {
+  Future<void> delete(int id) async {
+    final startedGeneration = _generation;
     if (_pendingDeleteId != null) {
       _undoTimer?.cancel();
+      _undoTimer = null;
       final prior = _pendingDeleteId!;
-      unawaited(_commit(prior));
+      final committed = await _commitOnce(prior, generation: startedGeneration);
+      if (!committed || startedGeneration != _generation) return;
     }
     _pendingDeleteId = id;
     _emitFromCache();
     _undoTimer = Timer(kUndoWindow, () async {
+      if (startedGeneration != _generation) return;
       final p = _pendingDeleteId;
       if (p == null) return;
-      await _commit(p);
+      await _commit(p, generation: startedGeneration);
     });
   }
 
@@ -137,24 +169,60 @@ class SliceDrilldownController extends _$SliceDrilldownController {
     _emitFromCache();
   }
 
-  Future<void> _commit(int id) async {
+  Future<bool> _commit(int id, {required int generation}) async {
+    _committedDeleteIds.add(id);
+    if (generation == _generation) {
+      _emitFromCache();
+    }
     try {
       await ref.read(transactionRepositoryProvider).delete(id);
-    } catch (e, st) {
-      debugPrint('[SliceDrilldown] commit failed: $e');
-      _effectListener?.call(SliceDrilldownDeleteFailedEffect(e, st));
-    } finally {
-      if (_pendingDeleteId == id) {
+      if (generation == _generation && _pendingDeleteId == id) {
         _pendingDeleteId = null;
         _undoTimer = null;
+        _emitFromCache();
       }
-      _emitFromCache();
+      return true;
+    } catch (e, st) {
+      debugPrint('[SliceDrilldown] commit failed: $e');
+      _committedDeleteIds.remove(id);
+      if (generation == _generation && _pendingDeleteId == id) {
+        _pendingDeleteId = null;
+        _undoTimer = null;
+        _emitFromCache();
+      }
+      if (generation == _generation) {
+        _effectListener?.call(SliceDrilldownDeleteFailedEffect(e, st));
+      }
+      return false;
     }
   }
 
+  Future<bool> _commitOnce(int id, {required int generation}) {
+    final active = _commitInFlight;
+    if (_commitInFlightId == id && active != null) {
+      return active;
+    }
+
+    final future = _commit(id, generation: generation);
+    _commitInFlightId = id;
+    _commitInFlight = future;
+    future.whenComplete(() {
+      if (identical(_commitInFlight, future)) {
+        _commitInFlight = null;
+        _commitInFlightId = null;
+      }
+    });
+    return future;
+  }
+
   void _emitFromCache() {
-    _emitter?.add(
-      SliceDrilldownData(rows: _lastRows, pendingDeleteId: _pendingDeleteId),
+    final emitter = _emitter;
+    if (emitter == null || emitter.isClosed) return;
+    emitter.add(
+      SliceDrilldownData(
+        rows: _visibleRowsFromCache(),
+        pendingDeleteId: _pendingDeleteId,
+      ),
     );
   }
 
@@ -168,5 +236,32 @@ class SliceDrilldownController extends _$SliceDrilldownController {
       SelectedAccountSlice(:final accountId) => (null, accountId, null),
       SelectedCurrencySlice(:final currencyCode) => (null, null, currencyCode),
     };
+  }
+
+  List<Transaction> _visibleRowsFromCache() {
+    var rows = _lastRows;
+    if (_committedDeleteIds.isNotEmpty) {
+      rows = rows
+          .where((tx) => !_committedDeleteIds.contains(tx.id))
+          .toList(growable: false);
+    }
+
+    final selection = ref.read(chartsSelectionControllerProvider).selectedSlice;
+    if (selection case SelectedCategorySlice(:final currencyCode?)) {
+      rows = rows
+          .where((tx) => tx.currency.code == currencyCode)
+          .toList(growable: false);
+    }
+
+    if (selection is! SelectedCurrencySlice) {
+      final fxStatus = ref.read(chartsFxStatusProvider).valueOrNull;
+      if (fxStatus != null) {
+        rows = rows
+            .where((tx) => fxStatus.scaledRate(tx.currency.code) != null)
+            .toList(growable: false);
+      }
+    }
+
+    return rows;
   }
 }

@@ -7,7 +7,7 @@ part of 'slice_drilldown_controller.dart';
 // **************************************************************************
 
 String _$sliceDrilldownControllerHash() =>
-    r'918b9b363ab90ceb506040a420ecf69d598f7066';
+    r'8641c82f2b15c0e3456298e92a03830001ba440c';
 
 /// See also [SliceDrilldownController].
 @ProviderFor(SliceDrilldownController)
@@ -23,11 +23,14 @@ final sliceDrilldownControllerProvider =
           : _$sliceDrilldownControllerHash,
       dependencies: <ProviderOrFamily>[
         transactionRepositoryProvider,
+        chartsFxStatusProvider,
         chartsSelectionControllerProvider,
       ],
       allTransitiveDependencies: <ProviderOrFamily>{
         transactionRepositoryProvider,
         ...?transactionRepositoryProvider.allTransitiveDependencies,
+        chartsFxStatusProvider,
+        ...?chartsFxStatusProvider.allTransitiveDependencies,
         chartsSelectionControllerProvider,
         ...?chartsSelectionControllerProvider.allTransitiveDependencies,
       },
