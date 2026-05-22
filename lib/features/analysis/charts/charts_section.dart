@@ -16,6 +16,7 @@ import 'widgets/chart_legend.dart';
 import 'widgets/daily_bar_chart.dart';
 import 'widgets/dimension_toggle.dart';
 import 'widgets/period_selector.dart';
+import 'widgets/selected_slice_items_list.dart';
 import 'widgets/type_toggle.dart';
 
 class ChartsSection extends ConsumerStatefulWidget {
@@ -124,6 +125,33 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
     // Touch the provider to keep it warm in tests + production.
     // ignore: unused_local_variable
     final defaultCurrency = ref.watch(initialDefaultCurrencyProvider);
+
+    // Stale-selection self-heal: clear the drill-down selection when the
+    // selected slice is no longer present in the latest emission, or when
+    // the state transitions to a variant that has no chart data
+    // (Empty / Error / no-previous BlockedByMissingRates).
+    ref.listen(chartsControllerProvider, (_, next) {
+      if (next is! AsyncData) return;
+      final value = next.value;
+      final sel = ref.read(chartsSelectionControllerProvider).selectedSlice;
+      if (sel == null) return;
+      switch (value) {
+        case ChartsDataState(:final chartData):
+          final hit = chartData.slices.any((s) => s.selectionKey == sel);
+          if (!hit) {
+            ref.read(chartsSelectionControllerProvider.notifier).clearSlice();
+          }
+        case ChartsBlockedByMissingRates(:final previous):
+          if (previous == null) {
+            ref.read(chartsSelectionControllerProvider.notifier).clearSlice();
+          }
+        case ChartsEmpty():
+        case ChartsError():
+          ref.read(chartsSelectionControllerProvider.notifier).clearSlice();
+        default:
+          break;
+      }
+    });
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -386,6 +414,21 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
           onHorizontalDragEnd: _onHorizontalFling,
           child: animatedBody,
         ),
+        if (chartData != null)
+          Builder(
+            builder: (ctx) {
+              final sel = selection.selectedSlice;
+              if (sel == null) return const SizedBox.shrink();
+              final idx = chartData.slices.indexWhere(
+                (s) => s.selectionKey == sel,
+              );
+              if (idx == -1) return const SizedBox.shrink();
+              return SelectedSliceItemsList(
+                slice: chartData.slices[idx],
+                locale: locale ?? 'en',
+              );
+            },
+          ),
       ],
     );
   }
