@@ -71,21 +71,16 @@ class SplashController extends _$SplashController {
       final now = clock();
       final dayCount = DateHelpers.daysSince(startDate: startDate, now: now);
       final template = _resolveTemplate(rawText);
-      final formatted = DateHelpers.applySplashTemplate(
+      final segments = DateHelpers.applySplashTemplateSegments(
         template: template,
         startDate: startDate,
         now: now,
         locale: localeTag,
       );
-      final formattedStartDate = DateHelpers.formatDisplayDate(
-        startDate,
-        localeTag,
-      );
       return SplashState.data(
         startDate: startDate,
         dayCount: dayCount,
-        formattedStartDate: formattedStartDate,
-        formattedDisplayText: formatted,
+        displayTextSegments: segments,
         buttonLabel: buttonLabel,
       );
     });
@@ -99,12 +94,20 @@ class SplashController extends _$SplashController {
     await repo.setSplashStartDate(date);
   }
 
-  /// Empty / whitespace-only custom text falls back to the seed default
-  /// (`Since {date}`), matching the PRD contract that the default
-  /// template is always visible until the user writes something.
+  /// Resolves the persisted display text into a final template that is
+  /// guaranteed to contain `{date}`:
+  ///   1. Empty / whitespace-only input falls back to the seed default
+  ///      `'On {date} start using Ledgerly'`.
+  ///   2. A non-empty template that already contains `{date}` passes
+  ///      through unchanged.
+  ///   3. A non-empty template missing `{date}` gets `'{date} '`
+  ///      prepended so the start date is always visible on the splash.
+  /// This is the single place where the "date is always shown" invariant
+  /// is enforced — the substitution helper itself is a pure rewriter.
   static String _resolveTemplate(String raw) {
     if (raw.trim().isEmpty) return kDefaultSplashDisplayText;
-    return raw;
+    if (raw.contains('{date}')) return raw;
+    return '{date} $raw';
   }
 
   /// Normalizes locale tags for `intl`. `intl` wants underscored tags

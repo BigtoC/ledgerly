@@ -2,8 +2,12 @@
 //
 // Composition (plan §5 bottom → top):
 //   1. `SplashSunBackground` — full-viewport sun image + contrast overlay.
-//   2. Center content column — day count, "days" label, rainbow-gradient
-//      start date, optional custom display text.
+//   2. Center content column — day count, "days" label, customizable
+//      display text where the resolved `{date}` portion renders inline
+//      with the rainbow gradient (the standalone gradient-date widget
+//      that previously sat between the day count and the display text
+//      has been removed — the date now lives inside the display text so
+//      it never appears twice).
 //   3. Bottom-center `SplashEnterButton` — navigates to `/home` via the
 //      existing fade transition wired in `app/router.dart`.
 //
@@ -16,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers/splash_redirect_provider.dart';
+import '../../core/utils/date_helpers.dart';
 import '../../l10n/app_localizations.dart';
 import 'splash_controller.dart';
 import 'splash_state.dart';
@@ -104,21 +109,7 @@ class _SplashContent extends StatelessWidget {
                     startDate: data.startDate,
                   ),
                   const SizedBox(height: 24),
-                  SplashRainbowGradientText(text: data.formattedStartDate),
-                  const SizedBox(height: 16),
-                  Text(
-                    data.formattedDisplayText,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w400,
-                      height: 1.3,
-                      shadows: <Shadow>[
-                        Shadow(color: Color(0xCC000000), blurRadius: 2),
-                      ],
-                    ),
-                  ),
+                  _SplashDisplayText(segments: data.displayTextSegments),
                   const SizedBox(height: 48),
                 ],
               ),
@@ -128,6 +119,53 @@ class _SplashContent extends StatelessWidget {
           const SizedBox(height: 24),
         ],
       ),
+    );
+  }
+}
+
+/// Renders the resolved splash display text. Plain segments are drawn as
+/// white shadowed text; `isDate: true` segments are wrapped in a
+/// `SplashRainbowGradientText` via `WidgetSpan` so the rainbow gradient
+/// flows with the surrounding text instead of standing on its own line.
+class _SplashDisplayText extends StatelessWidget {
+  const _SplashDisplayText({required this.segments});
+
+  final List<SplashTextSegment> segments;
+
+  static const TextStyle _baseStyle = TextStyle(
+    color: Colors.white,
+    fontSize: 18,
+    fontWeight: FontWeight.w400,
+    height: 1.3,
+    shadows: <Shadow>[Shadow(color: Color(0xCC000000), blurRadius: 2)],
+  );
+
+  static final TextStyle _dateStyle = _baseStyle.copyWith(
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.3,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    if (segments.isEmpty) return const SizedBox.shrink();
+    return Text.rich(
+      TextSpan(
+        children: [
+          for (final seg in segments)
+            if (seg.isDate)
+              WidgetSpan(
+                alignment: PlaceholderAlignment.baseline,
+                baseline: TextBaseline.alphabetic,
+                child: SplashRainbowGradientText(
+                  text: seg.text,
+                  style: _dateStyle,
+                ),
+              )
+            else
+              TextSpan(text: seg.text, style: _baseStyle),
+        ],
+      ),
+      textAlign: TextAlign.center,
     );
   }
 }

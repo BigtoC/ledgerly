@@ -7,6 +7,8 @@
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../../core/utils/date_helpers.dart';
+
 part 'splash_state.freezed.dart';
 
 @freezed
@@ -16,14 +18,15 @@ sealed class SplashState with _$SplashState {
 
   /// Fully-resolved day counter ready to render.
   ///
-  /// [formattedDisplayText] has `{date}` and `{days}` template tokens
-  /// already substituted per plan §5 ("Substitution happens in the
-  /// controller, not the widget").
+  /// [displayTextSegments] is the resolved splash display template split
+  /// into runs of plain text and date text. The widget renders the date
+  /// runs (`isDate: true`) with the rainbow gradient and the rest as
+  /// plain white text. Substitution and the auto-prepend rule for
+  /// missing `{date}` happen in the controller, never in `build()`.
   const factory SplashState.data({
     required DateTime startDate,
     required int dayCount,
-    required String formattedStartDate,
-    required String formattedDisplayText,
+    required List<SplashTextSegment> displayTextSegments,
     required String buttonLabel,
   }) = SplashData;
 
