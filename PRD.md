@@ -14,11 +14,11 @@ Ledgerly is a local-first mobile expense tracker built with Flutter. It is aimed
 
 ---
 
-## Project Status (as of 2026-05-08)
+## Project Status (as of 2026-05-22)
 
 **MVP — Complete.** All MVP features have shipped: manual entry, seeded + custom categories, multi-account / multi-currency, shopping list drafts, splash screen, theming, l10n.
 
-**Phase 2 — In progress.** First Phase 2 feature shipped: **Recurring transactions** (rule management + automatic pending-row generation on cold start; see [`recurring_rules`](#recurring_rules-phase-2--shipped-2026-05-08) table). Remaining Phase 2 work: pending-transaction review/approve UI on Home, wallet sync (Ankr integration), extended multi-currency conversion, charts, search, CSV import, credit-card / transfer flows.
+**Phase 2 — In progress.** Shipped slices on `main`: **Recurring transactions** + Home pending approval (2026-05-08; see [`recurring_rules`](#recurring_rules-phase-2--shipped-2026-05-08) table), **Transaction search** (2026-05-10), **Extended multi-currency conversion** (2026-05-17), **Basic charts** — pie + daily bar (2026-05-20). The active branch `feature/pie-chart-category-selector-item-list` adds **chart slice drill-down** (2026-05-22): coordinated pie/legend/bar selection plus a per-slice items list with edit, delete + 4 s undo, FX-converted/original amount split, and stale-rate notice — implementation lives entirely in the analysis layer (sealed `SelectedSlice` selection identity; `ChartsController` translates it into plain repository filters), so the data layer's schema and contracts are unchanged. Remaining Phase 2 work: wallet sync (Ankr integration), CSV import, credit-card / transfer flows.
 
 Inline `# Phase 2` annotations throughout the rest of the document mark code paths and surfaces that have **not** yet shipped. The recurring-rules slice is the canonical example of how a Phase 2 feature lands: data layer first (DAOs, repos, migration), then a use case in `lib/data/use_cases/` (Phase 2's `domain/` layer is reserved for cross-feature orchestration), then UI.
 
@@ -43,8 +43,9 @@ Inline `# Phase 2` annotations throughout the rest of the document mark code pat
 - **[Shipped 2026-05-08] Recurring transactions** — auto-generate pending transactions for user approval on a daily/weekly/monthly/yearly schedule. Rule management UI lives at `/settings/recurring`. Approval UI on Home is the next Phase 2 milestone.
 - **[Shipped 2026-05-08] Pending-row approval on Home** — the inline approve/skip affordance for recurring (and later blockchain) pending rows. Repository + use case shipped in the recurring slice; Home UI extension is next.
 - **[Shipped 2026-05-20]** Basic charts (pie, bar)
+- **[Complete on `feature/pie-chart-category-selector-item-list` 2026-05-22]** Chart slice drill-down — tap a pie slice or legend row to refilter the bar chart and render a per-slice items list (tap-to-edit, action-tap delete + 4 s undo, FX-converted primary amount beside original booked amount, "using last known exchange rates" notice when cached rates exceed 1 h). Selection identity lives in the analysis layer as a sealed `SelectedSlice` (category | account | currency); the repository boundary stays filter-based via `{categoryId, accountId, currencyCode}` arguments. Plan: [`docs/superpowers/plans/2026-05-22-chart-slice-drilldown.md`](docs/superpowers/plans/2026-05-22-chart-slice-drilldown.md).
 - [Pending] Fortune City CSV import
-- **[Shipped 2026-05-010]** Transaction search
+- **[Shipped 2026-05-10]** Transaction search
 - **[Shipped 2026-05-17]** Extended multi-currency — fetch currency prices and auto-convert balances, summaries, and charts to the user's default currency
 
 ### Phase 3
