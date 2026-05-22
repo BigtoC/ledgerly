@@ -13,6 +13,9 @@ import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/services/exchange_rate_service.dart';
 import 'package:ledgerly/features/analysis/analysis_screen.dart';
 import 'package:ledgerly/features/analysis/charts/charts_providers.dart';
+import 'package:ledgerly/features/analysis/charts/charts_controller.dart';
+import 'package:ledgerly/features/analysis/charts/slice_drilldown_controller.dart';
+import 'package:ledgerly/features/analysis/charts/charts_state.dart';
 import 'package:ledgerly/features/analysis/charts/widgets/chart_legend.dart';
 import 'package:ledgerly/features/analysis/charts/charts_selection_controller.dart';
 import 'package:ledgerly/features/analysis/charts/selected_slice.dart';
@@ -32,6 +35,10 @@ Future<void> _seed(drift.AppDatabase db) async {
     "is_token, sort_order) VALUES ('USD', 2, '\$', 'currency.usd', 0, 1)",
   );
   await db.customStatement(
+    'INSERT INTO currencies (code, decimals, symbol, name_l10n_key, '
+    "is_token, sort_order) VALUES ('EUR', 2, '€', 'currency.eur', 0, 2)",
+  );
+  await db.customStatement(
     'INSERT INTO categories (id, type, l10n_key, icon, color, sort_order, '
     "is_archived) VALUES (1, 'expense', 'category.food', 'restaurant', 0, 1, 0)",
   );
@@ -49,7 +56,7 @@ Future<void> _seed(drift.AppDatabase db) async {
     "(1, 1, 'Cash', 'USD', 0, 1, 0)",
   );
   final epoch = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-  Future<void> tx(int id, int amt, int cat) {
+  Future<void> tx(int id, int amt, int cat, String currency) {
     return db.customStatement(
       'INSERT INTO transactions (id, amount_minor_units, currency, '
       'category_id, account_id, date, created_at, updated_at) '
@@ -57,7 +64,7 @@ Future<void> _seed(drift.AppDatabase db) async {
       [
         id,
         amt,
-        'USD',
+        currency,
         cat,
         DateTime.now().millisecondsSinceEpoch ~/ 1000,
         epoch,
@@ -66,9 +73,9 @@ Future<void> _seed(drift.AppDatabase db) async {
     );
   }
 
-  await tx(1, 1000, 1);
-  await tx(2, 2000, 1);
-  await tx(3, 4000, 2);
+  await tx(1, 1000, 1, 'USD');
+  await tx(2, 500, 1, 'EUR');
+  await tx(3, 4000, 2, 'USD');
 }
 
 void main() {
@@ -79,62 +86,68 @@ void main() {
   testWidgets('Analysis tab: tap food slice → 2 rows, tap again clears', (
     tester,
   ) async {
-    final db = newTestAppDatabase();
-    final repo = DriftTransactionRepository(db);
-    await _seed(db);
+    late drift.AppDatabase db;
+    late DriftTransactionRepository repo;
+    late ExchangeRateRepository fxRepo;
+    late ProviderContainer container;
+    await tester.runAsync(() async {
+      db = newTestAppDatabase();
+      repo = DriftTransactionRepository(db);
+      await _seed(db);
 
-    final fxSvc = _MockFxSvc();
-    when(() => fxSvc.fetchRates(any())).thenAnswer((_) async => []);
-    final fxRepo = ExchangeRateRepository(
-      db,
-      fxSvc,
-      const Stream<String>.empty(),
-    );
-    addTearDown(() async {
-      fxRepo.dispose();
-      await db.close();
+      final fxSvc = _MockFxSvc();
+      when(() => fxSvc.fetchRates(any())).thenAnswer((_) async => []);
+      fxRepo = ExchangeRateRepository(db, fxSvc, const Stream<String>.empty());
+
+      container = ProviderContainer(
+        overrides: [
+          transactionRepositoryProvider.overrideWithValue(repo),
+          exchangeRateRepositoryProvider.overrideWithValue(fxRepo),
+          initialDefaultCurrencyProvider.overrideWithValue('USD'),
+          // Override analysis lookup providers so they don't require
+          // categoryRepositoryProvider / accountRepositoryProvider
+          // (which depend on appDatabaseProvider, not overridden here).
+          analysisCategoriesByIdProvider.overrideWith(
+            (ref) => Stream.value({
+              1: const Category(
+                id: 1,
+                type: CategoryType.expense,
+                l10nKey: 'category.food',
+                icon: 'restaurant',
+                color: 0,
+              ),
+              2: const Category(
+                id: 2,
+                type: CategoryType.expense,
+                l10nKey: 'category.transportation',
+                icon: 'car',
+                color: 1,
+              ),
+            }),
+          ),
+          analysisAccountsByIdProvider.overrideWith(
+            (ref) => Stream.value(const <int, Account>{}),
+          ),
+          chartsCurrenciesByCodeProvider.overrideWith(
+            (ref) => Stream.value({
+              'USD': _usd,
+              'EUR': const Currency(code: 'EUR', decimals: 2, symbol: '€'),
+            }),
+          ),
+          chartsFxStatusProvider.overrideWith(
+            (ref) => Stream.value(
+              const ChartsFxStatus(defaultCurrencyCode: 'USD', rates: {}),
+            ),
+          ),
+        ],
+      );
     });
 
-    final container = ProviderContainer(
-      overrides: [
-        transactionRepositoryProvider.overrideWithValue(repo),
-        exchangeRateRepositoryProvider.overrideWithValue(fxRepo),
-        initialDefaultCurrencyProvider.overrideWithValue('USD'),
-        // Override analysis lookup providers so they don't require
-        // categoryRepositoryProvider / accountRepositoryProvider
-        // (which depend on appDatabaseProvider, not overridden here).
-        analysisCategoriesByIdProvider.overrideWith(
-          (ref) => Stream.value({
-            1: const Category(
-              id: 1,
-              type: CategoryType.expense,
-              l10nKey: 'category.food',
-              icon: 'restaurant',
-              color: 0,
-            ),
-            2: const Category(
-              id: 2,
-              type: CategoryType.expense,
-              l10nKey: 'category.transportation',
-              icon: 'car',
-              color: 1,
-            ),
-          }),
-        ),
-        analysisAccountsByIdProvider.overrideWith(
-          (ref) => Stream.value(const <int, Account>{}),
-        ),
-        chartsCurrenciesByCodeProvider.overrideWith(
-          (ref) => Stream.value({'USD': _usd}),
-        ),
-        chartsFxStatusProvider.overrideWith(
-          (ref) => Stream.value(
-            const ChartsFxStatus(defaultCurrencyCode: 'USD', rates: {}),
-          ),
-        ),
-      ],
-    );
-    addTearDown(container.dispose);
+    addTearDown(() async {
+      fxRepo.dispose();
+      container.dispose();
+      await db.close();
+    });
 
     await tester.pumpWidget(
       UncontrolledProviderScope(
@@ -152,6 +165,14 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    expect(
+      ((container.read(chartsControllerProvider).valueOrNull!
+                  as ChartsDataState)
+              .chartData
+              .bucketTotals)
+          .fold<int>(0, (sum, bucket) => sum + bucket.totalMinorUnits),
+      5000,
+    );
     // The legend 'Food' row may be off-screen inside the SingleChildScrollView.
     // Scope the finder to ChartLegend to avoid matching the pie-chart labels or
     // items-list header that also say "Food".
@@ -171,7 +192,24 @@ void main() {
       container.read(chartsSelectionControllerProvider).selectedSlice,
       equals(const SelectedSlice.category(1)),
     );
-    expect(find.byType(ListTile), findsAtLeast(2));
+    expect(find.byType(ListTile), findsOneWidget);
+    expect(
+      container
+          .read(sliceDrilldownControllerProvider)
+          .valueOrNull!
+          .rows
+          .map((t) => t.id)
+          .toList(),
+      [1],
+    );
+    expect(
+      ((container.read(chartsControllerProvider).valueOrNull!
+                  as ChartsDataState)
+              .chartData
+              .bucketTotals)
+          .fold<int>(0, (sum, bucket) => sum + bucket.totalMinorUnits),
+      1000,
+    );
     // Tap again — selection clears. After selection the items list expands
     // below the chart and the legend may scroll off-screen. Target the legend's
     // Food row specifically via find.descendant(of: ChartLegend) to avoid
@@ -191,6 +229,15 @@ void main() {
     expect(
       container.read(chartsSelectionControllerProvider).selectedSlice,
       isNull,
+    );
+    expect(find.byType(ListTile), findsNothing);
+    expect(
+      ((container.read(chartsControllerProvider).valueOrNull!
+                  as ChartsDataState)
+              .chartData
+              .bucketTotals)
+          .fold<int>(0, (sum, bucket) => sum + bucket.totalMinorUnits),
+      5000,
     );
   });
 }

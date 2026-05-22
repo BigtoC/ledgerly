@@ -8,6 +8,7 @@ import 'package:ledgerly/data/models/account.dart';
 import 'package:ledgerly/data/models/category.dart';
 import 'package:ledgerly/data/models/currency.dart';
 import 'package:ledgerly/data/models/transaction.dart';
+import 'package:ledgerly/data/repositories/exchange_rate_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/features/analysis/charts/charts_providers.dart';
 import 'package:ledgerly/features/analysis/charts/charts_selection_controller.dart';
@@ -21,11 +22,12 @@ import 'package:mocktail/mocktail.dart';
 class _MockRepo extends Mock implements TransactionRepository {}
 
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
+const _eur = Currency(code: 'EUR', decimals: 2, symbol: '€');
 
-Transaction _tx(int id) => Transaction(
+Transaction _tx(int id, {Currency currency = _usd}) => Transaction(
   id: id,
   amountMinorUnits: 100 * id,
-  currency: _usd,
+  currency: currency,
   categoryId: 1,
   accountId: 1,
   date: DateTime(2026, 5, 18),
@@ -46,6 +48,11 @@ Widget _harness({
   required _MockRepo repo,
   required ChartSlice slice,
   SelectedSlice? activeSelection,
+  Map<String, Currency> currenciesByCode = const {'USD': _usd},
+  ChartsFxStatus fxStatus = const ChartsFxStatus(
+    defaultCurrencyCode: 'USD',
+    rates: {},
+  ),
   void Function(ProviderContainer container)? onContainer,
 }) {
   final container = ProviderContainer(
@@ -66,13 +73,9 @@ Widget _harness({
         (ref) => Stream.value(const <int, Account>{}),
       ),
       chartsCurrenciesByCodeProvider.overrideWith(
-        (ref) => Stream.value({'USD': _usd}),
+        (ref) => Stream.value(currenciesByCode),
       ),
-      chartsFxStatusProvider.overrideWith(
-        (ref) => Stream.value(
-          const ChartsFxStatus(defaultCurrencyCode: 'USD', rates: {}),
-        ),
-      ),
+      chartsFxStatusProvider.overrideWith((ref) => Stream.value(fxStatus)),
     ],
   );
   if (activeSelection != null) {
@@ -202,4 +205,49 @@ void main() {
     // Drain the kUndoWindow timer so it doesn't leak past teardown.
     await tester.pump(const Duration(seconds: 5));
   });
+
+  testWidgets(
+    'stale-rate notice keys off the displayed converted pair, not an unrelated fresh pair',
+    (tester) async {
+      final repo = _MockRepo();
+      when(
+        () => repo.watchTransactionsForSliceInRange(
+          start: any(named: 'start'),
+          end: any(named: 'end'),
+          type: any(named: 'type'),
+          categoryId: any(named: 'categoryId'),
+          accountId: any(named: 'accountId'),
+          currencyCode: any(named: 'currencyCode'),
+        ),
+      ).thenAnswer((_) => Stream.value([_tx(1, currency: _eur)]));
+
+      await tester.pumpWidget(
+        _harness(
+          repo: repo,
+          slice: _slice(
+            const SelectedSlice.category(1),
+          ).copyWith(currencyCode: 'USD', totalMinorUnits: 110),
+          activeSelection: const SelectedSlice.category(1),
+          currenciesByCode: const {'USD': _usd, 'EUR': _eur},
+          fxStatus: ChartsFxStatus(
+            defaultCurrencyCode: 'USD',
+            rates: {
+              'EUR→USD': ExchangeRateMetadata(
+                rateScaledE9: 1100000000,
+                fetchedAt: DateTime.now().subtract(const Duration(hours: 2)),
+              ),
+              'JPY→USD': ExchangeRateMetadata(
+                rateScaledE9: 7000000,
+                fetchedAt: DateTime.now(),
+              ),
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Using last known exchange rates'), findsOneWidget);
+      expect(find.text('Original amount'), findsOneWidget);
+    },
+  );
 }
