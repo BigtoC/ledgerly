@@ -886,6 +886,21 @@
   "analysisErrorMessage": "Something went wrong while searching",
   "@analysisErrorMessage": {"description": "User-facing error copy when the search stream errors (Drift error, schema corruption, etc.)"},
 
+  "analysisDrilldownEmpty": "No transactions in this period",
+  "@analysisDrilldownEmpty": {
+    "description": "Inline placeholder in the slice drill-down items list when the live emission has zero rows (transient race between selection toggle and stream emit)"
+  },
+
+  "analysisOriginalAmount": "Original amount",
+  "@analysisOriginalAmount": {
+    "description": "Label for the booked transaction amount shown as the secondary amount on FX-converted drill-down rows"
+  },
+
+  "analysisRatesStale": "Using last known exchange rates",
+  "@analysisRatesStale": {
+    "description": "Inline label shown when drill-down converted amounts are derived from stale cached FX rates"
+  },
+
   "settingsRecurringTile": "Recurring transactions",
   "@settingsRecurringTile": { "description": "Settings entry-point label for the recurring rules screen." },
 

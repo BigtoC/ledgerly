@@ -701,6 +701,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get analysisErrorMessage => 'Something went wrong while searching';
 
   @override
+  String get analysisDrilldownEmpty => 'No transactions in this period';
+
+  @override
+  String get analysisOriginalAmount => 'Original amount';
+
+  @override
+  String get analysisRatesStale => 'Using last known exchange rates';
+
+  @override
   String get settingsRecurringTile => 'Recurring transactions';
 
   @override

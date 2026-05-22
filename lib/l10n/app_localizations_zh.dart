@@ -701,6 +701,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get analysisErrorMessage => 'Something went wrong while searching';
 
   @override
+  String get analysisDrilldownEmpty => '此期間沒有交易';
+
+  @override
+  String get analysisOriginalAmount => '原始金額';
+
+  @override
+  String get analysisRatesStale => '使用上次取得的匯率';
+
+  @override
   String get settingsRecurringTile => 'Recurring transactions';
 
   @override
@@ -1603,6 +1612,15 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get analysisErrorMessage => '搜索时发生错误';
 
   @override
+  String get analysisDrilldownEmpty => '此期间没有交易';
+
+  @override
+  String get analysisOriginalAmount => '原始金额';
+
+  @override
+  String get analysisRatesStale => '使用上次获取的汇率';
+
+  @override
   String get settingsRecurringTile => '周期性交易';
 
   @override
@@ -2498,6 +2516,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get analysisErrorMessage => '搜尋時發生錯誤';
+
+  @override
+  String get analysisDrilldownEmpty => '此期間沒有交易';
+
+  @override
+  String get analysisOriginalAmount => '原始金額';
+
+  @override
+  String get analysisRatesStale => '使用上次取得的匯率';
 
   @override
   String get settingsRecurringTile => '週期性交易';

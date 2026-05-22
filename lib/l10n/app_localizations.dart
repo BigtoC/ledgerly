@@ -1366,6 +1366,24 @@ abstract class AppLocalizations {
   /// **'Something went wrong while searching'**
   String get analysisErrorMessage;
 
+  /// Inline placeholder in the slice drill-down items list when the live emission has zero rows (transient race between selection toggle and stream emit)
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions in this period'**
+  String get analysisDrilldownEmpty;
+
+  /// Label for the booked transaction amount shown as the secondary amount on FX-converted drill-down rows
+  ///
+  /// In en, this message translates to:
+  /// **'Original amount'**
+  String get analysisOriginalAmount;
+
+  /// Inline label shown when drill-down converted amounts are derived from stale cached FX rates
+  ///
+  /// In en, this message translates to:
+  /// **'Using last known exchange rates'**
+  String get analysisRatesStale;
+
   /// Settings entry-point label for the recurring rules screen.
   ///
   /// In en, this message translates to:

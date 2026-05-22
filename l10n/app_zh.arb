@@ -1,4 +1,7 @@
 {
   "@@locale": "zh",
-  "appTitle": "Ledgerly"
+  "appTitle": "Ledgerly",
+  "analysisDrilldownEmpty": "此期間沒有交易",
+  "analysisOriginalAmount": "原始金額",
+  "analysisRatesStale": "使用上次取得的匯率"
 }
