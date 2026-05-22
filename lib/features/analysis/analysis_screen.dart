@@ -78,9 +78,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
         // The placeholder lives above the chart as a subtle "search hint";
         // charts render the full breakdown.
         AnalysisIdle() => const SingleChildScrollView(
-          child: Column(
-            children: [ChartsSection()],
-          ),
+          child: Column(children: [ChartsSection()]),
         ),
         AnalysisLoading(:final previous, :final query) =>
           previous == null
