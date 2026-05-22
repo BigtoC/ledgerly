@@ -93,7 +93,12 @@ class ChartLegend extends StatelessWidget {
     );
   }
 
-  Widget _row(BuildContext context, ChartSlice s, {int? originalIndex}) {
+  Widget _row(
+    BuildContext context,
+    ChartSlice s, {
+    int? originalIndex,
+    VoidCallback? onTapOverride,
+  }) {
     final l10n = AppLocalizations.of(context);
     final currency =
         currenciesByCode[s.currencyCode] ??
@@ -180,7 +185,9 @@ class ChartLegend extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: InkWell(
         borderRadius: BorderRadius.circular(8),
-        onTap: () => onSelectSlice!(isSelected ? null : originalIndex),
+        onTap:
+            onTapOverride ??
+            () => onSelectSlice!(isSelected ? null : originalIndex),
         child: row,
       ),
     );
@@ -240,7 +247,15 @@ class ChartLegend extends StatelessWidget {
           shrinkWrap: true,
           children: [
             for (final entry in all)
-              _row(sheetCtx, entry.slice, originalIndex: entry.index),
+              _row(
+                sheetCtx,
+                entry.slice,
+                originalIndex: entry.index,
+                onTapOverride: () {
+                  onSelectSlice?.call(entry.index);
+                  Navigator.pop(sheetCtx);
+                },
+              ),
           ],
         ),
       ),
