@@ -796,11 +796,11 @@ abstract class AppLocalizations {
   /// **'Manage categories'**
   String get settingsManageCategories;
 
-  /// Settings plan §6. Hint text under the splash display-text field explaining the template variables. Square brackets here are a visual stand-in for the literal '{date}' / '{days}' template tokens — gen_l10n parses curly braces as MessageFormat placeholders, so the copy uses bracketed forms to stay a plain string.
+  /// Settings plan §6. Hint text under the splash display-text field explaining the template variables. The placeholders are named `dateToken` / `daysToken` (not `date` / `days`) because the call site passes the literal strings '{date}' and '{days}' as arguments — these are the actual MessageFormat-looking tokens that DateHelpers.applySplashTemplate substitutes. gen_l10n itself cannot embed literal { / } in a plain message, so the indirection through real placeholders is how the hint advertises the correct token form.
   ///
   /// In en, this message translates to:
-  /// **'Use [date] and [days] as placeholders'**
-  String get settingsSplashDisplayTextHint;
+  /// **'Use {dateToken} and {daysToken} as placeholders'**
+  String settingsSplashDisplayTextHint(String dateToken, String daysToken);
 
   /// Wave 2 §4.2. AppBar title for /home/add.
   ///

@@ -184,7 +184,11 @@ class _SplashDisplayTextFieldState
         onSubmitted: (_) => _submit(),
         decoration: InputDecoration(
           labelText: l10n.settingsSplashDisplayText,
-          hintText: l10n.settingsSplashDisplayTextHint,
+          // The literal '{date}' / '{days}' arguments are the actual tokens
+          // DateHelpers.applySplashTemplate substitutes; the ARB declares
+          // dateToken/daysToken placeholders only because gen_l10n cannot
+          // embed literal braces in a plain message.
+          hintText: l10n.settingsSplashDisplayTextHint('{date}', '{days}'),
         ),
       ),
     );

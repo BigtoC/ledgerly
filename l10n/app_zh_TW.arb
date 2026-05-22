@@ -130,7 +130,7 @@
   "settingsDefaultCurrencyLabel": "預設幣別",
   "settingsDefaultCurrencyPickerTitle": "選擇預設幣別",
   "settingsManageCategories": "管理分類",
-  "settingsSplashDisplayTextHint": "可使用 [date] 與 [days] 作為變數",
+  "settingsSplashDisplayTextHint": "可使用 {dateToken} 與 {daysToken} 作為變數",
 
   "txAddTitle": "新增交易",
   "txEditTitle": "編輯交易",

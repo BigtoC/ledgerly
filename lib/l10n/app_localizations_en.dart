@@ -365,8 +365,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsManageCategories => 'Manage categories';
 
   @override
-  String get settingsSplashDisplayTextHint =>
-      'Use [date] and [days] as placeholders';
+  String settingsSplashDisplayTextHint(String dateToken, String daysToken) {
+    return 'Use $dateToken and $daysToken as placeholders';
+  }
 
   @override
   String get txAddTitle => 'Add transaction';
