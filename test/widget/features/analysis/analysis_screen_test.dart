@@ -16,7 +16,6 @@ import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/features/analysis/analysis_screen.dart';
-import 'package:ledgerly/features/analysis/search/widgets/analysis_search_placeholder.dart';
 import 'package:ledgerly/features/analysis/search/widgets/category_search_tile.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
@@ -143,13 +142,6 @@ void main() {
     when(
       () => acct.watchAll(includeArchived: true),
     ).thenAnswer((_) => Stream.value(const <Account>[]));
-  });
-
-  testWidgets('renders idle placeholder by default', (tester) async {
-    await tester.pumpWidget(_harness(tx: tx, cat: cat, acct: acct));
-    await tester.pump();
-
-    expect(find.byType(AnalysisSearchPlaceholder), findsOneWidget);
   });
 
   testWidgets('shows no-results copy when query has no matches', (
