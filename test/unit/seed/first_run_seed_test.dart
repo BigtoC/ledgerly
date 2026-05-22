@@ -168,7 +168,10 @@ void main() {
       expect(await h.preferences.getThemeMode(), ThemeMode.light);
       expect(await h.preferences.getLocale(), isNull);
       expect(await h.preferences.getDefaultCurrency(), 'USD');
-      expect(await h.preferences.getSplashDisplayText(), 'Since {date}');
+      expect(
+        await h.preferences.getSplashDisplayText(),
+        'On {date} start using Ledgerly',
+      );
       expect(await h.preferences.getSplashButtonLabel(), 'Enter');
       expect(await h.preferences.getSplashStartDate(), isNull);
 

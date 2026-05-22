@@ -132,10 +132,16 @@ void main() {
       expect(await prefs.getSplashStartDate(), isNull);
     });
 
-    test('watchSplashDisplayText default-emits "Since {date}"', () async {
-      expect(await prefs.watchSplashDisplayText().first, 'Since {date}');
-      expect(await prefs.getSplashDisplayText(), kDefaultSplashDisplayText);
-    });
+    test(
+      'watchSplashDisplayText default-emits "On {date} start using Ledgerly"',
+      () async {
+        expect(
+          await prefs.watchSplashDisplayText().first,
+          'On {date} start using Ledgerly',
+        );
+        expect(await prefs.getSplashDisplayText(), kDefaultSplashDisplayText);
+      },
+    );
 
     test('watchSplashButtonLabel default-emits "Enter"', () async {
       expect(await prefs.watchSplashButtonLabel().first, 'Enter');
