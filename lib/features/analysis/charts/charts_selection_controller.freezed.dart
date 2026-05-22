@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ChartsSelection {
 
- PeriodType get period; CategoryType get type; ChartDimension get dimension; DateTime get anchorDate;
+ PeriodType get period; CategoryType get type; ChartDimension get dimension; DateTime get anchorDate; SelectedSlice? get selectedSlice;
 /// Create a copy of ChartsSelection
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $ChartsSelectionCopyWith<ChartsSelection> get copyWith => _$ChartsSelectionCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartsSelection&&(identical(other.period, period) || other.period == period)&&(identical(other.type, type) || other.type == type)&&(identical(other.dimension, dimension) || other.dimension == dimension)&&(identical(other.anchorDate, anchorDate) || other.anchorDate == anchorDate));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartsSelection&&(identical(other.period, period) || other.period == period)&&(identical(other.type, type) || other.type == type)&&(identical(other.dimension, dimension) || other.dimension == dimension)&&(identical(other.anchorDate, anchorDate) || other.anchorDate == anchorDate)&&(identical(other.selectedSlice, selectedSlice) || other.selectedSlice == selectedSlice));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,period,type,dimension,anchorDate);
+int get hashCode => Object.hash(runtimeType,period,type,dimension,anchorDate,selectedSlice);
 
 @override
 String toString() {
-  return 'ChartsSelection(period: $period, type: $type, dimension: $dimension, anchorDate: $anchorDate)';
+  return 'ChartsSelection(period: $period, type: $type, dimension: $dimension, anchorDate: $anchorDate, selectedSlice: $selectedSlice)';
 }
 
 
@@ -45,11 +45,11 @@ abstract mixin class $ChartsSelectionCopyWith<$Res>  {
   factory $ChartsSelectionCopyWith(ChartsSelection value, $Res Function(ChartsSelection) _then) = _$ChartsSelectionCopyWithImpl;
 @useResult
 $Res call({
- PeriodType period, CategoryType type, ChartDimension dimension, DateTime anchorDate
+ PeriodType period, CategoryType type, ChartDimension dimension, DateTime anchorDate, SelectedSlice? selectedSlice
 });
 
 
-
+$SelectedSliceCopyWith<$Res>? get selectedSlice;
 
 }
 /// @nodoc
@@ -62,16 +62,29 @@ class _$ChartsSelectionCopyWithImpl<$Res>
 
 /// Create a copy of ChartsSelection
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? period = null,Object? type = null,Object? dimension = null,Object? anchorDate = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? period = null,Object? type = null,Object? dimension = null,Object? anchorDate = null,Object? selectedSlice = freezed,}) {
   return _then(_self.copyWith(
 period: null == period ? _self.period : period // ignore: cast_nullable_to_non_nullable
 as PeriodType,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as CategoryType,dimension: null == dimension ? _self.dimension : dimension // ignore: cast_nullable_to_non_nullable
 as ChartDimension,anchorDate: null == anchorDate ? _self.anchorDate : anchorDate // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,selectedSlice: freezed == selectedSlice ? _self.selectedSlice : selectedSlice // ignore: cast_nullable_to_non_nullable
+as SelectedSlice?,
   ));
 }
+/// Create a copy of ChartsSelection
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$SelectedSliceCopyWith<$Res>? get selectedSlice {
+    if (_self.selectedSlice == null) {
+    return null;
+  }
 
+  return $SelectedSliceCopyWith<$Res>(_self.selectedSlice!, (value) {
+    return _then(_self.copyWith(selectedSlice: value));
+  });
+}
 }
 
 
@@ -153,10 +166,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PeriodType period,  CategoryType type,  ChartDimension dimension,  DateTime anchorDate)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PeriodType period,  CategoryType type,  ChartDimension dimension,  DateTime anchorDate,  SelectedSlice? selectedSlice)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ChartsSelection() when $default != null:
-return $default(_that.period,_that.type,_that.dimension,_that.anchorDate);case _:
+return $default(_that.period,_that.type,_that.dimension,_that.anchorDate,_that.selectedSlice);case _:
   return orElse();
 
 }
@@ -174,10 +187,10 @@ return $default(_that.period,_that.type,_that.dimension,_that.anchorDate);case _
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PeriodType period,  CategoryType type,  ChartDimension dimension,  DateTime anchorDate)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PeriodType period,  CategoryType type,  ChartDimension dimension,  DateTime anchorDate,  SelectedSlice? selectedSlice)  $default,) {final _that = this;
 switch (_that) {
 case _ChartsSelection():
-return $default(_that.period,_that.type,_that.dimension,_that.anchorDate);case _:
+return $default(_that.period,_that.type,_that.dimension,_that.anchorDate,_that.selectedSlice);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -194,10 +207,10 @@ return $default(_that.period,_that.type,_that.dimension,_that.anchorDate);case _
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PeriodType period,  CategoryType type,  ChartDimension dimension,  DateTime anchorDate)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PeriodType period,  CategoryType type,  ChartDimension dimension,  DateTime anchorDate,  SelectedSlice? selectedSlice)?  $default,) {final _that = this;
 switch (_that) {
 case _ChartsSelection() when $default != null:
-return $default(_that.period,_that.type,_that.dimension,_that.anchorDate);case _:
+return $default(_that.period,_that.type,_that.dimension,_that.anchorDate,_that.selectedSlice);case _:
   return null;
 
 }
@@ -209,13 +222,14 @@ return $default(_that.period,_that.type,_that.dimension,_that.anchorDate);case _
 
 
 class _ChartsSelection implements ChartsSelection {
-  const _ChartsSelection({required this.period, required this.type, required this.dimension, required this.anchorDate});
+  const _ChartsSelection({required this.period, required this.type, required this.dimension, required this.anchorDate, this.selectedSlice});
   
 
 @override final  PeriodType period;
 @override final  CategoryType type;
 @override final  ChartDimension dimension;
 @override final  DateTime anchorDate;
+@override final  SelectedSlice? selectedSlice;
 
 /// Create a copy of ChartsSelection
 /// with the given fields replaced by the non-null parameter values.
@@ -227,16 +241,16 @@ _$ChartsSelectionCopyWith<_ChartsSelection> get copyWith => __$ChartsSelectionCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChartsSelection&&(identical(other.period, period) || other.period == period)&&(identical(other.type, type) || other.type == type)&&(identical(other.dimension, dimension) || other.dimension == dimension)&&(identical(other.anchorDate, anchorDate) || other.anchorDate == anchorDate));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChartsSelection&&(identical(other.period, period) || other.period == period)&&(identical(other.type, type) || other.type == type)&&(identical(other.dimension, dimension) || other.dimension == dimension)&&(identical(other.anchorDate, anchorDate) || other.anchorDate == anchorDate)&&(identical(other.selectedSlice, selectedSlice) || other.selectedSlice == selectedSlice));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,period,type,dimension,anchorDate);
+int get hashCode => Object.hash(runtimeType,period,type,dimension,anchorDate,selectedSlice);
 
 @override
 String toString() {
-  return 'ChartsSelection(period: $period, type: $type, dimension: $dimension, anchorDate: $anchorDate)';
+  return 'ChartsSelection(period: $period, type: $type, dimension: $dimension, anchorDate: $anchorDate, selectedSlice: $selectedSlice)';
 }
 
 
@@ -247,11 +261,11 @@ abstract mixin class _$ChartsSelectionCopyWith<$Res> implements $ChartsSelection
   factory _$ChartsSelectionCopyWith(_ChartsSelection value, $Res Function(_ChartsSelection) _then) = __$ChartsSelectionCopyWithImpl;
 @override @useResult
 $Res call({
- PeriodType period, CategoryType type, ChartDimension dimension, DateTime anchorDate
+ PeriodType period, CategoryType type, ChartDimension dimension, DateTime anchorDate, SelectedSlice? selectedSlice
 });
 
 
-
+@override $SelectedSliceCopyWith<$Res>? get selectedSlice;
 
 }
 /// @nodoc
@@ -264,17 +278,30 @@ class __$ChartsSelectionCopyWithImpl<$Res>
 
 /// Create a copy of ChartsSelection
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? period = null,Object? type = null,Object? dimension = null,Object? anchorDate = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? period = null,Object? type = null,Object? dimension = null,Object? anchorDate = null,Object? selectedSlice = freezed,}) {
   return _then(_ChartsSelection(
 period: null == period ? _self.period : period // ignore: cast_nullable_to_non_nullable
 as PeriodType,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as CategoryType,dimension: null == dimension ? _self.dimension : dimension // ignore: cast_nullable_to_non_nullable
 as ChartDimension,anchorDate: null == anchorDate ? _self.anchorDate : anchorDate // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,selectedSlice: freezed == selectedSlice ? _self.selectedSlice : selectedSlice // ignore: cast_nullable_to_non_nullable
+as SelectedSlice?,
   ));
 }
 
+/// Create a copy of ChartsSelection
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$SelectedSliceCopyWith<$Res>? get selectedSlice {
+    if (_self.selectedSlice == null) {
+    return null;
+  }
 
+  return $SelectedSliceCopyWith<$Res>(_self.selectedSlice!, (value) {
+    return _then(_self.copyWith(selectedSlice: value));
+  });
+}
 }
 
 // dart format on
