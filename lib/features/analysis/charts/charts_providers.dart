@@ -36,6 +36,12 @@ class ChartsFxStatus {
     return rates['$from→$defaultCurrencyCode']?.rateScaledE9;
   }
 
+  /// Metadata lookup for an exact FX pair.
+  ExchangeRateMetadata? metadataForPair(String from, String to) {
+    if (from == to) return null;
+    return rates['$from→$to'];
+  }
+
   /// Most recent `fetchedAt` across all relevant pairs. Used by the
   /// warm-start gate (1h freshness window). `null` when there are no
   /// rates at all (cold start).

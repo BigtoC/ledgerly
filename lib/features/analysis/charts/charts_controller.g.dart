@@ -6,7 +6,7 @@ part of 'charts_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$chartsControllerHash() => r'050ba05b9088b189db1aa9d9e72bbab9169a1515';
+String _$chartsControllerHash() => r'7978ab2cf76b133970dff5cbaec4781294a0578a';
 
 /// See also [ChartsController].
 @ProviderFor(ChartsController)
