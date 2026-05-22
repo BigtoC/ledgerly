@@ -1330,12 +1330,6 @@ abstract class AppLocalizations {
   /// **'Analysis'**
   String get analysisTitle;
 
-  /// SearchBar placeholder on Analysis
-  ///
-  /// In en, this message translates to:
-  /// **'Search transactions…'**
-  String get analysisSearchHint;
-
   /// Idle-state copy under the search icon
   ///
   /// In en, this message translates to:
