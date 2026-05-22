@@ -628,8 +628,18 @@ A standalone day counter feature inspired by [hnotes](https://github.com/BigtoC/
 
 - Sun-themed background image
 - Large day count number, prominent center (white, large font ~90)
-- Rainbow-gradient text below showing the start date (locale-aware format)
-- Customizable display text (default: localized "Since {date}" with `{date}` and `{days}` as template variables)
+- Customizable display text rendered as a single line where the resolved
+  `{date}` substitution is drawn inline with the rainbow gradient and the
+  surrounding text is plain white shadowed text. There is no separate
+  standalone date line — the date lives inside the display text so it
+  always appears exactly once.
+- Default display text: `On {date} start using Ledgerly`. The `{date}`
+  token is locale-aware (formatted via `intl.DateFormat.yMMMd`); the
+  `{days}` token (whole-day count) is also supported as a plain
+  substitution. Users edit the template from Settings → Splash → Display
+  text. Empty / whitespace-only overrides fall back to the default. If
+  the user's custom template does not contain `{date}`, the splash
+  controller auto-prepends `{date} ` so the start date is never hidden.
 - Button at bottom to enter the app (default label: localized "Enter", customizable)
 - Fade transition to Home on button tap
 
@@ -649,12 +659,12 @@ App cold start
 
 - "Show splash screen" toggle (default: on)
 - "Start date" date picker (only visible when splash is enabled)
-- "Display text" free text field (`{date}` and `{days}` as template variables)
+- "Display text" free text field. Hint text advertises `{date}` and `{days}` as template variables (the hint is encoded in ARB via gen_l10n placeholders because `{...}` is reserved by MessageFormat). Users may delete `{date}` from their template — the splash controller still ensures the date is shown by auto-prepending `{date} ` before any user-entered text that lacks it.
 - "Button label" free text field
 
 ### Localization
 
-Day counter label, "Since {date}" default text, and "Enter" button label need entries in all three ARB files. Date formatted locale-aware using `intl`.
+Day counter label and "Enter" button label need entries in all three ARB files. The default display-text template (`On {date} start using Ledgerly`) is an English seed constant in `lib/data/repositories/user_preferences_repository.dart` — user overrides are not auto-translated (per the §1029 rule below). Date formatted locale-aware using `intl`.
 
 ---
 
