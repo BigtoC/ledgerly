@@ -5,7 +5,7 @@ import 'package:ledgerly/features/analysis/charts/slice_drilldown_data.dart';
 
 void main() {
   test('SliceDrilldownData stores rows + pendingDeleteId', () {
-    final usd = const Currency(code: 'USD', decimals: 2);
+    const usd = Currency(code: 'USD', decimals: 2);
     final tx = Transaction(
       id: 1,
       amountMinorUnits: 100,
@@ -22,7 +22,7 @@ void main() {
   });
 
   test('copyWith updates pendingDeleteId without dropping rows', () {
-    final usd = const Currency(code: 'USD', decimals: 2);
+    const usd = Currency(code: 'USD', decimals: 2);
     final tx = Transaction(
       id: 7,
       amountMinorUnits: 700,

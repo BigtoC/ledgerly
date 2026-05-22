@@ -75,7 +75,6 @@ void main() {
   testWidgets(
     'default (dismissible) mode keeps existing dismissible behavior',
     (tester) async {
-      var deleted = false;
       await tester.pumpWidget(
         _wrap(
           TransactionSearchRow(
@@ -83,7 +82,7 @@ void main() {
             category: _cat,
             account: _acc,
             locale: 'en',
-            onDelete: () => deleted = true,
+            onDelete: () {},
           ),
         ),
       );

@@ -362,6 +362,12 @@ const Set<String> _expectedEnKeys = <String>{
   'chartsPieChart',
   'chartsBarChart',
   'chartsExcludedCurrencies',
+
+  // Chart slice drill-down (2026-05-22)
+  // (docs/superpowers/plans/2026-05-22-chart-slice-drilldown.md §9).
+  'analysisDrilldownEmpty',
+  'analysisOriginalAmount',
+  'analysisRatesStale',
 };
 
 Map<String, dynamic> _readArb(String fileName) {

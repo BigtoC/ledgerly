@@ -49,7 +49,7 @@ void main() {
   });
   tearDown(() => container.dispose());
 
-  Future<SliceDrilldownData> _readData() async {
+  Future<SliceDrilldownData> readData() async {
     // Drain initial emission via a listener (mirrors the pattern used in
     // charts_controller_slice_test.dart since `.stream` on a
     // StreamNotifierProvider behaves differently across Riverpod versions).
@@ -74,7 +74,7 @@ void main() {
       ),
     ).thenAnswer((_) => Stream.value([_tx(1), _tx(2)]));
 
-    final state = await _readData();
+    final state = await readData();
     expect(state.rows, hasLength(2));
   });
 
@@ -118,7 +118,7 @@ void main() {
       ).thenAnswer((_) => Stream.value([_tx(1), _tx(2)]));
       when(() => repo.delete(any())).thenAnswer((_) async => true);
 
-      await _readData();
+      await readData();
       container.read(sliceDrilldownControllerProvider.notifier).delete(1);
 
       await Future<void>.delayed(Duration.zero);
@@ -143,7 +143,7 @@ void main() {
     ).thenAnswer((_) => Stream.value([_tx(1), _tx(2)]));
     when(() => repo.delete(any())).thenAnswer((_) async => true);
 
-    await _readData();
+    await readData();
     final notifier = container.read(sliceDrilldownControllerProvider.notifier);
     notifier.delete(1);
     await Future<void>.delayed(Duration.zero);
@@ -173,7 +173,7 @@ void main() {
     ).thenAnswer((_) => Stream.value([_tx(1)]));
     when(() => repo.delete(any())).thenAnswer((_) async => true);
 
-    await _readData();
+    await readData();
     container.read(sliceDrilldownControllerProvider.notifier).delete(1);
     await Future<void>.delayed(kUndoWindow + const Duration(milliseconds: 200));
     verify(() => repo.delete(1)).called(1);
@@ -192,7 +192,7 @@ void main() {
     ).thenAnswer((_) => Stream.value([_tx(1)]));
     when(() => repo.delete(any())).thenAnswer((_) async => true);
 
-    await _readData();
+    await readData();
     container.read(sliceDrilldownControllerProvider.notifier).delete(1);
     container.read(sliceDrilldownControllerProvider.notifier).undoDelete();
     await Future<void>.delayed(kUndoWindow + const Duration(milliseconds: 200));
@@ -211,7 +211,7 @@ void main() {
       ),
     ).thenAnswer((_) => Stream.value([_tx(1)]));
 
-    await _readData();
+    await readData();
     final notifier = container.read(sliceDrilldownControllerProvider.notifier);
     notifier.delete(1);
     await Future<void>.delayed(Duration.zero);

@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ledgerly/data/models/category.dart';
 import 'package:ledgerly/features/analysis/charts/selected_slice.dart';
 import 'package:ledgerly/features/analysis/charts/charts_selection_controller.dart';
 import 'package:ledgerly/features/analysis/charts/charts_state.dart';
