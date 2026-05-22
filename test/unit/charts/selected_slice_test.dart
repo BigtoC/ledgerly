@@ -26,12 +26,14 @@ void main() {
       const a = SelectedSlice.account(3);
       const b = SelectedSlice.account(3);
       expect(a, equals(b));
+      expect(a.hashCode, equals(b.hashCode));
     });
 
     test('SelectedCurrencySlice equality', () {
       const a = SelectedSlice.currency('JPY');
       const b = SelectedSlice.currency('JPY');
       expect(a, equals(b));
+      expect(a.hashCode, equals(b.hashCode));
       const c = SelectedSlice.currency('USD');
       expect(a, isNot(equals(c)));
     });
