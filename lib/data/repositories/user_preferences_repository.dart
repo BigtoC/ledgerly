@@ -33,7 +33,11 @@ import 'repository_exceptions.dart';
 /// the seed writes this literal, and `_watchJson` falls back to it when the
 /// key is absent. A drift between the two values would cause "first launch
 /// shows one string, wipe-and-reseed shows another". Keep in sync.
-const String kDefaultSplashDisplayText = 'Since {date}';
+///
+/// Includes `{date}` so the splash always displays the start date inline.
+/// User overrides that omit `{date}` get it auto-prepended by the splash
+/// controller's `_resolveTemplate` — the date is never allowed to vanish.
+const String kDefaultSplashDisplayText = 'On {date} start using Ledgerly';
 
 /// Shared seed-default + repository-default for the splash CTA label.
 /// Stream C plan §2.3 Step 6.
