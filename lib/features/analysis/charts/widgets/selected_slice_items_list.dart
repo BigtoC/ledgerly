@@ -252,13 +252,24 @@ class _SelectedSliceItemsListState
     required ChartSlice slice,
   }) {
     if (fxStatus == null || rows.isEmpty) return false;
-    final latest = fxStatus.mostRecentFetchedAt();
-    if (latest == null) return false;
-    final hasConvertedRow = rows.any(
-      (tx) => tx.currency.code != slice.currencyCode,
-    );
-    if (!hasConvertedRow) return false;
-    return DateTime.now().difference(latest) > const Duration(hours: 1);
+    final fetchedAts = <DateTime>[];
+    for (final tx in rows) {
+      if (tx.currency.code == slice.currencyCode) continue;
+      final metadata = fxStatus.metadataForPair(
+        tx.currency.code,
+        slice.currencyCode,
+      );
+      if (metadata != null) {
+        fetchedAts.add(metadata.fetchedAt);
+      }
+    }
+    if (fetchedAts.isEmpty) return false;
+
+    DateTime oldest = fetchedAts.first;
+    for (final fetchedAt in fetchedAts.skip(1)) {
+      if (fetchedAt.isBefore(oldest)) oldest = fetchedAt;
+    }
+    return DateTime.now().difference(oldest) > const Duration(hours: 1);
   }
 
   String _labelFor({
