@@ -122,11 +122,11 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( DateTime startDate,  int dayCount,  String formattedStartDate,  String formattedDisplayText,  String buttonLabel)?  data,TResult Function( Object error,  StackTrace stack)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( DateTime startDate,  int dayCount,  List<SplashTextSegment> displayTextSegments,  String buttonLabel)?  data,TResult Function( Object error,  StackTrace stack)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case SplashLoading() when loading != null:
 return loading();case SplashData() when data != null:
-return data(_that.startDate,_that.dayCount,_that.formattedStartDate,_that.formattedDisplayText,_that.buttonLabel);case SplashError() when error != null:
+return data(_that.startDate,_that.dayCount,_that.displayTextSegments,_that.buttonLabel);case SplashError() when error != null:
 return error(_that.error,_that.stack);case _:
   return orElse();
 
@@ -145,11 +145,11 @@ return error(_that.error,_that.stack);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( DateTime startDate,  int dayCount,  String formattedStartDate,  String formattedDisplayText,  String buttonLabel)  data,required TResult Function( Object error,  StackTrace stack)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( DateTime startDate,  int dayCount,  List<SplashTextSegment> displayTextSegments,  String buttonLabel)  data,required TResult Function( Object error,  StackTrace stack)  error,}) {final _that = this;
 switch (_that) {
 case SplashLoading():
 return loading();case SplashData():
-return data(_that.startDate,_that.dayCount,_that.formattedStartDate,_that.formattedDisplayText,_that.buttonLabel);case SplashError():
+return data(_that.startDate,_that.dayCount,_that.displayTextSegments,_that.buttonLabel);case SplashError():
 return error(_that.error,_that.stack);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -164,11 +164,11 @@ return error(_that.error,_that.stack);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( DateTime startDate,  int dayCount,  String formattedStartDate,  String formattedDisplayText,  String buttonLabel)?  data,TResult? Function( Object error,  StackTrace stack)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( DateTime startDate,  int dayCount,  List<SplashTextSegment> displayTextSegments,  String buttonLabel)?  data,TResult? Function( Object error,  StackTrace stack)?  error,}) {final _that = this;
 switch (_that) {
 case SplashLoading() when loading != null:
 return loading();case SplashData() when data != null:
-return data(_that.startDate,_that.dayCount,_that.formattedStartDate,_that.formattedDisplayText,_that.buttonLabel);case SplashError() when error != null:
+return data(_that.startDate,_that.dayCount,_that.displayTextSegments,_that.buttonLabel);case SplashError() when error != null:
 return error(_that.error,_that.stack);case _:
   return null;
 
@@ -213,13 +213,18 @@ String toString() {
 
 
 class SplashData implements SplashState {
-  const SplashData({required this.startDate, required this.dayCount, required this.formattedStartDate, required this.formattedDisplayText, required this.buttonLabel});
+  const SplashData({required this.startDate, required this.dayCount, required final  List<SplashTextSegment> displayTextSegments, required this.buttonLabel}): _displayTextSegments = displayTextSegments;
   
 
  final  DateTime startDate;
  final  int dayCount;
- final  String formattedStartDate;
- final  String formattedDisplayText;
+ final  List<SplashTextSegment> _displayTextSegments;
+ List<SplashTextSegment> get displayTextSegments {
+  if (_displayTextSegments is EqualUnmodifiableListView) return _displayTextSegments;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_displayTextSegments);
+}
+
  final  String buttonLabel;
 
 /// Create a copy of SplashState
@@ -232,16 +237,16 @@ $SplashDataCopyWith<SplashData> get copyWith => _$SplashDataCopyWithImpl<SplashD
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SplashData&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.dayCount, dayCount) || other.dayCount == dayCount)&&(identical(other.formattedStartDate, formattedStartDate) || other.formattedStartDate == formattedStartDate)&&(identical(other.formattedDisplayText, formattedDisplayText) || other.formattedDisplayText == formattedDisplayText)&&(identical(other.buttonLabel, buttonLabel) || other.buttonLabel == buttonLabel));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SplashData&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.dayCount, dayCount) || other.dayCount == dayCount)&&const DeepCollectionEquality().equals(other._displayTextSegments, _displayTextSegments)&&(identical(other.buttonLabel, buttonLabel) || other.buttonLabel == buttonLabel));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,startDate,dayCount,formattedStartDate,formattedDisplayText,buttonLabel);
+int get hashCode => Object.hash(runtimeType,startDate,dayCount,const DeepCollectionEquality().hash(_displayTextSegments),buttonLabel);
 
 @override
 String toString() {
-  return 'SplashState.data(startDate: $startDate, dayCount: $dayCount, formattedStartDate: $formattedStartDate, formattedDisplayText: $formattedDisplayText, buttonLabel: $buttonLabel)';
+  return 'SplashState.data(startDate: $startDate, dayCount: $dayCount, displayTextSegments: $displayTextSegments, buttonLabel: $buttonLabel)';
 }
 
 
@@ -252,7 +257,7 @@ abstract mixin class $SplashDataCopyWith<$Res> implements $SplashStateCopyWith<$
   factory $SplashDataCopyWith(SplashData value, $Res Function(SplashData) _then) = _$SplashDataCopyWithImpl;
 @useResult
 $Res call({
- DateTime startDate, int dayCount, String formattedStartDate, String formattedDisplayText, String buttonLabel
+ DateTime startDate, int dayCount, List<SplashTextSegment> displayTextSegments, String buttonLabel
 });
 
 
@@ -269,13 +274,12 @@ class _$SplashDataCopyWithImpl<$Res>
 
 /// Create a copy of SplashState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? startDate = null,Object? dayCount = null,Object? formattedStartDate = null,Object? formattedDisplayText = null,Object? buttonLabel = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? startDate = null,Object? dayCount = null,Object? displayTextSegments = null,Object? buttonLabel = null,}) {
   return _then(SplashData(
 startDate: null == startDate ? _self.startDate : startDate // ignore: cast_nullable_to_non_nullable
 as DateTime,dayCount: null == dayCount ? _self.dayCount : dayCount // ignore: cast_nullable_to_non_nullable
-as int,formattedStartDate: null == formattedStartDate ? _self.formattedStartDate : formattedStartDate // ignore: cast_nullable_to_non_nullable
-as String,formattedDisplayText: null == formattedDisplayText ? _self.formattedDisplayText : formattedDisplayText // ignore: cast_nullable_to_non_nullable
-as String,buttonLabel: null == buttonLabel ? _self.buttonLabel : buttonLabel // ignore: cast_nullable_to_non_nullable
+as int,displayTextSegments: null == displayTextSegments ? _self._displayTextSegments : displayTextSegments // ignore: cast_nullable_to_non_nullable
+as List<SplashTextSegment>,buttonLabel: null == buttonLabel ? _self.buttonLabel : buttonLabel // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }

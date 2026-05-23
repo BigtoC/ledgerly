@@ -1,7 +1,7 @@
 # Ledgerly
 
 Local-first Flutter expense tracker. Android-first, iOS supported. No bank
-sync, no sign-in, no cloud required for the MVP.
+sync, no sign-in, no cloud required — all data lives on the device.
 
 The authoritative spec is **[`PRD.md`](PRD.md)**. When this file and the
 PRD disagree, the PRD wins. The milestone sequencing lives in
@@ -13,9 +13,22 @@ PRD disagree, the PRD wins. The milestone sequencing lives in
 
 ## Status
 
-M5 complete — all six feature slices (Splash, Home, Transactions, Categories,
-Analysis, Settings) plus Wave 4 integration are on `main`. M6 (integration
-polish, a11y, release prep) is next.
+**MVP complete.** All six feature slices (Splash, Home, Transactions,
+Categories, Analysis, Settings) are on `main`, and several Phase 2 slices
+have shipped on top of the MVP: recurring transactions + pending approval,
+transaction search, extended multi-currency conversion with cached
+exchange rates, charts (pie + daily bar with animations and interactive
+selection), chart slice drill-down with per-slice item lists, and a
+splash display-text redesign where the start date renders inline with
+a rainbow gradient. The active branch
+`feature/default-splash-page-display` adds the new default template
+`On {date} start using Ledgerly`, multi-line display-text input in
+Settings, and an auto-prepend guarantee so the date is always visible
+on the splash even if the user removes `{date}` from their template.
+
+Drift schema is at **v5** (`exchange_rates` added in v5;
+`recurring_rules` + `pending_transactions` added in v4). Snapshots are
+committed under `drift_schemas/`.
 
 ## User handbook
 
@@ -69,6 +82,15 @@ visual layout.
   date that matters to you.
 - If the splash screen is enabled but no start date is set yet, Ledgerly asks
   you to choose one.
+- A customizable display text appears below the day count. The default is
+  `On {date} start using Ledgerly`, where `{date}` renders inline with a
+  rainbow gradient (the day count number, the rainbow date, and the rest
+  of the text share one block). You can also use `{days}` to embed the
+  current day count in your text.
+- The display text supports multiple lines — press return inside the
+  Settings field to break across lines.
+- If you delete `{date}` from your custom template, Ledgerly automatically
+  shows the date in front of your text so the start date is never hidden.
 - Tap the enter button on the splash screen to continue to `Home`.
 - You can turn the splash screen off if you prefer opening directly to `Home`.
 
@@ -80,6 +102,10 @@ visual layout.
 - Review quick summary information for that day.
 - Move backward or forward between days.
 - Start adding a new transaction from the main flow.
+- A pending-approval section appears when recurring rules have generated
+  upcoming entries waiting for you to confirm or skip.
+- A search affordance lets you find historical transactions by memo,
+  category, or amount across the full history.
 
 #### Add / Edit Transaction
 
@@ -99,8 +125,33 @@ repeat entry.
 
 #### Analysis
 
-`Analysis` is a Phase 2 placeholder for spending charts and trends. In the MVP
-it shows a coming-soon message.
+`Analysis` visualizes how you spend.
+
+- A pie chart breaks down expenses by category for the selected period.
+- A daily bar chart shows day-over-day totals with smooth animations.
+- Tap a pie slice or a legend row to drill into that category: the bar
+  chart refilters and a per-slice list of matching transactions appears
+  below the charts. Each row supports tap-to-edit and swipe-to-delete
+  with a 4-second undo window.
+- Multi-currency totals are converted using cached exchange rates; the
+  app notifies you when it falls back to the last known rates older than
+  about an hour.
+
+#### Recurring transactions
+
+`Settings > Recurring` lets you set up rules that pre-fill upcoming
+transactions on a cadence (daily, weekly, monthly, etc.). Generated
+entries land in the pending section on `Home` for approval — nothing is
+written to your books until you accept. Skipping an occurrence rejects
+that single date with a 4-second undo window; the parent rule keeps
+running.
+
+#### Shopping list
+
+Quick-capture flow for groceries and errands. Add items as drafts in a
+dedicated list, then convert each draft into a real transaction with the
+amount and category locked in. Useful when you record purchases away
+from the till and want to settle the books later.
 
 #### Manage Accounts
 
@@ -128,9 +179,13 @@ Use `Settings` to personalize the app.
 - Change app language.
 - Choose the default currency.
 - Choose the default account.
+- Manage categories and accounts (with archive-instead-of-delete for
+  history-backed records).
+- Manage recurring transaction rules.
 - Enable or disable the splash screen.
-- Configure the splash day counter start date, display text, and enter button
-  label.
+- Configure the splash day counter start date, the multi-line display
+  text template (using `{date}` and `{days}` placeholders), and the
+  enter button label.
 
 ### Daily usage example
 
@@ -146,18 +201,21 @@ If you buy lunch with cash, a common flow looks like this:
 
 The entry then appears on `Home` for that day.
 
-### What Ledgerly does not do in the MVP
+### What Ledgerly does not do today
 
-Ledgerly intentionally stays focused. The MVP does **not** include:
+Ledgerly intentionally stays focused. The shipped product does **not**
+include:
 
 - bank sync
 - sign-in or cloud backup
 - budget planning
-- charts and analytics-heavy reporting
-- recurring automation
-- crypto wallet sync
+- crypto wallet sync (Phase 3 — pending blockchain transactions are
+  staged in `pending_transactions` but the sync flow is not wired up)
+- automatic categorization or AI memo suggestions
 
-That keeps the app fast, understandable, and centered on manual logging.
+Charts and recurring transactions, which were Phase 2 stretch goals,
+have now shipped. The app stays fast, understandable, and centered on
+manual logging.
 
 ## Prerequisites
 
@@ -210,25 +268,30 @@ lib/
   core/       # theme, utils (money_formatter, icon_registry, color_palette, date_helpers)
   data/       # database + tables, DAOs, services, repositories, Freezed models
   features/
-    splash/         # animated sun splash with day-count display
-    home/           # day-at-a-time transaction list with summary strip
+    splash/         # sun-themed splash with day count + inline rainbow {date}
+    home/           # day-at-a-time list with summary strip, search, pending section
     transactions/   # add/edit form with calculator keypad
     categories/     # category list + form sheet with icon/color pickers
-    analysis/       # Phase 2 placeholder (Analysis tab)
-    accounts/       # account list + form with currency/type pickers (opened from Settings)
-    settings/       # language, theme, default currency/account, splash toggle; Manage Accounts sheet
+    analysis/       # pie + daily bar charts with slice drill-down
+    accounts/       # account list + form (currency/type pickers; opened from Settings)
+    recurring/      # recurring-rule list/form; generates pending approvals on Home
+    shopping_list/  # draft-capture list that converts items into transactions
+    settings/       # language, theme, defaults, splash + recurring entry points
 l10n/         # Source ARB files (app_en, app_zh, app_zh_CN, app_zh_TW)
 test/
   unit/       # services / repositories / controllers / utils
   widget/     # widget + golden tests
   integration/
-drift_schemas/ # Committed schema snapshots per schemaVersion (v1, v2)
+  support/    # shared in-memory DB + ProviderContainer fixtures
+drift_schemas/ # Committed schema snapshots per schemaVersion (v1 – v5)
 assets/
-  splash/     # Splash assets (sun-themed asset lands in M6)
+  splash/     # Sun-themed splash background image (shipped)
 ```
 
-MVP has no `lib/domain/`; that directory is Phase 2 only, for use-case
-orchestration across repositories.
+Cross-repository orchestration lives in `lib/data/use_cases/` (e.g.
+`RecurringGenerationUseCase`). PRD reserves a dedicated `lib/domain/`
+layer for further Phase 2/3 work; until then, use cases sit inside the
+data layer alongside repositories.
 
 ## Architecture guardrails
 
@@ -244,15 +307,19 @@ PRD → Architecture for the full table. Headlines:
 - Money is stored as integer minor units end-to-end. `double` is only
   allowed inside `core/utils/money_formatter.dart`.
 
-`analysis_options.yaml` wires `flutter_lints`, `custom_lint`,
-`riverpod_lint`, and `import_lint`; CI fails any PR that violates the
-layer-boundary rules.
+`analysis_options.yaml` wires `flutter_lints`, `custom_lint`, and
+`riverpod_lint`. The pinned `import_lint ^0.1.6` reads its layer-boundary
+rules from `import_analysis_options.yaml` at the repo root (separate
+file because that version uses a regex schema, not the 2.x globs). CI
+fails any PR that violates the layer-boundary rules.
 
 ## Contributing
 
-PRs must be green on the CI workflow at `.github/workflows/ci.yml`
-(analysis, lint, codegen, tests, Android debug build). iOS runs nightly
-via `.github/workflows/ios-nightly.yml`.
+PRs must be green on `.github/workflows/check.yml` (analysis, lint,
+codegen, tests, Android debug build). iOS runs nightly via
+`.github/workflows/ios-nightly.yml`. The website has its own
+`.github/workflows/site-check.yml`; release artifacts ship through
+`.github/workflows/android-release.yml`.
 
 ## Reference:
 - Color codes: https://m3.material.io/styles/color/static/baseline#c9263303-f4ef-4a33-ad57-7d91dc736b6b

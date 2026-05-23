@@ -97,4 +97,104 @@ void main() {
       expect(out, '100/100 (Jan 1, 2026)');
     });
   });
+
+  // Segmented substitution: same template grammar as applySplashTemplate, but
+  // returns `List<SplashTextSegment>` where date spans are marked so the
+  // splash widget can apply a rainbow gradient ONLY to the date portion (the
+  // standalone rainbow-date Text widget has been removed; the gradient now
+  // lives inline within the display text).
+  group('splash template substitution — segments', () {
+    final startDate = DateTime(2026, 1, 1);
+    final now = DateTime(2026, 4, 11); // 100 days later
+
+    test(
+      'G01: default template yields three segments with rainbow on date',
+      () {
+        final segs = DateHelpers.applySplashTemplateSegments(
+          template: 'On {date} start using Ledgerly',
+          startDate: startDate,
+          now: now,
+          locale: 'en_US',
+        );
+        expect(segs, <SplashTextSegment>[
+          (text: 'On ', isDate: false),
+          (text: 'Jan 1, 2026', isDate: true),
+          (text: ' start using Ledgerly', isDate: false),
+        ]);
+      },
+    );
+
+    test('G02: {days} substitutes inline as plain text, {date} as rainbow', () {
+      final segs = DateHelpers.applySplashTemplateSegments(
+        template: '{days} days since {date}',
+        startDate: startDate,
+        now: now,
+        locale: 'en_US',
+      );
+      expect(segs, <SplashTextSegment>[
+        (text: '100 days since ', isDate: false),
+        (text: 'Jan 1, 2026', isDate: true),
+      ]);
+    });
+
+    test('G03: template with no placeholders returns single plain segment', () {
+      final segs = DateHelpers.applySplashTemplateSegments(
+        template: 'My budget',
+        startDate: startDate,
+        now: now,
+        locale: 'en_US',
+      );
+      expect(segs, <SplashTextSegment>[(text: 'My budget', isDate: false)]);
+    });
+
+    test('G04: empty template returns empty segment list', () {
+      final segs = DateHelpers.applySplashTemplateSegments(
+        template: '',
+        startDate: startDate,
+        now: now,
+        locale: 'en_US',
+      );
+      expect(segs, isEmpty);
+    });
+
+    test('G05: repeated {date} marks every occurrence as rainbow', () {
+      final segs = DateHelpers.applySplashTemplateSegments(
+        template: '{date} and {date}',
+        startDate: startDate,
+        now: now,
+        locale: 'en_US',
+      );
+      expect(segs, <SplashTextSegment>[
+        (text: 'Jan 1, 2026', isDate: true),
+        (text: ' and ', isDate: false),
+        (text: 'Jan 1, 2026', isDate: true),
+      ]);
+    });
+
+    test('G06: leading {date} drops the empty plain prefix', () {
+      final segs = DateHelpers.applySplashTemplateSegments(
+        template: '{date} note',
+        startDate: startDate,
+        now: now,
+        locale: 'en_US',
+      );
+      expect(segs, <SplashTextSegment>[
+        (text: 'Jan 1, 2026', isDate: true),
+        (text: ' note', isDate: false),
+      ]);
+    });
+
+    test('G07: trailing {date} drops the empty plain suffix', () {
+      final segs = DateHelpers.applySplashTemplateSegments(
+        template: 'Since {date}',
+        startDate: startDate,
+        now: now,
+        locale: 'en_US',
+      );
+      expect(segs, <SplashTextSegment>[
+        (text: 'Since ', isDate: false),
+        (text: 'Jan 1, 2026', isDate: true),
+      ]);
+    });
+  });
 }

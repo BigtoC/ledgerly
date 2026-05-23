@@ -365,8 +365,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsManageCategories => 'Manage categories';
 
   @override
-  String get settingsSplashDisplayTextHint =>
-      'Use [date] and [days] as placeholders';
+  String settingsSplashDisplayTextHint(String dateToken, String daysToken) {
+    return 'Use $dateToken and $daysToken as placeholders';
+  }
 
   @override
   String get txAddTitle => 'Add transaction';
@@ -1297,7 +1298,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get settingsManageCategories => '管理分类';
 
   @override
-  String get settingsSplashDisplayTextHint => '可使用 [date] 与 [days] 作为变量';
+  String settingsSplashDisplayTextHint(String dateToken, String daysToken) {
+    return '可使用 $dateToken 与 $daysToken 作为变量';
+  }
 
   @override
   String get txAddTitle => '新增交易';
@@ -2200,7 +2203,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get settingsManageCategories => '管理分類';
 
   @override
-  String get settingsSplashDisplayTextHint => '可使用 [date] 與 [days] 作為變數';
+  String settingsSplashDisplayTextHint(String dateToken, String daysToken) {
+    return '可使用 $dateToken 與 $daysToken 作為變數';
+  }
 
   @override
   String get txAddTitle => '新增交易';

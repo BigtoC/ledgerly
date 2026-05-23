@@ -13,6 +13,7 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
+import 'package:ledgerly/core/utils/date_helpers.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/features/splash/splash_controller.dart';
 import 'package:ledgerly/features/splash/splash_screen.dart';
@@ -115,8 +116,11 @@ void main() {
               SplashState.data(
                 startDate: startDate,
                 dayCount: 100,
-                formattedStartDate: 'Jan 1, 2026',
-                formattedDisplayText: 'Since Jan 1, 2026',
+                displayTextSegments: const <SplashTextSegment>[
+                  (text: 'On ', isDate: false),
+                  (text: 'Jan 1, 2026', isDate: true),
+                  (text: ' start using Ledgerly', isDate: false),
+                ],
                 buttonLabel: 'Enter',
               ),
             ),
@@ -130,10 +134,22 @@ void main() {
 
       expect(find.byType(SplashDayCount), findsOneWidget);
       expect(find.text('100'), findsOneWidget);
+      // Exactly one inline rainbow date span — the standalone gradient-date
+      // widget that used to sit above the display text was removed when the
+      // date became part of the segmented display text.
       expect(find.byType(SplashRainbowGradientText), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(SplashRainbowGradientText),
+          matching: find.text('Jan 1, 2026'),
+        ),
+        findsOneWidget,
+      );
+      // The plain surrounding text (rendered via Text.rich) flanks the date.
+      expect(find.textContaining('On '), findsOneWidget);
+      expect(find.textContaining('start using Ledgerly'), findsOneWidget);
       expect(find.byType(SplashEnterButton), findsOneWidget);
       expect(find.text('Enter'), findsOneWidget);
-      expect(find.text('Since Jan 1, 2026'), findsOneWidget);
     },
   );
 
@@ -190,8 +206,11 @@ void main() {
             SplashState.data(
               startDate: startDate,
               dayCount: 100,
-              formattedStartDate: 'Jan 1, 2026',
-              formattedDisplayText: 'Since Jan 1, 2026',
+              displayTextSegments: const <SplashTextSegment>[
+                (text: 'On ', isDate: false),
+                (text: 'Jan 1, 2026', isDate: true),
+                (text: ' start using Ledgerly', isDate: false),
+              ],
               buttonLabel: 'Enter',
             ),
           ),
@@ -227,8 +246,11 @@ void main() {
             SplashState.data(
               startDate: startDate,
               dayCount: 100,
-              formattedStartDate: 'Jan 1, 2026',
-              formattedDisplayText: 'Since Jan 1, 2026',
+              displayTextSegments: const <SplashTextSegment>[
+                (text: 'On ', isDate: false),
+                (text: 'Jan 1, 2026', isDate: true),
+                (text: ' start using Ledgerly', isDate: false),
+              ],
               buttonLabel: 'Enter',
             ),
           ),
