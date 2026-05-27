@@ -2,6 +2,70 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
+
+**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+
+## 1. Think Before Coding
+
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+## 2. Simplicity First
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+## 3. Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
+
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: Every changed line should trace directly to the user's request.
+
+## 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+
+---
+
+**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+
 ## Project Status
 
 Ledgerly is a local-first Flutter expense tracker. **MVP is complete** and several Phase 2 slices have shipped on `main`: recurring transactions + pending approval on Home (2026-05-08), transaction search (2026-05-10), extended multi-currency conversion (2026-05-17), basic charts — pie + daily bar with animations and interactive selection (2026-05-20), and chart slice drill-down (2026-05-22). The active branch `feature/default-splash-page-display` (2026-05-23) reworks the splash display text: the default template is now `'On {date} start using Ledgerly'`, the `{date}` substitution renders inline with the rainbow gradient (the standalone gradient-date widget has been removed so the date never appears twice), and `SplashController._resolveTemplate` auto-prepends `{date} ` to any user-entered template that lacks it so the start date is always visible. `DateHelpers.applySplashTemplateSegments` returns `List<SplashTextSegment>` so the widget can style date spans independently from surrounding plain text. Selection on the chart drill-down is hoisted into a typed `SelectedSlice` (sealed: category | account | currency) on `ChartsSelectionController`; the data layer stays filter-based — `ChartsController` translates the active selection into plain `{categoryId, accountId, currencyCode}` filters before calling the repository. Drift schema is at **v5** (`exchange_rates` table added in v5; `recurring_rules` + `pending_transactions` were introduced in v4); snapshots live in `drift_schemas/`. Neither the drill-down nor the splash-text slice changed the schema. Wave planning for the M5 slice set lives in [`docs/plans/m5-ui-feature-slices/`](docs/plans/m5-ui-feature-slices/); newer Phase 2 plans live in [`docs/superpowers/plans/`](docs/superpowers/plans/). The spec in [`PRD.md`](PRD.md) is the authoritative source of truth — read it before making any architectural or data-model decision. Earlier design thinking lives in `docs/superpowers/specs/` but has been superseded by `PRD.md` wherever they conflict.
