@@ -20,11 +20,10 @@ transaction search, extended multi-currency conversion with cached
 exchange rates, charts (pie + daily bar with animations and interactive
 selection), chart slice drill-down with per-slice item lists, and a
 splash display-text redesign where the start date renders inline with
-a rainbow gradient. The active branch
-`feature/default-splash-page-display` adds the new default template
-`On {date} start using Ledgerly`, multi-line display-text input in
-Settings, and an auto-prepend guarantee so the date is always visible
-on the splash even if the user removes `{date}` from their template.
+a rainbow gradient. The default template is now `On {date} start using
+Ledgerly`, with multi-line display-text input in Settings and an
+auto-prepend guarantee so the date is always visible on the splash even
+if the user removes `{date}` from their template.
 
 Drift schema is at **v5** (`exchange_rates` added in v5;
 `recurring_rules` + `pending_transactions` added in v4). Snapshots are
@@ -209,13 +208,16 @@ include:
 - bank sync
 - sign-in or cloud backup
 - budget planning
-- crypto wallet sync (Phase 3 — pending blockchain transactions are
-  staged in `pending_transactions` but the sync flow is not wired up)
+- crypto wallet sync (the `pending_transactions` table supports
+  blockchain-source rows, but the sync flow and wallet management UI
+  are not implemented)
+- CSV import/export
+- account transfers or credit-card payoff flows
 - automatic categorization or AI memo suggestions
 
-Charts and recurring transactions, which were Phase 2 stretch goals,
-have now shipped. The app stays fast, understandable, and centered on
-manual logging.
+Charts, recurring transactions, and multi-currency conversion, which
+were Phase 2 stretch goals, have now shipped. The app stays fast,
+understandable, and centered on manual logging.
 
 ## Prerequisites
 
@@ -266,21 +268,23 @@ time and falls back to the Releases page when release metadata is unavailable.
 lib/
   app/        # bootstrap, router, MaterialApp, providers
   core/       # theme, utils (money_formatter, icon_registry, color_palette, date_helpers)
-  data/       # database + tables, DAOs, services, repositories, Freezed models
+  data/       # database + tables, DAOs, services, repositories, Freezed models, use_cases
   features/
     splash/         # sun-themed splash with day count + inline rainbow {date}
     home/           # day-at-a-time list with summary strip, search, pending section
     transactions/   # add/edit form with calculator keypad
     categories/     # category list + form sheet with icon/color pickers
-    analysis/       # pie + daily bar charts with slice drill-down
+    analysis/       # charts (pie + bar with drill-down) + memo search
+      charts/       # ChartsSection, pie/bar/legend/period/dimension/toggle widgets
+      search/       # SearchBar-based transaction search + category detail
     accounts/       # account list + form (currency/type pickers; opened from Settings)
     recurring/      # recurring-rule list/form; generates pending approvals on Home
     shopping_list/  # draft-capture list that converts items into transactions
-    settings/       # language, theme, defaults, splash + recurring entry points
+    settings/       # language, theme, defaults, splash + recurring entry points, about
 l10n/         # Source ARB files (app_en, app_zh, app_zh_CN, app_zh_TW)
 test/
   unit/       # services / repositories / controllers / utils
-  widget/     # widget + golden tests
+  widget/     # widget + golden tests (organized by feature)
   integration/
   support/    # shared in-memory DB + ProviderContainer fixtures
 drift_schemas/ # Committed schema snapshots per schemaVersion (v1 – v5)
