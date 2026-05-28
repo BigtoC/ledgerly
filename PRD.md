@@ -14,11 +14,11 @@ Ledgerly is a local-first mobile expense tracker built with Flutter. It is aimed
 
 ---
 
-## Project Status (as of 2026-05-22)
+## Project Status (as of 2026-05-27)
 
 **MVP — Complete.** All MVP features have shipped: manual entry, seeded + custom categories, multi-account / multi-currency, shopping list drafts, splash screen, theming, l10n.
 
-**Phase 2 — In progress.** Shipped slices on `main`: **Recurring transactions** + Home pending approval (2026-05-08; see [`recurring_rules`](#recurring_rules-phase-2--shipped-2026-05-08) table), **Transaction search** (2026-05-10), **Extended multi-currency conversion** (2026-05-17), **Basic charts** — pie + daily bar (2026-05-20). The active branch `feature/pie-chart-category-selector-item-list` adds **chart slice drill-down** (2026-05-22): coordinated pie/legend/bar selection plus a per-slice items list with edit, delete + 4 s undo, FX-converted/original amount split, and stale-rate notice — implementation lives entirely in the analysis layer (sealed `SelectedSlice` selection identity; `ChartsController` translates it into plain repository filters), so the data layer's schema and contracts are unchanged. Remaining Phase 2 work: wallet sync (Ankr integration), CSV import, credit-card / transfer flows.
+**Phase 2 — In progress.** Shipped slices on `main`: **Recurring transactions** + Home pending approval (2026-05-08; see [`recurring_rules`](#recurring_rules-phase-2--shipped-2026-05-08) table), **Transaction search** (2026-05-10), **Extended multi-currency conversion** (2026-05-17), **Basic charts** — pie + daily bar (2026-05-20), **Chart slice drill-down** (2026-05-22) — coordinated pie/legend/bar selection plus a per-slice items list with edit, delete + 4 s undo, FX-converted/original amount split, and stale-rate notice. Selection identity lives in the analysis layer as a sealed `SelectedSlice` (category | account | currency); the repository boundary stays filter-based via `{categoryId, accountId, currencyCode}` arguments. Remaining Phase 2 work: wallet sync (Ankr integration), CSV import, credit-card / transfer flows.
 
 Inline `# Phase 2` annotations throughout the rest of the document mark code paths and surfaces that have **not** yet shipped. The recurring-rules slice is the canonical example of how a Phase 2 feature lands: data layer first (DAOs, repos, migration), then a use case in `lib/data/use_cases/` (Phase 2's `domain/` layer is reserved for cross-feature orchestration), then UI.
 
@@ -43,10 +43,10 @@ Inline `# Phase 2` annotations throughout the rest of the document mark code pat
 - **[Shipped 2026-05-08] Recurring transactions** — auto-generate pending transactions for user approval on a daily/weekly/monthly/yearly schedule. Rule management UI lives at `/settings/recurring`. Approval UI on Home is the next Phase 2 milestone.
 - **[Shipped 2026-05-08] Pending-row approval on Home** — the inline approve/skip affordance for recurring (and later blockchain) pending rows. Repository + use case shipped in the recurring slice; Home UI extension is next.
 - **[Shipped 2026-05-20]** Basic charts (pie, bar)
-- **[Complete on `feature/pie-chart-category-selector-item-list` 2026-05-22]** Chart slice drill-down — tap a pie slice or legend row to refilter the bar chart and render a per-slice items list (tap-to-edit, action-tap delete + 4 s undo, FX-converted primary amount beside original booked amount, "using last known exchange rates" notice when cached rates exceed 1 h). Selection identity lives in the analysis layer as a sealed `SelectedSlice` (category | account | currency); the repository boundary stays filter-based via `{categoryId, accountId, currencyCode}` arguments. Plan: [`docs/superpowers/plans/2026-05-22-chart-slice-drilldown.md`](docs/superpowers/plans/2026-05-22-chart-slice-drilldown.md).
-- [Pending] Fortune City CSV import
+- **[Shipped 2026-05-22]** Chart slice drill-down — tap a pie slice or legend row to refilter the bar chart and render a per-slice items list (tap-to-edit, action-tap delete + 4 s undo, FX-converted primary amount beside original booked amount, "using last known exchange rates" notice when cached rates exceed 1 h). Selection identity lives in the analysis layer as a sealed `SelectedSlice` (category | account | currency); the repository boundary stays filter-based via `{categoryId, accountId, currencyCode}` arguments.
 - **[Shipped 2026-05-10]** Transaction search
 - **[Shipped 2026-05-17]** Extended multi-currency — fetch currency prices and auto-convert balances, summaries, and charts to the user's default currency
+- [Pending] Fortune City CSV import
 
 ### Phase 3
 - **[Pending]** Detailed monthly summary
@@ -119,6 +119,16 @@ lib/
     app.dart                 # MaterialApp, root ProviderScope
     router.dart              # go_router configuration
     bootstrap.dart           # Async init sequence, provider overrides
+    providers/
+      app_database_provider.dart
+      repository_providers.dart
+      theme_provider.dart
+      locale_provider.dart
+      locale_service_provider.dart
+      default_currency_provider.dart
+      splash_redirect_provider.dart
+    widgets/
+      adaptive_shell.dart    # 600dp nav switch (NavigationBar ↔ NavigationRail)
   core/
     l10n/
     theme/
@@ -140,9 +150,9 @@ lib/
         currencies_table.dart
         user_preferences_table.dart
         shopping_list_items_table.dart
-        pending_transactions_table.dart    # Phase 2
-        wallet_addresses_table.dart        # Phase 2
-        exchange_rates_table.dart          # Phase 2
+        recurring_rules_table.dart
+        pending_transactions_table.dart
+        exchange_rates_table.dart
       daos/
         transaction_dao.dart
         category_dao.dart
@@ -151,14 +161,12 @@ lib/
         currency_dao.dart
         user_preferences_dao.dart
         shopping_list_dao.dart
-        pending_transaction_dao.dart       # Phase 2
-        wallet_address_dao.dart            # Phase 2
-        exchange_rate_dao.dart             # Phase 2
+        recurring_rule_dao.dart
+        pending_transaction_dao.dart
+        exchange_rate_dao.dart
     services/
       locale_service.dart
-      ankr_service.dart                    # Phase 2
-      exchange_rate_service.dart           # Phase 2
-      secure_storage_service.dart          # Phase 2
+      exchange_rate_service.dart    # Dio-based HTTP client for FX rates
     repositories/
       transaction_repository.dart
       category_repository.dart
@@ -167,12 +175,14 @@ lib/
       currency_repository.dart
       user_preferences_repository.dart
       shopping_list_repository.dart
-      pending_transaction_repository.dart  # Phase 2
-      wallet_address_repository.dart       # Phase 2
-      exchange_rate_repository.dart        # Phase 2
-      api_key_repository.dart              # Phase 2
+      recurring_rules_repository.dart
+      pending_transaction_repository.dart
+      exchange_rate_repository.dart
+      repository_exceptions.dart
     seed/                                  # First-run seed orchestration
       first_run_seed.dart
+    use_cases/
+      recurring_generation_use_case.dart   # Cold-start recurring rule engine
     models/                                # Freezed domain models
       transaction.dart
       category.dart
@@ -180,36 +190,93 @@ lib/
       account.dart
       currency.dart
       shopping_list_item.dart
-      pending_transaction.dart             # Phase 2
-      wallet_address.dart                  # Phase 2
-      exchange_rate.dart                   # Phase 2
-  domain/                                  # Phase 2 — use cases
-    wallet_sync_use_case.dart
-    approve_pending_transaction_use_case.dart
-    reject_pending_transaction_use_case.dart
+      recurring_rule.dart
+      recurring_rule_draft.dart
+      pending_transaction.dart
+      category_slice.dart
+      account_slice.dart
+      currency_slice.dart
+      time_bucket_slice.dart
   features/
     splash/
       splash_screen.dart
       splash_controller.dart
       splash_state.dart
+      widgets/
+        splash_sun_background.dart
+        splash_day_count.dart
+        splash_rainbow_gradient_text.dart
+        splash_enter_button.dart
     home/
       home_screen.dart
       home_controller.dart
       home_state.dart
+      home_providers.dart
+      pending_controller.dart
+      pending_state.dart
+      widgets/
+        summary_strip.dart
+        day_navigation_header.dart
+        transaction_tile.dart
+        pending_section.dart
+        pending_badge.dart
     transactions/
       transaction_form_screen.dart
       transaction_form_controller.dart
       transaction_form_state.dart
-    pending_transactions/                  # Phase 2
-      pending_transactions_screen.dart
-      pending_transactions_controller.dart
-      pending_transactions_state.dart
+      transactions_providers.dart
+      keypad_state.dart
+      widgets/
+        calculator_keypad.dart
+        category_chip.dart
+        account_selector_tile.dart
+        account_picker_sheet.dart
+        currency_selector_tile.dart
+        currency_picker_sheet.dart
+        date_field.dart
+        memo_field.dart
+        amount_display.dart
+        transaction_type_segmented_control.dart
     categories/
       categories_screen.dart
       categories_controller.dart
       categories_state.dart
+      widgets/
+        category_tile.dart
+        category_display.dart
+        category_form_sheet.dart
+        category_picker.dart
+        category_icon_picker.dart
+        category_color_picker.dart
     analysis/
       analysis_screen.dart
+      charts/
+        charts_section.dart
+        charts_controller.dart
+        charts_state.dart
+        charts_providers.dart
+        charts_selection_controller.dart
+        selected_slice.dart
+        slice_drilldown_controller.dart
+        slice_drilldown_data.dart
+        widgets/
+          category_pie_chart.dart
+          daily_bar_chart.dart
+          chart_legend.dart
+          period_selector.dart
+          type_toggle.dart
+          dimension_toggle.dart
+          selected_slice_items_list.dart
+      search/
+        analysis_controller.dart
+        analysis_state.dart
+        analysis_providers.dart
+        category_search_detail_screen.dart
+        category_search_detail_controller.dart
+        category_search_detail_state.dart
+        widgets/
+          category_search_tile.dart
+          transaction_search_row.dart
     accounts/
       account_form_screen.dart
       accounts_controller.dart
@@ -226,26 +293,50 @@ lib/
       shopping_list_state.dart
       shopping_list_providers.dart
       shopping_list_item_labels.dart
-    wallets/                               # Phase 2
-      wallets_screen.dart
-      wallets_controller.dart
-      wallets_state.dart
+    recurring/
+      recurring_rules_screen.dart
+      recurring_rules_controller.dart
+      recurring_rules_state.dart
+      recurring_rules_providers.dart
+      recurring_rule_form_screen.dart
+      recurring_rule_form_controller.dart
+      recurring_rule_form_state.dart
     settings/
       settings_screen.dart
       settings_controller.dart
       settings_state.dart
+      settings_providers.dart
+      about_screen.dart
       widgets/
         manage_accounts_sheet.dart   # adaptive sheet/dialog for account management
         manage_accounts_tile.dart    # Settings list tile that opens the sheet
+        splash_settings_section.dart
+        settings_section.dart
+        theme_mode_selector.dart
+        language_selector.dart
+        default_currency_tile.dart
+        default_currency_picker_sheet.dart
+        manage_categories_tile.dart
 test/
   unit/
     services/
     repositories/
-    use_cases/                             # Phase 2
+    use_cases/
     controllers/
     utils/
   widget/
+    features/
+      analysis/
+      home/
+      transactions/
+      recurring/
+      accounts/
+      categories/
+      settings/
+      shopping_list/
+      splash/
   integration/
+  support/    # shared in-memory DB + ProviderContainer fixtures
 l10n/
   app_en.arb
   app_zh.arb            # Base Chinese fallback (required by flutter_localizations)
@@ -276,7 +367,9 @@ l10n/
 | Domain models     | Freezed + json_annotation                   |
 | i18n              | flutter_localizations + intl                |
 | Code generation   | build_runner, drift_dev, riverpod_generator |
-| UI components     | flutter_slidable                            |
+| UI components     | flutter_slidable, material_symbols_icons    |
+| Charts            | fl_chart                                    |
+| HTTP client       | Dio (exchange-rate fetching)                |
 | Native splash     | flutter_native_splash                       |
 | Testing           | mocktail, Drift in-memory DB                |
 
@@ -396,21 +489,24 @@ Notes:
 - Accounts with existing transactions can be archived but not hard-deleted.
 - Transfers, reconciliation, and credit-card payoff flows are deferred to Phase 2.
 
-### exchange_rates (Phase 2)
+### exchange_rates (Phase 2 — shipped 2026-05-17)
 
-| Column           | Type     | Constraints                          |
-|------------------|----------|--------------------------------------|
-| id               | INTEGER  | PRIMARY KEY AUTO                     |
-| base_currency    | TEXT     | NOT NULL REFERENCES currencies(code) |
-| quote_currency   | TEXT     | NOT NULL REFERENCES currencies(code) |
-| rate_numerator   | INTEGER  | NOT NULL                             |
-| rate_denominator | INTEGER  | NOT NULL                             |
-| fetched_at       | DATETIME | NOT NULL                             |
-| provider         | TEXT     | NOT NULL                             |
+| Column         | Type     | Constraints                               |
+|----------------|----------|-------------------------------------------|
+| id             | INTEGER  | PRIMARY KEY AUTO                          |
+| base_currency  | TEXT     | NOT NULL REFERENCES currencies(code)      |
+| quote_currency | TEXT     | NOT NULL REFERENCES currencies(code)      |
+| rate_scaled_e9 | INTEGER  | NOT NULL — `round(rate × 10⁹)`, CHECK > 0 |
+| fetched_at     | DATETIME | NOT NULL                                  |
+
+Indexes:
+- `idx_exchange_rates_pair (base_currency, quote_currency)` UNIQUE — one row per currency pair.
 
 Notes:
-- Rate is stored as an integer fraction (`numerator / denominator`) to preserve precision when applied to integer minor-unit amounts. Provider-native rate strings parse cleanly into this form.
+- Rate is stored as `rate_scaled_e9` = `round(rate × 10⁹)`, which fits any fiat rate comfortably in int64 (max representable rate ≈9.2×10⁹). A fixed scale is used rather than a numerator/denominator fraction because the API returns rates as `double` — the fraction representation would not preserve information already lost at parse time.
+- Stores forward rates only (foreign → default currency); no inverse rows. UI always looks up the foreign→default direction.
 - Original transaction and account amounts remain unchanged; conversion is additive display data.
+- See `lib/data/services/exchange_rate_service.dart` for the HTTP client and `lib/data/repositories/exchange_rate_repository.dart` for persistence/refresh orchestration.
 
 ### pending_transactions (Phase 2)
 
@@ -548,8 +644,10 @@ Notes:
 ### Migration Strategy
 
 - MVP ships with `schemaVersion = 1`. All MVP tables (`currencies`, `transactions`, `categories`, `accounts`, `user_preferences`) exist at v1.
-- Shopping list additions (`shopping_list_items`) bump to `schemaVersion = 3` via `MigrationStrategy.onUpgrade`.
-- Phase 2 additions (`pending_transactions`, `wallet_addresses`, `exchange_rates`, plus token rows seeded into `currencies`) bump to `schemaVersion = 4` (previously 2; renumbered when shopping list landed) via `MigrationStrategy.onUpgrade`.
+- v2 adds `currencies.custom_name` column.
+- v3 adds `shopping_list_items` table.
+- v4 adds `recurring_rules` and `pending_transactions` tables, plus the partial UNIQUE index `idx_pending_recurring_unique_partial`.
+- v5 adds `exchange_rates` table for multi-currency conversion.
 - Each schema version has a committed snapshot in `drift_schemas/` (generated via `drift_dev schema dump`).
 - Migrations are tested by generating every historical schema and running the upgrade path on both an empty DB and a seeded DB (see Testing Strategy → Repository Tests).
 - Breaking schema changes (column type swaps, table splits) require a new version + a documented data-transform step — never rewrite existing migrations in place.
@@ -668,7 +766,9 @@ Day counter label and "Enter" button label need entries in all three ARB files. 
 
 ---
 
-## Wallet Transaction Sync (Phase 2)
+## Wallet Transaction Sync (Phase 2 — not yet implemented)
+
+> **Status:** This section describes the planned wallet sync feature. None of the code paths described here (`wallet_addresses` table, `ankr_service.dart`, `wallet_address_repository.dart`, `api_key_repository.dart`, `wallets/` feature) exist in the codebase yet. The `pending_transactions` table is ready for this feature (blockchain source rows), but the sync flow and wallet management UI are not implemented.
 
 ### Overview
 
@@ -745,20 +845,23 @@ Navigation uses `go_router` with a `StatefulShellRoute` for the bottom navigatio
 ```text
 /                           redirect → /splash if splash_enabled else /home
 /splash                     Day counter screen
+/splash/preview             Splash preview (from Settings, top-level, fade transition)
 ShellRoute (bottom nav)
   /home                     Home tab
     /home/add               Add Transaction (modal push)
     /home/edit/:id          Edit Transaction (modal push)
-    /home/pending           Pending Transactions (Phase 2)
     /home/shopping-list     Shopping list screen
     /home/shopping-list/:itemId  Edit draft (modal, root navigator)
-  /analysis                 Analysis tab (Phase 2 placeholder)
+  /analysis                 Analysis tab (charts + search)
+    /analysis/search/:categoryId  Category search detail (requires q + c query params)
   /settings                 Settings tab
     /settings/categories    Manage Categories
+    /settings/about         About screen (modal push, root navigator)
     /settings/manage-accounts/new     New Account
     /settings/manage-accounts/:id     Edit Account
-    /settings/wallets       Wallet Management (Phase 2)
-    /settings/ankr-key      Ankr API Key (Phase 2)
+    /settings/recurring     Recurring rules list
+    /settings/recurring/new New recurring rule (modal push)
+    /settings/recurring/:id Edit recurring rule (modal push)
 ```
 
 - Add/Edit Transaction is a full-screen modal push (`MaterialPage` / `CupertinoPage`) so the calculator keypad has full vertical space.
@@ -767,6 +870,8 @@ ShellRoute (bottom nav)
 - The Home shopping-cart FAB is the only entry point to `ShoppingListScreen`; there is no ShoppingListCard on the Analysis tab.
 - Splash → Home transition uses a fade `CustomTransitionPage` to preserve the hnotes-style reveal.
 - Root `redirect:` reads `splash_enabled` from `user_preferences`; no splash route is visited when disabled.
+- Pending transactions are reviewed inline on Home via `PendingSection` — there is no standalone pending-transactions route. The pending badge on Home triggers an inline expansion.
+- Recurring rule management lives at `/settings/recurring` with create/edit routes pushed modally.
 
 ---
 
@@ -791,16 +896,15 @@ ShellRoute (bottom nav)
 ### Screens
 
 1. **Splash Screen** — Day counter with hnotes-style visual design, tap to enter Home
-2. **Home Screen** — Compact summary strip grouped by currency in MVP (`Today expense`, `Today income`, `Month net` per currency); Phase 2 can also show auto-converted totals in `default_currency`. Below the strip, the transaction list shows **one day at a time**, with prev/next day navigation to walk through days that have activity (empty gap days are skipped). Today is the default day on cold start. Empty-state CTA, FAB to add transaction, pending transaction badge (Phase 2).
+2. **Home Screen** — Compact summary strip grouped by currency (`Today expense`, `Today income`, `Month net` per currency); auto-converted totals in `default_currency` when exchange rates are available. Below the strip, the transaction list shows **one day at a time**, with prev/next day navigation to walk through days that have activity (empty gap days are skipped). Today is the default day on cold start. Empty-state CTA, FAB to add transaction, inline pending-approval section for recurring rules.
 3. **Add/Edit Transaction** — Expense/Income segmented control, calculator-style keypad for amount, category picker (icon grid), account selector with currency indicator, date picker, memo field for optional free-form detail, save; delete only in edit mode. In add mode, an inline "Add to shopping list" action below the memo field captures the current form state as a draft and returns to the caller without creating a transaction.
-4. **Analysis Screen** — Phase 2 placeholder for spending analysis and charts. Account management has moved to Settings > Manage Accounts.
+4. **Analysis Screen** — Memo-based transaction search with SearchBar. Below the search bar, the ChartsSection renders pie + daily bar charts with period/type/dimension toggles, coordinated selection via `SelectedSlice`, and a per-slice items list with tap-to-edit and swipe-to-delete.
 4a. **Manage Accounts** (Settings > Manage Accounts, adaptive sheet/dialog) — Active accounts list with tracked balances in native currency. Add account, manage account types, set default account, archive account. Opened via the ManageAccountsTile in Settings. New and edit routes are `/settings/manage-accounts/new` and `/settings/manage-accounts/:id`.
 4b. **Shopping List Screen** (`/home/shopping-list`) — Full draft list sorted newest first. Accessed from the Home shopping-cart FAB. Swipe-delete or icon-button delete with a 4-second undo snackbar. Tapping a row opens the draft in the reused transaction form. Empty-state CTA opens `/home/add`. Delete is the only mutation on this screen; draft creation happens in `/home/add` only.
 5. **Categories Screen** — List categories grouped by expense/income, add/edit/reorder/archive
-6. **Settings Screen** — Theme toggle (light/dark), language selector, default account, default currency, manage categories, splash screen settings
-7. **Pending Transactions Screen** (Phase 2) — Review/approve/reject auto-generated transactions, accessible from Home badge and Settings
-8. **Wallet Management Screen** (Phase 2) — Add/edit/delete wallet addresses, linked accounts
-9. **Ankr API Key Screen** (Phase 2) — Enter/update API key stored via `ApiKeyRepository`
+6. **Settings Screen** — Theme toggle (light/dark), language selector, default account, default currency, manage categories, manage recurring rules, splash screen settings, about screen
+7. **Recurring Rules Screen** (`/settings/recurring`) — List of recurring rules with create/edit/archive. Create/edit form reuses transaction-form widgets for visual parity.
+8. **About Screen** (`/settings/about`) — App version, links, changelog
 
 ### Add/Edit Interaction Rules
 
@@ -817,11 +921,10 @@ ShellRoute (bottom nav)
 ### Screen States
 
 - **Splash:** shows day count when configured, date picker redirect when no start date set, skipped when disabled
-- **Home:** cold start pins the day to today and shows a skeleton row; `No transactions yet` empty state on first run; per-day empty card (`No transaction`) on a day with no activity when the user lands on a gap day; grouped summary chips when multiple currencies are present with a `Multiple currencies` note when more than 2 groups are present; `Jump to today` button appears when the selected day differs from today; undo snackbar after delete; pending transaction badge (Phase 2); prev/next advance by one calendar day; prev disables at the date-picker floor (year 1900), next disables at today
+- **Home:** cold start pins the day to today and shows a skeleton row; `No transactions yet` empty state on first run; per-day empty card (`No transaction`) on a day with no activity when the user lands on a gap day; grouped summary chips when multiple currencies are present with a `Multiple currencies` note when more than 2 groups are present; `Jump to today` button appears when the selected day differs from today; undo snackbar after delete; inline pending-approval section when recurring rules have generated entries; prev/next advance by one calendar day; prev disables at the date-picker floor (year 1900), next disables at today
 - **Add/Edit Transaction:** inline validation for missing amount/category/account, confirm-discard dialog, save-error snackbar
 - **Manage Accounts (Settings):** if no active account exists, show `Create account` CTA and block transaction save until one exists
 - **Categories:** if a type has no visible categories, show `Create category` CTA; used categories can be archived but not deleted
-- **Pending Transactions (Phase 2):** list with approve/reject actions, empty state when no pending items, grouped by source
 
 ### Primary User Flow (Recording an Expense)
 
@@ -880,8 +983,8 @@ App open → WalletsController.sync() → auto-fetch transfers for all configure
 
 - Used categories keep their current type forever; if a user needs a category under the opposite type, they create a new category instead
 - Archived accounts and categories are hidden from pickers but remain visible in management screens and historical records
-- MVP does not include pending recurring items, account transfers, or credit-card payoff flows
-- Wallet addresses can be deleted; associated pending transactions are also deleted, but approved transactions remain in the transactions table
+- Recurring rules use archive-instead-of-delete; existing pending items survive archival
+- Account transfers and credit-card payoff flows are deferred to Phase 2/3
 
 ### UX Decisions
 
@@ -890,8 +993,8 @@ App open → WalletsController.sync() → auto-fetch transfers for all configure
 - Home screen sorted newest-first by default
 - Home summary stays a single compact strip, not a dashboard of generic metric cards
 - Swipe-to-delete on transactions with undo snackbar
-- MVP summaries stay grouped by original currency; Phase 2 adds auto-converted totals in `default_currency` when rates are available
-- Pending transactions as a separate review screen rather than inline with confirmed transactions — keeps the main transaction list clean
+- Summaries show auto-converted totals in `default_currency` when exchange rates are available, with original-currency amounts preserved
+- Pending transactions reviewed inline on Home rather than a separate screen — keeps the main transaction list clean while making approval frictionless
 
 ---
 
@@ -1152,22 +1255,33 @@ Versions below are the tested resolvable set under Flutter **3.41.7** (Dart 3.11
 | `drift`                  | `^2.28.0`   | Database ORM                                                             |
 | `drift_flutter`          | `^0.2.7`    | Flutter SQLite integration                                               |
 | `path_provider`          | `^2.1.5`    | DB file path location                                                    |
-| `go_router`              | `^17.2.1`   | Navigation/routing (`StatefulShellRoute`)                                |
+| `go_router`              | `^17.2.2`   | Navigation/routing (`StatefulShellRoute`)                                |
 | `freezed_annotation`     | `^3.0.0`    | Immutable data model annotations                                         |
 | `json_annotation`        | `^4.9.0`    | JSON serialization annotations                                           |
 | `flutter_localizations`  | sdk         | i18n framework                                                           |
 | `intl`                   | `^0.20.2`   | Localization utilities + `NumberFormat`                                  |
 | `flutter_slidable`       | `^4.0.3`    | Swipe actions on list items                                              |
+| `material_symbols_icons` | `^4.2803.0` | Material Symbols icon font                                               |
+| `package_info_plus`      | `^8.3.0`    | App version info (About screen)                                          |
+| `webview_flutter`        | `^4.13.1`   | In-app browser (About screen links)                                      |
+| `url_launcher`           | `^6.3.2`    | System browser launcher                                                  |
 | `flutter_native_splash`  | `^2.4.4`    | Native pre-Flutter splash screen (dev-only import; see Dev Dependencies) |
 
-### Phase 2 Additions
+### Phase 2 Additions (shipped)
 
-| Package                  | Version  | Purpose                                                       |
-|--------------------------|----------|---------------------------------------------------------------|
-| `flutter_secure_storage` | TBD      | Wrapped by `SecureStorageService` for Ankr API key            |
-| `dio`                    | TBD      | HTTP client (wrapped by `AnkrService`, `ExchangeRateService`) |
+| Package    | Version   | Purpose                               |
+|------------|-----------|---------------------------------------|
+| `dio`      | `^5.7.0`  | HTTP client (exchange-rate fetching)  |
+| `fl_chart` | `^0.70.2` | Pie + daily bar charts (Analysis tab) |
 
-Phase 2 versions are pinned when the milestone lands; do not pre-add to `pubspec.yaml`.
+### Deferred (Not yet shipped)
+
+| Package                  | Phase   | Purpose                              |
+|--------------------------|---------|--------------------------------------|
+| `flutter_secure_storage` | Phase 2 | Secure API key storage (wallet sync) |
+| `csv`                    | Phase 3 | CSV import and export                |
+| Firebase/Supabase        | Phase 3 | Cloud backup & sync                  |
+| `local_auth`             | Future  | App lock                             |
 
 ### Dev Dependencies
 
@@ -1182,16 +1296,8 @@ Phase 2 versions are pinned when the milestone lands; do not pre-add to `pubspec
 | `riverpod_lint`         | `^2.6.5`  | Riverpod-specific lints                                                                                                                                               |
 | `import_lint`           | `^0.1.6`  | Enforce layer-boundary rules — pinned to the 0.1.x line; see note                                                                                                     |
 | `mocktail`              | `^1.0.4`  | Mocking for tests                                                                                                                                                     |
+| `fake_async`            | `^1.3.3`  | Async time control for tests                                                                                                                                          |
 | `flutter_lints`         | `^6.0.0`  | Static analysis                                                                                                                                                       |
 | `flutter_native_splash` | `^2.4.4`  | Splash asset codegen CLI (`dart run flutter_native_splash:create`); never imported at runtime, so it lives in dev deps even though it's listed under Core (MVP) above |
 
 **`import_lint` version note.** `import_lint >=2.0.0` pulls `analyzer ^12.1.0`, which requires `meta ^1.18.0`. Flutter 3.41.7 pins `meta` to `1.17.0`, so 2.x is unresolvable. The 0.9.x–1.0.x line requires `analyzer ^5.2.0`, which conflicts with `freezed >=2.5.3`. Only `^0.1.6` resolves — it has no `analyzer` constraint. Revisit this pin when Flutter ships `meta 1.18+`; at that point pin `import_lint ^2.x` for the full layer-boundary rule set.
-
-### Deferred (Not in MVP)
-
-| Package           | Phase   | Purpose                           |
-|-------------------|---------|-----------------------------------|
-| `fl_chart`        | Phase 2 | Charts and trend views            |
-| `csv`             | Phase 3 | CSV import and export             |
-| Firebase/Supabase | Phase 3 | Cloud backup & sync               |
-| `local_auth`      | Future  | App lock                          |

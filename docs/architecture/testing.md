@@ -1,0 +1,34 @@
+# Testing
+
+> Authoritative source: [`PRD.md` → *Testing Strategy*](../../PRD.md#testing-strategy).
+
+Tests are organized **by architectural layer, not by feature**.
+
+```
+test/
+├── unit/{app,controllers,l10n,providers,repositories,seed,services,use_cases,utils}/
+├── widget/{app,features,smoke,theme}/
+└── integration/
+```
+
+## Patterns
+
+- **Repository tests** use Drift's **in-memory database**; assert rules like category type locking, archive-instead-of-delete, FK integrity, and reactive stream emissions.
+- **Controller tests** use Riverpod `ProviderContainer` overrides with `mocktail`.
+- **Splash screen** has **golden tests** because its visual design is a product requirement. Widget coverage lives in `test/widget/features/splash/splash_screen_test.dart`; route-level redirect coverage lives in `test/unit/app/router_test.dart`; controller/template coverage for the inline-date behavior lives in `test/unit/controllers/splash_controller_test.dart` and `test/unit/utils/splash_template_substitution_test.dart`.
+- **Migration tests** run `onUpgrade` against every committed snapshot in `drift_schemas/` on both empty and seeded DBs. The live tests are in `test/unit/repositories/migration_test.dart` and validate the v1–v5 generated schema helpers (`test/unit/repositories/_harness/generated/schema_v{1..5}.dart`), seeded and empty DB opens, and `PRAGMA foreign_keys` after upgrade. **Never rewrite a merged migration in place** — add a new schema version instead.
+- **Drift-backed setup and direct repository writes that happen before the first `pump`** must run inside `tester.runAsync(...)`; see `test/widget/smoke_test.dart` and `test/integration/bootstrap_to_home_test.dart`.
+- **Ankr API calls are mocked in every test**; no live network calls in the suite. For exchange rates, stub `ExchangeRateService` or override `exchangeRatesProvider` / `exchangeRateRepositoryProvider`.
+
+## Canonical harness
+
+`test/support/test_app.dart` is the canonical app-shell harness: `newTestAppDatabase()`, `runTestSeed(db)`, `makeTestContainer(...)`, `buildTestApp(...)`, `buildBootstrappedTestApp(...)` cover the standard in-memory DB + ProviderScope setup patterns.
+
+## Where slice coverage lives
+
+- **Conversion** — `test/unit/services/exchange_rate_service_test.dart`, `test/widget/features/home/summary_strip_conversion_test.dart`, `test/widget/features/home/transaction_tile_conversion_test.dart`, `test/widget/features/accounts/account_tile_conversion_test.dart`, `test/integration/currency_conversion_flow_test.dart`.
+- **Charts** — `test/widget/features/analysis/charts_section_test.dart`, `test/widget/features/analysis/chart_slice_selection_interaction_test.dart`, `test/widget/features/analysis/chart_slice_stale_selfheal_test.dart`, `test/widget/features/analysis/chart_legend_view_all_pop_test.dart`, `test/integration/chart_display_flow_test.dart`, `test/integration/analysis_drilldown_test.dart`. Controller/data coverage for the drill-down path lives in `test/unit/controllers/charts_selection_controller_slice_test.dart`, `test/unit/controllers/charts_controller_slice_test.dart`, `test/unit/controllers/slice_drilldown_controller_test.dart`, `test/unit/controllers/slice_drilldown_data_test.dart`. Override `chartsFxStatusProvider`, `chartsCurrenciesByCodeProvider`, and the analysis lookup providers (`analysisCategoriesByIdProvider`, `analysisAccountsByIdProvider`) when a chart test only needs the projection layer.
+
+## Schema-version handoff
+
+When adding schema v6: regenerate the v5 helper, extend `test/unit/repositories/migration_test.dart`, and add a new `drift_schema_v6.json` snapshot in `drift_schemas/`. The v4 upgrade adds `recurring_rules`, `pending_transactions`, and the partial UNIQUE index `idx_pending_recurring_unique_partial` (declared imperatively because Drift cannot express the partial WHERE clause); the v5 upgrade adds `exchange_rates` plus the unique pair index `idx_exchange_rates_pair`.

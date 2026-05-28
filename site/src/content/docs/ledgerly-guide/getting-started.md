@@ -17,12 +17,12 @@ Ledgerly is a good fit if you want to:
 - track personal spending manually
 - separate money across multiple accounts
 - log both expenses and income
-- keep data on-device for the MVP
+- keep data on-device
 - use a lightweight app instead of a finance platform
 
 ## Core ideas
 
-- **Local-first:** your data lives on the device in the MVP.
+- **Local-first:** your data lives on the device.
 - **Fast entry:** categories, currencies, and a default cash account are seeded
   on first run so you can start immediately.
 - **Simple structure:** transactions belong to an account, a category, and a
