@@ -52,11 +52,6 @@ class SettingsController extends _$SettingsController {
     await repo.setDefaultCurrency(code);
   }
 
-  Future<void> setDefaultAccountId(int? id) async {
-    final repo = ref.read(userPreferencesRepositoryProvider);
-    await repo.setDefaultAccountId(id);
-  }
-
   Future<void> setSplashEnabled(bool enabled) async {
     final repo = ref.read(userPreferencesRepositoryProvider);
     await repo.setSplashEnabled(enabled);
@@ -68,8 +63,8 @@ class SettingsController extends _$SettingsController {
   }
 
   /// Writes the custom splash display-text template. Empty / whitespace-only
-  /// input clears the override so the localized default (`splashSinceDate`)
-  /// is used at render time.
+  /// input clears the override so the default template
+  /// (`kDefaultSplashDisplayText`) is used at render time.
   Future<void> setSplashDisplayText(String text) async {
     final repo = ref.read(userPreferencesRepositoryProvider);
     final normalized = text.trim().isEmpty ? kDefaultSplashDisplayText : text;
@@ -199,7 +194,7 @@ class _SettingsComposer {
 
   Future<void> dispose() async {
     await _stop();
-    if (!_out.isClosed) await _out.close();
+    await _out.close();
   }
 
   void _onError(Object error, StackTrace stack) {

@@ -134,24 +134,15 @@ ProviderContainer _makeContainer({
   );
 }
 
-SettingsData _data({
-  ThemeMode themeMode = ThemeMode.light,
-  Locale? locale,
-  String defaultCurrency = 'USD',
-  int? defaultAccountId,
-  bool splashEnabled = true,
-  DateTime? splashStartDate,
-  String? splashDisplayText,
-  String? splashButtonLabel,
-}) => SettingsData(
-  themeMode: themeMode,
-  locale: locale,
-  defaultCurrency: defaultCurrency,
+SettingsData _data({int? defaultAccountId}) => SettingsData(
+  themeMode: ThemeMode.light,
+  locale: null,
+  defaultCurrency: 'USD',
   defaultAccountId: defaultAccountId,
-  splashEnabled: splashEnabled,
-  splashStartDate: splashStartDate,
-  splashDisplayText: splashDisplayText,
-  splashButtonLabel: splashButtonLabel,
+  splashEnabled: true,
+  splashStartDate: null,
+  splashDisplayText: null,
+  splashButtonLabel: null,
 );
 
 void main() {

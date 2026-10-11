@@ -52,8 +52,30 @@ class SplashSettingsSection extends ConsumerWidget {
         ),
         if (splashEnabled) ...[
           _SplashStartDateRow(startDate: splashStartDate),
-          _SplashDisplayTextField(text: splashDisplayText),
-          _SplashButtonLabelField(label: splashButtonLabel),
+          _SplashTextField(
+            fieldKey: const ValueKey('splashSettings:displayTextField'),
+            value: splashDisplayText,
+            labelText: l10n.settingsSplashDisplayText,
+            // The literal '{date}' / '{days}' arguments are the actual tokens
+            // DateHelpers.applySplashTemplateSegments substitutes; the ARB
+            // declares dateToken/daysToken placeholders only because gen_l10n
+            // cannot embed literal braces in a plain message.
+            hintText: l10n.settingsSplashDisplayTextHint('{date}', '{days}'),
+            // Multi-line input so users can split the splash text across visual
+            // lines with explicit `\n` separators (the splash renders via
+            // `Text.rich`, which honours newlines). Save still happens on
+            // focus-out; `onSubmitted` is retained so programmatic submissions
+            // and platforms that surface a "done" affordance continue to persist.
+            multiline: true,
+            write: (c, v) => c.setSplashDisplayText(v),
+          ),
+          _SplashTextField(
+            fieldKey: const ValueKey('splashSettings:buttonLabelField'),
+            value: splashButtonLabel,
+            labelText: l10n.settingsSplashButtonLabel,
+            hintText: l10n.splashEnter,
+            write: (c, v) => c.setSplashButtonLabel(v),
+          ),
           const _SplashPreviewTile(),
         ],
       ],
@@ -113,39 +135,50 @@ class _SplashStartDateRow extends ConsumerWidget {
   }
 }
 
-class _SplashDisplayTextField extends ConsumerStatefulWidget {
-  const _SplashDisplayTextField({required this.text});
+class _SplashTextField extends ConsumerStatefulWidget {
+  const _SplashTextField({
+    required this.fieldKey,
+    required this.value,
+    required this.labelText,
+    required this.hintText,
+    required this.write,
+    this.multiline = false,
+  });
 
-  final String? text;
+  final Key fieldKey;
+  final String? value;
+  final String labelText;
+  final String hintText;
+  final Future<void> Function(SettingsController controller, String value)
+  write;
+  final bool multiline;
 
   @override
-  ConsumerState<_SplashDisplayTextField> createState() =>
-      _SplashDisplayTextFieldState();
+  ConsumerState<_SplashTextField> createState() => _SplashTextFieldState();
 }
 
-class _SplashDisplayTextFieldState
-    extends ConsumerState<_SplashDisplayTextField> {
+class _SplashTextFieldState extends ConsumerState<_SplashTextField> {
   late final TextEditingController _controller;
   late final FocusNode _focusNode;
-  String _lastSyncedText = '';
+  String _lastSynced = '';
 
   @override
   void initState() {
     super.initState();
-    _lastSyncedText = widget.text ?? '';
-    _controller = TextEditingController(text: _lastSyncedText);
+    _lastSynced = widget.value ?? '';
+    _controller = TextEditingController(text: _lastSynced);
     _focusNode = FocusNode();
     _focusNode.addListener(_onFocusChange);
   }
 
   @override
-  void didUpdateWidget(covariant _SplashDisplayTextField oldWidget) {
+  void didUpdateWidget(covariant _SplashTextField oldWidget) {
     super.didUpdateWidget(oldWidget);
     // Pull upstream changes in — but only when they actually differ from
     // what we last synced, so we don't clobber mid-edit values.
-    final incoming = widget.text ?? '';
-    if (incoming != _lastSyncedText) {
-      _lastSyncedText = incoming;
+    final incoming = widget.value ?? '';
+    if (incoming != _lastSynced) {
+      _lastSynced = incoming;
       _controller.text = incoming;
     }
   }
@@ -166,115 +199,27 @@ class _SplashDisplayTextFieldState
 
   void _submit() {
     final value = _controller.text;
-    if (value == _lastSyncedText) return;
-    _lastSyncedText = value;
-    ref.read(settingsControllerProvider.notifier).setSplashDisplayText(value);
+    if (value == _lastSynced) return;
+    _lastSynced = value;
+    widget.write(ref.read(settingsControllerProvider.notifier), value);
   }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: TextField(
-        key: const ValueKey('splashSettings:displayTextField'),
+        key: widget.fieldKey,
         controller: _controller,
         focusNode: _focusNode,
-        // Multi-line input so users can split the splash text across visual
-        // lines with explicit `\n` separators (the splash renders via
-        // `Text.rich`, which honours newlines). `maxLines: null` lets the
-        // field grow with content; `keyboardType: multiline` makes the soft
-        // keyboard's return key insert a newline. Save still happens on
-        // focus-out via the `_onFocusChange` listener — `onSubmitted` is
-        // retained so programmatic submissions and platforms that surface
-        // a "done" affordance continue to persist.
-        maxLines: null,
-        minLines: 1,
-        keyboardType: TextInputType.multiline,
+        maxLines: widget.multiline ? null : 1,
+        minLines: widget.multiline ? 1 : null,
+        keyboardType: widget.multiline ? TextInputType.multiline : null,
+        textInputAction: widget.multiline ? null : TextInputAction.done,
         onSubmitted: (_) => _submit(),
         decoration: InputDecoration(
-          labelText: l10n.settingsSplashDisplayText,
-          // The literal '{date}' / '{days}' arguments are the actual tokens
-          // DateHelpers.applySplashTemplate substitutes; the ARB declares
-          // dateToken/daysToken placeholders only because gen_l10n cannot
-          // embed literal braces in a plain message.
-          hintText: l10n.settingsSplashDisplayTextHint('{date}', '{days}'),
-        ),
-      ),
-    );
-  }
-}
-
-class _SplashButtonLabelField extends ConsumerStatefulWidget {
-  const _SplashButtonLabelField({required this.label});
-
-  final String? label;
-
-  @override
-  ConsumerState<_SplashButtonLabelField> createState() =>
-      _SplashButtonLabelFieldState();
-}
-
-class _SplashButtonLabelFieldState
-    extends ConsumerState<_SplashButtonLabelField> {
-  late final TextEditingController _controller;
-  late final FocusNode _focusNode;
-  String _lastSyncedLabel = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _lastSyncedLabel = widget.label ?? '';
-    _controller = TextEditingController(text: _lastSyncedLabel);
-    _focusNode = FocusNode();
-    _focusNode.addListener(_onFocusChange);
-  }
-
-  @override
-  void didUpdateWidget(covariant _SplashButtonLabelField oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    final incoming = widget.label ?? '';
-    if (incoming != _lastSyncedLabel) {
-      _lastSyncedLabel = incoming;
-      _controller.text = incoming;
-    }
-  }
-
-  @override
-  void dispose() {
-    _focusNode.removeListener(_onFocusChange);
-    _focusNode.dispose();
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _onFocusChange() {
-    if (!_focusNode.hasFocus) {
-      _submit();
-    }
-  }
-
-  void _submit() {
-    final value = _controller.text;
-    if (value == _lastSyncedLabel) return;
-    _lastSyncedLabel = value;
-    ref.read(settingsControllerProvider.notifier).setSplashButtonLabel(value);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: TextField(
-        key: const ValueKey('splashSettings:buttonLabelField'),
-        controller: _controller,
-        focusNode: _focusNode,
-        textInputAction: TextInputAction.done,
-        onSubmitted: (_) => _submit(),
-        decoration: InputDecoration(
-          labelText: l10n.settingsSplashButtonLabel,
-          hintText: l10n.splashEnter,
+          labelText: widget.labelText,
+          hintText: widget.hintText,
         ),
       ),
     );

@@ -21,8 +21,7 @@ class ManageAccountsTile extends ConsumerWidget {
     final accountsAsync = ref.watch(accountsControllerProvider);
 
     final subtitle = accountsAsync.maybeWhen(
-      data: (state) {
-        final data = state;
+      data: (data) {
         if (data is! AccountsData) return '';
         if (data.active.isEmpty) return l10n.manageAccountsTileSubtitleAddCta;
         if (data.active.length == 1) return data.active.first.account.name;
