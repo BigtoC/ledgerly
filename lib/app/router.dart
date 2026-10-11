@@ -88,7 +88,6 @@ GoRouter router(Ref ref) {
                     pageBuilder: (ctx, state) => _modalPage(
                       state,
                       const _AdaptiveTransactionFormRoute(),
-                      fullscreenDialog: true,
                     ),
                   ),
                   GoRoute(
@@ -103,7 +102,6 @@ GoRouter router(Ref ref) {
                       _AdaptiveTransactionFormRoute(
                         transactionId: int.parse(state.pathParameters['id']!),
                       ),
-                      fullscreenDialog: true,
                     ),
                   ),
                   GoRoute(
@@ -127,7 +125,6 @@ GoRouter router(Ref ref) {
                               state.pathParameters['itemId']!,
                             ),
                           ),
-                          fullscreenDialog: true,
                         ),
                       ),
                     ],
@@ -196,11 +193,8 @@ GoRouter router(Ref ref) {
                   GoRoute(
                     path: 'manage-accounts/new',
                     parentNavigatorKey: _rootNavigatorKey,
-                    pageBuilder: (ctx, state) => _modalPage(
-                      state,
-                      const AccountFormScreen(),
-                      fullscreenDialog: true,
-                    ),
+                    pageBuilder: (ctx, state) =>
+                        _modalPage(state, const AccountFormScreen()),
                   ),
                   GoRoute(
                     path: 'manage-accounts/:id',
@@ -214,7 +208,6 @@ GoRouter router(Ref ref) {
                       AccountFormScreen(
                         accountId: int.parse(state.pathParameters['id']!),
                       ),
-                      fullscreenDialog: true,
                     ),
                   ),
                   GoRoute(
@@ -229,7 +222,6 @@ GoRouter router(Ref ref) {
                       const _AdaptiveFormRoute(
                         child: RecurringRuleFormScreen(),
                       ),
-                      fullscreenDialog: true,
                     ),
                   ),
                   GoRoute(
@@ -246,7 +238,6 @@ GoRouter router(Ref ref) {
                           ruleId: int.parse(state.pathParameters['id']!),
                         ),
                       ),
-                      fullscreenDialog: true,
                     ),
                   ),
                 ],
@@ -316,21 +307,13 @@ class _AdaptiveFormRoute extends StatelessWidget {
   }
 }
 
-Page<void> _modalPage(
-  GoRouterState state,
-  Widget child, {
-  bool fullscreenDialog = false,
-}) {
+Page<void> _modalPage(GoRouterState state, Widget child) {
   return switch (defaultTargetPlatform) {
     TargetPlatform.iOS || TargetPlatform.macOS => CupertinoPage(
       key: state.pageKey,
-      fullscreenDialog: fullscreenDialog,
+      fullscreenDialog: true,
       child: child,
     ),
-    _ => MaterialPage(
-      key: state.pageKey,
-      fullscreenDialog: fullscreenDialog,
-      child: child,
-    ),
+    _ => MaterialPage(key: state.pageKey, fullscreenDialog: true, child: child),
   };
 }

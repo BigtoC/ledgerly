@@ -27,7 +27,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/app/app.dart';
 import 'package:ledgerly/app/bootstrap.dart';
 import 'package:ledgerly/app/providers/app_database_provider.dart';
-import 'package:ledgerly/app/providers/locale_service_provider.dart';
 import 'package:ledgerly/data/database/app_database.dart';
 import 'package:ledgerly/data/models/account.dart';
 import 'package:ledgerly/data/models/transaction.dart';
@@ -45,8 +44,7 @@ import 'package:ledgerly/data/services/locale_service.dart';
 AppDatabase newTestAppDatabase() => AppDatabase(NativeDatabase.memory());
 
 /// Runs the first-run seed against [db] using a fixed `en_US` locale stub.
-/// Pass [locale] to simulate a different device locale.
-Future<void> runTestSeed(AppDatabase db, {String locale = 'en_US'}) {
+Future<void> runTestSeed(AppDatabase db) {
   final currencies = DriftCurrencyRepository(db);
   final currenciesRepo = currencies;
   return runFirstRunSeed(
@@ -56,28 +54,21 @@ Future<void> runTestSeed(AppDatabase db, {String locale = 'en_US'}) {
     accountTypes: DriftAccountTypeRepository(db, currenciesRepo),
     accounts: DriftAccountRepository(db, currenciesRepo),
     preferences: DriftUserPreferencesRepository(db),
-    localeService: _FixedLocaleService(locale),
+    localeService: const _FixedLocaleService('en_US'),
   );
 }
 
 /// Creates a `ProviderContainer` whose provider overrides match what the full
 /// app shell needs. Caller MUST register `addTearDown(container.dispose)`.
 ///
-/// Pass [localeService] to simulate a non-`en_US` device locale.
 /// Pass [extraOverrides] to override additional providers (e.g. to inject a
 /// pre-seeded `SplashGateSnapshot` without involving a live DB call).
 ProviderContainer makeTestContainer({
   required AppDatabase db,
-  LocaleService? localeService,
   List<Override> extraOverrides = const [],
 }) {
   return ProviderContainer(
-    overrides: [
-      appDatabaseProvider.overrideWithValue(db),
-      if (localeService != null)
-        localeServiceProvider.overrideWithValue(localeService),
-      ...extraOverrides,
-    ],
+    overrides: [appDatabaseProvider.overrideWithValue(db), ...extraOverrides],
   );
 }
 
@@ -97,17 +88,13 @@ Widget buildTestApp({required ProviderContainer container}) {
 /// `UncontrolledProviderScope` backed by the same overrides so tests can own
 /// container disposal via `addTearDown`. That mirrors [buildTestApp] and avoids
 /// Drift cleanup timers being scheduled during implicit widget-tree teardown.
-Future<Widget> buildBootstrappedTestApp({
-  required AppDatabase db,
-  String locale = 'en_US',
-  List<Override> extraOverrides = const [],
-}) async {
+Future<Widget> buildBootstrappedTestApp({required AppDatabase db}) async {
   Widget? launched;
   ProviderContainer? container;
   final overrides = <Override>[];
   await bootstrapFor(
     openDatabase: () async => db,
-    localeService: _FixedLocaleService(locale),
+    localeService: const _FixedLocaleService('en_US'),
     runAppFn: (widget) {
       launched = widget;
       if (widget is ProviderScope) {
@@ -119,7 +106,6 @@ Future<Widget> buildBootstrappedTestApp({
         );
       }
     },
-    extraOverrides: extraOverrides,
   );
 
   if (launched == null) {

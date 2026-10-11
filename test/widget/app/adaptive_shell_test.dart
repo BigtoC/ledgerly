@@ -14,11 +14,7 @@ import 'package:ledgerly/l10n/app_localizations.dart';
 /// Wraps `AdaptiveShell` with the minimum context it requires:
 /// `AppLocalizations` delegates (for destination labels) and a tight
 /// `SizedBox` so `LayoutBuilder` receives a predictable `maxWidth`.
-Widget _shellAt(
-  double width, {
-  int currentIndex = 0,
-  void Function(int)? onSelected,
-}) {
+Widget _shellAt(double width, {void Function(int)? onSelected}) {
   return MaterialApp(
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
@@ -27,7 +23,7 @@ Widget _shellAt(
         width: width,
         height: 800,
         child: AdaptiveShell(
-          currentIndex: currentIndex,
+          currentIndex: 0,
           onDestinationSelected: onSelected ?? (_) {},
           child: const SizedBox.expand(),
         ),

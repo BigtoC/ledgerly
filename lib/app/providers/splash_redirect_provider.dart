@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -60,11 +58,6 @@ Raw<SplashGateSnapshot> splashGateSnapshot(Ref ref) {
 
   return notifier;
 }
-
-/// Stream of `splash_enabled` for reactive UI (e.g. `SettingsScreen`).
-@Riverpod(keepAlive: true, dependencies: [userPreferencesRepository])
-Stream<bool> splashEnabled(Ref ref) =>
-    ref.watch(userPreferencesRepositoryProvider).watchSplashEnabled();
 
 /// Stream of `splash_start_date` for reactive UI (e.g. `SplashScreen`).
 @Riverpod(keepAlive: true, dependencies: [userPreferencesRepository])

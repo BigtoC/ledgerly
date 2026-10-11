@@ -8,21 +8,10 @@ import 'providers/repository_providers.dart';
 import 'providers/theme_provider.dart';
 import 'router.dart';
 
-typedef SchedulePostFrameCallbackFn = void Function(VoidCallback callback);
-
-void _defaultSchedulePostFrameCallback(VoidCallback callback) {
-  WidgetsBinding.instance.addPostFrameCallback((_) => callback());
-}
-
 class App extends ConsumerStatefulWidget {
-  const App({
-    super.key,
-    this.onFirstFrame,
-    this.schedulePostFrameCallback = _defaultSchedulePostFrameCallback,
-  });
+  const App({super.key, this.onFirstFrame});
 
   final VoidCallback? onFirstFrame;
-  final SchedulePostFrameCallbackFn schedulePostFrameCallback;
 
   @override
   ConsumerState<App> createState() => _AppState();
@@ -34,7 +23,9 @@ class _AppState extends ConsumerState<App> {
   @override
   void initState() {
     super.initState();
-    widget.schedulePostFrameCallback(_runFirstFrameCallback);
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _runFirstFrameCallback(),
+    );
   }
 
   void _runFirstFrameCallback() {
