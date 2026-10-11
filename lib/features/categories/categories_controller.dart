@@ -33,9 +33,7 @@ part 'categories_controller.g.dart';
 @Riverpod(dependencies: [categoryRepository])
 Stream<List<Category>> categoriesByType(Ref ref, CategoryType type) {
   final repo = ref.watch(categoryRepositoryProvider);
-  return repo
-      .watchAll(type: type, includeArchived: false)
-      .map((rows) => _sortForDisplay(rows));
+  return repo.watchAll(type: type, includeArchived: false).map(_sortForDisplay);
 }
 
 @Riverpod(dependencies: [categoryRepository])

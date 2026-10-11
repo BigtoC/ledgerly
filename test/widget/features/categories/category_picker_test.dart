@@ -29,7 +29,6 @@ class _MockCategoryRepository extends Mock implements CategoryRepository {}
 Category _c({
   required int id,
   required CategoryType type,
-  String? l10nKey,
   String? customName,
   int? sortOrder,
 }) => Category(
@@ -37,7 +36,6 @@ Category _c({
   icon: 'category',
   color: 0,
   type: type,
-  l10nKey: l10nKey,
   customName: customName,
   sortOrder: sortOrder,
 );
