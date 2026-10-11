@@ -138,14 +138,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get splashSetStartDate => 'Set start date';
 
   @override
-  String splashSinceDate(DateTime date) {
-    final intl.DateFormat dateDateFormat = intl.DateFormat.yMMMMd(localeName);
-    final String dateString = dateDateFormat.format(date);
-
-    return 'Since $dateString';
-  }
-
-  @override
   String get splashDayCountLabel => 'days';
 
   @override
@@ -211,18 +203,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get categoriesPickerEmptyCta => 'No categories yet — Create one';
-
-  @override
-  String get accountsListTitle => 'Accounts';
-
-  @override
-  String get accountsAddCta => 'Add account';
-
-  @override
-  String get accountsEmptyTitle => 'No active accounts';
-
-  @override
-  String get accountsEmptyCta => 'Create account';
 
   @override
   String get accountsArchivedSectionLabel => 'Archived';
@@ -317,9 +297,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsSectionGeneral => 'General';
 
   @override
-  String get settingsSectionDataManagement => 'Data management';
-
-  @override
   String get settingsThemeLabel => 'Theme';
 
   @override
@@ -342,18 +319,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsLanguageZhCn => '简体中文 (Simplified Chinese)';
-
-  @override
-  String get settingsDefaultAccountLabel => 'Default account';
-
-  @override
-  String get settingsDefaultAccountEmpty => 'Not set';
-
-  @override
-  String get settingsDefaultAccountPickerTitle => 'Pick default account';
-
-  @override
-  String get settingsDefaultAccountCreateCta => 'Create account';
 
   @override
   String get settingsDefaultCurrencyLabel => 'Default currency';
@@ -458,9 +423,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeJumpToToday => 'Jump to today';
 
   @override
-  String get homeSummaryMultiCurrencyNote => 'Multiple currencies';
-
-  @override
   String get homeDaySkeletonLabel => 'Loading day';
 
   @override
@@ -512,29 +474,6 @@ class AppLocalizationsEn extends AppLocalizations {
       locale: localeName,
       other: '+$count more',
       one: '+$count more',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get shoppingListCardTitle => 'Shopping list';
-
-  @override
-  String get shoppingListViewAll => 'View all';
-
-  @override
-  String get shoppingListEmptyBody => 'No upcoming expenses saved';
-
-  @override
-  String get shoppingListEmptyCta => 'Add to shopping list';
-
-  @override
-  String shoppingListItemsMore(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count more',
-      one: '$count more',
     );
     return '$_temp0';
   }
@@ -660,13 +599,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get manageAccountsBodyEmpty =>
       'No accounts yet. Create one to get started.';
-
-  @override
-  String get analysisPlaceholderTitle => 'Analysis is coming in Phase 2';
-
-  @override
-  String get analysisPlaceholderBody =>
-      'Charts and summaries will appear here once Phase 2 lands.';
 
   @override
   String get analysisTitle => 'Analysis';

@@ -138,14 +138,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get splashSetStartDate => 'Set start date';
 
   @override
-  String splashSinceDate(DateTime date) {
-    final intl.DateFormat dateDateFormat = intl.DateFormat.yMMMMd(localeName);
-    final String dateString = dateDateFormat.format(date);
-
-    return 'Since $dateString';
-  }
-
-  @override
   String get splashDayCountLabel => 'days';
 
   @override
@@ -211,18 +203,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get categoriesPickerEmptyCta => 'No categories yet — Create one';
-
-  @override
-  String get accountsListTitle => 'Accounts';
-
-  @override
-  String get accountsAddCta => 'Add account';
-
-  @override
-  String get accountsEmptyTitle => 'No active accounts';
-
-  @override
-  String get accountsEmptyCta => 'Create account';
 
   @override
   String get accountsArchivedSectionLabel => 'Archived';
@@ -317,9 +297,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsSectionGeneral => 'General';
 
   @override
-  String get settingsSectionDataManagement => 'Data management';
-
-  @override
   String get settingsThemeLabel => 'Theme';
 
   @override
@@ -342,18 +319,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsLanguageZhCn => '简体中文 (Simplified Chinese)';
-
-  @override
-  String get settingsDefaultAccountLabel => 'Default account';
-
-  @override
-  String get settingsDefaultAccountEmpty => 'Not set';
-
-  @override
-  String get settingsDefaultAccountPickerTitle => 'Pick default account';
-
-  @override
-  String get settingsDefaultAccountCreateCta => 'Create account';
 
   @override
   String get settingsDefaultCurrencyLabel => 'Default currency';
@@ -458,9 +423,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeJumpToToday => 'Jump to today';
 
   @override
-  String get homeSummaryMultiCurrencyNote => 'Multiple currencies';
-
-  @override
   String get homeDaySkeletonLabel => 'Loading day';
 
   @override
@@ -512,29 +474,6 @@ class AppLocalizationsZh extends AppLocalizations {
       locale: localeName,
       other: '+$count more',
       one: '+$count more',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get shoppingListCardTitle => 'Shopping list';
-
-  @override
-  String get shoppingListViewAll => 'View all';
-
-  @override
-  String get shoppingListEmptyBody => 'No upcoming expenses saved';
-
-  @override
-  String get shoppingListEmptyCta => 'Add to shopping list';
-
-  @override
-  String shoppingListItemsMore(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count more',
-      one: '$count more',
     );
     return '$_temp0';
   }
@@ -660,13 +599,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get manageAccountsBodyEmpty =>
       'No accounts yet. Create one to get started.';
-
-  @override
-  String get analysisPlaceholderTitle => 'Analysis is coming in Phase 2';
-
-  @override
-  String get analysisPlaceholderBody =>
-      'Charts and summaries will appear here once Phase 2 lands.';
 
   @override
   String get analysisTitle => 'Analysis';
@@ -1074,14 +1006,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get splashSetStartDate => '设置起始日期';
 
   @override
-  String splashSinceDate(DateTime date) {
-    final intl.DateFormat dateDateFormat = intl.DateFormat.yMMMMd(localeName);
-    final String dateString = dateDateFormat.format(date);
-
-    return '自 $dateString 起';
-  }
-
-  @override
   String get splashDayCountLabel => '天';
 
   @override
@@ -1146,18 +1070,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get categoriesPickerEmptyCta => '暂无分类 — 创建一个';
-
-  @override
-  String get accountsListTitle => '账户';
-
-  @override
-  String get accountsAddCta => '添加账户';
-
-  @override
-  String get accountsEmptyTitle => '没有使用中的账户';
-
-  @override
-  String get accountsEmptyCta => '创建账户';
 
   @override
   String get accountsArchivedSectionLabel => '已归档';
@@ -1250,9 +1162,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get settingsSectionGeneral => '常规';
 
   @override
-  String get settingsSectionDataManagement => '数据管理';
-
-  @override
   String get settingsThemeLabel => '主题';
 
   @override
@@ -1275,18 +1184,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get settingsLanguageZhCn => '简体中文';
-
-  @override
-  String get settingsDefaultAccountLabel => '默认账户';
-
-  @override
-  String get settingsDefaultAccountEmpty => '未设置';
-
-  @override
-  String get settingsDefaultAccountPickerTitle => '选择默认账户';
-
-  @override
-  String get settingsDefaultAccountCreateCta => '创建账户';
 
   @override
   String get settingsDefaultCurrencyLabel => '默认币种';
@@ -1387,9 +1284,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get homeJumpToToday => '跳至今天';
 
   @override
-  String get homeSummaryMultiCurrencyNote => '多种币种';
-
-  @override
   String get homeDaySkeletonLabel => '加载中的日期';
 
   @override
@@ -1436,28 +1330,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   @override
   String accountsBalanceMore(int count) {
     return '+$count 个更多';
-  }
-
-  @override
-  String get shoppingListCardTitle => '购物清单';
-
-  @override
-  String get shoppingListViewAll => '查看全部';
-
-  @override
-  String get shoppingListEmptyBody => '暂无待支出';
-
-  @override
-  String get shoppingListEmptyCta => '加入购物清单';
-
-  @override
-  String shoppingListItemsMore(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '还有$count条',
-    );
-    return '$_temp0';
   }
 
   @override
@@ -1577,12 +1449,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get manageAccountsBodyEmpty => '还没有账户，创建一个开始吧。';
-
-  @override
-  String get analysisPlaceholderTitle => '分析功能将在第二阶段推出';
-
-  @override
-  String get analysisPlaceholderBody => '图表和摘要将在第二阶段上线后显示。';
 
   @override
   String get analysisTitle => '分析';
@@ -1979,14 +1845,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get splashSetStartDate => '設定起始日期';
 
   @override
-  String splashSinceDate(DateTime date) {
-    final intl.DateFormat dateDateFormat = intl.DateFormat.yMMMMd(localeName);
-    final String dateString = dateDateFormat.format(date);
-
-    return '自 $dateString 起';
-  }
-
-  @override
   String get splashDayCountLabel => '天';
 
   @override
@@ -2051,18 +1909,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get categoriesPickerEmptyCta => '尚無分類 — 建立一個';
-
-  @override
-  String get accountsListTitle => '帳戶';
-
-  @override
-  String get accountsAddCta => '新增帳戶';
-
-  @override
-  String get accountsEmptyTitle => '沒有使用中的帳戶';
-
-  @override
-  String get accountsEmptyCta => '建立帳戶';
 
   @override
   String get accountsArchivedSectionLabel => '已封存';
@@ -2155,9 +2001,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get settingsSectionGeneral => '一般';
 
   @override
-  String get settingsSectionDataManagement => '資料管理';
-
-  @override
   String get settingsThemeLabel => '主題';
 
   @override
@@ -2180,18 +2023,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get settingsLanguageZhCn => '简体中文';
-
-  @override
-  String get settingsDefaultAccountLabel => '預設帳戶';
-
-  @override
-  String get settingsDefaultAccountEmpty => '尚未設定';
-
-  @override
-  String get settingsDefaultAccountPickerTitle => '選擇預設帳戶';
-
-  @override
-  String get settingsDefaultAccountCreateCta => '建立帳戶';
 
   @override
   String get settingsDefaultCurrencyLabel => '預設幣別';
@@ -2292,9 +2123,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get homeJumpToToday => '跳至今天';
 
   @override
-  String get homeSummaryMultiCurrencyNote => '多種幣別';
-
-  @override
   String get homeDaySkeletonLabel => '載入中的日期';
 
   @override
@@ -2341,28 +2169,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String accountsBalanceMore(int count) {
     return '+$count 個更多';
-  }
-
-  @override
-  String get shoppingListCardTitle => '購物清單';
-
-  @override
-  String get shoppingListViewAll => '查看全部';
-
-  @override
-  String get shoppingListEmptyBody => '尚無待支出';
-
-  @override
-  String get shoppingListEmptyCta => '加入購物清單';
-
-  @override
-  String shoppingListItemsMore(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '還有$count筆',
-    );
-    return '$_temp0';
   }
 
   @override
@@ -2482,12 +2288,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get manageAccountsBodyEmpty => '還沒有帳戶，建立一個開始吧。';
-
-  @override
-  String get analysisPlaceholderTitle => '分析功能將在第二階段推出';
-
-  @override
-  String get analysisPlaceholderBody => '圖表和摘要將在第二階段上線後顯示。';
 
   @override
   String get analysisTitle => '分析';

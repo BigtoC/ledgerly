@@ -182,16 +182,6 @@
   "@splashSetStartDate": {
     "description": "M4 placeholder. First-run splash prompt to set the start date."
   },
-  "splashSinceDate": "Since {date}",
-  "@splashSinceDate": {
-    "description": "PRD 526, 546. Splash default display text. {date} is formatted locale-aware via intl (yMMMMd).",
-    "placeholders": {
-      "date": {
-        "type": "DateTime",
-        "format": "yMMMMd"
-      }
-    }
-  },
   "splashDayCountLabel": "days",
   "@splashDayCountLabel": {
     "description": "PRD 551. Day-counter secondary label on splash."
@@ -283,22 +273,6 @@
     "description": "PRD 715. Empty-state CTA inside the picker sheet; closes the sheet and resolves null so the caller decides the next step (per wave-0 §2.3 and categories-plan §5)."
   },
 
-  "accountsListTitle": "Accounts",
-  "@accountsListTitle": {
-    "description": "PRD 680. AppBar title for the Accounts list screen."
-  },
-  "accountsAddCta": "Add account",
-  "@accountsAddCta": {
-    "description": "PRD 680. FAB label and empty-state CTA to open the account form in Add mode."
-  },
-  "accountsEmptyTitle": "No active accounts",
-  "@accountsEmptyTitle": {
-    "description": "PRD 703. Accounts list empty-state title shown when every account is archived."
-  },
-  "accountsEmptyCta": "Create account",
-  "@accountsEmptyCta": {
-    "description": "PRD 703. Primary CTA on the Accounts empty state — mirrors PRD's 'Create account' label when no active account exists."
-  },
   "accountsArchivedSectionLabel": "Archived",
   "@accountsArchivedSectionLabel": {
     "description": "Accounts plan §4. Section header for the collapsible archived-accounts group beneath the active list."
@@ -420,10 +394,6 @@
   "@settingsSectionGeneral": {
     "description": "Settings plan §5. Section header for default-account + default-currency group."
   },
-  "settingsSectionDataManagement": "Data management",
-  "@settingsSectionDataManagement": {
-    "description": "Settings plan §5. Section header grouping Manage Categories (wallets/ankr-key are Phase 2)."
-  },
   "settingsThemeLabel": "Theme",
   "@settingsThemeLabel": {
     "description": "Settings plan §3.2. Label for the theme-mode selector."
@@ -456,22 +426,6 @@
   "@settingsLanguageZhCn": {
     "description": "Settings plan §3.2. Language option — Simplified Chinese (zh_CN)."
   },
-  "settingsDefaultAccountLabel": "Default account",
-  "@settingsDefaultAccountLabel": {
-    "description": "Settings plan §3.2, §7. Label for the default-account tile."
-  },
-  "settingsDefaultAccountEmpty": "Not set",
-  "@settingsDefaultAccountEmpty": {
-    "description": "Settings plan §3.2, §7. Subtitle shown on the default-account tile when no default has been picked."
-  },
-  "settingsDefaultAccountPickerTitle": "Pick default account",
-  "@settingsDefaultAccountPickerTitle": {
-    "description": "Settings plan §7. Title for the default-account picker bottom sheet."
-  },
-  "settingsDefaultAccountCreateCta": "Create account",
-  "@settingsDefaultAccountCreateCta": {
-    "description": "Settings plan §7. CTA shown when no active accounts exist — routes to /settings/manage-accounts/new."
-  },
   "settingsDefaultCurrencyLabel": "Default currency",
   "@settingsDefaultCurrencyLabel": {
     "description": "Settings plan §3.2, §8. Label for the default-currency tile."
@@ -486,7 +440,7 @@
   },
   "settingsSplashDisplayTextHint": "Use {dateToken} and {daysToken} as placeholders",
   "@settingsSplashDisplayTextHint": {
-    "description": "Settings plan §6. Hint text under the splash display-text field explaining the template variables. The placeholders are named `dateToken` / `daysToken` (not `date` / `days`) because the call site passes the literal strings '{date}' and '{days}' as arguments — these are the actual MessageFormat-looking tokens that DateHelpers.applySplashTemplate substitutes. gen_l10n itself cannot embed literal { / } in a plain message, so the indirection through real placeholders is how the hint advertises the correct token form.",
+    "description": "Settings plan §6. Hint text under the splash display-text field explaining the template variables. The placeholders are named `dateToken` / `daysToken` (not `date` / `days`) because the call site passes the literal strings '{date}' and '{days}' as arguments — these are the actual MessageFormat-looking tokens that DateHelpers.applySplashTemplateSegments substitutes. gen_l10n itself cannot embed literal { / } in a plain message, so the indirection through real placeholders is how the hint advertises the correct token form.",
     "placeholders": {
       "dateToken": { "type": "String" },
       "daysToken": { "type": "String" }
@@ -606,10 +560,6 @@
   "@homeJumpToToday": {
     "description": "Button shown in SummaryStrip when selectedDay is not today."
   },
-  "homeSummaryMultiCurrencyNote": "Multiple currencies",
-  "@homeSummaryMultiCurrencyNote": {
-    "description": "Indicator row in SummaryStrip when more than 2 currency groups exist on the selected day."
-  },
   "homeDaySkeletonLabel": "Loading day",
   "@homeDaySkeletonLabel": {
     "description": "Wave 3 §4.2. Accessibility label for a transient Home day-loading placeholder. Reserved for loading affordances."
@@ -674,30 +624,6 @@
   "accountsBalanceMore": "{count, plural, one {+{count} more} other {+{count} more}}",
   "@accountsBalanceMore": {
     "description": "Account tile balance overflow — '+N more' when an account has more than 3 currency groups.",
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-
-  "shoppingListCardTitle": "Shopping list",
-  "@shoppingListCardTitle": {
-    "description": "Shopping list preview card title on the Accounts screen."
-  },
-  "shoppingListViewAll": "View all",
-  "@shoppingListViewAll": {
-    "description": "Shopping list card header CTA — navigates to the full shopping list screen."
-  },
-  "shoppingListEmptyBody": "No upcoming expenses saved",
-  "@shoppingListEmptyBody": {
-    "description": "Shopping list card empty-state body text."
-  },
-  "shoppingListEmptyCta": "Add to shopping list",
-  "@shoppingListEmptyCta": {
-    "description": "Shopping list card empty-state CTA — navigates to /home/add."
-  },
-  "shoppingListItemsMore": "{count, plural, one{{count} more} other{{count} more}}",
-  "@shoppingListItemsMore": {
-    "description": "Shopping list card overflow CTA — shown when more than 3 drafts exist.",
     "placeholders": {
       "count": {"type": "int"}
     }
@@ -856,14 +782,6 @@
   "manageAccountsBodyEmpty": "No accounts yet. Create one to get started.",
   "@manageAccountsBodyEmpty": {
     "description": "Empty-state body text inside the Manage accounts surface when no accounts exist."
-  },
-  "analysisPlaceholderTitle": "Analysis is coming in Phase 2",
-  "@analysisPlaceholderTitle": {
-    "description": "Title for the Analysis screen empty-state placeholder."
-  },
-  "analysisPlaceholderBody": "Charts and summaries will appear here once Phase 2 lands.",
-  "@analysisPlaceholderBody": {
-    "description": "Body copy for the Analysis screen empty-state placeholder."
   },
 
   "analysisTitle": "Analysis",

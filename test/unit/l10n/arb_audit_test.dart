@@ -52,7 +52,6 @@ const Set<String> _expectedEnKeys = <String>{
   // §5.3 Group P — Splash + splash-settings.
   'splashEnter',
   'splashSetStartDate',
-  'splashSinceDate',
   'splashDayCountLabel',
   'settingsSplashSection',
   'settingsSplashEnabled',
@@ -109,10 +108,6 @@ const Set<String> _expectedEnKeys = <String>{
 
   // M5 Wave 1 — Accounts slice UI keys
   // (docs/plans/m5-ui-feature-slices/wave-1/accounts-plan.md §3.2).
-  'accountsListTitle',
-  'accountsAddCta',
-  'accountsEmptyTitle',
-  'accountsEmptyCta',
   'accountsArchivedSectionLabel',
   'accountsSetDefaultAction',
   'accountsDefaultBadge',
@@ -146,7 +141,6 @@ const Set<String> _expectedEnKeys = <String>{
   // (docs/plans/m5-ui-feature-slices/wave-1/settings-plan.md §3.2).
   'settingsSectionAppearance',
   'settingsSectionGeneral',
-  'settingsSectionDataManagement',
   'settingsThemeLabel',
   'settingsThemeLight',
   'settingsThemeDark',
@@ -155,10 +149,6 @@ const Set<String> _expectedEnKeys = <String>{
   'settingsLanguageEnglish',
   'settingsLanguageZhTw',
   'settingsLanguageZhCn',
-  'settingsDefaultAccountLabel',
-  'settingsDefaultAccountEmpty',
-  'settingsDefaultAccountPickerTitle',
-  'settingsDefaultAccountCreateCta',
   'settingsDefaultCurrencyLabel',
   'settingsDefaultCurrencyPickerTitle',
   'settingsManageCategories',
@@ -212,7 +202,6 @@ const Set<String> _expectedEnKeys = <String>{
   // Home calendar-day browsing + transaction currency (plan 2026-04-28).
   'homeEmptyDayMessage',
   'homeJumpToToday',
-  'homeSummaryMultiCurrencyNote',
   'txCurrencyLabel',
   'txCurrencyPickerTitle',
   'txCurrencySearchHint',
@@ -232,13 +221,6 @@ const Set<String> _expectedEnKeys = <String>{
   'currencySgd',
   'currencyAud',
   'currencyNzd',
-
-  // Task 3 — Shopping list preview card (feature/shopping-list).
-  'shoppingListCardTitle',
-  'shoppingListViewAll',
-  'shoppingListEmptyBody',
-  'shoppingListEmptyCta',
-  'shoppingListItemsMore',
 
   // Task 4 — Dedicated shopping list screen + delete/undo.
   'shoppingListScreenTitle',
@@ -273,8 +255,6 @@ const Set<String> _expectedEnKeys = <String>{
   'manageAccountsTileSubtitleMore',
   'manageAccountsTileSubtitleAddCta',
   'manageAccountsBodyEmpty',
-  'analysisPlaceholderTitle',
-  'analysisPlaceholderBody',
 
   // Recurring transactions feature
   // (docs/superpowers/plans/2026-05-07-recurring-transactions.md).

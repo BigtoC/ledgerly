@@ -53,7 +53,6 @@
 
   "splashEnter": "进入",
   "splashSetStartDate": "设置起始日期",
-  "splashSinceDate": "自 {date} 起",
   "splashDayCountLabel": "天",
 
   "settingsSplashSection": "启动页",
@@ -79,10 +78,6 @@
   "categoriesPickerTitleIncome": "选择收入分类",
   "categoriesPickerEmptyCta": "暂无分类 — 创建一个",
 
-  "accountsListTitle": "账户",
-  "accountsAddCta": "添加账户",
-  "accountsEmptyTitle": "没有使用中的账户",
-  "accountsEmptyCta": "创建账户",
   "accountsArchivedSectionLabel": "已归档",
   "accountsSetDefaultAction": "设为默认",
   "accountsDefaultBadge": "默认",
@@ -114,7 +109,6 @@
 
   "settingsSectionAppearance": "外观",
   "settingsSectionGeneral": "常规",
-  "settingsSectionDataManagement": "数据管理",
   "settingsThemeLabel": "主题",
   "settingsThemeLight": "浅色",
   "settingsThemeDark": "深色",
@@ -123,10 +117,6 @@
   "settingsLanguageEnglish": "English",
   "settingsLanguageZhTw": "繁體中文",
   "settingsLanguageZhCn": "简体中文",
-  "settingsDefaultAccountLabel": "默认账户",
-  "settingsDefaultAccountEmpty": "未设置",
-  "settingsDefaultAccountPickerTitle": "选择默认账户",
-  "settingsDefaultAccountCreateCta": "创建账户",
   "settingsDefaultCurrencyLabel": "默认币种",
   "settingsDefaultCurrencyPickerTitle": "选择默认币种",
   "settingsManageCategories": "管理分类",
@@ -161,7 +151,6 @@
 
   "homeEmptyDayMessage": "无交易",
   "homeJumpToToday": "跳至今天",
-  "homeSummaryMultiCurrencyNote": "多种币种",
   "homeDaySkeletonLabel": "加载中的日期",
   "homeDeleteUndoSnackbar": "交易已删除",
   "homeDuplicateAction": "复制",
@@ -180,17 +169,6 @@
 
   "accountsBalanceMore": "+{count} 个更多",
   "@accountsBalanceMore": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-
-  "shoppingListCardTitle": "购物清单",
-  "shoppingListViewAll": "查看全部",
-  "shoppingListEmptyBody": "暂无待支出",
-  "shoppingListEmptyCta": "加入购物清单",
-  "shoppingListItemsMore": "{count, plural, other{还有{count}条}}",
-  "@shoppingListItemsMore": {
     "placeholders": {
       "count": {"type": "int"}
     }
@@ -241,8 +219,6 @@
   },
   "manageAccountsTileSubtitleAddCta": "添加账户",
   "manageAccountsBodyEmpty": "还没有账户，创建一个开始吧。",
-  "analysisPlaceholderTitle": "分析功能将在第二阶段推出",
-  "analysisPlaceholderBody": "图表和摘要将在第二阶段上线后显示。",
 
   "analysisTitle": "分析",
   "analysisSearchPrompt": "搜索备注以查找交易",

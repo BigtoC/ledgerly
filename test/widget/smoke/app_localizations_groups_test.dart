@@ -132,11 +132,6 @@ void main() {
           expect(l10n.splashEnter, isNotEmpty);
           expect(l10n.splashDayCountLabel, isNotEmpty);
 
-          // ICU placeholder — if the @placeholders block or the format is
-          // wrong, generation produces a different method signature per locale
-          // and this call does not compile.
-          expect(l10n.splashSinceDate(DateTime.utc(2024, 1, 1)), isNotEmpty);
-
           // Splash settings group.
           expect(l10n.settingsSplashSection, isNotEmpty);
           expect(l10n.settingsSplashEnabled, isNotEmpty);
