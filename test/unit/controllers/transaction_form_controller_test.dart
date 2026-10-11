@@ -102,22 +102,20 @@ Transaction _persistedTx({
   int id = 99,
   int amountMinorUnits = 500,
   Currency currency = _usd,
-  int categoryId = 10,
   int accountId = 1,
   String? memo,
   DateTime? date,
-  DateTime? createdAt,
 }) {
   final d = date ?? DateTime(2026, 4, 25);
   return Transaction(
     id: id,
     amountMinorUnits: amountMinorUnits,
     currency: currency,
-    categoryId: categoryId,
+    categoryId: 10,
     accountId: accountId,
     memo: memo,
     date: d,
-    createdAt: createdAt ?? d,
+    createdAt: d,
     updatedAt: d,
   );
 }

@@ -197,13 +197,13 @@ class _IconKey extends StatelessWidget {
     required this.icon,
     required this.tooltip,
     required this.onTap,
-    this.onLongPress,
+    required this.onLongPress,
   });
 
   final IconData icon;
   final String tooltip;
   final VoidCallback onTap;
-  final VoidCallback? onLongPress;
+  final VoidCallback onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -218,8 +218,7 @@ class _IconKey extends StatelessWidget {
           child: Semantics(
             onLongPressHint: l10n.txKeypadClear,
             customSemanticsActions: {
-              CustomSemanticsAction(label: l10n.txKeypadClear):
-                  onLongPress ?? () {},
+              CustomSemanticsAction(label: l10n.txKeypadClear): onLongPress,
             },
             child: Material(
               color: colors.surfaceContainerHigh,

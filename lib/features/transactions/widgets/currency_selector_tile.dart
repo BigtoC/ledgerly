@@ -18,9 +18,9 @@ class CurrencySelectorTile extends StatelessWidget {
 
   final Currency? currency;
 
-  /// Called when the user taps the tile. `null` when `currency` is null
+  /// Called when the user taps the tile. Ignored while `currency` is null
   /// (tile is disabled until an account is selected).
-  final VoidCallback? onTap;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {

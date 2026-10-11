@@ -21,7 +21,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../data/models/account.dart';
 import '../../data/models/category.dart';
 import '../../data/models/currency.dart';
-import '../../data/models/transaction.dart';
 import 'keypad_state.dart';
 
 part 'transaction_form_state.freezed.dart';
@@ -84,9 +83,7 @@ class ShoppingListEditResultSavedDraft extends ShoppingListEditResult {
 
 /// The draft was converted to a real transaction.
 class ShoppingListEditResultSavedTransaction extends ShoppingListEditResult {
-  const ShoppingListEditResultSavedTransaction({required this.transaction});
-
-  final Transaction transaction;
+  const ShoppingListEditResultSavedTransaction();
 }
 
 /// The draft row was not found when the form opened (already deleted).
@@ -106,12 +103,7 @@ class ShoppingListEditResultAddedToList extends ShoppingListEditResult {
 /// Tracks which async save command is currently in-flight. `none` means
 /// the form is idle; any other value disables all CTAs and shows a progress
 /// indicator on the active button.
-enum TransactionFormSubmissionAction {
-  none,
-  saveTransaction,
-  saveDraft,
-  convertDraft,
-}
+enum TransactionFormSubmissionAction { none, saveDraft, convertDraft }
 
 // ---------------------------------------------------------------------------
 // Why the form is in TransactionFormEmpty
@@ -218,7 +210,7 @@ sealed class TransactionFormState with _$TransactionFormState {
 
     /// Non-null only in [EditShoppingListDraftMode]; stores the id of the
     /// draft being edited so `saveDraft` and `convertDraft` can reference it.
-    @Default(null) int? shoppingListItemId,
+    int? shoppingListItemId,
 
     /// Tracks which async submission is currently in-flight. Used to
     /// disable all CTAs and show a progress indicator on the active button.

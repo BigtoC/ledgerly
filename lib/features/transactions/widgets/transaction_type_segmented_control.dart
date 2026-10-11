@@ -38,10 +38,7 @@ class TransactionTypeSegmentedControl extends StatelessWidget {
         ),
       ],
       selected: {value},
-      onSelectionChanged: (next) {
-        if (next.isEmpty) return;
-        onChanged(next.first);
-      },
+      onSelectionChanged: (next) => onChanged(next.first),
     );
   }
 }

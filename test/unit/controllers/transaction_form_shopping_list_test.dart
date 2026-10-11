@@ -114,20 +114,14 @@ ShoppingListItem _draft({
   updatedAt: DateTime(2026, 5, 1),
 );
 
-Transaction _persistedTx({
-  int id = 99,
-  int amountMinorUnits = 1000,
-  Currency currency = _usd,
-  int categoryId = 10,
-  int accountId = 1,
-}) {
+Transaction _persistedTx({int id = 99, int amountMinorUnits = 1000}) {
   final d = DateTime(2026, 5, 1);
   return Transaction(
     id: id,
     amountMinorUnits: amountMinorUnits,
-    currency: currency,
-    categoryId: categoryId,
-    accountId: accountId,
+    currency: _usd,
+    categoryId: 10,
+    accountId: 1,
     date: d,
     createdAt: d,
     updatedAt: d,
@@ -407,8 +401,6 @@ void main() {
           final result = await controller.convertDraft();
 
           expect(result, isA<ShoppingListEditResultSavedTransaction>());
-          final typed = result as ShoppingListEditResultSavedTransaction;
-          expect(typed.transaction, savedTx);
           verify(
             () => slRepo.convertToTransaction(
               shoppingListItemId: 33,

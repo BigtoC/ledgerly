@@ -84,8 +84,6 @@ const _expenseCategory = Category(
 Transaction _persistedTx({
   int id = 99,
   int amountMinorUnits = 500,
-  int categoryId = 10,
-  int accountId = 1,
   String? memo,
   DateTime? date,
 }) {
@@ -94,8 +92,8 @@ Transaction _persistedTx({
     id: id,
     amountMinorUnits: amountMinorUnits,
     currency: _usd,
-    categoryId: categoryId,
-    accountId: accountId,
+    categoryId: 10,
+    accountId: 1,
     memo: memo,
     date: d,
     createdAt: d,

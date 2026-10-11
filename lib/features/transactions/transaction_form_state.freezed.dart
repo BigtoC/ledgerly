@@ -354,7 +354,7 @@ as TransactionFormMode,
 
 
 class TransactionFormData extends TransactionFormState {
-  const TransactionFormData({required this.formMode, required this.amountMinorUnits, required this.keypad, required this.selectedAccount, required this.displayCurrency, required this.currencyTouched, required this.selectedCategory, required this.pendingType, required this.date, required this.memo, required this.isDirty, required this.isSaving, required this.isDeleting, required this.editingId, required this.duplicateSourceId, required this.originalCreatedAt, this.keypadRevision = 0, this.shoppingListItemId = null, this.submissionAction = TransactionFormSubmissionAction.none, this.selectedAccountIsArchived = false, this.selectedCategoryIsArchived = false}): super._();
+  const TransactionFormData({required this.formMode, required this.amountMinorUnits, required this.keypad, required this.selectedAccount, required this.displayCurrency, required this.currencyTouched, required this.selectedCategory, required this.pendingType, required this.date, required this.memo, required this.isDirty, required this.isSaving, required this.isDeleting, required this.editingId, required this.duplicateSourceId, required this.originalCreatedAt, this.keypadRevision = 0, this.shoppingListItemId, this.submissionAction = TransactionFormSubmissionAction.none, this.selectedAccountIsArchived = false, this.selectedCategoryIsArchived = false}): super._();
   
 
 /// Discriminates which entry point opened the form so widgets can derive
@@ -409,7 +409,7 @@ class TransactionFormData extends TransactionFormState {
 @JsonKey() final  int keypadRevision;
 /// Non-null only in [EditShoppingListDraftMode]; stores the id of the
 /// draft being edited so `saveDraft` and `convertDraft` can reference it.
-@JsonKey() final  int? shoppingListItemId;
+ final  int? shoppingListItemId;
 /// Tracks which async submission is currently in-flight. Used to
 /// disable all CTAs and show a progress indicator on the active button.
 @JsonKey() final  TransactionFormSubmissionAction submissionAction;

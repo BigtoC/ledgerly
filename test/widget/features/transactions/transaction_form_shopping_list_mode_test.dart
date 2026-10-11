@@ -112,33 +112,30 @@ class _FakeTransactionFormController extends TransactionFormController {
   Future<ShoppingListEditResult?> convertDraft() async => _convertDraftResult;
 }
 
-TransactionFormState _editableDraftState({int shoppingListItemId = 77}) =>
-    TransactionFormState.data(
-      formMode: EditShoppingListDraftMode(
-        shoppingListItemId: shoppingListItemId,
-      ),
-      amountMinorUnits: 500,
-      keypad: const KeypadState(
-        amountMinorUnits: 500,
-        fractionalDigitsEntered: 0,
-        isFractionalMode: false,
-        hasCurrentInput: true,
-      ),
-      selectedAccount: _account,
-      displayCurrency: _usd,
-      currencyTouched: false,
-      selectedCategory: _expenseCategory,
-      pendingType: CategoryType.expense,
-      date: DateTime(2026, 5, 1),
-      memo: 'Milk',
-      isDirty: false,
-      isSaving: false,
-      isDeleting: false,
-      editingId: null,
-      duplicateSourceId: null,
-      originalCreatedAt: null,
-      shoppingListItemId: shoppingListItemId,
-    );
+TransactionFormState _editableDraftState() => TransactionFormState.data(
+  formMode: const EditShoppingListDraftMode(shoppingListItemId: 77),
+  amountMinorUnits: 500,
+  keypad: const KeypadState(
+    amountMinorUnits: 500,
+    fractionalDigitsEntered: 0,
+    isFractionalMode: false,
+    hasCurrentInput: true,
+  ),
+  selectedAccount: _account,
+  displayCurrency: _usd,
+  currencyTouched: false,
+  selectedCategory: _expenseCategory,
+  pendingType: CategoryType.expense,
+  date: DateTime(2026, 5, 1),
+  memo: 'Milk',
+  isDirty: false,
+  isSaving: false,
+  isDeleting: false,
+  editingId: null,
+  duplicateSourceId: null,
+  originalCreatedAt: null,
+  shoppingListItemId: 77,
+);
 
 void main() {
   late _MockTransactionRepository txRepo;

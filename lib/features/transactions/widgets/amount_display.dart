@@ -151,12 +151,9 @@ class AmountDisplay extends StatelessWidget {
     final decimals = c?.decimals ?? 2;
     final amount = keypad.amountMinorUnits;
     if (decimals == 0) return amount.toString();
-    if (!keypad.isFractionalMode) {
-      final unit = _pow10(decimals);
-      return (amount ~/ unit).toString();
-    }
     final unit = _pow10(decimals);
     final whole = amount ~/ unit;
+    if (!keypad.isFractionalMode) return whole.toString();
     final fracPart = (amount % unit)
         .toString()
         .padLeft(decimals, '0')
