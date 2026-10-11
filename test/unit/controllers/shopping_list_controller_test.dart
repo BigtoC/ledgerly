@@ -29,16 +29,10 @@ import 'package:ledgerly/features/shopping_list/shopping_list_state.dart';
 class _MockShoppingListRepository extends Mock
     implements ShoppingListRepository {}
 
-ShoppingListItem _item({
-  required int id,
-  int categoryId = 1,
-  int accountId = 1,
-  String? memo,
-}) => ShoppingListItem(
+ShoppingListItem _item({required int id}) => ShoppingListItem(
   id: id,
-  categoryId: categoryId,
-  accountId: accountId,
-  memo: memo,
+  categoryId: 1,
+  accountId: 1,
   draftDate: DateTime(2026, 5, 1),
   createdAt: DateTime(2026, 5, 1),
   updatedAt: DateTime(2026, 5, 1),
@@ -54,9 +48,6 @@ void main() {
       itemsCtrl = StreamController<List<ShoppingListItem>>.broadcast();
 
       when(() => repo.watchAll()).thenAnswer((_) => itemsCtrl.stream);
-      when(
-        () => repo.watchAll(limit: any(named: 'limit')),
-      ).thenAnswer((_) => itemsCtrl.stream);
       when(() => repo.watchCount()).thenAnswer((_) => const Stream.empty());
     });
 

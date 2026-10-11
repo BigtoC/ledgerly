@@ -48,15 +48,10 @@ const _seededFoodCategory = Category(
   l10nKey: 'category.food',
 );
 
-ShoppingListItem _item({
-  required int id,
-  int categoryId = 1,
-  int accountId = 1,
-  String? memo,
-}) => ShoppingListItem(
+ShoppingListItem _item({required int id, String? memo}) => ShoppingListItem(
   id: id,
-  categoryId: categoryId,
-  accountId: accountId,
+  categoryId: 1,
+  accountId: 1,
   memo: memo ?? 'Item $id',
   draftDate: DateTime(2026, 5, 1),
   createdAt: DateTime(2026, 5, 1),
@@ -111,10 +106,9 @@ Widget _wrap({required ProviderContainer container}) {
 
 ProviderContainer _makeContainer({
   required ShoppingListState fixed,
-  _MockShoppingListRepository? repo,
   Category? category,
 }) {
-  final r = repo ?? _MockShoppingListRepository();
+  final r = _MockShoppingListRepository();
   when(() => r.watchAll()).thenAnswer((_) => const Stream.empty());
   when(() => r.watchCount()).thenAnswer((_) => const Stream.empty());
 

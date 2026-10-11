@@ -32,39 +32,6 @@ final shoppingListTotalCountProvider = AutoDisposeStreamProvider<int>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ShoppingListTotalCountRef = AutoDisposeStreamProviderRef<int>;
-String _$shoppingListPreviewHash() =>
-    r'f1ada95a3aac101d0525a97fafc7e7be788324c0';
-
-/// Combined preview + total-count stream.
-///
-/// Watches [shoppingListRepositoryProvider.watchAll()] once and maps it into a
-/// record with the first 3 items (`preview`) and the full list length
-/// (`totalCount`). Using a single stream avoids opening two live DB queries.
-///
-/// Copied from [shoppingListPreview].
-@ProviderFor(shoppingListPreview)
-final shoppingListPreviewProvider =
-    AutoDisposeStreamProvider<
-      ({List<ShoppingListItem> preview, int totalCount})
-    >.internal(
-      shoppingListPreview,
-      name: r'shoppingListPreviewProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$shoppingListPreviewHash,
-      dependencies: <ProviderOrFamily>[shoppingListRepositoryProvider],
-      allTransitiveDependencies: <ProviderOrFamily>{
-        shoppingListRepositoryProvider,
-        ...?shoppingListRepositoryProvider.allTransitiveDependencies,
-      },
-    );
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef ShoppingListPreviewRef =
-    AutoDisposeStreamProviderRef<
-      ({List<ShoppingListItem> preview, int totalCount})
-    >;
 String _$shoppingListCategoryByIdHash() =>
     r'563f779b2ffc71271256f4f4e2e0ba437d3e00b1';
 

@@ -35,10 +35,7 @@ sealed class ShoppingListEffect {
 }
 
 final class ShoppingListDeleteFailedEffect extends ShoppingListEffect {
-  const ShoppingListDeleteFailedEffect(this.error, this.stackTrace);
-
-  final Object error;
-  final StackTrace stackTrace;
+  const ShoppingListDeleteFailedEffect();
 }
 
 @Riverpod(dependencies: [shoppingListRepository])
@@ -111,18 +108,14 @@ class ShoppingListController extends _$ShoppingListController {
         _composer?.notifyPendingDeleteChanged();
       }
       return true;
-    } catch (error, stackTrace) {
+    } catch (_) {
       if (_pendingDelete?.itemId == id) {
         _pendingDelete = null;
-        _composer?.notifyPendingDeleteChanged();
-      } else {
-        // A second delete is already pending. The failed item's row must
-        // reappear regardless — force a stream re-emission so the restored
-        // row becomes visible (the pending state was not changed, but
-        // _scheduleEmit re-derives visible rows from the current state).
-        _composer?.notifyPendingDeleteChanged();
       }
-      _effectListener?.call(ShoppingListDeleteFailedEffect(error, stackTrace));
+      // Re-emit even when a second delete is already pending so the failed
+      // item's restored row becomes visible.
+      _composer?.notifyPendingDeleteChanged();
+      _effectListener?.call(const ShoppingListDeleteFailedEffect());
       return false;
     }
   }
@@ -169,7 +162,7 @@ class _Composer {
 
   Future<void> dispose() async {
     await _stop();
-    if (!_out.isClosed) await _out.close();
+    await _out.close();
   }
 
   void notifyPendingDeleteChanged() {
