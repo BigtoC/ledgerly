@@ -199,9 +199,7 @@ class _CategoryPieChartState extends State<CategoryPieChart> {
       currency: currency,
       locale: widget.locale,
     );
-    final displayLabel = slice.label.startsWith('category.')
-        ? categoryDisplayNameForKey(slice.label, l10n)
-        : slice.label;
+    final displayLabel = categoryDisplayNameForKey(slice.label, l10n);
     return Padding(
       key: ValueKey('slice-$selection'),
       padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -251,9 +249,7 @@ class _CategoryPieChartState extends State<CategoryPieChart> {
         currency: currency,
         locale: widget.locale,
       );
-      final displayLabel = s.label.startsWith('category.')
-          ? categoryDisplayNameForKey(s.label, l10n)
-          : s.label;
+      final displayLabel = categoryDisplayNameForKey(s.label, l10n);
       if (s.fraction != null) {
         parts.add('$displayLabel ${(s.fraction! * 100).round()}%, $amount');
       } else {

@@ -41,19 +41,6 @@ class ChartsFxStatus {
     if (from == to) return null;
     return rates['$from→$to'];
   }
-
-  /// Most recent `fetchedAt` across all relevant pairs. Used by the
-  /// warm-start gate (1h freshness window). `null` when there are no
-  /// rates at all (cold start).
-  DateTime? mostRecentFetchedAt() {
-    DateTime? latest;
-    for (final m in rates.values) {
-      if (latest == null || m.fetchedAt.isAfter(latest)) {
-        latest = m.fetchedAt;
-      }
-    }
-    return latest;
-  }
 }
 
 /// Stream of the joined FX status. Re-emits whenever either the default

@@ -51,22 +51,9 @@ class ChartLegend extends StatelessWidget {
                 b.slice.totalMinorUnits.compareTo(a.slice.totalMinorUnits),
           );
 
-    final visible = <({int index, ChartSlice slice})>[];
-    var otherTotal = 0;
-    var otherCount = 0;
-    final otherCurrencyCode = indexed.isNotEmpty
-        ? indexed.first.slice.currencyCode
-        : 'USD';
-    if (indexed.length <= _maxVisible) {
-      visible.addAll(indexed);
-    } else {
-      visible.addAll(indexed.take(_maxVisible - 1));
-      for (final entry in indexed.skip(_maxVisible - 1)) {
-        otherTotal += entry.slice.totalMinorUnits;
-        otherCount++;
-      }
-    }
     final hasOther = indexed.length > _maxVisible;
+    final visible = hasOther ? indexed.take(_maxVisible - 1) : indexed;
+    final others = indexed.skip(_maxVisible - 1);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -77,9 +64,12 @@ class ChartLegend extends StatelessWidget {
           _otherRow(
             context,
             l10n: l10n,
-            total: otherTotal,
-            count: otherCount,
-            currencyCode: otherCurrencyCode,
+            total: others.fold<int>(
+              0,
+              (sum, entry) => sum + entry.slice.totalMinorUnits,
+            ),
+            count: others.length,
+            currencyCode: indexed.first.slice.currencyCode,
           ),
         if (hasOther)
           Align(
@@ -106,9 +96,7 @@ class ChartLegend extends StatelessWidget {
     // The controller serializes seeded categories as their `category.*`
     // l10n key (no BuildContext available there). Re-resolve at render
     // time so the legend shows the localized name.
-    final displayLabel = s.label.startsWith('category.')
-        ? categoryDisplayNameForKey(s.label, l10n)
-        : s.label;
+    final displayLabel = categoryDisplayNameForKey(s.label, l10n);
     final isSelected =
         originalIndex != null && originalIndex == selectedSliceIndex;
     final hasAnySelection = selectedSliceIndex != null;

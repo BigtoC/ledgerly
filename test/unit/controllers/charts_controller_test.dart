@@ -54,8 +54,6 @@ const _defaultCategories = {
 
 ProviderContainer _container({
   required TransactionRepository repo,
-  Map<int, Category> categories = _defaultCategories,
-  Map<int, Account> accounts = const {},
   Map<String, Currency> currencies = const {'USD': _usd},
   ChartsFxStatus? fxStatus,
 }) {
@@ -80,10 +78,10 @@ ProviderContainer _container({
       transactionRepositoryProvider.overrideWithValue(repo),
       exchangeRateRepositoryProvider.overrideWithValue(fxRepo),
       analysisCategoriesByIdProvider.overrideWith(
-        (ref) => Stream.value(categories),
+        (ref) => Stream.value(_defaultCategories),
       ),
       analysisAccountsByIdProvider.overrideWith(
-        (ref) => Stream.value(accounts),
+        (ref) => Stream.value(const <int, Account>{}),
       ),
       chartsCurrenciesByCodeProvider.overrideWith(
         (ref) => Stream.value(currencies),

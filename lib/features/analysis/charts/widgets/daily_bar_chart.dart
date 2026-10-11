@@ -64,8 +64,7 @@ class _DailyBarChartState extends State<DailyBarChart> {
         : (widget.currenciesByCode[widget.displayCurrencyCode!] ??
               Currency(code: widget.displayCurrencyCode!, decimals: 2));
 
-    final gradientBottom =
-        Color.lerp(scheme.primary, Colors.black, 0.2) ?? scheme.primary;
+    final gradientBottom = Color.lerp(scheme.primary, Colors.black, 0.2)!;
     final gradientTop = scheme.secondary;
     final barsGradient = LinearGradient(
       colors: [gradientBottom, gradientTop],
@@ -82,7 +81,7 @@ class _DailyBarChartState extends State<DailyBarChart> {
     );
 
     return Semantics(
-      label: _semanticsLabel(l10n, filledBuckets),
+      label: _semanticsLabel(l10n, filledBuckets, currency),
       image: true,
       excludeSemantics: true,
       child: AspectRatio(
@@ -220,12 +219,9 @@ class _DailyBarChartState extends State<DailyBarChart> {
   String _semanticsLabel(
     AppLocalizations l10n,
     List<ChartBucketTotal> filledBuckets,
+    Currency? currency,
   ) {
     final parts = <String>[l10n.chartsBarChart];
-    final currency = widget.displayCurrencyCode == null
-        ? null
-        : (widget.currenciesByCode[widget.displayCurrencyCode!] ??
-              Currency(code: widget.displayCurrencyCode!, decimals: 2));
     for (final b in filledBuckets) {
       if (b.totalMinorUnits == 0) continue;
       final amount = currency == null

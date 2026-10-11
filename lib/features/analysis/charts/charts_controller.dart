@@ -82,31 +82,21 @@ class ChartsController extends _$ChartsController {
     _emitter = controller;
 
     // Re-resolve the current chart when FX or label metadata changes.
-    ref.listen(chartsFxStatusProvider, (_, _) {
+    void reemitIfReady(Object? _, Object? _) {
       if (_lastSlices != null && _lastBuckets != null) {
         _emitIfReady();
       }
-    });
-    ref.listen(chartsCurrenciesByCodeProvider, (_, _) {
-      if (_lastSlices != null && _lastBuckets != null) {
-        _emitIfReady();
-      }
-    });
-    ref.listen(analysisCategoriesByIdProvider, (_, _) {
-      if (_lastSlices != null && _lastBuckets != null) {
-        _emitIfReady();
-      }
-    });
-    ref.listen(analysisAccountsByIdProvider, (_, _) {
-      if (_lastSlices != null && _lastBuckets != null) {
-        _emitIfReady();
-      }
-    });
+    }
 
-    // No explicit Idle emission — _resubscribe() emits Loading(previous:
-    // _lastEmittedData), which renders the prior chart while new streams
-    // re-emit. Emitting Idle on every rebuild flashes a full spinner and
-    // (combined with the outer SingleChildScrollView) clamps scroll offset.
+    ref.listen(chartsFxStatusProvider, reemitIfReady);
+    ref.listen(chartsCurrenciesByCodeProvider, reemitIfReady);
+    ref.listen(analysisCategoriesByIdProvider, reemitIfReady);
+    ref.listen(analysisAccountsByIdProvider, reemitIfReady);
+
+    // _resubscribe() emits Loading(previous: _lastEmittedData), which renders
+    // the prior chart while new streams re-emit. A bare spinner on every
+    // rebuild would flash and (combined with the outer SingleChildScrollView)
+    // clamp scroll offset.
     _resubscribe();
 
     ref.onDispose(() {
@@ -154,22 +144,6 @@ class ChartsController extends _$ChartsController {
     PeriodType.year => TimeBucketGranularity.month,
   };
 
-  /// Translates the typed `SelectedSlice?` into plain filter args for the
-  /// repository. Keeps `SelectedSlice` inside the analysis layer — this is
-  /// the only place it crosses into data-access territory.
-  (int?, int?, String?) _selectionFilters(SelectedSlice? selection) {
-    return switch (selection) {
-      null => (null, null, null),
-      SelectedCategorySlice(:final categoryId, :final currencyCode) => (
-        categoryId,
-        null,
-        currencyCode,
-      ),
-      SelectedAccountSlice(:final accountId) => (null, accountId, null),
-      SelectedCurrencySlice(:final currencyCode) => (null, null, currencyCode),
-    };
-  }
-
   void _resubscribe() {
     _sliceSub?.cancel();
     _bucketsSub?.cancel();
@@ -187,7 +161,7 @@ class ChartsController extends _$ChartsController {
 
     final repo = ref.read(transactionRepositoryProvider);
 
-    final (categoryId, accountId, currencyCode) = _selectionFilters(
+    final (categoryId, accountId, currencyCode) = selectionFilters(
       _selection.selectedSlice,
     );
 

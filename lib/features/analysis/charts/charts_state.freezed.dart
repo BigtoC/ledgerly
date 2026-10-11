@@ -55,11 +55,10 @@ extension ChartsStatePatterns on ChartsState {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ChartsIdle value)?  idle,TResult Function( ChartsLoading value)?  loading,TResult Function( ChartsDataState value)?  data,TResult Function( ChartsEmpty value)?  empty,TResult Function( ChartsBlockedByMissingRates value)?  blockedByMissingRates,TResult Function( ChartsError value)?  error,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ChartsLoading value)?  loading,TResult Function( ChartsDataState value)?  data,TResult Function( ChartsEmpty value)?  empty,TResult Function( ChartsBlockedByMissingRates value)?  blockedByMissingRates,TResult Function( ChartsError value)?  error,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
-case ChartsIdle() when idle != null:
-return idle(_that);case ChartsLoading() when loading != null:
+case ChartsLoading() when loading != null:
 return loading(_that);case ChartsDataState() when data != null:
 return data(_that);case ChartsEmpty() when empty != null:
 return empty(_that);case ChartsBlockedByMissingRates() when blockedByMissingRates != null:
@@ -82,11 +81,10 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ChartsIdle value)  idle,required TResult Function( ChartsLoading value)  loading,required TResult Function( ChartsDataState value)  data,required TResult Function( ChartsEmpty value)  empty,required TResult Function( ChartsBlockedByMissingRates value)  blockedByMissingRates,required TResult Function( ChartsError value)  error,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ChartsLoading value)  loading,required TResult Function( ChartsDataState value)  data,required TResult Function( ChartsEmpty value)  empty,required TResult Function( ChartsBlockedByMissingRates value)  blockedByMissingRates,required TResult Function( ChartsError value)  error,}){
 final _that = this;
 switch (_that) {
-case ChartsIdle():
-return idle(_that);case ChartsLoading():
+case ChartsLoading():
 return loading(_that);case ChartsDataState():
 return data(_that);case ChartsEmpty():
 return empty(_that);case ChartsBlockedByMissingRates():
@@ -105,11 +103,10 @@ return error(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ChartsIdle value)?  idle,TResult? Function( ChartsLoading value)?  loading,TResult? Function( ChartsDataState value)?  data,TResult? Function( ChartsEmpty value)?  empty,TResult? Function( ChartsBlockedByMissingRates value)?  blockedByMissingRates,TResult? Function( ChartsError value)?  error,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ChartsLoading value)?  loading,TResult? Function( ChartsDataState value)?  data,TResult? Function( ChartsEmpty value)?  empty,TResult? Function( ChartsBlockedByMissingRates value)?  blockedByMissingRates,TResult? Function( ChartsError value)?  error,}){
 final _that = this;
 switch (_that) {
-case ChartsIdle() when idle != null:
-return idle(_that);case ChartsLoading() when loading != null:
+case ChartsLoading() when loading != null:
 return loading(_that);case ChartsDataState() when data != null:
 return data(_that);case ChartsEmpty() when empty != null:
 return empty(_that);case ChartsBlockedByMissingRates() when blockedByMissingRates != null:
@@ -131,10 +128,9 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  idle,TResult Function( ChartsData? previous)?  loading,TResult Function( ChartsData chartData)?  data,TResult Function()?  empty,TResult Function( ChartsData? previous)?  blockedByMissingRates,TResult Function( Object error,  StackTrace stack)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( ChartsData? previous)?  loading,TResult Function( ChartsData chartData)?  data,TResult Function()?  empty,TResult Function( ChartsData? previous)?  blockedByMissingRates,TResult Function( Object error,  StackTrace stack)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
-case ChartsIdle() when idle != null:
-return idle();case ChartsLoading() when loading != null:
+case ChartsLoading() when loading != null:
 return loading(_that.previous);case ChartsDataState() when data != null:
 return data(_that.chartData);case ChartsEmpty() when empty != null:
 return empty();case ChartsBlockedByMissingRates() when blockedByMissingRates != null:
@@ -157,10 +153,9 @@ return error(_that.error,_that.stack);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  idle,required TResult Function( ChartsData? previous)  loading,required TResult Function( ChartsData chartData)  data,required TResult Function()  empty,required TResult Function( ChartsData? previous)  blockedByMissingRates,required TResult Function( Object error,  StackTrace stack)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( ChartsData? previous)  loading,required TResult Function( ChartsData chartData)  data,required TResult Function()  empty,required TResult Function( ChartsData? previous)  blockedByMissingRates,required TResult Function( Object error,  StackTrace stack)  error,}) {final _that = this;
 switch (_that) {
-case ChartsIdle():
-return idle();case ChartsLoading():
+case ChartsLoading():
 return loading(_that.previous);case ChartsDataState():
 return data(_that.chartData);case ChartsEmpty():
 return empty();case ChartsBlockedByMissingRates():
@@ -179,10 +174,9 @@ return error(_that.error,_that.stack);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  idle,TResult? Function( ChartsData? previous)?  loading,TResult? Function( ChartsData chartData)?  data,TResult? Function()?  empty,TResult? Function( ChartsData? previous)?  blockedByMissingRates,TResult? Function( Object error,  StackTrace stack)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( ChartsData? previous)?  loading,TResult? Function( ChartsData chartData)?  data,TResult? Function()?  empty,TResult? Function( ChartsData? previous)?  blockedByMissingRates,TResult? Function( Object error,  StackTrace stack)?  error,}) {final _that = this;
 switch (_that) {
-case ChartsIdle() when idle != null:
-return idle();case ChartsLoading() when loading != null:
+case ChartsLoading() when loading != null:
 return loading(_that.previous);case ChartsDataState() when data != null:
 return data(_that.chartData);case ChartsEmpty() when empty != null:
 return empty();case ChartsBlockedByMissingRates() when blockedByMissingRates != null:
@@ -194,38 +188,6 @@ return error(_that.error,_that.stack);case _:
 }
 
 }
-
-/// @nodoc
-
-
-class ChartsIdle implements ChartsState {
-  const ChartsIdle();
-  
-
-
-
-
-
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartsIdle);
-}
-
-
-@override
-int get hashCode => runtimeType.hashCode;
-
-@override
-String toString() {
-  return 'ChartsState.idle()';
-}
-
-
-}
-
-
-
 
 /// @nodoc
 

@@ -187,7 +187,8 @@ class _CategorySearchDetailScreenState
                                       account: accountsById[tx.accountId],
                                       locale: locale,
                                       onTap: () => _onEditRow(tx.id),
-                                      onDelete: () => _onDeleteRow(tx.id),
+                                      onDelete: () =>
+                                          _controller.deleteTransaction(tx.id),
                                     ),
                                 ],
                               );
@@ -209,10 +210,6 @@ class _CategorySearchDetailScreenState
     // No follow-up action — the underlying memo stream re-emits if the
     // transaction was edited (or not, if the memo no longer matches the
     // active query, in which case the row drops out naturally).
-  }
-
-  Future<void> _onDeleteRow(int id) async {
-    await _controller.deleteTransaction(id);
   }
 
   void _maybeShowUndoSnackbar(

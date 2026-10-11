@@ -511,18 +511,17 @@ void main() {
       final txStream = StreamController<List<Transaction>>.broadcast();
       addTearDown(txStream.close);
 
-      Transaction snap({required int amount, String memo = 'coffee'}) =>
-          Transaction(
-            id: 1,
-            amountMinorUnits: amount,
-            currency: _usd,
-            categoryId: 1,
-            accountId: 1,
-            date: DateTime.utc(2026, 5, 1),
-            memo: memo,
-            createdAt: DateTime.utc(2026),
-            updatedAt: DateTime.utc(2026),
-          );
+      Transaction snap({required int amount}) => Transaction(
+        id: 1,
+        amountMinorUnits: amount,
+        currency: _usd,
+        categoryId: 1,
+        accountId: 1,
+        date: DateTime.utc(2026, 5, 1),
+        memo: 'coffee',
+        createdAt: DateTime.utc(2026),
+        updatedAt: DateTime.utc(2026),
+      );
 
       when(() => tx.watchByMemo('coffee')).thenAnswer((_) => txStream.stream);
       when(

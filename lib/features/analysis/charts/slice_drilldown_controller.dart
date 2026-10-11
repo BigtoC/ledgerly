@@ -34,10 +34,7 @@ sealed class SliceDrilldownEffect {
 }
 
 final class SliceDrilldownDeleteFailedEffect extends SliceDrilldownEffect {
-  const SliceDrilldownDeleteFailedEffect(this.error, this.stackTrace);
-
-  final Object error;
-  final StackTrace stackTrace;
+  const SliceDrilldownDeleteFailedEffect();
 }
 
 @Riverpod(
@@ -103,7 +100,7 @@ class SliceDrilldownController extends _$SliceDrilldownController {
 
     final start = normalizeAnchor(selection.anchorDate, selection.period);
     final end = shiftAnchor(start, selection.period, 1);
-    final (categoryId, accountId, currencyCode) = _selectionFilters(selected);
+    final (categoryId, accountId, currencyCode) = selectionFilters(selected);
     final repo = ref.read(transactionRepositoryProvider);
 
     _subscription = repo
@@ -182,7 +179,7 @@ class SliceDrilldownController extends _$SliceDrilldownController {
         _emitFromCache();
       }
       return true;
-    } catch (e, st) {
+    } catch (e) {
       debugPrint('[SliceDrilldown] commit failed: $e');
       _committedDeleteIds.remove(id);
       if (generation == _generation && _pendingDeleteId == id) {
@@ -191,7 +188,7 @@ class SliceDrilldownController extends _$SliceDrilldownController {
         _emitFromCache();
       }
       if (generation == _generation) {
-        _effectListener?.call(SliceDrilldownDeleteFailedEffect(e, st));
+        _effectListener?.call(const SliceDrilldownDeleteFailedEffect());
       }
       return false;
     }
@@ -224,18 +221,6 @@ class SliceDrilldownController extends _$SliceDrilldownController {
         pendingDeleteId: _pendingDeleteId,
       ),
     );
-  }
-
-  (int?, int?, String?) _selectionFilters(SelectedSlice selection) {
-    return switch (selection) {
-      SelectedCategorySlice(:final categoryId, :final currencyCode) => (
-        categoryId,
-        null,
-        currencyCode,
-      ),
-      SelectedAccountSlice(:final accountId) => (null, accountId, null),
-      SelectedCurrencySlice(:final currencyCode) => (null, null, currencyCode),
-    };
   }
 
   List<Transaction> _visibleRowsFromCache() {

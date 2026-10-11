@@ -29,7 +29,7 @@ class PeriodSelector extends StatelessWidget {
   final VoidCallback onNext;
   final ValueChanged<PeriodType> onPeriodChanged;
 
-  String _formatLabel(BuildContext context) {
+  String _formatLabel() {
     switch (period) {
       case PeriodType.day:
         return DateHelpers.formatDisplayDate(anchorDate, locale);
@@ -64,7 +64,7 @@ class PeriodSelector extends StatelessWidget {
             Expanded(
               child: Center(
                 child: Text(
-                  _formatLabel(context),
+                  _formatLabel(),
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),

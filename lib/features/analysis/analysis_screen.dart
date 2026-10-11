@@ -45,11 +45,9 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
     // each one would cancel the prior subscription and restart the 300ms
     // timer, producing N rapid loading flashes before the user has committed
     // a single character.
-    if (_searchController.value.composing.isValid) {
-      setState(() {});
-      return;
+    if (!_searchController.value.composing.isValid) {
+      ref.read(analysisControllerProvider.notifier).updateQuery(value);
     }
-    ref.read(analysisControllerProvider.notifier).updateQuery(value);
     setState(() {});
   }
 
