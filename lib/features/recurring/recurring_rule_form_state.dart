@@ -9,7 +9,6 @@ part 'recurring_rule_form_state.freezed.dart';
 enum RecurringFormErrorKey {
   /// Memo doubles as the rule's user-visible name; required.
   nameRequired,
-  amountRequired,
   categoryRequired,
   accountRequired,
   frequencyFieldRequired,

@@ -47,7 +47,7 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
       final memo = (rule.memo?.trim().isNotEmpty ?? false)
           ? rule.memo!
           : rule.name;
-      _keypad = _keypadFromAmount(
+      _keypad = KeypadState.fromAmount(
         rule.amountMinorUnits,
         decimals: rule.currency.decimals,
       );
@@ -136,9 +136,6 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
     _update((s) => s.copyWith(amountMinorUnits: _keypad.amountMinorUnits));
   }
 
-  void updateCurrency(Currency currency) =>
-      _update((s) => s.copyWith(currency: currency));
-
   void updateCategory(int categoryId) =>
       _update((s) => s.copyWith(categoryId: categoryId, categoryError: null));
 
@@ -169,18 +166,13 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
     });
   }
 
-  void updateDayOfWeek(int? day) => _update(
-    (s) => s.copyWith(
-      dayOfWeek: day,
-      frequencyFieldError: day != null ? null : s.frequencyFieldError,
-    ),
-  );
+  void updateDayOfWeek(int day) =>
+      _update((s) => s.copyWith(dayOfWeek: day, frequencyFieldError: null));
 
-  void updateDayOfMonth(int? day) => _update(
+  void updateDayOfMonth(int day) => _update(
     (s) => s.copyWith(
       dayOfMonth: day,
-      frequencyFieldError:
-          day != null && (s.frequency != 'yearly' || s.monthOfYear != null)
+      frequencyFieldError: s.frequency != 'yearly' || s.monthOfYear != null
           ? null
           : s.frequencyFieldError,
     ),
@@ -282,44 +274,5 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
     state = AsyncData(
       fn(current).copyWith(keypad: _keypad, keypadRevision: _keypadRevision),
     );
-  }
-
-  /// Reconstructs a [KeypadState] from a stored amount so backspace on a
-  /// hydrated edit value walks back through the visible digits rather
-  /// than dropping the whole amount in one press. Mirrors the equivalent
-  /// helper on `TransactionFormController`.
-  KeypadState _keypadFromAmount(int amountMinorUnits, {required int decimals}) {
-    if (amountMinorUnits == 0 || decimals == 0) {
-      return KeypadState(
-        amountMinorUnits: amountMinorUnits,
-        fractionalDigitsEntered: 0,
-        isFractionalMode: false,
-        hasCurrentInput: amountMinorUnits != 0,
-      );
-    }
-    final unit = _pow10(decimals);
-    final fractionalRemainder = amountMinorUnits % unit;
-    if (fractionalRemainder == 0) {
-      return KeypadState(
-        amountMinorUnits: amountMinorUnits,
-        fractionalDigitsEntered: 0,
-        isFractionalMode: false,
-        hasCurrentInput: true,
-      );
-    }
-    return KeypadState(
-      amountMinorUnits: amountMinorUnits,
-      fractionalDigitsEntered: decimals,
-      isFractionalMode: true,
-      hasCurrentInput: true,
-    );
-  }
-
-  static int _pow10(int exponent) {
-    var result = 1;
-    for (var i = 0; i < exponent; i++) {
-      result *= 10;
-    }
-    return result;
   }
 }
