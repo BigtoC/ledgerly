@@ -141,7 +141,6 @@ class MoneyFormatter {
   }
 
   static bool _digitsOnly(String s) {
-    if (s.isEmpty) return true;
     for (var i = 0; i < s.length; i++) {
       final c = s.codeUnitAt(i);
       if (c < 0x30 || c > 0x39) return false;
@@ -166,22 +165,9 @@ class MoneyFormatter {
     final whole = abs ~/ scale;
     final frac = (abs % scale).toString().padLeft(currency.decimals, '0');
     final pattern = NumberFormat.decimalPattern(locale);
-    // Re-group using BigInt string path when `whole` exceeds int range.
-    final wholeStr = whole.bitLength <= 53
-        ? pattern.format(whole.toInt())
-        : _groupBigIntDecimal(whole, pattern.symbols.GROUP_SEP);
+    final wholeStr = pattern.format(whole.toInt());
     final decSep = pattern.symbols.DECIMAL_SEP;
     final body = '$wholeStr$decSep$frac';
     return isNeg ? '-$symbol$body' : '$symbol$body';
-  }
-
-  static String _groupBigIntDecimal(BigInt v, String groupSep) {
-    final digits = v.toString();
-    final buf = StringBuffer();
-    for (var i = 0; i < digits.length; i++) {
-      if (i > 0 && (digits.length - i) % 3 == 0) buf.write(groupSep);
-      buf.write(digits[i]);
-    }
-    return buf.toString();
   }
 }
