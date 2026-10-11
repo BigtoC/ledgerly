@@ -28,8 +28,7 @@ sealed class PendingEffect {
 /// a SnackBar with `homePendingSkippedSnack` text and an Undo action that
 /// calls `notifier.undoSkip()`.
 final class PendingSkipStartedEffect extends PendingEffect {
-  const PendingSkipStartedEffect({required this.pendingId});
-  final int pendingId;
+  const PendingSkipStartedEffect();
 }
 
 /// Fired after a successful approve. The widget shows a SnackBar with
@@ -40,15 +39,11 @@ final class PendingApproveSucceededEffect extends PendingEffect {
 }
 
 final class PendingApproveFailedEffect extends PendingEffect {
-  const PendingApproveFailedEffect(this.error, this.stackTrace);
-  final Object error;
-  final StackTrace stackTrace;
+  const PendingApproveFailedEffect();
 }
 
 final class PendingSkipFailedEffect extends PendingEffect {
-  const PendingSkipFailedEffect(this.error, this.stackTrace);
-  final Object error;
-  final StackTrace stackTrace;
+  const PendingSkipFailedEffect();
 }
 
 @Riverpod(keepAlive: true, dependencies: [pendingTransactionRepository])
@@ -88,8 +83,8 @@ class PendingController extends _$PendingController {
         PendingApproveSucceededEffect(ruleName: ruleName ?? ''),
       );
       return true;
-    } catch (error, stackTrace) {
-      _effectListener?.call(PendingApproveFailedEffect(error, stackTrace));
+    } catch (_) {
+      _effectListener?.call(const PendingApproveFailedEffect());
       return false;
     }
   }
@@ -98,19 +93,13 @@ class PendingController extends _$PendingController {
     if (_skipScheduled != null) {
       _undoTimer?.cancel();
       _undoTimer = null;
-      final prior = _skipScheduled!;
-      _skipScheduled = null;
-      await _commitSkip(prior.pendingId);
+      await _commitSkip(_skipScheduled!.pendingId);
     }
 
-    final scheduledFor = DateTime.now().add(kUndoWindow);
-    _skipScheduled = PendingSkipScheduled(
-      pendingId: pendingId,
-      scheduledFor: scheduledFor,
-    );
+    _skipScheduled = PendingSkipScheduled(pendingId: pendingId);
     _composer?.notifySkipChanged();
 
-    _effectListener?.call(PendingSkipStartedEffect(pendingId: pendingId));
+    _effectListener?.call(const PendingSkipStartedEffect());
 
     _undoTimer = Timer(kUndoWindow, () async {
       final pending = _skipScheduled;
@@ -145,8 +134,8 @@ class PendingController extends _$PendingController {
     _composer?.notifySkipChanged();
     try {
       await ref.read(pendingTransactionRepositoryProvider).reject(pendingId);
-    } catch (error, stackTrace) {
-      _effectListener?.call(PendingSkipFailedEffect(error, stackTrace));
+    } catch (_) {
+      _effectListener?.call(const PendingSkipFailedEffect());
     }
   }
 }
@@ -189,7 +178,7 @@ class _Composer {
 
   Future<void> dispose() async {
     await _stop();
-    if (!_out.isClosed) await _out.close();
+    await _out.close();
   }
 
   void notifySkipChanged() => _scheduleEmit();
@@ -219,10 +208,8 @@ class _Composer {
     final skip = _skipScheduledGetter();
 
     if (items.isEmpty && skip == null) {
-      if (_out.isClosed) return;
       _out.add(const PendingState.empty());
     } else {
-      if (_out.isClosed) return;
       _out.add(PendingState.data(items: items, skipScheduled: skip));
     }
   }

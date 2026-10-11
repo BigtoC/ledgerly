@@ -70,21 +70,15 @@ Transaction _tx({
   updatedAt: DateTime.utc(0),
 );
 
-Category _cat({
-  required int id,
-  CategoryType type = CategoryType.expense,
-  String? customName,
-  String? l10nKey,
-  bool isArchived = false,
-}) => Category(
-  id: id,
-  icon: 'restaurant',
-  color: 0,
-  type: type,
-  l10nKey: l10nKey,
-  customName: customName,
-  isArchived: isArchived,
-);
+Category _cat({required int id, String? customName, bool isArchived = false}) =>
+    Category(
+      id: id,
+      icon: 'restaurant',
+      color: 0,
+      type: CategoryType.expense,
+      customName: customName,
+      isArchived: isArchived,
+    );
 
 Account _acc({
   required int id,

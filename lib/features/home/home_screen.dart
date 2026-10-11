@@ -189,11 +189,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ),
       body: SlidableAutoCloseBehavior(
         child: switch (state) {
-          AsyncData<HomeState>(value: final HomeData data) => _AdaptiveBody(
+          AsyncData<HomeState>(value: final HomeData data) => _SinglePane(
             data: data,
             onPrev: () => _enqueueDayStep(-1),
             onNext: () => _enqueueDayStep(1),
-            onPickDay: (day) => _onPickDay(day, data),
+            onPickDay: () => _onPickDay(data),
             onJumpToToday: () async {
               final current = _currentSelectedDay();
               if (current != null &&
@@ -229,7 +229,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // Carry the currently selected day to the form so the date field
     // matches what the user is looking at on Home. The form falls back
     // to today when `initialDate` is absent from the route extra.
-    final selectedDay = _selectedDayForAdd();
+    final selectedDay = _currentSelectedDay();
     final saved = await context.push<Transaction>(
       '/home/add',
       extra: selectedDay == null
@@ -240,16 +240,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (saved != null) {
       await ref.read(homeControllerProvider.notifier).pinDay(saved.date);
     }
-  }
-
-  DateTime? _selectedDayForAdd() {
-    final s = ref.read(homeControllerProvider);
-    if (s is AsyncData<HomeState>) {
-      final v = s.value;
-      if (v is HomeData) return v.selectedDay;
-      if (v is HomeEmpty) return v.selectedDay;
-    }
-    return null;
   }
 
   Future<void> _onEditRow(int id) async {
@@ -271,7 +261,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
   }
 
-  Future<void> _onPickDay(DateTime initial, HomeData data) async {
+  Future<void> _onPickDay(HomeData data) async {
     // Cap the date picker to [DateTime(1900), today] — consistent with
     // _minSelectableDay in HomeController and the prev/next boundaries.
     // No future dates: users cannot pre-enter future transactions via
@@ -334,45 +324,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 }
 
-class _AdaptiveBody extends StatelessWidget {
-  const _AdaptiveBody({
-    required this.data,
-    required this.onPrev,
-    required this.onNext,
-    required this.onPickDay,
-    required this.onJumpToToday,
-    required this.onTapRow,
-    required this.onDuplicateRow,
-    required this.onDeleteRow,
-    this.daySwitchAnimation,
-  });
-
-  final HomeData data;
-  final VoidCallback onPrev;
-  final VoidCallback onNext;
-  final void Function(DateTime initial) onPickDay;
-  final VoidCallback onJumpToToday;
-  final void Function(int id) onTapRow;
-  final void Function(int id) onDuplicateRow;
-  final void Function(int id) onDeleteRow;
-  final Animation<Offset>? daySwitchAnimation;
-
-  @override
-  Widget build(BuildContext context) {
-    return _SinglePane(
-      data: data,
-      onPrev: onPrev,
-      onNext: onNext,
-      onPickDay: onPickDay,
-      onJumpToToday: onJumpToToday,
-      onTapRow: onTapRow,
-      onDuplicateRow: onDuplicateRow,
-      onDeleteRow: onDeleteRow,
-      daySwitchAnimation: daySwitchAnimation,
-    );
-  }
-}
-
 class _SinglePane extends ConsumerWidget {
   const _SinglePane({
     required this.data,
@@ -383,18 +334,18 @@ class _SinglePane extends ConsumerWidget {
     required this.onTapRow,
     required this.onDuplicateRow,
     required this.onDeleteRow,
-    this.daySwitchAnimation,
+    required this.daySwitchAnimation,
   });
 
   final HomeData data;
   final VoidCallback onPrev;
   final VoidCallback onNext;
-  final void Function(DateTime initial) onPickDay;
+  final VoidCallback onPickDay;
   final VoidCallback onJumpToToday;
   final void Function(int id) onTapRow;
   final void Function(int id) onDuplicateRow;
   final void Function(int id) onDeleteRow;
-  final Animation<Offset>? daySwitchAnimation;
+  final Animation<Offset> daySwitchAnimation;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -434,7 +385,7 @@ class _SinglePane extends ConsumerWidget {
             locale: locale,
             onPrev: onPrev,
             onNext: onNext,
-            onPickDay: () => onPickDay(data.selectedDay),
+            onPickDay: onPickDay,
             canGoPrev: data.canGoPrev,
             canGoNext: data.canGoNext,
           ),
@@ -473,16 +424,13 @@ class _SinglePane extends ConsumerWidget {
       ],
     );
 
-    final animation = daySwitchAnimation;
-    if (animation != null) {
-      body = SlideTransition(
-        position: animation,
-        child: KeyedSubtree(
-          key: ValueKey<DateTime>(data.selectedDay),
-          child: body,
-        ),
-      );
-    }
+    body = SlideTransition(
+      position: daySwitchAnimation,
+      child: KeyedSubtree(
+        key: ValueKey<DateTime>(data.selectedDay),
+        child: body,
+      ),
+    );
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,

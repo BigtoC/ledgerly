@@ -15,10 +15,9 @@ part 'home_state.freezed.dart';
 /// Pending-delete record set during the 4-second undo window.
 /// Plain class (not Freezed) — controller swaps it out by reference.
 class PendingDelete {
-  const PendingDelete({required this.transaction, required this.scheduledFor});
+  const PendingDelete({required this.transaction});
 
   final Transaction transaction;
-  final DateTime scheduledFor;
 }
 
 /// Per-currency expense/income split used by the summary strip.

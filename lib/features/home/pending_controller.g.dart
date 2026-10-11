@@ -6,7 +6,7 @@ part of 'pending_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$pendingControllerHash() => r'c872ee5f5e7cbe01d687d50374665713e11c6986';
+String _$pendingControllerHash() => r'1a95898f0d6e0bdf8eed8a251601ea21b4f2ba59';
 
 /// See also [PendingController].
 @ProviderFor(PendingController)

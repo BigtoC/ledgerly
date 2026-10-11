@@ -24,36 +24,26 @@ class _MockPendingTransactionRepository extends Mock
 
 const _usd = Currency(code: 'USD', decimals: 2);
 
-PendingTransaction _pending({
-  required int id,
-  String memo = 'Netflix',
-  int amount = 1599,
-  int categoryId = 1,
-  int accountId = 1,
-}) => PendingTransaction(
-  id: id,
-  source: 'recurring',
-  amountMinorUnits: amount,
-  currency: _usd,
-  categoryId: categoryId,
-  accountId: accountId,
-  memo: memo,
-  date: DateTime(2026, 5, 8),
-  fetchedAt: DateTime(2026, 5, 8),
-  recurringRuleId: 1,
-);
+PendingTransaction _pending({required int id, String memo = 'Netflix'}) =>
+    PendingTransaction(
+      id: id,
+      source: 'recurring',
+      amountMinorUnits: 1599,
+      currency: _usd,
+      categoryId: 1,
+      accountId: 1,
+      memo: memo,
+      date: DateTime(2026, 5, 8),
+      fetchedAt: DateTime(2026, 5, 8),
+      recurringRuleId: 1,
+    );
 
-Transaction _tx({
-  required int id,
-  int amount = 1599,
-  int categoryId = 1,
-  int accountId = 1,
-}) => Transaction(
+Transaction _tx({required int id}) => Transaction(
   id: id,
-  amountMinorUnits: amount,
+  amountMinorUnits: 1599,
   currency: _usd,
-  categoryId: categoryId,
-  accountId: accountId,
+  categoryId: 1,
+  accountId: 1,
   date: DateTime(2026, 5, 8),
   memo: 'Netflix',
   createdAt: DateTime(2026, 5, 8),
