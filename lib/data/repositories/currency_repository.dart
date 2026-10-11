@@ -85,9 +85,7 @@ final class DriftCurrencyRepository implements CurrencyRepository {
   @override
   Stream<List<Currency>> watchAll({bool includeTokens = false}) {
     return _dao.watchAll().map((rows) {
-      final filtered = includeTokens
-          ? rows
-          : rows.where((r) => !r.isToken).toList(growable: false);
+      final filtered = includeTokens ? rows : rows.where((r) => !r.isToken);
       return filtered.map(_toDomain).toList(growable: false);
     });
   }
@@ -150,15 +148,7 @@ final class DriftCurrencyRepository implements CurrencyRepository {
     // We copy every other field from the stored row and touch only
     // `custom_name`.
     await _dao.updateRow(
-      drift.CurrenciesCompanion(
-        code: Value(existing.code),
-        decimals: Value(existing.decimals),
-        symbol: Value(existing.symbol),
-        nameL10nKey: Value(existing.nameL10nKey),
-        customName: Value(normalized),
-        isToken: Value(existing.isToken),
-        sortOrder: Value(existing.sortOrder),
-      ),
+      existing.toCompanion(false).copyWith(customName: Value(normalized)),
     );
   }
 }

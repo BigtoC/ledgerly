@@ -642,65 +642,50 @@ void main() {
   // -------------------------------------------------------------------------
   // Wave 3 §3 — daily / monthly aggregate streams.
   // -------------------------------------------------------------------------
-  group('watchDailyNetByCurrency / watchDailyTotalsByType', () {
+  group('watchDailyTotalsByType', () {
     test('A-empty-01: empty DB emits empty maps', () async {
       final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
-      final net = await txRepo.watchDailyNetByCurrency(today).first;
       final byType = await txRepo.watchDailyTotalsByType(today).first;
-      expect(net, isEmpty);
       expect(byType, isEmpty);
     });
 
-    test(
-      'A-single-01: single USD expense — net is negative, totals show expense',
-      () async {
-        final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
-        await txRepo.save(
-          sampleTx(
-            amount: 1500,
-            categoryId: fixtures.expenseCategoryId,
-            date: today.add(const Duration(hours: 9)),
-          ),
-        );
+    test('A-single-01: single USD expense — totals show expense', () async {
+      final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
+      await txRepo.save(
+        sampleTx(
+          amount: 1500,
+          categoryId: fixtures.expenseCategoryId,
+          date: today.add(const Duration(hours: 9)),
+        ),
+      );
 
-        final net = await txRepo.watchDailyNetByCurrency(today).first;
-        expect(net, {'USD': -1500});
+      final byType = await txRepo.watchDailyTotalsByType(today).first;
+      expect(byType, hasLength(1));
+      expect(byType['USD']!.expense, 1500);
+      expect(byType['USD']!.income, 0);
+    });
 
-        final byType = await txRepo.watchDailyTotalsByType(today).first;
-        expect(byType, hasLength(1));
-        expect(byType['USD']!.expense, 1500);
-        expect(byType['USD']!.income, 0);
-      },
-    );
+    test('A-mixed-01: expense + income on same day — split by type', () async {
+      final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
+      await txRepo.save(
+        sampleTx(
+          amount: 2500,
+          categoryId: fixtures.expenseCategoryId,
+          date: today.add(const Duration(hours: 9)),
+        ),
+      );
+      await txRepo.save(
+        sampleTx(
+          amount: 1000,
+          categoryId: fixtures.incomeCategoryId,
+          date: today.add(const Duration(hours: 11)),
+        ),
+      );
 
-    test(
-      'A-mixed-01: expense + income on same day — signed net + split',
-      () async {
-        final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
-        await txRepo.save(
-          sampleTx(
-            amount: 2500,
-            categoryId: fixtures.expenseCategoryId,
-            date: today.add(const Duration(hours: 9)),
-          ),
-        );
-        await txRepo.save(
-          sampleTx(
-            amount: 1000,
-            categoryId: fixtures.incomeCategoryId,
-            date: today.add(const Duration(hours: 11)),
-          ),
-        );
-
-        final net = await txRepo.watchDailyNetByCurrency(today).first;
-        // -2500 + 1000 = -1500
-        expect(net, {'USD': -1500});
-
-        final byType = await txRepo.watchDailyTotalsByType(today).first;
-        expect(byType['USD']!.expense, 2500);
-        expect(byType['USD']!.income, 1000);
-      },
-    );
+      final byType = await txRepo.watchDailyTotalsByType(today).first;
+      expect(byType['USD']!.expense, 2500);
+      expect(byType['USD']!.income, 1000);
+    });
 
     test(
       'A-multi-currency-01: multi-currency same day — separate keys per currency',
@@ -738,15 +723,15 @@ void main() {
           ),
         );
 
-        final net = await txRepo.watchDailyNetByCurrency(today).first;
-        expect(net, {'USD': -1000, 'JPY': -500});
-
         final byType = await txRepo.watchDailyTotalsByType(today).first;
         expect(byType.keys, containsAll(<String>['USD', 'JPY']));
         expect(byType['USD']!.expense, 1000);
         expect(byType['USD']!.income, 0);
         expect(byType['JPY']!.expense, 500);
         expect(byType['JPY']!.income, 0);
+
+        final net = await txRepo.watchMonthNetByCurrency(today).first;
+        expect(net, {'USD': -1000, 'JPY': -500});
       },
     );
 
@@ -761,28 +746,10 @@ void main() {
         await txRepo.save(sampleTx(amount: 200, date: today));
         await txRepo.save(sampleTx(amount: 300, date: tomorrow));
 
-        final net = await txRepo.watchDailyNetByCurrency(today).first;
-        expect(net, {'USD': -200});
+        final byType = await txRepo.watchDailyTotalsByType(today).first;
+        expect(byType, {'USD': (expense: 200, income: 0)});
       },
     );
-
-    test('A-reactive-01: stream re-emits after insert and delete', () async {
-      final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
-      final emissions = <Map<String, int>>[];
-      final sub = txRepo.watchDailyNetByCurrency(today).listen(emissions.add);
-      addTearDown(sub.cancel);
-
-      await Future<void>.delayed(Duration.zero);
-      expect(emissions.last, isEmpty);
-
-      final tx = await txRepo.save(sampleTx(amount: 400));
-      await Future<void>.delayed(Duration.zero);
-      expect(emissions.last, {'USD': -400});
-
-      await txRepo.delete(tx.id);
-      await Future<void>.delayed(Duration.zero);
-      expect(emissions.last, isEmpty);
-    });
 
     test(
       'A-reactive-02: totals stream re-emits after insert and delete',
@@ -806,19 +773,19 @@ void main() {
       },
     );
 
-    test('A-reactive-03: daily net re-emits after update', () async {
+    test('A-reactive-03: daily totals re-emit after update', () async {
       final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
-      final emissions = <Map<String, int>>[];
-      final sub = txRepo.watchDailyNetByCurrency(today).listen(emissions.add);
+      final emissions = <Map<String, ({int expense, int income})>>[];
+      final sub = txRepo.watchDailyTotalsByType(today).listen(emissions.add);
       addTearDown(sub.cancel);
 
       final tx = await txRepo.save(sampleTx(amount: 400));
       await Future<void>.delayed(Duration.zero);
-      expect(emissions.last, {'USD': -400});
+      expect(emissions.last['USD']!.expense, 400);
 
       await txRepo.save(tx.copyWith(amountMinorUnits: 900));
       await Future<void>.delayed(Duration.zero);
-      expect(emissions.last, {'USD': -900});
+      expect(emissions.last['USD']!.expense, 900);
     });
   });
 

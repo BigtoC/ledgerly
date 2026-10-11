@@ -45,7 +45,7 @@ class ShoppingListRepositoryException implements Exception {
 /// SSOT for `shopping_list_items`.
 abstract class ShoppingListRepository {
   /// Watch all items, newest `created_at` first.
-  Stream<List<ShoppingListItem>> watchAll({int limit = 10000});
+  Stream<List<ShoppingListItem>> watchAll();
 
   /// Reactive total row count across all shopping-list items.
   Stream<int> watchCount();
@@ -131,10 +131,10 @@ final class DriftShoppingListRepository implements ShoppingListRepository {
   // ---------- Reads ----------
 
   @override
-  Stream<List<ShoppingListItem>> watchAll({int limit = 10000}) {
-    return _shoppingListDao
-        .watchAll(limit: limit)
-        .map((rows) => rows.map(_toDomain).toList(growable: false));
+  Stream<List<ShoppingListItem>> watchAll() {
+    return _shoppingListDao.watchAll().map(
+      (rows) => rows.map(_toDomain).toList(growable: false),
+    );
   }
 
   @override
@@ -174,13 +174,11 @@ final class DriftShoppingListRepository implements ShoppingListRepository {
       drift.ShoppingListItemsCompanion(
         categoryId: Value(categoryId),
         accountId: Value(accountId),
-        memo: memo != null ? Value(memo) : const Value.absent(),
-        draftAmountMinorUnits: normalizedDraft.amountMinorUnits != null
-            ? Value(normalizedDraft.amountMinorUnits)
-            : const Value.absent(),
-        draftCurrencyCode: normalizedDraft.currencyCode != null
-            ? Value(normalizedDraft.currencyCode)
-            : const Value.absent(),
+        memo: Value.absentIfNull(memo),
+        draftAmountMinorUnits: Value.absentIfNull(
+          normalizedDraft.amountMinorUnits,
+        ),
+        draftCurrencyCode: Value.absentIfNull(normalizedDraft.currencyCode),
         draftDate: Value(draftDate),
         createdAt: Value(now),
         updatedAt: Value(now),

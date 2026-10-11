@@ -168,7 +168,7 @@ void main() {
         ),
       );
 
-      await repo.rename(id: id, customName: 'Wallet');
+      await repo.updateCustomName(id, 'Wallet');
 
       final found = await repo.getByL10nKey('accountType.cash');
       expect(found, isNotNull);
@@ -188,8 +188,8 @@ void main() {
         ),
       );
 
-      await repo.rename(id: id, customName: 'Wallet');
-      await repo.rename(id: id, customName: 'My Cash');
+      await repo.updateCustomName(id, 'Wallet');
+      await repo.updateCustomName(id, 'My Cash');
 
       final found = await repo.getByL10nKey('accountType.cash');
       expect(found!.customName, 'My Cash');
@@ -200,7 +200,7 @@ void main() {
       'AT07: rename on nonexistent id → AccountTypeNotFoundException',
       () async {
         await expectLater(
-          repo.rename(id: 999, customName: 'No such row'),
+          repo.updateCustomName(999, 'No such row'),
           throwsA(
             isA<AccountTypeNotFoundException>().having((e) => e.id, 'id', 999),
           ),
@@ -392,7 +392,7 @@ void main() {
         await Future<void>.delayed(Duration.zero);
         expect(snapshots.last.map((r) => r.id), [id]);
 
-        await repo.rename(id: id, customName: 'Wallet');
+        await repo.updateCustomName(id, 'Wallet');
         await Future<void>.delayed(Duration.zero);
         expect(snapshots.last.single.customName, 'Wallet');
 
@@ -450,7 +450,7 @@ void main() {
         );
 
         // User rename.
-        await repo.rename(id: firstId, customName: 'My Wallet');
+        await repo.updateCustomName(firstId, 'My Wallet');
         // User archive.
         await repo.archive(firstId);
 

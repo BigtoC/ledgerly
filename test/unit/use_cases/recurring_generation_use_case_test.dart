@@ -29,27 +29,20 @@ RecurringRule _rule({
   required int id,
   required DateTime nextDueDate,
   String name = 'Netflix',
-  int amount = 1599,
   String frequency = 'monthly',
   int? dayOfMonth = 15,
-  int? dayOfWeek,
-  int? monthOfYear,
   bool isActive = true,
-  bool isArchived = false,
-  Currency currency = _usd,
 }) => RecurringRule(
   id: id,
   name: name,
-  amountMinorUnits: amount,
-  currency: currency,
+  amountMinorUnits: 1599,
+  currency: _usd,
   categoryId: 1,
   accountId: 1,
   frequency: frequency,
-  dayOfWeek: dayOfWeek,
   dayOfMonth: dayOfMonth,
-  monthOfYear: monthOfYear,
   isActive: isActive,
-  isArchived: isArchived,
+  isArchived: false,
   nextDueDate: nextDueDate,
   createdAt: DateTime(2026, 1, 1),
   updatedAt: DateTime(2026, 1, 1),
@@ -136,8 +129,8 @@ void main() {
         final result = await useCase.execute(clock: () => today);
 
         expect(result.outcomes, hasLength(1));
-        expect(result.anyFailed, isFalse);
-        expect(result.anyCapped, isFalse);
+        expect(result.outcomes.single.failed, isFalse);
+        expect(result.outcomes.single.capped, isFalse);
         verify(
           () => pendingRepo.insert(
             source: 'recurring',
@@ -242,7 +235,6 @@ void main() {
         RecurringGenerationUseCase.catchUpCap,
       );
       expect(result.outcomes.single.capped, isTrue);
-      expect(result.anyCapped, isTrue);
       verify(
         () => recurringRepo.fastForwardToRecent(
           any(),

@@ -15,43 +15,10 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
     with _$TransactionDaoMixin {
   TransactionDao(super.db);
 
-  /// Watch the most recent `limit` transactions, ordered by
-  /// `date DESC, id DESC`. Default cap is the MVP pagination limit of
-  /// 10,000 (see `CLAUDE.md` → Pagination Cap).
-  Stream<List<TransactionRow>> watchAll({int limit = 10000}) {
-    return (select(transactions)
-          ..orderBy([
-            (t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc),
-            (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
-          ])
-          ..limit(limit))
-        .watch();
-  }
-
-  /// Watch transactions whose `date` falls in the half-open range
-  /// `[start, end)`. Used by month/day summaries.
-  Stream<List<TransactionRow>> watchByDateRange(DateTime start, DateTime end) {
-    return (select(transactions)
-          ..where(
-            (t) =>
-                t.date.isBiggerOrEqualValue(start) &
-                t.date.isSmallerThanValue(end),
-          )
-          ..orderBy([
-            (t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc),
-            (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
-          ]))
-        .watch();
-  }
-
   /// Watch transactions whose `date` falls in the half-open range
   /// `[start, end)`, ordered by `date DESC, id DESC`. Backs
   /// `TransactionRepository.watchByDay` — see
   /// `docs/plans/m3-repositories-seed/stream-a-transaction-category.md` §4.
-  ///
-  /// Named-argument sibling of [watchByDateRange], kept distinct so
-  /// consumers that want a local-midnight day window can pick the
-  /// intention-revealing helper.
   Stream<List<TransactionRow>> watchInDateRange({
     required DateTime start,
     required DateTime end,
@@ -136,7 +103,7 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
 
   /// Watch transactions whose memo contains [query] (case-insensitive
   /// substring), ordered `date DESC, id DESC`. Memos that are NULL are
-  /// excluded (`isNotNull()` filter; LIKE on NULL never matches anyway).
+  /// excluded (LIKE on NULL never matches).
   /// Empty/whitespace queries short-circuit to `[]` — without this,
   /// `LIKE '%%'` matches every memoed row and would silently dump the
   /// table on a broken deep link.
@@ -147,19 +114,12 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
     }
     final like = '%${trimmed.toLowerCase()}%';
     return (select(transactions)
-          ..where((t) => t.memo.isNotNull() & t.memo.lower().like(like))
+          ..where((t) => t.memo.lower().like(like))
           ..orderBy([
             (t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc),
             (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
           ]))
         .watch();
-  }
-
-  /// Watch a single transaction by id (Edit screen).
-  Stream<TransactionRow?> watchById(int id) {
-    return (select(
-      transactions,
-    )..where((t) => t.id.equals(id))).watchSingleOrNull();
   }
 
   /// One-shot read by id (e.g. duplicate flow).
@@ -206,15 +166,6 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
               ..where(transactions.accountId.equals(accountId)))
             .getSingle();
     return row.read(countExp) ?? 0;
-  }
-
-  /// Reactive count of transactions referencing the given account.
-  Stream<int> watchCountByAccount(int accountId) {
-    final countExp = transactions.id.count();
-    final query = selectOnly(transactions)
-      ..addColumns([countExp])
-      ..where(transactions.accountId.equals(accountId));
-    return query.watchSingle().map((row) => row.read(countExp) ?? 0);
   }
 
   /// Per `(category_id, currency)` subtotal in `[start, end)`, filtered by
@@ -390,7 +341,7 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
     int? accountId,
     String? currencyCode,
   }) {
-    var stmt =
+    final stmt =
         select(transactions).join([
           innerJoin(
             attachedDatabase.categories,
@@ -402,19 +353,18 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
               attachedDatabase.categories.type.equals(type),
         );
     if (categoryId != null) {
-      stmt = stmt..where(transactions.categoryId.equals(categoryId));
+      stmt.where(transactions.categoryId.equals(categoryId));
     }
     if (accountId != null) {
-      stmt = stmt..where(transactions.accountId.equals(accountId));
+      stmt.where(transactions.accountId.equals(accountId));
     }
     if (currencyCode != null) {
-      stmt = stmt..where(transactions.currency.equals(currencyCode));
+      stmt.where(transactions.currency.equals(currencyCode));
     }
-    stmt = stmt
-      ..orderBy([
-        OrderingTerm(expression: transactions.date, mode: OrderingMode.desc),
-        OrderingTerm(expression: transactions.id, mode: OrderingMode.desc),
-      ]);
+    stmt.orderBy([
+      OrderingTerm(expression: transactions.date, mode: OrderingMode.desc),
+      OrderingTerm(expression: transactions.id, mode: OrderingMode.desc),
+    ]);
     return stmt.watch().map(
       (rows) => rows.map((r) => r.readTable(transactions)).toList(),
     );

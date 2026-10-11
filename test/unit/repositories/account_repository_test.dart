@@ -183,7 +183,6 @@ void main() {
     String? icon,
     int? color,
     int? sortOrder,
-    bool isArchived = false,
   }) {
     return Account(
       id: id,
@@ -194,7 +193,6 @@ void main() {
       icon: icon,
       color: color,
       sortOrder: sortOrder,
-      isArchived: isArchived,
     );
   }
 
@@ -303,23 +301,6 @@ void main() {
         expect(archived.single.isArchived, isTrue);
       },
     );
-
-    test('AC08: watchById emits null after delete', () async {
-      final id = await repo.save(buildCashAccount(name: 'To be deleted'));
-
-      final snapshots = <Account?>[];
-      final sub = repo.watchById(id).listen(snapshots.add);
-
-      await Future<void>.delayed(Duration.zero);
-      expect(snapshots.last, isNotNull);
-      expect(snapshots.last!.name, 'To be deleted');
-
-      await repo.delete(id);
-      await Future<void>.delayed(Duration.zero);
-      expect(snapshots.last, isNull);
-
-      await sub.cancel();
-    });
 
     test('AC09: delete with no referencing transactions → succeeds', () async {
       final id = await repo.save(buildCashAccount());

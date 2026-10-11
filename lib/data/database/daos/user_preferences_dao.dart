@@ -22,11 +22,6 @@ class UserPreferencesDao extends DatabaseAccessor<AppDatabase>
         .map((row) => row?.value);
   }
 
-  /// Watch every row. Debug / settings bulk read.
-  Stream<List<UserPreferenceRow>> watchAll() {
-    return select(userPreferences).watch();
-  }
-
   /// One-shot read. Returns `null` when the key is missing.
   Future<String?> read(String key) async {
     final row = await (select(
@@ -40,18 +35,5 @@ class UserPreferencesDao extends DatabaseAccessor<AppDatabase>
     await into(userPreferences).insertOnConflictUpdate(
       UserPreferencesCompanion.insert(key: key, value: value),
     );
-  }
-
-  /// Delete a row by key.
-  ///
-  /// Named `deleteByKey` rather than `delete` because `DatabaseAccessor`
-  /// (via `DatabaseConnectionUser`) already defines a
-  /// `delete<Table>(TableInfo)` method used to build delete statements;
-  /// declaring an instance method named `delete` would collide with
-  /// that signature. Stream A §3.6 lists this as `delete(String)`;
-  /// renaming preserves the semantics without shadowing Drift's own
-  /// builder.
-  Future<int> deleteByKey(String key) {
-    return (delete(userPreferences)..where((p) => p.key.equals(key))).go();
   }
 }

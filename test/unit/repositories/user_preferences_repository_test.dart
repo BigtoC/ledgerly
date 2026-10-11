@@ -139,13 +139,11 @@ void main() {
           await prefs.watchSplashDisplayText().first,
           'On {date} start using Ledgerly',
         );
-        expect(await prefs.getSplashDisplayText(), kDefaultSplashDisplayText);
       },
     );
 
     test('watchSplashButtonLabel default-emits "Enter"', () async {
       expect(await prefs.watchSplashButtonLabel().first, 'Enter');
-      expect(await prefs.getSplashButtonLabel(), kDefaultSplashButtonLabel);
     });
   });
 
@@ -164,12 +162,12 @@ void main() {
 
     test('splash display text custom round-trip', () async {
       await prefs.setSplashDisplayText('Day {days}');
-      expect(await prefs.getSplashDisplayText(), 'Day {days}');
+      expect(await prefs.watchSplashDisplayText().first, 'Day {days}');
     });
 
     test('splash button label custom round-trip', () async {
       await prefs.setSplashButtonLabel('Go');
-      expect(await prefs.getSplashButtonLabel(), 'Go');
+      expect(await prefs.watchSplashButtonLabel().first, 'Go');
     });
 
     test('watchSplashEnabled emits [true, false] on write', () async {

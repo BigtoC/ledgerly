@@ -97,16 +97,12 @@ final class DriftPendingTransactionRepository
         source: Value(source),
         amountMinorUnits: Value(amountMinorUnits),
         currency: Value(currencyCode),
-        categoryId: categoryId != null
-            ? Value(categoryId)
-            : const Value.absent(),
+        categoryId: Value.absentIfNull(categoryId),
         accountId: Value(accountId),
-        memo: memo != null ? Value(memo) : const Value.absent(),
+        memo: Value.absentIfNull(memo),
         date: Value(date),
         fetchedAt: Value(fetchedAt),
-        recurringRuleId: recurringRuleId != null
-            ? Value(recurringRuleId)
-            : const Value.absent(),
+        recurringRuleId: Value.absentIfNull(recurringRuleId),
       ),
     );
   }

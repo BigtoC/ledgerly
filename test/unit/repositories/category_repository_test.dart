@@ -121,7 +121,6 @@ Future<_Fixtures> _seedFixtures(AppDatabase db) async {
   return _Fixtures(
     expenseCategoryId: expenseId,
     incomeCategoryId: incomeId,
-    accountTypeId: accountTypeId,
     accountId: accountId,
   );
 }
@@ -152,13 +151,11 @@ class _Fixtures {
   const _Fixtures({
     required this.expenseCategoryId,
     required this.incomeCategoryId,
-    required this.accountTypeId,
     required this.accountId,
   });
 
   final int expenseCategoryId;
   final int incomeCategoryId;
-  final int accountTypeId;
   final int accountId;
 }
 

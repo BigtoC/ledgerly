@@ -39,18 +39,7 @@ class CurrencyDao extends DatabaseAccessor<AppDatabase>
   /// caller is expected to index by `code` since SQLite IN queries do not
   /// preserve input order.
   Future<List<Currency>> findByCodes(List<String> codes) {
-    if (codes.isEmpty) return Future.value(const []);
     return (select(currencies)..where((c) => c.code.isIn(codes))).get();
-  }
-
-  /// Bulk upsert used by the M3 seed. Inserts with
-  /// `InsertMode.insertOrIgnore` so re-seed passes do not duplicate.
-  /// Returns the number of rows processed.
-  Future<int> upsertAll(List<CurrenciesCompanion> rows) async {
-    await batch((b) {
-      b.insertAll(currencies, rows, mode: InsertMode.insertOrIgnore);
-    });
-    return rows.length;
   }
 
   /// Single insert. Returns the rowid (unused — PK is `code`). Rethrows

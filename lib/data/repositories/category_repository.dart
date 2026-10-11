@@ -174,15 +174,13 @@ final class DriftCategoryRepository implements CategoryRepository {
     bool includeArchived = false,
   }) {
     final Stream<List<CategoryRow>> source;
-    if (type == null && !includeArchived) {
-      source = _dao.watchAll(includeArchived: false);
-    } else if (type == null && includeArchived) {
-      source = _dao.watchAll(includeArchived: true);
-    } else if (type != null && !includeArchived) {
+    if (type == null) {
+      source = _dao.watchAll(includeArchived: includeArchived);
+    } else if (!includeArchived) {
       source = _dao.watchByType(_wireFromType(type));
     } else {
       // includeArchived + type: no DAO helper; filter in Dart.
-      final wire = _wireFromType(type!);
+      final wire = _wireFromType(type);
       source = _dao
           .watchAll(includeArchived: true)
           .map((rows) => rows.where((r) => r.type == wire).toList());
@@ -327,20 +325,7 @@ final class DriftCategoryRepository implements CategoryRepository {
     // Only `custom_name` is written; every other column is absent so the
     // UPDATE leaves them alone.
     await _dao.updateRow(
-      CategoriesCompanion(
-        id: Value(id),
-        l10nKey: existing.l10nKey == null
-            ? const Value.absent()
-            : Value(existing.l10nKey),
-        customName: Value(normalized),
-        icon: Value(existing.icon),
-        color: Value(existing.color),
-        type: Value(existing.type),
-        sortOrder: existing.sortOrder == null
-            ? const Value.absent()
-            : Value(existing.sortOrder),
-        isArchived: Value(existing.isArchived),
-      ),
+      existing.toCompanion(true).copyWith(customName: Value(normalized)),
     );
     final updated = await _dao.findById(id);
     if (updated == null) {

@@ -17,11 +17,7 @@ Future<void> _seedCurrencyUsd(AppDatabase db) async {
 
 int _categoryCounter = 0;
 
-Future<int> _insertCategoryRaw(
-  AppDatabase db, {
-  String type = 'expense',
-  bool archived = false,
-}) async {
+Future<int> _insertCategoryRaw(AppDatabase db, {bool archived = false}) async {
   _categoryCounter++;
   await db.customStatement(
     'INSERT INTO categories (l10n_key, icon, color, type, sort_order, '
@@ -30,7 +26,7 @@ Future<int> _insertCategoryRaw(
       'cat.test.$_categoryCounter',
       'tag',
       0,
-      type,
+      'expense',
       1,
       archived ? 1 : 0,
     ],
@@ -41,11 +37,7 @@ Future<int> _insertCategoryRaw(
   return rows.first.read<int>('id');
 }
 
-Future<int> _insertAccountRaw(
-  AppDatabase db, {
-  String currency = 'USD',
-  bool archived = false,
-}) async {
+Future<int> _insertAccountRaw(AppDatabase db) async {
   await db.customStatement(
     'INSERT OR IGNORE INTO account_types '
     '(l10n_key, icon, color, sort_order, is_archived) '
@@ -60,7 +52,7 @@ Future<int> _insertAccountRaw(
     'INSERT INTO accounts (name, account_type_id, currency, '
     'opening_balance_minor_units, is_archived) '
     "VALUES ('Cash', ?, ?, 0, ?)",
-    <Object?>[typeId, currency, archived ? 1 : 0],
+    <Object?>[typeId, 'USD', 0],
   );
   final rows = await db
       .customSelect('SELECT id FROM accounts ORDER BY id DESC LIMIT 1')
@@ -92,14 +84,13 @@ void main() {
 
     RecurringRuleDraft draft({
       String name = 'Netflix',
-      int amount = 1599,
       String frequency = 'monthly',
       int? dayOfWeek,
       int? dayOfMonth,
       int? monthOfYear,
     }) => RecurringRuleDraft(
       name: name,
-      amountMinorUnits: amount,
+      amountMinorUnits: 1599,
       currency: _usd,
       categoryId: categoryId,
       accountId: accountId,

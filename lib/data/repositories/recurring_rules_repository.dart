@@ -93,13 +93,13 @@ final class DriftRecurringRulesRepository implements RecurringRulesRepository {
 
   @override
   Stream<List<RecurringRule>> watchActive() {
-    return _dao.watchActive().asyncMap((rows) async => _rowsToDomain(rows));
+    return _dao.watchActive().asyncMap(_rowsToDomain);
   }
 
   @override
   Future<RecurringRule?> getById(int id) async {
     final row = await _dao.findById(id);
-    return row == null ? null : _toDomain(row);
+    return row == null ? null : (await _rowsToDomain([row])).single;
   }
 
   @override
@@ -130,17 +130,11 @@ final class DriftRecurringRulesRepository implements RecurringRulesRepository {
         currency: Value(draft.currency.code),
         categoryId: Value(draft.categoryId),
         accountId: Value(draft.accountId),
-        memo: draft.memo != null ? Value(draft.memo) : const Value.absent(),
+        memo: Value.absentIfNull(draft.memo),
         frequency: Value(draft.frequency),
-        dayOfWeek: draft.dayOfWeek != null
-            ? Value(draft.dayOfWeek)
-            : const Value.absent(),
-        dayOfMonth: draft.dayOfMonth != null
-            ? Value(draft.dayOfMonth)
-            : const Value.absent(),
-        monthOfYear: draft.monthOfYear != null
-            ? Value(draft.monthOfYear)
-            : const Value.absent(),
+        dayOfWeek: Value.absentIfNull(draft.dayOfWeek),
+        dayOfMonth: Value.absentIfNull(draft.dayOfMonth),
+        monthOfYear: Value.absentIfNull(draft.monthOfYear),
         isActive: const Value(true),
         isArchived: const Value(false),
         nextDueDate: Value(nextDue),
@@ -182,17 +176,11 @@ final class DriftRecurringRulesRepository implements RecurringRulesRepository {
         currency: Value(draft.currency.code),
         categoryId: Value(draft.categoryId),
         accountId: Value(draft.accountId),
-        memo: draft.memo != null ? Value(draft.memo) : const Value.absent(),
+        memo: Value.absentIfNull(draft.memo),
         frequency: Value(draft.frequency),
-        dayOfWeek: draft.dayOfWeek != null
-            ? Value(draft.dayOfWeek)
-            : const Value.absent(),
-        dayOfMonth: draft.dayOfMonth != null
-            ? Value(draft.dayOfMonth)
-            : const Value.absent(),
-        monthOfYear: draft.monthOfYear != null
-            ? Value(draft.monthOfYear)
-            : const Value.absent(),
+        dayOfWeek: Value.absentIfNull(draft.dayOfWeek),
+        dayOfMonth: Value.absentIfNull(draft.dayOfMonth),
+        monthOfYear: Value.absentIfNull(draft.monthOfYear),
         isActive: Value(stored.isActive),
         isArchived: Value(stored.isArchived),
         nextDueDate: Value(nextDueDate),
@@ -447,30 +435,6 @@ final class DriftRecurringRulesRepository implements RecurringRulesRepository {
           ),
         )
         .toList(growable: false);
-  }
-
-  Future<RecurringRule> _toDomain(drift.RecurringRuleRow row) async {
-    final currencyRow = (await _currencyDao.findByCode(row.currency))!;
-    return RecurringRule(
-      id: row.id,
-      name: row.name,
-      amountMinorUnits: row.amountMinorUnits,
-      currency: _currencyFromRow(currencyRow),
-      categoryId: row.categoryId,
-      accountId: row.accountId,
-      memo: row.memo,
-      frequency: row.frequency,
-      dayOfWeek: row.dayOfWeek,
-      dayOfMonth: row.dayOfMonth,
-      monthOfYear: row.monthOfYear,
-      isActive: row.isActive,
-      isArchived: row.isArchived,
-      nextDueDate: row.nextDueDate,
-      lastError: row.lastError,
-      lastErrorAt: row.lastErrorAt,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    );
   }
 
   Future<RecurringRuleDraft> _storedToDraft(drift.RecurringRuleRow row) async {

@@ -88,7 +88,7 @@ void main() {
       final result = await useCase.execute(clock: () => DateTime(2026, 3, 16));
       expect(result.outcomes, hasLength(1));
       expect(result.outcomes.single.generated, 1);
-      expect(result.anyFailed, isFalse);
+      expect(result.outcomes.single.failed, isFalse);
 
       // next_due advanced to April 15.
       rule = await repo.getById(ruleId);
@@ -397,7 +397,7 @@ void main() {
         result.outcomes.single.generated,
         RecurringGenerationUseCase.catchUpCap,
       );
-      expect(result.anyCapped, isTrue);
+      expect(result.outcomes.single.capped, isTrue);
       expect(
         await pendingRepo.countByRecurringRule(ruleId),
         RecurringGenerationUseCase.catchUpCap,

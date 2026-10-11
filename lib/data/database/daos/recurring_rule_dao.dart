@@ -143,9 +143,4 @@ class RecurringRuleDao extends DatabaseAccessor<AppDatabase>
       ),
     );
   }
-
-  /// Hard-delete by id.
-  Future<int> deleteById(int id) {
-    return (delete(recurringRules)..where((t) => t.id.equals(id))).go();
-  }
 }
