@@ -21,7 +21,6 @@ void main() {
   Widget buildTile({
     required Map<String, int> balancesByCurrency,
     Map<String, int>? rates,
-    String defaultCurrency = 'USD',
   }) {
     const account = Account(
       id: 1,
@@ -35,10 +34,8 @@ void main() {
         exchangeRatesProvider.overrideWith(
           (_) => Stream.value(rates ?? const <String, int>{}),
         ),
-        defaultCurrencyProvider.overrideWith(
-          (_) => Stream.value(defaultCurrency),
-        ),
-        initialDefaultCurrencyProvider.overrideWithValue(defaultCurrency),
+        defaultCurrencyProvider.overrideWith((_) => Stream.value('USD')),
+        initialDefaultCurrencyProvider.overrideWithValue('USD'),
         currenciesByCodeProvider.overrideWith(
           (_) => Stream.value({
             'USD': const Currency(code: 'USD', decimals: 2, symbol: r'$'),

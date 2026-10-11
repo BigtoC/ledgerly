@@ -44,7 +44,7 @@ class AmountMinorUnitsField extends StatefulWidget {
 class _AmountMinorUnitsFieldState extends State<AmountMinorUnitsField> {
   late final TextEditingController _ctrl;
   String? _errorText;
-  int? _lastValidMinorUnits;
+  late int _lastValidMinorUnits;
 
   @override
   void initState() {
@@ -66,9 +66,8 @@ class _AmountMinorUnitsFieldState extends State<AmountMinorUnitsField> {
         oldWidget.locale != widget.locale) {
       // Currency swap — re-render the last known minor-unit value in
       // the new currency's decimals.
-      final v = _lastValidMinorUnits ?? 0;
       _ctrl.text = MoneyFormatter.formatBare(
-        amountMinorUnits: v,
+        amountMinorUnits: _lastValidMinorUnits,
         currency: widget.currency,
         locale: widget.locale,
       );

@@ -200,7 +200,7 @@ class _AccountsComposer {
 
   Future<void> dispose() async {
     await _stop();
-    if (!_out.isClosed) await _out.close();
+    await _out.close();
   }
 
   // ---------- Stream handlers ----------
@@ -276,12 +276,8 @@ class _AccountsComposer {
     final activeCount = _accounts.where((a) => !a.isArchived).length;
 
     for (final a in _sortForDisplay(_accounts)) {
-      final balance = _balances[a.id] ?? {};
-      final affordance = _affordance(
-        a,
-        activeCount,
-        _references[a.id] ?? false,
-      );
+      final balance = _balances[a.id]!;
+      final affordance = _affordance(a, activeCount, _references[a.id]!);
       final view = AccountWithBalance(
         account: a,
         balancesByCurrency: balance,
@@ -327,8 +323,7 @@ class _AccountsComposer {
       if (sa != sb) {
         if (sa == null) return 1;
         if (sb == null) return -1;
-        final cmp = sa.compareTo(sb);
-        if (cmp != 0) return cmp;
+        return sa.compareTo(sb);
       }
       return a.name.toLowerCase().compareTo(b.name.toLowerCase());
     });

@@ -54,15 +54,13 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
   bool _saving = false;
   String? _errorMessage;
 
-  bool _hydrating = false;
+  bool _hydrating = true;
   bool _notFound = false;
-  bool _defaultCurrencyResolved = false;
 
   @override
   void initState() {
     super.initState();
     _nameCtrl = TextEditingController();
-    _hydrating = true;
     WidgetsBinding.instance.addPostFrameCallback((_) => _hydrateFromProvider());
   }
 
@@ -81,7 +79,6 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
       setState(() {
         _hydrating = false;
         _notFound = true;
-        _defaultCurrencyResolved = true;
       });
       return;
     }
@@ -99,7 +96,6 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
         _currency = _currency ?? seed.defaultCurrency;
       }
       _hydrating = false;
-      _defaultCurrencyResolved = true;
     });
   }
 
@@ -138,19 +134,21 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
     }
   }
 
+  void _popOrGoSettings(BuildContext context) {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/settings');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     if (_notFound) {
       return _NotFoundSurface(
         message: l10n.accountsFormNotFound,
-        onDismiss: () {
-          if (context.canPop()) {
-            context.pop();
-          } else {
-            context.go('/settings');
-          }
-        },
+        onDismiss: () => _popOrGoSettings(context),
       );
     }
 
@@ -162,7 +160,7 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
               : l10n.accountsFormAddTitle,
         ),
       ),
-      body: _hydrating || (!widget.isEdit && !_defaultCurrencyResolved)
+      body: _hydrating
           ? const Center(child: CircularProgressIndicator())
           : SafeArea(
               child: SingleChildScrollView(
@@ -258,22 +256,19 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children:
-                          const [
-                                _IconChip(iconKey: 'wallet'),
-                                _IconChip(iconKey: 'trending_up'),
-                                _IconChip(iconKey: 'savings'),
-                                _IconChip(iconKey: 'payments'),
-                              ]
-                              .map(
-                                (chip) => _IconSelector(
-                                  iconKey: chip.iconKey,
-                                  selected: _icon == chip.iconKey,
-                                  onTap: () =>
-                                      setState(() => _icon = chip.iconKey),
-                                ),
-                              )
-                              .toList(),
+                      children: [
+                        for (final iconKey in const [
+                          'wallet',
+                          'trending_up',
+                          'savings',
+                          'payments',
+                        ])
+                          _IconSelector(
+                            iconKey: iconKey,
+                            selected: _icon == iconKey,
+                            onTap: () => setState(() => _icon = iconKey),
+                          ),
+                      ],
                     ),
                     if (_errorMessage != null) ...[
                       const SizedBox(height: 16),
@@ -300,13 +295,7 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
                           child: OutlinedButton(
                             onPressed: _saving
                                 ? null
-                                : () {
-                                    if (context.canPop()) {
-                                      context.pop();
-                                    } else {
-                                      context.go('/settings');
-                                    }
-                                  },
+                                : () => _popOrGoSettings(context),
                             child: Text(l10n.commonCancel),
                           ),
                         ),
@@ -371,11 +360,6 @@ class _ColorSwatches extends StatelessWidget {
       ],
     );
   }
-}
-
-class _IconChip {
-  const _IconChip({required this.iconKey});
-  final String iconKey;
 }
 
 class _IconSelector extends StatelessWidget {

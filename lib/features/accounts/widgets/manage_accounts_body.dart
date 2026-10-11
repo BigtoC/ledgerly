@@ -16,13 +16,13 @@ import '../accounts_state.dart';
 import 'account_tile.dart';
 import 'account_type_display.dart';
 
-class ManageAccountsBody extends ConsumerWidget {
+class ManageAccountsBody extends StatelessWidget {
   const ManageAccountsBody({super.key, required this.data});
 
   final AccountsData data;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context).toString();
 
@@ -165,19 +165,7 @@ class _AccountTileWithLookups extends ConsumerWidget {
       }
       if (e.kind == AccountsOperationError.defaultAccount) {
         if (!context.mounted) return;
-        await showDialog<void>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text(l10n.accountsDeleteDefaultBlockedTitle),
-            content: Text(l10n.accountsDeleteDefaultBlockedBody),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: Text(l10n.commonCancel),
-              ),
-            ],
-          ),
-        );
+        await _showDefaultBlockedDialog(context, l10n);
         return;
       }
       messenger
@@ -230,19 +218,7 @@ class _AccountTileWithLookups extends ConsumerWidget {
     } on AccountsOperationException catch (e) {
       if (e.kind == AccountsOperationError.defaultAccount) {
         if (!context.mounted) return;
-        await showDialog<void>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text(l10n.accountsDeleteDefaultBlockedTitle),
-            content: Text(l10n.accountsDeleteDefaultBlockedBody),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: Text(l10n.commonCancel),
-              ),
-            ],
-          ),
-        );
+        await _showDefaultBlockedDialog(context, l10n);
         return;
       }
       messenger
@@ -253,6 +229,25 @@ class _AccountTileWithLookups extends ConsumerWidget {
         ..clearSnackBars()
         ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
     }
+  }
+
+  Future<void> _showDefaultBlockedDialog(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) {
+    return showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.accountsDeleteDefaultBlockedTitle),
+        content: Text(l10n.accountsDeleteDefaultBlockedBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(l10n.commonCancel),
+          ),
+        ],
+      ),
+    );
   }
 
   void _onArchiveBlocked(BuildContext context) {

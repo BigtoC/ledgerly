@@ -140,16 +140,10 @@ class _CreateAccountTypeForm extends ConsumerStatefulWidget {
 
 class _CreateAccountTypeFormState
     extends ConsumerState<_CreateAccountTypeForm> {
-  late final TextEditingController _nameCtrl;
+  final _nameCtrl = TextEditingController();
   Currency? _defaultCurrency;
   bool _saving = false;
   String? _errorMessage;
-
-  @override
-  void initState() {
-    super.initState();
-    _nameCtrl = TextEditingController();
-  }
 
   @override
   void dispose() {
