@@ -169,10 +169,10 @@ void main() {
       expect(await h.preferences.getLocale(), isNull);
       expect(await h.preferences.getDefaultCurrency(), 'USD');
       expect(
-        await h.preferences.getSplashDisplayText(),
+        await h.preferences.watchSplashDisplayText().first,
         'On {date} start using Ledgerly',
       );
-      expect(await h.preferences.getSplashButtonLabel(), 'Enter');
+      expect(await h.preferences.watchSplashButtonLabel().first, 'Enter');
       expect(await h.preferences.getSplashStartDate(), isNull);
 
       // default_account_id wired to the seeded Cash account.

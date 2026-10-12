@@ -7,7 +7,7 @@ part of 'recurring_rule_form_controller.dart';
 // **************************************************************************
 
 String _$recurringRuleFormControllerHash() =>
-    r'6465f8afa9f266251bfddabd334b8b6405c7d99b';
+    r'56dc6bcad13dcc8f869c431fbc5f5c07c3600cc5';
 
 /// Copied from Dart SDK
 class _SystemHash {

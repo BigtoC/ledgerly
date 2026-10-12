@@ -8,10 +8,14 @@
 import 'package:flutter/material.dart';
 
 class SplashRainbowGradientText extends StatelessWidget {
-  const SplashRainbowGradientText({required this.text, this.style, super.key});
+  const SplashRainbowGradientText({
+    required this.text,
+    required this.style,
+    super.key,
+  });
 
   final String text;
-  final TextStyle? style;
+  final TextStyle style;
 
   static const List<Color> _rainbow = <Color>[
     Color(0xFFE53935), // red
@@ -25,25 +29,14 @@ class SplashRainbowGradientText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effective =
-        (style ??
-                const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
-                ))
-            .copyWith(
-              shadows: const <Shadow>[
-                // Subtle dark shadow behind the gradient guards contrast against
-                // the light sun core and the dark night edges alike.
-                Shadow(
-                  color: Color(0xCC000000),
-                  blurRadius: 3,
-                  offset: Offset(0, 1),
-                ),
-              ],
-              color: Colors.white,
-            );
+    final effective = style.copyWith(
+      shadows: const <Shadow>[
+        // Subtle dark shadow behind the gradient guards contrast against
+        // the light sun core and the dark night edges alike.
+        Shadow(color: Color(0xCC000000), blurRadius: 3, offset: Offset(0, 1)),
+      ],
+      color: Colors.white,
+    );
 
     return ShaderMask(
       blendMode: BlendMode.srcIn,

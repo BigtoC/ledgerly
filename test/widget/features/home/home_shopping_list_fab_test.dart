@@ -46,10 +46,7 @@ const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
-GoRouter _buildRouter({
-  required Widget homeWidget,
-  List<GoRoute> extra = const [],
-}) {
+GoRouter _buildRouter({required Widget homeWidget}) {
   return GoRouter(
     initialLocation: '/home',
     routes: [
@@ -71,7 +68,6 @@ GoRouter _buildRouter({
         path: '/home/shopping-list',
         builder: (_, _) => const Scaffold(body: Text('SHOPPING_LIST_SCREEN')),
       ),
-      ...extra,
     ],
   );
 }

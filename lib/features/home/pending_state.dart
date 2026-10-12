@@ -15,12 +15,8 @@ part 'pending_state.freezed.dart';
 /// A pending row currently inside the 4-second skip-undo window.
 /// Held in-memory by the controller, NOT in the DB.
 class PendingSkipScheduled {
-  const PendingSkipScheduled({
-    required this.pendingId,
-    required this.scheduledFor,
-  });
+  const PendingSkipScheduled({required this.pendingId});
   final int pendingId;
-  final DateTime scheduledFor;
 }
 
 @freezed

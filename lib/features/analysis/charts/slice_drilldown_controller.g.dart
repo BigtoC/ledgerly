@@ -7,7 +7,7 @@ part of 'slice_drilldown_controller.dart';
 // **************************************************************************
 
 String _$sliceDrilldownControllerHash() =>
-    r'18368adfe0bceeaeea3e7729d82044cfaa467c6d';
+    r'e2bd5342803a232d75e9b74173cb79cedb8aedd6';
 
 /// See also [SliceDrilldownController].
 @ProviderFor(SliceDrilldownController)

@@ -36,10 +36,7 @@ sealed class CategorySearchDetailEffect {
 
 final class CategorySearchDetailDeleteFailedEffect
     extends CategorySearchDetailEffect {
-  const CategorySearchDetailDeleteFailedEffect(this.error, this.stackTrace);
-
-  final Object error;
-  final StackTrace stackTrace;
+  const CategorySearchDetailDeleteFailedEffect();
 }
 
 @Riverpod(
@@ -158,10 +155,7 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
     final tx = _findTransaction(id);
     if (tx == null) return;
 
-    _pendingDelete = CategorySearchPendingDelete(
-      transaction: tx,
-      scheduledFor: DateTime.now().add(kUndoWindow),
-    );
+    _pendingDelete = CategorySearchPendingDelete(transaction: tx);
     _emitFromCache();
 
     _undoTimer = Timer(kUndoWindow, () async {
@@ -217,15 +211,13 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
         _emitFromCache();
       }
       return true;
-    } catch (error, stackTrace) {
+    } catch (_) {
       _committedDeleteIds.remove(id);
       if (_pendingDelete?.transaction.id == id) {
         _pendingDelete = null;
       }
       _emitFromCache();
-      _effectListener?.call(
-        CategorySearchDetailDeleteFailedEffect(error, stackTrace),
-      );
+      _effectListener?.call(const CategorySearchDetailDeleteFailedEffect());
       return false;
     }
   }
@@ -242,7 +234,7 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
               t.categoryId == categoryId &&
               t.currency.code == currencyCode &&
               !_committedDeleteIds.contains(t.id) &&
-              (pendingId == null || t.id != pendingId),
+              t.id != pendingId,
         )
         .toList();
 

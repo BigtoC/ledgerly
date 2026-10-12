@@ -20,7 +20,6 @@
 //     `currencies`") — that is a cross-table FK concern owned by the
 //     account / transaction repositories.
 
-import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart' show ThemeMode, Locale;
@@ -128,24 +127,17 @@ abstract class UserPreferencesRepository {
   Future<void> setSplashStartDate(DateTime? date);
 
   Stream<String> watchSplashDisplayText();
-  Future<String> getSplashDisplayText();
   Future<void> setSplashDisplayText(String text);
 
   Stream<String> watchSplashButtonLabel();
-  Future<String> getSplashButtonLabel();
   Future<void> setSplashButtonLabel(String label);
 }
 
 /// Concrete Drift-backed implementation of [UserPreferencesRepository].
 final class DriftUserPreferencesRepository
     implements UserPreferencesRepository {
-  DriftUserPreferencesRepository(this._db) : _dao = _db.userPreferencesDao;
+  DriftUserPreferencesRepository(AppDatabase db) : _dao = db.userPreferencesDao;
 
-  // `_db` is retained (not just the DAO) so the first-run seed can call
-  // `_db.transaction(...)` on the same instance. The DAO-facing path is
-  // `_dao` for succinctness.
-  // ignore: unused_field
-  final AppDatabase _db;
   final UserPreferencesDao _dao;
 
   // ---------- Key registry ----------
@@ -192,14 +184,8 @@ final class DriftUserPreferencesRepository
   }
 
   T _decodeRaw<T>(String key, String raw, T Function(dynamic) decode) {
-    dynamic decoded;
     try {
-      decoded = jsonDecode(raw);
-    } catch (e) {
-      throw PreferenceDecodeException(key, raw, e);
-    }
-    try {
-      return decode(decoded);
+      return decode(jsonDecode(raw));
     } catch (e) {
       throw PreferenceDecodeException(key, raw, e);
     }
@@ -364,25 +350,11 @@ final class DriftUserPreferencesRepository
   );
 
   @override
-  Future<String> getSplashDisplayText() => _readJson<String>(
-    _kSplashDisplayText,
-    defaultValue: kDefaultSplashDisplayText,
-    decode: _decodeString('splash_display_text'),
-  );
-
-  @override
   Future<void> setSplashDisplayText(String text) =>
       _writeJson(_kSplashDisplayText, text);
 
   @override
   Stream<String> watchSplashButtonLabel() => _watchJson<String>(
-    _kSplashButtonLabel,
-    defaultValue: kDefaultSplashButtonLabel,
-    decode: _decodeString('splash_button_label'),
-  );
-
-  @override
-  Future<String> getSplashButtonLabel() => _readJson<String>(
     _kSplashButtonLabel,
     defaultValue: kDefaultSplashButtonLabel,
     decode: _decodeString('splash_button_label'),

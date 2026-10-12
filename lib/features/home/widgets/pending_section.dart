@@ -114,10 +114,6 @@ class _PendingSectionState extends ConsumerState<PendingSection> {
     final state = ref.watch(pendingControllerProvider);
 
     return switch (state) {
-      AsyncData<PendingState>(value: PendingLoading()) =>
-        const SliverToBoxAdapter(child: SizedBox.shrink()),
-      AsyncData<PendingState>(value: PendingEmpty()) =>
-        const SliverToBoxAdapter(child: SizedBox.shrink()),
       AsyncData<PendingState>(value: PendingError()) => SliverToBoxAdapter(
         child: _ErrorBanner(
           message: AppLocalizations.of(context).homePendingLoadError,
@@ -204,9 +200,7 @@ class _PendingSectionState extends ConsumerState<PendingSection> {
                   PendingTile(
                     key: ValueKey(item.id),
                     item: item,
-                    category: item.categoryId != null
-                        ? categories[item.categoryId]
-                        : null,
+                    category: categories[item.categoryId],
                     account: accounts[item.accountId],
                     locale: locale,
                     onApprove: () async {
@@ -433,7 +427,7 @@ class _ApproveCircleButton extends StatefulWidget {
 class _ApproveCircleButtonState extends State<_ApproveCircleButton>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animController;
-  Animation<Color?>? _colorAnimation;
+  late Animation<Color?> _colorAnimation;
   late final Animation<double> _scaleAnimation;
   bool _approving = false;
 
@@ -511,9 +505,7 @@ class _ApproveCircleButtonState extends State<_ApproveCircleButton>
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color:
-                        _colorAnimation?.value ??
-                        scheme.surfaceContainerHighest,
+                    color: _colorAnimation.value,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(

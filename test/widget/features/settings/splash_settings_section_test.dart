@@ -40,8 +40,6 @@ Widget _wrap({
   required ProviderContainer container,
   required bool splashEnabled,
   DateTime? splashStartDate,
-  String? splashDisplayText,
-  String? splashButtonLabel,
 }) {
   return UncontrolledProviderScope(
     container: container,
@@ -53,8 +51,8 @@ Widget _wrap({
           child: SplashSettingsSection(
             splashEnabled: splashEnabled,
             splashStartDate: splashStartDate,
-            splashDisplayText: splashDisplayText,
-            splashButtonLabel: splashButtonLabel,
+            splashDisplayText: null,
+            splashButtonLabel: null,
           ),
         ),
       ),

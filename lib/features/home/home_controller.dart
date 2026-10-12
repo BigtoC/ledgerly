@@ -48,10 +48,7 @@ sealed class HomeEffect {
 }
 
 final class HomeDeleteFailedEffect extends HomeEffect {
-  const HomeDeleteFailedEffect(this.error, this.stackTrace);
-
-  final Object error;
-  final StackTrace stackTrace;
+  const HomeDeleteFailedEffect();
 }
 
 @Riverpod(keepAlive: true, dependencies: [transactionRepository])
@@ -88,14 +85,6 @@ class HomeController extends _$HomeController {
 
   // ---------- Commands ----------
 
-  /// Pin the selected day to today. Always succeeds, even when today has
-  /// no activity (renders gap-day empty inside [HomeData]).
-  Future<void> selectToday() async {
-    _syncTodayAnchor();
-    _selectedDay = DateHelpers.startOfDay(DateTime.now());
-    _composer?.changeSelectedDay(_selectedDay);
-  }
-
   /// Pin the selected day to the supplied [day]. Used by the form save
   /// round-trip — Home pins to `savedTx.date` so the new row lands in
   /// view even if the user picked a date other than today.
@@ -111,8 +100,7 @@ class HomeController extends _$HomeController {
   /// Step back by one calendar day. No-op when already at [_minSelectableDay].
   Future<void> selectPrevDay() async {
     _syncTodayAnchor();
-    if (_selectedDay.isAtSameMomentAs(_minSelectableDay)) return;
-    if (_selectedDay.isBefore(_minSelectableDay)) return;
+    if (!_selectedDay.isAfter(_minSelectableDay)) return;
     _selectedDay = _selectedDay.subtract(const Duration(days: 1));
     _composer?.changeSelectedDay(_selectedDay);
   }
@@ -143,8 +131,7 @@ class HomeController extends _$HomeController {
     final tx = _composer?.transactionById(id);
     if (tx == null) return;
 
-    final scheduledFor = DateTime.now().add(kUndoWindow);
-    _pendingDelete = PendingDelete(transaction: tx, scheduledFor: scheduledFor);
+    _pendingDelete = PendingDelete(transaction: tx);
     _composer?.setPendingDelete(_pendingDelete);
 
     _undoTimer = Timer(kUndoWindow, () async {
@@ -177,15 +164,11 @@ class HomeController extends _$HomeController {
         _composer?.setPendingDelete(null);
       }
       return true;
-    } catch (error, stackTrace) {
+    } catch (_) {
       _committedDeleteIds.remove(id);
-      if (_pendingDelete?.transaction.id == id) {
-        _pendingDelete = null;
-        _composer?.setPendingDelete(null);
-      } else {
-        _composer?.setPendingDelete(_pendingDelete);
-      }
-      _effectListener?.call(HomeDeleteFailedEffect(error, stackTrace));
+      if (_pendingDelete?.transaction.id == id) _pendingDelete = null;
+      _composer?.setPendingDelete(_pendingDelete);
+      _effectListener?.call(const HomeDeleteFailedEffect());
       return false;
     }
   }
@@ -274,7 +257,7 @@ class _Composer {
 
   Future<void> dispose() async {
     await _stop();
-    if (!_out.isClosed) await _out.close();
+    await _out.close();
   }
 
   void _subscribeDay(DateTime day) {

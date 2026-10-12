@@ -8,10 +8,6 @@
 // nested `db.transaction(...)`) for failure isolation while amortizing
 // the outer fsync cost.
 
-import 'dart:async';
-
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../database/app_database.dart';
 import '../models/recurring_rule.dart';
 import '../repositories/pending_transaction_repository.dart';
@@ -117,7 +113,7 @@ class RecurringGenerationUseCase {
     var generated = 0;
     var capped = false;
 
-    while (!_isAfter(currentDue, today) && generated < catchUpCap) {
+    while (!currentDue.isAfter(today) && generated < catchUpCap) {
       final exists = await pendingRepo.existsForRuleAndDate(
         rule.id,
         currentDue,
@@ -140,7 +136,7 @@ class RecurringGenerationUseCase {
       generated++;
     }
 
-    if (generated == catchUpCap && !_isAfter(currentDue, today)) {
+    if (generated == catchUpCap && !currentDue.isAfter(today)) {
       currentDue = recurringRepo.fastForwardToRecent(
         rule,
         today,
@@ -158,10 +154,6 @@ class RecurringGenerationUseCase {
       generated: generated,
       capped: capped,
     );
-  }
-
-  bool _isAfter(DateTime a, DateTime b) {
-    return a.isAfter(DateTime(b.year, b.month, b.day));
   }
 }
 
@@ -202,23 +194,4 @@ class RecurringGenerationOutcome {
 class RecurringGenerationResult {
   const RecurringGenerationResult({required this.outcomes});
   final List<RecurringGenerationOutcome> outcomes;
-
-  bool get anyCapped => outcomes.any((o) => o.capped);
-  bool get anyFailed => outcomes.any((o) => o.failed);
-  Iterable<int> get cappedRuleIds =>
-      outcomes.where((o) => o.capped).map((o) => o.ruleId);
-  Iterable<int> get failedRuleIds =>
-      outcomes.where((o) => o.failed).map((o) => o.ruleId);
 }
-
-/// Bootstrap stores its single result here for Home (Wave 3) to read.
-/// Default body throws — every test/runtime must override the value via
-/// `ProviderScope` so missing-override bugs fail loudly instead of
-/// silently returning `null`.
-final lastGenerationResultProvider = Provider<RecurringGenerationResult>(
-  (ref) => throw UnimplementedError(
-    'lastGenerationResultProvider must be overridden by '
-    'bootstrap() or a test harness',
-  ),
-  dependencies: const [],
-);

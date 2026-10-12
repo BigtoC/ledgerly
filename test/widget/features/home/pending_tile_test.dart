@@ -32,18 +32,14 @@ class _MockAccountRepo extends Mock implements AccountRepository {}
 
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 
-PendingTransaction _pending({
-  required int id,
-  String memo = 'Netflix',
-  int amount = 1599,
-}) => PendingTransaction(
+PendingTransaction _pending({required int id}) => PendingTransaction(
   id: id,
   source: 'recurring',
-  amountMinorUnits: amount,
+  amountMinorUnits: 1599,
   currency: _usd,
   categoryId: 1,
   accountId: 1,
-  memo: memo,
+  memo: 'Netflix',
   date: DateTime(2026, 5, 8),
   fetchedAt: DateTime(2026, 5, 8),
   recurringRuleId: 1,

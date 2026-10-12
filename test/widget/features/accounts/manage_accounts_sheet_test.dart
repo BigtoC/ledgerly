@@ -30,8 +30,6 @@ import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/features/accounts/accounts_controller.dart';
 import 'package:ledgerly/features/accounts/accounts_state.dart';
-import 'package:ledgerly/features/settings/settings_controller.dart';
-import 'package:ledgerly/features/settings/settings_state.dart';
 import 'package:ledgerly/features/settings/widgets/manage_accounts_sheet.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
@@ -55,41 +53,16 @@ class _FakeAccountsController extends AccountsController {
   }
 }
 
-class _FakeSettingsController extends SettingsController {
-  _FakeSettingsController(this._fixed);
-  final SettingsState _fixed;
-
-  @override
-  Stream<SettingsState> build() async* {
-    yield _fixed;
-  }
-}
-
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 const _allTestCurrencies = [_usd];
 
-Account _a({
-  required int id,
-  required String name,
-  int accountTypeId = 1,
-  Currency currency = _usd,
-  bool isArchived = false,
-}) => Account(
-  id: id,
-  name: name,
-  accountTypeId: accountTypeId,
-  currency: currency,
-  isArchived: isArchived,
-);
+Account _a({required int id, required String name}) =>
+    Account(id: id, name: name, accountTypeId: 1, currency: _usd);
 
-AccountWithBalance _wb(
-  Account a, {
-  Map<String, int> balances = const {},
-  AccountRowAffordance affordance = AccountRowAffordance.archive,
-}) => AccountWithBalance(
+AccountWithBalance _wb(Account a) => AccountWithBalance(
   account: a,
-  balancesByCurrency: balances,
-  affordance: affordance,
+  balancesByCurrency: const {},
+  affordance: AccountRowAffordance.archive,
 );
 
 const _cashType = AccountType(
@@ -100,11 +73,7 @@ const _cashType = AccountType(
   defaultCurrency: _usd,
 );
 
-ProviderContainer _makeContainer({
-  required AccountsState accountsFixed,
-  SettingsState? settingsFixed,
-  List<Currency> currencies = _allTestCurrencies,
-}) {
+ProviderContainer _makeContainer({required AccountsState accountsFixed}) {
   final accountRepo = _MockAccountRepository();
   final typeRepo = _MockAccountTypeRepository();
   final prefs = _MockUserPreferencesRepository();
@@ -115,30 +84,22 @@ ProviderContainer _makeContainer({
   ).thenAnswer((_) => Stream.value([_cashType]));
   when(
     () => currencyRepo.watchAll(),
-  ).thenAnswer((_) => Stream.value(currencies));
+  ).thenAnswer((_) => Stream.value(_allTestCurrencies));
   when(
     () => currencyRepo.watchAll(includeTokens: any(named: 'includeTokens')),
-  ).thenAnswer((_) => Stream.value(currencies));
+  ).thenAnswer((_) => Stream.value(_allTestCurrencies));
 
-  final overrides = <Override>[
-    accountRepositoryProvider.overrideWithValue(accountRepo),
-    accountTypeRepositoryProvider.overrideWithValue(typeRepo),
-    userPreferencesRepositoryProvider.overrideWithValue(prefs),
-    currencyRepositoryProvider.overrideWithValue(currencyRepo),
-    accountsControllerProvider.overrideWith(
-      () => _FakeAccountsController(accountsFixed),
-    ),
-  ];
-
-  if (settingsFixed != null) {
-    overrides.add(
-      settingsControllerProvider.overrideWith(
-        () => _FakeSettingsController(settingsFixed),
+  return ProviderContainer(
+    overrides: [
+      accountRepositoryProvider.overrideWithValue(accountRepo),
+      accountTypeRepositoryProvider.overrideWithValue(typeRepo),
+      userPreferencesRepositoryProvider.overrideWithValue(prefs),
+      currencyRepositoryProvider.overrideWithValue(currencyRepo),
+      accountsControllerProvider.overrideWith(
+        () => _FakeAccountsController(accountsFixed),
       ),
-    );
-  }
-
-  return ProviderContainer(overrides: overrides);
+    ],
+  );
 }
 
 Widget _wrapWithOpener({

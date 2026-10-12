@@ -48,14 +48,6 @@ final currenciesByCodeProvider =
       );
     });
 
-final accountByIdProvider = StreamProvider.autoDispose.family<Account?, int>((
-  ref,
-  id,
-) {
-  final repo = ref.watch(accountRepositoryProvider);
-  return repo.watchById(id);
-});
-
 class AccountFormSeedData {
   const AccountFormSeedData({
     this.account,

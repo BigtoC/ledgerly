@@ -176,11 +176,7 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
               onDeleteItem: _onDeleteItem,
               onTapItem: (id) => _onTapItem(context, id),
             ),
-          AsyncData<ShoppingListState>(value: ShoppingListError()) =>
-            _ErrorSurface(
-              message: l10n.errorSnackbarGeneric,
-              onRetry: () => ref.invalidate(shoppingListControllerProvider),
-            ),
+          AsyncData<ShoppingListState>(value: ShoppingListError()) ||
           AsyncError() => _ErrorSurface(
             message: l10n.errorSnackbarGeneric,
             onRetry: () => ref.invalidate(shoppingListControllerProvider),
@@ -341,12 +337,11 @@ class _ShoppingListRow extends ConsumerWidget {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (trailingLabel.isNotEmpty)
-                Text(
-                  trailingLabel,
-                  style: Theme.of(context).textTheme.bodySmall,
-                  textAlign: TextAlign.end,
-                ),
+              Text(
+                trailingLabel,
+                style: Theme.of(context).textTheme.bodySmall,
+                textAlign: TextAlign.end,
+              ),
               IconButton(
                 key: ValueKey('shoppingListItem:${item.id}:delete'),
                 icon: const Icon(Icons.delete_outline),

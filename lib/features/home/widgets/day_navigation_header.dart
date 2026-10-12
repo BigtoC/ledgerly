@@ -20,7 +20,6 @@ class DayNavigationHeader extends StatelessWidget {
     required this.onPickDay,
     required this.canGoPrev,
     required this.canGoNext,
-    this.trailing,
   });
 
   final DateTime selectedDay;
@@ -30,7 +29,6 @@ class DayNavigationHeader extends StatelessWidget {
   final VoidCallback onPickDay;
   final bool canGoPrev;
   final bool canGoNext;
-  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +73,6 @@ class DayNavigationHeader extends StatelessWidget {
             onPressed: canGoNext ? onNext : null,
             icon: const Icon(Icons.chevron_right),
           ),
-          if (trailing != null) ...[const SizedBox(width: 8), trailing!],
         ],
       ),
     );

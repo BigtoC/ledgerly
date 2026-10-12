@@ -146,10 +146,7 @@ void main() {
   });
 
   /// Mount the form screen with a typed [mode] under a minimal GoRouter.
-  Widget mountWithMode(
-    TransactionFormMode mode, {
-    List<Override> extra = const [],
-  }) {
+  Widget mountWithMode(TransactionFormMode mode) {
     final router = GoRouter(
       initialLocation: '/form',
       routes: [
@@ -184,7 +181,6 @@ void main() {
         userPreferencesRepositoryProvider.overrideWithValue(prefs),
         currencyRepositoryProvider.overrideWithValue(currencyRepo),
         shoppingListRepositoryProvider.overrideWithValue(slRepo),
-        ...extra,
       ],
       child: MaterialApp.router(
         routerConfig: router,

@@ -358,12 +358,6 @@ abstract class AppLocalizations {
   /// **'Set start date'**
   String get splashSetStartDate;
 
-  /// PRD 526, 546. Splash default display text. {date} is formatted locale-aware via intl (yMMMMd).
-  ///
-  /// In en, this message translates to:
-  /// **'Since {date}'**
-  String splashSinceDate(DateTime date);
-
   /// PRD 551. Day-counter secondary label on splash.
   ///
   /// In en, this message translates to:
@@ -495,30 +489,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No categories yet — Create one'**
   String get categoriesPickerEmptyCta;
-
-  /// PRD 680. AppBar title for the Accounts list screen.
-  ///
-  /// In en, this message translates to:
-  /// **'Accounts'**
-  String get accountsListTitle;
-
-  /// PRD 680. FAB label and empty-state CTA to open the account form in Add mode.
-  ///
-  /// In en, this message translates to:
-  /// **'Add account'**
-  String get accountsAddCta;
-
-  /// PRD 703. Accounts list empty-state title shown when every account is archived.
-  ///
-  /// In en, this message translates to:
-  /// **'No active accounts'**
-  String get accountsEmptyTitle;
-
-  /// PRD 703. Primary CTA on the Accounts empty state — mirrors PRD's 'Create account' label when no active account exists.
-  ///
-  /// In en, this message translates to:
-  /// **'Create account'**
-  String get accountsEmptyCta;
 
   /// Accounts plan §4. Section header for the collapsible archived-accounts group beneath the active list.
   ///
@@ -700,12 +670,6 @@ abstract class AppLocalizations {
   /// **'General'**
   String get settingsSectionGeneral;
 
-  /// Settings plan §5. Section header grouping Manage Categories (wallets/ankr-key are Phase 2).
-  ///
-  /// In en, this message translates to:
-  /// **'Data management'**
-  String get settingsSectionDataManagement;
-
   /// Settings plan §3.2. Label for the theme-mode selector.
   ///
   /// In en, this message translates to:
@@ -754,30 +718,6 @@ abstract class AppLocalizations {
   /// **'简体中文 (Simplified Chinese)'**
   String get settingsLanguageZhCn;
 
-  /// Settings plan §3.2, §7. Label for the default-account tile.
-  ///
-  /// In en, this message translates to:
-  /// **'Default account'**
-  String get settingsDefaultAccountLabel;
-
-  /// Settings plan §3.2, §7. Subtitle shown on the default-account tile when no default has been picked.
-  ///
-  /// In en, this message translates to:
-  /// **'Not set'**
-  String get settingsDefaultAccountEmpty;
-
-  /// Settings plan §7. Title for the default-account picker bottom sheet.
-  ///
-  /// In en, this message translates to:
-  /// **'Pick default account'**
-  String get settingsDefaultAccountPickerTitle;
-
-  /// Settings plan §7. CTA shown when no active accounts exist — routes to /settings/manage-accounts/new.
-  ///
-  /// In en, this message translates to:
-  /// **'Create account'**
-  String get settingsDefaultAccountCreateCta;
-
   /// Settings plan §3.2, §8. Label for the default-currency tile.
   ///
   /// In en, this message translates to:
@@ -796,7 +736,7 @@ abstract class AppLocalizations {
   /// **'Manage categories'**
   String get settingsManageCategories;
 
-  /// Settings plan §6. Hint text under the splash display-text field explaining the template variables. The placeholders are named `dateToken` / `daysToken` (not `date` / `days`) because the call site passes the literal strings '{date}' and '{days}' as arguments — these are the actual MessageFormat-looking tokens that DateHelpers.applySplashTemplate substitutes. gen_l10n itself cannot embed literal { / } in a plain message, so the indirection through real placeholders is how the hint advertises the correct token form.
+  /// Settings plan §6. Hint text under the splash display-text field explaining the template variables. The placeholders are named `dateToken` / `daysToken` (not `date` / `days`) because the call site passes the literal strings '{date}' and '{days}' as arguments — these are the actual MessageFormat-looking tokens that DateHelpers.applySplashTemplateSegments substitutes. gen_l10n itself cannot embed literal { / } in a plain message, so the indirection through real placeholders is how the hint advertises the correct token form.
   ///
   /// In en, this message translates to:
   /// **'Use {dateToken} and {daysToken} as placeholders'**
@@ -970,12 +910,6 @@ abstract class AppLocalizations {
   /// **'Jump to today'**
   String get homeJumpToToday;
 
-  /// Indicator row in SummaryStrip when more than 2 currency groups exist on the selected day.
-  ///
-  /// In en, this message translates to:
-  /// **'Multiple currencies'**
-  String get homeSummaryMultiCurrencyNote;
-
   /// Wave 3 §4.2. Accessibility label for a transient Home day-loading placeholder. Reserved for loading affordances.
   ///
   /// In en, this message translates to:
@@ -1065,36 +999,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, one {+{count} more} other {+{count} more}}'**
   String accountsBalanceMore(int count);
-
-  /// Shopping list preview card title on the Accounts screen.
-  ///
-  /// In en, this message translates to:
-  /// **'Shopping list'**
-  String get shoppingListCardTitle;
-
-  /// Shopping list card header CTA — navigates to the full shopping list screen.
-  ///
-  /// In en, this message translates to:
-  /// **'View all'**
-  String get shoppingListViewAll;
-
-  /// Shopping list card empty-state body text.
-  ///
-  /// In en, this message translates to:
-  /// **'No upcoming expenses saved'**
-  String get shoppingListEmptyBody;
-
-  /// Shopping list card empty-state CTA — navigates to /home/add.
-  ///
-  /// In en, this message translates to:
-  /// **'Add to shopping list'**
-  String get shoppingListEmptyCta;
-
-  /// Shopping list card overflow CTA — shown when more than 3 drafts exist.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, one{{count} more} other{{count} more}}'**
-  String shoppingListItemsMore(int count);
 
   /// AppBar title for the dedicated shopping list screen.
   ///
@@ -1311,18 +1215,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No accounts yet. Create one to get started.'**
   String get manageAccountsBodyEmpty;
-
-  /// Title for the Analysis screen empty-state placeholder.
-  ///
-  /// In en, this message translates to:
-  /// **'Analysis is coming in Phase 2'**
-  String get analysisPlaceholderTitle;
-
-  /// Body copy for the Analysis screen empty-state placeholder.
-  ///
-  /// In en, this message translates to:
-  /// **'Charts and summaries will appear here once Phase 2 lands.'**
-  String get analysisPlaceholderBody;
 
   /// Analysis tab AppBar title
   ///

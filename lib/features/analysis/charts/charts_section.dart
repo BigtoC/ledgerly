@@ -164,7 +164,6 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
         skipLoadingOnRefresh: true,
         loading: () => _frame(
           context,
-          ref,
           controller,
           selection,
           selectionNotifier,
@@ -173,36 +172,15 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
         ),
         error: (e, _) => _frame(
           context,
-          ref,
           controller,
           selection,
           selectionNotifier,
-          body: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('$e'),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: controller.retry,
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+          body: _errorBody(e, controller),
           l10n: l10n,
         ),
         data: (state) => switch (state) {
-          ChartsIdle() => _frame(
-            context,
-            ref,
-            controller,
-            selection,
-            selectionNotifier,
-            body: const Center(child: CircularProgressIndicator()),
-            l10n: l10n,
-          ),
           ChartsLoading(:final previous) => _frame(
             context,
-            ref,
             controller,
             selection,
             selectionNotifier,
@@ -221,11 +199,9 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
             l10n: l10n,
             chartData: previous,
             locale: locale,
-            currencies: currenciesAsync.valueOrNull ?? const {},
           ),
           ChartsEmpty() => _frame(
             context,
-            ref,
             controller,
             selection,
             selectionNotifier,
@@ -237,7 +213,6 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
           ),
           ChartsBlockedByMissingRates(:final previous) => _frame(
             context,
-            ref,
             controller,
             selection,
             selectionNotifier,
@@ -268,11 +243,9 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
             l10n: l10n,
             chartData: previous,
             locale: locale,
-            currencies: currenciesAsync.valueOrNull ?? const {},
           ),
           ChartsDataState(:final chartData) => _frame(
             context,
-            ref,
             controller,
             selection,
             selectionNotifier,
@@ -284,25 +257,13 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
             l10n: l10n,
             chartData: chartData,
             locale: locale,
-            currencies: currenciesAsync.valueOrNull ?? const {},
           ),
           ChartsError(:final error) => _frame(
             context,
-            ref,
             controller,
             selection,
             selectionNotifier,
-            body: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('$error'),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: controller.retry,
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
+            body: _errorBody(error, controller),
             l10n: l10n,
           ),
         },
@@ -310,9 +271,17 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
     );
   }
 
+  Widget _errorBody(Object error, ChartsController controller) => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Text('$error'),
+      const SizedBox(height: 8),
+      TextButton(onPressed: controller.retry, child: const Text('Retry')),
+    ],
+  );
+
   Widget _frame(
     BuildContext context,
-    WidgetRef ref,
     ChartsController controller,
     ChartsSelection selection,
     ChartsSelectionController selectionNotifier, {
@@ -320,7 +289,6 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
     required AppLocalizations l10n,
     ChartsData? chartData,
     String? locale,
-    Map<String, Currency> currencies = const {},
   }) {
     // Toggles bind to the live selection, not `chartData`. During loading the
     // `previous` data still has the *old* period; in the empty/blocked/error
@@ -450,17 +418,24 @@ class _ChartBody extends ConsumerWidget {
     final selection = ref
         .watch(chartsSelectionControllerProvider)
         .selectedSlice;
-    final selectedIndex = selection == null
-        ? null
-        : (() {
-            final i = data.slices.indexWhere(
-              (s) => s.selectionKey == selection,
-            );
-            return i == -1 ? null : i;
-          })();
+    final hit = selection == null
+        ? -1
+        : data.slices.indexWhere((s) => s.selectionKey == selection);
+    final selectedIndex = hit == -1 ? null : hit;
     final showBar =
         data.bucketTotals.isNotEmpty &&
         !(data.dimension == ChartDimension.currency && data.mixedCurrencies);
+    void selectSlice(int? i) {
+      if (i == null) {
+        ref.read(chartsSelectionControllerProvider.notifier).clearSlice();
+        return;
+      }
+      final key = data.slices[i].selectionKey;
+      if (key != null) {
+        ref.read(chartsSelectionControllerProvider.notifier).toggleSlice(key);
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -471,18 +446,7 @@ class _ChartBody extends ConsumerWidget {
           grandTotalMinorUnits: data.grandTotalMinorUnits,
           displayCurrencyCode: data.displayCurrencyCode,
           selectedIndex: selectedIndex,
-          onSelectionChanged: (i) {
-            if (i == null) {
-              ref.read(chartsSelectionControllerProvider.notifier).clearSlice();
-              return;
-            }
-            final key = data.slices[i].selectionKey;
-            if (key != null) {
-              ref
-                  .read(chartsSelectionControllerProvider.notifier)
-                  .toggleSlice(key);
-            }
-          },
+          onSelectionChanged: selectSlice,
         ),
         const SizedBox(height: 12),
         ChartLegend(
@@ -491,18 +455,7 @@ class _ChartBody extends ConsumerWidget {
           locale: locale,
           mixedCurrencies: data.mixedCurrencies,
           selectedSliceIndex: selectedIndex,
-          onSelectSlice: (i) {
-            if (i == null) {
-              ref.read(chartsSelectionControllerProvider.notifier).clearSlice();
-              return;
-            }
-            final key = data.slices[i].selectionKey;
-            if (key != null) {
-              ref
-                  .read(chartsSelectionControllerProvider.notifier)
-                  .toggleSlice(key);
-            }
-          },
+          onSelectSlice: selectSlice,
         ),
         if (showBar) ...[
           const SizedBox(height: 16),

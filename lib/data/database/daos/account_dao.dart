@@ -31,36 +31,8 @@ class AccountDao extends DatabaseAccessor<AppDatabase> with _$AccountDaoMixin {
     return query.watch();
   }
 
-  /// Watch non-archived accounts filtered by account type.
-  /// Uses `accounts_account_type_idx` for reverse lookup.
-  Stream<List<AccountRow>> watchByType(int accountTypeId) {
-    return (select(accounts)
-          ..where(
-            (a) =>
-                a.accountTypeId.equals(accountTypeId) &
-                a.isArchived.equals(false),
-          )
-          ..orderBy([
-            (a) => OrderingTerm(
-              expression: a.sortOrder,
-              mode: OrderingMode.asc,
-              nulls: NullsOrder.last,
-            ),
-            (a) => OrderingTerm(expression: a.id),
-          ]))
-        .watch();
-  }
-
   Future<AccountRow?> findById(int id) {
     return (select(accounts)..where((a) => a.id.equals(id))).getSingleOrNull();
-  }
-
-  /// Watch a single account by id (Edit Account screen). Emits `null`
-  /// once the row is deleted. See M3 Stream B plan §4 / §12 Q5.
-  Stream<AccountRow?> watchById(int id) {
-    return (select(
-      accounts,
-    )..where((a) => a.id.equals(id))).watchSingleOrNull();
   }
 
   Future<int> insert(AccountsCompanion row) {
@@ -81,18 +53,5 @@ class AccountDao extends DatabaseAccessor<AppDatabase> with _$AccountDaoMixin {
     return (update(accounts)..where((a) => a.id.equals(id))).write(
       const AccountsCompanion(isArchived: Value(true)),
     );
-  }
-
-  /// Count accounts referencing the given account-type id.
-  /// Complement of `AccountTypeDao.hasReferencingAccounts` for
-  /// settings/display use cases that want the actual count.
-  Future<int> countByAccountType(int accountTypeId) async {
-    final countExp = accounts.id.count();
-    final row =
-        await (selectOnly(accounts)
-              ..addColumns([countExp])
-              ..where(accounts.accountTypeId.equals(accountTypeId)))
-            .getSingle();
-    return row.read(countExp) ?? 0;
   }
 }

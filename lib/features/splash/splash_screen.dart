@@ -104,10 +104,7 @@ class _SplashContent extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const SizedBox(height: 48),
-                  SplashDayCount(
-                    count: data.dayCount,
-                    startDate: data.startDate,
-                  ),
+                  SplashDayCount(count: data.dayCount),
                   const SizedBox(height: 24),
                   _SplashDisplayText(segments: data.displayTextSegments),
                   const SizedBox(height: 48),

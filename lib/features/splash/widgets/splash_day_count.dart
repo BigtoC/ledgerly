@@ -10,14 +10,9 @@ import 'package:flutter/material.dart';
 import '../../../l10n/app_localizations.dart';
 
 class SplashDayCount extends StatelessWidget {
-  const SplashDayCount({
-    required this.count,
-    required this.startDate,
-    super.key,
-  });
+  const SplashDayCount({required this.count, super.key});
 
   final int count;
-  final DateTime startDate;
 
   @override
   Widget build(BuildContext context) {

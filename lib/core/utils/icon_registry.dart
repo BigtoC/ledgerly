@@ -66,7 +66,4 @@ const Map<String, IconData> kIconRegistry = <String, IconData>{
 /// Unknown / `null` / empty keys fall back to [kFallbackIcon]
 /// (`Icons.category`). Never throws — a corrupted row in the DB should
 /// still render *something*.
-IconData iconForKey(String? key) {
-  if (key == null || key.isEmpty) return kFallbackIcon;
-  return kIconRegistry[key] ?? kFallbackIcon;
-}
+IconData iconForKey(String? key) => kIconRegistry[key] ?? kFallbackIcon;

@@ -46,7 +46,6 @@ class ThemeModeSelector extends ConsumerWidget {
             ],
             selected: {value},
             onSelectionChanged: (selection) {
-              if (selection.isEmpty) return;
               ref
                   .read(settingsControllerProvider.notifier)
                   .setThemeMode(selection.first);

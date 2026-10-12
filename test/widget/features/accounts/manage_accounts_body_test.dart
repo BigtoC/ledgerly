@@ -49,18 +49,13 @@ const _allTestCurrencies = [_usd, _jpy, _twd];
 Account _a({
   required int id,
   required String name,
-  int accountTypeId = 1,
   Currency currency = _usd,
-  int openingBalanceMinorUnits = 0,
-  int? sortOrder,
   bool isArchived = false,
 }) => Account(
   id: id,
   name: name,
-  accountTypeId: accountTypeId,
+  accountTypeId: 1,
   currency: currency,
-  openingBalanceMinorUnits: openingBalanceMinorUnits,
-  sortOrder: sortOrder,
   isArchived: isArchived,
 );
 
@@ -133,15 +128,14 @@ ProviderContainer _makeContainer({
   required AccountTypeRepository typeRepo,
   required UserPreferencesRepository prefs,
   required AccountsState fixed,
-  List<Currency> currencies = _allTestCurrencies,
 }) {
   final currencyRepo = _MockCurrencyRepository();
   when(
     () => currencyRepo.watchAll(),
-  ).thenAnswer((_) => Stream.value(currencies));
+  ).thenAnswer((_) => Stream.value(_allTestCurrencies));
   when(
     () => currencyRepo.watchAll(includeTokens: any(named: 'includeTokens')),
-  ).thenAnswer((_) => Stream.value(currencies));
+  ).thenAnswer((_) => Stream.value(_allTestCurrencies));
 
   return ProviderContainer(
     overrides: [

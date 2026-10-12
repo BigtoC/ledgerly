@@ -187,20 +187,6 @@ void main() {
       verify(() => repo.setDefaultCurrency('JPY')).called(1);
     });
 
-    test('SC05: setDefaultAccountId writes through repo', () async {
-      when(() => repo.setDefaultAccountId(42)).thenAnswer((_) async {});
-      final container = makeContainer();
-      addTearDown(container.dispose);
-      container.listen(settingsControllerProvider, (_, _) {});
-      await pushAllInitial();
-      await waitForData(container);
-
-      await container
-          .read(settingsControllerProvider.notifier)
-          .setDefaultAccountId(42);
-      verify(() => repo.setDefaultAccountId(42)).called(1);
-    });
-
     test('SC06: setSplashEnabled writes through repo', () async {
       when(() => repo.setSplashEnabled(false)).thenAnswer((_) async {});
       final container = makeContainer();

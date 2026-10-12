@@ -5,13 +5,11 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'dart:async';
 
 import '../../app/providers/repository_providers.dart';
 import '../../data/models/account.dart';
 import '../../data/models/category.dart';
 import '../../data/models/currency.dart';
-import '../../data/models/shopping_list_item.dart';
 
 part 'shopping_list_providers.g.dart';
 
@@ -22,61 +20,6 @@ part 'shopping_list_providers.g.dart';
 @Riverpod(dependencies: [shoppingListRepository])
 Stream<int> shoppingListTotalCount(Ref ref) =>
     ref.watch(shoppingListRepositoryProvider).watchCount();
-
-/// Combined preview + total-count stream.
-///
-/// Watches [shoppingListRepositoryProvider.watchAll()] once and maps it into a
-/// record with the first 3 items (`preview`) and the full list length
-/// (`totalCount`). Using a single stream avoids opening two live DB queries.
-@Riverpod(dependencies: [shoppingListRepository])
-Stream<({List<ShoppingListItem> preview, int totalCount})> shoppingListPreview(
-  Ref ref,
-) {
-  final repo = ref.watch(shoppingListRepositoryProvider);
-  late final StreamController<
-    ({List<ShoppingListItem> preview, int totalCount})
-  >
-  controller;
-  StreamSubscription<List<ShoppingListItem>>? previewSub;
-  StreamSubscription<int>? countSub;
-  List<ShoppingListItem>? preview;
-  int? totalCount;
-
-  void emitIfReady() {
-    if (controller.isClosed || preview == null || totalCount == null) return;
-    controller.add((preview: preview!, totalCount: totalCount!));
-  }
-
-  controller =
-      StreamController<
-        ({List<ShoppingListItem> preview, int totalCount})
-      >.broadcast(
-        onListen: () {
-          previewSub = repo.watchAll(limit: 3).listen((items) {
-            preview = items;
-            emitIfReady();
-          });
-          countSub = repo.watchCount().listen((count) {
-            totalCount = count;
-            emitIfReady();
-          });
-        },
-        onCancel: () async {
-          await previewSub?.cancel();
-          await countSub?.cancel();
-          previewSub = null;
-          countSub = null;
-        },
-      );
-
-  ref.onDispose(() async {
-    await previewSub?.cancel();
-    await countSub?.cancel();
-    await controller.close();
-  });
-
-  return controller.stream;
-}
 
 /// One-shot read for archived-safe category name hydration.
 ///

@@ -58,6 +58,36 @@ class KeypadState {
       rightOperand = null,
       hasCurrentInput = false;
 
+  /// Reconstructs a keypad from a stored amount so backspace on a
+  /// hydrated edit/duplicate value walks back through the visible digits
+  /// rather than dropping the whole amount in one press. Sets
+  /// `hasCurrentInput: true` for non-zero amounts so edit/duplicate flows
+  /// can immediately start operator expressions from the existing value.
+  factory KeypadState.fromAmount(
+    int amountMinorUnits, {
+    required int decimals,
+  }) {
+    // If the amount has no fractional part, treat it as integer-mode
+    // entry. Otherwise enter fractional mode and assume the user has
+    // typed all `decimals` digits — backspace will walk them back.
+    if (amountMinorUnits == 0 ||
+        decimals <= 0 ||
+        amountMinorUnits % _pow10(decimals) == 0) {
+      return KeypadState(
+        amountMinorUnits: amountMinorUnits,
+        fractionalDigitsEntered: 0,
+        isFractionalMode: false,
+        hasCurrentInput: amountMinorUnits != 0,
+      );
+    }
+    return KeypadState(
+      amountMinorUnits: amountMinorUnits,
+      fractionalDigitsEntered: decimals,
+      isFractionalMode: true,
+      hasCurrentInput: true,
+    );
+  }
+
   final int amountMinorUnits;
   final int fractionalDigitsEntered;
   final bool isFractionalMode;
@@ -297,9 +327,7 @@ class KeypadState {
   /// - After a result is showing: use the result as the new left operand and
   ///   enter evaluating mode with the new operator.
   KeypadState pushOperator(CalcOperator op, {required int decimals}) {
-    if (!hasCurrentInput && !showingResult && !hasExpression) {
-      return this;
-    }
+    if (!hasVisibleInput) return this;
 
     if (isEvaluating && operator != null && leftOperand != null) {
       if (!hasCurrentInput) {
@@ -344,20 +372,6 @@ class KeypadState {
         fractionalDigitsEntered: 0,
         isFractionalMode: false,
         leftOperand: result,
-        operator: op,
-        isEvaluating: true,
-        showingResult: false,
-        rightOperand: null,
-        hasCurrentInput: false,
-      );
-    }
-
-    if (showingResult) {
-      return KeypadState(
-        amountMinorUnits: 0,
-        fractionalDigitsEntered: 0,
-        isFractionalMode: false,
-        leftOperand: amountMinorUnits,
         operator: op,
         isEvaluating: true,
         showingResult: false,

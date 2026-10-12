@@ -53,7 +53,6 @@ Widget _harness({
     defaultCurrencyCode: 'USD',
     rates: {},
   ),
-  void Function(ProviderContainer container)? onContainer,
 }) {
   final container = ProviderContainer(
     overrides: [
@@ -83,7 +82,6 @@ Widget _harness({
         .read(chartsSelectionControllerProvider.notifier)
         .toggleSlice(activeSelection);
   }
-  onContainer?.call(container);
   return UncontrolledProviderScope(
     container: container,
     child: MaterialApp(

@@ -26,3 +26,20 @@ sealed class SelectedSlice with _$SelectedSlice {
   const factory SelectedSlice.currency(String currencyCode) =
       SelectedCurrencySlice;
 }
+
+/// Translates a typed selection into plain `(categoryId, accountId,
+/// currencyCode)` repository filter args. Keeps [SelectedSlice] inside the
+/// analysis layer — this is the only place it crosses into data-access
+/// territory.
+(int?, int?, String?) selectionFilters(SelectedSlice? selection) {
+  return switch (selection) {
+    null => (null, null, null),
+    SelectedCategorySlice(:final categoryId, :final currencyCode) => (
+      categoryId,
+      null,
+      currencyCode,
+    ),
+    SelectedAccountSlice(:final accountId) => (null, accountId, null),
+    SelectedCurrencySlice(:final currencyCode) => (null, null, currencyCode),
+  };
+}

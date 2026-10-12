@@ -4,7 +4,6 @@
 //   - loading → empty (no history) and loading → data (with rows)
 //   - Day traversal: prev/next derived from `watchDaysWithActivity`,
 //     stepping over gap days; both null at boundaries.
-//   - `selectToday()` always pins selectedDay to today.
 //   - `pinDay(day)` pins to the supplied day (used by edit-save and
 //     duplicate-save round-trip).
 //   - `deleteTransaction(id)` schedules a timer and exposes
@@ -35,19 +34,12 @@ class _MockTransactionRepository extends Mock
 
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 
-Transaction _tx({
-  required int id,
-  required DateTime date,
-  int amount = 100,
-  Currency currency = _usd,
-  int categoryId = 1,
-  int accountId = 1,
-}) => Transaction(
+Transaction _tx({required int id, required DateTime date}) => Transaction(
   id: id,
-  amountMinorUnits: amount,
-  currency: currency,
-  categoryId: categoryId,
-  accountId: accountId,
+  amountMinorUnits: 100,
+  currency: _usd,
+  categoryId: 1,
+  accountId: 1,
   date: date,
   createdAt: DateTime.utc(0),
   updatedAt: DateTime.utc(0),
@@ -343,7 +335,7 @@ void main() {
       },
     );
 
-    test('H04: selectToday pins to today even on a gap day', () async {
+    test('H04: today is selected by default even on a gap day', () async {
       final container = makeContainer();
       addTearDown(container.dispose);
       container.listen(homeControllerProvider, (_, _) {});
@@ -370,11 +362,6 @@ void main() {
       // Calendar-based: can go prev (yesterday has activity), cannot go next (at today)
       expect(data.canGoPrev, isTrue);
       expect(data.canGoNext, isFalse);
-
-      await container.read(homeControllerProvider.notifier).selectToday();
-      await Future<void>.delayed(Duration.zero);
-      final after = await waitForNon(container, (s) => s is HomeData);
-      expect((after as HomeData).selectedDay, today);
     });
 
     test(

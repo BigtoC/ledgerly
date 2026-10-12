@@ -76,6 +76,9 @@ class AccountTile extends ConsumerWidget {
     final hasMultipleCurrencies = view.balancesByCurrency.length > 1;
     String? convertedTotalFormatted;
     if (hasMultipleCurrencies) {
+      final toCurrency =
+          currenciesByCode[defaultCurrency] ??
+          Currency(code: defaultCurrency, decimals: 2, symbol: defaultCurrency);
       int total = 0;
       bool allRatesPresent = true;
       for (final entry in view.balancesByCurrency.entries) {
@@ -89,32 +92,15 @@ class AccountTile extends ConsumerWidget {
             allRatesPresent = false;
             break;
           }
-          final fromCurrency =
-              currenciesByCode[code] ??
-              Currency(code: code, decimals: 2, symbol: code);
-          final toCurrency =
-              currenciesByCode[defaultCurrency] ??
-              Currency(
-                code: defaultCurrency,
-                decimals: 2,
-                symbol: defaultCurrency,
-              );
           total += CurrencyConverter.convertMinorUnits(
             amountMinorUnits: amount,
             rateScaledE9: rateScaledE9,
-            fromDecimals: fromCurrency.decimals,
+            fromDecimals: currenciesByCode[code]?.decimals ?? 2,
             toDecimals: toCurrency.decimals,
           );
         }
       }
       if (allRatesPresent) {
-        final toCurrency =
-            currenciesByCode[defaultCurrency] ??
-            Currency(
-              code: defaultCurrency,
-              decimals: 2,
-              symbol: defaultCurrency,
-            );
         convertedTotalFormatted = MoneyFormatter.format(
           amountMinorUnits: total,
           currency: toCurrency,

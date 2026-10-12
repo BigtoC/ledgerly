@@ -93,6 +93,18 @@ When verifying changes, run `dart format .` before any `flutter test` or `flutte
 
 Code generation is required whenever a `@freezed`, `@riverpod`, or Drift `@DriftDatabase`/`@DataClassName` annotation changes — the build will fail loudly if generated files are stale.
 
+## Commits and Pull Requests
+
+Commits and PR titles follow **different** conventions on purpose: a commit subject names the change, a PR title names the problem that motivated it. Never use one form where the other belongs.
+
+- **Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/):** `<type>[(scope)][!]: <description>`, then a blank line, the body, a blank line, and any footers.
+  - **Types used here:** `feat`, `fix`, `docs`, `refactor`, `chore`, `test`, `build`, `perf`, `style`, `ci`.
+  - **Scope** is a feature directory under `lib/features/` (`accounts`, `analysis`, `categories`, `home`, `recurring`, `settings`, `shopping-list`, `splash`, `transactions`) or a layer or area (`app`, `core`, `data`, `l10n`, `deps`, `test`). Separate scopes with a comma when a change really spans two, as in `refactor(home,data):`.
+  - **Breaking changes** take `!` before the colon, a `BREAKING CHANGE:` footer, or both. That token is the one part of the format that must be uppercase.
+  - **Footers are git trailers** (`Token: value`, with hyphens rather than spaces). The `Co-Authored-By:` trailer belongs there, after a blank line, never attached to the body.
+- **PR titles start with `Problem`.** Write `Problem: <the problem>`, or `Problem(scope): <the problem>` when scoped. State what is wrong, not what you did. For example, `Problem: Forex rate is not fetched right after transaction saved`, not "fetch rate on save". The reviewer then reads the diff as an answer to a question rather than a claim to audit, and the merge commit records why the work happened. GitHub appends `(#NN)` itself, so do not add it.
+- **Each commit should analyze and test on its own**, so a regression can be bisected. Split by concern, not by file count. If two files cannot compile apart, keep them in one commit and say so in the body rather than shipping a commit that does not build.
+
 ## Architecture
 
 Detailed agent-facing rules live under [`docs/architecture/`](docs/architecture/README.md). When in doubt, read [`PRD.md`](PRD.md) — these docs summarize it.

@@ -265,10 +265,7 @@ class _SelectedSliceItemsListState
     }
     if (fetchedAts.isEmpty) return false;
 
-    DateTime oldest = fetchedAts.first;
-    for (final fetchedAt in fetchedAts.skip(1)) {
-      if (fetchedAt.isBefore(oldest)) oldest = fetchedAt;
-    }
+    final oldest = fetchedAts.reduce((a, b) => b.isBefore(a) ? b : a);
     return DateTime.now().difference(oldest) > const Duration(hours: 1);
   }
 

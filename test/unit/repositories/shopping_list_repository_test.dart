@@ -49,7 +49,6 @@ Future<int> _insertCategoryRaw(
 Future<int> _insertAccountRaw(
   AppDatabase db, {
   String name = 'Cash',
-  String currency = 'USD',
   bool archived = false,
 }) async {
   // Use INSERT OR IGNORE so repeated calls with the same l10n_key are safe.
@@ -67,7 +66,7 @@ Future<int> _insertAccountRaw(
   await db.customStatement(
     'INSERT INTO accounts (name, account_type_id, currency, '
     'opening_balance_minor_units, is_archived) VALUES (?, ?, ?, 0, ?)',
-    <Object?>[name, typeId, currency, archived ? 1 : 0],
+    <Object?>[name, typeId, 'USD', archived ? 1 : 0],
   );
   final rows = await db
       .customSelect('SELECT id FROM accounts ORDER BY id DESC LIMIT 1')
@@ -86,17 +85,13 @@ Future<int> _insertShoppingListItemRaw(
   required int categoryId,
   required int accountId,
   String? memo,
-  int? draftAmountMinorUnits,
-  String? draftCurrencyCode,
   DateTime? draftDate,
   DateTime? createdAt,
-  DateTime? updatedAt,
 }) async {
   int toUnix(DateTime dt) => (dt.millisecondsSinceEpoch / 1000).truncate();
 
   final dateUnix = toUnix(draftDate ?? DateTime.utc(2026, 5, 1));
   final nowUnix = toUnix(createdAt ?? DateTime.utc(2026, 1, 1));
-  final updUnix = toUnix(updatedAt ?? createdAt ?? DateTime.utc(2026, 1, 1));
 
   await db.customInsert(
     'INSERT INTO shopping_list_items '
@@ -107,15 +102,11 @@ Future<int> _insertShoppingListItemRaw(
       Variable<int>(categoryId),
       Variable<int>(accountId),
       memo != null ? Variable<String>(memo) : const Variable(null),
-      draftAmountMinorUnits != null
-          ? Variable<int>(draftAmountMinorUnits)
-          : const Variable(null),
-      draftCurrencyCode != null
-          ? Variable<String>(draftCurrencyCode)
-          : const Variable(null),
+      const Variable(null),
+      const Variable(null),
       Variable<int>(dateUnix),
       Variable<int>(nowUnix),
-      Variable<int>(updUnix),
+      Variable<int>(nowUnix),
     ],
     updates: {db.shoppingListItems},
   );
@@ -472,40 +463,6 @@ void main() {
       expect(items.length, 2);
       expect(items[0].memo, 'newer');
       expect(items[1].memo, 'older');
-    });
-
-    test('watchAll limit returns only the newest rows', () async {
-      await _insertShoppingListItemRaw(
-        db,
-        categoryId: expenseCategoryId,
-        accountId: accountId,
-        memo: 'first',
-        createdAt: DateTime.utc(2026, 1, 1),
-      );
-      await _insertShoppingListItemRaw(
-        db,
-        categoryId: expenseCategoryId,
-        accountId: accountId,
-        memo: 'second',
-        createdAt: DateTime.utc(2026, 2, 1),
-      );
-      await _insertShoppingListItemRaw(
-        db,
-        categoryId: expenseCategoryId,
-        accountId: accountId,
-        memo: 'third',
-        createdAt: DateTime.utc(2026, 3, 1),
-      );
-      await _insertShoppingListItemRaw(
-        db,
-        categoryId: expenseCategoryId,
-        accountId: accountId,
-        memo: 'fourth',
-        createdAt: DateTime.utc(2026, 4, 1),
-      );
-
-      final items = await repo.watchAll(limit: 3).first;
-      expect(items.map((item) => item.memo), ['fourth', 'third', 'second']);
     });
   });
 

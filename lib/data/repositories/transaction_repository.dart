@@ -73,29 +73,22 @@ abstract class TransactionRepository {
   Stream<List<Transaction>> watchByDay(DateTime day);
 
   /// Newest-first stream of days that have at least one transaction,
-  /// bounded by `limit`. Each element is the local-midnight `DateTime`
-  /// of a distinct day.
-  Stream<List<DateTime>> watchDaysWithActivity({int limit = 365});
-
-  /// Net per currency for transactions dated on `day` (midnight-to-midnight
-  /// in the device's local timezone). Income contributes positively,
-  /// expense negatively (sign derived from `categories.type`). Empty map
-  /// if no activity. Re-emits on every insert / update / delete on that
-  /// day. Used by Home's summary strip — Wave 3 §3.
-  Stream<Map<String, int>> watchDailyNetByCurrency(DateTime day);
+  /// bounded to the 365 most recent days. Each element is the
+  /// local-midnight `DateTime` of a distinct day.
+  Stream<List<DateTime>> watchDaysWithActivity();
 
   /// Split of daily totals by transaction type (expense vs income),
   /// grouped by currency. Both values are unsigned sums (non-negative).
-  /// Day window is the device-local boundary, same as
-  /// [watchDailyNetByCurrency]. Re-emits on every relevant mutation —
-  /// Wave 3 §3.
+  /// Day window is the device-local midnight-to-midnight boundary.
+  /// Re-emits on every relevant mutation — Wave 3 §3.
   Stream<Map<String, ({int expense, int income})>> watchDailyTotalsByType(
     DateTime day,
   );
 
   /// Net per currency for the calendar month containing `month` (device
-  /// local timezone). Same sign convention as [watchDailyNetByCurrency].
-  /// Re-emits on any transaction mutation within the month — Wave 3 §3.
+  /// local timezone). Income contributes positively, expense negatively
+  /// (sign derived from `categories.type`). Re-emits on any transaction
+  /// mutation within the month — Wave 3 §3.
   Stream<Map<String, int>> watchMonthNetByCurrency(DateTime month);
 
   /// Transactions for a single account, reverse-chronological.
@@ -211,19 +204,10 @@ final class DriftTransactionRepository implements TransactionRepository {
   }
 
   @override
-  Stream<List<DateTime>> watchDaysWithActivity({int limit = 365}) {
-    return _dao
-        .watchDistinctActivityDays(limit: limit)
-        .map((days) => List.unmodifiable(days));
-  }
-
-  @override
-  Stream<Map<String, int>> watchDailyNetByCurrency(DateTime day) {
-    final start = DateHelpers.startOfDay(day);
-    final end = DateHelpers.startOfDay(
-      DateTime(day.year, day.month, day.day + 1),
+  Stream<List<DateTime>> watchDaysWithActivity() {
+    return _dao.watchDistinctActivityDays().map(
+      (days) => List.unmodifiable(days),
     );
-    return _watchNetByCurrency(start: start, end: end);
   }
 
   @override
@@ -235,8 +219,7 @@ final class DriftTransactionRepository implements TransactionRepository {
       DateTime(day.year, day.month, day.day + 1),
     );
     // Both totals are unsigned (non-negative); the screen splits them
-    // for the summary strip and re-derives the signed net via
-    // [watchDailyNetByCurrency].
+    // for the summary strip.
     final query = _db.customSelect(
       'SELECT t.currency AS code, '
       "COALESCE(SUM(CASE WHEN c.type = 'expense' "
@@ -539,6 +522,11 @@ final class DriftTransactionRepository implements TransactionRepository {
     final codes = rows.map((row) => row.currency).toSet();
     final currenciesByCode = <String, Currency>{};
     for (final code in codes) {
+      // Currency FK-resolved on read. Non-null asserted because the row
+      // cannot exist without a matching `currencies` entry:
+      //   (a) `save` runs a pre-insert `CurrencyDao.findByCode` check,
+      //   (b) `AppDatabase.beforeOpen` sets `PRAGMA foreign_keys = ON`.
+      // See Q4 resolution in Stream A plan §12.
       final currencyRow = (await _currencyDao.findByCode(code))!;
       currenciesByCode[code] = _currencyFromRow(currencyRow);
     }
@@ -560,25 +548,8 @@ final class DriftTransactionRepository implements TransactionRepository {
         .toList(growable: false);
   }
 
-  Future<Transaction> _toDomain(drift.TransactionRow row) async {
-    // Currency FK-resolved on read. Non-null asserted because the row
-    // cannot exist without a matching `currencies` entry:
-    //   (a) `save` runs a pre-insert `CurrencyDao.findByCode` check,
-    //   (b) `AppDatabase.beforeOpen` sets `PRAGMA foreign_keys = ON`.
-    // See Q4 resolution in Stream A plan §12.
-    final currencyRow = (await _currencyDao.findByCode(row.currency))!;
-    return Transaction(
-      id: row.id,
-      amountMinorUnits: row.amountMinorUnits,
-      currency: _currencyFromRow(currencyRow),
-      categoryId: row.categoryId,
-      accountId: row.accountId,
-      memo: row.memo,
-      date: row.date,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    );
-  }
+  Future<Transaction> _toDomain(drift.TransactionRow row) async =>
+      (await _rowsToDomain([row])).single;
 
   Currency _currencyFromRow(drift.Currency row) => Currency(
     code: row.code,

@@ -22,10 +22,6 @@ enum ChartDimension { category, account, currency }
 
 @freezed
 sealed class ChartsState with _$ChartsState {
-  /// Pre-first-emission. Renders chart-sized loading shimmer beneath the
-  /// (already-mounted) control row.
-  const factory ChartsState.idle() = ChartsIdle;
-
   /// New range/dimension/type subscribed; previous data (if any) is kept
   /// visible while the new payload lands. `previous == null` means cold
   /// start.

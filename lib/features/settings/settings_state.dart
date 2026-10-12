@@ -26,8 +26,8 @@ sealed class SettingsState with _$SettingsState {
   /// `defaultAccountId == null` means no default has been picked yet
   /// (first run until the user picks one).
   /// `splashDisplayText == null` / `splashButtonLabel == null` means
-  /// "fall back to the localized default template" — the widget layer
-  /// resolves to `splashSinceDate` / `splashEnter` at render time.
+  /// "fall back to the default" — the widget layer resolves to
+  /// `kDefaultSplashDisplayText` / `splashEnter` at render time.
   const factory SettingsState.data({
     required ThemeMode themeMode,
     required Locale? locale,

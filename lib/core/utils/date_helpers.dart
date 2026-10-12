@@ -80,34 +80,14 @@ class DateHelpers {
   static String formatDayHeader(DateTime date, String locale) =>
       DateFormat.MMMEd(locale).format(date);
 
-  /// Locale-aware short date for list-row timestamps
-  /// (e.g. `4/21/2026` / `2026/4/21`). Uses [DateFormat.yMd].
-  static String formatShortDate(DateTime date, String locale) =>
-      DateFormat.yMd(locale).format(date);
-
-  /// Substitutes `{date}` and `{days}` in the splash display template.
-  /// - `{date}` → `formatDisplayDate(startDate, locale)`.
-  /// - `{days}` → `daysSince(...)` rendered with locale-aware grouping
-  ///   via `NumberFormat.decimalPattern(locale)`.
-  /// Unknown `{placeholder}` tokens pass through unchanged. Default
-  /// template is the seed-supplied `"On {date} start using Ledgerly"`.
-  static String applySplashTemplate({
-    required String template,
-    required DateTime startDate,
-    required DateTime now,
-    required String locale,
-  }) {
-    final days = daysSince(startDate: startDate, now: now);
-    final daysStr = NumberFormat.decimalPattern(locale).format(days);
-    final dateStr = formatDisplayDate(startDate, locale);
-    return template.replaceAll('{days}', daysStr).replaceAll('{date}', dateStr);
-  }
-
-  /// Same grammar as [applySplashTemplate] but returns the resolved text
-  /// split into segments so the widget can style `{date}` substitutions
-  /// independently (rainbow gradient) from the surrounding plain run.
-  /// `{days}` is substituted inline into its enclosing plain segment.
-  /// Empty plain runs at segment boundaries are dropped.
+  /// Substitutes `{date}` (→ `formatDisplayDate(startDate, locale)`) and
+  /// `{days}` (→ `daysSince(...)` with locale-aware grouping via
+  /// `NumberFormat.decimalPattern(locale)`) in the splash display template;
+  /// unknown `{placeholder}` tokens pass through unchanged. Returns the
+  /// resolved text split into segments so the widget can style `{date}`
+  /// substitutions independently (rainbow gradient) from the surrounding
+  /// plain run. `{days}` is substituted inline into its enclosing plain
+  /// segment. Empty plain runs at segment boundaries are dropped.
   static List<SplashTextSegment> applySplashTemplateSegments({
     required String template,
     required DateTime startDate,

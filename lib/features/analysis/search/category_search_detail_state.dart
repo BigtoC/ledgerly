@@ -12,13 +12,9 @@ part 'category_search_detail_state.freezed.dart';
 /// `home/home_state.dart`'s `PendingDelete`; declared locally so the
 /// analysis slice does not import from the home feature.
 class CategorySearchPendingDelete {
-  const CategorySearchPendingDelete({
-    required this.transaction,
-    required this.scheduledFor,
-  });
+  const CategorySearchPendingDelete({required this.transaction});
 
   final Transaction transaction;
-  final DateTime scheduledFor;
 }
 
 @freezed

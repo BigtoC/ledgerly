@@ -3,15 +3,14 @@
 // The splash controller resolves `{date}` and `{days}` in the splash display
 // text template. Substitution happens in the controller (not `build()`), is
 // case-sensitive, and leaves unknown `{placeholders}` untouched. This test
-// proves those invariants against a stable helper surface — delegating to
-// `DateHelpers.applySplashTemplate` which is the single canonical
-// implementation per `core/utils/date_helpers.dart`.
+// proves those invariants against `DateHelpers.applySplashTemplateSegments`
+// in `core/utils/date_helpers.dart`.
 //
 // Cases enumerated by plan §5 + "Controller template-substitution rule":
 //   - `{date}` / `{days}` substitute literally.
 //   - `{daysx}` does NOT substitute.
 //   - `{DAYS}` does NOT substitute (case-sensitive).
-//   - Empty string returns empty string.
+//   - Empty template returns no segments.
 //   - Future start date yields negative day count (no clamp).
 
 import 'package:flutter_test/flutter_test.dart';
@@ -23,86 +22,10 @@ void main() {
     await initializeDateFormatting('en_US', null);
   });
 
-  group('splash template substitution (plan §5)', () {
-    final startDate = DateTime(2026, 1, 1);
-    final now = DateTime(2026, 4, 11); // 100 days later
-
-    test('S01: {date} and {days} substitute literally', () {
-      final out = DateHelpers.applySplashTemplate(
-        template: '{days} days since {date}',
-        startDate: startDate,
-        now: now,
-        locale: 'en_US',
-      );
-      expect(out, '100 days since Jan 1, 2026');
-    });
-
-    test('S02: {daysx} does NOT substitute (suffix-sensitive)', () {
-      final out = DateHelpers.applySplashTemplate(
-        template: 'raw {daysx} keep',
-        startDate: startDate,
-        now: now,
-        locale: 'en_US',
-      );
-      expect(out, 'raw {daysx} keep');
-    });
-
-    test('S03: {DAYS} does NOT substitute (case-sensitive)', () {
-      final out = DateHelpers.applySplashTemplate(
-        template: 'upper {DAYS} keep',
-        startDate: startDate,
-        now: now,
-        locale: 'en_US',
-      );
-      expect(out, 'upper {DAYS} keep');
-    });
-
-    test('S04: {Date} does NOT substitute (case-sensitive)', () {
-      final out = DateHelpers.applySplashTemplate(
-        template: 'upper {Date} keep',
-        startDate: startDate,
-        now: now,
-        locale: 'en_US',
-      );
-      expect(out, 'upper {Date} keep');
-    });
-
-    test('S05: empty template returns empty string', () {
-      final out = DateHelpers.applySplashTemplate(
-        template: '',
-        startDate: startDate,
-        now: now,
-        locale: 'en_US',
-      );
-      expect(out, '');
-    });
-
-    test('S06: future start date yields negative {days} (no clamp)', () {
-      final out = DateHelpers.applySplashTemplate(
-        template: '{days} days since {date}',
-        startDate: DateTime(2026, 4, 30),
-        now: DateTime(2026, 4, 21),
-        locale: 'en_US',
-      );
-      expect(out, '-9 days since Apr 30, 2026');
-    });
-
-    test('S07: repeated occurrences all substitute', () {
-      final out = DateHelpers.applySplashTemplate(
-        template: '{days}/{days} ({date})',
-        startDate: startDate,
-        now: now,
-        locale: 'en_US',
-      );
-      expect(out, '100/100 (Jan 1, 2026)');
-    });
-  });
-
-  // Segmented substitution: same template grammar as applySplashTemplate, but
-  // returns `List<SplashTextSegment>` where date spans are marked so the
-  // splash widget can apply a rainbow gradient ONLY to the date portion (the
-  // standalone rainbow-date Text widget has been removed; the gradient now
-  // lives inline within the display text).
+  // Segmented substitution: returns `List<SplashTextSegment>` where date
+  // spans are marked so the splash widget can apply a rainbow gradient ONLY
+  // to the date portion (the standalone rainbow-date Text widget has been
+  // removed; the gradient now lives inline within the display text).
   group('splash template substitution — segments', () {
     final startDate = DateTime(2026, 1, 1);
     final now = DateTime(2026, 4, 11); // 100 days later
@@ -195,6 +118,100 @@ void main() {
         (text: 'Since ', isDate: false),
         (text: 'Jan 1, 2026', isDate: true),
       ]);
+    });
+
+    test('G08: {daysx} does NOT substitute (suffix-sensitive)', () {
+      final segs = DateHelpers.applySplashTemplateSegments(
+        template: 'raw {daysx} keep',
+        startDate: startDate,
+        now: now,
+        locale: 'en_US',
+      );
+      expect(segs, <SplashTextSegment>[
+        (text: 'raw {daysx} keep', isDate: false),
+      ]);
+    });
+
+    test('G09: {DAYS} does NOT substitute (case-sensitive)', () {
+      final segs = DateHelpers.applySplashTemplateSegments(
+        template: 'upper {DAYS} keep',
+        startDate: startDate,
+        now: now,
+        locale: 'en_US',
+      );
+      expect(segs, <SplashTextSegment>[
+        (text: 'upper {DAYS} keep', isDate: false),
+      ]);
+    });
+
+    test('G10: {Date} does NOT substitute (case-sensitive)', () {
+      final segs = DateHelpers.applySplashTemplateSegments(
+        template: 'upper {Date} keep',
+        startDate: startDate,
+        now: now,
+        locale: 'en_US',
+      );
+      expect(segs, <SplashTextSegment>[
+        (text: 'upper {Date} keep', isDate: false),
+      ]);
+    });
+
+    test('G11: future start date yields negative {days} (no clamp)', () {
+      final segs = DateHelpers.applySplashTemplateSegments(
+        template: '{days} days since {date}',
+        startDate: DateTime(2026, 4, 30),
+        now: DateTime(2026, 4, 21),
+        locale: 'en_US',
+      );
+      expect(segs, <SplashTextSegment>[
+        (text: '-9 days since ', isDate: false),
+        (text: 'Apr 30, 2026', isDate: true),
+      ]);
+    });
+
+    test('G12: repeated {days} occurrences all substitute', () {
+      final segs = DateHelpers.applySplashTemplateSegments(
+        template: '{days}/{days} ({date})',
+        startDate: startDate,
+        now: now,
+        locale: 'en_US',
+      );
+      expect(segs, <SplashTextSegment>[
+        (text: '100/100 (', isDate: false),
+        (text: 'Jan 1, 2026', isDate: true),
+        (text: ')', isDate: false),
+      ]);
+    });
+
+    test('G13: unknown placeholder passes through unchanged', () {
+      final segs = DateHelpers.applySplashTemplateSegments(
+        template: '{foo} is kept and {days} {date}',
+        startDate: DateTime(2026, 4, 11),
+        now: DateTime(2026, 4, 21),
+        locale: 'en_US',
+      );
+      expect(segs, <SplashTextSegment>[
+        (text: '{foo} is kept and 10 ', isDate: false),
+        (text: 'Apr 11, 2026', isDate: true),
+      ]);
+    });
+
+    test('G14: large {days} uses locale grouping', () {
+      final days = DateHelpers.daysSince(
+        startDate: DateTime(2000, 4, 21),
+        now: DateTime(2026, 4, 21),
+      );
+      // Sanity: at least 9,000 days (26 years).
+      expect(days > 9000, isTrue);
+      final expected =
+          '${days ~/ 1000},${(days % 1000).toString().padLeft(3, '0')}';
+      final segs = DateHelpers.applySplashTemplateSegments(
+        template: '{days}',
+        startDate: DateTime(2000, 4, 21),
+        now: DateTime(2026, 4, 21),
+        locale: 'en_US',
+      );
+      expect(segs, <SplashTextSegment>[(text: expected, isDate: false)]);
     });
   });
 }

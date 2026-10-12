@@ -30,20 +30,15 @@ class _RecurringRulesScreenState extends ConsumerState<RecurringRulesScreen> {
   @override
   void initState() {
     super.initState();
-    _bindController(ref.read(recurringRulesControllerProvider.notifier));
+    final controller = ref.read(recurringRulesControllerProvider.notifier);
+    _controller = controller;
+    controller.setEffectListener(_onEffect);
   }
 
   @override
   void dispose() {
     _controller?.setEffectListener(null);
     super.dispose();
-  }
-
-  void _bindController(RecurringRulesController controller) {
-    if (identical(_controller, controller)) return;
-    _controller?.setEffectListener(null);
-    _controller = controller;
-    _controller?.setEffectListener(_onEffect);
   }
 
   void _onEffect(RecurringRulesEffect effect) {

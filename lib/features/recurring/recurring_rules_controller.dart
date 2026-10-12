@@ -29,9 +29,7 @@ sealed class RecurringRulesEffect {
 }
 
 final class RecurringRulesDeleteFailedEffect extends RecurringRulesEffect {
-  const RecurringRulesDeleteFailedEffect(this.error, this.stackTrace);
-  final Object error;
-  final StackTrace stackTrace;
+  const RecurringRulesDeleteFailedEffect();
 }
 
 @Riverpod(dependencies: [recurringRulesRepository])
@@ -111,14 +109,12 @@ class RecurringRulesController extends _$RecurringRulesController {
         _composer?.notifyPendingDeleteChanged();
       }
       return true;
-    } catch (error, stackTrace) {
+    } catch (_) {
       if (_pendingDelete?.ruleId == id) {
         _pendingDelete = null;
       }
       _composer?.notifyPendingDeleteChanged();
-      _effectListener?.call(
-        RecurringRulesDeleteFailedEffect(error, stackTrace),
-      );
+      _effectListener?.call(const RecurringRulesDeleteFailedEffect());
       return false;
     }
   }
@@ -162,7 +158,7 @@ class _Composer {
 
   Future<void> dispose() async {
     await _stop();
-    if (!_out.isClosed) await _out.close();
+    await _out.close();
   }
 
   void notifyPendingDeleteChanged() => _scheduleEmit();

@@ -32,28 +32,16 @@ class _MockPendingTransactionRepository extends Mock
 
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 
-RecurringRule _rule({
-  int id = 1,
-  String memo = 'Netflix',
-  int amountMinorUnits = 1599,
-  int categoryId = 10,
-  int accountId = 20,
-  String frequency = 'monthly',
-  int? dayOfWeek,
-  int? dayOfMonth = 15,
-  int? monthOfYear,
-}) => RecurringRule(
+RecurringRule _rule({int id = 1}) => RecurringRule(
   id: id,
-  name: memo,
-  amountMinorUnits: amountMinorUnits,
+  name: 'Netflix',
+  amountMinorUnits: 1599,
   currency: _usd,
-  categoryId: categoryId,
-  accountId: accountId,
-  memo: memo,
-  frequency: frequency,
-  dayOfWeek: dayOfWeek,
-  dayOfMonth: dayOfMonth,
-  monthOfYear: monthOfYear,
+  categoryId: 10,
+  accountId: 20,
+  memo: 'Netflix',
+  frequency: 'monthly',
+  dayOfMonth: 15,
   isActive: true,
   isArchived: false,
   nextDueDate: DateTime(2026, 5, 15),

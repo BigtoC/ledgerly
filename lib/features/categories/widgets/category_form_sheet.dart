@@ -8,9 +8,8 @@
 //   color picker.
 // - Wrapped in `SingleChildScrollView` so the soft keyboard does not
 //   clip the body (plan §12 risk #5).
-// - Typed repository exceptions
-//   (`CategoryTypeLockedException`, `CategoryInUseException`) surface
-//   inline as an error banner — the sheet stays open for retry.
+// - Typed repository exception (`CategoryTypeLockedException`)
+//   surfaces inline as an error banner — the sheet stays open for retry.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -60,15 +59,7 @@ class _CategoryFormSheetState extends ConsumerState<_CategoryFormSheet> {
   void initState() {
     super.initState();
     final initial = widget.initial;
-    _nameCtrl = TextEditingController(
-      text: initial == null
-          ? ''
-          // If the row is seeded (`l10nKey != null`) and has no custom
-          // rename yet, default to the currently-displayed localized
-          // name so users renaming a seed see the live value instead of
-          // blank.
-          : (initial.customName ?? ''),
-    );
+    _nameCtrl = TextEditingController(text: initial?.customName ?? '');
     if (initial != null) {
       _icon = initial.icon;
       _color = initial.color;
@@ -124,11 +115,6 @@ class _CategoryFormSheetState extends ConsumerState<_CategoryFormSheet> {
       }
       if (mounted) Navigator.of(context).pop();
     } on CategoryTypeLockedException catch (e) {
-      setState(() {
-        _errorMessage = e.message;
-        _saving = false;
-      });
-    } on CategoryInUseException catch (e) {
       setState(() {
         _errorMessage = e.message;
         _saving = false;

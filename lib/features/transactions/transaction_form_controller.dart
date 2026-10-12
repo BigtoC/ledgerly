@@ -136,24 +136,17 @@ class TransactionFormController extends _$TransactionFormController {
       }
       final accountRepo = ref.read(accountRepositoryProvider);
       final categoryRepo = ref.read(categoryRepositoryProvider);
-      final account = await accountRepo.getById(source.accountId);
-      if (account == null || account.isArchived) {
-        // Source account no longer usable — fall back to the standard
-        // default-resolution chain, like an Add hydration but with
-        // amount/category/memo prefilled.
-        final fallback = await _resolveDefaultAccount();
-        if (fallback == null) {
-          state = TransactionFormState.empty(
-            reason: TransactionFormEmptyReason.noActiveAccount,
-            formMode: _formMode,
-          );
-          return;
-        }
-        await _applyDuplicatePrefill(
-          source: source,
-          account: fallback,
-          categoryRepo: categoryRepo,
-          duplicateSourceId: sourceId,
+      final sourceAccount = await accountRepo.getById(source.accountId);
+      // Source account no longer usable — fall back to the standard
+      // default-resolution chain, like an Add hydration but with
+      // amount/category/memo prefilled.
+      final account = sourceAccount == null || sourceAccount.isArchived
+          ? await _resolveDefaultAccount()
+          : sourceAccount;
+      if (account == null) {
+        state = TransactionFormState.empty(
+          reason: TransactionFormEmptyReason.noActiveAccount,
+          formMode: _formMode,
         );
         return;
       }
@@ -193,7 +186,7 @@ class TransactionFormController extends _$TransactionFormController {
         return;
       }
       final category = await categoryRepo.getById(existing.categoryId);
-      _keypad = _keypadFromAmount(
+      _keypad = KeypadState.fromAmount(
         existing.amountMinorUnits,
         decimals: existing.currency.decimals,
       );
@@ -277,7 +270,7 @@ class TransactionFormController extends _$TransactionFormController {
 
       final amountMinorUnits = draft.draftAmountMinorUnits ?? 0;
       _keypad = amountMinorUnits > 0
-          ? _keypadFromAmount(
+          ? KeypadState.fromAmount(
               amountMinorUnits,
               decimals: displayCurrency.decimals,
             )
@@ -317,7 +310,7 @@ class TransactionFormController extends _$TransactionFormController {
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
     final decimals = s.displayCurrency?.decimals ?? 2;
     _keypad = _keypad.push(digit, decimals: decimals);
-    state = _copyWithKeypad(s, isDirty: true);
+    state = _copyWithKeypad(s);
   }
 
   void appendDecimal() {
@@ -328,7 +321,7 @@ class TransactionFormController extends _$TransactionFormController {
     // amountMinorUnits doesn't change on the decimal press itself, but
     // the visible display string does — bump isDirty and keypadRevision so
     // Riverpod rebuilds and the discard dialog fires if the user abandons.
-    state = _copyWithKeypad(s, isDirty: true);
+    state = _copyWithKeypad(s);
   }
 
   void backspace() {
@@ -338,7 +331,7 @@ class TransactionFormController extends _$TransactionFormController {
     final next = _keypad.pop(decimals: decimals);
     if (next == _keypad) return;
     _keypad = next;
-    state = _copyWithKeypad(s, isDirty: true);
+    state = _copyWithKeypad(s);
   }
 
   void clearAmount() {
@@ -347,7 +340,7 @@ class TransactionFormController extends _$TransactionFormController {
     final next = _keypad.clear();
     if (next == _keypad) return;
     _keypad = next;
-    state = _copyWithKeypad(s, isDirty: true);
+    state = _copyWithKeypad(s);
   }
 
   void applyOperator(CalcOperator op) {
@@ -357,22 +350,19 @@ class TransactionFormController extends _$TransactionFormController {
     final next = _keypad.pushOperator(op, decimals: decimals);
     if (next == _keypad) return;
     _keypad = next;
-    state = _copyWithKeypad(s, isDirty: true);
+    state = _copyWithKeypad(s);
   }
 
   /// Creates a `copyWith` snapshot that mirrors the current keypad
   /// state into `TransactionFormData`, always incrementing
   /// `keypadRevision` so Riverpod rebuilds even when `amountMinorUnits`
   /// did not change (e.g., operator tap, decimal-start while evaluating).
-  TransactionFormData _copyWithKeypad(
-    TransactionFormData s, {
-    required bool isDirty,
-  }) {
+  TransactionFormData _copyWithKeypad(TransactionFormData s) {
     _keypadRevision += 1;
     return s.copyWith(
       amountMinorUnits: _keypad.amountMinorUnits,
       keypad: _keypad,
-      isDirty: isDirty,
+      isDirty: true,
       keypadRevision: _keypadRevision,
     );
   }
@@ -465,7 +455,6 @@ class TransactionFormController extends _$TransactionFormController {
           displayCurrency: newCurrency,
           selectedAccountIsArchived: account.isArchived,
         ),
-        isDirty: true,
       );
     } else {
       state = s.copyWith(
@@ -486,20 +475,18 @@ class TransactionFormController extends _$TransactionFormController {
   void selectCurrency(Currency currency, {bool clearAmountOnChange = false}) {
     final s = state;
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
-    final currencyChanged = s.displayCurrency?.code != currency.code;
-    if (!currencyChanged) return;
+    if (s.displayCurrency?.code == currency.code) return;
     final hasDestructiveInput =
         s.amountMinorUnits > 0 || _keypad.hasVisibleInput;
-    if (currencyChanged && hasDestructiveInput && !clearAmountOnChange) {
+    if (hasDestructiveInput && !clearAmountOnChange) {
       // Refuse until the widget shows the confirm dialog and re-calls with
       // clearAmountOnChange: true.
       return;
     }
-    if (currencyChanged && clearAmountOnChange) {
+    if (clearAmountOnChange) {
       _keypad = const KeypadState.initial();
       state = _copyWithKeypad(
         s.copyWith(displayCurrency: currency, currencyTouched: true),
-        isDirty: true,
       );
     } else {
       // Same currency or zero-amount change — no need to clear amount.
@@ -536,7 +523,6 @@ class TransactionFormController extends _$TransactionFormController {
   Future<Transaction?> save() async {
     final s = state;
     if (s is! TransactionFormData) return null;
-    if (s.isSaving || s.isDeleting) return null;
     if (!s.canSave) return null;
     state = s.copyWith(isSaving: true);
     try {
@@ -614,7 +600,6 @@ class TransactionFormController extends _$TransactionFormController {
   Future<ShoppingListEditResult?> saveDraft() async {
     final s = state;
     if (s is! TransactionFormData) return null;
-    if (s.submissionAction != TransactionFormSubmissionAction.none) return null;
     if (!s.canSaveDraft) return null;
 
     state = s.copyWith(
@@ -674,7 +659,7 @@ class TransactionFormController extends _$TransactionFormController {
   ///
   /// Only available in [EditShoppingListDraftMode]. Calls
   /// `ShoppingListRepository.convertToTransaction(...)` and returns
-  /// `ShoppingListEditResultSavedTransaction(tx)` to the screen for popping.
+  /// `ShoppingListEditResultSavedTransaction()` to the screen for popping.
   ///
   /// Returns `null` when `canConvertDraft` is false or a submission is already
   /// in flight. Rethrows on repository failure after resetting
@@ -682,7 +667,6 @@ class TransactionFormController extends _$TransactionFormController {
   Future<ShoppingListEditResult?> convertDraft() async {
     final s = state;
     if (s is! TransactionFormData) return null;
-    if (s.submissionAction != TransactionFormSubmissionAction.none) return null;
     if (!s.canConvertDraft) return null;
     final itemId = s.shoppingListItemId;
     if (itemId == null) return null;
@@ -692,7 +676,7 @@ class TransactionFormController extends _$TransactionFormController {
     );
     try {
       final slRepo = ref.read(shoppingListRepositoryProvider);
-      final tx = await slRepo.convertToTransaction(
+      await slRepo.convertToTransaction(
         shoppingListItemId: itemId,
         categoryId: s.selectedCategory!.id,
         accountId: s.selectedAccount!.id,
@@ -704,7 +688,7 @@ class TransactionFormController extends _$TransactionFormController {
       state = s.copyWith(
         submissionAction: TransactionFormSubmissionAction.none,
       );
-      return ShoppingListEditResultSavedTransaction(transaction: tx);
+      return const ShoppingListEditResultSavedTransaction();
     } catch (e) {
       state = s.copyWith(
         submissionAction: TransactionFormSubmissionAction.none,
@@ -745,8 +729,7 @@ class TransactionFormController extends _$TransactionFormController {
     final lastUsed = await accountRepo.getLastUsedActiveAccount();
     if (lastUsed != null) return lastUsed;
     final firstActive = await accountRepo.watchAll().first;
-    if (firstActive.isEmpty) return null;
-    return firstActive.first;
+    return firstActive.firstOrNull;
   }
 
   Future<void> _applyDuplicatePrefill({
@@ -761,7 +744,7 @@ class TransactionFormController extends _$TransactionFormController {
     final preservesAmount = source.currency.code == account.currency.code;
     final amountMinorUnits = preservesAmount ? source.amountMinorUnits : 0;
     _keypad = preservesAmount
-        ? _keypadFromAmount(
+        ? KeypadState.fromAmount(
             source.amountMinorUnits,
             decimals: account.currency.decimals,
           )
@@ -790,49 +773,6 @@ class TransactionFormController extends _$TransactionFormController {
       duplicateSourceId: duplicateSourceId,
       originalCreatedAt: null,
     );
-  }
-
-  /// Reconstructs a [KeypadState] from a stored amount so backspace on a
-  /// hydrated edit/duplicate value walks back through the visible digits
-  /// rather than dropping the whole amount in one press. Sets
-  /// `hasCurrentInput: true` for non-zero amounts so edit/duplicate flows
-  /// can immediately start operator expressions from the existing value.
-  KeypadState _keypadFromAmount(int amountMinorUnits, {required int decimals}) {
-    if (amountMinorUnits == 0 || decimals == 0) {
-      return KeypadState(
-        amountMinorUnits: amountMinorUnits,
-        fractionalDigitsEntered: 0,
-        isFractionalMode: false,
-        hasCurrentInput: amountMinorUnits != 0,
-      );
-    }
-    // If the amount has no fractional part, treat it as integer-mode
-    // entry. Otherwise enter fractional mode and assume the user has
-    // typed all `decimals` digits — backspace will walk them back.
-    final unit = _pow10(decimals);
-    final fractionalRemainder = amountMinorUnits % unit;
-    if (fractionalRemainder == 0) {
-      return KeypadState(
-        amountMinorUnits: amountMinorUnits,
-        fractionalDigitsEntered: 0,
-        isFractionalMode: false,
-        hasCurrentInput: true,
-      );
-    }
-    return KeypadState(
-      amountMinorUnits: amountMinorUnits,
-      fractionalDigitsEntered: decimals,
-      isFractionalMode: true,
-      hasCurrentInput: true,
-    );
-  }
-
-  static int _pow10(int exponent) {
-    var result = 1;
-    for (var i = 0; i < exponent; i++) {
-      result *= 10;
-    }
-    return result;
   }
 
   static DateTime _today() {

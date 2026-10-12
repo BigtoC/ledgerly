@@ -88,13 +88,13 @@ final class ExchangeRateRepository {
 
   // ---------- Snapshot management ----------
 
+  static Map<String, int> _toRateMap(List<drift.ExchangeRateRow> rows) => {
+    for (final row in rows)
+      '${row.baseCurrency}→${row.quoteCurrency}': row.rateScaledE9,
+  };
+
   void _rebuildSnapshot(List<drift.ExchangeRateRow> rows) {
-    final map = <String, int>{};
-    for (final row in rows) {
-      final key = '${row.baseCurrency}→${row.quoteCurrency}';
-      map[key] = row.rateScaledE9;
-    }
-    _snapshot = map;
+    _snapshot = _toRateMap(rows);
   }
 
   // ---------- Reads ----------
@@ -118,16 +118,7 @@ final class ExchangeRateRepository {
 
   /// Stream of the snapshot map (scaled-e9 ints keyed by `from→to`).
   /// Consumed by `exchangeRatesProvider` and surfaced to UI tiles.
-  Stream<Map<String, int>> watchRates() {
-    return _dao.watchAll().map((rows) {
-      final map = <String, int>{};
-      for (final row in rows) {
-        final key = '${row.baseCurrency}→${row.quoteCurrency}';
-        map[key] = row.rateScaledE9;
-      }
-      return map;
-    });
-  }
+  Stream<Map<String, int>> watchRates() => _dao.watchAll().map(_toRateMap);
 
   /// Stream of `from→to` → [ExchangeRateMetadata] snapshots. Re-emits on
   /// every DAO change (insert / update / delete). Used by the chart slice

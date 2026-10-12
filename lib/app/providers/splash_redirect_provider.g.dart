@@ -27,28 +27,6 @@ final splashGateSnapshotProvider = Provider<Raw<SplashGateSnapshot>>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef SplashGateSnapshotRef = ProviderRef<Raw<SplashGateSnapshot>>;
-String _$splashEnabledHash() => r'5d023f161ca598447425b44eba53ab1067969e57';
-
-/// Stream of `splash_enabled` for reactive UI (e.g. `SettingsScreen`).
-///
-/// Copied from [splashEnabled].
-@ProviderFor(splashEnabled)
-final splashEnabledProvider = StreamProvider<bool>.internal(
-  splashEnabled,
-  name: r'splashEnabledProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$splashEnabledHash,
-  dependencies: <ProviderOrFamily>[userPreferencesRepositoryProvider],
-  allTransitiveDependencies: <ProviderOrFamily>{
-    userPreferencesRepositoryProvider,
-    ...?userPreferencesRepositoryProvider.allTransitiveDependencies,
-  },
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef SplashEnabledRef = StreamProviderRef<bool>;
 String _$splashStartDateHash() => r'155a89a3b957efe426da2ea46b13d1bd5cbbb9f0';
 
 /// Stream of `splash_start_date` for reactive UI (e.g. `SplashScreen`).

@@ -27,7 +27,6 @@ RecurringRule _rule({
   required int id,
   String name = 'Netflix',
   bool isActive = true,
-  bool isArchived = false,
 }) => RecurringRule(
   id: id,
   name: name,
@@ -38,7 +37,7 @@ RecurringRule _rule({
   frequency: 'monthly',
   dayOfMonth: 15,
   isActive: isActive,
-  isArchived: isArchived,
+  isArchived: false,
   nextDueDate: DateTime(2026, 6, 15),
   createdAt: DateTime(2026, 1, 1),
   updatedAt: DateTime(2026, 1, 1),

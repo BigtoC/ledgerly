@@ -51,13 +51,13 @@ class CategoriesScreen extends ConsumerWidget {
   }
 }
 
-class _CategoriesBody extends ConsumerWidget {
+class _CategoriesBody extends StatelessWidget {
   const _CategoriesBody({required this.data});
 
   final CategoriesData data;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return CustomScrollView(
       slivers: [

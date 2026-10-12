@@ -38,18 +38,14 @@ const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 Account _a({
   required int id,
   required String name,
-  int accountTypeId = 1,
-  Currency currency = _usd,
   int openingBalanceMinorUnits = 0,
-  int? sortOrder,
   bool isArchived = false,
 }) => Account(
   id: id,
   name: name,
-  accountTypeId: accountTypeId,
-  currency: currency,
+  accountTypeId: 1,
+  currency: _usd,
   openingBalanceMinorUnits: openingBalanceMinorUnits,
-  sortOrder: sortOrder,
   isArchived: isArchived,
 );
 

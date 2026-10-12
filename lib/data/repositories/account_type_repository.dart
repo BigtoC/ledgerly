@@ -4,7 +4,7 @@
 // for the full specification. Drift data classes never leave this file.
 //
 // Invariants enforced here (and only here):
-//   - Seeded-row identity is the `l10nKey`; `save` / `rename` never
+//   - Seeded-row identity is the `l10nKey`; `save` / `updateCustomName` never
 //     mutate `l10nKey` on an existing row (G7 — PRD.md 336-337).
 //   - Archive-instead-of-delete when at least one `accounts` row
 //     references this type (G6 — PRD.md 339).
@@ -47,7 +47,7 @@ abstract class AccountTypeRepository {
   ///
   /// On update, the stored `l10nKey` is preserved — seed-identity
   /// changes go through [upsertSeeded] and user renames go through
-  /// [rename]. Stream B §3.4 / §12 Q4 (re-read and preserve).
+  /// [updateCustomName]. Stream B §3.4 / §12 Q4 (re-read and preserve).
   Future<int> save(AccountType accountType);
 
   /// Seed-only insert-or-update keyed by [l10nKey]. Used by Stream C's
@@ -83,12 +83,6 @@ abstract class AccountTypeRepository {
   /// - Empty / whitespace-only strings normalize to `null`.
   /// - Throws [AccountTypeNotFoundException] when [id] has no row.
   Future<void> updateCustomName(int id, String? customName);
-
-  /// Convenience rename — mirrors [updateCustomName] but rejects null /
-  /// empty inputs with a type error at the call site. Kept for
-  /// parity with `CategoryRepository.rename` and the plan's §3.3
-  /// template.
-  Future<void> rename({required int id, required String customName});
 
   /// Marks the row archived. Archiving does NOT cascade to accounts
   /// of this type (PRD 358).
@@ -174,19 +168,8 @@ final class DriftAccountTypeRepository implements AccountTypeRepository {
       throw AccountTypeNotFoundException(accountType.id);
     }
     await _dao.updateRow(
-      drift.AccountTypesCompanion(
-        id: Value(accountType.id),
-        // Stored l10nKey wins; caller-supplied value is ignored on update.
-        l10nKey: Value(existing.l10nKey),
-        customName: Value(accountType.customName),
-        defaultCurrency: Value(accountType.defaultCurrency?.code),
-        icon: Value(accountType.icon),
-        color: Value(accountType.color),
-        sortOrder: Value(
-          accountType.sortOrder == 0 ? null : accountType.sortOrder,
-        ),
-        isArchived: Value(accountType.isArchived),
-      ),
+      // Stored l10nKey wins; caller-supplied value is ignored on update.
+      _toCompanion(accountType).copyWith(l10nKey: Value(existing.l10nKey)),
     );
     return accountType.id;
   }
@@ -248,23 +231,8 @@ final class DriftAccountTypeRepository implements AccountTypeRepository {
         : customName;
 
     await _dao.updateRow(
-      drift.AccountTypesCompanion(
-        id: Value(id),
-        l10nKey: Value(existing.l10nKey),
-        customName: Value(normalized),
-        defaultCurrency: Value(existing.defaultCurrency),
-        icon: Value(existing.icon),
-        color: Value(existing.color),
-        sortOrder: Value(existing.sortOrder),
-        isArchived: Value(existing.isArchived),
-      ),
+      existing.toCompanion(false).copyWith(customName: Value(normalized)),
     );
-  }
-
-  @override
-  Future<void> rename({required int id, required String customName}) async {
-    // Delegates to `updateCustomName` — same preservation template.
-    await updateCustomName(id, customName);
   }
 
   @override
@@ -297,21 +265,14 @@ final class DriftAccountTypeRepository implements AccountTypeRepository {
   // ---------- Private mapping ----------
 
   Future<AccountType> _toDomain(drift.AccountTypeRow row) async {
-    final defaultCurrency = row.defaultCurrency == null
-        ? null
-        // Non-null under `foreign_keys = ON` + write-side pre-check;
-        // see §2.2 / §12 Q3.
-        : (await _currencies.getByCode(row.defaultCurrency!))!;
-    return AccountType(
-      id: row.id,
-      l10nKey: row.l10nKey,
-      customName: row.customName,
-      defaultCurrency: defaultCurrency,
-      icon: row.icon,
-      color: row.color,
-      sortOrder: row.sortOrder ?? 0,
-      isArchived: row.isArchived,
-    );
+    final code = row.defaultCurrency;
+    final byCode = <String, Currency>{};
+    if (code != null) {
+      // Non-null under `foreign_keys = ON` + write-side pre-check;
+      // see §2.2 / §12 Q3.
+      byCode[code] = (await _currencies.getByCode(code))!;
+    }
+    return _rowToDomain(row, byCode);
   }
 
   AccountType _rowToDomain(

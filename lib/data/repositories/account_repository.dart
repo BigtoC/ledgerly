@@ -53,10 +53,6 @@ abstract class AccountRepository {
   /// Ordered by `sort_order NULLS LAST, id ASC`.
   Stream<List<Account>> watchAll({bool includeArchived = false});
 
-  /// Single-account stream for the Edit Account screen. Emits `null`
-  /// after delete. Emits every update.
-  Stream<Account?> watchById(int id);
-
   /// One-shot read by PK. Returns `null` when the id is absent.
   Future<Account?> getById(int id);
 
@@ -151,14 +147,6 @@ final class DriftAccountRepository implements AccountRepository {
         byCode[code] = c!;
       }
       return rows.map((r) => _rowToDomain(r, byCode)).toList(growable: false);
-    });
-  }
-
-  @override
-  Stream<Account?> watchById(int id) {
-    return _dao.watchById(id).asyncMap((row) async {
-      if (row == null) return null;
-      return _toDomain(row);
     });
   }
 
@@ -292,9 +280,6 @@ final class DriftAccountRepository implements AccountRepository {
         final opening = account.openingBalanceMinorUnits;
         if (opening != 0) {
           map[native] = (map[native] ?? 0) + opening;
-        } else if (!map.containsKey(native)) {
-          // Native currency has no transactions and zero opening balance —
-          // do not add a zero entry.
         }
       }
 
@@ -329,17 +314,7 @@ final class DriftAccountRepository implements AccountRepository {
 
   Future<Account> _toDomain(drift.AccountRow row) async {
     final currency = (await _currencies.getByCode(row.currency))!;
-    return Account(
-      id: row.id,
-      name: row.name,
-      accountTypeId: row.accountTypeId,
-      currency: currency,
-      openingBalanceMinorUnits: row.openingBalanceMinorUnits,
-      icon: row.icon,
-      color: row.color,
-      sortOrder: row.sortOrder,
-      isArchived: row.isArchived,
-    );
+    return _rowToDomain(row, {row.currency: currency});
   }
 
   Account _rowToDomain(drift.AccountRow row, Map<String, Currency> byCode) {

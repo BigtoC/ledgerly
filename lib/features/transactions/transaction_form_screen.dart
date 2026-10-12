@@ -55,8 +55,6 @@ class TransactionFormScreen extends ConsumerStatefulWidget {
   /// transactionId-based hydration (backward compat with Wave 2 routes).
   final TransactionFormMode? mode;
 
-  bool get isEdit => transactionId != null && mode == null;
-
   @override
   ConsumerState<TransactionFormScreen> createState() =>
       _TransactionFormScreenState();
@@ -66,10 +64,6 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   /// Set after the first invalid save attempt so inline guidance kicks
   /// in (Wave 2 §9 inline validation).
   bool _showValidationHints = false;
-
-  /// Resolved on mount via `GoRouterState.extra`. Wave 2 §10 contract:
-  /// `{'duplicateSourceId': <int>}` from Home's overflow→Duplicate path.
-  int? _duplicateSourceId;
 
   @override
   void initState() {
@@ -101,10 +95,13 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
 
     // Legacy Wave 2 hydration via route extras / transactionId.
     final extra = GoRouterState.of(context).extra;
+    // Wave 2 §10 contract: `{'duplicateSourceId': <int>}` from Home's
+    // overflow→Duplicate path.
+    int? duplicateSourceId;
     DateTime? initialDate;
     if (extra is Map) {
       if (extra['duplicateSourceId'] is int) {
-        _duplicateSourceId = extra['duplicateSourceId'] as int;
+        duplicateSourceId = extra['duplicateSourceId'] as int;
       }
       // Home's FAB / day-nav carries the currently selected day so the
       // form lands on that day instead of today (Wave 3 follow-up).
@@ -113,10 +110,11 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
         initialDate = extra['initialDate'] as DateTime;
       }
     }
-    if (widget.isEdit) {
-      controller.hydrateForEdit(widget.transactionId!);
-    } else if (_duplicateSourceId != null) {
-      controller.hydrateForDuplicate(_duplicateSourceId!);
+    final transactionId = widget.transactionId;
+    if (transactionId != null) {
+      controller.hydrateForEdit(transactionId);
+    } else if (duplicateSourceId != null) {
+      controller.hydrateForDuplicate(duplicateSourceId);
     } else {
       controller.hydrateForAdd(initialDate: initialDate);
     }
@@ -234,10 +232,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
         _showValidationHints && state.selectedCategory == null;
     final showAccountError =
         _showValidationHints && state.selectedAccount == null;
-    final controlsLocked =
-        state.isSaving ||
-        state.isDeleting ||
-        state.submissionAction != TransactionFormSubmissionAction.none;
+    final controlsLocked = _blocksPopDuringMutation(state);
 
     final isShoppingListDraftMode = activeMode is EditShoppingListDraftMode;
 
@@ -287,14 +282,8 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                   ),
                   CurrencySelectorTile(
                     currency: state.displayCurrency,
-                    onTap: state.displayCurrency == null
-                        ? null
-                        : () => _onTapCurrencyTile(
-                            context,
-                            l10n,
-                            state,
-                            controller,
-                          ),
+                    onTap: () =>
+                        _onTapCurrencyTile(context, l10n, state, controller),
                   ),
                   DateField(value: state.date, onChanged: controller.setDate),
                   const SizedBox(height: 8),
@@ -307,10 +296,16 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                     _ShoppingListDraftActions(
                       state: state,
                       l10n: l10n,
-                      onSaveToTransaction: () =>
-                          _convertDraft(context, l10n, controller),
-                      onSaveDraft: () =>
-                          _saveDraftFromEditMode(context, l10n, controller),
+                      onSaveToTransaction: () => _submitDraft(
+                        context,
+                        controller.convertDraft,
+                        l10n.shoppingListConvertFailedSnackbar,
+                      ),
+                      onSaveDraft: () => _submitDraft(
+                        context,
+                        controller.saveDraft,
+                        l10n.shoppingListSaveFailedSnackbar,
+                      ),
                     )
                   else if (activeMode is AddTransactionMode)
                     _AddToShoppingListAction(
@@ -365,52 +360,26 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     }
   }
 
-  /// Called from EditShoppingListDraftMode — saves draft (update).
-  Future<void> _saveDraftFromEditMode(
+  /// Called from EditShoppingListDraftMode — runs [submit] (saveDraft or
+  /// convertDraft) and pops with its result.
+  Future<void> _submitDraft(
     BuildContext context,
-    AppLocalizations l10n,
-    TransactionFormController controller,
+    Future<ShoppingListEditResult?> Function() submit,
+    String failureMessage,
   ) async {
     ShoppingListEditResult? result;
     try {
-      result = await controller.saveDraft();
+      result = await submit();
     } catch (_) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.shoppingListSaveFailedSnackbar)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failureMessage)));
       return;
     }
     if (result == null) return;
     if (!context.mounted) return;
     context.pop(result);
-  }
-
-  /// Called from EditShoppingListDraftMode — converts draft to transaction.
-  Future<void> _convertDraft(
-    BuildContext context,
-    AppLocalizations l10n,
-    TransactionFormController controller,
-  ) async {
-    ShoppingListEditResult? result;
-    try {
-      result = await controller.convertDraft();
-    } catch (_) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.shoppingListConvertFailedSnackbar)),
-      );
-      return;
-    }
-    if (result == null) return;
-    if (!context.mounted) return;
-    context.pop(result);
-  }
-
-  void _showValidationHintsIfPossible() {
-    setState(() {
-      _showValidationHints = true;
-    });
   }
 
   bool _isDirty(TransactionFormState state) {
@@ -470,7 +439,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     }
     if (saved == null) {
       // canSave was false — surface inline hints.
-      _showValidationHintsIfPossible();
+      setState(() => _showValidationHints = true);
       return;
     }
     if (!context.mounted) return;
@@ -570,7 +539,11 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
         state.amountMinorUnits > 0 || state.keypad.hasVisibleInput;
 
     if (currencyChanges && hasDestructiveInput) {
-      final confirmed = await _confirmCurrencyChange(context, l10n);
+      final confirmed = await _confirmCurrencyChange(
+        context,
+        l10n,
+        l10n.txCurrencyChangeConfirmBody,
+      );
       if (!context.mounted) return;
       if (!confirmed) return;
       controller.selectAccount(picked, clearAmountOnCurrencyChange: true);
@@ -593,7 +566,11 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
         state.amountMinorUnits > 0 || state.keypad.hasVisibleInput;
 
     if (currencyChanges && hasDestructiveInput) {
-      final confirmed = await _confirmPickerCurrencyChange(context, l10n);
+      final confirmed = await _confirmCurrencyChange(
+        context,
+        l10n,
+        l10n.txCurrencyPickerChangeConfirmBody,
+      );
       if (!context.mounted) return;
       if (!confirmed) return;
       controller.selectCurrency(picked, clearAmountOnChange: true);
@@ -602,39 +579,16 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     controller.selectCurrency(picked);
   }
 
-  Future<bool> _confirmPickerCurrencyChange(
-    BuildContext context,
-    AppLocalizations l10n,
-  ) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.txCurrencyChangeConfirmTitle),
-        content: Text(l10n.txCurrencyPickerChangeConfirmBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.txCurrencyChangeConfirmAction),
-          ),
-        ],
-      ),
-    );
-    return ok ?? false;
-  }
-
   Future<bool> _confirmCurrencyChange(
     BuildContext context,
     AppLocalizations l10n,
+    String body,
   ) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(l10n.txCurrencyChangeConfirmTitle),
-        content: Text(l10n.txCurrencyChangeConfirmBody),
+        content: Text(body),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),

@@ -7,12 +7,11 @@ import 'package:dio/dio.dart';
 /// `services_forbid_upstream_and_siblings` import rule forbids this
 /// layer from importing `data/models/` or `data/repositories/`.
 ///
-/// The endpoint URL is overridable via the [baseUrl] constructor parameter
-/// so that staging/localhost dev and integration tests can target an
-/// alternate host without mocking the entire Dio client. Currency codes
-/// passed in [pairs] are validated against the ISO 4217 shape
-/// (3 alphabetic chars) before being concatenated into the query string;
-/// malformed codes are silently skipped to avoid corrupting the request.
+/// The endpoint URL comes from the `FOREX_API_URL` compile-time define
+/// (`--dart-define`). Currency codes passed in [pairs] are validated
+/// against the ISO 4217 shape (3 alphabetic chars) before being
+/// concatenated into the query string; malformed codes are silently
+/// skipped to avoid corrupting the request.
 ///
 /// **TLS / certificate pinning:** the Cloudflare Worker endpoint relies on
 /// the OS-managed CA trust store. Exchange rates are advisory and rendered
@@ -23,13 +22,11 @@ import 'package:dio/dio.dart';
 ///
 /// See `docs/superpowers/specs/2026-05-14-multi-currency-conversion-design.md`.
 class ExchangeRateService {
-  ExchangeRateService(this._dio, {String? baseUrl})
-    : _baseUrl = baseUrl ?? _defaultBaseUrl;
+  ExchangeRateService(this._dio);
 
   final Dio _dio;
-  final String _baseUrl;
 
-  static const _defaultBaseUrl = String.fromEnvironment('FOREX_API_URL');
+  static const _baseUrl = String.fromEnvironment('FOREX_API_URL');
 
   static final _iso4217 = RegExp(r'^[A-Za-z]{3}$');
 
@@ -45,8 +42,6 @@ class ExchangeRateService {
   /// (repository) catches and logs only the exception type.
   Future<List<({String from, String to, double rate, DateTime fetchedAt})>>
   fetchRates(List<({String from, String to})> pairs) async {
-    if (pairs.isEmpty) return const [];
-
     final validPairs = pairs
         .where((p) => _iso4217.hasMatch(p.from) && _iso4217.hasMatch(p.to))
         .toList();

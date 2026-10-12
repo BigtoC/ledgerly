@@ -13,8 +13,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/models/currency.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../accounts/accounts_providers.dart';
 import '../../accounts/widgets/currency_display.dart';
-import '../settings_providers.dart';
 
 /// Opens the default-currency picker sheet and resolves with the chosen
 /// ISO code, or null if the user dismisses.
@@ -36,7 +36,7 @@ class _DefaultCurrencyPickerSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final async = ref.watch(settingsFiatCurrenciesProvider);
+    final async = ref.watch(selectableCurrenciesProvider);
     return SafeArea(
       top: false,
       child: Column(

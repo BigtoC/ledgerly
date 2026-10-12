@@ -12,6 +12,7 @@ jobs:
   release-apk:
     name: Build and release APK
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
 
@@ -25,6 +26,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: 3.44.0
           cache: true
 
       - name: Fetch packages

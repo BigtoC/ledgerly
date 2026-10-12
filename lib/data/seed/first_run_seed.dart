@@ -358,7 +358,7 @@ Future<void> runFirstRunSeed({
   // Resolve the locale → currency mapping BEFORE opening the transaction.
   // The device locale read is synchronous and has no DB interaction;
   // every step in the transaction sees the same value.
-  final localeCurrencyCode = _defaultCurrencyForLocale(
+  final localeCurrencyCode = defaultCurrencyForLocale(
     localeService.deviceLocale,
   );
 
@@ -446,12 +446,7 @@ Future<int> _seedAccountTypes(
       cashId = id;
     }
   }
-  if (cashId == null) {
-    throw const FirstRunSeedException(
-      'Seed expected accountType.cash row id but none was captured',
-    );
-  }
-  return cashId;
+  return cashId!;
 }
 
 /// Seeds the single Cash account on an empty DB. On a re-run of the seed
@@ -518,10 +513,7 @@ Future<void> _seedPreferences(
 /// through to the documented `USD` global fallback — language-prefix
 /// fallbacks for `de_*`/`fr_*`/`es_*`/`it_*` → EUR were removed 2026-04-22
 /// per the "language should not affect fiat" policy (§12 Q6).
-String defaultCurrencyForLocale(String rawLocale) =>
-    _defaultCurrencyForLocale(rawLocale);
-
-String _defaultCurrencyForLocale(String rawLocale) {
+String defaultCurrencyForLocale(String rawLocale) {
   // BCP-47 accepts both `-` and `_`; normalise to `_`.
   final normalized = rawLocale.replaceAll('-', '_');
 

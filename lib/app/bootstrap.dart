@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:drift_flutter/drift_flutter.dart';
-import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -26,10 +25,6 @@ import 'providers/splash_redirect_provider.dart';
 import 'providers/theme_provider.dart';
 
 typedef InitializeDateFormattingFn = Future<void> Function(String locale);
-typedef ReadThemeModeFn =
-    Future<ThemeMode> Function(UserPreferencesRepository preferences);
-typedef ReadLocaleFn =
-    Future<Locale?> Function(UserPreferencesRepository preferences);
 typedef ReadSplashEnabledFn =
     Future<bool> Function(UserPreferencesRepository preferences);
 typedef ReadSplashStartDateFn =
@@ -47,38 +42,11 @@ typedef RunFirstRunSeedFn =
 typedef RunRecurringGenerationFn =
     Future<RecurringGenerationResult> Function(AppDatabase db);
 
-Future<void> _initializeDateFormattingForLocale(String locale) =>
-    initializeDateFormatting(locale);
-
-Future<ThemeMode> _readThemeMode(UserPreferencesRepository preferences) =>
-    preferences.getThemeMode();
-
-Future<Locale?> _readLocale(UserPreferencesRepository preferences) =>
-    preferences.getLocale();
-
 Future<bool> _readSplashEnabled(UserPreferencesRepository preferences) =>
     preferences.getSplashEnabled();
 
 Future<DateTime?> _readSplashStartDate(UserPreferencesRepository preferences) =>
     preferences.getSplashStartDate();
-
-Future<void> _runSeed({
-  required AppDatabase db,
-  required CurrencyRepository currencies,
-  required CategoryRepository categories,
-  required AccountTypeRepository accountTypes,
-  required AccountRepository accounts,
-  required UserPreferencesRepository preferences,
-  required LocaleService localeService,
-}) => runFirstRunSeed(
-  db: db,
-  currencies: currencies,
-  categories: categories,
-  accountTypes: accountTypes,
-  accounts: accounts,
-  preferences: preferences,
-  localeService: localeService,
-);
 
 Future<RecurringGenerationResult> _runRecurringGeneration(AppDatabase db) {
   final useCase = RecurringGenerationUseCase(
@@ -103,14 +71,11 @@ Future<void> bootstrapFor({
   required LocaleService localeService,
   void Function(Widget)? runAppFn,
   InitializeDateFormattingFn initializeDateFormattingFn =
-      _initializeDateFormattingForLocale,
-  ReadThemeModeFn getThemeModeFn = _readThemeMode,
-  ReadLocaleFn getLocaleFn = _readLocale,
+      initializeDateFormatting,
   ReadSplashEnabledFn getSplashEnabledFn = _readSplashEnabled,
   ReadSplashStartDateFn getSplashStartDateFn = _readSplashStartDate,
-  RunFirstRunSeedFn runFirstRunSeedFn = _runSeed,
+  RunFirstRunSeedFn runFirstRunSeedFn = runFirstRunSeed,
   RunRecurringGenerationFn runRecurringGenerationFn = _runRecurringGeneration,
-  List<Override> extraOverrides = const [],
 }) async {
   // Step 1 — Framework binding.
   WidgetsFlutterBinding.ensureInitialized();
@@ -128,8 +93,8 @@ Future<void> bootstrapFor({
   // Step 5 — Eager preference read. Pre-seeds the first frame so the router,
   // splash UI, theme, and locale all see persisted values immediately.
   final preferencesRepo = DriftUserPreferencesRepository(db);
-  final initialThemeMode = await getThemeModeFn(preferencesRepo);
-  final initialLocale = await getLocaleFn(preferencesRepo);
+  final initialThemeMode = await preferencesRepo.getThemeMode();
+  final initialLocale = await preferencesRepo.getLocale();
   final splashEnabled = await getSplashEnabledFn(preferencesRepo);
   final splashStartDate = await getSplashStartDateFn(preferencesRepo);
   var initialDefaultCurrency = await preferencesRepo.getDefaultCurrency();
@@ -159,9 +124,6 @@ Future<void> bootstrapFor({
         initialDefaultCurrencyProvider.overrideWithValue(
           initialDefaultCurrency,
         ),
-        lastGenerationResultProvider.overrideWithValue(
-          const RecurringGenerationResult(outcomes: []),
-        ),
         splashGateSnapshotProvider.overrideWith((ref) {
           final notifier = SplashGateSnapshot.withInitial(
             enabled: splashEnabled,
@@ -180,7 +142,6 @@ Future<void> bootstrapFor({
           });
           return notifier;
         }),
-        ...extraOverrides,
       ],
       child: App(
         onFirstFrame: () {
