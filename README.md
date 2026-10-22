@@ -221,7 +221,7 @@ understandable, and centered on manual logging.
 
 ## Prerequisites
 
-- Flutter 3.44+ (stable channel, Dart 3.12). `flutter --version` must run
+- Flutter 3.47+ (stable channel, Dart 3.13). `flutter --version` must run
   cleanly.
 - For Android builds: JDK 17 + Android SDK.
 - For iOS builds: Xcode 15+ and CocoaPods.

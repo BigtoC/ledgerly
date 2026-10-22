@@ -5,7 +5,7 @@ version: 0.6.3
 
 environment:
   sdk: ^3.11.5
-  flutter: ">=3.44.0"
+  flutter: ">=3.47.0"
 
 # Dependency list mirrors PRD.md -> Dependencies (Core + shipped Phase 2).
 # Deferred Phase 2/3 packages (flutter_secure_storage, csv, ...) are NOT

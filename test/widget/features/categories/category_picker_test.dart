@@ -196,50 +196,51 @@ void main() {
     expect(picked, isNull);
   });
 
-  testWidgets('P04: >=600dp renders dialog container with picker body', (
-    tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(1000, 800));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+  testWidgets(
+    'P04: >=600dp renders dialog container with picker body',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1000, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    final container = ProviderContainer(
-      overrides: [
-        categoriesByTypeProvider(CategoryType.expense).overrideWith(
-          (ref) => Stream.value([
-            _c(
-              id: 11,
-              type: CategoryType.expense,
-              customName: 'Groceries',
-              sortOrder: 0,
-            ),
-          ]),
+      final container = ProviderContainer(
+        overrides: [
+          categoriesByTypeProvider(CategoryType.expense).overrideWith(
+            (ref) => Stream.value([
+              _c(
+                id: 11,
+                type: CategoryType.expense,
+                customName: 'Groceries',
+                sortOrder: 0,
+              ),
+            ]),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      Category? picked;
+      await tester.pumpWidget(
+        _hostApp(
+          container: container,
+          size: const Size(1000, 800),
+          onLaunch: (ctx) async {
+            picked = await showCategoryPicker(ctx, type: CategoryType.expense);
+            return picked;
+          },
         ),
-      ],
-    );
-    addTearDown(container.dispose);
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
 
-    Category? picked;
-    await tester.pumpWidget(
-      _hostApp(
-        container: container,
-        size: const Size(1000, 800),
-        onLaunch: (ctx) async {
-          picked = await showCategoryPicker(ctx, type: CategoryType.expense);
-          return picked;
-        },
-      ),
-    );
-    await tester.tap(find.text('open'));
-    await tester.pumpAndSettle();
+      expect(find.byType(Dialog), findsOneWidget);
+      expect(find.text('Groceries'), findsOneWidget);
 
-    expect(find.byType(Dialog), findsOneWidget);
-    expect(find.text('Groceries'), findsOneWidget);
-
-    await tester.tap(find.text('Groceries'));
-    await tester.pumpAndSettle();
-    expect(picked, isNotNull);
-    expect(picked!.id, 11);
-  });
+      await tester.tap(find.text('Groceries'));
+      await tester.pumpAndSettle();
+      expect(picked, isNotNull);
+      expect(picked!.id, 11);
+    },
+  );
 
   testWidgets('P05: 2x text scale renders without overflow', (tester) async {
     final container = ProviderContainer(

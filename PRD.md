@@ -1244,7 +1244,7 @@ Tests are organized by **architectural layer**, not by feature. This mirrors the
 
 ## Dependencies
 
-Versions below are the tested resolvable set under Flutter **3.44.0** (Dart 3.12.0). Keep `pubspec.yaml` in sync with this table — any version bump needs to round-trip `flutter pub get` and `dart run build_runner build` before landing here.
+Versions below are the tested resolvable set under Flutter **3.47.7** (Dart 3.13.5). Keep `pubspec.yaml` in sync with this table — any version bump needs to round-trip `flutter pub get` and `dart run build_runner build` before landing here.
 
 ### Core (MVP)
 
