@@ -37,7 +37,11 @@ class _MemoFieldState extends State<MemoField> {
     super.didUpdateWidget(old);
     if (widget.initialValue != old.initialValue &&
         widget.initialValue != _controller.text) {
-      _controller.text = widget.initialValue;
+      // Cursor at the end so a picked memo suggestion can be extended.
+      _controller.value = TextEditingValue(
+        text: widget.initialValue,
+        selection: TextSelection.collapsed(offset: widget.initialValue.length),
+      );
     }
   }
 

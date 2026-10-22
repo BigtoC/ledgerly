@@ -24,3 +24,19 @@ final txActiveAccountsProvider = StreamProvider.autoDispose<List<Account>>((
   final repo = ref.watch(accountRepositoryProvider);
   return repo.watchAll();
 }, dependencies: [accountRepositoryProvider]);
+
+/// Upper bound on memo suggestions shown under the Memo field. The query
+/// cost is dominated by aggregating the category's rows, not by the
+/// LIMIT, so 6/8/10 benchmark the same.
+const memoSuggestionLimit = 10;
+
+/// Recently used distinct memos for a category, newest first. Drives the
+/// suggestion chips under the transaction form's Memo field.
+final txMemoSuggestionsProvider = StreamProvider.autoDispose
+    .family<List<String>, int>((ref, categoryId) {
+      final repo = ref.watch(transactionRepositoryProvider);
+      return repo.watchRecentMemosForCategory(
+        categoryId,
+        limit: memoSuggestionLimit,
+      );
+    }, dependencies: [transactionRepositoryProvider]);

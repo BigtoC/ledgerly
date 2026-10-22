@@ -44,6 +44,7 @@ import 'widgets/currency_picker_sheet.dart';
 import 'widgets/currency_selector_tile.dart';
 import 'widgets/date_field.dart';
 import 'widgets/memo_field.dart';
+import 'widgets/memo_suggestions.dart';
 import 'widgets/transaction_type_segmented_control.dart';
 
 @Dependencies([TransactionFormController, categoriesByType, accountRepository])
@@ -294,6 +295,11 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                     initialValue: state.memo,
                     onChanged: controller.setMemo,
                   ),
+                  if (state.selectedCategory case final category?)
+                    MemoSuggestions(
+                      categoryId: category.id,
+                      onSelected: controller.setMemo,
+                    ),
                   // Shopping-list inline action rows — shown below MemoField.
                   if (isShoppingListDraftMode)
                     _ShoppingListDraftActions(
