@@ -4,6 +4,7 @@ import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/core/constants.dart';
@@ -47,6 +48,7 @@ Transaction _tx({
   updatedAt: DateTime.utc(2026),
 );
 
+@Dependencies([CategorySearchDetailController])
 void main() {
   setUpAll(() {
     registerFallbackValue('');
@@ -184,6 +186,7 @@ void main() {
       overrides: [transactionRepositoryProvider.overrideWithValue(repo)],
     );
 
+    @Dependencies([CategorySearchDetailController])
     Future<DetailData> waitForData(ProviderContainer c) async {
       final provider = categorySearchDetailControllerProvider(
         categoryId: 1,

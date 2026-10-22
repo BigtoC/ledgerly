@@ -20,6 +20,7 @@ import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/core/constants.dart';
@@ -45,6 +46,7 @@ Transaction _tx({required int id, required DateTime date}) => Transaction(
   updatedAt: DateTime.utc(0),
 );
 
+@Dependencies([HomeController])
 void main() {
   setUpAll(() {
     registerFallbackValue(DateTime(2026, 1, 1));
@@ -90,6 +92,7 @@ void main() {
       );
     }
 
+    @Dependencies([HomeController])
     Future<HomeState> waitForNon(
       ProviderContainer c,
       bool Function(HomeState) accept,

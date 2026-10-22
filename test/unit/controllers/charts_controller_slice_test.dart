@@ -19,6 +19,7 @@ import 'package:ledgerly/features/analysis/charts/charts_selection_controller.da
 import 'package:ledgerly/features/analysis/charts/charts_state.dart';
 import 'package:ledgerly/features/analysis/search/analysis_providers.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../repositories/_harness/test_app_database.dart';
 
@@ -79,6 +80,7 @@ ProviderContainer _container(_MockRepo repo) {
   );
 }
 
+@Dependencies([ChartsController, ChartsSelectionController])
 void main() {
   setUpAll(() {
     registerFallbackValue(DateTime(2026));

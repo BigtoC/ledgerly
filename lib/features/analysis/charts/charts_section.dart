@@ -3,14 +3,17 @@ import 'dart:collection';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../app/providers/default_currency_provider.dart';
 import '../../../data/models/currency.dart';
 import '../../../l10n/app_localizations.dart';
+import '../search/analysis_providers.dart';
 import 'charts_controller.dart';
 import 'charts_providers.dart';
 import 'charts_selection_controller.dart';
 import 'charts_state.dart';
+import 'slice_drilldown_controller.dart';
 import 'widgets/category_pie_chart.dart';
 import 'widgets/chart_legend.dart';
 import 'widgets/daily_bar_chart.dart';
@@ -19,6 +22,16 @@ import 'widgets/period_selector.dart';
 import 'widgets/selected_slice_items_list.dart';
 import 'widgets/type_toggle.dart';
 
+@Dependencies([
+  ChartsSelectionController,
+  ChartsController,
+  chartsCurrenciesByCode,
+  initialDefaultCurrency,
+  SliceDrilldownController,
+  analysisCategoriesById,
+  analysisAccountsById,
+  chartsFxStatus,
+])
 class ChartsSection extends ConsumerStatefulWidget {
   const ChartsSection({super.key});
 
@@ -402,6 +415,7 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
   }
 }
 
+@Dependencies([ChartsSelectionController])
 class _ChartBody extends ConsumerWidget {
   const _ChartBody({
     required this.data,
@@ -425,6 +439,7 @@ class _ChartBody extends ConsumerWidget {
     final showBar =
         data.bucketTotals.isNotEmpty &&
         !(data.dimension == ChartDimension.currency && data.mixedCurrencies);
+    @Dependencies([ChartsSelectionController])
     void selectSlice(int? i) {
       if (i == null) {
         ref.read(chartsSelectionControllerProvider.notifier).clearSlice();

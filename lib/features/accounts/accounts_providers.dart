@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../app/providers/default_currency_provider.dart';
 import '../../app/providers/repository_providers.dart';
@@ -21,6 +22,7 @@ final accountTypeByIdProvider = StreamProvider.autoDispose
       });
     }, dependencies: [accountTypeRepositoryProvider]);
 
+@Dependencies([accountTypeRepository])
 final accountTypesProvider = StreamProvider.autoDispose<List<AccountType>>((
   ref,
 ) {
@@ -28,6 +30,7 @@ final accountTypesProvider = StreamProvider.autoDispose<List<AccountType>>((
   return repo.watchAll();
 }, dependencies: [accountTypeRepositoryProvider]);
 
+@Dependencies([currencyRepository])
 final selectableCurrenciesProvider = StreamProvider.autoDispose<List<Currency>>(
   (ref) {
     final repo = ref.watch(currencyRepositoryProvider);
@@ -41,6 +44,7 @@ final selectableCurrenciesProvider = StreamProvider.autoDispose<List<Currency>>(
 /// Read-only map from currency code (uppercase) to [Currency] model.
 /// Used by [AccountTile] to resolve decimals/symbol for grouped balance
 /// formatting without passing a full currency list down the widget tree.
+@Dependencies([currencyRepository])
 final currenciesByCodeProvider =
     StreamProvider.autoDispose<Map<String, Currency>>((ref) {
       final repo = ref.watch(currencyRepositoryProvider);
@@ -94,6 +98,7 @@ final accountFormSeedDataProvider = FutureProvider.autoDispose
       ],
     );
 
+@Dependencies([initialDefaultCurrency, defaultCurrency, exchangeRateRepository])
 class AccountFormActions {
   AccountFormActions(this._accountRepository, this._ref);
 
@@ -126,6 +131,12 @@ class AccountFormActions {
   }
 }
 
+@Dependencies([
+  accountRepository,
+  initialDefaultCurrency,
+  defaultCurrency,
+  exchangeRateRepository,
+])
 final accountFormActionsProvider = Provider<AccountFormActions>(
   (ref) {
     final actions = AccountFormActions(
@@ -166,6 +177,7 @@ class AccountTypeCreationActions {
   }
 }
 
+@Dependencies([accountTypeRepository])
 final accountTypeCreationActionsProvider = Provider<AccountTypeCreationActions>(
   (ref) {
     return AccountTypeCreationActions(ref.read(accountTypeRepositoryProvider));

@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../../core/constants.dart';
 import '../../../../core/utils/currency_converter.dart';
@@ -26,6 +27,14 @@ import '../charts_state.dart';
 import '../selected_slice.dart';
 import '../slice_drilldown_controller.dart';
 
+@Dependencies([
+  SliceDrilldownController,
+  ChartsSelectionController,
+  analysisCategoriesById,
+  analysisAccountsById,
+  chartsCurrenciesByCode,
+  chartsFxStatus,
+])
 class SelectedSliceItemsList extends ConsumerStatefulWidget {
   const SelectedSliceItemsList({
     super.key,

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/currency.dart';
@@ -49,6 +50,7 @@ RecurringRule _rule({int id = 1}) => RecurringRule(
   updatedAt: DateTime(2026, 1, 1),
 );
 
+@Dependencies([RecurringRuleFormController])
 void main() {
   setUpAll(() {
     registerFallbackValue(
@@ -103,6 +105,7 @@ void main() {
     );
   }
 
+  @Dependencies([RecurringRuleFormController])
   Future<RecurringRuleFormState> buildState(
     ProviderContainer container, {
     int? ruleId,

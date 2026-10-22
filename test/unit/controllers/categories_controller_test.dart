@@ -16,6 +16,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/category.dart';
@@ -43,6 +44,7 @@ Category _c({
   isArchived: isArchived,
 );
 
+@Dependencies([CategoriesController])
 void main() {
   setUpAll(() {
     registerFallbackValue(
@@ -77,6 +79,7 @@ void main() {
       );
     }
 
+    @Dependencies([CategoriesController])
     Future<CategoriesState> waitForData(ProviderContainer c) async {
       for (var i = 0; i < 100; i++) {
         final s = c.read(categoriesControllerProvider);

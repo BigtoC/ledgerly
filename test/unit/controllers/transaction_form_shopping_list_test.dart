@@ -22,6 +22,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/account.dart';
@@ -128,6 +129,7 @@ Transaction _persistedTx({int id = 99, int amountMinorUnits = 1000}) {
   );
 }
 
+@Dependencies([TransactionFormController])
 void main() {
   setUpAll(() {
     // Register fallback values for mocktail argument matching.

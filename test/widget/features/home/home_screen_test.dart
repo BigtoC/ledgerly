@@ -18,7 +18,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
+import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/account.dart';
 import 'package:ledgerly/data/models/category.dart';
@@ -92,6 +94,7 @@ Account _acc({
   isArchived: isArchived,
 );
 
+@Dependencies([initialDefaultCurrency, defaultCurrency, exchangeRates])
 void main() {
   setUpAll(() {
     registerFallbackValue(DateTime(2026, 1, 1));
@@ -159,6 +162,7 @@ void main() {
     await currenciesCtrl.close();
   });
 
+  @Dependencies([initialDefaultCurrency, defaultCurrency, exchangeRates])
   Widget makeApp({double? textScale}) {
     return ProviderScope(
       overrides: [

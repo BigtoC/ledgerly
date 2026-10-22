@@ -15,6 +15,7 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/account.dart';
@@ -27,6 +28,7 @@ import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/shopping_list_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
+import 'package:ledgerly/features/categories/categories_controller.dart';
 import 'package:ledgerly/features/transactions/keypad_state.dart';
 import 'package:ledgerly/features/transactions/transaction_form_controller.dart';
 import 'package:ledgerly/features/transactions/transaction_form_screen.dart';
@@ -136,6 +138,7 @@ TransactionFormState _editableDraftState() => TransactionFormState.data(
   shoppingListItemId: 77,
 );
 
+@Dependencies([TransactionFormController, categoriesByType, accountRepository])
 void main() {
   late _MockTransactionRepository txRepo;
   late _MockAccountRepository accountRepo;
@@ -184,6 +187,11 @@ void main() {
     );
   }
 
+  @Dependencies([
+    TransactionFormController,
+    categoriesByType,
+    accountRepository,
+  ])
   Widget mountWithMode(TransactionFormMode mode) {
     final router = GoRouter(
       initialLocation: '/form',
@@ -203,6 +211,11 @@ void main() {
     return mountWithRouter(router);
   }
 
+  @Dependencies([
+    TransactionFormController,
+    categoriesByType,
+    accountRepository,
+  ])
   GoRouter buildPushRouter(TransactionFormMode mode) {
     final router = GoRouter(
       initialLocation: '/',

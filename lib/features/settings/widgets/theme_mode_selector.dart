@@ -7,10 +7,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../settings_controller.dart';
 
+@Dependencies([SettingsController])
 class ThemeModeSelector extends ConsumerWidget {
   const ThemeModeSelector({super.key, required this.value});
 

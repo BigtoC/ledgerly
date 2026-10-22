@@ -5,8 +5,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
+import 'package:ledgerly/app/providers/locale_provider.dart';
+import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
+import 'package:ledgerly/app/providers/theme_provider.dart';
+import 'package:ledgerly/app/router.dart';
 import 'package:ledgerly/data/database/app_database.dart';
 import 'package:ledgerly/data/models/account.dart';
 import 'package:ledgerly/data/repositories/pending_transaction_repository.dart';
@@ -14,6 +19,7 @@ import 'package:ledgerly/data/repositories/transaction_repository.dart';
 
 import '../support/test_app.dart';
 
+@Dependencies([router, themeMode, userLocalePreference, exchangeRateRepository])
 void main() {
   group('Pending approval flow', () {
     late AppDatabase db;

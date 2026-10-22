@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
@@ -26,12 +27,24 @@ import 'package:ledgerly/l10n/app_localizations.dart';
 class _MockUserPreferencesRepository extends Mock
     implements UserPreferencesRepository {}
 
+@Dependencies([
+  splashGateSnapshot,
+  splashStartDate,
+  splashClock,
+  SplashController,
+])
 void main() {
   setUpAll(() async {
     await initializeDateFormatting('en_US', null);
     registerFallbackValue(DateTime(2000));
   });
 
+  @Dependencies([
+    splashGateSnapshot,
+    splashStartDate,
+    splashClock,
+    SplashController,
+  ])
   Widget wrap(ProviderContainer container) {
     return UncontrolledProviderScope(
       container: container,
@@ -43,6 +56,12 @@ void main() {
     );
   }
 
+  @Dependencies([
+    splashGateSnapshot,
+    splashStartDate,
+    splashClock,
+    SplashController,
+  ])
   Widget routerWrap(ProviderContainer container) {
     final router = GoRouter(
       routes: [

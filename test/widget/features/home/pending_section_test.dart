@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:go_router/go_router.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/account.dart';
@@ -17,6 +18,7 @@ import 'package:ledgerly/data/models/pending_transaction.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/pending_transaction_repository.dart';
+import 'package:ledgerly/features/home/home_controller.dart';
 import 'package:ledgerly/features/home/pending_controller.dart';
 import 'package:ledgerly/features/home/pending_state.dart';
 import 'package:ledgerly/features/home/widgets/pending_section.dart';
@@ -57,6 +59,7 @@ class _FakeController extends PendingController {
   }
 }
 
+@Dependencies([PendingController, HomeController])
 Widget _wrap(ProviderContainer container) {
   return UncontrolledProviderScope(
     container: container,
@@ -113,6 +116,7 @@ ProviderContainer _makeContainer(PendingState fixed) {
   );
 }
 
+@Dependencies([PendingController, HomeController])
 void main() {
   testWidgets('PS01: PendingLoading renders SizedBox.shrink', (tester) async {
     final container = _makeContainer(const PendingState.loading());

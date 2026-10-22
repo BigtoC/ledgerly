@@ -19,9 +19,11 @@ import 'package:ledgerly/features/analysis/charts/charts_state.dart';
 import 'package:ledgerly/features/analysis/charts/widgets/chart_legend.dart';
 import 'package:ledgerly/features/analysis/charts/charts_selection_controller.dart';
 import 'package:ledgerly/features/analysis/charts/selected_slice.dart';
+import 'package:ledgerly/features/analysis/search/analysis_controller.dart';
 import 'package:ledgerly/features/analysis/search/analysis_providers.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../unit/repositories/_harness/test_app_database.dart';
 
@@ -78,6 +80,17 @@ Future<void> _seed(drift.AppDatabase db) async {
   await tx(3, 4000, 2, 'USD');
 }
 
+@Dependencies([
+  ChartsController,
+  ChartsSelectionController,
+  SliceDrilldownController,
+  AnalysisController,
+  chartsCurrenciesByCode,
+  initialDefaultCurrency,
+  analysisCategoriesById,
+  analysisAccountsById,
+  chartsFxStatus,
+])
 void main() {
   setUpAll(() {
     registerFallbackValue(DateTime.now());

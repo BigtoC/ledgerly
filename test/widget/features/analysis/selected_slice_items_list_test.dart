@@ -14,10 +14,12 @@ import 'package:ledgerly/features/analysis/charts/charts_providers.dart';
 import 'package:ledgerly/features/analysis/charts/charts_selection_controller.dart';
 import 'package:ledgerly/features/analysis/charts/charts_state.dart';
 import 'package:ledgerly/features/analysis/charts/selected_slice.dart';
+import 'package:ledgerly/features/analysis/charts/slice_drilldown_controller.dart';
 import 'package:ledgerly/features/analysis/charts/widgets/selected_slice_items_list.dart';
 import 'package:ledgerly/features/analysis/search/analysis_providers.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 class _MockRepo extends Mock implements TransactionRepository {}
 
@@ -44,6 +46,14 @@ ChartSlice _slice(SelectedSlice key) => ChartSlice(
   selectionKey: key,
 );
 
+@Dependencies([
+  ChartsSelectionController,
+  SliceDrilldownController,
+  analysisCategoriesById,
+  analysisAccountsById,
+  chartsCurrenciesByCode,
+  chartsFxStatus,
+])
 Widget _harness({
   required _MockRepo repo,
   required ChartSlice slice,
@@ -101,6 +111,14 @@ Widget _harness({
   );
 }
 
+@Dependencies([
+  ChartsSelectionController,
+  SliceDrilldownController,
+  analysisCategoriesById,
+  analysisAccountsById,
+  chartsCurrenciesByCode,
+  chartsFxStatus,
+])
 void main() {
   setUpAll(() {
     registerFallbackValue(DateTime(2026));

@@ -8,6 +8,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
@@ -16,6 +17,7 @@ import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 class _MockUserPreferencesRepository extends Mock
     implements UserPreferencesRepository {}
 
+@Dependencies([splashGateSnapshot])
 void main() {
   group('SplashGateSnapshot', () {
     test('withInitial sets fields without notifying listeners', () {

@@ -9,6 +9,7 @@ import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/core/constants.dart';
@@ -50,6 +51,7 @@ Transaction _tx({required int id}) => Transaction(
   updatedAt: DateTime(2026, 5, 8),
 );
 
+@Dependencies([PendingController])
 void main() {
   group('PendingController', () {
     late _MockPendingTransactionRepository repo;
@@ -75,6 +77,7 @@ void main() {
       );
     }
 
+    @Dependencies([PendingController])
     Future<PendingState> waitFor(
       ProviderContainer c,
       bool Function(PendingState) accept,

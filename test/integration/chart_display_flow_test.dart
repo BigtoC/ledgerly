@@ -5,12 +5,39 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
+import 'package:ledgerly/app/providers/default_currency_provider.dart';
+import 'package:ledgerly/app/providers/locale_provider.dart';
+import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
+import 'package:ledgerly/app/providers/theme_provider.dart';
+import 'package:ledgerly/app/router.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/features/analysis/analysis_screen.dart';
+import 'package:ledgerly/features/analysis/charts/charts_controller.dart';
+import 'package:ledgerly/features/analysis/charts/charts_providers.dart';
+import 'package:ledgerly/features/analysis/charts/charts_selection_controller.dart';
+import 'package:ledgerly/features/analysis/charts/slice_drilldown_controller.dart';
+import 'package:ledgerly/features/analysis/search/analysis_controller.dart';
+import 'package:ledgerly/features/analysis/search/analysis_providers.dart';
 
 import '../support/test_app.dart';
 
+@Dependencies([
+  AnalysisController,
+  ChartsSelectionController,
+  ChartsController,
+  chartsCurrenciesByCode,
+  initialDefaultCurrency,
+  SliceDrilldownController,
+  analysisCategoriesById,
+  analysisAccountsById,
+  chartsFxStatus,
+  router,
+  themeMode,
+  userLocalePreference,
+  exchangeRateRepository,
+])
 void main() {
   testWidgets('charts render on Analysis after an insert', (tester) async {
     final db = newTestAppDatabase();

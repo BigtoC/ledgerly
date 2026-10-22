@@ -6,7 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
+import '../../../app/providers/default_currency_provider.dart';
+import '../../../app/providers/repository_providers.dart';
 import '../../../core/constants.dart';
 import '../../../core/utils/box_shadow.dart';
 import '../../../l10n/app_localizations.dart';
@@ -16,6 +19,12 @@ import '../accounts_state.dart';
 import 'account_tile.dart';
 import 'account_type_display.dart';
 
+@Dependencies([
+  AccountsController,
+  exchangeRates,
+  initialDefaultCurrency,
+  defaultCurrency,
+])
 class ManageAccountsBody extends StatelessWidget {
   const ManageAccountsBody({super.key, required this.data});
 
@@ -88,6 +97,12 @@ class ManageAccountsBody extends StatelessWidget {
   }
 }
 
+@Dependencies([
+  AccountsController,
+  exchangeRates,
+  initialDefaultCurrency,
+  defaultCurrency,
+])
 class _AccountTileWithLookups extends ConsumerWidget {
   const _AccountTileWithLookups({
     required this.view,
@@ -260,6 +275,12 @@ class _AccountTileWithLookups extends ConsumerWidget {
   }
 }
 
+@Dependencies([
+  AccountsController,
+  exchangeRates,
+  initialDefaultCurrency,
+  defaultCurrency,
+])
 class _AccountListCard extends StatelessWidget {
   const _AccountListCard({
     required this.accounts,

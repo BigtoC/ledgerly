@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../core/constants.dart';
 import '../../../core/utils/color_palette.dart';
@@ -38,6 +39,7 @@ import 'pending_badge.dart';
 const int _kPendingCollapseThreshold = 5;
 
 /// Sliver that renders the pending approval section on HomeScreen.
+@Dependencies([PendingController, HomeController])
 class PendingSection extends ConsumerStatefulWidget {
   const PendingSection({super.key});
 

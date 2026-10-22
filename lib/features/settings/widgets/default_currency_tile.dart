@@ -6,11 +6,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../settings_controller.dart';
 import 'default_currency_picker_sheet.dart';
 
+@Dependencies([SettingsController])
 class DefaultCurrencyTile extends ConsumerWidget {
   const DefaultCurrencyTile({super.key, required this.defaultCurrency});
 

@@ -13,6 +13,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/currency.dart';
@@ -36,6 +37,7 @@ Widget _wrap(Widget child, {Map<String, int>? rates}) => ProviderScope(
   ),
 );
 
+@Dependencies([exchangeRates])
 void main() {
   testWidgets('SS01: single currency — USD chip group rendered', (
     tester,

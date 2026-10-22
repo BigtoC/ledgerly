@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/currency.dart';
@@ -74,6 +75,7 @@ class _StubRouter {
   }
 }
 
+@Dependencies([RecurringRulesController])
 Widget _wrap(ProviderContainer container) {
   return UncontrolledProviderScope(
     container: container,
@@ -101,6 +103,7 @@ ProviderContainer _makeContainer(RecurringRulesState fixed) {
   );
 }
 
+@Dependencies([RecurringRulesController])
 void main() {
   testWidgets('RRS01: shows loading indicator in loading state', (
     tester,

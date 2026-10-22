@@ -9,6 +9,7 @@ import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/core/constants.dart';
@@ -43,6 +44,7 @@ RecurringRule _rule({
   updatedAt: DateTime(2026, 1, 1),
 );
 
+@Dependencies([RecurringRulesController])
 void main() {
   group('RecurringRulesController', () {
     late _MockRecurringRulesRepository repo;
@@ -64,6 +66,7 @@ void main() {
       );
     }
 
+    @Dependencies([RecurringRulesController])
     Future<RecurringRulesState> waitFor(
       ProviderContainer c,
       bool Function(RecurringRulesState) accept,

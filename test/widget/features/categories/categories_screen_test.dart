@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/category.dart';
@@ -53,6 +54,7 @@ class _FakeCategoriesController extends CategoriesController {
   }
 }
 
+@Dependencies([CategoriesController])
 Widget _wrap({required ProviderContainer container, double textScale = 1.0}) {
   return UncontrolledProviderScope(
     container: container,
@@ -69,6 +71,7 @@ Widget _wrap({required ProviderContainer container, double textScale = 1.0}) {
   );
 }
 
+@Dependencies([CategoriesController])
 void main() {
   setUpAll(() {
     registerFallbackValue(

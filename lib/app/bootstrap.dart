@@ -4,6 +4,7 @@ import 'package:drift_flutter/drift_flutter.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../data/database/app_database.dart';
 import '../data/repositories/account_repository.dart';
@@ -21,8 +22,10 @@ import 'app.dart';
 import 'providers/app_database_provider.dart';
 import 'providers/default_currency_provider.dart';
 import 'providers/locale_provider.dart';
+import 'providers/repository_providers.dart';
 import 'providers/splash_redirect_provider.dart';
 import 'providers/theme_provider.dart';
+import 'router.dart';
 
 typedef InitializeDateFormattingFn = Future<void> Function(String locale);
 typedef ReadSplashEnabledFn = Future<bool> Function(
@@ -74,12 +77,14 @@ Future<RecurringGenerationResult> _runRecurringGeneration(AppDatabase db) {
   return useCase.execute();
 }
 
+@Dependencies([router, exchangeRateRepository])
 Future<void> bootstrap() => bootstrapFor(
   openDatabase: () async => AppDatabase(driftDatabase(name: 'ledgerly')),
   localeService: const LocaleService(),
 );
 
 @visibleForTesting
+@Dependencies([router, exchangeRateRepository])
 Future<void> bootstrapFor({
   required Future<AppDatabase> Function() openDatabase,
   required LocaleService localeService,

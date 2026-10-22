@@ -13,6 +13,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../core/utils/color_palette.dart';
 import '../../../core/utils/icon_registry.dart';
@@ -24,6 +25,7 @@ import 'category_color_picker.dart';
 import 'category_display.dart';
 import 'category_icon_picker.dart';
 
+@Dependencies([CategoriesController])
 Future<void> showCategoryFormSheet(BuildContext context, {Category? initial}) {
   return showModalBottomSheet<void>(
     context: context,
@@ -36,6 +38,7 @@ Future<void> showCategoryFormSheet(BuildContext context, {Category? initial}) {
   );
 }
 
+@Dependencies([CategoriesController])
 class _CategoryFormSheet extends ConsumerStatefulWidget {
   const _CategoryFormSheet({this.initial});
 

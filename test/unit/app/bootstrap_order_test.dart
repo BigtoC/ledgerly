@@ -14,10 +14,15 @@ import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/app.dart';
 import 'package:ledgerly/app/bootstrap.dart';
 import 'package:ledgerly/app/providers/default_currency_provider.dart';
+import 'package:ledgerly/app/providers/locale_provider.dart';
+import 'package:ledgerly/app/providers/repository_providers.dart';
+import 'package:ledgerly/app/providers/theme_provider.dart';
+import 'package:ledgerly/app/router.dart';
 import 'package:ledgerly/data/database/app_database.dart';
 import 'package:ledgerly/data/services/locale_service.dart';
 import 'package:ledgerly/data/use_cases/recurring_generation_use_case.dart';
@@ -30,6 +35,13 @@ class _StubLocaleService implements LocaleService {
   String get deviceLocale => 'en_US';
 }
 
+@Dependencies([
+  initialDefaultCurrency,
+  router,
+  themeMode,
+  userLocalePreference,
+  exchangeRateRepository,
+])
 void main() {
   setUpAll(() {
     driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;

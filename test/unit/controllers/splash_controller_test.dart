@@ -28,10 +28,12 @@ import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/features/splash/splash_controller.dart';
 import 'package:ledgerly/features/splash/splash_state.dart';
 import 'package:flutter/widgets.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 class _MockUserPreferencesRepository extends Mock
     implements UserPreferencesRepository {}
 
+@Dependencies([SplashController])
 void main() {
   setUpAll(() async {
     await initializeDateFormatting('en_US', null);
@@ -81,6 +83,7 @@ void main() {
       );
     }
 
+    @Dependencies([SplashController])
     Future<SplashState> waitForData(ProviderContainer c) async {
       // Pump until we get a non-loading state.
       for (var i = 0; i < 50; i++) {

@@ -10,9 +10,14 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/app.dart';
 import 'package:ledgerly/app/bootstrap.dart';
+import 'package:ledgerly/app/providers/locale_provider.dart';
+import 'package:ledgerly/app/providers/repository_providers.dart';
+import 'package:ledgerly/app/providers/theme_provider.dart';
+import 'package:ledgerly/app/router.dart';
 import 'package:ledgerly/data/database/app_database.dart' show AppDatabase;
 import 'package:ledgerly/data/models/currency.dart';
 import 'package:ledgerly/data/models/recurring_rule_draft.dart';
@@ -47,6 +52,7 @@ Future<({int accountId, int categoryId, Currency currency})> _seedBasics(
   return (accountId: cash.id, categoryId: categoryId, currency: usd!);
 }
 
+@Dependencies([router, themeMode, userLocalePreference, exchangeRateRepository])
 void main() {
   group('Recurring transactions integration', () {
     test('create rule → execute use case → pending row inserted, '

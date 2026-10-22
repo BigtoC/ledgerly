@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
@@ -27,6 +28,7 @@ import 'package:ledgerly/features/settings/settings_state.dart';
 class _MockUserPreferencesRepository extends Mock
     implements UserPreferencesRepository {}
 
+@Dependencies([SettingsController])
 void main() {
   setUpAll(() {
     registerFallbackValue(ThemeMode.light);
@@ -101,6 +103,7 @@ void main() {
       await Future<void>.delayed(Duration.zero);
     }
 
+    @Dependencies([SettingsController])
     Future<SettingsState> waitForData(ProviderContainer c) async {
       for (var i = 0; i < 200; i++) {
         final s = c.read(settingsControllerProvider);

@@ -11,13 +11,34 @@
 // pinned day via the Drift stream pipeline.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
+import 'package:ledgerly/app/providers/default_currency_provider.dart';
+import 'package:ledgerly/app/providers/locale_provider.dart';
+import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
+import 'package:ledgerly/app/providers/theme_provider.dart';
+import 'package:ledgerly/app/router.dart';
+import 'package:ledgerly/features/home/home_controller.dart';
 import 'package:ledgerly/features/home/home_screen.dart';
+import 'package:ledgerly/features/home/pending_controller.dart';
 import 'package:ledgerly/features/home/widgets/transaction_tile.dart';
+import 'package:ledgerly/features/shopping_list/shopping_list_providers.dart';
 
 import '../support/test_app.dart';
 
+@Dependencies([
+  HomeController,
+  PendingController,
+  shoppingListTotalCount,
+  initialDefaultCurrency,
+  defaultCurrency,
+  exchangeRates,
+  router,
+  themeMode,
+  userLocalePreference,
+  exchangeRateRepository,
+])
 void main() {
   group('duplicate flow (Unit 4)', () {
     testWidgets(

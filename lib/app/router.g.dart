@@ -22,12 +22,86 @@ final class RouterProvider
         retry: null,
         name: r'routerProvider',
         isAutoDispose: false,
-        dependencies: <ProviderOrFamily>[splashGateSnapshotProvider],
-        $allTransitiveDependencies: <ProviderOrFamily>[
+        dependencies: <ProviderOrFamily>[
+          splashGateSnapshotProvider,
+          splashStartDateProvider,
+          splashClockProvider,
+          splashControllerProvider,
+          homeControllerProvider,
+          pendingControllerProvider,
+          shoppingListTotalCountProvider,
+          initialDefaultCurrencyProvider,
+          defaultCurrencyProvider,
+          exchangeRatesProvider,
+          shoppingListControllerProvider,
+          shoppingListCategoryByIdProvider,
+          shoppingListAccountByIdProvider,
+          shoppingListCurrencyByCodeProvider,
+          analysisControllerProvider,
+          chartsSelectionControllerProvider,
+          chartsControllerProvider,
+          chartsCurrenciesByCodeProvider,
+          sliceDrilldownControllerProvider,
+          analysisCategoriesByIdProvider,
+          analysisAccountsByIdProvider,
+          chartsFxStatusProvider,
+          categorySearchDetailControllerProvider,
+          settingsControllerProvider,
+          accountsControllerProvider,
+          categoriesControllerProvider,
+          recurringRulesControllerProvider,
+          recurringRuleFormControllerProvider,
+          categoriesByTypeProvider,
+          accountRepositoryProvider,
+          transactionFormControllerProvider,
+        ],
+        $allTransitiveDependencies: <ProviderOrFamily>{
           RouterProvider.$allTransitiveDependencies0,
           RouterProvider.$allTransitiveDependencies1,
           RouterProvider.$allTransitiveDependencies2,
-        ],
+          RouterProvider.$allTransitiveDependencies3,
+          RouterProvider.$allTransitiveDependencies4,
+          RouterProvider.$allTransitiveDependencies5,
+          RouterProvider.$allTransitiveDependencies6,
+          RouterProvider.$allTransitiveDependencies7,
+          RouterProvider.$allTransitiveDependencies8,
+          RouterProvider.$allTransitiveDependencies9,
+          RouterProvider.$allTransitiveDependencies10,
+          RouterProvider.$allTransitiveDependencies11,
+          RouterProvider.$allTransitiveDependencies12,
+          RouterProvider.$allTransitiveDependencies13,
+          RouterProvider.$allTransitiveDependencies14,
+          RouterProvider.$allTransitiveDependencies15,
+          RouterProvider.$allTransitiveDependencies16,
+          RouterProvider.$allTransitiveDependencies17,
+          RouterProvider.$allTransitiveDependencies18,
+          RouterProvider.$allTransitiveDependencies19,
+          RouterProvider.$allTransitiveDependencies20,
+          RouterProvider.$allTransitiveDependencies21,
+          RouterProvider.$allTransitiveDependencies22,
+          RouterProvider.$allTransitiveDependencies23,
+          RouterProvider.$allTransitiveDependencies24,
+          RouterProvider.$allTransitiveDependencies25,
+          RouterProvider.$allTransitiveDependencies26,
+          RouterProvider.$allTransitiveDependencies27,
+          RouterProvider.$allTransitiveDependencies28,
+          RouterProvider.$allTransitiveDependencies29,
+          RouterProvider.$allTransitiveDependencies30,
+          RouterProvider.$allTransitiveDependencies31,
+          RouterProvider.$allTransitiveDependencies32,
+          RouterProvider.$allTransitiveDependencies33,
+          RouterProvider.$allTransitiveDependencies34,
+          RouterProvider.$allTransitiveDependencies35,
+          RouterProvider.$allTransitiveDependencies36,
+          RouterProvider.$allTransitiveDependencies37,
+          RouterProvider.$allTransitiveDependencies38,
+          RouterProvider.$allTransitiveDependencies39,
+          RouterProvider.$allTransitiveDependencies40,
+          RouterProvider.$allTransitiveDependencies41,
+          RouterProvider.$allTransitiveDependencies42,
+          RouterProvider.$allTransitiveDependencies43,
+          RouterProvider.$allTransitiveDependencies44,
+        },
       );
 
   static final $allTransitiveDependencies0 = splashGateSnapshotProvider;
@@ -35,6 +109,68 @@ final class RouterProvider
       SplashGateSnapshotProvider.$allTransitiveDependencies0;
   static final $allTransitiveDependencies2 =
       SplashGateSnapshotProvider.$allTransitiveDependencies1;
+  static final $allTransitiveDependencies3 = splashStartDateProvider;
+  static final $allTransitiveDependencies4 = splashClockProvider;
+  static final $allTransitiveDependencies5 = splashControllerProvider;
+  static final $allTransitiveDependencies6 =
+      SplashControllerProvider.$allTransitiveDependencies3;
+  static final $allTransitiveDependencies7 =
+      SplashControllerProvider.$allTransitiveDependencies4;
+  static final $allTransitiveDependencies8 =
+      SplashControllerProvider.$allTransitiveDependencies5;
+  static final $allTransitiveDependencies9 = homeControllerProvider;
+  static final $allTransitiveDependencies10 =
+      HomeControllerProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies11 = pendingControllerProvider;
+  static final $allTransitiveDependencies12 =
+      PendingControllerProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies13 = shoppingListTotalCountProvider;
+  static final $allTransitiveDependencies14 =
+      ShoppingListTotalCountProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies15 = initialDefaultCurrencyProvider;
+  static final $allTransitiveDependencies16 = defaultCurrencyProvider;
+  static final $allTransitiveDependencies17 = exchangeRatesProvider;
+  static final $allTransitiveDependencies18 =
+      ExchangeRatesProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies19 =
+      ExchangeRatesProvider.$allTransitiveDependencies2;
+  static final $allTransitiveDependencies20 = shoppingListControllerProvider;
+  static final $allTransitiveDependencies21 = shoppingListCategoryByIdProvider;
+  static final $allTransitiveDependencies22 =
+      ShoppingListCategoryByIdProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies23 = shoppingListAccountByIdProvider;
+  static final $allTransitiveDependencies24 =
+      ShoppingListAccountByIdProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies25 =
+      ShoppingListAccountByIdProvider.$allTransitiveDependencies2;
+  static final $allTransitiveDependencies26 =
+      shoppingListCurrencyByCodeProvider;
+  static final $allTransitiveDependencies27 = analysisControllerProvider;
+  static final $allTransitiveDependencies28 =
+      AnalysisControllerProvider.$allTransitiveDependencies2;
+  static final $allTransitiveDependencies29 = chartsSelectionControllerProvider;
+  static final $allTransitiveDependencies30 = chartsControllerProvider;
+  static final $allTransitiveDependencies31 =
+      ChartsControllerProvider.$allTransitiveDependencies6;
+  static final $allTransitiveDependencies32 =
+      ChartsControllerProvider.$allTransitiveDependencies8;
+  static final $allTransitiveDependencies33 =
+      ChartsControllerProvider.$allTransitiveDependencies12;
+  static final $allTransitiveDependencies34 = sliceDrilldownControllerProvider;
+  static final $allTransitiveDependencies35 =
+      categorySearchDetailControllerProvider;
+  static final $allTransitiveDependencies36 = settingsControllerProvider;
+  static final $allTransitiveDependencies37 = accountsControllerProvider;
+  static final $allTransitiveDependencies38 = categoriesControllerProvider;
+  static final $allTransitiveDependencies39 = recurringRulesControllerProvider;
+  static final $allTransitiveDependencies40 =
+      RecurringRulesControllerProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies41 =
+      recurringRuleFormControllerProvider;
+  static final $allTransitiveDependencies42 =
+      RecurringRuleFormControllerProvider.$allTransitiveDependencies4;
+  static final $allTransitiveDependencies43 = categoriesByTypeProvider;
+  static final $allTransitiveDependencies44 = transactionFormControllerProvider;
 
   @override
   String debugGetCreateSourceHash() => _$routerHash();
@@ -58,4 +194,4 @@ final class RouterProvider
   }
 }
 
-String _$routerHash() => r'1ac122eae2e0ba17589a969af5ed6c2e1c4b37bd';
+String _$routerHash() => r'23bfe34ec5ceea97267b99b8cfe1ef5dea128102';

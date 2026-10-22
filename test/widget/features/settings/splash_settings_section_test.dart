@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
@@ -36,6 +37,7 @@ class _FakeSettingsController extends SettingsController {
   }
 }
 
+@Dependencies([SettingsController])
 Widget _wrap({
   required ProviderContainer container,
   required bool splashEnabled,
@@ -82,6 +84,7 @@ ProviderContainer _makeContainer(UserPreferencesRepository prefs) {
   );
 }
 
+@Dependencies([SettingsController])
 void main() {
   setUpAll(() {
     registerFallbackValue(DateTime(2000));

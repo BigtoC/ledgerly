@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/account.dart';
@@ -45,6 +46,11 @@ class _FakeFormController extends RecurringRuleFormController {
   Future<void> deleteRule() async {}
 }
 
+@Dependencies([
+  RecurringRuleFormController,
+  categoriesByType,
+  accountRepository,
+])
 Widget _wrap(ProviderContainer container) {
   return UncontrolledProviderScope(
     container: container,
@@ -99,6 +105,11 @@ void _useTallViewport(WidgetTester tester) {
   addTearDown(tester.view.resetDevicePixelRatio);
 }
 
+@Dependencies([
+  RecurringRuleFormController,
+  categoriesByType,
+  accountRepository,
+])
 void main() {
   testWidgets('RFS01: create-mode app bar title and Create action label', (
     tester,

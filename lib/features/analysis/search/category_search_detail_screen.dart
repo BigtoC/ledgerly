@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../core/constants.dart';
 import '../../../core/utils/money_formatter.dart';
@@ -15,6 +16,11 @@ import 'category_search_detail_controller.dart';
 import 'category_search_detail_state.dart';
 import 'widgets/transaction_search_row.dart';
 
+@Dependencies([
+  CategorySearchDetailController,
+  analysisCategoriesById,
+  analysisAccountsById,
+])
 class CategorySearchDetailScreen extends ConsumerStatefulWidget {
   const CategorySearchDetailScreen({
     super.key,

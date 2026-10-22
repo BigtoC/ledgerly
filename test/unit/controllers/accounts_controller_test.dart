@@ -19,6 +19,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/account.dart';
@@ -49,6 +50,7 @@ Account _a({
   isArchived: isArchived,
 );
 
+@Dependencies([AccountsController])
 void main() {
   setUpAll(() {
     registerFallbackValue(_a(id: 0, name: '_'));
@@ -109,6 +111,7 @@ void main() {
       );
     }
 
+    @Dependencies([AccountsController])
     Future<AccountsState> waitForData(ProviderContainer c) async {
       for (var i = 0; i < 200; i++) {
         final s = c.read(accountsControllerProvider);

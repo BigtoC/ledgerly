@@ -11,6 +11,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../settings_controller.dart';
@@ -19,6 +20,7 @@ const _zhTw = Locale('zh', 'TW');
 const _zhCn = Locale('zh', 'CN');
 const _en = Locale('en');
 
+@Dependencies([SettingsController])
 class LanguageSelector extends ConsumerWidget {
   const LanguageSelector({super.key, required this.value});
 

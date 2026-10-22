@@ -19,7 +19,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
+import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/account.dart';
 import 'package:ledgerly/data/models/account_type.dart';
@@ -99,6 +101,12 @@ ProviderContainer _makeContainer({required AccountsState accountsFixed}) {
   );
 }
 
+@Dependencies([
+  AccountsController,
+  exchangeRates,
+  initialDefaultCurrency,
+  defaultCurrency,
+])
 Widget _wrapWithOpener({
   required ProviderContainer container,
   Size size = const Size(400, 800),
@@ -164,6 +172,12 @@ Widget _wrapWithOpener({
   );
 }
 
+@Dependencies([
+  AccountsController,
+  exchangeRates,
+  initialDefaultCurrency,
+  defaultCurrency,
+])
 void main() {
   setUpAll(() {
     registerFallbackValue(_a(id: 0, name: '_'));
