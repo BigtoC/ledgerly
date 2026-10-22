@@ -416,6 +416,7 @@ Notes:
 | category_id        | INTEGER  | NOT NULL REFERENCES categories                          |
 | account_id         | INTEGER  | NOT NULL REFERENCES accounts                            |
 | memo               | TEXT     |                                                         |
+| amount_formula     | TEXT     | nullable — keypad expression behind the amount (v6)     |
 | date               | DATETIME | NOT NULL                                                |
 | created_at         | DATETIME | NOT NULL — set by repository on insert                  |
 | updated_at         | DATETIME | NOT NULL — set by repository on insert and every update |
@@ -424,6 +425,7 @@ Notes:
 - Transaction type (expense/income) is derived from the linked category's `type` field. A category's `type` becomes immutable after the first transaction uses it, so historical transaction meaning cannot be changed later by editing the category.
 - **No third `type` value exists or will be added.** Phase 2 account transfers and wallet sync model direction as expense/income from the tracked account's (or wallet address's) perspective: inflow **into** the tracked account = **income**; outflow **out of** the tracked account = **expense**. An account-to-account transfer produces two transactions (expense on the source, income on the destination) linked by shared memo / timestamp — not a single `'transfer'` type.
 - `memo` is optional free-form user text and must support Unicode across all supported locales.
+- `amount_formula` records the calculator expression that produced `amount_minor_units`, such as `3.5+10.5+11+3`. It is canonical ASCII that does not depend on locale: operands as typed with `.` as the decimal separator and trailing fractional zeros dropped, operators `+ - * /`, no spaces. It is evaluated strictly left to right, and the form brackets the display to show this: the keys `1 + 2 × 2` show as `(1 + 2) × 2 = 6`. It is null when the amount was typed without an operator. When the form opens a transaction, it parses the formula and recalculates the result on the keypad, so the user can see and edit the calculation. `amount_minor_units` stays authoritative: a formula that does not parse, or that recalculates to a different amount, is ignored.
 - `currency` stores the original transaction currency. Phase 2 conversion never overwrites the original `amount_minor_units` or `currency`.
 - `created_at` and `updated_at` are populated by `TransactionRepository`, not by the database. On insert, both are set to `DateTime.now()`. On every update, `updated_at` is refreshed to `DateTime.now()` and `created_at` is left unchanged.
 
@@ -649,6 +651,7 @@ Notes:
 - v3 adds `shopping_list_items` table.
 - v4 adds `recurring_rules` and `pending_transactions` tables, plus the partial UNIQUE index `idx_pending_recurring_unique_partial`.
 - v5 adds `exchange_rates` table for multi-currency conversion.
+- v6 adds the nullable `transactions.amount_formula` column.
 - Each schema version has a committed snapshot in `drift_schemas/` (generated via `drift_dev schema dump`).
 - Migrations are tested by generating every historical schema and running the upgrade path on both an empty DB and a seeded DB (see Testing Strategy → Repository Tests).
 - Breaking schema changes (column type swaps, table splits) require a new version + a documented data-transform step — never rewrite existing migrations in place.
