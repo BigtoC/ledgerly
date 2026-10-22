@@ -33,6 +33,12 @@ class Transactions extends Table {
   IntColumn get accountId =>
       integer().named('account_id').references(Accounts, #id)();
   TextColumn get memo => text().nullable()();
+
+  /// Keypad expression that produced `amount_minor_units`, e.g.
+  /// `3.5+10.5+11+3`. Canonical ASCII (`.` decimal, `+ - * /`), evaluated
+  /// left to right. Null when the amount was typed without an operator.
+  /// Added in schema v6.
+  TextColumn get amountFormula => text().named('amount_formula').nullable()();
   DateTimeColumn get date => dateTime()();
   DateTimeColumn get createdAt => dateTime().named('created_at')();
   DateTimeColumn get updatedAt => dateTime().named('updated_at')();

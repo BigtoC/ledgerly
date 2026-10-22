@@ -2162,6 +2162,17 @@ class $TransactionsTable extends Transactions
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _amountFormulaMeta = const VerificationMeta(
+    'amountFormula',
+  );
+  @override
+  late final GeneratedColumn<String> amountFormula = GeneratedColumn<String>(
+    'amount_formula',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _dateMeta = const VerificationMeta('date');
   @override
   late final GeneratedColumn<DateTime> date = GeneratedColumn<DateTime>(
@@ -2201,6 +2212,7 @@ class $TransactionsTable extends Transactions
     categoryId,
     accountId,
     memo,
+    amountFormula,
     date,
     createdAt,
     updatedAt,
@@ -2261,6 +2273,15 @@ class $TransactionsTable extends Transactions
         memo.isAcceptableOrUnknown(data['memo']!, _memoMeta),
       );
     }
+    if (data.containsKey('amount_formula')) {
+      context.handle(
+        _amountFormulaMeta,
+        amountFormula.isAcceptableOrUnknown(
+          data['amount_formula']!,
+          _amountFormulaMeta,
+        ),
+      );
+    }
     if (data.containsKey('date')) {
       context.handle(
         _dateMeta,
@@ -2318,6 +2339,10 @@ class $TransactionsTable extends Transactions
         DriftSqlType.string,
         data['${effectivePrefix}memo'],
       ),
+      amountFormula: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}amount_formula'],
+      ),
       date: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}date'],
@@ -2350,6 +2375,12 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
   final int categoryId;
   final int accountId;
   final String? memo;
+
+  /// Keypad expression that produced `amount_minor_units`, e.g.
+  /// `3.5+10.5+11+3`. Canonical ASCII (`.` decimal, `+ - * /`), evaluated
+  /// left to right. Null when the amount was typed without an operator.
+  /// Added in schema v6.
+  final String? amountFormula;
   final DateTime date;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -2360,6 +2391,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     required this.categoryId,
     required this.accountId,
     this.memo,
+    this.amountFormula,
     required this.date,
     required this.createdAt,
     required this.updatedAt,
@@ -2375,6 +2407,9 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     if (!nullToAbsent || memo != null) {
       map['memo'] = Variable<String>(memo);
     }
+    if (!nullToAbsent || amountFormula != null) {
+      map['amount_formula'] = Variable<String>(amountFormula);
+    }
     map['date'] = Variable<DateTime>(date);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -2389,6 +2424,9 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
       categoryId: Value(categoryId),
       accountId: Value(accountId),
       memo: memo == null && nullToAbsent ? const Value.absent() : Value(memo),
+      amountFormula: amountFormula == null && nullToAbsent
+          ? const Value.absent()
+          : Value(amountFormula),
       date: Value(date),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -2407,6 +2445,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
       categoryId: serializer.fromJson<int>(json['categoryId']),
       accountId: serializer.fromJson<int>(json['accountId']),
       memo: serializer.fromJson<String?>(json['memo']),
+      amountFormula: serializer.fromJson<String?>(json['amountFormula']),
       date: serializer.fromJson<DateTime>(json['date']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -2422,6 +2461,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
       'categoryId': serializer.toJson<int>(categoryId),
       'accountId': serializer.toJson<int>(accountId),
       'memo': serializer.toJson<String?>(memo),
+      'amountFormula': serializer.toJson<String?>(amountFormula),
       'date': serializer.toJson<DateTime>(date),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -2435,6 +2475,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     int? categoryId,
     int? accountId,
     Value<String?> memo = const Value.absent(),
+    Value<String?> amountFormula = const Value.absent(),
     DateTime? date,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -2445,6 +2486,9 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     categoryId: categoryId ?? this.categoryId,
     accountId: accountId ?? this.accountId,
     memo: memo.present ? memo.value : this.memo,
+    amountFormula: amountFormula.present
+        ? amountFormula.value
+        : this.amountFormula,
     date: date ?? this.date,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -2461,6 +2505,9 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
           : this.categoryId,
       accountId: data.accountId.present ? data.accountId.value : this.accountId,
       memo: data.memo.present ? data.memo.value : this.memo,
+      amountFormula: data.amountFormula.present
+          ? data.amountFormula.value
+          : this.amountFormula,
       date: data.date.present ? data.date.value : this.date,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -2476,6 +2523,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
           ..write('categoryId: $categoryId, ')
           ..write('accountId: $accountId, ')
           ..write('memo: $memo, ')
+          ..write('amountFormula: $amountFormula, ')
           ..write('date: $date, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -2491,6 +2539,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     categoryId,
     accountId,
     memo,
+    amountFormula,
     date,
     createdAt,
     updatedAt,
@@ -2505,6 +2554,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
           other.categoryId == this.categoryId &&
           other.accountId == this.accountId &&
           other.memo == this.memo &&
+          other.amountFormula == this.amountFormula &&
           other.date == this.date &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
@@ -2517,6 +2567,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
   final Value<int> categoryId;
   final Value<int> accountId;
   final Value<String?> memo;
+  final Value<String?> amountFormula;
   final Value<DateTime> date;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -2527,6 +2578,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     this.categoryId = const Value.absent(),
     this.accountId = const Value.absent(),
     this.memo = const Value.absent(),
+    this.amountFormula = const Value.absent(),
     this.date = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -2538,6 +2590,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     required int categoryId,
     required int accountId,
     this.memo = const Value.absent(),
+    this.amountFormula = const Value.absent(),
     required DateTime date,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -2555,6 +2608,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     Expression<int>? categoryId,
     Expression<int>? accountId,
     Expression<String>? memo,
+    Expression<String>? amountFormula,
     Expression<DateTime>? date,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -2566,6 +2620,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
       if (categoryId != null) 'category_id': categoryId,
       if (accountId != null) 'account_id': accountId,
       if (memo != null) 'memo': memo,
+      if (amountFormula != null) 'amount_formula': amountFormula,
       if (date != null) 'date': date,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -2579,6 +2634,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     Value<int>? categoryId,
     Value<int>? accountId,
     Value<String?>? memo,
+    Value<String?>? amountFormula,
     Value<DateTime>? date,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
@@ -2590,6 +2646,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
       categoryId: categoryId ?? this.categoryId,
       accountId: accountId ?? this.accountId,
       memo: memo ?? this.memo,
+      amountFormula: amountFormula ?? this.amountFormula,
       date: date ?? this.date,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -2617,6 +2674,9 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     if (memo.present) {
       map['memo'] = Variable<String>(memo.value);
     }
+    if (amountFormula.present) {
+      map['amount_formula'] = Variable<String>(amountFormula.value);
+    }
     if (date.present) {
       map['date'] = Variable<DateTime>(date.value);
     }
@@ -2638,6 +2698,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
           ..write('categoryId: $categoryId, ')
           ..write('accountId: $accountId, ')
           ..write('memo: $memo, ')
+          ..write('amountFormula: $amountFormula, ')
           ..write('date: $date, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -8858,6 +8919,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       required int categoryId,
       required int accountId,
       Value<String?> memo,
+      Value<String?> amountFormula,
       required DateTime date,
       required DateTime createdAt,
       required DateTime updatedAt,
@@ -8870,6 +8932,7 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<int> categoryId,
       Value<int> accountId,
       Value<String?> memo,
+      Value<String?> amountFormula,
       Value<DateTime> date,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -8952,6 +9015,11 @@ class $$TransactionsTableFilterComposer
 
   ColumnFilters<String> get memo => $composableBuilder(
     column: $table.memo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get amountFormula => $composableBuilder(
+    column: $table.amountFormula,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9064,6 +9132,11 @@ class $$TransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get amountFormula => $composableBuilder(
+    column: $table.amountFormula,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get date => $composableBuilder(
     column: $table.date,
     builder: (column) => ColumnOrderings(column),
@@ -9168,6 +9241,11 @@ class $$TransactionsTableAnnotationComposer
 
   GeneratedColumn<String> get memo =>
       $composableBuilder(column: $table.memo, builder: (column) => column);
+
+  GeneratedColumn<String> get amountFormula => $composableBuilder(
+    column: $table.amountFormula,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get date =>
       $composableBuilder(column: $table.date, builder: (column) => column);
@@ -9286,6 +9364,7 @@ class $$TransactionsTableTableManager
                 Value<int> categoryId = const Value.absent(),
                 Value<int> accountId = const Value.absent(),
                 Value<String?> memo = const Value.absent(),
+                Value<String?> amountFormula = const Value.absent(),
                 Value<DateTime> date = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -9296,6 +9375,7 @@ class $$TransactionsTableTableManager
                 categoryId: categoryId,
                 accountId: accountId,
                 memo: memo,
+                amountFormula: amountFormula,
                 date: date,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -9308,6 +9388,7 @@ class $$TransactionsTableTableManager
                 required int categoryId,
                 required int accountId,
                 Value<String?> memo = const Value.absent(),
+                Value<String?> amountFormula = const Value.absent(),
                 required DateTime date,
                 required DateTime createdAt,
                 required DateTime updatedAt,
@@ -9318,6 +9399,7 @@ class $$TransactionsTableTableManager
                 categoryId: categoryId,
                 accountId: accountId,
                 memo: memo,
+                amountFormula: amountFormula,
                 date: date,
                 createdAt: createdAt,
                 updatedAt: updatedAt,

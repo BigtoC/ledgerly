@@ -217,6 +217,7 @@ void main() {
     int? categoryId,
     int? accountId,
     String? memo,
+    String? amountFormula,
   }) {
     return Transaction(
       id: 0,
@@ -226,6 +227,7 @@ void main() {
       accountId: accountId ?? fixtures.accountId,
       date: date ?? frozenNow,
       memo: memo,
+      amountFormula: amountFormula,
       // Placeholders; repo overwrites on insert.
       createdAt: DateTime.utc(0),
       updatedAt: DateTime.utc(0),
@@ -256,6 +258,36 @@ void main() {
       final inserted = await txRepo.save(sampleTx(memo: null));
       final fetched = await txRepo.getById(inserted.id);
       expect(fetched!.memo, isNull);
+    });
+
+    test('T-formula-01: amountFormula round-trips on insert', () async {
+      final inserted = await txRepo.save(
+        sampleTx(amount: 2800, amountFormula: '3.5+10.5+11+3'),
+      );
+      expect(inserted.amountFormula, '3.5+10.5+11+3');
+      final fetched = await txRepo.getById(inserted.id);
+      expect(fetched!.amountFormula, '3.5+10.5+11+3');
+    });
+
+    test('T-formula-02: amountFormula defaults to null', () async {
+      final inserted = await txRepo.save(sampleTx());
+      final fetched = await txRepo.getById(inserted.id);
+      expect(fetched!.amountFormula, isNull);
+    });
+
+    test('T-formula-03: update can replace and clear amountFormula', () async {
+      final inserted = await txRepo.save(
+        sampleTx(amount: 300, amountFormula: '1+2'),
+      );
+      final replaced = await txRepo.save(
+        inserted.copyWith(amountMinorUnits: 600, amountFormula: '1+2+3'),
+      );
+      expect(replaced.amountFormula, '1+2+3');
+      final cleared = await txRepo.save(
+        replaced.copyWith(amountMinorUnits: 500, amountFormula: null),
+      );
+      expect(cleared.amountFormula, isNull);
+      expect((await txRepo.getById(inserted.id))!.amountFormula, isNull);
     });
   });
 

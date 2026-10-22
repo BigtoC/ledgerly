@@ -556,6 +556,7 @@ final class DriftTransactionRepository implements TransactionRepository {
             categoryId: row.categoryId,
             accountId: row.accountId,
             memo: row.memo,
+            amountFormula: row.amountFormula,
             date: row.date,
             createdAt: row.createdAt,
             updatedAt: row.updatedAt,
@@ -589,6 +590,8 @@ final class DriftTransactionRepository implements TransactionRepository {
       categoryId: Value(tx.categoryId),
       accountId: Value(tx.accountId),
       memo: tx.memo == null ? const Value.absent() : Value(tx.memo),
+      // Always written so an edit that drops the expression clears it.
+      amountFormula: Value(tx.amountFormula),
       date: Value(tx.date),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),

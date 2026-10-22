@@ -38,6 +38,10 @@ abstract class Transaction with _$Transaction {
     /// Optional free text.
     String? memo,
 
+    /// Keypad expression that produced [amountMinorUnits] (e.g.
+    /// `3.5+10.5+11+3`), or null when the amount was typed directly.
+    String? amountFormula,
+
     /// Repository-populated at insert; immutable across updates (M3).
     required DateTime createdAt,
 
