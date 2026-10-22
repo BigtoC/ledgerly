@@ -7,7 +7,7 @@
 #      live in `import_analysis_options.yaml` at the repo root (required
 #      by import_lint ^0.1.6 — do NOT move them back into this file, the
 #      0.1.6 runner will not find them). Runs via `dart run import_lint`,
-#      wired into CI alongside `flutter analyze`.
+#      wired into CI alongside `dart analyze --fatal-infos`.
 #
 # Generated code is excluded; every other file is analyzed.
 
@@ -49,8 +49,10 @@ analyzer:
 # and 3.1.8 (analyzer 13) hang `dart analyze`. A plugin that fails to
 # resolve is skipped without failing the run, so after changing this,
 # check that `dart analyze` prints no "An error occurred while executing
-# an analyzer plugin" message. Its warnings show up in `dart analyze`, not
-# in `flutter analyze`.
+# an analyzer plugin" message. `dart analyze` waits for the plugin and
+# always reports its warnings; `flutter analyze` does not wait and reports
+# them only some of the time. CI runs `dart analyze --fatal-infos`, so
+# riverpod_lint warnings fail the build.
 plugins:
   riverpod_lint: 3.1.9
 

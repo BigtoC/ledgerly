@@ -231,8 +231,7 @@ understandable, and centered on manual logging.
 ```bash
 flutter pub get                                     # resolve packages
 flutter run                                         # device/emulator
-flutter analyze                                     # analyzer + flutter_lints
-dart analyze                                        # same, plus the riverpod_lint plugin
+dart analyze --fatal-infos                          # analyzer + flutter_lints + riverpod_lint (what CI runs)
 dart run import_lint                                # enforce layer boundaries
 dart run build_runner build --delete-conflicting-outputs
 dart run build_runner watch --delete-conflicting-outputs
@@ -313,12 +312,14 @@ PRD → Architecture for the full table. Headlines:
   allowed inside `core/utils/money_formatter.dart`.
 
 `analysis_options.yaml` wires `flutter_lints` and the `riverpod_lint`
-analysis-server plugin (reported by `dart analyze` and the IDE, not by
-`flutter analyze`). The pinned `import_lint ^0.1.6` reads its layer-boundary
-rules from `import_analysis_options.yaml` at the repo root (separate
-file because that version uses a regex schema, not the 2.x globs). CI
-runs it, but 0.1.6 does not currently enforce the rules: it matches them
-against absolute paths, so no `^lib/...` rule fires, and it always exits 0.
+analysis-server plugin. CI enforces both with `dart analyze --fatal-infos`,
+which waits for the plugin; `flutter analyze` does not wait and reports
+riverpod_lint warnings only some of the time. The pinned
+`import_lint ^0.1.6` reads its layer-boundary rules from
+`import_analysis_options.yaml` at the repo root (separate file because
+that version uses a regex schema, not the 2.x globs). CI runs it, but
+0.1.6 does not currently enforce the rules: it matches them against
+absolute paths, so no `^lib/...` rule fires, and it always exits 0.
 Review is what keeps the layer boundaries today.
 
 ## Contributing

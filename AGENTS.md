@@ -107,12 +107,12 @@ Detailed agent-facing rules live under [`docs/architecture/`](docs/architecture/
 
 ## Commands and workflows
 
-> When verifying changes, run `dart format .` before any `flutter test` or `flutter analyze` command.
+> When verifying changes, run `dart format .` before any `flutter test` or `dart analyze` command.
 
 - `flutter pub get`
 - `flutter run`
-- `dart format .` (run before `flutter test` or `flutter analyze` whenever verifying changes)
-- `flutter analyze` (analyzer + lint rules; `riverpod_lint` is an analysis-server plugin configured under `plugins:` in `analysis_options.yaml`, and its diagnostics show in `dart analyze` and the IDE, not in `flutter analyze`)
+- `dart format .` (run before `flutter test` or `dart analyze` whenever verifying changes)
+- `dart analyze --fatal-infos` (analyzer + lint rules, the same check CI runs; `riverpod_lint` is an analysis-server plugin configured under `plugins:` in `analysis_options.yaml`. `dart analyze` waits for it and always reports its diagnostics; `flutter analyze` does not wait and reports them only some of the time)
 - `dart run import_lint` (reads the regex rules in the root `import_analysis_options.yaml`)
 - `dart run build_runner build --delete-conflicting-outputs`
 - `dart run build_runner watch --delete-conflicting-outputs`
@@ -124,7 +124,7 @@ Code generation is required whenever a `@freezed`, `@riverpod`, or Drift `@Drift
 
 ### CI workflows
 
-- `.github/workflows/check.yml` — package resolution → `dart run import_lint` → codegen → format check → `flutter analyze` → `flutter test`, then builds Android APKs on pushes/PRs to `main` (signed release if signing secrets are present, otherwise debug), passing `FOREX_API_URL` via `--dart-define`.
+- `.github/workflows/check.yml` — package resolution → `dart run import_lint` → codegen → format check → `dart analyze --fatal-infos` (enforces `riverpod_lint`) → `flutter test`, then builds Android APKs on pushes/PRs to `main` (signed release if signing secrets are present, otherwise debug), passing `FOREX_API_URL` via `--dart-define`.
 - `.github/workflows/android-release.yml` — builds split signed release APKs on version tags, generates SHA-256 checksums, uploads APK assets to the GitHub Release.
 - `.github/workflows/github-pages.yml` — builds and deploys the Astro site from `site/`. `.github/workflows/site-check.yml` runs Yarn install/audit/test/check/build whenever site-related files change.
 - `.github/workflows/ios-nightly.yml` — iOS debug build (`flutter build ios --no-codesign --debug`) that also checks `sqlite3.framework` is embedded. Runs on PRs to `main` that touch `pubspec.yaml`, `pubspec.lock` or `ios/`, and via `workflow_dispatch`; not a scheduled nightly.
