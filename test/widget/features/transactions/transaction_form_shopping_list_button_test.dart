@@ -123,25 +123,19 @@ void main() {
     slRepo = _MockShoppingListRepository();
 
     when(() => prefs.getDefaultAccountId()).thenAnswer((_) async => 1);
-    when(
-      () => accountRepo.getLastUsedActiveAccount(),
-    ).thenAnswer((_) async => null);
+    when(() => accountRepo.getLastUsedActiveAccount())
+        .thenAnswer((_) async => null);
     when(() => accountRepo.getById(1)).thenAnswer((_) async => _account);
-    when(
-      () => accountRepo.getById(5),
-    ).thenAnswer((_) async => _archivedAccount);
-    when(
-      () => accountRepo.watchAll(includeArchived: false),
-    ).thenAnswer((_) => Stream.value(const [_account]));
-    when(
-      () => categoryRepo.getById(10),
-    ).thenAnswer((_) async => _expenseCategory);
-    when(
-      () => categoryRepo.getById(11),
-    ).thenAnswer((_) async => _archivedCategory);
-    when(
-      () => currencyRepo.watchAll(includeTokens: false),
-    ).thenAnswer((_) => Stream.value(const [_usd]));
+    when(() => accountRepo.getById(5))
+        .thenAnswer((_) async => _archivedAccount);
+    when(() => accountRepo.watchAll(includeArchived: false))
+        .thenAnswer((_) => Stream.value(const [_account]));
+    when(() => categoryRepo.getById(10))
+        .thenAnswer((_) async => _expenseCategory);
+    when(() => categoryRepo.getById(11))
+        .thenAnswer((_) async => _archivedCategory);
+    when(() => currencyRepo.watchAll(includeTokens: false))
+        .thenAnswer((_) => Stream.value(const [_usd]));
     when(() => currencyRepo.getByCode('USD')).thenAnswer((_) async => _usd);
   });
 
@@ -286,9 +280,8 @@ void main() {
         draftCurrencyCode: 'USD',
       );
       when(() => slRepo.getById(89)).thenAnswer((_) async => draft);
-      when(
-        () => accountRepo.watchAll(includeArchived: false),
-      ).thenAnswer((_) => Stream.value(const <Account>[]));
+      when(() => accountRepo.watchAll(includeArchived: false))
+          .thenAnswer((_) => Stream.value(const <Account>[]));
       when(() => accountRepo.getById(99)).thenAnswer(
         (_) async => const Account(
           id: 99,

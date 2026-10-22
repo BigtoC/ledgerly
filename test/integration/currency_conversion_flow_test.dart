@@ -97,9 +97,8 @@ void main() {
       defaultCurrencyController.add('GBP');
       await Future<void>.delayed(const Duration(milliseconds: 200));
 
-      verify(
-        () => mockService.fetchRates(any()),
-      ).called(greaterThanOrEqualTo(1));
+      verify(() => mockService.fetchRates(any()))
+          .called(greaterThanOrEqualTo(1));
       repo.dispose();
     });
 

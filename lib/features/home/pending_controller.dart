@@ -143,11 +143,7 @@ class PendingController extends _$PendingController {
 // ---------- Internal stream composition ----------
 
 class _Composer {
-  _Composer({
-    required PendingTransactionRepository repo,
-    required PendingSkipScheduled? Function() skipScheduledGetter,
-  }) : _repo = repo,
-       _skipScheduledGetter = skipScheduledGetter {
+  _Composer({required this._repo, required this._skipScheduledGetter}) {
     _out = StreamController<PendingState>.broadcast(
       onListen: _start,
       onCancel: _stop,

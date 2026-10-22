@@ -126,11 +126,7 @@ class ShoppingListController extends _$ShoppingListController {
 /// Owns the upstream subscription and maps it into a single
 /// [ShoppingListState] broadcast stream.
 class _Composer {
-  _Composer({
-    required ShoppingListRepository repo,
-    required ShoppingListPendingDelete? Function() pendingDeleteGetter,
-  }) : _repo = repo,
-       _pendingDeleteGetter = pendingDeleteGetter {
+  _Composer({required this._repo, required this._pendingDeleteGetter}) {
     _out = StreamController<ShoppingListState>.broadcast(
       onListen: _start,
       onCancel: _stop,

@@ -372,9 +372,8 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       result = await submit();
     } catch (_) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(failureMessage)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(failureMessage)));
       return;
     }
     if (result == null) return;
@@ -432,9 +431,8 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       saved = await controller.save();
     } catch (_) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.txSaveFailedSnackbar)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.txSaveFailedSnackbar)));
       return;
     }
     if (saved == null) {
@@ -479,16 +477,14 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       removed = await controller.deleteExisting();
     } catch (_) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.txDeleteFailedSnackbar)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.txDeleteFailedSnackbar)));
       return;
     }
     if (!context.mounted) return;
     if (!removed) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.txTransactionNotFound)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.txTransactionNotFound)));
     }
     context.pop();
   }

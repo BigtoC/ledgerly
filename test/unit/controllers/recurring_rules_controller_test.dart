@@ -130,9 +130,8 @@ void main() {
     });
 
     test('RRC04: pauseRule calls setActive(active: false)', () async {
-      when(
-        () => repo.setActive(any(), active: any(named: 'active')),
-      ).thenAnswer((_) async {});
+      when(() => repo.setActive(any(), active: any(named: 'active')))
+          .thenAnswer((_) async {});
 
       final container = makeContainer();
       addTearDown(container.dispose);
@@ -150,9 +149,8 @@ void main() {
 
     test('RRC05: resumeRule calls setActive(active: true)', () async {
       final resumedRule = _rule(id: 1, isActive: true);
-      when(
-        () => repo.setActive(any(), active: any(named: 'active')),
-      ).thenAnswer((_) async {});
+      when(() => repo.setActive(any(), active: any(named: 'active')))
+          .thenAnswer((_) async {});
       when(() => repo.getById(1)).thenAnswer((_) async => resumedRule);
 
       final container = makeContainer();

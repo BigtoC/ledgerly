@@ -82,13 +82,11 @@ void main() {
       // Default: no successful date math required for tests that don't
       // exercise the loop body. `advanceDateByFrequency` is overridden
       // per-test where needed.
-      when(
-        () => recurringRepo.advanceAfterGeneration(any(), any()),
-      ).thenAnswer((_) async {});
+      when(() => recurringRepo.advanceAfterGeneration(any(), any()))
+          .thenAnswer((_) async {});
       when(() => recurringRepo.clearFailure(any())).thenAnswer((_) async {});
-      when(
-        () => recurringRepo.recordFailure(any(), any(), any()),
-      ).thenAnswer((_) async {});
+      when(() => recurringRepo.recordFailure(any(), any(), any()))
+          .thenAnswer((_) async {});
     });
 
     tearDown(() async => db.close());
@@ -99,19 +97,16 @@ void main() {
         final today = DateTime(2026, 5, 15);
         final rule = _rule(id: 1, nextDueDate: DateTime(2026, 5, 15));
 
-        when(
-          () => recurringRepo.findDue(any()),
-        ).thenAnswer((_) async => [rule]);
-        when(
-          () => recurringRepo.advanceDateByFrequency(any(), any()),
-        ).thenAnswer((invocation) {
-          final r = invocation.positionalArguments[0] as RecurringRule;
-          final c = invocation.positionalArguments[1] as DateTime;
-          return _addMonths(DateTime(c.year, c.month, r.dayOfMonth!), 1);
-        });
-        when(
-          () => pendingRepo.existsForRuleAndDate(any(), any()),
-        ).thenAnswer((_) async => false);
+        when(() => recurringRepo.findDue(any()))
+            .thenAnswer((_) async => [rule]);
+        when(() => recurringRepo.advanceDateByFrequency(any(), any()))
+            .thenAnswer((invocation) {
+              final r = invocation.positionalArguments[0] as RecurringRule;
+              final c = invocation.positionalArguments[1] as DateTime;
+              return _addMonths(DateTime(c.year, c.month, r.dayOfMonth!), 1);
+            });
+        when(() => pendingRepo.existsForRuleAndDate(any(), any()))
+            .thenAnswer((_) async => false);
         when(
           () => pendingRepo.insert(
             source: any(named: 'source'),
@@ -156,15 +151,13 @@ void main() {
       final rule = _rule(id: 1, nextDueDate: DateTime(2026, 5, 15));
 
       when(() => recurringRepo.findDue(any())).thenAnswer((_) async => [rule]);
-      when(() => recurringRepo.advanceDateByFrequency(any(), any())).thenAnswer(
-        (invocation) {
-          final c = invocation.positionalArguments[1] as DateTime;
-          return DateTime(c.year, c.month + 1, c.day);
-        },
-      );
-      when(
-        () => pendingRepo.existsForRuleAndDate(any(), any()),
-      ).thenAnswer((_) async => true); // Already exists.
+      when(() => recurringRepo.advanceDateByFrequency(any(), any()))
+          .thenAnswer((invocation) {
+            final c = invocation.positionalArguments[1] as DateTime;
+            return DateTime(c.year, c.month + 1, c.day);
+          });
+      when(() => pendingRepo.existsForRuleAndDate(any(), any()))
+          .thenAnswer((_) async => true); // Already exists.
 
       await useCase.execute(clock: () => today);
 
@@ -198,12 +191,11 @@ void main() {
       );
 
       when(() => recurringRepo.findDue(any())).thenAnswer((_) async => [rule]);
-      when(() => recurringRepo.advanceDateByFrequency(any(), any())).thenAnswer(
-        (invocation) {
-          final c = invocation.positionalArguments[1] as DateTime;
-          return DateTime(c.year, c.month, c.day + 1);
-        },
-      );
+      when(() => recurringRepo.advanceDateByFrequency(any(), any()))
+          .thenAnswer((invocation) {
+            final c = invocation.positionalArguments[1] as DateTime;
+            return DateTime(c.year, c.month, c.day + 1);
+          });
       when(
         () => recurringRepo.fastForwardToRecent(
           any(),
@@ -211,9 +203,8 @@ void main() {
           safetyCap: any(named: 'safetyCap'),
         ),
       ).thenReturn(today);
-      when(
-        () => pendingRepo.existsForRuleAndDate(any(), any()),
-      ).thenAnswer((_) async => false);
+      when(() => pendingRepo.existsForRuleAndDate(any(), any()))
+          .thenAnswer((_) async => false);
       when(
         () => pendingRepo.insert(
           source: any(named: 'source'),
@@ -280,22 +271,18 @@ void main() {
         nextDueDate: DateTime(2026, 5, 15),
       );
 
-      when(
-        () => recurringRepo.findDue(any()),
-      ).thenAnswer((_) async => [ruleA, ruleB]);
-      when(() => recurringRepo.advanceDateByFrequency(any(), any())).thenAnswer(
-        (invocation) {
-          final c = invocation.positionalArguments[1] as DateTime;
-          return DateTime(c.year, c.month + 1, c.day);
-        },
-      );
+      when(() => recurringRepo.findDue(any()))
+          .thenAnswer((_) async => [ruleA, ruleB]);
+      when(() => recurringRepo.advanceDateByFrequency(any(), any()))
+          .thenAnswer((invocation) {
+            final c = invocation.positionalArguments[1] as DateTime;
+            return DateTime(c.year, c.month + 1, c.day);
+          });
       // Rule 1 throws; rule 2 succeeds.
-      when(
-        () => pendingRepo.existsForRuleAndDate(1, any()),
-      ).thenThrow(Exception('disk full'));
-      when(
-        () => pendingRepo.existsForRuleAndDate(2, any()),
-      ).thenAnswer((_) async => false);
+      when(() => pendingRepo.existsForRuleAndDate(1, any()))
+          .thenThrow(Exception('disk full'));
+      when(() => pendingRepo.existsForRuleAndDate(2, any()))
+          .thenAnswer((_) async => false);
       when(
         () => pendingRepo.insert(
           source: any(named: 'source'),

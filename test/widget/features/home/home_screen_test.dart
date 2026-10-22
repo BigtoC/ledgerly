@@ -121,12 +121,10 @@ void main() {
     slRepo = _MockShoppingListRepo();
     pendingRepo = _MockPendingRepo();
     when(() => slRepo.watchCount()).thenAnswer((_) => Stream.value(0));
-    when(
-      () => pendingRepo.watchAll(),
-    ).thenAnswer((_) => Stream.value(const []));
-    when(
-      () => pendingRepo.approve(any()),
-    ).thenAnswer((_) async => throw UnimplementedError());
+    when(() => pendingRepo.watchAll())
+        .thenAnswer((_) => Stream.value(const []));
+    when(() => pendingRepo.approve(any()))
+        .thenAnswer((_) async => throw UnimplementedError());
     when(() => pendingRepo.reject(any())).thenAnswer((_) async {});
     dayCtrl = StreamController.broadcast();
     activityCtrl = StreamController.broadcast();
@@ -137,24 +135,18 @@ void main() {
     currenciesCtrl = StreamController.broadcast();
 
     when(() => txRepo.watchByDay(any())).thenAnswer((_) => dayCtrl.stream);
-    when(
-      () => txRepo.watchDaysWithActivity(),
-    ).thenAnswer((_) => activityCtrl.stream);
-    when(
-      () => txRepo.watchDailyTotalsByType(any()),
-    ).thenAnswer((_) => todayTotalsCtrl.stream);
-    when(
-      () => txRepo.watchMonthNetByCurrency(any()),
-    ).thenAnswer((_) => monthNetCtrl.stream);
-    when(
-      () => catRepo.watchAll(includeArchived: true),
-    ).thenAnswer((_) => categoriesCtrl.stream);
-    when(
-      () => accRepo.watchAll(includeArchived: true),
-    ).thenAnswer((_) => accountsCtrl.stream);
-    when(
-      () => curRepo.watchAll(includeTokens: true),
-    ).thenAnswer((_) => currenciesCtrl.stream);
+    when(() => txRepo.watchDaysWithActivity())
+        .thenAnswer((_) => activityCtrl.stream);
+    when(() => txRepo.watchDailyTotalsByType(any()))
+        .thenAnswer((_) => todayTotalsCtrl.stream);
+    when(() => txRepo.watchMonthNetByCurrency(any()))
+        .thenAnswer((_) => monthNetCtrl.stream);
+    when(() => catRepo.watchAll(includeArchived: true))
+        .thenAnswer((_) => categoriesCtrl.stream);
+    when(() => accRepo.watchAll(includeArchived: true))
+        .thenAnswer((_) => accountsCtrl.stream);
+    when(() => curRepo.watchAll(includeTokens: true))
+        .thenAnswer((_) => currenciesCtrl.stream);
   });
 
   tearDown(() async {
@@ -183,9 +175,8 @@ void main() {
         builder: textScale == null
             ? null
             : (context, child) => MediaQuery(
-                data: MediaQuery.of(
-                  context,
-                ).copyWith(textScaler: TextScaler.linear(textScale)),
+                data: MediaQuery.of(context)
+                    .copyWith(textScaler: TextScaler.linear(textScale)),
                 child: child!,
               ),
         routerConfig: GoRouter(
@@ -596,9 +587,8 @@ void main() {
     'WH12: timed delete keeps the row hidden until slow delete completes',
     (tester) async {
       final deleteCompleter = Completer<bool>();
-      when(
-        () => txRepo.delete(any()),
-      ).thenAnswer((_) => deleteCompleter.future);
+      when(() => txRepo.delete(any()))
+          .thenAnswer((_) => deleteCompleter.future);
 
       await tester.binding.setSurfaceSize(const Size(400, 800));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -640,9 +630,8 @@ void main() {
   testWidgets(
     'WH12b: timed delete failure restores the row and shows a generic snackbar',
     (tester) async {
-      when(
-        () => txRepo.delete(any()),
-      ).thenAnswer((_) async => throw StateError('boom'));
+      when(() => txRepo.delete(any()))
+          .thenAnswer((_) async => throw StateError('boom'));
 
       await tester.binding.setSurfaceSize(const Size(400, 800));
       addTearDown(() => tester.binding.setSurfaceSize(null));

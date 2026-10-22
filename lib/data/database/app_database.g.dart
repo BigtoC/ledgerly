@@ -6033,28 +6033,26 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   ];
 }
 
-typedef $$CurrenciesTableCreateCompanionBuilder =
-    CurrenciesCompanion Function({
-      required String code,
-      required int decimals,
-      Value<String?> symbol,
-      Value<String?> nameL10nKey,
-      Value<String?> customName,
-      Value<bool> isToken,
-      Value<int?> sortOrder,
-      Value<int> rowid,
-    });
-typedef $$CurrenciesTableUpdateCompanionBuilder =
-    CurrenciesCompanion Function({
-      Value<String> code,
-      Value<int> decimals,
-      Value<String?> symbol,
-      Value<String?> nameL10nKey,
-      Value<String?> customName,
-      Value<bool> isToken,
-      Value<int?> sortOrder,
-      Value<int> rowid,
-    });
+typedef $$CurrenciesTableCreateCompanionBuilder = CurrenciesCompanion Function({
+  required String code,
+  required int decimals,
+  Value<String?> symbol,
+  Value<String?> nameL10nKey,
+  Value<String?> customName,
+  Value<bool> isToken,
+  Value<int?> sortOrder,
+  Value<int> rowid,
+});
+typedef $$CurrenciesTableUpdateCompanionBuilder = CurrenciesCompanion Function({
+  Value<String> code,
+  Value<int> decimals,
+  Value<String?> symbol,
+  Value<String?> nameL10nKey,
+  Value<String?> customName,
+  Value<bool> isToken,
+  Value<int?> sortOrder,
+  Value<int> rowid,
+});
 
 final class $$CurrenciesTableReferences
     extends BaseReferences<_$AppDatabase, $CurrenciesTable, Currency> {
@@ -6868,28 +6866,26 @@ typedef $$CurrenciesTableProcessedTableManager =
         bool pendingTransactionsRefs,
       })
     >;
-typedef $$CategoriesTableCreateCompanionBuilder =
-    CategoriesCompanion Function({
-      Value<int> id,
-      Value<String?> l10nKey,
-      Value<String?> customName,
-      required String icon,
-      required int color,
-      required String type,
-      Value<int?> sortOrder,
-      Value<bool> isArchived,
-    });
-typedef $$CategoriesTableUpdateCompanionBuilder =
-    CategoriesCompanion Function({
-      Value<int> id,
-      Value<String?> l10nKey,
-      Value<String?> customName,
-      Value<String> icon,
-      Value<int> color,
-      Value<String> type,
-      Value<int?> sortOrder,
-      Value<bool> isArchived,
-    });
+typedef $$CategoriesTableCreateCompanionBuilder = CategoriesCompanion Function({
+  Value<int> id,
+  Value<String?> l10nKey,
+  Value<String?> customName,
+  required String icon,
+  required int color,
+  required String type,
+  Value<int?> sortOrder,
+  Value<bool> isArchived,
+});
+typedef $$CategoriesTableUpdateCompanionBuilder = CategoriesCompanion Function({
+  Value<int> id,
+  Value<String?> l10nKey,
+  Value<String?> customName,
+  Value<String> icon,
+  Value<int> color,
+  Value<String> type,
+  Value<int?> sortOrder,
+  Value<bool> isArchived,
+});
 
 final class $$CategoriesTableReferences
     extends BaseReferences<_$AppDatabase, $CategoriesTable, CategoryRow> {
@@ -7929,19 +7925,15 @@ class $$AccountTypesTableTableManager
                         >
                       >(state) {
                         if (defaultCurrency) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.defaultCurrency,
-                                    referencedTable:
-                                        $$AccountTypesTableReferences
-                                            ._defaultCurrencyTable(db),
-                                    referencedColumn:
-                                        $$AccountTypesTableReferences
-                                            ._defaultCurrencyTable(db)
-                                            .code,
-                                  )
-                                  as T;
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.defaultCurrency,
+                            referencedTable: $$AccountTypesTableReferences
+                                ._defaultCurrencyTable(db),
+                            referencedColumn: $$AccountTypesTableReferences
+                                ._defaultCurrencyTable(db)
+                                .code,
+                          ) as T;
                         }
 
                         return state;
@@ -7991,30 +7983,28 @@ typedef $$AccountTypesTableProcessedTableManager =
       AccountTypeRow,
       PrefetchHooks Function({bool defaultCurrency, bool accountsRefs})
     >;
-typedef $$AccountsTableCreateCompanionBuilder =
-    AccountsCompanion Function({
-      Value<int> id,
-      required String name,
-      required int accountTypeId,
-      required String currency,
-      Value<int> openingBalanceMinorUnits,
-      Value<String?> icon,
-      Value<int?> color,
-      Value<int?> sortOrder,
-      Value<bool> isArchived,
-    });
-typedef $$AccountsTableUpdateCompanionBuilder =
-    AccountsCompanion Function({
-      Value<int> id,
-      Value<String> name,
-      Value<int> accountTypeId,
-      Value<String> currency,
-      Value<int> openingBalanceMinorUnits,
-      Value<String?> icon,
-      Value<int?> color,
-      Value<int?> sortOrder,
-      Value<bool> isArchived,
-    });
+typedef $$AccountsTableCreateCompanionBuilder = AccountsCompanion Function({
+  Value<int> id,
+  required String name,
+  required int accountTypeId,
+  required String currency,
+  Value<int> openingBalanceMinorUnits,
+  Value<String?> icon,
+  Value<int?> color,
+  Value<int?> sortOrder,
+  Value<bool> isArchived,
+});
+typedef $$AccountsTableUpdateCompanionBuilder = AccountsCompanion Function({
+  Value<int> id,
+  Value<String> name,
+  Value<int> accountTypeId,
+  Value<String> currency,
+  Value<int> openingBalanceMinorUnits,
+  Value<String?> icon,
+  Value<int?> color,
+  Value<int?> sortOrder,
+  Value<bool> isArchived,
+});
 
 final class $$AccountsTableReferences
     extends BaseReferences<_$AppDatabase, $AccountsTable, AccountRow> {
@@ -8721,30 +8711,26 @@ class $$AccountsTableTableManager
                         >
                       >(state) {
                         if (accountTypeId) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.accountTypeId,
-                                    referencedTable: $$AccountsTableReferences
-                                        ._accountTypeIdTable(db),
-                                    referencedColumn: $$AccountsTableReferences
-                                        ._accountTypeIdTable(db)
-                                        .id,
-                                  )
-                                  as T;
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.accountTypeId,
+                            referencedTable: $$AccountsTableReferences
+                                ._accountTypeIdTable(db),
+                            referencedColumn: $$AccountsTableReferences
+                                ._accountTypeIdTable(db)
+                                .id,
+                          ) as T;
                         }
                         if (currency) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.currency,
-                                    referencedTable: $$AccountsTableReferences
-                                        ._currencyTable(db),
-                                    referencedColumn: $$AccountsTableReferences
-                                        ._currencyTable(db)
-                                        .code,
-                                  )
-                                  as T;
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.currency,
+                            referencedTable: $$AccountsTableReferences
+                                ._currencyTable(db),
+                            referencedColumn: $$AccountsTableReferences
+                                ._currencyTable(db)
+                                .code,
+                          ) as T;
                         }
 
                         return state;
@@ -9366,49 +9352,37 @@ class $$TransactionsTableTableManager
                         >
                       >(state) {
                         if (currency) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.currency,
-                                    referencedTable:
-                                        $$TransactionsTableReferences
-                                            ._currencyTable(db),
-                                    referencedColumn:
-                                        $$TransactionsTableReferences
-                                            ._currencyTable(db)
-                                            .code,
-                                  )
-                                  as T;
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.currency,
+                            referencedTable: $$TransactionsTableReferences
+                                ._currencyTable(db),
+                            referencedColumn: $$TransactionsTableReferences
+                                ._currencyTable(db)
+                                .code,
+                          ) as T;
                         }
                         if (categoryId) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.categoryId,
-                                    referencedTable:
-                                        $$TransactionsTableReferences
-                                            ._categoryIdTable(db),
-                                    referencedColumn:
-                                        $$TransactionsTableReferences
-                                            ._categoryIdTable(db)
-                                            .id,
-                                  )
-                                  as T;
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.categoryId,
+                            referencedTable: $$TransactionsTableReferences
+                                ._categoryIdTable(db),
+                            referencedColumn: $$TransactionsTableReferences
+                                ._categoryIdTable(db)
+                                .id,
+                          ) as T;
                         }
                         if (accountId) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.accountId,
-                                    referencedTable:
-                                        $$TransactionsTableReferences
-                                            ._accountIdTable(db),
-                                    referencedColumn:
-                                        $$TransactionsTableReferences
-                                            ._accountIdTable(db)
-                                            .id,
-                                  )
-                                  as T;
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.accountId,
+                            referencedTable: $$TransactionsTableReferences
+                                ._accountIdTable(db),
+                            referencedColumn: $$TransactionsTableReferences
+                                ._accountIdTable(db)
+                                .id,
+                          ) as T;
                         }
 
                         return state;
@@ -9540,16 +9514,11 @@ class $$UserPreferencesTableTableManager
               $$UserPreferencesTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $$UserPreferencesTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> key = const Value.absent(),
-                Value<String> value = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => UserPreferencesCompanion(
-                key: key,
-                value: value,
-                rowid: rowid,
-              ),
+          updateCompanionCallback: ({
+            Value<String> key = const Value.absent(),
+            Value<String> value = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) => UserPreferencesCompanion(key: key, value: value, rowid: rowid),
           createCompanionCallback:
               ({
                 required String key,
@@ -10118,49 +10087,37 @@ class $$ShoppingListItemsTableTableManager
                         >
                       >(state) {
                         if (categoryId) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.categoryId,
-                                    referencedTable:
-                                        $$ShoppingListItemsTableReferences
-                                            ._categoryIdTable(db),
-                                    referencedColumn:
-                                        $$ShoppingListItemsTableReferences
-                                            ._categoryIdTable(db)
-                                            .id,
-                                  )
-                                  as T;
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.categoryId,
+                            referencedTable: $$ShoppingListItemsTableReferences
+                                ._categoryIdTable(db),
+                            referencedColumn: $$ShoppingListItemsTableReferences
+                                ._categoryIdTable(db)
+                                .id,
+                          ) as T;
                         }
                         if (accountId) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.accountId,
-                                    referencedTable:
-                                        $$ShoppingListItemsTableReferences
-                                            ._accountIdTable(db),
-                                    referencedColumn:
-                                        $$ShoppingListItemsTableReferences
-                                            ._accountIdTable(db)
-                                            .id,
-                                  )
-                                  as T;
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.accountId,
+                            referencedTable: $$ShoppingListItemsTableReferences
+                                ._accountIdTable(db),
+                            referencedColumn: $$ShoppingListItemsTableReferences
+                                ._accountIdTable(db)
+                                .id,
+                          ) as T;
                         }
                         if (draftCurrencyCode) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.draftCurrencyCode,
-                                    referencedTable:
-                                        $$ShoppingListItemsTableReferences
-                                            ._draftCurrencyCodeTable(db),
-                                    referencedColumn:
-                                        $$ShoppingListItemsTableReferences
-                                            ._draftCurrencyCodeTable(db)
-                                            .code,
-                                  )
-                                  as T;
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.draftCurrencyCode,
+                            referencedTable: $$ShoppingListItemsTableReferences
+                                ._draftCurrencyCodeTable(db),
+                            referencedColumn: $$ShoppingListItemsTableReferences
+                                ._draftCurrencyCodeTable(db)
+                                .code,
+                          ) as T;
                         }
 
                         return state;
@@ -10966,49 +10923,37 @@ class $$RecurringRulesTableTableManager
                         >
                       >(state) {
                         if (currency) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.currency,
-                                    referencedTable:
-                                        $$RecurringRulesTableReferences
-                                            ._currencyTable(db),
-                                    referencedColumn:
-                                        $$RecurringRulesTableReferences
-                                            ._currencyTable(db)
-                                            .code,
-                                  )
-                                  as T;
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.currency,
+                            referencedTable: $$RecurringRulesTableReferences
+                                ._currencyTable(db),
+                            referencedColumn: $$RecurringRulesTableReferences
+                                ._currencyTable(db)
+                                .code,
+                          ) as T;
                         }
                         if (categoryId) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.categoryId,
-                                    referencedTable:
-                                        $$RecurringRulesTableReferences
-                                            ._categoryIdTable(db),
-                                    referencedColumn:
-                                        $$RecurringRulesTableReferences
-                                            ._categoryIdTable(db)
-                                            .id,
-                                  )
-                                  as T;
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.categoryId,
+                            referencedTable: $$RecurringRulesTableReferences
+                                ._categoryIdTable(db),
+                            referencedColumn: $$RecurringRulesTableReferences
+                                ._categoryIdTable(db)
+                                .id,
+                          ) as T;
                         }
                         if (accountId) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.accountId,
-                                    referencedTable:
-                                        $$RecurringRulesTableReferences
-                                            ._accountIdTable(db),
-                                    referencedColumn:
-                                        $$RecurringRulesTableReferences
-                                            ._accountIdTable(db)
-                                            .id,
-                                  )
-                                  as T;
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.accountId,
+                            referencedTable: $$RecurringRulesTableReferences
+                                ._accountIdTable(db),
+                            referencedColumn: $$RecurringRulesTableReferences
+                                ._accountIdTable(db)
+                                .id,
+                          ) as T;
                         }
 
                         return state;
@@ -11846,64 +11791,56 @@ class $$PendingTransactionsTableTableManager
                         >
                       >(state) {
                         if (currency) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.currency,
-                                    referencedTable:
-                                        $$PendingTransactionsTableReferences
-                                            ._currencyTable(db),
-                                    referencedColumn:
-                                        $$PendingTransactionsTableReferences
-                                            ._currencyTable(db)
-                                            .code,
-                                  )
-                                  as T;
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.currency,
+                            referencedTable:
+                                $$PendingTransactionsTableReferences
+                                    ._currencyTable(db),
+                            referencedColumn:
+                                $$PendingTransactionsTableReferences
+                                    ._currencyTable(db)
+                                    .code,
+                          ) as T;
                         }
                         if (categoryId) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.categoryId,
-                                    referencedTable:
-                                        $$PendingTransactionsTableReferences
-                                            ._categoryIdTable(db),
-                                    referencedColumn:
-                                        $$PendingTransactionsTableReferences
-                                            ._categoryIdTable(db)
-                                            .id,
-                                  )
-                                  as T;
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.categoryId,
+                            referencedTable:
+                                $$PendingTransactionsTableReferences
+                                    ._categoryIdTable(db),
+                            referencedColumn:
+                                $$PendingTransactionsTableReferences
+                                    ._categoryIdTable(db)
+                                    .id,
+                          ) as T;
                         }
                         if (accountId) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.accountId,
-                                    referencedTable:
-                                        $$PendingTransactionsTableReferences
-                                            ._accountIdTable(db),
-                                    referencedColumn:
-                                        $$PendingTransactionsTableReferences
-                                            ._accountIdTable(db)
-                                            .id,
-                                  )
-                                  as T;
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.accountId,
+                            referencedTable:
+                                $$PendingTransactionsTableReferences
+                                    ._accountIdTable(db),
+                            referencedColumn:
+                                $$PendingTransactionsTableReferences
+                                    ._accountIdTable(db)
+                                    .id,
+                          ) as T;
                         }
                         if (recurringRuleId) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.recurringRuleId,
-                                    referencedTable:
-                                        $$PendingTransactionsTableReferences
-                                            ._recurringRuleIdTable(db),
-                                    referencedColumn:
-                                        $$PendingTransactionsTableReferences
-                                            ._recurringRuleIdTable(db)
-                                            .id,
-                                  )
-                                  as T;
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.recurringRuleId,
+                            referencedTable:
+                                $$PendingTransactionsTableReferences
+                                    ._recurringRuleIdTable(db),
+                            referencedColumn:
+                                $$PendingTransactionsTableReferences
+                                    ._recurringRuleIdTable(db)
+                                    .id,
+                          ) as T;
                         }
 
                         return state;
@@ -12290,34 +12227,26 @@ class $$ExchangeRatesTableTableManager
                         >
                       >(state) {
                         if (baseCurrency) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.baseCurrency,
-                                    referencedTable:
-                                        $$ExchangeRatesTableReferences
-                                            ._baseCurrencyTable(db),
-                                    referencedColumn:
-                                        $$ExchangeRatesTableReferences
-                                            ._baseCurrencyTable(db)
-                                            .code,
-                                  )
-                                  as T;
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.baseCurrency,
+                            referencedTable: $$ExchangeRatesTableReferences
+                                ._baseCurrencyTable(db),
+                            referencedColumn: $$ExchangeRatesTableReferences
+                                ._baseCurrencyTable(db)
+                                .code,
+                          ) as T;
                         }
                         if (quoteCurrency) {
-                          state =
-                              state.withJoin(
-                                    currentTable: table,
-                                    currentColumn: table.quoteCurrency,
-                                    referencedTable:
-                                        $$ExchangeRatesTableReferences
-                                            ._quoteCurrencyTable(db),
-                                    referencedColumn:
-                                        $$ExchangeRatesTableReferences
-                                            ._quoteCurrencyTable(db)
-                                            .code,
-                                  )
-                                  as T;
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.quoteCurrency,
+                            referencedTable: $$ExchangeRatesTableReferences
+                                ._quoteCurrencyTable(db),
+                            referencedColumn: $$ExchangeRatesTableReferences
+                                ._quoteCurrencyTable(db)
+                                .code,
+                          ) as T;
                         }
 
                         return state;

@@ -288,19 +288,16 @@ void main() {
       expect(fetched!.openingBalanceMinorUnits, big);
     });
 
-    test(
-      'AC07: archive hides row from default watchAll; includeArchived: true shows it',
-      () async {
-        final id = await repo.save(buildCashAccount(name: 'Cash'));
+    test('AC07: archive hides row from default watchAll; includeArchived: true shows it', () async {
+      final id = await repo.save(buildCashAccount(name: 'Cash'));
 
-        await repo.archive(id);
+      await repo.archive(id);
 
-        expect(await repo.watchAll().first, isEmpty);
-        final archived = await repo.watchAll(includeArchived: true).first;
-        expect(archived.map((a) => a.id), [id]);
-        expect(archived.single.isArchived, isTrue);
-      },
-    );
+      expect(await repo.watchAll().first, isEmpty);
+      final archived = await repo.watchAll(includeArchived: true).first;
+      expect(archived.map((a) => a.id), [id]);
+      expect(archived.single.isArchived, isTrue);
+    });
 
     test('AC09: delete with no referencing transactions → succeeds', () async {
       final id = await repo.save(buildCashAccount());
@@ -533,26 +530,20 @@ void main() {
 
     // watchBalanceByCurrency — Chunk 5.
     group('watchBalanceByCurrency', () {
-      test(
-        'ACB01: empty account (no transactions, opening balance 0) emits empty map',
-        () async {
-          final id = await repo.save(buildCashAccount());
+      test('ACB01: empty account (no transactions, opening balance 0) emits empty map', () async {
+        final id = await repo.save(buildCashAccount());
 
-          // Zero opening balance with no transactions → zero for USD → suppressed.
-          expect(await repo.watchBalanceByCurrency(id).first, isEmpty);
-        },
-      );
+        // Zero opening balance with no transactions → zero for USD → suppressed.
+        expect(await repo.watchBalanceByCurrency(id).first, isEmpty);
+      });
 
-      test(
-        'ACB02: only opening balance → own-currency group includes opening balance',
-        () async {
-          final id = await repo.save(
-            buildCashAccount(openingBalanceMinorUnits: 50000),
-          );
+      test('ACB02: only opening balance → own-currency group includes opening balance', () async {
+        final id = await repo.save(
+          buildCashAccount(openingBalanceMinorUnits: 50000),
+        );
 
-          expect(await repo.watchBalanceByCurrency(id).first, {'USD': 50000});
-        },
-      );
+        expect(await repo.watchBalanceByCurrency(id).first, {'USD': 50000});
+      });
 
       test(
         'ACB03: single expense → opening minus amount in own-currency group',
@@ -714,28 +705,25 @@ void main() {
         },
       );
 
-      test(
-        'ACB07b: stream re-emits when opening balance changes on the account row',
-        () async {
-          final id = await repo.save(
-            buildCashAccount(openingBalanceMinorUnits: 10000),
-          );
+      test('ACB07b: stream re-emits when opening balance changes on the account row', () async {
+        final id = await repo.save(
+          buildCashAccount(openingBalanceMinorUnits: 10000),
+        );
 
-          final snapshots = <Map<String, int>>[];
-          final sub = repo.watchBalanceByCurrency(id).listen(snapshots.add);
+        final snapshots = <Map<String, int>>[];
+        final sub = repo.watchBalanceByCurrency(id).listen(snapshots.add);
 
-          await Future<void>.delayed(Duration.zero);
-          expect(snapshots.last, {'USD': 10000});
+        await Future<void>.delayed(Duration.zero);
+        expect(snapshots.last, {'USD': 10000});
 
-          await repo.save(
-            buildCashAccount(id: id, openingBalanceMinorUnits: 12500),
-          );
-          await Future<void>.delayed(Duration.zero);
-          expect(snapshots.last, {'USD': 12500});
+        await repo.save(
+          buildCashAccount(id: id, openingBalanceMinorUnits: 12500),
+        );
+        await Future<void>.delayed(Duration.zero);
+        expect(snapshots.last, {'USD': 12500});
 
-          await sub.cancel();
-        },
-      );
+        await sub.cancel();
+      });
 
       test('ACB07c: missing account emits empty map', () async {
         expect(await repo.watchBalanceByCurrency(999).first, isEmpty);
@@ -874,21 +862,18 @@ void main() {
         expect(await repo.getById(id), isNotNull);
       });
 
-      test(
-        'isReferenced returns false for account with only shopping-list drafts',
-        () async {
-          final id = await repo.save(buildCashAccount());
-          final categoryId = await _insertCategoryRaw(db);
-          await _insertShoppingListItemRaw(
-            db,
-            categoryId: categoryId,
-            accountId: id,
-          );
+      test('isReferenced returns false for account with only shopping-list drafts', () async {
+        final id = await repo.save(buildCashAccount());
+        final categoryId = await _insertCategoryRaw(db);
+        await _insertShoppingListItemRaw(
+          db,
+          categoryId: categoryId,
+          accountId: id,
+        );
 
-          // isReferenced is transaction-only — shopping-list drafts don't count.
-          expect(await repo.isReferenced(id), isFalse);
-        },
-      );
+        // isReferenced is transaction-only — shopping-list drafts don't count.
+        expect(await repo.isReferenced(id), isFalse);
+      });
     });
   });
 }

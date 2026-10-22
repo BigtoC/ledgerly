@@ -125,24 +125,18 @@ void main() {
     monthNetCtrl = StreamController.broadcast();
 
     when(() => txRepo.watchByDay(any())).thenAnswer((_) => dayCtrl.stream);
-    when(
-      () => txRepo.watchDaysWithActivity(),
-    ).thenAnswer((_) => activityCtrl.stream);
-    when(
-      () => txRepo.watchDailyTotalsByType(any()),
-    ).thenAnswer((_) => todayTotalsCtrl.stream);
-    when(
-      () => txRepo.watchMonthNetByCurrency(any()),
-    ).thenAnswer((_) => monthNetCtrl.stream);
-    when(
-      () => catRepo.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value([]));
-    when(
-      () => accRepo.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value([]));
-    when(
-      () => curRepo.watchAll(includeTokens: true),
-    ).thenAnswer((_) => Stream.value([_usd]));
+    when(() => txRepo.watchDaysWithActivity())
+        .thenAnswer((_) => activityCtrl.stream);
+    when(() => txRepo.watchDailyTotalsByType(any()))
+        .thenAnswer((_) => todayTotalsCtrl.stream);
+    when(() => txRepo.watchMonthNetByCurrency(any()))
+        .thenAnswer((_) => monthNetCtrl.stream);
+    when(() => catRepo.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([]));
+    when(() => accRepo.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([]));
+    when(() => curRepo.watchAll(includeTokens: true))
+        .thenAnswer((_) => Stream.value([_usd]));
   });
 
   tearDown(() async {

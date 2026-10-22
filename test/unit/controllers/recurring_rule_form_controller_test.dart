@@ -78,9 +78,8 @@ void main() {
 
     when(() => prefs.getDefaultCurrency()).thenAnswer((_) async => 'USD');
     when(() => currencyRepo.getByCode('USD')).thenAnswer((_) async => _usd);
-    when(
-      () => pendingRepo.countByRecurringRule(any()),
-    ).thenAnswer((_) async => 0);
+    when(() => pendingRepo.countByRecurringRule(any()))
+        .thenAnswer((_) async => 0);
     when(
       () => generationUseCase.executeForRule(any(), clock: any(named: 'clock')),
     ).thenAnswer(
@@ -141,9 +140,8 @@ void main() {
     });
 
     test('save create inserts draft and runs generation', () async {
-      when(
-        () => recurringRepo.insert(any(), today: any(named: 'today')),
-      ).thenAnswer((_) async => 42);
+      when(() => recurringRepo.insert(any(), today: any(named: 'today')))
+          .thenAnswer((_) async => 42);
 
       final c = makeContainer();
       addTearDown(c.dispose);
@@ -160,9 +158,8 @@ void main() {
       final id = await controller.save();
 
       expect(id, 42);
-      verify(
-        () => recurringRepo.insert(any(), today: any(named: 'today')),
-      ).called(1);
+      verify(() => recurringRepo.insert(any(), today: any(named: 'today')))
+          .called(1);
       verify(
         () => generationUseCase.executeForRule(42, clock: any(named: 'clock')),
       ).called(1);
@@ -171,9 +168,8 @@ void main() {
     test(
       'save edit updates draft and records generation failure flag',
       () async {
-        when(
-          () => recurringRepo.getById(7),
-        ).thenAnswer((_) async => _rule(id: 7));
+        when(() => recurringRepo.getById(7))
+            .thenAnswer((_) async => _rule(id: 7));
         when(() => recurringRepo.update(7, any())).thenAnswer((_) async {});
         when(
           () => generationUseCase.executeForRule(
@@ -245,9 +241,8 @@ void main() {
     });
 
     test('save clears isLoading after async generation completes', () async {
-      when(
-        () => recurringRepo.insert(any(), today: any(named: 'today')),
-      ).thenAnswer((_) async => 42);
+      when(() => recurringRepo.insert(any(), today: any(named: 'today')))
+          .thenAnswer((_) async => 42);
       final completer = Completer<RecurringGenerationOutcome>();
       when(
         () =>

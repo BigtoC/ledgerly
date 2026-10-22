@@ -82,30 +82,27 @@ ProviderContainer _makeContainer(PendingState fixed) {
   final catRepo = _MockCategoryRepo();
   final accRepo = _MockAccountRepo();
   when(() => repo.watchAll()).thenAnswer((_) => const Stream.empty());
-  when(
-    () => repo.approve(any()),
-  ).thenAnswer((_) async => throw UnimplementedError());
+  when(() => repo.approve(any()))
+      .thenAnswer((_) async => throw UnimplementedError());
   when(() => repo.reject(any())).thenAnswer((_) async {});
-  when(
-    () => catRepo.watchAll(includeArchived: any(named: 'includeArchived')),
-  ).thenAnswer(
-    (_) => Stream.value(<Category>[
-      const Category(
-        id: 1,
-        icon: 'restaurant',
-        color: 0,
-        type: CategoryType.expense,
-        l10nKey: 'category.food',
-      ),
-    ]),
-  );
-  when(
-    () => accRepo.watchAll(includeArchived: any(named: 'includeArchived')),
-  ).thenAnswer(
-    (_) => Stream.value(<Account>[
-      const Account(id: 1, name: 'Cash', accountTypeId: 1, currency: _usd),
-    ]),
-  );
+  when(() => catRepo.watchAll(includeArchived: any(named: 'includeArchived')))
+      .thenAnswer(
+        (_) => Stream.value(<Category>[
+          const Category(
+            id: 1,
+            icon: 'restaurant',
+            color: 0,
+            type: CategoryType.expense,
+            l10nKey: 'category.food',
+          ),
+        ]),
+      );
+  when(() => accRepo.watchAll(includeArchived: any(named: 'includeArchived')))
+      .thenAnswer(
+        (_) => Stream.value(<Account>[
+          const Account(id: 1, name: 'Cash', accountTypeId: 1, currency: _usd),
+        ]),
+      );
   return ProviderContainer(
     overrides: [
       pendingTransactionRepositoryProvider.overrideWithValue(repo),

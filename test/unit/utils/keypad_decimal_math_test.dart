@@ -239,23 +239,20 @@ void main() {
       },
     );
 
-    test(
-      'K71: tapping a different operator before right input replaces the pending operator',
-      () {
-        final s = const KeypadState.initial()
-            .push(1, decimals: 2)
-            .push(2, decimals: 2)
-            .pushOperator(CalcOperator.multiply, decimals: 2);
+    test('K71: tapping a different operator before right input replaces the pending operator', () {
+      final s = const KeypadState.initial()
+          .push(1, decimals: 2)
+          .push(2, decimals: 2)
+          .pushOperator(CalcOperator.multiply, decimals: 2);
 
-        final result = s.pushOperator(CalcOperator.subtract, decimals: 2);
+      final result = s.pushOperator(CalcOperator.subtract, decimals: 2);
 
-        expect(result.leftOperand, 1200);
-        expect(result.operator, CalcOperator.subtract);
-        expect(result.amountMinorUnits, 0);
-        expect(result.isEvaluating, isTrue);
-        expect(result.hasCurrentInput, isFalse);
-      },
-    );
+      expect(result.leftOperand, 1200);
+      expect(result.operator, CalcOperator.subtract);
+      expect(result.amountMinorUnits, 0);
+      expect(result.isEvaluating, isTrue);
+      expect(result.hasCurrentInput, isFalse);
+    });
 
     test('K72: repeating the same operator with no right input is a no-op', () {
       final s = const KeypadState.initial()
@@ -406,79 +403,70 @@ void main() {
       },
     );
 
-    test(
-      'K92: digit during showingResult clears the old expression and starts fresh',
-      () {
-        const s = KeypadState(
-          amountMinorUnits: 1700,
-          fractionalDigitsEntered: 0,
-          isFractionalMode: false,
-          leftOperand: 1200,
-          operator: CalcOperator.add,
-          showingResult: true,
-          rightOperand: 500,
-          hasCurrentInput: false,
-        );
+    test('K92: digit during showingResult clears the old expression and starts fresh', () {
+      const s = KeypadState(
+        amountMinorUnits: 1700,
+        fractionalDigitsEntered: 0,
+        isFractionalMode: false,
+        leftOperand: 1200,
+        operator: CalcOperator.add,
+        showingResult: true,
+        rightOperand: 500,
+        hasCurrentInput: false,
+      );
 
-        final result = s.push(3, decimals: 2);
+      final result = s.push(3, decimals: 2);
 
-        expect(result.amountMinorUnits, 300);
-        expect(result.leftOperand, isNull);
-        expect(result.operator, isNull);
-        expect(result.showingResult, isFalse);
-        expect(result.hasCurrentInput, isTrue);
-      },
-    );
+      expect(result.amountMinorUnits, 300);
+      expect(result.leftOperand, isNull);
+      expect(result.operator, isNull);
+      expect(result.showingResult, isFalse);
+      expect(result.hasCurrentInput, isTrue);
+    });
 
-    test(
-      'K92b: decimal during showingResult clears the old expression and starts a fresh fractional input',
-      () {
-        const s = KeypadState(
-          amountMinorUnits: 1700,
-          fractionalDigitsEntered: 0,
-          isFractionalMode: false,
-          leftOperand: 1200,
-          operator: CalcOperator.add,
-          showingResult: true,
-          rightOperand: 500,
-          hasCurrentInput: false,
-        );
+    test('K92b: decimal during showingResult clears the old expression and starts a fresh fractional input', () {
+      const s = KeypadState(
+        amountMinorUnits: 1700,
+        fractionalDigitsEntered: 0,
+        isFractionalMode: false,
+        leftOperand: 1200,
+        operator: CalcOperator.add,
+        showingResult: true,
+        rightOperand: 500,
+        hasCurrentInput: false,
+      );
 
-        final result = s.pushDecimal(decimals: 2);
+      final result = s.pushDecimal(decimals: 2);
 
-        expect(result.amountMinorUnits, 0);
-        expect(result.leftOperand, isNull);
-        expect(result.operator, isNull);
-        expect(result.showingResult, isFalse);
-        expect(result.isFractionalMode, isTrue);
-        expect(result.hasCurrentInput, isTrue);
-      },
-    );
+      expect(result.amountMinorUnits, 0);
+      expect(result.leftOperand, isNull);
+      expect(result.operator, isNull);
+      expect(result.showingResult, isFalse);
+      expect(result.isFractionalMode, isTrue);
+      expect(result.hasCurrentInput, isTrue);
+    });
 
-    test(
-      'K92c: operator during showingResult starts the next expression from the result',
-      () {
-        const s = KeypadState(
-          amountMinorUnits: 1700,
-          fractionalDigitsEntered: 0,
-          isFractionalMode: false,
-          leftOperand: 1200,
-          operator: CalcOperator.add,
-          showingResult: true,
-          rightOperand: 500,
-          hasCurrentInput: false,
-        );
+    test('K92c: operator during showingResult starts the next expression from the result', () {
+      const s = KeypadState(
+        amountMinorUnits: 1700,
+        fractionalDigitsEntered: 0,
+        isFractionalMode: false,
+        leftOperand: 1200,
+        operator: CalcOperator.add,
+        showingResult: true,
+        rightOperand: 500,
+        hasCurrentInput: false,
+      );
 
-        final result = s.pushOperator(CalcOperator.multiply, decimals: 2);
+      final result = s.pushOperator(CalcOperator.multiply, decimals: 2);
 
-        expect(result.amountMinorUnits, 0);
-        expect(result.leftOperand, 1700);
-        expect(result.operator, CalcOperator.multiply);
-        expect(result.isEvaluating, isTrue);
-        expect(result.showingResult, isFalse);
-        expect(result.hasCurrentInput, isFalse);
-      },
-    );
+      expect(result.amountMinorUnits, 0);
+      expect(result.leftOperand, 1700);
+      expect(result.operator, CalcOperator.multiply);
+      expect(result.isEvaluating, isTrue);
+      expect(result.showingResult, isFalse);
+      expect(result.hasCurrentInput, isFalse);
+    });
 
     test('K93: pop with an empty right operand cancels the expression', () {
       final s = const KeypadState.initial()
@@ -514,22 +502,19 @@ void main() {
       },
     );
 
-    test(
-      'K95: backspacing an explicit zero returns to the empty-right-operand state',
-      () {
-        final s = const KeypadState.initial()
-            .push(7, decimals: 2)
-            .pushOperator(CalcOperator.divide, decimals: 2)
-            .push(0, decimals: 2);
+    test('K95: backspacing an explicit zero returns to the empty-right-operand state', () {
+      final s = const KeypadState.initial()
+          .push(7, decimals: 2)
+          .pushOperator(CalcOperator.divide, decimals: 2)
+          .push(0, decimals: 2);
 
-        final result = s.pop(decimals: 2);
+      final result = s.pop(decimals: 2);
 
-        expect(result.amountMinorUnits, 0);
-        expect(result.operator, CalcOperator.divide);
-        expect(result.isEvaluating, isTrue);
-        expect(result.hasCurrentInput, isFalse);
-      },
-    );
+      expect(result.amountMinorUnits, 0);
+      expect(result.operator, CalcOperator.divide);
+      expect(result.isEvaluating, isTrue);
+      expect(result.hasCurrentInput, isFalse);
+    });
 
     test('K96: clear resets every expression field', () {
       final s = const KeypadState.initial()
@@ -572,27 +557,24 @@ void main() {
       },
     );
 
-    test(
-      'K98: pop on showingResult with zero result (e.g. div-by-zero) exits the result state',
-      () {
-        const s = KeypadState(
-          amountMinorUnits: 0,
-          fractionalDigitsEntered: 0,
-          isFractionalMode: false,
-          leftOperand: 700,
-          operator: CalcOperator.divide,
-          showingResult: true,
-          rightOperand: 0,
-          hasCurrentInput: false,
-        );
+    test('K98: pop on showingResult with zero result (e.g. div-by-zero) exits the result state', () {
+      const s = KeypadState(
+        amountMinorUnits: 0,
+        fractionalDigitsEntered: 0,
+        isFractionalMode: false,
+        leftOperand: 700,
+        operator: CalcOperator.divide,
+        showingResult: true,
+        rightOperand: 0,
+        hasCurrentInput: false,
+      );
 
-        final result = s.pop(decimals: 2);
+      final result = s.pop(decimals: 2);
 
-        expect(result.showingResult, isFalse);
-        expect(result.leftOperand, isNull);
-        expect(result.operator, isNull);
-        expect(result.amountMinorUnits, 0);
-      },
-    );
+      expect(result.showingResult, isFalse);
+      expect(result.leftOperand, isNull);
+      expect(result.operator, isNull);
+      expect(result.amountMinorUnits, 0);
+    });
   });
 }

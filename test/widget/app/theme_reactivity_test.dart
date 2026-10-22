@@ -40,9 +40,8 @@ void main() {
       await tester.pumpWidget(buildTestApp(container: container));
       await tester.pump();
 
-      final brightness = Theme.of(
-        tester.element(find.byType(Scaffold).first),
-      ).brightness;
+      final brightness = Theme.of(tester.element(find.byType(Scaffold).first))
+          .brightness;
       expect(brightness, Brightness.dark);
     });
 

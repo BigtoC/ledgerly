@@ -194,16 +194,12 @@ class HomeController extends _$HomeController {
 /// cancel everything deterministically.
 class _Composer {
   _Composer({
-    required TransactionRepository repo,
-    required DateTime Function() selectedDayGetter,
-    required DateTime Function() todayGetter,
-    required PendingDelete? Function() pendingDeleteGetter,
-    required Set<int> Function() committedDeleteIdsGetter,
-  }) : _repo = repo,
-       _selectedDayGetter = selectedDayGetter,
-       _todayGetter = todayGetter,
-       _pendingDeleteGetter = pendingDeleteGetter,
-       _committedDeleteIdsGetter = committedDeleteIdsGetter {
+    required this._repo,
+    required this._selectedDayGetter,
+    required this._todayGetter,
+    required this._pendingDeleteGetter,
+    required this._committedDeleteIdsGetter,
+  }) {
     _out = StreamController<HomeState>.broadcast(
       onListen: _start,
       onCancel: _stop,

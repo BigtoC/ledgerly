@@ -79,15 +79,12 @@ ProviderContainer _makeContainer({required AccountsState accountsFixed}) {
   final prefs = _MockUserPreferencesRepository();
   final currencyRepo = _MockCurrencyRepository();
 
-  when(
-    () => typeRepo.watchAll(includeArchived: true),
-  ).thenAnswer((_) => Stream.value([_cashType]));
-  when(
-    () => currencyRepo.watchAll(),
-  ).thenAnswer((_) => Stream.value(_allTestCurrencies));
-  when(
-    () => currencyRepo.watchAll(includeTokens: any(named: 'includeTokens')),
-  ).thenAnswer((_) => Stream.value(_allTestCurrencies));
+  when(() => typeRepo.watchAll(includeArchived: true))
+      .thenAnswer((_) => Stream.value([_cashType]));
+  when(() => currencyRepo.watchAll())
+      .thenAnswer((_) => Stream.value(_allTestCurrencies));
+  when(() => currencyRepo.watchAll(includeTokens: any(named: 'includeTokens')))
+      .thenAnswer((_) => Stream.value(_allTestCurrencies));
 
   return ProviderContainer(
     overrides: [

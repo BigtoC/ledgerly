@@ -25,22 +25,24 @@ import 'providers/splash_redirect_provider.dart';
 import 'providers/theme_provider.dart';
 
 typedef InitializeDateFormattingFn = Future<void> Function(String locale);
-typedef ReadSplashEnabledFn =
-    Future<bool> Function(UserPreferencesRepository preferences);
-typedef ReadSplashStartDateFn =
-    Future<DateTime?> Function(UserPreferencesRepository preferences);
-typedef RunFirstRunSeedFn =
-    Future<void> Function({
-      required AppDatabase db,
-      required CurrencyRepository currencies,
-      required CategoryRepository categories,
-      required AccountTypeRepository accountTypes,
-      required AccountRepository accounts,
-      required UserPreferencesRepository preferences,
-      required LocaleService localeService,
-    });
-typedef RunRecurringGenerationFn =
-    Future<RecurringGenerationResult> Function(AppDatabase db);
+typedef ReadSplashEnabledFn = Future<bool> Function(
+  UserPreferencesRepository preferences,
+);
+typedef ReadSplashStartDateFn = Future<DateTime?> Function(
+  UserPreferencesRepository preferences,
+);
+typedef RunFirstRunSeedFn = Future<void> Function({
+  required AppDatabase db,
+  required CurrencyRepository currencies,
+  required CategoryRepository categories,
+  required AccountTypeRepository accountTypes,
+  required AccountRepository accounts,
+  required UserPreferencesRepository preferences,
+  required LocaleService localeService,
+});
+typedef RunRecurringGenerationFn = Future<RecurringGenerationResult> Function(
+  AppDatabase db,
+);
 
 /// Retry policy for every provider in the app: never retry.
 ///

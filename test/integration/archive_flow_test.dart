@@ -75,9 +75,9 @@ void main() {
         // Repository contract: the picker-facing stream
         // (`includeArchived: false`) must exclude archived rows.
         final pickerCategories = await tester.runAsync(() async {
-          return DriftCategoryRepository(
-            db,
-          ).watchAll(type: CategoryType.expense, includeArchived: false).first;
+          return DriftCategoryRepository(db)
+              .watchAll(type: CategoryType.expense, includeArchived: false)
+              .first;
         });
         expect(
           pickerCategories!.any((c) => c.id == foodId),
@@ -89,9 +89,9 @@ void main() {
         // Repository contract for archive-aware paths (e.g. Home tile
         // metadata): `includeArchived: true` still includes archived rows.
         final allCategories = await tester.runAsync(() async {
-          return DriftCategoryRepository(
-            db,
-          ).watchAll(type: CategoryType.expense, includeArchived: true).first;
+          return DriftCategoryRepository(db)
+              .watchAll(type: CategoryType.expense, includeArchived: true)
+              .first;
         });
         expect(
           allCategories!.any((c) => c.id == foodId && c.isArchived),

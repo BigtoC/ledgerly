@@ -113,9 +113,8 @@ Widget _wrap({
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(
-          context,
-        ).copyWith(textScaler: TextScaler.linear(textScale)),
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
       routerConfig: _StubRouter.build(data),
@@ -130,12 +129,10 @@ ProviderContainer _makeContainer({
   required AccountsState fixed,
 }) {
   final currencyRepo = _MockCurrencyRepository();
-  when(
-    () => currencyRepo.watchAll(),
-  ).thenAnswer((_) => Stream.value(_allTestCurrencies));
-  when(
-    () => currencyRepo.watchAll(includeTokens: any(named: 'includeTokens')),
-  ).thenAnswer((_) => Stream.value(_allTestCurrencies));
+  when(() => currencyRepo.watchAll())
+      .thenAnswer((_) => Stream.value(_allTestCurrencies));
+  when(() => currencyRepo.watchAll(includeTokens: any(named: 'includeTokens')))
+      .thenAnswer((_) => Stream.value(_allTestCurrencies));
 
   final container = ProviderContainer(
     overrides: [
@@ -173,9 +170,8 @@ void main() {
     final accountRepo = _MockAccountRepository();
     final typeRepo = _MockAccountTypeRepository();
     final prefs = _MockUserPreferencesRepository();
-    when(
-      () => typeRepo.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value([cashType]));
+    when(() => typeRepo.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([cashType]));
 
     final fixed = AccountsState.data(
       active: [
@@ -208,9 +204,8 @@ void main() {
     final accountRepo = _MockAccountRepository();
     final typeRepo = _MockAccountTypeRepository();
     final prefs = _MockUserPreferencesRepository();
-    when(
-      () => typeRepo.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value([cashType]));
+    when(() => typeRepo.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([cashType]));
 
     final fixed = AccountsState.data(
       active: [_wb(_a(id: 1, name: 'Cash'))],
@@ -240,9 +235,8 @@ void main() {
       final accountRepo = _MockAccountRepository();
       final typeRepo = _MockAccountTypeRepository();
       final prefs = _MockUserPreferencesRepository();
-      when(
-        () => typeRepo.watchAll(includeArchived: true),
-      ).thenAnswer((_) => Stream.value([cashType]));
+      when(() => typeRepo.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([cashType]));
 
       const data = AccountsData(
         active: [],
@@ -274,9 +268,8 @@ void main() {
     final accountRepo = _MockAccountRepository();
     final typeRepo = _MockAccountTypeRepository();
     final prefs = _MockUserPreferencesRepository();
-    when(
-      () => typeRepo.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value([cashType]));
+    when(() => typeRepo.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([cashType]));
     when(() => accountRepo.archive(2)).thenAnswer((_) async {});
     // Stub fallback used by archive() when state is not yet AsyncData.
     when(() => prefs.getDefaultAccountId()).thenAnswer((_) async => 1);
@@ -321,9 +314,8 @@ void main() {
     final accountRepo = _MockAccountRepository();
     final typeRepo = _MockAccountTypeRepository();
     final prefs = _MockUserPreferencesRepository();
-    when(
-      () => typeRepo.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value([cashType]));
+    when(() => typeRepo.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([cashType]));
 
     final fixed = AccountsState.data(
       active: [
@@ -365,9 +357,8 @@ void main() {
     final accountRepo = _MockAccountRepository();
     final typeRepo = _MockAccountTypeRepository();
     final prefs = _MockUserPreferencesRepository();
-    when(
-      () => typeRepo.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value([cashType]));
+    when(() => typeRepo.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([cashType]));
 
     final fixed = AccountsState.data(
       active: [

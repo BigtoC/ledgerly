@@ -21,8 +21,9 @@ import 'recurring_rules_state.dart';
 
 part 'recurring_rules_controller.g.dart';
 
-typedef RecurringRulesEffectListener =
-    void Function(RecurringRulesEffect effect);
+typedef RecurringRulesEffectListener = void Function(
+  RecurringRulesEffect effect,
+);
 
 sealed class RecurringRulesEffect {
   const RecurringRulesEffect();
@@ -123,11 +124,7 @@ class RecurringRulesController extends _$RecurringRulesController {
 // ---------- Internal stream composition ----------
 
 class _Composer {
-  _Composer({
-    required RecurringRulesRepository repo,
-    required RecurringRulesPendingDelete? Function() pendingDeleteGetter,
-  }) : _repo = repo,
-       _pendingDeleteGetter = pendingDeleteGetter {
+  _Composer({required this._repo, required this._pendingDeleteGetter}) {
     _out = StreamController<RecurringRulesState>.broadcast(
       onListen: _start,
       onCancel: _stop,

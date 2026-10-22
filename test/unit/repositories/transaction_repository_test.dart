@@ -461,24 +461,21 @@ void main() {
       },
     );
 
-    test(
-      'T-currency-fk-02: cross-currency transaction on an account saves without throwing',
-      () async {
-        final saved = await txRepo.save(
-          sampleTx(
-            currency: const Currency(
-              code: 'JPY',
-              decimals: 0,
-              symbol: '¥',
-              nameL10nKey: 'currency.jpy',
-            ),
+    test('T-currency-fk-02: cross-currency transaction on an account saves without throwing', () async {
+      final saved = await txRepo.save(
+        sampleTx(
+          currency: const Currency(
+            code: 'JPY',
+            decimals: 0,
+            symbol: '¥',
+            nameL10nKey: 'currency.jpy',
           ),
-        );
+        ),
+      );
 
-        expect(saved.currency.code, 'JPY');
-        expect(saved.accountId, fixtures.accountId);
-      },
-    );
+      expect(saved.currency.code, 'JPY');
+      expect(saved.accountId, fixtures.accountId);
+    });
   });
 
   group('save → timestamps', () {
@@ -687,53 +684,50 @@ void main() {
       expect(byType['USD']!.income, 1000);
     });
 
-    test(
-      'A-multi-currency-01: multi-currency same day — separate keys per currency',
-      () async {
-        // Add a JPY account so we can write a JPY transaction.
-        final jpyAccountId = await _insertAccountRaw(
-          db,
-          name: 'JPY Wallet',
-          accountTypeId: fixtures.accountTypeId,
-          currencyCode: 'JPY',
-        );
-        const jpy = Currency(
-          code: 'JPY',
-          decimals: 0,
-          symbol: '¥',
-          nameL10nKey: 'currency.jpy',
-          sortOrder: 2,
-        );
-        final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
+    test('A-multi-currency-01: multi-currency same day — separate keys per currency', () async {
+      // Add a JPY account so we can write a JPY transaction.
+      final jpyAccountId = await _insertAccountRaw(
+        db,
+        name: 'JPY Wallet',
+        accountTypeId: fixtures.accountTypeId,
+        currencyCode: 'JPY',
+      );
+      const jpy = Currency(
+        code: 'JPY',
+        decimals: 0,
+        symbol: '¥',
+        nameL10nKey: 'currency.jpy',
+        sortOrder: 2,
+      );
+      final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
 
-        await txRepo.save(
-          sampleTx(
-            amount: 1000,
-            categoryId: fixtures.expenseCategoryId,
-            date: today.add(const Duration(hours: 9)),
-          ),
-        );
-        await txRepo.save(
-          sampleTx(
-            amount: 500, // 500 JPY (whole yen — decimals=0)
-            currency: jpy,
-            categoryId: fixtures.expenseCategoryId,
-            accountId: jpyAccountId,
-            date: today.add(const Duration(hours: 10)),
-          ),
-        );
+      await txRepo.save(
+        sampleTx(
+          amount: 1000,
+          categoryId: fixtures.expenseCategoryId,
+          date: today.add(const Duration(hours: 9)),
+        ),
+      );
+      await txRepo.save(
+        sampleTx(
+          amount: 500, // 500 JPY (whole yen — decimals=0)
+          currency: jpy,
+          categoryId: fixtures.expenseCategoryId,
+          accountId: jpyAccountId,
+          date: today.add(const Duration(hours: 10)),
+        ),
+      );
 
-        final byType = await txRepo.watchDailyTotalsByType(today).first;
-        expect(byType.keys, containsAll(<String>['USD', 'JPY']));
-        expect(byType['USD']!.expense, 1000);
-        expect(byType['USD']!.income, 0);
-        expect(byType['JPY']!.expense, 500);
-        expect(byType['JPY']!.income, 0);
+      final byType = await txRepo.watchDailyTotalsByType(today).first;
+      expect(byType.keys, containsAll(<String>['USD', 'JPY']));
+      expect(byType['USD']!.expense, 1000);
+      expect(byType['USD']!.income, 0);
+      expect(byType['JPY']!.expense, 500);
+      expect(byType['JPY']!.income, 0);
 
-        final net = await txRepo.watchMonthNetByCurrency(today).first;
-        expect(net, {'USD': -1000, 'JPY': -500});
-      },
-    );
+      final net = await txRepo.watchMonthNetByCurrency(today).first;
+      expect(net, {'USD': -1000, 'JPY': -500});
+    });
 
     test(
       'A-day-bound-01: same-day stream excludes prev/next day rows',

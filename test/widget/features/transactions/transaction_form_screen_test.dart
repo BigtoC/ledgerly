@@ -121,19 +121,15 @@ void main() {
     currencyRepo = _MockCurrencyRepository();
 
     when(() => prefs.getDefaultAccountId()).thenAnswer((_) async => 1);
-    when(
-      () => accountRepo.getLastUsedActiveAccount(),
-    ).thenAnswer((_) async => null);
+    when(() => accountRepo.getLastUsedActiveAccount())
+        .thenAnswer((_) async => null);
     when(() => accountRepo.getById(1)).thenAnswer((_) async => _account);
-    when(
-      () => accountRepo.watchAll(includeArchived: false),
-    ).thenAnswer((_) => Stream.value(const [_account]));
-    when(
-      () => categoryRepo.getById(10),
-    ).thenAnswer((_) async => _expenseCategory);
-    when(
-      () => currencyRepo.watchAll(includeTokens: false),
-    ).thenAnswer((_) => Stream.value(const [_usd, _jpy, _eur]));
+    when(() => accountRepo.watchAll(includeArchived: false))
+        .thenAnswer((_) => Stream.value(const [_account]));
+    when(() => categoryRepo.getById(10))
+        .thenAnswer((_) async => _expenseCategory);
+    when(() => currencyRepo.watchAll(includeTokens: false))
+        .thenAnswer((_) => Stream.value(const [_usd, _jpy, _eur]));
   });
 
   Widget mountAdd({
@@ -186,9 +182,8 @@ void main() {
         builder: textScale == null
             ? null
             : (context, child) => MediaQuery(
-                data: MediaQuery.of(
-                  context,
-                ).copyWith(textScaler: TextScaler.linear(textScale)),
+                data: MediaQuery.of(context)
+                    .copyWith(textScaler: TextScaler.linear(textScale)),
                 child: child!,
               ),
       ),
@@ -228,9 +223,8 @@ void main() {
         builder: textScale == null
             ? null
             : (context, child) => MediaQuery(
-                data: MediaQuery.of(
-                  context,
-                ).copyWith(textScaler: TextScaler.linear(textScale)),
+                data: MediaQuery.of(context)
+                    .copyWith(textScaler: TextScaler.linear(textScale)),
                 child: child!,
               ),
       ),
@@ -260,9 +254,8 @@ void main() {
     await tester.pumpWidget(
       mountAdd(
         extraOverrides: [
-          categoriesByTypeProvider(
-            CategoryType.expense,
-          ).overrideWith((ref) => Stream.value(const [_expenseCategory])),
+          categoriesByTypeProvider(CategoryType.expense)
+              .overrideWith((ref) => Stream.value(const [_expenseCategory])),
         ],
       ),
     );
@@ -364,9 +357,8 @@ void main() {
     await tester.pumpWidget(
       mountAdd(
         extraOverrides: [
-          categoriesByTypeProvider(
-            CategoryType.expense,
-          ).overrideWith((ref) => Stream.value(const <Category>[])),
+          categoriesByTypeProvider(CategoryType.expense)
+              .overrideWith((ref) => Stream.value(const <Category>[])),
         ],
       ),
     );
@@ -392,9 +384,8 @@ void main() {
   testWidgets('WS09: historical edit dates still open the date picker', (
     tester,
   ) async {
-    when(
-      () => txRepo.getById(99),
-    ).thenAnswer((_) async => _persistedTx(date: DateTime(2000, 1, 1)));
+    when(() => txRepo.getById(99))
+        .thenAnswer((_) async => _persistedTx(date: DateTime(2000, 1, 1)));
     await tester.pumpWidget(mountEdit(99));
     await tester.pumpAndSettle();
 
@@ -421,9 +412,8 @@ void main() {
     await tester.pumpWidget(
       mountAdd(
         extraOverrides: [
-          categoriesByTypeProvider(
-            CategoryType.expense,
-          ).overrideWith((ref) => Stream.value(const [_expenseCategory])),
+          categoriesByTypeProvider(CategoryType.expense)
+              .overrideWith((ref) => Stream.value(const [_expenseCategory])),
         ],
       ),
     );
@@ -570,12 +560,10 @@ void main() {
       currency: _usd,
       isArchived: true,
     );
-    when(
-      () => accountRepo.watchAll(includeArchived: false),
-    ).thenAnswer((_) => Stream.value(const [_account]));
-    when(
-      () => accountRepo.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value(const [_account, archivedAccount]));
+    when(() => accountRepo.watchAll(includeArchived: false))
+        .thenAnswer((_) => Stream.value(const [_account]));
+    when(() => accountRepo.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value(const [_account, archivedAccount]));
 
     await tester.pumpWidget(mountAdd());
     await tester.pumpAndSettle();
@@ -874,9 +862,8 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(400, 1000));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      when(
-        () => accountRepo.watchAll(includeArchived: false),
-      ).thenAnswer((_) => Stream.value(const [_account, _yenAccount]));
+      when(() => accountRepo.watchAll(includeArchived: false))
+          .thenAnswer((_) => Stream.value(const [_account, _yenAccount]));
 
       await tester.pumpWidget(mountAdd());
       await tester.pumpAndSettle();

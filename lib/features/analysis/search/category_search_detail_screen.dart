@@ -163,9 +163,8 @@ class _CategorySearchDetailScreenState
                                           MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
-                                          DateFormat.yMMMd(
-                                            locale,
-                                          ).format(day.date),
+                                          DateFormat.yMMMd(locale)
+                                              .format(day.date),
                                           style: theme.textTheme.labelMedium,
                                         ),
                                         Text(

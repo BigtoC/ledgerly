@@ -58,24 +58,18 @@ void main() {
 
       when(() => repo.watchThemeMode()).thenAnswer((_) => themeCtrl.stream);
       when(() => repo.watchLocale()).thenAnswer((_) => localeCtrl.stream);
-      when(
-        () => repo.watchDefaultCurrency(),
-      ).thenAnswer((_) => defaultCurrencyCtrl.stream);
-      when(
-        () => repo.watchDefaultAccountId(),
-      ).thenAnswer((_) => defaultAccountCtrl.stream);
-      when(
-        () => repo.watchSplashEnabled(),
-      ).thenAnswer((_) => splashEnabledCtrl.stream);
-      when(
-        () => repo.watchSplashStartDate(),
-      ).thenAnswer((_) => splashStartDateCtrl.stream);
-      when(
-        () => repo.watchSplashDisplayText(),
-      ).thenAnswer((_) => splashDisplayTextCtrl.stream);
-      when(
-        () => repo.watchSplashButtonLabel(),
-      ).thenAnswer((_) => splashButtonLabelCtrl.stream);
+      when(() => repo.watchDefaultCurrency())
+          .thenAnswer((_) => defaultCurrencyCtrl.stream);
+      when(() => repo.watchDefaultAccountId())
+          .thenAnswer((_) => defaultAccountCtrl.stream);
+      when(() => repo.watchSplashEnabled())
+          .thenAnswer((_) => splashEnabledCtrl.stream);
+      when(() => repo.watchSplashStartDate())
+          .thenAnswer((_) => splashStartDateCtrl.stream);
+      when(() => repo.watchSplashDisplayText())
+          .thenAnswer((_) => splashDisplayTextCtrl.stream);
+      when(() => repo.watchSplashButtonLabel())
+          .thenAnswer((_) => splashButtonLabelCtrl.stream);
     });
 
     tearDown(() async {
@@ -158,9 +152,8 @@ void main() {
     });
 
     test('SC03: setLocale writes through repo', () async {
-      when(
-        () => repo.setLocale(const Locale('zh', 'TW')),
-      ).thenAnswer((_) async {});
+      when(() => repo.setLocale(const Locale('zh', 'TW')))
+          .thenAnswer((_) async {});
       final container = makeContainer();
       addTearDown(container.dispose);
       container.listen(settingsControllerProvider, (_, _) {});
@@ -217,9 +210,8 @@ void main() {
     });
 
     test('SC08: setSplashDisplayText writes non-empty value as-is', () async {
-      when(
-        () => repo.setSplashDisplayText('Day {days}'),
-      ).thenAnswer((_) async {});
+      when(() => repo.setSplashDisplayText('Day {days}'))
+          .thenAnswer((_) async {});
       final container = makeContainer();
       addTearDown(container.dispose);
       container.listen(settingsControllerProvider, (_, _) {});
@@ -235,9 +227,8 @@ void main() {
     test(
       'SC09: setSplashDisplayText normalizes empty to seed default',
       () async {
-        when(
-          () => repo.setSplashDisplayText(kDefaultSplashDisplayText),
-        ).thenAnswer((_) async {});
+        when(() => repo.setSplashDisplayText(kDefaultSplashDisplayText))
+            .thenAnswer((_) async {});
         final container = makeContainer();
         addTearDown(container.dispose);
         container.listen(settingsControllerProvider, (_, _) {});
@@ -247,9 +238,8 @@ void main() {
         await container
             .read(settingsControllerProvider.notifier)
             .setSplashDisplayText('   ');
-        verify(
-          () => repo.setSplashDisplayText(kDefaultSplashDisplayText),
-        ).called(1);
+        verify(() => repo.setSplashDisplayText(kDefaultSplashDisplayText))
+            .called(1);
       },
     );
 
@@ -270,9 +260,8 @@ void main() {
     test(
       'SC11: setSplashButtonLabel normalizes empty to seed default',
       () async {
-        when(
-          () => repo.setSplashButtonLabel(kDefaultSplashButtonLabel),
-        ).thenAnswer((_) async {});
+        when(() => repo.setSplashButtonLabel(kDefaultSplashButtonLabel))
+            .thenAnswer((_) async {});
         final container = makeContainer();
         addTearDown(container.dispose);
         container.listen(settingsControllerProvider, (_, _) {});
@@ -282,9 +271,8 @@ void main() {
         await container
             .read(settingsControllerProvider.notifier)
             .setSplashButtonLabel('');
-        verify(
-          () => repo.setSplashButtonLabel(kDefaultSplashButtonLabel),
-        ).called(1);
+        verify(() => repo.setSplashButtonLabel(kDefaultSplashButtonLabel))
+            .called(1);
       },
     );
 

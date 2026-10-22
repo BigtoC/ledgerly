@@ -136,12 +136,10 @@ void main() {
     tx = _MockTransactionRepository();
     cat = _MockCategoryRepository();
     acct = _MockAccountRepository();
-    when(
-      () => cat.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value(const <Category>[]));
-    when(
-      () => acct.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value(const <Account>[]));
+    when(() => cat.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value(const <Category>[]));
+    when(() => acct.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value(const <Account>[]));
   });
 
   testWidgets('shows no-results copy when query has no matches', (
@@ -167,9 +165,8 @@ void main() {
     when(() => tx.watchByMemo('coffee')).thenAnswer((_) => coffeeCtrl.stream);
     when(() => tx.watchByMemo('tea')).thenAnswer((_) => teaCtrl.stream);
 
-    when(
-      () => cat.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value([_cat()]));
+    when(() => cat.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([_cat()]));
 
     await tester.pumpWidget(
       _routerHarness(
@@ -201,9 +198,8 @@ void main() {
     tester,
   ) async {
     when(() => tx.watchByMemo(any())).thenAnswer((_) => Stream.value([_tx()]));
-    when(
-      () => cat.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value([_cat()]));
+    when(() => cat.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([_cat()]));
 
     await tester.pumpWidget(
       _routerHarness(

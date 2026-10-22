@@ -281,9 +281,9 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
                         child: Text(
                           _errorMessage!,
                           style: TextStyle(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onErrorContainer,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onErrorContainer,
                           ),
                         ),
                       ),

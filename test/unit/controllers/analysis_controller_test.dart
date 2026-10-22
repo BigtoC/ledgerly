@@ -184,9 +184,8 @@ void main() {
         final coffeeCtrl = StreamController<List<Transaction>>.broadcast();
 
         when(() => repo.watchByMemo('co')).thenAnswer((_) => coCtrl.stream);
-        when(
-          () => repo.watchByMemo('coffee'),
-        ).thenAnswer((_) => coffeeCtrl.stream);
+        when(() => repo.watchByMemo('coffee'))
+            .thenAnswer((_) => coffeeCtrl.stream);
 
         final container = _makeContainer(
           repo: repo,
@@ -246,90 +245,79 @@ void main() {
       });
     });
 
-    test(
-      'clear → retype emits loading with previous=null (lastResults cleared on idle)',
-      () {
-        fakeAsync((async) {
-          final container = _makeContainer(
-            repo: repo,
-            categoriesStream: Stream.value({1: _cat(id: 1)}),
-          );
-          addTearDown(container.dispose);
-          container.listen(analysisControllerProvider, (_, _) {});
+    test('clear → retype emits loading with previous=null (lastResults cleared on idle)', () {
+      fakeAsync((async) {
+        final container = _makeContainer(
+          repo: repo,
+          categoriesStream: Stream.value({1: _cat(id: 1)}),
+        );
+        addTearDown(container.dispose);
+        container.listen(analysisControllerProvider, (_, _) {});
 
-          container
-              .read(analysisControllerProvider.notifier)
-              .updateQuery('coffee');
-          async.elapse(const Duration(milliseconds: 350));
-          txCtrl.add([
-            _tx(id: 1, date: DateTime.utc(2026, 5, 1), categoryId: 1),
-          ]);
-          async.flushMicrotasks();
-          async.elapse(Duration.zero);
+        container
+            .read(analysisControllerProvider.notifier)
+            .updateQuery('coffee');
+        async.elapse(const Duration(milliseconds: 350));
+        txCtrl.add([_tx(id: 1, date: DateTime.utc(2026, 5, 1), categoryId: 1)]);
+        async.flushMicrotasks();
+        async.elapse(Duration.zero);
 
-          container.read(analysisControllerProvider.notifier).updateQuery('');
-          async.flushMicrotasks();
-          async.elapse(Duration.zero);
-          expect(
-            container.read(analysisControllerProvider).value,
-            isA<AnalysisIdle>(),
-          );
+        container.read(analysisControllerProvider.notifier).updateQuery('');
+        async.flushMicrotasks();
+        async.elapse(Duration.zero);
+        expect(
+          container.read(analysisControllerProvider).value,
+          isA<AnalysisIdle>(),
+        );
 
-          container
-              .read(analysisControllerProvider.notifier)
-              .updateQuery('latte');
-          async.flushMicrotasks();
-          async.elapse(Duration.zero);
-          final loading =
-              container.read(analysisControllerProvider).value
-                  as AnalysisLoading;
-          expect(loading.previous, isNull);
-        });
-      },
-    );
+        container
+            .read(analysisControllerProvider.notifier)
+            .updateQuery('latte');
+        async.flushMicrotasks();
+        async.elapse(Duration.zero);
+        final loading =
+            container.read(analysisControllerProvider).value as AnalysisLoading;
+        expect(loading.previous, isNull);
+      });
+    });
 
-    test(
-      'category-map emission re-emits results without a new transactions emission',
-      () {
-        fakeAsync((async) {
-          final cats = StreamController<Map<int, Category>>.broadcast();
-          addTearDown(cats.close);
-          final container = _makeContainer(
-            repo: repo,
-            categoriesStream: cats.stream,
-          );
-          addTearDown(container.dispose);
-          container.listen(analysisControllerProvider, (_, _) {});
+    test('category-map emission re-emits results without a new transactions emission', () {
+      fakeAsync((async) {
+        final cats = StreamController<Map<int, Category>>.broadcast();
+        addTearDown(cats.close);
+        final container = _makeContainer(
+          repo: repo,
+          categoriesStream: cats.stream,
+        );
+        addTearDown(container.dispose);
+        container.listen(analysisControllerProvider, (_, _) {});
 
-          cats.add({1: _cat(id: 1, name: 'Coffee')});
-          async.flushMicrotasks();
+        cats.add({1: _cat(id: 1, name: 'Coffee')});
+        async.flushMicrotasks();
 
-          container
-              .read(analysisControllerProvider.notifier)
-              .updateQuery('coffee');
-          async.elapse(const Duration(milliseconds: 350));
-          txCtrl.add([
-            _tx(id: 1, date: DateTime.utc(2026, 5, 1), categoryId: 1),
-          ]);
-          async.flushMicrotasks();
+        container
+            .read(analysisControllerProvider.notifier)
+            .updateQuery('coffee');
+        async.elapse(const Duration(milliseconds: 350));
+        txCtrl.add([_tx(id: 1, date: DateTime.utc(2026, 5, 1), categoryId: 1)]);
+        async.flushMicrotasks();
 
-          var results =
-              (container.read(analysisControllerProvider).value
-                      as AnalysisResults)
-                  .categories;
-          expect(results.first.category.customName, 'Coffee');
+        var results =
+            (container.read(analysisControllerProvider).value
+                    as AnalysisResults)
+                .categories;
+        expect(results.first.category.customName, 'Coffee');
 
-          cats.add({1: _cat(id: 1, name: 'Espresso')});
-          async.flushMicrotasks();
+        cats.add({1: _cat(id: 1, name: 'Espresso')});
+        async.flushMicrotasks();
 
-          results =
-              (container.read(analysisControllerProvider).value
-                      as AnalysisResults)
-                  .categories;
-          expect(results.first.category.customName, 'Espresso');
-        });
-      },
-    );
+        results =
+            (container.read(analysisControllerProvider).value
+                    as AnalysisResults)
+                .categories;
+        expect(results.first.category.customName, 'Espresso');
+      });
+    });
 
     test('stays loading until category metadata arrives for matching rows', () {
       fakeAsync((async) {

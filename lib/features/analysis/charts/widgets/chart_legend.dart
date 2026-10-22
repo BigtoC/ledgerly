@@ -114,9 +114,8 @@ class ChartLegend extends StatelessWidget {
       child: AnimatedDefaultTextStyle(
         duration: const Duration(milliseconds: 220),
         style: DefaultTextStyle.of(context).style.copyWith(
-          color: DefaultTextStyle.of(
-            context,
-          ).style.color?.withValues(alpha: dim ? 0.45 : 1.0),
+          color: DefaultTextStyle.of(context).style.color
+              ?.withValues(alpha: dim ? 0.45 : 1.0),
           fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
         ),
         child: Row(
@@ -126,16 +125,14 @@ class ChartLegend extends StatelessWidget {
               width: isSelected ? 14 : 12,
               height: isSelected ? 14 : 12,
               decoration: BoxDecoration(
-                color: colorForIndex(
-                  s.colorIndex,
-                ).withValues(alpha: dim ? 0.45 : 1.0),
+                color: colorForIndex(s.colorIndex)
+                    .withValues(alpha: dim ? 0.45 : 1.0),
                 shape: BoxShape.circle,
                 boxShadow: isSelected
                     ? [
                         BoxShadow(
-                          color: colorForIndex(
-                            s.colorIndex,
-                          ).withValues(alpha: 0.5),
+                          color: colorForIndex(s.colorIndex)
+                              .withValues(alpha: 0.5),
                           blurRadius: 4,
                           spreadRadius: 1,
                         ),

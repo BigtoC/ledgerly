@@ -87,12 +87,10 @@ class _HomeStub extends StatelessWidget {
 
 class _FakeTransactionFormController extends TransactionFormController {
   _FakeTransactionFormController({
-    required TransactionFormState fixed,
-    ShoppingListEditResult? saveDraftResult,
-    ShoppingListEditResult? convertDraftResult,
-  }) : _fixed = fixed,
-       _saveDraftResult = saveDraftResult,
-       _convertDraftResult = convertDraftResult;
+    required this._fixed,
+    this._saveDraftResult,
+    this._convertDraftResult,
+  });
 
   final TransactionFormState _fixed;
   final ShoppingListEditResult? _saveDraftResult;
@@ -155,19 +153,15 @@ void main() {
     slRepo = _MockShoppingListRepository();
 
     when(() => prefs.getDefaultAccountId()).thenAnswer((_) async => 1);
-    when(
-      () => accountRepo.getLastUsedActiveAccount(),
-    ).thenAnswer((_) async => null);
+    when(() => accountRepo.getLastUsedActiveAccount())
+        .thenAnswer((_) async => null);
     when(() => accountRepo.getById(1)).thenAnswer((_) async => _account);
-    when(
-      () => accountRepo.watchAll(includeArchived: false),
-    ).thenAnswer((_) => Stream.value(const [_account]));
-    when(
-      () => categoryRepo.getById(10),
-    ).thenAnswer((_) async => _expenseCategory);
-    when(
-      () => currencyRepo.watchAll(includeTokens: false),
-    ).thenAnswer((_) => Stream.value(const [_usd]));
+    when(() => accountRepo.watchAll(includeArchived: false))
+        .thenAnswer((_) => Stream.value(const [_account]));
+    when(() => categoryRepo.getById(10))
+        .thenAnswer((_) async => _expenseCategory);
+    when(() => currencyRepo.watchAll(includeTokens: false))
+        .thenAnswer((_) => Stream.value(const [_usd]));
     when(() => currencyRepo.getByCode('USD')).thenAnswer((_) async => _usd);
   });
 

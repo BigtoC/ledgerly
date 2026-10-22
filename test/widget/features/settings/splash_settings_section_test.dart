@@ -305,9 +305,8 @@ void main() {
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
 
-      verify(
-        () => prefs.setSplashDisplayText('On {date}\nstart of journey'),
-      ).called(1);
+      verify(() => prefs.setSplashDisplayText('On {date}\nstart of journey'))
+          .called(1);
     },
   );
 }

@@ -222,9 +222,8 @@ void main() {
       await tester.pumpWidget(
         _harness(
           repo: repo,
-          slice: _slice(
-            const SelectedSlice.category(1),
-          ).copyWith(currencyCode: 'USD', totalMinorUnits: 110),
+          slice: _slice(const SelectedSlice.category(1))
+              .copyWith(currencyCode: 'USD', totalMinorUnits: 110),
           activeSelection: const SelectedSlice.category(1),
           currenciesByCode: const {'USD': _usd, 'EUR': _eur},
           fxStatus: ChartsFxStatus(

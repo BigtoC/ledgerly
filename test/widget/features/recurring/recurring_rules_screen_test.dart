@@ -88,9 +88,8 @@ Widget _wrap(ProviderContainer container) {
 ProviderContainer _makeContainer(RecurringRulesState fixed) {
   final repo = _MockRecurringRulesRepository();
   when(() => repo.watchActive()).thenAnswer((_) => const Stream.empty());
-  when(
-    () => repo.setActive(any(), active: any(named: 'active')),
-  ).thenAnswer((_) async {});
+  when(() => repo.setActive(any(), active: any(named: 'active')))
+      .thenAnswer((_) async {});
   when(() => repo.archive(any())).thenAnswer((_) async {});
   return ProviderContainer(
     overrides: [

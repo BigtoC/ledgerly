@@ -67,26 +67,24 @@ Widget _wrap(ProviderContainer container) {
 }
 
 void _stubLookups(_MockCategoryRepo catRepo, _MockAccountRepo accRepo) {
-  when(
-    () => catRepo.watchAll(includeArchived: any(named: 'includeArchived')),
-  ).thenAnswer(
-    (_) => Stream.value(<Category>[
-      const Category(
-        id: 1,
-        icon: 'restaurant',
-        color: 0,
-        type: CategoryType.expense,
-        l10nKey: 'category.food',
-      ),
-    ]),
-  );
-  when(
-    () => accRepo.watchAll(includeArchived: any(named: 'includeArchived')),
-  ).thenAnswer(
-    (_) => Stream.value(<Account>[
-      const Account(id: 1, name: 'Cash', accountTypeId: 1, currency: _usd),
-    ]),
-  );
+  when(() => catRepo.watchAll(includeArchived: any(named: 'includeArchived')))
+      .thenAnswer(
+        (_) => Stream.value(<Category>[
+          const Category(
+            id: 1,
+            icon: 'restaurant',
+            color: 0,
+            type: CategoryType.expense,
+            l10nKey: 'category.food',
+          ),
+        ]),
+      );
+  when(() => accRepo.watchAll(includeArchived: any(named: 'includeArchived')))
+      .thenAnswer(
+        (_) => Stream.value(<Account>[
+          const Account(id: 1, name: 'Cash', accountTypeId: 1, currency: _usd),
+        ]),
+      );
 }
 
 ProviderContainer _makeFixedContainer(PendingState fixed) {
@@ -94,9 +92,8 @@ ProviderContainer _makeFixedContainer(PendingState fixed) {
   final catRepo = _MockCategoryRepo();
   final accRepo = _MockAccountRepo();
   when(() => repo.watchAll()).thenAnswer((_) => const Stream.empty());
-  when(
-    () => repo.approve(any()),
-  ).thenAnswer((_) async => throw UnimplementedError());
+  when(() => repo.approve(any()))
+      .thenAnswer((_) async => throw UnimplementedError());
   when(() => repo.reject(any())).thenAnswer((_) async {});
   _stubLookups(catRepo, accRepo);
   return ProviderContainer(
@@ -128,9 +125,8 @@ void main() {
     final repo = _MockPendingRepo();
     final catRepo = _MockCategoryRepo();
     final accRepo = _MockAccountRepo();
-    when(
-      () => repo.watchAll(),
-    ).thenAnswer((_) => Stream.value([_pending(id: 1)]));
+    when(() => repo.watchAll())
+        .thenAnswer((_) => Stream.value([_pending(id: 1)]));
     when(() => repo.approve(1)).thenAnswer(
       (_) async => Transaction(
         id: 99,
@@ -171,9 +167,8 @@ void main() {
       final repo = _MockPendingRepo();
       final catRepo = _MockCategoryRepo();
       final accRepo = _MockAccountRepo();
-      when(
-        () => repo.watchAll(),
-      ).thenAnswer((_) => Stream.value([_pending(id: 1)]));
+      when(() => repo.watchAll())
+          .thenAnswer((_) => Stream.value([_pending(id: 1)]));
       final approveCompleter = Completer<Transaction>();
       when(() => repo.approve(1)).thenAnswer((_) => approveCompleter.future);
       when(() => repo.reject(any())).thenAnswer((_) async {});
@@ -224,12 +219,10 @@ void main() {
     final repo = _MockPendingRepo();
     final catRepo = _MockCategoryRepo();
     final accRepo = _MockAccountRepo();
-    when(
-      () => repo.watchAll(),
-    ).thenAnswer((_) => Stream.value([_pending(id: 1)]));
-    when(
-      () => repo.approve(1),
-    ).thenThrow(const PendingTransactionRepositoryException('archived'));
+    when(() => repo.watchAll())
+        .thenAnswer((_) => Stream.value([_pending(id: 1)]));
+    when(() => repo.approve(1))
+        .thenThrow(const PendingTransactionRepositoryException('archived'));
     when(() => repo.reject(any())).thenAnswer((_) async {});
     _stubLookups(catRepo, accRepo);
 

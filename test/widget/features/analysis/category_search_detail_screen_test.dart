@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+
 import 'dart:async';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
@@ -79,15 +80,12 @@ void main() {
     final cat = _MockCategoryRepository();
     final acct = _MockAccountRepository();
 
-    when(
-      () => tx.watchByMemo('coffee'),
-    ).thenAnswer((_) => Stream.value([_tx()]));
-    when(
-      () => cat.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value([_cat()]));
-    when(
-      () => acct.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value([_acct()]));
+    when(() => tx.watchByMemo('coffee'))
+        .thenAnswer((_) => Stream.value([_tx()]));
+    when(() => cat.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([_cat()]));
+    when(() => acct.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([_acct()]));
 
     String? pushedLocation;
     final router = GoRouter(
@@ -147,15 +145,12 @@ void main() {
       final cat = _MockCategoryRepository();
       final acct = _MockAccountRepository();
 
-      when(
-        () => tx.watchByMemo('coffee'),
-      ).thenAnswer((_) => Stream.value([_tx()]));
-      when(
-        () => cat.watchAll(includeArchived: true),
-      ).thenAnswer((_) => Stream.value([_cat()]));
-      when(
-        () => acct.watchAll(includeArchived: true),
-      ).thenAnswer((_) => Stream.value([_acct()]));
+      when(() => tx.watchByMemo('coffee'))
+          .thenAnswer((_) => Stream.value([_tx()]));
+      when(() => cat.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([_cat()]));
+      when(() => acct.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([_acct()]));
       when(() => tx.delete(any())).thenAnswer((_) async => true);
 
       await tester.pumpWidget(
@@ -235,12 +230,10 @@ void main() {
       addTearDown(txStream.close);
 
       when(() => tx.watchByMemo('coffee')).thenAnswer((_) => txStream.stream);
-      when(
-        () => cat.watchAll(includeArchived: true),
-      ).thenAnswer((_) => Stream.value([_cat()]));
-      when(
-        () => acct.watchAll(includeArchived: true),
-      ).thenAnswer((_) => Stream.value([_acct()]));
+      when(() => cat.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([_cat()]));
+      when(() => acct.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([_acct()]));
       when(() => tx.delete(any())).thenAnswer((_) async => true);
 
       await tester.pumpWidget(
@@ -302,15 +295,12 @@ void main() {
       final cat = _MockCategoryRepository();
       final acct = _MockAccountRepository();
 
-      when(
-        () => tx.watchByMemo('coffee'),
-      ).thenAnswer((_) => Stream.value([_tx()]));
-      when(
-        () => cat.watchAll(includeArchived: true),
-      ).thenAnswer((_) => Stream.value([_cat()]));
-      when(
-        () => acct.watchAll(includeArchived: true),
-      ).thenAnswer((_) => Stream.value([_acct()]));
+      when(() => tx.watchByMemo('coffee'))
+          .thenAnswer((_) => Stream.value([_tx()]));
+      when(() => cat.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([_cat()]));
+      when(() => acct.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([_acct()]));
 
       await tester.pumpWidget(
         ProviderScope(
@@ -368,12 +358,10 @@ void main() {
           ),
         ]),
       );
-      when(
-        () => cat.watchAll(includeArchived: true),
-      ).thenAnswer((_) => categories.stream);
-      when(
-        () => acct.watchAll(includeArchived: true),
-      ).thenAnswer((_) => Stream.value([_acct()]));
+      when(() => cat.watchAll(includeArchived: true))
+          .thenAnswer((_) => categories.stream);
+      when(() => acct.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([_acct()]));
 
       await tester.pumpWidget(
         ProviderScope(
@@ -430,15 +418,12 @@ void main() {
       final cat = _MockCategoryRepository();
       final acct = _MockAccountRepository();
 
-      when(
-        () => tx.watchByMemo('coffee'),
-      ).thenAnswer((_) => Stream.value([_tx()]));
-      when(
-        () => cat.watchAll(includeArchived: true),
-      ).thenAnswer((_) => Stream.value([_cat()]));
-      when(
-        () => acct.watchAll(includeArchived: true),
-      ).thenAnswer((_) => Stream.value([_acct()]));
+      when(() => tx.watchByMemo('coffee'))
+          .thenAnswer((_) => Stream.value([_tx()]));
+      when(() => cat.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([_cat()]));
+      when(() => acct.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([_acct()]));
 
       final router = GoRouter(
         initialLocation: '/analysis',
@@ -524,12 +509,10 @@ void main() {
       );
 
       when(() => tx.watchByMemo('coffee')).thenAnswer((_) => txStream.stream);
-      when(
-        () => cat.watchAll(includeArchived: true),
-      ).thenAnswer((_) => Stream.value([_cat()]));
-      when(
-        () => acct.watchAll(includeArchived: true),
-      ).thenAnswer((_) => Stream.value([_acct()]));
+      when(() => cat.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([_cat()]));
+      when(() => acct.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([_acct()]));
 
       await tester.pumpWidget(
         ProviderScope(
@@ -583,12 +566,10 @@ void main() {
       addTearDown(txStream.close);
 
       when(() => tx.watchByMemo('coffee')).thenAnswer((_) => txStream.stream);
-      when(
-        () => cat.watchAll(includeArchived: true),
-      ).thenAnswer((_) => Stream.value([_cat()]));
-      when(
-        () => acct.watchAll(includeArchived: true),
-      ).thenAnswer((_) => Stream.value([_acct()]));
+      when(() => cat.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([_cat()]));
+      when(() => acct.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([_acct()]));
 
       await tester.pumpWidget(
         ProviderScope(
@@ -642,15 +623,12 @@ void main() {
       final cat = _MockCategoryRepository();
       final acct = _MockAccountRepository();
 
-      when(
-        () => tx.watchByMemo('coffee'),
-      ).thenAnswer((_) => Stream.value([_tx()]));
-      when(
-        () => cat.watchAll(includeArchived: true),
-      ).thenAnswer((_) => Stream.value([_cat()]));
-      when(
-        () => acct.watchAll(includeArchived: true),
-      ).thenAnswer((_) => Stream.value([_acct()]));
+      when(() => tx.watchByMemo('coffee'))
+          .thenAnswer((_) => Stream.value([_tx()]));
+      when(() => cat.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([_cat()]));
+      when(() => acct.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([_acct()]));
 
       final router = GoRouter(
         initialLocation: '/analysis',

@@ -51,15 +51,12 @@ void main() {
       textCtrl = StreamController<String>.broadcast();
       buttonCtrl = StreamController<String>.broadcast();
 
-      when(
-        () => repo.watchSplashStartDate(),
-      ).thenAnswer((_) => dateCtrl.stream);
-      when(
-        () => repo.watchSplashDisplayText(),
-      ).thenAnswer((_) => textCtrl.stream);
-      when(
-        () => repo.watchSplashButtonLabel(),
-      ).thenAnswer((_) => buttonCtrl.stream);
+      when(() => repo.watchSplashStartDate())
+          .thenAnswer((_) => dateCtrl.stream);
+      when(() => repo.watchSplashDisplayText())
+          .thenAnswer((_) => textCtrl.stream);
+      when(() => repo.watchSplashButtonLabel())
+          .thenAnswer((_) => buttonCtrl.stream);
       when(() => repo.setSplashStartDate(any())).thenAnswer((_) async {});
     });
 
@@ -149,26 +146,23 @@ void main() {
       },
     );
 
-    test(
-      'C04: default template "On {date} start using Ledgerly" yields date segment',
-      () async {
-        final container = makeContainer(now: DateTime(2026, 4, 11));
-        addTearDown(container.dispose);
-        container.listen(splashControllerProvider, (_, _) {});
-        await Future<void>.delayed(Duration.zero);
+    test('C04: default template "On {date} start using Ledgerly" yields date segment', () async {
+      final container = makeContainer(now: DateTime(2026, 4, 11));
+      addTearDown(container.dispose);
+      container.listen(splashControllerProvider, (_, _) {});
+      await Future<void>.delayed(Duration.zero);
 
-        dateCtrl.add(DateTime(2026, 1, 1));
-        textCtrl.add(kDefaultSplashDisplayText);
-        buttonCtrl.add('Enter');
+      dateCtrl.add(DateTime(2026, 1, 1));
+      textCtrl.add(kDefaultSplashDisplayText);
+      buttonCtrl.add('Enter');
 
-        final data = await waitForData(container) as SplashData;
-        expect(data.displayTextSegments, <SplashTextSegment>[
-          (text: 'On ', isDate: false),
-          (text: 'Jan 1, 2026', isDate: true),
-          (text: ' start using Ledgerly', isDate: false),
-        ]);
-      },
-    );
+      final data = await waitForData(container) as SplashData;
+      expect(data.displayTextSegments, <SplashTextSegment>[
+        (text: 'On ', isDate: false),
+        (text: 'Jan 1, 2026', isDate: true),
+        (text: ' start using Ledgerly', isDate: false),
+      ]);
+    });
 
     test(
       'C05: custom template with {days} but no {date} auto-prepends the date',
@@ -194,26 +188,23 @@ void main() {
       },
     );
 
-    test(
-      'C06: empty custom text falls back to default "On {date} start using Ledgerly"',
-      () async {
-        final container = makeContainer(now: DateTime(2026, 4, 11));
-        addTearDown(container.dispose);
-        container.listen(splashControllerProvider, (_, _) {});
-        await Future<void>.delayed(Duration.zero);
+    test('C06: empty custom text falls back to default "On {date} start using Ledgerly"', () async {
+      final container = makeContainer(now: DateTime(2026, 4, 11));
+      addTearDown(container.dispose);
+      container.listen(splashControllerProvider, (_, _) {});
+      await Future<void>.delayed(Duration.zero);
 
-        dateCtrl.add(DateTime(2026, 1, 1));
-        textCtrl.add('');
-        buttonCtrl.add('Enter');
+      dateCtrl.add(DateTime(2026, 1, 1));
+      textCtrl.add('');
+      buttonCtrl.add('Enter');
 
-        final data = await waitForData(container) as SplashData;
-        expect(data.displayTextSegments, <SplashTextSegment>[
-          (text: 'On ', isDate: false),
-          (text: 'Jan 1, 2026', isDate: true),
-          (text: ' start using Ledgerly', isDate: false),
-        ]);
-      },
-    );
+      final data = await waitForData(container) as SplashData;
+      expect(data.displayTextSegments, <SplashTextSegment>[
+        (text: 'On ', isDate: false),
+        (text: 'Jan 1, 2026', isDate: true),
+        (text: ' start using Ledgerly', isDate: false),
+      ]);
+    });
 
     test('C07: whitespace-only text falls back to default', () async {
       final container = makeContainer(now: DateTime(2026, 4, 11));
@@ -270,27 +261,24 @@ void main() {
       expect(dateSeg.text, '2026年1月1日');
     });
 
-    test(
-      'C10: user template without {date} or {days} still auto-prepends the date',
-      () async {
-        final container = makeContainer(now: DateTime(2026, 4, 11));
-        addTearDown(container.dispose);
-        container.listen(splashControllerProvider, (_, _) {});
-        await Future<void>.delayed(Duration.zero);
+    test('C10: user template without {date} or {days} still auto-prepends the date', () async {
+      final container = makeContainer(now: DateTime(2026, 4, 11));
+      addTearDown(container.dispose);
+      container.listen(splashControllerProvider, (_, _) {});
+      await Future<void>.delayed(Duration.zero);
 
-        dateCtrl.add(DateTime(2026, 1, 1));
-        textCtrl.add('My budget journey');
-        buttonCtrl.add('Enter');
+      dateCtrl.add(DateTime(2026, 1, 1));
+      textCtrl.add('My budget journey');
+      buttonCtrl.add('Enter');
 
-        final data = await waitForData(container) as SplashData;
-        // The user deleted `{date}` (or never wrote it). The controller
-        // injects it at the front so the date never disappears.
-        expect(data.displayTextSegments, <SplashTextSegment>[
-          (text: 'Jan 1, 2026', isDate: true),
-          (text: ' My budget journey', isDate: false),
-        ]);
-      },
-    );
+      final data = await waitForData(container) as SplashData;
+      // The user deleted `{date}` (or never wrote it). The controller
+      // injects it at the front so the date never disappears.
+      expect(data.displayTextSegments, <SplashTextSegment>[
+        (text: 'Jan 1, 2026', isDate: true),
+        (text: ' My budget journey', isDate: false),
+      ]);
+    });
 
     test(
       'C11: user template that already contains {date} is not auto-prepended',

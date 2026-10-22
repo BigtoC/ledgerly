@@ -304,64 +304,61 @@ void main() {
   // Path 3: Home FAB navigates to ShoppingListScreen with multiple drafts
   // ---------------------------------------------------------------------------
 
-  group(
-    'Path 3: Home FAB navigates to ShoppingListScreen with multiple drafts',
-    () {
-      testWidgets(
-        'Home FAB navigates to ShoppingListScreen with multiple drafts visible',
-        (tester) async {
-          final db = newTestAppDatabase();
-          addTearDown(db.close);
+  group('Path 3: Home FAB navigates to ShoppingListScreen with multiple drafts', () {
+    testWidgets(
+      'Home FAB navigates to ShoppingListScreen with multiple drafts visible',
+      (tester) async {
+        final db = newTestAppDatabase();
+        addTearDown(db.close);
 
-          await tester.runAsync(() async {
-            await runTestSeed(db);
-            final foodId = await getSeededCategoryId(db, 'category.food');
-            final cash = await getDefaultAccount(db);
-            final repo = DriftShoppingListRepository(
-              db,
-              DriftTransactionRepository(db),
-            );
-            // Insert 4 drafts; each gets a distinct memo.
-            for (var i = 1; i <= 4; i++) {
-              await repo.insert(
-                categoryId: foodId,
-                accountId: cash.id,
-                memo: 'Draft $i',
-                draftDate: DateTime.now(),
-              );
-            }
-          });
-
-          final container = makeTestContainer(
-            db: db,
-            extraOverrides: [
-              splashGateSnapshotProvider.overrideWithValue(
-                SplashGateSnapshot.withInitial(enabled: false, startDate: null),
-              ),
-            ],
+        await tester.runAsync(() async {
+          await runTestSeed(db);
+          final foodId = await getSeededCategoryId(db, 'category.food');
+          final cash = await getDefaultAccount(db);
+          final repo = DriftShoppingListRepository(
+            db,
+            DriftTransactionRepository(db),
           );
-          addTearDown(container.dispose);
+          // Insert 4 drafts; each gets a distinct memo.
+          for (var i = 1; i <= 4; i++) {
+            await repo.insert(
+              categoryId: foodId,
+              accountId: cash.id,
+              memo: 'Draft $i',
+              draftDate: DateTime.now(),
+            );
+          }
+        });
 
-          await tester.pumpWidget(buildTestApp(container: container));
-          await pumpToHome(tester);
+        final container = makeTestContainer(
+          db: db,
+          extraOverrides: [
+            splashGateSnapshotProvider.overrideWithValue(
+              SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
 
-          // Tap the shopping-cart FAB on Home to navigate to ShoppingListScreen.
-          expect(find.byKey(const Key('homeShoppingListFab')), findsWidgets);
-          await tester.tap(find.byKey(const Key('homeShoppingListFab')).first);
-          await tester.pumpAndSettle();
+        await tester.pumpWidget(buildTestApp(container: container));
+        await pumpToHome(tester);
 
-          expect(find.byType(ShoppingListScreen), findsOneWidget);
-          // All 4 drafts visible on the full screen.
-          expect(find.text('Draft 1'), findsOneWidget);
-          expect(find.text('Draft 2'), findsOneWidget);
-          expect(find.text('Draft 3'), findsOneWidget);
-          expect(find.text('Draft 4'), findsOneWidget);
+        // Tap the shopping-cart FAB on Home to navigate to ShoppingListScreen.
+        expect(find.byKey(const Key('homeShoppingListFab')), findsWidgets);
+        await tester.tap(find.byKey(const Key('homeShoppingListFab')).first);
+        await tester.pumpAndSettle();
 
-          expect(tester.takeException(), isNull);
-        },
-      );
-    },
-  );
+        expect(find.byType(ShoppingListScreen), findsOneWidget);
+        // All 4 drafts visible on the full screen.
+        expect(find.text('Draft 1'), findsOneWidget);
+        expect(find.text('Draft 2'), findsOneWidget);
+        expect(find.text('Draft 3'), findsOneWidget);
+        expect(find.text('Draft 4'), findsOneWidget);
+
+        expect(tester.takeException(), isNull);
+      },
+    );
+  });
 
   // ---------------------------------------------------------------------------
   // Path 4: Invalid draft id auto-pops with ShoppingListEditResultMissingDraft

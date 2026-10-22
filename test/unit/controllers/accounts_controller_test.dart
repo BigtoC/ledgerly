@@ -68,12 +68,10 @@ void main() {
       defaultCtrl = StreamController<int?>.broadcast();
       balanceCtrls.clear();
 
-      when(
-        () => accountRepo.watchAll(includeArchived: true),
-      ).thenAnswer((_) => accountsCtrl.stream);
-      when(
-        () => prefs.watchDefaultAccountId(),
-      ).thenAnswer((_) => defaultCtrl.stream);
+      when(() => accountRepo.watchAll(includeArchived: true))
+          .thenAnswer((_) => accountsCtrl.stream);
+      when(() => prefs.watchDefaultAccountId())
+          .thenAnswer((_) => defaultCtrl.stream);
       when(() => accountRepo.watchIsReferenced(any())).thenAnswer((inv) {
         final id = inv.positionalArguments.first as int;
         final balance = balanceCtrls.putIfAbsent(
@@ -82,9 +80,8 @@ void main() {
         );
         return balance.stream.asyncMap((_) => accountRepo.isReferenced(id));
       });
-      when(
-        () => accountRepo.isReferenced(any()),
-      ).thenAnswer((_) async => false);
+      when(() => accountRepo.isReferenced(any()))
+          .thenAnswer((_) async => false);
       when(() => accountRepo.watchBalanceByCurrency(any())).thenAnswer((inv) {
         final id = inv.positionalArguments.first as int;
         final c = balanceCtrls.putIfAbsent(

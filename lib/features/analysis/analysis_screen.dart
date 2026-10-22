@@ -128,9 +128,8 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
                   IconButton(
                     icon: const Icon(Icons.clear),
                     onPressed: _onClear,
-                    tooltip: MaterialLocalizations.of(
-                      context,
-                    ).deleteButtonTooltip,
+                    tooltip: MaterialLocalizations.of(context)
+                        .deleteButtonTooltip,
                   ),
               ],
               onChanged: _onChanged,

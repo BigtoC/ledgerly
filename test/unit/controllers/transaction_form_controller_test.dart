@@ -140,15 +140,12 @@ void main() {
 
     // Fallback-chain stubs: no preference, no last-used, single active.
     when(() => prefs.getDefaultAccountId()).thenAnswer((_) async => null);
-    when(
-      () => prefs.watchDefaultCurrency(),
-    ).thenAnswer((_) => defaultCurrencyCtrl.stream);
-    when(
-      () => accountRepo.getLastUsedActiveAccount(),
-    ).thenAnswer((_) async => null);
-    when(
-      () => accountRepo.watchAll(includeArchived: false),
-    ).thenAnswer((_) => Stream.value(const [_account]));
+    when(() => prefs.watchDefaultCurrency())
+        .thenAnswer((_) => defaultCurrencyCtrl.stream);
+    when(() => accountRepo.getLastUsedActiveAccount())
+        .thenAnswer((_) async => null);
+    when(() => accountRepo.watchAll(includeArchived: false))
+        .thenAnswer((_) => Stream.value(const [_account]));
     when(() => accountRepo.getById(any())).thenAnswer((inv) async {
       final id = inv.positionalArguments.first as int;
       if (id == _account.id) return _account;
@@ -201,9 +198,8 @@ void main() {
           accountTypeId: 1,
           currency: _usd,
         );
-        when(
-          () => accountRepo.getLastUsedActiveAccount(),
-        ).thenAnswer((_) async => lastUsed);
+        when(() => accountRepo.getLastUsedActiveAccount())
+            .thenAnswer((_) async => lastUsed);
         when(() => accountRepo.getById(7)).thenAnswer((_) async => lastUsed);
         final c = makeContainer();
         addTearDown(c.dispose);
@@ -229,9 +225,8 @@ void main() {
     );
 
     test('TC04: zero active accounts → empty(noActiveAccount)', () async {
-      when(
-        () => accountRepo.watchAll(includeArchived: false),
-      ).thenAnswer((_) => Stream.value(const <Account>[]));
+      when(() => accountRepo.watchAll(includeArchived: false))
+          .thenAnswer((_) => Stream.value(const <Account>[]));
       final c = makeContainer();
       addTearDown(c.dispose);
       await c.read(transactionFormControllerProvider.notifier).hydrateForAdd();
@@ -361,9 +356,8 @@ void main() {
         );
         when(() => txRepo.getById(99)).thenAnswer((_) async => source);
         when(() => accountRepo.getById(99)).thenAnswer((_) async => null);
-        when(
-          () => accountRepo.watchAll(includeArchived: false),
-        ).thenAnswer((_) => Stream.value(const <Account>[]));
+        when(() => accountRepo.watchAll(includeArchived: false))
+            .thenAnswer((_) => Stream.value(const <Account>[]));
 
         final c = makeContainer();
         addTearDown(c.dispose);
@@ -378,9 +372,8 @@ void main() {
         );
 
         when(() => prefs.getDefaultAccountId()).thenAnswer((_) async => 1);
-        when(
-          () => accountRepo.watchAll(includeArchived: false),
-        ).thenAnswer((_) => Stream.value(const [_account]));
+        when(() => accountRepo.watchAll(includeArchived: false))
+            .thenAnswer((_) => Stream.value(const [_account]));
 
         await controller.retryHydration();
         s = c.read<TransactionFormState>(transactionFormControllerProvider);
@@ -619,81 +612,75 @@ void main() {
       },
     );
 
-    test(
-      'TC61b: post-save FX fetch starts immediately and still runs after the auto-dispose controller is popped',
-      () async {
-        final db = _MockAppDatabase();
-        final dao = _MockExchangeRateDao();
-        final exchangeService = _MockExchangeRateService();
-        when(() => db.exchangeRateDao).thenReturn(dao);
-        when(
-          () => dao.watchAll(),
-        ).thenAnswer((_) => Stream.value(const <drift.ExchangeRateRow>[]));
-        when(() => dao.upsertAll(any())).thenAnswer((_) async {});
+    test('TC61b: post-save FX fetch starts immediately and still runs after the auto-dispose controller is popped', () async {
+      final db = _MockAppDatabase();
+      final dao = _MockExchangeRateDao();
+      final exchangeService = _MockExchangeRateService();
+      when(() => db.exchangeRateDao).thenReturn(dao);
+      when(() => dao.watchAll())
+          .thenAnswer((_) => Stream.value(const <drift.ExchangeRateRow>[]));
+      when(() => dao.upsertAll(any())).thenAnswer((_) async {});
 
-        final exchangeRepo = ExchangeRateRepository(
-          db,
-          exchangeService,
-          const Stream<String>.empty(),
-        );
-        addTearDown(exchangeRepo.dispose);
+      final exchangeRepo = ExchangeRateRepository(
+        db,
+        exchangeService,
+        const Stream<String>.empty(),
+      );
+      addTearDown(exchangeRepo.dispose);
 
-        final c = ProviderContainer(
-          overrides: [
-            transactionRepositoryProvider.overrideWithValue(txRepo),
-            accountRepositoryProvider.overrideWithValue(accountRepo),
-            categoryRepositoryProvider.overrideWithValue(categoryRepo),
-            userPreferencesRepositoryProvider.overrideWithValue(prefs),
-            defaultCurrencyProvider.overrideWith(
-              (ref) => const Stream<String>.empty(),
-            ),
-            initialDefaultCurrencyProvider.overrideWithValue('USD'),
-            exchangeRateRepositoryProvider.overrideWithValue(exchangeRepo),
-          ],
-        );
-        addTearDown(c.dispose);
+      final c = ProviderContainer(
+        overrides: [
+          transactionRepositoryProvider.overrideWithValue(txRepo),
+          accountRepositoryProvider.overrideWithValue(accountRepo),
+          categoryRepositoryProvider.overrideWithValue(categoryRepo),
+          userPreferencesRepositoryProvider.overrideWithValue(prefs),
+          defaultCurrencyProvider.overrideWith(
+            (ref) => const Stream<String>.empty(),
+          ),
+          initialDefaultCurrencyProvider.overrideWithValue('USD'),
+          exchangeRateRepositoryProvider.overrideWithValue(exchangeRepo),
+        ],
+      );
+      addTearDown(c.dispose);
 
-        final sub = c.listen(transactionFormControllerProvider, (_, _) {});
-        final controller = c.read(transactionFormControllerProvider.notifier);
-        await controller.hydrateForAdd();
-        controller.selectCurrency(_eur);
-        controller
-          ..appendDigit(1)
-          ..selectCategory(_expenseCategory);
+      final sub = c.listen(transactionFormControllerProvider, (_, _) {});
+      final controller = c.read(transactionFormControllerProvider.notifier);
+      await controller.hydrateForAdd();
+      controller.selectCurrency(_eur);
+      controller
+        ..appendDigit(1)
+        ..selectCategory(_expenseCategory);
 
-        when(() => txRepo.save(any())).thenAnswer(
-          (_) async => _persistedTx(amountMinorUnits: 100, currency: _eur),
-        );
-        when(
-          () => exchangeService.fetchRates(any()),
-        ).thenAnswer((_) async => []);
+      when(() => txRepo.save(any())).thenAnswer(
+        (_) async => _persistedTx(amountMinorUnits: 100, currency: _eur),
+      );
+      when(() => exchangeService.fetchRates(any())).thenAnswer((_) async => []);
 
-        var saveCompleted = false;
-        Object? saveError;
-        var disposeCompleted = false;
-        final saveFuture = controller
-            .save()
-            .then((_) => saveCompleted = true)
-            .catchError((Object e) {
-              saveError = e;
-              return false;
-            });
-        await pumpEventQueue();
+      var saveCompleted = false;
+      Object? saveError;
+      var disposeCompleted = false;
+      final saveFuture = controller
+          .save()
+          .then((_) => saveCompleted = true)
+          .catchError((Object e) {
+            saveError = e;
+            return false;
+          });
+      await pumpEventQueue();
 
-        sub.close();
-        await c.pump();
-        disposeCompleted = true;
+      sub.close();
+      await c.pump();
+      disposeCompleted = true;
 
-        await pumpEventQueue();
-        await saveFuture;
+      await pumpEventQueue();
+      await saveFuture;
 
-        expect(saveError, isNull);
-        expect(saveCompleted, isTrue);
-        expect(disposeCompleted, isTrue);
+      expect(saveError, isNull);
+      expect(saveCompleted, isTrue);
+      expect(disposeCompleted, isTrue);
 
-        verify(() => exchangeService.fetchRates(any())).called(1);
-      },
-    );
+      verify(() => exchangeService.fetchRates(any())).called(1);
+    });
 
     test('TC62: save returns null when canSave is false', () async {
       final c = makeContainer();
@@ -860,227 +847,198 @@ void main() {
       expect(s.currencyTouched, isTrue);
     });
 
-    test(
-      'TC82: account change re-seeds displayCurrency when currencyTouched is false',
-      () async {
-        final c = makeContainer();
-        addTearDown(c.dispose);
-        final controller = c.read(transactionFormControllerProvider.notifier);
-        await controller
-            .hydrateForAdd(); // starts with USD, currencyTouched=false
-        controller.selectAccount(_accountJpy);
-        final s =
-            c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(s.displayCurrency?.code, 'JPY');
-        expect(s.currencyTouched, isFalse);
-      },
-    );
+    test('TC82: account change re-seeds displayCurrency when currencyTouched is false', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+      await controller
+          .hydrateForAdd(); // starts with USD, currencyTouched=false
+      controller.selectAccount(_accountJpy);
+      final s =
+          c.read(transactionFormControllerProvider) as TransactionFormData;
+      expect(s.displayCurrency?.code, 'JPY');
+      expect(s.currencyTouched, isFalse);
+    });
 
-    test(
-      'TC83: account change leaves displayCurrency unchanged when currencyTouched is true',
-      () async {
-        const eur = Currency(
-          code: 'EUR',
-          decimals: 2,
-          symbol: '€',
-          nameL10nKey: 'currency.eur',
-        );
-        final c = makeContainer();
-        addTearDown(c.dispose);
-        final controller = c.read(transactionFormControllerProvider.notifier);
-        await controller.hydrateForAdd();
-        // User manually picks EUR — sets currencyTouched=true
-        controller.selectCurrency(eur);
-        var s =
-            c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(s.displayCurrency?.code, 'EUR');
-        expect(s.currencyTouched, isTrue);
-        // Switching account should NOT re-seed currency
-        controller.selectAccount(_accountJpy);
-        s = c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(s.displayCurrency?.code, 'EUR');
-        expect(s.selectedAccount?.id, _accountJpy.id);
-      },
-    );
+    test('TC83: account change leaves displayCurrency unchanged when currencyTouched is true', () async {
+      const eur = Currency(
+        code: 'EUR',
+        decimals: 2,
+        symbol: '€',
+        nameL10nKey: 'currency.eur',
+      );
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+      await controller.hydrateForAdd();
+      // User manually picks EUR — sets currencyTouched=true
+      controller.selectCurrency(eur);
+      var s = c.read(transactionFormControllerProvider) as TransactionFormData;
+      expect(s.displayCurrency?.code, 'EUR');
+      expect(s.currencyTouched, isTrue);
+      // Switching account should NOT re-seed currency
+      controller.selectAccount(_accountJpy);
+      s = c.read(transactionFormControllerProvider) as TransactionFormData;
+      expect(s.displayCurrency?.code, 'EUR');
+      expect(s.selectedAccount?.id, _accountJpy.id);
+    });
 
-    test(
-      'TC84: selectCurrency with non-zero amount refuses without clearAmountOnChange',
-      () async {
-        const eur = Currency(
-          code: 'EUR',
-          decimals: 2,
-          symbol: '€',
-          nameL10nKey: 'currency.eur',
-        );
-        final c = makeContainer();
-        addTearDown(c.dispose);
-        final controller = c.read(transactionFormControllerProvider.notifier);
-        await controller.hydrateForAdd();
-        controller.appendDigit(5); // amount = 500 minor units
-        controller.selectCurrency(eur); // no clearAmountOnChange flag
-        final s =
-            c.read(transactionFormControllerProvider) as TransactionFormData;
-        // Currency change should be refused
-        expect(s.displayCurrency?.code, 'USD');
-        expect(s.amountMinorUnits, 500);
-        expect(s.currencyTouched, isFalse);
-      },
-    );
+    test('TC84: selectCurrency with non-zero amount refuses without clearAmountOnChange', () async {
+      const eur = Currency(
+        code: 'EUR',
+        decimals: 2,
+        symbol: '€',
+        nameL10nKey: 'currency.eur',
+      );
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+      await controller.hydrateForAdd();
+      controller.appendDigit(5); // amount = 500 minor units
+      controller.selectCurrency(eur); // no clearAmountOnChange flag
+      final s =
+          c.read(transactionFormControllerProvider) as TransactionFormData;
+      // Currency change should be refused
+      expect(s.displayCurrency?.code, 'USD');
+      expect(s.amountMinorUnits, 500);
+      expect(s.currencyTouched, isFalse);
+    });
 
-    test(
-      'TC85: selectCurrency with clearAmountOnChange clears amount and sets currencyTouched',
-      () async {
-        const eur = Currency(
-          code: 'EUR',
-          decimals: 2,
-          symbol: '€',
-          nameL10nKey: 'currency.eur',
-        );
-        final c = makeContainer();
-        addTearDown(c.dispose);
-        final controller = c.read(transactionFormControllerProvider.notifier);
-        await controller.hydrateForAdd();
-        controller.appendDigit(5);
-        controller.selectCurrency(eur, clearAmountOnChange: true);
-        final s =
-            c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(s.displayCurrency?.code, 'EUR');
-        expect(s.amountMinorUnits, 0);
-        expect(s.currencyTouched, isTrue);
-      },
-    );
+    test('TC85: selectCurrency with clearAmountOnChange clears amount and sets currencyTouched', () async {
+      const eur = Currency(
+        code: 'EUR',
+        decimals: 2,
+        symbol: '€',
+        nameL10nKey: 'currency.eur',
+      );
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+      await controller.hydrateForAdd();
+      controller.appendDigit(5);
+      controller.selectCurrency(eur, clearAmountOnChange: true);
+      final s =
+          c.read(transactionFormControllerProvider) as TransactionFormData;
+      expect(s.displayCurrency?.code, 'EUR');
+      expect(s.amountMinorUnits, 0);
+      expect(s.currencyTouched, isTrue);
+    });
 
-    test(
-      'TC86: selectCurrency with zero amount succeeds without clearAmountOnChange',
-      () async {
-        const eur = Currency(
-          code: 'EUR',
-          decimals: 2,
-          symbol: '€',
-          nameL10nKey: 'currency.eur',
-        );
-        final c = makeContainer();
-        addTearDown(c.dispose);
-        final controller = c.read(transactionFormControllerProvider.notifier);
-        await controller.hydrateForAdd();
-        // amount is 0, no need for clearAmountOnChange flag
-        controller.selectCurrency(eur);
-        final s =
-            c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(s.displayCurrency?.code, 'EUR');
-        expect(s.currencyTouched, isTrue);
-      },
-    );
+    test('TC86: selectCurrency with zero amount succeeds without clearAmountOnChange', () async {
+      const eur = Currency(
+        code: 'EUR',
+        decimals: 2,
+        symbol: '€',
+        nameL10nKey: 'currency.eur',
+      );
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+      await controller.hydrateForAdd();
+      // amount is 0, no need for clearAmountOnChange flag
+      controller.selectCurrency(eur);
+      final s =
+          c.read(transactionFormControllerProvider) as TransactionFormData;
+      expect(s.displayCurrency?.code, 'EUR');
+      expect(s.currencyTouched, isTrue);
+    });
 
-    test(
-      'TC86b: re-selecting the current currency keeps automatic account-driven currency behavior',
-      () async {
-        final c = makeContainer();
-        addTearDown(c.dispose);
-        final controller = c.read(transactionFormControllerProvider.notifier);
-        await controller.hydrateForAdd();
+    test('TC86b: re-selecting the current currency keeps automatic account-driven currency behavior', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+      await controller.hydrateForAdd();
 
-        var s =
-            c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(s.displayCurrency?.code, 'USD');
-        expect(s.currencyTouched, isFalse);
+      var s = c.read(transactionFormControllerProvider) as TransactionFormData;
+      expect(s.displayCurrency?.code, 'USD');
+      expect(s.currencyTouched, isFalse);
 
-        controller.selectCurrency(_usd);
-        s = c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(s.displayCurrency?.code, 'USD');
-        expect(s.currencyTouched, isFalse);
+      controller.selectCurrency(_usd);
+      s = c.read(transactionFormControllerProvider) as TransactionFormData;
+      expect(s.displayCurrency?.code, 'USD');
+      expect(s.currencyTouched, isFalse);
 
-        controller.selectAccount(_accountJpy);
-        s = c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(s.selectedAccount?.id, _accountJpy.id);
-        expect(s.displayCurrency?.code, 'JPY');
-      },
-    );
+      controller.selectAccount(_accountJpy);
+      s = c.read(transactionFormControllerProvider) as TransactionFormData;
+      expect(s.selectedAccount?.id, _accountJpy.id);
+      expect(s.displayCurrency?.code, 'JPY');
+    });
 
-    test(
-      'TC87: save persists displayCurrency rather than selectedAccount.currency',
-      () async {
-        const eur = Currency(
-          code: 'EUR',
-          decimals: 2,
-          symbol: '€',
-          nameL10nKey: 'currency.eur',
-        );
-        final db = _MockAppDatabase();
-        final dao = _MockExchangeRateDao();
-        final exchangeService = _MockExchangeRateService();
-        when(() => db.exchangeRateDao).thenReturn(dao);
-        when(
-          () => dao.watchAll(),
-        ).thenAnswer((_) => Stream.value(const <drift.ExchangeRateRow>[]));
-        when(() => dao.upsertAll(any())).thenAnswer((_) async {});
-        when(
-          () => exchangeService.fetchRates(any()),
-        ).thenAnswer((_) async => []);
-        final exchangeRepo = ExchangeRateRepository(
-          db,
-          exchangeService,
-          const Stream<String>.empty(),
-        );
-        addTearDown(exchangeRepo.dispose);
+    test('TC87: save persists displayCurrency rather than selectedAccount.currency', () async {
+      const eur = Currency(
+        code: 'EUR',
+        decimals: 2,
+        symbol: '€',
+        nameL10nKey: 'currency.eur',
+      );
+      final db = _MockAppDatabase();
+      final dao = _MockExchangeRateDao();
+      final exchangeService = _MockExchangeRateService();
+      when(() => db.exchangeRateDao).thenReturn(dao);
+      when(() => dao.watchAll())
+          .thenAnswer((_) => Stream.value(const <drift.ExchangeRateRow>[]));
+      when(() => dao.upsertAll(any())).thenAnswer((_) async {});
+      when(() => exchangeService.fetchRates(any())).thenAnswer((_) async => []);
+      final exchangeRepo = ExchangeRateRepository(
+        db,
+        exchangeService,
+        const Stream<String>.empty(),
+      );
+      addTearDown(exchangeRepo.dispose);
 
-        final c = ProviderContainer(
-          overrides: [
-            transactionRepositoryProvider.overrideWithValue(txRepo),
-            accountRepositoryProvider.overrideWithValue(accountRepo),
-            categoryRepositoryProvider.overrideWithValue(categoryRepo),
-            userPreferencesRepositoryProvider.overrideWithValue(prefs),
-            defaultCurrencyProvider.overrideWith(
-              (ref) => const Stream<String>.empty(),
-            ),
-            initialDefaultCurrencyProvider.overrideWithValue('USD'),
-            exchangeRateRepositoryProvider.overrideWithValue(exchangeRepo),
-          ],
-        );
-        addTearDown(c.dispose);
-        final controller = c.read(transactionFormControllerProvider.notifier);
-        await controller.hydrateForAdd();
-        controller.selectCurrency(eur); // user picks EUR on a USD account
-        controller.appendDigit(1);
-        controller.selectCategory(_expenseCategory);
-        Transaction? capturedTx;
-        when(() => txRepo.save(any())).thenAnswer((inv) async {
-          capturedTx = inv.positionalArguments.first as Transaction;
-          return capturedTx!;
-        });
-        await controller.save();
-        expect(capturedTx?.currency.code, 'EUR');
-      },
-    );
+      final c = ProviderContainer(
+        overrides: [
+          transactionRepositoryProvider.overrideWithValue(txRepo),
+          accountRepositoryProvider.overrideWithValue(accountRepo),
+          categoryRepositoryProvider.overrideWithValue(categoryRepo),
+          userPreferencesRepositoryProvider.overrideWithValue(prefs),
+          defaultCurrencyProvider.overrideWith(
+            (ref) => const Stream<String>.empty(),
+          ),
+          initialDefaultCurrencyProvider.overrideWithValue('USD'),
+          exchangeRateRepositoryProvider.overrideWithValue(exchangeRepo),
+        ],
+      );
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+      await controller.hydrateForAdd();
+      controller.selectCurrency(eur); // user picks EUR on a USD account
+      controller.appendDigit(1);
+      controller.selectCategory(_expenseCategory);
+      Transaction? capturedTx;
+      when(() => txRepo.save(any())).thenAnswer((inv) async {
+        capturedTx = inv.positionalArguments.first as Transaction;
+        return capturedTx!;
+      });
+      await controller.save();
+      expect(capturedTx?.currency.code, 'EUR');
+    });
   });
 
   group('destructive-input gating', () {
-    test(
-      'TC36: selectCurrency refuses without the clear flag when an expression is active and the visible amount is zero',
-      () async {
-        const eur = Currency(
-          code: 'EUR',
-          decimals: 2,
-          symbol: '€',
-          nameL10nKey: 'currency.eur',
-        );
+    test('TC36: selectCurrency refuses without the clear flag when an expression is active and the visible amount is zero', () async {
+      const eur = Currency(
+        code: 'EUR',
+        decimals: 2,
+        symbol: '€',
+        nameL10nKey: 'currency.eur',
+      );
 
-        final c = makeContainer();
-        addTearDown(c.dispose);
-        final controller = c.read(transactionFormControllerProvider.notifier);
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
 
-        await controller.hydrateForAdd();
-        controller.appendDigit(1);
-        controller.applyOperator(CalcOperator.add); // amountMinorUnits == 0
-        controller.selectCurrency(eur);
+      await controller.hydrateForAdd();
+      controller.appendDigit(1);
+      controller.applyOperator(CalcOperator.add); // amountMinorUnits == 0
+      controller.selectCurrency(eur);
 
-        final data =
-            c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(data.displayCurrency?.code, 'USD');
-        expect(data.keypad.leftOperand, 100);
-        expect(data.keypad.operator, CalcOperator.add);
-      },
-    );
+      final data =
+          c.read(transactionFormControllerProvider) as TransactionFormData;
+      expect(data.displayCurrency?.code, 'USD');
+      expect(data.keypad.leftOperand, 100);
+      expect(data.keypad.operator, CalcOperator.add);
+    });
 
     test(
       'TC37: selectCurrency with the clear flag clears the active expression',
@@ -1109,71 +1067,59 @@ void main() {
       },
     );
 
-    test(
-      'TC38: selectAccount refuses without the clear flag when account reseeding would change displayCurrency during an active expression',
-      () async {
-        final c = makeContainer();
-        addTearDown(c.dispose);
-        final controller = c.read(transactionFormControllerProvider.notifier);
+    test('TC38: selectAccount refuses without the clear flag when account reseeding would change displayCurrency during an active expression', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
 
-        await controller.hydrateForAdd();
-        controller.appendDigit(1);
-        controller.applyOperator(CalcOperator.add);
-        controller.selectAccount(_accountJpy);
+      await controller.hydrateForAdd();
+      controller.appendDigit(1);
+      controller.applyOperator(CalcOperator.add);
+      controller.selectAccount(_accountJpy);
 
-        final data =
-            c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(data.displayCurrency?.code, 'USD');
-        expect(data.keypad.leftOperand, 100);
-        expect(data.keypad.operator, CalcOperator.add);
-      },
-    );
+      final data =
+          c.read(transactionFormControllerProvider) as TransactionFormData;
+      expect(data.displayCurrency?.code, 'USD');
+      expect(data.keypad.leftOperand, 100);
+      expect(data.keypad.operator, CalcOperator.add);
+    });
 
-    test(
-      'TC39: selectAccount with the clear flag clears the active expression after the currency reseed',
-      () async {
-        final c = makeContainer();
-        addTearDown(c.dispose);
-        final controller = c.read(transactionFormControllerProvider.notifier);
+    test('TC39: selectAccount with the clear flag clears the active expression after the currency reseed', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
 
-        await controller.hydrateForAdd();
-        controller.appendDigit(1);
-        controller.applyOperator(CalcOperator.add);
-        controller.selectAccount(
-          _accountJpy,
-          clearAmountOnCurrencyChange: true,
-        );
+      await controller.hydrateForAdd();
+      controller.appendDigit(1);
+      controller.applyOperator(CalcOperator.add);
+      controller.selectAccount(_accountJpy, clearAmountOnCurrencyChange: true);
 
-        final data =
-            c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(data.displayCurrency?.code, 'JPY');
-        expect(data.amountMinorUnits, 0);
-        expect(data.keypad.hasExpression, isFalse);
-      },
-    );
+      final data =
+          c.read(transactionFormControllerProvider) as TransactionFormData;
+      expect(data.displayCurrency?.code, 'JPY');
+      expect(data.amountMinorUnits, 0);
+      expect(data.keypad.hasExpression, isFalse);
+    });
 
-    test(
-      'TC40: selectAccount same-currency switch does not refuse even when keypad has visible input',
-      () async {
-        final c = makeContainer();
-        addTearDown(c.dispose);
-        final controller = c.read(transactionFormControllerProvider.notifier);
+    test('TC40: selectAccount same-currency switch does not refuse even when keypad has visible input', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
 
-        await controller.hydrateForAdd();
-        controller.appendDigit(1);
-        controller.applyOperator(CalcOperator.add);
-        // Switch to a second USD account (same currency)
-        controller.selectAccount(_accountUsd2);
+      await controller.hydrateForAdd();
+      controller.appendDigit(1);
+      controller.applyOperator(CalcOperator.add);
+      // Switch to a second USD account (same currency)
+      controller.selectAccount(_accountUsd2);
 
-        final data =
-            c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(data.displayCurrency?.code, 'USD');
-        expect(data.selectedAccount?.id, _accountUsd2.id);
-        // Expression preserved because currency did not change
-        expect(data.keypad.leftOperand, 100);
-        expect(data.keypad.operator, CalcOperator.add);
-      },
-    );
+      final data =
+          c.read(transactionFormControllerProvider) as TransactionFormData;
+      expect(data.displayCurrency?.code, 'USD');
+      expect(data.selectedAccount?.id, _accountUsd2.id);
+      // Expression preserved because currency did not change
+      expect(data.keypad.leftOperand, 100);
+      expect(data.keypad.operator, CalcOperator.add);
+    });
   });
 
   group('calculator operators', () {
@@ -1220,73 +1166,64 @@ void main() {
       },
     );
 
-    test(
-      'TC35: operator correction before right input replaces the pending operator',
-      () async {
-        final c = makeContainer();
-        addTearDown(c.dispose);
-        final controller = c.read(transactionFormControllerProvider.notifier);
+    test('TC35: operator correction before right input replaces the pending operator', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
 
-        await controller.hydrateForAdd();
-        controller.appendDigit(1);
-        controller.applyOperator(CalcOperator.multiply);
-        controller.applyOperator(CalcOperator.subtract);
+      await controller.hydrateForAdd();
+      controller.appendDigit(1);
+      controller.applyOperator(CalcOperator.multiply);
+      controller.applyOperator(CalcOperator.subtract);
 
-        final data =
-            c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(data.keypad.leftOperand, 100);
-        expect(data.keypad.operator, CalcOperator.subtract);
-        expect(data.keypad.amountMinorUnits, 0);
-      },
-    );
+      final data =
+          c.read(transactionFormControllerProvider) as TransactionFormData;
+      expect(data.keypad.leftOperand, 100);
+      expect(data.keypad.operator, CalcOperator.subtract);
+      expect(data.keypad.amountMinorUnits, 0);
+    });
 
-    test(
-      'TC35b: decimal-start while evaluating still increments the watched keypad revision',
-      () async {
-        final c = makeContainer();
-        addTearDown(c.dispose);
-        final controller = c.read(transactionFormControllerProvider.notifier);
+    test('TC35b: decimal-start while evaluating still increments the watched keypad revision', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
 
-        await controller.hydrateForAdd();
-        controller.appendDigit(1);
-        controller.applyOperator(CalcOperator.add);
-        final before =
-            (c.read(transactionFormControllerProvider) as TransactionFormData)
-                .keypadRevision;
+      await controller.hydrateForAdd();
+      controller.appendDigit(1);
+      controller.applyOperator(CalcOperator.add);
+      final before = (c.read(
+        transactionFormControllerProvider,
+      ) as TransactionFormData).keypadRevision;
 
-        controller.appendDecimal();
+      controller.appendDecimal();
 
-        final after =
-            (c.read(transactionFormControllerProvider) as TransactionFormData)
-                .keypadRevision;
-        final data =
-            c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(after, greaterThan(before));
-        expect(data.keypad.hasCurrentInput, isTrue);
-      },
-    );
+      final after = (c.read(
+        transactionFormControllerProvider,
+      ) as TransactionFormData).keypadRevision;
+      final data =
+          c.read(transactionFormControllerProvider) as TransactionFormData;
+      expect(after, greaterThan(before));
+      expect(data.keypad.hasCurrentInput, isTrue);
+    });
 
-    test(
-      'TC35c: chaining with a different operator starts the next expression from the evaluated result',
-      () async {
-        final c = makeContainer();
-        addTearDown(c.dispose);
-        final controller = c.read(transactionFormControllerProvider.notifier);
+    test('TC35c: chaining with a different operator starts the next expression from the evaluated result', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
 
-        await controller.hydrateForAdd();
-        controller.appendDigit(1);
-        controller.appendDigit(2);
-        controller.applyOperator(CalcOperator.add);
-        controller.appendDigit(5);
-        controller.applyOperator(CalcOperator.subtract);
+      await controller.hydrateForAdd();
+      controller.appendDigit(1);
+      controller.appendDigit(2);
+      controller.applyOperator(CalcOperator.add);
+      controller.appendDigit(5);
+      controller.applyOperator(CalcOperator.subtract);
 
-        final data =
-            c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(data.keypad.leftOperand, 1700);
-        expect(data.keypad.operator, CalcOperator.subtract);
-        expect(data.keypad.isEvaluating, isTrue);
-        expect(data.keypad.amountMinorUnits, 0);
-      },
-    );
+      final data =
+          c.read(transactionFormControllerProvider) as TransactionFormData;
+      expect(data.keypad.leftOperand, 1700);
+      expect(data.keypad.operator, CalcOperator.subtract);
+      expect(data.keypad.isEvaluating, isTrue);
+      expect(data.keypad.amountMinorUnits, 0);
+    });
   });
 }

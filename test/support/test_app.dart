@@ -215,9 +215,8 @@ Future<int> getSeededCategoryId(AppDatabase db, String l10nKey) async {
 /// under FakeAsync. Caller MUST wrap in `tester.runAsync`.
 Future<Account> getDefaultAccount(AppDatabase db) async {
   final currencies = DriftCurrencyRepository(db);
-  final defaultId = await DriftUserPreferencesRepository(
-    db,
-  ).getDefaultAccountId();
+  final defaultId = await DriftUserPreferencesRepository(db)
+      .getDefaultAccountId();
   if (defaultId == null) {
     throw StateError('default_account_id not set; seed did not run');
   }

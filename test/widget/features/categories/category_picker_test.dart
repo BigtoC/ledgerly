@@ -93,9 +93,8 @@ void main() {
       ];
       final container = ProviderContainer(
         overrides: [
-          categoriesByTypeProvider(
-            CategoryType.expense,
-          ).overrideWith((ref) => Stream.value(rows)),
+          categoriesByTypeProvider(CategoryType.expense)
+              .overrideWith((ref) => Stream.value(rows)),
         ],
       );
       addTearDown(container.dispose);
@@ -167,9 +166,8 @@ void main() {
   ) async {
     final container = ProviderContainer(
       overrides: [
-        categoriesByTypeProvider(
-          CategoryType.income,
-        ).overrideWith((ref) => Stream.value(const <Category>[])),
+        categoriesByTypeProvider(CategoryType.income)
+            .overrideWith((ref) => Stream.value(const <Category>[])),
       ],
     );
     addTearDown(container.dispose);
@@ -196,51 +194,50 @@ void main() {
     expect(picked, isNull);
   });
 
-  testWidgets(
-    'P04: >=600dp renders dialog container with picker body',
-    (tester) async {
-      await tester.binding.setSurfaceSize(const Size(1000, 800));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
+  testWidgets('P04: >=600dp renders dialog container with picker body', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1000, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final container = ProviderContainer(
-        overrides: [
-          categoriesByTypeProvider(CategoryType.expense).overrideWith(
-            (ref) => Stream.value([
-              _c(
-                id: 11,
-                type: CategoryType.expense,
-                customName: 'Groceries',
-                sortOrder: 0,
-              ),
-            ]),
-          ),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      Category? picked;
-      await tester.pumpWidget(
-        _hostApp(
-          container: container,
-          size: const Size(1000, 800),
-          onLaunch: (ctx) async {
-            picked = await showCategoryPicker(ctx, type: CategoryType.expense);
-            return picked;
-          },
+    final container = ProviderContainer(
+      overrides: [
+        categoriesByTypeProvider(CategoryType.expense).overrideWith(
+          (ref) => Stream.value([
+            _c(
+              id: 11,
+              type: CategoryType.expense,
+              customName: 'Groceries',
+              sortOrder: 0,
+            ),
+          ]),
         ),
-      );
-      await tester.tap(find.text('open'));
-      await tester.pumpAndSettle();
+      ],
+    );
+    addTearDown(container.dispose);
 
-      expect(find.byType(Dialog), findsOneWidget);
-      expect(find.text('Groceries'), findsOneWidget);
+    Category? picked;
+    await tester.pumpWidget(
+      _hostApp(
+        container: container,
+        size: const Size(1000, 800),
+        onLaunch: (ctx) async {
+          picked = await showCategoryPicker(ctx, type: CategoryType.expense);
+          return picked;
+        },
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Groceries'));
-      await tester.pumpAndSettle();
-      expect(picked, isNotNull);
-      expect(picked!.id, 11);
-    },
-  );
+    expect(find.byType(Dialog), findsOneWidget);
+    expect(find.text('Groceries'), findsOneWidget);
+
+    await tester.tap(find.text('Groceries'));
+    await tester.pumpAndSettle();
+    expect(picked, isNotNull);
+    expect(picked!.id, 11);
+  });
 
   testWidgets('P05: 2x text scale renders without overflow', (tester) async {
     final container = ProviderContainer(
@@ -266,9 +263,8 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(
-              context,
-            ).copyWith(textScaler: const TextScaler.linear(2.0)),
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(2.0)),
             child: child!,
           ),
           home: Builder(

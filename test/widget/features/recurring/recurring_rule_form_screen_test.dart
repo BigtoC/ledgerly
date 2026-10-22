@@ -68,9 +68,8 @@ ProviderContainer _makeContainer({
   when(
     () => accountRepo.watchAll(includeArchived: any(named: 'includeArchived')),
   ).thenAnswer((_) => const Stream<List<Account>>.empty());
-  when(
-    () => accountRepo.watchAll(),
-  ).thenAnswer((_) => const Stream<List<Account>>.empty());
+  when(() => accountRepo.watchAll())
+      .thenAnswer((_) => const Stream<List<Account>>.empty());
   final categoryRepo = _MockCategoryRepository();
   when(
     () => categoryRepo.watchAll(
@@ -81,14 +80,12 @@ ProviderContainer _makeContainer({
 
   return ProviderContainer(
     overrides: [
-      recurringRuleFormControllerProvider(
-        ruleId: ruleId,
-      ).overrideWith(() => _FakeFormController(initial)),
+      recurringRuleFormControllerProvider(ruleId: ruleId)
+          .overrideWith(() => _FakeFormController(initial)),
       accountRepositoryProvider.overrideWithValue(accountRepo),
       categoryRepositoryProvider.overrideWithValue(categoryRepo),
-      categoriesByTypeProvider(
-        CategoryType.expense,
-      ).overrideWith((_) => const Stream<List<Category>>.empty()),
+      categoriesByTypeProvider(CategoryType.expense)
+          .overrideWith((_) => const Stream<List<Category>>.empty()),
     ],
   );
 }

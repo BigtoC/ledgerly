@@ -95,9 +95,8 @@ Widget _wrap({
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(
-          context,
-        ).copyWith(textScaler: TextScaler.linear(textScale)),
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
       routerConfig: _StubRouter.build(const SettingsScreen()),
@@ -437,9 +436,8 @@ void main() {
       final prefs = _MockUserPreferencesRepository();
       final accountRepo = _MockAccountRepository();
       final currencyRepo = _MockCurrencyRepository();
-      when(
-        () => prefs.setLocale(const Locale('zh', 'TW')),
-      ).thenAnswer((_) async {});
+      when(() => prefs.setLocale(const Locale('zh', 'TW')))
+          .thenAnswer((_) async {});
 
       final container = _makeContainer(
         prefs: prefs,

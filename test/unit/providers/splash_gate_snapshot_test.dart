@@ -110,12 +110,10 @@ void main() {
       enabledCtrl = StreamController<bool>.broadcast();
       dateCtrl = StreamController<DateTime?>.broadcast();
 
-      when(
-        () => mockRepo.watchSplashEnabled(),
-      ).thenAnswer((_) => enabledCtrl.stream);
-      when(
-        () => mockRepo.watchSplashStartDate(),
-      ).thenAnswer((_) => dateCtrl.stream);
+      when(() => mockRepo.watchSplashEnabled())
+          .thenAnswer((_) => enabledCtrl.stream);
+      when(() => mockRepo.watchSplashStartDate())
+          .thenAnswer((_) => dateCtrl.stream);
 
       container = ProviderContainer(
         overrides: [

@@ -119,9 +119,8 @@ void main() {
           // Same write path the home controller's `_commitDelete`
           // uses after its undo window expires; applied before
           // pumpWidget so the seeded subscribe sees the empty state.
-          final removed = await DriftTransactionRepository(
-            db,
-          ).delete(inserted.id);
+          final removed = await DriftTransactionRepository(db)
+              .delete(inserted.id);
           if (!removed) {
             throw StateError('delete should have removed the seeded row');
           }
