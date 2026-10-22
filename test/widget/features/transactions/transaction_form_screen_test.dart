@@ -88,6 +88,7 @@ Transaction _persistedTx({
   int id = 99,
   int amountMinorUnits = 500,
   String? memo,
+  String? amountFormula,
   DateTime? date,
 }) {
   final d = date ?? DateTime(2026, 4, 25);
@@ -98,6 +99,7 @@ Transaction _persistedTx({
     categoryId: 10,
     accountId: 1,
     memo: memo,
+    amountFormula: amountFormula,
     date: d,
     createdAt: d,
     updatedAt: d,
@@ -1049,6 +1051,56 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(capturedTx?.amountMinorUnits, 300);
+    },
+  );
+
+  testWidgets(
+    'WS29: a saved formula reloads, recalculates, and saves after editing',
+    (tester) async {
+      when(() => txRepo.getById(99)).thenAnswer(
+        (_) async => _persistedTx(
+          amountMinorUnits: 2800,
+          amountFormula: '3.5+10.5+11+3',
+        ),
+      );
+      Transaction? capturedTx;
+      when(() => txRepo.save(any())).thenAnswer((inv) async {
+        capturedTx = inv.positionalArguments.first as Transaction;
+        return capturedTx!;
+      });
+
+      await tester.pumpWidget(mountEdit(99));
+      await tester.pumpAndSettle();
+
+      final display = find.byType(AmountDisplay);
+      expect(
+        find.descendant(
+          of: display,
+          matching: find.text('3.5 + 10.5 + 11 + 3 ='),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: display, matching: find.text('28.00')),
+        findsOneWidget,
+      );
+
+      // Backspace the trailing 3 and type 5: 3.5 + 10.5 + 11 + 5.
+      await tester.tap(find.byTooltip('Backspace'));
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(of: display, matching: find.text('3.5 + 10.5 + 11 +')),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('5').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(TextButton, 'Save'));
+      await tester.pumpAndSettle();
+
+      expect(capturedTx?.id, 99);
+      expect(capturedTx?.amountMinorUnits, 3000);
+      expect(capturedTx?.amountFormula, '3.5+10.5+11+5');
     },
   );
 }

@@ -32,6 +32,7 @@ import '../../data/models/currency.dart';
 import '../../data/models/shopping_list_item.dart';
 import '../../data/models/transaction.dart';
 import '../../data/repositories/category_repository.dart';
+import 'amount_formula.dart';
 import 'keypad_state.dart';
 import 'transaction_form_state.dart';
 
@@ -186,8 +187,9 @@ class TransactionFormController extends _$TransactionFormController {
         return;
       }
       final category = await categoryRepo.getById(existing.categoryId);
-      _keypad = KeypadState.fromAmount(
+      _keypad = _keypadForStored(
         existing.amountMinorUnits,
+        existing.amountFormula,
         decimals: existing.currency.decimals,
       );
       _keypadRevision = 0;
@@ -557,6 +559,7 @@ class TransactionFormController extends _$TransactionFormController {
         categoryId: s.selectedCategory!.id,
         accountId: s.selectedAccount!.id,
         memo: s.memo.isEmpty ? null : s.memo,
+        amountFormula: _keypad.formula(decimals: s.displayCurrency!.decimals),
         date: s.date,
         createdAt: s.originalCreatedAt ?? s.date,
         updatedAt: s.date,
@@ -770,8 +773,9 @@ class TransactionFormController extends _$TransactionFormController {
     final preservesAmount = source.currency.code == account.currency.code;
     final amountMinorUnits = preservesAmount ? source.amountMinorUnits : 0;
     _keypad = preservesAmount
-        ? KeypadState.fromAmount(
+        ? _keypadForStored(
             source.amountMinorUnits,
+            source.amountFormula,
             decimals: account.currency.decimals,
           )
         : const KeypadState.initial();
@@ -799,6 +803,25 @@ class TransactionFormController extends _$TransactionFormController {
       duplicateSourceId: duplicateSourceId,
       originalCreatedAt: null,
     );
+  }
+
+  /// Rebuilds the keypad for a stored amount. A stored formula is replayed
+  /// so the user sees it and can keep editing it. The stored amount stays
+  /// authoritative: a formula that no longer parses, or no longer
+  /// recalculates to that amount, is ignored.
+  static KeypadState _keypadForStored(
+    int amountMinorUnits,
+    String? formula, {
+    required int decimals,
+  }) {
+    final parsed = formula == null
+        ? null
+        : parseAmountFormula(formula, decimals: decimals);
+    if (parsed != null) {
+      final keypad = KeypadState.fromFormula(parsed, decimals: decimals);
+      if (keypad.amountMinorUnits == amountMinorUnits) return keypad;
+    }
+    return KeypadState.fromAmount(amountMinorUnits, decimals: decimals);
   }
 
   static DateTime _today() {
