@@ -3,7 +3,6 @@
 // All providers are autoDispose (keepAlive: false) per the project rule
 // for slice-local providers (CLAUDE.md → Architecture).
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../app/providers/repository_providers.dart';

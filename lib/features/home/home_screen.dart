@@ -154,7 +154,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     });
 
     final countAsync = ref.watch(shoppingListTotalCountProvider);
-    final count = countAsync.valueOrNull ?? 0;
+    final count = countAsync.value ?? 0;
     final badgeLabel = count > 99 ? '99+' : '$count';
 
     // Wrap the FAB row in TextScaler.noScaling so the pair never overflows at
@@ -351,14 +351,12 @@ class _SinglePane extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = Localizations.localeOf(context).toString();
     final currencies =
-        ref.watch(homeCurrenciesByCodeProvider).valueOrNull ?? const {};
-    final categories =
-        ref.watch(homeCategoriesByIdProvider).valueOrNull ?? const {};
-    final accounts =
-        ref.watch(homeAccountsByIdProvider).valueOrNull ?? const {};
+        ref.watch(homeCurrenciesByCodeProvider).value ?? const {};
+    final categories = ref.watch(homeCategoriesByIdProvider).value ?? const {};
+    final accounts = ref.watch(homeAccountsByIdProvider).value ?? const {};
     final initialDefault = ref.read(initialDefaultCurrencyProvider);
     final defaultCurrency =
-        ref.watch(defaultCurrencyProvider).valueOrNull ?? initialDefault;
+        ref.watch(defaultCurrencyProvider).value ?? initialDefault;
     final l10n = AppLocalizations.of(context);
     const double transactionPadding = 24;
 

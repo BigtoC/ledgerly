@@ -79,6 +79,20 @@ void main() {
       expect(launched, isA<ProviderScope>());
     });
 
+    test('root ProviderScope disables Riverpod 3 automatic retry', () async {
+      Widget? launched;
+
+      await bootstrapFor(
+        openDatabase: () async => AppDatabase(NativeDatabase.memory()),
+        localeService: const _StubLocaleService(),
+        runAppFn: (w) => launched = w,
+      );
+
+      final retry = (launched! as ProviderScope).retry;
+      expect(retry, isNotNull);
+      expect(retry!(0, Exception('network down')), isNull);
+    });
+
     test(
       'initialize formatting, eager reads, and seed happen before runApp',
       () async {

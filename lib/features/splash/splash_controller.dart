@@ -16,7 +16,6 @@
 
 import 'dart:async';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../app/providers/locale_provider.dart';
@@ -51,7 +50,7 @@ class SplashController extends _$SplashController {
     final localeTag = _localeTag(locale?.toLanguageTag());
     // First-frame hydrated start date so the launch transition does not
     // flicker loading → data while the repo stream warms up. Mirrors the
-    // widget's own `stream.valueOrNull ?? snapshot.splashStartDate` read.
+    // widget's own `stream.value ?? snapshot.splashStartDate` read.
     final snapshotStartDate = ref
         .read(splashGateSnapshotProvider)
         .splashStartDate;

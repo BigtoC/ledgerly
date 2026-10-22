@@ -136,8 +136,7 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 50));
 
       final data =
-          container.read(chartsControllerProvider).valueOrNull
-              as ChartsDataState;
+          container.read(chartsControllerProvider).value as ChartsDataState;
       final keys = data.chartData.slices.map((s) => s.selectionKey).toList();
       expect(
         keys,
@@ -191,7 +190,7 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 50));
 
     final data =
-        container.read(chartsControllerProvider).valueOrNull as ChartsDataState;
+        container.read(chartsControllerProvider).value as ChartsDataState;
     expect(
       data.chartData.slices.first.selectionKey,
       equals(const SelectedSlice.account(1)),
@@ -241,7 +240,7 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 50));
 
     final data =
-        container.read(chartsControllerProvider).valueOrNull as ChartsDataState;
+        container.read(chartsControllerProvider).value as ChartsDataState;
     final keys = data.chartData.slices.map((s) => s.selectionKey).toList();
     expect(
       keys,

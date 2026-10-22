@@ -152,7 +152,7 @@ void main() {
       ChartsState? latest;
       final sub = container.listen<AsyncValue<ChartsState>>(
         chartsControllerProvider,
-        (_, next) => latest = next.valueOrNull,
+        (_, next) => latest = next.value,
         fireImmediately: true,
       );
       await Future<void>.delayed(const Duration(milliseconds: 50));
@@ -200,8 +200,7 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 20));
 
       final initial =
-          container.read(chartsControllerProvider).valueOrNull
-              as ChartsDataState;
+          container.read(chartsControllerProvider).value as ChartsDataState;
       final initialAnchor = initial.chartData.anchorDate;
 
       container
@@ -209,8 +208,7 @@ void main() {
           .previousPeriod();
       await Future<void>.delayed(const Duration(milliseconds: 20));
       final after =
-          (container.read(chartsControllerProvider).valueOrNull
-                  as ChartsDataState)
+          (container.read(chartsControllerProvider).value as ChartsDataState)
               .chartData
               .anchorDate;
       expect(after.isBefore(initialAnchor), isTrue);
@@ -294,7 +292,7 @@ void main() {
       final sub = container.listen<AsyncValue<ChartsState>>(
         chartsControllerProvider,
         (_, next) {
-          final v = next.valueOrNull;
+          final v = next.value;
           if (v is ChartsEmpty && !completer.isCompleted) {
             completer.complete(v);
           }
@@ -375,7 +373,7 @@ void main() {
       container.listen(chartsControllerProvider, (_, _) {});
       await Future<void>.delayed(const Duration(milliseconds: 30));
 
-      final state = container.read(chartsControllerProvider).valueOrNull;
+      final state = container.read(chartsControllerProvider).value;
       expect(state, isA<ChartsDataState>());
       final data = (state! as ChartsDataState).chartData;
       expect(data.slices, hasLength(1));
@@ -436,7 +434,7 @@ void main() {
       ChartsState? latest;
       final sub = container.listen<AsyncValue<ChartsState>>(
         chartsControllerProvider,
-        (_, next) => latest = next.valueOrNull,
+        (_, next) => latest = next.value,
         fireImmediately: true,
       );
       await Future<void>.delayed(const Duration(milliseconds: 50));
@@ -510,7 +508,7 @@ void main() {
         container.listen(chartsControllerProvider, (_, _) {});
         await Future<void>.delayed(const Duration(milliseconds: 30));
 
-        final state = container.read(chartsControllerProvider).valueOrNull;
+        final state = container.read(chartsControllerProvider).value;
         expect(state, isA<ChartsDataState>());
         final data = (state! as ChartsDataState).chartData;
         // Only USD slice survives → fraction is 1.0, total is 1000.
@@ -565,7 +563,7 @@ void main() {
             .setDimension(ChartDimension.currency);
         await Future<void>.delayed(const Duration(milliseconds: 30));
 
-        final state = container.read(chartsControllerProvider).valueOrNull;
+        final state = container.read(chartsControllerProvider).value;
         expect(state, isA<ChartsDataState>());
         final data = (state! as ChartsDataState).chartData;
         expect(data.slices, hasLength(2));
@@ -618,7 +616,7 @@ void main() {
         ChartsState? latest;
         final sub = container.listen<AsyncValue<ChartsState>>(
           chartsControllerProvider,
-          (_, next) => latest = next.valueOrNull,
+          (_, next) => latest = next.value,
           fireImmediately: true,
         );
         await Future<void>.delayed(const Duration(milliseconds: 50));
@@ -673,8 +671,7 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 50));
 
       var data =
-          (container.read(chartsControllerProvider).valueOrNull!
-                  as ChartsDataState)
+          (container.read(chartsControllerProvider).value! as ChartsDataState)
               .chartData;
       expect(data.autoSwitchedFromCategoryDimension, isTrue);
 
@@ -683,8 +680,7 @@ void main() {
           .dismissAutoSwitchBanner();
       await Future<void>.delayed(const Duration(milliseconds: 30));
       data =
-          (container.read(chartsControllerProvider).valueOrNull!
-                  as ChartsDataState)
+          (container.read(chartsControllerProvider).value! as ChartsDataState)
               .chartData;
       expect(data.autoSwitchedFromCategoryDimension, isFalse);
       expect(data.dimension, ChartDimension.currency);
@@ -725,7 +721,7 @@ void main() {
       selection.nextPeriod();
       await Future<void>.delayed(const Duration(milliseconds: 20));
 
-      final state = container.read(chartsControllerProvider).valueOrNull;
+      final state = container.read(chartsControllerProvider).value;
       final calls = verify(
         () => repo.watchByCategoryInRange(
           start: any(named: 'start'),

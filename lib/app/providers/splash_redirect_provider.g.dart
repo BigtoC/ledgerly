@@ -6,48 +6,106 @@ part of 'splash_redirect_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+
+@ProviderFor(splashGateSnapshot)
+final splashGateSnapshotProvider = SplashGateSnapshotProvider._();
+
+final class SplashGateSnapshotProvider
+    extends
+        $FunctionalProvider<
+          Raw<SplashGateSnapshot>,
+          Raw<SplashGateSnapshot>,
+          Raw<SplashGateSnapshot>
+        >
+    with $Provider<Raw<SplashGateSnapshot>> {
+  SplashGateSnapshotProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'splashGateSnapshotProvider',
+        isAutoDispose: false,
+        dependencies: <ProviderOrFamily>[userPreferencesRepositoryProvider],
+        $allTransitiveDependencies: <ProviderOrFamily>[
+          SplashGateSnapshotProvider.$allTransitiveDependencies0,
+          SplashGateSnapshotProvider.$allTransitiveDependencies1,
+        ],
+      );
+
+  static final $allTransitiveDependencies0 = userPreferencesRepositoryProvider;
+  static final $allTransitiveDependencies1 =
+      UserPreferencesRepositoryProvider.$allTransitiveDependencies0;
+
+  @override
+  String debugGetCreateSourceHash() => _$splashGateSnapshotHash();
+
+  @$internal
+  @override
+  $ProviderElement<Raw<SplashGateSnapshot>> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  Raw<SplashGateSnapshot> create(Ref ref) {
+    return splashGateSnapshot(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Raw<SplashGateSnapshot> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Raw<SplashGateSnapshot>>(value),
+    );
+  }
+}
+
 String _$splashGateSnapshotHash() =>
     r'355664651509c3555b9c3228fe20d62c9116f16a';
 
-/// See also [splashGateSnapshot].
-@ProviderFor(splashGateSnapshot)
-final splashGateSnapshotProvider = Provider<Raw<SplashGateSnapshot>>.internal(
-  splashGateSnapshot,
-  name: r'splashGateSnapshotProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$splashGateSnapshotHash,
-  dependencies: <ProviderOrFamily>[userPreferencesRepositoryProvider],
-  allTransitiveDependencies: <ProviderOrFamily>{
-    userPreferencesRepositoryProvider,
-    ...?userPreferencesRepositoryProvider.allTransitiveDependencies,
-  },
-);
+/// Stream of `splash_start_date` for reactive UI (e.g. `SplashScreen`).
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef SplashGateSnapshotRef = ProviderRef<Raw<SplashGateSnapshot>>;
-String _$splashStartDateHash() => r'155a89a3b957efe426da2ea46b13d1bd5cbbb9f0';
+@ProviderFor(splashStartDate)
+final splashStartDateProvider = SplashStartDateProvider._();
 
 /// Stream of `splash_start_date` for reactive UI (e.g. `SplashScreen`).
-///
-/// Copied from [splashStartDate].
-@ProviderFor(splashStartDate)
-final splashStartDateProvider = StreamProvider<DateTime?>.internal(
-  splashStartDate,
-  name: r'splashStartDateProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$splashStartDateHash,
-  dependencies: <ProviderOrFamily>[userPreferencesRepositoryProvider],
-  allTransitiveDependencies: <ProviderOrFamily>{
-    userPreferencesRepositoryProvider,
-    ...?userPreferencesRepositoryProvider.allTransitiveDependencies,
-  },
-);
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef SplashStartDateRef = StreamProviderRef<DateTime?>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class SplashStartDateProvider
+    extends
+        $FunctionalProvider<AsyncValue<DateTime?>, DateTime?, Stream<DateTime?>>
+    with $FutureModifier<DateTime?>, $StreamProvider<DateTime?> {
+  /// Stream of `splash_start_date` for reactive UI (e.g. `SplashScreen`).
+  SplashStartDateProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'splashStartDateProvider',
+        isAutoDispose: false,
+        dependencies: <ProviderOrFamily>[userPreferencesRepositoryProvider],
+        $allTransitiveDependencies: <ProviderOrFamily>[
+          SplashStartDateProvider.$allTransitiveDependencies0,
+          SplashStartDateProvider.$allTransitiveDependencies1,
+        ],
+      );
+
+  static final $allTransitiveDependencies0 = userPreferencesRepositoryProvider;
+  static final $allTransitiveDependencies1 =
+      UserPreferencesRepositoryProvider.$allTransitiveDependencies0;
+
+  @override
+  String debugGetCreateSourceHash() => _$splashStartDateHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<DateTime?> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<DateTime?> create(Ref ref) {
+    return splashStartDate(ref);
+  }
+}
+
+String _$splashStartDateHash() => r'155a89a3b957efe426da2ea46b13d1bd5cbbb9f0';

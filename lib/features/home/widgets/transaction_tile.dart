@@ -101,11 +101,11 @@ class TransactionTile extends ConsumerWidget {
     final txCurrency = transaction.currency;
     if (txCurrency.code != defaultCurrency) {
       final ratesMap =
-          ref.watch(exchangeRatesProvider).valueOrNull ?? const <String, int>{};
+          ref.watch(exchangeRatesProvider).value ?? const <String, int>{};
       final rateScaledE9 = ratesMap['${txCurrency.code}→$defaultCurrency'];
       if (rateScaledE9 != null) {
         final currenciesByCode =
-            ref.watch(homeCurrenciesByCodeProvider).valueOrNull ??
+            ref.watch(homeCurrenciesByCodeProvider).value ??
             const <String, Currency>{};
         final toCurrency =
             currenciesByCode[defaultCurrency] ??

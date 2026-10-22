@@ -112,7 +112,7 @@ Detailed agent-facing rules live under [`docs/architecture/`](docs/architecture/
 - `flutter pub get`
 - `flutter run`
 - `dart format .` (run before `flutter test` or `flutter analyze` whenever verifying changes)
-- `flutter analyze` (runs analyzer + `custom_lint` / `riverpod_lint`)
+- `flutter analyze` (analyzer + lint rules; `riverpod_lint` is an analysis-server plugin configured under `plugins:` in `analysis_options.yaml`, and its diagnostics show in `dart analyze` and the IDE, not in `flutter analyze`)
 - `dart run import_lint` (reads the regex rules in the root `import_analysis_options.yaml`)
 - `dart run build_runner build --delete-conflicting-outputs`
 - `dart run build_runner watch --delete-conflicting-outputs`

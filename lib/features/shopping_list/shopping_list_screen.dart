@@ -304,9 +304,9 @@ class _ShoppingListRow extends ConsumerWidget {
         ? ref.watch(shoppingListCurrencyByCodeProvider(item.draftCurrencyCode!))
         : null;
 
-    final category = categoryAsync.valueOrNull;
-    final account = accountAsync.valueOrNull;
-    final currency = currencyAsync?.valueOrNull;
+    final category = categoryAsync.value;
+    final account = accountAsync.value;
+    final currency = currencyAsync?.value;
 
     final locale = Localizations.localeOf(context).toString();
     final primaryLabel = resolvePrimaryLabel(item, category, l10n);

@@ -19,14 +19,14 @@ final accountTypeByIdProvider = StreamProvider.autoDispose
         }
         return null;
       });
-    });
+    }, dependencies: [accountTypeRepositoryProvider]);
 
 final accountTypesProvider = StreamProvider.autoDispose<List<AccountType>>((
   ref,
 ) {
   final repo = ref.watch(accountTypeRepositoryProvider);
   return repo.watchAll();
-});
+}, dependencies: [accountTypeRepositoryProvider]);
 
 final selectableCurrenciesProvider = StreamProvider.autoDispose<List<Currency>>(
   (ref) {
@@ -35,6 +35,7 @@ final selectableCurrenciesProvider = StreamProvider.autoDispose<List<Currency>>(
       (rows) => rows.where((c) => !c.isToken).toList(growable: false),
     );
   },
+  dependencies: [currencyRepositoryProvider],
 );
 
 /// Read-only map from currency code (uppercase) to [Currency] model.
@@ -46,7 +47,7 @@ final currenciesByCodeProvider =
       return repo.watchAll().map(
         (rows) => {for (final c in rows) c.code.toUpperCase(): c},
       );
-    });
+    }, dependencies: [currencyRepositoryProvider]);
 
 class AccountFormSeedData {
   const AccountFormSeedData({
@@ -65,25 +66,33 @@ class AccountFormSeedData {
 }
 
 final accountFormSeedDataProvider = FutureProvider.autoDispose
-    .family<AccountFormSeedData, int?>((ref, accountId) async {
-      final accountRepo = ref.read(accountRepositoryProvider);
-      final typeRepo = ref.read(accountTypeRepositoryProvider);
-      final prefs = ref.read(userPreferencesRepositoryProvider);
-      final currencies = ref.read(currencyRepositoryProvider);
+    .family<AccountFormSeedData, int?>(
+      (ref, accountId) async {
+        final accountRepo = ref.read(accountRepositoryProvider);
+        final typeRepo = ref.read(accountTypeRepositoryProvider);
+        final prefs = ref.read(userPreferencesRepositoryProvider);
+        final currencies = ref.read(currencyRepositoryProvider);
 
-      if (accountId != null) {
-        final account = await accountRepo.getById(accountId);
-        if (account == null) {
-          return const AccountFormSeedData.missing();
+        if (accountId != null) {
+          final account = await accountRepo.getById(accountId);
+          if (account == null) {
+            return const AccountFormSeedData.missing();
+          }
+          final type = await typeRepo.getById(account.accountTypeId);
+          return AccountFormSeedData(account: account, accountType: type);
         }
-        final type = await typeRepo.getById(account.accountTypeId);
-        return AccountFormSeedData(account: account, accountType: type);
-      }
 
-      final code = await prefs.getDefaultCurrency();
-      final defaultCurrency = await currencies.getByCode(code);
-      return AccountFormSeedData(defaultCurrency: defaultCurrency);
-    });
+        final code = await prefs.getDefaultCurrency();
+        final defaultCurrency = await currencies.getByCode(code);
+        return AccountFormSeedData(defaultCurrency: defaultCurrency);
+      },
+      dependencies: [
+        accountRepositoryProvider,
+        accountTypeRepositoryProvider,
+        userPreferencesRepositoryProvider,
+        currencyRepositoryProvider,
+      ],
+    );
 
 class AccountFormActions {
   AccountFormActions(this._accountRepository, this._ref);
@@ -100,7 +109,7 @@ class AccountFormActions {
 
     final initialDefault = _ref.read(initialDefaultCurrencyProvider);
     final currentDefault =
-        _ref.read(defaultCurrencyProvider).valueOrNull ?? initialDefault;
+        _ref.read(defaultCurrencyProvider).value ?? initialDefault;
 
     if (draft.currency.code != currentDefault) {
       _pendingCodes.add(draft.currency.code);
@@ -117,11 +126,23 @@ class AccountFormActions {
   }
 }
 
-final accountFormActionsProvider = Provider<AccountFormActions>((ref) {
-  final actions = AccountFormActions(ref.read(accountRepositoryProvider), ref);
-  ref.onDispose(() => actions._debounce?.cancel());
-  return actions;
-});
+final accountFormActionsProvider = Provider<AccountFormActions>(
+  (ref) {
+    final actions = AccountFormActions(
+      ref.read(accountRepositoryProvider),
+      ref,
+    );
+    ref.onDispose(() => actions._debounce?.cancel());
+    return actions;
+  },
+  // `AccountFormActions` reads the last three through the stored `ref`.
+  dependencies: [
+    accountRepositoryProvider,
+    initialDefaultCurrencyProvider,
+    defaultCurrencyProvider,
+    exchangeRateRepositoryProvider,
+  ],
+);
 
 class AccountTypeCreationActions {
   AccountTypeCreationActions(this._repository);
@@ -149,4 +170,5 @@ final accountTypeCreationActionsProvider = Provider<AccountTypeCreationActions>(
   (ref) {
     return AccountTypeCreationActions(ref.read(accountTypeRepositoryProvider));
   },
+  dependencies: [accountTypeRepositoryProvider],
 );

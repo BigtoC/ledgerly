@@ -276,7 +276,7 @@ void main() {
           notifier.skip(1);
           async.flushMicrotasks();
 
-          var state = container.read(pendingControllerProvider).valueOrNull;
+          var state = container.read(pendingControllerProvider).value;
           expect(state, isA<PendingData>());
           expect((state as PendingData).skipScheduled?.pendingId, 1);
 
@@ -286,7 +286,7 @@ void main() {
           verify(() => repo.reject(1)).called(1);
           expect(captured.whereType<PendingSkipFailedEffect>(), hasLength(1));
 
-          state = container.read(pendingControllerProvider).valueOrNull;
+          state = container.read(pendingControllerProvider).value;
           expect(state, isA<PendingData>());
           expect((state as PendingData).skipScheduled, isNull);
           expect(state.items.any((p) => p.id == 1), isTrue);

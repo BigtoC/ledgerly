@@ -119,8 +119,8 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
     final locale = Localizations.localeOf(context).toLanguageTag();
     debugPrint(
       '[ChartsSection] build state=${stateAsync.runtimeType} '
-      'value=${stateAsync.valueOrNull?.runtimeType} '
-      'currencies=${currenciesAsync.valueOrNull?.length}',
+      'value=${stateAsync.value?.runtimeType} '
+      'currencies=${currenciesAsync.value?.length}',
     );
     // Touch the provider to keep it warm in tests + production.
     // ignore: unused_local_variable
@@ -194,7 +194,7 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
                 : _ChartBody(
                     data: previous,
                     locale: locale,
-                    currencies: currenciesAsync.valueOrNull ?? const {},
+                    currencies: currenciesAsync.value ?? const {},
                   ),
             l10n: l10n,
             chartData: previous,
@@ -236,7 +236,7 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
                       _ChartBody(
                         data: previous,
                         locale: locale,
-                        currencies: currenciesAsync.valueOrNull ?? const {},
+                        currencies: currenciesAsync.value ?? const {},
                       ),
                     ],
                   ),
@@ -252,7 +252,7 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
             body: _ChartBody(
               data: chartData,
               locale: locale,
-              currencies: currenciesAsync.valueOrNull ?? const {},
+              currencies: currenciesAsync.value ?? const {},
             ),
             l10n: l10n,
             chartData: chartData,

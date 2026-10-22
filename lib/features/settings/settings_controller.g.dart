@@ -6,28 +6,57 @@ part of 'settings_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+
+@ProviderFor(SettingsController)
+final settingsControllerProvider = SettingsControllerProvider._();
+
+final class SettingsControllerProvider
+    extends $StreamNotifierProvider<SettingsController, SettingsState> {
+  SettingsControllerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'settingsControllerProvider',
+        isAutoDispose: true,
+        dependencies: <ProviderOrFamily>[userPreferencesRepositoryProvider],
+        $allTransitiveDependencies: <ProviderOrFamily>[
+          SettingsControllerProvider.$allTransitiveDependencies0,
+          SettingsControllerProvider.$allTransitiveDependencies1,
+        ],
+      );
+
+  static final $allTransitiveDependencies0 = userPreferencesRepositoryProvider;
+  static final $allTransitiveDependencies1 =
+      UserPreferencesRepositoryProvider.$allTransitiveDependencies0;
+
+  @override
+  String debugGetCreateSourceHash() => _$settingsControllerHash();
+
+  @$internal
+  @override
+  SettingsController create() => SettingsController();
+}
+
 String _$settingsControllerHash() =>
     r'9590d7ea89315defaffff136f153cab016a7db3a';
 
-/// See also [SettingsController].
-@ProviderFor(SettingsController)
-final settingsControllerProvider =
-    AutoDisposeStreamNotifierProvider<
-      SettingsController,
-      SettingsState
-    >.internal(
-      SettingsController.new,
-      name: r'settingsControllerProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$settingsControllerHash,
-      dependencies: <ProviderOrFamily>[userPreferencesRepositoryProvider],
-      allTransitiveDependencies: <ProviderOrFamily>{
-        userPreferencesRepositoryProvider,
-        ...?userPreferencesRepositoryProvider.allTransitiveDependencies,
-      },
-    );
-
-typedef _$SettingsController = AutoDisposeStreamNotifier<SettingsState>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+abstract class _$SettingsController extends $StreamNotifier<SettingsState> {
+  Stream<SettingsState> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<SettingsState>, SettingsState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<SettingsState>, SettingsState>,
+              AsyncValue<SettingsState>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

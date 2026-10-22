@@ -6,25 +6,56 @@ part of 'router.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$routerHash() => r'1ac122eae2e0ba17589a969af5ed6c2e1c4b37bd';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [router].
 @ProviderFor(router)
-final routerProvider = Provider<GoRouter>.internal(
-  router,
-  name: r'routerProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$routerHash,
-  dependencies: <ProviderOrFamily>[splashGateSnapshotProvider],
-  allTransitiveDependencies: <ProviderOrFamily>{
-    splashGateSnapshotProvider,
-    ...?splashGateSnapshotProvider.allTransitiveDependencies,
-  },
-);
+final routerProvider = RouterProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef RouterRef = ProviderRef<GoRouter>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class RouterProvider
+    extends $FunctionalProvider<GoRouter, GoRouter, GoRouter>
+    with $Provider<GoRouter> {
+  RouterProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'routerProvider',
+        isAutoDispose: false,
+        dependencies: <ProviderOrFamily>[splashGateSnapshotProvider],
+        $allTransitiveDependencies: <ProviderOrFamily>[
+          RouterProvider.$allTransitiveDependencies0,
+          RouterProvider.$allTransitiveDependencies1,
+          RouterProvider.$allTransitiveDependencies2,
+        ],
+      );
+
+  static final $allTransitiveDependencies0 = splashGateSnapshotProvider;
+  static final $allTransitiveDependencies1 =
+      SplashGateSnapshotProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies2 =
+      SplashGateSnapshotProvider.$allTransitiveDependencies1;
+
+  @override
+  String debugGetCreateSourceHash() => _$routerHash();
+
+  @$internal
+  @override
+  $ProviderElement<GoRouter> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  GoRouter create(Ref ref) {
+    return router(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(GoRouter value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<GoRouter>(value),
+    );
+  }
+}
+
+String _$routerHash() => r'1ac122eae2e0ba17589a969af5ed6c2e1c4b37bd';

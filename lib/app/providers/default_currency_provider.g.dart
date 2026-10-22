@@ -6,33 +6,61 @@ part of 'default_currency_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$defaultCurrencyHash() => r'343f988e90cf6a3b4600129ca8e88e65d1c98813';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+/// Stream of the user's default currency ISO code, backed by Drift's
+/// `watchDefaultCurrency()`. The bootstrap-known initial value is
+/// provided synchronously via `initialDefaultCurrencyProvider` so UI
+/// tiles do not flicker through a `'USD'` fallback on cold start.
+
+@ProviderFor(defaultCurrency)
+final defaultCurrencyProvider = DefaultCurrencyProvider._();
 
 /// Stream of the user's default currency ISO code, backed by Drift's
 /// `watchDefaultCurrency()`. The bootstrap-known initial value is
 /// provided synchronously via `initialDefaultCurrencyProvider` so UI
 /// tiles do not flicker through a `'USD'` fallback on cold start.
-///
-/// Copied from [defaultCurrency].
-@ProviderFor(defaultCurrency)
-final defaultCurrencyProvider = StreamProvider<String>.internal(
-  defaultCurrency,
-  name: r'defaultCurrencyProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$defaultCurrencyHash,
-  dependencies: <ProviderOrFamily>[userPreferencesRepositoryProvider],
-  allTransitiveDependencies: <ProviderOrFamily>{
-    userPreferencesRepositoryProvider,
-    ...?userPreferencesRepositoryProvider.allTransitiveDependencies,
-  },
-);
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef DefaultCurrencyRef = StreamProviderRef<String>;
-String _$initialDefaultCurrencyHash() =>
-    r'd96062f6de5f3795d858097d4fd712a620ad1580';
+final class DefaultCurrencyProvider
+    extends $FunctionalProvider<AsyncValue<String>, String, Stream<String>>
+    with $FutureModifier<String>, $StreamProvider<String> {
+  /// Stream of the user's default currency ISO code, backed by Drift's
+  /// `watchDefaultCurrency()`. The bootstrap-known initial value is
+  /// provided synchronously via `initialDefaultCurrencyProvider` so UI
+  /// tiles do not flicker through a `'USD'` fallback on cold start.
+  DefaultCurrencyProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'defaultCurrencyProvider',
+        isAutoDispose: false,
+        dependencies: <ProviderOrFamily>[userPreferencesRepositoryProvider],
+        $allTransitiveDependencies: <ProviderOrFamily>[
+          DefaultCurrencyProvider.$allTransitiveDependencies0,
+          DefaultCurrencyProvider.$allTransitiveDependencies1,
+        ],
+      );
+
+  static final $allTransitiveDependencies0 = userPreferencesRepositoryProvider;
+  static final $allTransitiveDependencies1 =
+      UserPreferencesRepositoryProvider.$allTransitiveDependencies0;
+
+  @override
+  String debugGetCreateSourceHash() => _$defaultCurrencyHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<String> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<String> create(Ref ref) {
+    return defaultCurrency(ref);
+  }
+}
+
+String _$defaultCurrencyHash() => r'343f988e90cf6a3b4600129ca8e88e65d1c98813';
 
 /// Bootstrap-provided initial value of the default currency. Overridden
 /// in `bootstrap.dart` with the value read from `UserPreferencesRepository`
@@ -44,21 +72,66 @@ String _$initialDefaultCurrencyHash() =>
 /// path do not need to override it; production paths always override.
 /// Pattern mirrors `initialThemeModeProvider` and
 /// `initialPreferredLocaleProvider`.
-///
-/// Copied from [initialDefaultCurrency].
-@ProviderFor(initialDefaultCurrency)
-final initialDefaultCurrencyProvider = Provider<String>.internal(
-  initialDefaultCurrency,
-  name: r'initialDefaultCurrencyProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$initialDefaultCurrencyHash,
-  dependencies: const <ProviderOrFamily>[],
-  allTransitiveDependencies: const <ProviderOrFamily>{},
-);
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef InitialDefaultCurrencyRef = ProviderRef<String>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+@ProviderFor(initialDefaultCurrency)
+final initialDefaultCurrencyProvider = InitialDefaultCurrencyProvider._();
+
+/// Bootstrap-provided initial value of the default currency. Overridden
+/// in `bootstrap.dart` with the value read from `UserPreferencesRepository`
+/// before `runApp`, so UI tiles can synchronously resolve the default
+/// currency on first frame without going through the AsyncValue
+/// loading state.
+///
+/// Defaults to `'USD'` so widget tests that do not exercise the bootstrap
+/// path do not need to override it; production paths always override.
+/// Pattern mirrors `initialThemeModeProvider` and
+/// `initialPreferredLocaleProvider`.
+
+final class InitialDefaultCurrencyProvider
+    extends $FunctionalProvider<String, String, String>
+    with $Provider<String> {
+  /// Bootstrap-provided initial value of the default currency. Overridden
+  /// in `bootstrap.dart` with the value read from `UserPreferencesRepository`
+  /// before `runApp`, so UI tiles can synchronously resolve the default
+  /// currency on first frame without going through the AsyncValue
+  /// loading state.
+  ///
+  /// Defaults to `'USD'` so widget tests that do not exercise the bootstrap
+  /// path do not need to override it; production paths always override.
+  /// Pattern mirrors `initialThemeModeProvider` and
+  /// `initialPreferredLocaleProvider`.
+  InitialDefaultCurrencyProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'initialDefaultCurrencyProvider',
+        isAutoDispose: false,
+        dependencies: <ProviderOrFamily>[],
+        $allTransitiveDependencies: <ProviderOrFamily>[],
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$initialDefaultCurrencyHash();
+
+  @$internal
+  @override
+  $ProviderElement<String> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  String create(Ref ref) {
+    return initialDefaultCurrency(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String>(value),
+    );
+  }
+}
+
+String _$initialDefaultCurrencyHash() =>
+    r'd96062f6de5f3795d858097d4fd712a620ad1580';

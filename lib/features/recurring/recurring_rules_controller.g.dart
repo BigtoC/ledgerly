@@ -6,29 +6,60 @@ part of 'recurring_rules_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+
+@ProviderFor(RecurringRulesController)
+final recurringRulesControllerProvider = RecurringRulesControllerProvider._();
+
+final class RecurringRulesControllerProvider
+    extends
+        $StreamNotifierProvider<RecurringRulesController, RecurringRulesState> {
+  RecurringRulesControllerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'recurringRulesControllerProvider',
+        isAutoDispose: true,
+        dependencies: <ProviderOrFamily>[recurringRulesRepositoryProvider],
+        $allTransitiveDependencies: <ProviderOrFamily>[
+          RecurringRulesControllerProvider.$allTransitiveDependencies0,
+          RecurringRulesControllerProvider.$allTransitiveDependencies1,
+        ],
+      );
+
+  static final $allTransitiveDependencies0 = recurringRulesRepositoryProvider;
+  static final $allTransitiveDependencies1 =
+      RecurringRulesRepositoryProvider.$allTransitiveDependencies0;
+
+  @override
+  String debugGetCreateSourceHash() => _$recurringRulesControllerHash();
+
+  @$internal
+  @override
+  RecurringRulesController create() => RecurringRulesController();
+}
+
 String _$recurringRulesControllerHash() =>
     r'99c023dc86725bb9c07ba6eabf8165650f49e4b4';
 
-/// See also [RecurringRulesController].
-@ProviderFor(RecurringRulesController)
-final recurringRulesControllerProvider =
-    AutoDisposeStreamNotifierProvider<
-      RecurringRulesController,
-      RecurringRulesState
-    >.internal(
-      RecurringRulesController.new,
-      name: r'recurringRulesControllerProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$recurringRulesControllerHash,
-      dependencies: <ProviderOrFamily>[recurringRulesRepositoryProvider],
-      allTransitiveDependencies: <ProviderOrFamily>{
-        recurringRulesRepositoryProvider,
-        ...?recurringRulesRepositoryProvider.allTransitiveDependencies,
-      },
-    );
-
-typedef _$RecurringRulesController =
-    AutoDisposeStreamNotifier<RecurringRulesState>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+abstract class _$RecurringRulesController
+    extends $StreamNotifier<RecurringRulesState> {
+  Stream<RecurringRulesState> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref =
+        this.ref as $Ref<AsyncValue<RecurringRulesState>, RecurringRulesState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<RecurringRulesState>, RecurringRulesState>,
+              AsyncValue<RecurringRulesState>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

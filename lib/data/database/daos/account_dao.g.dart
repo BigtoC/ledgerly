@@ -7,4 +7,16 @@ mixin _$AccountDaoMixin on DatabaseAccessor<AppDatabase> {
   $CurrenciesTable get currencies => attachedDatabase.currencies;
   $AccountTypesTable get accountTypes => attachedDatabase.accountTypes;
   $AccountsTable get accounts => attachedDatabase.accounts;
+  AccountDaoManager get managers => AccountDaoManager(this);
+}
+
+class AccountDaoManager {
+  final _$AccountDaoMixin _db;
+  AccountDaoManager(this._db);
+  $$CurrenciesTableTableManager get currencies =>
+      $$CurrenciesTableTableManager(_db.attachedDatabase, _db.currencies);
+  $$AccountTypesTableTableManager get accountTypes =>
+      $$AccountTypesTableTableManager(_db.attachedDatabase, _db.accountTypes);
+  $$AccountsTableTableManager get accounts =>
+      $$AccountsTableTableManager(_db.attachedDatabase, _db.accounts);
 }

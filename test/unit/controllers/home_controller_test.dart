@@ -152,21 +152,27 @@ void main() {
         isA<AsyncLoading<HomeState>>(),
       );
 
+      // Riverpod 3 delivers the composer's initial `HomeState.loading()`
+      // (Riverpod 2 dropped it), so "still loading" is either form; the
+      // screen renders both as the same spinner.
+      final isStillLoading = anyOf(
+        isA<AsyncLoading<HomeState>>(),
+        isA<AsyncData<HomeState>>().having(
+          (s) => s.value,
+          'value',
+          isA<HomeLoading>(),
+        ),
+      );
+
       await Future<void>.delayed(Duration.zero);
       dayCtrl.add(const []);
       await Future<void>.delayed(Duration.zero);
-      expect(
-        container.read(homeControllerProvider),
-        isA<AsyncLoading<HomeState>>(),
-      );
+      expect(container.read(homeControllerProvider), isStillLoading);
 
       activityCtrl.add(const []);
       todayTotalsCtrl.add(const {});
       await Future<void>.delayed(Duration.zero);
-      expect(
-        container.read(homeControllerProvider),
-        isA<AsyncLoading<HomeState>>(),
-      );
+      expect(container.read(homeControllerProvider), isStillLoading);
 
       monthNetCtrl.add(const {});
       final state = await waitForNon(container, (s) => s is HomeEmpty);

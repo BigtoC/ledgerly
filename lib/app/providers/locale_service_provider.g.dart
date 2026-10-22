@@ -6,22 +6,46 @@ part of 'locale_service_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$localeServiceHash() => r'a3f251a2294f5e6dab4ffbbbbdabec5e517bfb1d';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [localeService].
 @ProviderFor(localeService)
-final localeServiceProvider = Provider<LocaleService>.internal(
-  localeService,
-  name: r'localeServiceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$localeServiceHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final localeServiceProvider = LocaleServiceProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef LocaleServiceRef = ProviderRef<LocaleService>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class LocaleServiceProvider
+    extends $FunctionalProvider<LocaleService, LocaleService, LocaleService>
+    with $Provider<LocaleService> {
+  LocaleServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'localeServiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$localeServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<LocaleService> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  LocaleService create(Ref ref) {
+    return localeService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(LocaleService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<LocaleService>(value),
+    );
+  }
+}
+
+String _$localeServiceHash() => r'a3f251a2294f5e6dab4ffbbbbdabec5e517bfb1d';

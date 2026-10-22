@@ -49,7 +49,7 @@ class SplashScreen extends ConsumerWidget {
         .read(splashGateSnapshotProvider)
         .splashStartDate;
     final startDate =
-        ref.watch(splashStartDateProvider).valueOrNull ?? initialStartDate;
+        ref.watch(splashStartDateProvider).value ?? initialStartDate;
 
     if (startDate == null) {
       return _LaunchTimeStartDatePrompt(label: l10n.splashSetStartDate);

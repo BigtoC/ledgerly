@@ -1,5 +1,6 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/repositories/account_repository.dart';
@@ -115,16 +116,21 @@ ExchangeRateService exchangeRateService(Ref ref) {
   dependencies: [appDatabase, exchangeRateService, defaultCurrency],
 )
 ExchangeRateRepository exchangeRateRepository(Ref ref) {
+  // The repository's constructor takes a real Stream for subscription.
+  // Riverpod 3 removed `defaultCurrencyProvider.stream`, so bridge it the
+  // way `.stream` behaved: forward later values without replaying the one
+  // the provider already holds. Errors stay on `defaultCurrencyProvider`.
+  final defaultCurrencies = StreamController<String>();
+  ref.listen(defaultCurrencyProvider, (_, next) {
+    if (next case AsyncData(:final value)) defaultCurrencies.add(value);
+  });
   final repo = ExchangeRateRepository(
     ref.watch(appDatabaseProvider),
     ref.watch(exchangeRateServiceProvider),
-    // Riverpod 2.x still exposes `.stream`; the repository's constructor
-    // takes a real Stream for subscription. `.future` is wrong here
-    // (single-shot) and AsyncValue listening doesn't fit the API.
-    // ignore: deprecated_member_use
-    ref.watch(defaultCurrencyProvider.stream),
+    defaultCurrencies.stream,
   );
   ref.onDispose(repo.dispose);
+  ref.onDispose(defaultCurrencies.close);
   return repo;
 }
 

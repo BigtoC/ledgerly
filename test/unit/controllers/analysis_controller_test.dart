@@ -92,6 +92,8 @@ void main() {
         categoriesStream: Stream.value(const <int, Category>{}),
       );
       addTearDown(container.dispose);
+      // Riverpod 3 pauses an unlistened provider, so keep one listener.
+      container.listen(analysisControllerProvider, (_, _) {});
 
       final state = await container.read(analysisControllerProvider.future);
       expect(state, isA<AnalysisIdle>());
@@ -129,7 +131,7 @@ void main() {
         ]);
         async.flushMicrotasks();
 
-        final state = container.read(analysisControllerProvider).valueOrNull;
+        final state = container.read(analysisControllerProvider).value;
         expect(state, isA<AnalysisResults>());
         final results = (state as AnalysisResults).categories;
         expect(results, hasLength(1));
@@ -165,7 +167,7 @@ void main() {
         async.flushMicrotasks();
 
         final results =
-            (container.read(analysisControllerProvider).valueOrNull
+            (container.read(analysisControllerProvider).value
                     as AnalysisResults)
                 .categories;
 
@@ -228,7 +230,7 @@ void main() {
         async.flushMicrotasks();
         async.elapse(Duration.zero);
         expect(
-          container.read(analysisControllerProvider).valueOrNull,
+          container.read(analysisControllerProvider).value,
           isA<AnalysisResults>(),
         );
 
@@ -237,8 +239,7 @@ void main() {
         async.elapse(Duration.zero);
         verifyNever(() => repo.watchByMemo('xyz'));
         final loading =
-            container.read(analysisControllerProvider).valueOrNull
-                as AnalysisLoading;
+            container.read(analysisControllerProvider).value as AnalysisLoading;
         expect(loading.query, 'xyz');
         expect(loading.previous, isNotNull);
         expect(loading.previous!.first.category.id, 1);
@@ -270,7 +271,7 @@ void main() {
           async.flushMicrotasks();
           async.elapse(Duration.zero);
           expect(
-            container.read(analysisControllerProvider).valueOrNull,
+            container.read(analysisControllerProvider).value,
             isA<AnalysisIdle>(),
           );
 
@@ -280,7 +281,7 @@ void main() {
           async.flushMicrotasks();
           async.elapse(Duration.zero);
           final loading =
-              container.read(analysisControllerProvider).valueOrNull
+              container.read(analysisControllerProvider).value
                   as AnalysisLoading;
           expect(loading.previous, isNull);
         });
@@ -313,7 +314,7 @@ void main() {
           async.flushMicrotasks();
 
           var results =
-              (container.read(analysisControllerProvider).valueOrNull
+              (container.read(analysisControllerProvider).value
                       as AnalysisResults)
                   .categories;
           expect(results.first.category.customName, 'Coffee');
@@ -322,7 +323,7 @@ void main() {
           async.flushMicrotasks();
 
           results =
-              (container.read(analysisControllerProvider).valueOrNull
+              (container.read(analysisControllerProvider).value
                       as AnalysisResults)
                   .categories;
           expect(results.first.category.customName, 'Espresso');
@@ -349,14 +350,14 @@ void main() {
         txCtrl.add([_tx(id: 1, date: DateTime.utc(2026, 5, 1), categoryId: 1)]);
         async.flushMicrotasks();
 
-        final interim = container.read(analysisControllerProvider).valueOrNull;
+        final interim = container.read(analysisControllerProvider).value;
         expect(interim, isA<AnalysisLoading>());
 
         cats.add({1: _cat(id: 1)});
         async.flushMicrotasks();
 
         expect(
-          container.read(analysisControllerProvider).valueOrNull,
+          container.read(analysisControllerProvider).value,
           isA<AnalysisResults>(),
         );
       });
@@ -469,7 +470,7 @@ void main() {
         async.flushMicrotasks();
 
         expect(
-          container.read(analysisControllerProvider).valueOrNull,
+          container.read(analysisControllerProvider).value,
           isA<AnalysisEmpty>(),
         );
       });

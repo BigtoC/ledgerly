@@ -66,7 +66,7 @@ class SummaryStrip extends ConsumerWidget {
     final theme = Theme.of(context);
 
     final ratesMap =
-        ref.watch(exchangeRatesProvider).valueOrNull ?? const <String, int>{};
+        ref.watch(exchangeRatesProvider).value ?? const <String, int>{};
 
     final toCurrency =
         currenciesByCode[defaultCurrency] ??

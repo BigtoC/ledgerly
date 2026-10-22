@@ -121,7 +121,7 @@ void main() {
     SliceDrilldownData? data;
     while (data == null) {
       await Future<void>.delayed(const Duration(milliseconds: 20));
-      data = container.read(sliceDrilldownControllerProvider).valueOrNull;
+      data = container.read(sliceDrilldownControllerProvider).value;
     }
     return data;
   }
@@ -186,9 +186,7 @@ void main() {
       await container.read(sliceDrilldownControllerProvider.notifier).delete(1);
 
       await Future<void>.delayed(Duration.zero);
-      final pending = container
-          .read(sliceDrilldownControllerProvider)
-          .valueOrNull!;
+      final pending = container.read(sliceDrilldownControllerProvider).value!;
       expect(pending.pendingDeleteId, equals(1));
       expect(pending.rows.map((t) => t.id), contains(1));
     },
@@ -216,16 +214,13 @@ void main() {
 
     verify(() => repo.delete(1)).called(1);
     expect(
-      container
-          .read(sliceDrilldownControllerProvider)
-          .valueOrNull!
-          .pendingDeleteId,
+      container.read(sliceDrilldownControllerProvider).value!.pendingDeleteId,
       2,
     );
     expect(
       container
           .read(sliceDrilldownControllerProvider)
-          .valueOrNull!
+          .value!
           .rows
           .map((t) => t.id),
       [2],
@@ -322,10 +317,7 @@ void main() {
 
     verify(() => repo.delete(1)).called(1);
     expect(
-      container
-          .read(sliceDrilldownControllerProvider)
-          .valueOrNull!
-          .pendingDeleteId,
+      container.read(sliceDrilldownControllerProvider).value!.pendingDeleteId,
       isNull,
     );
     expect(effects.single, isA<SliceDrilldownDeleteFailedEffect>());
@@ -350,12 +342,7 @@ void main() {
     first.emit([_tx(1)]);
     await Future<void>.delayed(const Duration(milliseconds: 20));
     expect(
-      container
-          .read(sliceDrilldownControllerProvider)
-          .valueOrNull!
-          .rows
-          .single
-          .id,
+      container.read(sliceDrilldownControllerProvider).value!.rows.single.id,
       1,
     );
 
@@ -366,12 +353,7 @@ void main() {
     second.emit([_tx(2)]);
     await Future<void>.delayed(const Duration(milliseconds: 20));
     expect(
-      container
-          .read(sliceDrilldownControllerProvider)
-          .valueOrNull!
-          .rows
-          .single
-          .id,
+      container.read(sliceDrilldownControllerProvider).value!.rows.single.id,
       2,
     );
 
@@ -380,12 +362,7 @@ void main() {
     first.emit([_tx(1)]);
     await Future<void>.delayed(const Duration(milliseconds: 20));
     expect(
-      container
-          .read(sliceDrilldownControllerProvider)
-          .valueOrNull!
-          .rows
-          .single
-          .id,
+      container.read(sliceDrilldownControllerProvider).value!.rows.single.id,
       2,
     );
   });
@@ -421,7 +398,7 @@ void main() {
 
     final state = container.read(sliceDrilldownControllerProvider);
     expect(state.hasError, isFalse);
-    expect(state.valueOrNull!.rows.single.id, 2);
+    expect(state.value!.rows.single.id, 2);
   });
 
   test('re-emits cached rows when FX availability changes', () async {
@@ -443,7 +420,7 @@ void main() {
 
     final stateLog = <SliceDrilldownData>[];
     container.listen(sliceDrilldownControllerProvider, (_, next) {
-      final value = next.valueOrNull;
+      final value = next.value;
       if (value != null) {
         stateLog.add(value);
       }

@@ -166,8 +166,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(
-      ((container.read(chartsControllerProvider).valueOrNull!
-                  as ChartsDataState)
+      ((container.read(chartsControllerProvider).value! as ChartsDataState)
               .chartData
               .bucketTotals)
           .fold<int>(0, (sum, bucket) => sum + bucket.totalMinorUnits),
@@ -196,15 +195,14 @@ void main() {
     expect(
       container
           .read(sliceDrilldownControllerProvider)
-          .valueOrNull!
+          .value!
           .rows
           .map((t) => t.id)
           .toList(),
       [1],
     );
     expect(
-      ((container.read(chartsControllerProvider).valueOrNull!
-                  as ChartsDataState)
+      ((container.read(chartsControllerProvider).value! as ChartsDataState)
               .chartData
               .bucketTotals)
           .fold<int>(0, (sum, bucket) => sum + bucket.totalMinorUnits),
@@ -232,8 +230,7 @@ void main() {
     );
     expect(find.byType(ListTile), findsNothing);
     expect(
-      ((container.read(chartsControllerProvider).valueOrNull!
-                  as ChartsDataState)
+      ((container.read(chartsControllerProvider).value! as ChartsDataState)
               .chartData
               .bucketTotals)
           .fold<int>(0, (sum, bucket) => sum + bucket.totalMinorUnits),

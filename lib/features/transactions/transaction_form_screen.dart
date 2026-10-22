@@ -504,7 +504,19 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     // create one (the picker would just show its empty-state CTA and
     // pop with `null`, which we cannot disambiguate from a dismiss).
     final type = state.pendingType;
-    final categories = await ref.read(categoriesByTypeProvider(type).future);
+    // Hold a subscription while awaiting: a bare `ref.read(...future)` on
+    // this auto-dispose stream provider pauses its stream as soon as the
+    // read returns (Riverpod 3), so the future would never complete.
+    final sub = ref.listenManual(
+      categoriesByTypeProvider(type).future,
+      (_, _) {},
+    );
+    final List<Category> categories;
+    try {
+      categories = await sub.read();
+    } finally {
+      sub.close();
+    }
     if (!context.mounted) return;
     if (categories.isEmpty) {
       await context.push('/settings/categories');

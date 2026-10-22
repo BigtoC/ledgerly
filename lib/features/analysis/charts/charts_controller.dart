@@ -282,9 +282,9 @@ class ChartsController extends _$ChartsController {
       return;
     }
 
-    final fx = ref.read(chartsFxStatusProvider).valueOrNull;
+    final fx = ref.read(chartsFxStatusProvider).value;
     final currencies =
-        ref.read(chartsCurrenciesByCodeProvider).valueOrNull ?? const {};
+        ref.read(chartsCurrenciesByCodeProvider).value ?? const {};
     if (fx == null) {
       debugPrint(
         '[ChartsController] emit → ChartsLoading (fx null, hold prior)',
@@ -293,10 +293,8 @@ class ChartsController extends _$ChartsController {
       return;
     }
 
-    final cats =
-        ref.read(analysisCategoriesByIdProvider).valueOrNull ?? const {};
-    final accts =
-        ref.read(analysisAccountsByIdProvider).valueOrNull ?? const {};
+    final cats = ref.read(analysisCategoriesByIdProvider).value ?? const {};
+    final accts = ref.read(analysisAccountsByIdProvider).value ?? const {};
 
     final activeCurrencies = _activeCurrencies(slices, buckets);
     final missingCurrencies = activeCurrencies

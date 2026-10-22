@@ -6,44 +6,97 @@ part of 'charts_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$chartsControllerHash() => r'789976f49340397bf8970d907aca490500594bbe';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [ChartsController].
 @ProviderFor(ChartsController)
-final chartsControllerProvider =
-    StreamNotifierProvider<ChartsController, ChartsState>.internal(
-      ChartsController.new,
-      name: r'chartsControllerProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$chartsControllerHash,
-      dependencies: <ProviderOrFamily>{
-        transactionRepositoryProvider,
-        exchangeRateRepositoryProvider,
-        chartsFxStatusProvider,
-        chartsCurrenciesByCodeProvider,
-        analysisCategoriesByIdProvider,
-        analysisAccountsByIdProvider,
-        chartsSelectionControllerProvider,
-      },
-      allTransitiveDependencies: <ProviderOrFamily>{
-        transactionRepositoryProvider,
-        ...?transactionRepositoryProvider.allTransitiveDependencies,
-        exchangeRateRepositoryProvider,
-        ...?exchangeRateRepositoryProvider.allTransitiveDependencies,
-        chartsFxStatusProvider,
-        ...?chartsFxStatusProvider.allTransitiveDependencies,
-        chartsCurrenciesByCodeProvider,
-        ...?chartsCurrenciesByCodeProvider.allTransitiveDependencies,
-        analysisCategoriesByIdProvider,
-        ...?analysisCategoriesByIdProvider.allTransitiveDependencies,
-        analysisAccountsByIdProvider,
-        ...?analysisAccountsByIdProvider.allTransitiveDependencies,
-        chartsSelectionControllerProvider,
-        ...?chartsSelectionControllerProvider.allTransitiveDependencies,
-      },
-    );
+final chartsControllerProvider = ChartsControllerProvider._();
 
-typedef _$ChartsController = StreamNotifier<ChartsState>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class ChartsControllerProvider
+    extends $StreamNotifierProvider<ChartsController, ChartsState> {
+  ChartsControllerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'chartsControllerProvider',
+        isAutoDispose: false,
+        dependencies: <ProviderOrFamily>[
+          transactionRepositoryProvider,
+          exchangeRateRepositoryProvider,
+          chartsFxStatusProvider,
+          chartsCurrenciesByCodeProvider,
+          analysisCategoriesByIdProvider,
+          analysisAccountsByIdProvider,
+          chartsSelectionControllerProvider,
+        ],
+        $allTransitiveDependencies: <ProviderOrFamily>{
+          ChartsControllerProvider.$allTransitiveDependencies0,
+          ChartsControllerProvider.$allTransitiveDependencies1,
+          ChartsControllerProvider.$allTransitiveDependencies2,
+          ChartsControllerProvider.$allTransitiveDependencies3,
+          ChartsControllerProvider.$allTransitiveDependencies4,
+          ChartsControllerProvider.$allTransitiveDependencies5,
+          ChartsControllerProvider.$allTransitiveDependencies6,
+          ChartsControllerProvider.$allTransitiveDependencies7,
+          ChartsControllerProvider.$allTransitiveDependencies8,
+          ChartsControllerProvider.$allTransitiveDependencies9,
+          ChartsControllerProvider.$allTransitiveDependencies10,
+          ChartsControllerProvider.$allTransitiveDependencies11,
+          ChartsControllerProvider.$allTransitiveDependencies12,
+          ChartsControllerProvider.$allTransitiveDependencies13,
+          ChartsControllerProvider.$allTransitiveDependencies14,
+        },
+      );
+
+  static final $allTransitiveDependencies0 = transactionRepositoryProvider;
+  static final $allTransitiveDependencies1 =
+      TransactionRepositoryProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies2 = exchangeRateRepositoryProvider;
+  static final $allTransitiveDependencies3 =
+      ExchangeRateRepositoryProvider.$allTransitiveDependencies1;
+  static final $allTransitiveDependencies4 =
+      ExchangeRateRepositoryProvider.$allTransitiveDependencies2;
+  static final $allTransitiveDependencies5 =
+      ExchangeRateRepositoryProvider.$allTransitiveDependencies3;
+  static final $allTransitiveDependencies6 = chartsFxStatusProvider;
+  static final $allTransitiveDependencies7 =
+      ChartsFxStatusProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies8 = chartsCurrenciesByCodeProvider;
+  static final $allTransitiveDependencies9 =
+      ChartsCurrenciesByCodeProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies10 = analysisCategoriesByIdProvider;
+  static final $allTransitiveDependencies11 =
+      AnalysisCategoriesByIdProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies12 = analysisAccountsByIdProvider;
+  static final $allTransitiveDependencies13 =
+      AnalysisAccountsByIdProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies14 = chartsSelectionControllerProvider;
+
+  @override
+  String debugGetCreateSourceHash() => _$chartsControllerHash();
+
+  @$internal
+  @override
+  ChartsController create() => ChartsController();
+}
+
+String _$chartsControllerHash() => r'71a0c2759aa8af4b0bdd86391b1fe2b10165adfa';
+
+abstract class _$ChartsController extends $StreamNotifier<ChartsState> {
+  Stream<ChartsState> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<ChartsState>, ChartsState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<ChartsState>, ChartsState>,
+              AsyncValue<ChartsState>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

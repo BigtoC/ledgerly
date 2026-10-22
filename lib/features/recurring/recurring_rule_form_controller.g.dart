@@ -6,193 +6,132 @@ part of 'recurring_rule_form_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$recurringRuleFormControllerHash() =>
-    r'56dc6bcad13dcc8f869c431fbc5f5c07c3600cc5';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
-abstract class _$RecurringRuleFormController
-    extends BuildlessAutoDisposeAsyncNotifier<RecurringRuleFormState> {
-  late final int? ruleId;
-
-  FutureOr<RecurringRuleFormState> build({int? ruleId});
-}
-
-/// See also [RecurringRuleFormController].
 @ProviderFor(RecurringRuleFormController)
-const recurringRuleFormControllerProvider = RecurringRuleFormControllerFamily();
+final recurringRuleFormControllerProvider =
+    RecurringRuleFormControllerFamily._();
 
-/// See also [RecurringRuleFormController].
-class RecurringRuleFormControllerFamily
-    extends Family<AsyncValue<RecurringRuleFormState>> {
-  /// See also [RecurringRuleFormController].
-  const RecurringRuleFormControllerFamily();
-
-  /// See also [RecurringRuleFormController].
-  RecurringRuleFormControllerProvider call({int? ruleId}) {
-    return RecurringRuleFormControllerProvider(ruleId: ruleId);
-  }
-
-  @override
-  RecurringRuleFormControllerProvider getProviderOverride(
-    covariant RecurringRuleFormControllerProvider provider,
-  ) {
-    return call(ruleId: provider.ruleId);
-  }
-
-  static final Iterable<ProviderOrFamily> _dependencies = <ProviderOrFamily>{
-    recurringRulesRepositoryProvider,
-    pendingTransactionRepositoryProvider,
-    recurringGenerationUseCaseProvider,
-    currencyRepositoryProvider,
-    userPreferencesRepositoryProvider,
-  };
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static final Iterable<ProviderOrFamily> _allTransitiveDependencies =
-      <ProviderOrFamily>{
-        recurringRulesRepositoryProvider,
-        ...?recurringRulesRepositoryProvider.allTransitiveDependencies,
-        pendingTransactionRepositoryProvider,
-        ...?pendingTransactionRepositoryProvider.allTransitiveDependencies,
-        recurringGenerationUseCaseProvider,
-        ...?recurringGenerationUseCaseProvider.allTransitiveDependencies,
-        currencyRepositoryProvider,
-        ...?currencyRepositoryProvider.allTransitiveDependencies,
-        userPreferencesRepositoryProvider,
-        ...?userPreferencesRepositoryProvider.allTransitiveDependencies,
-      };
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'recurringRuleFormControllerProvider';
-}
-
-/// See also [RecurringRuleFormController].
-class RecurringRuleFormControllerProvider
+final class RecurringRuleFormControllerProvider
     extends
-        AutoDisposeAsyncNotifierProviderImpl<
+        $AsyncNotifierProvider<
           RecurringRuleFormController,
           RecurringRuleFormState
         > {
-  /// See also [RecurringRuleFormController].
-  RecurringRuleFormControllerProvider({int? ruleId})
-    : this._internal(
-        () => RecurringRuleFormController()..ruleId = ruleId,
-        from: recurringRuleFormControllerProvider,
-        name: r'recurringRuleFormControllerProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$recurringRuleFormControllerHash,
-        dependencies: RecurringRuleFormControllerFamily._dependencies,
-        allTransitiveDependencies:
-            RecurringRuleFormControllerFamily._allTransitiveDependencies,
-        ruleId: ruleId,
-      );
+  RecurringRuleFormControllerProvider._({
+    required RecurringRuleFormControllerFamily super.from,
+    required int? super.argument,
+  }) : super(
+         retry: null,
+         name: r'recurringRuleFormControllerProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  RecurringRuleFormControllerProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.ruleId,
-  }) : super.internal();
-
-  final int? ruleId;
+  static final $allTransitiveDependencies0 = recurringRulesRepositoryProvider;
+  static final $allTransitiveDependencies1 =
+      RecurringRulesRepositoryProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies2 =
+      pendingTransactionRepositoryProvider;
+  static final $allTransitiveDependencies3 =
+      PendingTransactionRepositoryProvider.$allTransitiveDependencies1;
+  static final $allTransitiveDependencies4 = recurringGenerationUseCaseProvider;
+  static final $allTransitiveDependencies5 = currencyRepositoryProvider;
+  static final $allTransitiveDependencies6 = userPreferencesRepositoryProvider;
 
   @override
-  FutureOr<RecurringRuleFormState> runNotifierBuild(
-    covariant RecurringRuleFormController notifier,
-  ) {
-    return notifier.build(ruleId: ruleId);
-  }
+  String debugGetCreateSourceHash() => _$recurringRuleFormControllerHash();
 
   @override
-  Override overrideWith(RecurringRuleFormController Function() create) {
-    return ProviderOverride(
-      origin: this,
-      override: RecurringRuleFormControllerProvider._internal(
-        () => create()..ruleId = ruleId,
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        ruleId: ruleId,
-      ),
-    );
+  String toString() {
+    return r'recurringRuleFormControllerProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  AutoDisposeAsyncNotifierProviderElement<
-    RecurringRuleFormController,
-    RecurringRuleFormState
-  >
-  createElement() {
-    return _RecurringRuleFormControllerProviderElement(this);
-  }
+  RecurringRuleFormController create() => RecurringRuleFormController();
 
   @override
   bool operator ==(Object other) {
     return other is RecurringRuleFormControllerProvider &&
-        other.ruleId == ruleId;
+        other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, ruleId.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin RecurringRuleFormControllerRef
-    on AutoDisposeAsyncNotifierProviderRef<RecurringRuleFormState> {
-  /// The parameter `ruleId` of this provider.
-  int? get ruleId;
-}
+String _$recurringRuleFormControllerHash() =>
+    r'39f51bfafce720b5344ce85f0396ebd06ea8e19f';
 
-class _RecurringRuleFormControllerProviderElement
-    extends
-        AutoDisposeAsyncNotifierProviderElement<
+final class RecurringRuleFormControllerFamily extends $Family
+    with
+        $ClassFamilyOverride<
           RecurringRuleFormController,
-          RecurringRuleFormState
-        >
-    with RecurringRuleFormControllerRef {
-  _RecurringRuleFormControllerProviderElement(super.provider);
+          AsyncValue<RecurringRuleFormState>,
+          RecurringRuleFormState,
+          FutureOr<RecurringRuleFormState>,
+          int?
+        > {
+  RecurringRuleFormControllerFamily._()
+    : super(
+        retry: null,
+        name: r'recurringRuleFormControllerProvider',
+        dependencies: <ProviderOrFamily>[
+          recurringRulesRepositoryProvider,
+          pendingTransactionRepositoryProvider,
+          recurringGenerationUseCaseProvider,
+          currencyRepositoryProvider,
+          userPreferencesRepositoryProvider,
+        ],
+        $allTransitiveDependencies: <ProviderOrFamily>{
+          RecurringRuleFormControllerProvider.$allTransitiveDependencies0,
+          RecurringRuleFormControllerProvider.$allTransitiveDependencies1,
+          RecurringRuleFormControllerProvider.$allTransitiveDependencies2,
+          RecurringRuleFormControllerProvider.$allTransitiveDependencies3,
+          RecurringRuleFormControllerProvider.$allTransitiveDependencies4,
+          RecurringRuleFormControllerProvider.$allTransitiveDependencies5,
+          RecurringRuleFormControllerProvider.$allTransitiveDependencies6,
+        },
+        isAutoDispose: true,
+      );
+
+  RecurringRuleFormControllerProvider call({int? ruleId}) =>
+      RecurringRuleFormControllerProvider._(argument: ruleId, from: this);
 
   @override
-  int? get ruleId => (origin as RecurringRuleFormControllerProvider).ruleId;
+  String toString() => r'recurringRuleFormControllerProvider';
 }
 
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+abstract class _$RecurringRuleFormController
+    extends $AsyncNotifier<RecurringRuleFormState> {
+  late final _$args = ref.$arg as int?;
+  int? get ruleId => _$args;
+
+  FutureOr<RecurringRuleFormState> build({int? ruleId});
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref =
+        this.ref
+            as $Ref<AsyncValue<RecurringRuleFormState>, RecurringRuleFormState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<
+                AsyncValue<RecurringRuleFormState>,
+                RecurringRuleFormState
+              >,
+              AsyncValue<RecurringRuleFormState>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, () => build(ruleId: _$args));
+  }
+}

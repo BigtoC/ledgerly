@@ -7,4 +7,4 @@ final recurringActiveAccountsProvider =
     StreamProvider.autoDispose<List<Account>>((ref) {
       final repo = ref.watch(accountRepositoryProvider);
       return repo.watchAll();
-    });
+    }, dependencies: [accountRepositoryProvider]);

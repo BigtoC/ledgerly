@@ -80,15 +80,15 @@ class _SelectedSliceItemsListState
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(sliceDrilldownControllerProvider);
     final categoriesById =
-        ref.watch(analysisCategoriesByIdProvider).valueOrNull ?? const {};
+        ref.watch(analysisCategoriesByIdProvider).value ?? const {};
     final accountsById =
-        ref.watch(analysisAccountsByIdProvider).valueOrNull ?? const {};
+        ref.watch(analysisAccountsByIdProvider).value ?? const {};
     final currenciesByCode =
-        ref.watch(chartsCurrenciesByCodeProvider).valueOrNull ?? const {};
-    final fxStatus = ref.watch(chartsFxStatusProvider).valueOrNull;
+        ref.watch(chartsCurrenciesByCodeProvider).value ?? const {};
+    final fxStatus = ref.watch(chartsFxStatusProvider).value;
 
     ref.listen(sliceDrilldownControllerProvider, (_, next) {
-      final pendingId = next.valueOrNull?.pendingDeleteId;
+      final pendingId = next.value?.pendingDeleteId;
       if (pendingId == null) {
         if (!next.hasValue) {
           _messenger?.clearSnackBars();

@@ -42,6 +42,18 @@ typedef RunFirstRunSeedFn =
 typedef RunRecurringGenerationFn =
     Future<RecurringGenerationResult> Function(AppDatabase db);
 
+/// Retry policy for every provider in the app: never retry.
+///
+/// Riverpod 3 retries failing providers by default (exponential backoff,
+/// up to 10 attempts) and reports them as loading while it does. Ledgerly
+/// relies on errors surfacing immediately, as they did on Riverpod 2: the
+/// screens render their error states, and callers awaiting `.future` fail
+/// fast instead of waiting through the backoff. The root `ProviderScope`
+/// in [bootstrap] and the shared test harness (`test/support/test_app.dart`)
+/// pass this as `retry:`; containers built directly in tests keep
+/// Riverpod's default retry.
+Duration? noProviderRetry(int retryCount, Object error) => null;
+
 Future<bool> _readSplashEnabled(UserPreferencesRepository preferences) =>
     preferences.getSplashEnabled();
 
@@ -117,6 +129,7 @@ Future<void> bootstrapFor({
   // so startup is not blocked by due-rule processing.
   (runAppFn ?? runApp)(
     ProviderScope(
+      retry: noProviderRetry,
       overrides: [
         appDatabaseProvider.overrideWithValue(db),
         initialThemeModeProvider.overrideWithValue(initialThemeMode),

@@ -97,7 +97,7 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
     // Drift fetches the same data we already have in memory. Drift's
     // first emission on the live subscription below replaces it.
     if (ref.exists(analysisControllerProvider)) {
-      final settled = ref.read(analysisControllerProvider).valueOrNull;
+      final settled = ref.read(analysisControllerProvider).value;
       if (settled is AnalysisResults && settled.query == trimmedQuery) {
         _lastTransactions = settled.transactions;
         controller.add(
