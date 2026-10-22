@@ -68,10 +68,10 @@ class AccountTile extends ConsumerWidget {
     // Phase 2: converted-total line when the account holds multiple
     // currencies AND every non-default currency has a cached rate.
     final ratesMap =
-        ref.watch(exchangeRatesProvider).valueOrNull ?? const <String, int>{};
+        ref.watch(exchangeRatesProvider).value ?? const <String, int>{};
     final initialDefault = ref.read(initialDefaultCurrencyProvider);
     final defaultCurrency =
-        ref.watch(defaultCurrencyProvider).valueOrNull ?? initialDefault;
+        ref.watch(defaultCurrencyProvider).value ?? initialDefault;
 
     final hasMultipleCurrencies = view.balancesByCurrency.length > 1;
     String? convertedTotalFormatted;

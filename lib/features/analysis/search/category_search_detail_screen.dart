@@ -67,9 +67,8 @@ class _CategorySearchDetailScreenState
 
     final categoriesAsync = ref.watch(analysisCategoriesByIdProvider);
     final accountsAsync = ref.watch(analysisAccountsByIdProvider);
-    final categoriesById =
-        categoriesAsync.valueOrNull ?? const <int, Category>{};
-    final accountsById = accountsAsync.valueOrNull ?? const {};
+    final categoriesById = categoriesAsync.value ?? const <int, Category>{};
+    final accountsById = accountsAsync.value ?? const {};
 
     final category = categoriesById[widget.categoryId];
     final appBarTitle = category == null

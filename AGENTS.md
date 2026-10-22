@@ -68,9 +68,10 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 - Read [`PRD.md`](PRD.md) first. It is the authoritative source for architecture, schema, routing, layout primitives, bootstrap order, and dependency choices.
 - [`docs/architecture/`](docs/architecture/README.md) is the agent-facing summary of `PRD.md`, broken down by topic.
-- [`CLAUDE.md`](CLAUDE.md) / `AGENTS.md` are quick references that link into the above.
+- `AGENTS.md` (this file) is the quick reference that links into the above. [`CLAUDE.md`](CLAUDE.md) only imports this file — edit guidance here, not there.
 - [`README.md`](README.md) is useful for day-to-day commands and CI expectations, but some status/setup notes lag the committed scaffold; trust the checked-in tree when they differ.
-- `docs/superpowers/specs/2026-04-14-ledgerly-design.md` is historical context only. If it conflicts with `PRD.md`, follow `PRD.md`.
+- `docs/superpowers/specs/` (including `2026-04-14-ledgerly-design.md`) is historical design context only. If it conflicts with `PRD.md`, follow `PRD.md`.
+- Wave planning for the M5 slice set lives in [`docs/plans/m5-ui-feature-slices/`](docs/plans/m5-ui-feature-slices/); newer Phase 2 plans live in [`docs/superpowers/plans/`](docs/superpowers/plans/).
 
 ## Project status
 
@@ -79,6 +80,19 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - **Live feature slices:** `lib/features/splash/`, `lib/features/categories/`, `lib/features/accounts/`, `lib/features/analysis/`, `lib/features/settings/`, `lib/features/transactions/`, `lib/features/shopping_list/`, `lib/features/home/`, `lib/features/recurring/`.
 - **Runtime entry:** `lib/main.dart` awaits `bootstrap()` in `lib/app/bootstrap.dart`; `lib/app/app.dart` renders `MaterialApp.router`; `lib/app/router.dart` wires the route table; `lib/app/widgets/adaptive_shell.dart` owns the 600dp nav switch. Full bootstrap flow: see [`docs/architecture/bootstrap.md`](docs/architecture/bootstrap.md).
 - Remaining Phase 2 work: wallet sync (Ankr integration), CSV import, credit-card / transfer flows.
+- Top-level layout: `pubspec.yaml`, `analysis_options.yaml`, `import_analysis_options.yaml`, `l10n/` (`app_en.arb`, `app_zh.arb`, `app_zh_CN.arb`, `app_zh_TW.arb`), `lib/`, `test/`, `drift_schemas/`, `docs/`, `.github/workflows/`. Match the folder layout and package list in `PRD.md` when extending the scaffold — do not default to a generic `flutter create` shape.
+
+## Commits and Pull Requests
+
+Commits and PR titles follow **different** conventions on purpose: a commit subject names the change, a PR title names the problem that motivated it. Never use one form where the other belongs.
+
+- **Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/):** `<type>[(scope)][!]: <description>`, then a blank line, the body, a blank line, and any footers.
+  - **Types used here:** `feat`, `fix`, `docs`, `refactor`, `chore`, `test`, `build`, `perf`, `style`, `ci`.
+  - **Scope** is a feature directory under `lib/features/` (`accounts`, `analysis`, `categories`, `home`, `recurring`, `settings`, `shopping-list`, `splash`, `transactions`) or a layer or area (`app`, `core`, `data`, `l10n`, `deps`, `test`). Separate scopes with a comma when a change really spans two, as in `refactor(home,data):`.
+  - **Breaking changes** take `!` before the colon, a `BREAKING CHANGE:` footer, or both. That token is the one part of the format that must be uppercase.
+  - **Footers are git trailers** (`Token: value`, with hyphens rather than spaces). The `Co-Authored-By:` trailer belongs there, after a blank line, never attached to the body.
+- **PR titles start with `Problem`.** Write `Problem: <the problem>`, or `Problem(scope): <the problem>` when scoped. State what is wrong, not what you did. For example, `Problem: Forex rate is not fetched right after transaction saved`, not "fetch rate on save". The reviewer then reads the diff as an answer to a question rather than a claim to audit, and the merge commit records why the work happened. GitHub appends `(#NN)` itself, so do not add it.
+- **Each commit should analyze and test on its own**, so a regression can be bisected. Split by concern, not by file count. If two files cannot compile apart, keep them in one commit and say so in the body rather than shipping a commit that does not build.
 
 ## Architecture
 
@@ -98,12 +112,15 @@ Detailed agent-facing rules live under [`docs/architecture/`](docs/architecture/
 - `flutter pub get`
 - `flutter run`
 - `dart format .` (run before `flutter test` or `flutter analyze` whenever verifying changes)
-- `flutter analyze` (runs analyzer + `custom_lint` / `riverpod_lint`)
+- `flutter analyze` (analyzer + lint rules; `riverpod_lint` is an analysis-server plugin configured under `plugins:` in `analysis_options.yaml`, and its diagnostics show in `dart analyze` and the IDE, not in `flutter analyze`)
 - `dart run import_lint` (reads the regex rules in the root `import_analysis_options.yaml`)
 - `dart run build_runner build --delete-conflicting-outputs`
 - `dart run build_runner watch --delete-conflicting-outputs`
 - `dart run drift_dev schema dump lib/data/database/app_database.dart drift_schemas/`
 - `flutter test` / e.g. `flutter test test/widget/features/transactions/transaction_form_screen_test.dart` / `flutter test test/unit/repositories/migration_test.dart` / `flutter test test/integration/bootstrap_to_home_test.dart`
+- `flutter test --name 'category type is locked'` (single test by name)
+
+Code generation is required whenever a `@freezed`, `@riverpod`, or Drift `@DriftDatabase`/`@DataClassName` annotation changes — the build fails loudly if generated files are stale.
 
 ### CI workflows
 
@@ -126,6 +143,7 @@ See [`PRD.md` → *Security & Privacy*](PRD.md#security--privacy). Operational s
 
 - MVP is fully local-first and currently has no secrets.
 - In Phase 2, the Ankr API key must flow only through `data/services/secure_storage_service.dart` → `data/repositories/api_key_repository.dart`. Nothing else may read or write it.
+- Currency-price requests send only currency pairs and conversion metadata — never memos, categories, or any other transaction text.
 - Exchange-rate fetching uses `String.fromEnvironment('FOREX_API_URL')` in `lib/data/services/exchange_rate_service.dart`; pass it via `--dart-define` in app/build workflows instead of hardcoding URLs.
 - Keep failure logs sanitized (exception type only, no transaction data or request payloads). **Do not log financial data** (transactions, memos, balances, wallet data).
 

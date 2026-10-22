@@ -6,67 +6,143 @@ part of 'theme_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+
+@ProviderFor(initialThemeMode)
+final initialThemeModeProvider = InitialThemeModeProvider._();
+
+final class InitialThemeModeProvider
+    extends $FunctionalProvider<ThemeMode?, ThemeMode?, ThemeMode?>
+    with $Provider<ThemeMode?> {
+  InitialThemeModeProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'initialThemeModeProvider',
+        isAutoDispose: false,
+        dependencies: <ProviderOrFamily>[],
+        $allTransitiveDependencies: <ProviderOrFamily>[],
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$initialThemeModeHash();
+
+  @$internal
+  @override
+  $ProviderElement<ThemeMode?> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  ThemeMode? create(Ref ref) {
+    return initialThemeMode(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ThemeMode? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ThemeMode?>(value),
+    );
+  }
+}
+
 String _$initialThemeModeHash() => r'2c6afabe5a82826dd5bbab6aa55b415a08929814';
 
-/// See also [initialThemeMode].
-@ProviderFor(initialThemeMode)
-final initialThemeModeProvider = Provider<ThemeMode?>.internal(
-  initialThemeMode,
-  name: r'initialThemeModeProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$initialThemeModeHash,
-  dependencies: const <ProviderOrFamily>[],
-  allTransitiveDependencies: const <ProviderOrFamily>{},
-);
+@ProviderFor(themeModeStream)
+final themeModeStreamProvider = ThemeModeStreamProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef InitialThemeModeRef = ProviderRef<ThemeMode?>;
+final class ThemeModeStreamProvider
+    extends
+        $FunctionalProvider<AsyncValue<ThemeMode>, ThemeMode, Stream<ThemeMode>>
+    with $FutureModifier<ThemeMode>, $StreamProvider<ThemeMode> {
+  ThemeModeStreamProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'themeModeStreamProvider',
+        isAutoDispose: false,
+        dependencies: <ProviderOrFamily>[userPreferencesRepositoryProvider],
+        $allTransitiveDependencies: <ProviderOrFamily>[
+          ThemeModeStreamProvider.$allTransitiveDependencies0,
+          ThemeModeStreamProvider.$allTransitiveDependencies1,
+        ],
+      );
+
+  static final $allTransitiveDependencies0 = userPreferencesRepositoryProvider;
+  static final $allTransitiveDependencies1 =
+      UserPreferencesRepositoryProvider.$allTransitiveDependencies0;
+
+  @override
+  String debugGetCreateSourceHash() => _$themeModeStreamHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<ThemeMode> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<ThemeMode> create(Ref ref) {
+    return themeModeStream(ref);
+  }
+}
+
 String _$themeModeStreamHash() => r'fdbe5e87e9b70715ff5a14df88a6dea59f6f9b74';
 
-/// See also [themeModeStream].
-@ProviderFor(themeModeStream)
-final themeModeStreamProvider = StreamProvider<ThemeMode>.internal(
-  themeModeStream,
-  name: r'themeModeStreamProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$themeModeStreamHash,
-  dependencies: <ProviderOrFamily>[userPreferencesRepositoryProvider],
-  allTransitiveDependencies: <ProviderOrFamily>{
-    userPreferencesRepositoryProvider,
-    ...?userPreferencesRepositoryProvider.allTransitiveDependencies,
-  },
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef ThemeModeStreamRef = StreamProviderRef<ThemeMode>;
-String _$themeModeHash() => r'ffe15e42f4f820a99e6240223057ba1eb979e13d';
-
-/// See also [themeMode].
 @ProviderFor(themeMode)
-final themeModeProvider = AutoDisposeProvider<ThemeMode>.internal(
-  themeMode,
-  name: r'themeModeProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$themeModeHash,
-  dependencies: <ProviderOrFamily>[
-    initialThemeModeProvider,
-    themeModeStreamProvider,
-  ],
-  allTransitiveDependencies: <ProviderOrFamily>{
-    initialThemeModeProvider,
-    ...?initialThemeModeProvider.allTransitiveDependencies,
-    themeModeStreamProvider,
-    ...?themeModeStreamProvider.allTransitiveDependencies,
-  },
-);
+final themeModeProvider = ThemeModeProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef ThemeModeRef = AutoDisposeProviderRef<ThemeMode>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class ThemeModeProvider
+    extends $FunctionalProvider<ThemeMode, ThemeMode, ThemeMode>
+    with $Provider<ThemeMode> {
+  ThemeModeProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'themeModeProvider',
+        isAutoDispose: true,
+        dependencies: <ProviderOrFamily>[
+          initialThemeModeProvider,
+          themeModeStreamProvider,
+        ],
+        $allTransitiveDependencies: <ProviderOrFamily>{
+          ThemeModeProvider.$allTransitiveDependencies0,
+          ThemeModeProvider.$allTransitiveDependencies1,
+          ThemeModeProvider.$allTransitiveDependencies2,
+          ThemeModeProvider.$allTransitiveDependencies3,
+        },
+      );
+
+  static final $allTransitiveDependencies0 = initialThemeModeProvider;
+  static final $allTransitiveDependencies1 = themeModeStreamProvider;
+  static final $allTransitiveDependencies2 =
+      ThemeModeStreamProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies3 =
+      ThemeModeStreamProvider.$allTransitiveDependencies1;
+
+  @override
+  String debugGetCreateSourceHash() => _$themeModeHash();
+
+  @$internal
+  @override
+  $ProviderElement<ThemeMode> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  ThemeMode create(Ref ref) {
+    return themeMode(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ThemeMode value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ThemeMode>(value),
+    );
+  }
+}
+
+String _$themeModeHash() => r'ffe15e42f4f820a99e6240223057ba1eb979e13d';

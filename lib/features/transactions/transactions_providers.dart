@@ -21,4 +21,4 @@ final txActiveAccountsProvider = StreamProvider.autoDispose<List<Account>>((
 ) {
   final repo = ref.watch(accountRepositoryProvider);
   return repo.watchAll();
-});
+}, dependencies: [accountRepositoryProvider]);

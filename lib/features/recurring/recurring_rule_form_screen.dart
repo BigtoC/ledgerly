@@ -264,7 +264,7 @@ class _FormBody extends ConsumerWidget {
     final id = await controller.save();
     if (id == null) return;
     if (!context.mounted) return;
-    final updated = ref.read(providerKey).valueOrNull;
+    final updated = ref.read(providerKey).value;
     if (updated?.postSaveGenerationFailed ?? false) {
       messenger.showSnackBar(
         SnackBar(content: Text(l10n.recurringSavedButGenerationFailed)),

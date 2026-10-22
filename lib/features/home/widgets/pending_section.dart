@@ -154,10 +154,8 @@ class _PendingSectionState extends ConsumerState<PendingSection> {
       return const SliverToBoxAdapter(child: SizedBox.shrink());
     }
 
-    final categories =
-        ref.watch(homeCategoriesByIdProvider).valueOrNull ?? const {};
-    final accounts =
-        ref.watch(homeAccountsByIdProvider).valueOrNull ?? const {};
+    final categories = ref.watch(homeCategoriesByIdProvider).value ?? const {};
+    final accounts = ref.watch(homeAccountsByIdProvider).value ?? const {};
     final locale = Localizations.localeOf(context).toString();
 
     final overflowCount = visible.length - _kPendingCollapseThreshold;

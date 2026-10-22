@@ -115,7 +115,7 @@ class _SettingsBody extends ConsumerWidget {
                           .whenData(
                             (info) => 'v${info.version}+${info.buildNumber}',
                           )
-                          .valueOrNull ??
+                          .value ??
                       '',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,

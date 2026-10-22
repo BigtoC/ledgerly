@@ -69,13 +69,14 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      final state = await container.read(
-        categorySearchDetailControllerProvider(
-          categoryId: 1,
-          query: '   ',
-          currencyCode: 'USD',
-        ).future,
+      final provider = categorySearchDetailControllerProvider(
+        categoryId: 1,
+        query: '   ',
+        currencyCode: 'USD',
       );
+      // Riverpod 3 pauses an unlistened provider, so keep one listener.
+      container.listen(provider, (_, _) {});
+      final state = await container.read(provider.future);
       expect(state, isA<DetailEmpty>());
       verifyNever(() => repo.watchByMemo(any()));
     });
@@ -109,13 +110,14 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      final state = await container.read(
-        categorySearchDetailControllerProvider(
-          categoryId: 1,
-          query: 'coffee',
-          currencyCode: 'USD',
-        ).future,
+      final provider = categorySearchDetailControllerProvider(
+        categoryId: 1,
+        query: 'coffee',
+        currencyCode: 'USD',
       );
+      // Riverpod 3 pauses an unlistened provider, so keep one listener.
+      container.listen(provider, (_, _) {});
+      final state = await container.read(provider.future);
       final data = state as DetailData;
       expect(data.days, hasLength(1));
       expect(data.days.first.transactions.map((t) => t.id), [1]);
@@ -151,13 +153,14 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      final state = await container.read(
-        categorySearchDetailControllerProvider(
-          categoryId: 1,
-          query: 'coffee',
-          currencyCode: 'USD',
-        ).future,
+      final provider = categorySearchDetailControllerProvider(
+        categoryId: 1,
+        query: 'coffee',
+        currencyCode: 'USD',
       );
+      // Riverpod 3 pauses an unlistened provider, so keep one listener.
+      container.listen(provider, (_, _) {});
+      final state = await container.read(provider.future);
       final data = state as DetailData;
       expect(data.days.map((d) => d.daySumMinorUnits).toList(), [500, 100]);
       expect(data.overallSumMinorUnits, 600);

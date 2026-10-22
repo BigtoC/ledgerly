@@ -76,7 +76,7 @@ class AnalysisController extends _$AnalysisController {
         return;
       }
 
-      final cats = next.valueOrNull;
+      final cats = next.value;
       if (cats == null) {
         if (txs.isNotEmpty) {
           _emitter?.add(
@@ -149,7 +149,7 @@ class AnalysisController extends _$AnalysisController {
               return;
             }
 
-            final categoriesById = categoriesAsync.valueOrNull;
+            final categoriesById = categoriesAsync.value;
             if (categoriesById == null) {
               _emitter?.add(
                 AnalysisState.loading(query: query, previous: _lastResults),

@@ -86,7 +86,6 @@ class _RecurringRulesScreenState extends ConsumerState<RecurringRulesScreen> {
           ),
           AsyncData(value: RecurringRulesError()) ||
           AsyncError() => _ErrorState(l10n: l10n),
-          _ => const Center(child: CircularProgressIndicator()),
         },
       ),
     );

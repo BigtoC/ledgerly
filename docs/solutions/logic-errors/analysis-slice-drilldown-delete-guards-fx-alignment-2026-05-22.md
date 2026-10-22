@@ -104,7 +104,7 @@ List<Transaction> _visibleRowsFromCache() {
   }
 
   if (selection is! SelectedCurrencySlice) {
-    final fxStatus = ref.read(chartsFxStatusProvider).valueOrNull;
+    final fxStatus = ref.read(chartsFxStatusProvider).value;
     if (fxStatus != null) {
       rows = rows
           .where((tx) => fxStatus.scaledRate(tx.currency.code) != null)

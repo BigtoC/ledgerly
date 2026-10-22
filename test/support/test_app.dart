@@ -22,6 +22,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ledgerly/app/app.dart';
@@ -59,7 +60,8 @@ Future<void> runTestSeed(AppDatabase db) {
 }
 
 /// Creates a `ProviderContainer` whose provider overrides match what the full
-/// app shell needs. Caller MUST register `addTearDown(container.dispose)`.
+/// app shell needs, with the same no-retry policy as production
+/// (`noProviderRetry`). Caller MUST register `addTearDown(container.dispose)`.
 ///
 /// Pass [extraOverrides] to override additional providers (e.g. to inject a
 /// pre-seeded `SplashGateSnapshot` without involving a live DB call).
@@ -68,6 +70,7 @@ ProviderContainer makeTestContainer({
   List<Override> extraOverrides = const [],
 }) {
   return ProviderContainer(
+    retry: noProviderRetry,
     overrides: [appDatabaseProvider.overrideWithValue(db), ...extraOverrides],
   );
 }
@@ -85,9 +88,10 @@ Widget buildTestApp({required ProviderContainer container}) {
 /// pump the launched widget manually.
 ///
 /// If the captured widget is a `ProviderScope`, this returns an
-/// `UncontrolledProviderScope` backed by the same overrides so tests can own
-/// container disposal via `addTearDown`. That mirrors [buildTestApp] and avoids
-/// Drift cleanup timers being scheduled during implicit widget-tree teardown.
+/// `UncontrolledProviderScope` backed by the same overrides and retry policy
+/// so tests can own container disposal via `addTearDown`. That mirrors
+/// [buildTestApp] and avoids Drift cleanup timers being scheduled during
+/// implicit widget-tree teardown.
 Future<Widget> buildBootstrappedTestApp({required AppDatabase db}) async {
   Widget? launched;
   ProviderContainer? container;
@@ -99,7 +103,10 @@ Future<Widget> buildBootstrappedTestApp({required AppDatabase db}) async {
       launched = widget;
       if (widget is ProviderScope) {
         overrides.addAll(widget.overrides);
-        container = ProviderContainer(overrides: overrides);
+        container = ProviderContainer(
+          overrides: overrides,
+          retry: widget.retry,
+        );
         launched = UncontrolledProviderScope(
           container: container!,
           child: widget.child,

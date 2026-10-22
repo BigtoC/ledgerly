@@ -221,7 +221,7 @@ understandable, and centered on manual logging.
 
 ## Prerequisites
 
-- Flutter (stable channel), Dart SDK `^3.11.5`. `flutter --version` must run
+- Flutter 3.44+ (stable channel, Dart 3.12). `flutter --version` must run
   cleanly.
 - For Android builds: JDK 17 + Android SDK.
 - For iOS builds: Xcode 15+ and CocoaPods.
@@ -231,7 +231,8 @@ understandable, and centered on manual logging.
 ```bash
 flutter pub get                                     # resolve packages
 flutter run                                         # device/emulator
-flutter analyze                                     # custom_lint + riverpod_lint
+flutter analyze                                     # analyzer + flutter_lints
+dart analyze                                        # same, plus the riverpod_lint plugin
 dart run import_lint                                # enforce layer boundaries
 dart run build_runner build --delete-conflicting-outputs
 dart run build_runner watch --delete-conflicting-outputs
@@ -311,8 +312,9 @@ PRD → Architecture for the full table. Headlines:
 - Money is stored as integer minor units end-to-end. `double` is only
   allowed inside `core/utils/money_formatter.dart`.
 
-`analysis_options.yaml` wires `flutter_lints`, `custom_lint`, and
-`riverpod_lint`. The pinned `import_lint ^0.1.6` reads its layer-boundary
+`analysis_options.yaml` wires `flutter_lints` and the `riverpod_lint`
+analysis-server plugin (reported by `dart analyze` and the IDE, not by
+`flutter analyze`). The pinned `import_lint ^0.1.6` reads its layer-boundary
 rules from `import_analysis_options.yaml` at the repo root (separate
 file because that version uses a regex schema, not the 2.x globs). CI
 fails any PR that violates the layer-boundary rules.

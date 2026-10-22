@@ -5,7 +5,6 @@
 // their metadata. Generated providers (`@riverpod`) so controllers can
 // declare scoped deps that satisfy the `provider_dependencies` lint.
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../app/providers/repository_providers.dart';

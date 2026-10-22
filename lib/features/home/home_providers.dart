@@ -26,7 +26,7 @@ final homeCurrenciesByCodeProvider =
       return repo
           .watchAll(includeTokens: true)
           .map((rows) => {for (final c in rows) c.code: c});
-    });
+    }, dependencies: [currencyRepositoryProvider]);
 
 /// `id → Category` lookup (active + archived) for transaction rows.
 final homeCategoriesByIdProvider =
@@ -35,7 +35,7 @@ final homeCategoriesByIdProvider =
       return repo
           .watchAll(includeArchived: true)
           .map((rows) => {for (final c in rows) c.id: c});
-    });
+    }, dependencies: [categoryRepositoryProvider]);
 
 /// `id → Account` lookup (active + archived) for transaction rows.
 final homeAccountsByIdProvider = StreamProvider.autoDispose<Map<int, Account>>((
@@ -45,4 +45,4 @@ final homeAccountsByIdProvider = StreamProvider.autoDispose<Map<int, Account>>((
   return repo
       .watchAll(includeArchived: true)
       .map((rows) => {for (final a in rows) a.id: a});
-});
+}, dependencies: [accountRepositoryProvider]);

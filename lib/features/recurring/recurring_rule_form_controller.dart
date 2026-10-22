@@ -91,21 +91,21 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
   // ---------- Keypad commands ----------
 
   void appendDigit(int digit) {
-    final s = state.valueOrNull;
+    final s = state.value;
     if (s == null || s.isLoading) return;
     _keypad = _keypad.push(digit, decimals: s.currency.decimals);
     _emitKeypad();
   }
 
   void appendDecimal() {
-    final s = state.valueOrNull;
+    final s = state.value;
     if (s == null || s.isLoading) return;
     _keypad = _keypad.pushDecimal(decimals: s.currency.decimals);
     _emitKeypad();
   }
 
   void backspace() {
-    final s = state.valueOrNull;
+    final s = state.value;
     if (s == null || s.isLoading) return;
     final next = _keypad.pop(decimals: s.currency.decimals);
     if (next == _keypad) return;
@@ -114,7 +114,7 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
   }
 
   void clearAmount() {
-    final s = state.valueOrNull;
+    final s = state.value;
     if (s == null || s.isLoading) return;
     final next = _keypad.clear();
     if (next == _keypad) return;
@@ -123,7 +123,7 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
   }
 
   void applyOperator(CalcOperator op) {
-    final s = state.valueOrNull;
+    final s = state.value;
     if (s == null || s.isLoading) return;
     final next = _keypad.pushOperator(op, decimals: s.currency.decimals);
     if (next == _keypad) return;
@@ -194,7 +194,7 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
   /// On success, immediately runs generation for the new rule so the user
   /// sees today's pending row without waiting for a cold start.
   Future<int?> save() async {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null) return null;
     if (!current.canSave) {
       _update(
@@ -269,7 +269,7 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
   }
 
   void _update(RecurringRuleFormState Function(RecurringRuleFormState) fn) {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null) return;
     state = AsyncData(
       fn(current).copyWith(keypad: _keypad, keypadRevision: _keypadRevision),

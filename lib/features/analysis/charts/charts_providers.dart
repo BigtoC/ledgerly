@@ -7,7 +7,6 @@
 
 import 'dart:async';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../app/providers/default_currency_provider.dart';
@@ -56,10 +55,6 @@ class ChartsFxStatus {
 )
 Stream<ChartsFxStatus> chartsFxStatus(Ref ref) {
   final initialDefault = ref.watch(initialDefaultCurrencyProvider);
-  // `.stream` is the correct primitive for combining two streams into
-  // one. AsyncValue listening would force a re-watch on every emission.
-  // ignore: deprecated_member_use
-  final defaultsStream = ref.watch(defaultCurrencyProvider.stream);
   final repo = ref.watch(exchangeRateRepositoryProvider);
   final metadataStream = repo.watchRatesMetadata();
 
@@ -83,13 +78,17 @@ Stream<ChartsFxStatus> chartsFxStatus(Ref ref) {
     rates = next;
     emit();
   });
-  final defaultSub = defaultsStream.listen((next) {
-    defaultCode = next;
-    emit();
+  // Listen rather than watch: watching the AsyncValue would rebuild this
+  // provider on every emission. Like Riverpod 2's `.stream`, this reacts to
+  // later values only.
+  ref.listen(defaultCurrencyProvider, (_, next) {
+    if (next case AsyncData(:final value)) {
+      defaultCode = value;
+      emit();
+    }
   });
   ref.onDispose(() {
     ratesSub.cancel();
-    defaultSub.cancel();
     controller.close();
   });
 

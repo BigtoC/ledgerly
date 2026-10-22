@@ -110,7 +110,7 @@ class PendingController extends _$PendingController {
 
   /// Best-effort lookup of the rule name from the latest data state.
   String? _findRuleName(int pendingId) {
-    final value = state.valueOrNull;
+    final value = state.value;
     if (value is! PendingData) return null;
     for (final item in value.items) {
       if (item.id == pendingId) return item.memo;

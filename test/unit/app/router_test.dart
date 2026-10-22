@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:ledgerly/app/router.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
+import 'package:ledgerly/app/widgets/adaptive_shell.dart';
 import 'package:ledgerly/features/accounts/account_form_screen.dart';
 import 'package:ledgerly/features/analysis/analysis_screen.dart';
 import 'package:ledgerly/features/home/home_screen.dart';
@@ -279,6 +280,37 @@ void main() {
       expect(leaf.matchedLocation, '/home/shopping-list');
       expect(find.byType(ShoppingListScreen), findsOneWidget);
       expect(find.byType(AccountFormScreen), findsNothing);
+    });
+
+    // go_router 18 only recognises `package:material_ui`'s MaterialApp, so
+    // plain `builder:` routes would fall back to NoTransitionPage. Non-modal
+    // routes and the shell must stay on Material pages (push transitions,
+    // iOS back-swipe).
+    testWidgets('pushed and shell routes use MaterialPage', (tester) async {
+      final db = newTestAppDatabase();
+      addTearDown(db.close);
+      await tester.runAsync(() => runTestSeed(db));
+      final container = makeTestContainer(
+        db: db,
+        extraOverrides: [
+          splashGateSnapshotProvider.overrideWithValue(
+            SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(routerProvider);
+      addTearDown(router.dispose);
+      router.go('/home/shopping-list');
+
+      await tester.pumpWidget(buildTestApp(container: container));
+      await tester.pumpAndSettle();
+
+      Object? pageOf(Type widget) =>
+          ModalRoute.of(tester.element(find.byType(widget)))!.settings;
+      expect(pageOf(ShoppingListScreen), isA<MaterialPage<void>>());
+      expect(pageOf(AdaptiveShell), isA<MaterialPage<void>>());
     });
 
     // RT02 — /home/shopping-list/:id routes to the form (root navigator)

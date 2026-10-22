@@ -6,210 +6,242 @@ part of 'shopping_list_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$shoppingListTotalCountHash() =>
-    r'7b6cbe4a5fa4c1a4f29c0c2a88193749df077a36';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+/// Reactive total count of all shopping-list drafts.
+///
+/// Used by the Home screen mini-FAB badge. Returns 0 on error/loading so
+/// the badge never breaks the Home screen layout.
+
+@ProviderFor(shoppingListTotalCount)
+final shoppingListTotalCountProvider = ShoppingListTotalCountProvider._();
 
 /// Reactive total count of all shopping-list drafts.
 ///
 /// Used by the Home screen mini-FAB badge. Returns 0 on error/loading so
 /// the badge never breaks the Home screen layout.
-///
-/// Copied from [shoppingListTotalCount].
-@ProviderFor(shoppingListTotalCount)
-final shoppingListTotalCountProvider = AutoDisposeStreamProvider<int>.internal(
-  shoppingListTotalCount,
-  name: r'shoppingListTotalCountProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$shoppingListTotalCountHash,
-  dependencies: <ProviderOrFamily>[shoppingListRepositoryProvider],
-  allTransitiveDependencies: <ProviderOrFamily>{
-    shoppingListRepositoryProvider,
-    ...?shoppingListRepositoryProvider.allTransitiveDependencies,
-  },
-);
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef ShoppingListTotalCountRef = AutoDisposeStreamProviderRef<int>;
-String _$shoppingListCategoryByIdHash() =>
-    r'563f779b2ffc71271256f4f4e2e0ba437d3e00b1';
-
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
-/// One-shot read for archived-safe category name hydration.
-///
-/// Calls [getById] which returns the row even if archived, so archived names
-/// still display in preview rows.
-///
-/// Copied from [shoppingListCategoryById].
-@ProviderFor(shoppingListCategoryById)
-const shoppingListCategoryByIdProvider = ShoppingListCategoryByIdFamily();
-
-/// One-shot read for archived-safe category name hydration.
-///
-/// Calls [getById] which returns the row even if archived, so archived names
-/// still display in preview rows.
-///
-/// Copied from [shoppingListCategoryById].
-class ShoppingListCategoryByIdFamily extends Family<AsyncValue<Category?>> {
-  /// One-shot read for archived-safe category name hydration.
+final class ShoppingListTotalCountProvider
+    extends $FunctionalProvider<AsyncValue<int>, int, Stream<int>>
+    with $FutureModifier<int>, $StreamProvider<int> {
+  /// Reactive total count of all shopping-list drafts.
   ///
-  /// Calls [getById] which returns the row even if archived, so archived names
-  /// still display in preview rows.
-  ///
-  /// Copied from [shoppingListCategoryById].
-  const ShoppingListCategoryByIdFamily();
-
-  /// One-shot read for archived-safe category name hydration.
-  ///
-  /// Calls [getById] which returns the row even if archived, so archived names
-  /// still display in preview rows.
-  ///
-  /// Copied from [shoppingListCategoryById].
-  ShoppingListCategoryByIdProvider call(int id) {
-    return ShoppingListCategoryByIdProvider(id);
-  }
-
-  @override
-  ShoppingListCategoryByIdProvider getProviderOverride(
-    covariant ShoppingListCategoryByIdProvider provider,
-  ) {
-    return call(provider.id);
-  }
-
-  static final Iterable<ProviderOrFamily> _dependencies = <ProviderOrFamily>[
-    categoryRepositoryProvider,
-  ];
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static final Iterable<ProviderOrFamily> _allTransitiveDependencies =
-      <ProviderOrFamily>{
-        categoryRepositoryProvider,
-        ...?categoryRepositoryProvider.allTransitiveDependencies,
-      };
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'shoppingListCategoryByIdProvider';
-}
-
-/// One-shot read for archived-safe category name hydration.
-///
-/// Calls [getById] which returns the row even if archived, so archived names
-/// still display in preview rows.
-///
-/// Copied from [shoppingListCategoryById].
-class ShoppingListCategoryByIdProvider
-    extends AutoDisposeFutureProvider<Category?> {
-  /// One-shot read for archived-safe category name hydration.
-  ///
-  /// Calls [getById] which returns the row even if archived, so archived names
-  /// still display in preview rows.
-  ///
-  /// Copied from [shoppingListCategoryById].
-  ShoppingListCategoryByIdProvider(int id)
-    : this._internal(
-        (ref) =>
-            shoppingListCategoryById(ref as ShoppingListCategoryByIdRef, id),
-        from: shoppingListCategoryByIdProvider,
-        name: r'shoppingListCategoryByIdProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$shoppingListCategoryByIdHash,
-        dependencies: ShoppingListCategoryByIdFamily._dependencies,
-        allTransitiveDependencies:
-            ShoppingListCategoryByIdFamily._allTransitiveDependencies,
-        id: id,
+  /// Used by the Home screen mini-FAB badge. Returns 0 on error/loading so
+  /// the badge never breaks the Home screen layout.
+  ShoppingListTotalCountProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'shoppingListTotalCountProvider',
+        isAutoDispose: true,
+        dependencies: <ProviderOrFamily>[shoppingListRepositoryProvider],
+        $allTransitiveDependencies: <ProviderOrFamily>[
+          ShoppingListTotalCountProvider.$allTransitiveDependencies0,
+          ShoppingListTotalCountProvider.$allTransitiveDependencies1,
+          ShoppingListTotalCountProvider.$allTransitiveDependencies2,
+        ],
       );
 
-  ShoppingListCategoryByIdProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.id,
-  }) : super.internal();
-
-  final int id;
+  static final $allTransitiveDependencies0 = shoppingListRepositoryProvider;
+  static final $allTransitiveDependencies1 =
+      ShoppingListRepositoryProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies2 =
+      ShoppingListRepositoryProvider.$allTransitiveDependencies1;
 
   @override
-  Override overrideWith(
-    FutureOr<Category?> Function(ShoppingListCategoryByIdRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: ShoppingListCategoryByIdProvider._internal(
-        (ref) => create(ref as ShoppingListCategoryByIdRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        id: id,
-      ),
-    );
+  String debugGetCreateSourceHash() => _$shoppingListTotalCountHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<int> create(Ref ref) {
+    return shoppingListTotalCount(ref);
+  }
+}
+
+String _$shoppingListTotalCountHash() =>
+    r'7b6cbe4a5fa4c1a4f29c0c2a88193749df077a36';
+
+/// One-shot read for archived-safe category name hydration.
+///
+/// Calls [getById] which returns the row even if archived, so archived names
+/// still display in preview rows.
+
+@ProviderFor(shoppingListCategoryById)
+final shoppingListCategoryByIdProvider = ShoppingListCategoryByIdFamily._();
+
+/// One-shot read for archived-safe category name hydration.
+///
+/// Calls [getById] which returns the row even if archived, so archived names
+/// still display in preview rows.
+
+final class ShoppingListCategoryByIdProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Category?>,
+          Category?,
+          FutureOr<Category?>
+        >
+    with $FutureModifier<Category?>, $FutureProvider<Category?> {
+  /// One-shot read for archived-safe category name hydration.
+  ///
+  /// Calls [getById] which returns the row even if archived, so archived names
+  /// still display in preview rows.
+  ShoppingListCategoryByIdProvider._({
+    required ShoppingListCategoryByIdFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'shoppingListCategoryByIdProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  static final $allTransitiveDependencies0 = categoryRepositoryProvider;
+  static final $allTransitiveDependencies1 =
+      CategoryRepositoryProvider.$allTransitiveDependencies0;
+
+  @override
+  String debugGetCreateSourceHash() => _$shoppingListCategoryByIdHash();
+
+  @override
+  String toString() {
+    return r'shoppingListCategoryByIdProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  AutoDisposeFutureProviderElement<Category?> createElement() {
-    return _ShoppingListCategoryByIdProviderElement(this);
+  $FutureProviderElement<Category?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Category?> create(Ref ref) {
+    final argument = this.argument as int;
+    return shoppingListCategoryById(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is ShoppingListCategoryByIdProvider && other.id == id;
+    return other is ShoppingListCategoryByIdProvider &&
+        other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, id.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin ShoppingListCategoryByIdRef on AutoDisposeFutureProviderRef<Category?> {
-  /// The parameter `id` of this provider.
-  int get id;
-}
+String _$shoppingListCategoryByIdHash() =>
+    r'563f779b2ffc71271256f4f4e2e0ba437d3e00b1';
 
-class _ShoppingListCategoryByIdProviderElement
-    extends AutoDisposeFutureProviderElement<Category?>
-    with ShoppingListCategoryByIdRef {
-  _ShoppingListCategoryByIdProviderElement(super.provider);
+/// One-shot read for archived-safe category name hydration.
+///
+/// Calls [getById] which returns the row even if archived, so archived names
+/// still display in preview rows.
+
+final class ShoppingListCategoryByIdFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<Category?>, int> {
+  ShoppingListCategoryByIdFamily._()
+    : super(
+        retry: null,
+        name: r'shoppingListCategoryByIdProvider',
+        dependencies: <ProviderOrFamily>[categoryRepositoryProvider],
+        $allTransitiveDependencies: <ProviderOrFamily>[
+          ShoppingListCategoryByIdProvider.$allTransitiveDependencies0,
+          ShoppingListCategoryByIdProvider.$allTransitiveDependencies1,
+        ],
+        isAutoDispose: true,
+      );
+
+  /// One-shot read for archived-safe category name hydration.
+  ///
+  /// Calls [getById] which returns the row even if archived, so archived names
+  /// still display in preview rows.
+
+  ShoppingListCategoryByIdProvider call(int id) =>
+      ShoppingListCategoryByIdProvider._(argument: id, from: this);
 
   @override
-  int get id => (origin as ShoppingListCategoryByIdProvider).id;
+  String toString() => r'shoppingListCategoryByIdProvider';
+}
+
+/// One-shot read for archived-safe account name hydration.
+///
+/// Calls [getById] which returns the row even if archived, so archived names
+/// still display in preview rows.
+
+@ProviderFor(shoppingListAccountById)
+final shoppingListAccountByIdProvider = ShoppingListAccountByIdFamily._();
+
+/// One-shot read for archived-safe account name hydration.
+///
+/// Calls [getById] which returns the row even if archived, so archived names
+/// still display in preview rows.
+
+final class ShoppingListAccountByIdProvider
+    extends
+        $FunctionalProvider<AsyncValue<Account?>, Account?, FutureOr<Account?>>
+    with $FutureModifier<Account?>, $FutureProvider<Account?> {
+  /// One-shot read for archived-safe account name hydration.
+  ///
+  /// Calls [getById] which returns the row even if archived, so archived names
+  /// still display in preview rows.
+  ShoppingListAccountByIdProvider._({
+    required ShoppingListAccountByIdFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'shoppingListAccountByIdProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  static final $allTransitiveDependencies0 = accountRepositoryProvider;
+  static final $allTransitiveDependencies1 =
+      AccountRepositoryProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies2 =
+      AccountRepositoryProvider.$allTransitiveDependencies1;
+
+  @override
+  String debugGetCreateSourceHash() => _$shoppingListAccountByIdHash();
+
+  @override
+  String toString() {
+    return r'shoppingListAccountByIdProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<Account?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Account?> create(Ref ref) {
+    final argument = this.argument as int;
+    return shoppingListAccountById(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ShoppingListAccountByIdProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
 }
 
 String _$shoppingListAccountByIdHash() =>
@@ -219,155 +251,105 @@ String _$shoppingListAccountByIdHash() =>
 ///
 /// Calls [getById] which returns the row even if archived, so archived names
 /// still display in preview rows.
-///
-/// Copied from [shoppingListAccountById].
-@ProviderFor(shoppingListAccountById)
-const shoppingListAccountByIdProvider = ShoppingListAccountByIdFamily();
 
-/// One-shot read for archived-safe account name hydration.
-///
-/// Calls [getById] which returns the row even if archived, so archived names
-/// still display in preview rows.
-///
-/// Copied from [shoppingListAccountById].
-class ShoppingListAccountByIdFamily extends Family<AsyncValue<Account?>> {
-  /// One-shot read for archived-safe account name hydration.
-  ///
-  /// Calls [getById] which returns the row even if archived, so archived names
-  /// still display in preview rows.
-  ///
-  /// Copied from [shoppingListAccountById].
-  const ShoppingListAccountByIdFamily();
-
-  /// One-shot read for archived-safe account name hydration.
-  ///
-  /// Calls [getById] which returns the row even if archived, so archived names
-  /// still display in preview rows.
-  ///
-  /// Copied from [shoppingListAccountById].
-  ShoppingListAccountByIdProvider call(int id) {
-    return ShoppingListAccountByIdProvider(id);
-  }
-
-  @override
-  ShoppingListAccountByIdProvider getProviderOverride(
-    covariant ShoppingListAccountByIdProvider provider,
-  ) {
-    return call(provider.id);
-  }
-
-  static final Iterable<ProviderOrFamily> _dependencies = <ProviderOrFamily>[
-    accountRepositoryProvider,
-  ];
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static final Iterable<ProviderOrFamily> _allTransitiveDependencies =
-      <ProviderOrFamily>{
-        accountRepositoryProvider,
-        ...?accountRepositoryProvider.allTransitiveDependencies,
-      };
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'shoppingListAccountByIdProvider';
-}
-
-/// One-shot read for archived-safe account name hydration.
-///
-/// Calls [getById] which returns the row even if archived, so archived names
-/// still display in preview rows.
-///
-/// Copied from [shoppingListAccountById].
-class ShoppingListAccountByIdProvider
-    extends AutoDisposeFutureProvider<Account?> {
-  /// One-shot read for archived-safe account name hydration.
-  ///
-  /// Calls [getById] which returns the row even if archived, so archived names
-  /// still display in preview rows.
-  ///
-  /// Copied from [shoppingListAccountById].
-  ShoppingListAccountByIdProvider(int id)
-    : this._internal(
-        (ref) => shoppingListAccountById(ref as ShoppingListAccountByIdRef, id),
-        from: shoppingListAccountByIdProvider,
+final class ShoppingListAccountByIdFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<Account?>, int> {
+  ShoppingListAccountByIdFamily._()
+    : super(
+        retry: null,
         name: r'shoppingListAccountByIdProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$shoppingListAccountByIdHash,
-        dependencies: ShoppingListAccountByIdFamily._dependencies,
-        allTransitiveDependencies:
-            ShoppingListAccountByIdFamily._allTransitiveDependencies,
-        id: id,
+        dependencies: <ProviderOrFamily>[accountRepositoryProvider],
+        $allTransitiveDependencies: <ProviderOrFamily>[
+          ShoppingListAccountByIdProvider.$allTransitiveDependencies0,
+          ShoppingListAccountByIdProvider.$allTransitiveDependencies1,
+          ShoppingListAccountByIdProvider.$allTransitiveDependencies2,
+        ],
+        isAutoDispose: true,
       );
 
-  ShoppingListAccountByIdProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.id,
-  }) : super.internal();
+  /// One-shot read for archived-safe account name hydration.
+  ///
+  /// Calls [getById] which returns the row even if archived, so archived names
+  /// still display in preview rows.
 
-  final int id;
+  ShoppingListAccountByIdProvider call(int id) =>
+      ShoppingListAccountByIdProvider._(argument: id, from: this);
 
   @override
-  Override overrideWith(
-    FutureOr<Account?> Function(ShoppingListAccountByIdRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: ShoppingListAccountByIdProvider._internal(
-        (ref) => create(ref as ShoppingListAccountByIdRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        id: id,
-      ),
-    );
+  String toString() => r'shoppingListAccountByIdProvider';
+}
+
+/// One-shot currency lookup by code — used by preview rows to format amounts.
+///
+/// Returns null when the code is not registered (should not happen in practice
+/// since amounts always reference a seeded currency).
+
+@ProviderFor(shoppingListCurrencyByCode)
+final shoppingListCurrencyByCodeProvider = ShoppingListCurrencyByCodeFamily._();
+
+/// One-shot currency lookup by code — used by preview rows to format amounts.
+///
+/// Returns null when the code is not registered (should not happen in practice
+/// since amounts always reference a seeded currency).
+
+final class ShoppingListCurrencyByCodeProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Currency?>,
+          Currency?,
+          FutureOr<Currency?>
+        >
+    with $FutureModifier<Currency?>, $FutureProvider<Currency?> {
+  /// One-shot currency lookup by code — used by preview rows to format amounts.
+  ///
+  /// Returns null when the code is not registered (should not happen in practice
+  /// since amounts always reference a seeded currency).
+  ShoppingListCurrencyByCodeProvider._({
+    required ShoppingListCurrencyByCodeFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'shoppingListCurrencyByCodeProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  static final $allTransitiveDependencies0 = currencyRepositoryProvider;
+  static final $allTransitiveDependencies1 =
+      CurrencyRepositoryProvider.$allTransitiveDependencies0;
+
+  @override
+  String debugGetCreateSourceHash() => _$shoppingListCurrencyByCodeHash();
+
+  @override
+  String toString() {
+    return r'shoppingListCurrencyByCodeProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  AutoDisposeFutureProviderElement<Account?> createElement() {
-    return _ShoppingListAccountByIdProviderElement(this);
+  $FutureProviderElement<Currency?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Currency?> create(Ref ref) {
+    final argument = this.argument as String;
+    return shoppingListCurrencyByCode(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is ShoppingListAccountByIdProvider && other.id == id;
+    return other is ShoppingListCurrencyByCodeProvider &&
+        other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, id.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
-}
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin ShoppingListAccountByIdRef on AutoDisposeFutureProviderRef<Account?> {
-  /// The parameter `id` of this provider.
-  int get id;
-}
-
-class _ShoppingListAccountByIdProviderElement
-    extends AutoDisposeFutureProviderElement<Account?>
-    with ShoppingListAccountByIdRef {
-  _ShoppingListAccountByIdProviderElement(super.provider);
-
-  @override
-  int get id => (origin as ShoppingListAccountByIdProvider).id;
 }
 
 String _$shoppingListCurrencyByCodeHash() =>
@@ -377,159 +359,29 @@ String _$shoppingListCurrencyByCodeHash() =>
 ///
 /// Returns null when the code is not registered (should not happen in practice
 /// since amounts always reference a seeded currency).
-///
-/// Copied from [shoppingListCurrencyByCode].
-@ProviderFor(shoppingListCurrencyByCode)
-const shoppingListCurrencyByCodeProvider = ShoppingListCurrencyByCodeFamily();
 
-/// One-shot currency lookup by code — used by preview rows to format amounts.
-///
-/// Returns null when the code is not registered (should not happen in practice
-/// since amounts always reference a seeded currency).
-///
-/// Copied from [shoppingListCurrencyByCode].
-class ShoppingListCurrencyByCodeFamily extends Family<AsyncValue<Currency?>> {
-  /// One-shot currency lookup by code — used by preview rows to format amounts.
-  ///
-  /// Returns null when the code is not registered (should not happen in practice
-  /// since amounts always reference a seeded currency).
-  ///
-  /// Copied from [shoppingListCurrencyByCode].
-  const ShoppingListCurrencyByCodeFamily();
-
-  /// One-shot currency lookup by code — used by preview rows to format amounts.
-  ///
-  /// Returns null when the code is not registered (should not happen in practice
-  /// since amounts always reference a seeded currency).
-  ///
-  /// Copied from [shoppingListCurrencyByCode].
-  ShoppingListCurrencyByCodeProvider call(String code) {
-    return ShoppingListCurrencyByCodeProvider(code);
-  }
-
-  @override
-  ShoppingListCurrencyByCodeProvider getProviderOverride(
-    covariant ShoppingListCurrencyByCodeProvider provider,
-  ) {
-    return call(provider.code);
-  }
-
-  static final Iterable<ProviderOrFamily> _dependencies = <ProviderOrFamily>[
-    currencyRepositoryProvider,
-  ];
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static final Iterable<ProviderOrFamily> _allTransitiveDependencies =
-      <ProviderOrFamily>{
-        currencyRepositoryProvider,
-        ...?currencyRepositoryProvider.allTransitiveDependencies,
-      };
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'shoppingListCurrencyByCodeProvider';
-}
-
-/// One-shot currency lookup by code — used by preview rows to format amounts.
-///
-/// Returns null when the code is not registered (should not happen in practice
-/// since amounts always reference a seeded currency).
-///
-/// Copied from [shoppingListCurrencyByCode].
-class ShoppingListCurrencyByCodeProvider
-    extends AutoDisposeFutureProvider<Currency?> {
-  /// One-shot currency lookup by code — used by preview rows to format amounts.
-  ///
-  /// Returns null when the code is not registered (should not happen in practice
-  /// since amounts always reference a seeded currency).
-  ///
-  /// Copied from [shoppingListCurrencyByCode].
-  ShoppingListCurrencyByCodeProvider(String code)
-    : this._internal(
-        (ref) => shoppingListCurrencyByCode(
-          ref as ShoppingListCurrencyByCodeRef,
-          code,
-        ),
-        from: shoppingListCurrencyByCodeProvider,
+final class ShoppingListCurrencyByCodeFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<Currency?>, String> {
+  ShoppingListCurrencyByCodeFamily._()
+    : super(
+        retry: null,
         name: r'shoppingListCurrencyByCodeProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$shoppingListCurrencyByCodeHash,
-        dependencies: ShoppingListCurrencyByCodeFamily._dependencies,
-        allTransitiveDependencies:
-            ShoppingListCurrencyByCodeFamily._allTransitiveDependencies,
-        code: code,
+        dependencies: <ProviderOrFamily>[currencyRepositoryProvider],
+        $allTransitiveDependencies: <ProviderOrFamily>[
+          ShoppingListCurrencyByCodeProvider.$allTransitiveDependencies0,
+          ShoppingListCurrencyByCodeProvider.$allTransitiveDependencies1,
+        ],
+        isAutoDispose: true,
       );
 
-  ShoppingListCurrencyByCodeProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.code,
-  }) : super.internal();
+  /// One-shot currency lookup by code — used by preview rows to format amounts.
+  ///
+  /// Returns null when the code is not registered (should not happen in practice
+  /// since amounts always reference a seeded currency).
 
-  final String code;
+  ShoppingListCurrencyByCodeProvider call(String code) =>
+      ShoppingListCurrencyByCodeProvider._(argument: code, from: this);
 
   @override
-  Override overrideWith(
-    FutureOr<Currency?> Function(ShoppingListCurrencyByCodeRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: ShoppingListCurrencyByCodeProvider._internal(
-        (ref) => create(ref as ShoppingListCurrencyByCodeRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        code: code,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<Currency?> createElement() {
-    return _ShoppingListCurrencyByCodeProviderElement(this);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is ShoppingListCurrencyByCodeProvider && other.code == code;
-  }
-
-  @override
-  int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, code.hashCode);
-
-    return _SystemHash.finish(hash);
-  }
+  String toString() => r'shoppingListCurrencyByCodeProvider';
 }
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin ShoppingListCurrencyByCodeRef on AutoDisposeFutureProviderRef<Currency?> {
-  /// The parameter `code` of this provider.
-  String get code;
-}
-
-class _ShoppingListCurrencyByCodeProviderElement
-    extends AutoDisposeFutureProviderElement<Currency?>
-    with ShoppingListCurrencyByCodeRef {
-  _ShoppingListCurrencyByCodeProviderElement(super.provider);
-
-  @override
-  String get code => (origin as ShoppingListCurrencyByCodeProvider).code;
-}
-
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

@@ -6,188 +6,147 @@ part of 'categories_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$categoriesByTypeHash() => r'87844ad5c286f594c74523adc9505d1e31b94df0';
-
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 /// Picker data source (plan §5). Must NOT be `keepAlive: true`.
-///
-/// Copied from [categoriesByType].
+
 @ProviderFor(categoriesByType)
-const categoriesByTypeProvider = CategoriesByTypeFamily();
+final categoriesByTypeProvider = CategoriesByTypeFamily._();
 
 /// Picker data source (plan §5). Must NOT be `keepAlive: true`.
-///
-/// Copied from [categoriesByType].
-class CategoriesByTypeFamily extends Family<AsyncValue<List<Category>>> {
-  /// Picker data source (plan §5). Must NOT be `keepAlive: true`.
-  ///
-  /// Copied from [categoriesByType].
-  const CategoriesByTypeFamily();
 
+final class CategoriesByTypeProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Category>>,
+          List<Category>,
+          Stream<List<Category>>
+        >
+    with $FutureModifier<List<Category>>, $StreamProvider<List<Category>> {
   /// Picker data source (plan §5). Must NOT be `keepAlive: true`.
-  ///
-  /// Copied from [categoriesByType].
-  CategoriesByTypeProvider call(CategoryType type) {
-    return CategoriesByTypeProvider(type);
+  CategoriesByTypeProvider._({
+    required CategoriesByTypeFamily super.from,
+    required CategoryType super.argument,
+  }) : super(
+         retry: null,
+         name: r'categoriesByTypeProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  static final $allTransitiveDependencies0 = categoryRepositoryProvider;
+  static final $allTransitiveDependencies1 =
+      CategoryRepositoryProvider.$allTransitiveDependencies0;
+
+  @override
+  String debugGetCreateSourceHash() => _$categoriesByTypeHash();
+
+  @override
+  String toString() {
+    return r'categoriesByTypeProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  CategoriesByTypeProvider getProviderOverride(
-    covariant CategoriesByTypeProvider provider,
-  ) {
-    return call(provider.type);
-  }
-
-  static final Iterable<ProviderOrFamily> _dependencies = <ProviderOrFamily>[
-    categoryRepositoryProvider,
-  ];
+  $StreamProviderElement<List<Category>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
 
   @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static final Iterable<ProviderOrFamily> _allTransitiveDependencies =
-      <ProviderOrFamily>{
-        categoryRepositoryProvider,
-        ...?categoryRepositoryProvider.allTransitiveDependencies,
-      };
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'categoriesByTypeProvider';
-}
-
-/// Picker data source (plan §5). Must NOT be `keepAlive: true`.
-///
-/// Copied from [categoriesByType].
-class CategoriesByTypeProvider
-    extends AutoDisposeStreamProvider<List<Category>> {
-  /// Picker data source (plan §5). Must NOT be `keepAlive: true`.
-  ///
-  /// Copied from [categoriesByType].
-  CategoriesByTypeProvider(CategoryType type)
-    : this._internal(
-        (ref) => categoriesByType(ref as CategoriesByTypeRef, type),
-        from: categoriesByTypeProvider,
-        name: r'categoriesByTypeProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$categoriesByTypeHash,
-        dependencies: CategoriesByTypeFamily._dependencies,
-        allTransitiveDependencies:
-            CategoriesByTypeFamily._allTransitiveDependencies,
-        type: type,
-      );
-
-  CategoriesByTypeProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.type,
-  }) : super.internal();
-
-  final CategoryType type;
-
-  @override
-  Override overrideWith(
-    Stream<List<Category>> Function(CategoriesByTypeRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: CategoriesByTypeProvider._internal(
-        (ref) => create(ref as CategoriesByTypeRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        type: type,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeStreamProviderElement<List<Category>> createElement() {
-    return _CategoriesByTypeProviderElement(this);
+  Stream<List<Category>> create(Ref ref) {
+    final argument = this.argument as CategoryType;
+    return categoriesByType(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is CategoriesByTypeProvider && other.type == type;
+    return other is CategoriesByTypeProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, type.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin CategoriesByTypeRef on AutoDisposeStreamProviderRef<List<Category>> {
-  /// The parameter `type` of this provider.
-  CategoryType get type;
-}
+String _$categoriesByTypeHash() => r'87844ad5c286f594c74523adc9505d1e31b94df0';
 
-class _CategoriesByTypeProviderElement
-    extends AutoDisposeStreamProviderElement<List<Category>>
-    with CategoriesByTypeRef {
-  _CategoriesByTypeProviderElement(super.provider);
+/// Picker data source (plan §5). Must NOT be `keepAlive: true`.
+
+final class CategoriesByTypeFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<List<Category>>, CategoryType> {
+  CategoriesByTypeFamily._()
+    : super(
+        retry: null,
+        name: r'categoriesByTypeProvider',
+        dependencies: <ProviderOrFamily>[categoryRepositoryProvider],
+        $allTransitiveDependencies: <ProviderOrFamily>[
+          CategoriesByTypeProvider.$allTransitiveDependencies0,
+          CategoriesByTypeProvider.$allTransitiveDependencies1,
+        ],
+        isAutoDispose: true,
+      );
+
+  /// Picker data source (plan §5). Must NOT be `keepAlive: true`.
+
+  CategoriesByTypeProvider call(CategoryType type) =>
+      CategoriesByTypeProvider._(argument: type, from: this);
 
   @override
-  CategoryType get type => (origin as CategoriesByTypeProvider).type;
+  String toString() => r'categoriesByTypeProvider';
+}
+
+@ProviderFor(CategoriesController)
+final categoriesControllerProvider = CategoriesControllerProvider._();
+
+final class CategoriesControllerProvider
+    extends $StreamNotifierProvider<CategoriesController, CategoriesState> {
+  CategoriesControllerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'categoriesControllerProvider',
+        isAutoDispose: true,
+        dependencies: <ProviderOrFamily>[categoryRepositoryProvider],
+        $allTransitiveDependencies: <ProviderOrFamily>[
+          CategoriesControllerProvider.$allTransitiveDependencies0,
+          CategoriesControllerProvider.$allTransitiveDependencies1,
+        ],
+      );
+
+  static final $allTransitiveDependencies0 = categoryRepositoryProvider;
+  static final $allTransitiveDependencies1 =
+      CategoryRepositoryProvider.$allTransitiveDependencies0;
+
+  @override
+  String debugGetCreateSourceHash() => _$categoriesControllerHash();
+
+  @$internal
+  @override
+  CategoriesController create() => CategoriesController();
 }
 
 String _$categoriesControllerHash() =>
     r'a92184686f7227a47927abce8bb55527f206e514';
 
-/// See also [CategoriesController].
-@ProviderFor(CategoriesController)
-final categoriesControllerProvider =
-    AutoDisposeStreamNotifierProvider<
-      CategoriesController,
-      CategoriesState
-    >.internal(
-      CategoriesController.new,
-      name: r'categoriesControllerProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$categoriesControllerHash,
-      dependencies: <ProviderOrFamily>[categoryRepositoryProvider],
-      allTransitiveDependencies: <ProviderOrFamily>{
-        categoryRepositoryProvider,
-        ...?categoryRepositoryProvider.allTransitiveDependencies,
-      },
-    );
-
-typedef _$CategoriesController = AutoDisposeStreamNotifier<CategoriesState>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+abstract class _$CategoriesController extends $StreamNotifier<CategoriesState> {
+  Stream<CategoriesState> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<CategoriesState>, CategoriesState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<CategoriesState>, CategoriesState>,
+              AsyncValue<CategoriesState>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

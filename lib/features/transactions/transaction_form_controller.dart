@@ -545,7 +545,7 @@ class TransactionFormController extends _$TransactionFormController {
       // to the caller.
       final initialDefault = ref.read(initialDefaultCurrencyProvider);
       final currentDefault =
-          ref.read(defaultCurrencyProvider).valueOrNull ?? initialDefault;
+          ref.read(defaultCurrencyProvider).value ?? initialDefault;
       if (tx.currency.code != currentDefault) {
         final rateRepo = ref.read(exchangeRateRepositoryProvider);
         unawaited(rateRepo.fetchRate(tx.currency.code, currentDefault));

@@ -192,7 +192,7 @@ void main() {
 
         expect(id, 7);
         verify(() => recurringRepo.update(7, any())).called(1);
-        final state = c.read(provider).valueOrNull!;
+        final state = c.read(provider).value!;
         expect(state.postSaveGenerationFailed, isTrue);
       },
     );
@@ -207,7 +207,7 @@ void main() {
       final id = await controller.save();
 
       expect(id, isNull);
-      final state = c.read(provider).valueOrNull!;
+      final state = c.read(provider).value!;
       expect(state.nameError, RecurringFormErrorKey.nameRequired);
       expect(state.categoryError, RecurringFormErrorKey.categoryRequired);
       expect(state.accountError, RecurringFormErrorKey.accountRequired);
@@ -236,7 +236,7 @@ void main() {
       final id = await controller.save();
 
       expect(id, isNull);
-      final state = c.read(provider).valueOrNull!;
+      final state = c.read(provider).value!;
       expect(state.formError, isA<ArchivedRefErr>());
       expect(
         (state.formError as ArchivedRefErr).detail,
@@ -279,7 +279,7 @@ void main() {
       final id = await pendingSave;
 
       expect(id, 42);
-      expect(c.read(provider).valueOrNull!.isLoading, isFalse);
+      expect(c.read(provider).value!.isLoading, isFalse);
     });
   });
 }
