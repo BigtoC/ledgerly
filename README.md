@@ -317,7 +317,9 @@ analysis-server plugin (reported by `dart analyze` and the IDE, not by
 `flutter analyze`). The pinned `import_lint ^0.1.6` reads its layer-boundary
 rules from `import_analysis_options.yaml` at the repo root (separate
 file because that version uses a regex schema, not the 2.x globs). CI
-fails any PR that violates the layer-boundary rules.
+runs it, but 0.1.6 does not currently enforce the rules: it matches them
+against absolute paths, so no `^lib/...` rule fires, and it always exits 0.
+Review is what keeps the layer boundaries today.
 
 ## Contributing
 

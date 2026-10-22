@@ -15,7 +15,14 @@ The 2.x line (newest: 2.0.0) pins `analyzer ^12.1.0`. The code-gen stack now nee
 - An `import_lint:` block inside `analysis_options.yaml` is silently ignored.
 - The glob-based `target` / `from` / `except` keys under an `import_lint:` block in `analysis_options.yaml` belong to the 1.x/2.x lines. Do **not** use them with 0.1.6.
 
-Enforcement under the 0.1.6 pin is best-effort, so reviewer discipline matters more than the linter for layer-boundary rules — see [`layers.md`](./layers.md).
+### 0.1.6 does not enforce the rules
+
+`dart run import_lint` runs in CI, but under the 0.1.6 pin it enforces nothing:
+
+- It lists files with `Directory.current.list()`, which yields absolute paths, so the `^lib/...` `search_file_path_reg_exp` patterns never match.
+- It calls `exit(0)` after printing its report, so CI would not fail even if a rule matched.
+
+Adding `import 'package:ledgerly/data/database/app_database.dart';` to `lib/features/home/home_screen.dart` (a `widgets_forbid_data_internals` violation) still prints "No issues found!" and exits 0. Until a working check replaces it, reviewer discipline is what enforces layer-boundary rules — see [`layers.md`](./layers.md).
 
 ## Chinese ARBs require a base `app_zh.arb`
 

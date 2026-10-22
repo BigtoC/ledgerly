@@ -43,8 +43,10 @@ jobs:
         run: flutter pub get
 
       - name: Enforce layer boundaries (import_lint)
-        # Wired from analysis_options.yaml -> import_lint. Layer-violation
-        # PRs must fail here per M0 exit criteria and guardrails G1/G2.
+        # Rules live in import_analysis_options.yaml. import_lint 0.1.6 does
+        # NOT currently fail on violations: it matches the `^lib/...` rules
+        # against absolute paths and always exits 0. See
+        # docs/architecture/dependencies.md.
         run: dart run import_lint
 
       - name: Generate code (Drift / Freezed / Riverpod / json_serializable)
