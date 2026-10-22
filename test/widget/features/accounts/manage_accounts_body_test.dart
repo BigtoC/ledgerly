@@ -137,7 +137,7 @@ ProviderContainer _makeContainer({
     () => currencyRepo.watchAll(includeTokens: any(named: 'includeTokens')),
   ).thenAnswer((_) => Stream.value(_allTestCurrencies));
 
-  return ProviderContainer(
+  final container = ProviderContainer(
     overrides: [
       accountRepositoryProvider.overrideWithValue(accountRepo),
       accountTypeRepositoryProvider.overrideWithValue(typeRepo),
@@ -148,6 +148,12 @@ ProviderContainer _makeContainer({
       ),
     ],
   );
+  // In the app, ManageAccountsSheet watches accountsControllerProvider
+  // while it shows this body. Mirror that so the auto-dispose controller
+  // stays alive across the async gaps in its commands; since Riverpod 3.4
+  // an unlistened auto-dispose provider is disposed on the next microtask.
+  container.listen(accountsControllerProvider, (_, _) {});
+  return container;
 }
 
 void main() {

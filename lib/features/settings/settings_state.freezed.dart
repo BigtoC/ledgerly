@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'settings_state.dart';
@@ -9,6 +9,7 @@ part of 'settings_state.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -20,7 +21,7 @@ mixin _$SettingsState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SettingsState);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SettingsState);
 }
 
 
@@ -29,7 +30,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'SettingsState()';
+    return 'SettingsState()';
 }
 
 
@@ -191,7 +192,7 @@ class SettingsLoading implements SettingsState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SettingsLoading);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SettingsLoading);
 }
 
 
@@ -200,7 +201,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'SettingsState.loading()';
+    return 'SettingsState.loading()';
 }
 
 
@@ -235,16 +236,18 @@ $SettingsDataCopyWith<SettingsData> get copyWith => _$SettingsDataCopyWithImpl<S
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SettingsData&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.locale, locale) || other.locale == locale)&&(identical(other.defaultCurrency, defaultCurrency) || other.defaultCurrency == defaultCurrency)&&(identical(other.defaultAccountId, defaultAccountId) || other.defaultAccountId == defaultAccountId)&&(identical(other.splashEnabled, splashEnabled) || other.splashEnabled == splashEnabled)&&(identical(other.splashStartDate, splashStartDate) || other.splashStartDate == splashStartDate)&&(identical(other.splashDisplayText, splashDisplayText) || other.splashDisplayText == splashDisplayText)&&(identical(other.splashButtonLabel, splashButtonLabel) || other.splashButtonLabel == splashButtonLabel));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SettingsData&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.locale, locale) || other.locale == locale)&&(identical(other.defaultCurrency, defaultCurrency) || other.defaultCurrency == defaultCurrency)&&(identical(other.defaultAccountId, defaultAccountId) || other.defaultAccountId == defaultAccountId)&&(identical(other.splashEnabled, splashEnabled) || other.splashEnabled == splashEnabled)&&(identical(other.splashStartDate, splashStartDate) || other.splashStartDate == splashStartDate)&&(identical(other.splashDisplayText, splashDisplayText) || other.splashDisplayText == splashDisplayText)&&(identical(other.splashButtonLabel, splashButtonLabel) || other.splashButtonLabel == splashButtonLabel));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,themeMode,locale,defaultCurrency,defaultAccountId,splashEnabled,splashStartDate,splashDisplayText,splashButtonLabel);
+int get hashCode {
+    return Object.hash(runtimeType,themeMode,locale,defaultCurrency,defaultAccountId,splashEnabled,splashStartDate,splashDisplayText,splashButtonLabel);
+}
 
 @override
 String toString() {
-  return 'SettingsState.data(themeMode: $themeMode, locale: $locale, defaultCurrency: $defaultCurrency, defaultAccountId: $defaultAccountId, splashEnabled: $splashEnabled, splashStartDate: $splashStartDate, splashDisplayText: $splashDisplayText, splashButtonLabel: $splashButtonLabel)';
+    return 'SettingsState.data(themeMode: $themeMode, locale: $locale, defaultCurrency: $defaultCurrency, defaultAccountId: $defaultAccountId, splashEnabled: $splashEnabled, splashStartDate: $splashStartDate, splashDisplayText: $splashDisplayText, splashButtonLabel: $splashButtonLabel)';
 }
 
 
@@ -309,16 +312,18 @@ $SettingsErrorCopyWith<SettingsError> get copyWith => _$SettingsErrorCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SettingsError&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.stack, stack) || other.stack == stack));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SettingsError&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.stack, stack) || other.stack == stack));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(error),stack);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(error),stack);
+}
 
 @override
 String toString() {
-  return 'SettingsState.error(error: $error, stack: $stack)';
+    return 'SettingsState.error(error: $error, stack: $stack)';
 }
 
 

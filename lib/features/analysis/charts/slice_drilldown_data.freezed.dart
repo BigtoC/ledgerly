@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'slice_drilldown_data.dart';
@@ -9,6 +9,7 @@ part of 'slice_drilldown_data.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -25,16 +26,21 @@ $SliceDrilldownDataCopyWith<SliceDrilldownData> get copyWith => _$SliceDrilldown
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SliceDrilldownData&&const DeepCollectionEquality().equals(other.rows, rows)&&(identical(other.pendingDeleteId, pendingDeleteId) || other.pendingDeleteId == pendingDeleteId));
+  final _this = this as SliceDrilldownData;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SliceDrilldownData&&const DeepCollectionEquality().equals(other.rows, _this.rows)&&(identical(other.pendingDeleteId, _this.pendingDeleteId) || other.pendingDeleteId == _this.pendingDeleteId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(rows),pendingDeleteId);
+int get hashCode {
+  final _this = this as SliceDrilldownData;
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.rows),_this.pendingDeleteId);
+}
 
 @override
 String toString() {
-  return 'SliceDrilldownData(rows: $rows, pendingDeleteId: $pendingDeleteId)';
+  final _this = this as SliceDrilldownData;
+  return 'SliceDrilldownData(rows: ${_this.rows}, pendingDeleteId: ${_this.pendingDeleteId})';
 }
 
 
@@ -63,7 +69,7 @@ class _$SliceDrilldownDataCopyWithImpl<$Res>
 /// Create a copy of SliceDrilldownData
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? rows = null,Object? pendingDeleteId = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(SliceDrilldownData(
 rows: null == rows ? _self.rows : rows // ignore: cast_nullable_to_non_nullable
 as List<Transaction>,pendingDeleteId: freezed == pendingDeleteId ? _self.pendingDeleteId : pendingDeleteId // ignore: cast_nullable_to_non_nullable
 as int?,
@@ -207,7 +213,7 @@ return $default(_that.rows,_that.pendingDeleteId);case _:
 
 
 class _SliceDrilldownData implements SliceDrilldownData {
-  const _SliceDrilldownData({required final  List<Transaction> rows, this.pendingDeleteId}): _rows = rows;
+  const _SliceDrilldownData({required  List<Transaction> rows, this.pendingDeleteId}): _rows = rows;
   
 
  final  List<Transaction> _rows;
@@ -229,16 +235,18 @@ _$SliceDrilldownDataCopyWith<_SliceDrilldownData> get copyWith => __$SliceDrilld
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SliceDrilldownData&&const DeepCollectionEquality().equals(other._rows, _rows)&&(identical(other.pendingDeleteId, pendingDeleteId) || other.pendingDeleteId == pendingDeleteId));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SliceDrilldownData&&const DeepCollectionEquality().equals(other.rows, _rows)&&(identical(other.pendingDeleteId, pendingDeleteId) || other.pendingDeleteId == pendingDeleteId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_rows),pendingDeleteId);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_rows),pendingDeleteId);
+}
 
 @override
 String toString() {
-  return 'SliceDrilldownData(rows: $rows, pendingDeleteId: $pendingDeleteId)';
+    return 'SliceDrilldownData(rows: $rows, pendingDeleteId: $pendingDeleteId)';
 }
 
 

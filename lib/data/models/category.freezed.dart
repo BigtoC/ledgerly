@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'category.dart';
@@ -9,6 +9,7 @@ part of 'category.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -33,16 +34,21 @@ $CategoryCopyWith<Category> get copyWith => _$CategoryCopyWithImpl<Category>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Category&&(identical(other.id, id) || other.id == id)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.type, type) || other.type == type)&&(identical(other.l10nKey, l10nKey) || other.l10nKey == l10nKey)&&(identical(other.customName, customName) || other.customName == customName)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.isArchived, isArchived) || other.isArchived == isArchived));
+  final _this = this as Category;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Category&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.icon, _this.icon) || other.icon == _this.icon)&&(identical(other.color, _this.color) || other.color == _this.color)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.l10nKey, _this.l10nKey) || other.l10nKey == _this.l10nKey)&&(identical(other.customName, _this.customName) || other.customName == _this.customName)&&(identical(other.sortOrder, _this.sortOrder) || other.sortOrder == _this.sortOrder)&&(identical(other.isArchived, _this.isArchived) || other.isArchived == _this.isArchived));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,icon,color,type,l10nKey,customName,sortOrder,isArchived);
+int get hashCode {
+  final _this = this as Category;
+  return Object.hash(runtimeType,_this.id,_this.icon,_this.color,_this.type,_this.l10nKey,_this.customName,_this.sortOrder,_this.isArchived);
+}
 
 @override
 String toString() {
-  return 'Category(id: $id, icon: $icon, color: $color, type: $type, l10nKey: $l10nKey, customName: $customName, sortOrder: $sortOrder, isArchived: $isArchived)';
+  final _this = this as Category;
+  return 'Category(id: ${_this.id}, icon: ${_this.icon}, color: ${_this.color}, type: ${_this.type}, l10nKey: ${_this.l10nKey}, customName: ${_this.customName}, sortOrder: ${_this.sortOrder}, isArchived: ${_this.isArchived})';
 }
 
 
@@ -71,7 +77,7 @@ class _$CategoryCopyWithImpl<$Res>
 /// Create a copy of Category
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? icon = null,Object? color = null,Object? type = null,Object? l10nKey = freezed,Object? customName = freezed,Object? sortOrder = freezed,Object? isArchived = null,}) {
-  return _then(_self.copyWith(
+  return _then(Category(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,icon: null == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
 as String,color: null == color ? _self.color : color // ignore: cast_nullable_to_non_nullable
@@ -251,16 +257,18 @@ _$CategoryCopyWith<_Category> get copyWith => __$CategoryCopyWithImpl<_Category>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Category&&(identical(other.id, id) || other.id == id)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.type, type) || other.type == type)&&(identical(other.l10nKey, l10nKey) || other.l10nKey == l10nKey)&&(identical(other.customName, customName) || other.customName == customName)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.isArchived, isArchived) || other.isArchived == isArchived));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Category&&(identical(other.id, id) || other.id == id)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.type, type) || other.type == type)&&(identical(other.l10nKey, l10nKey) || other.l10nKey == l10nKey)&&(identical(other.customName, customName) || other.customName == customName)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.isArchived, isArchived) || other.isArchived == isArchived));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,icon,color,type,l10nKey,customName,sortOrder,isArchived);
+int get hashCode {
+    return Object.hash(runtimeType,id,icon,color,type,l10nKey,customName,sortOrder,isArchived);
+}
 
 @override
 String toString() {
-  return 'Category(id: $id, icon: $icon, color: $color, type: $type, l10nKey: $l10nKey, customName: $customName, sortOrder: $sortOrder, isArchived: $isArchived)';
+    return 'Category(id: $id, icon: $icon, color: $color, type: $type, l10nKey: $l10nKey, customName: $customName, sortOrder: $sortOrder, isArchived: $isArchived)';
 }
 
 

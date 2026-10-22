@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'accounts_state.dart';
@@ -9,6 +9,7 @@ part of 'accounts_state.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -25,16 +26,21 @@ $AccountWithBalanceCopyWith<AccountWithBalance> get copyWith => _$AccountWithBal
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AccountWithBalance&&(identical(other.account, account) || other.account == account)&&const DeepCollectionEquality().equals(other.balancesByCurrency, balancesByCurrency)&&(identical(other.affordance, affordance) || other.affordance == affordance));
+  final _this = this as AccountWithBalance;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AccountWithBalance&&(identical(other.account, _this.account) || other.account == _this.account)&&const DeepCollectionEquality().equals(other.balancesByCurrency, _this.balancesByCurrency)&&(identical(other.affordance, _this.affordance) || other.affordance == _this.affordance));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,account,const DeepCollectionEquality().hash(balancesByCurrency),affordance);
+int get hashCode {
+  final _this = this as AccountWithBalance;
+  return Object.hash(runtimeType,_this.account,const DeepCollectionEquality().hash(_this.balancesByCurrency),_this.affordance);
+}
 
 @override
 String toString() {
-  return 'AccountWithBalance(account: $account, balancesByCurrency: $balancesByCurrency, affordance: $affordance)';
+  final _this = this as AccountWithBalance;
+  return 'AccountWithBalance(account: ${_this.account}, balancesByCurrency: ${_this.balancesByCurrency}, affordance: ${_this.affordance})';
 }
 
 
@@ -63,7 +69,7 @@ class _$AccountWithBalanceCopyWithImpl<$Res>
 /// Create a copy of AccountWithBalance
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? account = null,Object? balancesByCurrency = null,Object? affordance = null,}) {
-  return _then(_self.copyWith(
+  return _then(AccountWithBalance(
 account: null == account ? _self.account : account // ignore: cast_nullable_to_non_nullable
 as Account,balancesByCurrency: null == balancesByCurrency ? _self.balancesByCurrency : balancesByCurrency // ignore: cast_nullable_to_non_nullable
 as Map<String, int>,affordance: null == affordance ? _self.affordance : affordance // ignore: cast_nullable_to_non_nullable
@@ -217,7 +223,7 @@ return $default(_that.account,_that.balancesByCurrency,_that.affordance);case _:
 
 
 class _AccountWithBalance implements AccountWithBalance {
-  const _AccountWithBalance({required this.account, required final  Map<String, int> balancesByCurrency, required this.affordance}): _balancesByCurrency = balancesByCurrency;
+  const _AccountWithBalance({required this.account, required  Map<String, int> balancesByCurrency, required this.affordance}): _balancesByCurrency = balancesByCurrency;
   
 
 @override final  Account account;
@@ -240,16 +246,18 @@ _$AccountWithBalanceCopyWith<_AccountWithBalance> get copyWith => __$AccountWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AccountWithBalance&&(identical(other.account, account) || other.account == account)&&const DeepCollectionEquality().equals(other._balancesByCurrency, _balancesByCurrency)&&(identical(other.affordance, affordance) || other.affordance == affordance));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AccountWithBalance&&(identical(other.account, account) || other.account == account)&&const DeepCollectionEquality().equals(other.balancesByCurrency, _balancesByCurrency)&&(identical(other.affordance, affordance) || other.affordance == affordance));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,account,const DeepCollectionEquality().hash(_balancesByCurrency),affordance);
+int get hashCode {
+    return Object.hash(runtimeType,account,const DeepCollectionEquality().hash(_balancesByCurrency),affordance);
+}
 
 @override
 String toString() {
-  return 'AccountWithBalance(account: $account, balancesByCurrency: $balancesByCurrency, affordance: $affordance)';
+    return 'AccountWithBalance(account: $account, balancesByCurrency: $balancesByCurrency, affordance: $affordance)';
 }
 
 
@@ -307,7 +315,7 @@ mixin _$AccountsState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AccountsState);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is AccountsState);
 }
 
 
@@ -316,7 +324,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'AccountsState()';
+    return 'AccountsState()';
 }
 
 
@@ -478,7 +486,7 @@ class AccountsLoading implements AccountsState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AccountsLoading);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is AccountsLoading);
 }
 
 
@@ -487,7 +495,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'AccountsState.loading()';
+    return 'AccountsState.loading()';
 }
 
 
@@ -500,7 +508,7 @@ String toString() {
 
 
 class AccountsData implements AccountsState {
-  const AccountsData({required final  List<AccountWithBalance> active, required final  List<AccountWithBalance> archived, required this.defaultAccountId}): _active = active,_archived = archived;
+  const AccountsData({required  List<AccountWithBalance> active, required  List<AccountWithBalance> archived, required this.defaultAccountId}): _active = active,_archived = archived;
   
 
  final  List<AccountWithBalance> _active;
@@ -529,16 +537,18 @@ $AccountsDataCopyWith<AccountsData> get copyWith => _$AccountsDataCopyWithImpl<A
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AccountsData&&const DeepCollectionEquality().equals(other._active, _active)&&const DeepCollectionEquality().equals(other._archived, _archived)&&(identical(other.defaultAccountId, defaultAccountId) || other.defaultAccountId == defaultAccountId));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is AccountsData&&const DeepCollectionEquality().equals(other.active, _active)&&const DeepCollectionEquality().equals(other.archived, _archived)&&(identical(other.defaultAccountId, defaultAccountId) || other.defaultAccountId == defaultAccountId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_active),const DeepCollectionEquality().hash(_archived),defaultAccountId);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_active),const DeepCollectionEquality().hash(_archived),defaultAccountId);
+}
 
 @override
 String toString() {
-  return 'AccountsState.data(active: $active, archived: $archived, defaultAccountId: $defaultAccountId)';
+    return 'AccountsState.data(active: $active, archived: $archived, defaultAccountId: $defaultAccountId)';
 }
 
 
@@ -598,16 +608,18 @@ $AccountsErrorCopyWith<AccountsError> get copyWith => _$AccountsErrorCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AccountsError&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.stack, stack) || other.stack == stack));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is AccountsError&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.stack, stack) || other.stack == stack));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(error),stack);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(error),stack);
+}
 
 @override
 String toString() {
-  return 'AccountsState.error(error: $error, stack: $stack)';
+    return 'AccountsState.error(error: $error, stack: $stack)';
 }
 
 

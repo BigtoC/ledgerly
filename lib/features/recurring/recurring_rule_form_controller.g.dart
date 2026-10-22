@@ -117,7 +117,7 @@ abstract class _$RecurringRuleFormController
   FutureOr<RecurringRuleFormState> build({int? ruleId});
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<AsyncValue<RecurringRuleFormState>, RecurringRuleFormState>;
@@ -132,6 +132,6 @@ abstract class _$RecurringRuleFormController
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(ruleId: _$args));
+    return element.handleCreate(ref, () => build(ruleId: _$args));
   }
 }

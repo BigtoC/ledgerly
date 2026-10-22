@@ -86,7 +86,7 @@ abstract class _$TransactionFormController
   TransactionFormState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<TransactionFormState, TransactionFormState>;
     final element =
         ref.element
@@ -96,6 +96,6 @@ abstract class _$TransactionFormController
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

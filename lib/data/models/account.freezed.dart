@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'account.dart';
@@ -9,6 +9,7 @@ part of 'account.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -35,16 +36,21 @@ $AccountCopyWith<Account> get copyWith => _$AccountCopyWithImpl<Account>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Account&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.accountTypeId, accountTypeId) || other.accountTypeId == accountTypeId)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.openingBalanceMinorUnits, openingBalanceMinorUnits) || other.openingBalanceMinorUnits == openingBalanceMinorUnits)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.isArchived, isArchived) || other.isArchived == isArchived));
+  final _this = this as Account;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Account&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.accountTypeId, _this.accountTypeId) || other.accountTypeId == _this.accountTypeId)&&(identical(other.currency, _this.currency) || other.currency == _this.currency)&&(identical(other.openingBalanceMinorUnits, _this.openingBalanceMinorUnits) || other.openingBalanceMinorUnits == _this.openingBalanceMinorUnits)&&(identical(other.icon, _this.icon) || other.icon == _this.icon)&&(identical(other.color, _this.color) || other.color == _this.color)&&(identical(other.sortOrder, _this.sortOrder) || other.sortOrder == _this.sortOrder)&&(identical(other.isArchived, _this.isArchived) || other.isArchived == _this.isArchived));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,accountTypeId,currency,openingBalanceMinorUnits,icon,color,sortOrder,isArchived);
+int get hashCode {
+  final _this = this as Account;
+  return Object.hash(runtimeType,_this.id,_this.name,_this.accountTypeId,_this.currency,_this.openingBalanceMinorUnits,_this.icon,_this.color,_this.sortOrder,_this.isArchived);
+}
 
 @override
 String toString() {
-  return 'Account(id: $id, name: $name, accountTypeId: $accountTypeId, currency: $currency, openingBalanceMinorUnits: $openingBalanceMinorUnits, icon: $icon, color: $color, sortOrder: $sortOrder, isArchived: $isArchived)';
+  final _this = this as Account;
+  return 'Account(id: ${_this.id}, name: ${_this.name}, accountTypeId: ${_this.accountTypeId}, currency: ${_this.currency}, openingBalanceMinorUnits: ${_this.openingBalanceMinorUnits}, icon: ${_this.icon}, color: ${_this.color}, sortOrder: ${_this.sortOrder}, isArchived: ${_this.isArchived})';
 }
 
 
@@ -73,7 +79,7 @@ class _$AccountCopyWithImpl<$Res>
 /// Create a copy of Account
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? accountTypeId = null,Object? currency = null,Object? openingBalanceMinorUnits = null,Object? icon = freezed,Object? color = freezed,Object? sortOrder = freezed,Object? isArchived = null,}) {
-  return _then(_self.copyWith(
+  return _then(Account(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,accountTypeId: null == accountTypeId ? _self.accountTypeId : accountTypeId // ignore: cast_nullable_to_non_nullable
@@ -266,16 +272,18 @@ _$AccountCopyWith<_Account> get copyWith => __$AccountCopyWithImpl<_Account>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Account&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.accountTypeId, accountTypeId) || other.accountTypeId == accountTypeId)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.openingBalanceMinorUnits, openingBalanceMinorUnits) || other.openingBalanceMinorUnits == openingBalanceMinorUnits)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.isArchived, isArchived) || other.isArchived == isArchived));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Account&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.accountTypeId, accountTypeId) || other.accountTypeId == accountTypeId)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.openingBalanceMinorUnits, openingBalanceMinorUnits) || other.openingBalanceMinorUnits == openingBalanceMinorUnits)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.isArchived, isArchived) || other.isArchived == isArchived));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,accountTypeId,currency,openingBalanceMinorUnits,icon,color,sortOrder,isArchived);
+int get hashCode {
+    return Object.hash(runtimeType,id,name,accountTypeId,currency,openingBalanceMinorUnits,icon,color,sortOrder,isArchived);
+}
 
 @override
 String toString() {
-  return 'Account(id: $id, name: $name, accountTypeId: $accountTypeId, currency: $currency, openingBalanceMinorUnits: $openingBalanceMinorUnits, icon: $icon, color: $color, sortOrder: $sortOrder, isArchived: $isArchived)';
+    return 'Account(id: $id, name: $name, accountTypeId: $accountTypeId, currency: $currency, openingBalanceMinorUnits: $openingBalanceMinorUnits, icon: $icon, color: $color, sortOrder: $sortOrder, isArchived: $isArchived)';
 }
 
 

@@ -120,7 +120,7 @@ abstract class _$SplashController extends $StreamNotifier<SplashState> {
   Stream<SplashState> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AsyncValue<SplashState>, SplashState>;
     final element =
         ref.element
@@ -130,6 +130,6 @@ abstract class _$SplashController extends $StreamNotifier<SplashState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

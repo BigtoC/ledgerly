@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'recurring_rule_draft.dart';
@@ -9,6 +9,7 @@ part of 'recurring_rule_draft.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -25,16 +26,21 @@ $RecurringRuleDraftCopyWith<RecurringRuleDraft> get copyWith => _$RecurringRuleD
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringRuleDraft&&(identical(other.name, name) || other.name == name)&&(identical(other.amountMinorUnits, amountMinorUnits) || other.amountMinorUnits == amountMinorUnits)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.frequency, frequency) || other.frequency == frequency)&&(identical(other.dayOfWeek, dayOfWeek) || other.dayOfWeek == dayOfWeek)&&(identical(other.dayOfMonth, dayOfMonth) || other.dayOfMonth == dayOfMonth)&&(identical(other.monthOfYear, monthOfYear) || other.monthOfYear == monthOfYear));
+  final _this = this as RecurringRuleDraft;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringRuleDraft&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.amountMinorUnits, _this.amountMinorUnits) || other.amountMinorUnits == _this.amountMinorUnits)&&(identical(other.currency, _this.currency) || other.currency == _this.currency)&&(identical(other.categoryId, _this.categoryId) || other.categoryId == _this.categoryId)&&(identical(other.accountId, _this.accountId) || other.accountId == _this.accountId)&&(identical(other.memo, _this.memo) || other.memo == _this.memo)&&(identical(other.frequency, _this.frequency) || other.frequency == _this.frequency)&&(identical(other.dayOfWeek, _this.dayOfWeek) || other.dayOfWeek == _this.dayOfWeek)&&(identical(other.dayOfMonth, _this.dayOfMonth) || other.dayOfMonth == _this.dayOfMonth)&&(identical(other.monthOfYear, _this.monthOfYear) || other.monthOfYear == _this.monthOfYear));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,amountMinorUnits,currency,categoryId,accountId,memo,frequency,dayOfWeek,dayOfMonth,monthOfYear);
+int get hashCode {
+  final _this = this as RecurringRuleDraft;
+  return Object.hash(runtimeType,_this.name,_this.amountMinorUnits,_this.currency,_this.categoryId,_this.accountId,_this.memo,_this.frequency,_this.dayOfWeek,_this.dayOfMonth,_this.monthOfYear);
+}
 
 @override
 String toString() {
-  return 'RecurringRuleDraft(name: $name, amountMinorUnits: $amountMinorUnits, currency: $currency, categoryId: $categoryId, accountId: $accountId, memo: $memo, frequency: $frequency, dayOfWeek: $dayOfWeek, dayOfMonth: $dayOfMonth, monthOfYear: $monthOfYear)';
+  final _this = this as RecurringRuleDraft;
+  return 'RecurringRuleDraft(name: ${_this.name}, amountMinorUnits: ${_this.amountMinorUnits}, currency: ${_this.currency}, categoryId: ${_this.categoryId}, accountId: ${_this.accountId}, memo: ${_this.memo}, frequency: ${_this.frequency}, dayOfWeek: ${_this.dayOfWeek}, dayOfMonth: ${_this.dayOfMonth}, monthOfYear: ${_this.monthOfYear})';
 }
 
 
@@ -63,7 +69,7 @@ class _$RecurringRuleDraftCopyWithImpl<$Res>
 /// Create a copy of RecurringRuleDraft
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? amountMinorUnits = null,Object? currency = null,Object? categoryId = null,Object? accountId = null,Object? memo = freezed,Object? frequency = null,Object? dayOfWeek = freezed,Object? dayOfMonth = freezed,Object? monthOfYear = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(RecurringRuleDraft(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,amountMinorUnits: null == amountMinorUnits ? _self.amountMinorUnits : amountMinorUnits // ignore: cast_nullable_to_non_nullable
 as int,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
@@ -248,16 +254,18 @@ _$RecurringRuleDraftCopyWith<_RecurringRuleDraft> get copyWith => __$RecurringRu
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RecurringRuleDraft&&(identical(other.name, name) || other.name == name)&&(identical(other.amountMinorUnits, amountMinorUnits) || other.amountMinorUnits == amountMinorUnits)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.frequency, frequency) || other.frequency == frequency)&&(identical(other.dayOfWeek, dayOfWeek) || other.dayOfWeek == dayOfWeek)&&(identical(other.dayOfMonth, dayOfMonth) || other.dayOfMonth == dayOfMonth)&&(identical(other.monthOfYear, monthOfYear) || other.monthOfYear == monthOfYear));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _RecurringRuleDraft&&(identical(other.name, name) || other.name == name)&&(identical(other.amountMinorUnits, amountMinorUnits) || other.amountMinorUnits == amountMinorUnits)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.frequency, frequency) || other.frequency == frequency)&&(identical(other.dayOfWeek, dayOfWeek) || other.dayOfWeek == dayOfWeek)&&(identical(other.dayOfMonth, dayOfMonth) || other.dayOfMonth == dayOfMonth)&&(identical(other.monthOfYear, monthOfYear) || other.monthOfYear == monthOfYear));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,amountMinorUnits,currency,categoryId,accountId,memo,frequency,dayOfWeek,dayOfMonth,monthOfYear);
+int get hashCode {
+    return Object.hash(runtimeType,name,amountMinorUnits,currency,categoryId,accountId,memo,frequency,dayOfWeek,dayOfMonth,monthOfYear);
+}
 
 @override
 String toString() {
-  return 'RecurringRuleDraft(name: $name, amountMinorUnits: $amountMinorUnits, currency: $currency, categoryId: $categoryId, accountId: $accountId, memo: $memo, frequency: $frequency, dayOfWeek: $dayOfWeek, dayOfMonth: $dayOfMonth, monthOfYear: $monthOfYear)';
+    return 'RecurringRuleDraft(name: $name, amountMinorUnits: $amountMinorUnits, currency: $currency, categoryId: $categoryId, accountId: $accountId, memo: $memo, frequency: $frequency, dayOfWeek: $dayOfWeek, dayOfMonth: $dayOfMonth, monthOfYear: $monthOfYear)';
 }
 
 

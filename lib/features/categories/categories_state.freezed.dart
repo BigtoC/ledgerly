@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'categories_state.dart';
@@ -9,6 +9,7 @@ part of 'categories_state.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -20,7 +21,7 @@ mixin _$CategoriesState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoriesState);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoriesState);
 }
 
 
@@ -29,7 +30,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'CategoriesState()';
+    return 'CategoriesState()';
 }
 
 
@@ -191,7 +192,7 @@ class CategoriesLoading implements CategoriesState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoriesLoading);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoriesLoading);
 }
 
 
@@ -200,7 +201,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'CategoriesState.loading()';
+    return 'CategoriesState.loading()';
 }
 
 
@@ -213,7 +214,7 @@ String toString() {
 
 
 class CategoriesData implements CategoriesState {
-  const CategoriesData({required final  List<CategoryRowView> expense, required final  List<CategoryRowView> income}): _expense = expense,_income = income;
+  const CategoriesData({required  List<CategoryRowView> expense, required  List<CategoryRowView> income}): _expense = expense,_income = income;
   
 
  final  List<CategoryRowView> _expense;
@@ -241,16 +242,18 @@ $CategoriesDataCopyWith<CategoriesData> get copyWith => _$CategoriesDataCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoriesData&&const DeepCollectionEquality().equals(other._expense, _expense)&&const DeepCollectionEquality().equals(other._income, _income));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoriesData&&const DeepCollectionEquality().equals(other.expense, _expense)&&const DeepCollectionEquality().equals(other.income, _income));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_expense),const DeepCollectionEquality().hash(_income));
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_expense),const DeepCollectionEquality().hash(_income));
+}
 
 @override
 String toString() {
-  return 'CategoriesState.data(expense: $expense, income: $income)';
+    return 'CategoriesState.data(expense: $expense, income: $income)';
 }
 
 
@@ -309,16 +312,18 @@ $CategoriesErrorCopyWith<CategoriesError> get copyWith => _$CategoriesErrorCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoriesError&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.stack, stack) || other.stack == stack));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoriesError&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.stack, stack) || other.stack == stack));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(error),stack);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(error),stack);
+}
 
 @override
 String toString() {
-  return 'CategoriesState.error(error: $error, stack: $stack)';
+    return 'CategoriesState.error(error: $error, stack: $stack)';
 }
 
 
@@ -370,16 +375,21 @@ $CategoryRowViewCopyWith<CategoryRowView> get copyWith => _$CategoryRowViewCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoryRowView&&(identical(other.category, category) || other.category == category)&&(identical(other.affordance, affordance) || other.affordance == affordance));
+  final _this = this as CategoryRowView;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoryRowView&&(identical(other.category, _this.category) || other.category == _this.category)&&(identical(other.affordance, _this.affordance) || other.affordance == _this.affordance));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,category,affordance);
+int get hashCode {
+  final _this = this as CategoryRowView;
+  return Object.hash(runtimeType,_this.category,_this.affordance);
+}
 
 @override
 String toString() {
-  return 'CategoryRowView(category: $category, affordance: $affordance)';
+  final _this = this as CategoryRowView;
+  return 'CategoryRowView(category: ${_this.category}, affordance: ${_this.affordance})';
 }
 
 
@@ -408,7 +418,7 @@ class _$CategoryRowViewCopyWithImpl<$Res>
 /// Create a copy of CategoryRowView
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? category = null,Object? affordance = null,}) {
-  return _then(_self.copyWith(
+  return _then(CategoryRowView(
 category: null == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
 as Category,affordance: null == affordance ? _self.affordance : affordance // ignore: cast_nullable_to_non_nullable
 as CategoryRowAffordance,
@@ -577,16 +587,18 @@ _$CategoryRowViewCopyWith<_CategoryRowView> get copyWith => __$CategoryRowViewCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CategoryRowView&&(identical(other.category, category) || other.category == category)&&(identical(other.affordance, affordance) || other.affordance == affordance));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _CategoryRowView&&(identical(other.category, category) || other.category == category)&&(identical(other.affordance, affordance) || other.affordance == affordance));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,category,affordance);
+int get hashCode {
+    return Object.hash(runtimeType,category,affordance);
+}
 
 @override
 String toString() {
-  return 'CategoryRowView(category: $category, affordance: $affordance)';
+    return 'CategoryRowView(category: $category, affordance: $affordance)';
 }
 
 

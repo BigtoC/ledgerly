@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'pending_state.dart';
@@ -9,6 +9,7 @@ part of 'pending_state.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -20,7 +21,7 @@ mixin _$PendingState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PendingState);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is PendingState);
 }
 
 
@@ -29,7 +30,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'PendingState()';
+    return 'PendingState()';
 }
 
 
@@ -197,7 +198,7 @@ class PendingLoading implements PendingState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PendingLoading);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is PendingLoading);
 }
 
 
@@ -206,7 +207,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'PendingState.loading()';
+    return 'PendingState.loading()';
 }
 
 
@@ -229,7 +230,7 @@ class PendingEmpty implements PendingState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PendingEmpty);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is PendingEmpty);
 }
 
 
@@ -238,7 +239,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'PendingState.empty()';
+    return 'PendingState.empty()';
 }
 
 
@@ -251,7 +252,7 @@ String toString() {
 
 
 class PendingData implements PendingState {
-  const PendingData({required final  List<PendingTransaction> items, required this.skipScheduled}): _items = items;
+  const PendingData({required  List<PendingTransaction> items, required this.skipScheduled}): _items = items;
   
 
  final  List<PendingTransaction> _items;
@@ -273,16 +274,18 @@ $PendingDataCopyWith<PendingData> get copyWith => _$PendingDataCopyWithImpl<Pend
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PendingData&&const DeepCollectionEquality().equals(other._items, _items)&&(identical(other.skipScheduled, skipScheduled) || other.skipScheduled == skipScheduled));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is PendingData&&const DeepCollectionEquality().equals(other.items, _items)&&(identical(other.skipScheduled, skipScheduled) || other.skipScheduled == skipScheduled));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_items),skipScheduled);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_items),skipScheduled);
+}
 
 @override
 String toString() {
-  return 'PendingState.data(items: $items, skipScheduled: $skipScheduled)';
+    return 'PendingState.data(items: $items, skipScheduled: $skipScheduled)';
 }
 
 
@@ -341,16 +344,18 @@ $PendingErrorCopyWith<PendingError> get copyWith => _$PendingErrorCopyWithImpl<P
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PendingError&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.stack, stack) || other.stack == stack));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is PendingError&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.stack, stack) || other.stack == stack));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(error),stack);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(error),stack);
+}
 
 @override
 String toString() {
-  return 'PendingState.error(error: $error, stack: $stack)';
+    return 'PendingState.error(error: $error, stack: $stack)';
 }
 
 

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'currency.dart';
@@ -9,6 +9,7 @@ part of 'currency.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -38,16 +39,21 @@ $CurrencyCopyWith<Currency> get copyWith => _$CurrencyCopyWithImpl<Currency>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Currency&&(identical(other.code, code) || other.code == code)&&(identical(other.decimals, decimals) || other.decimals == decimals)&&(identical(other.symbol, symbol) || other.symbol == symbol)&&(identical(other.nameL10nKey, nameL10nKey) || other.nameL10nKey == nameL10nKey)&&(identical(other.customName, customName) || other.customName == customName)&&(identical(other.isToken, isToken) || other.isToken == isToken)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder));
+  final _this = this as Currency;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Currency&&(identical(other.code, _this.code) || other.code == _this.code)&&(identical(other.decimals, _this.decimals) || other.decimals == _this.decimals)&&(identical(other.symbol, _this.symbol) || other.symbol == _this.symbol)&&(identical(other.nameL10nKey, _this.nameL10nKey) || other.nameL10nKey == _this.nameL10nKey)&&(identical(other.customName, _this.customName) || other.customName == _this.customName)&&(identical(other.isToken, _this.isToken) || other.isToken == _this.isToken)&&(identical(other.sortOrder, _this.sortOrder) || other.sortOrder == _this.sortOrder));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,code,decimals,symbol,nameL10nKey,customName,isToken,sortOrder);
+int get hashCode {
+  final _this = this as Currency;
+  return Object.hash(runtimeType,_this.code,_this.decimals,_this.symbol,_this.nameL10nKey,_this.customName,_this.isToken,_this.sortOrder);
+}
 
 @override
 String toString() {
-  return 'Currency(code: $code, decimals: $decimals, symbol: $symbol, nameL10nKey: $nameL10nKey, customName: $customName, isToken: $isToken, sortOrder: $sortOrder)';
+  final _this = this as Currency;
+  return 'Currency(code: ${_this.code}, decimals: ${_this.decimals}, symbol: ${_this.symbol}, nameL10nKey: ${_this.nameL10nKey}, customName: ${_this.customName}, isToken: ${_this.isToken}, sortOrder: ${_this.sortOrder})';
 }
 
 
@@ -76,7 +82,7 @@ class _$CurrencyCopyWithImpl<$Res>
 /// Create a copy of Currency
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? code = null,Object? decimals = null,Object? symbol = freezed,Object? nameL10nKey = freezed,Object? customName = freezed,Object? isToken = null,Object? sortOrder = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(Currency(
 code: null == code ? _self.code : code // ignore: cast_nullable_to_non_nullable
 as String,decimals: null == decimals ? _self.decimals : decimals // ignore: cast_nullable_to_non_nullable
 as int,symbol: freezed == symbol ? _self.symbol : symbol // ignore: cast_nullable_to_non_nullable
@@ -259,16 +265,18 @@ _$CurrencyCopyWith<_Currency> get copyWith => __$CurrencyCopyWithImpl<_Currency>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Currency&&(identical(other.code, code) || other.code == code)&&(identical(other.decimals, decimals) || other.decimals == decimals)&&(identical(other.symbol, symbol) || other.symbol == symbol)&&(identical(other.nameL10nKey, nameL10nKey) || other.nameL10nKey == nameL10nKey)&&(identical(other.customName, customName) || other.customName == customName)&&(identical(other.isToken, isToken) || other.isToken == isToken)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Currency&&(identical(other.code, code) || other.code == code)&&(identical(other.decimals, decimals) || other.decimals == decimals)&&(identical(other.symbol, symbol) || other.symbol == symbol)&&(identical(other.nameL10nKey, nameL10nKey) || other.nameL10nKey == nameL10nKey)&&(identical(other.customName, customName) || other.customName == customName)&&(identical(other.isToken, isToken) || other.isToken == isToken)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,code,decimals,symbol,nameL10nKey,customName,isToken,sortOrder);
+int get hashCode {
+    return Object.hash(runtimeType,code,decimals,symbol,nameL10nKey,customName,isToken,sortOrder);
+}
 
 @override
 String toString() {
-  return 'Currency(code: $code, decimals: $decimals, symbol: $symbol, nameL10nKey: $nameL10nKey, customName: $customName, isToken: $isToken, sortOrder: $sortOrder)';
+    return 'Currency(code: $code, decimals: $decimals, symbol: $symbol, nameL10nKey: $nameL10nKey, customName: $customName, isToken: $isToken, sortOrder: $sortOrder)';
 }
 
 

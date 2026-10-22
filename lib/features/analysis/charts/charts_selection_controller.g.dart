@@ -48,7 +48,7 @@ abstract class _$ChartsSelectionController extends $Notifier<ChartsSelection> {
   ChartsSelection build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ChartsSelection, ChartsSelection>;
     final element =
         ref.element
@@ -58,6 +58,6 @@ abstract class _$ChartsSelectionController extends $Notifier<ChartsSelection> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

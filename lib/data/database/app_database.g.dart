@@ -6063,10 +6063,7 @@ final class $$CurrenciesTableReferences
   static MultiTypedResultKey<$AccountTypesTable, List<AccountTypeRow>>
   _accountTypesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.accountTypes,
-    aliasName: $_aliasNameGenerator(
-      db.currencies.code,
-      db.accountTypes.defaultCurrency,
-    ),
+    aliasName: 'currencies__code__account_types__default_currency',
   );
 
   $$AccountTypesTableProcessedTableManager get accountTypesRefs {
@@ -6085,7 +6082,7 @@ final class $$CurrenciesTableReferences
   static MultiTypedResultKey<$AccountsTable, List<AccountRow>>
   _accountsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.accounts,
-    aliasName: $_aliasNameGenerator(db.currencies.code, db.accounts.currency),
+    aliasName: 'currencies__code__accounts__currency',
   );
 
   $$AccountsTableProcessedTableManager get accountsRefs {
@@ -6103,10 +6100,7 @@ final class $$CurrenciesTableReferences
   static MultiTypedResultKey<$TransactionsTable, List<TransactionRow>>
   _transactionsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.transactions,
-    aliasName: $_aliasNameGenerator(
-      db.currencies.code,
-      db.transactions.currency,
-    ),
+    aliasName: 'currencies__code__transactions__currency',
   );
 
   $$TransactionsTableProcessedTableManager get transactionsRefs {
@@ -6125,10 +6119,7 @@ final class $$CurrenciesTableReferences
   _shoppingListItemsRefsTable(_$AppDatabase db) =>
       MultiTypedResultKey.fromTable(
         db.shoppingListItems,
-        aliasName: $_aliasNameGenerator(
-          db.currencies.code,
-          db.shoppingListItems.draftCurrencyCode,
-        ),
+        aliasName: 'currencies__code__shopping_list_items__draft_currency_code',
       );
 
   $$ShoppingListItemsTableProcessedTableManager get shoppingListItemsRefs {
@@ -6152,10 +6143,7 @@ final class $$CurrenciesTableReferences
   static MultiTypedResultKey<$RecurringRulesTable, List<RecurringRuleRow>>
   _recurringRulesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.recurringRules,
-    aliasName: $_aliasNameGenerator(
-      db.currencies.code,
-      db.recurringRules.currency,
-    ),
+    aliasName: 'currencies__code__recurring_rules__currency',
   );
 
   $$RecurringRulesTableProcessedTableManager get recurringRulesRefs {
@@ -6177,10 +6165,7 @@ final class $$CurrenciesTableReferences
   _pendingTransactionsRefsTable(_$AppDatabase db) =>
       MultiTypedResultKey.fromTable(
         db.pendingTransactions,
-        aliasName: $_aliasNameGenerator(
-          db.currencies.code,
-          db.pendingTransactions.currency,
-        ),
+        aliasName: 'currencies__code__pending_transactions__currency',
       );
 
   $$PendingTransactionsTableProcessedTableManager get pendingTransactionsRefs {
@@ -6701,7 +6686,7 @@ class $$CurrenciesTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$CurrenciesTable, Currency>(table),
                   $$CurrenciesTableReferences(db, table, e),
                 ),
               )
@@ -6913,10 +6898,7 @@ final class $$CategoriesTableReferences
   static MultiTypedResultKey<$TransactionsTable, List<TransactionRow>>
   _transactionsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.transactions,
-    aliasName: $_aliasNameGenerator(
-      db.categories.id,
-      db.transactions.categoryId,
-    ),
+    aliasName: 'categories__id__transactions__category_id',
   );
 
   $$TransactionsTableProcessedTableManager get transactionsRefs {
@@ -6935,10 +6917,7 @@ final class $$CategoriesTableReferences
   _shoppingListItemsRefsTable(_$AppDatabase db) =>
       MultiTypedResultKey.fromTable(
         db.shoppingListItems,
-        aliasName: $_aliasNameGenerator(
-          db.categories.id,
-          db.shoppingListItems.categoryId,
-        ),
+        aliasName: 'categories__id__shopping_list_items__category_id',
       );
 
   $$ShoppingListItemsTableProcessedTableManager get shoppingListItemsRefs {
@@ -6958,10 +6937,7 @@ final class $$CategoriesTableReferences
   static MultiTypedResultKey<$RecurringRulesTable, List<RecurringRuleRow>>
   _recurringRulesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.recurringRules,
-    aliasName: $_aliasNameGenerator(
-      db.categories.id,
-      db.recurringRules.categoryId,
-    ),
+    aliasName: 'categories__id__recurring_rules__category_id',
   );
 
   $$RecurringRulesTableProcessedTableManager get recurringRulesRefs {
@@ -6983,10 +6959,7 @@ final class $$CategoriesTableReferences
   _pendingTransactionsRefsTable(_$AppDatabase db) =>
       MultiTypedResultKey.fromTable(
         db.pendingTransactions,
-        aliasName: $_aliasNameGenerator(
-          db.categories.id,
-          db.pendingTransactions.categoryId,
-        ),
+        aliasName: 'categories__id__pending_transactions__category_id',
       );
 
   $$PendingTransactionsTableProcessedTableManager get pendingTransactionsRefs {
@@ -7418,7 +7391,7 @@ class $$CategoriesTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$CategoriesTable, CategoryRow>(table),
                   $$CategoriesTableReferences(db, table, e),
                 ),
               )
@@ -7579,13 +7552,9 @@ final class $$AccountTypesTableReferences
     extends BaseReferences<_$AppDatabase, $AccountTypesTable, AccountTypeRow> {
   $$AccountTypesTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static $CurrenciesTable _defaultCurrencyTable(_$AppDatabase db) =>
-      db.currencies.createAlias(
-        $_aliasNameGenerator(
-          db.accountTypes.defaultCurrency,
-          db.currencies.code,
-        ),
-      );
+  static $CurrenciesTable _defaultCurrencyTable(_$AppDatabase db) => db
+      .currencies
+      .createAlias('account_types__default_currency__currencies__code');
 
   $$CurrenciesTableProcessedTableManager? get defaultCurrency {
     final $_column = $_itemColumn<String>('default_currency');
@@ -7604,10 +7573,7 @@ final class $$AccountTypesTableReferences
   static MultiTypedResultKey<$AccountsTable, List<AccountRow>>
   _accountsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.accounts,
-    aliasName: $_aliasNameGenerator(
-      db.accountTypes.id,
-      db.accounts.accountTypeId,
-    ),
+    aliasName: 'account_types__id__accounts__account_type_id',
   );
 
   $$AccountsTableProcessedTableManager get accountsRefs {
@@ -7936,7 +7902,7 @@ class $$AccountTypesTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$AccountTypesTable, AccountTypeRow>(table),
                   $$AccountTypesTableReferences(db, table, e),
                 ),
               )
@@ -8054,10 +8020,9 @@ final class $$AccountsTableReferences
     extends BaseReferences<_$AppDatabase, $AccountsTable, AccountRow> {
   $$AccountsTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static $AccountTypesTable _accountTypeIdTable(_$AppDatabase db) =>
-      db.accountTypes.createAlias(
-        $_aliasNameGenerator(db.accounts.accountTypeId, db.accountTypes.id),
-      );
+  static $AccountTypesTable _accountTypeIdTable(_$AppDatabase db) => db
+      .accountTypes
+      .createAlias('accounts__account_type_id__account_types__id');
 
   $$AccountTypesTableProcessedTableManager get accountTypeId {
     final $_column = $_itemColumn<int>('account_type_id')!;
@@ -8074,9 +8039,7 @@ final class $$AccountsTableReferences
   }
 
   static $CurrenciesTable _currencyTable(_$AppDatabase db) =>
-      db.currencies.createAlias(
-        $_aliasNameGenerator(db.accounts.currency, db.currencies.code),
-      );
+      db.currencies.createAlias('accounts__currency__currencies__code');
 
   $$CurrenciesTableProcessedTableManager get currency {
     final $_column = $_itemColumn<String>('currency')!;
@@ -8095,7 +8058,7 @@ final class $$AccountsTableReferences
   static MultiTypedResultKey<$TransactionsTable, List<TransactionRow>>
   _transactionsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.transactions,
-    aliasName: $_aliasNameGenerator(db.accounts.id, db.transactions.accountId),
+    aliasName: 'accounts__id__transactions__account_id',
   );
 
   $$TransactionsTableProcessedTableManager get transactionsRefs {
@@ -8114,10 +8077,7 @@ final class $$AccountsTableReferences
   _shoppingListItemsRefsTable(_$AppDatabase db) =>
       MultiTypedResultKey.fromTable(
         db.shoppingListItems,
-        aliasName: $_aliasNameGenerator(
-          db.accounts.id,
-          db.shoppingListItems.accountId,
-        ),
+        aliasName: 'accounts__id__shopping_list_items__account_id',
       );
 
   $$ShoppingListItemsTableProcessedTableManager get shoppingListItemsRefs {
@@ -8137,10 +8097,7 @@ final class $$AccountsTableReferences
   static MultiTypedResultKey<$RecurringRulesTable, List<RecurringRuleRow>>
   _recurringRulesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.recurringRules,
-    aliasName: $_aliasNameGenerator(
-      db.accounts.id,
-      db.recurringRules.accountId,
-    ),
+    aliasName: 'accounts__id__recurring_rules__account_id',
   );
 
   $$RecurringRulesTableProcessedTableManager get recurringRulesRefs {
@@ -8162,10 +8119,7 @@ final class $$AccountsTableReferences
   _pendingTransactionsRefsTable(_$AppDatabase db) =>
       MultiTypedResultKey.fromTable(
         db.pendingTransactions,
-        aliasName: $_aliasNameGenerator(
-          db.accounts.id,
-          db.pendingTransactions.accountId,
-        ),
+        aliasName: 'accounts__id__pending_transactions__account_id',
       );
 
   $$PendingTransactionsTableProcessedTableManager get pendingTransactionsRefs {
@@ -8728,7 +8682,7 @@ class $$AccountsTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$AccountsTable, AccountRow>(table),
                   $$AccountsTableReferences(db, table, e),
                 ),
               )
@@ -8940,9 +8894,7 @@ final class $$TransactionsTableReferences
   $$TransactionsTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
   static $CurrenciesTable _currencyTable(_$AppDatabase db) =>
-      db.currencies.createAlias(
-        $_aliasNameGenerator(db.transactions.currency, db.currencies.code),
-      );
+      db.currencies.createAlias('transactions__currency__currencies__code');
 
   $$CurrenciesTableProcessedTableManager get currency {
     final $_column = $_itemColumn<String>('currency')!;
@@ -8959,9 +8911,7 @@ final class $$TransactionsTableReferences
   }
 
   static $CategoriesTable _categoryIdTable(_$AppDatabase db) =>
-      db.categories.createAlias(
-        $_aliasNameGenerator(db.transactions.categoryId, db.categories.id),
-      );
+      db.categories.createAlias('transactions__category_id__categories__id');
 
   $$CategoriesTableProcessedTableManager get categoryId {
     final $_column = $_itemColumn<int>('category_id')!;
@@ -8978,9 +8928,7 @@ final class $$TransactionsTableReferences
   }
 
   static $AccountsTable _accountIdTable(_$AppDatabase db) =>
-      db.accounts.createAlias(
-        $_aliasNameGenerator(db.transactions.accountId, db.accounts.id),
-      );
+      db.accounts.createAlias('transactions__account_id__accounts__id');
 
   $$AccountsTableProcessedTableManager get accountId {
     final $_column = $_itemColumn<int>('account_id')!;
@@ -9391,7 +9339,7 @@ class $$TransactionsTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$TransactionsTable, TransactionRow>(table),
                   $$TransactionsTableReferences(db, table, e),
                 ),
               )
@@ -9613,7 +9561,16 @@ class $$UserPreferencesTableTableManager
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$UserPreferencesTable, UserPreferenceRow>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $UserPreferencesTable,
+                    UserPreferenceRow
+                  >(db, table, e),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),
@@ -9675,10 +9632,8 @@ final class $$ShoppingListItemsTableReferences
     super.$_typedResult,
   );
 
-  static $CategoriesTable _categoryIdTable(_$AppDatabase db) =>
-      db.categories.createAlias(
-        $_aliasNameGenerator(db.shoppingListItems.categoryId, db.categories.id),
-      );
+  static $CategoriesTable _categoryIdTable(_$AppDatabase db) => db.categories
+      .createAlias('shopping_list_items__category_id__categories__id');
 
   $$CategoriesTableProcessedTableManager get categoryId {
     final $_column = $_itemColumn<int>('category_id')!;
@@ -9695,9 +9650,7 @@ final class $$ShoppingListItemsTableReferences
   }
 
   static $AccountsTable _accountIdTable(_$AppDatabase db) =>
-      db.accounts.createAlias(
-        $_aliasNameGenerator(db.shoppingListItems.accountId, db.accounts.id),
-      );
+      db.accounts.createAlias('shopping_list_items__account_id__accounts__id');
 
   $$AccountsTableProcessedTableManager get accountId {
     final $_column = $_itemColumn<int>('account_id')!;
@@ -9715,10 +9668,7 @@ final class $$ShoppingListItemsTableReferences
 
   static $CurrenciesTable _draftCurrencyCodeTable(_$AppDatabase db) =>
       db.currencies.createAlias(
-        $_aliasNameGenerator(
-          db.shoppingListItems.draftCurrencyCode,
-          db.currencies.code,
-        ),
+        'shopping_list_items__draft_currency_code__currencies__code',
       );
 
   $$CurrenciesTableProcessedTableManager? get draftCurrencyCode {
@@ -10135,7 +10085,9 @@ class $$ShoppingListItemsTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$ShoppingListItemsTable, ShoppingListItemRow>(
+                    table,
+                  ),
                   $$ShoppingListItemsTableReferences(db, table, e),
                 ),
               )
@@ -10293,9 +10245,7 @@ final class $$RecurringRulesTableReferences
   );
 
   static $CurrenciesTable _currencyTable(_$AppDatabase db) =>
-      db.currencies.createAlias(
-        $_aliasNameGenerator(db.recurringRules.currency, db.currencies.code),
-      );
+      db.currencies.createAlias('recurring_rules__currency__currencies__code');
 
   $$CurrenciesTableProcessedTableManager get currency {
     final $_column = $_itemColumn<String>('currency')!;
@@ -10312,9 +10262,7 @@ final class $$RecurringRulesTableReferences
   }
 
   static $CategoriesTable _categoryIdTable(_$AppDatabase db) =>
-      db.categories.createAlias(
-        $_aliasNameGenerator(db.recurringRules.categoryId, db.categories.id),
-      );
+      db.categories.createAlias('recurring_rules__category_id__categories__id');
 
   $$CategoriesTableProcessedTableManager get categoryId {
     final $_column = $_itemColumn<int>('category_id')!;
@@ -10331,9 +10279,7 @@ final class $$RecurringRulesTableReferences
   }
 
   static $AccountsTable _accountIdTable(_$AppDatabase db) =>
-      db.accounts.createAlias(
-        $_aliasNameGenerator(db.recurringRules.accountId, db.accounts.id),
-      );
+      db.accounts.createAlias('recurring_rules__account_id__accounts__id');
 
   $$AccountsTableProcessedTableManager get accountId {
     final $_column = $_itemColumn<int>('account_id')!;
@@ -10356,10 +10302,8 @@ final class $$RecurringRulesTableReferences
   _pendingTransactionsRefsTable(_$AppDatabase db) =>
       MultiTypedResultKey.fromTable(
         db.pendingTransactions,
-        aliasName: $_aliasNameGenerator(
-          db.recurringRules.id,
-          db.pendingTransactions.recurringRuleId,
-        ),
+        aliasName:
+            'recurring_rules__id__pending_transactions__recurring_rule_id',
       );
 
   $$PendingTransactionsTableProcessedTableManager get pendingTransactionsRefs {
@@ -10988,7 +10932,7 @@ class $$RecurringRulesTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$RecurringRulesTable, RecurringRuleRow>(table),
                   $$RecurringRulesTableReferences(db, table, e),
                 ),
               )
@@ -11175,13 +11119,8 @@ final class $$PendingTransactionsTableReferences
     super.$_typedResult,
   );
 
-  static $CurrenciesTable _currencyTable(_$AppDatabase db) =>
-      db.currencies.createAlias(
-        $_aliasNameGenerator(
-          db.pendingTransactions.currency,
-          db.currencies.code,
-        ),
-      );
+  static $CurrenciesTable _currencyTable(_$AppDatabase db) => db.currencies
+      .createAlias('pending_transactions__currency__currencies__code');
 
   $$CurrenciesTableProcessedTableManager get currency {
     final $_column = $_itemColumn<String>('currency')!;
@@ -11197,13 +11136,8 @@ final class $$PendingTransactionsTableReferences
     );
   }
 
-  static $CategoriesTable _categoryIdTable(_$AppDatabase db) =>
-      db.categories.createAlias(
-        $_aliasNameGenerator(
-          db.pendingTransactions.categoryId,
-          db.categories.id,
-        ),
-      );
+  static $CategoriesTable _categoryIdTable(_$AppDatabase db) => db.categories
+      .createAlias('pending_transactions__category_id__categories__id');
 
   $$CategoriesTableProcessedTableManager? get categoryId {
     final $_column = $_itemColumn<int>('category_id');
@@ -11220,9 +11154,7 @@ final class $$PendingTransactionsTableReferences
   }
 
   static $AccountsTable _accountIdTable(_$AppDatabase db) =>
-      db.accounts.createAlias(
-        $_aliasNameGenerator(db.pendingTransactions.accountId, db.accounts.id),
-      );
+      db.accounts.createAlias('pending_transactions__account_id__accounts__id');
 
   $$AccountsTableProcessedTableManager get accountId {
     final $_column = $_itemColumn<int>('account_id')!;
@@ -11240,10 +11172,7 @@ final class $$PendingTransactionsTableReferences
 
   static $RecurringRulesTable _recurringRuleIdTable(_$AppDatabase db) =>
       db.recurringRules.createAlias(
-        $_aliasNameGenerator(
-          db.pendingTransactions.recurringRuleId,
-          db.recurringRules.id,
-        ),
+        'pending_transactions__recurring_rule_id__recurring_rules__id',
       );
 
   $$RecurringRulesTableProcessedTableManager? get recurringRuleId {
@@ -11883,7 +11812,9 @@ class $$PendingTransactionsTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$PendingTransactionsTable, PendingTransactionRow>(
+                    table,
+                  ),
                   $$PendingTransactionsTableReferences(db, table, e),
                 ),
               )
@@ -12031,10 +11962,8 @@ final class $$ExchangeRatesTableReferences
     super.$_typedResult,
   );
 
-  static $CurrenciesTable _baseCurrencyTable(_$AppDatabase db) =>
-      db.currencies.createAlias(
-        $_aliasNameGenerator(db.exchangeRates.baseCurrency, db.currencies.code),
-      );
+  static $CurrenciesTable _baseCurrencyTable(_$AppDatabase db) => db.currencies
+      .createAlias('exchange_rates__base_currency__currencies__code');
 
   $$CurrenciesTableProcessedTableManager get baseCurrency {
     final $_column = $_itemColumn<String>('base_currency')!;
@@ -12050,13 +11979,8 @@ final class $$ExchangeRatesTableReferences
     );
   }
 
-  static $CurrenciesTable _quoteCurrencyTable(_$AppDatabase db) =>
-      db.currencies.createAlias(
-        $_aliasNameGenerator(
-          db.exchangeRates.quoteCurrency,
-          db.currencies.code,
-        ),
-      );
+  static $CurrenciesTable _quoteCurrencyTable(_$AppDatabase db) => db.currencies
+      .createAlias('exchange_rates__quote_currency__currencies__code');
 
   $$CurrenciesTableProcessedTableManager get quoteCurrency {
     final $_column = $_itemColumn<String>('quote_currency')!;
@@ -12339,7 +12263,7 @@ class $$ExchangeRatesTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$ExchangeRatesTable, ExchangeRateRow>(table),
                   $$ExchangeRatesTableReferences(db, table, e),
                 ),
               )

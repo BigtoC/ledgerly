@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'shopping_list_item.dart';
@@ -9,6 +9,7 @@ part of 'shopping_list_item.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -30,16 +31,21 @@ $ShoppingListItemCopyWith<ShoppingListItem> get copyWith => _$ShoppingListItemCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ShoppingListItem&&(identical(other.id, id) || other.id == id)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.draftAmountMinorUnits, draftAmountMinorUnits) || other.draftAmountMinorUnits == draftAmountMinorUnits)&&(identical(other.draftCurrencyCode, draftCurrencyCode) || other.draftCurrencyCode == draftCurrencyCode)&&(identical(other.draftDate, draftDate) || other.draftDate == draftDate)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  final _this = this as ShoppingListItem;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ShoppingListItem&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.categoryId, _this.categoryId) || other.categoryId == _this.categoryId)&&(identical(other.accountId, _this.accountId) || other.accountId == _this.accountId)&&(identical(other.memo, _this.memo) || other.memo == _this.memo)&&(identical(other.draftAmountMinorUnits, _this.draftAmountMinorUnits) || other.draftAmountMinorUnits == _this.draftAmountMinorUnits)&&(identical(other.draftCurrencyCode, _this.draftCurrencyCode) || other.draftCurrencyCode == _this.draftCurrencyCode)&&(identical(other.draftDate, _this.draftDate) || other.draftDate == _this.draftDate)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.updatedAt, _this.updatedAt) || other.updatedAt == _this.updatedAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,categoryId,accountId,memo,draftAmountMinorUnits,draftCurrencyCode,draftDate,createdAt,updatedAt);
+int get hashCode {
+  final _this = this as ShoppingListItem;
+  return Object.hash(runtimeType,_this.id,_this.categoryId,_this.accountId,_this.memo,_this.draftAmountMinorUnits,_this.draftCurrencyCode,_this.draftDate,_this.createdAt,_this.updatedAt);
+}
 
 @override
 String toString() {
-  return 'ShoppingListItem(id: $id, categoryId: $categoryId, accountId: $accountId, memo: $memo, draftAmountMinorUnits: $draftAmountMinorUnits, draftCurrencyCode: $draftCurrencyCode, draftDate: $draftDate, createdAt: $createdAt, updatedAt: $updatedAt)';
+  final _this = this as ShoppingListItem;
+  return 'ShoppingListItem(id: ${_this.id}, categoryId: ${_this.categoryId}, accountId: ${_this.accountId}, memo: ${_this.memo}, draftAmountMinorUnits: ${_this.draftAmountMinorUnits}, draftCurrencyCode: ${_this.draftCurrencyCode}, draftDate: ${_this.draftDate}, createdAt: ${_this.createdAt}, updatedAt: ${_this.updatedAt})';
 }
 
 
@@ -68,7 +74,7 @@ class _$ShoppingListItemCopyWithImpl<$Res>
 /// Create a copy of ShoppingListItem
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? categoryId = null,Object? accountId = null,Object? memo = freezed,Object? draftAmountMinorUnits = freezed,Object? draftCurrencyCode = freezed,Object? draftDate = null,Object? createdAt = null,Object? updatedAt = null,}) {
-  return _then(_self.copyWith(
+  return _then(ShoppingListItem(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,categoryId: null == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as int,accountId: null == accountId ? _self.accountId : accountId // ignore: cast_nullable_to_non_nullable
@@ -247,16 +253,18 @@ _$ShoppingListItemCopyWith<_ShoppingListItem> get copyWith => __$ShoppingListIte
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ShoppingListItem&&(identical(other.id, id) || other.id == id)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.draftAmountMinorUnits, draftAmountMinorUnits) || other.draftAmountMinorUnits == draftAmountMinorUnits)&&(identical(other.draftCurrencyCode, draftCurrencyCode) || other.draftCurrencyCode == draftCurrencyCode)&&(identical(other.draftDate, draftDate) || other.draftDate == draftDate)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ShoppingListItem&&(identical(other.id, id) || other.id == id)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.draftAmountMinorUnits, draftAmountMinorUnits) || other.draftAmountMinorUnits == draftAmountMinorUnits)&&(identical(other.draftCurrencyCode, draftCurrencyCode) || other.draftCurrencyCode == draftCurrencyCode)&&(identical(other.draftDate, draftDate) || other.draftDate == draftDate)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,categoryId,accountId,memo,draftAmountMinorUnits,draftCurrencyCode,draftDate,createdAt,updatedAt);
+int get hashCode {
+    return Object.hash(runtimeType,id,categoryId,accountId,memo,draftAmountMinorUnits,draftCurrencyCode,draftDate,createdAt,updatedAt);
+}
 
 @override
 String toString() {
-  return 'ShoppingListItem(id: $id, categoryId: $categoryId, accountId: $accountId, memo: $memo, draftAmountMinorUnits: $draftAmountMinorUnits, draftCurrencyCode: $draftCurrencyCode, draftDate: $draftDate, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'ShoppingListItem(id: $id, categoryId: $categoryId, accountId: $accountId, memo: $memo, draftAmountMinorUnits: $draftAmountMinorUnits, draftCurrencyCode: $draftCurrencyCode, draftDate: $draftDate, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 

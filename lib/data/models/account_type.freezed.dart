@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'account_type.dart';
@@ -9,6 +9,7 @@ part of 'account_type.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -34,16 +35,21 @@ $AccountTypeCopyWith<AccountType> get copyWith => _$AccountTypeCopyWithImpl<Acco
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AccountType&&(identical(other.id, id) || other.id == id)&&(identical(other.l10nKey, l10nKey) || other.l10nKey == l10nKey)&&(identical(other.customName, customName) || other.customName == customName)&&(identical(other.defaultCurrency, defaultCurrency) || other.defaultCurrency == defaultCurrency)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.isArchived, isArchived) || other.isArchived == isArchived));
+  final _this = this as AccountType;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AccountType&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.l10nKey, _this.l10nKey) || other.l10nKey == _this.l10nKey)&&(identical(other.customName, _this.customName) || other.customName == _this.customName)&&(identical(other.defaultCurrency, _this.defaultCurrency) || other.defaultCurrency == _this.defaultCurrency)&&(identical(other.icon, _this.icon) || other.icon == _this.icon)&&(identical(other.color, _this.color) || other.color == _this.color)&&(identical(other.sortOrder, _this.sortOrder) || other.sortOrder == _this.sortOrder)&&(identical(other.isArchived, _this.isArchived) || other.isArchived == _this.isArchived));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,l10nKey,customName,defaultCurrency,icon,color,sortOrder,isArchived);
+int get hashCode {
+  final _this = this as AccountType;
+  return Object.hash(runtimeType,_this.id,_this.l10nKey,_this.customName,_this.defaultCurrency,_this.icon,_this.color,_this.sortOrder,_this.isArchived);
+}
 
 @override
 String toString() {
-  return 'AccountType(id: $id, l10nKey: $l10nKey, customName: $customName, defaultCurrency: $defaultCurrency, icon: $icon, color: $color, sortOrder: $sortOrder, isArchived: $isArchived)';
+  final _this = this as AccountType;
+  return 'AccountType(id: ${_this.id}, l10nKey: ${_this.l10nKey}, customName: ${_this.customName}, defaultCurrency: ${_this.defaultCurrency}, icon: ${_this.icon}, color: ${_this.color}, sortOrder: ${_this.sortOrder}, isArchived: ${_this.isArchived})';
 }
 
 
@@ -72,7 +78,7 @@ class _$AccountTypeCopyWithImpl<$Res>
 /// Create a copy of AccountType
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? l10nKey = freezed,Object? customName = freezed,Object? defaultCurrency = freezed,Object? icon = null,Object? color = null,Object? sortOrder = null,Object? isArchived = null,}) {
-  return _then(_self.copyWith(
+  return _then(AccountType(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,l10nKey: freezed == l10nKey ? _self.l10nKey : l10nKey // ignore: cast_nullable_to_non_nullable
 as String?,customName: freezed == customName ? _self.customName : customName // ignore: cast_nullable_to_non_nullable
@@ -265,16 +271,18 @@ _$AccountTypeCopyWith<_AccountType> get copyWith => __$AccountTypeCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AccountType&&(identical(other.id, id) || other.id == id)&&(identical(other.l10nKey, l10nKey) || other.l10nKey == l10nKey)&&(identical(other.customName, customName) || other.customName == customName)&&(identical(other.defaultCurrency, defaultCurrency) || other.defaultCurrency == defaultCurrency)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.isArchived, isArchived) || other.isArchived == isArchived));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AccountType&&(identical(other.id, id) || other.id == id)&&(identical(other.l10nKey, l10nKey) || other.l10nKey == l10nKey)&&(identical(other.customName, customName) || other.customName == customName)&&(identical(other.defaultCurrency, defaultCurrency) || other.defaultCurrency == defaultCurrency)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.isArchived, isArchived) || other.isArchived == isArchived));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,l10nKey,customName,defaultCurrency,icon,color,sortOrder,isArchived);
+int get hashCode {
+    return Object.hash(runtimeType,id,l10nKey,customName,defaultCurrency,icon,color,sortOrder,isArchived);
+}
 
 @override
 String toString() {
-  return 'AccountType(id: $id, l10nKey: $l10nKey, customName: $customName, defaultCurrency: $defaultCurrency, icon: $icon, color: $color, sortOrder: $sortOrder, isArchived: $isArchived)';
+    return 'AccountType(id: $id, l10nKey: $l10nKey, customName: $customName, defaultCurrency: $defaultCurrency, icon: $icon, color: $color, sortOrder: $sortOrder, isArchived: $isArchived)';
 }
 
 

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'analysis_state.dart';
@@ -9,6 +9,7 @@ part of 'analysis_state.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -20,7 +21,7 @@ mixin _$AnalysisState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnalysisState);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is AnalysisState);
 }
 
 
@@ -29,7 +30,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'AnalysisState()';
+    return 'AnalysisState()';
 }
 
 
@@ -197,7 +198,7 @@ class AnalysisIdle implements AnalysisState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnalysisIdle);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is AnalysisIdle);
 }
 
 
@@ -206,7 +207,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'AnalysisState.idle()';
+    return 'AnalysisState.idle()';
 }
 
 
@@ -219,7 +220,7 @@ String toString() {
 
 
 class AnalysisLoading implements AnalysisState {
-  const AnalysisLoading({required this.query, final  List<CategorySearchResult>? previous}): _previous = previous;
+  const AnalysisLoading({required this.query,  List<CategorySearchResult>? previous}): _previous = previous;
   
 
  final  String query;
@@ -243,16 +244,18 @@ $AnalysisLoadingCopyWith<AnalysisLoading> get copyWith => _$AnalysisLoadingCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnalysisLoading&&(identical(other.query, query) || other.query == query)&&const DeepCollectionEquality().equals(other._previous, _previous));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is AnalysisLoading&&(identical(other.query, query) || other.query == query)&&const DeepCollectionEquality().equals(other.previous, _previous));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,query,const DeepCollectionEquality().hash(_previous));
+int get hashCode {
+    return Object.hash(runtimeType,query,const DeepCollectionEquality().hash(_previous));
+}
 
 @override
 String toString() {
-  return 'AnalysisState.loading(query: $query, previous: $previous)';
+    return 'AnalysisState.loading(query: $query, previous: $previous)';
 }
 
 
@@ -295,7 +298,7 @@ as List<CategorySearchResult>?,
 
 
 class AnalysisResults implements AnalysisState {
-  const AnalysisResults({required final  List<CategorySearchResult> categories, required final  List<Transaction> transactions, required this.query}): _categories = categories,_transactions = transactions;
+  const AnalysisResults({required  List<CategorySearchResult> categories, required  List<Transaction> transactions, required this.query}): _categories = categories,_transactions = transactions;
   
 
  final  List<CategorySearchResult> _categories;
@@ -324,16 +327,18 @@ $AnalysisResultsCopyWith<AnalysisResults> get copyWith => _$AnalysisResultsCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnalysisResults&&const DeepCollectionEquality().equals(other._categories, _categories)&&const DeepCollectionEquality().equals(other._transactions, _transactions)&&(identical(other.query, query) || other.query == query));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is AnalysisResults&&const DeepCollectionEquality().equals(other.categories, _categories)&&const DeepCollectionEquality().equals(other.transactions, _transactions)&&(identical(other.query, query) || other.query == query));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_categories),const DeepCollectionEquality().hash(_transactions),query);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_categories),const DeepCollectionEquality().hash(_transactions),query);
+}
 
 @override
 String toString() {
-  return 'AnalysisState.results(categories: $categories, transactions: $transactions, query: $query)';
+    return 'AnalysisState.results(categories: $categories, transactions: $transactions, query: $query)';
 }
 
 
@@ -392,16 +397,18 @@ $AnalysisEmptyCopyWith<AnalysisEmpty> get copyWith => _$AnalysisEmptyCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnalysisEmpty&&(identical(other.query, query) || other.query == query));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is AnalysisEmpty&&(identical(other.query, query) || other.query == query));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,query);
+int get hashCode {
+    return Object.hash(runtimeType,query);
+}
 
 @override
 String toString() {
-  return 'AnalysisState.empty(query: $query)';
+    return 'AnalysisState.empty(query: $query)';
 }
 
 
@@ -457,16 +464,21 @@ $CategorySearchResultCopyWith<CategorySearchResult> get copyWith => _$CategorySe
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CategorySearchResult&&(identical(other.category, category) || other.category == category)&&(identical(other.transactionCount, transactionCount) || other.transactionCount == transactionCount)&&(identical(other.totalAmountMinorUnits, totalAmountMinorUnits) || other.totalAmountMinorUnits == totalAmountMinorUnits)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.mostRecentDate, mostRecentDate) || other.mostRecentDate == mostRecentDate));
+  final _this = this as CategorySearchResult;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CategorySearchResult&&(identical(other.category, _this.category) || other.category == _this.category)&&(identical(other.transactionCount, _this.transactionCount) || other.transactionCount == _this.transactionCount)&&(identical(other.totalAmountMinorUnits, _this.totalAmountMinorUnits) || other.totalAmountMinorUnits == _this.totalAmountMinorUnits)&&(identical(other.currency, _this.currency) || other.currency == _this.currency)&&(identical(other.mostRecentDate, _this.mostRecentDate) || other.mostRecentDate == _this.mostRecentDate));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,category,transactionCount,totalAmountMinorUnits,currency,mostRecentDate);
+int get hashCode {
+  final _this = this as CategorySearchResult;
+  return Object.hash(runtimeType,_this.category,_this.transactionCount,_this.totalAmountMinorUnits,_this.currency,_this.mostRecentDate);
+}
 
 @override
 String toString() {
-  return 'CategorySearchResult(category: $category, transactionCount: $transactionCount, totalAmountMinorUnits: $totalAmountMinorUnits, currency: $currency, mostRecentDate: $mostRecentDate)';
+  final _this = this as CategorySearchResult;
+  return 'CategorySearchResult(category: ${_this.category}, transactionCount: ${_this.transactionCount}, totalAmountMinorUnits: ${_this.totalAmountMinorUnits}, currency: ${_this.currency}, mostRecentDate: ${_this.mostRecentDate})';
 }
 
 
@@ -495,7 +507,7 @@ class _$CategorySearchResultCopyWithImpl<$Res>
 /// Create a copy of CategorySearchResult
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? category = null,Object? transactionCount = null,Object? totalAmountMinorUnits = null,Object? currency = null,Object? mostRecentDate = null,}) {
-  return _then(_self.copyWith(
+  return _then(CategorySearchResult(
 category: null == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
 as Category,transactionCount: null == transactionCount ? _self.transactionCount : transactionCount // ignore: cast_nullable_to_non_nullable
 as int,totalAmountMinorUnits: null == totalAmountMinorUnits ? _self.totalAmountMinorUnits : totalAmountMinorUnits // ignore: cast_nullable_to_non_nullable
@@ -683,16 +695,18 @@ _$CategorySearchResultCopyWith<_CategorySearchResult> get copyWith => __$Categor
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CategorySearchResult&&(identical(other.category, category) || other.category == category)&&(identical(other.transactionCount, transactionCount) || other.transactionCount == transactionCount)&&(identical(other.totalAmountMinorUnits, totalAmountMinorUnits) || other.totalAmountMinorUnits == totalAmountMinorUnits)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.mostRecentDate, mostRecentDate) || other.mostRecentDate == mostRecentDate));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _CategorySearchResult&&(identical(other.category, category) || other.category == category)&&(identical(other.transactionCount, transactionCount) || other.transactionCount == transactionCount)&&(identical(other.totalAmountMinorUnits, totalAmountMinorUnits) || other.totalAmountMinorUnits == totalAmountMinorUnits)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.mostRecentDate, mostRecentDate) || other.mostRecentDate == mostRecentDate));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,category,transactionCount,totalAmountMinorUnits,currency,mostRecentDate);
+int get hashCode {
+    return Object.hash(runtimeType,category,transactionCount,totalAmountMinorUnits,currency,mostRecentDate);
+}
 
 @override
 String toString() {
-  return 'CategorySearchResult(category: $category, transactionCount: $transactionCount, totalAmountMinorUnits: $totalAmountMinorUnits, currency: $currency, mostRecentDate: $mostRecentDate)';
+    return 'CategorySearchResult(category: $category, transactionCount: $transactionCount, totalAmountMinorUnits: $totalAmountMinorUnits, currency: $currency, mostRecentDate: $mostRecentDate)';
 }
 
 

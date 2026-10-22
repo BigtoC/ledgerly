@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'home_state.dart';
@@ -9,6 +9,7 @@ part of 'home_state.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -20,7 +21,7 @@ mixin _$HomeState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HomeState);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HomeState);
 }
 
 
@@ -29,7 +30,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'HomeState()';
+    return 'HomeState()';
 }
 
 
@@ -197,7 +198,7 @@ class HomeLoading implements HomeState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HomeLoading);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HomeLoading);
 }
 
 
@@ -206,7 +207,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'HomeState.loading()';
+    return 'HomeState.loading()';
 }
 
 
@@ -234,16 +235,18 @@ $HomeEmptyCopyWith<HomeEmpty> get copyWith => _$HomeEmptyCopyWithImpl<HomeEmpty>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HomeEmpty&&(identical(other.selectedDay, selectedDay) || other.selectedDay == selectedDay));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HomeEmpty&&(identical(other.selectedDay, selectedDay) || other.selectedDay == selectedDay));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,selectedDay);
+int get hashCode {
+    return Object.hash(runtimeType,selectedDay);
+}
 
 @override
 String toString() {
-  return 'HomeState.empty(selectedDay: $selectedDay)';
+    return 'HomeState.empty(selectedDay: $selectedDay)';
 }
 
 
@@ -285,7 +288,7 @@ as DateTime,
 
 
 class HomeData implements HomeState {
-  const HomeData({required this.selectedDay, required this.today, required final  List<Transaction> transactionsForDay, required final  DailyTotals todayTotalsByCurrency, required final  Map<String, int> monthNetByCurrency, required this.canGoPrev, required this.canGoNext, required this.pendingDelete}): _transactionsForDay = transactionsForDay,_todayTotalsByCurrency = todayTotalsByCurrency,_monthNetByCurrency = monthNetByCurrency;
+  const HomeData({required this.selectedDay, required this.today, required  List<Transaction> transactionsForDay, required  DailyTotals todayTotalsByCurrency, required  Map<String, int> monthNetByCurrency, required this.canGoPrev, required this.canGoNext, required this.pendingDelete}): _transactionsForDay = transactionsForDay,_todayTotalsByCurrency = todayTotalsByCurrency,_monthNetByCurrency = monthNetByCurrency;
   
 
  final  DateTime selectedDay;
@@ -325,16 +328,18 @@ $HomeDataCopyWith<HomeData> get copyWith => _$HomeDataCopyWithImpl<HomeData>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HomeData&&(identical(other.selectedDay, selectedDay) || other.selectedDay == selectedDay)&&(identical(other.today, today) || other.today == today)&&const DeepCollectionEquality().equals(other._transactionsForDay, _transactionsForDay)&&const DeepCollectionEquality().equals(other._todayTotalsByCurrency, _todayTotalsByCurrency)&&const DeepCollectionEquality().equals(other._monthNetByCurrency, _monthNetByCurrency)&&(identical(other.canGoPrev, canGoPrev) || other.canGoPrev == canGoPrev)&&(identical(other.canGoNext, canGoNext) || other.canGoNext == canGoNext)&&(identical(other.pendingDelete, pendingDelete) || other.pendingDelete == pendingDelete));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HomeData&&(identical(other.selectedDay, selectedDay) || other.selectedDay == selectedDay)&&(identical(other.today, today) || other.today == today)&&const DeepCollectionEquality().equals(other.transactionsForDay, _transactionsForDay)&&const DeepCollectionEquality().equals(other.todayTotalsByCurrency, _todayTotalsByCurrency)&&const DeepCollectionEquality().equals(other.monthNetByCurrency, _monthNetByCurrency)&&(identical(other.canGoPrev, canGoPrev) || other.canGoPrev == canGoPrev)&&(identical(other.canGoNext, canGoNext) || other.canGoNext == canGoNext)&&(identical(other.pendingDelete, pendingDelete) || other.pendingDelete == pendingDelete));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,selectedDay,today,const DeepCollectionEquality().hash(_transactionsForDay),const DeepCollectionEquality().hash(_todayTotalsByCurrency),const DeepCollectionEquality().hash(_monthNetByCurrency),canGoPrev,canGoNext,pendingDelete);
+int get hashCode {
+    return Object.hash(runtimeType,selectedDay,today,const DeepCollectionEquality().hash(_transactionsForDay),const DeepCollectionEquality().hash(_todayTotalsByCurrency),const DeepCollectionEquality().hash(_monthNetByCurrency),canGoPrev,canGoNext,pendingDelete);
+}
 
 @override
 String toString() {
-  return 'HomeState.data(selectedDay: $selectedDay, today: $today, transactionsForDay: $transactionsForDay, todayTotalsByCurrency: $todayTotalsByCurrency, monthNetByCurrency: $monthNetByCurrency, canGoPrev: $canGoPrev, canGoNext: $canGoNext, pendingDelete: $pendingDelete)';
+    return 'HomeState.data(selectedDay: $selectedDay, today: $today, transactionsForDay: $transactionsForDay, todayTotalsByCurrency: $todayTotalsByCurrency, monthNetByCurrency: $monthNetByCurrency, canGoPrev: $canGoPrev, canGoNext: $canGoNext, pendingDelete: $pendingDelete)';
 }
 
 
@@ -399,16 +404,18 @@ $HomeErrorCopyWith<HomeError> get copyWith => _$HomeErrorCopyWithImpl<HomeError>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HomeError&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.stack, stack) || other.stack == stack));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HomeError&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.stack, stack) || other.stack == stack));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(error),stack);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(error),stack);
+}
 
 @override
 String toString() {
-  return 'HomeState.error(error: $error, stack: $stack)';
+    return 'HomeState.error(error: $error, stack: $stack)';
 }
 
 
