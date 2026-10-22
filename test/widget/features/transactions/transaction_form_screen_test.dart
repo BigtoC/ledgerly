@@ -827,10 +827,7 @@ void main() {
 
       final display = find.byType(AmountDisplay);
       expect(
-        find.descendant(
-          of: display,
-          matching: find.textContaining('12.00 + 5.00 ='),
-        ),
+        find.descendant(of: display, matching: find.textContaining('12 + 5 =')),
         findsOneWidget,
       );
       expect(
@@ -910,6 +907,13 @@ void main() {
       await tester.tap(find.text('+'));
       await tester.pumpAndSettle();
 
+      final display = find.byType(AmountDisplay);
+      final pendingExpression = find.descendant(
+        of: display,
+        matching: find.text('1 +'),
+      );
+      expect(pendingExpression, findsOneWidget);
+
       await tester.tap(find.byType(CurrencySelectorTile));
       await tester.pumpAndSettle();
       await tester.tap(find.text('JPY').first);
@@ -921,12 +925,7 @@ void main() {
         find.byType(CurrencySelectorTile),
       );
       expect(tile.currency?.code, 'JPY');
-
-      final display = find.byType(AmountDisplay);
-      expect(
-        find.descendant(of: display, matching: find.textContaining('1.00 +')),
-        findsNothing,
-      );
+      expect(pendingExpression, findsNothing);
     },
   );
 
@@ -954,10 +953,7 @@ void main() {
 
       final display = find.byType(AmountDisplay);
       expect(
-        find.descendant(
-          of: display,
-          matching: find.textContaining('7.00 ÷ 0.00 ='),
-        ),
+        find.descendant(of: display, matching: find.textContaining('7 ÷ 0 =')),
         findsOneWidget,
       );
     },
@@ -982,7 +978,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('+'), findsOneWidget);
-      expect(find.textContaining('1.00 + 5.00 ='), findsOneWidget);
+      expect(find.textContaining('1 + 5 ='), findsOneWidget);
       expect(find.text('6.00'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
@@ -1000,7 +996,7 @@ void main() {
 
       final display = find.byType(AmountDisplay);
       expect(
-        find.descendant(of: display, matching: find.text('3.00 +')),
+        find.descendant(of: display, matching: find.text('1 + 2 +')),
         findsOneWidget,
       );
 
@@ -1010,7 +1006,7 @@ void main() {
       expect(
         find.descendant(
           of: display,
-          matching: find.textContaining('3.00 + 4.00 ='),
+          matching: find.textContaining('1 + 2 + 4 ='),
         ),
         findsOneWidget,
       );

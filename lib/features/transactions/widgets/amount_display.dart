@@ -24,6 +24,11 @@
 //     fixed-precision result (e.g. "17.00" for USD). A dangling operator
 //     finished with `=` ("12 +") has no right operand, so only the result
 //     shows and the history line is hidden.
+//   - When the keypad has recorded a formula, the history line shows it as
+//     typed instead ("3.5 + 10.5 + 11 +" while typing,
+//     "3.5 + 10.5 + 11 + 3 =" on the result), including one loaded from a
+//     saved transaction. Brackets show the left-to-right order where it
+//     differs from usual precedence ("(1 + 2) × 2 =").
 //   - When `onEquals` is set, an `=` button sits at the end of the history
 //     line, directly above the currency code. It shows for as long as the
 //     history line does and is enabled only while an expression is pending.
@@ -33,6 +38,7 @@ import 'package:flutter/material.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../../../data/models/currency.dart';
 import '../../../l10n/app_localizations.dart';
+import '../amount_formula.dart';
 import '../keypad_state.dart';
 
 class AmountDisplay extends StatelessWidget {
@@ -103,12 +109,30 @@ class AmountDisplay extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    expressionText,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: foreground.withValues(alpha: 0.6),
+                  // A long formula scrolls instead of being ellipsized, and
+                  // starts scrolled to its end so the operand being edited
+                  // stays visible. The minimum width keeps a short one
+                  // left-aligned with the amount below.
+                  child: LayoutBuilder(
+                    builder: (context, constraints) => SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      reverse: true,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minWidth: constraints.maxWidth,
+                        ),
+                        child: Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(
+                            expressionText,
+                            maxLines: 1,
+                            softWrap: false,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: foreground.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -194,6 +218,19 @@ class AmountDisplay extends StatelessWidget {
     final c = currency;
     if (c == null) return null;
 
+    final operands = keypad.formulaOperands;
+    final operators = keypad.formulaOperators;
+    if (keypad.isEvaluating &&
+        operands.isNotEmpty &&
+        operands.length == operators.length) {
+      return _formulaTerms(operands, operators, decimals: c.decimals);
+    }
+    if (keypad.showingResult &&
+        operators.isNotEmpty &&
+        operands.length == operators.length + 1) {
+      return '${_formulaTerms(operands, operators, decimals: c.decimals)} =';
+    }
+
     if (keypad.isEvaluating &&
         keypad.leftOperand != null &&
         keypad.operator != null) {
@@ -223,6 +260,39 @@ class AmountDisplay extends StatelessWidget {
     }
 
     return null;
+  }
+
+  /// Joins [operands] as typed with the display symbols of the [operators]
+  /// between them, ending with a pending operator when [operators] is as
+  /// long as [operands].
+  ///
+  /// The keypad evaluates strictly left to right, so wherever × or ÷
+  /// follows a + or −, the expression so far is bracketed: the keys
+  /// `1 + 2 × 2` render as "(1 + 2) × 2", which reads as the 6 it
+  /// evaluates to rather than 5.
+  String _formulaTerms(
+    List<FormulaOperand> operands,
+    List<CalcOperator> operators, {
+    required int decimals,
+  }) {
+    var text = encodeFormulaOperand(operands.first, decimals: decimals);
+    var hasUnbracketedAddition = false;
+    for (var i = 0; i < operators.length; i++) {
+      final op = operators[i];
+      final isMultiplicative =
+          op == CalcOperator.multiply || op == CalcOperator.divide;
+      if (isMultiplicative && hasUnbracketedAddition) {
+        text = '($text)';
+        hasUnbracketedAddition = false;
+      } else if (!isMultiplicative) {
+        hasUnbracketedAddition = true;
+      }
+      text += ' ${_operatorSymbol(op)}';
+      if (i + 1 < operands.length) {
+        text += ' ${encodeFormulaOperand(operands[i + 1], decimals: decimals)}';
+      }
+    }
+    return text;
   }
 
   String _operatorSymbol(CalcOperator op) => switch (op) {
