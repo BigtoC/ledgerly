@@ -22,7 +22,7 @@ dependencies:
 
   # Local database
   drift: ^2.31.0
-  drift_flutter: ^0.2.7
+  drift_flutter: ^0.2.8
   path_provider: ^2.1.6
 
   # Navigation
