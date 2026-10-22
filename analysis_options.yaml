@@ -7,7 +7,7 @@
 #      live in `import_analysis_options.yaml` at the repo root (required
 #      by import_lint ^0.1.6 — do NOT move them back into this file, the
 #      0.1.6 runner will not find them). Runs via `dart run import_lint`,
-#      wired into CI alongside `flutter analyze`.
+#      wired into CI alongside `dart analyze --fatal-infos`.
 #
 # Generated code is excluded; every other file is analyzed.
 
@@ -26,6 +26,12 @@ analyzer:
     # JSON snapshots in `drift_schemas/` and consumed by the migration
     # harness at `test/unit/repositories/migration_test.dart`.
     - "test/unit/repositories/_harness/generated/**"
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
   errors:
     # Freezed occasionally emits annotations on non-targets; keep info-level.
     invalid_annotation_target: ignore
@@ -36,15 +42,19 @@ analyzer:
 
 # riverpod_lint 3.1+ is an analysis_server_plugin, not a custom_lint plugin.
 # The analysis server resolves it in its own package (it is not a pubspec
-# dependency). On Dart 3.12, 3.1.4 is the only release that works: the
-# analysis server needs analysis_server_plugin ^0.3.8, which 3.1.0-3.1.3
-# cannot resolve against; 3.1.6 does not resolve; 3.1.7 and 3.1.8
-# (analyzer 13) hang `dart analyze`; 3.1.9 needs Dart 3.13. A plugin that
-# fails to resolve is skipped without failing the run, so after changing
-# this, check that `dart analyze` prints no "An error occurred while
-# executing an analyzer plugin" message.
+# dependency). 3.1.9 needs Dart 3.13 and resolves against analyzer 14 and
+# the analysis_server_plugin ^0.3.8 the analysis server asks for. On Dart
+# 3.12, 3.1.4 was the only working release: 3.1.0-3.1.3 cannot resolve
+# against that analysis_server_plugin, 3.1.6 does not resolve, and 3.1.7
+# and 3.1.8 (analyzer 13) hang `dart analyze`. A plugin that fails to
+# resolve is skipped without failing the run, so after changing this,
+# check that `dart analyze` prints no "An error occurred while executing
+# an analyzer plugin" message. `dart analyze` waits for the plugin and
+# always reports its warnings; `flutter analyze` does not wait and reports
+# them only some of the time. CI runs `dart analyze --fatal-infos`, so
+# riverpod_lint warnings fail the build.
 plugins:
-  riverpod_lint: 3.1.4
+  riverpod_lint: 3.1.9
 
 linter:
   rules:

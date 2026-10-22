@@ -221,7 +221,7 @@ understandable, and centered on manual logging.
 
 ## Prerequisites
 
-- Flutter 3.44+ (stable channel, Dart 3.12). `flutter --version` must run
+- Flutter 3.47+ (stable channel, Dart 3.13). `flutter --version` must run
   cleanly.
 - For Android builds: JDK 17 + Android SDK.
 - For iOS builds: Xcode 15+ and CocoaPods.
@@ -231,8 +231,7 @@ understandable, and centered on manual logging.
 ```bash
 flutter pub get                                     # resolve packages
 flutter run                                         # device/emulator
-flutter analyze                                     # analyzer + flutter_lints
-dart analyze                                        # same, plus the riverpod_lint plugin
+dart analyze --fatal-infos                          # analyzer + flutter_lints + riverpod_lint (what CI runs)
 dart run import_lint                                # enforce layer boundaries
 dart run build_runner build --delete-conflicting-outputs
 dart run build_runner watch --delete-conflicting-outputs
@@ -313,17 +312,22 @@ PRD → Architecture for the full table. Headlines:
   allowed inside `core/utils/money_formatter.dart`.
 
 `analysis_options.yaml` wires `flutter_lints` and the `riverpod_lint`
-analysis-server plugin (reported by `dart analyze` and the IDE, not by
-`flutter analyze`). The pinned `import_lint ^0.1.6` reads its layer-boundary
-rules from `import_analysis_options.yaml` at the repo root (separate
-file because that version uses a regex schema, not the 2.x globs). CI
-fails any PR that violates the layer-boundary rules.
+analysis-server plugin. CI enforces both with `dart analyze --fatal-infos`,
+which waits for the plugin; `flutter analyze` does not wait and reports
+riverpod_lint warnings only some of the time. The pinned
+`import_lint ^0.1.6` reads its layer-boundary rules from
+`import_analysis_options.yaml` at the repo root (separate file because
+that version uses a regex schema, not the 2.x globs). CI runs it, but
+0.1.6 does not currently enforce the rules: it matches them against
+absolute paths, so no `^lib/...` rule fires, and it always exits 0.
+Review is what keeps the layer boundaries today.
 
 ## Contributing
 
 PRs must be green on `.github/workflows/check.yml` (analysis, lint,
-codegen, tests, Android debug build). iOS runs nightly via
-`.github/workflows/ios-nightly.yml`. The website has its own
+codegen, tests, Android debug build). The iOS debug build in
+`.github/workflows/ios-nightly.yml` runs on PRs that change `pubspec.yaml`,
+`pubspec.lock` or `ios/`, and on demand. It is not scheduled. The website has its own
 `.github/workflows/site-check.yml`; release artifacts ship through
 `.github/workflows/android-release.yml`.
 

@@ -2,21 +2,42 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../features/accounts/account_form_screen.dart';
+import '../features/accounts/accounts_controller.dart';
 import '../features/analysis/analysis_screen.dart';
+import '../features/analysis/charts/charts_controller.dart';
+import '../features/analysis/charts/charts_providers.dart';
+import '../features/analysis/charts/charts_selection_controller.dart';
+import '../features/analysis/charts/slice_drilldown_controller.dart';
+import '../features/analysis/search/analysis_controller.dart';
+import '../features/analysis/search/analysis_providers.dart';
+import '../features/analysis/search/category_search_detail_controller.dart';
 import '../features/analysis/search/category_search_detail_screen.dart';
+import '../features/categories/categories_controller.dart';
 import '../features/categories/categories_screen.dart';
+import '../features/home/home_controller.dart';
 import '../features/home/home_screen.dart';
+import '../features/home/pending_controller.dart';
+import '../features/recurring/recurring_rule_form_controller.dart';
 import '../features/recurring/recurring_rule_form_screen.dart';
+import '../features/recurring/recurring_rules_controller.dart';
 import '../features/recurring/recurring_rules_screen.dart';
 import '../features/settings/about_screen.dart';
+import '../features/settings/settings_controller.dart';
 import '../features/settings/settings_screen.dart';
+import '../features/shopping_list/shopping_list_controller.dart';
+import '../features/shopping_list/shopping_list_providers.dart';
 import '../features/shopping_list/shopping_list_screen.dart';
+import '../features/splash/splash_controller.dart';
 import '../features/splash/splash_screen.dart';
+import '../features/transactions/transaction_form_controller.dart';
 import '../features/transactions/transaction_form_screen.dart';
 import '../features/transactions/transaction_form_state.dart';
+import 'providers/default_currency_provider.dart';
+import 'providers/repository_providers.dart';
 import 'providers/splash_redirect_provider.dart';
 import 'widgets/adaptive_shell.dart';
 
@@ -24,7 +45,42 @@ part 'router.g.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
-@Riverpod(keepAlive: true, dependencies: [splashGateSnapshot])
+@Riverpod(
+  keepAlive: true,
+  dependencies: [
+    splashGateSnapshot,
+    splashStartDate,
+    splashClock,
+    SplashController,
+    HomeController,
+    PendingController,
+    shoppingListTotalCount,
+    initialDefaultCurrency,
+    defaultCurrency,
+    exchangeRates,
+    ShoppingListController,
+    shoppingListCategoryById,
+    shoppingListAccountById,
+    shoppingListCurrencyByCode,
+    AnalysisController,
+    ChartsSelectionController,
+    ChartsController,
+    chartsCurrenciesByCode,
+    SliceDrilldownController,
+    analysisCategoriesById,
+    analysisAccountsById,
+    chartsFxStatus,
+    CategorySearchDetailController,
+    SettingsController,
+    AccountsController,
+    CategoriesController,
+    RecurringRulesController,
+    RecurringRuleFormController,
+    categoriesByType,
+    accountRepository,
+    TransactionFormController,
+  ],
+)
 GoRouter router(Ref ref) {
   final gate = ref.watch(splashGateSnapshotProvider);
   return GoRouter(
@@ -266,6 +322,7 @@ GoRouter router(Ref ref) {
   );
 }
 
+@Dependencies([TransactionFormController, categoriesByType, accountRepository])
 class _AdaptiveTransactionFormRoute extends StatelessWidget {
   const _AdaptiveTransactionFormRoute({
     this.transactionId,

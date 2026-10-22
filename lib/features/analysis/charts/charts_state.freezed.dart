@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'charts_state.dart';
@@ -9,6 +9,7 @@ part of 'charts_state.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -20,7 +21,7 @@ mixin _$ChartsState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartsState);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartsState);
 }
 
 
@@ -29,7 +30,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'ChartsState()';
+    return 'ChartsState()';
 }
 
 
@@ -208,16 +209,18 @@ $ChartsLoadingCopyWith<ChartsLoading> get copyWith => _$ChartsLoadingCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartsLoading&&(identical(other.previous, previous) || other.previous == previous));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartsLoading&&(identical(other.previous, previous) || other.previous == previous));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,previous);
+int get hashCode {
+    return Object.hash(runtimeType,previous);
+}
 
 @override
 String toString() {
-  return 'ChartsState.loading(previous: $previous)';
+    return 'ChartsState.loading(previous: $previous)';
 }
 
 
@@ -286,16 +289,18 @@ $ChartsDataStateCopyWith<ChartsDataState> get copyWith => _$ChartsDataStateCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartsDataState&&(identical(other.chartData, chartData) || other.chartData == chartData));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartsDataState&&(identical(other.chartData, chartData) || other.chartData == chartData));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,chartData);
+int get hashCode {
+    return Object.hash(runtimeType,chartData);
+}
 
 @override
 String toString() {
-  return 'ChartsState.data(chartData: $chartData)';
+    return 'ChartsState.data(chartData: $chartData)';
 }
 
 
@@ -356,7 +361,7 @@ class ChartsEmpty implements ChartsState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartsEmpty);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartsEmpty);
 }
 
 
@@ -365,7 +370,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'ChartsState.empty()';
+    return 'ChartsState.empty()';
 }
 
 
@@ -393,16 +398,18 @@ $ChartsBlockedByMissingRatesCopyWith<ChartsBlockedByMissingRates> get copyWith =
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartsBlockedByMissingRates&&(identical(other.previous, previous) || other.previous == previous));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartsBlockedByMissingRates&&(identical(other.previous, previous) || other.previous == previous));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,previous);
+int get hashCode {
+    return Object.hash(runtimeType,previous);
+}
 
 @override
 String toString() {
-  return 'ChartsState.blockedByMissingRates(previous: $previous)';
+    return 'ChartsState.blockedByMissingRates(previous: $previous)';
 }
 
 
@@ -472,16 +479,18 @@ $ChartsErrorCopyWith<ChartsError> get copyWith => _$ChartsErrorCopyWithImpl<Char
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartsError&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.stack, stack) || other.stack == stack));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartsError&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.stack, stack) || other.stack == stack));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(error),stack);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(error),stack);
+}
 
 @override
 String toString() {
-  return 'ChartsState.error(error: $error, stack: $stack)';
+    return 'ChartsState.error(error: $error, stack: $stack)';
 }
 
 
@@ -548,16 +557,21 @@ $ChartsDataCopyWith<ChartsData> get copyWith => _$ChartsDataCopyWithImpl<ChartsD
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartsData&&(identical(other.period, period) || other.period == period)&&(identical(other.anchorDate, anchorDate) || other.anchorDate == anchorDate)&&(identical(other.type, type) || other.type == type)&&(identical(other.dimension, dimension) || other.dimension == dimension)&&const DeepCollectionEquality().equals(other.slices, slices)&&const DeepCollectionEquality().equals(other.bucketTotals, bucketTotals)&&(identical(other.grandTotalMinorUnits, grandTotalMinorUnits) || other.grandTotalMinorUnits == grandTotalMinorUnits)&&(identical(other.displayCurrencyCode, displayCurrencyCode) || other.displayCurrencyCode == displayCurrencyCode)&&(identical(other.mixedCurrencies, mixedCurrencies) || other.mixedCurrencies == mixedCurrencies)&&(identical(other.autoSwitchedFromCategoryDimension, autoSwitchedFromCategoryDimension) || other.autoSwitchedFromCategoryDimension == autoSwitchedFromCategoryDimension)&&const DeepCollectionEquality().equals(other.excludedCurrencyCodes, excludedCurrencyCodes));
+  final _this = this as ChartsData;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartsData&&(identical(other.period, _this.period) || other.period == _this.period)&&(identical(other.anchorDate, _this.anchorDate) || other.anchorDate == _this.anchorDate)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.dimension, _this.dimension) || other.dimension == _this.dimension)&&const DeepCollectionEquality().equals(other.slices, _this.slices)&&const DeepCollectionEquality().equals(other.bucketTotals, _this.bucketTotals)&&(identical(other.grandTotalMinorUnits, _this.grandTotalMinorUnits) || other.grandTotalMinorUnits == _this.grandTotalMinorUnits)&&(identical(other.displayCurrencyCode, _this.displayCurrencyCode) || other.displayCurrencyCode == _this.displayCurrencyCode)&&(identical(other.mixedCurrencies, _this.mixedCurrencies) || other.mixedCurrencies == _this.mixedCurrencies)&&(identical(other.autoSwitchedFromCategoryDimension, _this.autoSwitchedFromCategoryDimension) || other.autoSwitchedFromCategoryDimension == _this.autoSwitchedFromCategoryDimension)&&const DeepCollectionEquality().equals(other.excludedCurrencyCodes, _this.excludedCurrencyCodes));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,period,anchorDate,type,dimension,const DeepCollectionEquality().hash(slices),const DeepCollectionEquality().hash(bucketTotals),grandTotalMinorUnits,displayCurrencyCode,mixedCurrencies,autoSwitchedFromCategoryDimension,const DeepCollectionEquality().hash(excludedCurrencyCodes));
+int get hashCode {
+  final _this = this as ChartsData;
+  return Object.hash(runtimeType,_this.period,_this.anchorDate,_this.type,_this.dimension,const DeepCollectionEquality().hash(_this.slices),const DeepCollectionEquality().hash(_this.bucketTotals),_this.grandTotalMinorUnits,_this.displayCurrencyCode,_this.mixedCurrencies,_this.autoSwitchedFromCategoryDimension,const DeepCollectionEquality().hash(_this.excludedCurrencyCodes));
+}
 
 @override
 String toString() {
-  return 'ChartsData(period: $period, anchorDate: $anchorDate, type: $type, dimension: $dimension, slices: $slices, bucketTotals: $bucketTotals, grandTotalMinorUnits: $grandTotalMinorUnits, displayCurrencyCode: $displayCurrencyCode, mixedCurrencies: $mixedCurrencies, autoSwitchedFromCategoryDimension: $autoSwitchedFromCategoryDimension, excludedCurrencyCodes: $excludedCurrencyCodes)';
+  final _this = this as ChartsData;
+  return 'ChartsData(period: ${_this.period}, anchorDate: ${_this.anchorDate}, type: ${_this.type}, dimension: ${_this.dimension}, slices: ${_this.slices}, bucketTotals: ${_this.bucketTotals}, grandTotalMinorUnits: ${_this.grandTotalMinorUnits}, displayCurrencyCode: ${_this.displayCurrencyCode}, mixedCurrencies: ${_this.mixedCurrencies}, autoSwitchedFromCategoryDimension: ${_this.autoSwitchedFromCategoryDimension}, excludedCurrencyCodes: ${_this.excludedCurrencyCodes})';
 }
 
 
@@ -586,7 +600,7 @@ class _$ChartsDataCopyWithImpl<$Res>
 /// Create a copy of ChartsData
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? period = null,Object? anchorDate = null,Object? type = null,Object? dimension = null,Object? slices = null,Object? bucketTotals = null,Object? grandTotalMinorUnits = freezed,Object? displayCurrencyCode = freezed,Object? mixedCurrencies = null,Object? autoSwitchedFromCategoryDimension = null,Object? excludedCurrencyCodes = null,}) {
-  return _then(_self.copyWith(
+  return _then(ChartsData(
 period: null == period ? _self.period : period // ignore: cast_nullable_to_non_nullable
 as PeriodType,anchorDate: null == anchorDate ? _self.anchorDate : anchorDate // ignore: cast_nullable_to_non_nullable
 as DateTime,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
@@ -739,7 +753,7 @@ return $default(_that.period,_that.anchorDate,_that.type,_that.dimension,_that.s
 
 
 class _ChartsData implements ChartsData {
-  const _ChartsData({required this.period, required this.anchorDate, required this.type, required this.dimension, required final  List<ChartSlice> slices, required final  List<ChartBucketTotal> bucketTotals, required this.grandTotalMinorUnits, required this.displayCurrencyCode, this.mixedCurrencies = false, this.autoSwitchedFromCategoryDimension = false, final  List<String> excludedCurrencyCodes = const <String>[]}): _slices = slices,_bucketTotals = bucketTotals,_excludedCurrencyCodes = excludedCurrencyCodes;
+  const _ChartsData({required this.period, required this.anchorDate, required this.type, required this.dimension, required  List<ChartSlice> slices, required  List<ChartBucketTotal> bucketTotals, required this.grandTotalMinorUnits, required this.displayCurrencyCode, this.mixedCurrencies = false, this.autoSwitchedFromCategoryDimension = false,  List<String> excludedCurrencyCodes = const <String>[]}): _slices = slices,_bucketTotals = bucketTotals,_excludedCurrencyCodes = excludedCurrencyCodes;
   
 
 @override final  PeriodType period;
@@ -802,16 +816,18 @@ _$ChartsDataCopyWith<_ChartsData> get copyWith => __$ChartsDataCopyWithImpl<_Cha
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChartsData&&(identical(other.period, period) || other.period == period)&&(identical(other.anchorDate, anchorDate) || other.anchorDate == anchorDate)&&(identical(other.type, type) || other.type == type)&&(identical(other.dimension, dimension) || other.dimension == dimension)&&const DeepCollectionEquality().equals(other._slices, _slices)&&const DeepCollectionEquality().equals(other._bucketTotals, _bucketTotals)&&(identical(other.grandTotalMinorUnits, grandTotalMinorUnits) || other.grandTotalMinorUnits == grandTotalMinorUnits)&&(identical(other.displayCurrencyCode, displayCurrencyCode) || other.displayCurrencyCode == displayCurrencyCode)&&(identical(other.mixedCurrencies, mixedCurrencies) || other.mixedCurrencies == mixedCurrencies)&&(identical(other.autoSwitchedFromCategoryDimension, autoSwitchedFromCategoryDimension) || other.autoSwitchedFromCategoryDimension == autoSwitchedFromCategoryDimension)&&const DeepCollectionEquality().equals(other._excludedCurrencyCodes, _excludedCurrencyCodes));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChartsData&&(identical(other.period, period) || other.period == period)&&(identical(other.anchorDate, anchorDate) || other.anchorDate == anchorDate)&&(identical(other.type, type) || other.type == type)&&(identical(other.dimension, dimension) || other.dimension == dimension)&&const DeepCollectionEquality().equals(other.slices, _slices)&&const DeepCollectionEquality().equals(other.bucketTotals, _bucketTotals)&&(identical(other.grandTotalMinorUnits, grandTotalMinorUnits) || other.grandTotalMinorUnits == grandTotalMinorUnits)&&(identical(other.displayCurrencyCode, displayCurrencyCode) || other.displayCurrencyCode == displayCurrencyCode)&&(identical(other.mixedCurrencies, mixedCurrencies) || other.mixedCurrencies == mixedCurrencies)&&(identical(other.autoSwitchedFromCategoryDimension, autoSwitchedFromCategoryDimension) || other.autoSwitchedFromCategoryDimension == autoSwitchedFromCategoryDimension)&&const DeepCollectionEquality().equals(other.excludedCurrencyCodes, _excludedCurrencyCodes));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,period,anchorDate,type,dimension,const DeepCollectionEquality().hash(_slices),const DeepCollectionEquality().hash(_bucketTotals),grandTotalMinorUnits,displayCurrencyCode,mixedCurrencies,autoSwitchedFromCategoryDimension,const DeepCollectionEquality().hash(_excludedCurrencyCodes));
+int get hashCode {
+    return Object.hash(runtimeType,period,anchorDate,type,dimension,const DeepCollectionEquality().hash(_slices),const DeepCollectionEquality().hash(_bucketTotals),grandTotalMinorUnits,displayCurrencyCode,mixedCurrencies,autoSwitchedFromCategoryDimension,const DeepCollectionEquality().hash(_excludedCurrencyCodes));
+}
 
 @override
 String toString() {
-  return 'ChartsData(period: $period, anchorDate: $anchorDate, type: $type, dimension: $dimension, slices: $slices, bucketTotals: $bucketTotals, grandTotalMinorUnits: $grandTotalMinorUnits, displayCurrencyCode: $displayCurrencyCode, mixedCurrencies: $mixedCurrencies, autoSwitchedFromCategoryDimension: $autoSwitchedFromCategoryDimension, excludedCurrencyCodes: $excludedCurrencyCodes)';
+    return 'ChartsData(period: $period, anchorDate: $anchorDate, type: $type, dimension: $dimension, slices: $slices, bucketTotals: $bucketTotals, grandTotalMinorUnits: $grandTotalMinorUnits, displayCurrencyCode: $displayCurrencyCode, mixedCurrencies: $mixedCurrencies, autoSwitchedFromCategoryDimension: $autoSwitchedFromCategoryDimension, excludedCurrencyCodes: $excludedCurrencyCodes)';
 }
 
 
@@ -890,16 +906,21 @@ $ChartSliceCopyWith<ChartSlice> get copyWith => _$ChartSliceCopyWithImpl<ChartSl
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartSlice&&(identical(other.label, label) || other.label == label)&&(identical(other.currencyCode, currencyCode) || other.currencyCode == currencyCode)&&(identical(other.totalMinorUnits, totalMinorUnits) || other.totalMinorUnits == totalMinorUnits)&&(identical(other.fraction, fraction) || other.fraction == fraction)&&(identical(other.colorIndex, colorIndex) || other.colorIndex == colorIndex)&&(identical(other.iconKey, iconKey) || other.iconKey == iconKey)&&(identical(other.selectionKey, selectionKey) || other.selectionKey == selectionKey));
+  final _this = this as ChartSlice;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartSlice&&(identical(other.label, _this.label) || other.label == _this.label)&&(identical(other.currencyCode, _this.currencyCode) || other.currencyCode == _this.currencyCode)&&(identical(other.totalMinorUnits, _this.totalMinorUnits) || other.totalMinorUnits == _this.totalMinorUnits)&&(identical(other.fraction, _this.fraction) || other.fraction == _this.fraction)&&(identical(other.colorIndex, _this.colorIndex) || other.colorIndex == _this.colorIndex)&&(identical(other.iconKey, _this.iconKey) || other.iconKey == _this.iconKey)&&(identical(other.selectionKey, _this.selectionKey) || other.selectionKey == _this.selectionKey));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,label,currencyCode,totalMinorUnits,fraction,colorIndex,iconKey,selectionKey);
+int get hashCode {
+  final _this = this as ChartSlice;
+  return Object.hash(runtimeType,_this.label,_this.currencyCode,_this.totalMinorUnits,_this.fraction,_this.colorIndex,_this.iconKey,_this.selectionKey);
+}
 
 @override
 String toString() {
-  return 'ChartSlice(label: $label, currencyCode: $currencyCode, totalMinorUnits: $totalMinorUnits, fraction: $fraction, colorIndex: $colorIndex, iconKey: $iconKey, selectionKey: $selectionKey)';
+  final _this = this as ChartSlice;
+  return 'ChartSlice(label: ${_this.label}, currencyCode: ${_this.currencyCode}, totalMinorUnits: ${_this.totalMinorUnits}, fraction: ${_this.fraction}, colorIndex: ${_this.colorIndex}, iconKey: ${_this.iconKey}, selectionKey: ${_this.selectionKey})';
 }
 
 
@@ -928,7 +949,7 @@ class _$ChartSliceCopyWithImpl<$Res>
 /// Create a copy of ChartSlice
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? label = null,Object? currencyCode = null,Object? totalMinorUnits = null,Object? fraction = freezed,Object? colorIndex = null,Object? iconKey = null,Object? selectionKey = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(ChartSlice(
 label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
 as String,currencyCode: null == currencyCode ? _self.currencyCode : currencyCode // ignore: cast_nullable_to_non_nullable
 as String,totalMinorUnits: null == totalMinorUnits ? _self.totalMinorUnits : totalMinorUnits // ignore: cast_nullable_to_non_nullable
@@ -1127,16 +1148,18 @@ _$ChartSliceCopyWith<_ChartSlice> get copyWith => __$ChartSliceCopyWithImpl<_Cha
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChartSlice&&(identical(other.label, label) || other.label == label)&&(identical(other.currencyCode, currencyCode) || other.currencyCode == currencyCode)&&(identical(other.totalMinorUnits, totalMinorUnits) || other.totalMinorUnits == totalMinorUnits)&&(identical(other.fraction, fraction) || other.fraction == fraction)&&(identical(other.colorIndex, colorIndex) || other.colorIndex == colorIndex)&&(identical(other.iconKey, iconKey) || other.iconKey == iconKey)&&(identical(other.selectionKey, selectionKey) || other.selectionKey == selectionKey));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChartSlice&&(identical(other.label, label) || other.label == label)&&(identical(other.currencyCode, currencyCode) || other.currencyCode == currencyCode)&&(identical(other.totalMinorUnits, totalMinorUnits) || other.totalMinorUnits == totalMinorUnits)&&(identical(other.fraction, fraction) || other.fraction == fraction)&&(identical(other.colorIndex, colorIndex) || other.colorIndex == colorIndex)&&(identical(other.iconKey, iconKey) || other.iconKey == iconKey)&&(identical(other.selectionKey, selectionKey) || other.selectionKey == selectionKey));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,label,currencyCode,totalMinorUnits,fraction,colorIndex,iconKey,selectionKey);
+int get hashCode {
+    return Object.hash(runtimeType,label,currencyCode,totalMinorUnits,fraction,colorIndex,iconKey,selectionKey);
+}
 
 @override
 String toString() {
-  return 'ChartSlice(label: $label, currencyCode: $currencyCode, totalMinorUnits: $totalMinorUnits, fraction: $fraction, colorIndex: $colorIndex, iconKey: $iconKey, selectionKey: $selectionKey)';
+    return 'ChartSlice(label: $label, currencyCode: $currencyCode, totalMinorUnits: $totalMinorUnits, fraction: $fraction, colorIndex: $colorIndex, iconKey: $iconKey, selectionKey: $selectionKey)';
 }
 
 
@@ -1206,16 +1229,21 @@ $ChartBucketTotalCopyWith<ChartBucketTotal> get copyWith => _$ChartBucketTotalCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartBucketTotal&&(identical(other.bucketStart, bucketStart) || other.bucketStart == bucketStart)&&(identical(other.totalMinorUnits, totalMinorUnits) || other.totalMinorUnits == totalMinorUnits));
+  final _this = this as ChartBucketTotal;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartBucketTotal&&(identical(other.bucketStart, _this.bucketStart) || other.bucketStart == _this.bucketStart)&&(identical(other.totalMinorUnits, _this.totalMinorUnits) || other.totalMinorUnits == _this.totalMinorUnits));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,bucketStart,totalMinorUnits);
+int get hashCode {
+  final _this = this as ChartBucketTotal;
+  return Object.hash(runtimeType,_this.bucketStart,_this.totalMinorUnits);
+}
 
 @override
 String toString() {
-  return 'ChartBucketTotal(bucketStart: $bucketStart, totalMinorUnits: $totalMinorUnits)';
+  final _this = this as ChartBucketTotal;
+  return 'ChartBucketTotal(bucketStart: ${_this.bucketStart}, totalMinorUnits: ${_this.totalMinorUnits})';
 }
 
 
@@ -1244,7 +1272,7 @@ class _$ChartBucketTotalCopyWithImpl<$Res>
 /// Create a copy of ChartBucketTotal
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? bucketStart = null,Object? totalMinorUnits = null,}) {
-  return _then(_self.copyWith(
+  return _then(ChartBucketTotal(
 bucketStart: null == bucketStart ? _self.bucketStart : bucketStart // ignore: cast_nullable_to_non_nullable
 as DateTime,totalMinorUnits: null == totalMinorUnits ? _self.totalMinorUnits : totalMinorUnits // ignore: cast_nullable_to_non_nullable
 as int,
@@ -1404,16 +1432,18 @@ _$ChartBucketTotalCopyWith<_ChartBucketTotal> get copyWith => __$ChartBucketTota
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChartBucketTotal&&(identical(other.bucketStart, bucketStart) || other.bucketStart == bucketStart)&&(identical(other.totalMinorUnits, totalMinorUnits) || other.totalMinorUnits == totalMinorUnits));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChartBucketTotal&&(identical(other.bucketStart, bucketStart) || other.bucketStart == bucketStart)&&(identical(other.totalMinorUnits, totalMinorUnits) || other.totalMinorUnits == totalMinorUnits));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,bucketStart,totalMinorUnits);
+int get hashCode {
+    return Object.hash(runtimeType,bucketStart,totalMinorUnits);
+}
 
 @override
 String toString() {
-  return 'ChartBucketTotal(bucketStart: $bucketStart, totalMinorUnits: $totalMinorUnits)';
+    return 'ChartBucketTotal(bucketStart: $bucketStart, totalMinorUnits: $totalMinorUnits)';
 }
 
 

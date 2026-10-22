@@ -12,9 +12,8 @@ Widget _wrap(Widget child, {double? textScale}) => MaterialApp(
   builder: textScale == null
       ? null
       : (context, inner) => MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: TextScaler.linear(textScale)),
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: TextScaler.linear(textScale)),
           child: inner!,
         ),
   home: Scaffold(body: child),
@@ -170,8 +169,7 @@ void main() {
           const AmountDisplay(
             keypad: keypad,
             currency: _usd,
-            currencyTouched:
-                true, // would show placeholder without the hasVisibleInput guard
+            currencyTouched: true, // would show placeholder without the hasVisibleInput guard
           ),
         ),
       );

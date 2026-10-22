@@ -16,7 +16,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
+import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/account.dart';
 import 'package:ledgerly/data/models/account_type.dart';
@@ -79,6 +81,12 @@ class _FakeAccountsController extends AccountsController {
   }
 }
 
+@Dependencies([
+  AccountsController,
+  exchangeRates,
+  initialDefaultCurrency,
+  defaultCurrency,
+])
 class _StubRouter {
   static GoRouter build(AccountsData data) {
     return GoRouter(
@@ -102,6 +110,12 @@ class _StubRouter {
   }
 }
 
+@Dependencies([
+  AccountsController,
+  exchangeRates,
+  initialDefaultCurrency,
+  defaultCurrency,
+])
 Widget _wrap({
   required ProviderContainer container,
   required AccountsData data,
@@ -113,9 +127,8 @@ Widget _wrap({
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(
-          context,
-        ).copyWith(textScaler: TextScaler.linear(textScale)),
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
       routerConfig: _StubRouter.build(data),
@@ -123,6 +136,7 @@ Widget _wrap({
   );
 }
 
+@Dependencies([AccountsController])
 ProviderContainer _makeContainer({
   required AccountRepository accountRepo,
   required AccountTypeRepository typeRepo,
@@ -130,14 +144,12 @@ ProviderContainer _makeContainer({
   required AccountsState fixed,
 }) {
   final currencyRepo = _MockCurrencyRepository();
-  when(
-    () => currencyRepo.watchAll(),
-  ).thenAnswer((_) => Stream.value(_allTestCurrencies));
-  when(
-    () => currencyRepo.watchAll(includeTokens: any(named: 'includeTokens')),
-  ).thenAnswer((_) => Stream.value(_allTestCurrencies));
+  when(() => currencyRepo.watchAll())
+      .thenAnswer((_) => Stream.value(_allTestCurrencies));
+  when(() => currencyRepo.watchAll(includeTokens: any(named: 'includeTokens')))
+      .thenAnswer((_) => Stream.value(_allTestCurrencies));
 
-  return ProviderContainer(
+  final container = ProviderContainer(
     overrides: [
       accountRepositoryProvider.overrideWithValue(accountRepo),
       accountTypeRepositoryProvider.overrideWithValue(typeRepo),
@@ -148,8 +160,20 @@ ProviderContainer _makeContainer({
       ),
     ],
   );
+  // In the app, ManageAccountsSheet watches accountsControllerProvider
+  // while it shows this body. Mirror that so the auto-dispose controller
+  // stays alive across the async gaps in its commands; since Riverpod 3.4
+  // an unlistened auto-dispose provider is disposed on the next microtask.
+  container.listen(accountsControllerProvider, (_, _) {});
+  return container;
 }
 
+@Dependencies([
+  AccountsController,
+  exchangeRates,
+  initialDefaultCurrency,
+  defaultCurrency,
+])
 void main() {
   setUpAll(() {
     registerFallbackValue(_a(id: 0, name: '_'));
@@ -167,9 +191,8 @@ void main() {
     final accountRepo = _MockAccountRepository();
     final typeRepo = _MockAccountTypeRepository();
     final prefs = _MockUserPreferencesRepository();
-    when(
-      () => typeRepo.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value([cashType]));
+    when(() => typeRepo.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([cashType]));
 
     final fixed = AccountsState.data(
       active: [
@@ -202,9 +225,8 @@ void main() {
     final accountRepo = _MockAccountRepository();
     final typeRepo = _MockAccountTypeRepository();
     final prefs = _MockUserPreferencesRepository();
-    when(
-      () => typeRepo.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value([cashType]));
+    when(() => typeRepo.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([cashType]));
 
     final fixed = AccountsState.data(
       active: [_wb(_a(id: 1, name: 'Cash'))],
@@ -234,9 +256,8 @@ void main() {
       final accountRepo = _MockAccountRepository();
       final typeRepo = _MockAccountTypeRepository();
       final prefs = _MockUserPreferencesRepository();
-      when(
-        () => typeRepo.watchAll(includeArchived: true),
-      ).thenAnswer((_) => Stream.value([cashType]));
+      when(() => typeRepo.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([cashType]));
 
       const data = AccountsData(
         active: [],
@@ -268,9 +289,8 @@ void main() {
     final accountRepo = _MockAccountRepository();
     final typeRepo = _MockAccountTypeRepository();
     final prefs = _MockUserPreferencesRepository();
-    when(
-      () => typeRepo.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value([cashType]));
+    when(() => typeRepo.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([cashType]));
     when(() => accountRepo.archive(2)).thenAnswer((_) async {});
     // Stub fallback used by archive() when state is not yet AsyncData.
     when(() => prefs.getDefaultAccountId()).thenAnswer((_) async => 1);
@@ -315,9 +335,8 @@ void main() {
     final accountRepo = _MockAccountRepository();
     final typeRepo = _MockAccountTypeRepository();
     final prefs = _MockUserPreferencesRepository();
-    when(
-      () => typeRepo.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value([cashType]));
+    when(() => typeRepo.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([cashType]));
 
     final fixed = AccountsState.data(
       active: [
@@ -359,9 +378,8 @@ void main() {
     final accountRepo = _MockAccountRepository();
     final typeRepo = _MockAccountTypeRepository();
     final prefs = _MockUserPreferencesRepository();
-    when(
-      () => typeRepo.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value([cashType]));
+    when(() => typeRepo.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([cashType]));
 
     final fixed = AccountsState.data(
       active: [

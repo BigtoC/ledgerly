@@ -1,9 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 import 'package:ledgerly/features/analysis/charts/selected_slice.dart';
 import 'package:ledgerly/features/analysis/charts/charts_selection_controller.dart';
 import 'package:ledgerly/features/analysis/charts/charts_state.dart';
 
+@Dependencies([ChartsSelectionController])
 void main() {
   late ProviderContainer container;
 
@@ -12,8 +14,10 @@ void main() {
   });
   tearDown(() => container.dispose());
 
+  @Dependencies([ChartsSelectionController])
   ChartsSelectionController notifier() =>
       container.read(chartsSelectionControllerProvider.notifier);
+  @Dependencies([ChartsSelectionController])
   ChartsSelection state() => container.read(chartsSelectionControllerProvider);
 
   test('initial state has selectedSlice == null', () {

@@ -24,10 +24,15 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/app.dart';
 import 'package:ledgerly/app/bootstrap.dart';
 import 'package:ledgerly/app/providers/app_database_provider.dart';
+import 'package:ledgerly/app/providers/locale_provider.dart';
+import 'package:ledgerly/app/providers/repository_providers.dart';
+import 'package:ledgerly/app/providers/theme_provider.dart';
+import 'package:ledgerly/app/router.dart';
 import 'package:ledgerly/data/database/app_database.dart';
 import 'package:ledgerly/data/models/account.dart';
 import 'package:ledgerly/data/models/transaction.dart';
@@ -78,6 +83,7 @@ ProviderContainer makeTestContainer({
 /// Builds the full `App` widget wrapped in an `UncontrolledProviderScope`
 /// backed by [container]. The caller owns [container]'s lifecycle and must
 /// dispose it via `addTearDown(container.dispose)`.
+@Dependencies([router, themeMode, userLocalePreference, exchangeRateRepository])
 Widget buildTestApp({required ProviderContainer container}) {
   return UncontrolledProviderScope(container: container, child: const App());
 }
@@ -92,6 +98,7 @@ Widget buildTestApp({required ProviderContainer container}) {
 /// so tests can own container disposal via `addTearDown`. That mirrors
 /// [buildTestApp] and avoids Drift cleanup timers being scheduled during
 /// implicit widget-tree teardown.
+@Dependencies([router, exchangeRateRepository])
 Future<Widget> buildBootstrappedTestApp({required AppDatabase db}) async {
   Widget? launched;
   ProviderContainer? container;
@@ -215,9 +222,8 @@ Future<int> getSeededCategoryId(AppDatabase db, String l10nKey) async {
 /// under FakeAsync. Caller MUST wrap in `tester.runAsync`.
 Future<Account> getDefaultAccount(AppDatabase db) async {
   final currencies = DriftCurrencyRepository(db);
-  final defaultId = await DriftUserPreferencesRepository(
-    db,
-  ).getDefaultAccountId();
+  final defaultId = await DriftUserPreferencesRepository(db)
+      .getDefaultAccountId();
   if (defaultId == null) {
     throw StateError('default_account_id not set; seed did not run');
   }

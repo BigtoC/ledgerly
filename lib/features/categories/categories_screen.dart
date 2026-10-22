@@ -14,6 +14,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../data/models/category.dart';
 import '../../data/repositories/category_repository.dart';
@@ -23,6 +24,7 @@ import 'categories_state.dart';
 import 'widgets/category_form_sheet.dart';
 import 'widgets/category_tile.dart';
 
+@Dependencies([CategoriesController])
 class CategoriesScreen extends ConsumerWidget {
   const CategoriesScreen({super.key});
 
@@ -51,6 +53,7 @@ class CategoriesScreen extends ConsumerWidget {
   }
 }
 
+@Dependencies([CategoriesController])
 class _CategoriesBody extends StatelessWidget {
   const _CategoriesBody({required this.data});
 
@@ -84,6 +87,7 @@ class _SectionHeader extends StatelessWidget {
   );
 }
 
+@Dependencies([CategoriesController])
 class _Section extends ConsumerWidget {
   const _Section({required this.type, required this.rows, required this.l10n});
 

@@ -7,18 +7,62 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
+import 'package:ledgerly/app/providers/default_currency_provider.dart';
+import 'package:ledgerly/app/providers/locale_provider.dart';
+import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/app/router.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
+import 'package:ledgerly/app/providers/theme_provider.dart';
 import 'package:ledgerly/app/widgets/adaptive_shell.dart';
 import 'package:ledgerly/features/accounts/account_form_screen.dart';
 import 'package:ledgerly/features/analysis/analysis_screen.dart';
+import 'package:ledgerly/features/analysis/charts/charts_controller.dart';
+import 'package:ledgerly/features/analysis/charts/charts_providers.dart';
+import 'package:ledgerly/features/analysis/charts/charts_selection_controller.dart';
+import 'package:ledgerly/features/analysis/charts/slice_drilldown_controller.dart';
+import 'package:ledgerly/features/analysis/search/analysis_controller.dart';
+import 'package:ledgerly/features/analysis/search/analysis_providers.dart';
+import 'package:ledgerly/features/home/home_controller.dart';
 import 'package:ledgerly/features/home/home_screen.dart';
+import 'package:ledgerly/features/home/pending_controller.dart';
+import 'package:ledgerly/features/shopping_list/shopping_list_controller.dart';
+import 'package:ledgerly/features/shopping_list/shopping_list_providers.dart';
 import 'package:ledgerly/features/shopping_list/shopping_list_screen.dart';
+import 'package:ledgerly/features/splash/splash_controller.dart';
 import 'package:ledgerly/features/splash/splash_screen.dart';
 
 import '../../support/test_app.dart';
 
+@Dependencies([
+  router,
+  splashGateSnapshot,
+  splashStartDate,
+  splashClock,
+  SplashController,
+  HomeController,
+  PendingController,
+  shoppingListTotalCount,
+  initialDefaultCurrency,
+  defaultCurrency,
+  ShoppingListController,
+  shoppingListCategoryById,
+  shoppingListAccountById,
+  shoppingListCurrencyByCode,
+  AnalysisController,
+  ChartsSelectionController,
+  ChartsController,
+  chartsCurrenciesByCode,
+  SliceDrilldownController,
+  analysisCategoriesById,
+  analysisAccountsById,
+  chartsFxStatus,
+  exchangeRates,
+  themeMode,
+  userLocalePreference,
+  exchangeRateRepository,
+])
 void main() {
   group('router redirect', () {
     testWidgets('splashEnabled=true: / → /splash', (tester) async {

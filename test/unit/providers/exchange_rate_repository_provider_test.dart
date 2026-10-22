@@ -9,6 +9,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/bootstrap.dart';
 import 'package:ledgerly/app/providers/app_database_provider.dart';
@@ -20,6 +21,7 @@ import '../../support/test_app.dart';
 
 class _MockExchangeRateService extends Mock implements ExchangeRateService {}
 
+@Dependencies([exchangeRateRepository])
 void main() {
   test('each default-currency value triggers a rate refresh', () async {
     final db = newTestAppDatabase();

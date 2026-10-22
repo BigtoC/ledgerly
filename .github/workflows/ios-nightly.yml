@@ -1,9 +1,19 @@
 name: iOS nightly build
 
-# Nightly iOS build so iOS-only breakage never surprises us at release
-# time (see implementation-plan.md risk #12).
+# iOS debug build so iOS-only breakage never surprises us at release
+# time (see implementation-plan.md risk #12). Despite the name it is not
+# scheduled. It runs on demand and on PRs that change dependencies or
+# ios/, because a package upgrade can change which native code ends up
+# in Runner.app.
 
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - 'ios/**'
+      - '.github/workflows/ios-nightly.yml'
   workflow_dispatch: {}
 
 jobs:
@@ -18,9 +28,17 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: 3.44.0
+          flutter-version: 3.47.7
           cache: true
 
       - run: flutter pub get
       - run: dart run build_runner build --delete-conflicting-outputs
       - run: flutter build ios --no-codesign --debug
+
+      - name: Check SQLite is embedded
+        # sqlite3 3.x ships SQLite as a build-hook code asset, and Flutter
+        # embeds libsqlite3.dylib as sqlite3.framework. Without it the app
+        # cannot open its database at startup.
+        run: |
+          ls build/ios/iphoneos/Runner.app/Frameworks
+          test -f build/ios/iphoneos/Runner.app/Frameworks/sqlite3.framework/sqlite3

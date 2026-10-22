@@ -20,6 +20,7 @@ import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/core/constants.dart';
@@ -45,6 +46,7 @@ Transaction _tx({required int id, required DateTime date}) => Transaction(
   updatedAt: DateTime.utc(0),
 );
 
+@Dependencies([HomeController])
 void main() {
   setUpAll(() {
     registerFallbackValue(DateTime(2026, 1, 1));
@@ -69,15 +71,12 @@ void main() {
       monthNetCtrl = StreamController<Map<String, int>>.broadcast();
 
       when(() => repo.watchByDay(any())).thenAnswer((_) => dayCtrl.stream);
-      when(
-        () => repo.watchDaysWithActivity(),
-      ).thenAnswer((_) => activityCtrl.stream);
-      when(
-        () => repo.watchDailyTotalsByType(any()),
-      ).thenAnswer((_) => todayTotalsCtrl.stream);
-      when(
-        () => repo.watchMonthNetByCurrency(any()),
-      ).thenAnswer((_) => monthNetCtrl.stream);
+      when(() => repo.watchDaysWithActivity())
+          .thenAnswer((_) => activityCtrl.stream);
+      when(() => repo.watchDailyTotalsByType(any()))
+          .thenAnswer((_) => todayTotalsCtrl.stream);
+      when(() => repo.watchMonthNetByCurrency(any()))
+          .thenAnswer((_) => monthNetCtrl.stream);
     });
 
     tearDown(() async {
@@ -93,6 +92,7 @@ void main() {
       );
     }
 
+    @Dependencies([HomeController])
     Future<HomeState> waitForNon(
       ProviderContainer c,
       bool Function(HomeState) accept,
@@ -297,49 +297,43 @@ void main() {
       expect((after as HomeData).selectedDay, todayMidnight);
     });
 
-    test(
-      'H02d: first-run empty: no history → HomeEmpty; non-empty + empty day → HomeData with []',
-      () async {
-        // Part 1: no history at all → HomeEmpty
-        final container1 = makeContainer();
-        addTearDown(container1.dispose);
-        container1.listen(homeControllerProvider, (_, _) {});
+    test('H02d: first-run empty: no history → HomeEmpty; non-empty + empty day → HomeData with []', () async {
+      // Part 1: no history at all → HomeEmpty
+      final container1 = makeContainer();
+      addTearDown(container1.dispose);
+      container1.listen(homeControllerProvider, (_, _) {});
 
-        await Future<void>.delayed(Duration.zero);
-        dayCtrl.add(const []);
-        activityCtrl.add(const []);
-        todayTotalsCtrl.add(const {});
-        monthNetCtrl.add(const {});
+      await Future<void>.delayed(Duration.zero);
+      dayCtrl.add(const []);
+      activityCtrl.add(const []);
+      todayTotalsCtrl.add(const {});
+      monthNetCtrl.add(const {});
 
-        final emptyState = await waitForNon(container1, (s) => s is HomeEmpty);
-        expect(emptyState, isA<HomeEmpty>());
-      },
-    );
+      final emptyState = await waitForNon(container1, (s) => s is HomeEmpty);
+      expect(emptyState, isA<HomeEmpty>());
+    });
 
-    test(
-      'H02e: history exists but selected day has no rows → HomeData with empty list',
-      () async {
-        final container = makeContainer();
-        addTearDown(container.dispose);
-        container.listen(homeControllerProvider, (_, _) {});
+    test('H02e: history exists but selected day has no rows → HomeData with empty list', () async {
+      final container = makeContainer();
+      addTearDown(container.dispose);
+      container.listen(homeControllerProvider, (_, _) {});
 
-        final today = DateTime.now();
-        final todayMidnight = DateTime(today.year, today.month, today.day);
-        final yesterday = todayMidnight.subtract(const Duration(days: 1));
+      final today = DateTime.now();
+      final todayMidnight = DateTime(today.year, today.month, today.day);
+      final yesterday = todayMidnight.subtract(const Duration(days: 1));
 
-        await Future<void>.delayed(Duration.zero);
-        dayCtrl.add(const []); // today is empty
-        activityCtrl.add([yesterday]); // but yesterday has activity
-        todayTotalsCtrl.add(const {});
-        monthNetCtrl.add(const {});
+      await Future<void>.delayed(Duration.zero);
+      dayCtrl.add(const []); // today is empty
+      activityCtrl.add([yesterday]); // but yesterday has activity
+      todayTotalsCtrl.add(const {});
+      monthNetCtrl.add(const {});
 
-        final state = await waitForNon(container, (s) => s is HomeData);
-        final data = state as HomeData;
-        expect(data.transactionsForDay, isEmpty);
-        expect(data.canGoPrev, isTrue); // yesterday exists
-        expect(data.canGoNext, isFalse); // capped at today
-      },
-    );
+      final state = await waitForNon(container, (s) => s is HomeData);
+      final data = state as HomeData;
+      expect(data.transactionsForDay, isEmpty);
+      expect(data.canGoPrev, isTrue); // yesterday exists
+      expect(data.canGoNext, isFalse); // capped at today
+    });
 
     test('H04: today is selected by default even on a gap day', () async {
       final container = makeContainer();
@@ -370,46 +364,43 @@ void main() {
       expect(data.canGoNext, isFalse);
     });
 
-    test(
-      'H05: deleteTransaction sets pendingDelete; timer expiry calls repo.delete',
-      () async {
-        final container = makeContainer();
-        addTearDown(container.dispose);
-        container.listen(homeControllerProvider, (_, _) {});
+    test('H05: deleteTransaction sets pendingDelete; timer expiry calls repo.delete', () async {
+      final container = makeContainer();
+      addTearDown(container.dispose);
+      container.listen(homeControllerProvider, (_, _) {});
 
-        when(() => repo.delete(any())).thenAnswer((_) async => true);
+      when(() => repo.delete(any())).thenAnswer((_) async => true);
 
-        final todayMidnight = DateTime.now();
-        final today = DateTime(
-          todayMidnight.year,
-          todayMidnight.month,
-          todayMidnight.day,
-        );
+      final todayMidnight = DateTime.now();
+      final today = DateTime(
+        todayMidnight.year,
+        todayMidnight.month,
+        todayMidnight.day,
+      );
 
-        final tx = _tx(id: 42, date: today);
-        await Future<void>.delayed(Duration.zero);
-        emitBase(rows: [tx], days: [today]);
-        await waitForNon(container, (s) => s is HomeData);
+      final tx = _tx(id: 42, date: today);
+      await Future<void>.delayed(Duration.zero);
+      emitBase(rows: [tx], days: [today]);
+      await waitForNon(container, (s) => s is HomeData);
 
-        fakeAsync((async) {
-          container
-              .read(homeControllerProvider.notifier)
-              .deleteTransaction(tx.id);
-          async.flushMicrotasks();
+      fakeAsync((async) {
+        container
+            .read(homeControllerProvider.notifier)
+            .deleteTransaction(tx.id);
+        async.flushMicrotasks();
 
-          final pending =
-              container.read(homeControllerProvider).requireValue as HomeData;
-          expect(pending.pendingDelete!.transaction.id, tx.id);
-          expect(pending.transactionsForDay, isEmpty);
-          verifyNever(() => repo.delete(any()));
+        final pending =
+            container.read(homeControllerProvider).requireValue as HomeData;
+        expect(pending.pendingDelete!.transaction.id, tx.id);
+        expect(pending.transactionsForDay, isEmpty);
+        verifyNever(() => repo.delete(any()));
 
-          async.elapse(kUndoWindow + const Duration(milliseconds: 1));
-          async.flushMicrotasks();
-        });
+        async.elapse(kUndoWindow + const Duration(milliseconds: 1));
+        async.flushMicrotasks();
+      });
 
-        verify(() => repo.delete(tx.id)).called(1);
-      },
-    );
+      verify(() => repo.delete(tx.id)).called(1);
+    });
 
     test(
       'H05b: expired delete stays hidden until repository removal completes',
@@ -419,9 +410,8 @@ void main() {
         container.listen(homeControllerProvider, (_, _) {});
 
         final deleteCompleter = Completer<bool>();
-        when(
-          () => repo.delete(any()),
-        ).thenAnswer((_) => deleteCompleter.future);
+        when(() => repo.delete(any()))
+            .thenAnswer((_) => deleteCompleter.future);
 
         final now = DateTime.now();
         final today = DateTime(now.year, now.month, now.day);
@@ -462,9 +452,8 @@ void main() {
         addTearDown(container.dispose);
         container.listen(homeControllerProvider, (_, _) {});
 
-        when(
-          () => repo.delete(any()),
-        ).thenAnswer((_) async => throw StateError('boom'));
+        when(() => repo.delete(any()))
+            .thenAnswer((_) async => throw StateError('boom'));
 
         final now = DateTime.now();
         final today = DateTime(now.year, now.month, now.day);
@@ -580,41 +569,38 @@ void main() {
       },
     );
 
-    test(
-      'H07b: second delete keeps the first row hidden until day stream catches up',
-      () async {
-        final container = makeContainer();
-        addTearDown(container.dispose);
-        container.listen(homeControllerProvider, (_, _) {});
+    test('H07b: second delete keeps the first row hidden until day stream catches up', () async {
+      final container = makeContainer();
+      addTearDown(container.dispose);
+      container.listen(homeControllerProvider, (_, _) {});
 
-        when(() => repo.delete(any())).thenAnswer((_) async => true);
+      when(() => repo.delete(any())).thenAnswer((_) async => true);
 
-        final now = DateTime.now();
-        final today = DateTime(now.year, now.month, now.day);
-        final tx1 = _tx(id: 1, date: today);
-        final tx2 = _tx(id: 2, date: today);
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final tx1 = _tx(id: 1, date: today);
+      final tx2 = _tx(id: 2, date: today);
 
-        await Future<void>.delayed(Duration.zero);
-        emitBase(rows: [tx1, tx2], days: [today]);
-        await waitForNon(container, (s) => s is HomeData);
+      await Future<void>.delayed(Duration.zero);
+      emitBase(rows: [tx1, tx2], days: [today]);
+      await waitForNon(container, (s) => s is HomeData);
 
-        await container
-            .read(homeControllerProvider.notifier)
-            .deleteTransaction(1);
-        await Future<void>.delayed(Duration.zero);
-        await container
-            .read(homeControllerProvider.notifier)
-            .deleteTransaction(2);
-        await Future<void>.delayed(Duration.zero);
+      await container
+          .read(homeControllerProvider.notifier)
+          .deleteTransaction(1);
+      await Future<void>.delayed(Duration.zero);
+      await container
+          .read(homeControllerProvider.notifier)
+          .deleteTransaction(2);
+      await Future<void>.delayed(Duration.zero);
 
-        final pendingSecond = await waitForNon(
-          container,
-          (s) => s is HomeData && s.pendingDelete?.transaction.id == 2,
-        );
+      final pendingSecond = await waitForNon(
+        container,
+        (s) => s is HomeData && s.pendingDelete?.transaction.id == 2,
+      );
 
-        expect((pendingSecond as HomeData).transactionsForDay, isEmpty);
-      },
-    );
+      expect((pendingSecond as HomeData).transactionsForDay, isEmpty);
+    });
 
     test(
       'H07c: failed first commit restores rows and aborts the second delete',
@@ -628,9 +614,8 @@ void main() {
             .read(homeControllerProvider.notifier)
             .setEffectListener(effects.add);
 
-        when(
-          () => repo.delete(1),
-        ).thenAnswer((_) async => throw StateError('boom'));
+        when(() => repo.delete(1))
+            .thenAnswer((_) async => throw StateError('boom'));
         when(() => repo.delete(2)).thenAnswer((_) async => true);
 
         final now = DateTime.now();

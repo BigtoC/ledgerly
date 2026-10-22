@@ -49,7 +49,7 @@ abstract class _$RecurringRulesController
   Stream<RecurringRulesState> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<RecurringRulesState>, RecurringRulesState>;
     final element =
@@ -60,6 +60,6 @@ abstract class _$RecurringRulesController
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

@@ -6,12 +6,21 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
+import '../../../app/providers/default_currency_provider.dart';
+import '../../../app/providers/repository_providers.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../accounts/accounts_controller.dart';
 import '../../accounts/accounts_state.dart';
 import 'manage_accounts_sheet.dart';
 
+@Dependencies([
+  AccountsController,
+  exchangeRates,
+  initialDefaultCurrency,
+  defaultCurrency,
+])
 class ManageAccountsTile extends ConsumerWidget {
   const ManageAccountsTile({super.key});
 

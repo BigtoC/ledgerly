@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'transaction_form_state.dart';
@@ -9,6 +9,7 @@ part of 'transaction_form_state.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -27,16 +28,21 @@ $TransactionFormStateCopyWith<TransactionFormState> get copyWith => _$Transactio
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TransactionFormState&&(identical(other.formMode, formMode) || other.formMode == formMode));
+  final _this = this as TransactionFormState;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TransactionFormState&&(identical(other.formMode, _this.formMode) || other.formMode == _this.formMode));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,formMode);
+int get hashCode {
+  final _this = this as TransactionFormState;
+  return Object.hash(runtimeType,_this.formMode);
+}
 
 @override
 String toString() {
-  return 'TransactionFormState(formMode: $formMode)';
+  final _this = this as TransactionFormState;
+  return 'TransactionFormState(formMode: ${_this.formMode})';
 }
 
 
@@ -235,16 +241,18 @@ $TransactionFormLoadingCopyWith<TransactionFormLoading> get copyWith => _$Transa
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TransactionFormLoading&&(identical(other.formMode, formMode) || other.formMode == formMode));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is TransactionFormLoading&&(identical(other.formMode, formMode) || other.formMode == formMode));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,formMode);
+int get hashCode {
+    return Object.hash(runtimeType,formMode);
+}
 
 @override
 String toString() {
-  return 'TransactionFormState.loading(formMode: $formMode)';
+    return 'TransactionFormState.loading(formMode: $formMode)';
 }
 
 
@@ -302,16 +310,18 @@ $TransactionFormEmptyCopyWith<TransactionFormEmpty> get copyWith => _$Transactio
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TransactionFormEmpty&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.formMode, formMode) || other.formMode == formMode));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is TransactionFormEmpty&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.formMode, formMode) || other.formMode == formMode));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,reason,formMode);
+int get hashCode {
+    return Object.hash(runtimeType,reason,formMode);
+}
 
 @override
 String toString() {
-  return 'TransactionFormState.empty(reason: $reason, formMode: $formMode)';
+    return 'TransactionFormState.empty(reason: $reason, formMode: $formMode)';
 }
 
 
@@ -430,16 +440,18 @@ $TransactionFormDataCopyWith<TransactionFormData> get copyWith => _$TransactionF
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TransactionFormData&&(identical(other.formMode, formMode) || other.formMode == formMode)&&(identical(other.amountMinorUnits, amountMinorUnits) || other.amountMinorUnits == amountMinorUnits)&&(identical(other.keypad, keypad) || other.keypad == keypad)&&(identical(other.selectedAccount, selectedAccount) || other.selectedAccount == selectedAccount)&&(identical(other.displayCurrency, displayCurrency) || other.displayCurrency == displayCurrency)&&(identical(other.currencyTouched, currencyTouched) || other.currencyTouched == currencyTouched)&&(identical(other.selectedCategory, selectedCategory) || other.selectedCategory == selectedCategory)&&(identical(other.pendingType, pendingType) || other.pendingType == pendingType)&&(identical(other.date, date) || other.date == date)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.isDirty, isDirty) || other.isDirty == isDirty)&&(identical(other.isSaving, isSaving) || other.isSaving == isSaving)&&(identical(other.isDeleting, isDeleting) || other.isDeleting == isDeleting)&&(identical(other.editingId, editingId) || other.editingId == editingId)&&(identical(other.duplicateSourceId, duplicateSourceId) || other.duplicateSourceId == duplicateSourceId)&&(identical(other.originalCreatedAt, originalCreatedAt) || other.originalCreatedAt == originalCreatedAt)&&(identical(other.keypadRevision, keypadRevision) || other.keypadRevision == keypadRevision)&&(identical(other.shoppingListItemId, shoppingListItemId) || other.shoppingListItemId == shoppingListItemId)&&(identical(other.submissionAction, submissionAction) || other.submissionAction == submissionAction)&&(identical(other.selectedAccountIsArchived, selectedAccountIsArchived) || other.selectedAccountIsArchived == selectedAccountIsArchived)&&(identical(other.selectedCategoryIsArchived, selectedCategoryIsArchived) || other.selectedCategoryIsArchived == selectedCategoryIsArchived));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is TransactionFormData&&(identical(other.formMode, formMode) || other.formMode == formMode)&&(identical(other.amountMinorUnits, amountMinorUnits) || other.amountMinorUnits == amountMinorUnits)&&(identical(other.keypad, keypad) || other.keypad == keypad)&&(identical(other.selectedAccount, selectedAccount) || other.selectedAccount == selectedAccount)&&(identical(other.displayCurrency, displayCurrency) || other.displayCurrency == displayCurrency)&&(identical(other.currencyTouched, currencyTouched) || other.currencyTouched == currencyTouched)&&(identical(other.selectedCategory, selectedCategory) || other.selectedCategory == selectedCategory)&&(identical(other.pendingType, pendingType) || other.pendingType == pendingType)&&(identical(other.date, date) || other.date == date)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.isDirty, isDirty) || other.isDirty == isDirty)&&(identical(other.isSaving, isSaving) || other.isSaving == isSaving)&&(identical(other.isDeleting, isDeleting) || other.isDeleting == isDeleting)&&(identical(other.editingId, editingId) || other.editingId == editingId)&&(identical(other.duplicateSourceId, duplicateSourceId) || other.duplicateSourceId == duplicateSourceId)&&(identical(other.originalCreatedAt, originalCreatedAt) || other.originalCreatedAt == originalCreatedAt)&&(identical(other.keypadRevision, keypadRevision) || other.keypadRevision == keypadRevision)&&(identical(other.shoppingListItemId, shoppingListItemId) || other.shoppingListItemId == shoppingListItemId)&&(identical(other.submissionAction, submissionAction) || other.submissionAction == submissionAction)&&(identical(other.selectedAccountIsArchived, selectedAccountIsArchived) || other.selectedAccountIsArchived == selectedAccountIsArchived)&&(identical(other.selectedCategoryIsArchived, selectedCategoryIsArchived) || other.selectedCategoryIsArchived == selectedCategoryIsArchived));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,formMode,amountMinorUnits,keypad,selectedAccount,displayCurrency,currencyTouched,selectedCategory,pendingType,date,memo,isDirty,isSaving,isDeleting,editingId,duplicateSourceId,originalCreatedAt,keypadRevision,shoppingListItemId,submissionAction,selectedAccountIsArchived,selectedCategoryIsArchived]);
+int get hashCode {
+    return Object.hashAll([runtimeType,formMode,amountMinorUnits,keypad,selectedAccount,displayCurrency,currencyTouched,selectedCategory,pendingType,date,memo,isDirty,isSaving,isDeleting,editingId,duplicateSourceId,originalCreatedAt,keypadRevision,shoppingListItemId,submissionAction,selectedAccountIsArchived,selectedCategoryIsArchived]);
+}
 
 @override
 String toString() {
-  return 'TransactionFormState.data(formMode: $formMode, amountMinorUnits: $amountMinorUnits, keypad: $keypad, selectedAccount: $selectedAccount, displayCurrency: $displayCurrency, currencyTouched: $currencyTouched, selectedCategory: $selectedCategory, pendingType: $pendingType, date: $date, memo: $memo, isDirty: $isDirty, isSaving: $isSaving, isDeleting: $isDeleting, editingId: $editingId, duplicateSourceId: $duplicateSourceId, originalCreatedAt: $originalCreatedAt, keypadRevision: $keypadRevision, shoppingListItemId: $shoppingListItemId, submissionAction: $submissionAction, selectedAccountIsArchived: $selectedAccountIsArchived, selectedCategoryIsArchived: $selectedCategoryIsArchived)';
+    return 'TransactionFormState.data(formMode: $formMode, amountMinorUnits: $amountMinorUnits, keypad: $keypad, selectedAccount: $selectedAccount, displayCurrency: $displayCurrency, currencyTouched: $currencyTouched, selectedCategory: $selectedCategory, pendingType: $pendingType, date: $date, memo: $memo, isDirty: $isDirty, isSaving: $isSaving, isDeleting: $isDeleting, editingId: $editingId, duplicateSourceId: $duplicateSourceId, originalCreatedAt: $originalCreatedAt, keypadRevision: $keypadRevision, shoppingListItemId: $shoppingListItemId, submissionAction: $submissionAction, selectedAccountIsArchived: $selectedAccountIsArchived, selectedCategoryIsArchived: $selectedCategoryIsArchived)';
 }
 
 
@@ -554,16 +566,18 @@ $TransactionFormErrorCopyWith<TransactionFormError> get copyWith => _$Transactio
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TransactionFormError&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.stack, stack) || other.stack == stack)&&(identical(other.formMode, formMode) || other.formMode == formMode));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is TransactionFormError&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.stack, stack) || other.stack == stack)&&(identical(other.formMode, formMode) || other.formMode == formMode));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(error),stack,formMode);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(error),stack,formMode);
+}
 
 @override
 String toString() {
-  return 'TransactionFormState.error(error: $error, stack: $stack, formMode: $formMode)';
+    return 'TransactionFormState.error(error: $error, stack: $stack, formMode: $formMode)';
 }
 
 

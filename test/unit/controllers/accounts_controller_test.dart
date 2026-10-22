@@ -19,6 +19,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/account.dart';
@@ -49,6 +50,7 @@ Account _a({
   isArchived: isArchived,
 );
 
+@Dependencies([AccountsController])
 void main() {
   setUpAll(() {
     registerFallbackValue(_a(id: 0, name: '_'));
@@ -68,12 +70,10 @@ void main() {
       defaultCtrl = StreamController<int?>.broadcast();
       balanceCtrls.clear();
 
-      when(
-        () => accountRepo.watchAll(includeArchived: true),
-      ).thenAnswer((_) => accountsCtrl.stream);
-      when(
-        () => prefs.watchDefaultAccountId(),
-      ).thenAnswer((_) => defaultCtrl.stream);
+      when(() => accountRepo.watchAll(includeArchived: true))
+          .thenAnswer((_) => accountsCtrl.stream);
+      when(() => prefs.watchDefaultAccountId())
+          .thenAnswer((_) => defaultCtrl.stream);
       when(() => accountRepo.watchIsReferenced(any())).thenAnswer((inv) {
         final id = inv.positionalArguments.first as int;
         final balance = balanceCtrls.putIfAbsent(
@@ -82,9 +82,8 @@ void main() {
         );
         return balance.stream.asyncMap((_) => accountRepo.isReferenced(id));
       });
-      when(
-        () => accountRepo.isReferenced(any()),
-      ).thenAnswer((_) async => false);
+      when(() => accountRepo.isReferenced(any()))
+          .thenAnswer((_) async => false);
       when(() => accountRepo.watchBalanceByCurrency(any())).thenAnswer((inv) {
         final id = inv.positionalArguments.first as int;
         final c = balanceCtrls.putIfAbsent(
@@ -112,6 +111,7 @@ void main() {
       );
     }
 
+    @Dependencies([AccountsController])
     Future<AccountsState> waitForData(ProviderContainer c) async {
       for (var i = 0; i < 200; i++) {
         final s = c.read(accountsControllerProvider);

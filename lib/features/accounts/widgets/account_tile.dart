@@ -16,6 +16,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../app/providers/default_currency_provider.dart';
 import '../../../app/providers/repository_providers.dart';
@@ -28,6 +29,7 @@ import '../../../l10n/app_localizations.dart';
 import '../accounts_providers.dart';
 import '../accounts_state.dart';
 
+@Dependencies([exchangeRates, initialDefaultCurrency, defaultCurrency])
 class AccountTile extends ConsumerWidget {
   const AccountTile({
     super.key,
@@ -139,9 +141,8 @@ class AccountTile extends ConsumerWidget {
           ),
           AccountRowAffordance.archiveBlocked => SlidableAction(
             onPressed: (_) => onArchiveBlocked(),
-            backgroundColor: Theme.of(
-              context,
-            ).disabledColor.withValues(alpha: 0.24),
+            backgroundColor: Theme.of(context).disabledColor
+                .withValues(alpha: 0.24),
             foregroundColor: Theme.of(context).colorScheme.onSurface,
             icon: Icons.archive_outlined,
             label: l10n.accountsArchiveAction,
@@ -260,9 +261,8 @@ class AccountTile extends ConsumerWidget {
       lines.add(
         Text(
           l10n.accountsBalanceMore(overflowCount),
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
+          style: Theme.of(context).textTheme.bodySmall
+              ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       );
     }
@@ -284,9 +284,8 @@ class AccountTile extends ConsumerWidget {
           excludeSemantics: true,
           child: Text(
             '≈ $convertedTotalFormatted ${l10n.convertedTotalLabel}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.outline,
-            ),
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(color: Theme.of(context).colorScheme.outline),
           ),
         ),
       );

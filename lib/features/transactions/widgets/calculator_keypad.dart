@@ -178,9 +178,8 @@ class _OperatorKey extends StatelessWidget {
                   child: Text(
                     label,
                     textScaler: clamped,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: colors.onPrimaryContainer,
-                    ),
+                    style: Theme.of(context).textTheme.titleLarge
+                        ?.copyWith(color: colors.onPrimaryContainer),
                   ),
                 ),
               ),

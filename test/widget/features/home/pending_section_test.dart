@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:go_router/go_router.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/account.dart';
@@ -17,6 +18,7 @@ import 'package:ledgerly/data/models/pending_transaction.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/pending_transaction_repository.dart';
+import 'package:ledgerly/features/home/home_controller.dart';
 import 'package:ledgerly/features/home/pending_controller.dart';
 import 'package:ledgerly/features/home/pending_state.dart';
 import 'package:ledgerly/features/home/widgets/pending_section.dart';
@@ -57,6 +59,7 @@ class _FakeController extends PendingController {
   }
 }
 
+@Dependencies([PendingController, HomeController])
 Widget _wrap(ProviderContainer container) {
   return UncontrolledProviderScope(
     container: container,
@@ -82,30 +85,27 @@ ProviderContainer _makeContainer(PendingState fixed) {
   final catRepo = _MockCategoryRepo();
   final accRepo = _MockAccountRepo();
   when(() => repo.watchAll()).thenAnswer((_) => const Stream.empty());
-  when(
-    () => repo.approve(any()),
-  ).thenAnswer((_) async => throw UnimplementedError());
+  when(() => repo.approve(any()))
+      .thenAnswer((_) async => throw UnimplementedError());
   when(() => repo.reject(any())).thenAnswer((_) async {});
-  when(
-    () => catRepo.watchAll(includeArchived: any(named: 'includeArchived')),
-  ).thenAnswer(
-    (_) => Stream.value(<Category>[
-      const Category(
-        id: 1,
-        icon: 'restaurant',
-        color: 0,
-        type: CategoryType.expense,
-        l10nKey: 'category.food',
-      ),
-    ]),
-  );
-  when(
-    () => accRepo.watchAll(includeArchived: any(named: 'includeArchived')),
-  ).thenAnswer(
-    (_) => Stream.value(<Account>[
-      const Account(id: 1, name: 'Cash', accountTypeId: 1, currency: _usd),
-    ]),
-  );
+  when(() => catRepo.watchAll(includeArchived: any(named: 'includeArchived')))
+      .thenAnswer(
+        (_) => Stream.value(<Category>[
+          const Category(
+            id: 1,
+            icon: 'restaurant',
+            color: 0,
+            type: CategoryType.expense,
+            l10nKey: 'category.food',
+          ),
+        ]),
+      );
+  when(() => accRepo.watchAll(includeArchived: any(named: 'includeArchived')))
+      .thenAnswer(
+        (_) => Stream.value(<Account>[
+          const Account(id: 1, name: 'Cash', accountTypeId: 1, currency: _usd),
+        ]),
+      );
   return ProviderContainer(
     overrides: [
       pendingTransactionRepositoryProvider.overrideWithValue(repo),
@@ -116,6 +116,7 @@ ProviderContainer _makeContainer(PendingState fixed) {
   );
 }
 
+@Dependencies([PendingController, HomeController])
 void main() {
   testWidgets('PS01: PendingLoading renders SizedBox.shrink', (tester) async {
     final container = _makeContainer(const PendingState.loading());

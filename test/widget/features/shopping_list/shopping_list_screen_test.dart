@@ -18,6 +18,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/category.dart';
@@ -27,6 +28,7 @@ import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/shopping_list_repository.dart';
 import 'package:ledgerly/features/shopping_list/shopping_list_controller.dart';
+import 'package:ledgerly/features/shopping_list/shopping_list_providers.dart';
 import 'package:ledgerly/features/shopping_list/shopping_list_screen.dart';
 import 'package:ledgerly/features/shopping_list/shopping_list_state.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
@@ -93,6 +95,12 @@ class _StubRouter {
   }
 }
 
+@Dependencies([
+  ShoppingListController,
+  shoppingListCategoryById,
+  shoppingListAccountById,
+  shoppingListCurrencyByCode,
+])
 Widget _wrap({required ProviderContainer container}) {
   return UncontrolledProviderScope(
     container: container,
@@ -146,6 +154,12 @@ ProviderContainer _makeContainer({
   );
 }
 
+@Dependencies([
+  ShoppingListController,
+  shoppingListCategoryById,
+  shoppingListAccountById,
+  shoppingListCurrencyByCode,
+])
 void main() {
   testWidgets('SLS01: shows loading indicator in loading state', (
     tester,

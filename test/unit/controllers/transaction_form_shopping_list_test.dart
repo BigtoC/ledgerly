@@ -22,6 +22,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/account.dart';
@@ -128,6 +129,7 @@ Transaction _persistedTx({int id = 99, int amountMinorUnits = 1000}) {
   );
 }
 
+@Dependencies([TransactionFormController])
 void main() {
   setUpAll(() {
     // Register fallback values for mocktail argument matching.
@@ -153,12 +155,10 @@ void main() {
 
     // Default fallback stubs.
     when(() => prefs.getDefaultAccountId()).thenAnswer((_) async => null);
-    when(
-      () => accountRepo.getLastUsedActiveAccount(),
-    ).thenAnswer((_) async => null);
-    when(
-      () => accountRepo.watchAll(includeArchived: false),
-    ).thenAnswer((_) => Stream.value(const [_account]));
+    when(() => accountRepo.getLastUsedActiveAccount())
+        .thenAnswer((_) async => null);
+    when(() => accountRepo.watchAll(includeArchived: false))
+        .thenAnswer((_) => Stream.value(const [_account]));
     when(() => accountRepo.getById(any())).thenAnswer((inv) async {
       final id = inv.positionalArguments.first as int;
       if (id == _account.id) return _account;
@@ -178,9 +178,8 @@ void main() {
       if (code == 'JPY') return _jpy;
       return null;
     });
-    when(
-      () => currencyRepo.watchAll(),
-    ).thenAnswer((_) => Stream.value(const [_usd, _jpy]));
+    when(() => currencyRepo.watchAll())
+        .thenAnswer((_) => Stream.value(const [_usd, _jpy]));
   });
 
   ProviderContainer makeContainer() {
@@ -263,67 +262,64 @@ void main() {
     },
   );
 
-  group(
-    'TFSL03: saveDraft() in add mode calls insert and returns ShoppingListEditResultAddedToList',
-    () {
-      test('calls ShoppingListRepository.insert with form snapshot', () async {
-        when(
-          () => slRepo.insert(
-            categoryId: any(named: 'categoryId'),
-            accountId: any(named: 'accountId'),
-            memo: any(named: 'memo'),
-            draftAmountMinorUnits: any(named: 'draftAmountMinorUnits'),
-            draftCurrencyCode: any(named: 'draftCurrencyCode'),
-            draftDate: any(named: 'draftDate'),
-          ),
-        ).thenAnswer((_) async => _draft());
+  group('TFSL03: saveDraft() in add mode calls insert and returns ShoppingListEditResultAddedToList', () {
+    test('calls ShoppingListRepository.insert with form snapshot', () async {
+      when(
+        () => slRepo.insert(
+          categoryId: any(named: 'categoryId'),
+          accountId: any(named: 'accountId'),
+          memo: any(named: 'memo'),
+          draftAmountMinorUnits: any(named: 'draftAmountMinorUnits'),
+          draftCurrencyCode: any(named: 'draftCurrencyCode'),
+          draftDate: any(named: 'draftDate'),
+        ),
+      ).thenAnswer((_) async => _draft());
 
-        final c = makeContainer();
-        addTearDown(c.dispose);
-        final controller = c.read(transactionFormControllerProvider.notifier);
-        // Add mode hydration (not shopping list draft mode).
-        await controller.hydrateForAdd();
-        controller.selectCategory(_expenseCategory);
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+      // Add mode hydration (not shopping list draft mode).
+      await controller.hydrateForAdd();
+      controller.selectCategory(_expenseCategory);
 
-        final result = await controller.saveDraft();
+      final result = await controller.saveDraft();
 
-        // In add mode, saveDraft returns ShoppingListEditResultAddedToList
-        // so the screen can distinguish a successful add from a guard no-op.
-        expect(result, isA<ShoppingListEditResultAddedToList>());
-        verify(
-          () => slRepo.insert(
-            categoryId: _expenseCategory.id,
-            accountId: _account.id,
-            memo: null,
-            draftAmountMinorUnits: null,
-            draftCurrencyCode: null,
-            draftDate: any(named: 'draftDate'),
-          ),
-        ).called(1);
-        verifyNever(() => slRepo.update(any()));
-      });
+      // In add mode, saveDraft returns ShoppingListEditResultAddedToList
+      // so the screen can distinguish a successful add from a guard no-op.
+      expect(result, isA<ShoppingListEditResultAddedToList>());
+      verify(
+        () => slRepo.insert(
+          categoryId: _expenseCategory.id,
+          accountId: _account.id,
+          memo: null,
+          draftAmountMinorUnits: null,
+          draftCurrencyCode: null,
+          draftDate: any(named: 'draftDate'),
+        ),
+      ).called(1);
+      verifyNever(() => slRepo.update(any()));
+    });
 
-      test('saveDraft() returns null when canSaveDraft is false', () async {
-        final c = makeContainer();
-        addTearDown(c.dispose);
-        final controller = c.read(transactionFormControllerProvider.notifier);
-        await controller.hydrateForAdd();
-        // No category selected → canSaveDraft is false.
-        final result = await controller.saveDraft();
-        expect(result, isNull);
-        verifyNever(
-          () => slRepo.insert(
-            categoryId: any(named: 'categoryId'),
-            accountId: any(named: 'accountId'),
-            memo: any(named: 'memo'),
-            draftAmountMinorUnits: any(named: 'draftAmountMinorUnits'),
-            draftCurrencyCode: any(named: 'draftCurrencyCode'),
-            draftDate: any(named: 'draftDate'),
-          ),
-        );
-      });
-    },
-  );
+    test('saveDraft() returns null when canSaveDraft is false', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+      await controller.hydrateForAdd();
+      // No category selected → canSaveDraft is false.
+      final result = await controller.saveDraft();
+      expect(result, isNull);
+      verifyNever(
+        () => slRepo.insert(
+          categoryId: any(named: 'categoryId'),
+          accountId: any(named: 'accountId'),
+          memo: any(named: 'memo'),
+          draftAmountMinorUnits: any(named: 'draftAmountMinorUnits'),
+          draftCurrencyCode: any(named: 'draftCurrencyCode'),
+          draftDate: any(named: 'draftDate'),
+        ),
+      );
+    });
+  });
 
   group(
     'TFSL04: saveDraft() in edit mode calls update and returns savedDraft',
@@ -366,56 +362,53 @@ void main() {
     },
   );
 
-  group(
-    'TFSL05: convertDraft() calls convertToTransaction and returns savedTransaction',
-    () {
-      test(
-        'converts draft and returns ShoppingListEditResultSavedTransaction',
-        () async {
-          final draft = _draft(
-            id: 33,
+  group('TFSL05: convertDraft() calls convertToTransaction and returns savedTransaction', () {
+    test(
+      'converts draft and returns ShoppingListEditResultSavedTransaction',
+      () async {
+        final draft = _draft(
+          id: 33,
+          categoryId: _expenseCategory.id,
+          accountId: _account.id,
+          draftAmountMinorUnits: 2000,
+          draftCurrencyCode: 'USD',
+        );
+        when(() => slRepo.getById(33)).thenAnswer((_) async => draft);
+        final savedTx = _persistedTx(id: 200, amountMinorUnits: 2000);
+        when(
+          () => slRepo.convertToTransaction(
+            shoppingListItemId: any(named: 'shoppingListItemId'),
+            categoryId: any(named: 'categoryId'),
+            accountId: any(named: 'accountId'),
+            currencyCode: any(named: 'currencyCode'),
+            amountMinorUnits: any(named: 'amountMinorUnits'),
+            date: any(named: 'date'),
+            memo: any(named: 'memo'),
+          ),
+        ).thenAnswer((_) async => savedTx);
+
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+        await controller.hydrateForShoppingListDraft(33);
+
+        final result = await controller.convertDraft();
+
+        expect(result, isA<ShoppingListEditResultSavedTransaction>());
+        verify(
+          () => slRepo.convertToTransaction(
+            shoppingListItemId: 33,
             categoryId: _expenseCategory.id,
             accountId: _account.id,
-            draftAmountMinorUnits: 2000,
-            draftCurrencyCode: 'USD',
-          );
-          when(() => slRepo.getById(33)).thenAnswer((_) async => draft);
-          final savedTx = _persistedTx(id: 200, amountMinorUnits: 2000);
-          when(
-            () => slRepo.convertToTransaction(
-              shoppingListItemId: any(named: 'shoppingListItemId'),
-              categoryId: any(named: 'categoryId'),
-              accountId: any(named: 'accountId'),
-              currencyCode: any(named: 'currencyCode'),
-              amountMinorUnits: any(named: 'amountMinorUnits'),
-              date: any(named: 'date'),
-              memo: any(named: 'memo'),
-            ),
-          ).thenAnswer((_) async => savedTx);
-
-          final c = makeContainer();
-          addTearDown(c.dispose);
-          final controller = c.read(transactionFormControllerProvider.notifier);
-          await controller.hydrateForShoppingListDraft(33);
-
-          final result = await controller.convertDraft();
-
-          expect(result, isA<ShoppingListEditResultSavedTransaction>());
-          verify(
-            () => slRepo.convertToTransaction(
-              shoppingListItemId: 33,
-              categoryId: _expenseCategory.id,
-              accountId: _account.id,
-              currencyCode: 'USD',
-              amountMinorUnits: 2000,
-              date: any(named: 'date'),
-              memo: null,
-            ),
-          ).called(1);
-        },
-      );
-    },
-  );
+            currencyCode: 'USD',
+            amountMinorUnits: 2000,
+            date: any(named: 'date'),
+            memo: null,
+          ),
+        ).called(1);
+      },
+    );
+  });
 
   group('TFSL06: missing draft id emits draftNotFound', () {
     test('getById returns null → empty(draftNotFound)', () async {

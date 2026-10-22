@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/category.dart';
@@ -53,6 +54,7 @@ class _FakeCategoriesController extends CategoriesController {
   }
 }
 
+@Dependencies([CategoriesController])
 Widget _wrap({required ProviderContainer container, double textScale = 1.0}) {
   return UncontrolledProviderScope(
     container: container,
@@ -60,9 +62,8 @@ Widget _wrap({required ProviderContainer container, double textScale = 1.0}) {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(
-          context,
-        ).copyWith(textScaler: TextScaler.linear(textScale)),
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
       home: const CategoriesScreen(),
@@ -70,6 +71,7 @@ Widget _wrap({required ProviderContainer container, double textScale = 1.0}) {
   );
 }
 
+@Dependencies([CategoriesController])
 void main() {
   setUpAll(() {
     registerFallbackValue(
@@ -243,13 +245,11 @@ void main() {
   testWidgets('S06: archive action emits an undo snackbar', (tester) async {
     final repo = _MockCategoryRepository();
     final cat = _c(id: 9, type: CategoryType.expense, customName: 'Hobby');
-    when(
-      () => repo.archive(9),
-    ).thenAnswer((_) async => cat.copyWith(isArchived: true));
+    when(() => repo.archive(9))
+        .thenAnswer((_) async => cat.copyWith(isArchived: true));
     when(() => repo.getById(9)).thenAnswer((_) async => cat);
-    when(
-      () => repo.save(any()),
-    ).thenAnswer((inv) async => inv.positionalArguments.first as Category);
+    when(() => repo.save(any()))
+        .thenAnswer((inv) async => inv.positionalArguments.first as Category);
 
     final container = ProviderContainer(
       overrides: [

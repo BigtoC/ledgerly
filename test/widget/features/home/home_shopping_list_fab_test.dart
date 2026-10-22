@@ -16,7 +16,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
+import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/currency.dart';
 import 'package:ledgerly/data/models/transaction.dart';
@@ -26,6 +28,7 @@ import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/shopping_list_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/features/home/home_screen.dart';
+import 'package:ledgerly/features/home/pending_controller.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 // ── Mocks ─────────────────────────────────────────────────────────────────
@@ -72,6 +75,12 @@ GoRouter _buildRouter({required Widget homeWidget}) {
   );
 }
 
+@Dependencies([
+  PendingController,
+  initialDefaultCurrency,
+  defaultCurrency,
+  exchangeRates,
+])
 Widget _makeApp({
   required _MockTxRepo txRepo,
   required _MockCategoryRepo catRepo,
@@ -95,6 +104,12 @@ Widget _makeApp({
   );
 }
 
+@Dependencies([
+  PendingController,
+  initialDefaultCurrency,
+  defaultCurrency,
+  exchangeRates,
+])
 void main() {
   setUpAll(() {
     registerFallbackValue(DateTime(2026, 1, 1));
@@ -125,24 +140,18 @@ void main() {
     monthNetCtrl = StreamController.broadcast();
 
     when(() => txRepo.watchByDay(any())).thenAnswer((_) => dayCtrl.stream);
-    when(
-      () => txRepo.watchDaysWithActivity(),
-    ).thenAnswer((_) => activityCtrl.stream);
-    when(
-      () => txRepo.watchDailyTotalsByType(any()),
-    ).thenAnswer((_) => todayTotalsCtrl.stream);
-    when(
-      () => txRepo.watchMonthNetByCurrency(any()),
-    ).thenAnswer((_) => monthNetCtrl.stream);
-    when(
-      () => catRepo.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value([]));
-    when(
-      () => accRepo.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value([]));
-    when(
-      () => curRepo.watchAll(includeTokens: true),
-    ).thenAnswer((_) => Stream.value([_usd]));
+    when(() => txRepo.watchDaysWithActivity())
+        .thenAnswer((_) => activityCtrl.stream);
+    when(() => txRepo.watchDailyTotalsByType(any()))
+        .thenAnswer((_) => todayTotalsCtrl.stream);
+    when(() => txRepo.watchMonthNetByCurrency(any()))
+        .thenAnswer((_) => monthNetCtrl.stream);
+    when(() => catRepo.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([]));
+    when(() => accRepo.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([]));
+    when(() => curRepo.watchAll(includeTokens: true))
+        .thenAnswer((_) => Stream.value([_usd]));
   });
 
   tearDown(() async {

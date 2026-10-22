@@ -158,33 +158,30 @@ void main() {
   // -------------------------------------------------------------------------
 
   group('insert', () {
-    test(
-      'insert round-trips memo, amount, currency, date for an amount-bearing draft',
-      () async {
-        final date = DateTime(2026, 6, 15);
-        final item = await repo.insert(
-          categoryId: expenseCategoryId,
-          accountId: accountId,
-          memo: 'Groceries',
-          draftAmountMinorUnits: 2500,
-          draftCurrencyCode: 'USD',
-          draftDate: date,
-        );
+    test('insert round-trips memo, amount, currency, date for an amount-bearing draft', () async {
+      final date = DateTime(2026, 6, 15);
+      final item = await repo.insert(
+        categoryId: expenseCategoryId,
+        accountId: accountId,
+        memo: 'Groceries',
+        draftAmountMinorUnits: 2500,
+        draftCurrencyCode: 'USD',
+        draftDate: date,
+      );
 
-        expect(item.id, isNonZero);
-        expect(item.categoryId, expenseCategoryId);
-        expect(item.accountId, accountId);
-        expect(item.memo, 'Groceries');
-        expect(item.draftAmountMinorUnits, 2500);
-        expect(item.draftCurrencyCode, 'USD');
-        // Drift stores datetimes as Unix seconds; compare via same-moment.
-        expect(
-          item.draftDate.millisecondsSinceEpoch,
-          date.millisecondsSinceEpoch,
-        );
-        expect(item.createdAt, equals(item.updatedAt));
-      },
-    );
+      expect(item.id, isNonZero);
+      expect(item.categoryId, expenseCategoryId);
+      expect(item.accountId, accountId);
+      expect(item.memo, 'Groceries');
+      expect(item.draftAmountMinorUnits, 2500);
+      expect(item.draftCurrencyCode, 'USD');
+      // Drift stores datetimes as Unix seconds; compare via same-moment.
+      expect(
+        item.draftDate.millisecondsSinceEpoch,
+        date.millisecondsSinceEpoch,
+      );
+      expect(item.createdAt, equals(item.updatedAt));
+    });
 
     test(
       'insert zero-amount draft persists null amount/null currency',
@@ -200,53 +197,44 @@ void main() {
       },
     );
 
-    test(
-      'insert normalizes zero amount with currency to null amount/null currency',
-      () async {
-        final item = await repo.insert(
+    test('insert normalizes zero amount with currency to null amount/null currency', () async {
+      final item = await repo.insert(
+        categoryId: expenseCategoryId,
+        accountId: accountId,
+        draftAmountMinorUnits: 0,
+        draftCurrencyCode: 'USD',
+        draftDate: DateTime.utc(2026, 6, 1),
+      );
+
+      expect(item.draftAmountMinorUnits, isNull);
+      expect(item.draftCurrencyCode, isNull);
+    });
+
+    test('insert with amount but no currency throws ShoppingListRepositoryException', () async {
+      await expectLater(
+        repo.insert(
           categoryId: expenseCategoryId,
           accountId: accountId,
-          draftAmountMinorUnits: 0,
+          draftAmountMinorUnits: 100,
+          draftCurrencyCode: null,
+          draftDate: DateTime.utc(2026, 6, 1),
+        ),
+        throwsA(isA<ShoppingListRepositoryException>()),
+      );
+    });
+
+    test('insert with currency but no amount throws ShoppingListRepositoryException', () async {
+      await expectLater(
+        repo.insert(
+          categoryId: expenseCategoryId,
+          accountId: accountId,
+          draftAmountMinorUnits: null,
           draftCurrencyCode: 'USD',
           draftDate: DateTime.utc(2026, 6, 1),
-        );
-
-        expect(item.draftAmountMinorUnits, isNull);
-        expect(item.draftCurrencyCode, isNull);
-      },
-    );
-
-    test(
-      'insert with amount but no currency throws ShoppingListRepositoryException',
-      () async {
-        await expectLater(
-          repo.insert(
-            categoryId: expenseCategoryId,
-            accountId: accountId,
-            draftAmountMinorUnits: 100,
-            draftCurrencyCode: null,
-            draftDate: DateTime.utc(2026, 6, 1),
-          ),
-          throwsA(isA<ShoppingListRepositoryException>()),
-        );
-      },
-    );
-
-    test(
-      'insert with currency but no amount throws ShoppingListRepositoryException',
-      () async {
-        await expectLater(
-          repo.insert(
-            categoryId: expenseCategoryId,
-            accountId: accountId,
-            draftAmountMinorUnits: null,
-            draftCurrencyCode: 'USD',
-            draftDate: DateTime.utc(2026, 6, 1),
-          ),
-          throwsA(isA<ShoppingListRepositoryException>()),
-        );
-      },
-    );
+        ),
+        throwsA(isA<ShoppingListRepositoryException>()),
+      );
+    });
 
     test(
       'insert with income category throws ShoppingListRepositoryException',
@@ -268,64 +256,52 @@ void main() {
   // -------------------------------------------------------------------------
 
   group('update', () {
-    test(
-      'update with amount but no currency throws ShoppingListRepositoryException',
-      () async {
-        final item = await repo.insert(
-          categoryId: expenseCategoryId,
-          accountId: accountId,
-          draftDate: DateTime.utc(2026, 6, 1),
-        );
+    test('update with amount but no currency throws ShoppingListRepositoryException', () async {
+      final item = await repo.insert(
+        categoryId: expenseCategoryId,
+        accountId: accountId,
+        draftDate: DateTime.utc(2026, 6, 1),
+      );
 
-        await expectLater(
-          repo.update(
-            item.copyWith(draftAmountMinorUnits: 100, draftCurrencyCode: null),
-          ),
-          throwsA(isA<ShoppingListRepositoryException>()),
-        );
-      },
-    );
+      await expectLater(
+        repo.update(
+          item.copyWith(draftAmountMinorUnits: 100, draftCurrencyCode: null),
+        ),
+        throwsA(isA<ShoppingListRepositoryException>()),
+      );
+    });
 
-    test(
-      'update with currency but no amount throws ShoppingListRepositoryException',
-      () async {
-        final item = await repo.insert(
-          categoryId: expenseCategoryId,
-          accountId: accountId,
-          draftDate: DateTime.utc(2026, 6, 1),
-        );
+    test('update with currency but no amount throws ShoppingListRepositoryException', () async {
+      final item = await repo.insert(
+        categoryId: expenseCategoryId,
+        accountId: accountId,
+        draftDate: DateTime.utc(2026, 6, 1),
+      );
 
-        await expectLater(
-          repo.update(
-            item.copyWith(
-              draftAmountMinorUnits: null,
-              draftCurrencyCode: 'USD',
-            ),
-          ),
-          throwsA(isA<ShoppingListRepositoryException>()),
-        );
-      },
-    );
+      await expectLater(
+        repo.update(
+          item.copyWith(draftAmountMinorUnits: null, draftCurrencyCode: 'USD'),
+        ),
+        throwsA(isA<ShoppingListRepositoryException>()),
+      );
+    });
 
-    test(
-      'update normalizes zero amount with currency to null amount/null currency',
-      () async {
-        final item = await repo.insert(
-          categoryId: expenseCategoryId,
-          accountId: accountId,
-          draftAmountMinorUnits: 100,
-          draftCurrencyCode: 'USD',
-          draftDate: DateTime.utc(2026, 6, 1),
-        );
+    test('update normalizes zero amount with currency to null amount/null currency', () async {
+      final item = await repo.insert(
+        categoryId: expenseCategoryId,
+        accountId: accountId,
+        draftAmountMinorUnits: 100,
+        draftCurrencyCode: 'USD',
+        draftDate: DateTime.utc(2026, 6, 1),
+      );
 
-        final updated = await repo.update(
-          item.copyWith(draftAmountMinorUnits: 0, draftCurrencyCode: 'USD'),
-        );
+      final updated = await repo.update(
+        item.copyWith(draftAmountMinorUnits: 0, draftCurrencyCode: 'USD'),
+      );
 
-        expect(updated.draftAmountMinorUnits, isNull);
-        expect(updated.draftCurrencyCode, isNull);
-      },
-    );
+      expect(updated.draftAmountMinorUnits, isNull);
+      expect(updated.draftCurrencyCode, isNull);
+    });
 
     test(
       'update with income category throws ShoppingListRepositoryException',
@@ -343,24 +319,21 @@ void main() {
       },
     );
 
-    test(
-      'update when item id does not exist throws ShoppingListRepositoryException',
-      () async {
-        final item = await repo.insert(
-          categoryId: expenseCategoryId,
-          accountId: accountId,
-          draftDate: DateTime.utc(2026, 6, 1),
-        );
+    test('update when item id does not exist throws ShoppingListRepositoryException', () async {
+      final item = await repo.insert(
+        categoryId: expenseCategoryId,
+        accountId: accountId,
+        draftDate: DateTime.utc(2026, 6, 1),
+      );
 
-        // Delete the item so the update target is gone.
-        await repo.delete(item.id);
+      // Delete the item so the update target is gone.
+      await repo.delete(item.id);
 
-        await expectLater(
-          repo.update(item.copyWith(memo: 'ghost update')),
-          throwsA(isA<ShoppingListRepositoryException>()),
-        );
-      },
-    );
+      await expectLater(
+        repo.update(item.copyWith(memo: 'ghost update')),
+        throwsA(isA<ShoppingListRepositoryException>()),
+      );
+    });
 
     test('update preserves createdAt and refreshes updatedAt', () async {
       // Use local (non-UTC) times because Drift stores as Unix seconds
@@ -525,56 +498,50 @@ void main() {
   // -------------------------------------------------------------------------
 
   group('convertToTransaction', () {
-    test(
-      'convertToTransaction creates a transaction and deletes the draft atomically',
-      () async {
-        final item = await repo.insert(
-          categoryId: expenseCategoryId,
-          accountId: accountId,
-          memo: 'Atomics',
-          draftAmountMinorUnits: 1500,
-          draftCurrencyCode: 'USD',
-          draftDate: DateTime.utc(2026, 6, 1),
-        );
+    test('convertToTransaction creates a transaction and deletes the draft atomically', () async {
+      final item = await repo.insert(
+        categoryId: expenseCategoryId,
+        accountId: accountId,
+        memo: 'Atomics',
+        draftAmountMinorUnits: 1500,
+        draftCurrencyCode: 'USD',
+        draftDate: DateTime.utc(2026, 6, 1),
+      );
 
-        final tx = await repo.convertToTransaction(
-          shoppingListItemId: item.id,
+      final tx = await repo.convertToTransaction(
+        shoppingListItemId: item.id,
+        categoryId: expenseCategoryId,
+        accountId: accountId,
+        currencyCode: 'USD',
+        amountMinorUnits: 1500,
+        date: DateTime.utc(2026, 6, 1),
+        memo: 'Atomics',
+      );
+
+      expect(tx, isA<Transaction>());
+      expect(tx.amountMinorUnits, 1500);
+      expect(tx.currency.code, 'USD');
+      expect(tx.categoryId, expenseCategoryId);
+      expect(tx.accountId, accountId);
+      expect(tx.memo, 'Atomics');
+
+      // Draft must be deleted.
+      expect(await repo.getById(item.id), isNull);
+    });
+
+    test('convertToTransaction with missing draft throws ShoppingListRepositoryException', () async {
+      await expectLater(
+        repo.convertToTransaction(
+          shoppingListItemId: 99999,
           categoryId: expenseCategoryId,
           accountId: accountId,
           currencyCode: 'USD',
-          amountMinorUnits: 1500,
+          amountMinorUnits: 1000,
           date: DateTime.utc(2026, 6, 1),
-          memo: 'Atomics',
-        );
-
-        expect(tx, isA<Transaction>());
-        expect(tx.amountMinorUnits, 1500);
-        expect(tx.currency.code, 'USD');
-        expect(tx.categoryId, expenseCategoryId);
-        expect(tx.accountId, accountId);
-        expect(tx.memo, 'Atomics');
-
-        // Draft must be deleted.
-        expect(await repo.getById(item.id), isNull);
-      },
-    );
-
-    test(
-      'convertToTransaction with missing draft throws ShoppingListRepositoryException',
-      () async {
-        await expectLater(
-          repo.convertToTransaction(
-            shoppingListItemId: 99999,
-            categoryId: expenseCategoryId,
-            accountId: accountId,
-            currencyCode: 'USD',
-            amountMinorUnits: 1000,
-            date: DateTime.utc(2026, 6, 1),
-          ),
-          throwsA(isA<ShoppingListRepositoryException>()),
-        );
-      },
-    );
+        ),
+        throwsA(isA<ShoppingListRepositoryException>()),
+      );
+    });
 
     test(
       'convertToTransaction with zero amount throws and keeps the draft',
@@ -605,93 +572,84 @@ void main() {
       },
     );
 
-    test(
-      'convertToTransaction with archived account throws ShoppingListRepositoryException',
-      () async {
-        final archivedAccountId = await _insertAccountRaw(
-          db,
-          name: 'Archived Account',
-          archived: true,
-        );
+    test('convertToTransaction with archived account throws ShoppingListRepositoryException', () async {
+      final archivedAccountId = await _insertAccountRaw(
+        db,
+        name: 'Archived Account',
+        archived: true,
+      );
 
-        // Insert the draft referencing the normal account first (FK constraint
-        // would prevent using archived account directly here — we insert raw).
-        final itemId = await _insertShoppingListItemRaw(
-          db,
+      // Insert the draft referencing the normal account first (FK constraint
+      // would prevent using archived account directly here — we insert raw).
+      final itemId = await _insertShoppingListItemRaw(
+        db,
+        categoryId: expenseCategoryId,
+        accountId: accountId,
+        draftDate: DateTime.utc(2026, 6, 1),
+      );
+
+      await expectLater(
+        repo.convertToTransaction(
+          shoppingListItemId: itemId,
+          categoryId: expenseCategoryId,
+          accountId: archivedAccountId,
+          currencyCode: 'USD',
+          amountMinorUnits: 1000,
+          date: DateTime.utc(2026, 6, 1),
+        ),
+        throwsA(isA<ShoppingListRepositoryException>()),
+      );
+    });
+
+    test('convertToTransaction with archived category throws ShoppingListRepositoryException', () async {
+      // Archive the expense category.
+      await db.customStatement(
+        'UPDATE categories SET is_archived = 1 WHERE id = ?',
+        <Object?>[expenseCategoryId],
+      );
+
+      final itemId = await _insertShoppingListItemRaw(
+        db,
+        categoryId: expenseCategoryId,
+        accountId: accountId,
+        draftDate: DateTime.utc(2026, 6, 1),
+      );
+
+      await expectLater(
+        repo.convertToTransaction(
+          shoppingListItemId: itemId,
           categoryId: expenseCategoryId,
           accountId: accountId,
-          draftDate: DateTime.utc(2026, 6, 1),
-        );
+          currencyCode: 'USD',
+          amountMinorUnits: 1000,
+          date: DateTime.utc(2026, 6, 1),
+        ),
+        throwsA(isA<ShoppingListRepositoryException>()),
+      );
+    });
 
-        await expectLater(
-          repo.convertToTransaction(
-            shoppingListItemId: itemId,
-            categoryId: expenseCategoryId,
-            accountId: archivedAccountId,
-            currencyCode: 'USD',
-            amountMinorUnits: 1000,
-            date: DateTime.utc(2026, 6, 1),
-          ),
-          throwsA(isA<ShoppingListRepositoryException>()),
-        );
-      },
-    );
+    test('convertToTransaction with income category throws ShoppingListRepositoryException', () async {
+      // Seed a draft referencing the expense category (FK constraint prevents
+      // using the income category directly as the draft's category_id).
+      final item = await repo.insert(
+        categoryId: expenseCategoryId,
+        accountId: accountId,
+        draftDate: DateTime.utc(2026, 6, 1),
+      );
 
-    test(
-      'convertToTransaction with archived category throws ShoppingListRepositoryException',
-      () async {
-        // Archive the expense category.
-        await db.customStatement(
-          'UPDATE categories SET is_archived = 1 WHERE id = ?',
-          <Object?>[expenseCategoryId],
-        );
-
-        final itemId = await _insertShoppingListItemRaw(
-          db,
-          categoryId: expenseCategoryId,
+      // Attempt to convert using the income category — must be rejected.
+      await expectLater(
+        repo.convertToTransaction(
+          shoppingListItemId: item.id,
+          categoryId: incomeCategoryId,
           accountId: accountId,
-          draftDate: DateTime.utc(2026, 6, 1),
-        );
-
-        await expectLater(
-          repo.convertToTransaction(
-            shoppingListItemId: itemId,
-            categoryId: expenseCategoryId,
-            accountId: accountId,
-            currencyCode: 'USD',
-            amountMinorUnits: 1000,
-            date: DateTime.utc(2026, 6, 1),
-          ),
-          throwsA(isA<ShoppingListRepositoryException>()),
-        );
-      },
-    );
-
-    test(
-      'convertToTransaction with income category throws ShoppingListRepositoryException',
-      () async {
-        // Seed a draft referencing the expense category (FK constraint prevents
-        // using the income category directly as the draft's category_id).
-        final item = await repo.insert(
-          categoryId: expenseCategoryId,
-          accountId: accountId,
-          draftDate: DateTime.utc(2026, 6, 1),
-        );
-
-        // Attempt to convert using the income category — must be rejected.
-        await expectLater(
-          repo.convertToTransaction(
-            shoppingListItemId: item.id,
-            categoryId: incomeCategoryId,
-            accountId: accountId,
-            currencyCode: 'USD',
-            amountMinorUnits: 1000,
-            date: DateTime.utc(2026, 6, 1),
-          ),
-          throwsA(isA<ShoppingListRepositoryException>()),
-        );
-      },
-    );
+          currencyCode: 'USD',
+          amountMinorUnits: 1000,
+          date: DateTime.utc(2026, 6, 1),
+        ),
+        throwsA(isA<ShoppingListRepositoryException>()),
+      );
+    });
 
     test(
       // This tests the step-1 failure path (draft missing at existence check),

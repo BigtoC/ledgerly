@@ -146,12 +146,10 @@ void main() {
 
       when(() => prefs.getDefaultCurrency()).thenAnswer((_) async => 'USD');
       when(() => currencyRepo.getByCode('USD')).thenAnswer((_) async => _usd);
-      when(
-        () => typeRepo.watchAll(),
-      ).thenAnswer((_) => Stream.value([_cashType]));
-      when(
-        () => currencyRepo.watchAll(),
-      ).thenAnswer((_) => Stream.value([_usd, _jpy, _twd]));
+      when(() => typeRepo.watchAll())
+          .thenAnswer((_) => Stream.value([_cashType]));
+      when(() => currencyRepo.watchAll())
+          .thenAnswer((_) => Stream.value([_usd, _jpy, _twd]));
 
       final container = _makeContainer(
         accountRepo: accountRepo,
@@ -185,12 +183,10 @@ void main() {
 
       when(() => prefs.getDefaultCurrency()).thenAnswer((_) async => 'USD');
       when(() => currencyRepo.getByCode('USD')).thenAnswer((_) async => _usd);
-      when(
-        () => typeRepo.watchAll(),
-      ).thenAnswer((_) => Stream.value([_cashType]));
-      when(
-        () => currencyRepo.watchAll(),
-      ).thenAnswer((_) => Stream.value([_usd, _jpy, _twd]));
+      when(() => typeRepo.watchAll())
+          .thenAnswer((_) => Stream.value([_cashType]));
+      when(() => currencyRepo.watchAll())
+          .thenAnswer((_) => Stream.value([_usd, _jpy, _twd]));
       when(() => accountRepo.save(any())).thenAnswer((_) async => 42);
 
       final container = _makeContainer(
@@ -262,12 +258,10 @@ void main() {
     );
     when(() => accountRepo.getById(7)).thenAnswer((_) async => stored);
     when(() => typeRepo.getById(1)).thenAnswer((_) async => _cashType);
-    when(
-      () => typeRepo.watchAll(),
-    ).thenAnswer((_) => Stream.value([_cashType]));
-    when(
-      () => currencyRepo.watchAll(),
-    ).thenAnswer((_) => Stream.value([_usd, _jpy, _twd]));
+    when(() => typeRepo.watchAll())
+        .thenAnswer((_) => Stream.value([_cashType]));
+    when(() => currencyRepo.watchAll())
+        .thenAnswer((_) => Stream.value([_usd, _jpy, _twd]));
 
     final container = _makeContainer(
       accountRepo: accountRepo,
@@ -301,9 +295,8 @@ void main() {
     final prefs = _MockUserPreferencesRepository();
 
     when(() => accountRepo.getById(999)).thenAnswer((_) async => null);
-    when(
-      () => typeRepo.watchAll(),
-    ).thenAnswer((_) => Stream.value([_cashType]));
+    when(() => typeRepo.watchAll())
+        .thenAnswer((_) => Stream.value([_cashType]));
     when(() => currencyRepo.watchAll()).thenAnswer((_) => Stream.value([_usd]));
 
     final container = _makeContainer(
@@ -337,12 +330,10 @@ void main() {
       final prefs = _MockUserPreferencesRepository();
 
       when(() => accountRepo.getById(999)).thenAnswer((_) async => null);
-      when(
-        () => typeRepo.watchAll(),
-      ).thenAnswer((_) => Stream.value([_cashType]));
-      when(
-        () => currencyRepo.watchAll(),
-      ).thenAnswer((_) => Stream.value([_usd]));
+      when(() => typeRepo.watchAll())
+          .thenAnswer((_) => Stream.value([_cashType]));
+      when(() => currencyRepo.watchAll())
+          .thenAnswer((_) => Stream.value([_usd]));
 
       final container = _makeContainer(
         accountRepo: accountRepo,
@@ -377,12 +368,10 @@ void main() {
 
       when(() => prefs.getDefaultCurrency()).thenAnswer((_) async => 'USD');
       when(() => currencyRepo.getByCode('USD')).thenAnswer((_) async => _usd);
-      when(
-        () => typeRepo.watchAll(),
-      ).thenAnswer((_) => Stream.value([_cashType]));
-      when(
-        () => currencyRepo.watchAll(),
-      ).thenAnswer((_) => Stream.value([_usd, _jpy, _twd]));
+      when(() => typeRepo.watchAll())
+          .thenAnswer((_) => Stream.value([_cashType]));
+      when(() => currencyRepo.watchAll())
+          .thenAnswer((_) => Stream.value([_usd, _jpy, _twd]));
 
       final container = _makeContainer(
         accountRepo: accountRepo,
@@ -421,12 +410,10 @@ void main() {
 
     when(() => prefs.getDefaultCurrency()).thenAnswer((_) async => 'JPY');
     when(() => currencyRepo.getByCode('JPY')).thenAnswer((_) async => _jpy);
-    when(
-      () => typeRepo.watchAll(),
-    ).thenAnswer((_) => Stream.value([_cashType]));
-    when(
-      () => currencyRepo.watchAll(),
-    ).thenAnswer((_) => Stream.value([_usd, _jpy]));
+    when(() => typeRepo.watchAll())
+        .thenAnswer((_) => Stream.value([_cashType]));
+    when(() => currencyRepo.watchAll())
+        .thenAnswer((_) => Stream.value([_usd, _jpy]));
 
     final container = _makeContainer(
       accountRepo: accountRepo,
@@ -477,12 +464,10 @@ void main() {
 
       when(() => prefs.getDefaultCurrency()).thenAnswer((_) async => 'USD');
       when(() => currencyRepo.getByCode('USD')).thenAnswer((_) async => _usd);
-      when(
-        () => typeRepo.watchAll(),
-      ).thenAnswer((_) => Stream.value([_cashType]));
-      when(
-        () => currencyRepo.watchAll(),
-      ).thenAnswer((_) => Stream.value([_usd, _jpy, _twd]));
+      when(() => typeRepo.watchAll())
+          .thenAnswer((_) => Stream.value([_cashType]));
+      when(() => currencyRepo.watchAll())
+          .thenAnswer((_) => Stream.value([_usd, _jpy, _twd]));
 
       const created = AccountType(
         id: 99,

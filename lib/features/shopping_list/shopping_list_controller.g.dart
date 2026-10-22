@@ -51,7 +51,7 @@ abstract class _$ShoppingListController
   Stream<ShoppingListState> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<ShoppingListState>, ShoppingListState>;
     final element =
@@ -62,6 +62,6 @@ abstract class _$ShoppingListController
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

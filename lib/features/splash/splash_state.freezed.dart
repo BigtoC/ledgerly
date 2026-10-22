@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'splash_state.dart';
@@ -9,6 +9,7 @@ part of 'splash_state.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -20,7 +21,7 @@ mixin _$SplashState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SplashState);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SplashState);
 }
 
 
@@ -29,7 +30,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'SplashState()';
+    return 'SplashState()';
 }
 
 
@@ -191,7 +192,7 @@ class SplashLoading implements SplashState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SplashLoading);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SplashLoading);
 }
 
 
@@ -200,7 +201,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'SplashState.loading()';
+    return 'SplashState.loading()';
 }
 
 
@@ -213,7 +214,7 @@ String toString() {
 
 
 class SplashData implements SplashState {
-  const SplashData({required this.startDate, required this.dayCount, required final  List<SplashTextSegment> displayTextSegments, required this.buttonLabel}): _displayTextSegments = displayTextSegments;
+  const SplashData({required this.startDate, required this.dayCount, required  List<SplashTextSegment> displayTextSegments, required this.buttonLabel}): _displayTextSegments = displayTextSegments;
   
 
  final  DateTime startDate;
@@ -237,16 +238,18 @@ $SplashDataCopyWith<SplashData> get copyWith => _$SplashDataCopyWithImpl<SplashD
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SplashData&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.dayCount, dayCount) || other.dayCount == dayCount)&&const DeepCollectionEquality().equals(other._displayTextSegments, _displayTextSegments)&&(identical(other.buttonLabel, buttonLabel) || other.buttonLabel == buttonLabel));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SplashData&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.dayCount, dayCount) || other.dayCount == dayCount)&&const DeepCollectionEquality().equals(other.displayTextSegments, _displayTextSegments)&&(identical(other.buttonLabel, buttonLabel) || other.buttonLabel == buttonLabel));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,startDate,dayCount,const DeepCollectionEquality().hash(_displayTextSegments),buttonLabel);
+int get hashCode {
+    return Object.hash(runtimeType,startDate,dayCount,const DeepCollectionEquality().hash(_displayTextSegments),buttonLabel);
+}
 
 @override
 String toString() {
-  return 'SplashState.data(startDate: $startDate, dayCount: $dayCount, displayTextSegments: $displayTextSegments, buttonLabel: $buttonLabel)';
+    return 'SplashState.data(startDate: $startDate, dayCount: $dayCount, displayTextSegments: $displayTextSegments, buttonLabel: $buttonLabel)';
 }
 
 
@@ -307,16 +310,18 @@ $SplashErrorCopyWith<SplashError> get copyWith => _$SplashErrorCopyWithImpl<Spla
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SplashError&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.stack, stack) || other.stack == stack));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SplashError&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.stack, stack) || other.stack == stack));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(error),stack);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(error),stack);
+}
 
 @override
 String toString() {
-  return 'SplashState.error(error: $error, stack: $stack)';
+    return 'SplashState.error(error: $error, stack: $stack)';
 }
 
 

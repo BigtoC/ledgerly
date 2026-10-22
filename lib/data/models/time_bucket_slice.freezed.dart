@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'time_bucket_slice.dart';
@@ -9,6 +9,7 @@ part of 'time_bucket_slice.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -25,16 +26,21 @@ $TimeBucketSliceCopyWith<TimeBucketSlice> get copyWith => _$TimeBucketSliceCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TimeBucketSlice&&(identical(other.bucketStart, bucketStart) || other.bucketStart == bucketStart)&&(identical(other.currencyCode, currencyCode) || other.currencyCode == currencyCode)&&(identical(other.totalMinorUnits, totalMinorUnits) || other.totalMinorUnits == totalMinorUnits));
+  final _this = this as TimeBucketSlice;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TimeBucketSlice&&(identical(other.bucketStart, _this.bucketStart) || other.bucketStart == _this.bucketStart)&&(identical(other.currencyCode, _this.currencyCode) || other.currencyCode == _this.currencyCode)&&(identical(other.totalMinorUnits, _this.totalMinorUnits) || other.totalMinorUnits == _this.totalMinorUnits));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,bucketStart,currencyCode,totalMinorUnits);
+int get hashCode {
+  final _this = this as TimeBucketSlice;
+  return Object.hash(runtimeType,_this.bucketStart,_this.currencyCode,_this.totalMinorUnits);
+}
 
 @override
 String toString() {
-  return 'TimeBucketSlice(bucketStart: $bucketStart, currencyCode: $currencyCode, totalMinorUnits: $totalMinorUnits)';
+  final _this = this as TimeBucketSlice;
+  return 'TimeBucketSlice(bucketStart: ${_this.bucketStart}, currencyCode: ${_this.currencyCode}, totalMinorUnits: ${_this.totalMinorUnits})';
 }
 
 
@@ -63,7 +69,7 @@ class _$TimeBucketSliceCopyWithImpl<$Res>
 /// Create a copy of TimeBucketSlice
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? bucketStart = null,Object? currencyCode = null,Object? totalMinorUnits = null,}) {
-  return _then(_self.copyWith(
+  return _then(TimeBucketSlice(
 bucketStart: null == bucketStart ? _self.bucketStart : bucketStart // ignore: cast_nullable_to_non_nullable
 as DateTime,currencyCode: null == currencyCode ? _self.currencyCode : currencyCode // ignore: cast_nullable_to_non_nullable
 as String,totalMinorUnits: null == totalMinorUnits ? _self.totalMinorUnits : totalMinorUnits // ignore: cast_nullable_to_non_nullable
@@ -225,16 +231,18 @@ _$TimeBucketSliceCopyWith<_TimeBucketSlice> get copyWith => __$TimeBucketSliceCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TimeBucketSlice&&(identical(other.bucketStart, bucketStart) || other.bucketStart == bucketStart)&&(identical(other.currencyCode, currencyCode) || other.currencyCode == currencyCode)&&(identical(other.totalMinorUnits, totalMinorUnits) || other.totalMinorUnits == totalMinorUnits));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _TimeBucketSlice&&(identical(other.bucketStart, bucketStart) || other.bucketStart == bucketStart)&&(identical(other.currencyCode, currencyCode) || other.currencyCode == currencyCode)&&(identical(other.totalMinorUnits, totalMinorUnits) || other.totalMinorUnits == totalMinorUnits));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,bucketStart,currencyCode,totalMinorUnits);
+int get hashCode {
+    return Object.hash(runtimeType,bucketStart,currencyCode,totalMinorUnits);
+}
 
 @override
 String toString() {
-  return 'TimeBucketSlice(bucketStart: $bucketStart, currencyCode: $currencyCode, totalMinorUnits: $totalMinorUnits)';
+    return 'TimeBucketSlice(bucketStart: $bucketStart, currencyCode: $currencyCode, totalMinorUnits: $totalMinorUnits)';
 }
 
 

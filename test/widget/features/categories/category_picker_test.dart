@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/category.dart';
@@ -67,6 +68,7 @@ Widget _hostApp({
   );
 }
 
+@Dependencies([categoriesByType])
 void main() {
   setUpAll(() {
     registerFallbackValue(
@@ -93,9 +95,8 @@ void main() {
       ];
       final container = ProviderContainer(
         overrides: [
-          categoriesByTypeProvider(
-            CategoryType.expense,
-          ).overrideWith((ref) => Stream.value(rows)),
+          categoriesByTypeProvider(CategoryType.expense)
+              .overrideWith((ref) => Stream.value(rows)),
         ],
       );
       addTearDown(container.dispose);
@@ -167,9 +168,8 @@ void main() {
   ) async {
     final container = ProviderContainer(
       overrides: [
-        categoriesByTypeProvider(
-          CategoryType.income,
-        ).overrideWith((ref) => Stream.value(const <Category>[])),
+        categoriesByTypeProvider(CategoryType.income)
+            .overrideWith((ref) => Stream.value(const <Category>[])),
       ],
     );
     addTearDown(container.dispose);
@@ -265,9 +265,8 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(
-              context,
-            ).copyWith(textScaler: const TextScaler.linear(2.0)),
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(2.0)),
             child: child!,
           ),
           home: Builder(

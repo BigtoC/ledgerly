@@ -46,7 +46,11 @@ class ChartsFxStatus {
 /// currency or the per-pair rate metadata changes. Uses an internal
 /// `StreamController` so both inputs feed the same output without
 /// dropping events from whichever input wasn't last awaited.
+///
+/// `keepAlive` because the kept-alive `ChartsController` and
+/// `SliceDrilldownController` listen to it for their whole lifetime.
 @Riverpod(
+  keepAlive: true,
   dependencies: [
     initialDefaultCurrency,
     defaultCurrency,
@@ -98,7 +102,9 @@ Stream<ChartsFxStatus> chartsFxStatus(Ref ref) {
 /// `code → Currency` for `MoneyFormatter` lookups in chart widgets.
 /// Mirrors `homeCurrenciesByCodeProvider` shape so chart code can format
 /// amounts identically to the Home summary strip.
-@Riverpod(dependencies: [currencyRepository])
+///
+/// `keepAlive` because the kept-alive `ChartsController` listens to it.
+@Riverpod(keepAlive: true, dependencies: [currencyRepository])
 Stream<Map<String, Currency>> chartsCurrenciesByCode(Ref ref) {
   final repo = ref.watch(currencyRepositoryProvider);
   return repo

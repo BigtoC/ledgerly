@@ -14,7 +14,10 @@ import '../../../data/models/category.dart';
 part 'analysis_providers.g.dart';
 
 /// `id → Category` lookup (active + archived) for search-result tiles.
-@Riverpod(dependencies: [categoryRepository])
+///
+/// `keepAlive` because the kept-alive `AnalysisController` and
+/// `ChartsController` listen to it.
+@Riverpod(keepAlive: true, dependencies: [categoryRepository])
 Stream<Map<int, Category>> analysisCategoriesById(Ref ref) {
   final repo = ref.watch(categoryRepositoryProvider);
   return repo
@@ -24,7 +27,9 @@ Stream<Map<int, Category>> analysisCategoriesById(Ref ref) {
 
 /// `id → Account` lookup (active + archived) for the detail screen's
 /// transaction rows.
-@Riverpod(dependencies: [accountRepository])
+///
+/// `keepAlive` because the kept-alive `ChartsController` listens to it.
+@Riverpod(keepAlive: true, dependencies: [accountRepository])
 Stream<Map<int, Account>> analysisAccountsById(Ref ref) {
   final repo = ref.watch(accountRepositoryProvider);
   return repo

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'recurring_rule_form_state.dart';
@@ -9,6 +9,7 @@ part of 'recurring_rule_form_state.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -34,16 +35,21 @@ $RecurringRuleFormStateCopyWith<RecurringRuleFormState> get copyWith => _$Recurr
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringRuleFormState&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.amountMinorUnits, amountMinorUnits) || other.amountMinorUnits == amountMinorUnits)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.frequency, frequency) || other.frequency == frequency)&&(identical(other.dayOfWeek, dayOfWeek) || other.dayOfWeek == dayOfWeek)&&(identical(other.dayOfMonth, dayOfMonth) || other.dayOfMonth == dayOfMonth)&&(identical(other.monthOfYear, monthOfYear) || other.monthOfYear == monthOfYear)&&(identical(other.isEdit, isEdit) || other.isEdit == isEdit)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.pendingItemCount, pendingItemCount) || other.pendingItemCount == pendingItemCount)&&(identical(other.keypad, keypad) || other.keypad == keypad)&&(identical(other.keypadRevision, keypadRevision) || other.keypadRevision == keypadRevision)&&(identical(other.nameError, nameError) || other.nameError == nameError)&&(identical(other.categoryError, categoryError) || other.categoryError == categoryError)&&(identical(other.accountError, accountError) || other.accountError == accountError)&&(identical(other.frequencyFieldError, frequencyFieldError) || other.frequencyFieldError == frequencyFieldError)&&(identical(other.formError, formError) || other.formError == formError)&&(identical(other.postSaveGenerationFailed, postSaveGenerationFailed) || other.postSaveGenerationFailed == postSaveGenerationFailed));
+  final _this = this as RecurringRuleFormState;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringRuleFormState&&(identical(other.memo, _this.memo) || other.memo == _this.memo)&&(identical(other.amountMinorUnits, _this.amountMinorUnits) || other.amountMinorUnits == _this.amountMinorUnits)&&(identical(other.currency, _this.currency) || other.currency == _this.currency)&&(identical(other.categoryId, _this.categoryId) || other.categoryId == _this.categoryId)&&(identical(other.accountId, _this.accountId) || other.accountId == _this.accountId)&&(identical(other.frequency, _this.frequency) || other.frequency == _this.frequency)&&(identical(other.dayOfWeek, _this.dayOfWeek) || other.dayOfWeek == _this.dayOfWeek)&&(identical(other.dayOfMonth, _this.dayOfMonth) || other.dayOfMonth == _this.dayOfMonth)&&(identical(other.monthOfYear, _this.monthOfYear) || other.monthOfYear == _this.monthOfYear)&&(identical(other.isEdit, _this.isEdit) || other.isEdit == _this.isEdit)&&(identical(other.isLoading, _this.isLoading) || other.isLoading == _this.isLoading)&&(identical(other.pendingItemCount, _this.pendingItemCount) || other.pendingItemCount == _this.pendingItemCount)&&(identical(other.keypad, _this.keypad) || other.keypad == _this.keypad)&&(identical(other.keypadRevision, _this.keypadRevision) || other.keypadRevision == _this.keypadRevision)&&(identical(other.nameError, _this.nameError) || other.nameError == _this.nameError)&&(identical(other.categoryError, _this.categoryError) || other.categoryError == _this.categoryError)&&(identical(other.accountError, _this.accountError) || other.accountError == _this.accountError)&&(identical(other.frequencyFieldError, _this.frequencyFieldError) || other.frequencyFieldError == _this.frequencyFieldError)&&(identical(other.formError, _this.formError) || other.formError == _this.formError)&&(identical(other.postSaveGenerationFailed, _this.postSaveGenerationFailed) || other.postSaveGenerationFailed == _this.postSaveGenerationFailed));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,memo,amountMinorUnits,currency,categoryId,accountId,frequency,dayOfWeek,dayOfMonth,monthOfYear,isEdit,isLoading,pendingItemCount,keypad,keypadRevision,nameError,categoryError,accountError,frequencyFieldError,formError,postSaveGenerationFailed]);
+int get hashCode {
+  final _this = this as RecurringRuleFormState;
+  return Object.hashAll([runtimeType,_this.memo,_this.amountMinorUnits,_this.currency,_this.categoryId,_this.accountId,_this.frequency,_this.dayOfWeek,_this.dayOfMonth,_this.monthOfYear,_this.isEdit,_this.isLoading,_this.pendingItemCount,_this.keypad,_this.keypadRevision,_this.nameError,_this.categoryError,_this.accountError,_this.frequencyFieldError,_this.formError,_this.postSaveGenerationFailed]);
+}
 
 @override
 String toString() {
-  return 'RecurringRuleFormState(memo: $memo, amountMinorUnits: $amountMinorUnits, currency: $currency, categoryId: $categoryId, accountId: $accountId, frequency: $frequency, dayOfWeek: $dayOfWeek, dayOfMonth: $dayOfMonth, monthOfYear: $monthOfYear, isEdit: $isEdit, isLoading: $isLoading, pendingItemCount: $pendingItemCount, keypad: $keypad, keypadRevision: $keypadRevision, nameError: $nameError, categoryError: $categoryError, accountError: $accountError, frequencyFieldError: $frequencyFieldError, formError: $formError, postSaveGenerationFailed: $postSaveGenerationFailed)';
+  final _this = this as RecurringRuleFormState;
+  return 'RecurringRuleFormState(memo: ${_this.memo}, amountMinorUnits: ${_this.amountMinorUnits}, currency: ${_this.currency}, categoryId: ${_this.categoryId}, accountId: ${_this.accountId}, frequency: ${_this.frequency}, dayOfWeek: ${_this.dayOfWeek}, dayOfMonth: ${_this.dayOfMonth}, monthOfYear: ${_this.monthOfYear}, isEdit: ${_this.isEdit}, isLoading: ${_this.isLoading}, pendingItemCount: ${_this.pendingItemCount}, keypad: ${_this.keypad}, keypadRevision: ${_this.keypadRevision}, nameError: ${_this.nameError}, categoryError: ${_this.categoryError}, accountError: ${_this.accountError}, frequencyFieldError: ${_this.frequencyFieldError}, formError: ${_this.formError}, postSaveGenerationFailed: ${_this.postSaveGenerationFailed})';
 }
 
 
@@ -72,7 +78,7 @@ class _$RecurringRuleFormStateCopyWithImpl<$Res>
 /// Create a copy of RecurringRuleFormState
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? memo = null,Object? amountMinorUnits = null,Object? currency = null,Object? categoryId = freezed,Object? accountId = freezed,Object? frequency = null,Object? dayOfWeek = freezed,Object? dayOfMonth = freezed,Object? monthOfYear = freezed,Object? isEdit = null,Object? isLoading = null,Object? pendingItemCount = freezed,Object? keypad = null,Object? keypadRevision = null,Object? nameError = freezed,Object? categoryError = freezed,Object? accountError = freezed,Object? frequencyFieldError = freezed,Object? formError = freezed,Object? postSaveGenerationFailed = null,}) {
-  return _then(_self.copyWith(
+  return _then(RecurringRuleFormState(
 memo: null == memo ? _self.memo : memo // ignore: cast_nullable_to_non_nullable
 as String,amountMinorUnits: null == amountMinorUnits ? _self.amountMinorUnits : amountMinorUnits // ignore: cast_nullable_to_non_nullable
 as int,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
@@ -286,16 +292,18 @@ _$RecurringRuleFormStateCopyWith<_RecurringRuleFormState> get copyWith => __$Rec
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RecurringRuleFormState&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.amountMinorUnits, amountMinorUnits) || other.amountMinorUnits == amountMinorUnits)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.frequency, frequency) || other.frequency == frequency)&&(identical(other.dayOfWeek, dayOfWeek) || other.dayOfWeek == dayOfWeek)&&(identical(other.dayOfMonth, dayOfMonth) || other.dayOfMonth == dayOfMonth)&&(identical(other.monthOfYear, monthOfYear) || other.monthOfYear == monthOfYear)&&(identical(other.isEdit, isEdit) || other.isEdit == isEdit)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.pendingItemCount, pendingItemCount) || other.pendingItemCount == pendingItemCount)&&(identical(other.keypad, keypad) || other.keypad == keypad)&&(identical(other.keypadRevision, keypadRevision) || other.keypadRevision == keypadRevision)&&(identical(other.nameError, nameError) || other.nameError == nameError)&&(identical(other.categoryError, categoryError) || other.categoryError == categoryError)&&(identical(other.accountError, accountError) || other.accountError == accountError)&&(identical(other.frequencyFieldError, frequencyFieldError) || other.frequencyFieldError == frequencyFieldError)&&(identical(other.formError, formError) || other.formError == formError)&&(identical(other.postSaveGenerationFailed, postSaveGenerationFailed) || other.postSaveGenerationFailed == postSaveGenerationFailed));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _RecurringRuleFormState&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.amountMinorUnits, amountMinorUnits) || other.amountMinorUnits == amountMinorUnits)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.frequency, frequency) || other.frequency == frequency)&&(identical(other.dayOfWeek, dayOfWeek) || other.dayOfWeek == dayOfWeek)&&(identical(other.dayOfMonth, dayOfMonth) || other.dayOfMonth == dayOfMonth)&&(identical(other.monthOfYear, monthOfYear) || other.monthOfYear == monthOfYear)&&(identical(other.isEdit, isEdit) || other.isEdit == isEdit)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.pendingItemCount, pendingItemCount) || other.pendingItemCount == pendingItemCount)&&(identical(other.keypad, keypad) || other.keypad == keypad)&&(identical(other.keypadRevision, keypadRevision) || other.keypadRevision == keypadRevision)&&(identical(other.nameError, nameError) || other.nameError == nameError)&&(identical(other.categoryError, categoryError) || other.categoryError == categoryError)&&(identical(other.accountError, accountError) || other.accountError == accountError)&&(identical(other.frequencyFieldError, frequencyFieldError) || other.frequencyFieldError == frequencyFieldError)&&(identical(other.formError, formError) || other.formError == formError)&&(identical(other.postSaveGenerationFailed, postSaveGenerationFailed) || other.postSaveGenerationFailed == postSaveGenerationFailed));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,memo,amountMinorUnits,currency,categoryId,accountId,frequency,dayOfWeek,dayOfMonth,monthOfYear,isEdit,isLoading,pendingItemCount,keypad,keypadRevision,nameError,categoryError,accountError,frequencyFieldError,formError,postSaveGenerationFailed]);
+int get hashCode {
+    return Object.hashAll([runtimeType,memo,amountMinorUnits,currency,categoryId,accountId,frequency,dayOfWeek,dayOfMonth,monthOfYear,isEdit,isLoading,pendingItemCount,keypad,keypadRevision,nameError,categoryError,accountError,frequencyFieldError,formError,postSaveGenerationFailed]);
+}
 
 @override
 String toString() {
-  return 'RecurringRuleFormState(memo: $memo, amountMinorUnits: $amountMinorUnits, currency: $currency, categoryId: $categoryId, accountId: $accountId, frequency: $frequency, dayOfWeek: $dayOfWeek, dayOfMonth: $dayOfMonth, monthOfYear: $monthOfYear, isEdit: $isEdit, isLoading: $isLoading, pendingItemCount: $pendingItemCount, keypad: $keypad, keypadRevision: $keypadRevision, nameError: $nameError, categoryError: $categoryError, accountError: $accountError, frequencyFieldError: $frequencyFieldError, formError: $formError, postSaveGenerationFailed: $postSaveGenerationFailed)';
+    return 'RecurringRuleFormState(memo: $memo, amountMinorUnits: $amountMinorUnits, currency: $currency, categoryId: $categoryId, accountId: $accountId, frequency: $frequency, dayOfWeek: $dayOfWeek, dayOfMonth: $dayOfMonth, monthOfYear: $monthOfYear, isEdit: $isEdit, isLoading: $isLoading, pendingItemCount: $pendingItemCount, keypad: $keypad, keypadRevision: $keypadRevision, nameError: $nameError, categoryError: $categoryError, accountError: $accountError, frequencyFieldError: $frequencyFieldError, formError: $formError, postSaveGenerationFailed: $postSaveGenerationFailed)';
 }
 
 

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'recurring_rules_state.dart';
@@ -9,6 +9,7 @@ part of 'recurring_rules_state.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -20,7 +21,7 @@ mixin _$RecurringRulesState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringRulesState);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringRulesState);
 }
 
 
@@ -29,7 +30,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'RecurringRulesState()';
+    return 'RecurringRulesState()';
 }
 
 
@@ -197,7 +198,7 @@ class RecurringRulesLoading implements RecurringRulesState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringRulesLoading);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringRulesLoading);
 }
 
 
@@ -206,7 +207,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'RecurringRulesState.loading()';
+    return 'RecurringRulesState.loading()';
 }
 
 
@@ -229,7 +230,7 @@ class RecurringRulesEmpty implements RecurringRulesState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringRulesEmpty);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringRulesEmpty);
 }
 
 
@@ -238,7 +239,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'RecurringRulesState.empty()';
+    return 'RecurringRulesState.empty()';
 }
 
 
@@ -251,7 +252,7 @@ String toString() {
 
 
 class RecurringRulesData implements RecurringRulesState {
-  const RecurringRulesData({required final  List<RecurringRule> rules, required this.pendingDelete}): _rules = rules;
+  const RecurringRulesData({required  List<RecurringRule> rules, required this.pendingDelete}): _rules = rules;
   
 
  final  List<RecurringRule> _rules;
@@ -273,16 +274,18 @@ $RecurringRulesDataCopyWith<RecurringRulesData> get copyWith => _$RecurringRules
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringRulesData&&const DeepCollectionEquality().equals(other._rules, _rules)&&(identical(other.pendingDelete, pendingDelete) || other.pendingDelete == pendingDelete));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringRulesData&&const DeepCollectionEquality().equals(other.rules, _rules)&&(identical(other.pendingDelete, pendingDelete) || other.pendingDelete == pendingDelete));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_rules),pendingDelete);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_rules),pendingDelete);
+}
 
 @override
 String toString() {
-  return 'RecurringRulesState.data(rules: $rules, pendingDelete: $pendingDelete)';
+    return 'RecurringRulesState.data(rules: $rules, pendingDelete: $pendingDelete)';
 }
 
 
@@ -341,16 +344,18 @@ $RecurringRulesErrorCopyWith<RecurringRulesError> get copyWith => _$RecurringRul
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringRulesError&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.stack, stack) || other.stack == stack));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringRulesError&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.stack, stack) || other.stack == stack));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(error),stack);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(error),stack);
+}
 
 @override
 String toString() {
-  return 'RecurringRulesState.error(error: $error, stack: $stack)';
+    return 'RecurringRulesState.error(error: $error, stack: $stack)';
 }
 
 

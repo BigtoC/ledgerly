@@ -34,7 +34,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: 3.44.0
+          flutter-version: 3.47.7
           cache: true
 
       - run: flutter --version
@@ -43,8 +43,10 @@ jobs:
         run: flutter pub get
 
       - name: Enforce layer boundaries (import_lint)
-        # Wired from analysis_options.yaml -> import_lint. Layer-violation
-        # PRs must fail here per M0 exit criteria and guardrails G1/G2.
+        # Rules live in import_analysis_options.yaml. import_lint 0.1.6 does
+        # NOT currently fail on violations: it matches the `^lib/...` rules
+        # against absolute paths and always exits 0. See
+        # docs/architecture/dependencies.md.
         run: dart run import_lint
 
       - name: Generate code (Drift / Freezed / Riverpod / json_serializable)
@@ -54,7 +56,20 @@ jobs:
         run: dart format --output=none --set-exit-if-changed .
 
       - name: Static analysis
-        run: flutter analyze
+        # `dart analyze` waits for the riverpod_lint analysis-server plugin
+        # (configured under `plugins:` in analysis_options.yaml), so its
+        # warnings are reported every run. `flutter analyze` does not wait
+        # for it and reports them only some of the time. `--fatal-infos`
+        # keeps infos fatal, as `flutter analyze` does. A plugin that fails
+        # to load is skipped without failing the run, so fail on that
+        # message too rather than silently losing riverpod_lint.
+        run: |
+          set -o pipefail
+          dart analyze --fatal-infos 2>&1 | tee analyze.log
+          if grep -q 'error occurred while executing an analyzer plugin' analyze.log; then
+            echo '::error::riverpod_lint plugin failed to load'
+            exit 1
+          fi
 
       - name: Run tests
         run: flutter test --reporter expanded
@@ -77,7 +92,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: 3.44.0
+          flutter-version: 3.47.7
           cache: true
 
       - run: flutter pub get

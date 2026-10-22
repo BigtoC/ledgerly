@@ -10,12 +10,29 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
+import 'package:ledgerly/app/providers/locale_provider.dart';
+import 'package:ledgerly/app/providers/repository_providers.dart';
+import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
+import 'package:ledgerly/app/providers/theme_provider.dart';
+import 'package:ledgerly/app/router.dart';
+import 'package:ledgerly/features/splash/splash_controller.dart';
 import 'package:ledgerly/features/splash/splash_screen.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 import '../support/test_app.dart';
 
+@Dependencies([
+  splashGateSnapshot,
+  splashStartDate,
+  splashClock,
+  SplashController,
+  router,
+  themeMode,
+  userLocalePreference,
+  exchangeRateRepository,
+])
 void main() {
   group('M4 smoke', () {
     testWidgets(

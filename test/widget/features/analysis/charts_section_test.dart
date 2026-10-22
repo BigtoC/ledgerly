@@ -12,11 +12,15 @@ import 'package:ledgerly/data/models/time_bucket_slice.dart';
 import 'package:ledgerly/data/repositories/exchange_rate_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/services/exchange_rate_service.dart';
+import 'package:ledgerly/features/analysis/charts/charts_controller.dart';
 import 'package:ledgerly/features/analysis/charts/charts_providers.dart';
 import 'package:ledgerly/features/analysis/charts/charts_section.dart';
+import 'package:ledgerly/features/analysis/charts/charts_selection_controller.dart';
+import 'package:ledgerly/features/analysis/charts/slice_drilldown_controller.dart';
 import 'package:ledgerly/features/analysis/search/analysis_providers.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../unit/repositories/_harness/test_app_database.dart';
 
@@ -31,6 +35,11 @@ const _usd = Currency(
   nameL10nKey: 'currency.usd',
 );
 
+@Dependencies([
+  ChartsSelectionController,
+  ChartsController,
+  SliceDrilldownController,
+])
 void main() {
   setUpAll(() {
     registerFallbackValue(DateTime(2026));

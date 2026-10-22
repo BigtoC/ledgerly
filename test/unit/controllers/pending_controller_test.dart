@@ -9,6 +9,7 @@ import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/core/constants.dart';
@@ -50,6 +51,7 @@ Transaction _tx({required int id}) => Transaction(
   updatedAt: DateTime(2026, 5, 8),
 );
 
+@Dependencies([PendingController])
 void main() {
   group('PendingController', () {
     late _MockPendingTransactionRepository repo;
@@ -75,6 +77,7 @@ void main() {
       );
     }
 
+    @Dependencies([PendingController])
     Future<PendingState> waitFor(
       ProviderContainer c,
       bool Function(PendingState) accept,
@@ -165,9 +168,8 @@ void main() {
     );
 
     test('PC05: approve failure fires PendingApproveFailedEffect', () async {
-      when(
-        () => repo.approve(any()),
-      ).thenThrow(const PendingTransactionRepositoryException('archived'));
+      when(() => repo.approve(any()))
+          .thenThrow(const PendingTransactionRepositoryException('archived'));
 
       final container = makeContainer();
       addTearDown(container.dispose);
@@ -255,44 +257,41 @@ void main() {
       });
     });
 
-    test(
-      'PC09: failed reject fires PendingSkipFailedEffect and makes row visible again',
-      () {
-        fakeAsync((async) {
-          when(() => repo.reject(any())).thenThrow(StateError('disk full'));
+    test('PC09: failed reject fires PendingSkipFailedEffect and makes row visible again', () {
+      fakeAsync((async) {
+        when(() => repo.reject(any())).thenThrow(StateError('disk full'));
 
-          final container = makeContainer();
-          addTearDown(container.dispose);
-          container.listen(pendingControllerProvider, (_, _) {});
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        container.listen(pendingControllerProvider, (_, _) {});
 
-          pendingCtrl.add([_pending(id: 1)]);
-          async.flushMicrotasks();
+        pendingCtrl.add([_pending(id: 1)]);
+        async.flushMicrotasks();
 
-          final notifier = container.read(pendingControllerProvider.notifier);
-          final captured = <PendingEffect>[];
-          notifier.setEffectListener(captured.add);
+        final notifier = container.read(pendingControllerProvider.notifier);
+        final captured = <PendingEffect>[];
+        notifier.setEffectListener(captured.add);
 
-          // ignore: unawaited_futures
-          notifier.skip(1);
-          async.flushMicrotasks();
+        // ignore: unawaited_futures
+        notifier.skip(1);
+        async.flushMicrotasks();
 
-          var state = container.read(pendingControllerProvider).value;
-          expect(state, isA<PendingData>());
-          expect((state as PendingData).skipScheduled?.pendingId, 1);
+        var state = container.read(pendingControllerProvider).value;
+        expect(state, isA<PendingData>());
+        expect((state as PendingData).skipScheduled?.pendingId, 1);
 
-          async.elapse(kUndoWindow + const Duration(seconds: 1));
-          async.flushMicrotasks();
+        async.elapse(kUndoWindow + const Duration(seconds: 1));
+        async.flushMicrotasks();
 
-          verify(() => repo.reject(1)).called(1);
-          expect(captured.whereType<PendingSkipFailedEffect>(), hasLength(1));
+        verify(() => repo.reject(1)).called(1);
+        expect(captured.whereType<PendingSkipFailedEffect>(), hasLength(1));
 
-          state = container.read(pendingControllerProvider).value;
-          expect(state, isA<PendingData>());
-          expect((state as PendingData).skipScheduled, isNull);
-          expect(state.items.any((p) => p.id == 1), isTrue);
-        });
-      },
-    );
+        state = container.read(pendingControllerProvider).value;
+        expect(state, isA<PendingData>());
+        expect((state as PendingData).skipScheduled, isNull);
+        expect(state.items.any((p) => p.id == 1), isTrue);
+      });
+    });
 
     test('PC10: second skip during pending undo commits the prior', () async {
       final container = makeContainer();

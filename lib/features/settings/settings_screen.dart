@@ -13,9 +13,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
+import '../../app/providers/default_currency_provider.dart';
+import '../../app/providers/repository_providers.dart';
 import '../../core/constants.dart';
 import '../../l10n/app_localizations.dart';
+import '../accounts/accounts_controller.dart';
 import 'settings_controller.dart';
 import 'settings_providers.dart';
 import 'settings_state.dart';
@@ -27,6 +31,13 @@ import 'widgets/settings_section.dart';
 import 'widgets/splash_settings_section.dart';
 import 'widgets/theme_mode_selector.dart';
 
+@Dependencies([
+  SettingsController,
+  AccountsController,
+  exchangeRates,
+  initialDefaultCurrency,
+  defaultCurrency,
+])
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -47,6 +58,13 @@ class SettingsScreen extends ConsumerWidget {
   }
 }
 
+@Dependencies([
+  SettingsController,
+  AccountsController,
+  exchangeRates,
+  initialDefaultCurrency,
+  defaultCurrency,
+])
 class _SettingsBody extends ConsumerWidget {
   const _SettingsBody({required this.data});
 

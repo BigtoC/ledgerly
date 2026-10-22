@@ -11,6 +11,7 @@
 // resolve to their metadata (Wave 3 §2 — "archived-safe lookups").
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../app/providers/repository_providers.dart';
 import '../../data/models/account.dart';
@@ -20,6 +21,7 @@ import '../../data/models/currency.dart';
 /// `code → Currency` for `MoneyFormatter` lookups in the summary strip.
 /// Includes tokens so any historical row whose `currency` was migrated
 /// to a token still resolves; MVP creates only fiat transactions.
+@Dependencies([currencyRepository])
 final homeCurrenciesByCodeProvider =
     StreamProvider.autoDispose<Map<String, Currency>>((ref) {
       final repo = ref.watch(currencyRepositoryProvider);
@@ -29,6 +31,7 @@ final homeCurrenciesByCodeProvider =
     }, dependencies: [currencyRepositoryProvider]);
 
 /// `id → Category` lookup (active + archived) for transaction rows.
+@Dependencies([categoryRepository])
 final homeCategoriesByIdProvider =
     StreamProvider.autoDispose<Map<int, Category>>((ref) {
       final repo = ref.watch(categoryRepositoryProvider);
@@ -38,6 +41,7 @@ final homeCategoriesByIdProvider =
     }, dependencies: [categoryRepositoryProvider]);
 
 /// `id → Account` lookup (active + archived) for transaction rows.
+@Dependencies([accountRepository])
 final homeAccountsByIdProvider = StreamProvider.autoDispose<Map<int, Account>>((
   ref,
 ) {

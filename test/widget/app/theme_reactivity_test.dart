@@ -7,13 +7,17 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/locale_provider.dart';
+import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/app/providers/theme_provider.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
+import 'package:ledgerly/app/router.dart';
 
 import '../../support/test_app.dart';
 
+@Dependencies([themeMode, router, userLocalePreference, exchangeRateRepository])
 void main() {
   group('theme reactivity', () {
     testWidgets('initial persisted dark theme is applied on the first frame', (
@@ -40,9 +44,8 @@ void main() {
       await tester.pumpWidget(buildTestApp(container: container));
       await tester.pump();
 
-      final brightness = Theme.of(
-        tester.element(find.byType(Scaffold).first),
-      ).brightness;
+      final brightness = Theme.of(tester.element(find.byType(Scaffold).first))
+          .brightness;
       expect(brightness, Brightness.dark);
     });
 

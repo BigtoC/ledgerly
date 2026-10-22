@@ -16,17 +16,38 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
+import 'package:ledgerly/app/providers/default_currency_provider.dart';
+import 'package:ledgerly/app/providers/locale_provider.dart';
+import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
+import 'package:ledgerly/app/providers/theme_provider.dart';
+import 'package:ledgerly/app/router.dart';
 import 'package:ledgerly/data/models/category.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
+import 'package:ledgerly/features/home/home_controller.dart';
 import 'package:ledgerly/features/home/home_screen.dart';
+import 'package:ledgerly/features/home/pending_controller.dart';
 import 'package:ledgerly/features/home/widgets/transaction_tile.dart';
+import 'package:ledgerly/features/shopping_list/shopping_list_providers.dart';
 
 import '../support/test_app.dart';
 
+@Dependencies([
+  HomeController,
+  PendingController,
+  shoppingListTotalCount,
+  initialDefaultCurrency,
+  defaultCurrency,
+  exchangeRates,
+  router,
+  themeMode,
+  userLocalePreference,
+  exchangeRateRepository,
+])
 void main() {
   group('archived-state rendering (Unit 6)', () {
     testWidgets(
@@ -75,9 +96,9 @@ void main() {
         // Repository contract: the picker-facing stream
         // (`includeArchived: false`) must exclude archived rows.
         final pickerCategories = await tester.runAsync(() async {
-          return DriftCategoryRepository(
-            db,
-          ).watchAll(type: CategoryType.expense, includeArchived: false).first;
+          return DriftCategoryRepository(db)
+              .watchAll(type: CategoryType.expense, includeArchived: false)
+              .first;
         });
         expect(
           pickerCategories!.any((c) => c.id == foodId),
@@ -89,9 +110,9 @@ void main() {
         // Repository contract for archive-aware paths (e.g. Home tile
         // metadata): `includeArchived: true` still includes archived rows.
         final allCategories = await tester.runAsync(() async {
-          return DriftCategoryRepository(
-            db,
-          ).watchAll(type: CategoryType.expense, includeArchived: true).first;
+          return DriftCategoryRepository(db)
+              .watchAll(type: CategoryType.expense, includeArchived: true)
+              .first;
         });
         expect(
           allCategories!.any((c) => c.id == foodId && c.isArchived),

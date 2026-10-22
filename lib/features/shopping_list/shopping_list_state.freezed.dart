@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'shopping_list_state.dart';
@@ -9,6 +9,7 @@ part of 'shopping_list_state.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -20,7 +21,7 @@ mixin _$ShoppingListState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ShoppingListState);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ShoppingListState);
 }
 
 
@@ -29,7 +30,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'ShoppingListState()';
+    return 'ShoppingListState()';
 }
 
 
@@ -197,7 +198,7 @@ class ShoppingListLoading implements ShoppingListState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ShoppingListLoading);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ShoppingListLoading);
 }
 
 
@@ -206,7 +207,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'ShoppingListState.loading()';
+    return 'ShoppingListState.loading()';
 }
 
 
@@ -229,7 +230,7 @@ class ShoppingListEmpty implements ShoppingListState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ShoppingListEmpty);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ShoppingListEmpty);
 }
 
 
@@ -238,7 +239,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'ShoppingListState.empty()';
+    return 'ShoppingListState.empty()';
 }
 
 
@@ -251,7 +252,7 @@ String toString() {
 
 
 class ShoppingListData implements ShoppingListState {
-  const ShoppingListData({required final  List<ShoppingListItem> items, required this.pendingDelete}): _items = items;
+  const ShoppingListData({required  List<ShoppingListItem> items, required this.pendingDelete}): _items = items;
   
 
  final  List<ShoppingListItem> _items;
@@ -273,16 +274,18 @@ $ShoppingListDataCopyWith<ShoppingListData> get copyWith => _$ShoppingListDataCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ShoppingListData&&const DeepCollectionEquality().equals(other._items, _items)&&(identical(other.pendingDelete, pendingDelete) || other.pendingDelete == pendingDelete));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ShoppingListData&&const DeepCollectionEquality().equals(other.items, _items)&&(identical(other.pendingDelete, pendingDelete) || other.pendingDelete == pendingDelete));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_items),pendingDelete);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_items),pendingDelete);
+}
 
 @override
 String toString() {
-  return 'ShoppingListState.data(items: $items, pendingDelete: $pendingDelete)';
+    return 'ShoppingListState.data(items: $items, pendingDelete: $pendingDelete)';
 }
 
 
@@ -341,16 +344,18 @@ $ShoppingListErrorCopyWith<ShoppingListError> get copyWith => _$ShoppingListErro
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ShoppingListError&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.stack, stack) || other.stack == stack));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ShoppingListError&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.stack, stack) || other.stack == stack));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(error),stack);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(error),stack);
+}
 
 @override
 String toString() {
-  return 'ShoppingListState.error(error: $error, stack: $stack)';
+    return 'ShoppingListState.error(error: $error, stack: $stack)';
 }
 
 

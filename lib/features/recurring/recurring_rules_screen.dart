@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../core/constants.dart';
 import '../../data/models/recurring_rule.dart';
@@ -16,6 +17,7 @@ import '../../l10n/app_localizations.dart';
 import 'recurring_rules_controller.dart';
 import 'recurring_rules_state.dart';
 
+@Dependencies([RecurringRulesController])
 class RecurringRulesScreen extends ConsumerStatefulWidget {
   const RecurringRulesScreen({super.key});
 
@@ -92,6 +94,7 @@ class _RecurringRulesScreenState extends ConsumerState<RecurringRulesScreen> {
   }
 }
 
+@Dependencies([RecurringRulesController])
 class _RuleList extends ConsumerWidget {
   const _RuleList({required this.rules});
 
@@ -271,6 +274,7 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
+@Dependencies([RecurringRulesController])
 class _ErrorState extends ConsumerWidget {
   const _ErrorState({required this.l10n});
   final AppLocalizations l10n;

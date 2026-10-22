@@ -9,6 +9,7 @@ import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/core/constants.dart';
@@ -43,6 +44,7 @@ RecurringRule _rule({
   updatedAt: DateTime(2026, 1, 1),
 );
 
+@Dependencies([RecurringRulesController])
 void main() {
   group('RecurringRulesController', () {
     late _MockRecurringRulesRepository repo;
@@ -64,6 +66,7 @@ void main() {
       );
     }
 
+    @Dependencies([RecurringRulesController])
     Future<RecurringRulesState> waitFor(
       ProviderContainer c,
       bool Function(RecurringRulesState) accept,
@@ -130,9 +133,8 @@ void main() {
     });
 
     test('RRC04: pauseRule calls setActive(active: false)', () async {
-      when(
-        () => repo.setActive(any(), active: any(named: 'active')),
-      ).thenAnswer((_) async {});
+      when(() => repo.setActive(any(), active: any(named: 'active')))
+          .thenAnswer((_) async {});
 
       final container = makeContainer();
       addTearDown(container.dispose);
@@ -150,9 +152,8 @@ void main() {
 
     test('RRC05: resumeRule calls setActive(active: true)', () async {
       final resumedRule = _rule(id: 1, isActive: true);
-      when(
-        () => repo.setActive(any(), active: any(named: 'active')),
-      ).thenAnswer((_) async {});
+      when(() => repo.setActive(any(), active: any(named: 'active')))
+          .thenAnswer((_) async {});
       when(() => repo.getById(1)).thenAnswer((_) async => resumedRule);
 
       final container = makeContainer();

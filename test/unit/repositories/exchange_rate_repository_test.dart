@@ -183,50 +183,39 @@ void main() {
       defaultCurrencyController.add('USD');
       await Future<void>.delayed(const Duration(milliseconds: 50));
 
-      verify(
-        () => mockService.fetchRates(any()),
-      ).called(greaterThanOrEqualTo(1));
+      verify(() => mockService.fetchRates(any()))
+          .called(greaterThanOrEqualTo(1));
     });
 
-    test(
-      'single-flight: concurrent refreshAll calls coalesce to one fetch',
-      () async {
-        await seedAccount('EUR');
-        final completer =
-            Completer<
-              List<({String from, String to, double rate, DateTime fetchedAt})>
-            >();
-        when(
-          () => mockService.fetchRates(any()),
-        ).thenAnswer((_) => completer.future);
+    test('single-flight: concurrent refreshAll calls coalesce to one fetch', () async {
+      await seedAccount('EUR');
+      final completer =
+          Completer<
+            List<({String from, String to, double rate, DateTime fetchedAt})>
+          >();
+      when(() => mockService.fetchRates(any()))
+          .thenAnswer((_) => completer.future);
 
-        // Fire three refreshAll calls in parallel for the same default currency.
-        final f1 = repo.refreshAll('USD');
-        final f2 = repo.refreshAll('USD');
-        final f3 = repo.refreshAll('USD');
+      // Fire three refreshAll calls in parallel for the same default currency.
+      final f1 = repo.refreshAll('USD');
+      final f2 = repo.refreshAll('USD');
+      final f3 = repo.refreshAll('USD');
 
-        // Allow microtasks to run.
-        await Future<void>.delayed(Duration.zero);
+      // Allow microtasks to run.
+      await Future<void>.delayed(Duration.zero);
 
-        completer.complete([
-          (
-            from: 'EUR',
-            to: 'USD',
-            rate: 1.08,
-            fetchedAt: DateTime(2026, 5, 14),
-          ),
-        ]);
-        await Future.wait([f1, f2, f3]);
+      completer.complete([
+        (from: 'EUR', to: 'USD', rate: 1.08, fetchedAt: DateTime(2026, 5, 14)),
+      ]);
+      await Future.wait([f1, f2, f3]);
 
-        // The mock was only invoked once thanks to single-flight.
-        verify(() => mockService.fetchRates(any())).called(1);
-      },
-    );
+      // The mock was only invoked once thanks to single-flight.
+      verify(() => mockService.fetchRates(any())).called(1);
+    });
 
     test('fetchRate handles service errors silently (no rethrow)', () async {
-      when(
-        () => mockService.fetchRates(any()),
-      ).thenThrow(Exception('network error'));
+      when(() => mockService.fetchRates(any()))
+          .thenThrow(Exception('network error'));
       await repo.fetchRate('EUR', 'USD'); // must not throw
       expect(repo.getRate('EUR', 'USD'), isNull);
     });

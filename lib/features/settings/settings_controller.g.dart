@@ -47,7 +47,7 @@ abstract class _$SettingsController extends $StreamNotifier<SettingsState> {
   Stream<SettingsState> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AsyncValue<SettingsState>, SettingsState>;
     final element =
         ref.element
@@ -57,6 +57,6 @@ abstract class _$SettingsController extends $StreamNotifier<SettingsState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

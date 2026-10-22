@@ -11,11 +11,13 @@
 // directly rather than declaring a transactions-local copy.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../app/providers/repository_providers.dart';
 import '../../data/models/account.dart';
 
 /// Non-archived accounts for the in-form account selector sheet.
+@Dependencies([accountRepository])
 final txActiveAccountsProvider = StreamProvider.autoDispose<List<Account>>((
   ref,
 ) {

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'category_search_detail_state.dart';
@@ -9,6 +9,7 @@ part of 'category_search_detail_state.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -20,7 +21,7 @@ mixin _$CategorySearchDetailState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CategorySearchDetailState);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is CategorySearchDetailState);
 }
 
 
@@ -29,7 +30,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'CategorySearchDetailState()';
+    return 'CategorySearchDetailState()';
 }
 
 
@@ -191,7 +192,7 @@ class DetailLoading implements CategorySearchDetailState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DetailLoading);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is DetailLoading);
 }
 
 
@@ -200,7 +201,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'CategorySearchDetailState.loading()';
+    return 'CategorySearchDetailState.loading()';
 }
 
 
@@ -213,7 +214,7 @@ String toString() {
 
 
 class DetailData implements CategorySearchDetailState {
-  const DetailData({required final  List<DatedTransactionGroup> days, required this.overallSumMinorUnits, required this.currency, this.pendingDelete}): _days = days;
+  const DetailData({required  List<DatedTransactionGroup> days, required this.overallSumMinorUnits, required this.currency, this.pendingDelete}): _days = days;
   
 
  final  List<DatedTransactionGroup> _days;
@@ -237,16 +238,18 @@ $DetailDataCopyWith<DetailData> get copyWith => _$DetailDataCopyWithImpl<DetailD
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DetailData&&const DeepCollectionEquality().equals(other._days, _days)&&(identical(other.overallSumMinorUnits, overallSumMinorUnits) || other.overallSumMinorUnits == overallSumMinorUnits)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.pendingDelete, pendingDelete) || other.pendingDelete == pendingDelete));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is DetailData&&const DeepCollectionEquality().equals(other.days, _days)&&(identical(other.overallSumMinorUnits, overallSumMinorUnits) || other.overallSumMinorUnits == overallSumMinorUnits)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.pendingDelete, pendingDelete) || other.pendingDelete == pendingDelete));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_days),overallSumMinorUnits,currency,pendingDelete);
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_days),overallSumMinorUnits,currency,pendingDelete);
+}
 
 @override
 String toString() {
-  return 'CategorySearchDetailState.data(days: $days, overallSumMinorUnits: $overallSumMinorUnits, currency: $currency, pendingDelete: $pendingDelete)';
+    return 'CategorySearchDetailState.data(days: $days, overallSumMinorUnits: $overallSumMinorUnits, currency: $currency, pendingDelete: $pendingDelete)';
 }
 
 
@@ -310,7 +313,7 @@ class DetailEmpty implements CategorySearchDetailState {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DetailEmpty);
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is DetailEmpty);
 }
 
 
@@ -319,7 +322,7 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'CategorySearchDetailState.empty()';
+    return 'CategorySearchDetailState.empty()';
 }
 
 
@@ -342,16 +345,21 @@ $DatedTransactionGroupCopyWith<DatedTransactionGroup> get copyWith => _$DatedTra
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DatedTransactionGroup&&(identical(other.date, date) || other.date == date)&&const DeepCollectionEquality().equals(other.transactions, transactions)&&(identical(other.daySumMinorUnits, daySumMinorUnits) || other.daySumMinorUnits == daySumMinorUnits));
+  final _this = this as DatedTransactionGroup;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DatedTransactionGroup&&(identical(other.date, _this.date) || other.date == _this.date)&&const DeepCollectionEquality().equals(other.transactions, _this.transactions)&&(identical(other.daySumMinorUnits, _this.daySumMinorUnits) || other.daySumMinorUnits == _this.daySumMinorUnits));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,date,const DeepCollectionEquality().hash(transactions),daySumMinorUnits);
+int get hashCode {
+  final _this = this as DatedTransactionGroup;
+  return Object.hash(runtimeType,_this.date,const DeepCollectionEquality().hash(_this.transactions),_this.daySumMinorUnits);
+}
 
 @override
 String toString() {
-  return 'DatedTransactionGroup(date: $date, transactions: $transactions, daySumMinorUnits: $daySumMinorUnits)';
+  final _this = this as DatedTransactionGroup;
+  return 'DatedTransactionGroup(date: ${_this.date}, transactions: ${_this.transactions}, daySumMinorUnits: ${_this.daySumMinorUnits})';
 }
 
 
@@ -380,7 +388,7 @@ class _$DatedTransactionGroupCopyWithImpl<$Res>
 /// Create a copy of DatedTransactionGroup
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? date = null,Object? transactions = null,Object? daySumMinorUnits = null,}) {
-  return _then(_self.copyWith(
+  return _then(DatedTransactionGroup(
 date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
 as DateTime,transactions: null == transactions ? _self.transactions : transactions // ignore: cast_nullable_to_non_nullable
 as List<Transaction>,daySumMinorUnits: null == daySumMinorUnits ? _self.daySumMinorUnits : daySumMinorUnits // ignore: cast_nullable_to_non_nullable
@@ -525,7 +533,7 @@ return $default(_that.date,_that.transactions,_that.daySumMinorUnits);case _:
 
 
 class _DatedTransactionGroup implements DatedTransactionGroup {
-  const _DatedTransactionGroup({required this.date, required final  List<Transaction> transactions, required this.daySumMinorUnits}): _transactions = transactions;
+  const _DatedTransactionGroup({required this.date, required  List<Transaction> transactions, required this.daySumMinorUnits}): _transactions = transactions;
   
 
 @override final  DateTime date;
@@ -548,16 +556,18 @@ _$DatedTransactionGroupCopyWith<_DatedTransactionGroup> get copyWith => __$Dated
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DatedTransactionGroup&&(identical(other.date, date) || other.date == date)&&const DeepCollectionEquality().equals(other._transactions, _transactions)&&(identical(other.daySumMinorUnits, daySumMinorUnits) || other.daySumMinorUnits == daySumMinorUnits));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DatedTransactionGroup&&(identical(other.date, date) || other.date == date)&&const DeepCollectionEquality().equals(other.transactions, _transactions)&&(identical(other.daySumMinorUnits, daySumMinorUnits) || other.daySumMinorUnits == daySumMinorUnits));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,date,const DeepCollectionEquality().hash(_transactions),daySumMinorUnits);
+int get hashCode {
+    return Object.hash(runtimeType,date,const DeepCollectionEquality().hash(_transactions),daySumMinorUnits);
+}
 
 @override
 String toString() {
-  return 'DatedTransactionGroup(date: $date, transactions: $transactions, daySumMinorUnits: $daySumMinorUnits)';
+    return 'DatedTransactionGroup(date: $date, transactions: $transactions, daySumMinorUnits: $daySumMinorUnits)';
 }
 
 

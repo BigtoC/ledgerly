@@ -128,7 +128,7 @@ abstract class _$CategorySearchDetailController
   });
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<
@@ -146,7 +146,7 @@ abstract class _$CategorySearchDetailController
               Object?,
               Object?
             >;
-    element.handleCreate(
+    return element.handleCreate(
       ref,
       () => build(
         categoryId: _$args.categoryId,

@@ -136,11 +136,7 @@ enum AccountsOperationError { lastActiveAccount, defaultAccount, missingRow }
 /// subscriptions deterministically — `Stream` closures are harder to
 /// reason about under riverpod's `keepAlive: false` rebuilds.
 class _AccountsComposer {
-  _AccountsComposer({
-    required AccountRepository accountRepo,
-    required UserPreferencesRepository prefs,
-  }) : _accountRepo = accountRepo,
-       _prefs = prefs {
+  _AccountsComposer({required this._accountRepo, required this._prefs}) {
     _out = StreamController<AccountsState>.broadcast(
       onListen: _start,
       onCancel: _stop,

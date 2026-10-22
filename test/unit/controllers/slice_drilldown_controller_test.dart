@@ -16,6 +16,7 @@ import 'package:ledgerly/features/analysis/charts/charts_state.dart';
 import 'package:ledgerly/features/analysis/charts/slice_drilldown_controller.dart';
 import 'package:ledgerly/features/analysis/charts/slice_drilldown_data.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 class _MockRepo extends Mock implements TransactionRepository {}
 
@@ -85,6 +86,11 @@ Transaction _tx(int id, {Currency currency = _usd}) => Transaction(
   updatedAt: DateTime(2026, 5, 18),
 );
 
+@Dependencies([
+  ChartsSelectionController,
+  chartsFxStatus,
+  SliceDrilldownController,
+])
 void main() {
   setUpAll(() {
     registerFallbackValue(DateTime(2026));
@@ -113,6 +119,7 @@ void main() {
   });
   tearDown(() => container.dispose());
 
+  @Dependencies([SliceDrilldownController])
   Future<SliceDrilldownData> readData() async {
     // Drain initial emission via a listener (mirrors the pattern used in
     // charts_controller_slice_test.dart since `.stream` on a

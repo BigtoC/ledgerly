@@ -18,6 +18,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../app/providers/splash_redirect_provider.dart';
 import '../../core/utils/date_helpers.dart';
@@ -29,6 +30,12 @@ import 'widgets/splash_enter_button.dart';
 import 'widgets/splash_rainbow_gradient_text.dart';
 import 'widgets/splash_sun_background.dart';
 
+@Dependencies([
+  splashGateSnapshot,
+  splashStartDate,
+  splashClock,
+  SplashController,
+])
 class SplashScreen extends ConsumerWidget {
   const SplashScreen({super.key, this.previewMode = false});
 
@@ -178,6 +185,7 @@ class _SplashErrorSurface extends StatelessWidget {
   }
 }
 
+@Dependencies([splashClock, SplashController])
 class _LaunchTimeStartDatePrompt extends ConsumerWidget {
   const _LaunchTimeStartDatePrompt({required this.label});
 

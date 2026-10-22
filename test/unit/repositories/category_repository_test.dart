@@ -486,36 +486,29 @@ void main() {
       expect(row, isNotNull);
     });
 
-    test(
-      'C-delete-02b: recurring-rule-referenced category → CategoryInUseException',
-      () async {
-        const custom = Category(
-          id: 0,
-          icon: 'misc',
-          color: 2,
-          type: CategoryType.expense,
-        );
-        final inserted = await catRepo.save(custom);
-        await _insertRecurringRuleRaw(
-          db,
-          categoryId: inserted.id,
-          accountId: fixtures.accountId,
-        );
+    test('C-delete-02b: recurring-rule-referenced category → CategoryInUseException', () async {
+      const custom = Category(
+        id: 0,
+        icon: 'misc',
+        color: 2,
+        type: CategoryType.expense,
+      );
+      final inserted = await catRepo.save(custom);
+      await _insertRecurringRuleRaw(
+        db,
+        categoryId: inserted.id,
+        accountId: fixtures.accountId,
+      );
 
-        await expectLater(
-          catRepo.delete(inserted.id),
-          throwsA(
-            isA<CategoryInUseException>().having(
-              (e) => e.id,
-              'id',
-              inserted.id,
-            ),
-          ),
-        );
+      await expectLater(
+        catRepo.delete(inserted.id),
+        throwsA(
+          isA<CategoryInUseException>().having((e) => e.id, 'id', inserted.id),
+        ),
+      );
 
-        expect(await catRepo.getById(inserted.id), isNotNull);
-      },
-    );
+      expect(await catRepo.getById(inserted.id), isNotNull);
+    });
 
     test(
       'C-delete-03: unused seeded category cannot be hard-deleted',

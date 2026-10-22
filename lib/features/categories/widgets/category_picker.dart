@@ -16,6 +16,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../core/utils/color_palette.dart';
 import '../../../core/utils/icon_registry.dart';
@@ -36,6 +37,7 @@ import 'category_display.dart';
 /// <600dp, constrained dialog on >=600dp. Both containers render the
 /// same `CustomScrollView → SliverGrid` picker body and survive 2× text
 /// scale.
+@Dependencies([categoriesByType])
 Future<Category?> showCategoryPicker(
   BuildContext context, {
   required CategoryType type,
@@ -65,6 +67,7 @@ Future<Category?> showCategoryPicker(
 }
 
 /// Picker body — identical across the modal-sheet and dialog containers.
+@Dependencies([categoriesByType])
 class _CategoryPickerSheet extends ConsumerWidget {
   const _CategoryPickerSheet({required this.type});
 

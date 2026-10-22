@@ -65,10 +65,7 @@ abstract class PendingTransactionRepository {
 
 final class DriftPendingTransactionRepository
     implements PendingTransactionRepository {
-  DriftPendingTransactionRepository(
-    this._db, {
-    required TransactionRepository txRepo,
-  }) : _txRepo = txRepo;
+  DriftPendingTransactionRepository(this._db, {required this._txRepo});
 
   final drift.AppDatabase _db;
   final TransactionRepository _txRepo;

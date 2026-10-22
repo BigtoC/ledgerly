@@ -12,6 +12,9 @@ part of 'charts_providers.dart';
 /// currency or the per-pair rate metadata changes. Uses an internal
 /// `StreamController` so both inputs feed the same output without
 /// dropping events from whichever input wasn't last awaited.
+///
+/// `keepAlive` because the kept-alive `ChartsController` and
+/// `SliceDrilldownController` listen to it for their whole lifetime.
 
 @ProviderFor(chartsFxStatus)
 final chartsFxStatusProvider = ChartsFxStatusProvider._();
@@ -20,6 +23,9 @@ final chartsFxStatusProvider = ChartsFxStatusProvider._();
 /// currency or the per-pair rate metadata changes. Uses an internal
 /// `StreamController` so both inputs feed the same output without
 /// dropping events from whichever input wasn't last awaited.
+///
+/// `keepAlive` because the kept-alive `ChartsController` and
+/// `SliceDrilldownController` listen to it for their whole lifetime.
 
 final class ChartsFxStatusProvider
     extends
@@ -33,13 +39,16 @@ final class ChartsFxStatusProvider
   /// currency or the per-pair rate metadata changes. Uses an internal
   /// `StreamController` so both inputs feed the same output without
   /// dropping events from whichever input wasn't last awaited.
+  ///
+  /// `keepAlive` because the kept-alive `ChartsController` and
+  /// `SliceDrilldownController` listen to it for their whole lifetime.
   ChartsFxStatusProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
         name: r'chartsFxStatusProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: <ProviderOrFamily>[
           initialDefaultCurrencyProvider,
           defaultCurrencyProvider,
@@ -80,11 +89,13 @@ final class ChartsFxStatusProvider
   }
 }
 
-String _$chartsFxStatusHash() => r'18956a2abd662947eb3fe7b5760a9c1902345f85';
+String _$chartsFxStatusHash() => r'b38f6109218c058a2c457b03887cd9af6b819641';
 
 /// `code → Currency` for `MoneyFormatter` lookups in chart widgets.
 /// Mirrors `homeCurrenciesByCodeProvider` shape so chart code can format
 /// amounts identically to the Home summary strip.
+///
+/// `keepAlive` because the kept-alive `ChartsController` listens to it.
 
 @ProviderFor(chartsCurrenciesByCode)
 final chartsCurrenciesByCodeProvider = ChartsCurrenciesByCodeProvider._();
@@ -92,6 +103,8 @@ final chartsCurrenciesByCodeProvider = ChartsCurrenciesByCodeProvider._();
 /// `code → Currency` for `MoneyFormatter` lookups in chart widgets.
 /// Mirrors `homeCurrenciesByCodeProvider` shape so chart code can format
 /// amounts identically to the Home summary strip.
+///
+/// `keepAlive` because the kept-alive `ChartsController` listens to it.
 
 final class ChartsCurrenciesByCodeProvider
     extends
@@ -106,13 +119,15 @@ final class ChartsCurrenciesByCodeProvider
   /// `code → Currency` for `MoneyFormatter` lookups in chart widgets.
   /// Mirrors `homeCurrenciesByCodeProvider` shape so chart code can format
   /// amounts identically to the Home summary strip.
+  ///
+  /// `keepAlive` because the kept-alive `ChartsController` listens to it.
   ChartsCurrenciesByCodeProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
         name: r'chartsCurrenciesByCodeProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: <ProviderOrFamily>[currencyRepositoryProvider],
         $allTransitiveDependencies: <ProviderOrFamily>[
           ChartsCurrenciesByCodeProvider.$allTransitiveDependencies0,
@@ -140,4 +155,4 @@ final class ChartsCurrenciesByCodeProvider
 }
 
 String _$chartsCurrenciesByCodeHash() =>
-    r'ae84501d9a92885aada4b05495e9defb148f667f';
+    r'2fa2bea4b065264c8a0a5f0b5837e6444fe1446d';

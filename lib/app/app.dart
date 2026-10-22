@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../l10n/app_localizations.dart';
 import '../core/theme/app_theme.dart';
@@ -8,6 +9,7 @@ import 'providers/repository_providers.dart';
 import 'providers/theme_provider.dart';
 import 'router.dart';
 
+@Dependencies([router, themeMode, userLocalePreference, exchangeRateRepository])
 class App extends ConsumerStatefulWidget {
   const App({super.key, this.onFirstFrame});
 

@@ -1244,20 +1244,20 @@ Tests are organized by **architectural layer**, not by feature. This mirrors the
 
 ## Dependencies
 
-Versions below are the tested resolvable set under Flutter **3.44.0** (Dart 3.12.0). Keep `pubspec.yaml` in sync with this table — any version bump needs to round-trip `flutter pub get` and `dart run build_runner build` before landing here.
+Versions below are the tested resolvable set under Flutter **3.47.7** (Dart 3.13.5). Keep `pubspec.yaml` in sync with this table — any version bump needs to round-trip `flutter pub get` and `dart run build_runner build` before landing here.
 
 ### Core (MVP)
 
 | Package                  | Version     | Purpose                                                                  |
 |--------------------------|-------------|--------------------------------------------------------------------------|
-| `flutter_riverpod`       | `^3.3.1`    | State management                                                         |
-| `riverpod_annotation`    | `^4.0.2`    | Provider code-gen annotations                                            |
-| `drift`                  | `^2.31.0`   | Database ORM                                                             |
-| `drift_flutter`          | `^0.2.8`    | Flutter SQLite integration                                               |
+| `flutter_riverpod`       | `^3.4.3`    | State management                                                         |
+| `riverpod_annotation`    | `^4.0.7`    | Provider code-gen annotations                                            |
+| `drift`                  | `^2.35.2`   | Database ORM                                                             |
+| `drift_flutter`          | `^0.3.1`    | Flutter SQLite integration                                               |
 | `path_provider`          | `^2.1.6`    | DB file path location                                                    |
 | `go_router`              | `^18.1.1`   | Navigation/routing (`StatefulShellRoute`)                                |
 | `freezed_annotation`     | `^3.1.0`    | Immutable data model annotations                                         |
-| `json_annotation`        | `^4.11.0`   | JSON serialization annotations                                           |
+| `json_annotation`        | `^4.12.0`   | JSON serialization annotations                                           |
 | `flutter_localizations`  | sdk         | i18n framework                                                           |
 | `intl`                   | `^0.20.2`   | Localization utilities + `NumberFormat`                                  |
 | `flutter_slidable`       | `^4.0.3`    | Swipe actions on list items                                              |
@@ -1287,18 +1287,24 @@ Versions below are the tested resolvable set under Flutter **3.44.0** (Dart 3.12
 
 | Package                 | Version   | Purpose                                                                                                                                                               |
 |-------------------------|-----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `build_runner`          | `^2.15.1` | Code generation runner                                                                                                                                                |
-| `drift_dev`             | `^2.31.0` | Drift code generation + schema dump                                                                                                                                   |
-| `freezed`               | `^3.2.5`  | Freezed code generation                                                                                                                                               |
-| `json_serializable`     | `^6.13.0` | JSON code generation                                                                                                                                                  |
-| `riverpod_generator`    | `^4.0.3`  | Riverpod code generation                                                                                                                                              |
-| `riverpod_lint`         | `3.1.4`   | Riverpod-specific lints — analysis-server plugin under `plugins:` in `analysis_options.yaml`, not a pubspec entry; see note                                           |
+| `build_runner`          | `^2.16.2` | Code generation runner — held below 2.17 by `build 5`; see note                                                                                                       |
+| `drift_dev`             | `^2.35.1` | Drift code generation + schema dump                                                                                                                                   |
+| `freezed`               | `^4.0.3`  | Freezed code generation                                                                                                                                               |
+| `json_serializable`     | `^6.15.2` | JSON code generation — not used yet; see note                                                                                                                         |
+| `riverpod_generator`    | `^4.0.9`  | Riverpod code generation                                                                                                                                              |
+| `riverpod_lint`         | `3.1.9`   | Riverpod-specific lints — analysis-server plugin under `plugins:` in `analysis_options.yaml`, not a pubspec entry; see note                                           |
 | `import_lint`           | `^0.1.6`  | Enforce layer-boundary rules — pinned to the 0.1.x line; see note                                                                                                     |
 | `mocktail`              | `^1.0.5`  | Mocking for tests                                                                                                                                                     |
 | `fake_async`            | `^1.3.3`  | Async time control for tests                                                                                                                                          |
 | `flutter_lints`         | `^6.0.0`  | Static analysis                                                                                                                                                       |
 | `flutter_native_splash` | `^2.4.8`  | Splash asset codegen CLI (`dart run flutter_native_splash:create`); never imported at runtime, so it lives in dev deps even though it's listed under Core (MVP) above |
 
-**`import_lint` version note.** `import_lint >=2.0.0` pins `analyzer ^12.1.0`. On Dart 3.12 the code-gen stack tops out at `analyzer 9` (`freezed 3.2.x` allows `<11`; `riverpod_generator 4.0.3` pins `^9`; the analyzer-12/13 releases of both need Dart 3.13 or prereleases), so 2.x is unresolvable. The 0.9.x–1.0.x line requires `analyzer ^5.2.0`, which conflicts with `freezed >=2.5.3`. Only `^0.1.6` resolves — it has no `analyzer` constraint. Revisit this pin when the project moves to Dart 3.13 and the analyzer-13 code-gen releases; at that point pin `import_lint ^2.x` for the full layer-boundary rule set.
+**`import_lint` version note.** `import_lint 2.0.0`, the newest release, pins `analyzer ^12.1.0`. The code-gen stack now needs analyzer 14: `freezed 4.0.3` requires `>=14.0.0`, and `riverpod_generator 4.0.9` and `drift_dev 2.35` require `>=13.0.0`. So 2.x still does not resolve. The solver reports: "import_lint >=2.0.0 depends on analyzer ^12.1.0 and riverpod_generator 4.0.9 depends on analyzer >=13.0.0 <15.0.0". The 0.9.x–1.0.x line requires `analyzer ^5.2.0`, which conflicts with `freezed >=2.5.3`. Only `^0.1.6` resolves, because it has no `analyzer` constraint. Revisit this pin when an `import_lint` release supports analyzer 14. 2.x reads its rules from an `import_lint:` block in `analysis_options.yaml` as glob `target` / `from` / `except` keys and runs as an analysis-server plugin, so moving to it means porting `import_analysis_options.yaml`.
 
-**`riverpod_lint` version note.** `riverpod_lint 3.1+` is an `analysis_server_plugin`, resolved by the analysis server from `analysis_options.yaml` rather than from `pubspec.yaml`. On Dart 3.12 only `3.1.4` loads (see the comment above `plugins:` in `analysis_options.yaml`). Its diagnostics appear in `dart analyze` and the IDE; `flutter analyze` does not load analysis-server plugins, so CI does not enforce them.
+**`riverpod_lint` version note.** `riverpod_lint 3.1+` is an `analysis_server_plugin`. The analysis server resolves it from `analysis_options.yaml`, not from `pubspec.yaml`. On Dart 3.13, `3.1.9` loads against analyzer 14 (on Dart 3.12 only `3.1.4` did; see the comment above `plugins:` in `analysis_options.yaml`). Its diagnostics appear in `dart analyze` and the IDE. CI runs `dart analyze --fatal-infos`, which waits for the plugin, so `riverpod_lint` warnings fail the build. `flutter analyze` does not wait for the plugin and reports its warnings only some of the time.
+
+**`json_serializable` note.** Nothing uses it yet. There are no `@JsonSerializable` classes and no `build.yaml`, and the `@JsonKey` annotations in `*.freezed.dart` come from `freezed_annotation`. It stays for future JSON boundaries such as backup/restore. Its `analyzer >=10.0.0 <15.0.0` range is wider than `freezed 4.0.3`'s `>=14.0.0`, so it does not limit analyzer upgrades today. If it becomes the binding constraint before anything uses it, drop it instead of holding the stack back.
+
+**`build_runner` version note.** `build_runner 2.17.1` requires `build >=5.0.0 <5.1.0`, and 2.17.0 is retracted. `drift_dev 2.35` and `riverpod_generator 4.0.9` still require `build <5.0.0`, so `^2.16.2` is the newest release that resolves.
+
+**SQLite native library note.** `drift_flutter 0.3` uses `sqlite3 3.x`. That release bundles SQLite through Dart build hooks: at build time it downloads a hash-checked prebuilt library from the `sqlite3.dart` GitHub release. It replaces `sqlite3_flutter_libs`, which now resolves only as an empty `+eol` package. The database file is unchanged at `getApplicationDocumentsDirectory()/ledgerly.sqlite`.

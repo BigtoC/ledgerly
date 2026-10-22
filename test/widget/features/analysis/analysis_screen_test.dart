@@ -6,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
+import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/account.dart';
 import 'package:ledgerly/data/models/category.dart';
@@ -16,6 +18,12 @@ import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/features/analysis/analysis_screen.dart';
+import 'package:ledgerly/features/analysis/charts/charts_controller.dart';
+import 'package:ledgerly/features/analysis/charts/charts_providers.dart';
+import 'package:ledgerly/features/analysis/charts/charts_selection_controller.dart';
+import 'package:ledgerly/features/analysis/charts/slice_drilldown_controller.dart';
+import 'package:ledgerly/features/analysis/search/analysis_controller.dart';
+import 'package:ledgerly/features/analysis/search/analysis_providers.dart';
 import 'package:ledgerly/features/analysis/search/widgets/category_search_tile.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
@@ -56,6 +64,14 @@ Transaction _tx() => Transaction(
   updatedAt: DateTime.utc(2026),
 );
 
+@Dependencies([
+  ChartsSelectionController,
+  ChartsController,
+  chartsCurrenciesByCode,
+  initialDefaultCurrency,
+  SliceDrilldownController,
+  chartsFxStatus,
+])
 Widget _harness({
   required TransactionRepository tx,
   required CategoryRepository cat,
@@ -80,6 +96,17 @@ Widget _harness({
   );
 }
 
+@Dependencies([
+  AnalysisController,
+  ChartsSelectionController,
+  ChartsController,
+  chartsCurrenciesByCode,
+  initialDefaultCurrency,
+  SliceDrilldownController,
+  analysisCategoriesById,
+  analysisAccountsById,
+  chartsFxStatus,
+])
 GoRouter _detailRouter(String initialLocation) {
   return GoRouter(
     initialLocation: initialLocation,
@@ -98,6 +125,17 @@ GoRouter _detailRouter(String initialLocation) {
   );
 }
 
+@Dependencies([
+  AnalysisController,
+  ChartsSelectionController,
+  ChartsController,
+  chartsCurrenciesByCode,
+  initialDefaultCurrency,
+  SliceDrilldownController,
+  analysisCategoriesById,
+  analysisAccountsById,
+  chartsFxStatus,
+])
 Widget _routerHarness({
   required TransactionRepository tx,
   required CategoryRepository cat,
@@ -123,6 +161,17 @@ Widget _routerHarness({
   );
 }
 
+@Dependencies([
+  ChartsSelectionController,
+  ChartsController,
+  chartsCurrenciesByCode,
+  initialDefaultCurrency,
+  SliceDrilldownController,
+  chartsFxStatus,
+  AnalysisController,
+  analysisCategoriesById,
+  analysisAccountsById,
+])
 void main() {
   setUpAll(() {
     registerFallbackValue('');
@@ -136,12 +185,10 @@ void main() {
     tx = _MockTransactionRepository();
     cat = _MockCategoryRepository();
     acct = _MockAccountRepository();
-    when(
-      () => cat.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value(const <Category>[]));
-    when(
-      () => acct.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value(const <Account>[]));
+    when(() => cat.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value(const <Category>[]));
+    when(() => acct.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value(const <Account>[]));
   });
 
   testWidgets('shows no-results copy when query has no matches', (
@@ -167,9 +214,8 @@ void main() {
     when(() => tx.watchByMemo('coffee')).thenAnswer((_) => coffeeCtrl.stream);
     when(() => tx.watchByMemo('tea')).thenAnswer((_) => teaCtrl.stream);
 
-    when(
-      () => cat.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value([_cat()]));
+    when(() => cat.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([_cat()]));
 
     await tester.pumpWidget(
       _routerHarness(
@@ -201,9 +247,8 @@ void main() {
     tester,
   ) async {
     when(() => tx.watchByMemo(any())).thenAnswer((_) => Stream.value([_tx()]));
-    when(
-      () => cat.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value([_cat()]));
+    when(() => cat.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([_cat()]));
 
     await tester.pumpWidget(
       _routerHarness(

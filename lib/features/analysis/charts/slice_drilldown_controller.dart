@@ -26,8 +26,9 @@ import 'slice_drilldown_data.dart';
 
 part 'slice_drilldown_controller.g.dart';
 
-typedef SliceDrilldownEffectListener =
-    void Function(SliceDrilldownEffect effect);
+typedef SliceDrilldownEffectListener = void Function(
+  SliceDrilldownEffect effect,
+);
 
 sealed class SliceDrilldownEffect {
   const SliceDrilldownEffect();

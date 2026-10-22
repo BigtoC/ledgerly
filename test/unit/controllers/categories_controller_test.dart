@@ -16,6 +16,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/category.dart';
@@ -43,6 +44,7 @@ Category _c({
   isArchived: isArchived,
 );
 
+@Dependencies([CategoriesController])
 void main() {
   setUpAll(() {
     registerFallbackValue(
@@ -62,9 +64,8 @@ void main() {
     setUp(() {
       repo = _MockCategoryRepository();
       rowsCtrl = StreamController<List<Category>>.broadcast();
-      when(
-        () => repo.watchAll(includeArchived: false),
-      ).thenAnswer((_) => rowsCtrl.stream);
+      when(() => repo.watchAll(includeArchived: false))
+          .thenAnswer((_) => rowsCtrl.stream);
       when(() => repo.isReferenced(any())).thenAnswer((_) async => false);
     });
 
@@ -78,6 +79,7 @@ void main() {
       );
     }
 
+    @Dependencies([CategoriesController])
     Future<CategoriesState> waitForData(ProviderContainer c) async {
       for (var i = 0; i < 100; i++) {
         final s = c.read(categoriesControllerProvider);
@@ -302,9 +304,8 @@ void main() {
         isArchived: true,
       );
       when(() => repo.getById(4)).thenAnswer((_) async => stored);
-      when(
-        () => repo.save(any()),
-      ).thenAnswer((_) async => stored.copyWith(isArchived: false));
+      when(() => repo.save(any()))
+          .thenAnswer((_) async => stored.copyWith(isArchived: false));
 
       await container
           .read(categoriesControllerProvider.notifier)
@@ -342,9 +343,8 @@ void main() {
       rowsCtrl.add(const []);
       await waitForData(container);
 
-      when(
-        () => repo.save(any()),
-      ).thenThrow(const CategoryTypeLockedException(1));
+      when(() => repo.save(any()))
+          .thenThrow(const CategoryTypeLockedException(1));
 
       expect(
         () => container
@@ -368,9 +368,8 @@ void main() {
       final b = _c(id: 20, type: CategoryType.expense, customName: 'B');
       when(() => repo.getById(10)).thenAnswer((_) async => a);
       when(() => repo.getById(20)).thenAnswer((_) async => b);
-      when(
-        () => repo.save(any()),
-      ).thenAnswer((inv) async => inv.positionalArguments.first as Category);
+      when(() => repo.save(any()))
+          .thenAnswer((inv) async => inv.positionalArguments.first as Category);
 
       await container.read(categoriesControllerProvider.notifier).reorder([
         20,
@@ -401,9 +400,8 @@ void main() {
         customName: 'Name',
       );
       when(() => repo.getById(50)).thenAnswer((_) async => existing);
-      when(
-        () => repo.save(any()),
-      ).thenAnswer((inv) async => inv.positionalArguments.first as Category);
+      when(() => repo.save(any()))
+          .thenAnswer((inv) async => inv.positionalArguments.first as Category);
 
       await container
           .read(categoriesControllerProvider.notifier)

@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/account.dart';
@@ -45,6 +46,11 @@ class _FakeFormController extends RecurringRuleFormController {
   Future<void> deleteRule() async {}
 }
 
+@Dependencies([
+  RecurringRuleFormController,
+  categoriesByType,
+  accountRepository,
+])
 Widget _wrap(ProviderContainer container) {
   return UncontrolledProviderScope(
     container: container,
@@ -68,9 +74,8 @@ ProviderContainer _makeContainer({
   when(
     () => accountRepo.watchAll(includeArchived: any(named: 'includeArchived')),
   ).thenAnswer((_) => const Stream<List<Account>>.empty());
-  when(
-    () => accountRepo.watchAll(),
-  ).thenAnswer((_) => const Stream<List<Account>>.empty());
+  when(() => accountRepo.watchAll())
+      .thenAnswer((_) => const Stream<List<Account>>.empty());
   final categoryRepo = _MockCategoryRepository();
   when(
     () => categoryRepo.watchAll(
@@ -81,14 +86,12 @@ ProviderContainer _makeContainer({
 
   return ProviderContainer(
     overrides: [
-      recurringRuleFormControllerProvider(
-        ruleId: ruleId,
-      ).overrideWith(() => _FakeFormController(initial)),
+      recurringRuleFormControllerProvider(ruleId: ruleId)
+          .overrideWith(() => _FakeFormController(initial)),
       accountRepositoryProvider.overrideWithValue(accountRepo),
       categoryRepositoryProvider.overrideWithValue(categoryRepo),
-      categoriesByTypeProvider(
-        CategoryType.expense,
-      ).overrideWith((_) => const Stream<List<Category>>.empty()),
+      categoriesByTypeProvider(CategoryType.expense)
+          .overrideWith((_) => const Stream<List<Category>>.empty()),
     ],
   );
 }
@@ -102,6 +105,11 @@ void _useTallViewport(WidgetTester tester) {
   addTearDown(tester.view.resetDevicePixelRatio);
 }
 
+@Dependencies([
+  RecurringRuleFormController,
+  categoriesByType,
+  accountRepository,
+])
 void main() {
   testWidgets('RFS01: create-mode app bar title and Create action label', (
     tester,

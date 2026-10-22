@@ -87,7 +87,7 @@ abstract class _$ChartsController extends $StreamNotifier<ChartsState> {
   Stream<ChartsState> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AsyncValue<ChartsState>, ChartsState>;
     final element =
         ref.element
@@ -97,6 +97,6 @@ abstract class _$ChartsController extends $StreamNotifier<ChartsState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

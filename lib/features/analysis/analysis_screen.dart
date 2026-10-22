@@ -3,10 +3,17 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
+import '../../app/providers/default_currency_provider.dart';
 import '../../l10n/app_localizations.dart';
+import 'charts/charts_controller.dart';
+import 'charts/charts_providers.dart';
 import 'charts/charts_section.dart';
+import 'charts/charts_selection_controller.dart';
+import 'charts/slice_drilldown_controller.dart';
 import 'search/analysis_controller.dart';
+import 'search/analysis_providers.dart';
 import 'search/analysis_state.dart';
 import 'search/widgets/category_search_tile.dart';
 
@@ -14,6 +21,17 @@ import 'search/widgets/category_search_tile.dart';
 const double _kSearchBarBaseHeight = 56;
 const double _kSearchBarVerticalPadding = 8;
 
+@Dependencies([
+  AnalysisController,
+  ChartsSelectionController,
+  ChartsController,
+  chartsCurrenciesByCode,
+  initialDefaultCurrency,
+  SliceDrilldownController,
+  analysisCategoriesById,
+  analysisAccountsById,
+  chartsFxStatus,
+])
 class AnalysisScreen extends ConsumerStatefulWidget {
   const AnalysisScreen({super.key});
 
@@ -128,9 +146,8 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
                   IconButton(
                     icon: const Icon(Icons.clear),
                     onPressed: _onClear,
-                    tooltip: MaterialLocalizations.of(
-                      context,
-                    ).deleteButtonTooltip,
+                    tooltip: MaterialLocalizations.of(context)
+                        .deleteButtonTooltip,
                   ),
               ],
               onChanged: _onChanged,

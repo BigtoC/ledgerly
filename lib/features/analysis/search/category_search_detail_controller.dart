@@ -27,8 +27,9 @@ import 'category_search_detail_state.dart';
 
 part 'category_search_detail_controller.g.dart';
 
-typedef CategorySearchDetailEffectListener =
-    void Function(CategorySearchDetailEffect effect);
+typedef CategorySearchDetailEffectListener = void Function(
+  CategorySearchDetailEffect effect,
+);
 
 sealed class CategorySearchDetailEffect {
   const CategorySearchDetailEffect();

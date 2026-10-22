@@ -24,8 +24,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../app/providers/default_currency_provider.dart';
+import '../../app/providers/repository_providers.dart';
 import '../../core/utils/box_shadow.dart';
 import '../shopping_list/shopping_list_providers.dart';
 import '../../core/utils/date_helpers.dart';
@@ -44,6 +46,14 @@ import 'widgets/pending_section.dart';
 import 'widgets/summary_strip.dart';
 import 'widgets/transaction_tile.dart';
 
+@Dependencies([
+  HomeController,
+  PendingController,
+  shoppingListTotalCount,
+  initialDefaultCurrency,
+  defaultCurrency,
+  exchangeRates,
+])
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -324,6 +334,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 }
 
+@Dependencies([
+  initialDefaultCurrency,
+  defaultCurrency,
+  exchangeRates,
+  PendingController,
+  HomeController,
+])
 class _SinglePane extends ConsumerWidget {
   const _SinglePane({
     required this.data,
@@ -479,6 +496,7 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
+@Dependencies([PendingController, HomeController])
 class _PendingOnlyBody extends StatelessWidget {
   const _PendingOnlyBody({required this.selectedDay});
 
@@ -563,6 +581,7 @@ class _EmptyDayCard extends StatelessWidget {
 /// stack of consistent cards. The list is rendered as a `Column` rather
 /// than a sliver because a single day's row count is bounded; the
 /// outer `CustomScrollView` still drives vertical scrolling.
+@Dependencies([exchangeRates])
 class _TransactionListCard extends StatelessWidget {
   const _TransactionListCard({
     required this.transactions,

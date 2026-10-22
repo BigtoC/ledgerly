@@ -25,7 +25,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
+import '../../app/providers/repository_providers.dart';
 import '../../data/models/category.dart';
 import '../../data/models/transaction.dart';
 import '../../l10n/app_localizations.dart';
@@ -44,6 +46,7 @@ import 'widgets/date_field.dart';
 import 'widgets/memo_field.dart';
 import 'widgets/transaction_type_segmented_control.dart';
 
+@Dependencies([TransactionFormController, categoriesByType, accountRepository])
 class TransactionFormScreen extends ConsumerStatefulWidget {
   const TransactionFormScreen({super.key, this.transactionId, this.mode});
 
@@ -372,9 +375,8 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       result = await submit();
     } catch (_) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(failureMessage)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(failureMessage)));
       return;
     }
     if (result == null) return;
@@ -432,9 +434,8 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       saved = await controller.save();
     } catch (_) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.txSaveFailedSnackbar)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.txSaveFailedSnackbar)));
       return;
     }
     if (saved == null) {
@@ -479,16 +480,14 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       removed = await controller.deleteExisting();
     } catch (_) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.txDeleteFailedSnackbar)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.txDeleteFailedSnackbar)));
       return;
     }
     if (!context.mounted) return;
     if (!removed) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.txTransactionNotFound)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.txTransactionNotFound)));
     }
     context.pop();
   }

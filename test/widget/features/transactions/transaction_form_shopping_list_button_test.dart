@@ -16,6 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/account.dart';
@@ -28,6 +29,8 @@ import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/shopping_list_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
+import 'package:ledgerly/features/categories/categories_controller.dart';
+import 'package:ledgerly/features/transactions/transaction_form_controller.dart';
 import 'package:ledgerly/features/transactions/transaction_form_screen.dart';
 import 'package:ledgerly/features/transactions/transaction_form_state.dart';
 import 'package:ledgerly/features/transactions/widgets/account_selector_tile.dart';
@@ -106,6 +109,7 @@ class _HomeStub extends StatelessWidget {
   Widget build(BuildContext context) => const Scaffold(body: Text('home-stub'));
 }
 
+@Dependencies([TransactionFormController, categoriesByType, accountRepository])
 void main() {
   late _MockTransactionRepository txRepo;
   late _MockAccountRepository accountRepo;
@@ -123,29 +127,28 @@ void main() {
     slRepo = _MockShoppingListRepository();
 
     when(() => prefs.getDefaultAccountId()).thenAnswer((_) async => 1);
-    when(
-      () => accountRepo.getLastUsedActiveAccount(),
-    ).thenAnswer((_) async => null);
+    when(() => accountRepo.getLastUsedActiveAccount())
+        .thenAnswer((_) async => null);
     when(() => accountRepo.getById(1)).thenAnswer((_) async => _account);
-    when(
-      () => accountRepo.getById(5),
-    ).thenAnswer((_) async => _archivedAccount);
-    when(
-      () => accountRepo.watchAll(includeArchived: false),
-    ).thenAnswer((_) => Stream.value(const [_account]));
-    when(
-      () => categoryRepo.getById(10),
-    ).thenAnswer((_) async => _expenseCategory);
-    when(
-      () => categoryRepo.getById(11),
-    ).thenAnswer((_) async => _archivedCategory);
-    when(
-      () => currencyRepo.watchAll(includeTokens: false),
-    ).thenAnswer((_) => Stream.value(const [_usd]));
+    when(() => accountRepo.getById(5))
+        .thenAnswer((_) async => _archivedAccount);
+    when(() => accountRepo.watchAll(includeArchived: false))
+        .thenAnswer((_) => Stream.value(const [_account]));
+    when(() => categoryRepo.getById(10))
+        .thenAnswer((_) async => _expenseCategory);
+    when(() => categoryRepo.getById(11))
+        .thenAnswer((_) async => _archivedCategory);
+    when(() => currencyRepo.watchAll(includeTokens: false))
+        .thenAnswer((_) => Stream.value(const [_usd]));
     when(() => currencyRepo.getByCode('USD')).thenAnswer((_) async => _usd);
   });
 
   /// Mount the form screen with a typed [mode] under a minimal GoRouter.
+  @Dependencies([
+    TransactionFormController,
+    categoriesByType,
+    accountRepository,
+  ])
   Widget mountWithMode(TransactionFormMode mode) {
     final router = GoRouter(
       initialLocation: '/form',
@@ -286,9 +289,8 @@ void main() {
         draftCurrencyCode: 'USD',
       );
       when(() => slRepo.getById(89)).thenAnswer((_) async => draft);
-      when(
-        () => accountRepo.watchAll(includeArchived: false),
-      ).thenAnswer((_) => Stream.value(const <Account>[]));
+      when(() => accountRepo.watchAll(includeArchived: false))
+          .thenAnswer((_) => Stream.value(const <Account>[]));
       when(() => accountRepo.getById(99)).thenAnswer(
         (_) async => const Account(
           id: 99,

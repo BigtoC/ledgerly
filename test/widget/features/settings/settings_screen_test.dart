@@ -19,7 +19,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
+import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/account.dart';
 import 'package:ledgerly/data/models/currency.dart';
@@ -83,6 +85,13 @@ class _StubRouter {
   }
 }
 
+@Dependencies([
+  SettingsController,
+  AccountsController,
+  exchangeRates,
+  initialDefaultCurrency,
+  defaultCurrency,
+])
 Widget _wrap({
   required ProviderContainer container,
   double textScale = 1.0,
@@ -95,9 +104,8 @@ Widget _wrap({
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(
-          context,
-        ).copyWith(textScaler: TextScaler.linear(textScale)),
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
       routerConfig: _StubRouter.build(const SettingsScreen()),
@@ -145,6 +153,13 @@ SettingsData _data({int? defaultAccountId}) => SettingsData(
   splashButtonLabel: null,
 );
 
+@Dependencies([
+  SettingsController,
+  AccountsController,
+  exchangeRates,
+  initialDefaultCurrency,
+  defaultCurrency,
+])
 void main() {
   setUpAll(() {
     registerFallbackValue(ThemeMode.light);
@@ -437,9 +452,8 @@ void main() {
       final prefs = _MockUserPreferencesRepository();
       final accountRepo = _MockAccountRepository();
       final currencyRepo = _MockCurrencyRepository();
-      when(
-        () => prefs.setLocale(const Locale('zh', 'TW')),
-      ).thenAnswer((_) async {});
+      when(() => prefs.setLocale(const Locale('zh', 'TW')))
+          .thenAnswer((_) async {});
 
       final container = _makeContainer(
         prefs: prefs,

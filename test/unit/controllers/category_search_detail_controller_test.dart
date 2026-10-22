@@ -4,6 +4,7 @@ import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/core/constants.dart';
@@ -47,6 +48,7 @@ Transaction _tx({
   updatedAt: DateTime.utc(2026),
 );
 
+@Dependencies([CategorySearchDetailController])
 void main() {
   setUpAll(() {
     registerFallbackValue('');
@@ -60,9 +62,8 @@ void main() {
     });
 
     test('empty query emits DetailEmpty without subscribing', () async {
-      when(
-        () => repo.watchByMemo(any()),
-      ).thenAnswer((_) => const Stream.empty());
+      when(() => repo.watchByMemo(any()))
+          .thenAnswer((_) => const Stream.empty());
 
       final container = ProviderContainer(
         overrides: [transactionRepositoryProvider.overrideWithValue(repo)],
@@ -185,6 +186,7 @@ void main() {
       overrides: [transactionRepositoryProvider.overrideWithValue(repo)],
     );
 
+    @Dependencies([CategorySearchDetailController])
     Future<DetailData> waitForData(ProviderContainer c) async {
       final provider = categorySearchDetailControllerProvider(
         categoryId: 1,
@@ -208,56 +210,43 @@ void main() {
       }
     }
 
-    test(
-      'optimistic hide: row drops out immediately and repo.delete is not called yet',
-      () async {
-        when(() => repo.delete(any())).thenAnswer((_) async => true);
+    test('optimistic hide: row drops out immediately and repo.delete is not called yet', () async {
+      when(() => repo.delete(any())).thenAnswer((_) async => true);
 
-        final container = makeContainer();
-        addTearDown(container.dispose);
-        final provider = categorySearchDetailControllerProvider(
-          categoryId: 1,
-          query: 'coffee',
-          currencyCode: 'USD',
-        );
-        container.listen(provider, (_, _) {});
+      final container = makeContainer();
+      addTearDown(container.dispose);
+      final provider = categorySearchDetailControllerProvider(
+        categoryId: 1,
+        query: 'coffee',
+        currencyCode: 'USD',
+      );
+      container.listen(provider, (_, _) {});
 
-        await Future<void>.delayed(Duration.zero);
-        txCtrl.add([
-          _tx(
-            id: 1,
-            date: DateTime.utc(2026, 5, 1),
-            categoryId: 1,
-            amount: 100,
-          ),
-          _tx(
-            id: 2,
-            date: DateTime.utc(2026, 5, 1),
-            categoryId: 1,
-            amount: 200,
-          ),
-        ]);
-        final before = await waitForData(container);
-        expect(
-          before.days.first.transactions.map((t) => t.id),
-          containsAll(<int>[1, 2]),
-        );
-        expect(before.overallSumMinorUnits, 300);
-        expect(before.pendingDelete, isNull);
+      await Future<void>.delayed(Duration.zero);
+      txCtrl.add([
+        _tx(id: 1, date: DateTime.utc(2026, 5, 1), categoryId: 1, amount: 100),
+        _tx(id: 2, date: DateTime.utc(2026, 5, 1), categoryId: 1, amount: 200),
+      ]);
+      final before = await waitForData(container);
+      expect(
+        before.days.first.transactions.map((t) => t.id),
+        containsAll(<int>[1, 2]),
+      );
+      expect(before.overallSumMinorUnits, 300);
+      expect(before.pendingDelete, isNull);
 
-        fakeAsync((async) {
-          container.read(provider.notifier).deleteTransaction(1);
-          async.flushMicrotasks();
+      fakeAsync((async) {
+        container.read(provider.notifier).deleteTransaction(1);
+        async.flushMicrotasks();
 
-          final hiding = container.read(provider).requireValue as DetailData;
-          expect(hiding.pendingDelete?.transaction.id, 1);
-          expect(hiding.days.first.transactions.map((t) => t.id), [2]);
-          // Sum excludes the pending row so the header stays consistent.
-          expect(hiding.overallSumMinorUnits, 200);
-          verifyNever(() => repo.delete(any()));
-        });
-      },
-    );
+        final hiding = container.read(provider).requireValue as DetailData;
+        expect(hiding.pendingDelete?.transaction.id, 1);
+        expect(hiding.days.first.transactions.map((t) => t.id), [2]);
+        // Sum excludes the pending row so the header stays consistent.
+        expect(hiding.overallSumMinorUnits, 200);
+        verifyNever(() => repo.delete(any()));
+      });
+    });
 
     test('undoDelete cancels timer and repo.delete is never called', () async {
       when(() => repo.delete(any())).thenAnswer((_) async => true);
@@ -321,74 +310,60 @@ void main() {
       verify(() => repo.delete(7)).called(1);
     });
 
-    test(
-      'commit failure surfaces CategorySearchDetailDeleteFailedEffect and restores row',
-      () async {
-        when(
-          () => repo.delete(any()),
-        ).thenAnswer((_) async => throw StateError('db error'));
+    test('commit failure surfaces CategorySearchDetailDeleteFailedEffect and restores row', () async {
+      when(() => repo.delete(any()))
+          .thenAnswer((_) async => throw StateError('db error'));
 
-        final container = makeContainer();
-        addTearDown(container.dispose);
-        final provider = categorySearchDetailControllerProvider(
-          categoryId: 1,
-          query: 'coffee',
-          currencyCode: 'USD',
-        );
-        container.listen(provider, (_, _) {});
+      final container = makeContainer();
+      addTearDown(container.dispose);
+      final provider = categorySearchDetailControllerProvider(
+        categoryId: 1,
+        query: 'coffee',
+        currencyCode: 'USD',
+      );
+      container.listen(provider, (_, _) {});
 
-        final effects = <CategorySearchDetailEffect>[];
-        container.read(provider.notifier).setEffectListener(effects.add);
+      final effects = <CategorySearchDetailEffect>[];
+      container.read(provider.notifier).setEffectListener(effects.add);
 
-        await Future<void>.delayed(Duration.zero);
-        // Two rows so the state stays DetailData while #9 is hidden — a
-        // single-row filter would briefly emit DetailEmpty during the
-        // pending window, which is a separate UI concern not under test
-        // here.
-        txCtrl.add([
-          _tx(
-            id: 9,
-            date: DateTime.utc(2026, 5, 1),
-            categoryId: 1,
-            amount: 500,
-          ),
-          _tx(
-            id: 10,
-            date: DateTime.utc(2026, 5, 1),
-            categoryId: 1,
-            amount: 700,
-          ),
-        ]);
-        await waitForData(container);
+      await Future<void>.delayed(Duration.zero);
+      // Two rows so the state stays DetailData while #9 is hidden — a
+      // single-row filter would briefly emit DetailEmpty during the
+      // pending window, which is a separate UI concern not under test
+      // here.
+      txCtrl.add([
+        _tx(id: 9, date: DateTime.utc(2026, 5, 1), categoryId: 1, amount: 500),
+        _tx(id: 10, date: DateTime.utc(2026, 5, 1), categoryId: 1, amount: 700),
+      ]);
+      await waitForData(container);
 
-        fakeAsync((async) {
-          container.read(provider.notifier).deleteTransaction(9);
-          async.flushMicrotasks();
+      fakeAsync((async) {
+        container.read(provider.notifier).deleteTransaction(9);
+        async.flushMicrotasks();
 
-          final hiding = container.read(provider).requireValue as DetailData;
-          expect(hiding.pendingDelete?.transaction.id, 9);
-          expect(hiding.days.first.transactions.map((t) => t.id), [10]);
+        final hiding = container.read(provider).requireValue as DetailData;
+        expect(hiding.pendingDelete?.transaction.id, 9);
+        expect(hiding.days.first.transactions.map((t) => t.id), [10]);
 
-          // Past the undo window → repo.delete fires, throws, effect fires.
-          async.elapse(kUndoWindow + const Duration(milliseconds: 1));
-          async.flushMicrotasks();
-        });
+        // Past the undo window → repo.delete fires, throws, effect fires.
+        async.elapse(kUndoWindow + const Duration(milliseconds: 1));
+        async.flushMicrotasks();
+      });
 
-        await pump();
+      await pump();
 
-        // Row is restored after the failed commit.
-        final after = container.read(provider).requireValue as DetailData;
-        expect(after.pendingDelete, isNull);
-        expect(
-          after.days.first.transactions.map((t) => t.id),
-          containsAll(<int>[9, 10]),
-        );
+      // Row is restored after the failed commit.
+      final after = container.read(provider).requireValue as DetailData;
+      expect(after.pendingDelete, isNull);
+      expect(
+        after.days.first.transactions.map((t) => t.id),
+        containsAll(<int>[9, 10]),
+      );
 
-        expect(effects, hasLength(1));
-        expect(effects.single, isA<CategorySearchDetailDeleteFailedEffect>());
-        verify(() => repo.delete(9)).called(1);
-      },
-    );
+      expect(effects, hasLength(1));
+      expect(effects.single, isA<CategorySearchDetailDeleteFailedEffect>());
+      verify(() => repo.delete(9)).called(1);
+    });
 
     test(
       'second deleteTransaction commits the prior pending delete immediately',

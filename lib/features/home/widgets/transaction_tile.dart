@@ -17,6 +17,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../app/providers/repository_providers.dart';
 import '../../../core/utils/color_palette.dart';
@@ -31,6 +32,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../categories/widgets/category_display.dart';
 import '../home_providers.dart';
 
+@Dependencies([exchangeRates])
 class TransactionTile extends ConsumerWidget {
   const TransactionTile({
     super.key,

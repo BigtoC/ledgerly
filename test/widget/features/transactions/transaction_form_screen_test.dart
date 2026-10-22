@@ -21,6 +21,7 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/account.dart';
@@ -33,6 +34,7 @@ import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/features/categories/categories_controller.dart';
+import 'package:ledgerly/features/transactions/transaction_form_controller.dart';
 import 'package:ledgerly/features/transactions/transaction_form_screen.dart';
 import 'package:ledgerly/features/transactions/widgets/account_selector_tile.dart';
 import 'package:ledgerly/features/transactions/widgets/amount_display.dart';
@@ -102,6 +104,7 @@ Transaction _persistedTx({
   );
 }
 
+@Dependencies([TransactionFormController, categoriesByType, accountRepository])
 void main() {
   setUpAll(() {
     registerFallbackValue(_persistedTx());
@@ -121,21 +124,22 @@ void main() {
     currencyRepo = _MockCurrencyRepository();
 
     when(() => prefs.getDefaultAccountId()).thenAnswer((_) async => 1);
-    when(
-      () => accountRepo.getLastUsedActiveAccount(),
-    ).thenAnswer((_) async => null);
+    when(() => accountRepo.getLastUsedActiveAccount())
+        .thenAnswer((_) async => null);
     when(() => accountRepo.getById(1)).thenAnswer((_) async => _account);
-    when(
-      () => accountRepo.watchAll(includeArchived: false),
-    ).thenAnswer((_) => Stream.value(const [_account]));
-    when(
-      () => categoryRepo.getById(10),
-    ).thenAnswer((_) async => _expenseCategory);
-    when(
-      () => currencyRepo.watchAll(includeTokens: false),
-    ).thenAnswer((_) => Stream.value(const [_usd, _jpy, _eur]));
+    when(() => accountRepo.watchAll(includeArchived: false))
+        .thenAnswer((_) => Stream.value(const [_account]));
+    when(() => categoryRepo.getById(10))
+        .thenAnswer((_) async => _expenseCategory);
+    when(() => currencyRepo.watchAll(includeTokens: false))
+        .thenAnswer((_) => Stream.value(const [_usd, _jpy, _eur]));
   });
 
+  @Dependencies([
+    TransactionFormController,
+    categoriesByType,
+    accountRepository,
+  ])
   Widget mountAdd({
     Object? extra,
     List<Override> extraOverrides = const [],
@@ -186,15 +190,19 @@ void main() {
         builder: textScale == null
             ? null
             : (context, child) => MediaQuery(
-                data: MediaQuery.of(
-                  context,
-                ).copyWith(textScaler: TextScaler.linear(textScale)),
+                data: MediaQuery.of(context)
+                    .copyWith(textScaler: TextScaler.linear(textScale)),
                 child: child!,
               ),
       ),
     );
   }
 
+  @Dependencies([
+    TransactionFormController,
+    categoriesByType,
+    accountRepository,
+  ])
   Widget mountEdit(int id, {double? textScale}) {
     final router = GoRouter(
       initialLocation: '/home/edit/$id',
@@ -228,9 +236,8 @@ void main() {
         builder: textScale == null
             ? null
             : (context, child) => MediaQuery(
-                data: MediaQuery.of(
-                  context,
-                ).copyWith(textScaler: TextScaler.linear(textScale)),
+                data: MediaQuery.of(context)
+                    .copyWith(textScaler: TextScaler.linear(textScale)),
                 child: child!,
               ),
       ),
@@ -260,9 +267,8 @@ void main() {
     await tester.pumpWidget(
       mountAdd(
         extraOverrides: [
-          categoriesByTypeProvider(
-            CategoryType.expense,
-          ).overrideWith((ref) => Stream.value(const [_expenseCategory])),
+          categoriesByTypeProvider(CategoryType.expense)
+              .overrideWith((ref) => Stream.value(const [_expenseCategory])),
         ],
       ),
     );
@@ -364,9 +370,8 @@ void main() {
     await tester.pumpWidget(
       mountAdd(
         extraOverrides: [
-          categoriesByTypeProvider(
-            CategoryType.expense,
-          ).overrideWith((ref) => Stream.value(const <Category>[])),
+          categoriesByTypeProvider(CategoryType.expense)
+              .overrideWith((ref) => Stream.value(const <Category>[])),
         ],
       ),
     );
@@ -392,9 +397,8 @@ void main() {
   testWidgets('WS09: historical edit dates still open the date picker', (
     tester,
   ) async {
-    when(
-      () => txRepo.getById(99),
-    ).thenAnswer((_) async => _persistedTx(date: DateTime(2000, 1, 1)));
+    when(() => txRepo.getById(99))
+        .thenAnswer((_) async => _persistedTx(date: DateTime(2000, 1, 1)));
     await tester.pumpWidget(mountEdit(99));
     await tester.pumpAndSettle();
 
@@ -421,9 +425,8 @@ void main() {
     await tester.pumpWidget(
       mountAdd(
         extraOverrides: [
-          categoriesByTypeProvider(
-            CategoryType.expense,
-          ).overrideWith((ref) => Stream.value(const [_expenseCategory])),
+          categoriesByTypeProvider(CategoryType.expense)
+              .overrideWith((ref) => Stream.value(const [_expenseCategory])),
         ],
       ),
     );
@@ -570,12 +573,10 @@ void main() {
       currency: _usd,
       isArchived: true,
     );
-    when(
-      () => accountRepo.watchAll(includeArchived: false),
-    ).thenAnswer((_) => Stream.value(const [_account]));
-    when(
-      () => accountRepo.watchAll(includeArchived: true),
-    ).thenAnswer((_) => Stream.value(const [_account, archivedAccount]));
+    when(() => accountRepo.watchAll(includeArchived: false))
+        .thenAnswer((_) => Stream.value(const [_account]));
+    when(() => accountRepo.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value(const [_account, archivedAccount]));
 
     await tester.pumpWidget(mountAdd());
     await tester.pumpAndSettle();
@@ -874,9 +875,8 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(400, 1000));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      when(
-        () => accountRepo.watchAll(includeArchived: false),
-      ).thenAnswer((_) => Stream.value(const [_account, _yenAccount]));
+      when(() => accountRepo.watchAll(includeArchived: false))
+          .thenAnswer((_) => Stream.value(const [_account, _yenAccount]));
 
       await tester.pumpWidget(mountAdd());
       await tester.pumpAndSettle();

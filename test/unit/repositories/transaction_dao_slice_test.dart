@@ -122,20 +122,17 @@ void main() {
   });
 
   group('watchTransactionRowsForSliceInRange', () {
-    test(
-      'category filter returns full TransactionRow objects ordered date DESC, id DESC',
-      () async {
-        final rows = await db.transactionDao
-            .watchTransactionRowsForSliceInRange(
-              start: DateTime(2026, 5, 18),
-              end: DateTime(2026, 5, 20),
-              type: 'expense',
-              categoryId: 1,
-            )
-            .first;
-        expect(rows.map((r) => r.id).toList(), [3, 2, 1]);
-      },
-    );
+    test('category filter returns full TransactionRow objects ordered date DESC, id DESC', () async {
+      final rows = await db.transactionDao
+          .watchTransactionRowsForSliceInRange(
+            start: DateTime(2026, 5, 18),
+            end: DateTime(2026, 5, 20),
+            type: 'expense',
+            categoryId: 1,
+          )
+          .first;
+      expect(rows.map((r) => r.id).toList(), [3, 2, 1]);
+    });
 
     test('account filter excludes wrong account', () async {
       await db.customStatement(

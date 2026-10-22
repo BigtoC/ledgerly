@@ -18,14 +18,35 @@
 //     (no `TransactionTile`).
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
 
+import 'package:ledgerly/app/providers/default_currency_provider.dart';
+import 'package:ledgerly/app/providers/locale_provider.dart';
+import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
+import 'package:ledgerly/app/providers/theme_provider.dart';
+import 'package:ledgerly/app/router.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
+import 'package:ledgerly/features/home/home_controller.dart';
 import 'package:ledgerly/features/home/home_screen.dart';
+import 'package:ledgerly/features/home/pending_controller.dart';
 import 'package:ledgerly/features/home/widgets/transaction_tile.dart';
+import 'package:ledgerly/features/shopping_list/shopping_list_providers.dart';
 
 import '../support/test_app.dart';
 
+@Dependencies([
+  HomeController,
+  PendingController,
+  shoppingListTotalCount,
+  initialDefaultCurrency,
+  defaultCurrency,
+  exchangeRates,
+  router,
+  themeMode,
+  userLocalePreference,
+  exchangeRateRepository,
+])
 void main() {
   group('edit invariant (Unit 7)', () {
     testWidgets(
@@ -119,9 +140,8 @@ void main() {
           // Same write path the home controller's `_commitDelete`
           // uses after its undo window expires; applied before
           // pumpWidget so the seeded subscribe sees the empty state.
-          final removed = await DriftTransactionRepository(
-            db,
-          ).delete(inserted.id);
+          final removed = await DriftTransactionRepository(db)
+              .delete(inserted.id);
           if (!removed) {
             throw StateError('delete should have removed the seeded row');
           }

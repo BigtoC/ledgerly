@@ -55,7 +55,7 @@ abstract class _$AnalysisController extends $StreamNotifier<AnalysisState> {
   Stream<AnalysisState> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AsyncValue<AnalysisState>, AnalysisState>;
     final element =
         ref.element
@@ -65,6 +65,6 @@ abstract class _$AnalysisController extends $StreamNotifier<AnalysisState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

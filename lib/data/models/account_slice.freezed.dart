@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'account_slice.dart';
@@ -9,6 +9,7 @@ part of 'account_slice.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -25,16 +26,21 @@ $AccountSliceCopyWith<AccountSlice> get copyWith => _$AccountSliceCopyWithImpl<A
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AccountSlice&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.currencyCode, currencyCode) || other.currencyCode == currencyCode)&&(identical(other.totalMinorUnits, totalMinorUnits) || other.totalMinorUnits == totalMinorUnits));
+  final _this = this as AccountSlice;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AccountSlice&&(identical(other.accountId, _this.accountId) || other.accountId == _this.accountId)&&(identical(other.currencyCode, _this.currencyCode) || other.currencyCode == _this.currencyCode)&&(identical(other.totalMinorUnits, _this.totalMinorUnits) || other.totalMinorUnits == _this.totalMinorUnits));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,accountId,currencyCode,totalMinorUnits);
+int get hashCode {
+  final _this = this as AccountSlice;
+  return Object.hash(runtimeType,_this.accountId,_this.currencyCode,_this.totalMinorUnits);
+}
 
 @override
 String toString() {
-  return 'AccountSlice(accountId: $accountId, currencyCode: $currencyCode, totalMinorUnits: $totalMinorUnits)';
+  final _this = this as AccountSlice;
+  return 'AccountSlice(accountId: ${_this.accountId}, currencyCode: ${_this.currencyCode}, totalMinorUnits: ${_this.totalMinorUnits})';
 }
 
 
@@ -63,7 +69,7 @@ class _$AccountSliceCopyWithImpl<$Res>
 /// Create a copy of AccountSlice
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? accountId = null,Object? currencyCode = null,Object? totalMinorUnits = null,}) {
-  return _then(_self.copyWith(
+  return _then(AccountSlice(
 accountId: null == accountId ? _self.accountId : accountId // ignore: cast_nullable_to_non_nullable
 as int,currencyCode: null == currencyCode ? _self.currencyCode : currencyCode // ignore: cast_nullable_to_non_nullable
 as String,totalMinorUnits: null == totalMinorUnits ? _self.totalMinorUnits : totalMinorUnits // ignore: cast_nullable_to_non_nullable
@@ -225,16 +231,18 @@ _$AccountSliceCopyWith<_AccountSlice> get copyWith => __$AccountSliceCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AccountSlice&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.currencyCode, currencyCode) || other.currencyCode == currencyCode)&&(identical(other.totalMinorUnits, totalMinorUnits) || other.totalMinorUnits == totalMinorUnits));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AccountSlice&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.currencyCode, currencyCode) || other.currencyCode == currencyCode)&&(identical(other.totalMinorUnits, totalMinorUnits) || other.totalMinorUnits == totalMinorUnits));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,accountId,currencyCode,totalMinorUnits);
+int get hashCode {
+    return Object.hash(runtimeType,accountId,currencyCode,totalMinorUnits);
+}
 
 @override
 String toString() {
-  return 'AccountSlice(accountId: $accountId, currencyCode: $currencyCode, totalMinorUnits: $totalMinorUnits)';
+    return 'AccountSlice(accountId: $accountId, currencyCode: $currencyCode, totalMinorUnits: $totalMinorUnits)';
 }
 
 
