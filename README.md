@@ -324,8 +324,9 @@ Review is what keeps the layer boundaries today.
 ## Contributing
 
 PRs must be green on `.github/workflows/check.yml` (analysis, lint,
-codegen, tests, Android debug build). iOS runs nightly via
-`.github/workflows/ios-nightly.yml`. The website has its own
+codegen, tests, Android debug build). The iOS debug build in
+`.github/workflows/ios-nightly.yml` runs on PRs that change `pubspec.yaml`,
+`pubspec.lock` or `ios/`, and on demand. It is not scheduled. The website has its own
 `.github/workflows/site-check.yml`; release artifacts ship through
 `.github/workflows/android-release.yml`.
 
