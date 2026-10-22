@@ -713,6 +713,7 @@ class TransactionFormController extends _$TransactionFormController {
         amountMinorUnits: s.amountMinorUnits,
         date: s.date,
         memo: s.memo.isEmpty ? null : s.memo,
+        amountFormula: _keypad.formula(decimals: s.displayCurrency!.decimals),
       );
       state = s.copyWith(
         submissionAction: TransactionFormSubmissionAction.none,

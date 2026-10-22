@@ -529,6 +529,28 @@ void main() {
       expect(await repo.getById(item.id), isNull);
     });
 
+    test('convertToTransaction stores the keypad formula', () async {
+      final item = await repo.insert(
+        categoryId: expenseCategoryId,
+        accountId: accountId,
+        draftAmountMinorUnits: 2800,
+        draftCurrencyCode: 'USD',
+        draftDate: DateTime.utc(2026, 6, 1),
+      );
+
+      final tx = await repo.convertToTransaction(
+        shoppingListItemId: item.id,
+        categoryId: expenseCategoryId,
+        accountId: accountId,
+        currencyCode: 'USD',
+        amountMinorUnits: 2800,
+        date: DateTime.utc(2026, 6, 1),
+        amountFormula: '3.5+10.5+11+3',
+      );
+
+      expect(tx.amountFormula, '3.5+10.5+11+3');
+    });
+
     test('convertToTransaction with missing draft throws ShoppingListRepositoryException', () async {
       await expectLater(
         repo.convertToTransaction(

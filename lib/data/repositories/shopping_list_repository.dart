@@ -106,6 +106,7 @@ abstract class ShoppingListRepository {
     required int amountMinorUnits,
     required DateTime date,
     String? memo,
+    String? amountFormula,
   });
 }
 
@@ -253,6 +254,7 @@ final class DriftShoppingListRepository implements ShoppingListRepository {
     required int amountMinorUnits,
     required DateTime date,
     String? memo,
+    String? amountFormula,
   }) async {
     return _db.transaction<Transaction>(() async {
       if (amountMinorUnits <= 0) {
@@ -310,6 +312,7 @@ final class DriftShoppingListRepository implements ShoppingListRepository {
         categoryId: categoryId,
         accountId: accountId,
         memo: memo,
+        amountFormula: amountFormula,
         date: date,
         createdAt: DateTime.utc(0),
         updatedAt: DateTime.utc(0),

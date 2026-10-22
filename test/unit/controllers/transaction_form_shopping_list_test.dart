@@ -666,4 +666,54 @@ void main() {
       });
     },
   );
+
+  test('TFSL12: convertDraft stores the formula typed on the keypad', () async {
+    final draft = _draft(
+      id: 34,
+      categoryId: _expenseCategory.id,
+      accountId: _account.id,
+      draftAmountMinorUnits: 2000,
+      draftCurrencyCode: 'USD',
+    );
+    when(() => slRepo.getById(34)).thenAnswer((_) async => draft);
+    when(
+      () => slRepo.convertToTransaction(
+        shoppingListItemId: any(named: 'shoppingListItemId'),
+        categoryId: any(named: 'categoryId'),
+        accountId: any(named: 'accountId'),
+        currencyCode: any(named: 'currencyCode'),
+        amountMinorUnits: any(named: 'amountMinorUnits'),
+        date: any(named: 'date'),
+        memo: any(named: 'memo'),
+        amountFormula: any(named: 'amountFormula'),
+      ),
+    ).thenAnswer((_) async => _persistedTx(id: 201, amountMinorUnits: 3000));
+
+    final c = makeContainer();
+    addTearDown(c.dispose);
+    final controller = c.read(transactionFormControllerProvider.notifier);
+    await controller.hydrateForShoppingListDraft(34);
+    controller
+      ..clearAmount()
+      ..appendDigit(1)
+      ..appendDigit(0)
+      ..applyOperator(CalcOperator.add)
+      ..appendDigit(2)
+      ..appendDigit(0);
+
+    await controller.convertDraft();
+
+    verify(
+      () => slRepo.convertToTransaction(
+        shoppingListItemId: 34,
+        categoryId: _expenseCategory.id,
+        accountId: _account.id,
+        currencyCode: 'USD',
+        amountMinorUnits: 3000,
+        date: any(named: 'date'),
+        memo: any(named: 'memo'),
+        amountFormula: '10+20',
+      ),
+    ).called(1);
+  });
 }
