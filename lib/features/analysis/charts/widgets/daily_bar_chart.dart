@@ -94,7 +94,7 @@ class _DailyBarChartState extends State<DailyBarChart> {
               enabled: true,
               handleBuiltInTouches: true,
               touchTooltipData: BarTouchTooltipData(
-                tooltipRoundedRadius: 8,
+                tooltipBorderRadius: BorderRadius.circular(8),
                 tooltipPadding: const EdgeInsets.symmetric(
                   horizontal: 10,
                   vertical: 6,
