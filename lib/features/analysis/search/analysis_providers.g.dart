@@ -9,11 +9,17 @@ part of 'analysis_providers.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// `id → Category` lookup (active + archived) for search-result tiles.
+///
+/// `keepAlive` because the kept-alive `AnalysisController` and
+/// `ChartsController` listen to it.
 
 @ProviderFor(analysisCategoriesById)
 final analysisCategoriesByIdProvider = AnalysisCategoriesByIdProvider._();
 
 /// `id → Category` lookup (active + archived) for search-result tiles.
+///
+/// `keepAlive` because the kept-alive `AnalysisController` and
+/// `ChartsController` listen to it.
 
 final class AnalysisCategoriesByIdProvider
     extends
@@ -26,13 +32,16 @@ final class AnalysisCategoriesByIdProvider
         $FutureModifier<Map<int, Category>>,
         $StreamProvider<Map<int, Category>> {
   /// `id → Category` lookup (active + archived) for search-result tiles.
+  ///
+  /// `keepAlive` because the kept-alive `AnalysisController` and
+  /// `ChartsController` listen to it.
   AnalysisCategoriesByIdProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
         name: r'analysisCategoriesByIdProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: <ProviderOrFamily>[categoryRepositoryProvider],
         $allTransitiveDependencies: <ProviderOrFamily>[
           AnalysisCategoriesByIdProvider.$allTransitiveDependencies0,
@@ -60,16 +69,20 @@ final class AnalysisCategoriesByIdProvider
 }
 
 String _$analysisCategoriesByIdHash() =>
-    r'db2c97eed6e1868d49af05b9be394622f01e5f64';
+    r'b80c5fc0e16c294d31e9c96145242f77170fa778';
 
 /// `id → Account` lookup (active + archived) for the detail screen's
 /// transaction rows.
+///
+/// `keepAlive` because the kept-alive `ChartsController` listens to it.
 
 @ProviderFor(analysisAccountsById)
 final analysisAccountsByIdProvider = AnalysisAccountsByIdProvider._();
 
 /// `id → Account` lookup (active + archived) for the detail screen's
 /// transaction rows.
+///
+/// `keepAlive` because the kept-alive `ChartsController` listens to it.
 
 final class AnalysisAccountsByIdProvider
     extends
@@ -83,13 +96,15 @@ final class AnalysisAccountsByIdProvider
         $StreamProvider<Map<int, Account>> {
   /// `id → Account` lookup (active + archived) for the detail screen's
   /// transaction rows.
+  ///
+  /// `keepAlive` because the kept-alive `ChartsController` listens to it.
   AnalysisAccountsByIdProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
         name: r'analysisAccountsByIdProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: <ProviderOrFamily>[accountRepositoryProvider],
         $allTransitiveDependencies: <ProviderOrFamily>[
           AnalysisAccountsByIdProvider.$allTransitiveDependencies0,
@@ -120,4 +135,4 @@ final class AnalysisAccountsByIdProvider
 }
 
 String _$analysisAccountsByIdHash() =>
-    r'e88ec353816afaf41e580634741f531f7b1b0949';
+    r'123c77bce83c6d1216e6637c7fd7eb2f7351d138';
