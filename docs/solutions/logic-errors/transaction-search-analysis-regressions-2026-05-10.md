@@ -47,7 +47,7 @@ The Analysis search flow regressed once the controller and detail page started d
 
 ## What Didn't Work
 
-- Treating `ref.read(analysisCategoriesByIdProvider).valueOrNull ?? const <int, Category>{}` as a safe fallback in `lib/features/analysis/search/analysis_controller.dart`. That erased the difference between metadata still loading, metadata failing, and metadata genuinely containing no matching categories.
+- Treating `ref.read(analysisCategoriesByIdProvider).value ?? const <int, Category>{}` as a safe fallback in `lib/features/analysis/search/analysis_controller.dart`. That erased the difference between metadata still loading, metadata failing, and metadata genuinely containing no matching categories.
 - Trying to reuse active analysis state through `analysisControllerProvider.stream` in `lib/features/analysis/search/category_search_detail_controller.dart`. That surface is not exposed by this generated provider, so the code compile-broke before the behavioral tests could even run.
 - Using `pumpAndSettle()` after tapping a stale loading tile. The tap was correctly ignored, so the test was waiting on the wrong signal and timing out noisily instead of checking that navigation never happened.
 
@@ -67,7 +67,7 @@ if (categoriesAsync.hasError) {
   return;
 }
 
-final categoriesById = categoriesAsync.valueOrNull;
+final categoriesById = categoriesAsync.value;
 if (categoriesById == null) {
   _emitter?.add(
     AnalysisState.loading(query: query, previous: _lastResults),
@@ -85,7 +85,7 @@ In `lib/features/analysis/search/category_search_detail_controller.dart`, reuse 
 ```dart
 if (ref.exists(analysisControllerProvider)) {
   final analysis = ref.read(analysisControllerProvider);
-  final state = analysis.valueOrNull;
+  final state = analysis.value;
   final matchesActiveQuery = switch (state) {
     AnalysisLoading(:final query) => query == trimmed,
     AnalysisResults(:final query) => query == trimmed,

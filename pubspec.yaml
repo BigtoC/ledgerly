@@ -7,8 +7,8 @@ environment:
   sdk: ^3.11.5
   flutter: ">=3.44.0"
 
-# Dependency list mirrors PRD.md -> Dependencies -> Core (MVP) exactly.
-# Phase 2 packages (dio, flutter_secure_storage, fl_chart, ...) are NOT
+# Dependency list mirrors PRD.md -> Dependencies (Core + shipped Phase 2).
+# Deferred Phase 2/3 packages (flutter_secure_storage, csv, ...) are NOT
 # added here; they land with their corresponding milestone.
 dependencies:
   flutter:

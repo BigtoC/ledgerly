@@ -87,7 +87,7 @@ if (!gate.splashEnabled) {
 ```dart
 final initialStartDate = ref.read(splashGateSnapshotProvider).splashStartDate;
 final startDate =
-    ref.watch(splashStartDateProvider).valueOrNull ?? initialStartDate;
+    ref.watch(splashStartDateProvider).value ?? initialStartDate;
 ```
 
 The bootstrap test was expanded with injectable hooks so it proves the intended startup order instead of only `openDatabase -> runApp`.

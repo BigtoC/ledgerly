@@ -84,7 +84,7 @@ Ledgerly uses a strict 3-layer architecture: a **Data** layer (SSOT), an optiona
 | Repositories (`data/repositories/*.dart`)    | Services, `AppDatabase`, DAOs, domain models               | Controllers, widgets, use cases                     |
 | Services (`data/services/*.dart`)            | External SDKs only (Drift, Dio, flutter_secure_storage, …) | Upstream layers                                     |
 
-These rules are enforced via `custom_lint` / `import_lint` entries in `analysis_options.yaml`.
+These rules are enforced via `import_lint` (rules in `import_analysis_options.yaml`, run as `dart run import_lint`) and the `riverpod_lint` analysis-server plugin configured under `plugins:` in `analysis_options.yaml`.
 
 ### SSOT Rule
 
@@ -1244,35 +1244,35 @@ Tests are organized by **architectural layer**, not by feature. This mirrors the
 
 ## Dependencies
 
-Versions below are the tested resolvable set under Flutter **3.41.7** (Dart 3.11.5). Keep `pubspec.yaml` in sync with this table — any version bump needs to round-trip `flutter pub get` and `dart run build_runner build` before landing here.
+Versions below are the tested resolvable set under Flutter **3.44.0** (Dart 3.12.0). Keep `pubspec.yaml` in sync with this table — any version bump needs to round-trip `flutter pub get` and `dart run build_runner build` before landing here.
 
 ### Core (MVP)
 
 | Package                  | Version     | Purpose                                                                  |
 |--------------------------|-------------|--------------------------------------------------------------------------|
-| `flutter_riverpod`       | `^2.6.1`    | State management                                                         |
-| `riverpod_annotation`    | `^2.6.1`    | Provider code-gen annotations                                            |
-| `drift`                  | `^2.28.0`   | Database ORM                                                             |
-| `drift_flutter`          | `^0.2.7`    | Flutter SQLite integration                                               |
-| `path_provider`          | `^2.1.5`    | DB file path location                                                    |
-| `go_router`              | `^17.2.2`   | Navigation/routing (`StatefulShellRoute`)                                |
-| `freezed_annotation`     | `^3.0.0`    | Immutable data model annotations                                         |
-| `json_annotation`        | `^4.9.0`    | JSON serialization annotations                                           |
+| `flutter_riverpod`       | `^3.3.1`    | State management                                                         |
+| `riverpod_annotation`    | `^4.0.2`    | Provider code-gen annotations                                            |
+| `drift`                  | `^2.31.0`   | Database ORM                                                             |
+| `drift_flutter`          | `^0.2.8`    | Flutter SQLite integration                                               |
+| `path_provider`          | `^2.1.6`    | DB file path location                                                    |
+| `go_router`              | `^18.1.1`   | Navigation/routing (`StatefulShellRoute`)                                |
+| `freezed_annotation`     | `^3.1.0`    | Immutable data model annotations                                         |
+| `json_annotation`        | `^4.11.0`   | JSON serialization annotations                                           |
 | `flutter_localizations`  | sdk         | i18n framework                                                           |
 | `intl`                   | `^0.20.2`   | Localization utilities + `NumberFormat`                                  |
 | `flutter_slidable`       | `^4.0.3`    | Swipe actions on list items                                              |
-| `material_symbols_icons` | `^4.2803.0` | Material Symbols icon font                                               |
-| `package_info_plus`      | `^8.3.0`    | App version info (About screen)                                          |
-| `webview_flutter`        | `^4.13.1`   | In-app browser (About screen links)                                      |
-| `url_launcher`           | `^6.3.2`    | System browser launcher                                                  |
-| `flutter_native_splash`  | `^2.4.4`    | Native pre-Flutter splash screen (dev-only import; see Dev Dependencies) |
+| `material_symbols_icons` | `^4.2960.0` | Material Symbols icon font                                               |
+| `package_info_plus`      | `^10.2.2`   | App version info (About screen)                                          |
+| `webview_flutter`        | `^4.14.1`   | In-app browser (About screen links)                                      |
+| `url_launcher`           | `^6.3.3`    | System browser launcher                                                  |
+| `flutter_native_splash`  | `^2.4.8`    | Native pre-Flutter splash screen (dev-only import; see Dev Dependencies) |
 
 ### Phase 2 Additions (shipped)
 
 | Package    | Version   | Purpose                               |
 |------------|-----------|---------------------------------------|
-| `dio`      | `^5.7.0`  | HTTP client (exchange-rate fetching)  |
-| `fl_chart` | `^0.70.2` | Pie + daily bar charts (Analysis tab) |
+| `dio`      | `^5.11.1` | HTTP client (exchange-rate fetching)  |
+| `fl_chart` | `^1.3.0`  | Pie + daily bar charts (Analysis tab) |
 
 ### Deferred (Not yet shipped)
 
@@ -1287,17 +1287,18 @@ Versions below are the tested resolvable set under Flutter **3.41.7** (Dart 3.11
 
 | Package                 | Version   | Purpose                                                                                                                                                               |
 |-------------------------|-----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `build_runner`          | `^2.5.4`  | Code generation runner                                                                                                                                                |
-| `drift_dev`             | `^2.28.0` | Drift code generation + schema dump                                                                                                                                   |
-| `freezed`               | `^3.1.0`  | Freezed code generation                                                                                                                                               |
-| `json_serializable`     | `^6.9.0`  | JSON code generation                                                                                                                                                  |
-| `riverpod_generator`    | `^2.6.3`  | Riverpod code generation                                                                                                                                              |
-| `custom_lint`           | `^0.7.6`  | Riverpod lint support                                                                                                                                                 |
-| `riverpod_lint`         | `^2.6.5`  | Riverpod-specific lints                                                                                                                                               |
+| `build_runner`          | `^2.15.1` | Code generation runner                                                                                                                                                |
+| `drift_dev`             | `^2.31.0` | Drift code generation + schema dump                                                                                                                                   |
+| `freezed`               | `^3.2.5`  | Freezed code generation                                                                                                                                               |
+| `json_serializable`     | `^6.13.0` | JSON code generation                                                                                                                                                  |
+| `riverpod_generator`    | `^4.0.3`  | Riverpod code generation                                                                                                                                              |
+| `riverpod_lint`         | `3.1.4`   | Riverpod-specific lints — analysis-server plugin under `plugins:` in `analysis_options.yaml`, not a pubspec entry; see note                                           |
 | `import_lint`           | `^0.1.6`  | Enforce layer-boundary rules — pinned to the 0.1.x line; see note                                                                                                     |
-| `mocktail`              | `^1.0.4`  | Mocking for tests                                                                                                                                                     |
+| `mocktail`              | `^1.0.5`  | Mocking for tests                                                                                                                                                     |
 | `fake_async`            | `^1.3.3`  | Async time control for tests                                                                                                                                          |
 | `flutter_lints`         | `^6.0.0`  | Static analysis                                                                                                                                                       |
-| `flutter_native_splash` | `^2.4.4`  | Splash asset codegen CLI (`dart run flutter_native_splash:create`); never imported at runtime, so it lives in dev deps even though it's listed under Core (MVP) above |
+| `flutter_native_splash` | `^2.4.8`  | Splash asset codegen CLI (`dart run flutter_native_splash:create`); never imported at runtime, so it lives in dev deps even though it's listed under Core (MVP) above |
 
-**`import_lint` version note.** `import_lint >=2.0.0` pulls `analyzer ^12.1.0`, which requires `meta ^1.18.0`. Flutter 3.41.7 pins `meta` to `1.17.0`, so 2.x is unresolvable. The 0.9.x–1.0.x line requires `analyzer ^5.2.0`, which conflicts with `freezed >=2.5.3`. Only `^0.1.6` resolves — it has no `analyzer` constraint. Revisit this pin when Flutter ships `meta 1.18+`; at that point pin `import_lint ^2.x` for the full layer-boundary rule set.
+**`import_lint` version note.** `import_lint >=2.0.0` pins `analyzer ^12.1.0`. On Dart 3.12 the code-gen stack tops out at `analyzer 9` (`freezed 3.2.x` allows `<11`; `riverpod_generator 4.0.3` pins `^9`; the analyzer-12/13 releases of both need Dart 3.13 or prereleases), so 2.x is unresolvable. The 0.9.x–1.0.x line requires `analyzer ^5.2.0`, which conflicts with `freezed >=2.5.3`. Only `^0.1.6` resolves — it has no `analyzer` constraint. Revisit this pin when the project moves to Dart 3.13 and the analyzer-13 code-gen releases; at that point pin `import_lint ^2.x` for the full layer-boundary rule set.
+
+**`riverpod_lint` version note.** `riverpod_lint 3.1+` is an `analysis_server_plugin`, resolved by the analysis server from `analysis_options.yaml` rather than from `pubspec.yaml`. On Dart 3.12 only `3.1.4` loads (see the comment above `plugins:` in `analysis_options.yaml`). Its diagnostics appear in `dart analyze` and the IDE; `flutter analyze` does not load analysis-server plugins, so CI does not enforce them.

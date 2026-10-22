@@ -6,7 +6,7 @@ Tested versions live in `pubspec.yaml`. Two non-obvious pins to preserve when bu
 
 ## `import_lint: ^0.1.6`
 
-The 2.x line pulls `analyzer ^12.1.0` → `meta ^1.18.0`, but Flutter 3.41.7 pins `meta 1.17.0`. The 0.9.x–1.0.x band needs `analyzer ^5.2.0`, which conflicts with `freezed >=2.5.3`. **Only `^0.1.6` resolves under the current SDK.** Revisit when Flutter ships `meta 1.18+`.
+The 2.x line pins `analyzer ^12.1.0`, but on Dart 3.12 the code-gen stack tops out at `analyzer 9` (`freezed 3.2.x` allows `<11`, `riverpod_generator 4.0.3` pins `^9`; the analyzer-13 releases of both need Dart 3.13). The 0.9.x–1.0.x band needs `analyzer ^5.2.0`, which conflicts with `freezed >=2.5.3`. **Only `^0.1.6` resolves under the current SDK.** Revisit when the project moves to Dart 3.13 and the analyzer-13 code-gen releases.
 
 ### Config-file quirk
 
