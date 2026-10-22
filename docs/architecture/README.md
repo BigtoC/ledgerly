@@ -17,5 +17,5 @@ Each doc captures the rules that are easy to get wrong by defaulting to a generi
 
 1. [`PRD.md`](../../PRD.md) — authoritative spec.
 2. These `docs/architecture/*` files — agent-facing summaries of the above.
-3. [`CLAUDE.md`](../../CLAUDE.md) / [`AGENTS.md`](../../AGENTS.md) — quick references that link here.
+3. [`AGENTS.md`](../../AGENTS.md) — quick reference that links here ([`CLAUDE.md`](../../CLAUDE.md) just imports it).
 4. `docs/superpowers/specs/2026-04-14-ledgerly-design.md` — historical context only; if it conflicts with `PRD.md`, follow `PRD.md`.
