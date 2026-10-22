@@ -21,7 +21,7 @@ dependencies:
   riverpod_annotation: ^4.0.2
 
   # Local database
-  drift: ^2.28.2
+  drift: ^2.31.0
   drift_flutter: ^0.2.7
   path_provider: ^2.1.6
 
@@ -60,7 +60,7 @@ dev_dependencies:
 
   # Code generation runners
   build_runner: ^2.15.1
-  drift_dev: ^2.28.0
+  drift_dev: ^2.31.0
   freezed: ^3.1.0
   json_serializable: ^6.9.5
   riverpod_generator: ^4.0.3
