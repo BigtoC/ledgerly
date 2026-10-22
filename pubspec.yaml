@@ -59,7 +59,7 @@ dev_dependencies:
     sdk: flutter
 
   # Code generation runners
-  build_runner: ^2.5.4
+  build_runner: ^2.15.1
   drift_dev: ^2.28.0
   freezed: ^3.1.0
   json_serializable: ^6.9.5
