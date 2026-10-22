@@ -551,6 +551,10 @@
   "@txKeypadDivide": {
     "description": "Semantics label for the ÷ (divide) operator key on the calculator keypad."
   },
+  "txKeypadEquals": "Equals",
+  "@txKeypadEquals": {
+    "description": "Tooltip and semantics label for the = button on the amount display that finishes the pending calculation."
+  },
 
   "homeEmptyDayMessage": "No transaction",
   "@homeEmptyDayMessage": {

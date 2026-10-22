@@ -418,6 +418,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txKeypadDivide => 'Divide';
 
   @override
+  String get txKeypadEquals => 'Equals';
+
+  @override
   String get homeEmptyDayMessage => 'No transaction';
 
   @override

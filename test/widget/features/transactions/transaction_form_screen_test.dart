@@ -822,7 +822,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('5'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('+'));
+      await tester.tap(find.byTooltip('Equals'));
       await tester.pumpAndSettle();
 
       final display = find.byType(AmountDisplay);
@@ -944,7 +944,7 @@ void main() {
       // the keypad button specifically via its position in the keypad.
       await tester.tap(find.text('0').last);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('÷'));
+      await tester.tap(find.byTooltip('Equals'));
       await tester.pumpAndSettle();
 
       final saveButton = tester.widget<TextButton>(
@@ -978,13 +978,81 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('5'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('+'));
+      await tester.tap(find.byTooltip('Equals'));
       await tester.pumpAndSettle();
 
       expect(find.text('+'), findsOneWidget);
       expect(find.textContaining('1.00 + 5.00 ='), findsOneWidget);
       expect(find.text('6.00'), findsOneWidget);
       expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets(
+    'WS27: chained operators keep the running total (1 + 2 + 4 = 7)',
+    (tester) async {
+      await tester.pumpWidget(mountAdd());
+      await tester.pumpAndSettle();
+
+      for (final key in ['1', '+', '2', '+', '4']) {
+        await tester.tap(find.text(key).last);
+        await tester.pumpAndSettle();
+      }
+
+      final display = find.byType(AmountDisplay);
+      expect(
+        find.descendant(of: display, matching: find.text('3.00 +')),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byTooltip('Equals'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: display,
+          matching: find.textContaining('3.00 + 4.00 ='),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: display, matching: find.text('7.00')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'WS28: Save without pressing = persists the finished calculation',
+    (tester) async {
+      Transaction? capturedTx;
+      when(() => txRepo.save(any())).thenAnswer((inv) async {
+        capturedTx = inv.positionalArguments.first as Transaction;
+        return capturedTx!;
+      });
+
+      await tester.pumpWidget(
+        mountAdd(
+          extraOverrides: [
+            categoriesByTypeProvider(CategoryType.expense)
+                .overrideWith((ref) => Stream.value(const [_expenseCategory])),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      for (final key in ['1', '+', '2']) {
+        await tester.tap(find.text(key).last);
+        await tester.pumpAndSettle();
+      }
+      await tester.tap(find.text('Select a category'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Food'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(TextButton, 'Save'));
+      await tester.pumpAndSettle();
+
+      expect(capturedTx?.amountMinorUnits, 300);
     },
   );
 }

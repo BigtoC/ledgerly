@@ -269,7 +269,7 @@ void main() {
           .pushOperator(CalcOperator.divide, decimals: 2)
           .push(0, decimals: 2);
 
-      final result = s.pushOperator(CalcOperator.divide, decimals: 2);
+      final result = s.equals(decimals: 2);
 
       expect(result.amountMinorUnits, 0);
       expect(result.showingResult, isTrue);
@@ -283,7 +283,7 @@ void main() {
           .pushDecimal(decimals: 2)
           .push(0, decimals: 2);
 
-      final result = s.pushOperator(CalcOperator.divide, decimals: 2);
+      final result = s.equals(decimals: 2);
 
       expect(result.amountMinorUnits, 0);
       expect(result.showingResult, isTrue);
@@ -297,7 +297,7 @@ void main() {
           .pushOperator(CalcOperator.add, decimals: 2)
           .push(5, decimals: 2);
 
-      final result = s.pushOperator(CalcOperator.add, decimals: 2);
+      final result = s.equals(decimals: 2);
       expect(result.amountMinorUnits, 1700);
     });
 
@@ -310,7 +310,7 @@ void main() {
           .push(5, decimals: 2)
           .push(0, decimals: 2);
 
-      final result = s.pushOperator(CalcOperator.subtract, decimals: 2);
+      final result = s.equals(decimals: 2);
       expect(result.amountMinorUnits, 10000);
     });
 
@@ -320,7 +320,7 @@ void main() {
           .pushOperator(CalcOperator.multiply, decimals: 2)
           .push(3, decimals: 2);
 
-      final result = s.pushOperator(CalcOperator.multiply, decimals: 2);
+      final result = s.equals(decimals: 2);
       expect(result.amountMinorUnits, 600);
     });
 
@@ -332,7 +332,7 @@ void main() {
           .pushOperator(CalcOperator.divide, decimals: 2)
           .push(3, decimals: 2);
 
-      final result = s.pushOperator(CalcOperator.divide, decimals: 2);
+      final result = s.equals(decimals: 2);
       expect(result.amountMinorUnits, 3333);
     });
 
@@ -342,7 +342,7 @@ void main() {
           .pushOperator(CalcOperator.divide, decimals: 2)
           .push(8, decimals: 2);
 
-      final result = s.pushOperator(CalcOperator.divide, decimals: 2);
+      final result = s.equals(decimals: 2);
       expect(result.amountMinorUnits, 13);
     });
 
@@ -356,7 +356,7 @@ void main() {
           .push(1, decimals: 2)
           .push(0, decimals: 2);
 
-      final result = s.pushOperator(CalcOperator.multiply, decimals: 2);
+      final result = s.equals(decimals: 2);
       expect(result.amountMinorUnits, 1);
     });
 
@@ -366,10 +366,92 @@ void main() {
           .pushOperator(CalcOperator.subtract, decimals: 2)
           .push(5, decimals: 2);
 
-      final result = s.pushOperator(CalcOperator.subtract, decimals: 2);
+      final result = s.equals(decimals: 2);
       expect(result.amountMinorUnits, 0);
       expect(result.showingResult, isTrue);
     });
+  });
+
+  group('KeypadState — chaining and equals', () {
+    test(
+      'K87: a second operator chains instead of finishing (1 + 2 + 4 = 7)',
+      () {
+        final chained = const KeypadState.initial()
+            .push(1, decimals: 2)
+            .pushOperator(CalcOperator.add, decimals: 2)
+            .push(2, decimals: 2)
+            .pushOperator(CalcOperator.add, decimals: 2);
+
+        expect(chained.leftOperand, 300);
+        expect(chained.operator, CalcOperator.add);
+        expect(chained.isEvaluating, isTrue);
+        expect(chained.showingResult, isFalse);
+        expect(chained.amountMinorUnits, 0);
+
+        final result = chained.push(4, decimals: 2).equals(decimals: 2);
+
+        expect(result.amountMinorUnits, 700);
+        expect(result.showingResult, isTrue);
+        expect(result.leftOperand, 300);
+        expect(result.operator, CalcOperator.add);
+        expect(result.rightOperand, 400);
+      },
+    );
+
+    test('K88: chains evaluate strictly left to right (2 + 3 × 4 = 20)', () {
+      final result = const KeypadState.initial()
+          .push(2, decimals: 2)
+          .pushOperator(CalcOperator.add, decimals: 2)
+          .push(3, decimals: 2)
+          .pushOperator(CalcOperator.multiply, decimals: 2)
+          .push(4, decimals: 2)
+          .equals(decimals: 2);
+
+      expect(result.amountMinorUnits, 2000);
+    });
+
+    test('K89: equals with no right input drops the dangling operator', () {
+      final result = const KeypadState.initial()
+          .push(1, decimals: 2)
+          .pushOperator(CalcOperator.add, decimals: 2)
+          .equals(decimals: 2);
+
+      expect(result.amountMinorUnits, 100);
+      expect(result.showingResult, isTrue);
+      expect(result.isEvaluating, isFalse);
+      expect(result.leftOperand, isNull);
+      expect(result.operator, isNull);
+    });
+
+    test('K89b: equals without a pending expression is a no-op', () {
+      final typed = const KeypadState.initial().push(5, decimals: 2);
+      expect(typed.equals(decimals: 2), typed);
+
+      const empty = KeypadState.initial();
+      expect(empty.equals(decimals: 2), empty);
+
+      final shown = typed
+          .pushOperator(CalcOperator.add, decimals: 2)
+          .push(1, decimals: 2)
+          .equals(decimals: 2);
+      expect(shown.equals(decimals: 2), shown);
+    });
+
+    test(
+      'K89c: an operator after equals keeps calculating from the result',
+      () {
+        final result = const KeypadState.initial()
+            .push(1, decimals: 2)
+            .pushOperator(CalcOperator.add, decimals: 2)
+            .push(2, decimals: 2)
+            .equals(decimals: 2)
+            .pushOperator(CalcOperator.add, decimals: 2)
+            .push(4, decimals: 2)
+            .equals(decimals: 2);
+
+        expect(result.amountMinorUnits, 700);
+      },
+    );
   });
 
   group('KeypadState — editing the current operand', () {
@@ -556,6 +638,41 @@ void main() {
         expect(result.hasCurrentInput, isTrue);
       },
     );
+
+    test('K97b: pop on a fractional result drops one fractional digit', () {
+      final s = const KeypadState.initial()
+          .push(1, decimals: 2)
+          .pushDecimal(decimals: 2)
+          .push(5, decimals: 2)
+          .pushOperator(CalcOperator.add, decimals: 2)
+          .push(2, decimals: 2)
+          .equals(decimals: 2); // 3.50
+
+      final result = s.pop(decimals: 2);
+
+      expect(result.amountMinorUnits, 350);
+      expect(result.isFractionalMode, isTrue);
+      expect(result.fractionalDigitsEntered, 1); // "3.5"
+      expect(result.showingResult, isFalse);
+    });
+
+    test('K93b: cancelling a chained fractional subtotal keeps its fraction visible', () {
+      final s = const KeypadState.initial()
+          .push(1, decimals: 2)
+          .pushDecimal(decimals: 2)
+          .push(5, decimals: 2)
+          .pushOperator(CalcOperator.add, decimals: 2)
+          .push(2, decimals: 2)
+          .pushOperator(CalcOperator.add, decimals: 2); // 3.50 +
+
+      final result = s.pop(decimals: 2);
+
+      expect(result.amountMinorUnits, 350);
+      expect(result.isFractionalMode, isTrue);
+      expect(result.fractionalDigitsEntered, 2); // "3.50"
+      expect(result.isEvaluating, isFalse);
+      expect(result.leftOperand, isNull);
+    });
 
     test('K98: pop on showingResult with zero result (e.g. div-by-zero) exits the result state', () {
       const s = KeypadState(

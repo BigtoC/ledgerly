@@ -186,6 +186,7 @@ const Set<String> _expectedEnKeys = <String>{
   'txKeypadSubtract',
   'txKeypadMultiply',
   'txKeypadDivide',
+  'txKeypadEquals',
 
   // M5 Wave 3 — Home slice UI keys
   // (docs/plans/m5-ui-feature-slices/wave-3-home-plan.md §4.2).

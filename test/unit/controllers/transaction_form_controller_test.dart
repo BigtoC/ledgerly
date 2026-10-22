@@ -597,6 +597,58 @@ void main() {
     });
 
     test(
+      'TC60b: save finishes a pending expression before persisting',
+      () async {
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+        await controller.hydrateForAdd();
+        controller
+          ..appendDigit(1)
+          ..applyOperator(CalcOperator.add)
+          ..appendDigit(2)
+          ..selectCategory(_expenseCategory);
+        Transaction? capturedTx;
+        when(() => txRepo.save(any())).thenAnswer((inv) async {
+          capturedTx = inv.positionalArguments.first as Transaction;
+          return capturedTx!;
+        });
+
+        await controller.save();
+
+        expect(capturedTx?.amountMinorUnits, 300);
+        final s =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(s.keypad.showingResult, isTrue);
+        expect(s.keypad.amountMinorUnits, 300);
+      },
+    );
+
+    test(
+      'TC60c: save with a dangling operator persists the left operand',
+      () async {
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+        await controller.hydrateForAdd();
+        controller
+          ..appendDigit(1)
+          ..applyOperator(CalcOperator.add)
+          ..selectCategory(_expenseCategory);
+        expect(c.read(transactionFormControllerProvider).canSave, isTrue);
+        Transaction? capturedTx;
+        when(() => txRepo.save(any())).thenAnswer((inv) async {
+          capturedTx = inv.positionalArguments.first as Transaction;
+          return capturedTx!;
+        });
+
+        await controller.save();
+
+        expect(capturedTx?.amountMinorUnits, 100);
+      },
+    );
+
+    test(
       'TC61: save rethrows on repository failure and clears isSaving',
       () async {
         final c = makeContainer();
@@ -1033,7 +1085,7 @@ void main() {
 
       await controller.hydrateForAdd();
       controller.appendDigit(1);
-      controller.applyOperator(CalcOperator.add); // amountMinorUnits == 0
+      controller.applyOperator(CalcOperator.add); // visible operand == 0
       controller.selectCurrency(eur);
 
       final data =
@@ -1147,8 +1199,28 @@ void main() {
       },
     );
 
+    test('TC34: repeating the operator chains and mirrors the running total to state', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+
+      await controller.hydrateForAdd();
+      controller.appendDigit(1);
+      controller.appendDigit(2);
+      controller.applyOperator(CalcOperator.add);
+      controller.appendDigit(5);
+      controller.applyOperator(CalcOperator.add);
+
+      final data =
+          c.read(transactionFormControllerProvider) as TransactionFormData;
+      expect(data.keypad.leftOperand, 1700);
+      expect(data.keypad.isEvaluating, isTrue);
+      expect(data.keypad.showingResult, isFalse);
+      expect(data.amountMinorUnits, 1700);
+    });
+
     test(
-      'TC34: repeating the operator evaluates and mirrors the result to state',
+      'TC34b: equals finishes the expression and shows the result',
       () async {
         final c = makeContainer();
         addTearDown(c.dispose);
@@ -1156,16 +1228,24 @@ void main() {
 
         await controller.hydrateForAdd();
         controller.appendDigit(1);
+        controller.applyOperator(CalcOperator.add);
         controller.appendDigit(2);
-        controller.applyOperator(CalcOperator.add);
-        controller.appendDigit(5);
-        controller.applyOperator(CalcOperator.add);
+
+        // Mid-expression the form already holds the value `=` would produce.
+        expect(
+          (c.read(
+            transactionFormControllerProvider,
+          ) as TransactionFormData).amountMinorUnits,
+          300,
+        );
+
+        controller.equals();
 
         final data =
             c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(data.keypad.amountMinorUnits, 1700);
         expect(data.keypad.showingResult, isTrue);
-        expect(data.amountMinorUnits, 1700);
+        expect(data.keypad.amountMinorUnits, 300);
+        expect(data.amountMinorUnits, 300);
       },
     );
 

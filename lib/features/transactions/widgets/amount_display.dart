@@ -22,6 +22,9 @@
 //   - When `showingResult` is true, the history line shows the full
 //     expression ("12.00 + 5.00 =") and the main amount shows the
 //     fixed-precision result (e.g. "17.00" for USD).
+//   - When `onEquals` is set, an `=` button sits at the end of the history
+//     line, directly above the currency code. It shows for as long as the
+//     history line does and is enabled only while an expression is pending.
 
 import 'package:flutter/material.dart';
 
@@ -37,6 +40,7 @@ class AmountDisplay extends StatelessWidget {
     required this.currency,
     this.currencyTouched = false,
     this.hasError = false,
+    this.onEquals,
   });
 
   /// Source of truth for what to render. The screen reads it from the
@@ -55,6 +59,9 @@ class AmountDisplay extends StatelessWidget {
   /// surrounding label switches to the inline-validation color (Wave 2 §9
   /// inline validation).
   final bool hasError;
+
+  /// Finishes the pending calculation. When null, no `=` button is shown.
+  final VoidCallback? onEquals;
 
   @override
   Widget build(BuildContext context) {
@@ -91,13 +98,33 @@ class AmountDisplay extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (expressionText != null)
-            Text(
-              expressionText,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: foreground.withValues(alpha: 0.6),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    expressionText,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: foreground.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ),
+                if (onEquals != null)
+                  IconButton.filledTonal(
+                    tooltip: l10n.txKeypadEquals,
+                    // The glyph only follows the button's enabled/disabled
+                    // foreground colour when its style comes from the
+                    // button, not from the Text itself.
+                    style: ButtonStyle(
+                      textStyle: WidgetStatePropertyAll(
+                        theme.textTheme.titleLarge,
+                      ),
+                    ),
+                    onPressed: keypad.isEvaluating ? onEquals : null,
+                    icon: const Text('='),
+                  ),
+              ],
             ),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,

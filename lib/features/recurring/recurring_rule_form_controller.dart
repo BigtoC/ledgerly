@@ -131,9 +131,26 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
     _emitKeypad();
   }
 
+  void equals() {
+    final s = state.value;
+    if (s == null || s.isLoading) return;
+    final next = _keypad.equals(decimals: s.currency.decimals);
+    if (next == _keypad) return;
+    _keypad = next;
+    _emitKeypad();
+  }
+
+  /// `amountMinorUnits` mirrors the value `=` would produce, so a pending
+  /// expression (`1 + 2`) is validated and saved as its result.
   void _emitKeypad() {
     _keypadRevision += 1;
-    _update((s) => s.copyWith(amountMinorUnits: _keypad.amountMinorUnits));
+    _update(
+      (s) => s.copyWith(
+        amountMinorUnits: _keypad
+            .equals(decimals: s.currency.decimals)
+            .amountMinorUnits,
+      ),
+    );
   }
 
   void updateCategory(int categoryId) =>
@@ -216,6 +233,8 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
       return null;
     }
 
+    // Saving finishes a pending expression, as if `=` had been pressed.
+    equals();
     _update((s) => s.copyWith(isLoading: true, formError: null));
     try {
       // Memo doubles as the rule's user-visible name; both columns get

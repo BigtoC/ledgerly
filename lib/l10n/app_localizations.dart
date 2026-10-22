@@ -898,6 +898,12 @@ abstract class AppLocalizations {
   /// **'Divide'**
   String get txKeypadDivide;
 
+  /// Tooltip and semantics label for the = button on the amount display that finishes the pending calculation.
+  ///
+  /// In en, this message translates to:
+  /// **'Equals'**
+  String get txKeypadEquals;
+
   /// Gap day empty card message shown when no transactions exist for the selected day but history exists.
   ///
   /// In en, this message translates to:

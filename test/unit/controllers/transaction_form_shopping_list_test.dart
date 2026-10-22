@@ -36,6 +36,7 @@ import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/shopping_list_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
+import 'package:ledgerly/features/transactions/keypad_state.dart';
 import 'package:ledgerly/features/transactions/transaction_form_controller.dart';
 import 'package:ledgerly/features/transactions/transaction_form_state.dart';
 
@@ -298,6 +299,45 @@ void main() {
         ),
       ).called(1);
       verifyNever(() => slRepo.update(any()));
+    });
+
+    test('a pending expression is saved as its finished result', () async {
+      when(
+        () => slRepo.insert(
+          categoryId: any(named: 'categoryId'),
+          accountId: any(named: 'accountId'),
+          memo: any(named: 'memo'),
+          draftAmountMinorUnits: any(named: 'draftAmountMinorUnits'),
+          draftCurrencyCode: any(named: 'draftCurrencyCode'),
+          draftDate: any(named: 'draftDate'),
+        ),
+      ).thenAnswer((_) async => _draft());
+
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+      await controller.hydrateForAdd();
+      controller
+        ..appendDigit(1)
+        ..applyOperator(CalcOperator.add)
+        ..appendDigit(2)
+        ..selectCategory(_expenseCategory);
+
+      await controller.saveDraft();
+
+      verify(
+        () => slRepo.insert(
+          categoryId: _expenseCategory.id,
+          accountId: _account.id,
+          memo: null,
+          draftAmountMinorUnits: 300,
+          draftCurrencyCode: 'USD',
+          draftDate: any(named: 'draftDate'),
+        ),
+      ).called(1);
+      final data =
+          c.read(transactionFormControllerProvider) as TransactionFormData;
+      expect(data.keypad.showingResult, isTrue);
     });
 
     test('saveDraft() returns null when canSaveDraft is false', () async {

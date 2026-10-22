@@ -223,24 +223,20 @@ class KeypadState {
   ///   the right operand returns to 0.
   KeypadState pop({required int decimals}) {
     if (showingResult) {
-      // Convert the displayed result to a plain editable state, then backspace it.
-      final plain = KeypadState(
-        amountMinorUnits: amountMinorUnits,
-        fractionalDigitsEntered: 0,
-        isFractionalMode: false,
-        hasCurrentInput: amountMinorUnits != 0,
-      );
-      return plain.pop(decimals: decimals);
+      // Convert the displayed result to a plain editable state, then
+      // backspace it. `fromAmount` keeps a fractional result in fractional
+      // mode, so 3.50 walks back to 3.5 rather than losing its fraction.
+      return KeypadState.fromAmount(
+        amountMinorUnits,
+        decimals: decimals,
+      ).pop(decimals: decimals);
     }
 
     // If evaluating with no right operand started, cancel the expression.
+    // `fromAmount` keeps a fractional subtotal (e.g. 3.50 from 1.5 + 2 +)
+    // visible as typed instead of truncating the display to "3".
     if (isEvaluating && !hasCurrentInput) {
-      return KeypadState(
-        amountMinorUnits: leftOperand ?? 0,
-        fractionalDigitsEntered: 0,
-        isFractionalMode: false,
-        hasCurrentInput: (leftOperand ?? 0) != 0,
-      );
+      return KeypadState.fromAmount(leftOperand ?? 0, decimals: decimals);
     }
 
     if (isFractionalMode) {
@@ -321,9 +317,9 @@ class KeypadState {
   ///   evaluating mode.
   /// - Already evaluating, no right input yet: replaces the pending operator
   ///   (unless it is the same operator — then a no-op).
-  /// - Already evaluating with right input: evaluates left OP right, stores
-  ///   result and enters the next pending operation (or shows the result if
-  ///   the same operator was tapped again).
+  /// - Already evaluating with right input: evaluates left OP right and
+  ///   chains — the result becomes the left operand of the next pending
+  ///   operation, so `1 + 2 + 4` evaluates strictly left to right to 7.
   /// - After a result is showing: use the result as the new left operand and
   ///   enter evaluating mode with the new operator.
   KeypadState pushOperator(CalcOperator op, {required int decimals}) {
@@ -345,33 +341,16 @@ class KeypadState {
         );
       }
 
-      final right = amountMinorUnits;
-      final result = _evaluate(
-        leftOperand: leftOperand!,
-        rightOperand: right,
-        operator: operator!,
-        decimals: decimals,
-      );
-
-      if (op == operator) {
-        return KeypadState(
-          amountMinorUnits: result,
-          fractionalDigitsEntered: 0,
-          isFractionalMode: false,
-          leftOperand: leftOperand,
-          operator: operator,
-          isEvaluating: false,
-          showingResult: true,
-          rightOperand: right,
-          hasCurrentInput: false,
-        );
-      }
-
       return KeypadState(
         amountMinorUnits: 0,
         fractionalDigitsEntered: 0,
         isFractionalMode: false,
-        leftOperand: result,
+        leftOperand: _evaluate(
+          leftOperand: leftOperand!,
+          rightOperand: amountMinorUnits,
+          operator: operator!,
+          decimals: decimals,
+        ),
         operator: op,
         isEvaluating: true,
         showingResult: false,
@@ -389,6 +368,46 @@ class KeypadState {
       isEvaluating: true,
       showingResult: false,
       rightOperand: null,
+      hasCurrentInput: false,
+    );
+  }
+
+  /// The `=` key. Finishes a pending expression and shows its result:
+  ///
+  /// - Evaluating with right input: evaluates left OP right and shows the
+  ///   result with the full expression kept for the history line.
+  /// - Evaluating with no right input yet (`1 +`): drops the dangling
+  ///   operator and shows the left operand as the result.
+  /// - No pending expression: no-op.
+  ///
+  /// Typing an operator afterwards keeps calculating from the result;
+  /// typing a digit starts a fresh amount.
+  KeypadState equals({required int decimals}) {
+    if (!isEvaluating || leftOperand == null || operator == null) return this;
+
+    if (!hasCurrentInput) {
+      return KeypadState(
+        amountMinorUnits: leftOperand!,
+        fractionalDigitsEntered: 0,
+        isFractionalMode: false,
+        showingResult: true,
+      );
+    }
+
+    return KeypadState(
+      amountMinorUnits: _evaluate(
+        leftOperand: leftOperand!,
+        rightOperand: amountMinorUnits,
+        operator: operator!,
+        decimals: decimals,
+      ),
+      fractionalDigitsEntered: 0,
+      isFractionalMode: false,
+      leftOperand: leftOperand,
+      operator: operator,
+      isEvaluating: false,
+      showingResult: true,
+      rightOperand: amountMinorUnits,
       hasCurrentInput: false,
     );
   }
