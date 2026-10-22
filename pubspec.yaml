@@ -40,7 +40,7 @@ dependencies:
   material_symbols_icons: ^4.2960.0
 
   # App info
-  package_info_plus: ^9.0.1
+  package_info_plus: ^10.2.2
 
   # In-app browser
   webview_flutter: ^4.14.1
