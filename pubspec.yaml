@@ -61,7 +61,7 @@ dev_dependencies:
   # Code generation runners
   build_runner: ^2.15.1
   drift_dev: ^2.31.0
-  freezed: ^3.1.0
+  freezed: ^3.2.5
   json_serializable: ^6.9.5
   riverpod_generator: ^4.0.3
 
