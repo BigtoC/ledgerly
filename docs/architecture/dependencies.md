@@ -70,6 +70,21 @@ Flutter's plugin enables `isMinifyEnabled` and `isShrinkResources` for release b
 
 After a toolchain bump, compare `build/app/outputs/mapping/release/seeds.txt` and `configuration.txt` with the previous build.
 
+## iOS build toolchain
+
+| Item                  | Value                       | Set in                                                        |
+|-----------------------|-----------------------------|---------------------------------------------------------------|
+| Deployment target     | iOS `15.0`                  | `IPHONEOS_DEPLOYMENT_TARGET` in `ios/Runner.xcodeproj/project.pbxproj` |
+| Xcode                 | 15+ (Flutter recommends 16) | Flutter 3.47.7 `xcodeRequiredVersion`                         |
+| Plugin dependencies   | Swift Package Manager       | `FlutterGeneratedPluginSwiftPackage`, generated under `ios/Flutter/ephemeral/` |
+| CocoaPods             | Not used                    | No `ios/Podfile`                                              |
+
+Flutter 3.47.7's iOS migrators raised the deployment target from 13.0 to 15.0 and added the Swift Package Manager integration: a local package reference and product dependency in `project.pbxproj`, and the "Run Prepare Flutter Framework Script" pre-action in `Runner.xcscheme`. Swift Package Manager is on by default on the stable channel, so nothing in `pubspec.yaml` or `flutter config` turns it on. **Users on iOS 13 and 14 cannot install releases built from this project any more.**
+
+Every iOS plugin in the graph ships a `Package.swift`: `package_info_plus`, `url_launcher_ios` and `webview_flutter_wkwebview`. `path_provider_foundation` 2.6 has no native plugin code. It calls Foundation through `objective_c` FFI. `sqlite3` and `objective_c` ship their libraries as build-hook code assets, which Flutter embeds as frameworks with or without a package manager. With all plugins on Swift Package Manager, Flutter prints "your project still has CocoaPods integration" and asks you to delete the Podfile and the `Pods-Runner.*.xcconfig` includes in `ios/Flutter/{Debug,Release}.xcconfig`. Both are gone. `pod deintegrate` had nothing to remove, because `pod install` output was never committed. When Swift Package Manager is in use and there is no Podfile, the tool skips CocoaPods (`processPodsIfNeeded` in `flutter_tools/lib/src/macos/cocoapod_utils.dart`).
+
+If a plugin without a `Package.swift` is added, `flutter build ios` writes a new Podfile and needs CocoaPods again. `ios-nightly.yml` fails when that happens, so the change is deliberate. To accept it, commit the generated Podfile and the Pods `#include?` lines Flutter adds to `ios/Flutter/{Debug,Release}.xcconfig`, and remove that check. `macos/` is not a supported target and still uses its original CocoaPods setup. Flutter migrates it the same way on the first `flutter build macos`.
+
 ## Build-runner consumers
 
 Code generation is required whenever any of these annotations changes — the build will fail loudly if generated files are stale:

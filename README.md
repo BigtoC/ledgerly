@@ -228,7 +228,10 @@ understandable, and centered on manual logging.
   The Gradle wrapper fetches Gradle 9.7.1; AGP 9.3.3 and Kotlin 2.4.21 are
   pinned in `android/settings.gradle.kts`. See
   [`docs/architecture/dependencies.md`](docs/architecture/dependencies.md#android-build-toolchain).
-- For iOS builds: Xcode 15+ and CocoaPods.
+- For iOS builds: Xcode 15 or newer (Flutter recommends 16+). CocoaPods is
+  not needed: every iOS plugin comes in through Swift Package Manager, and
+  `ios/` has no Podfile. The app targets iOS 15.0. See
+  [`docs/architecture/dependencies.md`](docs/architecture/dependencies.md#ios-build-toolchain).
 
 ## Common commands
 
