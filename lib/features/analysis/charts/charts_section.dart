@@ -449,14 +449,16 @@ class _ChartBody extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        CategoryPieChart(
-          slices: data.slices,
-          currenciesByCode: currencies,
-          locale: locale,
-          grandTotalMinorUnits: data.grandTotalMinorUnits,
-          displayCurrencyCode: data.displayCurrencyCode,
-          selectedIndex: selectedIndex,
-          onSelectionChanged: selectSlice,
+        RepaintBoundary(
+          child: CategoryPieChart(
+            slices: data.slices,
+            currenciesByCode: currencies,
+            locale: locale,
+            grandTotalMinorUnits: data.grandTotalMinorUnits,
+            displayCurrencyCode: data.displayCurrencyCode,
+            selectedIndex: selectedIndex,
+            onSelectionChanged: selectSlice,
+          ),
         ),
         const SizedBox(height: 12),
         ChartLegend(
@@ -469,13 +471,15 @@ class _ChartBody extends ConsumerWidget {
         ),
         if (showBar) ...[
           const SizedBox(height: 16),
-          DailyBarChart(
-            period: data.period,
-            anchorDate: data.anchorDate,
-            bucketTotals: data.bucketTotals,
-            locale: locale,
-            currenciesByCode: currencies,
-            displayCurrencyCode: data.displayCurrencyCode,
+          RepaintBoundary(
+            child: DailyBarChart(
+              period: data.period,
+              anchorDate: data.anchorDate,
+              bucketTotals: data.bucketTotals,
+              locale: locale,
+              currenciesByCode: currencies,
+              displayCurrencyCode: data.displayCurrencyCode,
+            ),
           ),
         ],
       ],

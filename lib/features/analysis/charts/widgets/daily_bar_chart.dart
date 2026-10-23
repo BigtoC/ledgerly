@@ -137,15 +137,14 @@ class _DailyBarChartState extends State<DailyBarChart> {
                 },
               ),
               touchCallback: (event, response) {
-                if (!event.isInterestedForInteractions ||
-                    response == null ||
-                    response.spot == null) {
-                  setState(() => _touchedIndex = null);
-                  return;
-                }
-                setState(
-                  () => _touchedIndex = response.spot!.touchedBarGroupIndex,
-                );
+                final next =
+                    (!event.isInterestedForInteractions ||
+                        response?.spot == null)
+                    ? null
+                    : response!.spot!.touchedBarGroupIndex;
+                // Pointer moves inside the same bar fire this on every
+                // event; skip the rebuild when the index is unchanged.
+                if (next != _touchedIndex) setState(() => _touchedIndex = next);
               },
             ),
             gridData: const FlGridData(show: false),
