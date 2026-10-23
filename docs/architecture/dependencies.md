@@ -34,20 +34,30 @@ Adding `import 'package:ledgerly/data/database/app_database.dart';` to `lib/feat
 
 | Tool   | Version  | File                                               |
 |--------|----------|----------------------------------------------------|
-| Gradle | `9.7.0`  | `android/gradle/wrapper/gradle-wrapper.properties` |
-| AGP    | `9.3.1`  | `android/settings.gradle.kts`                      |
+| Gradle | `9.7.1`  | `android/gradle/wrapper/gradle-wrapper.properties` |
+| AGP    | `9.3.3`  | `android/settings.gradle.kts`                      |
 | KGP    | `2.4.21` | `android/settings.gradle.kts` (`apply false`)      |
 | JDK    | 17+      | CI: Temurin 21                                     |
 
 ### Why these versions
 
-A bump has to pass all three checks:
+A bump has to pass all three checks. The one exception is patch releases on the Kotlin table's newest minor lines (see [Patch releases above the Kotlin table](#patch-releases-above-the-kotlin-table)).
 
 1. **Kotlin's KGP table** ([kotlinlang.org → Configure a Gradle project](https://kotlinlang.org/docs/gradle-configure-project.html#apply-the-plugin)). KGP 2.4.20–2.4.21 covers Gradle 7.6.3–9.7.0 and AGP 8.5.2–9.3.1. KGP 2.4.0–2.4.10 stops at Gradle 9.5.0 and AGP 9.1.0.
 2. **AGP's minimum Gradle** ([AGP release notes](https://developer.android.com/build/releases/about-agp)). AGP 9.3 needs Gradle 9.5.0, AGP 9.4 needs 9.6.0.
 3. **Flutter 3.47.7.** The Gradle plugin's `DependencyVersionChecker` warns below Gradle 9.1.0, AGP 9.0.1 and KGP 2.3.20. `flutter analyze --suggestions` must show `[✓] Java/Gradle/KGP/Android Gradle Plugin`. Its tables (`packages/flutter_tools/lib/src/android/gradle_utils.dart`) stop at AGP 9.2 and KGP 2.4.0 and accept newer versions as unknown. So this check passes for any KGP above 2.4.0, and the Kotlin table is the real limit.
 
-AGP 9.4.x with Gradle 9.8.x builds and passes Flutter's check, but it is outside the Kotlin table. Move to it when a KGP release lists it. Patch releases above the documented maxima (AGP 9.3.2/9.3.3, Gradle 9.7.1) also build. They fix R8/D8 bugs, but the Kotlin table does not list them yet.
+AGP 9.4.x with Gradle 9.8.x builds and passes Flutter's check, but it is outside the Kotlin table. Move to it when a KGP release lists it.
+
+#### Patch releases above the Kotlin table
+
+AGP 9.3.3 and Gradle 9.7.1 are patch releases above the Kotlin table's maxima (9.3.1 and 9.7.0): two AGP patches and one Gradle patch. JetBrains does not list them as fully supported for KGP 2.4.21. The page says newer Gradle and AGP versions can be used, but "you might encounter deprecation warnings or some new features might not work." This is a deliberate choice: the patches stay on the same minor lines and fix bugs that affect release builds.
+
+- **AGP 9.3.2:** lint no longer crashes on JDK 17 (`NoSuchMethodError: java.util.List.removeLast()`, [522845800](https://issuetracker.google.com/issues/522845800)).
+- **AGP 9.3.3:** R8 builds are deterministic again, so identical input gives identical dex and mapping ([554586985](https://issuetracker.google.com/issues/554586985)). It fixes dex files that intermittently fail verification and crash the app on launch ([485558707](https://issuetracker.google.com/issues/485558707)). It also fixes an R8 outliner `VerifyError` ([551348855](https://issuetracker.google.com/issues/551348855)), a D8 debug-mode crash, duplicate R8 mappings, high R8 per-rule memory use, a ~38% slower `mergeProjectDexDebug`, and `optimization { enable = true }` not setting `isMinifyEnabled`.
+- **Gradle 9.7.1:** fixes regressions from 9.7.0, among them `BaseExecSpec` streams, test-failure diff output, bundled antlr leaking onto the kapt classpath, and `ant.taskdef` classpath isolation.
+
+Compared with 9.3.1 / 9.7.0 under JDK 21, the patches add no new warnings to `assembleDebug --warning-mode all`. In the signed split-per-ABI release APKs, `aapt2` badging and manifest trees are identical, every `.so` and `classes.dex` keeps its size, R8's `pg-map-id` and `mapping.txt` are the same, and `seeds.txt` has the same entries in a different order. The dex is semantically identical (`dexdump -a -d` matches); its bytes differ in the R8 version marker (9.3.16 → 9.3.28), the header checksum and the order of annotation items. `libdartjni.so` differs only in its build ID. `zipalign -c -P 16` and `apksigner verify` pass. If a KGP release lists 9.3.3 / 9.7.1 or later, this exception ends. Do not use it to justify moving to a new minor line.
 
 ### Built-in Kotlin and the KGP line
 

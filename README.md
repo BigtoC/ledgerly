@@ -225,7 +225,7 @@ understandable, and centered on manual logging.
 - Flutter 3.47+ (stable channel, Dart 3.13). `flutter --version` must run
   cleanly.
 - For Android builds: JDK 17 or newer (CI uses Temurin 21) + Android SDK.
-  The Gradle wrapper fetches Gradle 9.7.0; AGP 9.3.1 and Kotlin 2.4.21 are
+  The Gradle wrapper fetches Gradle 9.7.1; AGP 9.3.3 and Kotlin 2.4.21 are
   pinned in `android/settings.gradle.kts`. See
   [`docs/architecture/dependencies.md`](docs/architecture/dependencies.md#android-build-toolchain).
 - For iOS builds: Xcode 15+ and CocoaPods.
