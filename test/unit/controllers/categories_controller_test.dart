@@ -6,8 +6,8 @@
 //     archive for referenced custom, delete for unused custom).
 //   - Seeded + unreferenced → Archive, not Delete (plan §12 risk #3).
 //   - Archived rows are excluded from the state.
-//   - Commands route to the repository and surface typed exceptions via
-//     `AsyncError`.
+//   - Commands route to the repository and translate the repository's
+//     typed exceptions into `CategoriesOperationException(kind)`.
 //
 // Repository is mocked via `mocktail`; no live DB.
 
@@ -43,6 +43,9 @@ Category _c({
   sortOrder: sortOrder,
   isArchived: isArchived,
 );
+
+Matcher _operationError(CategoriesOperationError kind) =>
+    isA<CategoriesOperationException>().having((e) => e.kind, 'kind', kind);
 
 @Dependencies([CategoriesController])
 void main() {
@@ -317,7 +320,7 @@ void main() {
       expect(captured.isArchived, isFalse);
     });
 
-    test('C12: deleteCategory surfaces CategoryInUseException', () async {
+    test('C12: deleteCategory translates CategoryInUseException', () async {
       final container = makeContainer();
       addTearDown(container.dispose);
       container.listen(categoriesControllerProvider, (_, _) {});
@@ -327,15 +330,88 @@ void main() {
 
       when(() => repo.delete(11)).thenThrow(const CategoryInUseException(11));
 
-      expect(
-        () => container
+      await expectLater(
+        container
             .read(categoriesControllerProvider.notifier)
             .deleteCategory(11),
-        throwsA(isA<CategoryInUseException>()),
+        throwsA(_operationError(CategoriesOperationError.inUse)),
       );
     });
 
-    test('C13: createCategory surfaces CategoryTypeLockedException', () async {
+    test(
+      'C13: createCategory translates CategoryTypeLockedException',
+      () async {
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        container.listen(categoriesControllerProvider, (_, _) {});
+        await Future<void>.delayed(Duration.zero);
+        rowsCtrl.add(const []);
+        await waitForData(container);
+
+        when(() => repo.save(any()))
+            .thenThrow(const CategoryTypeLockedException(1));
+
+        await expectLater(
+          container
+              .read(categoriesControllerProvider.notifier)
+              .createCategory(
+                _c(id: 1, type: CategoryType.income, customName: 'X'),
+              ),
+          throwsA(_operationError(CategoriesOperationError.typeLocked)),
+        );
+      },
+    );
+
+    test(
+      'C13b: updateIconColor translates CategoryTypeLockedException',
+      () async {
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        container.listen(categoriesControllerProvider, (_, _) {});
+        await Future<void>.delayed(Duration.zero);
+        rowsCtrl.add(const []);
+        await waitForData(container);
+
+        when(() => repo.getById(5)).thenAnswer(
+          (_) async => _c(id: 5, type: CategoryType.expense, customName: 'A'),
+        );
+        when(() => repo.save(any()))
+            .thenThrow(const CategoryTypeLockedException(5));
+
+        await expectLater(
+          container
+              .read(categoriesControllerProvider.notifier)
+              .updateIconColor(id: 5, icon: 'home', color: 1),
+          throwsA(_operationError(CategoriesOperationError.typeLocked)),
+        );
+      },
+    );
+
+    test(
+      'C13c: archiveCategory translates CategoryHasRecurringRuleException',
+      () async {
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        container.listen(categoriesControllerProvider, (_, _) {});
+        await Future<void>.delayed(Duration.zero);
+        rowsCtrl.add(const []);
+        await waitForData(container);
+
+        when(() => repo.archive(7))
+            .thenThrow(const CategoryHasRecurringRuleException(7));
+
+        await expectLater(
+          container
+              .read(categoriesControllerProvider.notifier)
+              .archiveCategory(7),
+          throwsA(
+            _operationError(CategoriesOperationError.hasActiveRecurringRule),
+          ),
+        );
+      },
+    );
+
+    test('C13d: other repository failures pass through untranslated', () async {
       final container = makeContainer();
       addTearDown(container.dispose);
       container.listen(categoriesControllerProvider, (_, _) {});
@@ -343,16 +419,14 @@ void main() {
       rowsCtrl.add(const []);
       await waitForData(container);
 
-      when(() => repo.save(any()))
-          .thenThrow(const CategoryTypeLockedException(1));
+      when(() => repo.rename(8, 'B'))
+          .thenThrow(const CategoryRepositoryException('Category 8 not found'));
 
-      expect(
-        () => container
+      await expectLater(
+        container
             .read(categoriesControllerProvider.notifier)
-            .createCategory(
-              _c(id: 1, type: CategoryType.income, customName: 'X'),
-            ),
-        throwsA(isA<CategoryTypeLockedException>()),
+            .renameCategory(8, 'B'),
+        throwsA(isA<CategoryRepositoryException>()),
       );
     });
 

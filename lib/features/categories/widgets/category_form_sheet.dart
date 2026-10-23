@@ -8,8 +8,11 @@
 //   color picker.
 // - Wrapped in `SingleChildScrollView` so the soft keyboard does not
 //   clip the body (plan §12 risk #5).
-// - Typed repository exception (`CategoryTypeLockedException`)
-//   surfaces inline as an error banner — the sheet stays open for retry.
+// - A type-locked save arrives from `CategoriesController` as
+//   `CategoriesOperationException(CategoriesOperationError.typeLocked)`
+//   and surfaces inline as the localized `categoriesFormTypeLockedError`
+//   banner; any other failure shows `errorSnackbarGeneric` there. The
+//   sheet stays open for retry.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,7 +21,6 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 import '../../../core/utils/color_palette.dart';
 import '../../../core/utils/icon_registry.dart';
 import '../../../data/models/category.dart';
-import '../../../data/repositories/category_repository.dart';
 import '../../../l10n/app_localizations.dart';
 import '../categories_controller.dart';
 import 'category_color_picker.dart';
@@ -117,9 +119,11 @@ class _CategoryFormSheetState extends ConsumerState<_CategoryFormSheet> {
         }
       }
       if (mounted) Navigator.of(context).pop();
-    } on CategoryTypeLockedException catch (e) {
+    } on CategoriesOperationException catch (e) {
       setState(() {
-        _errorMessage = e.message;
+        _errorMessage = e.kind == CategoriesOperationError.typeLocked
+            ? l10n.categoriesFormTypeLockedError
+            : l10n.errorSnackbarGeneric;
         _saving = false;
       });
     } catch (_) {

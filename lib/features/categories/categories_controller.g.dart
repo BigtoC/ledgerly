@@ -131,7 +131,7 @@ final class CategoriesControllerProvider
 }
 
 String _$categoriesControllerHash() =>
-    r'a92184686f7227a47927abce8bb55527f206e514';
+    r'f94ae2a44276c22fc2a5863553a998e37954d3e8';
 
 abstract class _$CategoriesController extends $StreamNotifier<CategoriesState> {
   Stream<CategoriesState> build();

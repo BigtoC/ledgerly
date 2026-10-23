@@ -197,6 +197,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get categoriesDeleteConfirmBody => 'This cannot be undone.';
 
   @override
+  String get categoriesDeleteInUseError =>
+      'This category is still in use, so it can\'t be deleted.';
+
+  @override
+  String get categoriesArchiveRecurringRuleError =>
+      'An active recurring transaction uses this category, so it can\'t be archived.';
+
+  @override
+  String get categoriesFormTypeLockedError =>
+      'This category\'s type can\'t change after it has been used. Create a new category instead.';
+
+  @override
   String get categoriesPickerTitleExpense => 'Pick expense category';
 
   @override
@@ -1078,6 +1090,15 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get categoriesDeleteConfirmBody => '此操作无法撤销。';
 
   @override
+  String get categoriesDeleteInUseError => '此分类仍在使用中，无法删除。';
+
+  @override
+  String get categoriesArchiveRecurringRuleError => '有启用中的周期性交易使用此分类，无法归档。';
+
+  @override
+  String get categoriesFormTypeLockedError => '此分类使用后无法更改类型，请改为创建新分类。';
+
+  @override
   String get categoriesPickerTitleExpense => '选择支出分类';
 
   @override
@@ -1929,6 +1950,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get categoriesDeleteConfirmBody => '此操作無法復原。';
+
+  @override
+  String get categoriesDeleteInUseError => '此分類仍在使用中，無法刪除。';
+
+  @override
+  String get categoriesArchiveRecurringRuleError => '有啟用中的週期性交易使用此分類，無法封存。';
+
+  @override
+  String get categoriesFormTypeLockedError => '此分類使用後無法變更類型，請改為建立新分類。';
 
   @override
   String get categoriesPickerTitleExpense => '選擇支出分類';
