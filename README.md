@@ -236,7 +236,7 @@ understandable, and centered on manual logging.
 flutter pub get                                     # resolve packages
 flutter run                                         # device/emulator
 dart analyze --fatal-infos                          # analyzer + flutter_lints + riverpod_lint (what CI runs)
-dart run import_lint                                # enforce layer boundaries
+flutter test test/unit/architecture/                # enforce layer boundaries
 dart run build_runner build --delete-conflicting-outputs
 dart run build_runner watch --delete-conflicting-outputs
 dart run drift_dev schema dump \
@@ -318,13 +318,11 @@ PRD → Architecture for the full table. Headlines:
 `analysis_options.yaml` wires `flutter_lints` and the `riverpod_lint`
 analysis-server plugin. CI enforces both with `dart analyze --fatal-infos`,
 which waits for the plugin; `flutter analyze` does not wait and reports
-riverpod_lint warnings only some of the time. The pinned
-`import_lint ^0.1.6` reads its layer-boundary rules from
-`import_analysis_options.yaml` at the repo root (separate file because
-that version uses a regex schema, not the 2.x globs). CI runs it, but
-0.1.6 does not currently enforce the rules: it matches them against
-absolute paths, so no `^lib/...` rule fires, and it always exits 0.
-Review is what keeps the layer boundaries today.
+riverpod_lint warnings only some of the time. The layer-boundary rules
+live in `import_analysis_options.yaml` at the repo root and are enforced
+by `test/unit/architecture/layer_boundaries_test.dart`, which CI runs as
+its own step. Violations that predate the check are listed in that
+file's `baseline:`; anything new fails CI.
 
 ## Contributing
 

@@ -2,7 +2,7 @@
 //
 // Exposes lookup maps the screen needs to render rows + summary strip
 // without importing the repository surfaces directly. Keeps screen
-// imports compliant with the `widgets_forbid_data_internals` import_lint
+// imports compliant with the `widgets_forbid_data_internals` layer
 // rule (only `app/providers/...` and feature-local files are
 // reachable from the screen).
 //

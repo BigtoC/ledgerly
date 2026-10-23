@@ -13,8 +13,8 @@
 // rxdart `combineLatest` in spirit — we implement it with nested
 // `StreamSubscription`s because rxdart is not on the project deps (plan
 // §3.1 / PRD dep list). The feature folder must not import Drift
-// directly (import_lint `features_` rules); only repositories and
-// domain models flow through here.
+// directly (layer-boundary rules in import_analysis_options.yaml); only
+// repositories and domain models flow through here.
 //
 // Commands: `setDefault`, `archive`, `delete`, `unarchive`, plus an
 // internal `canArchive` hint for the widget to surface disabled

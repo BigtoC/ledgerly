@@ -2,11 +2,11 @@
 
 > Authoritative source: [`PRD.md` → *Architecture*](../../PRD.md#architecture).
 
-Ledgerly uses a strict **3-layer architecture** (Data → UI), with a `domain/` use-case layer added only in Phase 2. Reviewer discipline matters more than the linter here — see [`dependencies.md`](./dependencies.md) for why `import_lint` enforcement is best-effort.
+Ledgerly uses a strict **3-layer architecture** (Data → UI), with a `domain/` use-case layer added only in Phase 2. Import-level layer boundaries are enforced by `test/unit/architecture/layer_boundaries_test.dart` (see [`dependencies.md`](./dependencies.md#layer-boundary-check)) for the paths its rules match: `*_screen.dart`, `widgets/`, `*_controller.dart` and `*_state.dart` under `lib/features/`, plus `lib/core/`, `lib/data/` and use cases. Other feature files (for example `analysis/charts/charts_section.dart`, `*_providers.dart`) and `lib/app/` are not covered, and the rules below that are not about imports still rely on review.
 
 ## Non-Negotiables
 
-- **SSOT on repositories.** Only `data/repositories/*` write to Drift or `flutter_secure_storage`. Controllers and widgets never construct Drift `Insertable` rows, never call DAO `.insert()`, never touch secure storage. Layer-boundary rules are declared in `import_analysis_options.yaml` at the repo root (the pinned `import_lint ^0.1.6` only reads from that filename, not from `analysis_options.yaml`).
+- **SSOT on repositories.** Only `data/repositories/*` write to Drift or `flutter_secure_storage`. Controllers and widgets never construct Drift `Insertable` rows, never call DAO `.insert()`, never touch secure storage. Layer-boundary rules are declared in `import_analysis_options.yaml` at the repo root and checked by `test/unit/architecture/layer_boundaries_test.dart`.
 - **Drift stays inside repositories.** Repositories map Drift data classes into Freezed domain models in `data/models/` and return those. Controllers and widgets must never see a Drift row type — that is the seam that protects the UI from schema churn.
 - **Controllers expose state + commands, not data access.** Each `*_controller.dart` owns an immutable Freezed sealed state (`loading | empty | data(...) | error`) and typed command methods. Widgets read state and call commands; no data transformation in `build()`.
 - **Reactive by default.** Repositories return `Stream<T>` backed by Drift `.watch()`; controllers consume via Riverpod `StreamNotifier` / `AsyncNotifier`. Avoid manual refresh patterns.
