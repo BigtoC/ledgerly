@@ -39,10 +39,11 @@ class _HostState extends State<_Host> {
   }
 }
 
-Widget _mount(List<String> memos) {
+Widget _mount(List<String> memos, {List<String> allMemos = const []}) {
   return ProviderScope(
     overrides: [
       txMemoSuggestionsProvider(7).overrideWith((ref) => Stream.value(memos)),
+      txAllMemosProvider(7).overrideWith((ref) => Stream.value(allMemos)),
     ],
     child: const MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -106,5 +107,94 @@ void main() {
     final text = tester.widget<Text>(find.text(longMemo));
     expect(text.maxLines, 1);
     expect(text.overflow, TextOverflow.ellipsis);
+  });
+
+  group('more than memoSuggestionLimit memos', () {
+    final overflow = [for (var i = 0; i <= memoSuggestionLimit; i++) 'memo $i'];
+    final all = [...overflow, 'oldest'];
+
+    testWidgets('shows the first memoSuggestionLimit chips, then More', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_mount(overflow, allMemos: all));
+      await tester.pump();
+
+      expect(find.text('memo ${memoSuggestionLimit - 1}'), findsOneWidget);
+      expect(find.text('memo $memoSuggestionLimit'), findsNothing);
+      expect(find.widgetWithText(ActionChip, 'More'), findsOneWidget);
+    });
+
+    testWidgets('no More chip at exactly memoSuggestionLimit memos', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _mount(overflow.take(memoSuggestionLimit).toList()),
+      );
+      await tester.pump();
+
+      expect(find.widgetWithText(ActionChip, 'More'), findsNothing);
+    });
+
+    testWidgets('sheet opens at 88% height with a divider between memos', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _mount(overflow, allMemos: const ['A', 'B', 'C']),
+      );
+      await tester.pump();
+
+      await tester.ensureVisible(find.widgetWithText(ActionChip, 'More'));
+      await tester.tap(find.widgetWithText(ActionChip, 'More'));
+      await tester.pumpAndSettle();
+
+      final sheet = find.byType(BottomSheet);
+      final box = tester.widget<FractionallySizedBox>(
+        find
+            .descendant(of: sheet, matching: find.byType(FractionallySizedBox))
+            .first,
+      );
+      expect(box.heightFactor, 0.88);
+      final dividers = find.descendant(
+        of: sheet,
+        matching: find.byType(Divider),
+      );
+      expect(dividers, findsNWidgets(2));
+      final listRect = tester.getRect(
+        find.descendant(of: sheet, matching: find.byType(ListView)),
+      );
+      final dividerRect = tester.getRect(dividers.first);
+      expect(dividerRect.width, moreOrLessEquals(listRect.width * 0.88));
+      expect(dividerRect.center.dx, moreOrLessEquals(listRect.center.dx));
+    });
+
+    testWidgets('More opens a sheet listing every memo; a pick fills it', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_mount(overflow, allMemos: all));
+      await tester.pump();
+
+      await tester.ensureVisible(find.widgetWithText(ActionChip, 'More'));
+      await tester.tap(find.widgetWithText(ActionChip, 'More'));
+      await tester.pumpAndSettle();
+
+      final sheet = find.byType(BottomSheet);
+      expect(sheet, findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.descendant(of: sheet, matching: find.text('oldest')),
+        200,
+        scrollable: find.descendant(
+          of: sheet,
+          matching: find.byType(Scrollable),
+        ),
+      );
+      await tester.tap(
+        find.descendant(of: sheet, matching: find.text('oldest')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(BottomSheet), findsNothing);
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.controller!.text, 'oldest');
+    });
   });
 }

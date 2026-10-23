@@ -375,6 +375,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get txMemoLabel => 'Memo';
 
   @override
+  String get txMemoSuggestionsMore => 'More';
+
+  @override
+  String get txMemoPickerTitle => 'Memos';
+
+  @override
   String get txAmountRequired => 'Enter an amount';
 
   @override
@@ -1263,6 +1269,12 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get txMemoLabel => '备注';
 
   @override
+  String get txMemoSuggestionsMore => '更多';
+
+  @override
+  String get txMemoPickerTitle => '备注';
+
+  @override
   String get txAmountRequired => '请输入金额';
 
   @override
@@ -2123,6 +2135,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get txMemoLabel => '備註';
+
+  @override
+  String get txMemoSuggestionsMore => '更多';
+
+  @override
+  String get txMemoPickerTitle => '備註';
 
   @override
   String get txAmountRequired => '請輸入金額';
