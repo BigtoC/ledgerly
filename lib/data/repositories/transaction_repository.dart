@@ -103,8 +103,8 @@ abstract class TransactionRepository {
   Stream<List<Transaction>> watchByMemo(String query);
 
   /// Up to [limit] distinct memos (trimmed) previously used in
-  /// [categoryId], most recently used first. NULL and whitespace-only
-  /// memos are excluded. Feeds the transaction form's memo suggestions.
+  /// [categoryId], most recently saved first (by `updatedAt`, not the
+  /// transaction date). NULL and whitespace-only memos are excluded. Feeds the transaction form's memo suggestions.
   Stream<List<String>> watchRecentMemosForCategory(
     int categoryId, {
     required int limit,

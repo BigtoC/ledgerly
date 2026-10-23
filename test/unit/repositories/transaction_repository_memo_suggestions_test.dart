@@ -37,9 +37,13 @@ Future<void> _insertTx({
   required DateTime date,
   String? memo,
   int categoryId = 1,
+  DateTime? updatedAt,
 }) {
   // Drift stores DateTime as integer Unix seconds (default mode).
   final epoch = DateTime.utc(2026, 1, 1).millisecondsSinceEpoch ~/ 1000;
+  // `updated_at` (save time) drives the ranking; default it to [date] so
+  // tests that only care about order read naturally.
+  final saved = (updatedAt ?? date).millisecondsSinceEpoch ~/ 1000;
   return db.customStatement(
     'INSERT INTO transactions (id, amount_minor_units, currency, '
     'category_id, account_id, date, memo, created_at, updated_at) '
@@ -50,7 +54,7 @@ Future<void> _insertTx({
       date.millisecondsSinceEpoch ~/ 1000,
       memo,
       epoch,
-      epoch,
+      saved,
     ],
   );
 }
@@ -90,6 +94,36 @@ void main() {
     final memos = await repo.watchRecentMemosForCategory(1, limit: 10).first;
 
     expect(memos, ['second', 'first']);
+  });
+
+  test('ranks by when the memo was saved, not the transaction date', () async {
+    // Future-dated entry saved long ago: must not stay pinned at the front.
+    await _insertTx(
+      db: db,
+      id: 1,
+      date: DateTime.utc(2026, 12, 25),
+      updatedAt: DateTime.utc(2026, 5, 1),
+      memo: 'Gift',
+    );
+    // Backfilled entry for last month, saved just now: most recently typed.
+    await _insertTx(
+      db: db,
+      id: 2,
+      date: DateTime.utc(2026, 4, 1),
+      updatedAt: DateTime.utc(2026, 5, 3),
+      memo: 'Rent',
+    );
+    await _insertTx(
+      db: db,
+      id: 3,
+      date: DateTime.utc(2026, 5, 2),
+      updatedAt: DateTime.utc(2026, 5, 2),
+      memo: 'Lunch',
+    );
+
+    final memos = await repo.watchRecentMemosForCategory(1, limit: 10).first;
+
+    expect(memos, ['Rent', 'Lunch', 'Gift']);
   });
 
   test('same-day tiebreak uses the id of each memo\'s latest row', () async {
