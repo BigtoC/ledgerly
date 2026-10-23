@@ -11,7 +11,7 @@ Each doc captures the rules that are easy to get wrong by defaulting to a generi
 - [`ui-and-layout.md`](./ui-and-layout.md) — Required layout primitives for Home, Add/Edit Transaction, and Category picker; the 600dp adaptive breakpoint; 2× text scale.
 - [`bootstrap.md`](./bootstrap.md) — First-run + bootstrap sequence, splash redirect, route table.
 - [`testing.md`](./testing.md) — Test organization by architectural layer; in-memory Drift, `ProviderContainer` overrides, splash goldens, migration tests.
-- [`dependencies.md`](./dependencies.md) — Pinned versions and the non-obvious reasons behind them (`import_lint ^0.1.6`, base `app_zh.arb`).
+- [`dependencies.md`](./dependencies.md) — Pinned versions and the non-obvious reasons behind them (base `app_zh.arb`), and the layer-boundary check that replaced `import_lint`.
 
 ## Source precedence
 

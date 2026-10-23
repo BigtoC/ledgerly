@@ -3,11 +3,11 @@
 # Layer-boundary enforcement comes from two places:
 #   1. `riverpod_lint` (loaded below via the top-level `plugins:` key, the
 #      Dart analysis_server_plugin system) checks Riverpod usage.
-#   2. `import_lint` encodes the PRD -> Layer Boundaries table. Its rules
-#      live in `import_analysis_options.yaml` at the repo root (required
-#      by import_lint ^0.1.6 — do NOT move them back into this file, the
-#      0.1.6 runner will not find them). Runs via `dart run import_lint`,
-#      wired into CI alongside `dart analyze --fatal-infos`.
+#   2. `test/unit/architecture/layer_boundaries_test.dart` encodes the
+#      PRD -> Layer Boundaries table. Its rules live in
+#      `import_analysis_options.yaml` at the repo root, not in this file.
+#      CI runs it as its own step (`flutter test test/unit/architecture/`)
+#      before `dart analyze --fatal-infos`.
 #
 # Generated code is excluded; every other file is analyzed.
 
@@ -71,6 +71,6 @@ linter:
     unawaited_futures: true
     use_super_parameters: true
 
-# import_lint rules are NOT configured here. They live in
-# `import_analysis_options.yaml` at the repo root (required by
-# import_lint ^0.1.6). See that file for the layer-boundary policy.
+# Layer-boundary rules are NOT configured here. They live in
+# `import_analysis_options.yaml` at the repo root. See that file for the
+# layer-boundary policy.

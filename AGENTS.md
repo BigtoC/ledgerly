@@ -103,17 +103,17 @@ Detailed agent-facing rules live under [`docs/architecture/`](docs/architecture/
 - [`ui-and-layout.md`](docs/architecture/ui-and-layout.md) — Required layout primitives, 600dp adaptive breakpoint, 2× text scale, reference live screens.
 - [`bootstrap.md`](docs/architecture/bootstrap.md) — First-run + bootstrap order, splash redirect, route table.
 - [`testing.md`](docs/architecture/testing.md) — Test organization by layer; repository/controller/golden/migration patterns; per-slice coverage map.
-- [`dependencies.md`](docs/architecture/dependencies.md) — `import_lint ^0.1.6` and base `app_zh.arb` pins; Android Gradle / AGP / Kotlin toolchain.
+- [`dependencies.md`](docs/architecture/dependencies.md) — layer-boundary check (replaced `import_lint`), base `app_zh.arb` requirement, Android and iOS build toolchains.
 
 ## Commands and workflows
 
 > When verifying changes, run `dart format .` before any `flutter test` or `dart analyze` command.
 
-- `flutter pub get`
+- `flutter pub get` (`pubspec.lock` is committed: commit it with any dependency change; CI runs `flutter pub get --enforce-lockfile`, which fails if the lockfile is missing or out of date)
 - `flutter run`
 - `dart format .` (run before `flutter test` or `dart analyze` whenever verifying changes)
 - `dart analyze --fatal-infos` (analyzer + lint rules, the same check CI runs; `riverpod_lint` is an analysis-server plugin configured under `plugins:` in `analysis_options.yaml`. `dart analyze` waits for it and always reports its diagnostics; `flutter analyze` does not wait and reports them only some of the time)
-- `dart run import_lint` (reads the regex rules in the root `import_analysis_options.yaml`)
+- `flutter test test/unit/architecture/` (layer-boundary check; reads the rules and the baseline of known violations in the root `import_analysis_options.yaml`)
 - `dart run build_runner build --delete-conflicting-outputs`
 - `dart run build_runner watch --delete-conflicting-outputs`
 - `dart run drift_dev schema dump lib/data/database/app_database.dart drift_schemas/`
@@ -124,10 +124,10 @@ Code generation is required whenever a `@freezed`, `@riverpod`, or Drift `@Drift
 
 ### CI workflows
 
-- `.github/workflows/check.yml` — package resolution → `dart run import_lint` → codegen → format check → `dart analyze --fatal-infos` (enforces `riverpod_lint`) → `flutter test`, then builds Android APKs on pushes/PRs to `main` (signed release if signing secrets are present, otherwise debug), passing `FOREX_API_URL` via `--dart-define`.
+- `.github/workflows/check.yml` — package resolution from the committed lockfile (`--enforce-lockfile`) → layer-boundary check (`flutter test test/unit/architecture/`) → codegen → format check → `dart analyze --fatal-infos` (enforces `riverpod_lint`) → `flutter test`, then builds Android APKs on pushes/PRs to `main` (signed release if signing secrets are present, otherwise debug), passing `FOREX_API_URL` via `--dart-define`.
 - `.github/workflows/android-release.yml` — builds split signed release APKs on version tags, generates SHA-256 checksums, uploads APK assets to the GitHub Release.
 - `.github/workflows/github-pages.yml` — builds and deploys the Astro site from `site/`. `.github/workflows/site-check.yml` runs Yarn install/audit/test/check/build whenever site-related files change.
-- `.github/workflows/ios-nightly.yml` — iOS debug build (`flutter build ios --no-codesign --debug`) that also checks `sqlite3.framework` is embedded. Runs on PRs to `main` that touch `pubspec.yaml`, `pubspec.lock` or `ios/`, and via `workflow_dispatch`; not a scheduled nightly.
+- `.github/workflows/ios-nightly.yml` — iOS debug build (`flutter build ios --no-codesign --debug`) that also checks the build did not create `ios/Podfile` (plugins come in through Swift Package Manager; no CocoaPods) and that `sqlite3.framework` is embedded. Runs on PRs to `main` that touch `pubspec.yaml`, `pubspec.lock` or `ios/`, and via `workflow_dispatch`; not a scheduled nightly.
 
 If you touch `site/`, use `corepack enable` plus `yarn --cwd site install --immutable`, `yarn --cwd site test`, `yarn --cwd site check`, `yarn --cwd site build`.
 

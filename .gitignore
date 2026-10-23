@@ -1,6 +1,9 @@
 # Miscellaneous
 *.class
 *.lock
+# The app's resolved package versions (and the bundled SQLite that
+# sqlite3 3.x picks) are pinned in the committed lockfile.
+!/pubspec.lock
 *.log
 *.pyc
 *.swp
@@ -142,3 +145,7 @@ site/.yarn/*
 !site/.yarn/patches/
 site/.yarn/install-state.gz
 !site/yarn.lock
+
+# Swift Package Manager (Flutter 3.47 iOS template)
+.build/
+.swiftpm/
