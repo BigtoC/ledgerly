@@ -368,7 +368,7 @@ l10n/
 | Domain models     | Freezed + json_annotation                   |
 | i18n              | flutter_localizations + intl                |
 | Code generation   | build_runner, drift_dev, riverpod_generator |
-| UI components     | flutter_slidable, material_symbols_icons    |
+| UI components     | flutter_slidable                            |
 | Charts            | fl_chart                                    |
 | HTTP client       | Dio (exchange-rate fetching)                |
 | Native splash     | flutter_native_splash                       |
@@ -1265,7 +1265,6 @@ Versions below are the tested resolvable set under Flutter **3.47.7** (Dart 3.13
 | `flutter_localizations`  | sdk         | i18n framework                                                           |
 | `intl`                   | `^0.20.2`   | Localization utilities + `NumberFormat`                                  |
 | `flutter_slidable`       | `^4.0.3`    | Swipe actions on list items                                              |
-| `material_symbols_icons` | `^4.2960.0` | Material Symbols icon font                                               |
 | `package_info_plus`      | `^10.2.2`   | App version info (About screen)                                          |
 | `webview_flutter`        | `^4.14.1`   | In-app browser (About screen links)                                      |
 | `url_launcher`           | `^6.3.3`    | System browser launcher                                                  |

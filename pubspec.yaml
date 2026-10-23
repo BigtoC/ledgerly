@@ -37,7 +37,6 @@ dependencies:
 
   # UI components
   flutter_slidable: ^4.0.3
-  material_symbols_icons: ^4.2960.0
 
   # App info
   package_info_plus: ^10.2.2
