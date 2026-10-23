@@ -4,6 +4,8 @@
 // followed by `TransactionSearchRow` instances in action-only delete
 // mode. Owns its own snackbar undo wiring via `SliceDrilldownController`.
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -216,7 +218,10 @@ class _SelectedSliceItemsListState
                       setState(() => _visibleCount += _kDrilldownPageSize),
                   child: Text(
                     l10n.analysisDrilldownShowMore(
-                      data.rows.length - _visibleCount,
+                      math.min(
+                        _kDrilldownPageSize,
+                        data.rows.length - _visibleCount,
+                      ),
                     ),
                   ),
                 ),

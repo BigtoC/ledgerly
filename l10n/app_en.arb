@@ -816,7 +816,7 @@
 
   "analysisDrilldownShowMore": "Show {count} more",
   "@analysisDrilldownShowMore": {
-    "description": "TextButton label below the slice drill-down rows that renders the next page of rows. {count} is the number of rows still hidden.",
+    "description": "TextButton label below the slice drill-down rows that renders the next page of rows. {count} is how many rows the tap reveals: the page size, or fewer on the last page.",
     "placeholders": { "count": { "type": "int" } }
   },
 

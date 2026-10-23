@@ -302,8 +302,8 @@ void main() {
     expect(find.byType(TransactionSearchRow), findsNWidgets(50));
     expect(find.text('120 transactions'), findsOneWidget);
 
-    await tester.ensureVisible(find.text('Show 70 more'));
-    await tester.tap(find.text('Show 70 more'));
+    await tester.ensureVisible(find.text('Show 50 more'));
+    await tester.tap(find.text('Show 50 more'));
     await tester.pumpAndSettle();
     expect(find.byType(TransactionSearchRow), findsNWidgets(100));
     expect(find.text('120 transactions'), findsOneWidget);
@@ -343,8 +343,8 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Show 70 more'));
-    await tester.tap(find.text('Show 70 more'));
+    await tester.ensureVisible(find.text('Show 50 more'));
+    await tester.tap(find.text('Show 50 more'));
     await tester.pumpAndSettle();
     expect(find.byType(TransactionSearchRow), findsNWidgets(100));
 
@@ -357,6 +357,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(TransactionSearchRow), findsNWidgets(50));
-    expect(find.text('Show 70 more'), findsOneWidget);
+    expect(find.text('Show 50 more'), findsOneWidget);
   });
 }
