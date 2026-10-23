@@ -102,6 +102,14 @@ abstract class TransactionRepository {
   /// Empty/whitespace queries emit `[]` (DAO short-circuits).
   Stream<List<Transaction>> watchByMemo(String query);
 
+  /// Up to [limit] distinct memos (trimmed) previously used in
+  /// [categoryId], most recently saved first (by `updatedAt`, not the
+  /// transaction date). NULL and whitespace-only memos are excluded. Feeds the transaction form's memo suggestions.
+  Stream<List<String>> watchRecentMemosForCategory(
+    int categoryId, {
+    required int limit,
+  });
+
   /// Per-(category, currency) subtotal in `[start, end)` filtered by
   /// transaction type. Emits one row per pair so chart controllers can
   /// run currency conversion before regrouping. See basic-charts spec
@@ -304,6 +312,14 @@ final class DriftTransactionRepository implements TransactionRepository {
   @override
   Stream<List<Transaction>> watchByMemo(String query) {
     return _dao.watchByMemo(query).asyncMap(_rowsToDomain);
+  }
+
+  @override
+  Stream<List<String>> watchRecentMemosForCategory(
+    int categoryId, {
+    required int limit,
+  }) {
+    return _dao.watchRecentMemosByCategory(categoryId, limit: limit);
   }
 
   String _typeWire(CategoryType type) =>

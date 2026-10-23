@@ -122,6 +122,47 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
         .watch();
   }
 
+  /// Up to [limit] distinct trimmed memos used in [categoryId], ordered by
+  /// when each was last saved (`updated_at DESC`, then `id DESC`), not by
+  /// the transaction's `date`: a backfilled entry typed just now ranks
+  /// first and a future-dated one does not stay pinned. NULL and blank
+  /// memos are excluded. Backs the memo suggestions under the
+  /// transaction form's Memo field.
+  ///
+  /// The window function ranks each memo by its own latest row; a plain
+  /// `MAX(updated_at), MAX(id)` would take the id tiebreak from a
+  /// different row. Uses `transactions_category_idx`; every memoed row in the
+  /// category is ranked before the LIMIT applies.
+  ///
+  /// One-argument `TRIM` strips only U+0020, so the memo is trimmed with
+  /// the same whitespace set as Dart's `String.trim` (tabs, NBSP, the
+  /// CJK ideographic space U+3000, ...).
+  Stream<List<String>> watchRecentMemosByCategory(
+    int categoryId, {
+    required int limit,
+  }) {
+    final query = attachedDatabase.customSelect(
+      'SELECT m FROM ('
+      'SELECT m, updated_at, id, ROW_NUMBER() OVER ('
+      'PARTITION BY m ORDER BY updated_at DESC, id DESC) AS rn '
+      'FROM ('
+      'SELECT TRIM(memo, char(9, 10, 11, 12, 13, 32, 133, 160, 5760, '
+      '8192, 8193, 8194, 8195, 8196, 8197, 8198, 8199, 8200, 8201, 8202, '
+      '8232, 8233, 8239, 8287, 12288, 65279)) AS m, updated_at, id '
+      'FROM transactions '
+      'WHERE category_id = ? AND memo IS NOT NULL'
+      ") WHERE m <> ''"
+      ') WHERE rn = 1 '
+      'ORDER BY updated_at DESC, id DESC '
+      'LIMIT ?',
+      variables: [Variable<int>(categoryId), Variable<int>(limit)],
+      readsFrom: {transactions},
+    );
+    return query.watch().map(
+      (rows) => rows.map((r) => r.read<String>('m')).toList(growable: false),
+    );
+  }
+
   /// One-shot read by id (e.g. duplicate flow).
   Future<TransactionRow?> findById(int id) {
     return (select(
