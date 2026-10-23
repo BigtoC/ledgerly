@@ -88,17 +88,16 @@ flutter:
   generate: true
   assets:
     # Splash slice assets. `sun-splash.png` now backs both the runtime
-    # Flutter splash and the native splash regeneration step.
-    - assets/splash/
+    # Flutter splash and the native splash regeneration step. Listed by
+    # file so the directory's README.md is not bundled into the app.
+    - assets/splash/sun-splash.png
 
 # Native splash config. `background_image` is supported on iOS and
 # pre-Android-12. Android 12+ only supports a solid background plus a
 # centered splash image, so that section keeps explicit fallback colors.
 flutter_native_splash:
   background_image_android: assets/splash/sun-splash.png
-  background_image_dark_android: assets/splash/sun-splash.png
   background_image_ios: assets/splash/sun-splash.png
-  background_image_dark_ios: assets/splash/sun-splash.png
   fullscreen: true
   android_12:
     color: "#D9A06C"
