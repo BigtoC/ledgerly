@@ -105,9 +105,10 @@ abstract class TransactionRepository {
   /// Up to [limit] distinct memos (trimmed) previously used in
   /// [categoryId], most recently saved first (by `updatedAt`, not the
   /// transaction date). NULL and whitespace-only memos are excluded. Feeds the transaction form's memo suggestions.
+  /// A null [limit] returns every distinct memo.
   Stream<List<String>> watchRecentMemosForCategory(
     int categoryId, {
-    required int limit,
+    int? limit,
   });
 
   /// Per-(category, currency) subtotal in `[start, end)` filtered by
@@ -317,7 +318,7 @@ final class DriftTransactionRepository implements TransactionRepository {
   @override
   Stream<List<String>> watchRecentMemosForCategory(
     int categoryId, {
-    required int limit,
+    int? limit,
   }) {
     return _dao.watchRecentMemosByCategory(categoryId, limit: limit);
   }

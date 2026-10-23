@@ -139,7 +139,7 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
   /// CJK ideographic space U+3000, ...).
   Stream<List<String>> watchRecentMemosByCategory(
     int categoryId, {
-    required int limit,
+    int? limit,
   }) {
     final query = attachedDatabase.customSelect(
       'SELECT m FROM ('
@@ -155,7 +155,8 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
       ') WHERE rn = 1 '
       'ORDER BY updated_at DESC, id DESC '
       'LIMIT ?',
-      variables: [Variable<int>(categoryId), Variable<int>(limit)],
+      // SQLite treats a negative LIMIT as unbounded.
+      variables: [Variable<int>(categoryId), Variable<int>(limit ?? -1)],
       readsFrom: {transactions},
     );
     return query.watch().map(

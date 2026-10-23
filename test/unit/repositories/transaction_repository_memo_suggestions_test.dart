@@ -234,6 +234,23 @@ void main() {
     expect(memos.last, 'memo 3');
   });
 
+  test('omitting limit returns every distinct memo', () async {
+    for (var i = 1; i <= 12; i++) {
+      await _insertTx(
+        db: db,
+        id: i,
+        date: DateTime.utc(2026, 5, i),
+        memo: 'memo $i',
+      );
+    }
+
+    final memos = await repo.watchRecentMemosForCategory(1).first;
+
+    expect(memos, hasLength(12));
+    expect(memos.first, 'memo 12');
+    expect(memos.last, 'memo 1');
+  });
+
   test('re-emits when a transaction is written', () async {
     await _insertTx(db: db, id: 1, date: DateTime.utc(2026, 5, 1), memo: 'A');
 
