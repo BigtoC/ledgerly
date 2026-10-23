@@ -6,7 +6,9 @@
 #
 # Rule names mirror the PRD -> Layer Boundaries table. Use cases live in
 # `lib/data/use_cases/` (PRD § folder layout); `use_cases_forbid_ui` also
-# covers a future `lib/domain/`.
+# covers a future `lib/domain/`. The table names only screens and
+# controllers under features/; the other feature rules extend it so that
+# every lib/features/ file matches at least one rule.
 #
 # Schema (regex-based; the key names come from the retired import_lint
 # 0.1.6, which never matched them):
@@ -69,6 +71,39 @@ rules:
       - "^package:ledgerly/data/repositories/"
       - "^package:drift/"
       - "^package:drift_flutter/"
+    ignore_import_reg_exps: []
+
+  # Slice-local helper providers (features/**/*_providers.dart) sit next
+  # to controllers and follow the controller rule: repositories, domain
+  # models and app/providers are fine — never AppDatabase, DAOs, Drift,
+  # or services.
+  feature_providers_forbid_db_and_services:
+    search_file_path_reg_exp: "^lib/features/.*_providers\\.dart$"
+    not_allow_import_reg_exps:
+      - "^package:ledgerly/data/database/"
+      - "^package:ledgerly/data/services/"
+      - "^package:drift/"
+      - "^package:drift_flutter/"
+      - "^package:path_provider/"
+    ignore_import_reg_exps: []
+
+  # Catch-all for every other feature file: widgets not named
+  # *_screen.dart (e.g. charts_section.dart) and presentation helpers or
+  # codecs (e.g. selected_slice.dart, amount_formula.dart). They follow
+  # the widget rule. The path regex excludes the files the rules above
+  # cover (*_controller / *_providers / *_state / *_screen.dart and
+  # anything under widgets/), so it never overlaps them, and a new
+  # feature file is covered without editing this list. Name a file
+  # *_controller.dart or *_providers.dart if it needs repositories.
+  feature_files_forbid_data_internals:
+    search_file_path_reg_exp: "^lib/features/(?!.*_(controller|providers|state|screen)\\.dart$)(?!.*/widgets/).*\\.dart$"
+    not_allow_import_reg_exps:
+      - "^package:ledgerly/data/database/"
+      - "^package:ledgerly/data/services/"
+      - "^package:ledgerly/data/repositories/"
+      - "^package:drift/"
+      - "^package:drift_flutter/"
+      - "^package:path_provider/"
     ignore_import_reg_exps: []
 
   # Use cases (Phase 2) may import repositories, services, domain
