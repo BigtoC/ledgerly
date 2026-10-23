@@ -117,12 +117,12 @@ These rules come from a performance audit covering rendering, memory, startup an
   - make calls after dispose no-ops, for example by nulling the emitter in `onDispose`.
 
   `CategorySearchDetailController` is the reference implementation.
-- **Regenerate whenever you edit a file that has a generated part.** `riverpod_generator` embeds a source hash, so even a body-only edit leaves the committed `.g.dart` stale. Run `build_runner` and commit the regenerated file in the same commit.
+- **Regenerate whenever you edit a file that has a generated part.** `riverpod_generator` embeds a hash of the provider's source (comments excluded), so any code edit inside a provider leaves the committed `.g.dart` stale, even when no annotation changed. Run `build_runner` and commit the regenerated file in the same commit.
 - **Call `setState` only when something changed.** In high-frequency callbacks (fl_chart `touchCallback`, gesture and scroll handlers), compare the new value with the current one before calling `setState`. After an `await` or a platform callback (WebView, timers), check `mounted` first.
 - **Give each animated chart its own `RepaintBoundary`.** fl_chart adds none, so `_ChartBody` wraps each one. Don't add boundaries elsewhere unless a DevTools repaint trace shows the need.
 - **Before `runApp`, `bootstrap()` loads only what the first frame needs:** theme, locale, the splash gate, the default currency and intl date data. Run everything else after the first frame, the way recurring generation does. Don't reorder the documented bootstrap steps to save milliseconds.
 - **Ship only what the app uses.**
-  - Every runtime dependency must be imported from `lib/`. Packages that ship fonts or assets bundle them whether or not you use them: the unused `material_symbols_icons` added about 15.6 MB.
+  - Every runtime dependency must be imported from `lib/`. Packages that ship fonts or assets bundle them whether or not you use them: the unused `material_symbols_icons` added about 34 MB of fonts (about 15.6 MB of compressed APK).
   - List assets by file, not by directory.
   - Don't give light and dark native-splash entries the same image, because each entry gets its own copy.
   - After adding a package or asset, check the size with `flutter build apk --analyze-size` or `unzip -l` on the APK.
