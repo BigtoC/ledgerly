@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -180,4 +181,21 @@ void main() {
         .selectedSlice;
     expect(selection, equals(const SelectedSlice.category(1)));
   });
+
+  testWidgets('pie slice tap drives ChartsSelectionController.toggleSlice', (
+    tester,
+  ) async {
+    final container = await _pumpChartsSection(tester);
+    // Food is the only slice, so any point on the ring hits it. 74 is
+    // midway between the centre hole (44) and the outer edge (104). Tap
+    // above the centre: the chart's lower half runs past the test viewport.
+    await tester.tapAt(
+      tester.getCenter(find.byType(PieChart)) + const Offset(0, -74),
+    );
+    await tester.pumpAndSettle();
+    final selection = container
+        .read(chartsSelectionControllerProvider)
+        .selectedSlice;
+    expect(selection, equals(const SelectedSlice.category(1)));
+  }, variant: TargetPlatformVariant.mobile());
 }

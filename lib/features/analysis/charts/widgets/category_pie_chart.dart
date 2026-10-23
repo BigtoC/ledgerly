@@ -73,7 +73,10 @@ class _CategoryPieChartState extends State<CategoryPieChart> {
                 pieTouchData: PieTouchData(
                   enabled: true,
                   touchCallback: (event, response) {
-                    if (!event.isInterestedForInteractions ||
+                    // Don't gate on `isInterestedForInteractions`: fl_chart
+                    // reports FlTapUpEvent as uninteresting on mobile, which
+                    // would drop every slice tap.
+                    if ((event is! FlTapUpEvent && event is! FlLongPressEnd) ||
                         response == null ||
                         response.touchedSection == null) {
                       return;
@@ -81,14 +84,10 @@ class _CategoryPieChartState extends State<CategoryPieChart> {
                     final idx = response.touchedSection!.touchedSectionIndex;
                     if (idx < 0 || idx >= widget.slices.length) {
                       // Tap landed in the centre hole — clear selection.
-                      if (event is FlTapUpEvent || event is FlLongPressEnd) {
-                        _select(null);
-                      }
+                      _select(null);
                       return;
                     }
-                    if (event is FlTapUpEvent || event is FlLongPressEnd) {
-                      _select(selection == idx ? null : idx);
-                    }
+                    _select(selection == idx ? null : idx);
                   },
                 ),
                 sections: [
