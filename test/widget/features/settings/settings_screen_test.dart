@@ -13,6 +13,8 @@
 //     MaterialApp locale swap then verifies visible strings change
 //     without re-navigating.
 //   - 2× text scale survives.
+//   - "new version" badge appears beside the app version only when an
+//     update URL is available, and survives 2× text scale.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,6 +23,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
+import 'package:ledgerly/app/providers/app_update_provider.dart';
 import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/account.dart';
@@ -32,6 +35,7 @@ import 'package:ledgerly/features/accounts/accounts_controller.dart';
 import 'package:ledgerly/features/accounts/accounts_state.dart';
 import 'package:ledgerly/features/settings/settings_controller.dart';
 import 'package:ledgerly/features/settings/settings_screen.dart';
+import 'package:ledgerly/features/settings/widgets/new_version_badge.dart';
 import 'package:ledgerly/features/settings/settings_state.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
@@ -119,6 +123,7 @@ ProviderContainer _makeContainer({
   required CurrencyRepository currencyRepo,
   required SettingsState fixed,
   AccountsState? accountsFixed,
+  Uri? update,
 }) {
   final defaultAccountsState =
       accountsFixed ??
@@ -138,9 +143,14 @@ ProviderContainer _makeContainer({
       accountsControllerProvider.overrideWith(
         () => _FakeAccountsController(defaultAccountsState),
       ),
+      availableAppUpdateProvider.overrideWithBuild((ref, notifier) => update),
     ],
   );
 }
+
+final _apkUrl = Uri.parse('https://example.com/ledgerly-v0.7.2-arm64-v8a.apk');
+
+const _badgeKey = ValueKey('settingsNewVersionBadge');
 
 SettingsData _data({int? defaultAccountId}) => SettingsData(
   themeMode: ThemeMode.light,
@@ -494,5 +504,78 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     expect(find.text('Appearance'), findsOneWidget);
+  });
+
+  testWidgets('SS08: no new-version badge without an available update', (
+    tester,
+  ) async {
+    final container = _makeContainer(
+      prefs: _MockUserPreferencesRepository(),
+      accountRepo: _MockAccountRepository(),
+      currencyRepo: _MockCurrencyRepository(),
+      fixed: _data(),
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(_badgeKey, skipOffstage: false), findsNothing);
+  });
+
+  testWidgets('SS09: new-version badge shows when an update is available', (
+    tester,
+  ) async {
+    final container = _makeContainer(
+      prefs: _MockUserPreferencesRepository(),
+      accountRepo: _MockAccountRepository(),
+      currencyRepo: _MockCurrencyRepository(),
+      fixed: _data(),
+      update: _apkUrl,
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(_badgeKey),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+
+    expect(
+      find.descendant(
+        of: find.byKey(_badgeKey),
+        matching: find.text('new version'),
+      ),
+      findsOneWidget,
+    );
+    // The badge opens the provider's ABI-specific APK URL.
+    expect(
+      tester.widget<NewVersionBadge>(find.byType(NewVersionBadge)).url,
+      _apkUrl,
+    );
+  });
+
+  testWidgets('SS10: new-version badge survives 2x text scale', (tester) async {
+    final container = _makeContainer(
+      prefs: _MockUserPreferencesRepository(),
+      accountRepo: _MockAccountRepository(),
+      currencyRepo: _MockCurrencyRepository(),
+      fixed: _data(),
+      update: _apkUrl,
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container: container, textScale: 2.0));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(_badgeKey),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.byKey(_badgeKey), findsOneWidget);
   });
 }

@@ -312,5 +312,7 @@
   "chartsPieChart": "圓餅圖",
   "chartsBarChart": "長條圖",
   "chartsExcludedCurrencies": "已排除：{codes} — 尚未取得匯率",
-  "@chartsExcludedCurrencies": { "placeholders": { "codes": { "type": "String" } } }
+  "@chartsExcludedCurrencies": { "placeholders": { "codes": { "type": "String" } } },
+  "settingsNewVersionBadge": "新版本",
+  "settingsNewVersionOpenFailed": "無法開啟下載連結"
 }

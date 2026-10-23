@@ -879,6 +879,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String chartsExcludedCurrencies(String codes) {
     return 'Excluded: $codes — no exchange rate yet';
   }
+
+  @override
+  String get settingsNewVersionBadge => 'new version';
+
+  @override
+  String get settingsNewVersionOpenFailed => 'Could not open the download link';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -1726,6 +1732,12 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String chartsExcludedCurrencies(String codes) {
     return '已排除：$codes — 汇率尚未就绪';
   }
+
+  @override
+  String get settingsNewVersionBadge => '新版本';
+
+  @override
+  String get settingsNewVersionOpenFailed => '无法打开下载链接';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -2573,4 +2585,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String chartsExcludedCurrencies(String codes) {
     return '已排除：$codes — 尚未取得匯率';
   }
+
+  @override
+  String get settingsNewVersionBadge => '新版本';
+
+  @override
+  String get settingsNewVersionOpenFailed => '無法開啟下載連結';
 }

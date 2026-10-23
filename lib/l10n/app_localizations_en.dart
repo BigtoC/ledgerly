@@ -879,4 +879,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String chartsExcludedCurrencies(String codes) {
     return 'Excluded: $codes — no exchange rate yet';
   }
+
+  @override
+  String get settingsNewVersionBadge => 'new version';
+
+  @override
+  String get settingsNewVersionOpenFailed => 'Could not open the download link';
 }

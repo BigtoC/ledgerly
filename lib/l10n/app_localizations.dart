@@ -1677,6 +1677,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Excluded: {codes} — no exchange rate yet'**
   String chartsExcludedCurrencies(String codes);
+
+  /// Pink badge to the right of the app version at the bottom of Settings when a newer GitHub release exists; tapping opens the APK download in the system browser.
+  ///
+  /// In en, this message translates to:
+  /// **'new version'**
+  String get settingsNewVersionBadge;
+
+  /// SnackBar shown when the system browser cannot open the update download URL.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the download link'**
+  String get settingsNewVersionOpenFailed;
 }
 
 class _AppLocalizationsDelegate
