@@ -576,18 +576,60 @@ final class RecurringGenerationUseCaseProvider
 String _$recurringGenerationUseCaseHash() =>
     r'350e388f51b864c88329360e1078cac008904655';
 
-/// Exchange-rate HTTP service. Constructs its own `Dio` with conservative
-/// timeouts — there is no standalone `dioProvider`, since the rate service
-/// is the only consumer of Dio in the codebase. If a second HTTP consumer
-/// appears later, extract `dioProvider` at that point.
+/// Shared HTTP client for every HTTP service. Conservative timeouts; the
+/// client is closed when the owning container is disposed.
+
+@ProviderFor(dio)
+final dioProvider = DioProvider._();
+
+/// Shared HTTP client for every HTTP service. Conservative timeouts; the
+/// client is closed when the owning container is disposed.
+
+final class DioProvider extends $FunctionalProvider<Dio, Dio, Dio>
+    with $Provider<Dio> {
+  /// Shared HTTP client for every HTTP service. Conservative timeouts; the
+  /// client is closed when the owning container is disposed.
+  DioProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'dioProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$dioHash();
+
+  @$internal
+  @override
+  $ProviderElement<Dio> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  Dio create(Ref ref) {
+    return dio(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Dio value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Dio>(value),
+    );
+  }
+}
+
+String _$dioHash() => r'609f409fd9322951631485f1281f0561805462f7';
+
+/// Exchange-rate HTTP service. Uses the shared [dioProvider] client.
 
 @ProviderFor(exchangeRateService)
 final exchangeRateServiceProvider = ExchangeRateServiceProvider._();
 
-/// Exchange-rate HTTP service. Constructs its own `Dio` with conservative
-/// timeouts — there is no standalone `dioProvider`, since the rate service
-/// is the only consumer of Dio in the codebase. If a second HTTP consumer
-/// appears later, extract `dioProvider` at that point.
+/// Exchange-rate HTTP service. Uses the shared [dioProvider] client.
 
 final class ExchangeRateServiceProvider
     extends
@@ -597,10 +639,7 @@ final class ExchangeRateServiceProvider
           ExchangeRateService
         >
     with $Provider<ExchangeRateService> {
-  /// Exchange-rate HTTP service. Constructs its own `Dio` with conservative
-  /// timeouts — there is no standalone `dioProvider`, since the rate service
-  /// is the only consumer of Dio in the codebase. If a second HTTP consumer
-  /// appears later, extract `dioProvider` at that point.
+  /// Exchange-rate HTTP service. Uses the shared [dioProvider] client.
   ExchangeRateServiceProvider._()
     : super(
         from: null,
@@ -636,7 +675,7 @@ final class ExchangeRateServiceProvider
 }
 
 String _$exchangeRateServiceHash() =>
-    r'01da3d2facd8c002cace687fbd6691d79a961325';
+    r'54cac23382bca3bc90ff6bca49f4643fc47a093d';
 
 /// Exchange-rate repository. The constructor subscribes to DAO changes
 /// and default-currency changes immediately — so simply reading this
