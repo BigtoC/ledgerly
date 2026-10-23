@@ -92,6 +92,20 @@ void main() {
       expect(await repo().findUpdate(), isNull);
     });
 
+    test('an APK for this ABI from another version gives null', () async {
+      stubRelease(
+        _release(
+          assets: const [
+            (
+              name: 'ledgerly-v0.7.1-arm64-v8a.apk',
+              url: 'https://example.com/ledgerly-v0.7.1-arm64-v8a.apk',
+            ),
+          ],
+        ),
+      );
+      expect(await repo().findUpdate(), isNull);
+    });
+
     test('an http: URL gives null', () async {
       stubRelease(
         _release(

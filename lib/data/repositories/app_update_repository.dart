@@ -39,9 +39,10 @@ class AppUpdateRepository {
           !isNewerVersion(release.tagName, await _installedVersion())) {
         return null;
       }
-      final asset = release.assets
-          .where((a) => a.name.endsWith('-$abi.apk'))
-          .firstOrNull;
+      // Only this release's APK for this ABI, named as android-release.yml
+      // uploads it. Without one, the release is not an update for this device.
+      final apkName = 'ledgerly-${release.tagName}-$abi.apk';
+      final asset = release.assets.where((a) => a.name == apkName).firstOrNull;
       final uri = asset == null ? null : Uri.tryParse(asset.url);
       return uri != null && uri.isScheme('https') ? uri : null;
     } on Exception catch (e) {
