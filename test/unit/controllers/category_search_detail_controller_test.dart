@@ -166,6 +166,34 @@ void main() {
       expect(data.days.map((d) => d.daySumMinorUnits).toList(), [500, 100]);
       expect(data.overallSumMinorUnits, 600);
     });
+
+    test(
+      'disposes and cancels the repo subscription once unlistened',
+      () async {
+        final txCtrl = StreamController<List<Transaction>>.broadcast();
+        addTearDown(txCtrl.close);
+        when(() => repo.watchByMemo('coffee')).thenAnswer((_) => txCtrl.stream);
+
+        final container = ProviderContainer(
+          overrides: [transactionRepositoryProvider.overrideWithValue(repo)],
+        );
+        addTearDown(container.dispose);
+
+        final provider = categorySearchDetailControllerProvider(
+          categoryId: 1,
+          query: 'coffee',
+          currencyCode: 'USD',
+        );
+        final sub = container.listen(provider, (_, _) {});
+        expect(txCtrl.hasListener, isTrue);
+
+        sub.close();
+        await Future<void>.delayed(Duration.zero);
+
+        expect(container.exists(provider), isFalse);
+        expect(txCtrl.hasListener, isFalse);
+      },
+    );
   });
 
   group('CategorySearchDetailController.deleteTransaction', () {
@@ -403,6 +431,91 @@ void main() {
 
         await pump();
         verify(() => repo.delete(2)).called(1);
+      },
+    );
+
+    test(
+      'pending delete outlives its last listener, commits, then disposes',
+      () async {
+        when(() => repo.delete(any())).thenAnswer((_) async => true);
+
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        final provider = categorySearchDetailControllerProvider(
+          categoryId: 1,
+          query: 'coffee',
+          currencyCode: 'USD',
+        );
+        final sub = container.listen(provider, (_, _) {});
+
+        await Future<void>.delayed(Duration.zero);
+        txCtrl.add([_tx(id: 7, date: DateTime.utc(2026, 5, 1), categoryId: 1)]);
+        await waitForData(container);
+
+        fakeAsync((async) {
+          container.read(provider.notifier).deleteTransaction(7);
+          async.flushMicrotasks();
+
+          // Screen popped mid-window: the undo window keeps it alive.
+          sub.close();
+          async.elapse(Duration.zero);
+          expect(container.exists(provider), isTrue);
+          verifyNever(() => repo.delete(any()));
+
+          async.elapse(kUndoWindow + const Duration(milliseconds: 1));
+          async.flushMicrotasks();
+          verify(() => repo.delete(7)).called(1);
+
+          async.elapse(Duration.zero);
+          expect(container.exists(provider), isFalse);
+        });
+      },
+    );
+
+    test(
+      'undoDelete after the commit disposed the provider is a no-op',
+      () async {
+        when(() => repo.delete(any())).thenAnswer((_) async => true);
+
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        final provider = categorySearchDetailControllerProvider(
+          categoryId: 1,
+          query: 'coffee',
+          currencyCode: 'USD',
+        );
+        final sub = container.listen(provider, (_, _) {});
+
+        await Future<void>.delayed(Duration.zero);
+        txCtrl.add([_tx(id: 7, date: DateTime.utc(2026, 5, 1), categoryId: 1)]);
+        await waitForData(container);
+
+        fakeAsync((async) {
+          // The screen keeps this notifier for the Undo SnackBar, which can
+          // outlive both the screen and the undo window.
+          final notifier = container.read(provider.notifier);
+          notifier.deleteTransaction(7);
+          async.flushMicrotasks();
+
+          sub.close();
+          async.elapse(kUndoWindow + const Duration(milliseconds: 1));
+          async.flushMicrotasks();
+          async.elapse(Duration.zero);
+          expect(container.exists(provider), isFalse);
+
+          Object? undoError;
+          var undone = false;
+          notifier.undoDelete().then<void>(
+            (_) => undone = true,
+            onError: (Object e) => undoError = e,
+          );
+          async.flushMicrotasks();
+
+          expect(undoError, isNull);
+          expect(undone, isTrue);
+        });
+
+        verify(() => repo.delete(7)).called(1);
       },
     );
   });

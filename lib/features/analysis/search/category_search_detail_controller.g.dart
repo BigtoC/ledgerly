@@ -26,7 +26,7 @@ final class CategorySearchDetailControllerProvider
   }) : super(
          retry: null,
          name: r'categorySearchDetailControllerProvider',
-         isAutoDispose: false,
+         isAutoDispose: true,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
@@ -67,7 +67,7 @@ final class CategorySearchDetailControllerProvider
 }
 
 String _$categorySearchDetailControllerHash() =>
-    r'6c3bd27b798ded593f687337507f94f922ea6b4e';
+    r'7423c08d6f2325aa72558a50c4c34e5ed22a0be6';
 
 final class CategorySearchDetailControllerFamily extends $Family
     with
@@ -93,7 +93,7 @@ final class CategorySearchDetailControllerFamily extends $Family
           CategorySearchDetailControllerProvider.$allTransitiveDependencies3,
           CategorySearchDetailControllerProvider.$allTransitiveDependencies4,
         },
-        isAutoDispose: false,
+        isAutoDispose: true,
       );
 
   CategorySearchDetailControllerProvider call({
