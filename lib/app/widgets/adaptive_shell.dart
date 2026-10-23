@@ -89,12 +89,18 @@ class _SettingsNavIcon extends ConsumerWidget {
     final hasUpdate = ref.watch(
       availableAppUpdateProvider.select((url) => url != null),
     );
-    // No label, so the badge renders as a small dot at the top end.
-    return Badge(
-      key: const ValueKey('settingsUpdateDot'),
-      isLabelVisible: hasUpdate,
-      backgroundColor: Theme.of(context).colorScheme.primary,
-      child: const Icon(Icons.settings),
+    // No label, so the badge renders as a small dot at the top end. The dot
+    // is visual only, so screen readers get the badge text instead.
+    return Semantics(
+      label: hasUpdate
+          ? AppLocalizations.of(context).settingsNewVersionBadge
+          : null,
+      child: Badge(
+        key: const ValueKey('settingsUpdateDot'),
+        isLabelVisible: hasUpdate,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        child: const Icon(Icons.settings),
+      ),
     );
   }
 }

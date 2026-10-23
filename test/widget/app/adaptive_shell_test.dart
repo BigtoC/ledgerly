@@ -145,6 +145,24 @@ void main() {
         ).colorScheme;
         expect(dot.backgroundColor, scheme.primary);
       });
+
+      testWidgets('is announced to screen readers at ${width}dp', (
+        tester,
+      ) async {
+        await tester.binding.setSurfaceSize(const Size(1200, 900));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        final handle = tester.ensureSemantics();
+
+        await tester.pumpWidget(_shellAt(width));
+        await tester.pumpAndSettle();
+        expect(find.bySemanticsLabel(RegExp('new version')), findsNothing);
+
+        await tester.pumpWidget(_shellAt(width, update: _apkUrl));
+        await tester.pumpAndSettle();
+        expect(find.bySemanticsLabel(RegExp('new version')), findsOneWidget);
+
+        handle.dispose();
+      });
     }
   });
 }
