@@ -13,6 +13,7 @@ Before implementing:
 - If multiple interpretations exist, present them - don't pick silently.
 - If a simpler approach exists, say so. Push back when warranted.
 - If something is unclear, stop. Name what's confusing. Ask.
+- Always use the `superpowers:test-driven-development` skill when writing code: write a failing test, watch it fail, then write the minimal code that makes it pass.
 
 ## 2. Simplicity First
 
@@ -105,6 +106,8 @@ Detailed agent-facing rules live under [`docs/architecture/`](docs/architecture/
 - [`testing.md`](docs/architecture/testing.md) — Test organization by layer; repository/controller/golden/migration patterns; per-slice coverage map.
 - [`dependencies.md`](docs/architecture/dependencies.md) — layer-boundary check (replaced `import_lint`), base `app_zh.arb` requirement, Android and iOS build toolchains.
 
+Code generation is required whenever a `@freezed`, `@riverpod`, or Drift `@DriftDatabase`/`@DataClassName` annotation changes — the build fails loudly if generated files are stale.
+
 ## Performance rules
 
 These rules come from a performance audit covering rendering, memory, startup and package size. Measure before restructuring anything for speed: run `flutter run --profile` and use DevTools. Never break an architecture rule for a gain you have not measured.
@@ -136,23 +139,6 @@ These rules come from a performance audit covering rendering, memory, startup an
   - The box-shadow colour is randomised on each build.
   - There are no deferred components, because APKs ship through GitHub Releases rather than Play.
 
-## Commands and workflows
-
-> When verifying changes, run `dart format .` before any `flutter test` or `dart analyze` command.
-
-- `flutter pub get` (`pubspec.lock` is committed: commit it with any dependency change; CI runs `flutter pub get --enforce-lockfile`, which fails if the lockfile is missing or out of date)
-- `flutter run`
-- `dart format .` (run before `flutter test` or `dart analyze` whenever verifying changes)
-- `dart analyze --fatal-infos` (analyzer + lint rules, the same check CI runs; `riverpod_lint` is an analysis-server plugin configured under `plugins:` in `analysis_options.yaml`. `dart analyze` waits for it and always reports its diagnostics; `flutter analyze` does not wait and reports them only some of the time)
-- `flutter test test/unit/architecture/` (layer-boundary check; reads the rules and the baseline of known violations in the root `import_analysis_options.yaml`)
-- `dart run build_runner build --delete-conflicting-outputs`
-- `dart run build_runner watch --delete-conflicting-outputs`
-- `dart run drift_dev schema dump lib/data/database/app_database.dart drift_schemas/`
-- `flutter test` / e.g. `flutter test test/widget/features/transactions/transaction_form_screen_test.dart` / `flutter test test/unit/repositories/migration_test.dart` / `flutter test test/integration/bootstrap_to_home_test.dart`
-- `flutter test --name 'category type is locked'` (single test by name)
-
-Code generation is required whenever a `@freezed`, `@riverpod`, or Drift `@DriftDatabase`/`@DataClassName` annotation changes — the build fails loudly if generated files are stale.
-
 ### CI workflows
 
 - `.github/workflows/check.yml` — package resolution from the committed lockfile (`--enforce-lockfile`) → layer-boundary check (`flutter test test/unit/architecture/`) → codegen → format check → `dart analyze --fatal-infos` (enforces `riverpod_lint`) → `flutter test`, then builds Android APKs on pushes/PRs to `main` (signed release if signing secrets are present, otherwise debug), passing `FOREX_API_URL` via `--dart-define`.
@@ -166,9 +152,9 @@ l10n codegen is configured in `l10n.yaml`; generated output lands in `lib/l10n/`
 
 ## Testing
 
-Always use the `superpowers:test-driven-development` skill when writing code: write a failing test, watch it fail, then write the minimal code that makes it pass.
+See [`docs/architecture/testing.md`](docs/architecture/testing.md) for the layer layout, canonical harness (`test/support/test_app.dart`), and per-slice coverage map. 
 
-See [`docs/architecture/testing.md`](docs/architecture/testing.md) for the layer layout, canonical harness (`test/support/test_app.dart`), and per-slice coverage map. The non-obvious rule when writing new tests: any Drift-backed setup or direct repository write that happens **before the first `pump`** must run inside `tester.runAsync(...)` — see `test/widget/smoke_test.dart` and `test/integration/bootstrap_to_home_test.dart`.
+The non-obvious rule when writing new tests: any Drift-backed setup or direct repository write that happens **before the first `pump`** must run inside `tester.runAsync(...)` — see `test/widget/smoke_test.dart` and `test/integration/bootstrap_to_home_test.dart`.
 
 ## Security and agent hints
 
