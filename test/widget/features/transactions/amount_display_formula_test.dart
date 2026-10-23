@@ -153,4 +153,15 @@ void main() {
       expect(find.text('(1 + 2) ×'), findsOneWidget);
     });
   });
+
+  testWidgets('ADF08: history operands use locale digit grouping', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(AmountDisplay(keypad: _typed('1234.5+1000='), currency: _usd)),
+    );
+
+    expect(find.text('1,234.5 + 1,000 ='), findsOneWidget);
+    expect(find.text('2,234.50'), findsOneWidget);
+  });
 }

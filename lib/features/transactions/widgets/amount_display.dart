@@ -34,6 +34,7 @@
 //     history line does and is enabled only while an expression is pending.
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/utils/money_formatter.dart';
 import '../../../data/models/currency.dart';
@@ -223,12 +224,23 @@ class AmountDisplay extends StatelessWidget {
     if (keypad.isEvaluating &&
         operands.isNotEmpty &&
         operands.length == operators.length) {
-      return _formulaText(operands, operators, decimals: c.decimals);
+      return _formulaText(
+        operands,
+        operators,
+        decimals: c.decimals,
+        locale: locale,
+      );
     }
     if (keypad.showingResult &&
         operators.isNotEmpty &&
         operands.length == operators.length + 1) {
-      return '${_formulaText(operands, operators, decimals: c.decimals)} =';
+      final text = _formulaText(
+        operands,
+        operators,
+        decimals: c.decimals,
+        locale: locale,
+      );
+      return '$text =';
     }
 
     if (keypad.isEvaluating &&
@@ -269,13 +281,34 @@ class AmountDisplay extends StatelessWidget {
     List<FormulaOperand> operands,
     List<CalcOperator> operators, {
     required int decimals,
-  }) => renderFormula(
-    operands: operands,
-    operators: operators,
-    operand: (o) => encodeFormulaOperand(o, decimals: decimals),
-    operator: _operatorSymbol,
-    separator: ' ',
-  );
+    required String locale,
+  }) {
+    final format = NumberFormat.decimalPattern(locale);
+    return renderFormula(
+      operands: operands,
+      operators: operators,
+      operand: (o) => _localizedOperand(o, decimals: decimals, format: format),
+      operator: _operatorSymbol,
+      separator: ' ',
+    );
+  }
+
+  /// [operand] with the fractional digits as typed, but the whole part
+  /// grouped and the decimal separator taken from [format]'s locale, like
+  /// the result line below it ("1,234.5").
+  static String _localizedOperand(
+    FormulaOperand operand, {
+    required int decimals,
+    required NumberFormat format,
+  }) {
+    final text = encodeFormulaOperand(operand, decimals: decimals);
+    final dot = text.indexOf('.');
+    final whole = format.format(
+      int.parse(dot < 0 ? text : text.substring(0, dot)),
+    );
+    if (dot < 0) return whole;
+    return '$whole${format.symbols.DECIMAL_SEP}${text.substring(dot + 1)}';
+  }
 
   String _operatorSymbol(CalcOperator op) => switch (op) {
     CalcOperator.add => '+',
