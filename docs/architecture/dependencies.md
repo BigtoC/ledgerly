@@ -94,3 +94,12 @@ Code generation is required whenever any of these annotations changes — the bu
 - `@DriftDatabase` / `@DataClassName` → `drift_dev`
 
 Run `dart run build_runner build --delete-conflicting-outputs` (or the `watch` variant) after touching any of them.
+
+## Committed `pubspec.lock`
+
+`pubspec.lock` is committed (the root `.gitignore` ignores `*.lock` but re-includes `!/pubspec.lock`), as Dart recommends for applications. Before this, every CI run resolved packages fresh, so a new release of any transitive package could change the build with no diff in the repo. The sharpest case is `sqlite3 3.x`: its version selects the prebuilt SQLite library that is downloaded and shipped (see the SQLite note in `PRD.md`), so a new `sqlite3` release could have changed the database engine in release builds silently.
+
+- Every workflow runs `flutter pub get --enforce-lockfile`, which fails if `pubspec.lock` is missing, does not satisfy `pubspec.yaml`, or would change.
+- To change a dependency, edit `pubspec.yaml`, run `flutter pub get` (or `flutter pub upgrade <package>`), and commit `pubspec.yaml` and `pubspec.lock` together.
+- `pubspec.lock` is in the `ios-nightly.yml` path filter, so a lockfile-only upgrade still triggers the iOS build.
+

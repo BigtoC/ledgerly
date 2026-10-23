@@ -1311,7 +1311,7 @@ Versions below are the tested resolvable set under Flutter **3.47.7** (Dart 3.13
 
 **`build_runner` version note.** `build_runner 2.17.1` requires `build >=5.0.0 <5.1.0`, and 2.17.0 is retracted. `drift_dev 2.35` and `riverpod_generator 4.0.9` still require `build <5.0.0`, so `^2.16.2` is the newest release that resolves.
 
-**SQLite native library note.** `drift_flutter 0.3` uses `sqlite3 3.x`. That release bundles SQLite through Dart build hooks: at build time it downloads a hash-checked prebuilt library from the `sqlite3.dart` GitHub release. It replaces `sqlite3_flutter_libs`, which now resolves only as an empty `+eol` package. The database file is unchanged at `getApplicationDocumentsDirectory()/ledgerly.sqlite`.
+**SQLite native library note.** `drift_flutter 0.3` uses `sqlite3 3.x`. That release bundles SQLite through Dart build hooks: at build time it downloads a hash-checked prebuilt library from the `sqlite3.dart` GitHub release. It replaces `sqlite3_flutter_libs`, which now resolves only as an empty `+eol` package. The database file is unchanged at `getApplicationDocumentsDirectory()/ledgerly.sqlite`. The exact `sqlite3` release, and therefore the SQLite version that ships, is pinned by the committed `pubspec.lock`; CI resolves with `flutter pub get --enforce-lockfile`.
 
 ### Android Build Toolchain
 

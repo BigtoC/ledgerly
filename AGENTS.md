@@ -109,7 +109,7 @@ Detailed agent-facing rules live under [`docs/architecture/`](docs/architecture/
 
 > When verifying changes, run `dart format .` before any `flutter test` or `dart analyze` command.
 
-- `flutter pub get`
+- `flutter pub get` (`pubspec.lock` is committed: commit it with any dependency change; CI runs `flutter pub get --enforce-lockfile`, which fails if the lockfile is missing or out of date)
 - `flutter run`
 - `dart format .` (run before `flutter test` or `dart analyze` whenever verifying changes)
 - `dart analyze --fatal-infos` (analyzer + lint rules, the same check CI runs; `riverpod_lint` is an analysis-server plugin configured under `plugins:` in `analysis_options.yaml`. `dart analyze` waits for it and always reports its diagnostics; `flutter analyze` does not wait and reports them only some of the time)
@@ -124,7 +124,7 @@ Code generation is required whenever a `@freezed`, `@riverpod`, or Drift `@Drift
 
 ### CI workflows
 
-- `.github/workflows/check.yml` — package resolution → layer-boundary check (`flutter test test/unit/architecture/`) → codegen → format check → `dart analyze --fatal-infos` (enforces `riverpod_lint`) → `flutter test`, then builds Android APKs on pushes/PRs to `main` (signed release if signing secrets are present, otherwise debug), passing `FOREX_API_URL` via `--dart-define`.
+- `.github/workflows/check.yml` — package resolution from the committed lockfile (`--enforce-lockfile`) → layer-boundary check (`flutter test test/unit/architecture/`) → codegen → format check → `dart analyze --fatal-infos` (enforces `riverpod_lint`) → `flutter test`, then builds Android APKs on pushes/PRs to `main` (signed release if signing secrets are present, otherwise debug), passing `FOREX_API_URL` via `--dart-define`.
 - `.github/workflows/android-release.yml` — builds split signed release APKs on version tags, generates SHA-256 checksums, uploads APK assets to the GitHub Release.
 - `.github/workflows/github-pages.yml` — builds and deploys the Astro site from `site/`. `.github/workflows/site-check.yml` runs Yarn install/audit/test/check/build whenever site-related files change.
 - `.github/workflows/ios-nightly.yml` — iOS debug build (`flutter build ios --no-codesign --debug`) that also checks the build did not create `ios/Podfile` (plugins come in through Swift Package Manager; no CocoaPods) and that `sqlite3.framework` is embedded. Runs on PRs to `main` that touch `pubspec.yaml`, `pubspec.lock` or `ios/`, and via `workflow_dispatch`; not a scheduled nightly.
