@@ -125,7 +125,7 @@ class SliceDrilldownController extends _$SliceDrilldownController {
           },
           onError: (Object e, StackTrace st) {
             if (myGeneration != _generation) return;
-            debugPrint('[SliceDrilldown] stream error: $e');
+            debugPrint('[SliceDrilldown] stream error: ${e.runtimeType}');
             _emitter?.addError(e, st);
           },
         );
@@ -181,7 +181,7 @@ class SliceDrilldownController extends _$SliceDrilldownController {
       }
       return true;
     } catch (e) {
-      debugPrint('[SliceDrilldown] commit failed: $e');
+      debugPrint('[SliceDrilldown] commit failed: ${e.runtimeType}');
       _committedDeleteIds.remove(id);
       if (generation == _generation && _pendingDeleteId == id) {
         _pendingDeleteId = null;

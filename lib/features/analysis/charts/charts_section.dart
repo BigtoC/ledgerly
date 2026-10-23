@@ -130,11 +130,6 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
     );
     final currenciesAsync = ref.watch(chartsCurrenciesByCodeProvider);
     final locale = Localizations.localeOf(context).toLanguageTag();
-    debugPrint(
-      '[ChartsSection] build state=${stateAsync.runtimeType} '
-      'value=${stateAsync.value?.runtimeType} '
-      'currencies=${currenciesAsync.value?.length}',
-    );
     // Touch the provider to keep it warm in tests + production.
     // ignore: unused_local_variable
     final defaultCurrency = ref.watch(initialDefaultCurrencyProvider);
