@@ -142,3 +142,7 @@ site/.yarn/*
 !site/.yarn/patches/
 site/.yarn/install-state.gz
 !site/yarn.lock
+
+# Swift Package Manager (Flutter 3.47 iOS template)
+.build/
+.swiftpm/
