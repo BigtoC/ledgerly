@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../l10n/app_localizations.dart';
 import '../core/theme/app_theme.dart';
+import 'providers/app_update_provider.dart';
 import 'providers/locale_provider.dart';
 import 'providers/repository_providers.dart';
 import 'providers/theme_provider.dart';
@@ -34,6 +37,13 @@ class _AppState extends ConsumerState<App> {
     if (_ranFirstFrameCallback || !mounted) return;
     _ranFirstFrameCallback = true;
     widget.onFirstFrame?.call();
+    // Update check: after the first frame and the startup FX refresh, once
+    // per launch.
+    unawaited(
+      ref
+          .read(availableAppUpdateProvider.notifier)
+          .checkAfter(ref.read(exchangeRateRepositoryProvider).startupRefresh),
+    );
   }
 
   @override
