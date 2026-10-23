@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,6 +32,124 @@ class _MockFxSvc extends Mock implements ExchangeRateService {}
 
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 
+/// Pumps [ChartsSection] with one USD expense slice (Food) and returns
+/// the container so tests can read the selection state.
+@Dependencies([
+  ChartsSelectionController,
+  ChartsController,
+  chartsCurrenciesByCode,
+  initialDefaultCurrency,
+  SliceDrilldownController,
+  analysisCategoriesById,
+  analysisAccountsById,
+  chartsFxStatus,
+])
+Future<ProviderContainer> _pumpChartsSection(WidgetTester tester) async {
+  final repo = _MockRepo();
+  when(
+    () => repo.watchByCategoryInRange(
+      start: any(named: 'start'),
+      end: any(named: 'end'),
+      type: any(named: 'type'),
+    ),
+  ).thenAnswer(
+    (_) => Stream.value(const [
+      CategorySlice(categoryId: 1, currencyCode: 'USD', totalMinorUnits: 5000),
+    ]),
+  );
+  when(
+    () => repo.watchTimeBucketsInRange(
+      start: any(named: 'start'),
+      end: any(named: 'end'),
+      type: any(named: 'type'),
+      granularity: any(named: 'granularity'),
+      categoryId: any(named: 'categoryId'),
+      accountId: any(named: 'accountId'),
+      currencyCode: any(named: 'currencyCode'),
+    ),
+  ).thenAnswer(
+    (_) => Stream.value(<TimeBucketSlice>[
+      TimeBucketSlice(
+        bucketStart: DateTime(2026, 5, 18),
+        currencyCode: 'USD',
+        totalMinorUnits: 5000,
+      ),
+    ]),
+  );
+  when(
+    () => repo.watchTransactionsForSliceInRange(
+      start: any(named: 'start'),
+      end: any(named: 'end'),
+      type: any(named: 'type'),
+      categoryId: any(named: 'categoryId'),
+      accountId: any(named: 'accountId'),
+      currencyCode: any(named: 'currencyCode'),
+    ),
+  ).thenAnswer((_) => Stream.value(const []));
+
+  final fxSvc = _MockFxSvc();
+  when(() => fxSvc.fetchRates(any())).thenAnswer((_) async => []);
+  final fxDb = newTestAppDatabase();
+  final fxRepo = ExchangeRateRepository(
+    fxDb,
+    fxSvc,
+    const Stream<String>.empty(),
+  );
+  addTearDown(() async {
+    fxRepo.dispose();
+    await fxDb.close();
+  });
+
+  final container = ProviderContainer(
+    overrides: [
+      transactionRepositoryProvider.overrideWithValue(repo),
+      exchangeRateRepositoryProvider.overrideWithValue(fxRepo),
+      analysisCategoriesByIdProvider.overrideWith(
+        (ref) => Stream.value({
+          1: const Category(
+            id: 1,
+            type: CategoryType.expense,
+            l10nKey: 'category.food',
+            icon: 'restaurant',
+            color: 0,
+          ),
+        }),
+      ),
+      analysisAccountsByIdProvider.overrideWith(
+        (ref) => Stream.value(const <int, Account>{}),
+      ),
+      chartsCurrenciesByCodeProvider.overrideWith(
+        (ref) => Stream.value({'USD': _usd}),
+      ),
+      chartsFxStatusProvider.overrideWith(
+        (ref) => Stream.value(
+          const ChartsFxStatus(defaultCurrencyCode: 'USD', rates: {}),
+        ),
+      ),
+      initialDefaultCurrencyProvider.overrideWithValue('USD'),
+    ],
+  );
+  addTearDown(container.dispose);
+
+  await tester.pumpWidget(
+    UncontrolledProviderScope(
+      container: container,
+      child: const MaterialApp(
+        localizationsDelegates: [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(body: SingleChildScrollView(child: ChartsSection())),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+  return container;
+}
+
 @Dependencies([
   ChartsSelectionController,
   ChartsController,
@@ -52,112 +171,7 @@ void main() {
   testWidgets('legend tap drives ChartsSelectionController.toggleSlice', (
     tester,
   ) async {
-    final repo = _MockRepo();
-    when(
-      () => repo.watchByCategoryInRange(
-        start: any(named: 'start'),
-        end: any(named: 'end'),
-        type: any(named: 'type'),
-      ),
-    ).thenAnswer(
-      (_) => Stream.value(const [
-        CategorySlice(
-          categoryId: 1,
-          currencyCode: 'USD',
-          totalMinorUnits: 5000,
-        ),
-      ]),
-    );
-    when(
-      () => repo.watchTimeBucketsInRange(
-        start: any(named: 'start'),
-        end: any(named: 'end'),
-        type: any(named: 'type'),
-        granularity: any(named: 'granularity'),
-        categoryId: any(named: 'categoryId'),
-        accountId: any(named: 'accountId'),
-        currencyCode: any(named: 'currencyCode'),
-      ),
-    ).thenAnswer(
-      (_) => Stream.value(<TimeBucketSlice>[
-        TimeBucketSlice(
-          bucketStart: DateTime(2026, 5, 18),
-          currencyCode: 'USD',
-          totalMinorUnits: 5000,
-        ),
-      ]),
-    );
-    when(
-      () => repo.watchTransactionsForSliceInRange(
-        start: any(named: 'start'),
-        end: any(named: 'end'),
-        type: any(named: 'type'),
-        categoryId: any(named: 'categoryId'),
-        accountId: any(named: 'accountId'),
-        currencyCode: any(named: 'currencyCode'),
-      ),
-    ).thenAnswer((_) => Stream.value(const []));
-
-    final fxSvc = _MockFxSvc();
-    when(() => fxSvc.fetchRates(any())).thenAnswer((_) async => []);
-    final fxDb = newTestAppDatabase();
-    final fxRepo = ExchangeRateRepository(
-      fxDb,
-      fxSvc,
-      const Stream<String>.empty(),
-    );
-    addTearDown(() async {
-      fxRepo.dispose();
-      await fxDb.close();
-    });
-
-    final container = ProviderContainer(
-      overrides: [
-        transactionRepositoryProvider.overrideWithValue(repo),
-        exchangeRateRepositoryProvider.overrideWithValue(fxRepo),
-        analysisCategoriesByIdProvider.overrideWith(
-          (ref) => Stream.value({
-            1: const Category(
-              id: 1,
-              type: CategoryType.expense,
-              l10nKey: 'category.food',
-              icon: 'restaurant',
-              color: 0,
-            ),
-          }),
-        ),
-        analysisAccountsByIdProvider.overrideWith(
-          (ref) => Stream.value(const <int, Account>{}),
-        ),
-        chartsCurrenciesByCodeProvider.overrideWith(
-          (ref) => Stream.value({'USD': _usd}),
-        ),
-        chartsFxStatusProvider.overrideWith(
-          (ref) => Stream.value(
-            const ChartsFxStatus(defaultCurrencyCode: 'USD', rates: {}),
-          ),
-        ),
-        initialDefaultCurrencyProvider.overrideWithValue('USD'),
-      ],
-    );
-    addTearDown(container.dispose);
-
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const MaterialApp(
-          localizationsDelegates: [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(body: SingleChildScrollView(child: ChartsSection())),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
+    final container = await _pumpChartsSection(tester);
     // Scroll the legend row into view, then tap it.
     await tester.scrollUntilVisible(find.text('Food'), 50);
     await tester.tap(find.text('Food'));
@@ -167,4 +181,21 @@ void main() {
         .selectedSlice;
     expect(selection, equals(const SelectedSlice.category(1)));
   });
+
+  testWidgets('pie slice tap drives ChartsSelectionController.toggleSlice', (
+    tester,
+  ) async {
+    final container = await _pumpChartsSection(tester);
+    // Food is the only slice, so any point on the ring hits it. 74 is
+    // midway between the centre hole (44) and the outer edge (104). Tap
+    // above the centre: the chart's lower half runs past the test viewport.
+    await tester.tapAt(
+      tester.getCenter(find.byType(PieChart)) + const Offset(0, -74),
+    );
+    await tester.pumpAndSettle();
+    final selection = container
+        .read(chartsSelectionControllerProvider)
+        .selectedSlice;
+    expect(selection, equals(const SelectedSlice.category(1)));
+  }, variant: TargetPlatformVariant.mobile());
 }
