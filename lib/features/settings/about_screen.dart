@@ -22,7 +22,9 @@ class _AboutScreenState extends State<AboutScreen> {
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
-          onPageFinished: (_) => setState(() => _loading = false),
+          onPageFinished: (_) {
+            if (mounted) setState(() => _loading = false);
+          },
         ),
       )
       ..loadRequest(_url);

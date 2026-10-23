@@ -6,6 +6,10 @@
 // re-emit synchronously from the cached `_lastTransactions` without
 // waiting for the next repository emission.
 //
+// Lifecycle: auto-disposed once the screen stops listening, except that a
+// pending delete holds a `KeepAliveLink` (`_undoLink`) until it is undone or
+// committed, so Undo and the commit still work after the screen pops.
+//
 // Cleanup axes:
 //   - `_subscription` — cancelled on dispose / rebuild.
 //   - `_undoTimer`    — cancelled on dispose / before scheduling a new
@@ -15,6 +19,7 @@
 
 import 'dart:async';
 
+import 'package:flutter_riverpod/misc.dart' show KeepAliveLink;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../app/providers/repository_providers.dart';
@@ -40,15 +45,13 @@ final class CategorySearchDetailDeleteFailedEffect
   const CategorySearchDetailDeleteFailedEffect();
 }
 
-@Riverpod(
-  keepAlive: true,
-  dependencies: [transactionRepository, AnalysisController],
-)
+@Riverpod(dependencies: [transactionRepository, AnalysisController])
 class CategorySearchDetailController extends _$CategorySearchDetailController {
   StreamController<CategorySearchDetailState>? _emitter;
   StreamSubscription<List<Transaction>>? _subscription;
   Timer? _undoTimer;
   CategorySearchPendingDelete? _pendingDelete;
+  KeepAliveLink? _undoLink;
   final Set<int> _committedDeleteIds = <int>{};
   List<Transaction>? _lastTransactions;
   CategorySearchDetailEffectListener? _effectListener;
@@ -59,16 +62,17 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
     required String query,
     required String currencyCode,
   }) {
-    // Close any prior emitter from a previous `build()` run — `keepAlive: true`
-    // does not prevent rebuilds (e.g. on `ref.invalidate`, dependency churn,
-    // or hot-reload), and Riverpod calls `ref.onDispose` only on full
-    // teardown, not on rebuild.
+    // Close any prior emitter from a previous `build()` run — a rebuild
+    // (e.g. on `ref.invalidate`, dependency churn, or hot-reload) reuses this
+    // notifier. A rebuild also drops the old `Ref`'s keep-alive links, so
+    // `_undoLink` is just forgotten here.
     _emitter?.close();
     _subscription?.cancel();
     _subscription = null;
     _undoTimer?.cancel();
     _undoTimer = null;
     _pendingDelete = null;
+    _undoLink = null;
     _committedDeleteIds.clear();
     _lastTransactions = null;
 
@@ -84,7 +88,12 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
       _subscription?.cancel();
       _subscription = null;
       _pendingDelete = null;
+      _undoLink = null;
       _committedDeleteIds.clear();
+      // The Undo SnackBar can outlive this provider, so a late `undoDelete`
+      // (or a failed in-flight commit) must find nothing to emit into.
+      if (identical(_emitter, controller)) _emitter = null;
+      _lastTransactions = null;
       controller.close();
     });
 
@@ -157,6 +166,7 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
     if (tx == null) return;
 
     _pendingDelete = CategorySearchPendingDelete(transaction: tx);
+    _undoLink ??= ref.keepAlive();
     _emitFromCache();
 
     _undoTimer = Timer(kUndoWindow, () async {
@@ -172,6 +182,7 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
     _undoTimer?.cancel();
     _undoTimer = null;
     _pendingDelete = null;
+    _releaseUndoLink();
     _emitFromCache();
   }
 
@@ -180,6 +191,11 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
   }
 
   // ---------- Internals ----------
+
+  void _releaseUndoLink() {
+    _undoLink?.close();
+    _undoLink = null;
+  }
 
   Transaction? _findTransaction(int id) {
     final txs = _lastTransactions;
@@ -209,6 +225,7 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
       await ref.read(transactionRepositoryProvider).delete(id);
       if (_pendingDelete?.transaction.id == id) {
         _pendingDelete = null;
+        _releaseUndoLink();
         _emitFromCache();
       }
       return true;
@@ -216,6 +233,7 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
       _committedDeleteIds.remove(id);
       if (_pendingDelete?.transaction.id == id) {
         _pendingDelete = null;
+        _releaseUndoLink();
       }
       _emitFromCache();
       _effectListener?.call(const CategorySearchDetailDeleteFailedEffect());

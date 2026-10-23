@@ -116,7 +116,6 @@ Future<void> bootstrapFor({
   final initialLocale = await preferencesRepo.getLocale();
   final splashEnabled = await getSplashEnabledFn(preferencesRepo);
   final splashStartDate = await getSplashStartDateFn(preferencesRepo);
-  var initialDefaultCurrency = await preferencesRepo.getDefaultCurrency();
 
   // Step 6 — First-run seed (idempotent; short-circuits if already run).
   final currenciesRepo = DriftCurrencyRepository(db);
@@ -129,7 +128,7 @@ Future<void> bootstrapFor({
     preferences: preferencesRepo,
     localeService: localeService,
   );
-  initialDefaultCurrency = await preferencesRepo.getDefaultCurrency();
+  final initialDefaultCurrency = await preferencesRepo.getDefaultCurrency();
 
   // Step 7 — ProviderScope with DB override + pre-seeded splash gate.
   // Recurring generation is scheduled from the App's first-frame callback

@@ -7,7 +7,6 @@
 // ref.watches this notifier, so any selection mutation transparently
 // re-runs the data pipeline.
 
-import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -45,7 +44,6 @@ class ChartsSelectionController extends _$ChartsSelectionController {
   }
 
   void setPeriod(PeriodType period) {
-    debugPrint('[ChartsSelection] setPeriod($period) current=${state.period}');
     if (state.period == period) return;
     state = state.copyWith(
       period: period,
@@ -55,9 +53,6 @@ class ChartsSelectionController extends _$ChartsSelectionController {
   }
 
   void previousPeriod() {
-    debugPrint(
-      '[ChartsSelection] previousPeriod() from anchor=${state.anchorDate}',
-    );
     state = state.copyWith(
       anchorDate: shiftAnchor(state.anchorDate, state.period, -1),
       selectedSlice: null,
@@ -65,9 +60,6 @@ class ChartsSelectionController extends _$ChartsSelectionController {
   }
 
   void nextPeriod() {
-    debugPrint(
-      '[ChartsSelection] nextPeriod() from anchor=${state.anchorDate}',
-    );
     if (isAtCurrentPeriod()) return;
     state = state.copyWith(
       anchorDate: shiftAnchor(state.anchorDate, state.period, 1),
@@ -76,7 +68,6 @@ class ChartsSelectionController extends _$ChartsSelectionController {
   }
 
   void toggleType() {
-    debugPrint('[ChartsSelection] toggleType() current=${state.type}');
     state = state.copyWith(
       type: state.type == CategoryType.expense
           ? CategoryType.income
@@ -86,16 +77,12 @@ class ChartsSelectionController extends _$ChartsSelectionController {
   }
 
   void setDimension(ChartDimension dimension) {
-    debugPrint(
-      '[ChartsSelection] setDimension($dimension) current=${state.dimension}',
-    );
     if (state.dimension == dimension) return;
     state = state.copyWith(dimension: dimension, selectedSlice: null);
   }
 
   /// Tap-toggle semantics: same slice clears, different slice replaces.
   void toggleSlice(SelectedSlice slice) {
-    debugPrint('[ChartsSelection] toggleSlice($slice)');
     state = state.copyWith(
       selectedSlice: state.selectedSlice == slice ? null : slice,
     );

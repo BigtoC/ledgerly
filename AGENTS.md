@@ -105,6 +105,37 @@ Detailed agent-facing rules live under [`docs/architecture/`](docs/architecture/
 - [`testing.md`](docs/architecture/testing.md) — Test organization by layer; repository/controller/golden/migration patterns; per-slice coverage map.
 - [`dependencies.md`](docs/architecture/dependencies.md) — layer-boundary check (replaced `import_lint`), base `app_zh.arb` requirement, Android and iOS build toolchains.
 
+## Performance rules
+
+These rules come from a performance audit covering rendering, memory, startup and package size. Measure before restructuring anything for speed: run `flutter run --profile` and use DevTools. Never break an architecture rule for a gain you have not measured.
+
+- **Render user-data lists lazily.** A list whose length depends on the user's data uses `ListView.builder` / `SliverList.builder`, or caps rendered rows behind a "Show N more" control (`PendingSection`, and `SelectedSliceItemsList` with `_kDrilldownPageSize`). Never map unbounded rows into a `Column` inside a `SingleChildScrollView`. Home's single-day `Column` is a deliberate exception: its row count is bounded. Don't set `itemExtent` on rows that contain text, because it breaks the 2× text-scale requirement.
+- **Keep `build()` and controller emit paths free of side effects.** No I/O, no controller or stream creation, no logging, and no new `NumberFormat`/`DateFormat` built per row. Format money with `MoneyFormatter.format`/`formatBare`, which cache their formats. Older per-call formatters remain in `date_helpers.dart` and `PendingSection`. A recompute path such as `ChartsController._emitIfReady` must not start a network call or DB write on every emission. Track what has already been requested, because a write can make the same stream emit again and loop.
+- **Don't add trace logs to shipped code.** `debugPrint` runs in release builds. Never log amounts, totals, balances, currency sets or memos. Error logs carry `${e.runtimeType}` only.
+- **Never put `keepAlive: true` on a Riverpod family.** Every argument set would keep its state and Drift subscription for the rest of the session. If a provider must outlive its screen during an undo window:
+  - take a `ref.keepAlive()` link only while the undo is pending, and close it on commit or undo;
+  - make calls after dispose no-ops, for example by nulling the emitter in `onDispose`.
+
+  `CategorySearchDetailController` is the reference implementation.
+- **Regenerate whenever you edit a file that has a generated part.** `riverpod_generator` embeds a hash of the provider's source (comments excluded), so any code edit inside a provider leaves the committed `.g.dart` stale, even when no annotation changed. Run `build_runner` and commit the regenerated file in the same commit.
+- **Call `setState` only when something changed.** In high-frequency callbacks (fl_chart `touchCallback`, gesture and scroll handlers), compare the new value with the current one before calling `setState`. After an `await` or a platform callback (WebView, timers), check `mounted` first.
+- **Give each animated chart its own `RepaintBoundary`.** fl_chart adds none, so `_ChartBody` wraps each one. Don't add boundaries elsewhere unless a DevTools repaint trace shows the need.
+- **Before `runApp`, `bootstrap()` does only what the first frame needs:** opening the database, the first-run seed, and reading theme, locale, the splash gate, the default currency (read after the seed) and intl date data. Run everything else after the first frame, the way recurring generation does. Don't reorder the documented bootstrap steps to save milliseconds.
+- **Ship only what the app uses.**
+  - Any dependency that ships fonts or assets must be referenced from `lib/`, because Flutter bundles those files whether or not you use them. The unused `material_symbols_icons` added about 34 MB of fonts, about 15.6 MB once compressed.
+  - Dependencies with nothing to ship, such as `path_provider` (pulled in by `drift_flutter`) and `json_annotation`, cost nothing and can stay.
+  - List assets by file, not by directory.
+  - Don't give light and dark native-splash entries the same image, because each entry gets its own copy.
+  - After adding a package or asset, check the size with `flutter build apk --analyze-size` or `unzip -l` on the APK.
+- **These are already decided, so don't "optimise" them:**
+  - R8 and resource shrinking are Flutter's release defaults, so don't add Gradle flags.
+  - Drift runs on a background isolate through `driftDatabase()`.
+  - The existing Drift indexes cover the hot queries.
+  - Home's `_Composer` batches its stream emissions in microtasks.
+  - The charts use `skipLoadingOnReload`.
+  - The box-shadow colour is randomised on each build.
+  - There are no deferred components, because APKs ship through GitHub Releases rather than Play.
+
 ## Commands and workflows
 
 > When verifying changes, run `dart format .` before any `flutter test` or `dart analyze` command.
@@ -157,36 +188,11 @@ Three Flutter-specific skills are installed at `.agents/skills/` and symlinked i
 
 When the user asks to structure a new feature, invoke `flutter-architecting-apps`; when building or refining UI, invoke `flutter-building-layouts`; when adding motion or transitions, invoke `flutter-animating-apps`.
 
-## Work Mode
-> Based on the complexity of the tasks, choose the appropriate work mode
-
-### Direct Execution Model (Default)
-
-Trigger: bug fixes, small features, <30 line changes
-Behavior: write code directly, do not invoke any skills
-
-### Full Development Mode
-
-Trigger: user explicitly says "full flow" or uses one of the `/full` command.
-Behavior: follow this sequence strictly:
-1. `/superpowers:brainstorming` — requirements exploration
-2. `/ce:plan` — technical plan, auto-search `docs/solutions/`
-3. `/superpowers:test-driven-development` — TDD implementation
-4. `/ce:review` — multi-agent code review.
-5. `/ce:compound` — knowledge consolidation
-
-### Coding Mode
-
-Trigger: User explicitly says "write code".
-1. `/superpowers:test-driven-development` — TDD implementation
-2. `/ce:review` — multi-agent code review.
-3. `/ce:compound` — knowledge consolidation
-
 ## Knowledge Consolidation
 
 After resolving a non-trivial problem, run `/ce:compound` to persist the solution for future reference.
 
-- `docs/solutions/` is a searchable prior-solutions store organized by category (`best-practices/`, `database-issues/`, `design-patterns/`, `logic-errors/`, `runtime-errors/`, `test-failures/`, `ui-bugs/`); solution docs use YAML frontmatter like `module`, `tags`, and `problem_type`.
+- `docs/solutions/` is a searchable prior-solutions store organized by category (`best-practices/`, `database-issues/`, `design-patterns/`, `logic-errors/`, `performance-issues/`, `runtime-errors/`, `test-failures/`, `ui-bugs/`); solution docs use YAML frontmatter like `module`, `tags`, and `problem_type`.
 - `/ce:plan` auto-searches `docs/solutions/` at planning time to surface relevant prior solutions before implementation begins.
 - Each solution document includes: problem description, root cause, fix applied, and tags for search.
 

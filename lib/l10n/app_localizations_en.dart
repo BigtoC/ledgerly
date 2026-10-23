@@ -638,6 +638,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get analysisDrilldownEmpty => 'No transactions in this period';
 
   @override
+  String analysisDrilldownShowMore(int count) {
+    return 'Show $count more';
+  }
+
+  @override
   String get analysisOriginalAmount => 'Original amount';
 
   @override

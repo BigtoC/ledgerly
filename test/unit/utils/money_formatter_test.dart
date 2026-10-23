@@ -221,6 +221,31 @@ void main() {
     });
   });
 
+  // Cached NumberFormat instances must be keyed by locale. en_US and
+  // zh_TW share separators, so de_DE is the contrasting locale here.
+  group('MoneyFormatter — cached formats stay locale-specific', () {
+    test('format alternates en_US → de_DE → en_US', () {
+      String fmt(String locale) => MoneyFormatter.format(
+        amountMinorUnits: 123456,
+        currency: _usd,
+        locale: locale,
+      );
+      expect(fmt('en_US'), r'$1,234.56');
+      expect(fmt('de_DE'), contains('1.234,56'));
+      expect(fmt('en_US'), r'$1,234.56');
+    });
+    test('formatBare alternates en_US → de_DE → en_US', () {
+      String fmt(String locale) => MoneyFormatter.formatBare(
+        amountMinorUnits: 123456,
+        currency: _usd,
+        locale: locale,
+      );
+      expect(fmt('en_US'), '1,234.56');
+      expect(fmt('de_DE'), '1.234,56');
+      expect(fmt('en_US'), '1,234.56');
+    });
+  });
+
   group('MoneyFormatter.parseToMinorUnits — happy path', () {
     test('M19: "123.45" USD en_US → 12345', () {
       expect(

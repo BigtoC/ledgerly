@@ -7,10 +7,12 @@
 
 import 'dart:async';
 
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
+import 'package:ledgerly/data/database/app_database.dart' as db;
 import 'package:ledgerly/data/models/account.dart';
 import 'package:ledgerly/data/models/account_slice.dart';
 import 'package:ledgerly/data/models/category.dart';
@@ -733,6 +735,141 @@ void main() {
       ).callCount;
       expect(calls, 1, reason: 'nextPeriod at current should not resubscribe');
       expect(state, anyOf(isA<ChartsEmpty>(), isA<ChartsDataState>()));
+    });
+  });
+
+  group('ChartsController — missing-rate refresh', () {
+    test('requests missing rates once, not on every FX re-emission', () async {
+      // Real FX repository + real `chartsFxStatusProvider`, so each rate
+      // upsert re-emits FX status into the controller. EUR resolves,
+      // TWD never does — the loop this guards against.
+      final fxDb = newTestAppDatabase();
+      for (final (i, code) in const ['USD', 'EUR', 'TWD'].indexed) {
+        await fxDb
+            .into(fxDb.currencies)
+            .insert(
+              db.CurrenciesCompanion.insert(
+                code: code,
+                decimals: 2,
+                sortOrder: Value(i),
+              ),
+            );
+      }
+      final typeId = await fxDb
+          .into(fxDb.accountTypes)
+          .insert(
+            db.AccountTypesCompanion.insert(
+              icon: 'wallet',
+              color: 0,
+              l10nKey: const Value('accountType.cash'),
+            ),
+          );
+      for (final code in const ['EUR', 'TWD']) {
+        await fxDb
+            .into(fxDb.accounts)
+            .insert(
+              db.AccountsCompanion.insert(
+                name: 'Cash $code',
+                accountTypeId: typeId,
+                currency: code,
+              ),
+            );
+      }
+
+      var fetchCalls = 0;
+      final fxService = _MockExchangeRateService();
+      when(() => fxService.fetchRates(any())).thenAnswer((_) async {
+        fetchCalls++;
+        // Yield to the timer queue like real network I/O; an all-microtask
+        // fetch would let a refresh loop starve the test's delays.
+        await Future<void>.delayed(Duration.zero);
+        return [(from: 'EUR', to: 'USD', rate: 1.1, fetchedAt: DateTime.now())];
+      });
+      final fxRepo = ExchangeRateRepository(
+        fxDb,
+        fxService,
+        const Stream<String>.empty(),
+      );
+      addTearDown(() async {
+        fxRepo.dispose();
+        await fxDb.close();
+      });
+
+      var slices = const <CategorySlice>[
+        CategorySlice(categoryId: 1, currencyCode: 'USD', totalMinorUnits: 1),
+        CategorySlice(categoryId: 1, currencyCode: 'EUR', totalMinorUnits: 1),
+        CategorySlice(categoryId: 1, currencyCode: 'TWD', totalMinorUnits: 1),
+      ];
+      final sliceUpdates = StreamController<List<CategorySlice>>.broadcast();
+      addTearDown(sliceUpdates.close);
+      final repo = _MockTxRepo();
+      when(
+        () => repo.watchByCategoryInRange(
+          start: any(named: 'start'),
+          end: any(named: 'end'),
+          type: any(named: 'type'),
+        ),
+      ).thenAnswer((_) async* {
+        yield slices;
+        yield* sliceUpdates.stream;
+      });
+      when(
+        () => repo.watchTimeBucketsInRange(
+          start: any(named: 'start'),
+          end: any(named: 'end'),
+          type: any(named: 'type'),
+          granularity: any(named: 'granularity'),
+        ),
+      ).thenAnswer((_) => Stream.value(const <TimeBucketSlice>[]));
+
+      final container = ProviderContainer(
+        overrides: [
+          transactionRepositoryProvider.overrideWithValue(repo),
+          exchangeRateRepositoryProvider.overrideWithValue(fxRepo),
+          analysisCategoriesByIdProvider.overrideWith(
+            (ref) => Stream.value(_defaultCategories),
+          ),
+          analysisAccountsByIdProvider.overrideWith(
+            (ref) => Stream.value(const <int, Account>{}),
+          ),
+          chartsCurrenciesByCodeProvider.overrideWith(
+            (ref) => Stream.value(const {'USD': _usd}),
+          ),
+          defaultCurrencyProvider.overrideWith(
+            (ref) => const Stream<String>.empty(),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      container.listen(chartsControllerProvider, (_, _) {});
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      expect(fetchCalls, 1);
+
+      // A new TWD transaction re-emits the slices; TWD was already
+      // requested, so no new fetch.
+      slices = [
+        ...slices,
+        const CategorySlice(
+          categoryId: 1,
+          currencyCode: 'TWD',
+          totalMinorUnits: 2,
+        ),
+      ];
+      sliceUpdates.add(slices);
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      expect(fetchCalls, 1);
+
+      container.read(chartsControllerProvider.notifier).retry();
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      expect(fetchCalls, 2);
+
+      // A selection change gets one fresh attempt, so a fetch that failed
+      // earlier (e.g. offline) can recover without a restart.
+      container
+          .read(chartsSelectionControllerProvider.notifier)
+          .previousPeriod();
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      expect(fetchCalls, 3);
     });
   });
 }

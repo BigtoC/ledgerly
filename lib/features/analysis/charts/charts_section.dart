@@ -130,11 +130,6 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
     );
     final currenciesAsync = ref.watch(chartsCurrenciesByCodeProvider);
     final locale = Localizations.localeOf(context).toLanguageTag();
-    debugPrint(
-      '[ChartsSection] build state=${stateAsync.runtimeType} '
-      'value=${stateAsync.value?.runtimeType} '
-      'currencies=${currenciesAsync.value?.length}',
-    );
     // Touch the provider to keep it warm in tests + production.
     // ignore: unused_local_variable
     final defaultCurrency = ref.watch(initialDefaultCurrencyProvider);
@@ -454,14 +449,16 @@ class _ChartBody extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        CategoryPieChart(
-          slices: data.slices,
-          currenciesByCode: currencies,
-          locale: locale,
-          grandTotalMinorUnits: data.grandTotalMinorUnits,
-          displayCurrencyCode: data.displayCurrencyCode,
-          selectedIndex: selectedIndex,
-          onSelectionChanged: selectSlice,
+        RepaintBoundary(
+          child: CategoryPieChart(
+            slices: data.slices,
+            currenciesByCode: currencies,
+            locale: locale,
+            grandTotalMinorUnits: data.grandTotalMinorUnits,
+            displayCurrencyCode: data.displayCurrencyCode,
+            selectedIndex: selectedIndex,
+            onSelectionChanged: selectSlice,
+          ),
         ),
         const SizedBox(height: 12),
         ChartLegend(
@@ -474,13 +471,15 @@ class _ChartBody extends ConsumerWidget {
         ),
         if (showBar) ...[
           const SizedBox(height: 16),
-          DailyBarChart(
-            period: data.period,
-            anchorDate: data.anchorDate,
-            bucketTotals: data.bucketTotals,
-            locale: locale,
-            currenciesByCode: currencies,
-            displayCurrencyCode: data.displayCurrencyCode,
+          RepaintBoundary(
+            child: DailyBarChart(
+              period: data.period,
+              anchorDate: data.anchorDate,
+              bucketTotals: data.bucketTotals,
+              locale: locale,
+              currenciesByCode: currencies,
+              displayCurrencyCode: data.displayCurrencyCode,
+            ),
           ),
         ],
       ],

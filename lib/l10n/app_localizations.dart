@@ -1264,6 +1264,12 @@ abstract class AppLocalizations {
   /// **'No transactions in this period'**
   String get analysisDrilldownEmpty;
 
+  /// TextButton label below the slice drill-down rows that renders the next page of rows. {count} is how many rows the tap reveals: the page size, or fewer on the last page.
+  ///
+  /// In en, this message translates to:
+  /// **'Show {count} more'**
+  String analysisDrilldownShowMore(int count);
+
   /// Label for the booked transaction amount shown as the secondary amount on FX-converted drill-down rows
   ///
   /// In en, this message translates to:

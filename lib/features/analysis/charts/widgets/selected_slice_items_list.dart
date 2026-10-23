@@ -4,6 +4,8 @@
 // followed by `TransactionSearchRow` instances in action-only delete
 // mode. Owns its own snackbar undo wiring via `SliceDrilldownController`.
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -26,6 +28,11 @@ import '../charts_selection_controller.dart';
 import '../charts_state.dart';
 import '../selected_slice.dart';
 import '../slice_drilldown_controller.dart';
+
+/// Number of drill-down rows rendered per "Show N more" step. The rows sit
+/// in a non-lazy `Column`, so this bounds the build/layout cost when a
+/// slice holds hundreds of transactions.
+const int _kDrilldownPageSize = 50;
 
 @Dependencies([
   SliceDrilldownController,
@@ -58,6 +65,7 @@ class _SelectedSliceItemsListState
   int? _lastShownPendingDeleteId;
   late final SliceDrilldownController _controller;
   ScaffoldMessengerState? _messenger;
+  int _visibleCount = _kDrilldownPageSize;
 
   @override
   void initState() {
@@ -70,6 +78,15 @@ class _SelectedSliceItemsListState
   void didChangeDependencies() {
     super.didChangeDependencies();
     _messenger = ScaffoldMessenger.maybeOf(context);
+  }
+
+  @override
+  void didUpdateWidget(SelectedSliceItemsList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // The parent does not key this widget, so State survives slice changes.
+    if (oldWidget.slice.selectionKey != widget.slice.selectionKey) {
+      _visibleCount = _kDrilldownPageSize;
+    }
   }
 
   @override
@@ -163,7 +180,7 @@ class _SelectedSliceItemsListState
                   child: Center(child: Text(l10n.analysisDrilldownEmpty)),
                 )
               else
-                for (final tx in data.rows)
+                for (final tx in data.rows.take(_visibleCount))
                   Opacity(
                     opacity: data.pendingDeleteId == tx.id ? 0.55 : 1,
                     child: IgnorePointer(
@@ -195,6 +212,19 @@ class _SelectedSliceItemsListState
                       ),
                     ),
                   ),
+              if (data.rows.length > _visibleCount)
+                TextButton(
+                  onPressed: () =>
+                      setState(() => _visibleCount += _kDrilldownPageSize),
+                  child: Text(
+                    l10n.analysisDrilldownShowMore(
+                      math.min(
+                        _kDrilldownPageSize,
+                        data.rows.length - _visibleCount,
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),

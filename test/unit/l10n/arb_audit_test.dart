@@ -346,6 +346,7 @@ const Set<String> _expectedEnKeys = <String>{
   // Chart slice drill-down (2026-05-22)
   // (docs/superpowers/plans/2026-05-22-chart-slice-drilldown.md §9).
   'analysisDrilldownEmpty',
+  'analysisDrilldownShowMore',
   'analysisOriginalAmount',
   'analysisRatesStale',
 };

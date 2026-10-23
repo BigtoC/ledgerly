@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,6 +18,7 @@ import 'package:ledgerly/features/analysis/charts/selected_slice.dart';
 import 'package:ledgerly/features/analysis/charts/slice_drilldown_controller.dart';
 import 'package:ledgerly/features/analysis/charts/widgets/selected_slice_items_list.dart';
 import 'package:ledgerly/features/analysis/search/analysis_providers.dart';
+import 'package:ledgerly/features/analysis/search/widgets/transaction_search_row.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
@@ -57,6 +59,7 @@ ChartSlice _slice(SelectedSlice key) => ChartSlice(
 Widget _harness({
   required _MockRepo repo,
   required ChartSlice slice,
+  ValueListenable<ChartSlice>? sliceListenable,
   SelectedSlice? activeSelection,
   Map<String, Currency> currenciesByCode = const {'USD': _usd},
   ChartsFxStatus fxStatus = const ChartsFxStatus(
@@ -104,7 +107,13 @@ Widget _harness({
       supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
         body: SingleChildScrollView(
-          child: SelectedSliceItemsList(slice: slice, locale: 'en'),
+          child: sliceListenable == null
+              ? SelectedSliceItemsList(slice: slice, locale: 'en')
+              : ValueListenableBuilder<ChartSlice>(
+                  valueListenable: sliceListenable,
+                  builder: (_, current, _) =>
+                      SelectedSliceItemsList(slice: current, locale: 'en'),
+                ),
         ),
       ),
     ),
@@ -265,4 +274,89 @@ void main() {
       expect(find.text('Original amount'), findsOneWidget);
     },
   );
+
+  testWidgets('caps rendered rows at 50 behind a Show more button', (
+    tester,
+  ) async {
+    final repo = _MockRepo();
+    when(
+      () => repo.watchTransactionsForSliceInRange(
+        start: any(named: 'start'),
+        end: any(named: 'end'),
+        type: any(named: 'type'),
+        categoryId: any(named: 'categoryId'),
+        accountId: any(named: 'accountId'),
+        currencyCode: any(named: 'currencyCode'),
+      ),
+    ).thenAnswer((_) => Stream.value([for (var i = 1; i <= 120; i++) _tx(i)]));
+
+    await tester.pumpWidget(
+      _harness(
+        repo: repo,
+        slice: _slice(const SelectedSlice.category(1)),
+        activeSelection: const SelectedSlice.category(1),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TransactionSearchRow), findsNWidgets(50));
+    expect(find.text('120 transactions'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Show 50 more'));
+    await tester.tap(find.text('Show 50 more'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TransactionSearchRow), findsNWidgets(100));
+    expect(find.text('120 transactions'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Show 20 more'));
+    await tester.tap(find.text('Show 20 more'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TransactionSearchRow), findsNWidgets(120));
+    expect(find.textContaining('more'), findsNothing);
+  });
+
+  testWidgets('switching to another slice resets the cap to 50', (
+    tester,
+  ) async {
+    final repo = _MockRepo();
+    when(
+      () => repo.watchTransactionsForSliceInRange(
+        start: any(named: 'start'),
+        end: any(named: 'end'),
+        type: any(named: 'type'),
+        categoryId: any(named: 'categoryId'),
+        accountId: any(named: 'accountId'),
+        currencyCode: any(named: 'currencyCode'),
+      ),
+    ).thenAnswer((_) => Stream.value([for (var i = 1; i <= 120; i++) _tx(i)]));
+    final sliceNotifier = ValueNotifier(
+      _slice(const SelectedSlice.category(1)),
+    );
+    addTearDown(sliceNotifier.dispose);
+
+    await tester.pumpWidget(
+      _harness(
+        repo: repo,
+        slice: sliceNotifier.value,
+        sliceListenable: sliceNotifier,
+        activeSelection: const SelectedSlice.category(1),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Show 50 more'));
+    await tester.tap(find.text('Show 50 more'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TransactionSearchRow), findsNWidgets(100));
+
+    ProviderScope.containerOf(
+          tester.element(find.byType(SelectedSliceItemsList)),
+        )
+        .read(chartsSelectionControllerProvider.notifier)
+        .toggleSlice(const SelectedSlice.category(2));
+    sliceNotifier.value = _slice(const SelectedSlice.category(2));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TransactionSearchRow), findsNWidgets(50));
+    expect(find.text('Show 50 more'), findsOneWidget);
+  });
 }
