@@ -1,7 +1,7 @@
 ---
 title: Transaction form workflow integrity across recovery, mutation, and adaptive routing
 date: 2026-04-25
-last_updated: 2026-04-29
+last_updated: 2026-10-23
 category: logic-errors
 module: transactions
 problem_type: logic_error
@@ -81,14 +81,15 @@ Using `push` instead of `go` keeps the in-progress form on the navigation stack 
 final preservesAmount = source.currency.code == account.currency.code;
 final amountMinorUnits = preservesAmount ? source.amountMinorUnits : 0;
 _keypad = preservesAmount
-    ? _keypadFromAmount(
+    ? _keypadForStored(
         source.amountMinorUnits,
+        source.amountFormula,
         decimals: account.currency.decimals,
       )
     : const KeypadState.initial();
 ```
 
-That keeps duplicate hydration from silently reinterpreting minor units in the wrong currency.
+That keeps duplicate hydration from silently reinterpreting minor units in the wrong currency. The stored keypad formula follows the same guard: it is replayed only when the amount is kept, and dropped with it otherwise (see the formula doc linked below).
 
 3. Widen the date picker bounds so historical transactions stay editable.
 
@@ -196,3 +197,4 @@ Verification that passed for this fix:
 - `docs/solutions/best-practices/reactive-feature-flow-ownership-2026-04-25.md` — broader guidance on router-owned modal behavior and feature-flow ownership.
 - `docs/solutions/logic-errors/account-transaction-currency-invariant-2026-04-25.md` — related currency-integrity background for transaction/account interactions.
 - `docs/solutions/logic-errors/m4-app-shell-first-frame-hydration-2026-04-23.md` — adjacent hydration/recovery pattern, but not the same transaction-form workflow problem.
+- `docs/solutions/design-patterns/keypad-formula-replay-verified-persistence.md` — how `_keypadForStored` replays a stored `amount_formula` on Edit/Duplicate and falls back to the plain amount.
