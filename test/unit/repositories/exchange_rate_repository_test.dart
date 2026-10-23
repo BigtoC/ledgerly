@@ -221,6 +221,76 @@ void main() {
     });
   });
 
+  group('startupRefresh', () {
+    /// Records whether [ExchangeRateRepository.startupRefresh] has completed.
+    bool Function() trackStartupRefresh() {
+      var done = false;
+      unawaited(repo.startupRefresh.then((_) => done = true));
+      return () => done;
+    }
+
+    test('is pending before the first default-currency emission', () async {
+      final isDone = trackStartupRefresh();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(isDone(), isFalse);
+    });
+
+    test('stays pending while fetchRates runs, completes after', () async {
+      await seedAccount('EUR');
+      final completer =
+          Completer<
+            List<({String from, String to, double rate, DateTime fetchedAt})>
+          >();
+      when(() => mockService.fetchRates(any()))
+          .thenAnswer((_) => completer.future);
+      final isDone = trackStartupRefresh();
+
+      defaultCurrencyController.add('USD');
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      verify(() => mockService.fetchRates(any())).called(1);
+      expect(isDone(), isFalse);
+
+      completer.complete([
+        (from: 'EUR', to: 'USD', rate: 1.08, fetchedAt: DateTime(2026, 5, 14)),
+      ]);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(isDone(), isTrue);
+    });
+
+    test('completes when fetchRates throws', () async {
+      await seedAccount('EUR');
+      when(() => mockService.fetchRates(any()))
+          .thenThrow(Exception('network error'));
+      final isDone = trackStartupRefresh();
+
+      defaultCurrencyController.add('USD');
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(isDone(), isTrue);
+    });
+
+    test('completes when there are no foreign pairs', () async {
+      final isDone = trackStartupRefresh();
+
+      defaultCurrencyController.add('USD');
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(isDone(), isTrue);
+      verifyNever(() => mockService.fetchRates(any()));
+    });
+
+    test('a second emission does not throw', () async {
+      await seedAccount('EUR');
+      when(() => mockService.fetchRates(any()))
+          .thenAnswer((_) async => const []);
+      final isDone = trackStartupRefresh();
+
+      defaultCurrencyController.add('USD');
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      defaultCurrencyController.add('EUR');
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(isDone(), isTrue);
+    });
+  });
+
   group('watchRatesMetadata', () {
     test('emits per-pair (rate, fetchedAt) keyed by from→to', () async {
       final eurFetchedAt = DateTime(2026, 5, 19, 10);

@@ -92,21 +92,24 @@ RecurringGenerationUseCase recurringGenerationUseCase(Ref ref) {
   );
 }
 
-/// Exchange-rate HTTP service. Constructs its own `Dio` with conservative
-/// timeouts — there is no standalone `dioProvider`, since the rate service
-/// is the only consumer of Dio in the codebase. If a second HTTP consumer
-/// appears later, extract `dioProvider` at that point.
-@Riverpod(keepAlive: true, dependencies: [])
-ExchangeRateService exchangeRateService(Ref ref) {
-  return ExchangeRateService(
-    Dio(
-      BaseOptions(
-        connectTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 10),
-      ),
+/// Shared HTTP client for every HTTP service. Conservative timeouts; the
+/// client is closed when the owning container is disposed.
+@Riverpod(keepAlive: true)
+Dio dio(Ref ref) {
+  final dio = Dio(
+    BaseOptions(
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
     ),
   );
+  ref.onDispose(dio.close);
+  return dio;
 }
+
+/// Exchange-rate HTTP service. Uses the shared [dioProvider] client.
+@Riverpod(keepAlive: true, dependencies: [])
+ExchangeRateService exchangeRateService(Ref ref) =>
+    ExchangeRateService(ref.watch(dioProvider));
 
 /// Exchange-rate repository. The constructor subscribes to DAO changes
 /// and default-currency changes immediately — so simply reading this

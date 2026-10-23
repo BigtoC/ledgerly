@@ -15,6 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
+import '../../app/providers/app_update_provider.dart';
 import '../../app/providers/default_currency_provider.dart';
 import '../../app/providers/repository_providers.dart';
 import '../../core/constants.dart';
@@ -27,6 +28,7 @@ import 'widgets/manage_accounts_tile.dart';
 import 'widgets/default_currency_tile.dart';
 import 'widgets/language_selector.dart';
 import 'widgets/manage_categories_tile.dart';
+import 'widgets/new_version_badge.dart';
 import 'widgets/settings_section.dart';
 import 'widgets/splash_settings_section.dart';
 import 'widgets/theme_mode_selector.dart';
@@ -74,6 +76,7 @@ class _SettingsBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final packageInfo = ref.watch(packageInfoProvider);
+    final updateUrl = ref.watch(availableAppUpdateProvider);
     const EdgeInsets cardPadding = EdgeInsets.symmetric(
       horizontal: homePageCardHorizontalPadding - 16,
     );
@@ -126,19 +129,31 @@ class _SettingsBody extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.only(top: 24, bottom: 32),
             child: Center(
-              child: GestureDetector(
-                onTap: () => context.push('/settings/about'),
-                child: Text(
-                  packageInfo
-                          .whenData(
-                            (info) => 'v${info.version}+${info.buildNumber}',
-                          )
-                          .value ??
-                      '',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+              // Wrap, not Row: the badge drops to its own line at 2x text
+              // scale instead of overflowing.
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  GestureDetector(
+                    onTap: () => context.push('/settings/about'),
+                    child: Text(
+                      packageInfo
+                              .whenData(
+                                (info) =>
+                                    'v${info.version}+${info.buildNumber}',
+                              )
+                              .value ??
+                          '',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                   ),
-                ),
+                  if (updateUrl != null) NewVersionBadge(url: updateUrl),
+                ],
               ),
             ),
           ),

@@ -349,6 +349,10 @@ const Set<String> _expectedEnKeys = <String>{
   'analysisDrilldownShowMore',
   'analysisOriginalAmount',
   'analysisRatesStale',
+
+  // App update check (2026-10)
+  'settingsNewVersionBadge',
+  'settingsNewVersionOpenFailed',
 };
 
 Map<String, dynamic> _readArb(String fileName) {

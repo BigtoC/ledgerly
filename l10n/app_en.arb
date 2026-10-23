@@ -1037,5 +1037,9 @@
   "@chartsExcludedCurrencies": {
     "description": "Ribbon shown above a category/account chart when some currencies were dropped because their FX rate was missing. {codes} is a comma-separated currency-code list (e.g. 'EUR, JPY').",
     "placeholders": { "codes": { "type": "String" } }
-  }
+  },
+  "settingsNewVersionBadge": "new version",
+  "@settingsNewVersionBadge": { "description": "Pink badge to the right of the app version at the bottom of Settings when a newer GitHub release exists; tapping opens the APK download in the system browser." },
+  "settingsNewVersionOpenFailed": "Could not open the download link",
+  "@settingsNewVersionOpenFailed": { "description": "SnackBar shown when the system browser cannot open the update download URL." }
 }

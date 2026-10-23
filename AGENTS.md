@@ -166,6 +166,8 @@ l10n codegen is configured in `l10n.yaml`; generated output lands in `lib/l10n/`
 
 ## Testing
 
+Always use the `superpowers:test-driven-development` skill when writing code: write a failing test, watch it fail, then write the minimal code that makes it pass.
+
 See [`docs/architecture/testing.md`](docs/architecture/testing.md) for the layer layout, canonical harness (`test/support/test_app.dart`), and per-slice coverage map. The non-obvious rule when writing new tests: any Drift-backed setup or direct repository write that happens **before the first `pump`** must run inside `tester.runAsync(...)` — see `test/widget/smoke_test.dart` and `test/integration/bootstrap_to_home_test.dart`.
 
 ## Security and agent hints

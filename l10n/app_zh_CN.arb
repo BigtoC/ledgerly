@@ -312,5 +312,7 @@
   "chartsPieChart": "饼图",
   "chartsBarChart": "条形图",
   "chartsExcludedCurrencies": "已排除：{codes} — 汇率尚未就绪",
-  "@chartsExcludedCurrencies": { "placeholders": { "codes": { "type": "String" } } }
+  "@chartsExcludedCurrencies": { "placeholders": { "codes": { "type": "String" } } },
+  "settingsNewVersionBadge": "新版本",
+  "settingsNewVersionOpenFailed": "无法打开下载链接"
 }

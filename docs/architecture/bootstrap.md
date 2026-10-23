@@ -11,7 +11,7 @@
 5. **Build `ProviderScope`** with `appDatabaseProvider` overridden (the provider is injected via override rather than constructed inside the provider)
 6. `runApp`
 
-After the first frame, `App` schedules `RecurringGenerationUseCase.execute()` from the first-frame callback; failures are swallowed so startup is not blocked. `lib/app/app.dart` also eagerly reads `exchangeRateRepositoryProvider` so DAO / default-currency listeners start on first build.
+After the first frame, `App` schedules `RecurringGenerationUseCase.execute()` from the first-frame callback; failures are swallowed so startup is not blocked. `lib/app/app.dart` also eagerly reads `exchangeRateRepositoryProvider` so DAO / default-currency listeners start on first build. The same first-frame callback then calls `availableAppUpdateProvider.notifier.checkAfter(exchangeRateRepository.startupRefresh)`: once the startup FX refresh settles it makes one GitHub `releases/latest` GET per launch, only on Android ABIs, without blocking the frame, and logs only the exception type on failure.
 
 ## Splash redirect
 

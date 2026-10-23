@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../providers/app_update_provider.dart';
 
 /// Adaptive navigation shell. Renders a [NavigationBar] below 600dp and a
 /// [NavigationRail] at 600dp and above. The breakpoint is enforced here at
@@ -40,7 +42,7 @@ class AdaptiveShell extends StatelessWidget {
                       label: Text(l10n.navAnalysis),
                     ),
                     NavigationRailDestination(
-                      icon: const Icon(Icons.settings),
+                      icon: const _SettingsNavIcon(),
                       label: Text(l10n.navSettings),
                     ),
                   ],
@@ -66,13 +68,39 @@ class AdaptiveShell extends StatelessWidget {
                 label: l10n.navAnalysis,
               ),
               NavigationDestination(
-                icon: const Icon(Icons.settings),
+                icon: const _SettingsNavIcon(),
                 label: l10n.navSettings,
               ),
             ],
           ),
         );
       },
+    );
+  }
+}
+
+/// Settings destination icon with a small primary-color dot when a newer
+/// release is available. Only this icon rebuilds when the update appears.
+class _SettingsNavIcon extends ConsumerWidget {
+  const _SettingsNavIcon();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hasUpdate = ref.watch(
+      availableAppUpdateProvider.select((url) => url != null),
+    );
+    // No label, so the badge renders as a small dot at the top end. The dot
+    // is visual only, so screen readers get the badge text instead.
+    return Semantics(
+      label: hasUpdate
+          ? AppLocalizations.of(context).settingsNewVersionBadge
+          : null,
+      child: Badge(
+        key: const ValueKey('settingsUpdateDot'),
+        isLabelVisible: hasUpdate,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        child: const Icon(Icons.settings),
+      ),
     );
   }
 }
