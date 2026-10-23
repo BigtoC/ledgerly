@@ -11,6 +11,8 @@
 // and zero-padding the fractional part to `fractionalDigitsEntered`
 // characters.
 
+import 'amount_formula.dart';
+
 /// The four arithmetic operators supported by the calculator keypad.
 enum CalcOperator { add, subtract, multiply, divide }
 
@@ -33,6 +35,11 @@ enum CalcOperator { add, subtract, multiply, divide }
 /// - [rightOperand] holds the right-hand side of an in-progress expression.
 /// - [hasCurrentInput] is true when the user has typed at least one digit
 ///   into the current operand slot.
+/// - [formulaOperands] / [formulaOperators] record the expression as typed
+///   so it can be stored and reloaded (see `amount_formula.dart`). While
+///   evaluating they hold the operands before the current one, each
+///   followed by its operator; while showing a result they hold the whole
+///   expression. Both are empty otherwise.
 class KeypadState {
   const KeypadState({
     required this.amountMinorUnits,
@@ -44,6 +51,8 @@ class KeypadState {
     this.showingResult = false,
     this.rightOperand,
     this.hasCurrentInput = false,
+    this.formulaOperands = const [],
+    this.formulaOperators = const [],
   });
 
   /// Empty state — used as the keypad's starting point and by `clear`.
@@ -56,7 +65,9 @@ class KeypadState {
       isEvaluating = false,
       showingResult = false,
       rightOperand = null,
-      hasCurrentInput = false;
+      hasCurrentInput = false,
+      formulaOperands = const [],
+      formulaOperators = const [];
 
   /// Reconstructs a keypad from a stored amount so backspace on a
   /// hydrated edit/duplicate value walks back through the visible digits
@@ -88,6 +99,42 @@ class KeypadState {
     );
   }
 
+  /// Rebuilds the keypad from a stored formula as if the user had typed it
+  /// and pressed `=`: the result is recalculated left to right with the
+  /// same arithmetic as the keys, and backspace walks back into it.
+  factory KeypadState.fromFormula(
+    ParsedFormula formula, {
+    required int decimals,
+  }) {
+    final operands = formula.operands;
+    final operators = formula.operators;
+    assert(operators.isNotEmpty && operators.length == operands.length - 1);
+    final left = _fold(
+      operands.sublist(0, operands.length - 1),
+      operators.sublist(0, operators.length - 1),
+      decimals: decimals,
+    );
+    final right = operands.last.amountMinorUnits;
+    return KeypadState(
+      amountMinorUnits: _nonNegative(
+        _evaluate(
+          leftOperand: left,
+          rightOperand: right,
+          operator: operators.last,
+          decimals: decimals,
+        ),
+      ),
+      fractionalDigitsEntered: 0,
+      isFractionalMode: false,
+      leftOperand: left,
+      operator: operators.last,
+      showingResult: true,
+      rightOperand: right,
+      formulaOperands: List.unmodifiable(operands),
+      formulaOperators: List.unmodifiable(operators),
+    );
+  }
+
   final int amountMinorUnits;
   final int fractionalDigitsEntered;
   final bool isFractionalMode;
@@ -113,6 +160,9 @@ class KeypadState {
   /// operand slot (used to distinguish "0 entered" from "nothing entered").
   final bool hasCurrentInput;
 
+  final List<FormulaOperand> formulaOperands;
+  final List<CalcOperator> formulaOperators;
+
   // ---------------------------------------------------------------------------
   // Derived getters
   // ---------------------------------------------------------------------------
@@ -130,6 +180,76 @@ class KeypadState {
   /// True when there is either a calculator expression or user-typed input
   /// to display.
   bool get hasVisibleInput => hasExpression || hasCurrentInput;
+
+  /// The current operand as typed.
+  FormulaOperand get _currentOperand => (
+    amountMinorUnits: amountMinorUnits,
+    fractionalDigitsEntered: fractionalDigitsEntered,
+    isFractionalMode: isFractionalMode,
+  );
+
+  /// The expression that produces the amount `=` would show, in the stored
+  /// formula format (e.g. `3.5+10.5+11+3`). A dangling operator is left
+  /// out. Null when there is no operator to record.
+  String? formula({required int decimals}) {
+    final List<FormulaOperand> operands;
+    final List<CalcOperator> operators;
+    if (isEvaluating && hasCurrentInput) {
+      operands = [...formulaOperands, _currentOperand];
+      operators = formulaOperators;
+    } else if (isEvaluating && formulaOperators.isNotEmpty) {
+      operands = formulaOperands;
+      operators = formulaOperators.sublist(0, formulaOperators.length - 1);
+    } else if (showingResult) {
+      operands = formulaOperands;
+      operators = formulaOperators;
+    } else {
+      return null;
+    }
+    if (operators.isEmpty || operands.length != operators.length + 1) {
+      return null;
+    }
+    return encodeAmountFormula(
+      operands: operands,
+      operators: operators,
+      decimals: decimals,
+    );
+  }
+
+  /// Makes the last of [operands] the operand being typed again, with the
+  /// rest of the expression ([operators] has one fewer entry) committed
+  /// before it.
+  static KeypadState _reopen(
+    List<FormulaOperand> operands,
+    List<CalcOperator> operators, {
+    required int decimals,
+  }) {
+    final current = operands.last;
+    final committed = operands.sublist(0, operands.length - 1);
+    if (committed.isEmpty) {
+      return KeypadState(
+        amountMinorUnits: current.amountMinorUnits,
+        fractionalDigitsEntered: current.fractionalDigitsEntered,
+        isFractionalMode: current.isFractionalMode,
+        hasCurrentInput: true,
+      );
+    }
+    return KeypadState(
+      amountMinorUnits: current.amountMinorUnits,
+      fractionalDigitsEntered: current.fractionalDigitsEntered,
+      isFractionalMode: current.isFractionalMode,
+      leftOperand: _fold(
+        committed,
+        operators.sublist(0, operators.length - 1),
+        decimals: decimals,
+      ),
+      operator: operators.last,
+      isEvaluating: true,
+      hasCurrentInput: true,
+      formulaOperands: committed,
+      formulaOperators: operators,
+    );
+  }
 
   // ---------------------------------------------------------------------------
   // Mutators
@@ -221,7 +341,30 @@ class KeypadState {
   ///   entered, removes the last digit while preserving the expression
   ///   (leftOperand + operator). [hasCurrentInput] is set to false if
   ///   the right operand returns to 0.
+  /// - When a formula is recorded, backspace on a result or on a dangling
+  ///   operator reopens the previous operand for editing instead.
   KeypadState pop({required int decimals}) {
+    if (showingResult &&
+        formulaOperators.isNotEmpty &&
+        formulaOperands.length == formulaOperators.length + 1) {
+      return _reopen(
+        formulaOperands,
+        formulaOperators,
+        decimals: decimals,
+      ).pop(decimals: decimals);
+    }
+
+    if (isEvaluating &&
+        !hasCurrentInput &&
+        formulaOperands.isNotEmpty &&
+        formulaOperands.length == formulaOperators.length) {
+      return _reopen(
+        formulaOperands,
+        formulaOperators.sublist(0, formulaOperators.length - 1),
+        decimals: decimals,
+      );
+    }
+
     if (showingResult) {
       // Convert the displayed result to a plain editable state, then
       // backspace it. `fromAmount` keeps a fractional result in fractional
@@ -305,6 +448,8 @@ class KeypadState {
       showingResult: false,
       rightOperand: null,
       hasCurrentInput: hasCurrentInput,
+      formulaOperands: isEvaluating ? formulaOperands : const [],
+      formulaOperators: isEvaluating ? formulaOperators : const [],
     );
   }
 
@@ -338,6 +483,13 @@ class KeypadState {
           showingResult: false,
           rightOperand: null,
           hasCurrentInput: false,
+          formulaOperands: formulaOperands,
+          formulaOperators: formulaOperators.isEmpty
+              ? const []
+              : [
+                  ...formulaOperators.sublist(0, formulaOperators.length - 1),
+                  op,
+                ],
         );
       }
 
@@ -356,9 +508,35 @@ class KeypadState {
         showingResult: false,
         rightOperand: null,
         hasCurrentInput: false,
+        formulaOperands: [...formulaOperands, _currentOperand],
+        formulaOperators: [...formulaOperators, op],
       );
     }
 
+    // After a result, the formula behind it (if any) continues from its
+    // unclamped running total, so the keys and the replayed formula agree
+    // even when the shown result was clamped at zero. A result without a
+    // formula becomes the first operand.
+    if (showingResult && formulaOperators.isNotEmpty) {
+      return KeypadState(
+        amountMinorUnits: 0,
+        fractionalDigitsEntered: 0,
+        isFractionalMode: false,
+        leftOperand: _fold(
+          formulaOperands,
+          formulaOperators,
+          decimals: decimals,
+        ),
+        operator: op,
+        isEvaluating: true,
+        hasCurrentInput: false,
+        formulaOperands: formulaOperands,
+        formulaOperators: [...formulaOperators, op],
+      );
+    }
+    final firstOperand = showingResult
+        ? KeypadState.fromAmount(amountMinorUnits, decimals: decimals)
+        : this;
     return KeypadState(
       amountMinorUnits: 0,
       fractionalDigitsEntered: 0,
@@ -369,6 +547,8 @@ class KeypadState {
       showingResult: false,
       rightOperand: null,
       hasCurrentInput: false,
+      formulaOperands: [firstOperand._currentOperand],
+      formulaOperators: [op],
     );
   }
 
@@ -386,20 +566,27 @@ class KeypadState {
     if (!isEvaluating || leftOperand == null || operator == null) return this;
 
     if (!hasCurrentInput) {
+      final operators = formulaOperators.isEmpty
+          ? const <CalcOperator>[]
+          : formulaOperators.sublist(0, formulaOperators.length - 1);
       return KeypadState(
-        amountMinorUnits: leftOperand!,
+        amountMinorUnits: _nonNegative(leftOperand!),
         fractionalDigitsEntered: 0,
         isFractionalMode: false,
         showingResult: true,
+        formulaOperands: operators.isEmpty ? const [] : formulaOperands,
+        formulaOperators: operators,
       );
     }
 
     return KeypadState(
-      amountMinorUnits: _evaluate(
-        leftOperand: leftOperand!,
-        rightOperand: amountMinorUnits,
-        operator: operator!,
-        decimals: decimals,
+      amountMinorUnits: _nonNegative(
+        _evaluate(
+          leftOperand: leftOperand!,
+          rightOperand: amountMinorUnits,
+          operator: operator!,
+          decimals: decimals,
+        ),
       ),
       fractionalDigitsEntered: 0,
       isFractionalMode: false,
@@ -409,6 +596,8 @@ class KeypadState {
       showingResult: true,
       rightOperand: amountMinorUnits,
       hasCurrentInput: false,
+      formulaOperands: [...formulaOperands, _currentOperand],
+      formulaOperators: formulaOperators,
     );
   }
 
@@ -427,7 +616,9 @@ class KeypadState {
         other.isEvaluating == isEvaluating &&
         other.showingResult == showingResult &&
         other.rightOperand == rightOperand &&
-        other.hasCurrentInput == hasCurrentInput;
+        other.hasCurrentInput == hasCurrentInput &&
+        _listEquals(other.formulaOperands, formulaOperands) &&
+        _listEquals(other.formulaOperators, formulaOperators);
   }
 
   @override
@@ -441,6 +632,8 @@ class KeypadState {
     showingResult,
     rightOperand,
     hasCurrentInput,
+    Object.hashAll(formulaOperands),
+    Object.hashAll(formulaOperators),
   );
 
   @override
@@ -453,7 +646,36 @@ class KeypadState {
       'isEvaluating: $isEvaluating, '
       'showingResult: $showingResult, '
       'rightOperand: $rightOperand, '
-      'hasCurrentInput: $hasCurrentInput)';
+      'hasCurrentInput: $hasCurrentInput, '
+      'formulaOperands: $formulaOperands, '
+      'formulaOperators: $formulaOperators)';
+}
+
+bool _listEquals<T>(List<T> a, List<T> b) {
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
+}
+
+/// Evaluates [operands] joined by [operators] strictly left to right, the
+/// same way chained operator presses do.
+int _fold(
+  List<FormulaOperand> operands,
+  List<CalcOperator> operators, {
+  required int decimals,
+}) {
+  var result = operands.first.amountMinorUnits;
+  for (var i = 0; i < operators.length; i++) {
+    result = _evaluate(
+      leftOperand: result,
+      rightOperand: operands[i + 1].amountMinorUnits,
+      operator: operators[i],
+      decimals: decimals,
+    );
+  }
+  return result;
 }
 
 int _pow10(int exponent) {
@@ -467,8 +689,9 @@ int _pow10(int exponent) {
 
 /// Evaluate [leftOperand] [operator] [rightOperand] in integer minor-unit
 /// arithmetic. Multiplication and division use [BigInt] to avoid overflow and
-/// apply half-up rounding at the [decimals] boundary. Subtraction underflow is
-/// clamped to zero (expenses can never be negative).
+/// round half away from zero at the [decimals] boundary. A subtotal may go
+/// negative (`5 - 10 + 20` is 15); only the finished result is clamped to
+/// zero, by [_nonNegative], because amounts can never be negative.
 int _evaluate({
   required int leftOperand,
   required int rightOperand,
@@ -478,7 +701,7 @@ int _evaluate({
   final unit = BigInt.from(_pow10(decimals));
   return switch (operator) {
     CalcOperator.add => leftOperand + rightOperand,
-    CalcOperator.subtract => (leftOperand - rightOperand).clamp(0, leftOperand),
+    CalcOperator.subtract => leftOperand - rightOperand,
     CalcOperator.multiply => _roundHalfUp(
       BigInt.from(leftOperand) * BigInt.from(rightOperand),
       unit,
@@ -493,19 +716,24 @@ int _evaluate({
   };
 }
 
-/// Integer division with half-up rounding: ⌊(numerator + denominator/2) /
-/// denominator⌋. Both arguments must be non-negative.
+/// Integer division rounding half away from zero:
+/// sign × ⌊(|numerator| + denominator/2) / denominator⌋. [denominator] must
+/// be positive; [numerator] may be negative (a negative subtotal).
 ///
-/// Clamps to [double.maxFinite] cast as int if the result overflows Dart's
+/// Clamps to ±[double.maxFinite] cast as int if the result overflows Dart's
 /// native int range (relevant for high-decimal currencies such as ETH).
 int _roundHalfUp(BigInt numerator, BigInt denominator) {
-  final adjusted = numerator + (denominator ~/ BigInt.from(2));
-  final result = adjusted ~/ denominator;
+  final adjusted = numerator.abs() + (denominator ~/ BigInt.from(2));
+  final magnitude = adjusted ~/ denominator;
+  final result = numerator.isNegative ? -magnitude : magnitude;
   // BigInt.isValidInt is true iff result fits in a Dart native int (63-bit
   // on 64-bit platforms, 32-bit on 32-bit platforms).
   return result.isValidInt
       ? result.toInt()
       : result.isNegative
-      ? 0
+      ? -double.maxFinite.toInt()
       : double.maxFinite.toInt();
 }
+
+/// A finished calculation is an amount, which can never be negative.
+int _nonNegative(int value) => value < 0 ? 0 : value;

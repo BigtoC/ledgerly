@@ -639,39 +639,44 @@ void main() {
       },
     );
 
-    test('K97b: pop on a fractional result drops one fractional digit', () {
+    test(
+      'K97b: pop on a result reopens the formula and edits its last operand',
+      () {
+        final s = const KeypadState.initial()
+            .push(1, decimals: 2)
+            .pushDecimal(decimals: 2)
+            .push(5, decimals: 2)
+            .pushOperator(CalcOperator.add, decimals: 2)
+            .push(2, decimals: 2)
+            .equals(decimals: 2); // 1.5 + 2 = 3.50
+
+        final result = s.pop(decimals: 2); // 1.5 +
+
+        expect(result.showingResult, isFalse);
+        expect(result.isEvaluating, isTrue);
+        expect(result.leftOperand, 150);
+        expect(result.operator, CalcOperator.add);
+        expect(result.amountMinorUnits, 0);
+        expect(result.hasCurrentInput, isFalse);
+      },
+    );
+
+    test('K93b: pop on a chained operator reopens the previous operand', () {
       final s = const KeypadState.initial()
           .push(1, decimals: 2)
           .pushDecimal(decimals: 2)
           .push(5, decimals: 2)
           .pushOperator(CalcOperator.add, decimals: 2)
           .push(2, decimals: 2)
-          .equals(decimals: 2); // 3.50
+          .pushOperator(CalcOperator.add, decimals: 2); // 1.5 + 2 +
 
-      final result = s.pop(decimals: 2);
+      final result = s.pop(decimals: 2); // 1.5 + 2
 
-      expect(result.amountMinorUnits, 350);
-      expect(result.isFractionalMode, isTrue);
-      expect(result.fractionalDigitsEntered, 1); // "3.5"
-      expect(result.showingResult, isFalse);
-    });
-
-    test('K93b: cancelling a chained fractional subtotal keeps its fraction visible', () {
-      final s = const KeypadState.initial()
-          .push(1, decimals: 2)
-          .pushDecimal(decimals: 2)
-          .push(5, decimals: 2)
-          .pushOperator(CalcOperator.add, decimals: 2)
-          .push(2, decimals: 2)
-          .pushOperator(CalcOperator.add, decimals: 2); // 3.50 +
-
-      final result = s.pop(decimals: 2);
-
-      expect(result.amountMinorUnits, 350);
-      expect(result.isFractionalMode, isTrue);
-      expect(result.fractionalDigitsEntered, 2); // "3.50"
-      expect(result.isEvaluating, isFalse);
-      expect(result.leftOperand, isNull);
+      expect(result.isEvaluating, isTrue);
+      expect(result.leftOperand, 150);
+      expect(result.operator, CalcOperator.add);
+      expect(result.amountMinorUnits, 200);
+      expect(result.hasCurrentInput, isTrue);
     });
 
     test('K98: pop on showingResult with zero result (e.g. div-by-zero) exits the result state', () {

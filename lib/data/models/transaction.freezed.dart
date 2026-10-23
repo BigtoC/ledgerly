@@ -24,7 +24,9 @@ mixin _$Transaction {
  int get categoryId;/// FK -> `accounts.id`.
  int get accountId;/// User-supplied transaction date.
  DateTime get date;/// Optional free text.
- String? get memo;/// Repository-populated at insert; immutable across updates (M3).
+ String? get memo;/// Keypad expression that produced [amountMinorUnits] (e.g.
+/// `3.5+10.5+11+3`), or null when the amount was typed directly.
+ String? get amountFormula;/// Repository-populated at insert; immutable across updates (M3).
  DateTime get createdAt;/// Repository-populated at insert; refreshed on every update (M3).
  DateTime get updatedAt;
 /// Create a copy of Transaction
@@ -38,20 +40,20 @@ $TransactionCopyWith<Transaction> get copyWith => _$TransactionCopyWithImpl<Tran
 @override
 bool operator ==(Object other) {
   final _this = this as Transaction;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Transaction&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.amountMinorUnits, _this.amountMinorUnits) || other.amountMinorUnits == _this.amountMinorUnits)&&(identical(other.currency, _this.currency) || other.currency == _this.currency)&&(identical(other.categoryId, _this.categoryId) || other.categoryId == _this.categoryId)&&(identical(other.accountId, _this.accountId) || other.accountId == _this.accountId)&&(identical(other.date, _this.date) || other.date == _this.date)&&(identical(other.memo, _this.memo) || other.memo == _this.memo)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.updatedAt, _this.updatedAt) || other.updatedAt == _this.updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Transaction&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.amountMinorUnits, _this.amountMinorUnits) || other.amountMinorUnits == _this.amountMinorUnits)&&(identical(other.currency, _this.currency) || other.currency == _this.currency)&&(identical(other.categoryId, _this.categoryId) || other.categoryId == _this.categoryId)&&(identical(other.accountId, _this.accountId) || other.accountId == _this.accountId)&&(identical(other.date, _this.date) || other.date == _this.date)&&(identical(other.memo, _this.memo) || other.memo == _this.memo)&&(identical(other.amountFormula, _this.amountFormula) || other.amountFormula == _this.amountFormula)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.updatedAt, _this.updatedAt) || other.updatedAt == _this.updatedAt));
 }
 
 
 @override
 int get hashCode {
   final _this = this as Transaction;
-  return Object.hash(runtimeType,_this.id,_this.amountMinorUnits,_this.currency,_this.categoryId,_this.accountId,_this.date,_this.memo,_this.createdAt,_this.updatedAt);
+  return Object.hash(runtimeType,_this.id,_this.amountMinorUnits,_this.currency,_this.categoryId,_this.accountId,_this.date,_this.memo,_this.amountFormula,_this.createdAt,_this.updatedAt);
 }
 
 @override
 String toString() {
   final _this = this as Transaction;
-  return 'Transaction(id: ${_this.id}, amountMinorUnits: ${_this.amountMinorUnits}, currency: ${_this.currency}, categoryId: ${_this.categoryId}, accountId: ${_this.accountId}, date: ${_this.date}, memo: ${_this.memo}, createdAt: ${_this.createdAt}, updatedAt: ${_this.updatedAt})';
+  return 'Transaction(id: ${_this.id}, amountMinorUnits: ${_this.amountMinorUnits}, currency: ${_this.currency}, categoryId: ${_this.categoryId}, accountId: ${_this.accountId}, date: ${_this.date}, memo: ${_this.memo}, amountFormula: ${_this.amountFormula}, createdAt: ${_this.createdAt}, updatedAt: ${_this.updatedAt})';
 }
 
 
@@ -62,7 +64,7 @@ abstract mixin class $TransactionCopyWith<$Res>  {
   factory $TransactionCopyWith(Transaction value, $Res Function(Transaction) _then) = _$TransactionCopyWithImpl;
 @useResult
 $Res call({
- int id, int amountMinorUnits, Currency currency, int categoryId, int accountId, DateTime date, String? memo, DateTime createdAt, DateTime updatedAt
+ int id, int amountMinorUnits, Currency currency, int categoryId, int accountId, DateTime date, String? memo, String? amountFormula, DateTime createdAt, DateTime updatedAt
 });
 
 
@@ -79,7 +81,7 @@ class _$TransactionCopyWithImpl<$Res>
 
 /// Create a copy of Transaction
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? amountMinorUnits = null,Object? currency = null,Object? categoryId = null,Object? accountId = null,Object? date = null,Object? memo = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? amountMinorUnits = null,Object? currency = null,Object? categoryId = null,Object? accountId = null,Object? date = null,Object? memo = freezed,Object? amountFormula = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
   return _then(Transaction(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,amountMinorUnits: null == amountMinorUnits ? _self.amountMinorUnits : amountMinorUnits // ignore: cast_nullable_to_non_nullable
@@ -88,6 +90,7 @@ as Currency,categoryId: null == categoryId ? _self.categoryId : categoryId // ig
 as int,accountId: null == accountId ? _self.accountId : accountId // ignore: cast_nullable_to_non_nullable
 as int,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
 as DateTime,memo: freezed == memo ? _self.memo : memo // ignore: cast_nullable_to_non_nullable
+as String?,amountFormula: freezed == amountFormula ? _self.amountFormula : amountFormula // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
@@ -184,10 +187,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  int amountMinorUnits,  Currency currency,  int categoryId,  int accountId,  DateTime date,  String? memo,  DateTime createdAt,  DateTime updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  int amountMinorUnits,  Currency currency,  int categoryId,  int accountId,  DateTime date,  String? memo,  String? amountFormula,  DateTime createdAt,  DateTime updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Transaction() when $default != null:
-return $default(_that.id,_that.amountMinorUnits,_that.currency,_that.categoryId,_that.accountId,_that.date,_that.memo,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.amountMinorUnits,_that.currency,_that.categoryId,_that.accountId,_that.date,_that.memo,_that.amountFormula,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -205,10 +208,10 @@ return $default(_that.id,_that.amountMinorUnits,_that.currency,_that.categoryId,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  int amountMinorUnits,  Currency currency,  int categoryId,  int accountId,  DateTime date,  String? memo,  DateTime createdAt,  DateTime updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  int amountMinorUnits,  Currency currency,  int categoryId,  int accountId,  DateTime date,  String? memo,  String? amountFormula,  DateTime createdAt,  DateTime updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _Transaction():
-return $default(_that.id,_that.amountMinorUnits,_that.currency,_that.categoryId,_that.accountId,_that.date,_that.memo,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.amountMinorUnits,_that.currency,_that.categoryId,_that.accountId,_that.date,_that.memo,_that.amountFormula,_that.createdAt,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -225,10 +228,10 @@ return $default(_that.id,_that.amountMinorUnits,_that.currency,_that.categoryId,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  int amountMinorUnits,  Currency currency,  int categoryId,  int accountId,  DateTime date,  String? memo,  DateTime createdAt,  DateTime updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  int amountMinorUnits,  Currency currency,  int categoryId,  int accountId,  DateTime date,  String? memo,  String? amountFormula,  DateTime createdAt,  DateTime updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Transaction() when $default != null:
-return $default(_that.id,_that.amountMinorUnits,_that.currency,_that.categoryId,_that.accountId,_that.date,_that.memo,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.amountMinorUnits,_that.currency,_that.categoryId,_that.accountId,_that.date,_that.memo,_that.amountFormula,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -240,7 +243,7 @@ return $default(_that.id,_that.amountMinorUnits,_that.currency,_that.categoryId,
 
 
 class _Transaction implements Transaction {
-  const _Transaction({required this.id, required this.amountMinorUnits, required this.currency, required this.categoryId, required this.accountId, required this.date, this.memo, required this.createdAt, required this.updatedAt});
+  const _Transaction({required this.id, required this.amountMinorUnits, required this.currency, required this.categoryId, required this.accountId, required this.date, this.memo, this.amountFormula, required this.createdAt, required this.updatedAt});
   
 
 @override final  int id;
@@ -259,6 +262,9 @@ class _Transaction implements Transaction {
 @override final  DateTime date;
 /// Optional free text.
 @override final  String? memo;
+/// Keypad expression that produced [amountMinorUnits] (e.g.
+/// `3.5+10.5+11+3`), or null when the amount was typed directly.
+@override final  String? amountFormula;
 /// Repository-populated at insert; immutable across updates (M3).
 @override final  DateTime createdAt;
 /// Repository-populated at insert; refreshed on every update (M3).
@@ -274,18 +280,18 @@ _$TransactionCopyWith<_Transaction> get copyWith => __$TransactionCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Transaction&&(identical(other.id, id) || other.id == id)&&(identical(other.amountMinorUnits, amountMinorUnits) || other.amountMinorUnits == amountMinorUnits)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.date, date) || other.date == date)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Transaction&&(identical(other.id, id) || other.id == id)&&(identical(other.amountMinorUnits, amountMinorUnits) || other.amountMinorUnits == amountMinorUnits)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.date, date) || other.date == date)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.amountFormula, amountFormula) || other.amountFormula == amountFormula)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,amountMinorUnits,currency,categoryId,accountId,date,memo,createdAt,updatedAt);
+    return Object.hash(runtimeType,id,amountMinorUnits,currency,categoryId,accountId,date,memo,amountFormula,createdAt,updatedAt);
 }
 
 @override
 String toString() {
-    return 'Transaction(id: $id, amountMinorUnits: $amountMinorUnits, currency: $currency, categoryId: $categoryId, accountId: $accountId, date: $date, memo: $memo, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'Transaction(id: $id, amountMinorUnits: $amountMinorUnits, currency: $currency, categoryId: $categoryId, accountId: $accountId, date: $date, memo: $memo, amountFormula: $amountFormula, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -296,7 +302,7 @@ abstract mixin class _$TransactionCopyWith<$Res> implements $TransactionCopyWith
   factory _$TransactionCopyWith(_Transaction value, $Res Function(_Transaction) _then) = __$TransactionCopyWithImpl;
 @override @useResult
 $Res call({
- int id, int amountMinorUnits, Currency currency, int categoryId, int accountId, DateTime date, String? memo, DateTime createdAt, DateTime updatedAt
+ int id, int amountMinorUnits, Currency currency, int categoryId, int accountId, DateTime date, String? memo, String? amountFormula, DateTime createdAt, DateTime updatedAt
 });
 
 
@@ -313,7 +319,7 @@ class __$TransactionCopyWithImpl<$Res>
 
 /// Create a copy of Transaction
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? amountMinorUnits = null,Object? currency = null,Object? categoryId = null,Object? accountId = null,Object? date = null,Object? memo = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? amountMinorUnits = null,Object? currency = null,Object? categoryId = null,Object? accountId = null,Object? date = null,Object? memo = freezed,Object? amountFormula = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
   return _then(_Transaction(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,amountMinorUnits: null == amountMinorUnits ? _self.amountMinorUnits : amountMinorUnits // ignore: cast_nullable_to_non_nullable
@@ -322,6 +328,7 @@ as Currency,categoryId: null == categoryId ? _self.categoryId : categoryId // ig
 as int,accountId: null == accountId ? _self.accountId : accountId // ignore: cast_nullable_to_non_nullable
 as int,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
 as DateTime,memo: freezed == memo ? _self.memo : memo // ignore: cast_nullable_to_non_nullable
+as String?,amountFormula: freezed == amountFormula ? _self.amountFormula : amountFormula // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,

@@ -24,15 +24,22 @@
 //     fixed-precision result (e.g. "17.00" for USD). A dangling operator
 //     finished with `=` ("12 +") has no right operand, so only the result
 //     shows and the history line is hidden.
+//   - When the keypad has recorded a formula, the history line shows it as
+//     typed instead ("3.5 + 10.5 + 11 +" while typing,
+//     "3.5 + 10.5 + 11 + 3 =" on the result), including one loaded from a
+//     saved transaction. Brackets show the left-to-right order where it
+//     differs from usual precedence ("(1 + 2) × 2 =").
 //   - When `onEquals` is set, an `=` button sits at the end of the history
 //     line, directly above the currency code. It shows for as long as the
 //     history line does and is enabled only while an expression is pending.
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/utils/money_formatter.dart';
 import '../../../data/models/currency.dart';
 import '../../../l10n/app_localizations.dart';
+import '../amount_formula.dart';
 import '../keypad_state.dart';
 
 class AmountDisplay extends StatelessWidget {
@@ -103,12 +110,30 @@ class AmountDisplay extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    expressionText,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: foreground.withValues(alpha: 0.6),
+                  // A long formula scrolls instead of being ellipsized, and
+                  // starts scrolled to its end so the operand being edited
+                  // stays visible. The minimum width keeps a short one
+                  // left-aligned with the amount below.
+                  child: LayoutBuilder(
+                    builder: (context, constraints) => SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      reverse: true,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minWidth: constraints.maxWidth,
+                        ),
+                        child: Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(
+                            expressionText,
+                            maxLines: 1,
+                            softWrap: false,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: foreground.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -194,6 +219,30 @@ class AmountDisplay extends StatelessWidget {
     final c = currency;
     if (c == null) return null;
 
+    final operands = keypad.formulaOperands;
+    final operators = keypad.formulaOperators;
+    if (keypad.isEvaluating &&
+        operands.isNotEmpty &&
+        operands.length == operators.length) {
+      return _formulaText(
+        operands,
+        operators,
+        decimals: c.decimals,
+        locale: locale,
+      );
+    }
+    if (keypad.showingResult &&
+        operators.isNotEmpty &&
+        operands.length == operators.length + 1) {
+      final text = _formulaText(
+        operands,
+        operators,
+        decimals: c.decimals,
+        locale: locale,
+      );
+      return '$text =';
+    }
+
     if (keypad.isEvaluating &&
         keypad.leftOperand != null &&
         keypad.operator != null) {
@@ -223,6 +272,42 @@ class AmountDisplay extends StatelessWidget {
     }
 
     return null;
+  }
+
+  /// The formula as typed, with display symbols and the same left-to-right
+  /// brackets as the stored form: the keys `1 + 2 × 2` read
+  /// "(1 + 2) × 2", the 6 they evaluate to, not 5.
+  String _formulaText(
+    List<FormulaOperand> operands,
+    List<CalcOperator> operators, {
+    required int decimals,
+    required String locale,
+  }) {
+    final format = NumberFormat.decimalPattern(locale);
+    return renderFormula(
+      operands: operands,
+      operators: operators,
+      operand: (o) => _localizedOperand(o, decimals: decimals, format: format),
+      operator: _operatorSymbol,
+      separator: ' ',
+    );
+  }
+
+  /// [operand] with the fractional digits as typed, but the whole part
+  /// grouped and the decimal separator taken from [format]'s locale, like
+  /// the result line below it ("1,234.5").
+  static String _localizedOperand(
+    FormulaOperand operand, {
+    required int decimals,
+    required NumberFormat format,
+  }) {
+    final text = encodeFormulaOperand(operand, decimals: decimals);
+    final dot = text.indexOf('.');
+    final whole = format.format(
+      int.parse(dot < 0 ? text : text.substring(0, dot)),
+    );
+    if (dot < 0) return whole;
+    return '$whole${format.symbols.DECIMAL_SEP}${text.substring(dot + 1)}';
   }
 
   String _operatorSymbol(CalcOperator op) => switch (op) {

@@ -34,6 +34,7 @@ import '_harness/generated/schema_v1.dart' as v1;
 import '_harness/generated/schema_v2.dart' as v2;
 import '_harness/generated/schema_v3.dart' as v3;
 import '_harness/generated/schema_v4.dart' as v4;
+import '_harness/generated/schema_v5.dart' as v5;
 
 /// Fixed-locale stub for the migration test. The locale-dependent unit
 /// tests live in `test/unit/seed/first_run_seed_test.dart`; here we only
@@ -52,7 +53,7 @@ void main() {
       // snapshot" mistake next time Phase 2 touches the file.
       final db = AppDatabase(NativeDatabase.memory());
       addTearDown(() async => db.close());
-      expect(db.schemaVersion, 5);
+      expect(db.schemaVersion, 6);
       // The drift_dev-generated helper should advance with the new snapshot.
       expect(GeneratedHelper.versions, contains(db.schemaVersion));
       expect(GeneratedHelper.versions.last, db.schemaVersion);
@@ -464,7 +465,68 @@ void main() {
         expect(fkResult.read<int>('foreign_keys'), 1);
       });
     });
+
+    group('v6 snapshot', () {
+      test(
+        'upgrades v5 DBs to v6, keeps transactions, adds null amount_formula',
+        () async {
+          final verifier = SchemaVerifier(GeneratedHelper());
+          final schema = await verifier.schemaAt(5);
+          final legacyDb = v5.DatabaseAtV5(schema.newConnection());
+          addTearDown(() async => legacyDb.close());
+
+          await legacyDb.customStatement(
+            'INSERT INTO currencies (code, decimals, symbol, name_l10n_key, '
+            'is_token, sort_order) VALUES (?, ?, ?, ?, 0, ?)',
+            <Object?>['USD', 2, r'$', 'currency.usd', 1],
+          );
+          await legacyDb.customStatement(
+            'INSERT INTO categories (l10n_key, icon, color, type, sort_order, '
+            'is_archived) VALUES (?, ?, ?, ?, ?, 0)',
+            <Object?>['category.food', 'restaurant', 0, 'expense', 1],
+          );
+          await legacyDb.customStatement(
+            'INSERT INTO account_types (l10n_key, icon, color, sort_order, '
+            'is_archived) VALUES (?, ?, ?, ?, 0)',
+            <Object?>['accountType.cash', 'wallet', 0, 1],
+          );
+          await legacyDb.customStatement(
+            'INSERT INTO accounts (name, account_type_id, currency, '
+            'opening_balance_minor_units, is_archived) '
+            'VALUES (?, 1, ?, 0, 0)',
+            <Object?>['Cash', 'USD'],
+          );
+          await legacyDb.customStatement(
+            'INSERT INTO transactions (amount_minor_units, currency, '
+            'category_id, account_id, memo, date, created_at, updated_at) '
+            'VALUES (?, ?, 1, 1, ?, 0, 0, 0)',
+            <Object?>[2800, 'USD', 'lunch'],
+          );
+          await legacyDb.close();
+
+          final db = AppDatabase(schema.newConnection());
+          addTearDown(() async => db.close());
+
+          await verifier.migrateAndValidate(db, db.schemaVersion);
+
+          final rows = await db.select(db.transactions).get();
+          expect(rows, hasLength(1));
+          expect(rows.single.amountMinorUnits, 2800);
+          expect(rows.single.memo, 'lunch');
+          expect(rows.single.amountFormula, isNull);
+        },
+      );
+
+      test('v6 upgrade on empty DB succeeds', () async {
+        final verifier = SchemaVerifier(GeneratedHelper());
+        final schema = await verifier.schemaAt(5);
+        final db = AppDatabase(schema.newConnection());
+        addTearDown(() async => db.close());
+
+        await verifier.migrateAndValidate(db, db.schemaVersion);
+      });
+    });
   });
 }
 
-const int dbVersionForOpenCheck = 5;
+const int dbVersionForOpenCheck = 6;

@@ -74,7 +74,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -106,6 +106,9 @@ class AppDatabase extends _$AppDatabase {
       if (from < 5) {
         await m.createTable(exchangeRates);
         await m.createIndex(idxExchangeRatesPair);
+      }
+      if (from < 6) {
+        await m.addColumn(transactions, transactions.amountFormula);
       }
     },
     beforeOpen: (details) async {
