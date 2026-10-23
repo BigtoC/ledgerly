@@ -103,7 +103,7 @@ Detailed agent-facing rules live under [`docs/architecture/`](docs/architecture/
 - [`ui-and-layout.md`](docs/architecture/ui-and-layout.md) — Required layout primitives, 600dp adaptive breakpoint, 2× text scale, reference live screens.
 - [`bootstrap.md`](docs/architecture/bootstrap.md) — First-run + bootstrap order, splash redirect, route table.
 - [`testing.md`](docs/architecture/testing.md) — Test organization by layer; repository/controller/golden/migration patterns; per-slice coverage map.
-- [`dependencies.md`](docs/architecture/dependencies.md) — `import_lint ^0.1.6` and base `app_zh.arb` pins.
+- [`dependencies.md`](docs/architecture/dependencies.md) — `import_lint ^0.1.6` and base `app_zh.arb` pins; Android Gradle / AGP / Kotlin toolchain.
 
 ## Commands and workflows
 
