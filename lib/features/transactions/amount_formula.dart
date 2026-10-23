@@ -6,6 +6,11 @@
 // amount loaded at full precision reads the same as one typed short;
 // operators are `+ - * /`; there are no spaces. Example: `3.5+10.5+11+3`.
 //
+// The keypad evaluates strictly left to right, so wherever × or ÷ follows
+// + or −, the expression so far is bracketed: the keys `1 + 2 × 2` are
+// stored as `(1+2)*2`, which any reader applying usual precedence also
+// evaluates to 6. The same rendering drives the history line on screen.
+//
 // A formula always has at least one operator. A plain amount is stored as
 // a null formula, never as a single operand.
 
@@ -50,45 +55,89 @@ String encodeFormulaOperand(FormulaOperand operand, {required int decimals}) {
   return fraction.isEmpty ? '$whole' : '$whole.$fraction';
 }
 
+/// Renders [operands] joined by [operators] left to right, bracketing the
+/// expression so far wherever × or ÷ follows + or −. When [operators] is
+/// as long as [operands], the text ends with that pending operator.
+/// [operand] and [operator] render the parts and [separator] goes around
+/// each operator, so storage and the history line share one rendering.
+String renderFormula({
+  required List<FormulaOperand> operands,
+  required List<CalcOperator> operators,
+  required String Function(FormulaOperand) operand,
+  required String Function(CalcOperator) operator,
+  String separator = '',
+}) {
+  assert(
+    operators.length == operands.length ||
+        operators.length == operands.length - 1,
+  );
+  var text = operand(operands.first);
+  var hasUnbracketedAddition = false;
+  for (var i = 0; i < operators.length; i++) {
+    final op = operators[i];
+    final isMultiplicative =
+        op == CalcOperator.multiply || op == CalcOperator.divide;
+    if (isMultiplicative && hasUnbracketedAddition) {
+      text = '($text)';
+      hasUnbracketedAddition = false;
+    } else if (!isMultiplicative) {
+      hasUnbracketedAddition = true;
+    }
+    text += '$separator${operator(op)}';
+    if (i + 1 < operands.length) {
+      text += '$separator${operand(operands[i + 1])}';
+    }
+  }
+  return text;
+}
+
+/// The stored form of a complete formula
+/// (`operators.length == operands.length - 1`).
 String encodeAmountFormula({
   required List<FormulaOperand> operands,
   required List<CalcOperator> operators,
   required int decimals,
 }) {
   assert(operators.length == operands.length - 1);
-  final buffer = StringBuffer(
-    encodeFormulaOperand(operands.first, decimals: decimals),
+  return renderFormula(
+    operands: operands,
+    operators: operators,
+    operand: (o) => encodeFormulaOperand(o, decimals: decimals),
+    operator: (op) => _operatorChars[op]!,
   );
-  for (var i = 0; i < operators.length; i++) {
-    buffer
-      ..write(_operatorChars[operators[i]])
-      ..write(encodeFormulaOperand(operands[i + 1], decimals: decimals));
-  }
-  return buffer.toString();
 }
 
 final _operandPattern = RegExp(r'^(\d+)(?:\.(\d+))?$');
 
 /// Parses a stored formula for a currency with [decimals]. Returns null
 /// when [formula] is malformed, has no operator, has more fractional digits
-/// than the currency allows, or overflows an int.
+/// than the currency allows, overflows an int, or is not exactly what
+/// [encodeAmountFormula] writes. The last check rejects brackets in any
+/// other place (`1+(2*2)`) and unbracketed mixed operators (`1+2*2`), whose
+/// meaning would differ from left-to-right evaluation.
 ParsedFormula? parseAmountFormula(String formula, {required int decimals}) {
+  // Brackets only ever restate left-to-right order, so parse without them
+  // and let the canonical check below verify where they were.
+  final flat = formula.replaceAll(RegExp(r'[()]'), '');
   final operands = <FormulaOperand>[];
   final operators = <CalcOperator>[];
   var start = 0;
-  for (var i = 0; i <= formula.length; i++) {
-    final op = i == formula.length ? null : _operatorFor(formula[i]);
-    if (i < formula.length && op == null) continue;
-    final operand = _parseOperand(
-      formula.substring(start, i),
-      decimals: decimals,
-    );
+  for (var i = 0; i <= flat.length; i++) {
+    final op = i == flat.length ? null : _operatorFor(flat[i]);
+    if (i < flat.length && op == null) continue;
+    final operand = _parseOperand(flat.substring(start, i), decimals: decimals);
     if (operand == null) return null;
     operands.add(operand);
     if (op != null) operators.add(op);
     start = i + 1;
   }
   if (operators.isEmpty) return null;
+  final canonical = encodeAmountFormula(
+    operands: operands,
+    operators: operators,
+    decimals: decimals,
+  );
+  if (canonical != formula) return null;
   return (operands: operands, operators: operators);
 }
 

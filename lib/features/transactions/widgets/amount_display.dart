@@ -223,12 +223,12 @@ class AmountDisplay extends StatelessWidget {
     if (keypad.isEvaluating &&
         operands.isNotEmpty &&
         operands.length == operators.length) {
-      return _formulaTerms(operands, operators, decimals: c.decimals);
+      return _formulaText(operands, operators, decimals: c.decimals);
     }
     if (keypad.showingResult &&
         operators.isNotEmpty &&
         operands.length == operators.length + 1) {
-      return '${_formulaTerms(operands, operators, decimals: c.decimals)} =';
+      return '${_formulaText(operands, operators, decimals: c.decimals)} =';
     }
 
     if (keypad.isEvaluating &&
@@ -262,38 +262,20 @@ class AmountDisplay extends StatelessWidget {
     return null;
   }
 
-  /// Joins [operands] as typed with the display symbols of the [operators]
-  /// between them, ending with a pending operator when [operators] is as
-  /// long as [operands].
-  ///
-  /// The keypad evaluates strictly left to right, so wherever × or ÷
-  /// follows a + or −, the expression so far is bracketed: the keys
-  /// `1 + 2 × 2` render as "(1 + 2) × 2", which reads as the 6 it
-  /// evaluates to rather than 5.
-  String _formulaTerms(
+  /// The formula as typed, with display symbols and the same left-to-right
+  /// brackets as the stored form: the keys `1 + 2 × 2` read
+  /// "(1 + 2) × 2", the 6 they evaluate to, not 5.
+  String _formulaText(
     List<FormulaOperand> operands,
     List<CalcOperator> operators, {
     required int decimals,
-  }) {
-    var text = encodeFormulaOperand(operands.first, decimals: decimals);
-    var hasUnbracketedAddition = false;
-    for (var i = 0; i < operators.length; i++) {
-      final op = operators[i];
-      final isMultiplicative =
-          op == CalcOperator.multiply || op == CalcOperator.divide;
-      if (isMultiplicative && hasUnbracketedAddition) {
-        text = '($text)';
-        hasUnbracketedAddition = false;
-      } else if (!isMultiplicative) {
-        hasUnbracketedAddition = true;
-      }
-      text += ' ${_operatorSymbol(op)}';
-      if (i + 1 < operands.length) {
-        text += ' ${encodeFormulaOperand(operands[i + 1], decimals: decimals)}';
-      }
-    }
-    return text;
-  }
+  }) => renderFormula(
+    operands: operands,
+    operators: operators,
+    operand: (o) => encodeFormulaOperand(o, decimals: decimals),
+    operator: _operatorSymbol,
+    separator: ' ',
+  );
 
   String _operatorSymbol(CalcOperator op) => switch (op) {
     CalcOperator.add => '+',

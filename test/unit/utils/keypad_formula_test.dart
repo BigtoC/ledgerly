@@ -69,6 +69,12 @@ void main() {
       expect(const KeypadState.initial().formula(decimals: _usd), isNull);
     });
 
+    test('mixed operators are recorded with left-to-right brackets', () {
+      expect(type('1+2*2').formula(decimals: _usd), '(1+2)*2');
+      expect(type('1+2=*2').formula(decimals: _usd), '(1+2)*2');
+      expect(finished(type('1+2*2')), 600);
+    });
+
     test('replacing a pending operator replaces it in the formula', () {
       expect(type('6+*2').formula(decimals: _usd), '6*2');
       expect(finished(type('6+*2')), 1200);
@@ -141,7 +147,7 @@ void main() {
     });
 
     test('evaluates left to right like the keys', () {
-      expect(load('2+3*4').amountMinorUnits, 2000);
+      expect(load('(2+3)*4').amountMinorUnits, 2000);
       expect(load('10/4').amountMinorUnits, 250);
       expect(load('1-5+6').amountMinorUnits, 200);
       expect(load('1-5+2').amountMinorUnits, 0);
@@ -218,7 +224,7 @@ void main() {
       expect(type('3-5=').amountMinorUnits, 0);
       // A dangling operator after a negative subtotal finishes at zero.
       expect(type('3-5+=').amountMinorUnits, 0);
-      expect(load('5-10*2').amountMinorUnits, 0);
+      expect(load('(5-10)*2').amountMinorUnits, 0);
     });
 
     test('continuing after a clamped result resumes the formula', () {

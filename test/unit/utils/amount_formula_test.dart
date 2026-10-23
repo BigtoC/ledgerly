@@ -138,7 +138,7 @@ void main() {
           ],
           decimals: 2,
         ),
-        '1+1-1*1/1',
+        '(1+1-1)*1/1',
       );
     });
   });
@@ -184,7 +184,7 @@ void main() {
     });
 
     test('parses every operator', () {
-      final parsed = parseAmountFormula('8-2*3/4', decimals: 0)!;
+      final parsed = parseAmountFormula('(8-2)*3/4', decimals: 0)!;
       expect(parsed.operators, const [
         CalcOperator.subtract,
         CalcOperator.multiply,
@@ -214,6 +214,64 @@ void main() {
 
     test('rejects a decimal point for zero-decimal currencies', () {
       expect(parseAmountFormula('1.5+2', decimals: 0), isNull);
+    });
+  });
+
+  group('left-to-right brackets', () {
+    const one = (
+      amountMinorUnits: 100,
+      fractionalDigitsEntered: 0,
+      isFractionalMode: false,
+    );
+    String encode(List<CalcOperator> operators) => encodeAmountFormula(
+      operands: List.filled(operators.length + 1, one),
+      operators: operators,
+      decimals: 2,
+    );
+    const add = CalcOperator.add;
+    const sub = CalcOperator.subtract;
+    const mul = CalcOperator.multiply;
+    const div = CalcOperator.divide;
+
+    test('bracket the sum before a product', () {
+      expect(encode(const [add, mul]), '(1+1)*1');
+      expect(encode(const [add, mul, add, div]), '((1+1)*1+1)/1');
+      expect(encode(const [sub, div]), '(1-1)/1');
+    });
+
+    test('no brackets where usual precedence already agrees', () {
+      expect(encode(const [mul, add]), '1*1+1');
+      expect(encode(const [mul, div, mul]), '1*1/1*1');
+      expect(encode(const [add, sub, add]), '1+1-1+1');
+    });
+
+    test('bracketed formulas parse back', () {
+      for (final formula in ['(1+2)*2', '((1+2)*2+3)*4', '(9-3)/2+1']) {
+        final parsed = parseAmountFormula(formula, decimals: 2)!;
+        expect(
+          encodeAmountFormula(
+            operands: parsed.operands,
+            operators: parsed.operators,
+            decimals: 2,
+          ),
+          formula,
+        );
+      }
+    });
+
+    test('anything but the canonical form is rejected', () {
+      for (final bad in [
+        '1+2*2', // would read as 5 under usual precedence
+        '1+(2*2)',
+        '((1+2))*2',
+        '(1+2*2',
+        '1*2)',
+        '()1+2',
+        '3.50+1', // canonical form drops trailing zeros
+        '03+1',
+      ]) {
+        expect(parseAmountFormula(bad, decimals: 2), isNull, reason: bad);
+      }
     });
   });
 }

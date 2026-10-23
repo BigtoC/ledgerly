@@ -262,7 +262,7 @@ void main() {
       final saved = await controller.save();
 
       expect(saved!.amountMinorUnits, 5600);
-      expect(saved.amountFormula, '3.5+10.5+11+3*2');
+      expect(saved.amountFormula, '(3.5+10.5+11+3)*2');
     });
 
     test(
