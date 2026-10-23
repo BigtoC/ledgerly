@@ -187,31 +187,6 @@ Three Flutter-specific skills are installed at `.agents/skills/` and symlinked i
 
 When the user asks to structure a new feature, invoke `flutter-architecting-apps`; when building or refining UI, invoke `flutter-building-layouts`; when adding motion or transitions, invoke `flutter-animating-apps`.
 
-## Work Mode
-> Based on the complexity of the tasks, choose the appropriate work mode
-
-### Direct Execution Model (Default)
-
-Trigger: bug fixes, small features, <30 line changes
-Behavior: write code directly, do not invoke any skills
-
-### Full Development Mode
-
-Trigger: user explicitly says "full flow" or uses one of the `/full` command.
-Behavior: follow this sequence strictly:
-1. `/superpowers:brainstorming` — requirements exploration
-2. `/ce:plan` — technical plan, auto-search `docs/solutions/`
-3. `/superpowers:test-driven-development` — TDD implementation
-4. `/ce:review` — multi-agent code review.
-5. `/ce:compound` — knowledge consolidation
-
-### Coding Mode
-
-Trigger: User explicitly says "write code".
-1. `/superpowers:test-driven-development` — TDD implementation
-2. `/ce:review` — multi-agent code review.
-3. `/ce:compound` — knowledge consolidation
-
 ## Knowledge Consolidation
 
 After resolving a non-trivial problem, run `/ce:compound` to persist the solution for future reference.
