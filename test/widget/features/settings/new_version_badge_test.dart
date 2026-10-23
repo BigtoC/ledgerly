@@ -5,7 +5,8 @@
 //   - Tapping launches the exact APK URL in the system browser.
 //   - A failed launch shows the localized SnackBar, whether the launcher
 //     returns false or throws (url_launcher_android throws on failure).
-//   - The label meets WCAG AA contrast on the pink fill in both themes.
+//   - The label meets WCAG AA contrast on the primary fill in both app
+//     themes and with a dark primary.
 //   - The badge is a labeled button with a 48dp tap target.
 
 import 'dart:math';
@@ -95,7 +96,20 @@ void main() {
     expect(find.text('Could not open the download link'), findsOneWidget);
   });
 
-  for (final (name, theme) in [('light', lightTheme), ('dark', darkTheme)]) {
+  for (final (name, theme) in [
+    ('light', lightTheme),
+    ('dark', darkTheme),
+    // Guards against hardcoding the label color to suit pinkAccent.
+    (
+      'dark-primary',
+      ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.indigo,
+          primary: const Color(0xFF1A237E),
+        ),
+      ),
+    ),
+  ]) {
     testWidgets('NVB05: label meets WCAG AA contrast in $name theme', (
       tester,
     ) async {
