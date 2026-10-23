@@ -14,7 +14,7 @@ Future<String?> showMemoPickerSheet(BuildContext context, int categoryId) {
     isScrollControlled: true,
     useSafeArea: true,
     builder: (ctx) => FractionallySizedBox(
-      heightFactor: 0.6,
+      heightFactor: 0.88,
       child: _MemoPickerSheet(categoryId: categoryId),
     ),
   );
@@ -43,8 +43,12 @@ class _MemoPickerSheet extends ConsumerWidget {
             ),
           ),
           Expanded(
-            child: ListView.builder(
+            child: ListView.separated(
               itemCount: memos.length,
+              separatorBuilder: (context, index) => const FractionallySizedBox(
+                widthFactor: 0.88,
+                child: Divider(height: 1),
+              ),
               itemBuilder: (context, index) {
                 final memo = memos[index];
                 return ListTile(

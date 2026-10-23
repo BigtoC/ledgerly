@@ -135,6 +135,38 @@ void main() {
       expect(find.widgetWithText(ActionChip, 'More'), findsNothing);
     });
 
+    testWidgets('sheet opens at 88% height with a divider between memos', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _mount(overflow, allMemos: const ['A', 'B', 'C']),
+      );
+      await tester.pump();
+
+      await tester.ensureVisible(find.widgetWithText(ActionChip, 'More'));
+      await tester.tap(find.widgetWithText(ActionChip, 'More'));
+      await tester.pumpAndSettle();
+
+      final sheet = find.byType(BottomSheet);
+      final box = tester.widget<FractionallySizedBox>(
+        find
+            .descendant(of: sheet, matching: find.byType(FractionallySizedBox))
+            .first,
+      );
+      expect(box.heightFactor, 0.88);
+      final dividers = find.descendant(
+        of: sheet,
+        matching: find.byType(Divider),
+      );
+      expect(dividers, findsNWidgets(2));
+      final listRect = tester.getRect(
+        find.descendant(of: sheet, matching: find.byType(ListView)),
+      );
+      final dividerRect = tester.getRect(dividers.first);
+      expect(dividerRect.width, moreOrLessEquals(listRect.width * 0.88));
+      expect(dividerRect.center.dx, moreOrLessEquals(listRect.center.dx));
+    });
+
     testWidgets('More opens a sheet listing every memo; a pick fills it', (
       tester,
     ) async {
