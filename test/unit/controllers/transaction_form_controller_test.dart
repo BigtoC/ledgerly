@@ -1091,7 +1091,7 @@ void main() {
       final data =
           c.read(transactionFormControllerProvider) as TransactionFormData;
       expect(data.displayCurrency?.code, 'USD');
-      expect(data.keypad.leftOperand, 100);
+      expect(data.keypad.leftOperand(decimals: 2), 100);
       expect(data.keypad.operator, CalcOperator.add);
     });
 
@@ -1135,7 +1135,7 @@ void main() {
       final data =
           c.read(transactionFormControllerProvider) as TransactionFormData;
       expect(data.displayCurrency?.code, 'USD');
-      expect(data.keypad.leftOperand, 100);
+      expect(data.keypad.leftOperand(decimals: 2), 100);
       expect(data.keypad.operator, CalcOperator.add);
     });
 
@@ -1172,7 +1172,7 @@ void main() {
       expect(data.displayCurrency?.code, 'USD');
       expect(data.selectedAccount?.id, _accountUsd2.id);
       // Expression preserved because currency did not change
-      expect(data.keypad.leftOperand, 100);
+      expect(data.keypad.leftOperand(decimals: 2), 100);
       expect(data.keypad.operator, CalcOperator.add);
     });
   });
@@ -1192,7 +1192,7 @@ void main() {
 
         final data =
             c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(data.keypad.leftOperand, 1200);
+        expect(data.keypad.leftOperand(decimals: 2), 1200);
         expect(data.keypad.operator, CalcOperator.add);
         expect(data.keypad.isEvaluating, isTrue);
         expect(data.keypad.amountMinorUnits, 0);
@@ -1213,7 +1213,7 @@ void main() {
 
       final data =
           c.read(transactionFormControllerProvider) as TransactionFormData;
-      expect(data.keypad.leftOperand, 1700);
+      expect(data.keypad.leftOperand(decimals: 2), 1700);
       expect(data.keypad.isEvaluating, isTrue);
       expect(data.keypad.showingResult, isFalse);
       expect(data.amountMinorUnits, 1700);
@@ -1261,7 +1261,7 @@ void main() {
 
       final data =
           c.read(transactionFormControllerProvider) as TransactionFormData;
-      expect(data.keypad.leftOperand, 100);
+      expect(data.keypad.leftOperand(decimals: 2), 100);
       expect(data.keypad.operator, CalcOperator.subtract);
       expect(data.keypad.amountMinorUnits, 0);
     });
@@ -1303,7 +1303,7 @@ void main() {
 
       final data =
           c.read(transactionFormControllerProvider) as TransactionFormData;
-      expect(data.keypad.leftOperand, 1700);
+      expect(data.keypad.leftOperand(decimals: 2), 1700);
       expect(data.keypad.operator, CalcOperator.subtract);
       expect(data.keypad.isEvaluating, isTrue);
       expect(data.keypad.amountMinorUnits, 0);

@@ -41,7 +41,7 @@ const _operatorChars = {
 /// Renders [operand] with the fractional digits the user typed, minus
 /// trailing zeros. A dangling decimal point ("3.") is dropped.
 String encodeFormulaOperand(FormulaOperand operand, {required int decimals}) {
-  final unit = _pow10(decimals);
+  final unit = pow10(decimals);
   final whole = operand.amountMinorUnits ~/ unit;
   final digits = operand.fractionalDigitsEntered;
   if (!operand.isFractionalMode || digits == 0 || decimals == 0) {
@@ -153,7 +153,7 @@ FormulaOperand? _parseOperand(String text, {required int decimals}) {
   if (match == null) return null;
   final fraction = match.group(2) ?? '';
   if (fraction.length > decimals) return null;
-  final unit = BigInt.from(_pow10(decimals));
+  final unit = BigInt.from(pow10(decimals));
   final minorUnits =
       BigInt.parse(match.group(1)!) * unit +
       (fraction.isEmpty
@@ -165,12 +165,4 @@ FormulaOperand? _parseOperand(String text, {required int decimals}) {
     fractionalDigitsEntered: fraction.length,
     isFractionalMode: fraction.isNotEmpty,
   );
-}
-
-int _pow10(int exponent) {
-  var result = 1;
-  for (var i = 0; i < exponent; i++) {
-    result *= 10;
-  }
-  return result;
 }

@@ -60,6 +60,10 @@ void main() {
       final done = type('1+2+=');
       expect(done.amountMinorUnits, 300);
       expect(done.formula(decimals: _usd), '1+2');
+      // The running total, operator and last operand describe that formula.
+      expect(done.leftOperand(decimals: _usd), 100);
+      expect(done.operator, CalcOperator.add);
+      expect(done.rightOperand, 200);
     });
 
     test('a single operand is not a formula', () {
@@ -108,7 +112,7 @@ void main() {
     test('past a dangling operator reopens the previous operand', () {
       final s = type('1.5+2+<');
       expect(s.isEvaluating, isTrue);
-      expect(s.leftOperand, 150);
+      expect(s.leftOperand(decimals: 2), 150);
       expect(s.operator, CalcOperator.add);
       expect(s.amountMinorUnits, 200);
       expect(s.hasCurrentInput, isTrue);
