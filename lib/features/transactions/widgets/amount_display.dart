@@ -32,8 +32,10 @@
 //   - When `onEquals` is set, an `=` button sits at the end of the history
 //     line, directly above the currency code. It shows for as long as the
 //     history line does and is enabled only while an expression is pending.
+//     Tapping it fires a medium haptic, a step up from the keypad's light one.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/utils/money_formatter.dart';
@@ -148,7 +150,12 @@ class AmountDisplay extends StatelessWidget {
                         theme.textTheme.titleLarge,
                       ),
                     ),
-                    onPressed: keypad.isEvaluating ? onEquals : null,
+                    onPressed: keypad.isEvaluating
+                        ? () {
+                            HapticFeedback.mediumImpact();
+                            onEquals!();
+                          }
+                        : null,
                     icon: const Text('='),
                   ),
               ],

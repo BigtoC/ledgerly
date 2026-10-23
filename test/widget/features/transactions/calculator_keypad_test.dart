@@ -11,9 +11,11 @@
 //   - Long-pressing ⌫ triggers onClear.
 //   - Old 00 / C keys are gone.
 //   - Text scale clamping at 1.5×.
+//   - Key taps fire a light haptic; the disabled decimal key does not.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ledgerly/features/transactions/keypad_state.dart';
@@ -32,6 +34,22 @@ Widget _wrap(Widget child, {double? textScale}) => MaterialApp(
         ),
   home: Scaffold(body: child),
 );
+
+/// Records the haptic types requested via `HapticFeedback` during a test.
+List<String?> _recordHaptics(WidgetTester tester) {
+  final haptics = <String?>[];
+  final messenger = tester.binding.defaultBinaryMessenger;
+  messenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
+    if (call.method == 'HapticFeedback.vibrate') {
+      haptics.add(call.arguments as String?);
+    }
+    return null;
+  });
+  addTearDown(
+    () => messenger.setMockMethodCallHandler(SystemChannels.platform, null),
+  );
+  return haptics;
+}
 
 void main() {
   testWidgets('WK01: decimal point is enabled on USD (decimals = 2)', (
@@ -282,5 +300,48 @@ void main() {
     expect(find.text('+'), findsOneWidget);
     expect(find.text('÷'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('WK15: every key tap fires a light haptic', (tester) async {
+    final haptics = _recordHaptics(tester);
+    await tester.pumpWidget(
+      _wrap(
+        CalculatorKeypad(
+          decimals: 2,
+          onDigit: (_) {},
+          onDecimal: () {},
+          onBackspace: () {},
+          onClear: () {},
+          onOperator: (_) {},
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('7'));
+    await tester.tap(find.text('.'));
+    await tester.tap(find.text('+'));
+    await tester.tap(find.byTooltip('Backspace'));
+
+    expect(haptics, List.filled(4, 'HapticFeedbackType.lightImpact'));
+  });
+
+  testWidgets('WK16: the disabled decimal key fires no haptic', (tester) async {
+    final haptics = _recordHaptics(tester);
+    await tester.pumpWidget(
+      _wrap(
+        CalculatorKeypad(
+          decimals: 0,
+          onDigit: (_) {},
+          onDecimal: () {},
+          onBackspace: () {},
+          onClear: () {},
+          onOperator: (_) {},
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('.'));
+
+    expect(haptics, isEmpty);
   });
 }

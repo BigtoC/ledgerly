@@ -10,12 +10,14 @@
 // Notes:
 //   - The decimal key is greyed out when `decimals == 0` (JPY).
 //   - Long-pressing ⌫ triggers `onClear`.
+//   - Every enabled key tap fires a light haptic.
 //   - Operator keys (÷ × − +) emit `CalcOperator` values via `onOperator`.
 //   - Save lives in the AppBar, not the keypad — keep the surface
 //     numeric-only so the user can type quickly with one thumb.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
+import 'package:flutter/services.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../keypad_state.dart';
@@ -106,6 +108,16 @@ class CalculatorKeypad extends StatelessWidget {
   }
 }
 
+/// Wraps a key's tap handler so it fires a light haptic first. A null
+/// handler stays null so disabled keys keep their disabled styling.
+VoidCallback? _withHaptic(VoidCallback? onTap) {
+  if (onTap == null) return null;
+  return () {
+    HapticFeedback.lightImpact();
+    onTap();
+  };
+}
+
 class _DigitKey extends StatelessWidget {
   const _DigitKey({required this.label, required this.onTap});
   final String label;
@@ -127,7 +139,7 @@ class _DigitKey extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
-            onTap: onTap,
+            onTap: _withHaptic(onTap),
             child: Center(
               child: Text(
                 label,
@@ -169,7 +181,7 @@ class _OperatorKey extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
-            onTap: onTap,
+            onTap: _withHaptic(onTap),
             child: Semantics(
               label: semanticsLabel,
               button: true,
@@ -224,7 +236,7 @@ class _IconKey extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               clipBehavior: Clip.antiAlias,
               child: InkWell(
-                onTap: onTap,
+                onTap: _withHaptic(onTap),
                 onLongPress: onLongPress,
                 child: Center(child: Icon(icon)),
               ),

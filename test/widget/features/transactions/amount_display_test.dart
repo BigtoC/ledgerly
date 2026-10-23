@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ledgerly/data/models/currency.dart';
@@ -275,6 +276,29 @@ void main() {
       );
       expect(size.width, greaterThanOrEqualTo(48));
       expect(size.height, greaterThanOrEqualTo(48));
+    });
+
+    testWidgets('AD11b: tapping it fires a medium haptic', (tester) async {
+      final haptics = <String?>[];
+      final messenger = tester.binding.defaultBinaryMessenger;
+      messenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
+        if (call.method == 'HapticFeedback.vibrate') {
+          haptics.add(call.arguments as String?);
+        }
+        return null;
+      });
+      addTearDown(
+        () => messenger.setMockMethodCallHandler(SystemChannels.platform, null),
+      );
+      await tester.pumpWidget(
+        _wrap(
+          AmountDisplay(keypad: evaluating, currency: _usd, onEquals: () {}),
+        ),
+      );
+
+      await tester.tap(find.byTooltip('Equals'));
+
+      expect(haptics, ['HapticFeedbackType.mediumImpact']);
     });
 
     testWidgets('AD12: stays visible but disabled on the result', (
