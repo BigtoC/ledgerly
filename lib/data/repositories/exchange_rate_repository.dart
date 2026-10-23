@@ -58,7 +58,11 @@ final class ExchangeRateRepository {
       },
     );
     _currencySub = defaultCurrency$.listen((code) {
-      unawaited(refreshAll(code));
+      unawaited(
+        refreshAll(code).whenComplete(() {
+          if (!_startupRefresh.isCompleted) _startupRefresh.complete();
+        }),
+      );
     });
   }
 
@@ -77,6 +81,13 @@ final class ExchangeRateRepository {
   /// firing a parallel network request.
   Future<void>? _inFlight;
   String? _inFlightCurrency;
+
+  final _startupRefresh = Completer<void>();
+
+  /// Completes when the first default-currency-triggered refresh settles
+  /// (success, swallowed failure, or no foreign pairs). Post-startup work
+  /// that must run after the FX fetch (the app-update check) awaits this.
+  Future<void> get startupRefresh => _startupRefresh.future;
 
   /// Absolute plausible-range guard against malicious or buggy upstream
   /// responses. Applies on every fetch including cold-start (no cached
