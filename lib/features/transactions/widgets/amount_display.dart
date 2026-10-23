@@ -16,19 +16,19 @@
 //     calculator state is active, a currency-specific placeholder is shown
 //     instead of "0" so the user knows the amount was cleared for a
 //     currency change.
-//   - When the calculator is in `isEvaluating` state, a one-line history
-//     showing the left operand and operator is rendered above the main
-//     amount.
-//   - When `showingResult` is true, the history line shows the full
-//     expression ("12.00 + 5.00 =") and the main amount shows the
-//     fixed-precision result (e.g. "17.00" for USD). A dangling operator
-//     finished with `=` ("12 +") has no right operand, so only the result
-//     shows and the history line is hidden.
-//   - When the keypad has recorded a formula, the history line shows it as
-//     typed instead ("3.5 + 10.5 + 11 +" while typing,
-//     "3.5 + 10.5 + 11 + 3 =" on the result), including one loaded from a
-//     saved transaction. Brackets show the left-to-right order where it
-//     differs from usual precedence ("(1 + 2) × 2 =").
+//   - While an expression is in progress, a one-line history above the
+//     amount shows the formula as typed with its pending operator
+//     ("3.5 + 10.5 + 11 +"), and the main amount shows the operand being
+//     typed.
+//   - When `showingResult` is true, the history line shows the whole
+//     formula ("3.5 + 10.5 + 11 + 3 =") and the main amount shows the
+//     fixed-precision result (e.g. "28.00" for USD). This includes a
+//     formula loaded from a saved transaction. A dangling operator finished
+//     with `=` ("12 +") leaves no formula, so only the result shows and the
+//     history line is hidden.
+//   - Brackets show the left-to-right order where it differs from usual
+//     precedence ("(1 + 2) × 2 ="). Operands keep the fractional digits as
+//     typed, minus trailing zeros, with locale digit grouping ("1,234.5").
 //   - When `onEquals` is set, an `=` button sits at the end of the history
 //     line, directly above the currency code. It shows for as long as the
 //     history line does and is enabled only while an expression is pending.
@@ -205,7 +205,7 @@ class AmountDisplay extends StatelessWidget {
     final decimals = c?.decimals ?? 2;
     final amount = keypad.amountMinorUnits;
     if (decimals == 0) return amount.toString();
-    final unit = _pow10(decimals);
+    final unit = pow10(decimals);
     final whole = amount ~/ unit;
     if (!keypad.isFractionalMode) return whole.toString();
     final fracPart = (amount % unit)
@@ -219,59 +219,16 @@ class AmountDisplay extends StatelessWidget {
     final c = currency;
     if (c == null) return null;
 
-    final operands = keypad.formulaOperands;
-    final operators = keypad.formulaOperators;
-    if (keypad.isEvaluating &&
-        operands.isNotEmpty &&
-        operands.length == operators.length) {
-      return _formulaText(
-        operands,
-        operators,
-        decimals: c.decimals,
-        locale: locale,
-      );
-    }
-    if (keypad.showingResult &&
-        operators.isNotEmpty &&
-        operands.length == operators.length + 1) {
-      final text = _formulaText(
-        operands,
-        operators,
-        decimals: c.decimals,
-        locale: locale,
-      );
-      return '$text =';
-    }
-
-    if (keypad.isEvaluating &&
-        keypad.leftOperand != null &&
-        keypad.operator != null) {
-      final left = MoneyFormatter.formatBare(
-        amountMinorUnits: keypad.leftOperand!,
-        currency: c,
-        locale: locale,
-      );
-      return '$left ${_operatorSymbol(keypad.operator!)}';
-    }
-
-    if (keypad.showingResult &&
-        keypad.leftOperand != null &&
-        keypad.operator != null &&
-        keypad.rightOperand != null) {
-      final left = MoneyFormatter.formatBare(
-        amountMinorUnits: keypad.leftOperand!,
-        currency: c,
-        locale: locale,
-      );
-      final right = MoneyFormatter.formatBare(
-        amountMinorUnits: keypad.rightOperand!,
-        currency: c,
-        locale: locale,
-      );
-      return '$left ${_operatorSymbol(keypad.operator!)} $right =';
-    }
-
-    return null;
+    // Evaluating, the formula ends with its pending operator; on a result
+    // it is complete. A result without a formula has no history line.
+    if (keypad.formulaOperators.isEmpty) return null;
+    final text = _formulaText(
+      keypad.formulaOperands,
+      keypad.formulaOperators,
+      decimals: c.decimals,
+      locale: locale,
+    );
+    return keypad.showingResult ? '$text =' : text;
   }
 
   /// The formula as typed, with display symbols and the same left-to-right
@@ -316,15 +273,4 @@ class AmountDisplay extends StatelessWidget {
     CalcOperator.multiply => '×',
     CalcOperator.divide => '÷',
   };
-
-  // Local copy of the pow10 helper used for the live-entry preview path.
-  // The expression-history and result paths use MoneyFormatter.formatBare
-  // which handles scaling internally.
-  static int _pow10(int exponent) {
-    var result = 1;
-    for (var i = 0; i < exponent; i++) {
-      result *= 10;
-    }
-    return result;
-  }
 }

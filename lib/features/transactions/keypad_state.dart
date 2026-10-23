@@ -18,9 +18,10 @@ enum CalcOperator { add, subtract, multiply, divide }
 
 /// Immutable state for the calculator keypad.
 ///
-/// - [amountMinorUnits] is the amount in the active currency's minor units
-///   (cents for USD, yen for JPY, wei for ETH). Always non-negative; the
-///   form has no negation key.
+/// - [amountMinorUnits] is the operand being typed, or the result while
+///   [showingResult], in the active currency's minor units (cents for USD,
+///   yen for JPY, wei for ETH). Always non-negative; the form has no
+///   negation key.
 /// - [fractionalDigitsEntered] is how many digits the user has typed
 ///   *after* the decimal separator. 0 either means "no decimal pressed
 ///   yet" (when [isFractionalMode] is false) or "decimal pressed but no
@@ -28,43 +29,46 @@ enum CalcOperator { add, subtract, multiply, divide }
 /// - [isFractionalMode] flips to true once `pushDecimal` accepts a press;
 ///   it stays true until `pop` walks back past the decimal or `clear` is
 ///   called.
-/// - [leftOperand] holds the left-hand side of an in-progress expression.
-/// - [operator] holds the pending arithmetic operator.
-/// - [isEvaluating] is true while the user is entering the right operand.
+/// - [isEvaluating] is true while the user is entering the operand after
+///   an operator.
 /// - [showingResult] is true immediately after `=` is pressed.
-/// - [rightOperand] holds the right-hand side of an in-progress expression.
 /// - [hasCurrentInput] is true when the user has typed at least one digit
 ///   into the current operand slot.
-/// - [formulaOperands] / [formulaOperators] record the expression as typed
-///   so it can be stored and reloaded (see `amount_formula.dart`). While
-///   evaluating they hold the operands before the current one, each
-///   followed by its operator; while showing a result they hold the whole
-///   expression. Both are empty otherwise.
+/// - [formulaOperands] / [formulaOperators] are the only record of the
+///   expression, as typed, so it can be stored and reloaded (see
+///   `amount_formula.dart`). While evaluating they hold the operands before
+///   the current one, each followed by its operator. While showing a result
+///   they hold the whole expression, or are both empty when the result has
+///   no formula (`1 + =`). Both are empty otherwise. The running total,
+///   pending operator and last operand are all derived from them.
 class KeypadState {
-  const KeypadState({
+  KeypadState({
     required this.amountMinorUnits,
     required this.fractionalDigitsEntered,
     required this.isFractionalMode,
-    this.leftOperand,
-    this.operator,
     this.isEvaluating = false,
     this.showingResult = false,
-    this.rightOperand,
     this.hasCurrentInput = false,
     this.formulaOperands = const [],
     this.formulaOperators = const [],
-  });
+  }) : assert(
+         isEvaluating
+             ? !showingResult &&
+                   formulaOperators.isNotEmpty &&
+                   formulaOperands.length == formulaOperators.length
+             : showingResult && formulaOperators.isNotEmpty
+             ? formulaOperands.length == formulaOperators.length + 1
+             : formulaOperands.isEmpty && formulaOperators.isEmpty,
+         'formula lists do not match the keypad mode',
+       );
 
   /// Empty state — used as the keypad's starting point and by `clear`.
   const KeypadState.initial()
     : amountMinorUnits = 0,
       fractionalDigitsEntered = 0,
       isFractionalMode = false,
-      leftOperand = null,
-      operator = null,
       isEvaluating = false,
       showingResult = false,
-      rightOperand = null,
       hasCurrentInput = false,
       formulaOperands = const [],
       formulaOperators = const [];
@@ -83,7 +87,7 @@ class KeypadState {
     // typed all `decimals` digits — backspace will walk them back.
     if (amountMinorUnits == 0 ||
         decimals <= 0 ||
-        amountMinorUnits % _pow10(decimals) == 0) {
+        amountMinorUnits % pow10(decimals) == 0) {
       return KeypadState(
         amountMinorUnits: amountMinorUnits,
         fractionalDigitsEntered: 0,
@@ -105,56 +109,26 @@ class KeypadState {
   factory KeypadState.fromFormula(
     ParsedFormula formula, {
     required int decimals,
-  }) {
-    final operands = formula.operands;
-    final operators = formula.operators;
-    assert(operators.isNotEmpty && operators.length == operands.length - 1);
-    final left = _fold(
-      operands.sublist(0, operands.length - 1),
-      operators.sublist(0, operators.length - 1),
-      decimals: decimals,
-    );
-    final right = operands.last.amountMinorUnits;
-    return KeypadState(
-      amountMinorUnits: _nonNegative(
-        _evaluate(
-          leftOperand: left,
-          rightOperand: right,
-          operator: operators.last,
-          decimals: decimals,
-        ),
-      ),
-      fractionalDigitsEntered: 0,
-      isFractionalMode: false,
-      leftOperand: left,
-      operator: operators.last,
-      showingResult: true,
-      rightOperand: right,
-      formulaOperands: List.unmodifiable(operands),
-      formulaOperators: List.unmodifiable(operators),
-    );
-  }
+  }) => KeypadState(
+    amountMinorUnits: _nonNegative(
+      _fold(formula.operands, formula.operators, decimals: decimals),
+    ),
+    fractionalDigitsEntered: 0,
+    isFractionalMode: false,
+    showingResult: true,
+    formulaOperands: List.unmodifiable(formula.operands),
+    formulaOperators: List.unmodifiable(formula.operators),
+  );
 
   final int amountMinorUnits;
   final int fractionalDigitsEntered;
   final bool isFractionalMode;
 
-  /// The left-hand side of an in-progress expression (in minor units), or
-  /// null when no expression has been started.
-  final int? leftOperand;
-
-  /// The pending arithmetic operator, or null when none has been pressed.
-  final CalcOperator? operator;
-
-  /// True while the user is entering the right operand of an expression.
+  /// True while the user is entering the operand after an operator.
   final bool isEvaluating;
 
   /// True immediately after `=` is pressed (result is on display).
   final bool showingResult;
-
-  /// The right-hand side of an in-progress expression (in minor units), or
-  /// null when the user has not yet started entering it.
-  final int? rightOperand;
 
   /// True when the user has typed at least one digit into the current
   /// operand slot (used to distinguish "0 entered" from "nothing entered").
@@ -167,19 +141,47 @@ class KeypadState {
   // Derived getters
   // ---------------------------------------------------------------------------
 
-  /// True when any part of a calculator expression is in progress or
-  /// complete (left operand set, operator pressed, evaluating, or result
-  /// showing).
-  bool get hasExpression =>
-      leftOperand != null ||
-      operator != null ||
-      isEvaluating ||
-      showingResult ||
-      rightOperand != null;
+  /// True when a calculator expression is in progress or its result is
+  /// showing.
+  bool get hasExpression => isEvaluating || showingResult;
 
   /// True when there is either a calculator expression or user-typed input
   /// to display.
   bool get hasVisibleInput => hasExpression || hasCurrentInput;
+
+  /// The pending operator while evaluating, or the last operator of the
+  /// formula behind a result. Null otherwise.
+  CalcOperator? get operator =>
+      formulaOperators.isEmpty ? null : formulaOperators.last;
+
+  /// The last operand of the formula behind a result, in minor units. Null
+  /// otherwise.
+  int? get rightOperand => showingResult && formulaOperators.isNotEmpty
+      ? formulaOperands.last.amountMinorUnits
+      : null;
+
+  /// The running total that [operator] applies to: everything before the
+  /// operand being typed while evaluating, or before the last operand of a
+  /// result's formula. Null when there is no expression, or when a result
+  /// has no formula behind it (`1 + =`). It may be negative;
+  /// only the finished result is clamped.
+  int? leftOperand({required int decimals}) {
+    if (isEvaluating) {
+      return _fold(
+        formulaOperands,
+        _withoutLast(formulaOperators),
+        decimals: decimals,
+      );
+    }
+    if (showingResult && formulaOperators.isNotEmpty) {
+      return _fold(
+        _withoutLast(formulaOperands),
+        _withoutLast(formulaOperators),
+        decimals: decimals,
+      );
+    }
+    return null;
+  }
 
   /// The current operand as typed.
   FormulaOperand get _currentOperand => (
@@ -192,28 +194,32 @@ class KeypadState {
   /// formula format (e.g. `3.5+10.5+11+3`). A dangling operator is left
   /// out. Null when there is no operator to record.
   String? formula({required int decimals}) {
+    final finished = _finishedFormula;
+    if (finished == null) return null;
+    return encodeAmountFormula(
+      operands: finished.operands,
+      operators: finished.operators,
+      decimals: decimals,
+    );
+  }
+
+  /// The whole expression as `=` would finish it, or null when it has no
+  /// operator.
+  ParsedFormula? get _finishedFormula {
     final List<FormulaOperand> operands;
     final List<CalcOperator> operators;
     if (isEvaluating && hasCurrentInput) {
       operands = [...formulaOperands, _currentOperand];
       operators = formulaOperators;
-    } else if (isEvaluating && formulaOperators.isNotEmpty) {
+    } else if (isEvaluating) {
       operands = formulaOperands;
-      operators = formulaOperators.sublist(0, formulaOperators.length - 1);
-    } else if (showingResult) {
+      operators = _withoutLast(formulaOperators);
+    } else {
       operands = formulaOperands;
       operators = formulaOperators;
-    } else {
-      return null;
     }
-    if (operators.isEmpty || operands.length != operators.length + 1) {
-      return null;
-    }
-    return encodeAmountFormula(
-      operands: operands,
-      operators: operators,
-      decimals: decimals,
-    );
+    if (operators.isEmpty) return null;
+    return (operands: operands, operators: operators);
   }
 
   /// Makes the last of [operands] the operand being typed again, with the
@@ -221,33 +227,18 @@ class KeypadState {
   /// before it.
   static KeypadState _reopen(
     List<FormulaOperand> operands,
-    List<CalcOperator> operators, {
-    required int decimals,
-  }) {
+    List<CalcOperator> operators,
+  ) {
     final current = operands.last;
-    final committed = operands.sublist(0, operands.length - 1);
-    if (committed.isEmpty) {
-      return KeypadState(
-        amountMinorUnits: current.amountMinorUnits,
-        fractionalDigitsEntered: current.fractionalDigitsEntered,
-        isFractionalMode: current.isFractionalMode,
-        hasCurrentInput: true,
-      );
-    }
+    final committed = _withoutLast(operands);
     return KeypadState(
       amountMinorUnits: current.amountMinorUnits,
       fractionalDigitsEntered: current.fractionalDigitsEntered,
       isFractionalMode: current.isFractionalMode,
-      leftOperand: _fold(
-        committed,
-        operators.sublist(0, operators.length - 1),
-        decimals: decimals,
-      ),
-      operator: operators.last,
-      isEvaluating: true,
+      isEvaluating: committed.isNotEmpty,
       hasCurrentInput: true,
       formulaOperands: committed,
-      formulaOperators: operators,
+      formulaOperators: committed.isEmpty ? const [] : operators,
     );
   }
 
@@ -271,7 +262,7 @@ class KeypadState {
     if (showingResult) {
       // Typing after a result clears the expression and starts fresh.
       return KeypadState(
-        amountMinorUnits: digit * _pow10(decimals),
+        amountMinorUnits: digit * pow10(decimals),
         fractionalDigitsEntered: 0,
         isFractionalMode: false,
         hasCurrentInput: true,
@@ -283,7 +274,7 @@ class KeypadState {
         return this;
       }
       final exponent = decimals - fractionalDigitsEntered - 1;
-      final addend = digit * _pow10(exponent);
+      final addend = digit * pow10(exponent);
       return _withCurrentOperand(
         amountMinorUnits: amountMinorUnits + addend,
         fractionalDigitsEntered: fractionalDigitsEntered + 1,
@@ -291,7 +282,7 @@ class KeypadState {
         hasCurrentInput: true,
       );
     }
-    final shifted = amountMinorUnits * 10 + digit * _pow10(decimals);
+    final shifted = amountMinorUnits * 10 + digit * pow10(decimals);
     return _withCurrentOperand(
       amountMinorUnits: shifted,
       fractionalDigitsEntered: 0,
@@ -313,7 +304,7 @@ class KeypadState {
     if (isFractionalMode) return this;
     if (showingResult) {
       // Decimal after a result clears the expression and starts fresh.
-      return const KeypadState(
+      return KeypadState(
         amountMinorUnits: 0,
         fractionalDigitsEntered: 0,
         isFractionalMode: true,
@@ -333,53 +324,31 @@ class KeypadState {
   /// drops the last integer digit (e.g. "12" → "1" → "0"). No-op on the
   /// empty initial state.
   ///
-  /// Expression-aware backspace rules:
-  /// - When [isEvaluating] is true but no right-operand digit has been
-  ///   entered ([hasCurrentInput] is false), cancels the expression and
-  ///   restores [leftOperand] as the plain current value.
-  /// - When [isEvaluating] is true and a right-operand digit has been
-  ///   entered, removes the last digit while preserving the expression
-  ///   (leftOperand + operator). [hasCurrentInput] is set to false if
-  ///   the right operand returns to 0.
-  /// - When a formula is recorded, backspace on a result or on a dangling
-  ///   operator reopens the previous operand for editing instead.
+  /// Expression-aware backspace walks back through the formula:
+  /// - On a result with a formula, reopens the last operand and drops its
+  ///   last digit. A result without one becomes a plain amount instead.
+  /// - While evaluating with no digit typed after the operator, removes the
+  ///   operator and reopens the previous operand for editing.
+  /// - While evaluating with a digit typed, edits that operand and keeps the
+  ///   expression. [hasCurrentInput] turns false once it is back to 0.
   KeypadState pop({required int decimals}) {
-    if (showingResult &&
-        formulaOperators.isNotEmpty &&
-        formulaOperands.length == formulaOperators.length + 1) {
-      return _reopen(
-        formulaOperands,
-        formulaOperators,
-        decimals: decimals,
-      ).pop(decimals: decimals);
-    }
-
-    if (isEvaluating &&
-        !hasCurrentInput &&
-        formulaOperands.isNotEmpty &&
-        formulaOperands.length == formulaOperators.length) {
-      return _reopen(
-        formulaOperands,
-        formulaOperators.sublist(0, formulaOperators.length - 1),
-        decimals: decimals,
-      );
-    }
-
     if (showingResult) {
-      // Convert the displayed result to a plain editable state, then
-      // backspace it. `fromAmount` keeps a fractional result in fractional
-      // mode, so 3.50 walks back to 3.5 rather than losing its fraction.
+      if (formulaOperators.isNotEmpty) {
+        return _reopen(
+          formulaOperands,
+          formulaOperators,
+        ).pop(decimals: decimals);
+      }
+      // `fromAmount` keeps a fractional result in fractional mode, so 3.50
+      // walks back to 3.5 rather than losing its fraction.
       return KeypadState.fromAmount(
         amountMinorUnits,
         decimals: decimals,
       ).pop(decimals: decimals);
     }
 
-    // If evaluating with no right operand started, cancel the expression.
-    // `fromAmount` keeps a fractional subtotal (e.g. 3.50 from 1.5 + 2 +)
-    // visible as typed instead of truncating the display to "3".
     if (isEvaluating && !hasCurrentInput) {
-      return KeypadState.fromAmount(leftOperand ?? 0, decimals: decimals);
+      return _reopen(formulaOperands, _withoutLast(formulaOperators));
     }
 
     if (isFractionalMode) {
@@ -395,7 +364,7 @@ class KeypadState {
       // Round amountMinorUnits down to the divisor that strips the last
       // fractional digit. For decimals=2 with one digit entered, divisor
       // is 10^(2-1+1) = 100 → 150 → 100 (drops the "5" of "1.5").
-      final divisor = _pow10(decimals - fractionalDigitsEntered + 1);
+      final divisor = pow10(decimals - fractionalDigitsEntered + 1);
       final reduced = (amountMinorUnits ~/ divisor) * divisor;
       return _withCurrentOperand(
         amountMinorUnits: reduced,
@@ -417,7 +386,7 @@ class KeypadState {
       );
     }
 
-    final unit = _pow10(decimals);
+    final unit = pow10(decimals);
     final integerPart = amountMinorUnits ~/ unit;
     final reducedInteger = integerPart ~/ 10;
     final newAmount = reducedInteger * unit;
@@ -429,9 +398,8 @@ class KeypadState {
     );
   }
 
-  /// Returns a copy that updates the current operand fields while preserving
-  /// any active expression (leftOperand + operator + isEvaluating), and
-  /// always clears showingResult and rightOperand.
+  /// Returns a copy that updates the current operand fields while keeping
+  /// any expression in progress, and always leaves the result state.
   KeypadState _withCurrentOperand({
     required int amountMinorUnits,
     required int fractionalDigitsEntered,
@@ -442,11 +410,7 @@ class KeypadState {
       amountMinorUnits: amountMinorUnits,
       fractionalDigitsEntered: fractionalDigitsEntered,
       isFractionalMode: isFractionalMode,
-      leftOperand: isEvaluating ? leftOperand : null,
-      operator: isEvaluating ? operator : null,
       isEvaluating: isEvaluating,
-      showingResult: false,
-      rightOperand: null,
       hasCurrentInput: hasCurrentInput,
       formulaOperands: isEvaluating ? formulaOperands : const [],
       formulaOperators: isEvaluating ? formulaOperators : const [],
@@ -457,147 +421,81 @@ class KeypadState {
   ///
   /// Behaviour:
   /// - Untouched keypad (no input, no expression): no-op.
-  /// - First operator press (no expression yet): saves current amount as the
-  ///   left operand, stores the operator, resets the display to 0, and enters
-  ///   evaluating mode.
-  /// - Already evaluating, no right input yet: replaces the pending operator
-  ///   (unless it is the same operator — then a no-op).
-  /// - Already evaluating with right input: evaluates left OP right and
-  ///   chains — the result becomes the left operand of the next pending
-  ///   operation, so `1 + 2 + 4` evaluates strictly left to right to 7.
-  /// - After a result is showing: use the result as the new left operand and
-  ///   enter evaluating mode with the new operator.
+  /// - First operator press (no expression yet): commits the current amount
+  ///   as the first operand, records the operator, resets the display to 0,
+  ///   and enters evaluating mode.
+  /// - Already evaluating, no operand typed yet: replaces the pending
+  ///   operator (unless it is the same operator — then a no-op).
+  /// - Already evaluating with an operand typed: commits it and chains, so
+  ///   `1 + 2 + 4` evaluates strictly left to right to 7.
+  /// - After a result: continues the formula behind it, or starts a new one
+  ///   from the result when it has none.
   KeypadState pushOperator(CalcOperator op, {required int decimals}) {
     if (!hasVisibleInput) return this;
 
-    if (isEvaluating && operator != null && leftOperand != null) {
-      if (!hasCurrentInput) {
-        if (op == operator) return this;
-        return KeypadState(
-          amountMinorUnits: 0,
-          fractionalDigitsEntered: 0,
-          isFractionalMode: false,
-          leftOperand: leftOperand,
-          operator: op,
-          isEvaluating: true,
-          showingResult: false,
-          rightOperand: null,
-          hasCurrentInput: false,
-          formulaOperands: formulaOperands,
-          formulaOperators: formulaOperators.isEmpty
-              ? const []
-              : [
-                  ...formulaOperators.sublist(0, formulaOperators.length - 1),
-                  op,
-                ],
-        );
-      }
-
-      return KeypadState(
-        amountMinorUnits: 0,
-        fractionalDigitsEntered: 0,
-        isFractionalMode: false,
-        leftOperand: _evaluate(
-          leftOperand: leftOperand!,
-          rightOperand: amountMinorUnits,
-          operator: operator!,
-          decimals: decimals,
-        ),
-        operator: op,
-        isEvaluating: true,
-        showingResult: false,
-        rightOperand: null,
-        hasCurrentInput: false,
-        formulaOperands: [...formulaOperands, _currentOperand],
-        formulaOperators: [...formulaOperators, op],
-      );
+    final List<FormulaOperand> operands;
+    final List<CalcOperator> operators;
+    if (isEvaluating && !hasCurrentInput) {
+      if (op == formulaOperators.last) return this;
+      operands = formulaOperands;
+      operators = [..._withoutLast(formulaOperators), op];
+    } else if (isEvaluating) {
+      operands = [...formulaOperands, _currentOperand];
+      operators = [...formulaOperators, op];
+    } else if (showingResult && formulaOperators.isNotEmpty) {
+      // Continuing the formula resumes its unclamped running total, so the
+      // keys and the replayed formula agree even when the shown result was
+      // clamped at zero.
+      operands = formulaOperands;
+      operators = [...formulaOperators, op];
+    } else {
+      final first = showingResult
+          ? KeypadState.fromAmount(amountMinorUnits, decimals: decimals)
+          : this;
+      operands = [first._currentOperand];
+      operators = [op];
     }
-
-    // After a result, the formula behind it (if any) continues from its
-    // unclamped running total, so the keys and the replayed formula agree
-    // even when the shown result was clamped at zero. A result without a
-    // formula becomes the first operand.
-    if (showingResult && formulaOperators.isNotEmpty) {
-      return KeypadState(
-        amountMinorUnits: 0,
-        fractionalDigitsEntered: 0,
-        isFractionalMode: false,
-        leftOperand: _fold(
-          formulaOperands,
-          formulaOperators,
-          decimals: decimals,
-        ),
-        operator: op,
-        isEvaluating: true,
-        hasCurrentInput: false,
-        formulaOperands: formulaOperands,
-        formulaOperators: [...formulaOperators, op],
-      );
-    }
-    final firstOperand = showingResult
-        ? KeypadState.fromAmount(amountMinorUnits, decimals: decimals)
-        : this;
     return KeypadState(
       amountMinorUnits: 0,
       fractionalDigitsEntered: 0,
       isFractionalMode: false,
-      leftOperand: amountMinorUnits,
-      operator: op,
       isEvaluating: true,
-      showingResult: false,
-      rightOperand: null,
-      hasCurrentInput: false,
-      formulaOperands: [firstOperand._currentOperand],
-      formulaOperators: [op],
+      formulaOperands: operands,
+      formulaOperators: operators,
     );
   }
 
   /// The `=` key. Finishes a pending expression and shows its result:
   ///
-  /// - Evaluating with right input: evaluates left OP right and shows the
-  ///   result with the full expression kept for the history line.
-  /// - Evaluating with no right input yet (`1 +`): drops the dangling
-  ///   operator and shows the left operand as the result.
+  /// - Evaluating with an operand typed: shows the result of the whole
+  ///   formula, kept for the history line.
+  /// - Evaluating with no operand typed yet (`1 +`): drops the dangling
+  ///   operator and shows the result of what is left. A single operand
+  ///   leaves no formula.
   /// - No pending expression: no-op.
   ///
-  /// Typing an operator afterwards keeps calculating from the result;
+  /// The result is clamped to zero; the running total behind it is not.
+  /// Typing an operator afterwards keeps calculating from the formula;
   /// typing a digit starts a fresh amount.
   KeypadState equals({required int decimals}) {
-    if (!isEvaluating || leftOperand == null || operator == null) return this;
+    if (!isEvaluating) return this;
 
-    if (!hasCurrentInput) {
-      final operators = formulaOperators.isEmpty
-          ? const <CalcOperator>[]
-          : formulaOperators.sublist(0, formulaOperators.length - 1);
-      return KeypadState(
-        amountMinorUnits: _nonNegative(leftOperand!),
-        fractionalDigitsEntered: 0,
-        isFractionalMode: false,
-        showingResult: true,
-        formulaOperands: operators.isEmpty ? const [] : formulaOperands,
-        formulaOperators: operators,
-      );
-    }
-
+    final operands = hasCurrentInput
+        ? [...formulaOperands, _currentOperand]
+        : formulaOperands;
+    final operators = hasCurrentInput
+        ? formulaOperators
+        : _withoutLast(formulaOperators);
+    final hasFormula = operators.isNotEmpty;
     return KeypadState(
       amountMinorUnits: _nonNegative(
-        _evaluate(
-          leftOperand: leftOperand!,
-          rightOperand: amountMinorUnits,
-          operator: operator!,
-          decimals: decimals,
-        ),
+        _fold(operands, operators, decimals: decimals),
       ),
       fractionalDigitsEntered: 0,
       isFractionalMode: false,
-      leftOperand: leftOperand,
-      operator: operator,
-      isEvaluating: false,
       showingResult: true,
-      rightOperand: amountMinorUnits,
-      hasCurrentInput: false,
-      formulaOperands: [...formulaOperands, _currentOperand],
-      formulaOperators: formulaOperators,
+      formulaOperands: hasFormula ? operands : const [],
+      formulaOperators: operators,
     );
   }
 
@@ -611,11 +509,8 @@ class KeypadState {
         other.amountMinorUnits == amountMinorUnits &&
         other.fractionalDigitsEntered == fractionalDigitsEntered &&
         other.isFractionalMode == isFractionalMode &&
-        other.leftOperand == leftOperand &&
-        other.operator == operator &&
         other.isEvaluating == isEvaluating &&
         other.showingResult == showingResult &&
-        other.rightOperand == rightOperand &&
         other.hasCurrentInput == hasCurrentInput &&
         _listEquals(other.formulaOperands, formulaOperands) &&
         _listEquals(other.formulaOperators, formulaOperators);
@@ -626,11 +521,8 @@ class KeypadState {
     amountMinorUnits,
     fractionalDigitsEntered,
     isFractionalMode,
-    leftOperand,
-    operator,
     isEvaluating,
     showingResult,
-    rightOperand,
     hasCurrentInput,
     Object.hashAll(formulaOperands),
     Object.hashAll(formulaOperators),
@@ -641,15 +533,26 @@ class KeypadState {
       'KeypadState(amountMinorUnits: $amountMinorUnits, '
       'fractionalDigitsEntered: $fractionalDigitsEntered, '
       'isFractionalMode: $isFractionalMode, '
-      'leftOperand: $leftOperand, '
-      'operator: $operator, '
       'isEvaluating: $isEvaluating, '
       'showingResult: $showingResult, '
-      'rightOperand: $rightOperand, '
       'hasCurrentInput: $hasCurrentInput, '
       'formulaOperands: $formulaOperands, '
       'formulaOperators: $formulaOperators)';
 }
+
+/// 10 to the power [exponent], for scaling between whole currency units
+/// and minor units.
+int pow10(int exponent) {
+  assert(exponent >= 0);
+  var result = 1;
+  for (var i = 0; i < exponent; i++) {
+    result *= 10;
+  }
+  return result;
+}
+
+List<T> _withoutLast<T>(List<T> list) =>
+    list.isEmpty ? list : list.sublist(0, list.length - 1);
 
 bool _listEquals<T>(List<T> a, List<T> b) {
   if (a.length != b.length) return false;
@@ -660,7 +563,7 @@ bool _listEquals<T>(List<T> a, List<T> b) {
 }
 
 /// Evaluates [operands] joined by [operators] strictly left to right, the
-/// same way chained operator presses do.
+/// same way chained operator presses do. [operators] has one fewer entry.
 int _fold(
   List<FormulaOperand> operands,
   List<CalcOperator> operators, {
@@ -678,15 +581,6 @@ int _fold(
   return result;
 }
 
-int _pow10(int exponent) {
-  assert(exponent >= 0);
-  var result = 1;
-  for (var i = 0; i < exponent; i++) {
-    result *= 10;
-  }
-  return result;
-}
-
 /// Evaluate [leftOperand] [operator] [rightOperand] in integer minor-unit
 /// arithmetic. Multiplication and division use [BigInt] to avoid overflow and
 /// round half away from zero at the [decimals] boundary. A subtotal may go
@@ -698,7 +592,7 @@ int _evaluate({
   required CalcOperator operator,
   required int decimals,
 }) {
-  final unit = BigInt.from(_pow10(decimals));
+  final unit = BigInt.from(pow10(decimals));
   return switch (operator) {
     CalcOperator.add => leftOperand + rightOperand,
     CalcOperator.subtract => leftOperand - rightOperand,

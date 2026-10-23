@@ -116,7 +116,7 @@ class _FakeTransactionFormController extends TransactionFormController {
 TransactionFormState _editableDraftState() => TransactionFormState.data(
   formMode: const EditShoppingListDraftMode(shoppingListItemId: 77),
   amountMinorUnits: 500,
-  keypad: const KeypadState(
+  keypad: KeypadState(
     amountMinorUnits: 500,
     fractionalDigitsEntered: 0,
     isFractionalMode: false,

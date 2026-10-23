@@ -3,6 +3,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ledgerly/data/models/currency.dart';
+import 'package:ledgerly/features/transactions/amount_formula.dart';
 import 'package:ledgerly/features/transactions/keypad_state.dart';
 import 'package:ledgerly/features/transactions/widgets/amount_display.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
@@ -23,6 +24,13 @@ Widget _wrap(Widget child, {double? textScale}) => MaterialApp(
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 const _jpy = Currency(code: 'JPY', decimals: 0, symbol: '¥');
 
+/// A whole-number operand as the keypad records it.
+FormulaOperand _whole(int minorUnits) => (
+  amountMinorUnits: minorUnits,
+  fractionalDigitsEntered: 0,
+  isFractionalMode: false,
+);
+
 void main() {
   testWidgets('AD01: no expression state renders no expression line', (
     tester,
@@ -38,61 +46,59 @@ void main() {
   testWidgets('AD02: evaluating state shows the left operand and operator', (
     tester,
   ) async {
-    const keypad = KeypadState(
+    final keypad = KeypadState(
       amountMinorUnits: 500,
       fractionalDigitsEntered: 0,
       isFractionalMode: false,
-      leftOperand: 1200,
-      operator: CalcOperator.add,
+      formulaOperands: [_whole(1200)],
+      formulaOperators: [CalcOperator.add],
       isEvaluating: true,
       hasCurrentInput: true,
     );
 
     await tester.pumpWidget(
-      _wrap(const AmountDisplay(keypad: keypad, currency: _usd)),
+      _wrap(AmountDisplay(keypad: keypad, currency: _usd)),
     );
 
-    expect(find.textContaining('12.00 +'), findsOneWidget);
+    expect(find.textContaining('12 +'), findsOneWidget);
   });
 
   testWidgets(
     'AD03: showingResult keeps expression history on the first line',
     (tester) async {
-      const keypad = KeypadState(
+      final keypad = KeypadState(
         amountMinorUnits: 1700,
         fractionalDigitsEntered: 0,
         isFractionalMode: false,
-        leftOperand: 1200,
-        operator: CalcOperator.add,
+        formulaOperands: [_whole(1200), _whole(500)],
+        formulaOperators: [CalcOperator.add],
         showingResult: true,
-        rightOperand: 500,
         hasCurrentInput: false,
       );
 
       await tester.pumpWidget(
-        _wrap(const AmountDisplay(keypad: keypad, currency: _usd)),
+        _wrap(AmountDisplay(keypad: keypad, currency: _usd)),
       );
 
-      expect(find.textContaining('12.00 + 5.00 ='), findsOneWidget);
+      expect(find.textContaining('12 + 5 ='), findsOneWidget);
     },
   );
 
   testWidgets(
     'AD04: showingResult renders the main result at fixed precision',
     (tester) async {
-      const keypad = KeypadState(
+      final keypad = KeypadState(
         amountMinorUnits: 1700,
         fractionalDigitsEntered: 0,
         isFractionalMode: false,
-        leftOperand: 1200,
-        operator: CalcOperator.add,
+        formulaOperands: [_whole(1200), _whole(500)],
+        formulaOperators: [CalcOperator.add],
         showingResult: true,
-        rightOperand: 500,
         hasCurrentInput: false,
       );
 
       await tester.pumpWidget(
-        _wrap(const AmountDisplay(keypad: keypad, currency: _usd)),
+        _wrap(AmountDisplay(keypad: keypad, currency: _usd)),
       );
 
       expect(find.text('17.00'), findsOneWidget);
@@ -102,19 +108,18 @@ void main() {
   testWidgets('AD05: zero-decimal currencies keep zero-decimal formatting', (
     tester,
   ) async {
-    const keypad = KeypadState(
+    final keypad = KeypadState(
       amountMinorUnits: 6,
       fractionalDigitsEntered: 0,
       isFractionalMode: false,
-      leftOperand: 12,
-      operator: CalcOperator.divide,
+      formulaOperands: [_whole(12), _whole(2)],
+      formulaOperators: [CalcOperator.divide],
       showingResult: true,
-      rightOperand: 2,
       hasCurrentInput: false,
     );
 
     await tester.pumpWidget(
-      _wrap(const AmountDisplay(keypad: keypad, currency: _jpy)),
+      _wrap(AmountDisplay(keypad: keypad, currency: _jpy)),
     );
 
     expect(find.textContaining('12 ÷ 2 ='), findsOneWidget);
@@ -127,25 +132,21 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(430, 300));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      const keypad = KeypadState(
+      final keypad = KeypadState(
         amountMinorUnits: 1700,
         fractionalDigitsEntered: 0,
         isFractionalMode: false,
-        leftOperand: 1200,
-        operator: CalcOperator.add,
+        formulaOperands: [_whole(1200), _whole(500)],
+        formulaOperators: [CalcOperator.add],
         showingResult: true,
-        rightOperand: 500,
         hasCurrentInput: false,
       );
 
       await tester.pumpWidget(
-        _wrap(
-          const AmountDisplay(keypad: keypad, currency: _usd),
-          textScale: 2.0,
-        ),
+        _wrap(AmountDisplay(keypad: keypad, currency: _usd), textScale: 2.0),
       );
 
-      expect(find.textContaining('12.00 + 5.00 ='), findsOneWidget);
+      expect(find.textContaining('12 + 5 ='), findsOneWidget);
       expect(find.text('17.00'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
@@ -155,19 +156,19 @@ void main() {
     'AD07: placeholder is suppressed when keypad has visible input even if amount is zero',
     (tester) async {
       // isEvaluating=true means hasVisibleInput=true — placeholder must not show.
-      const keypad = KeypadState(
+      final keypad = KeypadState(
         amountMinorUnits: 0,
         fractionalDigitsEntered: 0,
         isFractionalMode: false,
-        leftOperand: 100,
-        operator: CalcOperator.add,
+        formulaOperands: [_whole(100)],
+        formulaOperators: [CalcOperator.add],
         isEvaluating: true,
         hasCurrentInput: false,
       );
 
       await tester.pumpWidget(
         _wrap(
-          const AmountDisplay(
+          AmountDisplay(
             keypad: keypad,
             currency: _usd,
             currencyTouched: true, // would show placeholder without the hasVisibleInput guard
@@ -187,14 +188,14 @@ void main() {
         findsNothing,
       );
       // Expression line must appear
-      expect(find.textContaining('1.00 +'), findsOneWidget);
+      expect(find.textContaining('1 +'), findsOneWidget);
     },
   );
 
   testWidgets(
     'AD07b: decimal-start input suppresses the placeholder after a manual currency pick',
     (tester) async {
-      const keypad = KeypadState(
+      final keypad = KeypadState(
         amountMinorUnits: 0,
         fractionalDigitsEntered: 0,
         isFractionalMode: true,
@@ -203,11 +204,7 @@ void main() {
 
       await tester.pumpWidget(
         _wrap(
-          const AmountDisplay(
-            keypad: keypad,
-            currency: _usd,
-            currencyTouched: true,
-          ),
+          AmountDisplay(keypad: keypad, currency: _usd, currencyTouched: true),
         ),
       );
 
@@ -225,23 +222,22 @@ void main() {
   );
 
   group('equals button', () {
-    const evaluating = KeypadState(
+    final evaluating = KeypadState(
       amountMinorUnits: 500,
       fractionalDigitsEntered: 0,
       isFractionalMode: false,
-      leftOperand: 1200,
-      operator: CalcOperator.add,
+      formulaOperands: [_whole(1200)],
+      formulaOperators: [CalcOperator.add],
       isEvaluating: true,
       hasCurrentInput: true,
     );
-    const result = KeypadState(
+    final result = KeypadState(
       amountMinorUnits: 1700,
       fractionalDigitsEntered: 0,
       isFractionalMode: false,
-      leftOperand: 1200,
-      operator: CalcOperator.add,
+      formulaOperands: [_whole(1200), _whole(500)],
+      formulaOperators: [CalcOperator.add],
       showingResult: true,
-      rightOperand: 500,
     );
 
     IconButton equalsButton(WidgetTester tester) => tester.widget<IconButton>(
@@ -299,7 +295,7 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        _wrap(const AmountDisplay(keypad: evaluating, currency: _usd)),
+        _wrap(AmountDisplay(keypad: evaluating, currency: _usd)),
       );
 
       expect(find.byTooltip('Equals'), findsNothing);

@@ -14,7 +14,15 @@
 //     once `fractionalDigitsEntered == decimals`.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ledgerly/features/transactions/amount_formula.dart';
 import 'package:ledgerly/features/transactions/keypad_state.dart';
+
+/// A whole-number operand as the keypad records it.
+FormulaOperand _whole(int minorUnits) => (
+  amountMinorUnits: minorUnits,
+  fractionalDigitsEntered: 0,
+  isFractionalMode: false,
+);
 
 void main() {
   group('KeypadState — initial state', () {
@@ -202,7 +210,7 @@ void main() {
     test('K60: initial state has no expression and no current input', () {
       const s = KeypadState.initial();
 
-      expect(s.leftOperand, isNull);
+      expect(s.leftOperand(decimals: 2), isNull);
       expect(s.operator, isNull);
       expect(s.isEvaluating, isFalse);
       expect(s.showingResult, isFalse);
@@ -231,7 +239,7 @@ void main() {
 
         final result = s.pushOperator(CalcOperator.add, decimals: 2);
 
-        expect(result.leftOperand, 1200);
+        expect(result.leftOperand(decimals: 2), 1200);
         expect(result.operator, CalcOperator.add);
         expect(result.isEvaluating, isTrue);
         expect(result.amountMinorUnits, 0);
@@ -247,7 +255,7 @@ void main() {
 
       final result = s.pushOperator(CalcOperator.subtract, decimals: 2);
 
-      expect(result.leftOperand, 1200);
+      expect(result.leftOperand(decimals: 2), 1200);
       expect(result.operator, CalcOperator.subtract);
       expect(result.amountMinorUnits, 0);
       expect(result.isEvaluating, isTrue);
@@ -382,7 +390,7 @@ void main() {
             .push(2, decimals: 2)
             .pushOperator(CalcOperator.add, decimals: 2);
 
-        expect(chained.leftOperand, 300);
+        expect(chained.leftOperand(decimals: 2), 300);
         expect(chained.operator, CalcOperator.add);
         expect(chained.isEvaluating, isTrue);
         expect(chained.showingResult, isFalse);
@@ -392,7 +400,7 @@ void main() {
 
         expect(result.amountMinorUnits, 700);
         expect(result.showingResult, isTrue);
-        expect(result.leftOperand, 300);
+        expect(result.leftOperand(decimals: 2), 300);
         expect(result.operator, CalcOperator.add);
         expect(result.rightOperand, 400);
       },
@@ -419,7 +427,7 @@ void main() {
       expect(result.amountMinorUnits, 100);
       expect(result.showingResult, isTrue);
       expect(result.isEvaluating, isFalse);
-      expect(result.leftOperand, isNull);
+      expect(result.leftOperand(decimals: 2), isNull);
       expect(result.operator, isNull);
     });
 
@@ -463,7 +471,7 @@ void main() {
       final result = s.push(5, decimals: 2);
 
       expect(result.amountMinorUnits, 500);
-      expect(result.leftOperand, 100);
+      expect(result.leftOperand(decimals: 2), 100);
       expect(result.operator, CalcOperator.add);
       expect(result.isEvaluating, isTrue);
       expect(result.hasCurrentInput, isTrue);
@@ -478,7 +486,7 @@ void main() {
 
         final result = s.pushDecimal(decimals: 2);
 
-        expect(result.leftOperand, 100);
+        expect(result.leftOperand(decimals: 2), 100);
         expect(result.operator, CalcOperator.add);
         expect(result.isEvaluating, isTrue);
         expect(result.hasCurrentInput, isTrue);
@@ -486,42 +494,40 @@ void main() {
     );
 
     test('K92: digit during showingResult clears the old expression and starts fresh', () {
-      const s = KeypadState(
+      final s = KeypadState(
         amountMinorUnits: 1700,
         fractionalDigitsEntered: 0,
         isFractionalMode: false,
-        leftOperand: 1200,
-        operator: CalcOperator.add,
+        formulaOperands: [_whole(1200), _whole(500)],
+        formulaOperators: [CalcOperator.add],
         showingResult: true,
-        rightOperand: 500,
         hasCurrentInput: false,
       );
 
       final result = s.push(3, decimals: 2);
 
       expect(result.amountMinorUnits, 300);
-      expect(result.leftOperand, isNull);
+      expect(result.leftOperand(decimals: 2), isNull);
       expect(result.operator, isNull);
       expect(result.showingResult, isFalse);
       expect(result.hasCurrentInput, isTrue);
     });
 
     test('K92b: decimal during showingResult clears the old expression and starts a fresh fractional input', () {
-      const s = KeypadState(
+      final s = KeypadState(
         amountMinorUnits: 1700,
         fractionalDigitsEntered: 0,
         isFractionalMode: false,
-        leftOperand: 1200,
-        operator: CalcOperator.add,
+        formulaOperands: [_whole(1200), _whole(500)],
+        formulaOperators: [CalcOperator.add],
         showingResult: true,
-        rightOperand: 500,
         hasCurrentInput: false,
       );
 
       final result = s.pushDecimal(decimals: 2);
 
       expect(result.amountMinorUnits, 0);
-      expect(result.leftOperand, isNull);
+      expect(result.leftOperand(decimals: 2), isNull);
       expect(result.operator, isNull);
       expect(result.showingResult, isFalse);
       expect(result.isFractionalMode, isTrue);
@@ -529,21 +535,21 @@ void main() {
     });
 
     test('K92c: operator during showingResult starts the next expression from the result', () {
-      const s = KeypadState(
+      // 17 + = leaves 17.00 with no formula behind it, so the operator
+      // starts a new formula from the result rather than continuing one.
+      final s = KeypadState(
         amountMinorUnits: 1700,
         fractionalDigitsEntered: 0,
         isFractionalMode: false,
-        leftOperand: 1200,
-        operator: CalcOperator.add,
         showingResult: true,
-        rightOperand: 500,
-        hasCurrentInput: false,
       );
 
       final result = s.pushOperator(CalcOperator.multiply, decimals: 2);
 
       expect(result.amountMinorUnits, 0);
-      expect(result.leftOperand, 1700);
+      expect(result.formulaOperands, [_whole(1700)]);
+      expect(result.formulaOperators, [CalcOperator.multiply]);
+      expect(result.leftOperand(decimals: 2), 1700);
       expect(result.operator, CalcOperator.multiply);
       expect(result.isEvaluating, isTrue);
       expect(result.showingResult, isFalse);
@@ -559,7 +565,7 @@ void main() {
       final result = s.pop(decimals: 2);
 
       expect(result.amountMinorUnits, 1200);
-      expect(result.leftOperand, isNull);
+      expect(result.leftOperand(decimals: 2), isNull);
       expect(result.operator, isNull);
       expect(result.isEvaluating, isFalse);
       expect(result.hasCurrentInput, isTrue);
@@ -577,7 +583,7 @@ void main() {
         final result = s.pop(decimals: 2);
 
         expect(result.amountMinorUnits, 0);
-        expect(result.leftOperand, 1200);
+        expect(result.leftOperand(decimals: 2), 1200);
         expect(result.operator, CalcOperator.add);
         expect(result.isEvaluating, isTrue);
         expect(result.hasCurrentInput, isFalse);
@@ -607,7 +613,7 @@ void main() {
       final result = s.clear();
 
       expect(result.amountMinorUnits, 0);
-      expect(result.leftOperand, isNull);
+      expect(result.leftOperand(decimals: 2), isNull);
       expect(result.operator, isNull);
       expect(result.isEvaluating, isFalse);
       expect(result.showingResult, isFalse);
@@ -615,29 +621,23 @@ void main() {
       expect(result.hasCurrentInput, isFalse);
     });
 
-    test(
-      'K97: pop on showingResult with non-zero result backtracks one digit',
-      () {
-        const s = KeypadState(
-          amountMinorUnits: 1700,
-          fractionalDigitsEntered: 0,
-          isFractionalMode: false,
-          leftOperand: 1200,
-          operator: CalcOperator.add,
-          showingResult: true,
-          rightOperand: 500,
-          hasCurrentInput: false,
-        );
+    test('K97: pop on a result without a formula backtracks one digit', () {
+      // 17 + = leaves 17.00 with no formula behind it.
+      final s = KeypadState(
+        amountMinorUnits: 1700,
+        fractionalDigitsEntered: 0,
+        isFractionalMode: false,
+        showingResult: true,
+      );
 
-        final result = s.pop(decimals: 2);
+      final result = s.pop(decimals: 2);
 
-        expect(result.amountMinorUnits, 100);
-        expect(result.leftOperand, isNull);
-        expect(result.operator, isNull);
-        expect(result.showingResult, isFalse);
-        expect(result.hasCurrentInput, isTrue);
-      },
-    );
+      expect(result.amountMinorUnits, 100);
+      expect(result.leftOperand(decimals: 2), isNull);
+      expect(result.operator, isNull);
+      expect(result.showingResult, isFalse);
+      expect(result.hasCurrentInput, isTrue);
+    });
 
     test(
       'K97b: pop on a result reopens the formula and edits its last operand',
@@ -654,7 +654,7 @@ void main() {
 
         expect(result.showingResult, isFalse);
         expect(result.isEvaluating, isTrue);
-        expect(result.leftOperand, 150);
+        expect(result.leftOperand(decimals: 2), 150);
         expect(result.operator, CalcOperator.add);
         expect(result.amountMinorUnits, 0);
         expect(result.hasCurrentInput, isFalse);
@@ -673,30 +673,29 @@ void main() {
       final result = s.pop(decimals: 2); // 1.5 + 2
 
       expect(result.isEvaluating, isTrue);
-      expect(result.leftOperand, 150);
+      expect(result.leftOperand(decimals: 2), 150);
       expect(result.operator, CalcOperator.add);
       expect(result.amountMinorUnits, 200);
       expect(result.hasCurrentInput, isTrue);
     });
 
-    test('K98: pop on showingResult with zero result (e.g. div-by-zero) exits the result state', () {
-      const s = KeypadState(
-        amountMinorUnits: 0,
-        fractionalDigitsEntered: 0,
-        isFractionalMode: false,
-        leftOperand: 700,
-        operator: CalcOperator.divide,
-        showingResult: true,
-        rightOperand: 0,
-        hasCurrentInput: false,
-      );
+    test(
+      'K98: pop on a zero result without a formula exits the result state',
+      () {
+        final s = KeypadState(
+          amountMinorUnits: 0,
+          fractionalDigitsEntered: 0,
+          isFractionalMode: false,
+          showingResult: true,
+        );
 
-      final result = s.pop(decimals: 2);
+        final result = s.pop(decimals: 2);
 
-      expect(result.showingResult, isFalse);
-      expect(result.leftOperand, isNull);
-      expect(result.operator, isNull);
-      expect(result.amountMinorUnits, 0);
-    });
+        expect(result.showingResult, isFalse);
+        expect(result.leftOperand(decimals: 2), isNull);
+        expect(result.operator, isNull);
+        expect(result.amountMinorUnits, 0);
+      },
+    );
   });
 }
