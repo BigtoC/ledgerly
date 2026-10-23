@@ -58,6 +58,15 @@ class ChartsController extends _$ChartsController {
   ChartsData? _lastEmittedData;
   bool _autoSwitchedToCurrency = false;
 
+  // Currencies already sent to `refreshAll` for `_refreshRequestedFor`.
+  // Each rate upsert re-emits FX status, so without this a currency the
+  // service never returns would re-trigger the fetch on every emission.
+  // Reset in build() so each selection change gets one fresh attempt (a
+  // failed fetch is otherwise never retried); FX re-emissions go through
+  // ref.listen, not build(), so this does not reopen the loop.
+  final Set<String> _refreshRequested = {};
+  String? _refreshRequestedFor;
+
   // TODO(charts/warm-start): per the spec, week+expense+category may seed
   // from a warmed snapshot when FX freshness < 1h, default currency
   // unchanged, locale unchanged, and no transaction/category/account
@@ -66,6 +75,7 @@ class ChartsController extends _$ChartsController {
   @override
   Stream<ChartsState> build() {
     _selection = ref.watch(chartsSelectionControllerProvider);
+    _refreshRequested.clear();
     if (_selection.dimension != ChartDimension.currency) {
       _autoSwitchedToCurrency = false;
     }
@@ -108,6 +118,7 @@ class ChartsController extends _$ChartsController {
   // ---------- Commands ----------
 
   void retry() {
+    _refreshRequested.clear();
     _resubscribe();
   }
 
@@ -262,12 +273,17 @@ class ChartsController extends _$ChartsController {
     final missingCurrencies = activeCurrencies
         .where((code) => fx.scaledRate(code) == null)
         .toSet();
-    final missingRate = missingCurrencies.isNotEmpty;
     final allMissing =
         activeCurrencies.isNotEmpty &&
         missingCurrencies.length == activeCurrencies.length;
 
-    if (missingRate) {
+    if (fx.defaultCurrencyCode != _refreshRequestedFor) {
+      _refreshRequestedFor = fx.defaultCurrencyCode;
+      _refreshRequested.clear();
+    }
+    final toRequest = missingCurrencies.difference(_refreshRequested);
+    if (toRequest.isNotEmpty) {
+      _refreshRequested.addAll(toRequest);
       final repo = ref.read(exchangeRateRepositoryProvider);
       unawaited(repo.refreshAll(fx.defaultCurrencyCode));
     }
