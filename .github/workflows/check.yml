@@ -42,12 +42,12 @@ jobs:
       - name: Fetch packages
         run: flutter pub get
 
-      - name: Enforce layer boundaries (import_lint)
-        # Rules live in import_analysis_options.yaml. import_lint 0.1.6 does
-        # NOT currently fail on violations: it matches the `^lib/...` rules
-        # against absolute paths and always exits 0. See
+      - name: Enforce layer boundaries
+        # Rules and the baseline of known violations live in
+        # import_analysis_options.yaml. Fails on a new violation or a stale
+        # baseline entry. Also runs in the full suite below. See
         # docs/architecture/dependencies.md.
-        run: dart run import_lint
+        run: flutter test test/unit/architecture/
 
       - name: Generate code (Drift / Freezed / Riverpod / json_serializable)
         run: dart run build_runner build --delete-conflicting-outputs

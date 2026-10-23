@@ -76,6 +76,9 @@ dev_dependencies:
   # Testing
   fake_async: ^1.3.3
   mocktail: ^1.0.5
+  # Reads import_analysis_options.yaml in
+  # test/unit/architecture/layer_boundaries_test.dart.
+  yaml: ^3.1.4
 
   # Native splash is a codegen CLI (`dart run flutter_native_splash:create`),
   # never imported at runtime, so it belongs in dev_dependencies even though
