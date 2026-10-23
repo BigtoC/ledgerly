@@ -375,6 +375,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txMemoLabel => 'Memo';
 
   @override
+  String get txMemoSuggestionsMore => 'More';
+
+  @override
+  String get txMemoPickerTitle => 'Memos';
+
+  @override
   String get txAmountRequired => 'Enter an amount';
 
   @override

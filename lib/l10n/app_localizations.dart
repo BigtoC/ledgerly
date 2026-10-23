@@ -814,6 +814,18 @@ abstract class AppLocalizations {
   /// **'Memo'**
   String get txMemoLabel;
 
+  /// Trailing chip after the memo suggestion chips when the category has more memos than fit; opens a sheet listing all of them.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get txMemoSuggestionsMore;
+
+  /// Title of the bottom sheet listing every memo used in the selected category, newest first.
+  ///
+  /// In en, this message translates to:
+  /// **'Memos'**
+  String get txMemoPickerTitle;
+
   /// Wave 2 §9. Inline validation hint shown on the amount display when amountMinorUnits is 0 after a save attempt.
   ///
   /// In en, this message translates to:

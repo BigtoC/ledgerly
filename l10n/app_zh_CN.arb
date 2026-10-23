@@ -134,6 +134,8 @@
   "txAccountPickerTitle": "选择账户",
   "txDateLabel": "日期",
   "txMemoLabel": "备注",
+  "txMemoSuggestionsMore": "更多",
+  "txMemoPickerTitle": "备注",
   "txAmountRequired": "请输入金额",
   "txCreateAccountCta": "创建账户",
   "txTransactionNotFound": "找不到此笔交易",

@@ -31,12 +31,23 @@ final txActiveAccountsProvider = StreamProvider.autoDispose<List<Account>>((
 const memoSuggestionLimit = 10;
 
 /// Recently used distinct memos for a category, newest first. Drives the
-/// suggestion chips under the transaction form's Memo field.
+/// suggestion chips under the transaction form's Memo field. Fetches one
+/// past [memoSuggestionLimit] so the chips know to offer "More".
 final txMemoSuggestionsProvider = StreamProvider.autoDispose
     .family<List<String>, int>((ref, categoryId) {
       final repo = ref.watch(transactionRepositoryProvider);
       return repo.watchRecentMemosForCategory(
         categoryId,
-        limit: memoSuggestionLimit,
+        limit: memoSuggestionLimit + 1,
       );
     }, dependencies: [transactionRepositoryProvider]);
+
+/// Every distinct memo used in a category, newest first. Backs the
+/// "More" sheet opened from the memo suggestion chips.
+final txAllMemosProvider = StreamProvider.autoDispose.family<List<String>, int>(
+  (ref, categoryId) {
+    final repo = ref.watch(transactionRepositoryProvider);
+    return repo.watchRecentMemosForCategory(categoryId);
+  },
+  dependencies: [transactionRepositoryProvider],
+);

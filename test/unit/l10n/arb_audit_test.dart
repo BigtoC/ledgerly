@@ -170,6 +170,8 @@ const Set<String> _expectedEnKeys = <String>{
   'txAccountPickerTitle',
   'txDateLabel',
   'txMemoLabel',
+  'txMemoSuggestionsMore',
+  'txMemoPickerTitle',
   'txAmountRequired',
   'txCreateAccountCta',
   'txTransactionNotFound',
