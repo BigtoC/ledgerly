@@ -638,6 +638,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get analysisDrilldownEmpty => 'No transactions in this period';
 
   @override
+  String analysisDrilldownShowMore(int count) {
+    return 'Show $count more';
+  }
+
+  @override
   String get analysisOriginalAmount => 'Original amount';
 
   @override
@@ -1485,6 +1490,11 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get analysisDrilldownEmpty => '此期间没有交易';
 
   @override
+  String analysisDrilldownShowMore(int count) {
+    return '再显示 $count 项';
+  }
+
+  @override
   String get analysisOriginalAmount => '原始金额';
 
   @override
@@ -2325,6 +2335,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get analysisDrilldownEmpty => '此期間沒有交易';
+
+  @override
+  String analysisDrilldownShowMore(int count) {
+    return '再顯示 $count 項';
+  }
 
   @override
   String get analysisOriginalAmount => '原始金額';

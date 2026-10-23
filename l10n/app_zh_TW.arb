@@ -231,6 +231,8 @@
   "analysisSearchTotal": "總計",
   "analysisErrorMessage": "搜尋時發生錯誤",
   "analysisDrilldownEmpty": "此期間沒有交易",
+  "analysisDrilldownShowMore": "再顯示 {count} 項",
+  "@analysisDrilldownShowMore": { "placeholders": { "count": { "type": "int" } } },
   "analysisOriginalAmount": "原始金額",
   "analysisRatesStale": "使用上次取得的匯率",
 

@@ -814,6 +814,12 @@
     "description": "Inline placeholder in the slice drill-down items list when the live emission has zero rows (transient race between selection toggle and stream emit)"
   },
 
+  "analysisDrilldownShowMore": "Show {count} more",
+  "@analysisDrilldownShowMore": {
+    "description": "TextButton label below the slice drill-down rows that renders the next page of rows. {count} is the number of rows still hidden.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
   "analysisOriginalAmount": "Original amount",
   "@analysisOriginalAmount": {
     "description": "Label for the booked transaction amount shown as the secondary amount on FX-converted drill-down rows"
