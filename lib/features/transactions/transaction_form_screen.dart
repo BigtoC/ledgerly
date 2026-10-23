@@ -260,6 +260,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                     currency: state.displayCurrency,
                     currencyTouched: state.currencyTouched,
                     hasError: showAmountError,
+                    onEquals: controller.equals,
                   ),
                   if (showAmountError)
                     Padding(

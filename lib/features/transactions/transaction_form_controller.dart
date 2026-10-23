@@ -353,14 +353,37 @@ class TransactionFormController extends _$TransactionFormController {
     state = _copyWithKeypad(s);
   }
 
+  void equals() {
+    final s = state;
+    if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
+    final next = _finishPendingExpression(s);
+    if (!identical(next, s)) state = next;
+  }
+
+  /// Presses `=` on the keypad so the display shows the amount that is
+  /// about to be persisted. Returns [s] unchanged when no expression is
+  /// pending.
+  TransactionFormData _finishPendingExpression(TransactionFormData s) {
+    final decimals = s.displayCurrency?.decimals ?? 2;
+    final next = _keypad.equals(decimals: decimals);
+    if (next == _keypad) return s;
+    _keypad = next;
+    return _copyWithKeypad(s);
+  }
+
   /// Creates a `copyWith` snapshot that mirrors the current keypad
   /// state into `TransactionFormData`, always incrementing
   /// `keypadRevision` so Riverpod rebuilds even when `amountMinorUnits`
   /// did not change (e.g., operator tap, decimal-start while evaluating).
+  ///
+  /// `amountMinorUnits` mirrors the value `=` would produce, not the
+  /// operand being typed: mid-expression (`1 + 2`) the form already holds
+  /// 3, so validation and every submit path see the finished result.
   TransactionFormData _copyWithKeypad(TransactionFormData s) {
     _keypadRevision += 1;
+    final decimals = s.displayCurrency?.decimals ?? 2;
     return s.copyWith(
-      amountMinorUnits: _keypad.amountMinorUnits,
+      amountMinorUnits: _keypad.equals(decimals: decimals).amountMinorUnits,
       keypad: _keypad,
       isDirty: true,
       keypadRevision: _keypadRevision,
@@ -521,9 +544,10 @@ class TransactionFormController extends _$TransactionFormController {
   /// chain when the repository call fails — `isSaving` is always
   /// cleared before the throw so the AppBar Save button re-enables.
   Future<Transaction?> save() async {
-    final s = state;
-    if (s is! TransactionFormData) return null;
-    if (!s.canSave) return null;
+    final current = state;
+    if (current is! TransactionFormData) return null;
+    if (!current.canSave) return null;
+    final s = _finishPendingExpression(current);
     state = s.copyWith(isSaving: true);
     try {
       final tx = Transaction(
@@ -598,9 +622,10 @@ class TransactionFormController extends _$TransactionFormController {
   /// in flight. Rethrows on repository failure after resetting
   /// `submissionAction` to `none`.
   Future<ShoppingListEditResult?> saveDraft() async {
-    final s = state;
-    if (s is! TransactionFormData) return null;
-    if (!s.canSaveDraft) return null;
+    final current = state;
+    if (current is! TransactionFormData) return null;
+    if (!current.canSaveDraft) return null;
+    final s = _finishPendingExpression(current);
 
     state = s.copyWith(
       submissionAction: TransactionFormSubmissionAction.saveDraft,
@@ -665,11 +690,12 @@ class TransactionFormController extends _$TransactionFormController {
   /// in flight. Rethrows on repository failure after resetting
   /// `submissionAction` to `none`.
   Future<ShoppingListEditResult?> convertDraft() async {
-    final s = state;
-    if (s is! TransactionFormData) return null;
-    if (!s.canConvertDraft) return null;
-    final itemId = s.shoppingListItemId;
+    final current = state;
+    if (current is! TransactionFormData) return null;
+    if (!current.canConvertDraft) return null;
+    final itemId = current.shoppingListItemId;
     if (itemId == null) return null;
+    final s = _finishPendingExpression(current);
 
     state = s.copyWith(
       submissionAction: TransactionFormSubmissionAction.convertDraft,

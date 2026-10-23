@@ -148,6 +148,7 @@
   "txKeypadSubtract": "減",
   "txKeypadMultiply": "乘",
   "txKeypadDivide": "除",
+  "txKeypadEquals": "等於",
 
   "homeEmptyDayMessage": "無交易",
   "homeJumpToToday": "跳至今天",

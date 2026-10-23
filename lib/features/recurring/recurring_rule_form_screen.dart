@@ -182,7 +182,11 @@ class _FormBody extends ConsumerWidget {
                   // Calculator-driven amount display. The keypad lives at the
                   // bottom of the screen (outside this ListView) so it can't
                   // be dismissed mid-entry by the soft keyboard.
-                  AmountDisplay(keypad: state.keypad, currency: state.currency),
+                  AmountDisplay(
+                    keypad: state.keypad,
+                    currency: state.currency,
+                    onEquals: controller.equals,
+                  ),
                   const SizedBox(height: 16),
                   _CategoryPickerTile(
                     state: state,

@@ -16,6 +16,7 @@ import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/data/use_cases/recurring_generation_use_case.dart';
 import 'package:ledgerly/features/recurring/recurring_rule_form_controller.dart';
 import 'package:ledgerly/features/recurring/recurring_rule_form_state.dart';
+import 'package:ledgerly/features/transactions/keypad_state.dart';
 
 class _MockRecurringRulesRepository extends Mock
     implements RecurringRulesRepository {}
@@ -166,6 +167,41 @@ void main() {
       verify(
         () => generationUseCase.executeForRule(42, clock: any(named: 'clock')),
       ).called(1);
+    });
+
+    test('save finishes a pending expression before persisting', () async {
+      when(() => recurringRepo.insert(any(), today: any(named: 'today')))
+          .thenAnswer((_) async => 42);
+
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      await buildState(c);
+      final controller = c.read(recurringRuleFormControllerProvider().notifier);
+
+      controller.updateMemo('Netflix');
+      controller.appendDigit(1);
+      controller.applyOperator(CalcOperator.add);
+      controller.appendDigit(2);
+      controller.applyOperator(CalcOperator.add);
+      controller.appendDigit(4);
+      controller.updateCategory(10);
+      controller.updateAccount(20);
+      controller.updateDayOfMonth(15);
+
+      await controller.save();
+
+      final draft =
+          verify(
+                () => recurringRepo.insert(
+                  captureAny(),
+                  today: any(named: 'today'),
+                ),
+              ).captured.single
+              as RecurringRuleDraft;
+      expect(draft.amountMinorUnits, 700);
+      final state = c.read(recurringRuleFormControllerProvider()).value!;
+      expect(state.keypad.showingResult, isTrue);
+      expect(state.keypad.amountMinorUnits, 700);
     });
 
     test(
