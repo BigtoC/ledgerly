@@ -76,13 +76,14 @@ Ledgerly uses a strict 3-layer architecture: a **Data** layer (SSOT), an optiona
 
 ### Layer Boundaries (Forbidden Imports)
 
-| Layer                                        | May import                                                 | Must not import                                     |
-|----------------------------------------------|------------------------------------------------------------|-----------------------------------------------------|
-| Widgets (`features/*/*_screen.dart`)         | Own controller + UI primitives                             | Repositories, services, `AppDatabase`, Drift tables |
-| Controllers (`features/*/*_controller.dart`) | Repositories, use cases, domain models                     | `AppDatabase`, services, Drift tables, DAOs         |
-| Use Cases (`domain/*.dart`) — Phase 2        | Repositories, services, domain models                      | Controllers, widgets                                |
-| Repositories (`data/repositories/*.dart`)    | Services, `AppDatabase`, DAOs, domain models               | Controllers, widgets, use cases                     |
-| Services (`data/services/*.dart`)            | External SDKs only (Drift, Dio, flutter_secure_storage, …) | Upstream layers                                     |
+| Layer                                        | May import                                                                | Must not import                                                             |
+|----------------------------------------------|---------------------------------------------------------------------------|-----------------------------------------------------------------------------|
+| Widgets (`features/*/*_screen.dart`)         | Own controller + UI primitives                                            | Repositories, services, `AppDatabase`, Drift tables                         |
+| Controllers (`features/*/*_controller.dart`) | Repositories, use cases, domain models                                    | `AppDatabase`, services, Drift tables, DAOs                                 |
+| Use Cases (`domain/*.dart`) — Phase 2        | Repositories, services, domain models                                     | Controllers, widgets                                                        |
+| Repositories (`data/repositories/*.dart`)    | Services, `AppDatabase`, DAOs, domain models                              | Controllers, widgets, use cases                                             |
+| Services (`data/services/*.dart`)            | External SDKs only (Drift, Dio, flutter_secure_storage, …)                | Upstream layers                                                             |
+| Core (`core/*`)                              | Flutter SDK and pure packages (`intl`, …), domain models (`data/models/`) | Repositories, services, use cases, seed, `AppDatabase`, DAOs, features, app |
 
 These rules are enforced by `test/unit/architecture/layer_boundaries_test.dart` (rules and the pre-existing-violation baseline live in `import_analysis_options.yaml`; run as `flutter test test/unit/architecture/`) and by the `riverpod_lint` analysis-server plugin configured under `plugins:` in `analysis_options.yaml`.
 
