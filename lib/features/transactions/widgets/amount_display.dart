@@ -21,7 +21,9 @@
 //     amount.
 //   - When `showingResult` is true, the history line shows the full
 //     expression ("12.00 + 5.00 =") and the main amount shows the
-//     fixed-precision result (e.g. "17.00" for USD).
+//     fixed-precision result (e.g. "17.00" for USD). A dangling operator
+//     finished with `=` ("12 +") has no right operand, so only the result
+//     shows and the history line is hidden.
 //   - When `onEquals` is set, an `=` button sits at the end of the history
 //     line, directly above the currency code. It shows for as long as the
 //     history line does and is enabled only while an expression is pending.

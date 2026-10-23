@@ -357,7 +357,7 @@ class TransactionFormController extends _$TransactionFormController {
     final s = state;
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
     final next = _finishPendingExpression(s);
-    if (next != s) state = next;
+    if (!identical(next, s)) state = next;
   }
 
   /// Presses `=` on the keypad so the display shows the amount that is
