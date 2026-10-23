@@ -13,6 +13,7 @@ symptoms:
 root_cause: config_error
 resolution_type: code_fix
 severity: high
+last_refreshed: 2026-10-23
 related_components:
   - category_search_detail_controller
   - analysis_controller
@@ -75,10 +76,8 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
 }
 
 // After — declares both scoped providers
-@Riverpod(
-  keepAlive: true,
-  dependencies: [transactionRepository, AnalysisController],
-)
+// (keepAlive was later removed; see the note under "Why This Works")
+@Riverpod(dependencies: [transactionRepository, AnalysisController])
 class CategorySearchDetailController extends _$CategorySearchDetailController {
   // unchanged body
 }
@@ -148,13 +147,24 @@ Riverpod's `dependencies` parameter declares the scoping contract: any scoped pr
 2. Allows `ref.read(analysisControllerProvider)` and `ref.read(analysisControllerProvider.notifier).lastTransactions` to pass the assertion.
 3. Keeps the cache-reuse path working without regressing the standalone path (the detail provider still falls back to `repo.watchByMemo` when no active analysis state exists).
 
-The `keepAlive: true` regen was a separate-but-necessary fix: the family provider was running as `autoDispose` at runtime because the source annotation had drifted ahead of the generated code. Both issues had to be fixed; either alone left the bug.
+At the time, regenerating for `keepAlive: true` was a separate fix that was also needed. The family provider was running as `autoDispose` at runtime because the source annotation had drifted ahead of the generated code. Both issues had to be fixed; fixing either one alone left the bug.
+
+> **Update (2026-10-23):** `keepAlive: true` has since been removed from this provider.
+>
+> - **Why:** a keepAlive *family* keeps one instance per `(categoryId, query, currencyCode)` alive, together with its `watchByMemo` Drift subscription, for the rest of the session.
+> - **What replaced it:** the provider is now autoDispose. It holds a `ref.keepAlive()` link only while an undo is pending, and it ignores calls that arrive after dispose.
+> - **Unchanged:** the `dependencies` fix above. The assertion came only from the incomplete `dependencies` list, and the provider's lifecycle played no part in it, so returning to autoDispose does not bring the bug back.
+>
+> See [the performance audit learning](../performance-issues/flutter-performance-audit-riverpod-lifecycle-and-emit-path-fixes.md).
 
 ## Prevention
 
 - **Whenever you add `ref.read(otherScopedProvider)` or `ref.watch(otherScopedProvider)` inside a `@Riverpod`-annotated provider, immediately add that provider to your own `dependencies` list.** The runtime assertion only fires in debug builds and only when the read path is exercised — easy to miss in static review.
 
-- **Re-run `dart run build_runner build --delete-conflicting-outputs` after every change to a `@Riverpod` annotation** (`keepAlive`, `dependencies`, `family` parameters). The generated `.g.dart` encodes runtime behavior; source-only changes are silently ignored until regen. CLAUDE.md already calls this out, but it bears restating: an out-of-date `.g.dart` will not produce a compile error — it will produce a runtime divergence.
+- **Re-run `dart run build_runner build --delete-conflicting-outputs` after every edit to a file that has a generated part.** This covers more than changes to a `@Riverpod` annotation (`keepAlive`, `dependencies`, `family` parameters).
+  - The generated `.g.dart` encodes runtime behavior. An annotation change has no effect until you regenerate.
+  - riverpod_generator also embeds a hash of the provider's source (comments excluded), so any code edit inside the provider leaves the committed `.g.dart` stale, even when no annotation changed.
+  - An out-of-date `.g.dart` does not cause a compile error. It causes the runtime to diverge from the source.
 
 - **Widget tests for cross-provider state reuse must assert positive render, not just widget presence.** A screen widget remains in the tree when its body is the error branch. Always pair `find.byType(<Screen>)` with `find.byType(<expected child>)` and `find.text(<error message>), findsNothing`.
 
@@ -165,6 +175,7 @@ The `keepAlive: true` regen was a separate-but-necessary fix: the family provide
 ## Related Issues
 
 - [`docs/solutions/logic-errors/transaction-search-analysis-regressions-2026-05-10.md`](../logic-errors/transaction-search-analysis-regressions-2026-05-10.md) — same module, same day, same files. Covers a different root cause (state-machine flattening of metadata-readiness) but flags the same `category_search_detail_controller.dart` as a hotspot for reuse-of-shared-analysis-state regressions. Should be updated to add a back-reference to this doc.
+- [`docs/solutions/performance-issues/flutter-performance-audit-riverpod-lifecycle-and-emit-path-fixes.md`](../performance-issues/flutter-performance-audit-riverpod-lifecycle-and-emit-path-fixes.md) — removed this provider's `keepAlive` (family leak) and widened the regen rule to body-only edits.
 - [`docs/solutions/best-practices/reactive-feature-flow-ownership-2026-04-25.md`](../best-practices/reactive-feature-flow-ownership-2026-04-25.md) — broader Riverpod ownership pattern (router → repo → controller → widget). This learning reinforces the contract at the provider-declaration layer.
 - Verified with:
   - `dart run build_runner build --delete-conflicting-outputs`
