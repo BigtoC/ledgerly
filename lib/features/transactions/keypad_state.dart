@@ -116,11 +116,13 @@ class KeypadState {
     );
     final right = operands.last.amountMinorUnits;
     return KeypadState(
-      amountMinorUnits: _evaluate(
-        leftOperand: left,
-        rightOperand: right,
-        operator: operators.last,
-        decimals: decimals,
+      amountMinorUnits: _nonNegative(
+        _evaluate(
+          leftOperand: left,
+          rightOperand: right,
+          operator: operators.last,
+          decimals: decimals,
+        ),
       ),
       fractionalDigitsEntered: 0,
       isFractionalMode: false,
@@ -511,9 +513,27 @@ class KeypadState {
       );
     }
 
-    // After a result, the formula behind it (if any) continues; a result
-    // without one becomes the first operand.
-    final continuesFormula = showingResult && formulaOperators.isNotEmpty;
+    // After a result, the formula behind it (if any) continues from its
+    // unclamped running total, so the keys and the replayed formula agree
+    // even when the shown result was clamped at zero. A result without a
+    // formula becomes the first operand.
+    if (showingResult && formulaOperators.isNotEmpty) {
+      return KeypadState(
+        amountMinorUnits: 0,
+        fractionalDigitsEntered: 0,
+        isFractionalMode: false,
+        leftOperand: _fold(
+          formulaOperands,
+          formulaOperators,
+          decimals: decimals,
+        ),
+        operator: op,
+        isEvaluating: true,
+        hasCurrentInput: false,
+        formulaOperands: formulaOperands,
+        formulaOperators: [...formulaOperators, op],
+      );
+    }
     final firstOperand = showingResult
         ? KeypadState.fromAmount(amountMinorUnits, decimals: decimals)
         : this;
@@ -527,10 +547,8 @@ class KeypadState {
       showingResult: false,
       rightOperand: null,
       hasCurrentInput: false,
-      formulaOperands: continuesFormula
-          ? formulaOperands
-          : [firstOperand._currentOperand],
-      formulaOperators: continuesFormula ? [...formulaOperators, op] : [op],
+      formulaOperands: [firstOperand._currentOperand],
+      formulaOperators: [op],
     );
   }
 
@@ -552,7 +570,7 @@ class KeypadState {
           ? const <CalcOperator>[]
           : formulaOperators.sublist(0, formulaOperators.length - 1);
       return KeypadState(
-        amountMinorUnits: leftOperand!,
+        amountMinorUnits: _nonNegative(leftOperand!),
         fractionalDigitsEntered: 0,
         isFractionalMode: false,
         showingResult: true,
@@ -562,11 +580,13 @@ class KeypadState {
     }
 
     return KeypadState(
-      amountMinorUnits: _evaluate(
-        leftOperand: leftOperand!,
-        rightOperand: amountMinorUnits,
-        operator: operator!,
-        decimals: decimals,
+      amountMinorUnits: _nonNegative(
+        _evaluate(
+          leftOperand: leftOperand!,
+          rightOperand: amountMinorUnits,
+          operator: operator!,
+          decimals: decimals,
+        ),
       ),
       fractionalDigitsEntered: 0,
       isFractionalMode: false,
@@ -669,8 +689,9 @@ int _pow10(int exponent) {
 
 /// Evaluate [leftOperand] [operator] [rightOperand] in integer minor-unit
 /// arithmetic. Multiplication and division use [BigInt] to avoid overflow and
-/// apply half-up rounding at the [decimals] boundary. Subtraction underflow is
-/// clamped to zero (expenses can never be negative).
+/// round half away from zero at the [decimals] boundary. A subtotal may go
+/// negative (`5 - 10 + 20` is 15); only the finished result is clamped to
+/// zero, by [_nonNegative], because amounts can never be negative.
 int _evaluate({
   required int leftOperand,
   required int rightOperand,
@@ -680,7 +701,7 @@ int _evaluate({
   final unit = BigInt.from(_pow10(decimals));
   return switch (operator) {
     CalcOperator.add => leftOperand + rightOperand,
-    CalcOperator.subtract => (leftOperand - rightOperand).clamp(0, leftOperand),
+    CalcOperator.subtract => leftOperand - rightOperand,
     CalcOperator.multiply => _roundHalfUp(
       BigInt.from(leftOperand) * BigInt.from(rightOperand),
       unit,
@@ -695,19 +716,24 @@ int _evaluate({
   };
 }
 
-/// Integer division with half-up rounding: ⌊(numerator + denominator/2) /
-/// denominator⌋. Both arguments must be non-negative.
+/// Integer division rounding half away from zero:
+/// sign × ⌊(|numerator| + denominator/2) / denominator⌋. [denominator] must
+/// be positive; [numerator] may be negative (a negative subtotal).
 ///
-/// Clamps to [double.maxFinite] cast as int if the result overflows Dart's
+/// Clamps to ±[double.maxFinite] cast as int if the result overflows Dart's
 /// native int range (relevant for high-decimal currencies such as ETH).
 int _roundHalfUp(BigInt numerator, BigInt denominator) {
-  final adjusted = numerator + (denominator ~/ BigInt.from(2));
-  final result = adjusted ~/ denominator;
+  final adjusted = numerator.abs() + (denominator ~/ BigInt.from(2));
+  final magnitude = adjusted ~/ denominator;
+  final result = numerator.isNegative ? -magnitude : magnitude;
   // BigInt.isValidInt is true iff result fits in a Dart native int (63-bit
   // on 64-bit platforms, 32-bit on 32-bit platforms).
   return result.isValidInt
       ? result.toInt()
       : result.isNegative
-      ? 0
+      ? -double.maxFinite.toInt()
       : double.maxFinite.toInt();
 }
+
+/// A finished calculation is an amount, which can never be negative.
+int _nonNegative(int value) => value < 0 ? 0 : value;

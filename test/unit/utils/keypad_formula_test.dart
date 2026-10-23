@@ -143,7 +143,8 @@ void main() {
     test('evaluates left to right like the keys', () {
       expect(load('2+3*4').amountMinorUnits, 2000);
       expect(load('10/4').amountMinorUnits, 250);
-      expect(load('1-5+2').amountMinorUnits, 200);
+      expect(load('1-5+6').amountMinorUnits, 200);
+      expect(load('1-5+2').amountMinorUnits, 0);
       expect(load('1500*3', decimals: 0).amountMinorUnits, 4500);
     });
 
@@ -193,6 +194,38 @@ void main() {
 
     test('a formula-less result is recorded without trailing zeros', () {
       expect(type('1.5+=*2').formula(decimals: _usd), '1.5*2');
+    });
+  });
+
+  group('only the result is clamped at zero', () {
+    test('a negative subtotal carries through, so the formula holds', () {
+      final s = type('5-10+20=');
+      expect(s.amountMinorUnits, 1500);
+      expect(s.formula(decimals: _usd), '5-10+20');
+      expect(load('5-10+20').amountMinorUnits, 1500);
+    });
+
+    test('negative subtotals round away from zero like positive ones', () {
+      // (1 - 3.33) × 1.5 = -3.495 -> -3.50, then + 5 = 1.50.
+      expect(finished(type('1-3.33*1.5+5')), 150);
+      // (1 - 2) ÷ 3 = -0.333.. -> -0.33, then + 1 = 0.67.
+      expect(finished(type('1-2/3+1')), 67);
+    });
+
+    test('a negative result is clamped to zero', () {
+      expect(finished(type('3-5')), 0);
+      expect(finished(type('5-10*2')), 0);
+      expect(type('3-5=').amountMinorUnits, 0);
+      // A dangling operator after a negative subtotal finishes at zero.
+      expect(type('3-5+=').amountMinorUnits, 0);
+      expect(load('5-10*2').amountMinorUnits, 0);
+    });
+
+    test('continuing after a clamped result resumes the formula', () {
+      final s = type('3-5=+2');
+      expect(s.formula(decimals: _usd), '3-5+2');
+      expect(finished(s), 0);
+      expect(finished(type('+2', start: load('3-5'))), 0);
     });
   });
 }
