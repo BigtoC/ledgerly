@@ -105,6 +105,36 @@ Detailed agent-facing rules live under [`docs/architecture/`](docs/architecture/
 - [`testing.md`](docs/architecture/testing.md) — Test organization by layer; repository/controller/golden/migration patterns; per-slice coverage map.
 - [`dependencies.md`](docs/architecture/dependencies.md) — layer-boundary check (replaced `import_lint`), base `app_zh.arb` requirement, Android and iOS build toolchains.
 
+## Performance rules
+
+These rules come from a performance audit covering rendering, memory, startup and package size. Measure before restructuring anything for speed: run `flutter run --profile` and use DevTools. Never break an architecture rule for a gain you have not measured.
+
+- **Render user-data lists lazily.** A list whose length depends on the user's data uses `ListView.builder` / `SliverList.builder`, or caps rendered rows behind a "Show N more" control (`PendingSection`, and `SelectedSliceItemsList` with `_kDrilldownPageSize`). Never map unbounded rows into a `Column` inside a `SingleChildScrollView`. Home's single-day `Column` is a deliberate exception: its row count is bounded. Don't set `itemExtent` on rows that contain text, because it breaks the 2× text-scale requirement.
+- **Keep `build()` and controller emit paths free of side effects.** No I/O, no controller or stream creation, no logging, and no `NumberFormat`/`DateFormat` built per row. Use `MoneyFormatter`, which caches its formats. A recompute path such as `ChartsController._emitIfReady` must not start a network call or DB write on every emission. Track what has already been requested, because a write can make the same stream emit again and loop.
+- **Don't add trace logs to shipped code.** `debugPrint` runs in release builds. Never log amounts, totals, balances, currency sets or memos. Error logs carry `${e.runtimeType}` only.
+- **Never put `keepAlive: true` on a Riverpod family.** Every argument set would keep its state and Drift subscription for the rest of the session. If a provider must outlive its screen during an undo window:
+  - take a `ref.keepAlive()` link only while the undo is pending, and close it on commit or undo;
+  - make calls after dispose no-ops, for example by nulling the emitter in `onDispose`.
+
+  `CategorySearchDetailController` is the reference implementation.
+- **Regenerate whenever you edit a file that has a generated part.** `riverpod_generator` embeds a source hash, so even a body-only edit leaves the committed `.g.dart` stale. Run `build_runner` and commit the regenerated file in the same commit.
+- **Call `setState` only when something changed.** In high-frequency callbacks (fl_chart `touchCallback`, gesture and scroll handlers), compare the new value with the current one before calling `setState`. After an `await` or a platform callback (WebView, timers), check `mounted` first.
+- **Give each animated chart its own `RepaintBoundary`.** fl_chart adds none, so `_ChartBody` wraps each one. Don't add boundaries elsewhere unless a DevTools repaint trace shows the need.
+- **Before `runApp`, `bootstrap()` loads only what the first frame needs:** theme, locale, the splash gate, the default currency and intl date data. Run everything else after the first frame, the way recurring generation does. Don't reorder the documented bootstrap steps to save milliseconds.
+- **Ship only what the app uses.**
+  - Every runtime dependency must be imported from `lib/`. Packages that ship fonts or assets bundle them whether or not you use them: the unused `material_symbols_icons` added about 15.6 MB.
+  - List assets by file, not by directory.
+  - Don't give light and dark native-splash entries the same image, because each entry gets its own copy.
+  - After adding a package or asset, check the size with `flutter build apk --analyze-size` or `unzip -l` on the APK.
+- **These are already decided, so don't "optimise" them:**
+  - R8 and resource shrinking are Flutter's release defaults, so don't add Gradle flags.
+  - Drift runs on a background isolate through `driftDatabase()`.
+  - The existing Drift indexes cover the hot queries.
+  - Home's `_Composer` batches its stream emissions in microtasks.
+  - The charts use `skipLoadingOnReload`.
+  - The box-shadow colour is randomised on each build.
+  - There are no deferred components, because APKs ship through GitHub Releases rather than Play.
+
 ## Commands and workflows
 
 > When verifying changes, run `dart format .` before any `flutter test` or `dart analyze` command.
