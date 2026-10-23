@@ -1309,3 +1309,15 @@ Versions below are the tested resolvable set under Flutter **3.47.7** (Dart 3.13
 **`build_runner` version note.** `build_runner 2.17.1` requires `build >=5.0.0 <5.1.0`, and 2.17.0 is retracted. `drift_dev 2.35` and `riverpod_generator 4.0.9` still require `build <5.0.0`, so `^2.16.2` is the newest release that resolves.
 
 **SQLite native library note.** `drift_flutter 0.3` uses `sqlite3 3.x`. That release bundles SQLite through Dart build hooks: at build time it downloads a hash-checked prebuilt library from the `sqlite3.dart` GitHub release. It replaces `sqlite3_flutter_libs`, which now resolves only as an empty `+eol` package. The database file is unchanged at `getApplicationDocumentsDirectory()/ledgerly.sqlite`.
+
+### Android Build Toolchain
+
+| Tool                          | Version  | Set in                                                  |
+|-------------------------------|----------|---------------------------------------------------------|
+| Gradle                        | `9.7.0`  | `android/gradle/wrapper/gradle-wrapper.properties`      |
+| Android Gradle Plugin (AGP)   | `9.3.1`  | `android/settings.gradle.kts`                           |
+| Kotlin Gradle Plugin (KGP)    | `2.4.21` | `android/settings.gradle.kts` (`apply false`)           |
+| JDK                           | 17+      | CI uses Temurin 21 (`check.yml`, `android-release.yml`) |
+| Java / Kotlin bytecode target | 17       | `android/app/build.gradle.kts`                          |
+
+**Android toolchain pin note.** These are the newest releases that the Kotlin and AGP compatibility tables and Flutter 3.47.7's version checks all accept. The Kotlin table (kotlinlang.org, "Configure a Gradle project") lists KGP 2.4.20–2.4.21 for Gradle 7.6.3–9.7.0 and AGP 8.5.2–9.3.1. The AGP release notes require at least Gradle 9.5.0 for AGP 9.3. Flutter 3.47.7 warns below Gradle 9.1.0, AGP 9.0.1 and Kotlin 2.3.20, and `flutter analyze --suggestions` reports this set as compatible. AGP 9.4 and Gradle 9.8 also build, but they are above the Kotlin table's limits, so wait for a KGP release that lists them. `android.builtInKotlin=true` means AGP compiles Kotlin with the KGP on the build classpath, which is why the `apply false` line in `settings.gradle.kts` sets the compiler version. `android.newDsl=false` stays until the Flutter Gradle Plugin stops using the legacy variant API ([flutter/flutter#166550](https://github.com/flutter/flutter/issues/166550)). See [`docs/architecture/dependencies.md`](docs/architecture/dependencies.md#android-build-toolchain).
