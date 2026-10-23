@@ -141,5 +141,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Food'), findsWidgets);
+    // Period, type and dimension toggles mark the selected segment by fill
+    // only, without a leading check icon.
+    expect(find.byIcon(Icons.check), findsNothing);
   });
 }

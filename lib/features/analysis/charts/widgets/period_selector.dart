@@ -78,6 +78,7 @@ class PeriodSelector extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         SegmentedButton<PeriodType>(
+          showSelectedIcon: false,
           segments: [
             ButtonSegment(
               value: PeriodType.day,

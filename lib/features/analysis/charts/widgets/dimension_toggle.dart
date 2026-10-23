@@ -17,6 +17,7 @@ class DimensionToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return SegmentedButton<ChartDimension>(
+      showSelectedIcon: false,
       segments: [
         ButtonSegment(
           value: ChartDimension.category,

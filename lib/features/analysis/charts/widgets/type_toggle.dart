@@ -13,6 +13,7 @@ class TypeToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return SegmentedButton<CategoryType>(
+      showSelectedIcon: false,
       segments: [
         ButtonSegment(
           value: CategoryType.expense,
