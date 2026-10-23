@@ -11,6 +11,12 @@ import '../../data/models/currency.dart';
 class MoneyFormatter {
   const MoneyFormatter._();
 
+  // Building a NumberFormat parses the locale pattern each time, and list
+  // rows call these per build. Keys are (locale, symbol, decimals) and
+  // (locale, decimals); the key space is small, so no eviction.
+  static final Map<(String, String, int), NumberFormat> _currencyCache = {};
+  static final Map<(String, int), NumberFormat> _bareCache = {};
+
   /// Formats [amountMinorUnits] in [currency] for [locale] (e.g. `'en_US'`,
   /// `'zh_TW'`, `'zh_CN'`). Uses `currency.symbol` if present, otherwise
   /// falls back to `currency.code`. Negative amounts render with the
@@ -25,10 +31,13 @@ class MoneyFormatter {
     // `double` is safe up to ~15 significant digits. Above that, fall
     // through to a BigInt-based string path to avoid ULP drift (ETH @ 18).
     if (currency.decimals <= 12) {
-      final fmt = NumberFormat.currency(
-        locale: locale,
-        symbol: symbol,
-        decimalDigits: currency.decimals,
+      final fmt = _currencyCache.putIfAbsent(
+        (locale, symbol, currency.decimals),
+        () => NumberFormat.currency(
+          locale: locale,
+          symbol: symbol,
+          decimalDigits: currency.decimals,
+        ),
       );
       return fmt.format(amountMinorUnits / _scale(currency.decimals));
     }
@@ -67,9 +76,12 @@ class MoneyFormatter {
     required String locale,
   }) {
     if (currency.decimals <= 12) {
-      final fmt = NumberFormat.decimalPatternDigits(
-        locale: locale,
-        decimalDigits: currency.decimals,
+      final fmt = _bareCache.putIfAbsent(
+        (locale, currency.decimals),
+        () => NumberFormat.decimalPatternDigits(
+          locale: locale,
+          decimalDigits: currency.decimals,
+        ),
       );
       return fmt.format(amountMinorUnits / _scale(currency.decimals));
     }
