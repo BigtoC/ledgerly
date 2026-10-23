@@ -3,12 +3,10 @@
 // download URL in the system browser.
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/utils/system_browser.dart';
 import '../../../l10n/app_localizations.dart';
-
-typedef LaunchUrlFn = Future<bool> Function(Uri url, {LaunchMode mode});
 
 class NewVersionBadge extends StatelessWidget {
   const NewVersionBadge({
@@ -23,14 +21,7 @@ class NewVersionBadge extends StatelessWidget {
   Future<void> _open(BuildContext context) async {
     final messenger = ScaffoldMessenger.maybeOf(context);
     final failed = AppLocalizations.of(context).settingsNewVersionOpenFailed;
-    bool launched;
-    try {
-      // System browser, not the in-app WebView.
-      launched = await launch(url, mode: LaunchMode.externalApplication);
-    } on PlatformException {
-      // url_launcher_android throws rather than returning false.
-      launched = false;
-    }
+    final launched = await openInSystemBrowser(url, launch: launch);
     if (!launched) messenger?.showSnackBar(SnackBar(content: Text(failed)));
   }
 

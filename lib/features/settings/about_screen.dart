@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+
+import '../../core/utils/system_browser.dart';
 
 class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
@@ -32,10 +33,7 @@ class _AboutScreenState extends State<AboutScreen> {
 
   Future<void> _openInBrowser() async {
     final messenger = ScaffoldMessenger.maybeOf(context);
-    final launched = await launchUrl(
-      _url,
-      mode: LaunchMode.externalApplication,
-    );
+    final launched = await openInSystemBrowser(_url);
     if (!launched) {
       messenger?.showSnackBar(
         SnackBar(content: Text('Could not open ${_url.toString()}')),
