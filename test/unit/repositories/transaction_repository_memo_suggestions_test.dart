@@ -140,6 +140,28 @@ void main() {
     expect(memos, ['Lunch']);
   });
 
+  test('non-space whitespace is trimmed like String.trim', () async {
+    // Tab and the ideographic space (U+3000, typed by CJK IMEs) are not
+    // stripped by SQLite's one-argument TRIM.
+    await _insertTx(
+      db: db,
+      id: 1,
+      date: DateTime.utc(2026, 5, 1),
+      memo: 'Lunch\t',
+    );
+    await _insertTx(
+      db: db,
+      id: 2,
+      date: DateTime.utc(2026, 5, 2),
+      memo: '　Lunch',
+    );
+    await _insertTx(db: db, id: 3, date: DateTime.utc(2026, 5, 3), memo: '　\t');
+
+    final memos = await repo.watchRecentMemosForCategory(1, limit: 10).first;
+
+    expect(memos, ['Lunch']);
+  });
+
   test('scoped to the requested category', () async {
     await _insertTx(
       db: db,
