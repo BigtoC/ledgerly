@@ -1,9 +1,12 @@
 // Guards `availableAppUpdateProvider`: the update check waits for the
 // future it is given (the startup FX refresh), runs at most once per
-// container, and exposes the APK URL it found.
+// container, and exposes the APK URL it found. It stops waiting after a
+// timeout so a startup refresh that never settles cannot cancel the check,
+// and it does not wait at all where no APK can be installed.
 
 import 'dart:async';
 
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -22,6 +25,7 @@ void main() {
 
   setUp(() {
     repo = _MockAppUpdateRepository();
+    when(() => repo.isSupported).thenReturn(true);
     container = ProviderContainer(
       retry: noProviderRetry,
       overrides: [appUpdateRepositoryProvider.overrideWithValue(repo)],
@@ -73,5 +77,34 @@ void main() {
 
     verify(() => repo.findUpdate()).called(1);
     expect(container.read(availableAppUpdateProvider), isNull);
+  });
+
+  test('checks after the timeout when ready never completes', () {
+    fakeAsync((async) {
+      when(() => repo.findUpdate()).thenAnswer((_) async => _apkUrl);
+
+      unawaited(
+        container
+            .read(availableAppUpdateProvider.notifier)
+            .checkAfter(Completer<void>().future),
+      );
+      async.elapse(const Duration(seconds: 29));
+      verifyNever(() => repo.findUpdate());
+
+      async.elapse(const Duration(seconds: 2));
+      verify(() => repo.findUpdate()).called(1);
+      expect(container.read(availableAppUpdateProvider), _apkUrl);
+    });
+  });
+
+  test('does not wait for ready where no APK can be installed', () async {
+    when(() => repo.isSupported).thenReturn(false);
+    when(() => repo.findUpdate()).thenAnswer((_) async => null);
+
+    await container
+        .read(availableAppUpdateProvider.notifier)
+        .checkAfter(Completer<void>().future);
+
+    verifyNever(() => repo.findUpdate());
   });
 }

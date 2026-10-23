@@ -126,6 +126,16 @@ void main() {
       expect(await repo().findUpdate(), isNull);
     });
 
+    test('an Error while checking gives null', () async {
+      stubRelease(_release());
+      final failing = AppUpdateRepository(
+        service,
+        installedVersion: () async => throw StateError('no package info'),
+        abi: Abi.androidArm64,
+      );
+      expect(await failing.findUpdate(), isNull);
+    });
+
     test('service returning null gives null', () async {
       stubRelease(null);
       expect(await repo().findUpdate(), isNull);
@@ -158,6 +168,20 @@ void main() {
     for (final (latest, installed, expected) in cases) {
       test('$latest vs $installed is $expected', () {
         expect(isNewerVersion(latest, installed), expected);
+      });
+    }
+  });
+
+  group('AppUpdateRepository.isSupported', () {
+    for (final (abi, expected) in [
+      (Abi.androidArm64, true),
+      (Abi.androidArm, true),
+      (Abi.androidX64, true),
+      (Abi.macosArm64, false),
+      (Abi.iosArm64, false),
+    ]) {
+      test('$abi is ${expected ? '' : 'not '}supported', () {
+        expect(repo(abi: abi).isSupported, expected);
       });
     }
   });

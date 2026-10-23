@@ -107,7 +107,7 @@ final class AvailableAppUpdateProvider
 }
 
 String _$availableAppUpdateHash() =>
-    r'e42bd3f211a698ed31a3d1703ecf0e22f37ee0cb';
+    r'c8c5581b4436cfc9dd823a4ef397f87cb24e3ec2';
 
 /// APK download URL of a newer release, or null. `build()` has no side
 /// effects; `App` triggers [checkAfter] once per launch after the first

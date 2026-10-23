@@ -54,6 +54,7 @@ void main() {
     final fx = _MockExchangeRateService();
     when(() => fx.fetchRates(any())).thenAnswer((_) => fxGate.future);
     final updates = _MockAppUpdateRepository();
+    when(() => updates.isSupported).thenReturn(true);
     when(() => updates.findUpdate()).thenAnswer((_) async => _apkUrl);
 
     final container = makeTestContainer(

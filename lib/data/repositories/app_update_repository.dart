@@ -27,6 +27,10 @@ class AppUpdateRepository {
     Abi.androidX64: 'x86_64',
   };
 
+  /// Whether this device can install a published APK. When false,
+  /// [findUpdate] makes no request, so callers need not wait to call it.
+  bool get isSupported => _apkAbi.containsKey(_abi);
+
   /// The https APK URL for this device's ABI from a release newer than the
   /// installed app, or null: off Android, not newer, no matching asset, or
   /// any failure.
@@ -45,7 +49,9 @@ class AppUpdateRepository {
       final asset = release.assets.where((a) => a.name == apkName).firstOrNull;
       final uri = asset == null ? null : Uri.tryParse(asset.url);
       return uri != null && uri.isScheme('https') ? uri : null;
-    } on Exception catch (e) {
+    } on Object catch (e) {
+      // Best-effort background check: no failure may escape to the
+      // unawaited caller, Errors included.
       debugPrint('AppUpdateRepository.findUpdate failed (${e.runtimeType})');
       return null;
     }

@@ -18,6 +18,8 @@ AppUpdateRepository appUpdateRepository(Ref ref) => AppUpdateRepository(
   abi: Abi.current(),
 );
 
+const _readyTimeout = Duration(seconds: 30);
+
 /// APK download URL of a newer release, or null. `build()` has no side
 /// effects; `App` triggers [checkAfter] once per launch after the first
 /// frame.
@@ -29,13 +31,17 @@ class AvailableAppUpdate extends _$AvailableAppUpdate {
   Uri? build() => null;
 
   /// Waits for [ready] (the startup FX refresh), then checks for a newer
-  /// release. Later calls are no-ops.
+  /// release. Stops waiting after [_readyTimeout], so a refresh that never
+  /// settles cannot cancel the check. Later calls are no-ops.
   Future<void> checkAfter(Future<void> ready) async {
     if (_requested) return;
     _requested = true;
-    await ready;
+    final repo = ref.read(appUpdateRepositoryProvider);
+    // Nothing to check here, so don't wait (or start a timer).
+    if (!repo.isSupported) return;
+    await ready.timeout(_readyTimeout, onTimeout: () {});
     if (!ref.mounted) return;
-    final url = await ref.read(appUpdateRepositoryProvider).findUpdate();
+    final url = await repo.findUpdate();
     if (ref.mounted) state = url;
   }
 }
