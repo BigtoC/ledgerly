@@ -8,6 +8,8 @@
 //   - Per-section empty CTA renders when a type has no visible rows.
 //   - FAB opens the form sheet.
 //   - Archive action surfaces the undo snackbar.
+//   - Blocked delete / archive / save show localized messages, never the
+//     repository's English developer strings.
 //   - Edit-mode disables the Type toggle (plan §12 risk #2).
 //   - 2× text scale survives.
 
@@ -55,10 +57,15 @@ class _FakeCategoriesController extends CategoriesController {
 }
 
 @Dependencies([CategoriesController])
-Widget _wrap({required ProviderContainer container, double textScale = 1.0}) {
+Widget _wrap({
+  required ProviderContainer container,
+  double textScale = 1.0,
+  Locale? locale,
+}) {
   return UncontrolledProviderScope(
     container: container,
     child: MaterialApp(
+      locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
@@ -280,4 +287,171 @@ void main() {
     expect(find.text('Undo'), findsOneWidget);
     verify(() => repo.archive(9)).called(1);
   });
+
+  ProviderContainer singleRowContainer(
+    _MockCategoryRepository repo,
+    Category cat,
+    CategoryRowAffordance affordance,
+  ) {
+    final container = ProviderContainer(
+      overrides: [
+        categoryRepositoryProvider.overrideWithValue(repo),
+        categoriesControllerProvider.overrideWith(
+          () => _FakeCategoriesController(
+            CategoriesState.data(
+              expense: [_row(cat, affordance)],
+              income: const [],
+            ),
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    return container;
+  }
+
+  Future<void> deleteAndConfirm(WidgetTester tester, int id) async {
+    await tester.tap(find.byKey(ValueKey('categoryTile:$id:delete')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FilledButton));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('S07: blocked delete shows the localized in-use message', (
+    tester,
+  ) async {
+    final repo = _MockCategoryRepository();
+    final cat = _c(id: 12, type: CategoryType.expense, customName: 'Hobby');
+    when(() => repo.delete(12)).thenThrow(const CategoryInUseException(12));
+    final container = singleRowContainer(
+      repo,
+      cat,
+      CategoryRowAffordance.delete,
+    );
+
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
+    await deleteAndConfirm(tester, 12);
+
+    expect(
+      find.text("This category is still in use, so it can't be deleted."),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Category 12'), findsNothing);
+  });
+
+  testWidgets('S08: blocked delete message follows the zh_TW locale', (
+    tester,
+  ) async {
+    final repo = _MockCategoryRepository();
+    final cat = _c(id: 12, type: CategoryType.expense, customName: 'Hobby');
+    when(() => repo.delete(12)).thenThrow(const CategoryInUseException(12));
+    final container = singleRowContainer(
+      repo,
+      cat,
+      CategoryRowAffordance.delete,
+    );
+
+    await tester.pumpWidget(
+      _wrap(container: container, locale: const Locale('zh', 'TW')),
+    );
+    await tester.pumpAndSettle();
+    await deleteAndConfirm(tester, 12);
+
+    expect(find.text('此分類仍在使用中，無法刪除。'), findsOneWidget);
+  });
+
+  testWidgets(
+    'S09: archive blocked by a recurring rule shows the localized message',
+    (tester) async {
+      final repo = _MockCategoryRepository();
+      final cat = _c(id: 9, type: CategoryType.expense, customName: 'Rent');
+      when(() => repo.archive(9))
+          .thenThrow(const CategoryHasRecurringRuleException(9));
+      final container = singleRowContainer(
+        repo,
+        cat,
+        CategoryRowAffordance.archive,
+      );
+
+      await tester.pumpWidget(_wrap(container: container));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('categoryTile:9:archive')));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          'An active recurring transaction uses this category, '
+          "so it can't be archived.",
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Category archived'), findsNothing);
+    },
+  );
+
+  testWidgets('S10: other archive failures keep the generic snackbar', (
+    tester,
+  ) async {
+    final repo = _MockCategoryRepository();
+    final cat = _c(id: 9, type: CategoryType.expense, customName: 'Rent');
+    when(() => repo.archive(9))
+        .thenThrow(const CategoryRepositoryException('Category 9 not found'));
+    final container = singleRowContainer(
+      repo,
+      cat,
+      CategoryRowAffordance.archive,
+    );
+
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('categoryTile:9:archive')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Something went wrong. Please try again.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets(
+    'S11: type-locked save shows the localized inline error and keeps the '
+    'sheet open',
+    (tester) async {
+      final repo = _MockCategoryRepository();
+      final cat = _c(id: 3, type: CategoryType.expense, customName: 'Food');
+      // Synthetic: the real rename() never type-locks (Edit keeps the
+      // stored type). This only exercises the typeLocked -> message map.
+      when(() => repo.rename(3, 'Groceries'))
+          .thenThrow(const CategoryTypeLockedException(3));
+      final container = singleRowContainer(
+        repo,
+        cat,
+        CategoryRowAffordance.archive,
+      );
+
+      await tester.pumpWidget(_wrap(container: container));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Food'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Groceries');
+      await tester.pump();
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          "This category's type can't change after it has been used. "
+          'Create a new category instead.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('id: 3'), findsNothing);
+      // Sheet stays open and Save is enabled again for a retry.
+      final save = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Save'),
+      );
+      expect(save.onPressed, isNotNull);
+    },
+  );
 }

@@ -105,6 +105,11 @@ const Set<String> _expectedEnKeys = <String>{
   'categoriesPickerEmptyCta',
   // Wave 4 §3.2 rename: was commonArchive — only categories used it.
   'categoriesArchiveAction',
+  // Localized messages for blocked commands, mapped from
+  // CategoriesOperationError (were raw repository exception strings).
+  'categoriesDeleteInUseError',
+  'categoriesArchiveRecurringRuleError',
+  'categoriesFormTypeLockedError',
 
   // M5 Wave 1 — Accounts slice UI keys
   // (docs/plans/m5-ui-feature-slices/wave-1/accounts-plan.md §3.2).

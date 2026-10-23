@@ -12,10 +12,15 @@
 //
 // Repository-layer invariants (category-type lock, seeded-row-cannot-
 // delete) stay in `CategoryRepository`; the controller only derives
-// which affordance to show and routes the correct command. Typed
-// exceptions (`CategoryTypeLockedException`, `CategoryInUseException`)
-// bubble to the form sheet via `AsyncError` so the sheet stays open for
-// retry (plan §6).
+// which affordance to show and routes the correct command. The create,
+// rename, updateIconColor, archive, undoArchive and delete commands
+// translate the repository's typed exceptions
+// (`CategoryInUseException`, `CategoryTypeLockedException`,
+// `CategoryHasRecurringRuleException`) into
+// `CategoriesOperationException(kind)`, which the widgets map to
+// localized messages without importing the repository. The form sheet
+// stays open for retry (plan §6). Any other failure is rethrown as is
+// and the widgets show their generic fallback.
 
 import 'dart:async';
 
@@ -67,13 +72,13 @@ class CategoriesController extends _$CategoriesController {
   /// Create a new category. `category.id` must be `0`.
   Future<Category> createCategory(Category category) {
     final repo = ref.read(categoryRepositoryProvider);
-    return repo.save(category.copyWith(id: 0));
+    return _translate(() => repo.save(category.copyWith(id: 0)));
   }
 
   /// Rename an existing category. Writes `customName` only.
   Future<Category> renameCategory(int id, String? customName) {
     final repo = ref.read(categoryRepositoryProvider);
-    return repo.rename(id, customName);
+    return _translate(() => repo.rename(id, customName));
   }
 
   /// Updates icon + color on an existing category, preserving every other
@@ -89,13 +94,18 @@ class CategoriesController extends _$CategoriesController {
     if (existing == null) {
       throw CategoryRepositoryException('Category $id not found');
     }
-    return repo.save(existing.copyWith(icon: icon, color: color));
+    return _translate(
+      () => repo.save(existing.copyWith(icon: icon, color: color)),
+    );
   }
 
-  /// Archive a category. Idempotent at repo level.
+  /// Archive a category. Idempotent at repo level. Throws
+  /// [CategoriesOperationException] with
+  /// [CategoriesOperationError.hasActiveRecurringRule] when an active
+  /// recurring rule still uses the category.
   Future<Category> archiveCategory(int id) {
     final repo = ref.read(categoryRepositoryProvider);
-    return repo.archive(id);
+    return _translate(() => repo.archive(id));
   }
 
   /// Un-archive after an undo-snackbar action.
@@ -105,14 +115,16 @@ class CategoriesController extends _$CategoriesController {
     if (existing == null) {
       throw CategoryRepositoryException('Category $id not found');
     }
-    return repo.save(existing.copyWith(isArchived: false));
+    return _translate(() => repo.save(existing.copyWith(isArchived: false)));
   }
 
-  /// Hard-delete a custom, unused category. Surfaces
-  /// [CategoryInUseException] when the row has referencing transactions.
+  /// Hard-delete a custom, unused category. Throws
+  /// [CategoriesOperationException] with [CategoriesOperationError.inUse]
+  /// when transactions, recurring rules or shopping-list drafts still
+  /// reference the row.
   Future<bool> deleteCategory(int id) {
     final repo = ref.read(categoryRepositoryProvider);
-    return repo.delete(id);
+    return _translate(() => repo.delete(id));
   }
 
   /// Re-order within a single type section. `orderedIds` is the new
@@ -130,6 +142,24 @@ class CategoriesController extends _$CategoriesController {
   }
 
   // ---------- Private helpers ----------
+
+  /// Runs a repository write and rethrows its typed exceptions as
+  /// [CategoriesOperationException]. Other failures pass through.
+  Future<T> _translate<T>(Future<T> Function() write) async {
+    try {
+      return await write();
+    } on CategoryInUseException {
+      throw const CategoriesOperationException(CategoriesOperationError.inUse);
+    } on CategoryTypeLockedException {
+      throw const CategoriesOperationException(
+        CategoriesOperationError.typeLocked,
+      );
+    } on CategoryHasRecurringRuleException {
+      throw const CategoriesOperationException(
+        CategoriesOperationError.hasActiveRecurringRule,
+      );
+    }
+  }
 
   Future<List<CategoryRowView>> _withAffordance(
     List<Category> rows,
@@ -155,6 +185,29 @@ class CategoriesController extends _$CategoriesController {
         ? CategoryRowAffordance.archive
         : CategoryRowAffordance.delete;
   }
+}
+
+/// Typed failure surface for [CategoriesController] commands. Widgets
+/// branch on `kind` to pick a localized message.
+class CategoriesOperationException implements Exception {
+  const CategoriesOperationException(this.kind);
+
+  final CategoriesOperationError kind;
+
+  @override
+  String toString() => 'CategoriesOperationException($kind)';
+}
+
+enum CategoriesOperationError {
+  /// Delete blocked: transactions, recurring rules or shopping-list
+  /// drafts still reference the category.
+  inUse,
+
+  /// Save blocked: the category's type cannot change after first use.
+  typeLocked,
+
+  /// Archive blocked: an active recurring rule still uses the category.
+  hasActiveRecurringRule,
 }
 
 // ---------- Shared sort helpers ----------

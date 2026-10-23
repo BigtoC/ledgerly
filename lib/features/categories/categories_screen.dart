@@ -8,6 +8,12 @@
 // Reordering uses `SliverReorderableList`; per-row swipe actions are
 // rendered by `CategoryTile` via `flutter_slidable`. Archive actions
 // emit an undo snackbar; delete actions confirm via a dialog first.
+//
+// Blocked commands arrive as `CategoriesOperationException(kind)` from
+// `CategoriesController` (this file never imports the repository). A
+// delete blocked by references and an archive blocked by an active
+// recurring rule show localized snackbars; every other failure shows
+// `errorSnackbarGeneric`.
 
 import 'dart:async';
 
@@ -17,7 +23,6 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../data/models/category.dart';
-import '../../data/repositories/category_repository.dart';
 import '../../l10n/app_localizations.dart';
 import 'categories_controller.dart';
 import 'categories_state.dart';
@@ -149,6 +154,12 @@ class _Section extends ConsumerWidget {
       await ref
           .read(categoriesControllerProvider.notifier)
           .archiveCategory(cat.id);
+    } on CategoriesOperationException catch (e) {
+      final message = e.kind == CategoriesOperationError.hasActiveRecurringRule
+          ? l10n.categoriesArchiveRecurringRuleError
+          : l10n.errorSnackbarGeneric;
+      messenger.showSnackBar(SnackBar(content: Text(message)));
+      return;
     } catch (_) {
       messenger.showSnackBar(
         SnackBar(content: Text(l10n.errorSnackbarGeneric)),
@@ -198,8 +209,11 @@ class _Section extends ConsumerWidget {
       await ref
           .read(categoriesControllerProvider.notifier)
           .deleteCategory(cat.id);
-    } on CategoryInUseException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    } on CategoriesOperationException catch (e) {
+      final message = e.kind == CategoriesOperationError.inUse
+          ? l10n.categoriesDeleteInUseError
+          : l10n.errorSnackbarGeneric;
+      messenger.showSnackBar(SnackBar(content: Text(message)));
     } catch (_) {
       messenger.showSnackBar(
         SnackBar(content: Text(l10n.errorSnackbarGeneric)),

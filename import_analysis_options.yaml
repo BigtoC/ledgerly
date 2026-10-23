@@ -147,16 +147,6 @@ rules:
 # list can only shrink. `import` is the normalised `package:ledgerly/...`
 # form. Do not add entries for new code.
 baseline:
-  # Catches CategoryTypeLockedException from the repository. The
-  # controller should translate it into state instead.
-  - rule: widget_helpers_forbid_data_internals
-    file: lib/features/categories/widgets/category_form_sheet.dart
-    import: package:ledgerly/data/repositories/category_repository.dart
-  # Catches CategoryInUseException from the repository. The controller
-  # should translate it into state instead.
-  - rule: widgets_forbid_data_internals
-    file: lib/features/categories/categories_screen.dart
-    import: package:ledgerly/data/repositories/category_repository.dart
   # Takes the Currency domain model for `decimals` (PRD -> Money Storage
   # Policy). The PRD Layer Boundaries table does not cover core/; this
   # repo-local rule may be stricter than intended for data/models/.

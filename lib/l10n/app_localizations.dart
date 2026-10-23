@@ -472,6 +472,24 @@ abstract class AppLocalizations {
   /// **'This cannot be undone.'**
   String get categoriesDeleteConfirmBody;
 
+  /// PRD 737. SnackBar shown when a delete is blocked because transactions, recurring rules or shopping-list drafts still reference the category.
+  ///
+  /// In en, this message translates to:
+  /// **'This category is still in use, so it can\'t be deleted.'**
+  String get categoriesDeleteInUseError;
+
+  /// PRD 737. SnackBar shown when an archive is blocked because an active recurring rule still uses the category.
+  ///
+  /// In en, this message translates to:
+  /// **'An active recurring transaction uses this category, so it can\'t be archived.'**
+  String get categoriesArchiveRecurringRuleError;
+
+  /// PRD 735-737. Inline error in the category form sheet when the repository rejects a type change on a category that is already in use.
+  ///
+  /// In en, this message translates to:
+  /// **'This category\'s type can\'t change after it has been used. Create a new category instead.'**
+  String get categoriesFormTypeLockedError;
+
   /// PRD 683, 715. Category picker sheet title when opened for an expense transaction.
   ///
   /// In en, this message translates to:
