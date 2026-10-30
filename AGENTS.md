@@ -180,7 +180,7 @@ When the user asks to structure a new feature, invoke `flutter-architecting-apps
 
 After resolving a non-trivial problem, run `/ce:compound` to persist the solution for future reference.
 
-- `docs/solutions/` is a searchable prior-solutions store organized by category (`best-practices/`, `database-issues/`, `design-patterns/`, `logic-errors/`, `performance-issues/`, `runtime-errors/`, `test-failures/`, `ui-bugs/`); solution docs use YAML frontmatter like `module`, `tags`, and `problem_type`.
+- `docs/solutions/` is a searchable prior-solutions store organized by category (`architecture-patterns/`, `best-practices/`, `database-issues/`, `design-patterns/`, `logic-errors/`, `performance-issues/`, `runtime-errors/`, `test-failures/`, `ui-bugs/`); solution docs use YAML frontmatter like `module`, `tags`, and `problem_type`.
 - `/ce:plan` auto-searches `docs/solutions/` at planning time to surface relevant prior solutions before implementation begins.
 - Each solution document includes: problem description, root cause, fix applied, and tags for search.
 
