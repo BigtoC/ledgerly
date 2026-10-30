@@ -1283,18 +1283,19 @@ Versions below are the tested resolvable set under Flutter **3.47.9** (Dart 3.13
 
 ### Phase 2 Additions (shipped)
 
-| Package    | Version   | Purpose                                                                         |
-|------------|-----------|---------------------------------------------------------------------------------|
-| `dio`      | `^5.11.1` | HTTP client (exchange-rate fetching, app-update release check and APK download) |
-| `fl_chart` | `^1.3.0`  | Pie + daily bar charts (Analysis tab)                                           |
-| `crypto`   | `^3.0.8`  | SHA-256 check of downloaded app-update APKs                                     |
+| Package         | Version   | Purpose                                                                         |
+|-----------------|-----------|---------------------------------------------------------------------------------|
+| `dio`           | `^5.11.1` | HTTP client (exchange-rate fetching, app-update release check and APK download) |
+| `fl_chart`      | `^1.3.0`  | Pie + daily bar charts (Analysis tab)                                           |
+| `crypto`        | `^3.0.8`  | SHA-256 check of downloaded app-update APKs                                     |
+| `file_selector` | `^1.1.0`  | System file picker (Fortune City CSV import)                                    |
+| `csv`           | `^8.0.0`  | RFC 4180 decoding (CSV import; export in Phase 3)                               |
 
 ### Deferred (Not yet shipped)
 
 | Package                  | Phase   | Purpose                              |
 |--------------------------|---------|--------------------------------------|
 | `flutter_secure_storage` | Phase 2 | Secure API key storage (wallet sync) |
-| `csv`                    | Phase 3 | CSV import and export                |
 | Firebase/Supabase        | Phase 3 | Cloud backup & sync                  |
 | `local_auth`             | Future  | App lock                             |
 
