@@ -240,7 +240,6 @@ void main() {
         'category.entertainment',
         'category.medical',
         'category.education',
-        'category.personal',
         'category.travel',
         'category.threeC',
         'category.miscellaneous',
@@ -250,6 +249,7 @@ void main() {
         'category.income.investment',
         'category.income.gift',
         'category.income.other',
+        'category.investment',
       ];
       for (var i = 0; i < expectedKeys.length; i++) {
         final key = expectedKeys[i];
@@ -258,6 +258,9 @@ void main() {
         expect(cat!.sortOrder, i, reason: '$key sortOrder should be $i');
         expect(cat.isArchived, isFalse);
       }
+      expect(byKey['category.investment']!.icon, 'trending_up');
+      expect(byKey['category.investment']!.color, 9); // yellow80
+      expect(byKey.containsKey('category.personal'), isFalse);
     });
 
     test('seeded account types have default_currency = '

@@ -112,6 +112,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryOther => 'Other';
 
   @override
+  String get categoryInvestment => 'Investment';
+
+  @override
   String get categoryIncomeSalary => 'Salary';
 
   @override

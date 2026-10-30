@@ -274,7 +274,7 @@ abstract class AppLocalizations {
   /// **'Education'**
   String get categoryEducation;
 
-  /// PRD 472. Seeded expense category — Personal. DB l10n_key: category.personal.
+  /// PRD 472. Retired expense category — Personal. No longer seeded; schema v7 deletes unused rows and archives used ones, so this label only names archived rows that still hold history. DB l10n_key: category.personal.
   ///
   /// In en, this message translates to:
   /// **'Personal'**
@@ -303,6 +303,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Other'**
   String get categoryOther;
+
+  /// Seeded expense category — Investment (money put into funds, stocks, crypto or insurance; distinct from the category.income.investment row). DB l10n_key: category.investment.
+  ///
+  /// In en, this message translates to:
+  /// **'Investment'**
+  String get categoryInvestment;
 
   /// PRD 485. Seeded income category — Salary. DB l10n_key: category.income.salary.
   ///

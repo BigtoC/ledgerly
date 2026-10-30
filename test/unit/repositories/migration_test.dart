@@ -35,6 +35,7 @@ import '_harness/generated/schema_v2.dart' as v2;
 import '_harness/generated/schema_v3.dart' as v3;
 import '_harness/generated/schema_v4.dart' as v4;
 import '_harness/generated/schema_v5.dart' as v5;
+import '_harness/generated/schema_v6.dart' as v6;
 
 /// Fixed-locale stub for the migration test. The locale-dependent unit
 /// tests live in `test/unit/seed/first_run_seed_test.dart`; here we only
@@ -53,7 +54,7 @@ void main() {
       // snapshot" mistake next time Phase 2 touches the file.
       final db = AppDatabase(NativeDatabase.memory());
       addTearDown(() async => db.close());
-      expect(db.schemaVersion, 6);
+      expect(db.schemaVersion, 7);
       // The drift_dev-generated helper should advance with the new snapshot.
       expect(GeneratedHelper.versions, contains(db.schemaVersion));
       expect(GeneratedHelper.versions.last, db.schemaVersion);
@@ -526,7 +527,202 @@ void main() {
         await verifier.migrateAndValidate(db, db.schemaVersion);
       });
     });
+
+    group('v7 snapshot', () {
+      Future<List<Map<String, Object?>>> investmentRows(AppDatabase db) async {
+        final rows = await db
+            .customSelect(
+              'SELECT type, icon, color, sort_order, is_archived '
+              "FROM categories WHERE l10n_key = 'category.investment'",
+            )
+            .get();
+        return rows.map((r) => r.data).toList();
+      }
+
+      test(
+        'upgrades v6 DBs to v7 and appends the Investment expense category',
+        () async {
+          final verifier = SchemaVerifier(GeneratedHelper());
+          final schema = await verifier.schemaAt(6);
+          final legacyDb = v6.DatabaseAtV6(schema.newConnection());
+          addTearDown(() async => legacyDb.close());
+
+          await legacyDb.customStatement(
+            'INSERT INTO categories (l10n_key, icon, color, type, sort_order, '
+            'is_archived) VALUES (?, ?, ?, ?, ?, 0)',
+            <Object?>['category.food', 'restaurant', 0, 'expense', 0],
+          );
+          await legacyDb.customStatement(
+            'INSERT INTO categories (l10n_key, icon, color, type, sort_order, '
+            'is_archived) VALUES (?, ?, ?, ?, ?, 0)',
+            <Object?>['category.income.other', 'savings', 9, 'income', 17],
+          );
+          await legacyDb.close();
+
+          final db = AppDatabase(schema.newConnection());
+          addTearDown(() async => db.close());
+
+          await verifier.migrateAndValidate(db, db.schemaVersion);
+
+          final rows = await investmentRows(db);
+          expect(rows, hasLength(1));
+          expect(rows.single['type'], 'expense');
+          expect(rows.single['icon'], 'trending_up');
+          expect(rows.single['color'], 9); // yellow80
+          expect(rows.single['sort_order'], 18);
+          expect(rows.single['is_archived'], 0);
+        },
+      );
+
+      test('v7 upgrade keeps an existing Investment row untouched', () async {
+        final verifier = SchemaVerifier(GeneratedHelper());
+        final schema = await verifier.schemaAt(6);
+        final legacyDb = v6.DatabaseAtV6(schema.newConnection());
+        addTearDown(() async => legacyDb.close());
+
+        await legacyDb.customStatement(
+          'INSERT INTO categories (l10n_key, icon, color, type, sort_order, '
+          'is_archived) VALUES (?, ?, ?, ?, ?, 1)',
+          <Object?>['category.investment', 'trending_up', 9, 'expense', 3],
+        );
+        await legacyDb.close();
+
+        final db = AppDatabase(schema.newConnection());
+        addTearDown(() async => db.close());
+
+        await verifier.migrateAndValidate(db, db.schemaVersion);
+
+        final rows = await investmentRows(db);
+        expect(rows, hasLength(1));
+        expect(rows.single['sort_order'], 3);
+        expect(rows.single['is_archived'], 1);
+      });
+
+      Future<List<Map<String, Object?>>> personalRows(AppDatabase db) async {
+        final rows = await db
+            .customSelect(
+              'SELECT is_archived FROM categories '
+              "WHERE l10n_key = 'category.personal'",
+            )
+            .get();
+        return rows.map((r) => r.data).toList();
+      }
+
+      Future<void> insertPersonal(v6.DatabaseAtV6 legacyDb) {
+        return legacyDb.customStatement(
+          'INSERT INTO categories (l10n_key, icon, color, type, sort_order, '
+          'is_archived) VALUES (?, ?, ?, ?, ?, 0)',
+          <Object?>['category.personal', 'self_care', 4, 'expense', 8],
+        );
+      }
+
+      test('v7 upgrade deletes an unused Personal category', () async {
+        final verifier = SchemaVerifier(GeneratedHelper());
+        final schema = await verifier.schemaAt(6);
+        final legacyDb = v6.DatabaseAtV6(schema.newConnection());
+        await insertPersonal(legacyDb);
+        await legacyDb.close();
+
+        final db = AppDatabase(schema.newConnection());
+        addTearDown(() async => db.close());
+
+        await verifier.migrateAndValidate(db, db.schemaVersion);
+
+        expect(await personalRows(db), isEmpty);
+      });
+
+      test(
+        'v7 upgrade archives a Personal category that has transactions',
+        () async {
+          final verifier = SchemaVerifier(GeneratedHelper());
+          final schema = await verifier.schemaAt(6);
+          final legacyDb = v6.DatabaseAtV6(schema.newConnection());
+          await insertPersonal(legacyDb);
+          await legacyDb.customStatement(
+            'INSERT INTO currencies (code, decimals, symbol, name_l10n_key, '
+            'is_token, sort_order) VALUES (?, ?, ?, ?, 0, ?)',
+            <Object?>['USD', 2, r'$', 'currency.usd', 1],
+          );
+          await legacyDb.customStatement(
+            'INSERT INTO account_types (l10n_key, icon, color, sort_order, '
+            'is_archived) VALUES (?, ?, ?, ?, 0)',
+            <Object?>['accountType.cash', 'wallet', 0, 1],
+          );
+          await legacyDb.customStatement(
+            'INSERT INTO accounts (name, account_type_id, currency, '
+            'opening_balance_minor_units, is_archived) '
+            'VALUES (?, 1, ?, 0, 0)',
+            <Object?>['Cash', 'USD'],
+          );
+          await legacyDb.customStatement(
+            'INSERT INTO transactions (amount_minor_units, currency, '
+            'category_id, account_id, memo, date, created_at, updated_at) '
+            'VALUES (?, ?, 1, 1, ?, 0, 0, 0)',
+            <Object?>[1500, 'USD', 'haircut'],
+          );
+          await legacyDb.close();
+
+          final db = AppDatabase(schema.newConnection());
+          addTearDown(() async => db.close());
+
+          await verifier.migrateAndValidate(db, db.schemaVersion);
+
+          final rows = await personalRows(db);
+          expect(rows, hasLength(1));
+          expect(rows.single['is_archived'], 1);
+          expect(await db.select(db.transactions).get(), hasLength(1));
+        },
+      );
+
+      test('v7 upgrade archives a Personal category used by a shopping-list '
+          'draft', () async {
+        final verifier = SchemaVerifier(GeneratedHelper());
+        final schema = await verifier.schemaAt(6);
+        final legacyDb = v6.DatabaseAtV6(schema.newConnection());
+        await insertPersonal(legacyDb);
+        await legacyDb.customStatement(
+          'INSERT INTO currencies (code, decimals, symbol, name_l10n_key, '
+          'is_token, sort_order) VALUES (?, ?, ?, ?, 0, ?)',
+          <Object?>['USD', 2, r'$', 'currency.usd', 1],
+        );
+        await legacyDb.customStatement(
+          'INSERT INTO account_types (l10n_key, icon, color, sort_order, '
+          'is_archived) VALUES (?, ?, ?, ?, 0)',
+          <Object?>['accountType.cash', 'wallet', 0, 1],
+        );
+        await legacyDb.customStatement(
+          'INSERT INTO accounts (name, account_type_id, currency, '
+          'opening_balance_minor_units, is_archived) '
+          'VALUES (?, 1, ?, 0, 0)',
+          <Object?>['Cash', 'USD'],
+        );
+        await legacyDb.customStatement(
+          'INSERT INTO shopping_list_items (category_id, account_id, memo, '
+          'draft_date, created_at, updated_at) VALUES (1, 1, ?, 0, 0, 0)',
+          <Object?>['shampoo'],
+        );
+        await legacyDb.close();
+
+        final db = AppDatabase(schema.newConnection());
+        addTearDown(() async => db.close());
+
+        await verifier.migrateAndValidate(db, db.schemaVersion);
+
+        final rows = await personalRows(db);
+        expect(rows, hasLength(1));
+        expect(rows.single['is_archived'], 1);
+      });
+
+      test('v7 upgrade on empty DB succeeds', () async {
+        final verifier = SchemaVerifier(GeneratedHelper());
+        final schema = await verifier.schemaAt(6);
+        final db = AppDatabase(schema.newConnection());
+        addTearDown(() async => db.close());
+
+        await verifier.migrateAndValidate(db, db.schemaVersion);
+      });
+    });
   });
 }
 
-const int dbVersionForOpenCheck = 6;
+const int dbVersionForOpenCheck = 7;

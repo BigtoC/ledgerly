@@ -105,6 +105,7 @@ void main() {
         expect(l10n.categoryThreeC, isNotEmpty);
         expect(l10n.categoryMiscellaneous, isNotEmpty);
         expect(l10n.categoryOther, isNotEmpty);
+        expect(l10n.categoryInvestment, isNotEmpty);
 
         expect(l10n.categoryIncomeSalary, isNotEmpty);
         expect(l10n.categoryIncomeFreelance, isNotEmpty);

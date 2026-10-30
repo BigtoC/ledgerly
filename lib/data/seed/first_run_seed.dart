@@ -155,7 +155,10 @@ class _SeededCategory {
 /// 18 seeded categories (13 expense + 5 income). Icon keys reconcile
 /// against the canonical Stream B registry (`directions_car` for
 /// transportation, `savings` for income.other — Stream C plan §2.3 Step 3
-/// "reconcile with Stream B" clause).
+/// "reconcile with Stream B" clause). `category.investment` was added
+/// after launch, so it sits last and the schema v7 migration appends the
+/// same row to existing installs. `category.personal` was retired in the
+/// same release; v7 deletes or archives it on existing installs.
 const List<_SeededCategory> _kSeededCategories = <_SeededCategory>[
   // Expense categories (PRD 464–476).
   _SeededCategory(
@@ -215,39 +218,32 @@ const List<_SeededCategory> _kSeededCategories = <_SeededCategory>[
     sortOrder: 7,
   ),
   _SeededCategory(
-    l10nKey: 'category.personal',
-    icon: 'self_care',
-    color: CategoryPaletteIndex.green80,
-    type: CategoryType.expense,
-    sortOrder: 8,
-  ),
-  _SeededCategory(
     l10nKey: 'category.travel',
     icon: 'flight',
     color: CategoryPaletteIndex.cyan70,
     type: CategoryType.expense,
-    sortOrder: 9,
+    sortOrder: 8,
   ),
   _SeededCategory(
     l10nKey: 'category.threeC',
     icon: 'devices',
     color: CategoryPaletteIndex.blue30,
     type: CategoryType.expense,
-    sortOrder: 10,
+    sortOrder: 9,
   ),
   _SeededCategory(
     l10nKey: 'category.miscellaneous',
     icon: 'category',
     color: CategoryPaletteIndex.neutralVariant50,
     type: CategoryType.expense,
-    sortOrder: 11,
+    sortOrder: 10,
   ),
   _SeededCategory(
     l10nKey: 'category.other',
     icon: 'more_horiz',
     color: CategoryPaletteIndex.neutralVariant50,
     type: CategoryType.expense,
-    sortOrder: 12,
+    sortOrder: 11,
   ),
   // Income categories (PRD 486–490).
   _SeededCategory(
@@ -255,34 +251,42 @@ const List<_SeededCategory> _kSeededCategories = <_SeededCategory>[
     icon: 'payments',
     color: CategoryPaletteIndex.yellow80,
     type: CategoryType.income,
-    sortOrder: 13,
+    sortOrder: 12,
   ),
   _SeededCategory(
     l10nKey: 'category.income.freelance',
     icon: 'work',
     color: CategoryPaletteIndex.yellow80,
     type: CategoryType.income,
-    sortOrder: 14,
+    sortOrder: 13,
   ),
   _SeededCategory(
     l10nKey: 'category.income.investment',
     icon: 'trending_up',
     color: CategoryPaletteIndex.yellow80,
     type: CategoryType.income,
-    sortOrder: 15,
+    sortOrder: 14,
   ),
   _SeededCategory(
     l10nKey: 'category.income.gift',
     icon: 'redeem',
     color: CategoryPaletteIndex.yellow80,
     type: CategoryType.income,
-    sortOrder: 16,
+    sortOrder: 15,
   ),
   _SeededCategory(
     l10nKey: 'category.income.other',
     icon: 'savings',
     color: CategoryPaletteIndex.yellow80,
     type: CategoryType.income,
+    sortOrder: 16,
+  ),
+  // Expense category added after launch (schema v7 backfill).
+  _SeededCategory(
+    l10nKey: 'category.investment',
+    icon: 'trending_up',
+    color: CategoryPaletteIndex.yellow80,
+    type: CategoryType.expense,
     sortOrder: 17,
   ),
 ];
