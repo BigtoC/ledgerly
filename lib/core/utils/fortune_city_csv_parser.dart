@@ -45,10 +45,11 @@ FortuneCityCsvParseResult parseFortuneCityCsv(Uint8List bytes) {
   }
   final text = decoded.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
 
-  // `csv` never throws: an unterminated quote silently swallows the rest
-  // of the file into one field. In well-formed RFC 4180 text every `"` is
-  // paired, so an odd count always means a broken file.
-  if ('"'.allMatches(text).length.isOdd) {
+  // `csv` never throws: an unterminated quoted field, or a stray character
+  // after its closing quote (`"a" ,`), silently swallows later rows into
+  // one field. A `"` inside an unquoted field (`12" pizza`) is a literal,
+  // which `csv` decodes correctly.
+  if (!_quotedFieldsAreClosed(text)) {
     throw const CsvFileException(CsvFileErrorKind.parse);
   }
 
@@ -145,6 +146,39 @@ FortuneCityCsvParseResult parseFortuneCityCsv(Uint8List bytes) {
     throw const CsvFileException(CsvFileErrorKind.empty);
   }
   return FortuneCityCsvParseResult(rows: rows, errors: errors);
+}
+
+/// Whether every quoted field in [text] is closed, and its closing quote is
+/// followed by `,`, `\n` or the end of the text. A `"` opens a quoted field
+/// only at the start of a field; inside one, `""` is an escaped quote.
+bool _quotedFieldsAreClosed(String text) {
+  const quote = 0x22, comma = 0x2C, newline = 0x0A;
+  var fieldStart = true;
+  // The decoder strips a leading BOM, so the first field starts after it.
+  for (var i = text.startsWith('\uFEFF') ? 1 : 0; i < text.length; i++) {
+    final c = text.codeUnitAt(i);
+    if (fieldStart && c == quote) {
+      // Find the closing quote, stepping over `""` escapes.
+      var close = text.indexOf('"', i + 1);
+      while (close != -1 &&
+          close + 1 < text.length &&
+          text.codeUnitAt(close + 1) == quote) {
+        close = text.indexOf('"', close + 2);
+      }
+      if (close == -1) return false;
+      // Step onto the delimiter after the field; the next field follows it.
+      i = close + 1;
+      if (i < text.length &&
+          text.codeUnitAt(i) != comma &&
+          text.codeUnitAt(i) != newline) {
+        return false;
+      }
+      fieldStart = true;
+      continue;
+    }
+    fieldStart = c == comma || c == newline;
+  }
+  return true;
 }
 
 bool _isBlank(List<dynamic> record) =>

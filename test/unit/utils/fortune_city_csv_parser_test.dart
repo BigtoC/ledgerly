@@ -144,6 +144,48 @@ void main() {
         _fileError(CsvFileErrorKind.parse),
       );
     });
+
+    test('a space after a closing quote is a parse error', () {
+      expect(
+        () => _parse(
+          '$_header\n'
+          'Cash,食物,42,HKD,2026/1/5 9:05,"a" ,0\n'
+          'Cash,食物,42,HKD,2026/1/5 9:05,c,0\n'
+          'Cash,食物,42,HKD,2026/1/5 9:05,"q",0\n',
+        ),
+        _fileError(CsvFileErrorKind.parse),
+      );
+    });
+
+    test('a letter after a closing quote is a parse error', () {
+      expect(
+        () => _parse(
+          '$_header\n'
+          'Cash,食物,42,HKD,2026/1/5 9:05,"a"x,0\n'
+          'Cash,食物,42,HKD,2026/1/5 9:05,c,0\n'
+          'Cash,食物,42,HKD,2026/1/5 9:05,"q",0\n',
+        ),
+        _fileError(CsvFileErrorKind.parse),
+      );
+    });
+
+    test('an escaped "" just before the closing quote', () {
+      final result = _parse(
+        '$_header\n'
+        'Cash,食物,42,HKD,2026/1/5 9:05,"say ""hi""",0\n'
+        'Cash,食物,42,HKD,2026/1/5 9:05,"b"',
+      );
+      expect(result.rows.map((r) => r.memo), ['say "hi"', 'b']);
+    });
+
+    test('a quote inside an unquoted field is a literal', () {
+      final result = _parse(
+        '$_header\n'
+        'Cash,食物,42,HKD,2026/1/5 9:05,12" pizza,0\n'
+        'Cash,食物,42,HKD,2026/1/5 9:05,c,0\n',
+      );
+      expect(result.rows.map((r) => r.memo), ['12" pizza', 'c']);
+    });
   });
 
   group('header', () {
