@@ -1194,6 +1194,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get csvExportFailed => 'Couldn\'t export. Please try again.';
+
+  @override
+  String get csvExportNoneInRange =>
+      'There are no transactions in this date range.';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -2336,6 +2340,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get csvExportFailed => '无法导出，请重试。';
+
+  @override
+  String get csvExportNoneInRange => '此日期范围内没有交易。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -3478,4 +3485,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get csvExportFailed => '無法匯出，請再試一次。';
+
+  @override
+  String get csvExportNoneInRange => '此日期範圍內沒有交易。';
 }

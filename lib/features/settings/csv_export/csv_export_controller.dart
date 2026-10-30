@@ -45,7 +45,8 @@ class CsvExportController extends _$CsvExportController {
   }
 
   /// Exports the range and opens the save dialog. A cancelled save returns
-  /// to idle. [categoryName] localizes seeded category names.
+  /// to idle; an empty range reports [CsvExportStatus.noTransactions]
+  /// without a dialog. [categoryName] localizes seeded category names.
   Future<void> export(String Function(Category) categoryName) async {
     final s = state.value;
     if (s is! CsvExportReady || s.status == CsvExportStatus.exporting) return;
@@ -70,10 +71,13 @@ class CsvExportController extends _$CsvExportController {
       return;
     }
     if (!ref.mounted) return;
-    state = AsyncData(
-      count == null
-          ? s.copyWith(status: CsvExportStatus.idle, exportedCount: null)
-          : s.copyWith(status: CsvExportStatus.done, exportedCount: count),
-    );
+    state = AsyncData(switch (count) {
+      null => s.copyWith(status: CsvExportStatus.idle, exportedCount: null),
+      0 => s.copyWith(
+        status: CsvExportStatus.noTransactions,
+        exportedCount: null,
+      ),
+      _ => s.copyWith(status: CsvExportStatus.done, exportedCount: count),
+    });
   }
 }

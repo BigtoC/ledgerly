@@ -55,6 +55,7 @@ class _ReadyBody extends StatelessWidget {
         state.rangeStart == state.firstDay && state.rangeEnd == state.lastDay;
     final message = switch (state.status) {
       CsvExportStatus.done => l10n.csvExportDone(state.exportedCount ?? 0),
+      CsvExportStatus.noTransactions => l10n.csvExportNoneInRange,
       CsvExportStatus.failed => l10n.csvExportFailed,
       _ => null,
     };

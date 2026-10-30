@@ -1204,5 +1204,7 @@
   "csvExportDone": "{count, plural, =1{Exported 1 transaction} other{Exported {count} transactions}}",
   "@csvExportDone": {"description": "CSV export result: number of transactions written.", "placeholders": {"count": {"type": "int"}}},
   "csvExportFailed": "Couldn't export. Please try again.",
-  "@csvExportFailed": {"description": "CSV export failure message."}
+  "@csvExportFailed": {"description": "CSV export failure message."},
+  "csvExportNoneInRange": "There are no transactions in this date range.",
+  "@csvExportNoneInRange": {"description": "CSV export message when the chosen range holds no transactions; no file is saved."}
 }

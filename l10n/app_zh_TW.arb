@@ -404,5 +404,6 @@
   "csvExportButton": "匯出為 CSV",
   "csvExportDone": "{count, plural, other{已匯出 {count} 筆交易}}",
   "@csvExportDone": {"placeholders": {"count": {"type": "int"}}},
-  "csvExportFailed": "無法匯出，請再試一次。"
+  "csvExportFailed": "無法匯出，請再試一次。",
+  "csvExportNoneInRange": "此日期範圍內沒有交易。"
 }

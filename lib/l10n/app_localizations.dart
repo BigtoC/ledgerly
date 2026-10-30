@@ -2139,6 +2139,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t export. Please try again.'**
   String get csvExportFailed;
+
+  /// CSV export message when the chosen range holds no transactions; no file is saved.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no transactions in this date range.'**
+  String get csvExportNoneInRange;
 }
 
 class _AppLocalizationsDelegate

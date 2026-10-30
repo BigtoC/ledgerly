@@ -8,7 +8,9 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'csv_export_state.freezed.dart';
 
-enum CsvExportStatus { idle, exporting, done, failed }
+/// [noTransactions]: the chosen range holds no transactions, so no save
+/// dialog was shown.
+enum CsvExportStatus { idle, exporting, done, noTransactions, failed }
 
 @freezed
 sealed class CsvExportState with _$CsvExportState {

@@ -213,6 +213,17 @@ void main() {
     expect(find.text("Couldn't export. Please try again."), findsOneWidget);
   });
 
+  testWidgets('CE10: an empty range says there is nothing to export', (
+    tester,
+  ) async {
+    await _pump(tester, _ready(status: CsvExportStatus.noTransactions));
+
+    expect(
+      find.text('There are no transactions in this date range.'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('CE09: 2x text scale lays out without overflow', (tester) async {
     await _pump(
       tester,

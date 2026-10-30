@@ -1194,4 +1194,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get csvExportFailed => 'Couldn\'t export. Please try again.';
+
+  @override
+  String get csvExportNoneInRange =>
+      'There are no transactions in this date range.';
 }

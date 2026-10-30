@@ -39,6 +39,7 @@ class CsvExportUseCase {
   /// seeded category names.
   ///
   /// Returns the number of rows written, or null when the user cancels.
+  /// Returns 0 without opening the dialog when the range is empty.
   Future<int?> export({
     required DateTime firstDay,
     required DateTime lastDay,
@@ -46,8 +47,12 @@ class CsvExportUseCase {
   }) async {
     final start = DateHelpers.startOfDay(firstDay);
     final end = DateTime(lastDay.year, lastDay.month, lastDay.day + 1);
-    final (transactions, categories, accounts) = await (
-      transactionRepo.getInDateRange(start, end),
+    final transactions = await transactionRepo.getInDateRange(start, end);
+    if (transactions.isEmpty) return 0;
+    // Read after the transactions: every category and account they use
+    // exists by then, and used rows are archived, never deleted, so the
+    // encoder's lookups always resolve.
+    final (categories, accounts) = await (
       categoryRepo.watchAll(includeArchived: true).first,
       accountRepo.watchAll(includeArchived: true).first,
     ).wait;

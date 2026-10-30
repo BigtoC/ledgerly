@@ -163,6 +163,23 @@ void main() {
     expect(readyOf(container).exportedCount, isNull);
   });
 
+  test('an empty range reports noTransactions', () async {
+    when(
+      () => useCase.export(
+        firstDay: any(named: 'firstDay'),
+        lastDay: any(named: 'lastDay'),
+        categoryName: any(named: 'categoryName'),
+      ),
+    ).thenAnswer((_) async => 0);
+    final container = makeContainer();
+    final controller = await loaded(container);
+
+    await controller.export(_name);
+
+    expect(readyOf(container).status, CsvExportStatus.noTransactions);
+    expect(readyOf(container).exportedCount, isNull);
+  });
+
   test('a failed export reports failed', () async {
     when(
       () => useCase.export(

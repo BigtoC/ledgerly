@@ -1,6 +1,7 @@
 // Unit tests for `CsvExportUseCase`: range → rows → CSV bytes → save
 // dialog, with mocked repositories and a fake file service.
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -139,5 +140,44 @@ void main() {
     );
 
     expect(count, isNull);
+  });
+
+  test(
+    'returns 0 without opening the save dialog for an empty range',
+    () async {
+      when(() => txRepo.getInDateRange(any(), any()))
+          .thenAnswer((_) async => const []);
+      final service = _FakeCsvFileService();
+
+      final count = await useCaseWith(service).export(
+        firstDay: DateTime(2026, 3, 4),
+        lastDay: DateTime(2026, 3, 4),
+        categoryName: nameOf,
+      );
+
+      expect(count, 0);
+      expect(service.saves, isEmpty);
+    },
+  );
+
+  test('reads names only after the transactions', () async {
+    // Every category and account a transaction uses already exists when
+    // the transactions are read, and used rows are archived, never
+    // deleted, so reading names afterwards always resolves them.
+    final transactions = Completer<List<Transaction>>();
+    when(() => txRepo.getInDateRange(any(), any()))
+        .thenAnswer((_) => transactions.future);
+
+    final export = useCaseWith(_FakeCsvFileService()).export(
+      firstDay: DateTime(2026, 3, 4),
+      lastDay: DateTime(2026, 3, 4),
+      categoryName: nameOf,
+    );
+    await Future<void>.delayed(Duration.zero);
+    verifyNever(() => categoryRepo.watchAll(includeArchived: true));
+    verifyNever(() => accountRepo.watchAll(includeArchived: true));
+
+    transactions.complete([_tx(1)]);
+    expect(await export, 1);
   });
 }
