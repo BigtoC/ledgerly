@@ -113,6 +113,29 @@ void main() {
     expect(states.last, const AppUpdateState.ready(_path));
   });
 
+  test('a newer install tap keeps installing when the older one '
+      'reports back', () async {
+    stubDownload();
+    when(() => repo.canInstall()).thenAnswer((_) async => false);
+    await controller().start(_update);
+    when(() => repo.canInstall()).thenAnswer((_) async => true);
+    final first = Completer<InstallOutcome>();
+    var calls = 0;
+    when(() => repo.install(_path)).thenAnswer(
+      (_) => ++calls == 1 ? first.future : Completer<InstallOutcome>().future,
+    );
+
+    unawaited(controller().start(_update));
+    await pumpEventQueue();
+    unawaited(controller().start(_update));
+    await pumpEventQueue();
+    first.complete(InstallOutcome.cancelled);
+    await pumpEventQueue();
+
+    verify(() => repo.install(_path)).called(2);
+    expect(states.last, const AppUpdateState.installing(_path));
+  });
+
   test('a tap while downloading is ignored', () async {
     final gate = Completer<String>();
     when(() => repo.download(any(), onProgress: any(named: 'onProgress')))

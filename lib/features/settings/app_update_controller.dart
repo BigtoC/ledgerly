@@ -52,17 +52,23 @@ class AppUpdateController extends _$AppUpdateController {
     }
   }
 
+  /// Bumped by each [_install]; an older call whose number no longer
+  /// matches has been replaced by a newer tap and leaves [state] alone.
+  int _installAttempt = 0;
+
   Future<void> _install(AppUpdateRepository repo, String path) async {
+    final attempt = ++_installAttempt;
+    bool stale() => !ref.mounted || attempt != _installAttempt;
     if (!await repo.canInstall()) {
-      if (!ref.mounted) return;
+      if (stale()) return;
       state = AppUpdateState.ready(path, needsPermission: true);
       await repo.openInstallSettings();
       return;
     }
-    if (!ref.mounted) return;
+    if (stale()) return;
     state = AppUpdateState.installing(path);
     final outcome = await repo.install(path);
-    if (!ref.mounted) return;
+    if (stale()) return;
     state = switch (outcome) {
       // Android replaces this process; nothing left to show.
       InstallOutcome.success => AppUpdateState.installing(path),
