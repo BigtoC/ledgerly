@@ -173,7 +173,7 @@ lib/
       exchange_rate_service.dart    # Dio-based HTTP client for FX rates
       app_release_service.dart      # Dio: latest GitHub release lookup + APK download
       apk_installer_service.dart    # Platform channel to Android's PackageInstaller
-      csv_file_service.dart         # file_selector picker with the 5 MB cap
+      csv_file_service.dart         # file_selector picker; deletes the picker's cache copy
     repositories/
       transaction_repository.dart
       category_repository.dart
