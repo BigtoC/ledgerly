@@ -10,6 +10,7 @@
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../../../core/utils/csv_import_keys.dart';
 import '../../../data/models/account.dart';
 import '../../../data/models/account_type.dart';
 import '../../../data/models/category.dart';
@@ -165,7 +166,7 @@ abstract final class CsvImportMatcher {
         rowsByCategory,
         categories,
         labelSets,
-        salaryNotes.map(_normalize).toSet(),
+        salaryNotes.map(normalizeImportKey).toSet(),
       ),
       salaryNotes: salaryNotes,
     );
@@ -179,13 +180,13 @@ abstract final class CsvImportMatcher {
     List<AppLocalizations> labelSets,
     String defaultCurrencyCode,
   ) {
-    final normalized = _normalize(value);
+    final normalized = normalizeImportKey(value);
     final currencyCode = _accountCurrency(rows, defaultCurrencyCode);
     final active = accounts.where((a) => !a.isArchived).toList();
     final options = [
       ...active,
       ...accounts.where(
-        (a) => a.isArchived && _normalize(a.name) == normalized,
+        (a) => a.isArchived && normalizeImportKey(a.name) == normalized,
       ),
     ];
 
@@ -204,7 +205,7 @@ abstract final class CsvImportMatcher {
     );
 
     final byName = active
-        .where((a) => _normalize(a.name) == normalized)
+        .where((a) => normalizeImportKey(a.name) == normalized)
         .toList();
     if (byName.length == 1) {
       return entry(
@@ -265,14 +266,14 @@ abstract final class CsvImportMatcher {
     }
     final incomeMarkers = {
       for (final l in labelSets) ...[
-        _normalize(l.transactionTypeIncome),
-        _normalize(l.categoriesSectionIncome),
+        normalizeImportKey(l.transactionTypeIncome),
+        normalizeImportKey(l.categoriesSectionIncome),
       ],
     };
 
     return [
       for (final MapEntry(key: value, value: rows) in rowsByCategory.entries)
-        if (incomeMarkers.contains(_normalize(value)))
+        if (incomeMarkers.contains(normalizeImportKey(value)))
           CsvCategoryMatch(
             csvValue: value,
             rowCount: rows.length,
@@ -281,11 +282,7 @@ abstract final class CsvImportMatcher {
               otherCategoryId: _seeded(categories, 'category.income.other'),
             ),
             salaryRowCount: rows
-                .where(
-                  (r) =>
-                      r.memo != null &&
-                      normalizedSalaryNotes.contains(_normalize(r.memo!)),
-                )
+                .where((r) => isSalaryNote(r.memo, normalizedSalaryNotes))
                 .length,
           )
         else
@@ -301,7 +298,7 @@ abstract final class CsvImportMatcher {
     String value,
     Map<String, Set<Category>> byLabel,
   ) {
-    final candidates = byLabel[_normalize(value)];
+    final candidates = byLabel[normalizeImportKey(value)];
     if (candidates == null) {
       return CategoryResolution.create(name: value, type: CategoryType.expense);
     }
@@ -350,11 +347,11 @@ abstract final class CsvImportMatcher {
     String Function(String, AppLocalizations) labelFor,
   ) => {
     if (customName != null && customName.trim().isNotEmpty)
-      _normalize(customName),
+      normalizeImportKey(customName),
     if (l10nKey != null)
       for (final l in labelSets)
         if (labelFor(l10nKey, l) case final label when label != l10nKey)
-          _normalize(label),
+          normalizeImportKey(label),
   };
 
   static String _accountCurrency(
@@ -391,7 +388,3 @@ abstract final class CsvImportMatcher {
     return a.$4.compareTo(b.$4);
   }
 }
-
-/// Matching normalization: trim, and fold Latin case. CJK compares
-/// exactly; there is no Traditional/Simplified conversion.
-String _normalize(String value) => value.trim().toLowerCase();

@@ -11,6 +11,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import '../../core/utils/color_palette.dart';
+import '../../core/utils/csv_import_keys.dart';
 import '../../core/utils/date_helpers.dart';
 import '../../core/utils/decimal_rounding.dart';
 import '../../core/utils/fortune_city_csv_parser.dart';
@@ -43,9 +44,6 @@ _ImportKey _keyOf(
   currencyCode,
   memo ?? '',
 );
-
-/// Matching normalization: trim, and fold Latin case. CJK compares exactly.
-String _normalize(String value) => value.trim().toLowerCase();
 
 class CsvImportUseCase {
   CsvImportUseCase({
@@ -183,7 +181,7 @@ class CsvImportUseCase {
         int accountTypeId,
         String currencyCode,
       ) async {
-        final key = (_normalize(name), accountTypeId);
+        final key = (normalizeImportKey(name), accountTypeId);
         final existing = createdAccounts[key];
         if (existing != null) return existing;
         final currency = await currencyRepo.getByCode(currencyCode);
@@ -212,15 +210,16 @@ class CsvImportUseCase {
           CreateTypeAndAccountResolution(:final name, :final currencyCode) =>
             await createAccount(
               name,
-              createdTypes[_normalize(name)] ??= await accountTypeRepo.save(
-                AccountType(
-                  id: 0,
-                  customName: name,
-                  icon: 'wallet',
-                  color: CategoryPaletteIndex.neutralVariant70,
-                  sortOrder: nextTypeSort++,
-                ),
-              ),
+              createdTypes[normalizeImportKey(name)] ??= await accountTypeRepo
+                  .save(
+                    AccountType(
+                      id: 0,
+                      customName: name,
+                      icon: 'wallet',
+                      color: CategoryPaletteIndex.neutralVariant70,
+                      sortOrder: nextTypeSort++,
+                    ),
+                  ),
               currencyCode,
             ),
         };
@@ -233,8 +232,11 @@ class CsvImportUseCase {
           case ExistingCategoryResolution(:final categoryId):
             categoryIds[value] = categoryId;
           case CreateCategoryResolution(:final name, :final type):
-            categoryIds[value] = createdCategories[(_normalize(name), type)] ??=
-                (await categoryRepo.save(
+            categoryIds[value] =
+                createdCategories[(
+                  normalizeImportKey(name),
+                  type,
+                )] ??= (await categoryRepo.save(
                   Category(
                     id: 0,
                     icon: 'category',
@@ -249,12 +251,11 @@ class CsvImportUseCase {
         }
       }
 
-      final salaryNotes = plan.salaryNotes.map(_normalize).toSet();
+      final salaryNotes = plan.salaryNotes.map(normalizeImportKey).toSet();
       int categoryIdFor(CsvImportRow row) {
         final income = incomeByNote[row.category];
         if (income == null) return categoryIds[row.category]!;
-        final memo = row.memo;
-        return memo != null && salaryNotes.contains(_normalize(memo))
+        return isSalaryNote(row.memo, salaryNotes)
             ? income.salaryCategoryId
             : income.otherCategoryId;
       }

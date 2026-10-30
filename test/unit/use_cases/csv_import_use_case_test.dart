@@ -686,6 +686,46 @@ void main() {
       );
     });
 
+    test(
+      '收入 rows whose note normalizes to a salary note go to Salary',
+      () async {
+        final useCase = useCaseWith(
+          _serviceFor(
+            _csv([
+              'Cash,收入,10,HKD,2026/1/5 9:05, SALARY ,0',
+              'Cash,收入,11,HKD,2026/1/5 9:06,薪资,0',
+              'Cash,收入,12,HKD,2026/1/5 9:07,bonus,0',
+              'Cash,收入,13,HKD,2026/1/5 9:08,,0',
+            ]),
+          ),
+        );
+        final load = (await useCase.pickAndLoad())!;
+        final cash = (await accounts.watchAll().first).single;
+        final salary = await categoryIdFor('category.income.salary');
+        final other = await categoryIdFor('category.income.other');
+
+        await useCase.commit(
+          CsvImportPlan(
+            rows: load.validRows,
+            accounts: {'Cash': AccountResolution.existing(cash.id)},
+            categories: {
+              '收入': CategoryResolution.incomeByNote(
+                salaryCategoryId: salary,
+                otherCategoryId: other,
+              ),
+            },
+            salaryNotes: _salaryNotes,
+          ),
+        );
+
+        final rows = await allTransactionRows();
+        expect(
+          {for (final r in rows) r.amountMinorUnits: r.categoryId},
+          {1000: salary, 1100: salary, 1200: other, 1300: other},
+        );
+      },
+    );
+
     test('is atomic: a failing insert leaves types, accounts, categories '
         'and transactions unchanged', () async {
       final failing = _MockTransactionRepository();
