@@ -2,6 +2,7 @@ import 'dart:ffi' show Abi;
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
+import 'package:dio/dio.dart' show DioException;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show PlatformException;
 
@@ -137,6 +138,11 @@ class AppUpdateRepository {
     } on FileSystemException catch (e) {
       debugPrint('AppUpdateRepository.download failed (${e.runtimeType})');
       throw const UpdateStorageException();
+    } on DioException catch (e) {
+      debugPrint('AppUpdateRepository.download failed (${e.runtimeType})');
+      // dio wraps a failure writing the received bytes, e.g. a full disk.
+      if (e.error is FileSystemException) throw const UpdateStorageException();
+      throw const UpdateDownloadException();
     } on Object catch (e) {
       debugPrint('AppUpdateRepository.download failed (${e.runtimeType})');
       throw const UpdateDownloadException();

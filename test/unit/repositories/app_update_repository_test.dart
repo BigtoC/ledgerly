@@ -354,6 +354,30 @@ void main() {
         throwsA(isA<UpdateStorageException>()),
       );
     });
+
+    test(
+      'write failure wrapped by dio throws UpdateStorageException',
+      () async {
+        // dio wraps an error from writing the received bytes (e.g. a full
+        // disk) in a DioException.
+        when(
+          () => service.download(
+            any(),
+            any(),
+            onProgress: any(named: 'onProgress'),
+          ),
+        ).thenThrow(
+          DioException(
+            requestOptions: RequestOptions(),
+            error: const FileSystemException('No space left on device'),
+          ),
+        );
+        await expectLater(
+          repo().download(_upd()),
+          throwsA(isA<UpdateStorageException>()),
+        );
+      },
+    );
   });
 
   group('AppUpdateRepository.install', () {
