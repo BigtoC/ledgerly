@@ -192,7 +192,7 @@ Categories carry `l10n_key` + `customName`. Matching uses **all** categories, bo
 For each distinct CSV Category value, in order:
 
 1. **Income marker.** The value equals the `transactionTypeIncome` or `categoriesSectionIncome` label in any locale ("Income", 收入). Fortune City writes its type label into the Category column for income rows, so these rows are **income**, and the category is chosen **per row from its note**:
-   - note (trimmed, normalized) equals the `categoryIncomeSalary` label in any locale (薪資 / 薪资 / Salary) → seeded `category.income.salary`;
+   - note (trimmed, normalized) equals the `categoryIncomeSalary` label in any locale (薪資 / 工资 / Salary) or 薪资, the Simplified form of 薪資 → seeded `category.income.salary`;
    - any other note, or no note → seeded `category.income.other`.
 
    This is the user's rule ("if the income note is 薪資, put into salary, otherwise Other income"). It is the only per-row resolution; every other Category value resolves once per distinct value. Seeded categories cannot be deleted (`CategoryRepository.delete` throws for any row with an `l10nKey`), and an archived one is still matched, so both lookups always succeed. The preview lists the income marker under "Will use existing" with both targets and their row counts.

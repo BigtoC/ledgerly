@@ -299,8 +299,8 @@ void main() {
       expect(creditCard.options, [seededCash]);
     });
 
-    test('salaryNotes holds the Salary label of every locale', () {
-      expect(match.salaryNotes, {'Salary', '薪資', '工资'});
+    test('salaryNotes holds the Salary label of every locale and 薪资', () {
+      expect(match.salaryNotes, {'Salary', '薪資', '工资', '薪资'});
     });
 
     test('the result does not depend on the order of the label sets', () {
@@ -345,9 +345,9 @@ void main() {
       expect(en.salaryRowCount, 1);
     });
 
-    test('薪资 is not a Salary label (zh_CN says 工资), so it is Other', () {
+    test('薪资, the Simplified form of 薪資, is a Salary note too', () {
       final match = _match([_row(category: '收入', memo: '薪资')]);
-      expect(_categoryEntry(match, '收入').salaryRowCount, 0);
+      expect(_categoryEntry(match, '收入').salaryRowCount, 1);
     });
 
     test('a retired, archived category.personal still matches its labels', () {

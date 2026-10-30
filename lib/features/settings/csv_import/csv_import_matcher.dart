@@ -119,7 +119,8 @@ abstract class CsvImportMatch with _$CsvImportMatch {
     required List<CsvAccountMatch> accounts,
     required List<CsvCategoryMatch> categories,
 
-    /// The Salary label of every locale, for [CsvImportPlan.salaryNotes].
+    /// The Salary label of every locale plus 薪资, for
+    /// [CsvImportPlan.salaryNotes].
     required Set<String> salaryNotes,
   }) = _CsvImportMatch;
 }
@@ -143,7 +144,11 @@ abstract final class CsvImportMatcher {
       (rowsByCategory[row.category] ??= []).add(row);
     }
 
-    final salaryNotes = {for (final l in labelSets) l.categoryIncomeSalary};
+    // 薪资 is the Simplified form of 薪資; the zh_CN label is 工资.
+    final salaryNotes = {
+      for (final l in labelSets) l.categoryIncomeSalary,
+      '薪资',
+    };
     return CsvImportMatch(
       accounts: [
         for (final MapEntry(:key, :value) in rowsByAccount.entries)

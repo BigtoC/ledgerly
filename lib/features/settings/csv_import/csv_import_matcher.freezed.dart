@@ -662,7 +662,8 @@ $CategoryResolutionCopyWith<$Res> get resolution {
 /// @nodoc
 mixin _$CsvImportMatch {
 
- List<CsvAccountMatch> get accounts; List<CsvCategoryMatch> get categories;/// The Salary label of every locale, for [CsvImportPlan.salaryNotes].
+ List<CsvAccountMatch> get accounts; List<CsvCategoryMatch> get categories;/// The Salary label of every locale plus 薪资, for
+/// [CsvImportPlan.salaryNotes].
  Set<String> get salaryNotes;
 /// Create a copy of CsvImportMatch
 /// with the given fields replaced by the non-null parameter values.
@@ -879,9 +880,11 @@ class _CsvImportMatch implements CsvImportMatch {
   return EqualUnmodifiableListView(_categories);
 }
 
-/// The Salary label of every locale, for [CsvImportPlan.salaryNotes].
+/// The Salary label of every locale plus 薪资, for
+/// [CsvImportPlan.salaryNotes].
  final  Set<String> _salaryNotes;
-/// The Salary label of every locale, for [CsvImportPlan.salaryNotes].
+/// The Salary label of every locale plus 薪资, for
+/// [CsvImportPlan.salaryNotes].
 @override Set<String> get salaryNotes {
   if (_salaryNotes is EqualUnmodifiableSetView) return _salaryNotes;
   // ignore: implicit_dynamic_type
