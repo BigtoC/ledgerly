@@ -182,13 +182,16 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
     return batch((b) => b.insertAll(transactions, rows));
   }
 
-  /// `(created_at, amount_minor_units, currency, memo)` of every row whose
-  /// `created_at` lies in `[start, endInclusive]`. Selects only those four
-  /// columns: CSV import duplicate detection compares nothing else, and the
-  /// range can span years of history.
+  /// `(id, created_at, amount_minor_units, currency, memo)` of up to
+  /// [limit] rows with `id > afterId` whose `created_at` lies in
+  /// `[start, endInclusive]`, in `id` order. Selects only those columns:
+  /// CSV import duplicate detection compares nothing else, and the range
+  /// can span years of history. Callers page by passing the last `id` as
+  /// [afterId]; the rowid keyset keeps each page one primary-key range scan.
   Future<
     List<
       ({
+        int id,
         DateTime createdAt,
         int amountMinorUnits,
         String currency,
@@ -199,19 +202,28 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
   getImportSignatureRows({
     required DateTime start,
     required DateTime endInclusive,
+    required int afterId,
+    required int limit,
   }) async {
     final query = selectOnly(transactions)
       ..addColumns([
+        transactions.id,
         transactions.createdAt,
         transactions.amountMinorUnits,
         transactions.currency,
         transactions.memo,
       ])
-      ..where(transactions.createdAt.isBetweenValues(start, endInclusive));
+      ..where(
+        transactions.id.isBiggerThanValue(afterId) &
+            transactions.createdAt.isBetweenValues(start, endInclusive),
+      )
+      ..orderBy([OrderingTerm(expression: transactions.id)])
+      ..limit(limit);
     final rows = await query.get();
     return rows
         .map(
           (r) => (
+            id: r.read(transactions.id)!,
             createdAt: r.read(transactions.createdAt)!,
             amountMinorUnits: r.read(transactions.amountMinorUnits)!,
             currency: r.read(transactions.currency)!,

@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-30
 **Status:** Approved for implementation. The user answered the open questions on 2026-10-30; see [Decisions](#decisions).
-**PRD reference:** `PRD.md` § Phase 2: "[Pending] Fortune City CSV import"; § Security & Privacy: "Future CSV import/export must be explicit user actions with schema validation, size limits, malformed-row handling, formula escaping, and clear warnings…"
+**PRD reference:** `PRD.md` § Phase 2: "[Pending] Fortune City CSV import"; § Security & Privacy: "Future CSV import/export must be explicit user actions with schema validation, malformed-row handling, formula escaping, and clear warnings…", plus "CSV import has no size or row cap"
 **Sample data:** `test/data/import_fortune_city_data.csv` (export from the Fortune City / 記帳城市 app)
 **Depends on** (merged to `main` in #62):
 - the `category.investment` expense category (en "Investment", zh_TW 理財, zh_CN 理财) and its schema v7 data-only migration;
@@ -51,7 +51,7 @@ No schema change is needed; the import runs on schema v7. It needs:
 - **Editing individual rows in the preview,** or remapping a to-be-created category onto an existing one. Near-miss labels were resolved by renaming the built-in zh labels instead (see [Decisions](#decisions)).
 - **Undo after import.** The preview shows every account and category decision before anything is written, and atomicity means there is never a half-import to clean up. Imported rows can be deleted individually as usual. A batch undo is a possible follow-up.
 - **Adjusting opening balances.** Imported history changes the balances of the accounts it lands in. The preview says so; it does not compensate.
-- **Background or streaming import.** There is no size or row cap; the whole file is read and parsed in memory and committed in one Drift transaction. If a large file proves slow, the follow-up is to chunk the work while keeping the commit all-or-nothing.
+- **Streaming import.** There is no size or row cap. The whole file is still read into memory at once and committed in one Drift transaction; parsing runs on a worker isolate and the commit inserts in chunks (see the Performance note under [Layer placement](#layer-placement)).
 
 ---
 
@@ -290,7 +290,7 @@ Dedup is **multiset-based**: for each key, `toInsert = max(0, countInFile − co
 
 **When it runs.** Dedup runs during load, **before** matching, over every valid row. Only the rows left over (the "rows to import") feed account and category matching. This is why a re-import asks no questions. Because the key ignores resolutions, the duplicate count and the confirm count never change while the user edits the preview. The commit **recomputes** dedup inside its transaction, which is authoritative, and the Done screen reports the commit's numbers. If the recount leaves a to-be-created account, type or category with no rows, the commit does not create it.
 
-**Read path.** `TransactionRepository.getImportSignatures(DateTime start, DateTime endInclusive)` returns only `({DateTime createdAt, int amountMinorUnits, String currencyCode, String? memo})` records for transactions whose `created_at` lies in the valid rows' range. It is backed by a narrow DAO select, not full `Transaction` domain objects, because the sample alone spans four years.
+**Read path.** `TransactionRepository.getImportSignatures(DateTime start, DateTime endInclusive)` returns only `({DateTime createdAt, int amountMinorUnits, String currencyCode, String? memo})` records for transactions whose `created_at` lies in the valid rows' range. It is backed by a narrow DAO select, not full `Transaction` domain objects, because the sample alone spans four years. The repository reads it in keyset pages on `id` and returns the concatenated list.
 
 **Known limitations** (documented in the spec and the PR):
 
@@ -363,7 +363,14 @@ Dedup is **multiset-based**: for each key, `toInsert = max(0, countInFile − co
 
 **Dispose safety:** `commit()` is not cancellable once it starts; the Drift transaction completes or rolls back. The screen blocks pop during `committing`. The controller also checks `ref.mounted` before every post-`await` state write.
 
-**Performance:** the parser is a pure function of the bytes and runs on the main isolate. There is no row cap; it is expected to take well under a frame budget per thousand rows. Per the AGENTS.md performance rules, moving it to `Isolate.run` or chunking the file waits for a profile-mode measurement that shows jank.
+**Performance:** there is no row cap. A benchmark of uncapped files, with the database on its background isolate as in the app, showed three separate stalls on the UI isolate: load, commit, and an all-duplicate re-load. Each is split as follows, and the commit stays all-or-nothing:
+
+- **Load.** Parsing and the currency and amount checks are pure, so `pickAndLoad` runs them in one `Isolate.run`. It reads the currencies once beforehand and sends them with the bytes. The closure is built in a top-level function, so it cannot capture the database or the repositories. A `CsvFileException` comes back with its own type. Dedup, the error sort and `CsvLoadResult` stay on the main isolate.
+- **Commit.** Rows are inserted 1,000 at a time (`_kInsertChunk`) inside the one `db.transaction`. Each `insertImported` call runs as a savepoint, so the UI isolate yields between chunks, and any failure still rolls back every chunk plus every created type, account and category. Drift holds table-update notifications until the outer commit, so Home re-queries once and not once per chunk.
+- **Duplicate signatures.** `getImportSignatures` reads 2,000 rows per page (`_kImportSignaturePage`), keyset-paged on `id`. That is a `rowid` range scan, so no new index is needed, and no single query or isolate hop carries the whole date range.
+- **Duplicate check.** `_withoutDuplicates` runs in `pickAndLoad` and again in the commit's recount, over every valid row in the file (`plan.rows` stays the full valid set, because the multiset recount depends on it). A re-load or commit of a file whose rows are mostly in the database already, such as a grown export imported again, walks every stored signature in range. Both of its loops yield to the event loop every 5,000 rows (`_kDedupChunk`), so the UI isolate never holds one block for the whole file.
+
+The file is still read whole into memory. The following wait for a profile-mode trace that shows the need: moving the commit's sort into a worker, and a streaming parser.
 
 ### Data flow
 
@@ -371,10 +378,13 @@ Dedup is **multiset-based**: for each key, `toInsert = max(0, countInFile − co
 CsvImportScreen ──tap──▶ CsvImportController.pickFile()
   ▶ csvImportUseCase.pickAndLoad()
       ▶ CsvFileService.pick()                      (file_selector; deletes cache copy)
-      ▶ parseFortuneCityCsv(bytes)                 (core; UTF-8/quotes/csv/lines/header/rows)
-      ▶ CurrencyRepository.getByCode × distinct    (unknownCurrency rows → errors)
-      ▶ decimalStringToMinorUnits per row          (core)
-      ▶ TransactionRepository.getImportSignatures  (multiset dedup)
+      ▶ CurrencyRepository.watchAll(includeTokens: true).first
+      ▶ Isolate.run {
+          parseFortuneCityCsv(bytes)               (core; UTF-8/quotes/csv/lines/header/rows)
+          currency lookup                          (unknownCurrency rows → errors)
+          decimalStringToMinorUnits per row        (core)
+        }
+      ▶ TransactionRepository.getImportSignatures  (multiset dedup; keyset pages)
   ◀ CsvLoadResult(rowsToImport, duplicateCount, errors, fileName)
   ▶ repos.watchAll(includeArchived: true).first     (categories, accounts, types)
   ▶ CsvImportMatcher.resolve(rowsToImport, …, labelSets)   (feature; pure)
@@ -391,7 +401,7 @@ tap Import ─▶ commit()
         AccountRepository.save × new accounts      (only those with rows left)
         CategoryRepository.save × new categories   (only those with rows left)
         sort rows by (createdAt ASC, line DESC)
-        TransactionRepository.insertImported(rows)
+        TransactionRepository.insertImported × 1,000-row chunks
       }
   ▶ if any currency ≠ default: unawaited(exchangeRateRepository.refreshAll(default))
   ⇒ state = done(result)
@@ -477,7 +487,7 @@ Existing keys are reused where they fit: `transactionTypeExpense` / `transaction
 - **Nothing leaves the device** except the existing currency-pair-only FX refresh.
 - **No stray copies.** `file_selector_android` copies the picked file into the app cache directory. `CsvFileService` deletes that copy after reading it (see [Architecture](#architecture)).
 - **Formula injection:** memos starting with `=`, `+`, `-` or `@` are stored as plain text and never evaluated. Escaping is an **export** concern, deferred to the CSV export work. This satisfies the PRD's "formula escaping" item for the import direction.
-- **No size limits:** files of any size or row count are accepted, so a large file is never rejected or truncated. The whole file is held in memory while it is parsed.
+- **No size limits:** files of any size or row count are accepted, so a large file is never rejected or truncated. The whole file is held in memory while it is parsed. This deliberately replaces the PRD's former "size limits" item for import, at the user's request (2026-10-30); `PRD.md` § Security & Privacy now says so.
 - **Schema validation:** required headers, quote parity, strict amount, date and currency validation, and per-row errors.
 
 ---
@@ -512,7 +522,7 @@ TDD per AGENTS.md: write each test first and watch it fail.
 **Unit — repositories** (`test/unit/repositories/transaction_repository_test.dart`, in-memory Drift, `DriftTransactionRepository(db, clock: …)` built directly)
 - `insertImported` keeps `createdAt`, sets every row's `updatedAt` to one clock value (a clock that advances per call still yields a single value), keeps `date` from the model, sets `amountFormula` to null, and inserts in the given order (ascending ids). It throws `CurrencyNotFoundException` for an unknown code, and it is atomic inside an outer `db.transaction` that throws, so nothing persists.
 - With `PRAGMA foreign_keys = ON`, a batch in which one row has `categoryId: 999999` throws and leaves 0 rows.
-- `getImportSignatures` includes both bounds, filters on `created_at` (not `date`), and returns only the four fields.
+- `getImportSignatures` includes both bounds, filters on `created_at` (not `date`), and returns only the four fields. Across several keyset pages, with out-of-range rows interleaved by id, it returns every in-range row exactly once. The DAO query honours `afterId` and `limit`.
 - Update every fake or mock that `implements TransactionRepository` in `test/`.
 
 **Unit — use case** (`test/unit/use_cases/csv_import_use_case_test.dart`, in-memory Drift with `runTestSeed`, fake `CsvFileService`)
@@ -524,6 +534,7 @@ TDD per AGENTS.md: write each test first and watch it fail.
 - Loading the sample again after a commit gives 0 rows to import and 105 duplicates, **even when** the first commit sent Credit Card to an existing account and that account has since been archived.
 - Dedup is multiset-based: a file with 2 identical rows against 1 existing row inserts 1.
 - When the commit-time recount finds every row of a to-be-created category already present (rows inserted between load and commit), that category is not created.
+- A 2,500-row commit calls `insertImported` with 1,000, 1,000 and 500 rows, and ids still follow `(createdAt ASC, line DESC)` across chunk boundaries. When the second chunk throws, the first chunk and the created type, account and category roll back. Re-loading a committed file of more than one signature page reports every row as a duplicate.
 - **Atomicity:** real account-type, account and category repositories on the same in-memory `AppDatabase`, plus a `TransactionRepository` whose `insertImported` throws. After the failed commit, the counts of account types, accounts, categories and transactions are unchanged.
 - A cancelled pick returns null.
 

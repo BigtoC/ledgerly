@@ -1198,7 +1198,7 @@ Material Design 3 with `ColorScheme.fromSeed()` for both light and dark variants
 - Phase 2 currency-price requests send currency pairs and conversion metadata only; they must not include user memos, categories, or other transaction text
 - The app-update check sends a fixed GitHub `releases/latest` GET (Android only, once per launch) and downloads the release APK only on a user tap; neither request includes any user or transaction data
 - App lock remains future work. MVP baseline relies on OS device security plus sandbox/file-protection settings rather than an in-app passcode
-- Future CSV import/export must be explicit user actions with schema validation, size limits, malformed-row handling, formula escaping, and clear warnings that exported CSV files are portable unencrypted data
+- Future CSV import/export must be explicit user actions with schema validation, malformed-row handling, formula escaping, and clear warnings that exported CSV files are portable unencrypted data. CSV import has no size or row cap (decided 2026-10-30): it parses off the UI isolate and inserts in chunks inside one all-or-nothing transaction
 - Future cloud backup must define provider choice, authentication, encryption expectations, token storage, sync scope, and delete/restore behavior before implementation
 
 ---

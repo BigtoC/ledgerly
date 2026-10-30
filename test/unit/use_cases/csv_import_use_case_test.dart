@@ -49,6 +49,26 @@ _FakeCsvFileService _serviceFor(Uint8List bytes, {String name = 'a.csv'}) =>
 Uint8List _csv(List<String> rows) =>
     Uint8List.fromList(utf8.encode([_header, ...rows].join('\n')));
 
+/// [n] rows newest first, as the export orders them, three per minute so
+/// a minute straddles each 1,000-row chunk boundary. Row `i` costs `i + 1`
+/// HKD, so a stored row's line is `amountMinorUnits ~/ 100 + 1`.
+List<String> _rowsNewestFirst(
+  int n, {
+  String account = 'Cash',
+  String category = '食物',
+}) {
+  final rows = <String>[];
+  for (var i = 0; i < n; i++) {
+    final t = DateTime(2026).add(Duration(minutes: (n - 1 - i) ~/ 3));
+    final minute = t.minute.toString().padLeft(2, '0');
+    rows.add(
+      '$account,$category,${i + 1},HKD,'
+      '${t.year}/${t.month}/${t.day} ${t.hour}:$minute,,0',
+    );
+  }
+  return rows;
+}
+
 void main() {
   late AppDatabase db;
   late CurrencyRepository currencies;
@@ -727,6 +747,126 @@ void main() {
       );
 
       expect(await counts(), before);
+    });
+
+    group('2,500 rows', () {
+      late _MockTransactionRepository spy;
+      late List<int> batchSizes;
+
+      setUp(() {
+        spy = _MockTransactionRepository();
+        batchSizes = [];
+        when(() => spy.getImportSignatures(any(), any())).thenAnswer(
+          (i) => transactions.getImportSignatures(
+            i.positionalArguments[0] as DateTime,
+            i.positionalArguments[1] as DateTime,
+          ),
+        );
+        when(() => spy.insertImported(any())).thenAnswer((i) {
+          final txs = i.positionalArguments.single as List<Transaction>;
+          batchSizes.add(txs.length);
+          return transactions.insertImported(txs);
+        });
+      });
+
+      Future<CsvImportPlan> cashFoodPlan(CsvLoadResult load) async =>
+          CsvImportPlan(
+            rows: load.validRows,
+            accounts: {
+              'Cash': AccountResolution.existing(
+                (await accounts.watchAll().first).single.id,
+              ),
+            },
+            categories: {
+              '食物': CategoryResolution.existing(
+                await categoryIdFor('category.food'),
+              ),
+            },
+            salaryNotes: _salaryNotes,
+          );
+
+      test('are inserted in 1,000-row chunks and ids still follow '
+          '(createdAt ASC, line DESC)', () async {
+        final useCase = useCaseWith(
+          _serviceFor(_csv(_rowsNewestFirst(2500))),
+          transactionRepo: spy,
+        );
+        final load = (await useCase.pickAndLoad())!;
+
+        final result = await useCase.commit(await cashFoodPlan(load));
+
+        expect(result.importedCount, 2500);
+        expect(batchSizes, [1000, 1000, 500]);
+        final rows = await allTransactionRows();
+        expect(rows, hasLength(2500));
+        int lineOf(TransactionRow r) => r.amountMinorUnits ~/ 100 + 1;
+        for (var i = 1; i < rows.length; i++) {
+          final byTime = rows[i].createdAt.compareTo(rows[i - 1].createdAt);
+          expect(byTime, greaterThanOrEqualTo(0), reason: 'id ${rows[i].id}');
+          if (byTime == 0) {
+            expect(
+              lineOf(rows[i]),
+              lessThan(lineOf(rows[i - 1])),
+              reason: 'id ${rows[i].id}',
+            );
+          }
+        }
+      });
+
+      test('a failing later chunk rolls back the earlier chunks and the '
+          'created type, account and category', () async {
+        when(() => spy.insertImported(any())).thenAnswer((i) {
+          if (batchSizes.isNotEmpty) throw StateError('second chunk failed');
+          final txs = i.positionalArguments.single as List<Transaction>;
+          batchSizes.add(txs.length);
+          return transactions.insertImported(txs);
+        });
+        final useCase = useCaseWith(
+          _serviceFor(
+            _csv(_rowsNewestFirst(2500, account: 'Card', category: 'Fun')),
+          ),
+          transactionRepo: spy,
+        );
+        final load = (await useCase.pickAndLoad())!;
+        final before = await counts();
+
+        await expectLater(
+          useCase.commit(
+            CsvImportPlan(
+              rows: load.validRows,
+              accounts: const {
+                'Card': AccountResolution.createTypeAndAccount(
+                  name: 'Card',
+                  currencyCode: 'HKD',
+                ),
+              },
+              categories: const {
+                'Fun': CategoryResolution.create(
+                  name: 'Fun',
+                  type: CategoryType.expense,
+                ),
+              },
+              salaryNotes: _salaryNotes,
+            ),
+          ),
+          throwsA(isA<StateError>()),
+        );
+
+        expect(batchSizes, [1000]);
+        expect(await counts(), before);
+      });
+
+      test('re-importing after a commit finds every row a duplicate', () async {
+        final useCase = useCaseWith(_serviceFor(_csv(_rowsNewestFirst(2500))));
+        await useCase.commit(
+          await cashFoodPlan((await useCase.pickAndLoad())!),
+        );
+
+        final again = (await useCase.pickAndLoad())!;
+
+        expect(again.rowsToImport, isEmpty);
+        expect(again.duplicateCount, 2500);
+      });
     });
   });
 }

@@ -4,20 +4,24 @@
 // Lives in `data/use_cases/` because the commit coordinates four
 // repositories inside one `db.transaction`, the role
 // `RecurringGenerationUseCase` already plays. It also owns the file
-// service call, so controllers never import `data/services/`. Never logs: rows carry memos and amounts.
+// service call, so controllers never import `data/services/`. Never
+// logs: rows carry memos and amounts.
 
+import 'dart:isolate';
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import '../../core/utils/color_palette.dart';
 import '../../core/utils/csv_import_keys.dart';
 import '../../core/utils/date_helpers.dart';
 import '../../core/utils/decimal_rounding.dart';
 import '../../core/utils/fortune_city_csv_parser.dart';
-import '../database/app_database.dart';
+import '../database/app_database.dart' show AppDatabase;
 import '../models/account.dart';
 import '../models/account_type.dart';
 import '../models/category.dart';
 import '../models/csv_import.dart';
+import '../models/currency.dart';
 import '../models/transaction.dart';
 import '../repositories/account_repository.dart';
 import '../repositories/account_type_repository.dart';
@@ -42,6 +46,79 @@ _ImportKey _keyOf(
   currencyCode,
   memo ?? '',
 );
+
+/// Runs [_parseAndValidate] on a worker isolate. Top-level so the closure
+/// captures only [bytes] and [currencies], never the database or
+/// repositories, which cannot be sent.
+Future<({List<CsvImportRow> valid, List<CsvRowError> errors})>
+_loadInBackground(Uint8List bytes, Map<String, Currency> currencies) =>
+    Isolate.run(() => _parseAndValidate(bytes, currencies));
+
+/// Parses [bytes] and turns rows with an unknown currency or an unusable
+/// amount into row errors. Pure, so it can run off the UI isolate.
+({List<CsvImportRow> valid, List<CsvRowError> errors}) _parseAndValidate(
+  Uint8List bytes,
+  Map<String, Currency> currencies,
+) {
+  final parsed = parseFortuneCityCsv(bytes);
+  final errors = [...parsed.errors];
+  final valid = <CsvImportRow>[];
+  for (final row in parsed.rows) {
+    final currency = currencies[row.currencyCode];
+    if (currency == null) {
+      errors.add(
+        CsvRowError(
+          lineNumber: row.line,
+          reason: CsvRowErrorReason.unknownCurrency,
+          currencyCode: row.currencyCode,
+        ),
+      );
+      continue;
+    }
+    final int amount;
+    try {
+      amount = decimalStringToMinorUnits(
+        row.amountText,
+        scale: math.min(2, currency.decimals),
+        decimals: currency.decimals,
+      );
+    } on FormatException {
+      errors.add(
+        CsvRowError(
+          lineNumber: row.line,
+          reason: CsvRowErrorReason.invalidAmount,
+        ),
+      );
+      continue;
+    }
+    if (amount == 0) {
+      errors.add(
+        CsvRowError(lineNumber: row.line, reason: CsvRowErrorReason.zeroAmount),
+      );
+      continue;
+    }
+    valid.add(
+      CsvImportRow(
+        line: row.line,
+        account: row.account,
+        category: row.category,
+        amountMinorUnits: amount,
+        currency: currency,
+        recordedAt: row.recordedAt,
+        memo: row.memo,
+      ),
+    );
+  }
+
+  return (valid: valid, errors: errors);
+}
+
+/// Rows per `insertImported` call in [CsvImportUseCase.commit].
+const _kInsertChunk = 1000;
+
+/// Rows per synchronous slice of the duplicate check; it yields to the
+/// event loop between slices so a large file doesn't freeze the UI.
+const _kDedupChunk = 5000;
 
 class CsvImportUseCase {
   CsvImportUseCase({
@@ -70,63 +147,11 @@ class CsvImportUseCase {
     final picked = await fileService.pick();
     if (picked == null) return null;
 
-    final parsed = parseFortuneCityCsv(picked.bytes);
-    final errors = [...parsed.errors];
     final currencies = {
-      for (final code in parsed.rows.map((r) => r.currencyCode).toSet())
-        code: await currencyRepo.getByCode(code),
+      for (final c in await currencyRepo.watchAll(includeTokens: true).first)
+        c.code: c,
     };
-
-    final valid = <CsvImportRow>[];
-    for (final row in parsed.rows) {
-      final currency = currencies[row.currencyCode];
-      if (currency == null) {
-        errors.add(
-          CsvRowError(
-            lineNumber: row.line,
-            reason: CsvRowErrorReason.unknownCurrency,
-            currencyCode: row.currencyCode,
-          ),
-        );
-        continue;
-      }
-      final int amount;
-      try {
-        amount = decimalStringToMinorUnits(
-          row.amountText,
-          scale: math.min(2, currency.decimals),
-          decimals: currency.decimals,
-        );
-      } on FormatException {
-        errors.add(
-          CsvRowError(
-            lineNumber: row.line,
-            reason: CsvRowErrorReason.invalidAmount,
-          ),
-        );
-        continue;
-      }
-      if (amount == 0) {
-        errors.add(
-          CsvRowError(
-            lineNumber: row.line,
-            reason: CsvRowErrorReason.zeroAmount,
-          ),
-        );
-        continue;
-      }
-      valid.add(
-        CsvImportRow(
-          line: row.line,
-          account: row.account,
-          category: row.category,
-          amountMinorUnits: amount,
-          currency: currency,
-          recordedAt: row.recordedAt,
-          memo: row.memo,
-        ),
-      );
-    }
+    final (:valid, :errors) = await _loadInBackground(picked.bytes, currencies);
 
     final deduped = await _withoutDuplicates(valid);
     errors.sort((a, b) => a.lineNumber.compareTo(b.lineNumber));
@@ -142,7 +167,9 @@ class CsvImportUseCase {
   /// Writes [plan] in one transaction: recounts duplicates, creates the
   /// account types, accounts and categories that still have rows, then
   /// inserts the rows sorted by `(createdAt ASC, line DESC)` so ids follow
-  /// time. Any failure rolls everything back and rethrows.
+  /// time. Rows are inserted in chunks inside the one transaction, so the
+  /// UI isolate yields between chunks and any failure still rolls
+  /// everything back and rethrows.
   ///
   /// [CsvImportPlan.accounts] and [CsvImportPlan.categories] must cover
   /// the value of every row the recount leaves.
@@ -257,21 +284,27 @@ class CsvImportUseCase {
           final byTime = a.recordedAt.compareTo(b.recordedAt);
           return byTime != 0 ? byTime : b.line.compareTo(a.line);
         });
-      final imported = await transactionRepo.insertImported([
-        for (final row in sorted)
-          Transaction(
-            id: 0,
-            amountMinorUnits: row.amountMinorUnits,
-            currency: row.currency,
-            categoryId: categoryIdFor(row),
-            accountId: accountIds[row.account]!,
-            date: DateHelpers.startOfDay(row.recordedAt),
-            memo: row.memo,
-            createdAt: row.recordedAt,
-            // Replaced by the repository's clock.
-            updatedAt: row.recordedAt,
-          ),
-      ]);
+      var imported = 0;
+      for (var i = 0; i < sorted.length; i += _kInsertChunk) {
+        imported += await transactionRepo.insertImported([
+          for (final row in sorted.sublist(
+            i,
+            math.min(i + _kInsertChunk, sorted.length),
+          ))
+            Transaction(
+              id: 0,
+              amountMinorUnits: row.amountMinorUnits,
+              currency: row.currency,
+              categoryId: categoryIdFor(row),
+              accountId: accountIds[row.account]!,
+              date: DateHelpers.startOfDay(row.recordedAt),
+              memo: row.memo,
+              createdAt: row.recordedAt,
+              // Replaced by the repository's clock.
+              updatedAt: row.recordedAt,
+            ),
+        ]);
+      }
 
       return CsvImportResult(
         importedCount: imported,
@@ -297,7 +330,9 @@ class CsvImportUseCase {
     }
 
     final inDb = <_ImportKey, int>{};
+    var i = 0;
     for (final s in await transactionRepo.getImportSignatures(start, end)) {
+      if (++i % _kDedupChunk == 0) await Future<void>.delayed(Duration.zero);
       final key = _keyOf(
         s.createdAt,
         s.amountMinorUnits,
@@ -308,7 +343,9 @@ class CsvImportUseCase {
     }
 
     final kept = <CsvImportRow>[];
+    i = 0;
     for (final row in rows) {
+      if (++i % _kDedupChunk == 0) await Future<void>.delayed(Duration.zero);
       final key = _keyOf(
         row.recordedAt,
         row.amountMinorUnits,

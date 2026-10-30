@@ -1070,7 +1070,7 @@ void main() {
       },
     );
 
-    test('S-02: selects only the four signature columns', () async {
+    test('S-02: selects only the signature columns plus id', () async {
       final interceptor = _SelectCountingInterceptor();
       final countedDb = AppDatabase(
         NativeDatabase.memory().interceptWith(interceptor),
@@ -1086,6 +1086,7 @@ void main() {
       );
 
       final sql = interceptor.statements.single;
+      expect(sql, contains('"id"'));
       expect(sql, contains('"created_at"'));
       expect(sql, contains('"amount_minor_units"'));
       expect(sql, contains('"currency"'));
@@ -1093,6 +1094,64 @@ void main() {
       expect(sql, isNot(contains('"category_id"')));
       expect(sql, isNot(contains('"account_id"')));
       expect(sql, isNot(contains('"amount_formula"')));
+    });
+
+    test('S-03: returns every in-range row exactly once across pages, '
+        'with out-of-range rows interleaved by id', () async {
+      final start = DateTime(2026, 3, 1);
+      final end = DateTime(2026, 3, 31, 23, 59);
+      // Every third id is outside the range, so page boundaries fall
+      // between in-range ids that are not consecutive.
+      await txRepo.insertImported([
+        for (var i = 0; i < 4001; i++) ...[
+          if (i % 2 == 0)
+            importedTx(
+              createdAt: i % 4 == 0
+                  ? start.subtract(const Duration(seconds: 1))
+                  : end.add(const Duration(seconds: 1)),
+              amount: -1 - i,
+            ),
+          importedTx(
+            createdAt: start.add(Duration(minutes: i)),
+            amount: i + 1,
+          ),
+        ],
+      ]);
+
+      final signatures = await txRepo.getImportSignatures(start, end);
+
+      final amounts = signatures.map((s) => s.amountMinorUnits).toList();
+      expect(amounts, hasLength(4001));
+      expect(amounts.toSet(), {for (var i = 1; i <= 4001; i++) i});
+    });
+  });
+
+  group('TransactionDao.getImportSignatureRows', () {
+    test('returns ids above afterId in id order, at most limit rows', () async {
+      final start = DateTime(2026, 3, 1);
+      await txRepo.insertImported([
+        for (var i = 0; i < 5; i++)
+          importedTx(
+            createdAt: start.add(Duration(minutes: i)),
+            amount: i,
+          ),
+      ]);
+      final ids =
+          (await db
+                  .customSelect('SELECT id FROM transactions ORDER BY id')
+                  .get())
+              .map((r) => r.read<int>('id'))
+              .toList();
+
+      final page = await db.transactionDao.getImportSignatureRows(
+        start: start,
+        endInclusive: start.add(const Duration(days: 1)),
+        afterId: ids[1],
+        limit: 2,
+      );
+
+      expect(page.map((r) => r.id), [ids[2], ids[3]]);
+      expect(page.map((r) => r.amountMinorUnits), [2, 3]);
     });
   });
 }

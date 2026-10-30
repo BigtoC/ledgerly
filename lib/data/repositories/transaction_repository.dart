@@ -208,7 +208,8 @@ abstract class TransactionRepository {
   Future<int> insertImported(List<Transaction> txs);
 
   /// Duplicate-detection keys of every transaction whose `createdAt`
-  /// lies in `[start, endInclusive]`. Reads only these four columns.
+  /// lies in `[start, endInclusive]`. Returns only these four fields; the
+  /// DAO also reads `id` to page.
   Future<List<TransactionImportSignature>> getImportSignatures(
     DateTime start,
     DateTime endInclusive,
@@ -218,6 +219,9 @@ abstract class TransactionRepository {
   /// no row matched.
   Future<bool> delete(int id);
 }
+
+/// Rows per DAO page in [DriftTransactionRepository.getImportSignatures].
+const _kImportSignaturePage = 2000;
 
 /// Concrete Drift-backed implementation of [TransactionRepository].
 final class DriftTransactionRepository implements TransactionRepository {
@@ -578,20 +582,28 @@ final class DriftTransactionRepository implements TransactionRepository {
     DateTime start,
     DateTime endInclusive,
   ) async {
-    final rows = await _dao.getImportSignatureRows(
-      start: start,
-      endInclusive: endInclusive,
-    );
-    return rows
-        .map(
-          (r) => (
-            createdAt: r.createdAt,
-            amountMinorUnits: r.amountMinorUnits,
-            currencyCode: r.currency,
-            memo: r.memo,
-          ),
-        )
-        .toList(growable: false);
+    // Keyset pages keep each read, and the isolate hop that carries it,
+    // bounded however much history the range spans.
+    final signatures = <TransactionImportSignature>[];
+    var afterId = 0;
+    while (true) {
+      final page = await _dao.getImportSignatureRows(
+        start: start,
+        endInclusive: endInclusive,
+        afterId: afterId,
+        limit: _kImportSignaturePage,
+      );
+      for (final r in page) {
+        signatures.add((
+          createdAt: r.createdAt,
+          amountMinorUnits: r.amountMinorUnits,
+          currencyCode: r.currency,
+          memo: r.memo,
+        ));
+      }
+      if (page.length < _kImportSignaturePage) return signatures;
+      afterId = page.last.id;
+    }
   }
 
   @override
