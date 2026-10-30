@@ -28,13 +28,13 @@
 
   "errorSnackbarGeneric": "出错了，请重试。",
 
-  "categoryFood": "饮食",
-  "categoryDrinks": "饮料",
+  "categoryFood": "食物",
+  "categoryDrinks": "饮品",
   "categoryTransportation": "交通",
-  "categoryShopping": "购物",
-  "categoryHousing": "居住",
+  "categoryShopping": "消费",
+  "categoryHousing": "居家",
   "categoryEntertainment": "娱乐",
-  "categoryMedical": "医疗",
+  "categoryMedical": "医药",
   "categoryEducation": "教育",
   "categoryPersonal": "个人",
   "categoryTravel": "旅游",

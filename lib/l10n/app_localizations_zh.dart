@@ -976,25 +976,25 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get errorSnackbarGeneric => '出错了，请重试。';
 
   @override
-  String get categoryFood => '饮食';
+  String get categoryFood => '食物';
 
   @override
-  String get categoryDrinks => '饮料';
+  String get categoryDrinks => '饮品';
 
   @override
   String get categoryTransportation => '交通';
 
   @override
-  String get categoryShopping => '购物';
+  String get categoryShopping => '消费';
 
   @override
-  String get categoryHousing => '居住';
+  String get categoryHousing => '居家';
 
   @override
   String get categoryEntertainment => '娱乐';
 
   @override
-  String get categoryMedical => '医疗';
+  String get categoryMedical => '医药';
 
   @override
   String get categoryEducation => '教育';
@@ -1847,25 +1847,25 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get errorSnackbarGeneric => '發生錯誤，請再試一次。';
 
   @override
-  String get categoryFood => '飲食';
+  String get categoryFood => '食物';
 
   @override
-  String get categoryDrinks => '飲料';
+  String get categoryDrinks => '飲品';
 
   @override
   String get categoryTransportation => '交通';
 
   @override
-  String get categoryShopping => '購物';
+  String get categoryShopping => '消費';
 
   @override
-  String get categoryHousing => '居住';
+  String get categoryHousing => '居家';
 
   @override
   String get categoryEntertainment => '娛樂';
 
   @override
-  String get categoryMedical => '醫療';
+  String get categoryMedical => '醫藥';
 
   @override
   String get categoryEducation => '教育';
