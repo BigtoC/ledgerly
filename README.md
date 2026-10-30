@@ -19,7 +19,7 @@ have shipped on top of the MVP: recurring transactions + pending approval,
 transaction search, extended multi-currency conversion with cached
 exchange rates, charts (pie + daily bar with animations and interactive
 selection), chart slice drill-down with per-slice item lists, Fortune
-City CSV import from Settings, and a splash display-text redesign where
+City CSV import and date-range CSV export from Settings, and a splash display-text redesign where
 the start date renders inline with a rainbow gradient. The default
 template is now `On {date} start using Ledgerly`, with multi-line
 display-text input in Settings and an auto-prepend guarantee so the date
@@ -317,7 +317,7 @@ lib/
     accounts/       # account list + form (currency/type pickers; opened from Settings)
     recurring/      # recurring-rule list/form; generates pending approvals on Home
     shopping_list/  # draft-capture list that converts items into transactions
-    settings/       # language, theme, defaults, splash + recurring entry points, CSV import, about
+    settings/       # language, theme, defaults, splash + recurring entry points, CSV import/export, about
 l10n/         # Source ARB files (app_en, app_zh, app_zh_CN, app_zh_TW)
 test/
   unit/       # services / repositories / controllers / utils

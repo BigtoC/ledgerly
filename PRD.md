@@ -18,7 +18,7 @@ Ledgerly is a local-first mobile expense tracker built with Flutter. It is aimed
 
 **MVP — Complete.** All MVP features have shipped: manual entry, seeded + custom categories, multi-account / multi-currency, shopping list drafts, splash screen, theming, l10n.
 
-**Phase 2 — In progress.** Shipped slices on `main`: **Recurring transactions** + Home pending approval (2026-05-08; see [`recurring_rules`](#recurring_rules-phase-2--shipped-2026-05-08) table), **Transaction search** (2026-05-10), **Extended multi-currency conversion** (2026-05-17), **Basic charts** — pie + daily bar (2026-05-20), **Chart slice drill-down** (2026-05-22) — coordinated pie/legend/bar selection plus a per-slice items list with edit, delete + 4 s undo, FX-converted/original amount split, and stale-rate notice. Selection identity lives in the analysis layer as a sealed `SelectedSlice` (category | account | currency); the repository boundary stays filter-based via `{categoryId, accountId, currencyCode}` arguments. **Fortune City CSV import** (2026-10-30) — `/settings/import` previews a Fortune City export (account and category matching, duplicate and invalid-row skipping) and writes it in one Drift transaction; see the `transactions` table note on imported `created_at`. Remaining Phase 2 work: wallet sync (Ankr integration), credit-card / transfer flows.
+**Phase 2 — In progress.** Shipped slices on `main`: **Recurring transactions** + Home pending approval (2026-05-08; see [`recurring_rules`](#recurring_rules-phase-2--shipped-2026-05-08) table), **Transaction search** (2026-05-10), **Extended multi-currency conversion** (2026-05-17), **Basic charts** — pie + daily bar (2026-05-20), **Chart slice drill-down** (2026-05-22) — coordinated pie/legend/bar selection plus a per-slice items list with edit, delete + 4 s undo, FX-converted/original amount split, and stale-rate notice. Selection identity lives in the analysis layer as a sealed `SelectedSlice` (category | account | currency); the repository boundary stays filter-based via `{categoryId, accountId, currencyCode}` arguments. **Fortune City CSV import** (2026-10-30) — `/settings/import` previews a Fortune City export (account and category matching, duplicate and invalid-row skipping) and writes it in one Drift transaction; see the `transactions` table note on imported `created_at`. **CSV export** (2026-10-30) — `/settings/export` writes the transactions of a chosen date range (all by default) to a CSV the user saves through the system save dialog. Remaining Phase 2 work: wallet sync (Ankr integration), credit-card / transfer flows.
 
 Inline `# Phase 2` annotations throughout the rest of the document mark code paths and surfaces that have **not** yet shipped. The recurring-rules slice is the canonical example of how a Phase 2 feature lands: data layer first (DAOs, repos, migration), then a use case in `lib/data/use_cases/` (Phase 2's `domain/` layer is reserved for cross-feature orchestration), then UI.
 
@@ -52,7 +52,7 @@ Inline `# Phase 2` annotations throughout the rest of the document mark code pat
 - **[Pending]** Detailed monthly summary
 - **[Pending]** Wallet transaction sync** — EVM wallet addresses linked to accounts, Ankr API integration, pending transaction review/approve/reject flow
 - **[Pending]** Budget management (weekly/monthly/yearly)
-- **[Pending]** Data export (CSV)
+- **[Shipped 2026-10-30]** Data export (CSV) — Settings → Data Management → Export data writes the transactions of a chosen date range (every transaction by default) to a UTF-8 CSV (`id, date, type, amount, currency, category, account, memo, created_at, updated_at`; decimal amounts, category and account names, local ISO 8601 times with offset; no `amount_formula`) and saves it through the system save dialog (Android opens in Downloads; iOS uses the Files picker).
 - **[Pending]** Cloud backup & sync
 
 ### Future (Good to Have)
@@ -141,8 +141,9 @@ lib/
       icon_registry.dart
       color_palette.dart
       date_helpers.dart
-      decimal_rounding.dart          # Half-up decimal string → minor units (CSV import)
+      decimal_rounding.dart          # Decimal string ↔ minor units (CSV import/export)
       fortune_city_csv_parser.dart   # Pure Fortune City CSV parser
+      transactions_csv.dart          # Pure transactions CSV encoder (export)
   data/
     database/
       app_database.dart      # Drift database, schemaVersion, migrations
@@ -173,7 +174,7 @@ lib/
       exchange_rate_service.dart    # Dio-based HTTP client for FX rates
       app_release_service.dart      # Dio: latest GitHub release lookup + APK download
       apk_installer_service.dart    # Platform channel to Android's PackageInstaller
-      csv_file_service.dart         # file_selector picker; deletes the picker's cache copy
+      csv_file_service.dart         # file_selector picker + file_picker save dialog; deletes platform temp copies
     repositories/
       transaction_repository.dart
       category_repository.dart
@@ -192,6 +193,7 @@ lib/
     use_cases/
       recurring_generation_use_case.dart   # Cold-start recurring rule engine
       csv_import_use_case.dart             # CSV load, dedup and atomic commit
+      csv_export_use_case.dart             # Date-range CSV export through the save dialog
     models/                                # Freezed domain models
       transaction.dart
       category.dart
@@ -321,6 +323,10 @@ lib/
       about_screen.dart
       app_update_controller.dart
       app_update_state.dart
+      csv_export/
+        csv_export_screen.dart
+        csv_export_controller.dart
+        csv_export_state.dart
       csv_import/
         csv_import_screen.dart
         csv_import_controller.dart
@@ -1198,7 +1204,7 @@ Material Design 3 with `ColorScheme.fromSeed()` for both light and dark variants
 - Phase 2 currency-price requests send currency pairs and conversion metadata only; they must not include user memos, categories, or other transaction text
 - The app-update check sends a fixed GitHub `releases/latest` GET (Android only, once per launch) and downloads the release APK only on a user tap; neither request includes any user or transaction data
 - App lock remains future work. MVP baseline relies on OS device security plus sandbox/file-protection settings rather than an in-app passcode
-- Future CSV import/export must be explicit user actions with schema validation, malformed-row handling, formula escaping, and clear warnings that exported CSV files are portable unencrypted data. CSV import has no size or row cap (decided 2026-10-30): it parses off the UI isolate and inserts in chunks inside one all-or-nothing transaction
+- Future CSV import/export must be explicit user actions with schema validation, malformed-row handling, formula escaping, and clear warnings that exported CSV files are portable unencrypted data. CSV import has no size or row cap (decided 2026-10-30): it parses off the UI isolate and inserts in chunks inside one all-or-nothing transaction. CSV export (2026-10-30) runs only on a button tap, saves through the system save dialog, prefixes category, account and memo text that starts with `= + - @`, tab or CR with `'`, warns on screen that the file is unencrypted, and deletes the iOS picker's temp copy
 - Future cloud backup must define provider choice, authentication, encryption expectations, token storage, sync scope, and delete/restore behavior before implementation
 
 ---
@@ -1304,7 +1310,8 @@ Versions below are the tested resolvable set under Flutter **3.47.9** (Dart 3.13
 | `fl_chart`      | `^1.3.0`  | Pie + daily bar charts (Analysis tab)                                           |
 | `crypto`        | `^3.0.8`  | SHA-256 check of downloaded app-update APKs                                     |
 | `file_selector` | `^1.1.0`  | System file picker (Fortune City CSV import)                                    |
-| `csv`           | `^8.0.0`  | RFC 4180 decoding (CSV import; export in Phase 3)                               |
+| `file_picker`   | `^13.1.0` | System save dialog (CSV export); Swift Package Manager on iOS, no CocoaPods     |
+| `csv`           | `^8.0.0`  | RFC 4180 decoding and encoding (CSV import and export)                          |
 
 ### Deferred (Not yet shipped)
 
