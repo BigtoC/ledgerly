@@ -41,24 +41,27 @@ class MainActivity : FlutterActivity() {
     /** Streams the verified APK into a PackageInstaller session and commits it. */
     private fun install(path: String, result: MethodChannel.Result) {
         val installer = packageManager.packageInstaller
-        var sessionId = -1
-        try {
-            val file = File(path)
-            val params = PackageInstaller.SessionParams(
-                PackageInstaller.SessionParams.MODE_FULL_INSTALL,
-            ).apply {
-                setAppPackageName(packageName)
-                setSize(file.length())
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
+        // The copy and fsync stay off the main thread, which is also Flutter's UI thread.
+        Thread {
+            var sessionId = -1
+            try {
+                val file = File(path)
+                val params = PackageInstaller.SessionParams(
+                    PackageInstaller.SessionParams.MODE_FULL_INSTALL,
+                ).apply {
+                    setAppPackageName(packageName)
+                    setSize(file.length())
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
+                    }
                 }
-            }
-            sessionId = installer.createSession(params)
-            installer.openSession(sessionId).use { session ->
-                file.inputStream().use { input ->
-                    session.openWrite("base.apk", 0, file.length()).use { output ->
-                        input.copyTo(output)
-                        session.fsync(output)
+                sessionId = installer.createSession(params)
+                installer.openSession(sessionId).use { session ->
+                    file.inputStream().use { input ->
+                        session.openWrite("base.apk", 0, file.length()).use { output ->
+                            input.copyTo(output)
+                            session.fsync(output)
+                        }
                     }
                 }
                 // Mutable: the installer fills in EXTRA_STATUS. Explicit
@@ -71,20 +74,39 @@ class MainActivity : FlutterActivity() {
                     Intent(this, InstallStatusReceiver::class.java),
                     flags,
                 )
-                InstallStatusReceiver.pending?.success(PackageInstaller.STATUS_FAILURE_ABORTED)
-                InstallStatusReceiver.pending = result
-                session.commit(status.intentSender)
+                val written = sessionId
+                runOnUiThread { commit(installer, written, status, result) }
+            } catch (e: Exception) {
+                if (sessionId != -1) installer.abandonSession(sessionId)
+                runOnUiThread { result.success(failureStatus(e)) }
             }
+        }.start()
+    }
+
+    /**
+     * Commits on the main thread, where the receiver also runs, so
+     * [InstallStatusReceiver.pending] is set before this session can report.
+     */
+    private fun commit(
+        installer: PackageInstaller,
+        sessionId: Int,
+        status: PendingIntent,
+        result: MethodChannel.Result,
+    ) {
+        try {
+            InstallStatusReceiver.pending?.success(PackageInstaller.STATUS_FAILURE_ABORTED)
+            InstallStatusReceiver.pending = result
+            installer.openSession(sessionId).use { it.commit(status.intentSender) }
         } catch (e: Exception) {
-            if (sessionId != -1) installer.abandonSession(sessionId)
+            installer.abandonSession(sessionId)
             if (InstallStatusReceiver.pending === result) InstallStatusReceiver.pending = null
-            result.success(
-                if (e is java.io.IOException) {
-                    PackageInstaller.STATUS_FAILURE_STORAGE
-                } else {
-                    PackageInstaller.STATUS_FAILURE
-                },
-            )
+            result.success(failureStatus(e))
         }
+    }
+
+    private fun failureStatus(e: Exception) = if (e is java.io.IOException) {
+        PackageInstaller.STATUS_FAILURE_STORAGE
+    } else {
+        PackageInstaller.STATUS_FAILURE
     }
 }
