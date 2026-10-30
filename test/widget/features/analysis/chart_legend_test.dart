@@ -9,12 +9,12 @@ import 'package:ledgerly/l10n/app_localizations.dart';
 
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 
-List<ChartSlice> _nineSlices() => List.generate(
-  9,
+List<ChartSlice> _twelveSlices() => List.generate(
+  12,
   (i) => ChartSlice(
     label: 'Slice $i',
     currencyCode: 'USD',
-    totalMinorUnits: 1000 - i * 100,
+    totalMinorUnits: 1200 - i * 100,
     colorIndex: i,
     iconKey: '',
     selectionKey: SelectedSlice.category(i + 1),
@@ -29,43 +29,60 @@ Widget _wrap(Widget child) => MaterialApp(
     GlobalCupertinoLocalizations.delegate,
   ],
   supportedLocales: AppLocalizations.supportedLocales,
-  home: Scaffold(body: child),
+  home: Scaffold(body: SingleChildScrollView(child: child)),
 );
 
 void main() {
-  testWidgets('View all sheet pops itself when a row is tapped', (
+  testWidgets('lists every slice inside a card, with no View all button', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        ChartLegend(
+          slices: _twelveSlices(),
+          currenciesByCode: const {'USD': _usd},
+          locale: 'en',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    for (var i = 0; i < 12; i++) {
+      expect(
+        find.descendant(
+          of: find.descendant(
+            of: find.byType(ChartLegend),
+            matching: find.byType(Card),
+          ),
+          matching: find.text('Slice $i'),
+        ),
+        findsOneWidget,
+      );
+    }
+    expect(find.text('View all'), findsNothing);
+    expect(find.text('Other'), findsNothing);
+  });
+
+  testWidgets('tapping a row beyond the old 8-row cap selects that slice', (
     tester,
   ) async {
     int? selectedIndex;
     await tester.pumpWidget(
       _wrap(
         ChartLegend(
-          slices: _nineSlices(),
+          slices: _twelveSlices(),
           currenciesByCode: const {'USD': _usd},
           locale: 'en',
-          selectedSliceIndex: null,
           onSelectSlice: (idx) => selectedIndex = idx,
         ),
       ),
     );
     await tester.pumpAndSettle();
-    // Slice 8 is the 9th slice (smallest amount, 200), which is only visible
-    // inside the sheet — not in the inline legend.
-    expect(find.text('Slice 8'), findsNothing);
 
-    // Find and tap "View all".
-    await tester.tap(find.text('View all'));
+    await tester.ensureVisible(find.text('Slice 11'));
+    await tester.tap(find.text('Slice 11'));
     await tester.pumpAndSettle();
-    // The modal sheet shows all nine rows. Slice 8 is now visible.
-    expect(find.text('Slice 8'), findsOneWidget);
 
-    // Tap the row for Slice 8 inside the sheet.
-    await tester.tap(find.text('Slice 8'));
-    await tester.pumpAndSettle();
-    // After tap, the sheet must close → Slice 8 is hidden again (not in inline
-    // legend), and the callback must have fired with the correct index.
-    expect(find.text('Slice 8'), findsNothing);
-    expect(find.text('View all'), findsOneWidget);
-    expect(selectedIndex, equals(8));
+    expect(selectedIndex, 11);
   });
 }

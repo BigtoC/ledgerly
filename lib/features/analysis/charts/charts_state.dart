@@ -106,8 +106,8 @@ abstract class ChartSlice with _$ChartSlice {
     /// for currency-dimension slices.
     required String iconKey,
 
-    /// Drill-down identity for this slice. Null for the synthetic "Other"
-    /// aggregate — that row stays non-interactive.
+    /// Drill-down identity for this slice. A slice without one stays
+    /// non-interactive.
     ///
     /// Named `selectionKey` (not `key`) to avoid confusion with Flutter's
     /// `Widget.key`. `ChartSlice` is a Freezed data class, not a widget,

@@ -867,24 +867,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chartsRatesRequired => 'Waiting for exchange rates';
 
   @override
-  String get chartsViewAll => 'View all';
-
-  @override
   String get chartsTotal => 'Total';
-
-  @override
-  String get chartsOther => 'Other';
-
-  @override
-  String chartsOtherCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Other ($count items)',
-      one: 'Other (1 item)',
-    );
-    return '$_temp0';
-  }
 
   @override
   String get chartsAutoSwitchedToCurrency =>
@@ -2034,24 +2017,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get chartsRatesRequired => '等待汇率数据';
 
   @override
-  String get chartsViewAll => '查看全部';
-
-  @override
   String get chartsTotal => '总计';
-
-  @override
-  String get chartsOther => '其他';
-
-  @override
-  String chartsOtherCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '其他（$count 项）',
-      one: '其他（1 项）',
-    );
-    return '$_temp0';
-  }
 
   @override
   String get chartsAutoSwitchedToCurrency => '改用币种视图 — 类别视图所需的汇率尚未就绪。';
@@ -3182,24 +3148,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get chartsRatesRequired => '等待匯率資料';
 
   @override
-  String get chartsViewAll => '查看全部';
-
-  @override
   String get chartsTotal => '總計';
-
-  @override
-  String get chartsOther => '其他';
-
-  @override
-  String chartsOtherCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '其他（$count 項）',
-      one: '其他（1 項）',
-    );
-    return '$_temp0';
-  }
 
   @override
   String get chartsAutoSwitchedToCurrency => '改以幣別檢視 — 尚未取得類別檢視所需的匯率。';

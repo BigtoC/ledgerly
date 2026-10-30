@@ -867,24 +867,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chartsRatesRequired => 'Waiting for exchange rates';
 
   @override
-  String get chartsViewAll => 'View all';
-
-  @override
   String get chartsTotal => 'Total';
-
-  @override
-  String get chartsOther => 'Other';
-
-  @override
-  String chartsOtherCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Other ($count items)',
-      one: 'Other (1 item)',
-    );
-    return '$_temp0';
-  }
 
   @override
   String get chartsAutoSwitchedToCurrency =>

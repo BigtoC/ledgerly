@@ -470,7 +470,6 @@ class _ChartBody extends ConsumerWidget {
           slices: data.slices,
           currenciesByCode: currencies,
           locale: locale,
-          mixedCurrencies: data.mixedCurrencies,
           selectedSliceIndex: selectedIndex,
           onSelectSlice: selectSlice,
         ),
