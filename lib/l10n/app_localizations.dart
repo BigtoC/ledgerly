@@ -1714,7 +1714,7 @@ abstract class AppLocalizations {
   /// **'Excluded: {codes} — no exchange rate yet'**
   String chartsExcludedCurrencies(String codes);
 
-  /// Pink badge to the right of the app version at the bottom of Settings when a newer GitHub release exists; tapping opens the APK download in the system browser.
+  /// Pink badge to the right of the app version at the bottom of Settings when a newer GitHub release exists; tapping offers to download and install the APK in the app.
   ///
   /// In en, this message translates to:
   /// **'new version'**
@@ -1725,6 +1725,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not open the download link'**
   String get settingsNewVersionOpenFailed;
+
+  /// Title of the dialog shown when the user taps the new-version badge.
+  ///
+  /// In en, this message translates to:
+  /// **'Update to {version}?'**
+  String settingsUpdateConfirmTitle(String version);
+
+  /// Body of the update dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Ledgerly will download about {sizeMb} MB and install the update. Keep Ledgerly open until it finishes. Ledgerly closes while the update installs; open it again afterwards.'**
+  String settingsUpdateConfirmBody(String sizeMb);
+
+  /// Confirm button of the update dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get settingsUpdateDownloadAction;
+
+  /// Badge label while the update APK downloads.
+  ///
+  /// In en, this message translates to:
+  /// **'downloading {percent}%'**
+  String settingsUpdateDownloading(int percent);
+
+  /// Badge label once the update is downloaded and verified; tapping installs it.
+  ///
+  /// In en, this message translates to:
+  /// **'install'**
+  String get settingsUpdateInstall;
+
+  /// Badge label while Android installs the update.
+  ///
+  /// In en, this message translates to:
+  /// **'installing…'**
+  String get settingsUpdateInstalling;
+
+  /// SnackBar shown when the system 'Install unknown apps' page opens for Ledgerly.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow Ledgerly to install apps, then tap install.'**
+  String get settingsUpdatePermissionNeeded;
+
+  /// SnackBar when the update download fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Download failed. Check your connection and try again.'**
+  String get settingsUpdateFailedNetwork;
+
+  /// SnackBar when the downloaded APK's SHA-256 does not match the release.
+  ///
+  /// In en, this message translates to:
+  /// **'The download was damaged. Try again.'**
+  String get settingsUpdateFailedChecksum;
+
+  /// SnackBar when the APK cannot be saved or installed for lack of space.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough storage for the update.'**
+  String get settingsUpdateFailedStorage;
+
+  /// SnackBar when Android rejects the update because the signing key differs (e.g. a debug build).
+  ///
+  /// In en, this message translates to:
+  /// **'This copy of Ledgerly is signed differently from the release, so it cannot update in place.'**
+  String get settingsUpdateFailedSignature;
+
+  /// SnackBar for any other install failure.
+  ///
+  /// In en, this message translates to:
+  /// **'The update could not be installed.'**
+  String get settingsUpdateFailedGeneric;
+
+  /// SnackBar action on update failures: opens the APK download in the system browser.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in browser'**
+  String get settingsUpdateOpenInBrowser;
 }
 
 class _AppLocalizationsDelegate

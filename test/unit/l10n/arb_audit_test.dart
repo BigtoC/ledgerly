@@ -361,6 +361,22 @@ const Set<String> _expectedEnKeys = <String>{
   // App update check (2026-10)
   'settingsNewVersionBadge',
   'settingsNewVersionOpenFailed',
+
+  // In-app update (2026-10-30)
+  // (docs/superpowers/plans/2026-10-30-in-app-apk-update.md Task 6).
+  'settingsUpdateConfirmTitle',
+  'settingsUpdateConfirmBody',
+  'settingsUpdateDownloadAction',
+  'settingsUpdateDownloading',
+  'settingsUpdateInstall',
+  'settingsUpdateInstalling',
+  'settingsUpdatePermissionNeeded',
+  'settingsUpdateFailedNetwork',
+  'settingsUpdateFailedChecksum',
+  'settingsUpdateFailedStorage',
+  'settingsUpdateFailedSignature',
+  'settingsUpdateFailedGeneric',
+  'settingsUpdateOpenInBrowser',
 };
 
 Map<String, dynamic> _readArb(String fileName) {
