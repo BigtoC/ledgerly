@@ -203,7 +203,7 @@ For each distinct CSV Category value, in order:
 3. **No match** → **create a custom category:**
    - `customName = <value>`, `l10nKey = null`, `type = expense` by default. The preview shows an Expense/Income toggle on each to-be-created category, because `CategoryTypeLockedException` stops the type changing once the category is used. See [D-3](#decisions).
    - `icon`/`color` use the category form's defaults, falling back to `category` / `CategoryPaletteIndex.neutralVariant50` (the `category.miscellaneous` seed). `sortOrder = max + 1`, `isArchived = false`.
-   - Values that normalize the same way share one created category.
+   - Values that normalize the same way share one created category when their chosen types match; with different types, each type gets its own.
 
 Re-importing is safe: on the second run, step 2 finds the categories created in the first run by `customName`.
 

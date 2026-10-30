@@ -173,10 +173,10 @@ class CsvImportUseCase {
       final rows = deduped.rows;
 
       // Created rows are shared by every CSV value that normalizes the
-      // same way.
+      // same way; categories only when the chosen type matches too.
       final createdTypes = <String, int>{};
       final createdAccounts = <(String, int), int>{};
-      final createdCategories = <String, int>{};
+      final createdCategories = <(String, CategoryType), int>{};
 
       Future<int> createAccount(
         String name,
@@ -233,7 +233,7 @@ class CsvImportUseCase {
           case ExistingCategoryResolution(:final categoryId):
             categoryIds[value] = categoryId;
           case CreateCategoryResolution(:final name, :final type):
-            categoryIds[value] = createdCategories[_normalize(name)] ??=
+            categoryIds[value] = createdCategories[(_normalize(name), type)] ??=
                 (await categoryRepo.save(
                   Category(
                     id: 0,

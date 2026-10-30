@@ -642,6 +642,50 @@ void main() {
       expect(rows.map((r) => r.categoryId).toSet(), hasLength(1));
     });
 
+    test('names that normalize the same way but differ in type get one '
+        'created row per type', () async {
+      final useCase = useCaseWith(
+        _serviceFor(
+          _csv([
+            'Card,Fun,10,HKD,2026/1/5 9:05,,0',
+            'Card,fun,11,HKD,2026/1/5 9:06,,0',
+          ]),
+        ),
+      );
+      final load = (await useCase.pickAndLoad())!;
+      final before = await counts();
+
+      final result = await useCase.commit(
+        CsvImportPlan(
+          rows: load.validRows,
+          accounts: const {
+            'Card': AccountResolution.createTypeAndAccount(
+              name: 'Card',
+              currencyCode: 'HKD',
+            ),
+          },
+          categories: const {
+            'Fun': CategoryResolution.create(
+              name: 'Fun',
+              type: CategoryType.expense,
+            ),
+            'fun': CategoryResolution.create(
+              name: 'fun',
+              type: CategoryType.income,
+            ),
+          },
+          salaryNotes: _salaryNotes,
+        ),
+      );
+
+      expect(result.createdCategoryCount, 2);
+      expect((await counts()).categories, before.categories + 2);
+      expect(
+        await transactions.watchDailyTotalsByType(DateTime(2026, 1, 5)).first,
+        {'HKD': (expense: 1000, income: 1100)},
+      );
+    });
+
     test('is atomic: a failing insert leaves types, accounts, categories '
         'and transactions unchanged', () async {
       final failing = _MockTransactionRepository();
