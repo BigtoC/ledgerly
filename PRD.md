@@ -128,6 +128,7 @@ lib/
       locale_service_provider.dart
       default_currency_provider.dart
       splash_redirect_provider.dart
+      app_update_provider.dart
     widgets/
       adaptive_shell.dart    # 600dp nav switch (NavigationBar ↔ NavigationRail)
   core/
@@ -168,6 +169,8 @@ lib/
     services/
       locale_service.dart
       exchange_rate_service.dart    # Dio-based HTTP client for FX rates
+      app_release_service.dart      # Dio: latest GitHub release lookup + APK download
+      apk_installer_service.dart    # Platform channel to Android's PackageInstaller
     repositories/
       transaction_repository.dart
       category_repository.dart
@@ -179,6 +182,7 @@ lib/
       recurring_rules_repository.dart
       pending_transaction_repository.dart
       exchange_rate_repository.dart
+      app_update_repository.dart
       repository_exceptions.dart
     seed/                                  # First-run seed orchestration
       first_run_seed.dart
@@ -198,6 +202,7 @@ lib/
       account_slice.dart
       currency_slice.dart
       time_bucket_slice.dart
+      app_update.dart
   features/
     splash/
       splash_screen.dart
@@ -309,6 +314,8 @@ lib/
       settings_state.dart
       settings_providers.dart
       about_screen.dart
+      app_update_controller.dart
+      app_update_state.dart
       widgets/
         manage_accounts_sheet.dart   # adaptive sheet/dialog for account management
         manage_accounts_tile.dart    # Settings list tile that opens the sheet
@@ -319,6 +326,7 @@ lib/
         default_currency_tile.dart
         default_currency_picker_sheet.dart
         manage_categories_tile.dart
+        new_version_badge.dart
 test/
   unit/
     services/
@@ -371,7 +379,7 @@ l10n/
 | Code generation   | build_runner, drift_dev, riverpod_generator |
 | UI components     | flutter_slidable                            |
 | Charts            | fl_chart                                    |
-| HTTP client       | Dio (exchange-rate fetching)                |
+| HTTP client       | Dio (exchange-rate fetching, app updates)   |
 | Native splash     | flutter_native_splash                       |
 | Testing           | mocktail, Drift in-memory DB                |
 
@@ -908,7 +916,7 @@ ShellRoute (bottom nav)
 4a. **Manage Accounts** (Settings > Manage Accounts, adaptive sheet/dialog) — Active accounts list with tracked balances in native currency. Add account, manage account types, set default account, archive account. Opened via the ManageAccountsTile in Settings. New and edit routes are `/settings/manage-accounts/new` and `/settings/manage-accounts/:id`.
 4b. **Shopping List Screen** (`/home/shopping-list`) — Full draft list sorted newest first. Accessed from the Home shopping-cart FAB. Swipe-delete or icon-button delete with a 4-second undo snackbar. Tapping a row opens the draft in the reused transaction form. Empty-state CTA opens `/home/add`. Delete is the only mutation on this screen; draft creation happens in `/home/add` only.
 5. **Categories Screen** — List categories grouped by expense/income, add/edit/reorder/archive
-6. **Settings Screen** — Theme toggle (light/dark), language selector, default account, default currency, manage categories, manage recurring rules, splash screen settings, about screen
+6. **Settings Screen** — Theme toggle (light/dark), language selector, default account, default currency, manage categories, manage recurring rules, splash screen settings, about screen, new-version badge (in-app APK download + install when a newer GitHub release exists)
 7. **Recurring Rules Screen** (`/settings/recurring`) — List of recurring rules with create/edit/archive. Create/edit form reuses transaction-form widgets for visual parity.
 8. **About Screen** (`/settings/about`) — App version, links, changelog
 
@@ -1173,6 +1181,7 @@ Material Design 3 with `ColorScheme.fromSeed()` for both light and dark variants
 - Wallet addresses are stored in the local database only; no server-side storage
 - MVP stores no remote tokens. Phase 2 introduces the Ankr API key as the first secret requiring secure storage.
 - Phase 2 currency-price requests send currency pairs and conversion metadata only; they must not include user memos, categories, or other transaction text
+- The app-update check sends a fixed GitHub `releases/latest` GET (Android only, once per launch) and downloads the release APK only on a user tap; neither request includes any user or transaction data
 - App lock remains future work. MVP baseline relies on OS device security plus sandbox/file-protection settings rather than an in-app passcode
 - Future CSV import/export must be explicit user actions with schema validation, size limits, malformed-row handling, formula escaping, and clear warnings that exported CSV files are portable unencrypted data
 - Future cloud backup must define provider choice, authentication, encryption expectations, token storage, sync scope, and delete/restore behavior before implementation
@@ -1185,7 +1194,7 @@ Tests are organized by **architectural layer**, not by feature. This mirrors the
 
 ### Service Tests (`test/unit/services/`)
 
-- Primarily Phase 2: `AnkrService` response parsing, `ExchangeRateService` fetch + error shapes
+- Primarily Phase 2: `AnkrService` response parsing, `ExchangeRateService` fetch + error shapes, `AppReleaseService` release parsing + download, `ApkInstallerService` channel calls
 - Mock `Dio` / HTTP client; assert raw JSON → typed return values
 - `SecureStorageService` uses an in-memory fake implementation
 - `AppDatabase` is not unit-tested directly; repositories exercise it via the in-memory Drift constructor
@@ -1260,24 +1269,25 @@ Versions below are the tested resolvable set under Flutter **3.47.7** (Dart 3.13
 | `riverpod_annotation`    | `^4.0.7`    | Provider code-gen annotations                                            |
 | `drift`                  | `^2.35.2`   | Database ORM                                                             |
 | `drift_flutter`          | `^0.3.1`    | Flutter SQLite integration                                               |
-| `path_provider`          | `^2.1.6`    | DB file path location                                                    |
+| `path_provider`          | `^2.1.6`    | DB file path location; update APK download directory                     |
 | `go_router`              | `^18.1.1`   | Navigation/routing (`StatefulShellRoute`)                                |
 | `freezed_annotation`     | `^3.1.0`    | Immutable data model annotations                                         |
 | `json_annotation`        | `^4.12.0`   | JSON serialization annotations                                           |
 | `flutter_localizations`  | sdk         | i18n framework                                                           |
 | `intl`                   | `^0.20.2`   | Localization utilities + `NumberFormat`                                  |
 | `flutter_slidable`       | `^4.0.3`    | Swipe actions on list items                                              |
-| `package_info_plus`      | `^10.2.2`   | App version info (About screen)                                          |
+| `package_info_plus`      | `^10.2.2`   | App version info (About screen, app-update check)                        |
 | `webview_flutter`        | `^4.14.1`   | In-app browser (About screen links)                                      |
 | `url_launcher`           | `^6.3.3`    | System browser launcher                                                  |
 | `flutter_native_splash`  | `^2.4.8`    | Native pre-Flutter splash screen (dev-only import; see Dev Dependencies) |
 
 ### Phase 2 Additions (shipped)
 
-| Package    | Version   | Purpose                               |
-|------------|-----------|---------------------------------------|
-| `dio`      | `^5.11.1` | HTTP client (exchange-rate fetching)  |
-| `fl_chart` | `^1.3.0`  | Pie + daily bar charts (Analysis tab) |
+| Package    | Version   | Purpose                                                                         |
+|------------|-----------|---------------------------------------------------------------------------------|
+| `dio`      | `^5.11.1` | HTTP client (exchange-rate fetching, app-update release check and APK download) |
+| `fl_chart` | `^1.3.0`  | Pie + daily bar charts (Analysis tab)                                           |
+| `crypto`   | `^3.0.6`  | SHA-256 check of downloaded app-update APKs                                     |
 
 ### Deferred (Not yet shipped)
 
