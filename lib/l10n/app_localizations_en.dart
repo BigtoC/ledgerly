@@ -1151,4 +1151,47 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get csvImportDone => 'Done';
+
+  @override
+  String get settingsSectionDataManagement => 'Data Management';
+
+  @override
+  String get settingsExportDataTile => 'Export data';
+
+  @override
+  String get csvExportTitle => 'Export data';
+
+  @override
+  String get csvExportIntro =>
+      'Export your transactions to a CSV file. You choose where to save it.';
+
+  @override
+  String get csvExportPrivacyNote =>
+      'The file is not encrypted. Anyone who has it can read your transactions.';
+
+  @override
+  String get csvExportEmpty => 'There are no transactions to export.';
+
+  @override
+  String get csvExportRange => 'Date range';
+
+  @override
+  String get csvExportFullRange => 'Use full range';
+
+  @override
+  String get csvExportButton => 'Export to CSV';
+
+  @override
+  String csvExportDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Exported $count transactions',
+      one: 'Exported 1 transaction',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get csvExportFailed => 'Couldn\'t export. Please try again.';
 }

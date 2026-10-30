@@ -425,6 +425,19 @@ const Set<String> _expectedEnKeys = <String>{
   'csvImportDoneCreated',
   'csvImportDoneSkipped',
   'csvImportDone',
+
+  // Data management + CSV export.
+  'settingsSectionDataManagement',
+  'settingsExportDataTile',
+  'csvExportTitle',
+  'csvExportIntro',
+  'csvExportPrivacyNote',
+  'csvExportEmpty',
+  'csvExportRange',
+  'csvExportFullRange',
+  'csvExportButton',
+  'csvExportDone',
+  'csvExportFailed',
 };
 
 Map<String, dynamic> _readArb(String fileName) {

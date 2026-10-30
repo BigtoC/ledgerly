@@ -1804,7 +1804,7 @@ abstract class AppLocalizations {
   /// **'Open in browser'**
   String get settingsUpdateOpenInBrowser;
 
-  /// Settings General-section tile that opens the CSV import screen.
+  /// Settings Data Management-section tile that opens the CSV import screen.
   ///
   /// In en, this message translates to:
   /// **'Import from CSV'**
@@ -2073,6 +2073,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Done'**
   String get csvImportDone;
+
+  /// Settings section header for CSV import and export.
+  ///
+  /// In en, this message translates to:
+  /// **'Data Management'**
+  String get settingsSectionDataManagement;
+
+  /// Settings Data Management-section tile that opens the CSV export screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Export data'**
+  String get settingsExportDataTile;
+
+  /// CSV export screen app-bar title.
+  ///
+  /// In en, this message translates to:
+  /// **'Export data'**
+  String get csvExportTitle;
+
+  /// CSV export screen explanation above the date range.
+  ///
+  /// In en, this message translates to:
+  /// **'Export your transactions to a CSV file. You choose where to save it.'**
+  String get csvExportIntro;
+
+  /// CSV export warning under the intro: the saved file is portable, unencrypted data.
+  ///
+  /// In en, this message translates to:
+  /// **'The file is not encrypted. Anyone who has it can read your transactions.'**
+  String get csvExportPrivacyNote;
+
+  /// CSV export screen message when the ledger has no transactions.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no transactions to export.'**
+  String get csvExportEmpty;
+
+  /// CSV export screen label of the tile that opens the date range picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Date range'**
+  String get csvExportRange;
+
+  /// CSV export screen button that resets the range to every transaction's dates.
+  ///
+  /// In en, this message translates to:
+  /// **'Use full range'**
+  String get csvExportFullRange;
+
+  /// CSV export screen button that builds the file and opens the save dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Export to CSV'**
+  String get csvExportButton;
+
+  /// CSV export result: number of transactions written.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Exported 1 transaction} other{Exported {count} transactions}}'**
+  String csvExportDone(int count);
+
+  /// CSV export failure message.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t export. Please try again.'**
+  String get csvExportFailed;
 }
 
 class _AppLocalizationsDelegate

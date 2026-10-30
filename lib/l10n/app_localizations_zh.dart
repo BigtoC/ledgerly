@@ -1151,6 +1151,49 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get csvImportDone => 'Done';
+
+  @override
+  String get settingsSectionDataManagement => 'Data Management';
+
+  @override
+  String get settingsExportDataTile => 'Export data';
+
+  @override
+  String get csvExportTitle => 'Export data';
+
+  @override
+  String get csvExportIntro =>
+      'Export your transactions to a CSV file. You choose where to save it.';
+
+  @override
+  String get csvExportPrivacyNote =>
+      'The file is not encrypted. Anyone who has it can read your transactions.';
+
+  @override
+  String get csvExportEmpty => 'There are no transactions to export.';
+
+  @override
+  String get csvExportRange => 'Date range';
+
+  @override
+  String get csvExportFullRange => 'Use full range';
+
+  @override
+  String get csvExportButton => 'Export to CSV';
+
+  @override
+  String csvExportDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Exported $count transactions',
+      one: 'Exported 1 transaction',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get csvExportFailed => 'Couldn\'t export. Please try again.';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -2253,6 +2296,46 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get csvImportDone => '完成';
+
+  @override
+  String get settingsSectionDataManagement => '数据管理';
+
+  @override
+  String get settingsExportDataTile => '导出数据';
+
+  @override
+  String get csvExportTitle => '导出数据';
+
+  @override
+  String get csvExportIntro => '将交易导出为 CSV 文件，并选择保存位置。';
+
+  @override
+  String get csvExportPrivacyNote => '文件未加密，任何拿到文件的人都能读取你的交易。';
+
+  @override
+  String get csvExportEmpty => '没有可导出的交易。';
+
+  @override
+  String get csvExportRange => '日期范围';
+
+  @override
+  String get csvExportFullRange => '使用全部期间';
+
+  @override
+  String get csvExportButton => '导出为 CSV';
+
+  @override
+  String csvExportDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '已导出 $count 笔交易',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get csvExportFailed => '无法导出，请重试。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -3355,4 +3438,44 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get csvImportDone => '完成';
+
+  @override
+  String get settingsSectionDataManagement => '資料管理';
+
+  @override
+  String get settingsExportDataTile => '匯出資料';
+
+  @override
+  String get csvExportTitle => '匯出資料';
+
+  @override
+  String get csvExportIntro => '將交易匯出為 CSV 檔案，並選擇儲存位置。';
+
+  @override
+  String get csvExportPrivacyNote => '檔案未加密，任何取得檔案的人都能讀取你的交易。';
+
+  @override
+  String get csvExportEmpty => '沒有可匯出的交易。';
+
+  @override
+  String get csvExportRange => '日期範圍';
+
+  @override
+  String get csvExportFullRange => '使用全部期間';
+
+  @override
+  String get csvExportButton => '匯出為 CSV';
+
+  @override
+  String csvExportDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '已匯出 $count 筆交易',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get csvExportFailed => '無法匯出，請再試一次。';
 }

@@ -1,7 +1,8 @@
 // SettingsScreen widget tests (plan §3.3).
 //
 // Covers:
-//   - Data state renders all sections (Appearance, General, Splash)
+//   - Data state renders all sections (Appearance, General, Data
+//     Management, Splash)
 //     with their labels localized via AppLocalizations.
 //   - Theme segmented control exercises the `setThemeMode` command.
 //   - ManageAccountsTile shows "Add an account" when there are no active accounts.
@@ -9,7 +10,9 @@
 //   - ManageAccountsTile uses the accounts slice default for multi-account subtitles.
 //   - ManageAccountsTile falls back to the first active account when the default is absent.
 //   - "Manage Categories" tile navigates to `/settings/categories`.
-//   - "Import from CSV" tile navigates to `/settings/import`.
+//   - "Import from CSV" and "Export data" tiles sit in the Data
+//     Management section and navigate to `/settings/import` and
+//     `/settings/export`.
 //   - Locale change via `setLocale` writes through the repo; a manual
 //     MaterialApp locale swap then verifies visible strings change
 //     without re-navigating.
@@ -38,6 +41,7 @@ import 'package:ledgerly/features/accounts/accounts_state.dart';
 import 'package:ledgerly/features/settings/settings_controller.dart';
 import 'package:ledgerly/features/settings/settings_screen.dart';
 import 'package:ledgerly/features/settings/widgets/new_version_badge.dart';
+import 'package:ledgerly/features/settings/widgets/settings_section.dart';
 import 'package:ledgerly/features/settings/settings_state.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
@@ -89,6 +93,10 @@ class _StubRouter {
         GoRoute(
           path: '/settings/import',
           builder: (_, _) => const Scaffold(body: Text('CSV_IMPORT')),
+        ),
+        GoRoute(
+          path: '/settings/export',
+          builder: (_, _) => const Scaffold(body: Text('CSV_EXPORT')),
         ),
       ],
     );
@@ -206,6 +214,7 @@ void main() {
     // scroll position.
     expect(find.text('Appearance', skipOffstage: false), findsOneWidget);
     expect(find.text('General', skipOffstage: false), findsOneWidget);
+    expect(find.text('Data Management', skipOffstage: false), findsOneWidget);
     expect(find.text('Splash screen', skipOffstage: false), findsOneWidget);
   });
 
@@ -463,10 +472,50 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(
+      find.descendant(of: _dataManagementSection(), matching: find.byKey(tile)),
+      findsOneWidget,
+    );
     await tester.tap(find.byKey(tile));
     await tester.pumpAndSettle();
 
     expect(find.text('CSV_IMPORT'), findsOneWidget);
+  });
+
+  testWidgets('SS05c: Export data tile navigates to /settings/export', (
+    tester,
+  ) async {
+    final container = _makeContainer(
+      prefs: _MockUserPreferencesRepository(),
+      accountRepo: _MockAccountRepository(),
+      currencyRepo: _MockCurrencyRepository(),
+      fixed: _data(),
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
+
+    const tile = ValueKey('settingsExportDataTile');
+    await tester.scrollUntilVisible(
+      find.byKey(tile),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.ensureVisible(find.byKey(tile));
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(of: find.byKey(tile), matching: find.text('Export data')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: _dataManagementSection(), matching: find.byKey(tile)),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(tile));
+    await tester.pumpAndSettle();
+
+    expect(find.text('CSV_EXPORT'), findsOneWidget);
   });
 
   testWidgets(
@@ -627,3 +676,7 @@ void main() {
     expect(find.byKey(_badgeKey), findsOneWidget);
   });
 }
+
+Finder _dataManagementSection() => find.byWidgetPredicate(
+  (w) => w is SettingsSection && w.title == 'Data Management',
+);
