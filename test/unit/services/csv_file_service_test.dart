@@ -94,6 +94,69 @@ void main() {
     expect(picked!.bytes, hasLength(size));
     expect(copy.existsSync(), isFalse);
   });
+
+  group('save', () {
+    /// Mimics the iOS plugin: writes `tmp/<fileName>`, then the user saves
+    /// ([saved] true) or cancels.
+    CsvFileService saverFor({required bool saved, List<String>? calls}) =>
+        CsvFileService(
+          saveFile: ({required fileName, required bytes}) async {
+            calls?.add(fileName);
+            File('${tmp.path}/$fileName').writeAsBytesSync(bytes);
+            return saved;
+          },
+          temporaryDirectory: () async => cache,
+          systemTemporaryDirectory: () => tmp,
+        );
+
+    test('returns true and deletes the iOS temp copy once saved', () async {
+      final calls = <String>[];
+
+      final saved = await saverFor(
+        saved: true,
+        calls: calls,
+      ).save('export.csv', Uint8List.fromList([1, 2]));
+
+      expect(saved, isTrue);
+      expect(calls, ['export.csv']);
+      expect(File('${tmp.path}/export.csv').existsSync(), isFalse);
+    });
+
+    test('returns false and still deletes the copy when cancelled', () async {
+      final saved = await saverFor(saved: false)
+          .save('export.csv', Uint8List.fromList([1]));
+
+      expect(saved, isFalse);
+      expect(File('${tmp.path}/export.csv').existsSync(), isFalse);
+    });
+
+    test('succeeds when no temp copy exists (Android)', () async {
+      final service = CsvFileService(
+        saveFile: ({required fileName, required bytes}) async => true,
+        temporaryDirectory: () async => cache,
+        systemTemporaryDirectory: () => tmp,
+      );
+
+      expect(await service.save('export.csv', Uint8List(0)), isTrue);
+    });
+
+    test('deletes the copy when saving throws', () async {
+      final service = CsvFileService(
+        saveFile: ({required fileName, required bytes}) async {
+          File('${tmp.path}/$fileName').writeAsBytesSync(bytes);
+          throw const FileSystemException('save failed');
+        },
+        temporaryDirectory: () async => cache,
+        systemTemporaryDirectory: () => tmp,
+      );
+
+      await expectLater(
+        service.save('export.csv', Uint8List.fromList([1])),
+        throwsA(isA<FileSystemException>()),
+      );
+      expect(File('${tmp.path}/export.csv').existsSync(), isFalse);
+    });
+  });
 }
 
 class _UnreadableXFile extends XFile {

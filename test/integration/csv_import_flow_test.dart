@@ -40,6 +40,10 @@ class _FakeCsvFileService implements CsvFileService {
   @override
   Future<({String name, Uint8List bytes})?> pick() async =>
       (name: 'import_fortune_city_data.csv', bytes: _bytes);
+
+  @override
+  Future<bool> save(String fileName, Uint8List bytes) =>
+      throw UnimplementedError();
 }
 
 class _NoopExchangeRateService extends Mock implements ExchangeRateService {}
