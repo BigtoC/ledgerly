@@ -103,6 +103,13 @@ abstract class TransactionRepository {
   /// mutation within the month — Wave 3 §3.
   Stream<Map<String, int>> watchMonthNetByCurrency(DateTime month);
 
+  /// Net per currency for transactions in `[start, end)`. Same sign rule
+  /// as [watchMonthNetByCurrency]. Used by the Analysis net-total box.
+  Stream<Map<String, int>> watchNetByCurrencyInRange({
+    required DateTime start,
+    required DateTime end,
+  });
+
   /// Transactions for a single account, reverse-chronological.
   Stream<List<Transaction>> watchForAccount(int accountId, {int limit = 200});
 
@@ -309,6 +316,12 @@ final class DriftTransactionRepository implements TransactionRepository {
     );
     return _watchNetByCurrency(start: start, end: end);
   }
+
+  @override
+  Stream<Map<String, int>> watchNetByCurrencyInRange({
+    required DateTime start,
+    required DateTime end,
+  }) => _watchNetByCurrency(start: start, end: end);
 
   Stream<Map<String, int>> _watchNetByCurrency({
     required DateTime start,
