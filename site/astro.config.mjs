@@ -2,8 +2,7 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 
 export default defineConfig({
-  site: 'https://bigtoc.github.io',
-  base: '/ledgerly',
+  site: 'https://ledgerlylab.com',
   integrations: [
     starlight({
       title: 'Ledgerly',
