@@ -41,6 +41,7 @@ String categoryDisplayNameForKey(String key, AppLocalizations l10n) {
     'category.threeC' => l10n.categoryThreeC,
     'category.miscellaneous' => l10n.categoryMiscellaneous,
     'category.other' => l10n.categoryOther,
+    'category.investment' => l10n.categoryInvestment,
     'category.income.salary' => l10n.categoryIncomeSalary,
     'category.income.freelance' => l10n.categoryIncomeFreelance,
     'category.income.investment' => l10n.categoryIncomeInvestment,

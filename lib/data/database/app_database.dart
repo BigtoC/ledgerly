@@ -74,7 +74,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -110,11 +110,31 @@ class AppDatabase extends _$AppDatabase {
       if (from < 6) {
         await m.addColumn(transactions, transactions.amountFormula);
       }
+      if (from < 7) {
+        await _backfillInvestmentCategory();
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },
   );
+
+  /// Data-only v7 step: appends the seeded `category.investment` expense
+  /// row to installs whose first-run seed predates it. Placed after every
+  /// existing row so user-chosen ordering is kept. Skipped when the row
+  /// already exists (e.g. a user who archived it), keeping the step
+  /// idempotent. Values mirror `_kSeededCategories` in `first_run_seed.dart`
+  /// (icon `trending_up`, color index 9 = yellow80).
+  Future<void> _backfillInvestmentCategory() {
+    return customStatement(
+      'INSERT INTO categories (l10n_key, icon, color, type, sort_order, '
+      'is_archived) '
+      "SELECT 'category.investment', 'trending_up', 9, 'expense', "
+      '(SELECT COALESCE(MAX(sort_order) + 1, 0) FROM categories), 0 '
+      'WHERE NOT EXISTS (SELECT 1 FROM categories '
+      "WHERE l10n_key = 'category.investment')",
+    );
+  }
 
   /// Partial UNIQUE index for recurring-source idempotency.
   /// Drift cannot express the partial WHERE clause declaratively, so we

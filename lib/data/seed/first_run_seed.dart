@@ -10,7 +10,7 @@
 //   Step 0 — Idempotency gate (`preferences.getFirstRunComplete()`).
 //   Step 1 — Seed 11 currencies (Stream C plan §2.3 Step 1 + §12 Q6).
 //   Step 2 — Resolve `default_currency` from `LocaleService.deviceLocale`.
-//   Step 3 — Seed 18 default categories (13 expense + 5 income).
+//   Step 3 — Seed 19 default categories (14 expense + 5 income).
 //   Step 4 — Seed 2 default account types (Cash, Investment).
 //   Step 5 — Seed 1 Cash account at the resolved default currency.
 //   Step 6 — Seed 8 `user_preferences` keys (incl. `default_account_id`
@@ -152,10 +152,12 @@ class _SeededCategory {
   final int sortOrder;
 }
 
-/// 18 seeded categories (13 expense + 5 income). Icon keys reconcile
+/// 19 seeded categories (14 expense + 5 income). Icon keys reconcile
 /// against the canonical Stream B registry (`directions_car` for
 /// transportation, `savings` for income.other — Stream C plan §2.3 Step 3
-/// "reconcile with Stream B" clause).
+/// "reconcile with Stream B" clause). `category.investment` was added
+/// after launch, so it sits last and the schema v7 migration appends the
+/// same row to existing installs.
 const List<_SeededCategory> _kSeededCategories = <_SeededCategory>[
   // Expense categories (PRD 464–476).
   _SeededCategory(
@@ -284,6 +286,14 @@ const List<_SeededCategory> _kSeededCategories = <_SeededCategory>[
     color: CategoryPaletteIndex.yellow80,
     type: CategoryType.income,
     sortOrder: 17,
+  ),
+  // Expense category added after launch (schema v7 backfill).
+  _SeededCategory(
+    l10nKey: 'category.investment',
+    icon: 'trending_up',
+    color: CategoryPaletteIndex.yellow80,
+    type: CategoryType.expense,
+    sortOrder: 18,
   ),
 ];
 

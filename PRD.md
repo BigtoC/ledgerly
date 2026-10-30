@@ -653,6 +653,7 @@ Notes:
 - v4 adds `recurring_rules` and `pending_transactions` tables, plus the partial UNIQUE index `idx_pending_recurring_unique_partial`.
 - v5 adds `exchange_rates` table for multi-currency conversion.
 - v6 adds the nullable `transactions.amount_formula` column.
+- v7 is data-only: it appends the seeded `category.investment` expense row to installs seeded before it existed (no table changes).
 - Each schema version has a committed snapshot in `drift_schemas/` (generated via `drift_dev schema dump`).
 - Migrations are tested by generating every historical schema and running the upgrade path on both an empty DB and a seeded DB (see Testing Strategy → Repository Tests).
 - Breaking schema changes (column type swaps, table splits) require a new version + a documented data-transform step — never rewrite existing migrations in place.
@@ -682,8 +683,9 @@ All seeded colors (categories and account types) are picked from the **Material 
 | 3C             | Phone, Computer, Gadgets                | Blue 30 — `#04409F`                                                |
 | Miscellaneous  | —                                       | Neutral Variant 50 — `#79747E`                                     |
 | Other          | —                                       | Neutral Variant 50 — `#79747E`                                     |
+| Investment     | Funds, Stocks, Crypto, Insurance        | Yellow 80 — `#FCBD00`                                              |
 
-**Color reuse is intentional.** Transportation + Travel share Cyan 70; Shopping + Education share Purple 30; Housing + Personal share Green 80; Other + Miscellaneous share Neutral Variant 50. The `color_palette.dart` registry de-duplicates: each unique color occupies one index, and multiple `categories` rows can reference the same index.
+**Color reuse is intentional.** Transportation + Travel share Cyan 70; Shopping + Education share Purple 30; Housing + Personal share Green 80; Other + Miscellaneous share Neutral Variant 50. Investment (`category.investment`) deliberately uses the income categories' Yellow 80 and the `trending_up` icon shared with the Investment income category and account type; it was added after launch, so it is seeded last and schema v7 backfills it. The `color_palette.dart` registry de-duplicates: each unique color occupies one index, and multiple `categories` rows can reference the same index.
 
 ### Income Categories
 

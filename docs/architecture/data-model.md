@@ -2,7 +2,7 @@
 
 > Authoritative source: [`PRD.md` → *Database Schema*](../../PRD.md#database-schema).
 
-Drift schema is at **v6** (`transactions.amount_formula` added in v6; `exchange_rates` added in v5; `recurring_rules` + `pending_transactions` introduced in v4). Snapshots live in `drift_schemas/`. **Never rewrite a merged migration in place** — add a new schema version instead. See [`testing.md`](./testing.md) for migration test rules.
+Drift schema is at **v7** (v7 backfills the seeded `category.investment` row; `transactions.amount_formula` added in v6; `exchange_rates` added in v5; `recurring_rules` + `pending_transactions` introduced in v4). Snapshots live in `drift_schemas/`. **Never rewrite a merged migration in place** — add a new schema version instead. See [`testing.md`](./testing.md) for migration test rules.
 
 ## Invariants
 

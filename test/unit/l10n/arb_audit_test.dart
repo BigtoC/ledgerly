@@ -74,6 +74,7 @@ const Set<String> _expectedEnKeys = <String>{
   'categoryThreeC',
   'categoryMiscellaneous',
   'categoryOther',
+  'categoryInvestment',
 
   // §5.4 Group C — Seeded income categories.
   'categoryIncomeSalary',

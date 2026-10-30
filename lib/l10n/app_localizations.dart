@@ -304,6 +304,12 @@ abstract class AppLocalizations {
   /// **'Other'**
   String get categoryOther;
 
+  /// Seeded expense category — Investment (money put into funds, stocks, crypto or insurance; distinct from the category.income.investment row). DB l10n_key: category.investment.
+  ///
+  /// In en, this message translates to:
+  /// **'Investment'**
+  String get categoryInvestment;
+
   /// PRD 485. Seeded income category — Salary. DB l10n_key: category.income.salary.
   ///
   /// In en, this message translates to:

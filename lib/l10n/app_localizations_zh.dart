@@ -112,6 +112,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get categoryOther => 'Other';
 
   @override
+  String get categoryInvestment => 'Investment';
+
+  @override
   String get categoryIncomeSalary => 'Salary';
 
   @override
@@ -1012,6 +1015,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get categoryOther => '其他';
 
   @override
+  String get categoryInvestment => '理财';
+
+  @override
   String get categoryIncomeSalary => '工资';
 
   @override
@@ -1878,6 +1884,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get categoryOther => '其他';
+
+  @override
+  String get categoryInvestment => '理財';
 
   @override
   String get categoryIncomeSalary => '薪資';

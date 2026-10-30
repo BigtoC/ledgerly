@@ -149,10 +149,10 @@ void main() {
       expect(allCurrencies, hasLength(11));
 
       final allCats = await h.categories.watchAll().first;
-      expect(allCats, hasLength(18));
+      expect(allCats, hasLength(19));
       expect(
         allCats.where((c) => c.type == CategoryType.expense),
-        hasLength(13),
+        hasLength(14),
       );
       expect(allCats.where((c) => c.type == CategoryType.income), hasLength(5));
 
@@ -250,6 +250,7 @@ void main() {
         'category.income.investment',
         'category.income.gift',
         'category.income.other',
+        'category.investment',
       ];
       for (var i = 0; i < expectedKeys.length; i++) {
         final key = expectedKeys[i];
@@ -258,6 +259,8 @@ void main() {
         expect(cat!.sortOrder, i, reason: '$key sortOrder should be $i');
         expect(cat.isArchived, isFalse);
       }
+      expect(byKey['category.investment']!.icon, 'trending_up');
+      expect(byKey['category.investment']!.color, 9); // yellow80
     });
 
     test('seeded account types have default_currency = '
@@ -378,7 +381,7 @@ void main() {
         'accounts': (await h.accounts.watchAll().first).length,
       };
       expect(afterFirst['currencies'], 11);
-      expect(afterFirst['categories'], 18);
+      expect(afterFirst['categories'], 19);
       expect(afterFirst['accountTypes'], 2);
       expect(afterFirst['accounts'], 1);
 

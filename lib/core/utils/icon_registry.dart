@@ -58,7 +58,8 @@ const Map<String, IconData> kIconRegistry = <String, IconData>{
 
   // Default account types (PRD.md 497-500).
   'wallet': Icons.wallet,
-  // 'trending_up' above is shared with the Investment account type.
+  // 'trending_up' above is shared with the Investment account type and the
+  // Investment expense category.
 };
 
 /// Resolves an icon string [key] to an [IconData].

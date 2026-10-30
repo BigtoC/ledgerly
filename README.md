@@ -25,7 +25,8 @@ Ledgerly`, with multi-line display-text input in Settings and an
 auto-prepend guarantee so the date is always visible on the splash even
 if the user removes `{date}` from their template.
 
-Drift schema is at **v6** (`transactions.amount_formula` added in v6;
+Drift schema is at **v7** (v7 backfills the seeded Investment expense
+category; `transactions.amount_formula` added in v6;
 `exchange_rates` added in v5; `recurring_rules` + `pending_transactions`
 added in v4). Snapshots are
 committed under `drift_schemas/`.
@@ -294,7 +295,7 @@ test/
   widget/     # widget + golden tests (organized by feature)
   integration/
   support/    # shared in-memory DB + ProviderContainer fixtures
-drift_schemas/ # Committed schema snapshots per schemaVersion (v1 – v6)
+drift_schemas/ # Committed schema snapshots per schemaVersion (v1 – v7)
 assets/
   splash/     # Sun-themed splash background image (shipped)
 ```

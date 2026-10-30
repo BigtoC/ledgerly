@@ -143,6 +143,10 @@
   "@categoryOther": {
     "description": "PRD 476. Seeded expense category — Other. DB l10n_key: category.other."
   },
+  "categoryInvestment": "Investment",
+  "@categoryInvestment": {
+    "description": "Seeded expense category — Investment (money put into funds, stocks, crypto or insurance; distinct from the category.income.investment row). DB l10n_key: category.investment."
+  },
 
   "categoryIncomeSalary": "Salary",
   "@categoryIncomeSalary": {
