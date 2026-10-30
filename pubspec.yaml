@@ -1,7 +1,7 @@
 name: ledgerly
 description: Local-first Flutter expense tracker. See PRD.md for the spec.
 publish_to: "none"
-version: 0.7.4
+version: 0.7.5
 
 environment:
   sdk: ^3.13.7
