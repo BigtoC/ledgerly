@@ -16,6 +16,20 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Check tag matches pubspec version
+        shell: bash
+        run: |
+          # Drop the optional "+build" suffix; the tag carries only x.y.z.
+          pubspec_version=$(sed -n 's/^version:[[:space:]]*\([^+[:space:]]*\).*/\1/p' pubspec.yaml)
+          tag_version="${GITHUB_REF_NAME#v}"
+
+          if [ "$pubspec_version" != "$tag_version" ]; then
+            echo "::error file=pubspec.yaml::Release tag ${GITHUB_REF_NAME} does not match pubspec.yaml version ${pubspec_version}. Bump the version in pubspec.yaml to ${tag_version}, then re-tag."
+            exit 1
+          fi
+
+          echo "Tag ${GITHUB_REF_NAME} matches pubspec.yaml version ${pubspec_version}"
+
       - name: Set up JDK 21
         uses: actions/setup-java@v6
         with:
