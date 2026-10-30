@@ -14,11 +14,11 @@ Ledgerly is a local-first mobile expense tracker built with Flutter. It is aimed
 
 ---
 
-## Project Status (as of 2026-05-27)
+## Project Status (as of 2026-10-30)
 
 **MVP — Complete.** All MVP features have shipped: manual entry, seeded + custom categories, multi-account / multi-currency, shopping list drafts, splash screen, theming, l10n.
 
-**Phase 2 — In progress.** Shipped slices on `main`: **Recurring transactions** + Home pending approval (2026-05-08; see [`recurring_rules`](#recurring_rules-phase-2--shipped-2026-05-08) table), **Transaction search** (2026-05-10), **Extended multi-currency conversion** (2026-05-17), **Basic charts** — pie + daily bar (2026-05-20), **Chart slice drill-down** (2026-05-22) — coordinated pie/legend/bar selection plus a per-slice items list with edit, delete + 4 s undo, FX-converted/original amount split, and stale-rate notice. Selection identity lives in the analysis layer as a sealed `SelectedSlice` (category | account | currency); the repository boundary stays filter-based via `{categoryId, accountId, currencyCode}` arguments. Remaining Phase 2 work: wallet sync (Ankr integration), CSV import, credit-card / transfer flows.
+**Phase 2 — In progress.** Shipped slices on `main`: **Recurring transactions** + Home pending approval (2026-05-08; see [`recurring_rules`](#recurring_rules-phase-2--shipped-2026-05-08) table), **Transaction search** (2026-05-10), **Extended multi-currency conversion** (2026-05-17), **Basic charts** — pie + daily bar (2026-05-20), **Chart slice drill-down** (2026-05-22) — coordinated pie/legend/bar selection plus a per-slice items list with edit, delete + 4 s undo, FX-converted/original amount split, and stale-rate notice. Selection identity lives in the analysis layer as a sealed `SelectedSlice` (category | account | currency); the repository boundary stays filter-based via `{categoryId, accountId, currencyCode}` arguments. **Fortune City CSV import** (2026-10-30) — `/settings/import` previews a Fortune City export (account and category matching, duplicate and invalid-row skipping) and writes it in one Drift transaction; see the `transactions` table note on imported `created_at`. Remaining Phase 2 work: wallet sync (Ankr integration), credit-card / transfer flows.
 
 Inline `# Phase 2` annotations throughout the rest of the document mark code paths and surfaces that have **not** yet shipped. The recurring-rules slice is the canonical example of how a Phase 2 feature lands: data layer first (DAOs, repos, migration), then a use case in `lib/data/use_cases/` (Phase 2's `domain/` layer is reserved for cross-feature orchestration), then UI.
 
@@ -46,7 +46,7 @@ Inline `# Phase 2` annotations throughout the rest of the document mark code pat
 - **[Shipped 2026-05-22]** Chart slice drill-down — tap a pie slice or legend row to refilter the bar chart and render a per-slice items list (tap-to-edit, action-tap delete + 4 s undo, FX-converted primary amount beside original booked amount, "using last known exchange rates" notice when cached rates exceed 1 h). Selection identity lives in the analysis layer as a sealed `SelectedSlice` (category | account | currency); the repository boundary stays filter-based via `{categoryId, accountId, currencyCode}` arguments.
 - **[Shipped 2026-05-10]** Transaction search
 - **[Shipped 2026-05-17]** Extended multi-currency — fetch currency prices and auto-convert balances, summaries, and charts to the user's default currency
-- [Pending] Fortune City CSV import
+- **[Shipped 2026-10-30]** Fortune City CSV import — Settings → Import from CSV picks a Fortune City export, matches its accounts and categories against existing rows and every locale's labels, skips duplicates and invalid rows, and imports the rest in one transaction after a preview.
 
 ### Phase 3
 - **[Pending]** Detailed monthly summary
@@ -141,6 +141,8 @@ lib/
       icon_registry.dart
       color_palette.dart
       date_helpers.dart
+      decimal_rounding.dart          # Half-up decimal string → minor units (CSV import)
+      fortune_city_csv_parser.dart   # Pure Fortune City CSV parser
   data/
     database/
       app_database.dart      # Drift database, schemaVersion, migrations
@@ -171,6 +173,7 @@ lib/
       exchange_rate_service.dart    # Dio-based HTTP client for FX rates
       app_release_service.dart      # Dio: latest GitHub release lookup + APK download
       apk_installer_service.dart    # Platform channel to Android's PackageInstaller
+      csv_file_service.dart         # file_selector picker with the 5 MB cap
     repositories/
       transaction_repository.dart
       category_repository.dart
@@ -188,6 +191,7 @@ lib/
       first_run_seed.dart
     use_cases/
       recurring_generation_use_case.dart   # Cold-start recurring rule engine
+      csv_import_use_case.dart             # CSV load, dedup and atomic commit
     models/                                # Freezed domain models
       transaction.dart
       category.dart
@@ -203,6 +207,7 @@ lib/
       currency_slice.dart
       time_bucket_slice.dart
       app_update.dart
+      csv_import.dart                      # CSV import rows, errors, plan and result
   features/
     splash/
       splash_screen.dart
@@ -316,6 +321,14 @@ lib/
       about_screen.dart
       app_update_controller.dart
       app_update_state.dart
+      csv_import/
+        csv_import_screen.dart
+        csv_import_controller.dart
+        csv_import_state.dart
+        csv_import_matcher.dart      # account/category matching against l10n labels
+        widgets/
+          csv_import_preview_sections.dart
+          csv_account_resolution_sheet.dart
       widgets/
         manage_accounts_sheet.dart   # adaptive sheet/dialog for account management
         manage_accounts_tile.dart    # Settings list tile that opens the sheet

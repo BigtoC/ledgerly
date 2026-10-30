@@ -18,12 +18,13 @@ Categories, Analysis, Settings) are on `main`, and several Phase 2 slices
 have shipped on top of the MVP: recurring transactions + pending approval,
 transaction search, extended multi-currency conversion with cached
 exchange rates, charts (pie + daily bar with animations and interactive
-selection), chart slice drill-down with per-slice item lists, and a
-splash display-text redesign where the start date renders inline with
-a rainbow gradient. The default template is now `On {date} start using
-Ledgerly`, with multi-line display-text input in Settings and an
-auto-prepend guarantee so the date is always visible on the splash even
-if the user removes `{date}` from their template.
+selection), chart slice drill-down with per-slice item lists, Fortune
+City CSV import from Settings, and a splash display-text redesign where
+the start date renders inline with a rainbow gradient. The default
+template is now `On {date} start using Ledgerly`, with multi-line
+display-text input in Settings and an auto-prepend guarantee so the date
+is always visible on the splash even if the user removes `{date}` from
+their template.
 
 Drift schema is at **v7** (v7 backfills the seeded Investment expense
 category and retires Personal; `transactions.amount_formula` added in v6;
@@ -147,6 +148,20 @@ written to your books until you accept. Skipping an occurrence rejects
 that single date with a 4-second undo window; the parent rule keeps
 running.
 
+#### Import from CSV
+
+`Settings > Import from CSV` brings in transactions exported from the
+Fortune City (記帳城市) app. Pick the CSV file and Ledgerly shows a
+preview before anything is written:
+
+- Accounts and categories are matched to existing ones by name, in any
+  supported language. You choose where an unmatched account goes, and
+  categories that don't exist yet are created (expense by default).
+- Rows that already exist are skipped, so importing the same file twice
+  adds nothing. Invalid rows are listed by line number and skipped.
+- Import writes every transaction at once, or none if it fails. The file
+  is read on the device only and never uploaded.
+
 #### Shopping list
 
 Quick-capture flow for groceries and errands. Add items as drafts in a
@@ -183,6 +198,7 @@ Use `Settings` to personalize the app.
 - Manage categories and accounts (with archive-instead-of-delete for
   history-backed records).
 - Manage recurring transaction rules.
+- Import transactions from a Fortune City CSV export.
 - Enable or disable the splash screen.
 - Configure the splash day counter start date, the multi-line display
   text template (using `{date}` and `{days}` placeholders), and the
@@ -213,13 +229,13 @@ include:
 - crypto wallet sync (the `pending_transactions` table supports
   blockchain-source rows, but the sync flow and wallet management UI
   are not implemented)
-- CSV import/export
+- CSV export
 - account transfers or credit-card payoff flows
 - automatic categorization or AI memo suggestions
 
-Charts, recurring transactions, and multi-currency conversion, which
-were Phase 2 stretch goals, have now shipped. The app stays fast,
-understandable, and centered on manual logging.
+Charts, recurring transactions, multi-currency conversion, and Fortune
+City CSV import, which were Phase 2 stretch goals, have now shipped. The
+app stays fast, understandable, and centered on manual logging.
 
 ## Prerequisites
 
@@ -288,7 +304,7 @@ lib/
     accounts/       # account list + form (currency/type pickers; opened from Settings)
     recurring/      # recurring-rule list/form; generates pending approvals on Home
     shopping_list/  # draft-capture list that converts items into transactions
-    settings/       # language, theme, defaults, splash + recurring entry points, about
+    settings/       # language, theme, defaults, splash + recurring entry points, CSV import, about
 l10n/         # Source ARB files (app_en, app_zh, app_zh_CN, app_zh_TW)
 test/
   unit/       # services / repositories / controllers / utils

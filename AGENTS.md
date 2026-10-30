@@ -76,11 +76,11 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ## Project status
 
-- **MVP is complete.** The Phase 2 slices shipped on `main` are: recurring transactions + Home pending approval, transaction search, multi-currency conversion (with `exchange_rates` cache + FX-converted display), basic charts (pie + daily bar) with slice drill-down, and the splash display-text rework.
+- **MVP is complete.** The Phase 2 slices shipped on `main` are: recurring transactions + Home pending approval, transaction search, multi-currency conversion (with `exchange_rates` cache + FX-converted display), basic charts (pie + daily bar) with slice drill-down, the splash display-text rework, and Fortune City CSV import (`lib/features/settings/csv_import/`, `/settings/import`).
 - **Drift schema is at v7** (v7 is data-only: it backfills the seeded `category.investment` expense row and retires `category.personal`, deleting it when unused and archiving it otherwise; v6 adds the nullable `transactions.amount_formula` column; `exchange_rates` was introduced in v5 after `recurring_rules` + `pending_transactions` in v4); snapshots are committed in `drift_schemas/drift_schema_v1.json`–`v7.json`.
 - **Live feature slices:** `lib/features/splash/`, `lib/features/categories/`, `lib/features/accounts/`, `lib/features/analysis/`, `lib/features/settings/`, `lib/features/transactions/`, `lib/features/shopping_list/`, `lib/features/home/`, `lib/features/recurring/`.
 - **Runtime entry:** `lib/main.dart` awaits `bootstrap()` in `lib/app/bootstrap.dart`; `lib/app/app.dart` renders `MaterialApp.router`; `lib/app/router.dart` wires the route table; `lib/app/widgets/adaptive_shell.dart` owns the 600dp nav switch. Full bootstrap flow: see [`docs/architecture/bootstrap.md`](docs/architecture/bootstrap.md).
-- Remaining Phase 2 work: wallet sync (Ankr integration), CSV import, credit-card / transfer flows.
+- Remaining Phase 2 work: wallet sync (Ankr integration), credit-card / transfer flows.
 - Top-level layout: `pubspec.yaml`, `analysis_options.yaml`, `import_analysis_options.yaml`, `l10n/` (`app_en.arb`, `app_zh.arb`, `app_zh_CN.arb`, `app_zh_TW.arb`), `lib/`, `test/`, `drift_schemas/`, `docs/`, `.github/workflows/`. Match the folder layout and package list in `PRD.md` when extending the scaffold — do not default to a generic `flutter create` shape.
 
 ## Commits and Pull Requests
