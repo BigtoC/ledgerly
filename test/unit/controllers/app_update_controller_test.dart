@@ -98,6 +98,25 @@ void main() {
     },
   );
 
+  test('a failing install-permission check fails with generic', () async {
+    stubDownload();
+    when(() => repo.canInstall()).thenThrow(Exception('channel'));
+
+    await controller().start(_update);
+
+    expect(states.last, const AppUpdateState.failed(UpdateFailure.generic));
+  });
+
+  test('failing to open install settings fails with generic', () async {
+    stubDownload();
+    when(() => repo.canInstall()).thenAnswer((_) async => false);
+    when(() => repo.openInstallSettings()).thenThrow(Exception('channel'));
+
+    await controller().start(_update);
+
+    expect(states.last, const AppUpdateState.failed(UpdateFailure.generic));
+  });
+
   test('tapping again from ready installs without re-downloading', () async {
     stubDownload();
     when(() => repo.canInstall()).thenAnswer((_) async => false);

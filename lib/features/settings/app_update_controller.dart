@@ -59,10 +59,21 @@ class AppUpdateController extends _$AppUpdateController {
   Future<void> _install(AppUpdateRepository repo, String path) async {
     final attempt = ++_installAttempt;
     bool stale() => !ref.mounted || attempt != _installAttempt;
-    if (!await repo.canInstall()) {
+    final bool allowed;
+    try {
+      allowed = await repo.canInstall();
+    } on Object {
+      if (!stale()) _fail(UpdateFailure.generic);
+      return;
+    }
+    if (!allowed) {
       if (stale()) return;
       state = AppUpdateState.ready(path, needsPermission: true);
-      await repo.openInstallSettings();
+      try {
+        await repo.openInstallSettings();
+      } on Object {
+        if (!stale()) _fail(UpdateFailure.generic);
+      }
       return;
     }
     if (stale()) return;
