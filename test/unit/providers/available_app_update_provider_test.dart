@@ -2,7 +2,8 @@
 // future it is given (the startup FX refresh), runs at most once per
 // container, and exposes the update it found. It stops waiting after a
 // timeout so a startup refresh that never settles cannot cancel the check,
-// and it does not wait at all where no APK can be installed.
+// and it does not wait at all where no APK can be installed. Stale update
+// files are cleaned up once the check has finished.
 
 import 'dart:async';
 
@@ -31,6 +32,7 @@ void main() {
   setUp(() {
     repo = _MockAppUpdateRepository();
     when(() => repo.isSupported).thenReturn(true);
+    when(() => repo.cleanUp(keep: any(named: 'keep'))).thenAnswer((_) async {});
     container = ProviderContainer(
       retry: noProviderRetry,
       overrides: [appUpdateRepositoryProvider.overrideWithValue(repo)],
@@ -82,6 +84,16 @@ void main() {
 
     verify(() => repo.findUpdate()).called(1);
     expect(container.read(availableAppUpdateProvider), isNull);
+  });
+
+  test('cleans stale update files, keeping the found update', () async {
+    when(() => repo.findUpdate()).thenAnswer((_) async => _update);
+
+    await container
+        .read(availableAppUpdateProvider.notifier)
+        .checkAfter(Future.value());
+
+    verify(() => repo.cleanUp(keep: _update)).called(1);
   });
 
   test('checks after the timeout when ready never completes', () {

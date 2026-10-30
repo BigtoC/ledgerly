@@ -1,19 +1,37 @@
+import 'dart:convert';
 import 'dart:ffi' show Abi;
+import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/data/models/app_update.dart';
 import 'package:ledgerly/data/repositories/app_update_repository.dart';
+import 'package:ledgerly/data/services/apk_installer_service.dart';
 import 'package:ledgerly/data/services/app_release_service.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockAppReleaseService extends Mock implements AppReleaseService {}
+
+class MockApkInstallerService extends Mock implements ApkInstallerService {}
 
 const _arm64Url = 'https://example.com/ledgerly-v0.7.2-arm64-v8a.apk';
 const _armUrl = 'https://example.com/ledgerly-v0.7.2-armeabi-v7a.apk';
 const _x64Url = 'https://example.com/ledgerly-v0.7.2-x86_64.apk';
 final _hex = 'ab' * 32;
 final _digest = 'sha256:$_hex';
+
+final _bytes = utf8.encode('fake apk bytes');
+final _goodHex = sha256.convert(_bytes).toString();
+
+AppUpdate _upd({String? hex}) => AppUpdate(
+  version: 'v0.7.2',
+  fileName: 'ledgerly-v0.7.2-arm64-v8a.apk',
+  apkUrl: Uri.parse(_arm64Url),
+  sha256: hex ?? _goodHex,
+  sizeBytes: _bytes.length,
+);
 
 Matcher _hasApkUrl(String url) =>
     isA<AppUpdate>().having((u) => u.apkUrl, 'apkUrl', Uri.parse(url));
@@ -54,10 +72,17 @@ _Release _release({String tag = 'v0.7.2', List<ReleaseAsset>? assets}) => (
 
 void main() {
   late MockAppReleaseService service;
+  late MockApkInstallerService installer;
+  late Directory dir;
   late int versionCalls;
+
+  setUpAll(() => registerFallbackValue(Uri()));
 
   setUp(() {
     service = MockAppReleaseService();
+    installer = MockApkInstallerService();
+    dir = Directory.systemTemp.createTempSync('upd');
+    addTearDown(() => dir.deleteSync(recursive: true));
     versionCalls = 0;
   });
 
@@ -66,6 +91,8 @@ void main() {
     String installed = '0.7.1',
   }) => AppUpdateRepository(
     service,
+    installer: installer,
+    updatesDir: () async => dir,
     installedVersion: () async {
       versionCalls++;
       return installed;
@@ -75,6 +102,17 @@ void main() {
 
   void stubRelease(_Release? release) {
     when(() => service.fetchLatestRelease()).thenAnswer((_) async => release);
+  }
+
+  void stubDownloadWrites(List<int> bytes) {
+    when(
+      () =>
+          service.download(any(), any(), onProgress: any(named: 'onProgress')),
+    ).thenAnswer((inv) async {
+      final cb = inv.namedArguments[#onProgress] as void Function(int, int)?;
+      cb?.call(bytes.length, bytes.length);
+      File(inv.positionalArguments[1] as String).writeAsBytesSync(bytes);
+    });
   }
 
   group('AppUpdateRepository.findUpdate', () {
@@ -227,6 +265,8 @@ void main() {
       stubRelease(_release());
       final failing = AppUpdateRepository(
         service,
+        installer: installer,
+        updatesDir: () async => dir,
         installedVersion: () async => throw StateError('no package info'),
         abi: Abi.androidArm64,
       );
@@ -249,6 +289,125 @@ void main() {
         expect(versionCalls, 0);
       },
     );
+  });
+
+  group('AppUpdateRepository.download', () {
+    test(
+      'verified download is renamed from .part and its path returned',
+      () async {
+        stubDownloadWrites(_bytes);
+        final progress = <double>[];
+        final path = await repo().download(_upd(), onProgress: progress.add);
+        expect(path, '${dir.path}/ledgerly-v0.7.2-arm64-v8a.apk');
+        expect(File(path).readAsBytesSync(), _bytes);
+        expect(File('$path.part').existsSync(), isFalse);
+        expect(progress, [1.0]);
+      },
+    );
+
+    test('hash mismatch deletes the file and throws', () async {
+      stubDownloadWrites(utf8.encode('tampered'));
+      await expectLater(
+        repo().download(_upd()),
+        throwsA(isA<UpdateChecksumException>()),
+      );
+      expect(dir.listSync(), isEmpty);
+    });
+
+    test('an already verified file is reused without downloading', () async {
+      File('${dir.path}/ledgerly-v0.7.2-arm64-v8a.apk')
+          .writeAsBytesSync(_bytes);
+      await repo().download(_upd());
+      verifyNever(
+        () => service.download(
+          any(),
+          any(),
+          onProgress: any(named: 'onProgress'),
+        ),
+      );
+    });
+
+    test('network failure throws UpdateDownloadException', () async {
+      when(
+        () => service.download(
+          any(),
+          any(),
+          onProgress: any(named: 'onProgress'),
+        ),
+      ).thenThrow(DioException(requestOptions: RequestOptions()));
+      await expectLater(
+        repo().download(_upd()),
+        throwsA(isA<UpdateDownloadException>()),
+      );
+    });
+
+    test('file-system failure throws UpdateStorageException', () async {
+      when(
+        () => service.download(
+          any(),
+          any(),
+          onProgress: any(named: 'onProgress'),
+        ),
+      ).thenThrow(const FileSystemException('No space left on device'));
+      await expectLater(
+        repo().download(_upd()),
+        throwsA(isA<UpdateStorageException>()),
+      );
+    });
+  });
+
+  group('AppUpdateRepository.install', () {
+    for (final (status, outcome) in [
+      (0, InstallOutcome.success),
+      (3, InstallOutcome.cancelled),
+      (5, InstallOutcome.signatureConflict),
+      (6, InstallOutcome.storage),
+      (1, InstallOutcome.failed),
+      (2, InstallOutcome.failed),
+      (4, InstallOutcome.failed),
+      (7, InstallOutcome.failed),
+      (8, InstallOutcome.failed),
+      (99, InstallOutcome.failed),
+    ]) {
+      test('status $status maps to $outcome', () async {
+        when(() => installer.install('/a.apk')).thenAnswer((_) async => status);
+        expect(await repo().install('/a.apk'), outcome);
+      });
+    }
+
+    test('a channel error maps to failed', () async {
+      when(() => installer.install(any()))
+          .thenThrow(PlatformException(code: 'x'));
+      expect(await repo().install('/a.apk'), InstallOutcome.failed);
+    });
+
+    test('canInstall and openInstallSettings delegate', () async {
+      when(() => installer.canRequestInstalls()).thenAnswer((_) async => true);
+      when(() => installer.openInstallSettings()).thenAnswer((_) async {});
+      expect(await repo().canInstall(), isTrue);
+      await repo().openInstallSettings();
+      verify(() => installer.openInstallSettings()).called(1);
+    });
+  });
+
+  group('AppUpdateRepository.cleanUp', () {
+    test('keeps only the verified APK of the given update', () async {
+      final keep = File('${dir.path}/ledgerly-v0.7.2-arm64-v8a.apk')
+        ..writeAsBytesSync(_bytes);
+      final part = File('${keep.path}.part')..writeAsBytesSync(_bytes);
+      final old = File('${dir.path}/ledgerly-v0.7.1-arm64-v8a.apk')
+        ..writeAsBytesSync(_bytes);
+      await repo().cleanUp(keep: _upd());
+      expect(keep.existsSync(), isTrue);
+      expect(part.existsSync(), isFalse);
+      expect(old.existsSync(), isFalse);
+    });
+
+    test('with no update everything is removed', () async {
+      File('${dir.path}/x.apk').writeAsBytesSync(_bytes);
+      await repo().cleanUp(keep: null);
+      expect(dir.listSync(), isEmpty);
+    });
   });
 
   group('isNewerVersion', () {

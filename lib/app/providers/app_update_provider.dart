@@ -1,10 +1,13 @@
 import 'dart:ffi' show Abi;
+import 'dart:io';
 
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/models/app_update.dart';
 import '../../data/repositories/app_update_repository.dart';
+import '../../data/services/apk_installer_service.dart';
 import '../../data/services/app_release_service.dart';
 import 'repository_providers.dart';
 
@@ -15,6 +18,10 @@ part 'app_update_provider.g.dart';
 @Riverpod(keepAlive: true)
 AppUpdateRepository appUpdateRepository(Ref ref) => AppUpdateRepository(
   AppReleaseService(ref.watch(dioProvider)),
+  installer: const ApkInstallerService(),
+  updatesDir: () async =>
+      Directory('${(await getTemporaryDirectory()).path}/updates')
+          .create(recursive: true),
   installedVersion: () async => (await PackageInfo.fromPlatform()).version,
   abi: Abi.current(),
 );
@@ -42,6 +49,7 @@ class AvailableAppUpdate extends _$AvailableAppUpdate {
     await ready.timeout(_readyTimeout, onTimeout: () {});
     if (!ref.mounted) return;
     final update = await repo.findUpdate();
+    await repo.cleanUp(keep: update);
     if (ref.mounted) state = update;
   }
 }

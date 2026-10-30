@@ -62,7 +62,7 @@ final class AppUpdateRepositoryProvider
 }
 
 String _$appUpdateRepositoryHash() =>
-    r'c3199e01953b457bd035a630d91405e85813c959';
+    r'27feb361942b9a87e74db8d0a4b1e559911e1c3c';
 
 /// The newer release, or null. `build()` has no side effects; `App`
 /// triggers [checkAfter] once per launch after the first frame.
@@ -104,7 +104,7 @@ final class AvailableAppUpdateProvider
 }
 
 String _$availableAppUpdateHash() =>
-    r'77cd4094e46ea822a06abc966d00794fe94a80d1';
+    r'77e609b51f4dcdf32cd95a771e52cb3ffe9f87de';
 
 /// The newer release, or null. `build()` has no side effects; `App`
 /// triggers [checkAfter] once per launch after the first frame.

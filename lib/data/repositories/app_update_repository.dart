@@ -1,22 +1,53 @@
 import 'dart:ffi' show Abi;
+import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show PlatformException;
 
 import '../models/app_update.dart';
+import '../services/apk_installer_service.dart';
 import '../services/app_release_service.dart';
+import 'repository_exceptions.dart';
 
-/// Finds a newer GitHub release APK built for this device's ABI.
+/// How a PackageInstaller session ended, when it ended without the
+/// process being replaced.
+enum InstallOutcome { success, cancelled, signatureConflict, storage, failed }
+
+/// The update APK could not be downloaded (network or HTTP failure).
+class UpdateDownloadException extends RepositoryException {
+  const UpdateDownloadException() : super('Update download failed');
+}
+
+/// The downloaded APK's SHA-256 does not match the release digest.
+class UpdateChecksumException extends RepositoryException {
+  const UpdateChecksumException() : super('Update checksum mismatch');
+}
+
+/// The update APK could not be written to local storage.
+class UpdateStorageException extends RepositoryException {
+  const UpdateStorageException() : super('Update could not be stored');
+}
+
+/// Finds a newer GitHub release APK built for this device's ABI, then
+/// downloads, verifies and installs it.
 ///
 /// Only Android split APKs are published, so on any other ABI this makes
 /// no network call and does not read the installed version.
 class AppUpdateRepository {
   AppUpdateRepository(
     this._service, {
+    required this._installer,
+    required this._updatesDir,
     required this._installedVersion,
     required this._abi,
   });
 
   final AppReleaseService _service;
+  final ApkInstallerService _installer;
+
+  /// Existing directory that holds downloaded update APKs.
+  final Future<Directory> Function() _updatesDir;
   final Future<String> Function() _installedVersion;
   final Abi _abi;
 
@@ -67,6 +98,90 @@ class AppUpdateRepository {
       // unawaited caller, Errors included.
       debugPrint('AppUpdateRepository.findUpdate failed (${e.runtimeType})');
       return null;
+    }
+  }
+
+  /// Downloads [update] into the updates directory, verifies it against
+  /// `update.sha256` and returns the verified APK's path. A file already
+  /// verified earlier (e.g. before Android 11 restarted the app on the
+  /// permission grant) is reused. [onProgress] gets 0.0–1.0.
+  ///
+  /// Requires `update.sha256`. Throws [UpdateDownloadException],
+  /// [UpdateChecksumException] or [UpdateStorageException].
+  Future<String> download(
+    AppUpdate update, {
+    void Function(double fraction)? onProgress,
+  }) async {
+    final expected = update.sha256!;
+    try {
+      final dir = await _updatesDir();
+      final apk = File('${dir.path}/${update.fileName}');
+      if (await apk.exists() && await _sha256Of(apk) == expected) {
+        return apk.path;
+      }
+      final part = File('${apk.path}.part');
+      await _service.download(
+        update.apkUrl,
+        part.path,
+        onProgress: (received, total) {
+          if (total > 0) onProgress?.call(received / total);
+        },
+      );
+      if (await _sha256Of(part) != expected) {
+        await part.delete();
+        throw const UpdateChecksumException();
+      }
+      return (await part.rename(apk.path)).path;
+    } on UpdateChecksumException {
+      rethrow;
+    } on FileSystemException catch (e) {
+      debugPrint('AppUpdateRepository.download failed (${e.runtimeType})');
+      throw const UpdateStorageException();
+    } on Object catch (e) {
+      debugPrint('AppUpdateRepository.download failed (${e.runtimeType})');
+      throw const UpdateDownloadException();
+    }
+  }
+
+  static Future<String> _sha256Of(File file) async =>
+      (await sha256.bind(file.openRead()).first).toString();
+
+  /// Whether Ledgerly may install apps ("Install unknown apps").
+  Future<bool> canInstall() => _installer.canRequestInstalls();
+
+  /// Opens the system page where the user allows Ledgerly to install apps.
+  Future<void> openInstallSettings() => _installer.openInstallSettings();
+
+  /// Installs the verified APK at [path]. On success Android replaces this
+  /// process, so the returned future usually never completes.
+  Future<InstallOutcome> install(String path) async {
+    try {
+      return switch (await _installer.install(path)) {
+        0 => InstallOutcome.success,
+        3 => InstallOutcome.cancelled,
+        5 => InstallOutcome.signatureConflict,
+        6 => InstallOutcome.storage,
+        _ => InstallOutcome.failed,
+      };
+    } on PlatformException catch (e) {
+      debugPrint('AppUpdateRepository.install failed (${e.runtimeType})');
+      return InstallOutcome.failed;
+    }
+  }
+
+  /// Deletes every file in the updates directory except [keep]'s APK:
+  /// partial downloads, and the APK left behind by an update that has
+  /// already been installed. Best effort; never throws.
+  Future<void> cleanUp({required AppUpdate? keep}) async {
+    try {
+      final dir = await _updatesDir();
+      await for (final entity in dir.list()) {
+        if (entity.uri.pathSegments.last != keep?.fileName) {
+          await entity.delete(recursive: true);
+        }
+      }
+    } on Object catch (e) {
+      debugPrint('AppUpdateRepository.cleanUp failed (${e.runtimeType})');
     }
   }
 }

@@ -61,6 +61,8 @@ void main() {
     final updates = _MockAppUpdateRepository();
     when(() => updates.isSupported).thenReturn(true);
     when(() => updates.findUpdate()).thenAnswer((_) async => _update);
+    when(() => updates.cleanUp(keep: any(named: 'keep')))
+        .thenAnswer((_) async {});
 
     final container = makeTestContainer(
       db: db,
