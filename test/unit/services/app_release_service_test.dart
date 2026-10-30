@@ -52,10 +52,14 @@ void main() {
         (
           name: 'ledgerly-v0.7.2-arm64-v8a.apk',
           url: 'https://example.com/arm64.apk',
+          digest: null,
+          size: null,
         ),
         (
           name: 'ledgerly-v0.7.2-checksums.txt',
           url: 'https://example.com/checksums.txt',
+          digest: null,
+          size: null,
         ),
       ]);
     });
@@ -80,8 +84,51 @@ void main() {
         (
           name: 'ledgerly-v0.7.2-x86_64.apk',
           url: 'https://example.com/x86_64.apk',
+          digest: null,
+          size: null,
         ),
       ]);
+    });
+
+    test('parses digest and size when present', () async {
+      stubBody({
+        'tag_name': 'v0.7.3',
+        'assets': [
+          {
+            'name': 'ledgerly-v0.7.3-arm64-v8a.apk',
+            'browser_download_url': 'https://example.com/arm64.apk',
+            'digest': 'sha256:41733337fdf4406a32e99c13108afd9b1be786f28c85e69ff2f375adf199fad4',
+            'size': 25568852,
+          },
+        ],
+      });
+
+      final release = await service.fetchLatestRelease();
+
+      expect(release!.assets.single, (
+        name: 'ledgerly-v0.7.3-arm64-v8a.apk',
+        url: 'https://example.com/arm64.apk',
+        digest: 'sha256:41733337fdf4406a32e99c13108afd9b1be786f28c85e69ff2f375adf199fad4',
+        size: 25568852,
+      ));
+    });
+
+    test('non-string digest and non-int size become null', () async {
+      stubBody({
+        'tag_name': 'v0.7.3',
+        'assets': [
+          {
+            'name': 'a.apk',
+            'browser_download_url': 'https://example.com/a.apk',
+            'digest': 42,
+            'size': '1',
+          },
+        ],
+      });
+
+      final asset = (await service.fetchLatestRelease())!.assets.single;
+      expect(asset.digest, isNull);
+      expect(asset.size, isNull);
     });
 
     test('missing tag_name gives null', () async {
@@ -137,5 +184,32 @@ void main() {
         );
       },
     );
+  });
+
+  group('AppReleaseService.download', () {
+    test('downloads the URL to the path and reports progress', () async {
+      final url = Uri.parse('https://example.com/a.apk');
+      when(
+        () => mockDio.downloadUri(
+          url,
+          '/tmp/a.apk.part',
+          onReceiveProgress: any(named: 'onReceiveProgress'),
+          deleteOnError: true,
+        ),
+      ).thenAnswer((inv) async {
+        final cb = inv.namedArguments[#onReceiveProgress] as ProgressCallback;
+        cb(5, 10);
+        return Response<dynamic>(requestOptions: RequestOptions());
+      });
+      final progress = <(int, int)>[];
+
+      await service.download(
+        url,
+        '/tmp/a.apk.part',
+        onProgress: (r, t) => progress.add((r, t)),
+      );
+
+      expect(progress, [(5, 10)]);
+    });
   });
 }

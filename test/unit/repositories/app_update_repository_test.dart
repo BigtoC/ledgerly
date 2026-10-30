@@ -12,22 +12,36 @@ const _arm64Url = 'https://example.com/ledgerly-v0.7.2-arm64-v8a.apk';
 const _armUrl = 'https://example.com/ledgerly-v0.7.2-armeabi-v7a.apk';
 const _x64Url = 'https://example.com/ledgerly-v0.7.2-x86_64.apk';
 
-typedef _Release = ({String tagName, List<({String name, String url})> assets});
+typedef _Release = ({String tagName, List<ReleaseAsset> assets});
 
-_Release _release({
-  String tag = 'v0.7.2',
-  List<({String name, String url})>? assets,
-}) => (
+_Release _release({String tag = 'v0.7.2', List<ReleaseAsset>? assets}) => (
   tagName: tag,
   assets:
       assets ??
       const [
-        (name: 'ledgerly-v0.7.2-arm64-v8a.apk', url: _arm64Url),
-        (name: 'ledgerly-v0.7.2-armeabi-v7a.apk', url: _armUrl),
-        (name: 'ledgerly-v0.7.2-x86_64.apk', url: _x64Url),
+        (
+          name: 'ledgerly-v0.7.2-arm64-v8a.apk',
+          url: _arm64Url,
+          digest: null,
+          size: null,
+        ),
+        (
+          name: 'ledgerly-v0.7.2-armeabi-v7a.apk',
+          url: _armUrl,
+          digest: null,
+          size: null,
+        ),
+        (
+          name: 'ledgerly-v0.7.2-x86_64.apk',
+          url: _x64Url,
+          digest: null,
+          size: null,
+        ),
         (
           name: 'ledgerly-v0.7.2-checksums.txt',
           url: 'https://example.com/ledgerly-v0.7.2-checksums.txt',
+          digest: null,
+          size: null,
         ),
       ],
 );
@@ -86,7 +100,14 @@ void main() {
     test('no matching asset gives null', () async {
       stubRelease(
         _release(
-          assets: const [(name: 'ledgerly-v0.7.2-x86_64.apk', url: _x64Url)],
+          assets: const [
+            (
+              name: 'ledgerly-v0.7.2-x86_64.apk',
+              url: _x64Url,
+              digest: null,
+              size: null,
+            ),
+          ],
         ),
       );
       expect(await repo().findUpdate(), isNull);
@@ -99,6 +120,8 @@ void main() {
             (
               name: 'ledgerly-v0.7.1-arm64-v8a.apk',
               url: 'https://example.com/ledgerly-v0.7.1-arm64-v8a.apk',
+              digest: null,
+              size: null,
             ),
           ],
         ),
@@ -113,6 +136,8 @@ void main() {
             (
               name: 'ledgerly-v0.7.2-arm64-v8a.apk',
               url: 'http://example.com/ledgerly-v0.7.2-arm64-v8a.apk',
+              digest: null,
+              size: null,
             ),
           ],
         ),
