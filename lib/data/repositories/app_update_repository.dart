@@ -2,6 +2,7 @@ import 'dart:ffi' show Abi;
 
 import 'package:flutter/foundation.dart';
 
+import '../models/app_update.dart';
 import '../services/app_release_service.dart';
 
 /// Finds a newer GitHub release APK built for this device's ABI.
@@ -27,14 +28,17 @@ class AppUpdateRepository {
     Abi.androidX64: 'x86_64',
   };
 
+  static final _sha256Digest = RegExp(r'^sha256:([0-9a-fA-F]{64})$');
+
   /// Whether this device can install a published APK. When false,
   /// [findUpdate] makes no request, so callers need not wait to call it.
   bool get isSupported => _apkAbi.containsKey(_abi);
 
-  /// The https APK URL for this device's ABI from a release newer than the
+  /// The https APK for this device's ABI from a release newer than the
   /// installed app, or null: off Android, not newer, no matching asset, or
-  /// any failure.
-  Future<Uri?> findUpdate() async {
+  /// any failure. Its SHA-256 and size are set only when GitHub publishes
+  /// both in the expected form.
+  Future<AppUpdate?> findUpdate() async {
     final abi = _apkAbi[_abi];
     if (abi == null) return null;
     try {
@@ -48,7 +52,16 @@ class AppUpdateRepository {
       final apkName = 'ledgerly-${release.tagName}-$abi.apk';
       final asset = release.assets.where((a) => a.name == apkName).firstOrNull;
       final uri = asset == null ? null : Uri.tryParse(asset.url);
-      return uri != null && uri.isScheme('https') ? uri : null;
+      if (asset == null || uri == null || !uri.isScheme('https')) return null;
+      final hex = _sha256Digest.firstMatch(asset.digest ?? '')?[1];
+      final inApp = hex != null && asset.size != null;
+      return AppUpdate(
+        version: release.tagName,
+        fileName: apkName,
+        apkUrl: uri,
+        sha256: inApp ? hex.toLowerCase() : null,
+        sizeBytes: inApp ? asset.size : null,
+      );
     } on Object catch (e) {
       // Best-effort background check: no failure may escape to the
       // unawaited caller, Errors included.

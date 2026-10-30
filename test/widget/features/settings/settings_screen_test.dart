@@ -27,6 +27,7 @@ import 'package:ledgerly/app/providers/app_update_provider.dart';
 import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/account.dart';
+import 'package:ledgerly/data/models/app_update.dart';
 import 'package:ledgerly/data/models/currency.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
@@ -123,7 +124,7 @@ ProviderContainer _makeContainer({
   required CurrencyRepository currencyRepo,
   required SettingsState fixed,
   AccountsState? accountsFixed,
-  Uri? update,
+  AppUpdate? update,
 }) {
   final defaultAccountsState =
       accountsFixed ??
@@ -148,7 +149,11 @@ ProviderContainer _makeContainer({
   );
 }
 
-final _apkUrl = Uri.parse('https://example.com/ledgerly-v0.7.2-arm64-v8a.apk');
+final _update = AppUpdate(
+  version: 'v0.7.2',
+  fileName: 'ledgerly-v0.7.2-arm64-v8a.apk',
+  apkUrl: Uri.parse('https://example.com/ledgerly-v0.7.2-arm64-v8a.apk'),
+);
 
 const _badgeKey = ValueKey('settingsNewVersionBadge');
 
@@ -531,7 +536,7 @@ void main() {
       accountRepo: _MockAccountRepository(),
       currencyRepo: _MockCurrencyRepository(),
       fixed: _data(),
-      update: _apkUrl,
+      update: _update,
     );
     addTearDown(container.dispose);
 
@@ -552,8 +557,11 @@ void main() {
     );
     // The badge opens the provider's ABI-specific APK URL.
     expect(
-      tester.widget<NewVersionBadge>(find.byType(NewVersionBadge)).url,
-      _apkUrl,
+      tester
+          .widget<NewVersionBadge>(find.byType(NewVersionBadge))
+          .update
+          .apkUrl,
+      _update.apkUrl,
     );
   });
 
@@ -563,7 +571,7 @@ void main() {
       accountRepo: _MockAccountRepository(),
       currencyRepo: _MockCurrencyRepository(),
       fixed: _data(),
-      update: _apkUrl,
+      update: _update,
     );
     addTearDown(container.dispose);
 

@@ -1,6 +1,6 @@
 // Guards `availableAppUpdateProvider`: the update check waits for the
 // future it is given (the startup FX refresh), runs at most once per
-// container, and exposes the APK URL it found. It stops waiting after a
+// container, and exposes the update it found. It stops waiting after a
 // timeout so a startup refresh that never settles cannot cancel the check,
 // and it does not wait at all where no APK can be installed.
 
@@ -13,11 +13,16 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:ledgerly/app/bootstrap.dart';
 import 'package:ledgerly/app/providers/app_update_provider.dart';
+import 'package:ledgerly/data/models/app_update.dart';
 import 'package:ledgerly/data/repositories/app_update_repository.dart';
 
 class _MockAppUpdateRepository extends Mock implements AppUpdateRepository {}
 
-final _apkUrl = Uri.parse('https://example.com/ledgerly-v0.7.2-arm64-v8a.apk');
+final _update = AppUpdate(
+  version: 'v0.7.2',
+  fileName: 'ledgerly-v0.7.2-arm64-v8a.apk',
+  apkUrl: Uri.parse('https://example.com/ledgerly-v0.7.2-arm64-v8a.apk'),
+);
 
 void main() {
   late _MockAppUpdateRepository repo;
@@ -38,7 +43,7 @@ void main() {
   });
 
   test('checks only after the ready future completes', () async {
-    when(() => repo.findUpdate()).thenAnswer((_) async => _apkUrl);
+    when(() => repo.findUpdate()).thenAnswer((_) async => _update);
     final ready = Completer<void>();
 
     final check = container
@@ -52,11 +57,11 @@ void main() {
     await check;
 
     verify(() => repo.findUpdate()).called(1);
-    expect(container.read(availableAppUpdateProvider), _apkUrl);
+    expect(container.read(availableAppUpdateProvider), _update);
   });
 
   test('checks once even when called twice concurrently', () async {
-    when(() => repo.findUpdate()).thenAnswer((_) async => _apkUrl);
+    when(() => repo.findUpdate()).thenAnswer((_) async => _update);
     final notifier = container.read(availableAppUpdateProvider.notifier);
 
     await Future.wait([
@@ -81,7 +86,7 @@ void main() {
 
   test('checks after the timeout when ready never completes', () {
     fakeAsync((async) {
-      when(() => repo.findUpdate()).thenAnswer((_) async => _apkUrl);
+      when(() => repo.findUpdate()).thenAnswer((_) async => _update);
 
       unawaited(
         container
@@ -93,7 +98,7 @@ void main() {
 
       async.elapse(const Duration(seconds: 2));
       verify(() => repo.findUpdate()).called(1);
-      expect(container.read(availableAppUpdateProvider), _apkUrl);
+      expect(container.read(availableAppUpdateProvider), _update);
     });
   });
 

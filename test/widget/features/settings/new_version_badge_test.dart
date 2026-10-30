@@ -18,12 +18,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:ledgerly/core/theme/app_theme.dart';
+import 'package:ledgerly/data/models/app_update.dart';
 import 'package:ledgerly/features/settings/widgets/new_version_badge.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
-final _apkUrl = Uri.parse(
-  'https://github.com/BigtoC/ledgerly/releases/download/v0.7.2/'
-  'ledgerly-v0.7.2-arm64-v8a.apk',
+final _update = AppUpdate(
+  version: 'v0.7.2',
+  fileName: 'ledgerly-v0.7.2-arm64-v8a.apk',
+  apkUrl: Uri.parse(
+    'https://github.com/BigtoC/ledgerly/releases/download/v0.7.2/'
+    'ledgerly-v0.7.2-arm64-v8a.apk',
+  ),
 );
 
 Widget _wrap(Widget child, {ThemeData? theme}) => MaterialApp(
@@ -35,7 +40,7 @@ Widget _wrap(Widget child, {ThemeData? theme}) => MaterialApp(
 
 void main() {
   testWidgets('NVB01: shows "new version"', (tester) async {
-    await tester.pumpWidget(_wrap(NewVersionBadge(url: _apkUrl)));
+    await tester.pumpWidget(_wrap(NewVersionBadge(update: _update)));
 
     expect(find.text('new version'), findsOneWidget);
   });
@@ -53,12 +58,12 @@ void main() {
     }
 
     await tester.pumpWidget(
-      _wrap(NewVersionBadge(url: _apkUrl, launch: fakeLaunch)),
+      _wrap(NewVersionBadge(update: _update, launch: fakeLaunch)),
     );
     await tester.tap(find.text('new version'));
     await tester.pumpAndSettle();
 
-    expect(calls, [(_apkUrl, LaunchMode.externalApplication)]);
+    expect(calls, [(_update.apkUrl, LaunchMode.externalApplication)]);
     expect(find.byType(SnackBar), findsNothing);
   });
 
@@ -71,7 +76,7 @@ void main() {
     }) => Future.value(false);
 
     await tester.pumpWidget(
-      _wrap(NewVersionBadge(url: _apkUrl, launch: fakeLaunch)),
+      _wrap(NewVersionBadge(update: _update, launch: fakeLaunch)),
     );
     await tester.tap(find.text('new version'));
     await tester.pumpAndSettle();
@@ -88,7 +93,7 @@ void main() {
     }) => Future.error(PlatformException(code: 'ACTIVITY_NOT_FOUND'));
 
     await tester.pumpWidget(
-      _wrap(NewVersionBadge(url: _apkUrl, launch: fakeLaunch)),
+      _wrap(NewVersionBadge(update: _update, launch: fakeLaunch)),
     );
     await tester.tap(find.text('new version'));
     await tester.pumpAndSettle();
@@ -114,7 +119,7 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        _wrap(NewVersionBadge(url: _apkUrl), theme: theme),
+        _wrap(NewVersionBadge(update: _update), theme: theme),
       );
 
       // Effective colors as painted, independent of how the badge is built.
@@ -146,7 +151,7 @@ void main() {
     tester,
   ) async {
     final handle = tester.ensureSemantics();
-    await tester.pumpWidget(_wrap(NewVersionBadge(url: _apkUrl)));
+    await tester.pumpWidget(_wrap(NewVersionBadge(update: _update)));
 
     expect(
       tester.getSemantics(find.text('new version')),

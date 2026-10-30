@@ -64,21 +64,18 @@ final class AppUpdateRepositoryProvider
 String _$appUpdateRepositoryHash() =>
     r'c3199e01953b457bd035a630d91405e85813c959';
 
-/// APK download URL of a newer release, or null. `build()` has no side
-/// effects; `App` triggers [checkAfter] once per launch after the first
-/// frame.
+/// The newer release, or null. `build()` has no side effects; `App`
+/// triggers [checkAfter] once per launch after the first frame.
 
 @ProviderFor(AvailableAppUpdate)
 final availableAppUpdateProvider = AvailableAppUpdateProvider._();
 
-/// APK download URL of a newer release, or null. `build()` has no side
-/// effects; `App` triggers [checkAfter] once per launch after the first
-/// frame.
+/// The newer release, or null. `build()` has no side effects; `App`
+/// triggers [checkAfter] once per launch after the first frame.
 final class AvailableAppUpdateProvider
-    extends $NotifierProvider<AvailableAppUpdate, Uri?> {
-  /// APK download URL of a newer release, or null. `build()` has no side
-  /// effects; `App` triggers [checkAfter] once per launch after the first
-  /// frame.
+    extends $NotifierProvider<AvailableAppUpdate, AppUpdate?> {
+  /// The newer release, or null. `build()` has no side effects; `App`
+  /// triggers [checkAfter] once per launch after the first frame.
   AvailableAppUpdateProvider._()
     : super(
         from: null,
@@ -98,32 +95,31 @@ final class AvailableAppUpdateProvider
   AvailableAppUpdate create() => AvailableAppUpdate();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(Uri? value) {
+  Override overrideWithValue(AppUpdate? value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<Uri?>(value),
+      providerOverride: $SyncValueProvider<AppUpdate?>(value),
     );
   }
 }
 
 String _$availableAppUpdateHash() =>
-    r'c8c5581b4436cfc9dd823a4ef397f87cb24e3ec2';
+    r'77cd4094e46ea822a06abc966d00794fe94a80d1';
 
-/// APK download URL of a newer release, or null. `build()` has no side
-/// effects; `App` triggers [checkAfter] once per launch after the first
-/// frame.
+/// The newer release, or null. `build()` has no side effects; `App`
+/// triggers [checkAfter] once per launch after the first frame.
 
-abstract class _$AvailableAppUpdate extends $Notifier<Uri?> {
-  Uri? build();
+abstract class _$AvailableAppUpdate extends $Notifier<AppUpdate?> {
+  AppUpdate? build();
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref = this.ref as $Ref<Uri?, Uri?>;
+    final ref = this.ref as $Ref<AppUpdate?, AppUpdate?>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<Uri?, Uri?>,
-              Uri?,
+              AnyNotifier<AppUpdate?, AppUpdate?>,
+              AppUpdate?,
               Object?,
               Object?
             >;

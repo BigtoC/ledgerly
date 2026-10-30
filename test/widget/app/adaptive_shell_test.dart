@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ledgerly/app/providers/app_update_provider.dart';
 import 'package:ledgerly/app/widgets/adaptive_shell.dart';
+import 'package:ledgerly/data/models/app_update.dart';
 
 import 'package:ledgerly/l10n/app_localizations.dart';
 
@@ -18,7 +19,11 @@ import 'package:ledgerly/l10n/app_localizations.dart';
 /// `SizedBox` so `LayoutBuilder` receives a predictable `maxWidth`, and a
 /// provider container (disposed with the test) pinning the available update
 /// to [update].
-Widget _shellAt(double width, {void Function(int)? onSelected, Uri? update}) {
+Widget _shellAt(
+  double width, {
+  void Function(int)? onSelected,
+  AppUpdate? update,
+}) {
   final container = ProviderContainer.test(
     overrides: [
       availableAppUpdateProvider.overrideWithBuild((ref, notifier) => update),
@@ -44,7 +49,11 @@ Widget _shellAt(double width, {void Function(int)? onSelected, Uri? update}) {
   );
 }
 
-final _apkUrl = Uri.parse('https://example.com/ledgerly-v0.7.2-arm64-v8a.apk');
+final _update = AppUpdate(
+  version: 'v0.7.2',
+  fileName: 'ledgerly-v0.7.2-arm64-v8a.apk',
+  apkUrl: Uri.parse('https://example.com/ledgerly-v0.7.2-arm64-v8a.apk'),
+);
 
 Badge _settingsDot(WidgetTester tester) =>
     tester.widget<Badge>(find.byKey(const ValueKey('settingsUpdateDot')));
@@ -135,7 +144,7 @@ void main() {
         await tester.binding.setSurfaceSize(const Size(1200, 900));
         addTearDown(() => tester.binding.setSurfaceSize(null));
 
-        await tester.pumpWidget(_shellAt(width, update: _apkUrl));
+        await tester.pumpWidget(_shellAt(width, update: _update));
         await tester.pumpAndSettle();
 
         final dot = _settingsDot(tester);
@@ -157,7 +166,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.bySemanticsLabel(RegExp('new version')), findsNothing);
 
-        await tester.pumpWidget(_shellAt(width, update: _apkUrl));
+        await tester.pumpWidget(_shellAt(width, update: _update));
         await tester.pumpAndSettle();
         expect(find.bySemanticsLabel(RegExp('new version')), findsOneWidget);
 

@@ -17,6 +17,7 @@ import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
 import 'package:ledgerly/app/providers/theme_provider.dart';
 import 'package:ledgerly/app/router.dart';
+import 'package:ledgerly/data/models/app_update.dart';
 import 'package:ledgerly/data/repositories/app_update_repository.dart';
 import 'package:ledgerly/data/services/exchange_rate_service.dart';
 
@@ -26,7 +27,11 @@ class _MockExchangeRateService extends Mock implements ExchangeRateService {}
 
 class _MockAppUpdateRepository extends Mock implements AppUpdateRepository {}
 
-final _apkUrl = Uri.parse('https://example.com/ledgerly-v0.7.2-arm64-v8a.apk');
+final _update = AppUpdate(
+  version: 'v0.7.2',
+  fileName: 'ledgerly-v0.7.2-arm64-v8a.apk',
+  apkUrl: Uri.parse('https://example.com/ledgerly-v0.7.2-arm64-v8a.apk'),
+);
 
 @Dependencies([router, themeMode, userLocalePreference, exchangeRateRepository])
 void main() {
@@ -55,7 +60,7 @@ void main() {
     when(() => fx.fetchRates(any())).thenAnswer((_) => fxGate.future);
     final updates = _MockAppUpdateRepository();
     when(() => updates.isSupported).thenReturn(true);
-    when(() => updates.findUpdate()).thenAnswer((_) async => _apkUrl);
+    when(() => updates.findUpdate()).thenAnswer((_) async => _update);
 
     final container = makeTestContainer(
       db: db,

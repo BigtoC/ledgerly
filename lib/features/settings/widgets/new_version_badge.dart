@@ -6,22 +6,23 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/utils/system_browser.dart';
+import '../../../data/models/app_update.dart';
 import '../../../l10n/app_localizations.dart';
 
 class NewVersionBadge extends StatelessWidget {
   const NewVersionBadge({
     super.key,
-    required this.url,
+    required this.update,
     @visibleForTesting this.launch = launchUrl,
   });
 
-  final Uri url;
+  final AppUpdate update;
   final LaunchUrlFn launch;
 
   Future<void> _open(BuildContext context) async {
     final messenger = ScaffoldMessenger.maybeOf(context);
     final failed = AppLocalizations.of(context).settingsNewVersionOpenFailed;
-    final launched = await openInSystemBrowser(url, launch: launch);
+    final launched = await openInSystemBrowser(update.apkUrl, launch: launch);
     if (!launched) messenger?.showSnackBar(SnackBar(content: Text(failed)));
   }
 

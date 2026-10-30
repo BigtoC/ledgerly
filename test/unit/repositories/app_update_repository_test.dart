@@ -2,6 +2,7 @@ import 'dart:ffi' show Abi;
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ledgerly/data/models/app_update.dart';
 import 'package:ledgerly/data/repositories/app_update_repository.dart';
 import 'package:ledgerly/data/services/app_release_service.dart';
 import 'package:mocktail/mocktail.dart';
@@ -11,6 +12,11 @@ class MockAppReleaseService extends Mock implements AppReleaseService {}
 const _arm64Url = 'https://example.com/ledgerly-v0.7.2-arm64-v8a.apk';
 const _armUrl = 'https://example.com/ledgerly-v0.7.2-armeabi-v7a.apk';
 const _x64Url = 'https://example.com/ledgerly-v0.7.2-x86_64.apk';
+final _hex = 'ab' * 32;
+final _digest = 'sha256:$_hex';
+
+Matcher _hasApkUrl(String url) =>
+    isA<AppUpdate>().having((u) => u.apkUrl, 'apkUrl', Uri.parse(url));
 
 typedef _Release = ({String tagName, List<ReleaseAsset> assets});
 
@@ -74,17 +80,83 @@ void main() {
   group('AppUpdateRepository.findUpdate', () {
     test('androidArm64 returns the arm64-v8a URL', () async {
       stubRelease(_release());
-      expect(await repo().findUpdate(), Uri.parse(_arm64Url));
+      expect(await repo().findUpdate(), _hasApkUrl(_arm64Url));
     });
 
     test('androidArm returns armeabi-v7a, not arm64-v8a', () async {
       stubRelease(_release());
-      expect(await repo(abi: Abi.androidArm).findUpdate(), Uri.parse(_armUrl));
+      expect(await repo(abi: Abi.androidArm).findUpdate(), _hasApkUrl(_armUrl));
     });
 
     test('androidX64 returns the x86_64 URL', () async {
       stubRelease(_release());
-      expect(await repo(abi: Abi.androidX64).findUpdate(), Uri.parse(_x64Url));
+      expect(await repo(abi: Abi.androidX64).findUpdate(), _hasApkUrl(_x64Url));
+    });
+
+    test('carries tag, file name, sha256 and size', () async {
+      stubRelease(
+        _release(
+          assets: [
+            (
+              name: 'ledgerly-v0.7.2-arm64-v8a.apk',
+              url: _arm64Url,
+              digest: _digest,
+              size: 1234,
+            ),
+          ],
+        ),
+      );
+      expect(
+        await repo().findUpdate(),
+        AppUpdate(
+          version: 'v0.7.2',
+          fileName: 'ledgerly-v0.7.2-arm64-v8a.apk',
+          apkUrl: Uri.parse(_arm64Url),
+          sha256: _hex,
+          sizeBytes: 1234,
+        ),
+      );
+    });
+
+    for (final (label, digest, size) in [
+      ('missing digest', null, 1234),
+      ('non-sha256 digest', 'md5:abcd', 1234),
+      ('short hex', 'sha256:abcd', 1234),
+      ('missing size', _digest, null),
+    ]) {
+      test('$label: sha256 and size are null (browser only)', () async {
+        stubRelease(
+          _release(
+            assets: [
+              (
+                name: 'ledgerly-v0.7.2-arm64-v8a.apk',
+                url: _arm64Url,
+                digest: digest,
+                size: size,
+              ),
+            ],
+          ),
+        );
+        final update = await repo().findUpdate();
+        expect(update!.sha256, isNull);
+        expect(update.sizeBytes, isNull);
+      });
+    }
+
+    test('uppercase hex digest is normalised to lowercase', () async {
+      stubRelease(
+        _release(
+          assets: [
+            (
+              name: 'ledgerly-v0.7.2-arm64-v8a.apk',
+              url: _arm64Url,
+              digest: 'sha256:${'AB' * 32}',
+              size: 1,
+            ),
+          ],
+        ),
+      );
+      expect((await repo().findUpdate())!.sha256, _hex);
     });
 
     test('same version gives null', () async {
