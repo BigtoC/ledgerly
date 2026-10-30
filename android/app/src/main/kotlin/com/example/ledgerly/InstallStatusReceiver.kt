@@ -15,7 +15,8 @@ class InstallStatusReceiver : BroadcastReceiver() {
             PackageInstaller.STATUS_FAILURE,
         )
         if (status == PackageInstaller.STATUS_PENDING_USER_ACTION) {
-            val confirm = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // The typed overload is buggy on API 33; AndroidX IntentCompat also waits for 34.
+            val confirm = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)
             } else {
                 @Suppress("DEPRECATION")
