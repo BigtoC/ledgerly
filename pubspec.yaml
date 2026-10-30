@@ -4,8 +4,8 @@ publish_to: "none"
 version: 0.7.4
 
 environment:
-  sdk: ^3.13.0
-  flutter: ">=3.47.0"
+  sdk: ^3.13.7
+  flutter: ">=3.47.8"
 
 # Dependency list mirrors PRD.md -> Dependencies (Core + shipped Phase 2).
 # Deferred Phase 2/3 packages (flutter_secure_storage, csv, ...) are NOT
