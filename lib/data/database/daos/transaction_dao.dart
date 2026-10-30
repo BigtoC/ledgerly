@@ -176,6 +176,51 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
     return into(transactions).insert(row);
   }
 
+  /// Insert [rows] in list order with one batch, so ids ascend with the
+  /// list. Backs `TransactionRepository.insertImported`.
+  Future<void> insertBatch(List<TransactionsCompanion> rows) {
+    return batch((b) => b.insertAll(transactions, rows));
+  }
+
+  /// `(created_at, amount_minor_units, currency, memo)` of every row whose
+  /// `created_at` lies in `[start, endInclusive]`. Selects only those four
+  /// columns: CSV import duplicate detection compares nothing else, and the
+  /// range can span years of history.
+  Future<
+    List<
+      ({
+        DateTime createdAt,
+        int amountMinorUnits,
+        String currency,
+        String? memo,
+      })
+    >
+  >
+  getImportSignatureRows({
+    required DateTime start,
+    required DateTime endInclusive,
+  }) async {
+    final query = selectOnly(transactions)
+      ..addColumns([
+        transactions.createdAt,
+        transactions.amountMinorUnits,
+        transactions.currency,
+        transactions.memo,
+      ])
+      ..where(transactions.createdAt.isBetweenValues(start, endInclusive));
+    final rows = await query.get();
+    return rows
+        .map(
+          (r) => (
+            createdAt: r.read(transactions.createdAt)!,
+            amountMinorUnits: r.read(transactions.amountMinorUnits)!,
+            currency: r.read(transactions.currency)!,
+            memo: r.read(transactions.memo),
+          ),
+        )
+        .toList(growable: false);
+  }
+
   /// Replace row by PK.
   Future<bool> updateRow(TransactionsCompanion row) {
     return update(transactions).replace(row);

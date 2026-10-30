@@ -900,4 +900,199 @@ void main() {
       expect(emissions.last, isEmpty);
     });
   });
+
+  // -------------------------------------------------------------------------
+  // CSV import write + duplicate-detection read paths.
+  // -------------------------------------------------------------------------
+  Transaction importedTx({
+    required DateTime createdAt,
+    int amount = 1234,
+    Currency currency = _usd,
+    int? categoryId,
+    String? memo,
+    String? amountFormula,
+  }) {
+    return Transaction(
+      id: 0,
+      amountMinorUnits: amount,
+      currency: currency,
+      categoryId: categoryId ?? fixtures.expenseCategoryId,
+      accountId: fixtures.accountId,
+      memo: memo,
+      amountFormula: amountFormula,
+      date: DateTime(createdAt.year, createdAt.month, createdAt.day),
+      createdAt: createdAt,
+      // Placeholder; the repository overwrites it.
+      updatedAt: DateTime.utc(0),
+    );
+  }
+
+  Future<int> countTransactions() async {
+    final row = await db
+        .customSelect('SELECT COUNT(*) AS n FROM transactions')
+        .getSingle();
+    return row.read<int>('n');
+  }
+
+  group('insertImported', () {
+    test(
+      'I-01: keeps createdAt and date, one updatedAt per call, null formula, '
+      'ids follow list order',
+      () async {
+        var calls = 0;
+        final importNow = DateTime(2026, 10, 30, 12);
+        final repo = DriftTransactionRepository(
+          db,
+          clock: () => importNow.add(Duration(seconds: calls++)),
+        );
+        final input = [
+          importedTx(createdAt: DateTime(2022, 7, 16, 18, 28), amount: 100),
+          importedTx(
+            createdAt: DateTime(2024, 1, 2, 9, 5, 30),
+            amount: 200,
+            memo: 'lunch',
+            amountFormula: '1+1',
+          ),
+          importedTx(createdAt: DateTime(2023, 3, 4, 23, 59), amount: 300),
+        ];
+
+        final inserted = await repo.insertImported(input);
+
+        expect(inserted, 3);
+        expect(calls, 1);
+        final ids =
+            (await db
+                    .customSelect('SELECT id FROM transactions ORDER BY id')
+                    .get())
+                .map((r) => r.read<int>('id'))
+                .toList();
+        expect(ids, hasLength(3));
+        for (var i = 0; i < ids.length; i++) {
+          final stored = (await repo.getById(ids[i]))!;
+          expect(stored.amountMinorUnits, input[i].amountMinorUnits);
+          expect(stored.createdAt, input[i].createdAt);
+          expect(stored.date, input[i].date);
+          expect(stored.updatedAt, importNow);
+          expect(stored.memo, input[i].memo);
+          expect(stored.amountFormula, isNull);
+        }
+      },
+    );
+
+    test('I-02: unknown currency throws CurrencyNotFoundException, nothing '
+        'inserted', () async {
+      await expectLater(
+        txRepo.insertImported([
+          importedTx(createdAt: DateTime(2026, 1, 1, 10)),
+          importedTx(
+            createdAt: DateTime(2026, 1, 1, 11),
+            currency: const Currency(code: 'XXX', decimals: 2),
+          ),
+        ]),
+        throwsA(
+          isA<CurrencyNotFoundException>().having((e) => e.code, 'code', 'XXX'),
+        ),
+      );
+      expect(await countTransactions(), 0);
+    });
+
+    test('I-03: rolls back with an outer transaction that throws', () async {
+      await expectLater(
+        db.transaction(() async {
+          await txRepo.insertImported([
+            importedTx(createdAt: DateTime(2026, 1, 1, 10)),
+            importedTx(createdAt: DateTime(2026, 1, 1, 11)),
+          ]);
+          throw StateError('outer failure');
+        }),
+        throwsStateError,
+      );
+      expect(await countTransactions(), 0);
+    });
+
+    test('I-04: an FK failure mid-batch leaves no rows', () async {
+      final fk = await db.customSelect('PRAGMA foreign_keys').getSingle();
+      expect(fk.read<int>('foreign_keys'), 1);
+
+      await expectLater(
+        txRepo.insertImported([
+          importedTx(createdAt: DateTime(2026, 1, 1, 10)),
+          importedTx(createdAt: DateTime(2026, 1, 1, 11), categoryId: 999999),
+          importedTx(createdAt: DateTime(2026, 1, 1, 12)),
+        ]),
+        throwsA(isA<SqliteException>()),
+      );
+      expect(await countTransactions(), 0);
+    });
+  });
+
+  group('getImportSignatures', () {
+    test(
+      'S-01: includes both bounds and filters on createdAt, not date',
+      () async {
+        final start = DateTime(2026, 3, 1, 8);
+        final end = DateTime(2026, 3, 5, 20, 30);
+        await txRepo.insertImported([
+          // Out: one second before start.
+          importedTx(
+            createdAt: start.subtract(const Duration(seconds: 1)),
+            amount: 1,
+          ),
+          // In: exactly start.
+          importedTx(createdAt: start, amount: 2, memo: 'start'),
+          // In: exactly end.
+          importedTx(createdAt: end, amount: 3),
+          // Out: one second after end.
+          importedTx(createdAt: end.add(const Duration(seconds: 1)), amount: 4),
+        ]);
+        // Out by createdAt although its `date` lies inside the range.
+        await txRepo.save(sampleTx(amount: 5, date: DateTime(2026, 3, 3)));
+
+        final signatures = await txRepo.getImportSignatures(start, end);
+
+        expect(
+          signatures,
+          unorderedEquals([
+            (
+              createdAt: start,
+              amountMinorUnits: 2,
+              currencyCode: 'USD',
+              memo: 'start',
+            ),
+            (
+              createdAt: end,
+              amountMinorUnits: 3,
+              currencyCode: 'USD',
+              memo: null,
+            ),
+          ]),
+        );
+      },
+    );
+
+    test('S-02: selects only the four signature columns', () async {
+      final interceptor = _SelectCountingInterceptor();
+      final countedDb = AppDatabase(
+        NativeDatabase.memory().interceptWith(interceptor),
+      );
+      addTearDown(() async => countedDb.close());
+      await _seedFixtures(countedDb);
+      final repo = DriftTransactionRepository(countedDb);
+      interceptor.statements.clear();
+
+      await repo.getImportSignatures(
+        DateTime(2026, 1, 1),
+        DateTime(2026, 12, 31),
+      );
+
+      final sql = interceptor.statements.single;
+      expect(sql, contains('"created_at"'));
+      expect(sql, contains('"amount_minor_units"'));
+      expect(sql, contains('"currency"'));
+      expect(sql, contains('"memo"'));
+      expect(sql, isNot(contains('"category_id"')));
+      expect(sql, isNot(contains('"account_id"')));
+      expect(sql, isNot(contains('"amount_formula"')));
+    });
+  });
 }
