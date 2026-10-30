@@ -15,6 +15,7 @@ import 'package:ledgerly/app/router.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/features/analysis/analysis_screen.dart';
 import 'package:ledgerly/features/analysis/charts/charts_controller.dart';
+import 'package:ledgerly/features/analysis/charts/charts_net_total_provider.dart';
 import 'package:ledgerly/features/analysis/charts/charts_providers.dart';
 import 'package:ledgerly/features/analysis/charts/charts_selection_controller.dart';
 import 'package:ledgerly/features/analysis/charts/slice_drilldown_controller.dart';
@@ -37,6 +38,7 @@ import '../support/test_app.dart';
   themeMode,
   userLocalePreference,
   exchangeRateRepository,
+  chartsNetTotal,
 ])
 void main() {
   testWidgets('charts render on Analysis after an insert', (tester) async {

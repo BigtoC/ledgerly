@@ -8,6 +8,7 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 import '../../app/providers/default_currency_provider.dart';
 import '../../l10n/app_localizations.dart';
 import 'charts/charts_controller.dart';
+import 'charts/charts_net_total_provider.dart';
 import 'charts/charts_providers.dart';
 import 'charts/charts_section.dart';
 import 'charts/charts_selection_controller.dart';
@@ -31,6 +32,7 @@ const double _kSearchBarVerticalPadding = 8;
   analysisCategoriesById,
   analysisAccountsById,
   chartsFxStatus,
+  chartsNetTotal,
 ])
 class AnalysisScreen extends ConsumerStatefulWidget {
   const AnalysisScreen({super.key});
