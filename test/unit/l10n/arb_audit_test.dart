@@ -424,6 +424,7 @@ const Set<String> _expectedEnKeys = <String>{
   'csvImportDoneTitle',
   'csvImportDoneImported',
   'csvImportDoneCreated',
+  'csvImportDoneSkipped',
   'csvImportDone',
 };
 

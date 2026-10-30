@@ -2068,6 +2068,12 @@ abstract class AppLocalizations {
   /// **'Created {accounts} accounts and {categories} categories'**
   String csvImportDoneCreated(int accounts, int categories);
 
+  /// CSV import result: number of rows skipped as duplicates and as invalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped {duplicates} duplicates and {invalid} invalid rows'**
+  String csvImportDoneSkipped(int duplicates, int invalid);
+
   /// CSV import result button that returns to Settings.
   ///
   /// In en, this message translates to:

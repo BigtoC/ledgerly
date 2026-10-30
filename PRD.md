@@ -877,6 +877,7 @@ ShellRoute (bottom nav)
     /settings/recurring     Recurring rules list
     /settings/recurring/new New recurring rule (modal push)
     /settings/recurring/:id Edit recurring rule (modal push)
+    /settings/import        Import from CSV (modal push, root navigator)
 ```
 
 - Add/Edit Transaction is a full-screen modal push (`MaterialPage` / `CupertinoPage`) so the calculator keypad has full vertical space.

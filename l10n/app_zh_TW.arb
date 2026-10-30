@@ -392,5 +392,7 @@
   "@csvImportDoneImported": {"placeholders": {"count": {"type": "int"}}},
   "csvImportDoneCreated": "已建立 {accounts} 個帳戶及 {categories} 個類別",
   "@csvImportDoneCreated": {"placeholders": {"accounts": {"type": "int"}, "categories": {"type": "int"}}},
+  "csvImportDoneSkipped": "已略過 {duplicates} 筆重複及 {invalid} 筆無效資料",
+  "@csvImportDoneSkipped": {"placeholders": {"duplicates": {"type": "int"}, "invalid": {"type": "int"}}},
   "csvImportDone": "完成"
 }

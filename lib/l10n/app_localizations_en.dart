@@ -1150,5 +1150,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String csvImportDoneSkipped(int duplicates, int invalid) {
+    return 'Skipped $duplicates duplicates and $invalid invalid rows';
+  }
+
+  @override
   String get csvImportDone => 'Done';
 }

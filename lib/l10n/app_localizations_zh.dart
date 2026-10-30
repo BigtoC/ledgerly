@@ -1150,6 +1150,11 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String csvImportDoneSkipped(int duplicates, int invalid) {
+    return 'Skipped $duplicates duplicates and $invalid invalid rows';
+  }
+
+  @override
   String get csvImportDone => 'Done';
 }
 
@@ -2252,6 +2257,11 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
+  String csvImportDoneSkipped(int duplicates, int invalid) {
+    return '已跳过 $duplicates 笔重复及 $invalid 笔无效数据';
+  }
+
+  @override
   String get csvImportDone => '完成';
 }
 
@@ -3351,6 +3361,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String csvImportDoneCreated(int accounts, int categories) {
     return '已建立 $accounts 個帳戶及 $categories 個類別';
+  }
+
+  @override
+  String csvImportDoneSkipped(int duplicates, int invalid) {
+    return '已略過 $duplicates 筆重複及 $invalid 筆無效資料';
   }
 
   @override

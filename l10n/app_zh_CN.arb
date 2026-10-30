@@ -392,5 +392,7 @@
   "@csvImportDoneImported": {"placeholders": {"count": {"type": "int"}}},
   "csvImportDoneCreated": "已创建 {accounts} 个账户及 {categories} 个类别",
   "@csvImportDoneCreated": {"placeholders": {"accounts": {"type": "int"}, "categories": {"type": "int"}}},
+  "csvImportDoneSkipped": "已跳过 {duplicates} 笔重复及 {invalid} 笔无效数据",
+  "@csvImportDoneSkipped": {"placeholders": {"duplicates": {"type": "int"}, "invalid": {"type": "int"}}},
   "csvImportDone": "完成"
 }

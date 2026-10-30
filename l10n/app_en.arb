@@ -1181,6 +1181,8 @@
   "@csvImportDoneImported": {"description": "CSV import result: number of transactions inserted.", "placeholders": {"count": {"type": "int"}}},
   "csvImportDoneCreated": "Created {accounts} accounts and {categories} categories",
   "@csvImportDoneCreated": {"description": "CSV import result: number of accounts and categories created.", "placeholders": {"accounts": {"type": "int"}, "categories": {"type": "int"}}},
+  "csvImportDoneSkipped": "Skipped {duplicates} duplicates and {invalid} invalid rows",
+  "@csvImportDoneSkipped": {"description": "CSV import result: number of rows skipped as duplicates and as invalid.", "placeholders": {"duplicates": {"type": "int"}, "invalid": {"type": "int"}}},
   "csvImportDone": "Done",
   "@csvImportDone": {"description": "CSV import result button that returns to Settings."}
 }

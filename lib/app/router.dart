@@ -26,6 +26,8 @@ import '../features/recurring/recurring_rule_form_screen.dart';
 import '../features/recurring/recurring_rules_controller.dart';
 import '../features/recurring/recurring_rules_screen.dart';
 import '../features/settings/about_screen.dart';
+import '../features/settings/csv_import/csv_import_controller.dart';
+import '../features/settings/csv_import/csv_import_screen.dart';
 import '../features/settings/settings_controller.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/shopping_list/shopping_list_controller.dart';
@@ -76,6 +78,7 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
     CategoriesController,
     RecurringRulesController,
     RecurringRuleFormController,
+    CsvImportController,
     categoriesByType,
     accountRepository,
     TransactionFormController,
@@ -294,6 +297,14 @@ GoRouter router(Ref ref) {
                       const _AdaptiveFormRoute(
                         child: RecurringRuleFormScreen(),
                       ),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'import',
+                    parentNavigatorKey: _rootNavigatorKey,
+                    pageBuilder: (ctx, state) => _modalPage(
+                      state,
+                      const _AdaptiveFormRoute(child: CsvImportScreen()),
                     ),
                   ),
                   GoRoute(

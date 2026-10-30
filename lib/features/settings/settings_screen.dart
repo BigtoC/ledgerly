@@ -110,6 +110,12 @@ class _SettingsBody extends ConsumerWidget {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => context.push('/settings/recurring'),
                 ),
+                ListTile(
+                  key: const ValueKey('settingsImportCsvTile'),
+                  title: Text(l10n.settingsImportCsvTile),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/settings/import'),
+                ),
               ],
             ),
           ),
