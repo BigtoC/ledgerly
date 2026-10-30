@@ -10,6 +10,9 @@ import io.flutter.plugin.common.MethodChannel
 /** Receives PackageInstaller session status for the in-app update. */
 class InstallStatusReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        // A session a newer tap replaced still reports (abandoning it sends
+        // STATUS_FAILURE_ABORTED); that status is not the install in flight.
+        if (intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1) != pendingSessionId) return
         val status = intent.getIntExtra(
             PackageInstaller.EXTRA_STATUS,
             PackageInstaller.STATUS_FAILURE,
@@ -37,9 +40,13 @@ class InstallStatusReceiver : BroadcastReceiver() {
         /** Channel result of the install in flight; completed once. */
         var pending: MethodChannel.Result? = null
 
+        /** PackageInstaller session [pending] waits on, or -1. */
+        var pendingSessionId = -1
+
         fun finish(status: Int) {
             pending?.success(status)
             pending = null
+            pendingSessionId = -1
         }
     }
 }

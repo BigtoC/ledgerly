@@ -77,7 +77,7 @@ class MainActivity : FlutterActivity() {
                 val written = sessionId
                 runOnUiThread { commit(installer, written, status, result) }
             } catch (e: Exception) {
-                if (sessionId != -1) installer.abandonSession(sessionId)
+                if (sessionId != -1) abandonQuietly(installer, sessionId)
                 runOnUiThread { result.success(failureStatus(e)) }
             }
         }.start()
@@ -94,13 +94,30 @@ class MainActivity : FlutterActivity() {
         result: MethodChannel.Result,
     ) {
         try {
-            InstallStatusReceiver.pending?.success(PackageInstaller.STATUS_FAILURE_ABORTED)
+            // A newer tap replaces the install in flight: report it aborted
+            // and try to abandon its session. Android ignores that once the
+            // user has confirmed; the receiver then drops its late status.
+            val replaced = InstallStatusReceiver.pendingSessionId
+            InstallStatusReceiver.finish(PackageInstaller.STATUS_FAILURE_ABORTED)
+            if (replaced != -1) abandonQuietly(installer, replaced)
             InstallStatusReceiver.pending = result
+            InstallStatusReceiver.pendingSessionId = sessionId
             installer.openSession(sessionId).use { it.commit(status.intentSender) }
         } catch (e: Exception) {
-            installer.abandonSession(sessionId)
-            if (InstallStatusReceiver.pending === result) InstallStatusReceiver.pending = null
+            abandonQuietly(installer, sessionId)
+            if (InstallStatusReceiver.pending === result) {
+                InstallStatusReceiver.pending = null
+                InstallStatusReceiver.pendingSessionId = -1
+            }
             result.success(failureStatus(e))
+        }
+    }
+
+    /** A session that already finished or was abandoned throws; nothing is left to clean up. */
+    private fun abandonQuietly(installer: PackageInstaller, sessionId: Int) {
+        try {
+            installer.abandonSession(sessionId)
+        } catch (e: Exception) {
         }
     }
 
