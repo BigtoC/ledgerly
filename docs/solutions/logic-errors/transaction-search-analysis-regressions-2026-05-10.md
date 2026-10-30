@@ -14,6 +14,7 @@ symptoms:
 root_cause: logic_error
 resolution_type: code_fix
 severity: high
+last_refreshed: 2026-10-31
 related_components:
   - analysis_controller
   - category_search_detail_controller
@@ -80,50 +81,51 @@ _emitGroupedState(txs, categoriesById, query);
 
 The category-listener path now follows the same contract: if metadata errors, forward the error; if metadata is still loading and there are already matching transactions, keep the controller in `AnalysisLoading(previous: ...)`; only emit grouped results when both streams are ready.
 
-In `lib/features/analysis/search/category_search_detail_controller.dart`, reuse active Analysis state only when it already exists and is settled for the same query; otherwise fall back to the repository stream:
+In `lib/features/analysis/search/category_search_detail_controller.dart`, pre-fill synchronously from active Analysis state only when it exists and holds `AnalysisResults` for the same query, then always open the detail page's own repository subscription:
 
 ```dart
 if (ref.exists(analysisControllerProvider)) {
-  final analysis = ref.read(analysisControllerProvider);
-  final state = analysis.value;
-  final matchesActiveQuery = switch (state) {
-    AnalysisLoading(:final query) => query == trimmed,
-    AnalysisResults(:final query) => query == trimmed,
-    AnalysisEmpty(:final query) => query == trimmed,
-    _ => false,
-  };
-
-  if (matchesActiveQuery && state is! AnalysisLoading) {
-    final all = ref.read(analysisControllerProvider.notifier).lastTransactions;
-    if (all != null) {
-      return Stream.value(
-        _buildState(
-          all: all,
-          categoryId: categoryId,
-          currencyCode: trimmedCurrencyCode,
-        ),
-      );
-    }
+  final settled = ref.read(analysisControllerProvider).value;
+  if (settled is AnalysisResults && settled.query == trimmedQuery) {
+    _lastTransactions = settled.transactions;
+    controller.add(
+      _buildState(
+        all: settled.transactions,
+        categoryId: categoryId,
+        currencyCode: trimmedCurrencyCode,
+      ),
+    );
   }
 }
 
-return repo.watchByMemo(trimmed).map(
-  (all) => _buildState(
-    all: all,
-    categoryId: categoryId,
-    currencyCode: trimmedCurrencyCode,
-  ),
-);
+final repo = ref.watch(transactionRepositoryProvider);
+_subscription = repo
+    .watchByMemo(trimmedQuery)
+    .listen(
+      (txs) {
+        _lastTransactions = txs;
+        _emitter?.add(
+          _buildState(
+            all: txs,
+            categoryId: categoryId,
+            currencyCode: trimmedCurrencyCode,
+          ),
+        );
+      },
+      onError: (Object e, StackTrace st) {
+        _emitter?.addError(e, st);
+      },
+    );
 ```
 
-That preserves the single-source-of-truth behavior for in-flow drill-downs without breaking standalone tests or direct-entry routes that have no live `AnalysisController` state yet.
+`AnalysisResults.transactions` replaced the earlier `analysisControllerProvider.notifier.lastTransactions` getter. The pre-fill saves in-flow drill-downs a frame of `DetailLoading`. The repository subscription stays the source of truth, so direct-entry routes with no live `AnalysisController` state work, and so do edits made after navigating in. The pre-fill reads `.value` without a `hasError` check. In Riverpod 3 that can return the last `AnalysisResults` while the controller is in `AsyncError`, but those rows still match the same query and the subscription's first emission replaces them.
 
 The test harnesses were updated to match the real contracts:
 
 - `test/unit/controllers/analysis_controller_test.dart` now locks in metadata-loading and metadata-error behavior.
-- `test/unit/controllers/category_search_detail_controller_test.dart` still proves the repository fallback path.
+- `test/unit/controllers/category_search_detail_controller_test.dart` still proves the repository subscription path.
 - `test/widget/features/analysis/analysis_screen_test.dart` verifies stale loading rows do not navigate by tapping with `warnIfMissed: false` and checking the route stays put.
-- `test/widget/features/analysis/category_search_detail_screen_test.dart` verifies the detail page reuses the active analysis search when available.
+- `test/widget/features/analysis/category_search_detail_screen_test.dart` verifies the detail page pre-fills from the active analysis results and still opens its own live subscription.
 - `test/unit/app/router_test.dart` exercises the real router and confirms invalid Analysis detail params redirect to `/analysis`.
 
 ## Why This Works
@@ -134,7 +136,7 @@ The fixed code stops flattening three distinct states into one:
 - transactions found + metadata error
 - transactions found + metadata ready
 
-That keeps the UI honest about whether search results are still resolving, genuinely empty, or actually broken. The detail controller also now reuses shared state only through APIs Riverpod really exposes, which removes the compile-time failure and keeps the fallback behavior intact for standalone detail consumers.
+That keeps the UI honest about whether search results are still resolving, genuinely empty, or actually broken. The detail controller now reads shared state only through the provider's `state` (`AnalysisResults.transactions`), not through a `.stream` surface or a notifier getter. Its own repository subscription covers standalone detail consumers.
 
 ## Prevention
 
@@ -145,7 +147,7 @@ That keeps the UI honest about whether search results are still resolving, genui
 - Keep regression coverage for:
   - non-empty search while category metadata is still loading
   - category metadata error propagation
-  - detail reuse of active analysis state vs repository fallback
+  - detail pre-fill from active analysis state plus its own live subscription
   - stale loading rows remaining non-interactive
   - invalid Analysis detail params redirecting to `/analysis`
 
@@ -153,6 +155,8 @@ That keeps the UI honest about whether search results are still resolving, genui
 
 - `docs/solutions/best-practices/reactive-feature-flow-ownership-2026-04-25.md` — broader guidance on router-owned navigation and reactive state ownership
 - `docs/solutions/test-failures/analysis-manage-accounts-review-followups-2026-05-05.md` — nearby Analysis-area review fallout and stale route/l10n drift
+- `docs/solutions/runtime-errors/riverpod-cross-provider-dependencies-assertion-2026-05-10.md` — same day, same controller: the reuse read also needed `AnalysisController` in the detail provider's `dependencies:`
+- `docs/solutions/best-practices/adding-derived-riverpod-provider-to-scoped-analysis-screen.md` — Riverpod 3 `.value` returns previous data during `AsyncError`; check `hasError` first when stale data would mislead
 - Verified with:
   - `"/Users/bigtochan/flutter/flutter/bin/flutter" test "test/unit/controllers/analysis_controller_test.dart"`
   - `"/Users/bigtochan/flutter/flutter/bin/flutter" test "test/widget/features/analysis/analysis_screen_test.dart"`
