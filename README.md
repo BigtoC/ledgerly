@@ -26,7 +26,7 @@ auto-prepend guarantee so the date is always visible on the splash even
 if the user removes `{date}` from their template.
 
 Drift schema is at **v7** (v7 backfills the seeded Investment expense
-category; `transactions.amount_formula` added in v6;
+category and retires Personal; `transactions.amount_formula` added in v6;
 `exchange_rates` added in v5; `recurring_rules` + `pending_transactions`
 added in v4). Snapshots are
 committed under `drift_schemas/`.

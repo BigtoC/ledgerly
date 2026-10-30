@@ -125,7 +125,7 @@
   },
   "categoryPersonal": "Personal",
   "@categoryPersonal": {
-    "description": "PRD 472. Seeded expense category — Personal. DB l10n_key: category.personal."
+    "description": "PRD 472. Retired expense category — Personal. No longer seeded; schema v7 deletes unused rows and archives used ones, so this label only names archived rows that still hold history. DB l10n_key: category.personal."
   },
   "categoryTravel": "Travel",
   "@categoryTravel": {

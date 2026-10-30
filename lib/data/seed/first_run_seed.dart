@@ -10,7 +10,7 @@
 //   Step 0 — Idempotency gate (`preferences.getFirstRunComplete()`).
 //   Step 1 — Seed 11 currencies (Stream C plan §2.3 Step 1 + §12 Q6).
 //   Step 2 — Resolve `default_currency` from `LocaleService.deviceLocale`.
-//   Step 3 — Seed 19 default categories (14 expense + 5 income).
+//   Step 3 — Seed 18 default categories (13 expense + 5 income).
 //   Step 4 — Seed 2 default account types (Cash, Investment).
 //   Step 5 — Seed 1 Cash account at the resolved default currency.
 //   Step 6 — Seed 8 `user_preferences` keys (incl. `default_account_id`
@@ -152,12 +152,13 @@ class _SeededCategory {
   final int sortOrder;
 }
 
-/// 19 seeded categories (14 expense + 5 income). Icon keys reconcile
+/// 18 seeded categories (13 expense + 5 income). Icon keys reconcile
 /// against the canonical Stream B registry (`directions_car` for
 /// transportation, `savings` for income.other — Stream C plan §2.3 Step 3
 /// "reconcile with Stream B" clause). `category.investment` was added
 /// after launch, so it sits last and the schema v7 migration appends the
-/// same row to existing installs.
+/// same row to existing installs. `category.personal` was retired in the
+/// same release; v7 deletes or archives it on existing installs.
 const List<_SeededCategory> _kSeededCategories = <_SeededCategory>[
   // Expense categories (PRD 464–476).
   _SeededCategory(
@@ -217,39 +218,32 @@ const List<_SeededCategory> _kSeededCategories = <_SeededCategory>[
     sortOrder: 7,
   ),
   _SeededCategory(
-    l10nKey: 'category.personal',
-    icon: 'self_care',
-    color: CategoryPaletteIndex.green80,
-    type: CategoryType.expense,
-    sortOrder: 8,
-  ),
-  _SeededCategory(
     l10nKey: 'category.travel',
     icon: 'flight',
     color: CategoryPaletteIndex.cyan70,
     type: CategoryType.expense,
-    sortOrder: 9,
+    sortOrder: 8,
   ),
   _SeededCategory(
     l10nKey: 'category.threeC',
     icon: 'devices',
     color: CategoryPaletteIndex.blue30,
     type: CategoryType.expense,
-    sortOrder: 10,
+    sortOrder: 9,
   ),
   _SeededCategory(
     l10nKey: 'category.miscellaneous',
     icon: 'category',
     color: CategoryPaletteIndex.neutralVariant50,
     type: CategoryType.expense,
-    sortOrder: 11,
+    sortOrder: 10,
   ),
   _SeededCategory(
     l10nKey: 'category.other',
     icon: 'more_horiz',
     color: CategoryPaletteIndex.neutralVariant50,
     type: CategoryType.expense,
-    sortOrder: 12,
+    sortOrder: 11,
   ),
   // Income categories (PRD 486–490).
   _SeededCategory(
@@ -257,35 +251,35 @@ const List<_SeededCategory> _kSeededCategories = <_SeededCategory>[
     icon: 'payments',
     color: CategoryPaletteIndex.yellow80,
     type: CategoryType.income,
-    sortOrder: 13,
+    sortOrder: 12,
   ),
   _SeededCategory(
     l10nKey: 'category.income.freelance',
     icon: 'work',
     color: CategoryPaletteIndex.yellow80,
     type: CategoryType.income,
-    sortOrder: 14,
+    sortOrder: 13,
   ),
   _SeededCategory(
     l10nKey: 'category.income.investment',
     icon: 'trending_up',
     color: CategoryPaletteIndex.yellow80,
     type: CategoryType.income,
-    sortOrder: 15,
+    sortOrder: 14,
   ),
   _SeededCategory(
     l10nKey: 'category.income.gift',
     icon: 'redeem',
     color: CategoryPaletteIndex.yellow80,
     type: CategoryType.income,
-    sortOrder: 16,
+    sortOrder: 15,
   ),
   _SeededCategory(
     l10nKey: 'category.income.other',
     icon: 'savings',
     color: CategoryPaletteIndex.yellow80,
     type: CategoryType.income,
-    sortOrder: 17,
+    sortOrder: 16,
   ),
   // Expense category added after launch (schema v7 backfill).
   _SeededCategory(
@@ -293,7 +287,7 @@ const List<_SeededCategory> _kSeededCategories = <_SeededCategory>[
     icon: 'trending_up',
     color: CategoryPaletteIndex.yellow80,
     type: CategoryType.expense,
-    sortOrder: 18,
+    sortOrder: 17,
   ),
 ];
 

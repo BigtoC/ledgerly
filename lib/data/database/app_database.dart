@@ -112,6 +112,7 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 7) {
         await _backfillInvestmentCategory();
+        await _retirePersonalCategory();
       }
     },
     beforeOpen: (details) async {
@@ -133,6 +134,28 @@ class AppDatabase extends _$AppDatabase {
       '(SELECT COALESCE(MAX(sort_order) + 1, 0) FROM categories), 0 '
       'WHERE NOT EXISTS (SELECT 1 FROM categories '
       "WHERE l10n_key = 'category.investment')",
+    );
+  }
+
+  /// Data-only v7 step: retires the seeded `category.personal` row. It is
+  /// deleted when nothing references it; otherwise it is archived so the
+  /// transactions, recurring rules, shopping-list drafts and pending rows
+  /// that use it keep their history (archive-instead-of-delete).
+  Future<void> _retirePersonalCategory() async {
+    await customStatement(
+      "DELETE FROM categories WHERE l10n_key = 'category.personal' "
+      'AND NOT EXISTS (SELECT 1 FROM transactions '
+      'WHERE category_id = categories.id) '
+      'AND NOT EXISTS (SELECT 1 FROM recurring_rules '
+      'WHERE category_id = categories.id) '
+      'AND NOT EXISTS (SELECT 1 FROM shopping_list_items '
+      'WHERE category_id = categories.id) '
+      'AND NOT EXISTS (SELECT 1 FROM pending_transactions '
+      'WHERE category_id = categories.id)',
+    );
+    await customStatement(
+      'UPDATE categories SET is_archived = 1 '
+      "WHERE l10n_key = 'category.personal'",
     );
   }
 

@@ -149,10 +149,10 @@ void main() {
       expect(allCurrencies, hasLength(11));
 
       final allCats = await h.categories.watchAll().first;
-      expect(allCats, hasLength(19));
+      expect(allCats, hasLength(18));
       expect(
         allCats.where((c) => c.type == CategoryType.expense),
-        hasLength(14),
+        hasLength(13),
       );
       expect(allCats.where((c) => c.type == CategoryType.income), hasLength(5));
 
@@ -240,7 +240,6 @@ void main() {
         'category.entertainment',
         'category.medical',
         'category.education',
-        'category.personal',
         'category.travel',
         'category.threeC',
         'category.miscellaneous',
@@ -261,6 +260,7 @@ void main() {
       }
       expect(byKey['category.investment']!.icon, 'trending_up');
       expect(byKey['category.investment']!.color, 9); // yellow80
+      expect(byKey.containsKey('category.personal'), isFalse);
     });
 
     test('seeded account types have default_currency = '
@@ -381,7 +381,7 @@ void main() {
         'accounts': (await h.accounts.watchAll().first).length,
       };
       expect(afterFirst['currencies'], 11);
-      expect(afterFirst['categories'], 19);
+      expect(afterFirst['categories'], 18);
       expect(afterFirst['accountTypes'], 2);
       expect(afterFirst['accounts'], 1);
 

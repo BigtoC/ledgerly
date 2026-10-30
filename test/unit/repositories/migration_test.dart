@@ -134,7 +134,7 @@ void main() {
           await currencies.watchAll(includeTokens: false).first,
           hasLength(11),
         );
-        expect(await categories.watchAll().first, hasLength(19));
+        expect(await categories.watchAll().first, hasLength(18));
         expect(await accountTypes.watchAll().first, hasLength(2));
         final all = await accounts.watchAll().first;
         expect(all, hasLength(1));
@@ -595,6 +595,121 @@ void main() {
         final rows = await investmentRows(db);
         expect(rows, hasLength(1));
         expect(rows.single['sort_order'], 3);
+        expect(rows.single['is_archived'], 1);
+      });
+
+      Future<List<Map<String, Object?>>> personalRows(AppDatabase db) async {
+        final rows = await db
+            .customSelect(
+              'SELECT is_archived FROM categories '
+              "WHERE l10n_key = 'category.personal'",
+            )
+            .get();
+        return rows.map((r) => r.data).toList();
+      }
+
+      Future<void> insertPersonal(v6.DatabaseAtV6 legacyDb) {
+        return legacyDb.customStatement(
+          'INSERT INTO categories (l10n_key, icon, color, type, sort_order, '
+          'is_archived) VALUES (?, ?, ?, ?, ?, 0)',
+          <Object?>['category.personal', 'self_care', 4, 'expense', 8],
+        );
+      }
+
+      test('v7 upgrade deletes an unused Personal category', () async {
+        final verifier = SchemaVerifier(GeneratedHelper());
+        final schema = await verifier.schemaAt(6);
+        final legacyDb = v6.DatabaseAtV6(schema.newConnection());
+        await insertPersonal(legacyDb);
+        await legacyDb.close();
+
+        final db = AppDatabase(schema.newConnection());
+        addTearDown(() async => db.close());
+
+        await verifier.migrateAndValidate(db, db.schemaVersion);
+
+        expect(await personalRows(db), isEmpty);
+      });
+
+      test(
+        'v7 upgrade archives a Personal category that has transactions',
+        () async {
+          final verifier = SchemaVerifier(GeneratedHelper());
+          final schema = await verifier.schemaAt(6);
+          final legacyDb = v6.DatabaseAtV6(schema.newConnection());
+          await insertPersonal(legacyDb);
+          await legacyDb.customStatement(
+            'INSERT INTO currencies (code, decimals, symbol, name_l10n_key, '
+            'is_token, sort_order) VALUES (?, ?, ?, ?, 0, ?)',
+            <Object?>['USD', 2, r'$', 'currency.usd', 1],
+          );
+          await legacyDb.customStatement(
+            'INSERT INTO account_types (l10n_key, icon, color, sort_order, '
+            'is_archived) VALUES (?, ?, ?, ?, 0)',
+            <Object?>['accountType.cash', 'wallet', 0, 1],
+          );
+          await legacyDb.customStatement(
+            'INSERT INTO accounts (name, account_type_id, currency, '
+            'opening_balance_minor_units, is_archived) '
+            'VALUES (?, 1, ?, 0, 0)',
+            <Object?>['Cash', 'USD'],
+          );
+          await legacyDb.customStatement(
+            'INSERT INTO transactions (amount_minor_units, currency, '
+            'category_id, account_id, memo, date, created_at, updated_at) '
+            'VALUES (?, ?, 1, 1, ?, 0, 0, 0)',
+            <Object?>[1500, 'USD', 'haircut'],
+          );
+          await legacyDb.close();
+
+          final db = AppDatabase(schema.newConnection());
+          addTearDown(() async => db.close());
+
+          await verifier.migrateAndValidate(db, db.schemaVersion);
+
+          final rows = await personalRows(db);
+          expect(rows, hasLength(1));
+          expect(rows.single['is_archived'], 1);
+          expect(await db.select(db.transactions).get(), hasLength(1));
+        },
+      );
+
+      test('v7 upgrade archives a Personal category used by a shopping-list '
+          'draft', () async {
+        final verifier = SchemaVerifier(GeneratedHelper());
+        final schema = await verifier.schemaAt(6);
+        final legacyDb = v6.DatabaseAtV6(schema.newConnection());
+        await insertPersonal(legacyDb);
+        await legacyDb.customStatement(
+          'INSERT INTO currencies (code, decimals, symbol, name_l10n_key, '
+          'is_token, sort_order) VALUES (?, ?, ?, ?, 0, ?)',
+          <Object?>['USD', 2, r'$', 'currency.usd', 1],
+        );
+        await legacyDb.customStatement(
+          'INSERT INTO account_types (l10n_key, icon, color, sort_order, '
+          'is_archived) VALUES (?, ?, ?, ?, 0)',
+          <Object?>['accountType.cash', 'wallet', 0, 1],
+        );
+        await legacyDb.customStatement(
+          'INSERT INTO accounts (name, account_type_id, currency, '
+          'opening_balance_minor_units, is_archived) '
+          'VALUES (?, 1, ?, 0, 0)',
+          <Object?>['Cash', 'USD'],
+        );
+        await legacyDb.customStatement(
+          'INSERT INTO shopping_list_items (category_id, account_id, memo, '
+          'draft_date, created_at, updated_at) VALUES (1, 1, ?, 0, 0, 0)',
+          <Object?>['shampoo'],
+        );
+        await legacyDb.close();
+
+        final db = AppDatabase(schema.newConnection());
+        addTearDown(() async => db.close());
+
+        await verifier.migrateAndValidate(db, db.schemaVersion);
+
+        final rows = await personalRows(db);
+        expect(rows, hasLength(1));
         expect(rows.single['is_archived'], 1);
       });
 

@@ -274,7 +274,7 @@ abstract class AppLocalizations {
   /// **'Education'**
   String get categoryEducation;
 
-  /// PRD 472. Seeded expense category — Personal. DB l10n_key: category.personal.
+  /// PRD 472. Retired expense category — Personal. No longer seeded; schema v7 deletes unused rows and archives used ones, so this label only names archived rows that still hold history. DB l10n_key: category.personal.
   ///
   /// In en, this message translates to:
   /// **'Personal'**
