@@ -108,4 +108,36 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Today'), findsOneWidget);
   });
+
+  testWidgets('DH05: day label sits in a pill filled with the card colour', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        DayNavigationHeader(
+          selectedDay: DateTime.now(),
+          locale: 'en_US',
+          onPrev: () {},
+          onNext: () {},
+          onPickDay: () {},
+          canGoPrev: true,
+          canGoNext: true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final button = tester.widget<TextButton>(find.byType(TextButton));
+    final colorScheme = Theme.of(tester.element(find.byType(TextButton)))
+        .colorScheme;
+    expect(
+      button.style?.backgroundColor?.resolve(<WidgetState>{}),
+      colorScheme.surfaceContainer,
+    );
+    expect(button.style?.shape?.resolve(<WidgetState>{}), isA<StadiumBorder>());
+    // The pill hugs the label instead of stretching between the chevrons.
+    expect(
+      tester.getSize(find.byType(TextButton)).width,
+      lessThan(tester.getSize(find.byType(Row)).width / 2),
+    );
+  });
 }

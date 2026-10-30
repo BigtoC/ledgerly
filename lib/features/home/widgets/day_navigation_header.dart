@@ -54,16 +54,27 @@ class DayNavigationHeader extends StatelessWidget {
             icon: const Icon(Icons.chevron_left),
           ),
           Expanded(
-            child: Tooltip(
-              message: label,
-              child: TextButton(
-                key: const ValueKey('homeDayHeader.pickDay'),
-                onPressed: onPickDay,
-                child: Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+            child: Center(
+              child: Tooltip(
+                message: label,
+                // Pill filled with the home cards' colour so the label
+                // reads as part of the same card family.
+                child: TextButton(
+                  key: const ValueKey('homeDayHeader.pickDay'),
+                  onPressed: onPickDay,
+                  style: TextButton.styleFrom(
+                    backgroundColor: Theme.of(context)
+                        .colorScheme
+                        .surfaceContainer,
+                    shape: const StadiumBorder(),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                  ),
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
             ),

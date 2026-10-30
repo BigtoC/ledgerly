@@ -183,9 +183,7 @@ class TransactionTile extends ConsumerWidget {
                 Text(
                   amountText,
                   style: theme.textTheme.titleMedium?.copyWith(
-                    color: isIncome
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.onSurface,
+                    color: theme.colorScheme.onSurface,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
