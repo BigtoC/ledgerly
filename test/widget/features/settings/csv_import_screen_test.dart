@@ -336,6 +336,8 @@ void main() {
             'This file has more than 10000 rows.',
         const CsvImportState.failure(CsvFileErrorKind.parse):
             'This file could not be read as CSV.',
+        const CsvImportState.failure(CsvFileErrorKind.readFailed):
+            'This file could not be read.',
         const CsvImportState.failure(CsvFileErrorKind.commitFailed):
             'Import failed. Nothing was imported.',
       };

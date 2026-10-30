@@ -30,6 +30,9 @@ enum CsvFileErrorKind {
   /// The text cannot be CSV (an unpaired `"`).
   parse,
 
+  /// Reading the file or the data to match it against failed.
+  readFailed,
+
   /// The commit failed and rolled back; nothing was imported.
   commitFailed,
 }

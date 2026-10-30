@@ -392,6 +392,7 @@ const Set<String> _expectedEnKeys = <String>{
   'csvImportErrorMissingColumns',
   'csvImportErrorTooManyRows',
   'csvImportErrorParse',
+  'csvImportErrorRead',
   'csvImportErrorCommit',
   'csvImportChooseAnother',
   'csvImportBalanceNote',

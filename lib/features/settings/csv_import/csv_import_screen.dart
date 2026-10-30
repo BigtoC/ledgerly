@@ -85,6 +85,7 @@ String _failureMessage(CsvImportFailure failure, AppLocalizations l10n) =>
         kCsvImportMaxRows,
       ),
       CsvFileErrorKind.parse => l10n.csvImportErrorParse,
+      CsvFileErrorKind.readFailed => l10n.csvImportErrorRead,
       CsvFileErrorKind.commitFailed => l10n.csvImportErrorCommit,
     };
 

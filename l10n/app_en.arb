@@ -1117,6 +1117,8 @@
   "@csvImportErrorTooManyRows": {"description": "CSV import failure: the file has more data rows than the import accepts. {max} is the row cap.", "placeholders": {"max": {"type": "int"}}},
   "csvImportErrorParse": "This file could not be read as CSV.",
   "@csvImportErrorParse": {"description": "CSV import failure: the text is not valid CSV (e.g. an unterminated quote)."},
+  "csvImportErrorRead": "This file could not be read.",
+  "@csvImportErrorRead": {"description": "CSV import failure: reading the picked file, or the data to match it against, failed unexpectedly."},
   "csvImportErrorCommit": "Import failed. Nothing was imported.",
   "@csvImportErrorCommit": {"description": "CSV import failure: writing the import failed and was rolled back."},
   "csvImportChooseAnother": "Choose another file",

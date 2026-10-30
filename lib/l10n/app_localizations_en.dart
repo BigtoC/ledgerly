@@ -1001,6 +1001,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get csvImportErrorParse => 'This file could not be read as CSV.';
 
   @override
+  String get csvImportErrorRead => 'This file could not be read.';
+
+  @override
   String get csvImportErrorCommit => 'Import failed. Nothing was imported.';
 
   @override

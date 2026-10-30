@@ -1001,6 +1001,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get csvImportErrorParse => 'This file could not be read as CSV.';
 
   @override
+  String get csvImportErrorRead => 'This file could not be read.';
+
+  @override
   String get csvImportErrorCommit => 'Import failed. Nothing was imported.';
 
   @override
@@ -2114,6 +2117,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get csvImportErrorParse => '无法以 CSV 格式读取此文件。';
 
   @override
+  String get csvImportErrorRead => '无法读取此文件。';
+
+  @override
   String get csvImportErrorCommit => '导入失败，未导入任何数据。';
 
   @override
@@ -3219,6 +3225,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get csvImportErrorParse => '無法以 CSV 格式讀取此檔案。';
+
+  @override
+  String get csvImportErrorRead => '無法讀取此檔案。';
 
   @override
   String get csvImportErrorCommit => '匯入失敗，未匯入任何資料。';

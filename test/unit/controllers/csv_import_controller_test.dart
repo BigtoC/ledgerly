@@ -3,6 +3,7 @@
 // subscribe with `container.listen` and read the provider directly.
 
 import 'dart:async';
+import 'dart:io' show FileSystemException;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -551,6 +552,42 @@ void main() {
         );
       });
     }
+
+    test('any other load exception goes to failure(readFailed), and the '
+        'user can pick again', () async {
+      when(() => useCase.pickAndLoad())
+          .thenThrow(const FileSystemException('unreadable'));
+      final container = makeContainer();
+      listen(container);
+      final controller = container.read(csvImportControllerProvider.notifier);
+
+      await controller.pickFile();
+
+      expect(
+        container.read(csvImportControllerProvider),
+        const CsvImportState.failure(CsvFileErrorKind.readFailed),
+      );
+      when(() => useCase.pickAndLoad()).thenAnswer((_) async => _load);
+      await controller.pickFile();
+      expect(
+        container.read(csvImportControllerProvider),
+        isA<CsvImportPreview>(),
+      );
+    });
+
+    test('a repository read failure goes to failure(readFailed)', () async {
+      when(() => categoryRepo.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.error(StateError('db')));
+      final container = makeContainer();
+      listen(container);
+
+      await container.read(csvImportControllerProvider.notifier).pickFile();
+
+      expect(
+        container.read(csvImportControllerProvider),
+        const CsvImportState.failure(CsvFileErrorKind.readFailed),
+      );
+    });
 
     test('reset returns to idle', () async {
       final container = makeContainer();

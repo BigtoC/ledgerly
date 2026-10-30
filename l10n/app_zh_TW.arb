@@ -349,6 +349,7 @@
   "csvImportErrorTooManyRows": "檔案超過 {max} 列。",
   "@csvImportErrorTooManyRows": {"placeholders": {"max": {"type": "int"}}},
   "csvImportErrorParse": "無法以 CSV 格式讀取此檔案。",
+  "csvImportErrorRead": "無法讀取此檔案。",
   "csvImportErrorCommit": "匯入失敗，未匯入任何資料。",
   "csvImportChooseAnother": "選擇其他檔案",
   "csvImportBalanceNote": "匯入的交易會改變所屬帳戶的餘額。",

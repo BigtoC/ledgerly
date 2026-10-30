@@ -13,6 +13,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../app/providers/default_currency_provider.dart';
 import '../../../app/providers/repository_providers.dart';
+import '../../../data/models/account.dart';
+import '../../../data/models/account_type.dart';
 import '../../../data/models/category.dart';
 import '../../../data/models/csv_import.dart';
 import '../../../l10n/app_localizations.dart';
@@ -60,8 +62,33 @@ class CsvImportController extends _$CsvImportController {
     state = const CsvImportState.loading();
 
     final CsvLoadResult? load;
+    final List<Category> categories;
+    final CsvImportMatch match;
     try {
       load = await useCase.pickAndLoad();
+      if (!ref.mounted) return;
+      if (load == null) {
+        state = const CsvImportState.idle();
+        return;
+      }
+
+      final List<Account> accounts;
+      final List<AccountType> accountTypes;
+      (categories, accounts, accountTypes) = await (
+        categoryRepo.watchAll(includeArchived: true).first,
+        accountRepo.watchAll(includeArchived: true).first,
+        accountTypeRepo.watchAll(includeArchived: true).first,
+      ).wait;
+      if (!ref.mounted) return;
+
+      match = CsvImportMatcher.resolve(
+        rows: load.rowsToImport,
+        categories: categories,
+        accounts: accounts,
+        accountTypes: accountTypes,
+        labelSets: _labelSets,
+        defaultCurrencyCode: defaultCurrency,
+      );
     } on CsvFileException catch (e) {
       if (ref.mounted) {
         state = CsvImportState.failure(
@@ -70,28 +97,14 @@ class CsvImportController extends _$CsvImportController {
         );
       }
       return;
-    }
-    if (!ref.mounted) return;
-    if (load == null) {
-      state = const CsvImportState.idle();
+    } catch (_) {
+      // A platform, file-system or database error: leave loading so the
+      // user can pick again.
+      if (ref.mounted) {
+        state = const CsvImportState.failure(CsvFileErrorKind.readFailed);
+      }
       return;
     }
-
-    final (categories, accounts, accountTypes) = await (
-      categoryRepo.watchAll(includeArchived: true).first,
-      accountRepo.watchAll(includeArchived: true).first,
-      accountTypeRepo.watchAll(includeArchived: true).first,
-    ).wait;
-    if (!ref.mounted) return;
-
-    final match = CsvImportMatcher.resolve(
-      rows: load.rowsToImport,
-      categories: categories,
-      accounts: accounts,
-      accountTypes: accountTypes,
-      labelSets: _labelSets,
-      defaultCurrencyCode: defaultCurrency,
-    );
     final categoriesById = {for (final c in categories) c.id: c};
     DateTime? first;
     DateTime? last;

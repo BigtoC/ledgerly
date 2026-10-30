@@ -349,6 +349,7 @@
   "csvImportErrorTooManyRows": "文件超过 {max} 行。",
   "@csvImportErrorTooManyRows": {"placeholders": {"max": {"type": "int"}}},
   "csvImportErrorParse": "无法以 CSV 格式读取此文件。",
+  "csvImportErrorRead": "无法读取此文件。",
   "csvImportErrorCommit": "导入失败，未导入任何数据。",
   "csvImportChooseAnother": "选择其他文件",
   "csvImportBalanceNote": "导入的交易会改变所属账户的余额。",

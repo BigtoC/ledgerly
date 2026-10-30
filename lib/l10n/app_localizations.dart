@@ -1876,6 +1876,12 @@ abstract class AppLocalizations {
   /// **'This file could not be read as CSV.'**
   String get csvImportErrorParse;
 
+  /// CSV import failure: reading the picked file, or the data to match it against, failed unexpectedly.
+  ///
+  /// In en, this message translates to:
+  /// **'This file could not be read.'**
+  String get csvImportErrorRead;
+
   /// CSV import failure: writing the import failed and was rolled back.
   ///
   /// In en, this message translates to:
