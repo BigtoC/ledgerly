@@ -707,6 +707,81 @@ final class CsvImportUseCaseProvider
 
 String _$csvImportUseCaseHash() => r'f2343df24f0d14a2fb082bcff33966a731bc9b46';
 
+/// CSV export use case. Lives here for the same reason as
+/// [csvImportUseCase].
+
+@ProviderFor(csvExportUseCase)
+final csvExportUseCaseProvider = CsvExportUseCaseProvider._();
+
+/// CSV export use case. Lives here for the same reason as
+/// [csvImportUseCase].
+
+final class CsvExportUseCaseProvider
+    extends
+        $FunctionalProvider<
+          CsvExportUseCase,
+          CsvExportUseCase,
+          CsvExportUseCase
+        >
+    with $Provider<CsvExportUseCase> {
+  /// CSV export use case. Lives here for the same reason as
+  /// [csvImportUseCase].
+  CsvExportUseCaseProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'csvExportUseCaseProvider',
+        isAutoDispose: false,
+        dependencies: <ProviderOrFamily>[
+          csvFileServiceProvider,
+          transactionRepositoryProvider,
+          categoryRepositoryProvider,
+          accountRepositoryProvider,
+        ],
+        $allTransitiveDependencies: <ProviderOrFamily>{
+          CsvExportUseCaseProvider.$allTransitiveDependencies0,
+          CsvExportUseCaseProvider.$allTransitiveDependencies1,
+          CsvExportUseCaseProvider.$allTransitiveDependencies2,
+          CsvExportUseCaseProvider.$allTransitiveDependencies3,
+          CsvExportUseCaseProvider.$allTransitiveDependencies4,
+          CsvExportUseCaseProvider.$allTransitiveDependencies5,
+        },
+      );
+
+  static final $allTransitiveDependencies0 = csvFileServiceProvider;
+  static final $allTransitiveDependencies1 = transactionRepositoryProvider;
+  static final $allTransitiveDependencies2 =
+      TransactionRepositoryProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies3 = categoryRepositoryProvider;
+  static final $allTransitiveDependencies4 = accountRepositoryProvider;
+  static final $allTransitiveDependencies5 =
+      AccountRepositoryProvider.$allTransitiveDependencies1;
+
+  @override
+  String debugGetCreateSourceHash() => _$csvExportUseCaseHash();
+
+  @$internal
+  @override
+  $ProviderElement<CsvExportUseCase> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  CsvExportUseCase create(Ref ref) {
+    return csvExportUseCase(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CsvExportUseCase value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CsvExportUseCase>(value),
+    );
+  }
+}
+
+String _$csvExportUseCaseHash() => r'515768f963276c92ac5348cc6c8f262a828fc16c';
+
 /// Shared HTTP client for every HTTP service. Conservative timeouts; the
 /// client is closed when the owning container is disposed.
 
