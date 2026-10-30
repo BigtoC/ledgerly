@@ -178,6 +178,15 @@ abstract class TransactionRepository {
     String? currencyCode,
   });
 
+  /// Earliest and latest transaction `date`, or null when there are no
+  /// transactions. One-shot.
+  Future<({DateTime first, DateTime last})?> getDateBounds();
+
+  /// One-shot read of every transaction whose `date` falls in the
+  /// half-open range `[start, end)`, oldest first (ties by id). Not
+  /// capped: the CSV export reads the whole range.
+  Future<List<Transaction>> getInDateRange(DateTime start, DateTime end);
+
   /// One-shot read by id. Returns null when no row matches.
   Future<Transaction?> getById(int id);
 
@@ -502,6 +511,15 @@ final class DriftTransactionRepository implements TransactionRepository {
           currencyCode: currencyCode,
         )
         .asyncMap(_rowsToDomain);
+  }
+
+  @override
+  Future<({DateTime first, DateTime last})?> getDateBounds() =>
+      _dao.getDateBounds();
+
+  @override
+  Future<List<Transaction>> getInDateRange(DateTime start, DateTime end) async {
+    return _rowsToDomain(await _dao.getInDateRange(start: start, end: end));
   }
 
   @override
