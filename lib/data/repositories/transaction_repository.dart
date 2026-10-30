@@ -13,7 +13,9 @@
 //     repository accepts any valid seeded currency regardless of the
 //     account's own currency.
 //   - `createdAt` / `updatedAt` populated by the repository, never by
-//     SQL defaults (PRD.md 291-293).
+//     SQL defaults (PRD.md 291-293). One documented exception:
+//     `insertImported` (CSV import) keeps the caller's `createdAt`, the
+//     source app's Recorded At, and sets `updatedAt` to the clock.
 //   - Home screen is day-bounded: `watchByDay` + `watchDaysWithActivity`
 //     replace any notion of `watchAll` (Stream A §12 Q2/Q5).
 
@@ -49,6 +51,15 @@ class TransactionRepositoryException implements Exception {
   String toString() => 'TransactionRepositoryException: $message';
 }
 
+/// Fields CSV import compares to find rows that already exist. See
+/// [TransactionRepository.getImportSignatures].
+typedef TransactionImportSignature = ({
+  DateTime createdAt,
+  int amountMinorUnits,
+  String currencyCode,
+  String? memo,
+});
+
 /// SSOT for `transactions`. Owns every write path to the Drift
 /// `transactions` table. Drift data classes never leave this file.
 ///
@@ -58,7 +69,8 @@ class TransactionRepositoryException implements Exception {
 /// - Currency FK integrity — insert rejects unknown `Currency.code`
 ///   (G2 / PRD.md 286).
 /// - `createdAt` / `updatedAt` populated by the repository, never by
-///   SQL defaults (PRD.md 291-293).
+///   SQL defaults (PRD.md 291-293). [insertImported] is the one exception:
+///   it keeps the caller's `createdAt`.
 ///
 /// **No `duplicate(id)` convenience method exists by design.** PRD's
 /// quick-repeat flow ("user adjusts amount or date if needed → tap
@@ -183,10 +195,33 @@ abstract class TransactionRepository {
   /// - [RepositoryException] on any other Drift-layer failure.
   Future<Transaction> save(Transaction tx);
 
+  /// Inserts CSV-imported rows in list order, so ids ascend with the
+  /// list, and returns how many were inserted. Each row keeps its own
+  /// `createdAt` (the source's recorded time) and `date`; `updatedAt` is
+  /// one clock reading shared by every row; `amountFormula` is null.
+  /// This is the documented exception to "on insert both timestamps are
+  /// set to now". All rows land in one transaction (a savepoint when the
+  /// caller already holds one), so a failure inserts nothing.
+  ///
+  /// Throws [CurrencyNotFoundException] for any code absent from
+  /// `currencies`, before anything is written.
+  Future<int> insertImported(List<Transaction> txs);
+
+  /// Duplicate-detection keys of every transaction whose `createdAt`
+  /// lies in `[start, endInclusive]`. Returns only these four fields; the
+  /// DAO also reads `id` to page.
+  Future<List<TransactionImportSignature>> getImportSignatures(
+    DateTime start,
+    DateTime endInclusive,
+  );
+
   /// Delete by id. Returns `true` when a row was removed, `false` when
   /// no row matched.
   Future<bool> delete(int id);
 }
+
+/// Rows per DAO page in [DriftTransactionRepository.getImportSignatures].
+const _kImportSignaturePage = 2000;
 
 /// Concrete Drift-backed implementation of [TransactionRepository].
 final class DriftTransactionRepository implements TransactionRepository {
@@ -519,6 +554,56 @@ final class DriftTransactionRepository implements TransactionRepository {
       );
     }
     return _toDomain(updated);
+  }
+
+  @override
+  Future<int> insertImported(List<Transaction> txs) async {
+    for (final code in txs.map((tx) => tx.currency.code).toSet()) {
+      if (await _currencyDao.findByCode(code) == null) {
+        throw CurrencyNotFoundException(code);
+      }
+    }
+
+    final now = _clock();
+    final rows = [
+      for (final tx in txs)
+        _toCompanion(
+          tx,
+          createdAt: tx.createdAt,
+          updatedAt: now,
+        ).copyWith(id: const Value.absent(), amountFormula: const Value(null)),
+    ];
+    await _db.transaction(() => _dao.insertBatch(rows));
+    return rows.length;
+  }
+
+  @override
+  Future<List<TransactionImportSignature>> getImportSignatures(
+    DateTime start,
+    DateTime endInclusive,
+  ) async {
+    // Keyset pages keep each read, and the isolate hop that carries it,
+    // bounded however much history the range spans.
+    final signatures = <TransactionImportSignature>[];
+    var afterId = 0;
+    while (true) {
+      final page = await _dao.getImportSignatureRows(
+        start: start,
+        endInclusive: endInclusive,
+        afterId: afterId,
+        limit: _kImportSignaturePage,
+      );
+      for (final r in page) {
+        signatures.add((
+          createdAt: r.createdAt,
+          amountMinorUnits: r.amountMinorUnits,
+          currencyCode: r.currency,
+          memo: r.memo,
+        ));
+      }
+      if (page.length < _kImportSignaturePage) return signatures;
+      afterId = page.last.id;
+    }
   }
 
   @override

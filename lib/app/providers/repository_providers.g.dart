@@ -576,6 +576,137 @@ final class RecurringGenerationUseCaseProvider
 String _$recurringGenerationUseCaseHash() =>
     r'350e388f51b864c88329360e1078cac008904655';
 
+/// System file picker for CSV import. Tests override it with a fake that
+/// returns fixture bytes.
+
+@ProviderFor(csvFileService)
+final csvFileServiceProvider = CsvFileServiceProvider._();
+
+/// System file picker for CSV import. Tests override it with a fake that
+/// returns fixture bytes.
+
+final class CsvFileServiceProvider
+    extends $FunctionalProvider<CsvFileService, CsvFileService, CsvFileService>
+    with $Provider<CsvFileService> {
+  /// System file picker for CSV import. Tests override it with a fake that
+  /// returns fixture bytes.
+  CsvFileServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'csvFileServiceProvider',
+        isAutoDispose: false,
+        dependencies: <ProviderOrFamily>[],
+        $allTransitiveDependencies: <ProviderOrFamily>[],
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$csvFileServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<CsvFileService> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  CsvFileService create(Ref ref) {
+    return csvFileService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CsvFileService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CsvFileService>(value),
+    );
+  }
+}
+
+String _$csvFileServiceHash() => r'55d5f03b94b6deba083b3656e22a9bc1598b0cb1';
+
+/// CSV import use case. Lives here for the same reason as
+/// [recurringGenerationUseCase]: the controller reads it without importing
+/// `data/services/` or `data/database/`.
+
+@ProviderFor(csvImportUseCase)
+final csvImportUseCaseProvider = CsvImportUseCaseProvider._();
+
+/// CSV import use case. Lives here for the same reason as
+/// [recurringGenerationUseCase]: the controller reads it without importing
+/// `data/services/` or `data/database/`.
+
+final class CsvImportUseCaseProvider
+    extends
+        $FunctionalProvider<
+          CsvImportUseCase,
+          CsvImportUseCase,
+          CsvImportUseCase
+        >
+    with $Provider<CsvImportUseCase> {
+  /// CSV import use case. Lives here for the same reason as
+  /// [recurringGenerationUseCase]: the controller reads it without importing
+  /// `data/services/` or `data/database/`.
+  CsvImportUseCaseProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'csvImportUseCaseProvider',
+        isAutoDispose: false,
+        dependencies: <ProviderOrFamily>[
+          appDatabaseProvider,
+          csvFileServiceProvider,
+          transactionRepositoryProvider,
+          categoryRepositoryProvider,
+          accountRepositoryProvider,
+          accountTypeRepositoryProvider,
+          currencyRepositoryProvider,
+        ],
+        $allTransitiveDependencies: <ProviderOrFamily>{
+          CsvImportUseCaseProvider.$allTransitiveDependencies0,
+          CsvImportUseCaseProvider.$allTransitiveDependencies1,
+          CsvImportUseCaseProvider.$allTransitiveDependencies2,
+          CsvImportUseCaseProvider.$allTransitiveDependencies3,
+          CsvImportUseCaseProvider.$allTransitiveDependencies4,
+          CsvImportUseCaseProvider.$allTransitiveDependencies5,
+          CsvImportUseCaseProvider.$allTransitiveDependencies6,
+        },
+      );
+
+  static final $allTransitiveDependencies0 = appDatabaseProvider;
+  static final $allTransitiveDependencies1 = csvFileServiceProvider;
+  static final $allTransitiveDependencies2 = transactionRepositoryProvider;
+  static final $allTransitiveDependencies3 = categoryRepositoryProvider;
+  static final $allTransitiveDependencies4 = accountRepositoryProvider;
+  static final $allTransitiveDependencies5 =
+      AccountRepositoryProvider.$allTransitiveDependencies1;
+  static final $allTransitiveDependencies6 = accountTypeRepositoryProvider;
+
+  @override
+  String debugGetCreateSourceHash() => _$csvImportUseCaseHash();
+
+  @$internal
+  @override
+  $ProviderElement<CsvImportUseCase> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  CsvImportUseCase create(Ref ref) {
+    return csvImportUseCase(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CsvImportUseCase value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CsvImportUseCase>(value),
+    );
+  }
+}
+
+String _$csvImportUseCaseHash() => r'f2343df24f0d14a2fb082bcff33966a731bc9b46';
+
 /// Shared HTTP client for every HTTP service. Conservative timeouts; the
 /// client is closed when the owning container is disposed.
 

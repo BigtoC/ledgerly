@@ -18,12 +18,13 @@ Categories, Analysis, Settings) are on `main`, and several Phase 2 slices
 have shipped on top of the MVP: recurring transactions + pending approval,
 transaction search, extended multi-currency conversion with cached
 exchange rates, charts (pie + daily bar with animations and interactive
-selection), chart slice drill-down with per-slice item lists, and a
-splash display-text redesign where the start date renders inline with
-a rainbow gradient. The default template is now `On {date} start using
-Ledgerly`, with multi-line display-text input in Settings and an
-auto-prepend guarantee so the date is always visible on the splash even
-if the user removes `{date}` from their template.
+selection), chart slice drill-down with per-slice item lists, Fortune
+City CSV import from Settings, and a splash display-text redesign where
+the start date renders inline with a rainbow gradient. The default
+template is now `On {date} start using Ledgerly`, with multi-line
+display-text input in Settings and an auto-prepend guarantee so the date
+is always visible on the splash even if the user removes `{date}` from
+their template.
 
 Drift schema is at **v7** (v7 backfills the seeded Investment expense
 category and retires Personal; `transactions.amount_formula` added in v6;
@@ -147,6 +148,33 @@ written to your books until you accept. Skipping an occurrence rejects
 that single date with a 4-second undo window; the parent rule keeps
 running.
 
+#### Import from CSV
+
+`Settings > Import from CSV` brings in transactions exported from the
+Fortune City (記帳城市) app. Pick the CSV file and Ledgerly shows a
+preview before anything is written:
+
+- Accounts and categories are matched to existing ones by name, in any
+  supported language. You choose where an unmatched account goes, and
+  categories that don't exist yet are created (expense by default).
+- 收入 (income) rows go to Salary when the note is 薪資, 薪资, 工资 or
+  "Salary", and to Other income otherwise. Amounts are rounded half-up
+  to two decimals, so `23.6000003814697` becomes 23.60.
+- Each row keeps its original Recorded At time and appears on that day
+  in Home, search and charts. A currency code that isn't in Ledgerly
+  makes the row invalid.
+- Rows that already exist are skipped, so importing the same file twice
+  adds nothing. A duplicate is a row with the same Recorded At time,
+  amount, currency and note. Re-importing a newer export of the same
+  ledger therefore adds only the new rows. Invalid rows are listed by
+  line number and skipped.
+- There is no file size or row limit. Large files are parsed in the
+  background, and the import writes rows in chunks so the screen stays
+  responsive (see [CSV import performance](#csv-import-performance)).
+- Import writes every transaction at once, or none if it fails. The file
+  is read on the device only and never uploaded, and the temporary copy
+  the system file picker makes is deleted after reading.
+
 #### Shopping list
 
 Quick-capture flow for groceries and errands. Add items as drafts in a
@@ -183,6 +211,7 @@ Use `Settings` to personalize the app.
 - Manage categories and accounts (with archive-instead-of-delete for
   history-backed records).
 - Manage recurring transaction rules.
+- Import transactions from a Fortune City CSV export.
 - Enable or disable the splash screen.
 - Configure the splash day counter start date, the multi-line display
   text template (using `{date}` and `{days}` placeholders), and the
@@ -213,13 +242,13 @@ include:
 - crypto wallet sync (the `pending_transactions` table supports
   blockchain-source rows, but the sync flow and wallet management UI
   are not implemented)
-- CSV import/export
+- CSV export
 - account transfers or credit-card payoff flows
 - automatic categorization or AI memo suggestions
 
-Charts, recurring transactions, and multi-currency conversion, which
-were Phase 2 stretch goals, have now shipped. The app stays fast,
-understandable, and centered on manual logging.
+Charts, recurring transactions, multi-currency conversion, and Fortune
+City CSV import, which were Phase 2 stretch goals, have now shipped. The
+app stays fast, understandable, and centered on manual logging.
 
 ## Prerequisites
 
@@ -288,7 +317,7 @@ lib/
     accounts/       # account list + form (currency/type pickers; opened from Settings)
     recurring/      # recurring-rule list/form; generates pending approvals on Home
     shopping_list/  # draft-capture list that converts items into transactions
-    settings/       # language, theme, defaults, splash + recurring entry points, about
+    settings/       # language, theme, defaults, splash + recurring entry points, CSV import, about
 l10n/         # Source ARB files (app_en, app_zh, app_zh_CN, app_zh_TW)
 test/
   unit/       # services / repositories / controllers / utils
@@ -327,6 +356,94 @@ live in `import_analysis_options.yaml` at the repo root and are enforced
 by `test/unit/architecture/layer_boundaries_test.dart`, which CI runs as
 its own step. Violations that predate the check are listed in that
 file's `baseline:`; anything new fails CI.
+
+## CSV import performance
+
+The Fortune City CSV import has no row or size cap. To keep large files
+from freezing the UI, `CsvImportUseCase`
+(`lib/data/use_cases/csv_import_use_case.dart`) splits the work. The
+commit is still one all-or-nothing `db.transaction`.
+
+| Step | How it is split |
+|------|-----------------|
+| Parse and validate | One `Isolate.run`, off the UI isolate. The currencies are read once and sent with the bytes. |
+| Duplicate signatures | `getImportSignatures` reads 2,000 rows per page, keyset-paged on `id` (a rowid range scan; no new index). |
+| Duplicate check | Both loops in `_withoutDuplicates` yield to the event loop every 5,000 rows (`_kDedupChunk`). It runs on load and again inside the commit. |
+| Commit | `insertImported` is called with 1,000 rows at a time (`_kInsertChunk`) inside the one transaction. Each call is a savepoint, so any failing chunk rolls back every chunk and every created account type, account and category. Drift sends one table-update notification after the outer commit. |
+
+The file is still read into memory whole; on Android the system picker
+does that anyway. A streaming parser, and moving the commit's sort into
+a worker, wait for a profile-mode trace that shows the need.
+
+### Benchmark (2026-10-30)
+
+How it was measured:
+
+- `flutter test` on a Mac, in the JIT/debug VM.
+- The database was a file opened with `NativeDatabase.createInBackground`,
+  which matches the app's background-isolate `driftDatabase()`.
+- Each size used a freshly seeded database, after one 2,000-row warm-up
+  run.
+
+The synthetic Fortune City exports had:
+
+- 6 accounts and 40 categories;
+- 24 categories that had to be created;
+- about 6% 收入 rows;
+- 5 currencies;
+- about 8% of memos quoted (with commas or escaped quotes) and 10% empty;
+- Recorded At values from 2018-11 to 2026-10;
+- amounts with float32 artefacts such as `23.6000003814697`.
+
+Every row parsed and imported with no errors.
+
+**Longest UI-isolate block** is the largest gap between ticks of a 1 ms
+`Timer.periodic` running alongside each step. A gap over about 100 ms is
+a visible freeze.
+
+| Rows (file size) | Load, before → after | Commit, before → after | Re-import all duplicates, before → after |
+|------------------|----------------------|------------------------|------------------------------------------|
+| 10,000 (0.5 MB) | 26 → 2 ms | 45 → 5 ms | 48 → 13 ms |
+| 50,000 (2.6 MB) | 111 → 5 ms | 207 → 14 ms | 264 → 42 ms |
+| 100,000 (5.2 MB) | 226 → 25 ms | 356 → 25 ms | 522 → 29 ms |
+| 200,000 (10.4 MB) | 536 → 53 ms | 693 → 56 ms | 1,731 → 71 ms |
+
+"Before" is the uncapped code with no chunking. Each pair of columns
+below is the longest block on load and on commit of a grown export: N
+rows already imported plus 1,000 new ones. The "dedup yields" columns
+are the final code.
+
+| Rows already imported | Load, no dedup yields | Commit, no dedup yields | Load, dedup yields | Commit, dedup yields |
+|-----------------------|-----------------------|-------------------------|--------------------|----------------------|
+| 10,000 | 12 ms | 13 ms | 13 ms | 14 ms |
+| 50,000 | 15 ms | 27 ms | 14 ms | 30 ms |
+| 100,000 | 46 ms | 38 ms | 45 ms | 29 ms |
+| 200,000 | 98 ms | 78 ms | 79 ms | 52 ms |
+
+**Wall time**, with the final code:
+
+| Rows | Load | Commit | Re-import all duplicates | Test-process RSS peak |
+|------|------|--------|--------------------------|-----------------------|
+| 10,000 | 31 ms | 88 ms | 94 ms | 313 MB |
+| 50,000 | 165 ms | 404 ms | 590 ms | 368 MB |
+| 100,000 | 363 ms | 687 ms | 997 ms | 491 MB |
+| 200,000 | 752 ms | 1,373 ms | 2,089 ms | 758 MB |
+
+- Every step scales linearly: about 4 µs per row to load, 7 µs to
+  commit, and 0.1 µs to match accounts and categories.
+- The RSS figures are for the test process, which holds two databases
+  and several copies of the data. They come to roughly 2 KB resident per
+  row while the bytes, decoded text, parsed rows and transactions are all
+  alive.
+- The figures are pessimistic. AOT release builds run the Dart-side
+  loops several times faster, though a phone CPU is slower than the Mac.
+- The import hasn't yet been profiled on a device with
+  `flutter run --profile` and DevTools at 100k–200k rows.
+- The benchmark harness isn't checked in.
+
+`docs/architecture/data-model.md` still documents about 10,000
+transactions as the app-wide rendering limit. One import can take a
+ledger past it.
 
 ## Contributing
 

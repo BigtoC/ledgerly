@@ -25,6 +25,6 @@ The default template is `'On {date} start using Ledgerly'`. `lib/features/splash
 
 Routes are wired in `lib/app/router.dart`:
 
-`/splash`, `/splash/preview`, `/home`, `/home/add`, `/home/edit/:id`, `/home/shopping-list`, `/home/shopping-list/:itemId`, `/analysis`, `/analysis/search/:categoryId`, `/settings`, `/settings/about`, `/settings/categories`, `/settings/recurring`, `/settings/recurring/new`, `/settings/recurring/:id`, `/settings/manage-accounts/new`, `/settings/manage-accounts/:id`.
+`/splash`, `/splash/preview`, `/home`, `/home/add`, `/home/edit/:id`, `/home/shopping-list`, `/home/shopping-list/:itemId`, `/analysis`, `/analysis/search/:categoryId`, `/settings`, `/settings/about`, `/settings/categories`, `/settings/recurring`, `/settings/recurring/new`, `/settings/recurring/:id`, `/settings/import`, `/settings/manage-accounts/new`, `/settings/manage-accounts/:id`.
 
 Tapping the version label at the bottom of `settings_screen.dart` opens `lib/features/settings/about_screen.dart` at `/settings/about`.

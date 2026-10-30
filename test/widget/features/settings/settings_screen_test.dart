@@ -9,6 +9,7 @@
 //   - ManageAccountsTile uses the accounts slice default for multi-account subtitles.
 //   - ManageAccountsTile falls back to the first active account when the default is absent.
 //   - "Manage Categories" tile navigates to `/settings/categories`.
+//   - "Import from CSV" tile navigates to `/settings/import`.
 //   - Locale change via `setLocale` writes through the repo; a manual
 //     MaterialApp locale swap then verifies visible strings change
 //     without re-navigating.
@@ -84,6 +85,10 @@ class _StubRouter {
         GoRoute(
           path: '/settings/categories',
           builder: (_, _) => const Scaffold(body: Text('MANAGE_CATEGORIES')),
+        ),
+        GoRoute(
+          path: '/settings/import',
+          builder: (_, _) => const Scaffold(body: Text('CSV_IMPORT')),
         ),
       ],
     );
@@ -428,6 +433,41 @@ void main() {
       expect(find.text('MANAGE_CATEGORIES'), findsOneWidget);
     },
   );
+
+  testWidgets('SS05b: Import from CSV tile navigates to /settings/import', (
+    tester,
+  ) async {
+    final container = _makeContainer(
+      prefs: _MockUserPreferencesRepository(),
+      accountRepo: _MockAccountRepository(),
+      currencyRepo: _MockCurrencyRepository(),
+      fixed: _data(),
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
+
+    const tile = ValueKey('settingsImportCsvTile');
+    await tester.scrollUntilVisible(
+      find.byKey(tile),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.ensureVisible(find.byKey(tile));
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: find.byKey(tile),
+        matching: find.text('Import from CSV'),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(tile));
+    await tester.pumpAndSettle();
+
+    expect(find.text('CSV_IMPORT'), findsOneWidget);
+  });
 
   testWidgets(
     'SS06: locale change propagates visible strings without manual nav',

@@ -176,6 +176,63 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
     return into(transactions).insert(row);
   }
 
+  /// Insert [rows] in list order with one batch, so ids ascend with the
+  /// list. Backs `TransactionRepository.insertImported`.
+  Future<void> insertBatch(List<TransactionsCompanion> rows) {
+    return batch((b) => b.insertAll(transactions, rows));
+  }
+
+  /// `(id, created_at, amount_minor_units, currency, memo)` of up to
+  /// [limit] rows with `id > afterId` whose `created_at` lies in
+  /// `[start, endInclusive]`, in `id` order. Selects only those columns:
+  /// CSV import duplicate detection compares nothing else, and the range
+  /// can span years of history. Callers page by passing the last `id` as
+  /// [afterId]; the rowid keyset keeps each page one primary-key range scan.
+  Future<
+    List<
+      ({
+        int id,
+        DateTime createdAt,
+        int amountMinorUnits,
+        String currency,
+        String? memo,
+      })
+    >
+  >
+  getImportSignatureRows({
+    required DateTime start,
+    required DateTime endInclusive,
+    required int afterId,
+    required int limit,
+  }) async {
+    final query = selectOnly(transactions)
+      ..addColumns([
+        transactions.id,
+        transactions.createdAt,
+        transactions.amountMinorUnits,
+        transactions.currency,
+        transactions.memo,
+      ])
+      ..where(
+        transactions.id.isBiggerThanValue(afterId) &
+            transactions.createdAt.isBetweenValues(start, endInclusive),
+      )
+      ..orderBy([OrderingTerm(expression: transactions.id)])
+      ..limit(limit);
+    final rows = await query.get();
+    return rows
+        .map(
+          (r) => (
+            id: r.read(transactions.id)!,
+            createdAt: r.read(transactions.createdAt)!,
+            amountMinorUnits: r.read(transactions.amountMinorUnits)!,
+            currency: r.read(transactions.currency)!,
+            memo: r.read(transactions.memo),
+          ),
+        )
+        .toList(growable: false);
+  }
+
   /// Replace row by PK.
   Future<bool> updateRow(TransactionsCompanion row) {
     return update(transactions).replace(row);

@@ -14,11 +14,11 @@ Ledgerly is a local-first mobile expense tracker built with Flutter. It is aimed
 
 ---
 
-## Project Status (as of 2026-05-27)
+## Project Status (as of 2026-10-30)
 
 **MVP — Complete.** All MVP features have shipped: manual entry, seeded + custom categories, multi-account / multi-currency, shopping list drafts, splash screen, theming, l10n.
 
-**Phase 2 — In progress.** Shipped slices on `main`: **Recurring transactions** + Home pending approval (2026-05-08; see [`recurring_rules`](#recurring_rules-phase-2--shipped-2026-05-08) table), **Transaction search** (2026-05-10), **Extended multi-currency conversion** (2026-05-17), **Basic charts** — pie + daily bar (2026-05-20), **Chart slice drill-down** (2026-05-22) — coordinated pie/legend/bar selection plus a per-slice items list with edit, delete + 4 s undo, FX-converted/original amount split, and stale-rate notice. Selection identity lives in the analysis layer as a sealed `SelectedSlice` (category | account | currency); the repository boundary stays filter-based via `{categoryId, accountId, currencyCode}` arguments. Remaining Phase 2 work: wallet sync (Ankr integration), CSV import, credit-card / transfer flows.
+**Phase 2 — In progress.** Shipped slices on `main`: **Recurring transactions** + Home pending approval (2026-05-08; see [`recurring_rules`](#recurring_rules-phase-2--shipped-2026-05-08) table), **Transaction search** (2026-05-10), **Extended multi-currency conversion** (2026-05-17), **Basic charts** — pie + daily bar (2026-05-20), **Chart slice drill-down** (2026-05-22) — coordinated pie/legend/bar selection plus a per-slice items list with edit, delete + 4 s undo, FX-converted/original amount split, and stale-rate notice. Selection identity lives in the analysis layer as a sealed `SelectedSlice` (category | account | currency); the repository boundary stays filter-based via `{categoryId, accountId, currencyCode}` arguments. **Fortune City CSV import** (2026-10-30) — `/settings/import` previews a Fortune City export (account and category matching, duplicate and invalid-row skipping) and writes it in one Drift transaction; see the `transactions` table note on imported `created_at`. Remaining Phase 2 work: wallet sync (Ankr integration), credit-card / transfer flows.
 
 Inline `# Phase 2` annotations throughout the rest of the document mark code paths and surfaces that have **not** yet shipped. The recurring-rules slice is the canonical example of how a Phase 2 feature lands: data layer first (DAOs, repos, migration), then a use case in `lib/data/use_cases/` (Phase 2's `domain/` layer is reserved for cross-feature orchestration), then UI.
 
@@ -46,7 +46,7 @@ Inline `# Phase 2` annotations throughout the rest of the document mark code pat
 - **[Shipped 2026-05-22]** Chart slice drill-down — tap a pie slice or legend row to refilter the bar chart and render a per-slice items list (tap-to-edit, action-tap delete + 4 s undo, FX-converted primary amount beside original booked amount, "using last known exchange rates" notice when cached rates exceed 1 h). Selection identity lives in the analysis layer as a sealed `SelectedSlice` (category | account | currency); the repository boundary stays filter-based via `{categoryId, accountId, currencyCode}` arguments.
 - **[Shipped 2026-05-10]** Transaction search
 - **[Shipped 2026-05-17]** Extended multi-currency — fetch currency prices and auto-convert balances, summaries, and charts to the user's default currency
-- [Pending] Fortune City CSV import
+- **[Shipped 2026-10-30]** Fortune City CSV import — Settings → Import from CSV picks a Fortune City export, matches its accounts and categories against existing rows and every locale's labels, skips duplicates and invalid rows, and imports the rest in one transaction after a preview.
 
 ### Phase 3
 - **[Pending]** Detailed monthly summary
@@ -141,6 +141,8 @@ lib/
       icon_registry.dart
       color_palette.dart
       date_helpers.dart
+      decimal_rounding.dart          # Half-up decimal string → minor units (CSV import)
+      fortune_city_csv_parser.dart   # Pure Fortune City CSV parser
   data/
     database/
       app_database.dart      # Drift database, schemaVersion, migrations
@@ -171,6 +173,7 @@ lib/
       exchange_rate_service.dart    # Dio-based HTTP client for FX rates
       app_release_service.dart      # Dio: latest GitHub release lookup + APK download
       apk_installer_service.dart    # Platform channel to Android's PackageInstaller
+      csv_file_service.dart         # file_selector picker; deletes the picker's cache copy
     repositories/
       transaction_repository.dart
       category_repository.dart
@@ -188,6 +191,7 @@ lib/
       first_run_seed.dart
     use_cases/
       recurring_generation_use_case.dart   # Cold-start recurring rule engine
+      csv_import_use_case.dart             # CSV load, dedup and atomic commit
     models/                                # Freezed domain models
       transaction.dart
       category.dart
@@ -203,6 +207,7 @@ lib/
       currency_slice.dart
       time_bucket_slice.dart
       app_update.dart
+      csv_import.dart                      # CSV import rows, errors, plan and result
   features/
     splash/
       splash_screen.dart
@@ -316,6 +321,14 @@ lib/
       about_screen.dart
       app_update_controller.dart
       app_update_state.dart
+      csv_import/
+        csv_import_screen.dart
+        csv_import_controller.dart
+        csv_import_state.dart
+        csv_import_matcher.dart      # account/category matching against l10n labels
+        widgets/
+          csv_import_preview_sections.dart
+          csv_account_resolution_sheet.dart
       widgets/
         manage_accounts_sheet.dart   # adaptive sheet/dialog for account management
         manage_accounts_tile.dart    # Settings list tile that opens the sheet
@@ -437,6 +450,7 @@ Notes:
 - `amount_formula` records the calculator expression that produced `amount_minor_units`, such as `3.5+10.5+11+3`. It is canonical ASCII that does not depend on locale: operands as typed with `.` as the decimal separator and trailing fractional zeros dropped, operators `+ - * /`, no spaces. It is evaluated strictly left to right. Wherever × or ÷ follows + or −, the expression so far is bracketed, so the keys `1 + 2 × 2` are stored as `(1+2)*2` and shown as `(1 + 2) × 2 = 6`, which reads the same under usual precedence. Only this canonical form is accepted when reading. Subtotals may go negative; only the finished amount is clamped to zero. It is null when the amount was typed without an operator. When the form opens a transaction, it parses the formula and recalculates the result on the keypad, so the user can see and edit the calculation. `amount_minor_units` stays authoritative: a formula that does not parse, or that recalculates to a different amount, is ignored.
 - `currency` stores the original transaction currency. Phase 2 conversion never overwrites the original `amount_minor_units` or `currency`.
 - `created_at` and `updated_at` are populated by `TransactionRepository`, not by the database. On insert, both are set to `DateTime.now()`. On every update, `updated_at` is refreshed to `DateTime.now()` and `created_at` is left unchanged.
+- **Exception: CSV import.** `TransactionRepository.insertImported` keeps each row's `created_at` as the source file's Recorded At, so imported history keeps its original times and re-imports can be detected. `updated_at` is the import time, read once and shared by every row in the call. Later edits preserve the imported `created_at` like any other.
 
 ### categories
 
@@ -876,6 +890,7 @@ ShellRoute (bottom nav)
     /settings/recurring     Recurring rules list
     /settings/recurring/new New recurring rule (modal push)
     /settings/recurring/:id Edit recurring rule (modal push)
+    /settings/import        Import from CSV (modal push, root navigator)
 ```
 
 - Add/Edit Transaction is a full-screen modal push (`MaterialPage` / `CupertinoPage`) so the calculator keypad has full vertical space.
@@ -1183,7 +1198,7 @@ Material Design 3 with `ColorScheme.fromSeed()` for both light and dark variants
 - Phase 2 currency-price requests send currency pairs and conversion metadata only; they must not include user memos, categories, or other transaction text
 - The app-update check sends a fixed GitHub `releases/latest` GET (Android only, once per launch) and downloads the release APK only on a user tap; neither request includes any user or transaction data
 - App lock remains future work. MVP baseline relies on OS device security plus sandbox/file-protection settings rather than an in-app passcode
-- Future CSV import/export must be explicit user actions with schema validation, size limits, malformed-row handling, formula escaping, and clear warnings that exported CSV files are portable unencrypted data
+- Future CSV import/export must be explicit user actions with schema validation, malformed-row handling, formula escaping, and clear warnings that exported CSV files are portable unencrypted data. CSV import has no size or row cap (decided 2026-10-30): it parses off the UI isolate and inserts in chunks inside one all-or-nothing transaction
 - Future cloud backup must define provider choice, authentication, encryption expectations, token storage, sync scope, and delete/restore behavior before implementation
 
 ---
@@ -1283,18 +1298,19 @@ Versions below are the tested resolvable set under Flutter **3.47.9** (Dart 3.13
 
 ### Phase 2 Additions (shipped)
 
-| Package    | Version   | Purpose                                                                         |
-|------------|-----------|---------------------------------------------------------------------------------|
-| `dio`      | `^5.11.1` | HTTP client (exchange-rate fetching, app-update release check and APK download) |
-| `fl_chart` | `^1.3.0`  | Pie + daily bar charts (Analysis tab)                                           |
-| `crypto`   | `^3.0.8`  | SHA-256 check of downloaded app-update APKs                                     |
+| Package         | Version   | Purpose                                                                         |
+|-----------------|-----------|---------------------------------------------------------------------------------|
+| `dio`           | `^5.11.1` | HTTP client (exchange-rate fetching, app-update release check and APK download) |
+| `fl_chart`      | `^1.3.0`  | Pie + daily bar charts (Analysis tab)                                           |
+| `crypto`        | `^3.0.8`  | SHA-256 check of downloaded app-update APKs                                     |
+| `file_selector` | `^1.1.0`  | System file picker (Fortune City CSV import)                                    |
+| `csv`           | `^8.0.0`  | RFC 4180 decoding (CSV import; export in Phase 3)                               |
 
 ### Deferred (Not yet shipped)
 
 | Package                  | Phase   | Purpose                              |
 |--------------------------|---------|--------------------------------------|
 | `flutter_secure_storage` | Phase 2 | Secure API key storage (wallet sync) |
-| `csv`                    | Phase 3 | CSV import and export                |
 | Firebase/Supabase        | Phase 3 | Cloud backup & sync                  |
 | `local_auth`             | Future  | App lock                             |
 

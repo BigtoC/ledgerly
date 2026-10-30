@@ -957,6 +957,200 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsUpdateOpenInBrowser => 'Open in browser';
+
+  @override
+  String get settingsImportCsvTile => 'Import from CSV';
+
+  @override
+  String get csvImportTitle => 'Import from CSV';
+
+  @override
+  String get csvImportIntro =>
+      'Import transactions exported from Fortune City.';
+
+  @override
+  String get csvImportPrivacyNote =>
+      'The file is read on this device only. Nothing is uploaded.';
+
+  @override
+  String get csvImportChooseFile => 'Choose CSV file';
+
+  @override
+  String get csvImportReading => 'Reading file…';
+
+  @override
+  String get csvImportErrorNotUtf8 => 'This file is not UTF-8 text.';
+
+  @override
+  String get csvImportErrorEmpty => 'This file has no transactions.';
+
+  @override
+  String csvImportErrorMissingColumns(String columns) {
+    return 'Missing columns: $columns';
+  }
+
+  @override
+  String get csvImportErrorParse => 'This file could not be read as CSV.';
+
+  @override
+  String get csvImportErrorRead => 'This file could not be read.';
+
+  @override
+  String get csvImportErrorCommit => 'Import failed. Nothing was imported.';
+
+  @override
+  String get csvImportChooseAnother => 'Choose another file';
+
+  @override
+  String get csvImportBalanceNote =>
+      'Imported transactions change the balances of the accounts they go into.';
+
+  @override
+  String get csvImportSectionAccounts => 'Accounts';
+
+  @override
+  String get csvImportSectionCategories => 'Categories';
+
+  @override
+  String get csvImportSectionSkipped => 'Skipped rows';
+
+  @override
+  String csvImportRowCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transactions',
+      one: '1 transaction',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get csvImportAccountNeedsChoice => 'Choose where these go';
+
+  @override
+  String get csvImportAccountMatchedByType => 'Matched by account type';
+
+  @override
+  String get csvImportNewBadge => 'New';
+
+  @override
+  String get csvImportAccountUseExisting => 'Use an existing account';
+
+  @override
+  String csvImportAccountArchived(String name) {
+    return '$name (archived)';
+  }
+
+  @override
+  String csvImportAccountCreate(String name, String type) {
+    return 'Create account \"$name\" ($type)';
+  }
+
+  @override
+  String csvImportAccountCreateWithType(String name) {
+    return 'Create account type and account \"$name\"';
+  }
+
+  @override
+  String get csvImportCategoriesExisting => 'Will use existing';
+
+  @override
+  String get csvImportCategoriesNew => 'Will be created';
+
+  @override
+  String csvImportDuplicates(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count rows already exist and will be skipped',
+      one: '1 row already exists and will be skipped',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String csvImportInvalidRows(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count invalid rows will be skipped',
+      one: '1 invalid row will be skipped',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get csvImportNothingToImport => 'Nothing new to import';
+
+  @override
+  String csvImportRowErrorLine(int line, String reason) {
+    return 'Line $line: $reason';
+  }
+
+  @override
+  String get csvImportReasonColumnCount => 'missing fields';
+
+  @override
+  String get csvImportReasonEmptyAccount => 'empty account';
+
+  @override
+  String get csvImportReasonEmptyCategory => 'empty category';
+
+  @override
+  String get csvImportReasonInvalidAmount => 'invalid amount';
+
+  @override
+  String get csvImportReasonZeroAmount => 'amount must be greater than 0';
+
+  @override
+  String csvImportReasonUnknownCurrency(String code) {
+    return 'unknown currency $code';
+  }
+
+  @override
+  String get csvImportReasonInvalidDate => 'invalid date';
+
+  @override
+  String csvImportConfirm(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Import $count transactions',
+      one: 'Import 1 transaction',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get csvImportImporting => 'Importing…';
+
+  @override
+  String get csvImportDoneTitle => 'Import complete';
+
+  @override
+  String csvImportDoneImported(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Imported $count transactions',
+      one: 'Imported 1 transaction',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String csvImportDoneCreated(int accounts, int categories) {
+    return 'Created $accounts accounts and $categories categories';
+  }
+
+  @override
+  String csvImportDoneSkipped(int duplicates, int invalid) {
+    return 'Skipped $duplicates duplicates and $invalid invalid rows';
+  }
+
+  @override
+  String get csvImportDone => 'Done';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -1873,6 +2067,192 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get settingsUpdateOpenInBrowser => '在浏览器中打开';
+
+  @override
+  String get settingsImportCsvTile => '从 CSV 导入';
+
+  @override
+  String get csvImportTitle => '从 CSV 导入';
+
+  @override
+  String get csvImportIntro => '导入从记账城市导出的交易。';
+
+  @override
+  String get csvImportPrivacyNote => '文件只会在此设备上读取，不会上传。';
+
+  @override
+  String get csvImportChooseFile => '选择 CSV 文件';
+
+  @override
+  String get csvImportReading => '正在读取文件…';
+
+  @override
+  String get csvImportErrorNotUtf8 => '此文件不是 UTF-8 文本。';
+
+  @override
+  String get csvImportErrorEmpty => '此文件没有任何交易。';
+
+  @override
+  String csvImportErrorMissingColumns(String columns) {
+    return '缺少列：$columns';
+  }
+
+  @override
+  String get csvImportErrorParse => '无法以 CSV 格式读取此文件。';
+
+  @override
+  String get csvImportErrorRead => '无法读取此文件。';
+
+  @override
+  String get csvImportErrorCommit => '导入失败，未导入任何数据。';
+
+  @override
+  String get csvImportChooseAnother => '选择其他文件';
+
+  @override
+  String get csvImportBalanceNote => '导入的交易会改变所属账户的余额。';
+
+  @override
+  String get csvImportSectionAccounts => '账户';
+
+  @override
+  String get csvImportSectionCategories => '类别';
+
+  @override
+  String get csvImportSectionSkipped => '跳过的行';
+
+  @override
+  String csvImportRowCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 笔交易',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get csvImportAccountNeedsChoice => '请选择导入位置';
+
+  @override
+  String get csvImportAccountMatchedByType => '按账户类型匹配';
+
+  @override
+  String get csvImportNewBadge => '新建';
+
+  @override
+  String get csvImportAccountUseExisting => '使用现有账户';
+
+  @override
+  String csvImportAccountArchived(String name) {
+    return '$name（已归档）';
+  }
+
+  @override
+  String csvImportAccountCreate(String name, String type) {
+    return '创建账户“$name”（$type）';
+  }
+
+  @override
+  String csvImportAccountCreateWithType(String name) {
+    return '创建账户类型及账户“$name”';
+  }
+
+  @override
+  String get csvImportCategoriesExisting => '使用现有类别';
+
+  @override
+  String get csvImportCategoriesNew => '将会创建';
+
+  @override
+  String csvImportDuplicates(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 笔已存在，将跳过',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String csvImportInvalidRows(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 笔无效数据将跳过',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get csvImportNothingToImport => '没有新数据可导入';
+
+  @override
+  String csvImportRowErrorLine(int line, String reason) {
+    return '第 $line 行：$reason';
+  }
+
+  @override
+  String get csvImportReasonColumnCount => '字段不足';
+
+  @override
+  String get csvImportReasonEmptyAccount => '账户为空';
+
+  @override
+  String get csvImportReasonEmptyCategory => '类别为空';
+
+  @override
+  String get csvImportReasonInvalidAmount => '金额无效';
+
+  @override
+  String get csvImportReasonZeroAmount => '金额必须大于 0';
+
+  @override
+  String csvImportReasonUnknownCurrency(String code) {
+    return '不支持的货币 $code';
+  }
+
+  @override
+  String get csvImportReasonInvalidDate => '日期无效';
+
+  @override
+  String csvImportConfirm(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '导入 $count 笔交易',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get csvImportImporting => '正在导入…';
+
+  @override
+  String get csvImportDoneTitle => '导入完成';
+
+  @override
+  String csvImportDoneImported(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '已导入 $count 笔交易',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String csvImportDoneCreated(int accounts, int categories) {
+    return '已创建 $accounts 个账户及 $categories 个类别';
+  }
+
+  @override
+  String csvImportDoneSkipped(int duplicates, int invalid) {
+    return '已跳过 $duplicates 笔重复及 $invalid 笔无效数据';
+  }
+
+  @override
+  String get csvImportDone => '完成';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -2789,4 +3169,190 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get settingsUpdateOpenInBrowser => '在瀏覽器中開啟';
+
+  @override
+  String get settingsImportCsvTile => '從 CSV 匯入';
+
+  @override
+  String get csvImportTitle => '從 CSV 匯入';
+
+  @override
+  String get csvImportIntro => '匯入從記帳城市匯出的交易。';
+
+  @override
+  String get csvImportPrivacyNote => '檔案只會在此裝置上讀取，不會上傳。';
+
+  @override
+  String get csvImportChooseFile => '選擇 CSV 檔案';
+
+  @override
+  String get csvImportReading => '正在讀取檔案…';
+
+  @override
+  String get csvImportErrorNotUtf8 => '此檔案不是 UTF-8 文字。';
+
+  @override
+  String get csvImportErrorEmpty => '此檔案沒有任何交易。';
+
+  @override
+  String csvImportErrorMissingColumns(String columns) {
+    return '缺少欄位：$columns';
+  }
+
+  @override
+  String get csvImportErrorParse => '無法以 CSV 格式讀取此檔案。';
+
+  @override
+  String get csvImportErrorRead => '無法讀取此檔案。';
+
+  @override
+  String get csvImportErrorCommit => '匯入失敗，未匯入任何資料。';
+
+  @override
+  String get csvImportChooseAnother => '選擇其他檔案';
+
+  @override
+  String get csvImportBalanceNote => '匯入的交易會改變所屬帳戶的餘額。';
+
+  @override
+  String get csvImportSectionAccounts => '帳戶';
+
+  @override
+  String get csvImportSectionCategories => '類別';
+
+  @override
+  String get csvImportSectionSkipped => '略過的列';
+
+  @override
+  String csvImportRowCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 筆交易',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get csvImportAccountNeedsChoice => '請選擇匯入位置';
+
+  @override
+  String get csvImportAccountMatchedByType => '依帳戶類型配對';
+
+  @override
+  String get csvImportNewBadge => '新增';
+
+  @override
+  String get csvImportAccountUseExisting => '使用現有帳戶';
+
+  @override
+  String csvImportAccountArchived(String name) {
+    return '$name（已封存）';
+  }
+
+  @override
+  String csvImportAccountCreate(String name, String type) {
+    return '建立帳戶「$name」（$type）';
+  }
+
+  @override
+  String csvImportAccountCreateWithType(String name) {
+    return '建立帳戶類型及帳戶「$name」';
+  }
+
+  @override
+  String get csvImportCategoriesExisting => '使用現有類別';
+
+  @override
+  String get csvImportCategoriesNew => '將會建立';
+
+  @override
+  String csvImportDuplicates(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 筆已存在，將略過',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String csvImportInvalidRows(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 筆無效資料將略過',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get csvImportNothingToImport => '沒有新資料可匯入';
+
+  @override
+  String csvImportRowErrorLine(int line, String reason) {
+    return '第 $line 行：$reason';
+  }
+
+  @override
+  String get csvImportReasonColumnCount => '欄位不足';
+
+  @override
+  String get csvImportReasonEmptyAccount => '帳戶為空';
+
+  @override
+  String get csvImportReasonEmptyCategory => '類別為空';
+
+  @override
+  String get csvImportReasonInvalidAmount => '金額無效';
+
+  @override
+  String get csvImportReasonZeroAmount => '金額必須大於 0';
+
+  @override
+  String csvImportReasonUnknownCurrency(String code) {
+    return '不支援的貨幣 $code';
+  }
+
+  @override
+  String get csvImportReasonInvalidDate => '日期無效';
+
+  @override
+  String csvImportConfirm(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '匯入 $count 筆交易',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get csvImportImporting => '正在匯入…';
+
+  @override
+  String get csvImportDoneTitle => '匯入完成';
+
+  @override
+  String csvImportDoneImported(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '已匯入 $count 筆交易',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String csvImportDoneCreated(int accounts, int categories) {
+    return '已建立 $accounts 個帳戶及 $categories 個類別';
+  }
+
+  @override
+  String csvImportDoneSkipped(int duplicates, int invalid) {
+    return '已略過 $duplicates 筆重複及 $invalid 筆無效資料';
+  }
+
+  @override
+  String get csvImportDone => '完成';
 }

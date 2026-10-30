@@ -13,6 +13,7 @@ These are easy to violate and expensive to retrofit.
 - **Category `type` is immutable after first use.** Once a transaction references a category, its `type` (expense/income) is frozen — users needing the opposite type create a new category. Enforce this in `CategoryRepository`, not in the UI.
 - **Seeded categories are identified by `l10n_key`, not by display name.** Renames write `custom_name` but keep `l10n_key` so locale changes do not duplicate or orphan rows. Users can rename any seeded category; auto-translation is not applied after a rename.
 - **Archive-instead-of-delete** for any category or account that has transactions. Hard-delete is only allowed for unused custom rows.
+- **`transactions.created_at` / `updated_at` are set by `TransactionRepository`,** never by SQL defaults: both are "now" on insert, and an update refreshes only `updated_at`. The one exception is CSV import: `insertImported` keeps each row's `created_at` as the source's Recorded At and sets `updated_at` to one import-time clock reading for the whole call.
 - **Icons and colors are indirect.** `categories.icon` is a string key resolved via `core/utils/icon_registry.dart`; `categories.color` is an **index** into the append-only `core/utils/color_palette.dart`. Never store raw `IconData` symbols or ARGB ints in the DB — both break across Flutter/Material updates and across backup/restore.
 
 ## `pending_transactions` (universal staging table)

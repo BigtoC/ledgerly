@@ -13,7 +13,9 @@ import '../../data/repositories/recurring_rules_repository.dart';
 import '../../data/repositories/shopping_list_repository.dart';
 import '../../data/repositories/transaction_repository.dart';
 import '../../data/repositories/user_preferences_repository.dart';
+import '../../data/services/csv_file_service.dart';
 import '../../data/services/exchange_rate_service.dart';
+import '../../data/use_cases/csv_import_use_case.dart';
 import '../../data/use_cases/recurring_generation_use_case.dart';
 import 'app_database_provider.dart';
 import 'default_currency_provider.dart';
@@ -91,6 +93,36 @@ RecurringGenerationUseCase recurringGenerationUseCase(Ref ref) {
     db: ref.watch(appDatabaseProvider),
   );
 }
+
+/// System file picker for CSV import. Tests override it with a fake that
+/// returns fixture bytes.
+@Riverpod(keepAlive: true, dependencies: [])
+CsvFileService csvFileService(Ref ref) => CsvFileService();
+
+/// CSV import use case. Lives here for the same reason as
+/// [recurringGenerationUseCase]: the controller reads it without importing
+/// `data/services/` or `data/database/`.
+@Riverpod(
+  keepAlive: true,
+  dependencies: [
+    appDatabase,
+    csvFileService,
+    transactionRepository,
+    categoryRepository,
+    accountRepository,
+    accountTypeRepository,
+    currencyRepository,
+  ],
+)
+CsvImportUseCase csvImportUseCase(Ref ref) => CsvImportUseCase(
+  fileService: ref.watch(csvFileServiceProvider),
+  transactionRepo: ref.watch(transactionRepositoryProvider),
+  categoryRepo: ref.watch(categoryRepositoryProvider),
+  accountRepo: ref.watch(accountRepositoryProvider),
+  accountTypeRepo: ref.watch(accountTypeRepositoryProvider),
+  currencyRepo: ref.watch(currencyRepositoryProvider),
+  db: ref.watch(appDatabaseProvider),
+);
 
 /// Shared HTTP client for every HTTP service. Conservative timeouts; the
 /// client is closed when the owning container is disposed.

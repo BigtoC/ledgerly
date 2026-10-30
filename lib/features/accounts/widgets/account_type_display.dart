@@ -17,6 +17,13 @@ String accountTypeDisplayName(AccountType type, AppLocalizations l10n) {
   final key = type.l10nKey;
   if (key == null) return '';
 
+  return accountTypeDisplayNameForKey(key, l10n);
+}
+
+/// Resolves a seeded `accountType.*` l10n key to its localized display
+/// name. Mirrors `categoryDisplayNameForKey`. Unknown keys fall through to
+/// the raw string so orphaned rows still render something.
+String accountTypeDisplayNameForKey(String key, AppLocalizations l10n) {
   return switch (key) {
     'accountType.cash' => l10n.accountTypeCash,
     'accountType.investment' => l10n.accountTypeInvestment,
