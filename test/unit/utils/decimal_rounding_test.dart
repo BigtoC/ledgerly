@@ -83,4 +83,29 @@ void main() {
       });
     }
   });
+
+  group('minorUnitsToDecimalString', () {
+    test('inserts the decimal point at the currency scale', () {
+      expect(minorUnitsToDecimalString(1234, decimals: 2), '12.34');
+      expect(minorUnitsToDecimalString(1200, decimals: 2), '12.00');
+    });
+
+    test('pads small amounts with leading zeros', () {
+      expect(minorUnitsToDecimalString(5, decimals: 2), '0.05');
+      expect(minorUnitsToDecimalString(0, decimals: 2), '0.00');
+      expect(
+        minorUnitsToDecimalString(1, decimals: 18),
+        '0.000000000000000001',
+      );
+    });
+
+    test('zero-decimal currencies have no decimal point', () {
+      expect(minorUnitsToDecimalString(1500, decimals: 0), '1500');
+    });
+
+    test('keeps the sign', () {
+      expect(minorUnitsToDecimalString(-1234, decimals: 2), '-12.34');
+      expect(minorUnitsToDecimalString(-5, decimals: 2), '-0.05');
+    });
+  });
 }

@@ -41,6 +41,17 @@ int decimalStringToMinorUnits(
   return int.parse(minor);
 }
 
+/// The inverse of [decimalStringToMinorUnits]: formats [minorUnits] as a
+/// plain decimal string with exactly [decimals] fraction digits (`1234`,
+/// 2 → `12.34`; `1500`, 0 → `1500`). No grouping, never via a `double`.
+String minorUnitsToDecimalString(int minorUnits, {required int decimals}) {
+  final digits = minorUnits.abs().toString().padLeft(decimals + 1, '0');
+  final sign = minorUnits < 0 ? '-' : '';
+  if (decimals == 0) return '$sign$digits';
+  final point = digits.length - decimals;
+  return '$sign${digits.substring(0, point)}.${digits.substring(point)}';
+}
+
 final _decimalPattern = RegExp(r'^([0-9]+)(?:\.([0-9]+))?$');
 final _leadingZeros = RegExp(r'^0+(?=[0-9])');
 const _maxInt64 = '9223372036854775807';
