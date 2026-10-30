@@ -979,9 +979,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get csvImportReading => 'Reading file…';
 
   @override
-  String get csvImportErrorTooLarge => 'This file is larger than 5 MB.';
-
-  @override
   String get csvImportErrorNotUtf8 => 'This file is not UTF-8 text.';
 
   @override
@@ -990,11 +987,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String csvImportErrorMissingColumns(String columns) {
     return 'Missing columns: $columns';
-  }
-
-  @override
-  String csvImportErrorTooManyRows(int max) {
-    return 'This file has more than $max rows.';
   }
 
   @override
@@ -2095,9 +2087,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get csvImportReading => '正在读取文件…';
 
   @override
-  String get csvImportErrorTooLarge => '文件超过 5 MB。';
-
-  @override
   String get csvImportErrorNotUtf8 => '此文件不是 UTF-8 文本。';
 
   @override
@@ -2106,11 +2095,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   @override
   String csvImportErrorMissingColumns(String columns) {
     return '缺少列：$columns';
-  }
-
-  @override
-  String csvImportErrorTooManyRows(int max) {
-    return '文件超过 $max 行。';
   }
 
   @override
@@ -3205,9 +3189,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get csvImportReading => '正在讀取檔案…';
 
   @override
-  String get csvImportErrorTooLarge => '檔案超過 5 MB。';
-
-  @override
   String get csvImportErrorNotUtf8 => '此檔案不是 UTF-8 文字。';
 
   @override
@@ -3216,11 +3197,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String csvImportErrorMissingColumns(String columns) {
     return '缺少欄位：$columns';
-  }
-
-  @override
-  String csvImportErrorTooManyRows(int max) {
-    return '檔案超過 $max 列。';
   }
 
   @override

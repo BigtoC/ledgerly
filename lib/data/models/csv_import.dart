@@ -5,16 +5,8 @@ import 'currency.dart';
 
 part 'csv_import.freezed.dart';
 
-/// Most data rows one CSV import accepts. Matches the 10k pagination cap
-/// in `docs/architecture/data-model.md`; larger files are rejected, never
-/// truncated.
-const kCsvImportMaxRows = 10000;
-
 /// Why a whole CSV file was rejected.
 enum CsvFileErrorKind {
-  /// The file is over the 5 MB size cap.
-  tooLarge,
-
   /// The bytes are not valid UTF-8.
   notUtf8,
 
@@ -23,9 +15,6 @@ enum CsvFileErrorKind {
 
   /// A required header is missing; see [CsvFileException.missingColumns].
   missingColumns,
-
-  /// More than [kCsvImportMaxRows] data rows.
-  tooManyRows,
 
   /// The text cannot be CSV (an unpaired `"`).
   parse,

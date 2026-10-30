@@ -1840,12 +1840,6 @@ abstract class AppLocalizations {
   /// **'Reading file…'**
   String get csvImportReading;
 
-  /// CSV import failure: the file exceeds the 5 MB cap.
-  ///
-  /// In en, this message translates to:
-  /// **'This file is larger than 5 MB.'**
-  String get csvImportErrorTooLarge;
-
   /// CSV import failure: the file bytes are not valid UTF-8.
   ///
   /// In en, this message translates to:
@@ -1863,12 +1857,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Missing columns: {columns}'**
   String csvImportErrorMissingColumns(String columns);
-
-  /// CSV import failure: the file has more data rows than the import accepts. {max} is the row cap.
-  ///
-  /// In en, this message translates to:
-  /// **'This file has more than {max} rows.'**
-  String csvImportErrorTooManyRows(int max);
 
   /// CSV import failure: the text is not valid CSV (e.g. an unterminated quote).
   ///

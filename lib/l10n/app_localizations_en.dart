@@ -979,9 +979,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get csvImportReading => 'Reading file…';
 
   @override
-  String get csvImportErrorTooLarge => 'This file is larger than 5 MB.';
-
-  @override
   String get csvImportErrorNotUtf8 => 'This file is not UTF-8 text.';
 
   @override
@@ -990,11 +987,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String csvImportErrorMissingColumns(String columns) {
     return 'Missing columns: $columns';
-  }
-
-  @override
-  String csvImportErrorTooManyRows(int max) {
-    return 'This file has more than $max rows.';
   }
 
   @override

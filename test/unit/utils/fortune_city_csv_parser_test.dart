@@ -258,25 +258,12 @@ void main() {
     });
   });
 
-  group('row limits', () {
-    String rows(int n) => [
+  test('a file over 10,000 data rows is accepted in full', () {
+    final csv = [
       _header,
-      for (var i = 0; i < n; i++) 'Cash,食物,1,HKD,2026/1/5 9:05,,0',
+      for (var i = 0; i < 10001; i++) 'Cash,食物,1,HKD,2026/1/5 9:05,,0',
     ].join('\n');
-
-    test('$kCsvImportMaxRows rows are accepted', () {
-      expect(
-        _parse(rows(kCsvImportMaxRows)).rows,
-        hasLength(kCsvImportMaxRows),
-      );
-    });
-
-    test('${kCsvImportMaxRows + 1} rows are rejected', () {
-      expect(
-        () => _parse(rows(kCsvImportMaxRows + 1)),
-        _fileError(CsvFileErrorKind.tooManyRows),
-      );
-    });
+    expect(_parse(csv).rows, hasLength(10001));
   });
 
   group('row validation', () {

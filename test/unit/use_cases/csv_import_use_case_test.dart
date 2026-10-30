@@ -209,22 +209,6 @@ void main() {
       expect(await useCase.pickAndLoad(), isNull);
     });
 
-    test('a too-large file surfaces as CsvFileException(tooLarge)', () async {
-      final useCase = useCaseWith(
-        _FakeCsvFileService(() => throw const CsvFileTooLargeException()),
-      );
-      await expectLater(
-        useCase.pickAndLoad(),
-        throwsA(
-          isA<CsvFileException>().having(
-            (e) => e.kind,
-            'kind',
-            CsvFileErrorKind.tooLarge,
-          ),
-        ),
-      );
-    });
-
     test('parser file errors propagate unchanged', () async {
       final useCase = useCaseWith(_serviceFor(_csv([])));
       await expectLater(

@@ -102,9 +102,7 @@ FortuneCityCsvParseResult parseFortuneCityCsv(Uint8List bytes) {
     final lineNumber = ++line;
     line += _newlines(record);
     if (_isBlank(record)) continue;
-    if (++dataRows > kCsvImportMaxRows) {
-      throw const CsvFileException(CsvFileErrorKind.tooManyRows);
-    }
+    dataRows++;
 
     final fields = [for (final f in record) f.toString()];
     if (fields.length <= lastRequired) {

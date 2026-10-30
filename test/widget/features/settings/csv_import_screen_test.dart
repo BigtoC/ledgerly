@@ -322,8 +322,6 @@ void main() {
       tester,
     ) async {
       final cases = <CsvImportState, String>{
-        const CsvImportState.failure(CsvFileErrorKind.tooLarge):
-            'This file is larger than 5 MB.',
         const CsvImportState.failure(CsvFileErrorKind.notUtf8):
             'This file is not UTF-8 text.',
         const CsvImportState.failure(CsvFileErrorKind.empty):
@@ -332,8 +330,6 @@ void main() {
           CsvFileErrorKind.missingColumns,
           missingColumns: ['Amount', 'Currency'],
         ): 'Missing columns: Amount, Currency',
-        const CsvImportState.failure(CsvFileErrorKind.tooManyRows):
-            'This file has more than 10000 rows.',
         const CsvImportState.failure(CsvFileErrorKind.parse):
             'This file could not be read as CSV.',
         const CsvImportState.failure(CsvFileErrorKind.readFailed):

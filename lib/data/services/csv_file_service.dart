@@ -4,13 +4,6 @@ import 'dart:typed_data';
 import 'package:file_selector/file_selector.dart' as file_selector;
 import 'package:path_provider/path_provider.dart';
 
-/// The picked file is larger than [CsvFileService.maxBytes]. Defined here
-/// because services may not import models; the CSV import use case
-/// translates it into its own file error.
-class CsvFileTooLargeException implements Exception {
-  const CsvFileTooLargeException();
-}
-
 /// Picks a CSV file through the system picker and returns its bytes. Knows
 /// nothing about the CSV format.
 ///
@@ -27,10 +20,6 @@ class CsvFileService {
        _temporaryDirectory = temporaryDirectory ?? getTemporaryDirectory,
        _systemTemporaryDirectory =
            systemTemporaryDirectory ?? (() => Directory.systemTemp);
-
-  /// Largest file [pick] reads: 5 MB. A parse guard, not a memory guard:
-  /// on Android the platform has already read the whole file.
-  static const maxBytes = 5 * 1024 * 1024;
 
   static const _csvTypeGroup = file_selector.XTypeGroup(
     label: 'CSV',
@@ -55,15 +44,10 @@ class CsvFileService {
       file_selector.openFile(acceptedTypeGroups: const [_csvTypeGroup]);
 
   /// The chosen file's name and bytes, or null when the user cancels.
-  ///
-  /// Throws [CsvFileTooLargeException] when the file is over [maxBytes].
   Future<({String name, Uint8List bytes})?> pick() async {
     final file = await _openFile();
     if (file == null) return null;
     try {
-      if (await file.length() > maxBytes) {
-        throw const CsvFileTooLargeException();
-      }
       return (name: file.name, bytes: await file.readAsBytes());
     } finally {
       await _deleteCacheCopy(file.path);

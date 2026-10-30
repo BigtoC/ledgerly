@@ -75,14 +75,10 @@ class CsvImportScreen extends ConsumerWidget {
 
 String _failureMessage(CsvImportFailure failure, AppLocalizations l10n) =>
     switch (failure.kind) {
-      CsvFileErrorKind.tooLarge => l10n.csvImportErrorTooLarge,
       CsvFileErrorKind.notUtf8 => l10n.csvImportErrorNotUtf8,
       CsvFileErrorKind.empty => l10n.csvImportErrorEmpty,
       CsvFileErrorKind.missingColumns => l10n.csvImportErrorMissingColumns(
         failure.missingColumns.join(', '),
-      ),
-      CsvFileErrorKind.tooManyRows => l10n.csvImportErrorTooManyRows(
-        kCsvImportMaxRows,
       ),
       CsvFileErrorKind.parse => l10n.csvImportErrorParse,
       CsvFileErrorKind.readFailed => l10n.csvImportErrorRead,

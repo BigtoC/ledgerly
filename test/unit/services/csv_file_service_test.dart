@@ -84,24 +84,15 @@ void main() {
     expect(copy.existsSync(), isFalse);
   });
 
-  test('a file over 5 MB throws and its cache copy is still deleted', () async {
+  test('a file over 5 MB is returned and its cache copy deleted', () async {
+    const size = 5 * 1024 * 1024 + 1;
     final copy = File('${cache.path}/big.csv')
-      ..writeAsBytesSync(List.filled(CsvFileService.maxBytes + 1, 0x41));
-
-    await expectLater(
-      serviceFor(copy).pick(),
-      throwsA(isA<CsvFileTooLargeException>()),
-    );
-    expect(copy.existsSync(), isFalse);
-  });
-
-  test('a file of exactly 5 MB is accepted', () async {
-    final copy = File('${cache.path}/edge.csv')
-      ..writeAsBytesSync(List.filled(CsvFileService.maxBytes, 0x41));
+      ..writeAsBytesSync(List.filled(size, 0x41));
 
     final picked = await serviceFor(copy).pick();
 
-    expect(picked!.bytes, hasLength(CsvFileService.maxBytes));
+    expect(picked!.bytes, hasLength(size));
+    expect(copy.existsSync(), isFalse);
   });
 }
 

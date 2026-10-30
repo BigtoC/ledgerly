@@ -4,11 +4,9 @@
 // Lives in `data/use_cases/` because the commit coordinates four
 // repositories inside one `db.transaction`, the role
 // `RecurringGenerationUseCase` already plays. It also owns the file
-// service call and translates its exception, so controllers never import
-// `data/services/`. Never logs: rows carry memos and amounts.
+// service call, so controllers never import `data/services/`. Never logs: rows carry memos and amounts.
 
 import 'dart:math' as math;
-import 'dart:typed_data';
 
 import '../../core/utils/color_palette.dart';
 import '../../core/utils/csv_import_keys.dart';
@@ -67,15 +65,9 @@ class CsvImportUseCase {
   /// Picks a file, parses it, resolves currencies, rounds amounts and drops
   /// rows that already exist. Returns null when the user cancels.
   ///
-  /// Throws [CsvFileException] when the file is unusable, including
-  /// [CsvFileErrorKind.tooLarge].
+  /// Throws [CsvFileException] when the file is unusable.
   Future<CsvLoadResult?> pickAndLoad() async {
-    final ({String name, Uint8List bytes})? picked;
-    try {
-      picked = await fileService.pick();
-    } on CsvFileTooLargeException {
-      throw const CsvFileException(CsvFileErrorKind.tooLarge);
-    }
+    final picked = await fileService.pick();
     if (picked == null) return null;
 
     final parsed = parseFortuneCityCsv(picked.bytes);
