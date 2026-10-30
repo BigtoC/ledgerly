@@ -906,6 +906,57 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsNewVersionOpenFailed => 'Could not open the download link';
+
+  @override
+  String settingsUpdateConfirmTitle(String version) {
+    return 'Update to $version?';
+  }
+
+  @override
+  String settingsUpdateConfirmBody(String sizeMb) {
+    return 'Ledgerly will download about $sizeMb MB and install the update. Keep Ledgerly open until it finishes. Ledgerly closes while the update installs; open it again afterwards.';
+  }
+
+  @override
+  String get settingsUpdateDownloadAction => 'Download';
+
+  @override
+  String settingsUpdateDownloading(int percent) {
+    return 'downloading $percent%';
+  }
+
+  @override
+  String get settingsUpdateInstall => 'install';
+
+  @override
+  String get settingsUpdateInstalling => 'installing…';
+
+  @override
+  String get settingsUpdatePermissionNeeded =>
+      'Allow Ledgerly to install apps, then tap install.';
+
+  @override
+  String get settingsUpdateFailedNetwork =>
+      'Download failed. Check your connection and try again.';
+
+  @override
+  String get settingsUpdateFailedChecksum =>
+      'The download was damaged. Try again.';
+
+  @override
+  String get settingsUpdateFailedStorage =>
+      'Not enough storage for the update.';
+
+  @override
+  String get settingsUpdateFailedSignature =>
+      'This copy of Ledgerly is signed differently from the release, so it cannot update in place.';
+
+  @override
+  String get settingsUpdateFailedGeneric =>
+      'The update could not be installed.';
+
+  @override
+  String get settingsUpdateOpenInBrowser => 'Open in browser';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -1777,6 +1828,51 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get settingsNewVersionOpenFailed => '无法打开下载链接';
+
+  @override
+  String settingsUpdateConfirmTitle(String version) {
+    return '更新至 $version？';
+  }
+
+  @override
+  String settingsUpdateConfirmBody(String sizeMb) {
+    return 'Ledgerly 将下载约 $sizeMb MB 并安装更新。完成前请保持 Ledgerly 开启。安装更新时 Ledgerly 会关闭，之后请重新打开。';
+  }
+
+  @override
+  String get settingsUpdateDownloadAction => '下载';
+
+  @override
+  String settingsUpdateDownloading(int percent) {
+    return '下载中 $percent%';
+  }
+
+  @override
+  String get settingsUpdateInstall => '安装';
+
+  @override
+  String get settingsUpdateInstalling => '安装中…';
+
+  @override
+  String get settingsUpdatePermissionNeeded => '请允许 Ledgerly 安装应用，然后点按「安装」。';
+
+  @override
+  String get settingsUpdateFailedNetwork => '下载失败，请检查网络后重试。';
+
+  @override
+  String get settingsUpdateFailedChecksum => '下载的文件已损坏，请重试。';
+
+  @override
+  String get settingsUpdateFailedStorage => '存储空间不足，无法更新。';
+
+  @override
+  String get settingsUpdateFailedSignature => '此 Ledgerly 的签名与正式版本不同，无法直接更新。';
+
+  @override
+  String get settingsUpdateFailedGeneric => '无法安装更新。';
+
+  @override
+  String get settingsUpdateOpenInBrowser => '在浏览器中打开';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -2648,4 +2744,49 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get settingsNewVersionOpenFailed => '無法開啟下載連結';
+
+  @override
+  String settingsUpdateConfirmTitle(String version) {
+    return '更新至 $version？';
+  }
+
+  @override
+  String settingsUpdateConfirmBody(String sizeMb) {
+    return 'Ledgerly 將下載約 $sizeMb MB 並安裝更新。完成前請保持 Ledgerly 開啟。安裝更新時 Ledgerly 會關閉，之後請重新開啟。';
+  }
+
+  @override
+  String get settingsUpdateDownloadAction => '下載';
+
+  @override
+  String settingsUpdateDownloading(int percent) {
+    return '下載中 $percent%';
+  }
+
+  @override
+  String get settingsUpdateInstall => '安裝';
+
+  @override
+  String get settingsUpdateInstalling => '安裝中…';
+
+  @override
+  String get settingsUpdatePermissionNeeded => '請允許 Ledgerly 安裝應用程式，然後輕觸「安裝」。';
+
+  @override
+  String get settingsUpdateFailedNetwork => '下載失敗，請檢查網路後重試。';
+
+  @override
+  String get settingsUpdateFailedChecksum => '下載的檔案已損毀，請重試。';
+
+  @override
+  String get settingsUpdateFailedStorage => '儲存空間不足，無法更新。';
+
+  @override
+  String get settingsUpdateFailedSignature => '此 Ledgerly 的簽署與正式版本不同，無法直接更新。';
+
+  @override
+  String get settingsUpdateFailedGeneric => '無法安裝更新。';
+
+  @override
+  String get settingsUpdateOpenInBrowser => '在瀏覽器中開啟';
 }

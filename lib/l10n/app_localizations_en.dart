@@ -906,4 +906,55 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsNewVersionOpenFailed => 'Could not open the download link';
+
+  @override
+  String settingsUpdateConfirmTitle(String version) {
+    return 'Update to $version?';
+  }
+
+  @override
+  String settingsUpdateConfirmBody(String sizeMb) {
+    return 'Ledgerly will download about $sizeMb MB and install the update. Keep Ledgerly open until it finishes. Ledgerly closes while the update installs; open it again afterwards.';
+  }
+
+  @override
+  String get settingsUpdateDownloadAction => 'Download';
+
+  @override
+  String settingsUpdateDownloading(int percent) {
+    return 'downloading $percent%';
+  }
+
+  @override
+  String get settingsUpdateInstall => 'install';
+
+  @override
+  String get settingsUpdateInstalling => 'installing…';
+
+  @override
+  String get settingsUpdatePermissionNeeded =>
+      'Allow Ledgerly to install apps, then tap install.';
+
+  @override
+  String get settingsUpdateFailedNetwork =>
+      'Download failed. Check your connection and try again.';
+
+  @override
+  String get settingsUpdateFailedChecksum =>
+      'The download was damaged. Try again.';
+
+  @override
+  String get settingsUpdateFailedStorage =>
+      'Not enough storage for the update.';
+
+  @override
+  String get settingsUpdateFailedSignature =>
+      'This copy of Ledgerly is signed differently from the release, so it cannot update in place.';
+
+  @override
+  String get settingsUpdateFailedGeneric =>
+      'The update could not be installed.';
+
+  @override
+  String get settingsUpdateOpenInBrowser => 'Open in browser';
 }

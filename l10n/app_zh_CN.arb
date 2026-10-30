@@ -320,5 +320,18 @@
   "chartsExcludedCurrencies": "已排除：{codes} — 汇率尚未就绪",
   "@chartsExcludedCurrencies": { "placeholders": { "codes": { "type": "String" } } },
   "settingsNewVersionBadge": "新版本",
-  "settingsNewVersionOpenFailed": "无法打开下载链接"
+  "settingsNewVersionOpenFailed": "无法打开下载链接",
+  "settingsUpdateConfirmTitle": "更新至 {version}？",
+  "settingsUpdateConfirmBody": "Ledgerly 将下载约 {sizeMb} MB 并安装更新。完成前请保持 Ledgerly 开启。安装更新时 Ledgerly 会关闭，之后请重新打开。",
+  "settingsUpdateDownloadAction": "下载",
+  "settingsUpdateDownloading": "下载中 {percent}%",
+  "settingsUpdateInstall": "安装",
+  "settingsUpdateInstalling": "安装中…",
+  "settingsUpdatePermissionNeeded": "请允许 Ledgerly 安装应用，然后点按「安装」。",
+  "settingsUpdateFailedNetwork": "下载失败，请检查网络后重试。",
+  "settingsUpdateFailedChecksum": "下载的文件已损坏，请重试。",
+  "settingsUpdateFailedStorage": "存储空间不足，无法更新。",
+  "settingsUpdateFailedSignature": "此 Ledgerly 的签名与正式版本不同，无法直接更新。",
+  "settingsUpdateFailedGeneric": "无法安装更新。",
+  "settingsUpdateOpenInBrowser": "在浏览器中打开"
 }

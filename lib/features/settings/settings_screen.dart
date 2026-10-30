@@ -76,7 +76,7 @@ class _SettingsBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final packageInfo = ref.watch(packageInfoProvider);
-    final updateUrl = ref.watch(availableAppUpdateProvider);
+    final update = ref.watch(availableAppUpdateProvider);
     const EdgeInsets cardPadding = EdgeInsets.symmetric(
       horizontal: homePageCardHorizontalPadding - 16,
     );
@@ -152,7 +152,7 @@ class _SettingsBody extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  if (updateUrl != null) NewVersionBadge(url: updateUrl),
+                  if (update != null) NewVersionBadge(update: update),
                 ],
               ),
             ),

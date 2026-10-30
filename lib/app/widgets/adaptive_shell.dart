@@ -87,7 +87,7 @@ class _SettingsNavIcon extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final hasUpdate = ref.watch(
-      availableAppUpdateProvider.select((url) => url != null),
+      availableAppUpdateProvider.select((update) => update != null),
     );
     // No label, so the badge renders as a small dot at the top end. The dot
     // is visual only, so screen readers get the badge text instead.
