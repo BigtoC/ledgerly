@@ -4,7 +4,7 @@
 **Status:** Approved for implementation. The user answered the open questions on 2026-10-30; see [Decisions](#decisions).
 **PRD reference:** `PRD.md` § Phase 2: "[Pending] Fortune City CSV import"; § Security & Privacy: "Future CSV import/export must be explicit user actions with schema validation, size limits, malformed-row handling, formula escaping, and clear warnings…"
 **Sample data:** `test/data/import_fortune_city_data.csv` (export from the Fortune City / 記帳城市 app)
-**Depends on** (landed on `feat/csv-import`):
+**Depends on** (merged to `main` in #62):
 - the `category.investment` expense category (en "Investment", zh_TW 理財, zh_CN 理财) and its schema v7 data-only migration;
 - zh labels renamed to Fortune City's names: Food 食物, Drinks 飲品/饮品, Shopping 消費/消费, Housing 居家, Medical 醫藥/医药;
 - `category.personal` retired (no longer seeded; v7 deletes it when unused, archives it otherwise).
@@ -57,7 +57,7 @@ No schema change is needed; the import runs on schema v7. It needs:
 
 ## Prerequisites
 
-- `category.investment`, the zh label renames and the Personal retirement (landed on `feat/csv-import`; schema v7).
+- `category.investment`, the zh label renames and the Personal retirement (merged to `main` in #62; schema v7).
 - Add `file_selector` and `csv` to `pubspec.yaml`. See [Dependencies](#dependencies).
 
 ---
