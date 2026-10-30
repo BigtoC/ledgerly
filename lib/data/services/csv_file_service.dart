@@ -14,15 +14,19 @@ class CsvFileTooLargeException implements Exception {
 /// Picks a CSV file through the system picker and returns its bytes. Knows
 /// nothing about the CSV format.
 ///
-/// `file_selector_android` (and the iOS picker) copy the chosen file into
-/// the app's temporary directory. That copy holds financial data, so
-/// [pick] deletes it after reading. The file name is never logged.
+/// The platform pickers copy the chosen file: `file_selector_android` into
+/// the app's cache directory, the iOS document picker into the app's
+/// `tmp/`. That copy holds financial data, so [pick] deletes it after
+/// reading. The file name is never logged.
 class CsvFileService {
   CsvFileService({
     Future<file_selector.XFile?> Function()? openFile,
     Future<Directory> Function()? temporaryDirectory,
+    Directory Function()? systemTemporaryDirectory,
   }) : _openFile = openFile ?? _openCsvFile,
-       _temporaryDirectory = temporaryDirectory ?? getTemporaryDirectory;
+       _temporaryDirectory = temporaryDirectory ?? getTemporaryDirectory,
+       _systemTemporaryDirectory =
+           systemTemporaryDirectory ?? (() => Directory.systemTemp);
 
   /// Largest file [pick] reads: 5 MB. A parse guard, not a memory guard:
   /// on Android the platform has already read the whole file.
@@ -45,6 +49,7 @@ class CsvFileService {
 
   final Future<file_selector.XFile?> Function() _openFile;
   final Future<Directory> Function() _temporaryDirectory;
+  final Directory Function() _systemTemporaryDirectory;
 
   static Future<file_selector.XFile?> _openCsvFile() =>
       file_selector.openFile(acceptedTypeGroups: const [_csvTypeGroup]);
@@ -65,15 +70,20 @@ class CsvFileService {
     }
   }
 
-  /// Deletes [path] when it lies inside the temporary directory, where the
-  /// platform picker put its copy. Failures are ignored: the copy is the
-  /// platform's, and a leftover cache file must not fail the import.
+  /// Deletes [path] when it lies inside the temporary directory (Android's
+  /// cache dir; `Library/Caches` on iOS) or the system temp directory (the
+  /// app's `tmp/` on iOS), where the platform picker put its copy.
+  /// Failures are ignored: the copy is the platform's, and a leftover cache
+  /// file must not fail the import.
   Future<void> _deleteCacheCopy(String path) async {
     try {
       // Resolve links so `/var` and `/private/var` (iOS) compare equal.
-      final temp = await (await _temporaryDirectory()).resolveSymbolicLinks();
+      final roots = [
+        await (await _temporaryDirectory()).resolveSymbolicLinks(),
+        await _systemTemporaryDirectory().resolveSymbolicLinks(),
+      ];
       final file = await File(path).resolveSymbolicLinks();
-      if (file.startsWith('$temp${Platform.pathSeparator}')) {
+      if (roots.any((r) => file.startsWith('$r${Platform.pathSeparator}'))) {
         await File(file).delete();
       }
     } on Object {

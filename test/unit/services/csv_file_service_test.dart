@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,10 +8,12 @@ import 'package:ledgerly/data/services/csv_file_service.dart';
 void main() {
   late Directory root;
   late Directory cache;
+  late Directory tmp;
 
   setUp(() {
     root = Directory.systemTemp.createTempSync('csv_file_service_test');
     cache = Directory('${root.path}/cache')..createSync();
+    tmp = Directory('${root.path}/tmp')..createSync();
   });
 
   tearDown(() => root.deleteSync(recursive: true));
@@ -21,6 +24,7 @@ void main() {
   }) => CsvFileService(
     openFile: () async => picked == null ? null : XFile(picked.path),
     temporaryDirectory: temporaryDirectory ?? () async => cache,
+    systemTemporaryDirectory: () => tmp,
   );
 
   test('returns null when the pick is cancelled', () async {
@@ -34,6 +38,15 @@ void main() {
 
     expect(picked!.name, 'export.csv');
     expect(picked.bytes, [1, 2, 3]);
+    expect(copy.existsSync(), isFalse);
+  });
+
+  test('deletes the iOS picker copy under the system temp dir', () async {
+    final inbox = Directory('${tmp.path}/app-Inbox')..createSync();
+    final copy = File('${inbox.path}/export.csv')..writeAsBytesSync([1]);
+
+    await serviceFor(copy).pick();
+
     expect(copy.existsSync(), isFalse);
   });
 
@@ -57,6 +70,20 @@ void main() {
     expect(picked!.bytes, [1]);
   });
 
+  test('deletes the copy when reading it fails', () async {
+    final copy = File('${cache.path}/export.csv')..writeAsBytesSync([1]);
+
+    await expectLater(
+      CsvFileService(
+        openFile: () async => _UnreadableXFile(copy.path),
+        temporaryDirectory: () async => cache,
+        systemTemporaryDirectory: () => tmp,
+      ).pick(),
+      throwsA(isA<FileSystemException>()),
+    );
+    expect(copy.existsSync(), isFalse);
+  });
+
   test('a file over 5 MB throws and its cache copy is still deleted', () async {
     final copy = File('${cache.path}/big.csv')
       ..writeAsBytesSync(List.filled(CsvFileService.maxBytes + 1, 0x41));
@@ -76,4 +103,12 @@ void main() {
 
     expect(picked!.bytes, hasLength(CsvFileService.maxBytes));
   });
+}
+
+class _UnreadableXFile extends XFile {
+  _UnreadableXFile(super.path);
+
+  @override
+  Future<Uint8List> readAsBytes() =>
+      throw const FileSystemException('unreadable');
 }
