@@ -38,6 +38,10 @@ class _FakeCsvFileService implements CsvFileService {
 
   @override
   Future<({String name, Uint8List bytes})?> pick() => _pick();
+
+  @override
+  Future<bool> save(String fileName, Uint8List bytes) =>
+      throw UnimplementedError();
 }
 
 class _MockTransactionRepository extends Mock

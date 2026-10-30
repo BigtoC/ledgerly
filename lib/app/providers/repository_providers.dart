@@ -15,6 +15,7 @@ import '../../data/repositories/transaction_repository.dart';
 import '../../data/repositories/user_preferences_repository.dart';
 import '../../data/services/csv_file_service.dart';
 import '../../data/services/exchange_rate_service.dart';
+import '../../data/use_cases/csv_export_use_case.dart';
 import '../../data/use_cases/csv_import_use_case.dart';
 import '../../data/use_cases/recurring_generation_use_case.dart';
 import 'app_database_provider.dart';
@@ -122,6 +123,24 @@ CsvImportUseCase csvImportUseCase(Ref ref) => CsvImportUseCase(
   accountTypeRepo: ref.watch(accountTypeRepositoryProvider),
   currencyRepo: ref.watch(currencyRepositoryProvider),
   db: ref.watch(appDatabaseProvider),
+);
+
+/// CSV export use case. Lives here for the same reason as
+/// [csvImportUseCase].
+@Riverpod(
+  keepAlive: true,
+  dependencies: [
+    csvFileService,
+    transactionRepository,
+    categoryRepository,
+    accountRepository,
+  ],
+)
+CsvExportUseCase csvExportUseCase(Ref ref) => CsvExportUseCase(
+  fileService: ref.watch(csvFileServiceProvider),
+  transactionRepo: ref.watch(transactionRepositoryProvider),
+  categoryRepo: ref.watch(categoryRepositoryProvider),
+  accountRepo: ref.watch(accountRepositoryProvider),
 );
 
 /// Shared HTTP client for every HTTP service. Conservative timeouts; the

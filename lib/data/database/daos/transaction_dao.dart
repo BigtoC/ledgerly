@@ -164,6 +164,39 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
+  /// Earliest and latest `date` across all rows, or null when the table
+  /// is empty. Backs `TransactionRepository.getDateBounds`.
+  Future<({DateTime first, DateTime last})?> getDateBounds() async {
+    final first = transactions.date.min();
+    final last = transactions.date.max();
+    final row = await (selectOnly(
+      transactions,
+    )..addColumns([first, last])).getSingle();
+    final firstDate = row.read(first);
+    final lastDate = row.read(last);
+    if (firstDate == null || lastDate == null) return null;
+    return (first: firstDate, last: lastDate);
+  }
+
+  /// One-shot read of rows whose `date` falls in `[start, end)`, ordered
+  /// by `date ASC, id ASC`. Backs `TransactionRepository.getInDateRange`.
+  Future<List<TransactionRow>> getInDateRange({
+    required DateTime start,
+    required DateTime end,
+  }) {
+    return (select(transactions)
+          ..where(
+            (t) =>
+                t.date.isBiggerOrEqualValue(start) &
+                t.date.isSmallerThanValue(end),
+          )
+          ..orderBy([
+            (t) => OrderingTerm(expression: t.date),
+            (t) => OrderingTerm(expression: t.id),
+          ]))
+        .get();
+  }
+
   /// One-shot read by id (e.g. duplicate flow).
   Future<TransactionRow?> findById(int id) {
     return (select(

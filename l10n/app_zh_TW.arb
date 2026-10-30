@@ -392,5 +392,18 @@
   "@csvImportDoneCreated": {"placeholders": {"accounts": {"type": "int"}, "categories": {"type": "int"}}},
   "csvImportDoneSkipped": "已略過 {duplicates} 筆重複及 {invalid} 筆無效資料",
   "@csvImportDoneSkipped": {"placeholders": {"duplicates": {"type": "int"}, "invalid": {"type": "int"}}},
-  "csvImportDone": "完成"
+  "csvImportDone": "完成",
+  "settingsSectionDataManagement": "資料管理",
+  "settingsExportDataTile": "匯出資料",
+  "csvExportTitle": "匯出資料",
+  "csvExportIntro": "將交易匯出為 CSV 檔案，並選擇儲存位置。",
+  "csvExportPrivacyNote": "檔案未加密，任何取得檔案的人都能讀取你的交易。",
+  "csvExportEmpty": "沒有可匯出的交易。",
+  "csvExportRange": "日期範圍",
+  "csvExportFullRange": "使用全部期間",
+  "csvExportButton": "匯出為 CSV",
+  "csvExportDone": "{count, plural, other{已匯出 {count} 筆交易}}",
+  "@csvExportDone": {"placeholders": {"count": {"type": "int"}}},
+  "csvExportFailed": "無法匯出，請再試一次。",
+  "csvExportNoneInRange": "此日期範圍內沒有交易。"
 }

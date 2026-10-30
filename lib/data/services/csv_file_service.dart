@@ -1,22 +1,38 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:file_selector/file_selector.dart' as file_selector;
 import 'package:path_provider/path_provider.dart';
 
-/// Picks a CSV file through the system picker and returns its bytes. Knows
-/// nothing about the CSV format.
+/// Saves bytes through the system save dialog. Returns false when the
+/// user cancels.
+typedef SaveFile = Future<bool> Function({
+  required String fileName,
+  required Uint8List bytes,
+});
+
+/// Picks a CSV file through the system picker and returns its bytes, and
+/// saves one through the system save dialog. Knows nothing about the CSV
+/// format.
 ///
 /// The platform pickers copy the chosen file: `file_selector_android` into
 /// the app's cache directory, the iOS document picker into the app's
-/// `tmp/`. That copy holds financial data, so [pick] deletes it after
-/// reading. The file name is never logged.
+/// `tmp/`. Saving on iOS also leaves a copy in `tmp/` (`file_picker`
+/// writes the bytes there before showing the dialog; see [save]). Those
+/// copies hold
+/// financial data, so [pick] and [save] delete them. File names are never
+/// logged.
 class CsvFileService {
   CsvFileService({
     Future<file_selector.XFile?> Function()? openFile,
+    SaveFile? saveFile,
     Future<Directory> Function()? temporaryDirectory,
     Directory Function()? systemTemporaryDirectory,
+    bool? isIOS,
   }) : _openFile = openFile ?? _openCsvFile,
+       _saveFile = saveFile ?? _saveCsvFile,
+       _isIOS = isIOS ?? Platform.isIOS,
        _temporaryDirectory = temporaryDirectory ?? getTemporaryDirectory,
        _systemTemporaryDirectory =
            systemTemporaryDirectory ?? (() => Directory.systemTemp);
@@ -37,11 +53,52 @@ class CsvFileService {
   );
 
   final Future<file_selector.XFile?> Function() _openFile;
+  final SaveFile _saveFile;
+  final bool _isIOS;
   final Future<Directory> Function() _temporaryDirectory;
   final Directory Function() _systemTemporaryDirectory;
 
   static Future<file_selector.XFile?> _openCsvFile() =>
       file_selector.openFile(acceptedTypeGroups: const [_csvTypeGroup]);
+
+  /// The public Downloads folder as a Storage Access Framework document,
+  /// where the Android save dialog opens. iOS ignores it.
+  static const _androidDownloads =
+      'content://com.android.externalstorage.documents/document/primary%3ADownload';
+
+  static Future<bool> _saveCsvFile({
+    required String fileName,
+    required Uint8List bytes,
+  }) async =>
+      await FilePicker.saveFile(
+        fileName: fileName,
+        bytes: bytes,
+        mimeType: 'text/csv',
+        initialDirectory: _androidDownloads,
+      ) !=
+      null;
+
+  /// Shows the system save dialog for [bytes] named [fileName]. Returns
+  /// false when the user cancels.
+  ///
+  /// On iOS, `file_picker_darwin` 2.4.0 writes the bytes to
+  /// `NSTemporaryDirectory()/<fileName>` before presenting the export
+  /// picker and never deletes them (`IOSFilePickerHandler.saveFile`), so
+  /// that path is deleted afterwards, saved or not. Recheck it when
+  /// upgrading the plugin. Other platforms write straight to the chosen
+  /// location, which may itself be the temp directory, so nothing is
+  /// deleted there.
+  Future<bool> save(String fileName, Uint8List bytes) async {
+    try {
+      return await _saveFile(fileName: fileName, bytes: bytes);
+    } finally {
+      if (_isIOS) {
+        await _deleteCacheCopy(
+          '${_systemTemporaryDirectory().path}${Platform.pathSeparator}$fileName',
+        );
+      }
+    }
+  }
 
   /// The chosen file's name and bytes, or null when the user cancels.
   Future<({String name, Uint8List bytes})?> pick() async {
@@ -57,8 +114,9 @@ class CsvFileService {
   /// Deletes [path] when it lies inside the temporary directory (Android's
   /// cache dir; `Library/Caches` on iOS) or the system temp directory (the
   /// app's `tmp/` on iOS), where the platform picker put its copy.
-  /// Failures are ignored: the copy is the platform's, and a leftover cache
-  /// file must not fail the import.
+  /// Failures, including a missing copy, are ignored: the copy is the
+  /// platform's, and a leftover cache file must not fail the import or
+  /// export.
   Future<void> _deleteCacheCopy(String path) async {
     try {
       // Resolve links so `/var` and `/private/var` (iOS) compare equal.

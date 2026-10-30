@@ -3,8 +3,10 @@
 // Layout: `CustomScrollView` with one `SliverToBoxAdapter` per section.
 // Sections (order):
 //   1. Appearance — theme segmented control + language selector.
-//   2. General — default account, default currency, manage categories.
-//   3. Splash — splash settings subsection (plan §6).
+//   2. General — default account, default currency, manage categories,
+//      recurring.
+//   3. Data Management — import from CSV, export data.
+//   4. Splash — splash settings subsection (plan §6).
 //
 // The screen is purely a projection of `settingsControllerProvider` — it
 // never reads repositories directly, and no data transformation happens
@@ -110,11 +112,27 @@ class _SettingsBody extends ConsumerWidget {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => context.push('/settings/recurring'),
                 ),
+              ],
+            ),
+          ),
+        ),
+        SliverPadding(
+          padding: cardPadding,
+          sliver: SliverToBoxAdapter(
+            child: SettingsSection(
+              title: l10n.settingsSectionDataManagement,
+              children: [
                 ListTile(
                   key: const ValueKey('settingsImportCsvTile'),
                   title: Text(l10n.settingsImportCsvTile),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => context.push('/settings/import'),
+                ),
+                ListTile(
+                  key: const ValueKey('settingsExportDataTile'),
+                  title: Text(l10n.settingsExportDataTile),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/settings/export'),
                 ),
               ],
             ),

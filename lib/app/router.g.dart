@@ -52,6 +52,7 @@ final class RouterProvider
           recurringRulesControllerProvider,
           recurringRuleFormControllerProvider,
           csvImportControllerProvider,
+          csvExportControllerProvider,
           categoriesByTypeProvider,
           accountRepositoryProvider,
           transactionFormControllerProvider,
@@ -106,6 +107,8 @@ final class RouterProvider
           RouterProvider.$allTransitiveDependencies46,
           RouterProvider.$allTransitiveDependencies47,
           RouterProvider.$allTransitiveDependencies48,
+          RouterProvider.$allTransitiveDependencies49,
+          RouterProvider.$allTransitiveDependencies50,
         },
       );
 
@@ -181,8 +184,11 @@ final class RouterProvider
       CsvImportControllerProvider.$allTransitiveDependencies2;
   static final $allTransitiveDependencies46 =
       CsvImportControllerProvider.$allTransitiveDependencies7;
-  static final $allTransitiveDependencies47 = categoriesByTypeProvider;
-  static final $allTransitiveDependencies48 = transactionFormControllerProvider;
+  static final $allTransitiveDependencies47 = csvExportControllerProvider;
+  static final $allTransitiveDependencies48 =
+      CsvExportControllerProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies49 = categoriesByTypeProvider;
+  static final $allTransitiveDependencies50 = transactionFormControllerProvider;
 
   @override
   String debugGetCreateSourceHash() => _$routerHash();
@@ -206,4 +212,4 @@ final class RouterProvider
   }
 }
 
-String _$routerHash() => r'66c69f111ed4d9e34893a20b2c1d0f9a61830398';
+String _$routerHash() => r'e5e676e0c796c21e3b4ddc041c21932dbb625f56';

@@ -1154,4 +1154,44 @@ void main() {
       expect(page.map((r) => r.amountMinorUnits), [2, 3]);
     });
   });
+
+  group('getDateBounds', () {
+    test('B-01: null when there are no transactions', () async {
+      expect(await txRepo.getDateBounds(), isNull);
+    });
+
+    test('B-02: earliest and latest date, not createdAt', () async {
+      await txRepo.save(sampleTx(date: DateTime(2025, 6, 1, 9)));
+      await txRepo.save(sampleTx(date: DateTime(2024, 1, 2, 23, 30)));
+      await txRepo.save(sampleTx(date: DateTime(2026, 3, 4, 8)));
+
+      expect(await txRepo.getDateBounds(), (
+        first: DateTime(2024, 1, 2, 23, 30),
+        last: DateTime(2026, 3, 4, 8),
+      ));
+    });
+  });
+
+  group('getInDateRange', () {
+    test('R-01: half-open [start, end), oldest first, ties by id', () async {
+      final start = DateTime(2026, 3, 1);
+      final end = DateTime(2026, 3, 5);
+      // Out: one second before start.
+      await txRepo.save(
+        sampleTx(amount: 1, date: start.subtract(const Duration(seconds: 1))),
+      );
+      final last = await txRepo.save(
+        sampleTx(amount: 2, date: end.subtract(const Duration(seconds: 1))),
+      );
+      final firstA = await txRepo.save(sampleTx(amount: 3, date: start));
+      final firstB = await txRepo.save(sampleTx(amount: 4, date: start));
+      // Out: exactly end.
+      await txRepo.save(sampleTx(amount: 5, date: end));
+
+      final rows = await txRepo.getInDateRange(start, end);
+
+      expect(rows.map((t) => t.id), [firstA.id, firstB.id, last.id]);
+      expect(rows.first.currency, _usd);
+    });
+  });
 }
