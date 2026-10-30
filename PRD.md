@@ -1259,7 +1259,7 @@ Tests are organized by **architectural layer**, not by feature. This mirrors the
 
 ## Dependencies
 
-Versions below are the tested resolvable set under Flutter **3.47.7** (Dart 3.13.5). Keep `pubspec.yaml` in sync with this table — any version bump needs to round-trip `flutter pub get` and `dart run build_runner build` before landing here.
+Versions below are the tested resolvable set under Flutter **3.47.9** (Dart 3.13.7). Keep `pubspec.yaml` in sync with this table — any version bump needs to round-trip `flutter pub get` and `dart run build_runner build` before landing here.
 
 ### Core (MVP)
 
@@ -1267,10 +1267,10 @@ Versions below are the tested resolvable set under Flutter **3.47.7** (Dart 3.13
 |--------------------------|-------------|--------------------------------------------------------------------------|
 | `flutter_riverpod`       | `^3.4.3`    | State management                                                         |
 | `riverpod_annotation`    | `^4.0.7`    | Provider code-gen annotations                                            |
-| `drift`                  | `^2.35.2`   | Database ORM                                                             |
+| `drift`                  | `^2.35.3`   | Database ORM                                                             |
 | `drift_flutter`          | `^0.3.1`    | Flutter SQLite integration                                               |
 | `path_provider`          | `^2.1.6`    | DB file path location; update APK download directory                     |
-| `go_router`              | `^18.1.1`   | Navigation/routing (`StatefulShellRoute`)                                |
+| `go_router`              | `^18.1.2`   | Navigation/routing (`StatefulShellRoute`)                                |
 | `freezed_annotation`     | `^3.1.0`    | Immutable data model annotations                                         |
 | `json_annotation`        | `^4.12.0`   | JSON serialization annotations                                           |
 | `flutter_localizations`  | sdk         | i18n framework                                                           |
@@ -1287,7 +1287,7 @@ Versions below are the tested resolvable set under Flutter **3.47.7** (Dart 3.13
 |------------|-----------|---------------------------------------------------------------------------------|
 | `dio`      | `^5.11.1` | HTTP client (exchange-rate fetching, app-update release check and APK download) |
 | `fl_chart` | `^1.3.0`  | Pie + daily bar charts (Analysis tab)                                           |
-| `crypto`   | `^3.0.6`  | SHA-256 check of downloaded app-update APKs                                     |
+| `crypto`   | `^3.0.8`  | SHA-256 check of downloaded app-update APKs                                     |
 
 ### Deferred (Not yet shipped)
 
@@ -1303,7 +1303,7 @@ Versions below are the tested resolvable set under Flutter **3.47.7** (Dart 3.13
 | Package                 | Version   | Purpose                                                                                                                                                               |
 |-------------------------|-----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `build_runner`          | `^2.16.2` | Code generation runner — held below 2.17 by `build 5`; see note                                                                                                       |
-| `drift_dev`             | `^2.35.1` | Drift code generation + schema dump                                                                                                                                   |
+| `drift_dev`             | `^2.35.2` | Drift code generation + schema dump                                                                                                                                   |
 | `freezed`               | `^4.0.3`  | Freezed code generation                                                                                                                                               |
 | `json_serializable`     | `^6.15.2` | JSON code generation — not used yet; see note                                                                                                                         |
 | `riverpod_generator`    | `^4.0.9`  | Riverpod code generation                                                                                                                                              |

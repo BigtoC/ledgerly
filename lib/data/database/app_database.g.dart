@@ -6773,10 +6773,11 @@ class $$CurrenciesTableTableManager
                   getPrefetchedDataCallback: (items) async {
                     return [
                       if (accountTypesRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           Currency,
                           $CurrenciesTable,
-                          AccountTypeRow
+                          AccountTypeRow,
+                          $AccountTypesTable
                         >(
                           currentTable: table,
                           referencedTable: $$CurrenciesTableReferences
@@ -6787,17 +6788,16 @@ class $$CurrenciesTableTableManager
                                 table,
                                 p0,
                               ).accountTypesRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.defaultCurrency == item.code,
-                              ),
+                          currentColumn: 'code',
+                          referencedColumn: 'default_currency',
                           typedResults: items,
                         ),
                       if (accountsRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           Currency,
                           $CurrenciesTable,
-                          AccountRow
+                          AccountRow,
+                          $AccountsTable
                         >(
                           currentTable: table,
                           referencedTable: $$CurrenciesTableReferences
@@ -6808,17 +6808,16 @@ class $$CurrenciesTableTableManager
                                 table,
                                 p0,
                               ).accountsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.currency == item.code,
-                              ),
+                          currentColumn: 'code',
+                          referencedColumn: 'currency',
                           typedResults: items,
                         ),
                       if (transactionsRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           Currency,
                           $CurrenciesTable,
-                          TransactionRow
+                          TransactionRow,
+                          $TransactionsTable
                         >(
                           currentTable: table,
                           referencedTable: $$CurrenciesTableReferences
@@ -6829,17 +6828,16 @@ class $$CurrenciesTableTableManager
                                 table,
                                 p0,
                               ).transactionsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.currency == item.code,
-                              ),
+                          currentColumn: 'code',
+                          referencedColumn: 'currency',
                           typedResults: items,
                         ),
                       if (shoppingListItemsRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           Currency,
                           $CurrenciesTable,
-                          ShoppingListItemRow
+                          ShoppingListItemRow,
+                          $ShoppingListItemsTable
                         >(
                           currentTable: table,
                           referencedTable: $$CurrenciesTableReferences
@@ -6850,17 +6848,16 @@ class $$CurrenciesTableTableManager
                                 table,
                                 p0,
                               ).shoppingListItemsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.draftCurrencyCode == item.code,
-                              ),
+                          currentColumn: 'code',
+                          referencedColumn: 'draft_currency_code',
                           typedResults: items,
                         ),
                       if (recurringRulesRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           Currency,
                           $CurrenciesTable,
-                          RecurringRuleRow
+                          RecurringRuleRow,
+                          $RecurringRulesTable
                         >(
                           currentTable: table,
                           referencedTable: $$CurrenciesTableReferences
@@ -6871,17 +6868,16 @@ class $$CurrenciesTableTableManager
                                 table,
                                 p0,
                               ).recurringRulesRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.currency == item.code,
-                              ),
+                          currentColumn: 'code',
+                          referencedColumn: 'currency',
                           typedResults: items,
                         ),
                       if (pendingTransactionsRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           Currency,
                           $CurrenciesTable,
-                          PendingTransactionRow
+                          PendingTransactionRow,
+                          $PendingTransactionsTable
                         >(
                           currentTable: table,
                           referencedTable: $$CurrenciesTableReferences
@@ -6892,10 +6888,8 @@ class $$CurrenciesTableTableManager
                                 table,
                                 p0,
                               ).pendingTransactionsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.currency == item.code,
-                              ),
+                          currentColumn: 'code',
+                          referencedColumn: 'currency',
                           typedResults: items,
                         ),
                     ];
@@ -7472,10 +7466,11 @@ class $$CategoriesTableTableManager
                   getPrefetchedDataCallback: (items) async {
                     return [
                       if (transactionsRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           CategoryRow,
                           $CategoriesTable,
-                          TransactionRow
+                          TransactionRow,
+                          $TransactionsTable
                         >(
                           currentTable: table,
                           referencedTable: $$CategoriesTableReferences
@@ -7486,17 +7481,16 @@ class $$CategoriesTableTableManager
                                 table,
                                 p0,
                               ).transactionsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.categoryId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'category_id',
                           typedResults: items,
                         ),
                       if (shoppingListItemsRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           CategoryRow,
                           $CategoriesTable,
-                          ShoppingListItemRow
+                          ShoppingListItemRow,
+                          $ShoppingListItemsTable
                         >(
                           currentTable: table,
                           referencedTable: $$CategoriesTableReferences
@@ -7507,17 +7501,16 @@ class $$CategoriesTableTableManager
                                 table,
                                 p0,
                               ).shoppingListItemsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.categoryId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'category_id',
                           typedResults: items,
                         ),
                       if (recurringRulesRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           CategoryRow,
                           $CategoriesTable,
-                          RecurringRuleRow
+                          RecurringRuleRow,
+                          $RecurringRulesTable
                         >(
                           currentTable: table,
                           referencedTable: $$CategoriesTableReferences
@@ -7528,17 +7521,16 @@ class $$CategoriesTableTableManager
                                 table,
                                 p0,
                               ).recurringRulesRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.categoryId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'category_id',
                           typedResults: items,
                         ),
                       if (pendingTransactionsRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           CategoryRow,
                           $CategoriesTable,
-                          PendingTransactionRow
+                          PendingTransactionRow,
+                          $PendingTransactionsTable
                         >(
                           currentTable: table,
                           referencedTable: $$CategoriesTableReferences
@@ -7549,10 +7541,8 @@ class $$CategoriesTableTableManager
                                 table,
                                 p0,
                               ).pendingTransactionsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.categoryId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'category_id',
                           typedResults: items,
                         ),
                     ];
@@ -8002,10 +7992,11 @@ class $$AccountTypesTableTableManager
                   getPrefetchedDataCallback: (items) async {
                     return [
                       if (accountsRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           AccountTypeRow,
                           $AccountTypesTable,
-                          AccountRow
+                          AccountRow,
+                          $AccountsTable
                         >(
                           currentTable: table,
                           referencedTable: $$AccountTypesTableReferences
@@ -8016,10 +8007,8 @@ class $$AccountTypesTableTableManager
                                 table,
                                 p0,
                               ).accountsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.accountTypeId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'account_type_id',
                           typedResults: items,
                         ),
                     ];
@@ -8799,10 +8788,11 @@ class $$AccountsTableTableManager
                   getPrefetchedDataCallback: (items) async {
                     return [
                       if (transactionsRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           AccountRow,
                           $AccountsTable,
-                          TransactionRow
+                          TransactionRow,
+                          $TransactionsTable
                         >(
                           currentTable: table,
                           referencedTable: $$AccountsTableReferences
@@ -8813,17 +8803,16 @@ class $$AccountsTableTableManager
                                 table,
                                 p0,
                               ).transactionsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.accountId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'account_id',
                           typedResults: items,
                         ),
                       if (shoppingListItemsRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           AccountRow,
                           $AccountsTable,
-                          ShoppingListItemRow
+                          ShoppingListItemRow,
+                          $ShoppingListItemsTable
                         >(
                           currentTable: table,
                           referencedTable: $$AccountsTableReferences
@@ -8834,17 +8823,16 @@ class $$AccountsTableTableManager
                                 table,
                                 p0,
                               ).shoppingListItemsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.accountId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'account_id',
                           typedResults: items,
                         ),
                       if (recurringRulesRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           AccountRow,
                           $AccountsTable,
-                          RecurringRuleRow
+                          RecurringRuleRow,
+                          $RecurringRulesTable
                         >(
                           currentTable: table,
                           referencedTable: $$AccountsTableReferences
@@ -8855,17 +8843,16 @@ class $$AccountsTableTableManager
                                 table,
                                 p0,
                               ).recurringRulesRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.accountId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'account_id',
                           typedResults: items,
                         ),
                       if (pendingTransactionsRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           AccountRow,
                           $AccountsTable,
-                          PendingTransactionRow
+                          PendingTransactionRow,
+                          $PendingTransactionsTable
                         >(
                           currentTable: table,
                           referencedTable: $$AccountsTableReferences
@@ -8876,10 +8863,8 @@ class $$AccountsTableTableManager
                                 table,
                                 p0,
                               ).pendingTransactionsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.accountId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'account_id',
                           typedResults: items,
                         ),
                     ];
@@ -11043,10 +11028,11 @@ class $$RecurringRulesTableTableManager
                   getPrefetchedDataCallback: (items) async {
                     return [
                       if (pendingTransactionsRefs)
-                        await $_getPrefetchedData<
+                        await $_getPrefetchedDataByColumns<
                           RecurringRuleRow,
                           $RecurringRulesTable,
-                          PendingTransactionRow
+                          PendingTransactionRow,
+                          $PendingTransactionsTable
                         >(
                           currentTable: table,
                           referencedTable: $$RecurringRulesTableReferences
@@ -11057,10 +11043,8 @@ class $$RecurringRulesTableTableManager
                                 table,
                                 p0,
                               ).pendingTransactionsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.recurringRuleId == item.id,
-                              ),
+                          currentColumn: 'id',
+                          referencedColumn: 'recurring_rule_id',
                           typedResults: items,
                         ),
                     ];
