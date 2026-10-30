@@ -957,4 +957,198 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsUpdateOpenInBrowser => 'Open in browser';
+
+  @override
+  String get settingsImportCsvTile => 'Import from CSV';
+
+  @override
+  String get csvImportTitle => 'Import from CSV';
+
+  @override
+  String get csvImportIntro =>
+      'Import transactions exported from Fortune City.';
+
+  @override
+  String get csvImportPrivacyNote =>
+      'The file is read on this device only. Nothing is uploaded.';
+
+  @override
+  String get csvImportChooseFile => 'Choose CSV file';
+
+  @override
+  String get csvImportReading => 'Reading file…';
+
+  @override
+  String get csvImportErrorTooLarge => 'This file is larger than 5 MB.';
+
+  @override
+  String get csvImportErrorNotUtf8 => 'This file is not UTF-8 text.';
+
+  @override
+  String get csvImportErrorEmpty => 'This file has no transactions.';
+
+  @override
+  String csvImportErrorMissingColumns(String columns) {
+    return 'Missing columns: $columns';
+  }
+
+  @override
+  String csvImportErrorTooManyRows(int max) {
+    return 'This file has more than $max rows.';
+  }
+
+  @override
+  String get csvImportErrorParse => 'This file could not be read as CSV.';
+
+  @override
+  String get csvImportErrorCommit => 'Import failed. Nothing was imported.';
+
+  @override
+  String get csvImportChooseAnother => 'Choose another file';
+
+  @override
+  String get csvImportBalanceNote =>
+      'Imported transactions change the balances of the accounts they go into.';
+
+  @override
+  String get csvImportSectionAccounts => 'Accounts';
+
+  @override
+  String get csvImportSectionCategories => 'Categories';
+
+  @override
+  String get csvImportSectionSkipped => 'Skipped rows';
+
+  @override
+  String csvImportRowCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transactions',
+      one: '1 transaction',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get csvImportAccountNeedsChoice => 'Choose where these go';
+
+  @override
+  String get csvImportAccountMatchedByType => 'Matched by account type';
+
+  @override
+  String get csvImportNewBadge => 'New';
+
+  @override
+  String get csvImportAccountUseExisting => 'Use an existing account';
+
+  @override
+  String csvImportAccountArchived(String name) {
+    return '$name (archived)';
+  }
+
+  @override
+  String csvImportAccountCreate(String name, String type) {
+    return 'Create account \"$name\" ($type)';
+  }
+
+  @override
+  String csvImportAccountCreateWithType(String name) {
+    return 'Create account type and account \"$name\"';
+  }
+
+  @override
+  String get csvImportCategoriesExisting => 'Will use existing';
+
+  @override
+  String get csvImportCategoriesNew => 'Will be created';
+
+  @override
+  String csvImportDuplicates(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count rows already exist and will be skipped',
+      one: '1 row already exists and will be skipped',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String csvImportInvalidRows(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count invalid rows will be skipped',
+      one: '1 invalid row will be skipped',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get csvImportNothingToImport => 'Nothing new to import';
+
+  @override
+  String csvImportRowErrorLine(int line, String reason) {
+    return 'Line $line: $reason';
+  }
+
+  @override
+  String get csvImportReasonColumnCount => 'missing fields';
+
+  @override
+  String get csvImportReasonEmptyAccount => 'empty account';
+
+  @override
+  String get csvImportReasonEmptyCategory => 'empty category';
+
+  @override
+  String get csvImportReasonInvalidAmount => 'invalid amount';
+
+  @override
+  String get csvImportReasonZeroAmount => 'amount must be greater than 0';
+
+  @override
+  String csvImportReasonUnknownCurrency(String code) {
+    return 'unknown currency $code';
+  }
+
+  @override
+  String get csvImportReasonInvalidDate => 'invalid date';
+
+  @override
+  String csvImportConfirm(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Import $count transactions',
+      one: 'Import 1 transaction',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get csvImportImporting => 'Importing…';
+
+  @override
+  String get csvImportDoneTitle => 'Import complete';
+
+  @override
+  String csvImportDoneImported(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Imported $count transactions',
+      one: 'Imported 1 transaction',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String csvImportDoneCreated(int accounts, int categories) {
+    return 'Created $accounts accounts and $categories categories';
+  }
+
+  @override
+  String get csvImportDone => 'Done';
 }

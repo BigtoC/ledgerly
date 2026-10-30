@@ -1803,6 +1803,276 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open in browser'**
   String get settingsUpdateOpenInBrowser;
+
+  /// Settings General-section tile that opens the CSV import screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Import from CSV'**
+  String get settingsImportCsvTile;
+
+  /// CSV import screen app-bar title.
+  ///
+  /// In en, this message translates to:
+  /// **'Import from CSV'**
+  String get csvImportTitle;
+
+  /// CSV import intro text on the idle screen. Fortune City (記帳城市) is the app whose export format is supported.
+  ///
+  /// In en, this message translates to:
+  /// **'Import transactions exported from Fortune City.'**
+  String get csvImportIntro;
+
+  /// Privacy note under the CSV import intro.
+  ///
+  /// In en, this message translates to:
+  /// **'The file is read on this device only. Nothing is uploaded.'**
+  String get csvImportPrivacyNote;
+
+  /// Button that opens the system file picker for a CSV file.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose CSV file'**
+  String get csvImportChooseFile;
+
+  /// Shown with a spinner while the picked CSV file is parsed and matched.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading file…'**
+  String get csvImportReading;
+
+  /// CSV import failure: the file exceeds the 5 MB cap.
+  ///
+  /// In en, this message translates to:
+  /// **'This file is larger than 5 MB.'**
+  String get csvImportErrorTooLarge;
+
+  /// CSV import failure: the file bytes are not valid UTF-8.
+  ///
+  /// In en, this message translates to:
+  /// **'This file is not UTF-8 text.'**
+  String get csvImportErrorNotUtf8;
+
+  /// CSV import failure: no header or no data rows.
+  ///
+  /// In en, this message translates to:
+  /// **'This file has no transactions.'**
+  String get csvImportErrorEmpty;
+
+  /// CSV import failure: required header columns are missing. {columns} is a comma-separated list of the CSV header names (e.g. 'Amount, Currency').
+  ///
+  /// In en, this message translates to:
+  /// **'Missing columns: {columns}'**
+  String csvImportErrorMissingColumns(String columns);
+
+  /// CSV import failure: the file has more data rows than the import accepts. {max} is the row cap.
+  ///
+  /// In en, this message translates to:
+  /// **'This file has more than {max} rows.'**
+  String csvImportErrorTooManyRows(int max);
+
+  /// CSV import failure: the text is not valid CSV (e.g. an unterminated quote).
+  ///
+  /// In en, this message translates to:
+  /// **'This file could not be read as CSV.'**
+  String get csvImportErrorParse;
+
+  /// CSV import failure: writing the import failed and was rolled back.
+  ///
+  /// In en, this message translates to:
+  /// **'Import failed. Nothing was imported.'**
+  String get csvImportErrorCommit;
+
+  /// Button on the CSV import failure state that opens the file picker again.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose another file'**
+  String get csvImportChooseAnother;
+
+  /// Note in the CSV import preview warning that imported history changes account balances.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported transactions change the balances of the accounts they go into.'**
+  String get csvImportBalanceNote;
+
+  /// CSV import preview section header for account resolutions.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts'**
+  String get csvImportSectionAccounts;
+
+  /// CSV import preview section header for category resolutions.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get csvImportSectionCategories;
+
+  /// CSV import preview section header for duplicate and invalid rows.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped rows'**
+  String get csvImportSectionSkipped;
+
+  /// Row count shown next to a CSV account or category value in the import preview.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 transaction} other{{count} transactions}}'**
+  String csvImportRowCount(int count);
+
+  /// CSV import preview: an account value needs the user's decision before importing.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose where these go'**
+  String get csvImportAccountNeedsChoice;
+
+  /// CSV import preview: the account value matched an account-type label rather than an account name.
+  ///
+  /// In en, this message translates to:
+  /// **'Matched by account type'**
+  String get csvImportAccountMatchedByType;
+
+  /// Badge on a CSV import preview entry that will be created on import.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get csvImportNewBadge;
+
+  /// CSV import decision sheet: option header for picking an existing account.
+  ///
+  /// In en, this message translates to:
+  /// **'Use an existing account'**
+  String get csvImportAccountUseExisting;
+
+  /// CSV import decision sheet: an archived account offered as a target. {name} is the account name.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} (archived)'**
+  String csvImportAccountArchived(String name);
+
+  /// CSV import: create a new account of an existing account type. {name} is the CSV account value, {type} the account type's display name.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account \"{name}\" ({type})'**
+  String csvImportAccountCreate(String name, String type);
+
+  /// CSV import: create a new account type and an account, both named after the CSV account value {name}.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account type and account \"{name}\"'**
+  String csvImportAccountCreateWithType(String name);
+
+  /// CSV import preview sub-header for CSV categories that map to existing categories.
+  ///
+  /// In en, this message translates to:
+  /// **'Will use existing'**
+  String get csvImportCategoriesExisting;
+
+  /// CSV import preview sub-header for CSV categories that will be created.
+  ///
+  /// In en, this message translates to:
+  /// **'Will be created'**
+  String get csvImportCategoriesNew;
+
+  /// CSV import preview: number of rows already in the database.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 row already exists and will be skipped} other{{count} rows already exist and will be skipped}}'**
+  String csvImportDuplicates(int count);
+
+  /// CSV import preview: number of malformed rows that will be skipped.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 invalid row will be skipped} other{{count} invalid rows will be skipped}}'**
+  String csvImportInvalidRows(int count);
+
+  /// CSV import preview: shown instead of the Import button label when no rows would be inserted.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing new to import'**
+  String get csvImportNothingToImport;
+
+  /// One skipped CSV row: its 1-based line number and a localized reason. Never shows field values.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {line}: {reason}'**
+  String csvImportRowErrorLine(int line, String reason);
+
+  /// CSV row error reason: the row has too few fields.
+  ///
+  /// In en, this message translates to:
+  /// **'missing fields'**
+  String get csvImportReasonColumnCount;
+
+  /// CSV row error reason: the Account field is blank.
+  ///
+  /// In en, this message translates to:
+  /// **'empty account'**
+  String get csvImportReasonEmptyAccount;
+
+  /// CSV row error reason: the Category field is blank.
+  ///
+  /// In en, this message translates to:
+  /// **'empty category'**
+  String get csvImportReasonEmptyCategory;
+
+  /// CSV row error reason: the Amount is not a plain positive decimal or is too large.
+  ///
+  /// In en, this message translates to:
+  /// **'invalid amount'**
+  String get csvImportReasonInvalidAmount;
+
+  /// CSV row error reason: the Amount rounds to zero.
+  ///
+  /// In en, this message translates to:
+  /// **'amount must be greater than 0'**
+  String get csvImportReasonZeroAmount;
+
+  /// CSV row error reason: the Currency code is not supported. {code} is the code from the file.
+  ///
+  /// In en, this message translates to:
+  /// **'unknown currency {code}'**
+  String csvImportReasonUnknownCurrency(String code);
+
+  /// CSV row error reason: Recorded At is not a valid date and time.
+  ///
+  /// In en, this message translates to:
+  /// **'invalid date'**
+  String get csvImportReasonInvalidDate;
+
+  /// CSV import preview: confirm button that writes the import.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Import 1 transaction} other{Import {count} transactions}}'**
+  String csvImportConfirm(int count);
+
+  /// Shown with a spinner while the CSV import is written.
+  ///
+  /// In en, this message translates to:
+  /// **'Importing…'**
+  String get csvImportImporting;
+
+  /// CSV import result title.
+  ///
+  /// In en, this message translates to:
+  /// **'Import complete'**
+  String get csvImportDoneTitle;
+
+  /// CSV import result: number of transactions inserted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Imported 1 transaction} other{Imported {count} transactions}}'**
+  String csvImportDoneImported(int count);
+
+  /// CSV import result: number of accounts and categories created.
+  ///
+  /// In en, this message translates to:
+  /// **'Created {accounts} accounts and {categories} categories'**
+  String csvImportDoneCreated(int accounts, int categories);
+
+  /// CSV import result button that returns to Settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get csvImportDone;
 }
 
 class _AppLocalizationsDelegate
