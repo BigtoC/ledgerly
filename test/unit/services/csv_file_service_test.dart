@@ -98,16 +98,20 @@ void main() {
   group('save', () {
     /// Mimics the iOS plugin: writes `tmp/<fileName>`, then the user saves
     /// ([saved] true) or cancels.
-    CsvFileService saverFor({required bool saved, List<String>? calls}) =>
-        CsvFileService(
-          saveFile: ({required fileName, required bytes}) async {
-            calls?.add(fileName);
-            File('${tmp.path}/$fileName').writeAsBytesSync(bytes);
-            return saved;
-          },
-          temporaryDirectory: () async => cache,
-          systemTemporaryDirectory: () => tmp,
-        );
+    CsvFileService saverFor({
+      required bool saved,
+      List<String>? calls,
+      bool isIOS = true,
+    }) => CsvFileService(
+      saveFile: ({required fileName, required bytes}) async {
+        calls?.add(fileName);
+        File('${tmp.path}/$fileName').writeAsBytesSync(bytes);
+        return saved;
+      },
+      temporaryDirectory: () async => cache,
+      systemTemporaryDirectory: () => tmp,
+      isIOS: isIOS,
+    );
 
     test('returns true and deletes the iOS temp copy once saved', () async {
       final calls = <String>[];
@@ -130,11 +134,24 @@ void main() {
       expect(File('${tmp.path}/export.csv').existsSync(), isFalse);
     });
 
-    test('succeeds when no temp copy exists (Android)', () async {
+    test('keeps a file the user saved into temp on other platforms', () async {
+      // On desktop the user may pick the temp dir itself; that file is the
+      // export, not a plugin copy.
+      final saved = await saverFor(
+        saved: true,
+        isIOS: false,
+      ).save('export.csv', Uint8List.fromList([1]));
+
+      expect(saved, isTrue);
+      expect(File('${tmp.path}/export.csv').existsSync(), isTrue);
+    });
+
+    test('succeeds when no temp copy exists', () async {
       final service = CsvFileService(
         saveFile: ({required fileName, required bytes}) async => true,
         temporaryDirectory: () async => cache,
         systemTemporaryDirectory: () => tmp,
+        isIOS: true,
       );
 
       expect(await service.save('export.csv', Uint8List(0)), isTrue);
@@ -148,6 +165,7 @@ void main() {
         },
         temporaryDirectory: () async => cache,
         systemTemporaryDirectory: () => tmp,
+        isIOS: true,
       );
 
       await expectLater(

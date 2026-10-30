@@ -19,7 +19,8 @@ typedef SaveFile = Future<bool> Function({
 /// The platform pickers copy the chosen file: `file_selector_android` into
 /// the app's cache directory, the iOS document picker into the app's
 /// `tmp/`. Saving on iOS also leaves a copy in `tmp/` (`file_picker`
-/// writes the bytes there before showing the dialog). Those copies hold
+/// writes the bytes there before showing the dialog; see [save]). Those
+/// copies hold
 /// financial data, so [pick] and [save] delete them. File names are never
 /// logged.
 class CsvFileService {
@@ -28,8 +29,10 @@ class CsvFileService {
     SaveFile? saveFile,
     Future<Directory> Function()? temporaryDirectory,
     Directory Function()? systemTemporaryDirectory,
+    bool? isIOS,
   }) : _openFile = openFile ?? _openCsvFile,
        _saveFile = saveFile ?? _saveCsvFile,
+       _isIOS = isIOS ?? Platform.isIOS,
        _temporaryDirectory = temporaryDirectory ?? getTemporaryDirectory,
        _systemTemporaryDirectory =
            systemTemporaryDirectory ?? (() => Directory.systemTemp);
@@ -51,6 +54,7 @@ class CsvFileService {
 
   final Future<file_selector.XFile?> Function() _openFile;
   final SaveFile _saveFile;
+  final bool _isIOS;
   final Future<Directory> Function() _temporaryDirectory;
   final Directory Function() _systemTemporaryDirectory;
 
@@ -76,13 +80,23 @@ class CsvFileService {
 
   /// Shows the system save dialog for [bytes] named [fileName]. Returns
   /// false when the user cancels.
+  ///
+  /// On iOS, `file_picker_darwin` 2.4.0 writes the bytes to
+  /// `NSTemporaryDirectory()/<fileName>` before presenting the export
+  /// picker and never deletes them (`IOSFilePickerHandler.saveFile`), so
+  /// that path is deleted afterwards, saved or not. Recheck it when
+  /// upgrading the plugin. Other platforms write straight to the chosen
+  /// location, which may itself be the temp directory, so nothing is
+  /// deleted there.
   Future<bool> save(String fileName, Uint8List bytes) async {
     try {
       return await _saveFile(fileName: fileName, bytes: bytes);
     } finally {
-      await _deleteCacheCopy(
-        '${_systemTemporaryDirectory().path}${Platform.pathSeparator}$fileName',
-      );
+      if (_isIOS) {
+        await _deleteCacheCopy(
+          '${_systemTemporaryDirectory().path}${Platform.pathSeparator}$fileName',
+        );
+      }
     }
   }
 
