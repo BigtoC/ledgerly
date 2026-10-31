@@ -270,7 +270,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                   CategoryChip(
                     category: state.selectedCategory,
                     hasError: showCategoryError,
-                    onTap: () => _onTapCategoryChip(context, state, controller),
+                    onTap: () => _onTapCategoryChip(context, controller),
                   ),
                   AccountSelectorTile(
                     account: state.selectedAccount,
@@ -494,7 +494,6 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
 
   Future<void> _onTapCategoryChip(
     BuildContext context,
-    TransactionFormData state,
     TransactionFormController controller,
   ) async {
     // Wave 2 §7.1 — decide BEFORE opening the picker whether the picker
