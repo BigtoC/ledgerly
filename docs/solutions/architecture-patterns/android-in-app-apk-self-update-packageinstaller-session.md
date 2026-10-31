@@ -70,7 +70,7 @@ The choice: about 150 lines of our own Kotlin behind a `ledgerly/apk_installer` 
 The repository does the following:
 - **`findUpdate()`** sets `sha256` and `sizeBytes` only when both are valid. When they aren't, the badge **fails closed** to the browser.
 - **`download()`** writes `<cache>/updates/<name>.part`, checks the SHA-256, then renames the file. It reuses a file it already verified.
-- **`cleanUp(keep:)`** runs on every launch.
+- **`cleanUp(keep:)`** runs on every launch whose update check succeeds. A failed check throws, and `checkAfter` skips clean-up so a verified APK survives an offline launch.
 - **Errors** are typed: `Update{Download,Checksum,Storage}Exception`.
 
 **Android pieces**

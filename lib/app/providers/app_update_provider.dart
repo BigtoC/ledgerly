@@ -1,6 +1,7 @@
 import 'dart:ffi' show Abi;
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -48,7 +49,16 @@ class AvailableAppUpdate extends _$AvailableAppUpdate {
     if (!repo.isSupported) return;
     await ready.timeout(_readyTimeout, onTimeout: () {});
     if (!ref.mounted) return;
-    final update = await repo.findUpdate();
+    final AppUpdate? update;
+    try {
+      update = await repo.findUpdate();
+    } on Object catch (e) {
+      // Best-effort background check: no failure may escape to the
+      // unawaited caller, Errors included. Skip clean-up too: a failed
+      // check says nothing about which downloaded APK is still current.
+      debugPrint('AvailableAppUpdate.checkAfter failed (${e.runtimeType})');
+      return;
+    }
     await repo.cleanUp(keep: update);
     if (ref.mounted) state = update;
   }

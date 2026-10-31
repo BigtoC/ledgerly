@@ -250,13 +250,15 @@ void main() {
       expect(await repo().findUpdate(), isNull);
     });
 
-    test('DioException gives null', () async {
+    // A failed check must not look like "up to date": the caller cleans up
+    // update files after a null result, which would delete a verified APK.
+    test('DioException is rethrown', () async {
       when(() => service.fetchLatestRelease())
           .thenThrow(DioException(requestOptions: RequestOptions(path: '')));
-      expect(await repo().findUpdate(), isNull);
+      await expectLater(repo().findUpdate(), throwsA(isA<DioException>()));
     });
 
-    test('an Error while checking gives null', () async {
+    test('an Error while checking is rethrown', () async {
       stubRelease(_release());
       final failing = AppUpdateRepository(
         service,
@@ -265,7 +267,7 @@ void main() {
         installedVersion: () async => throw StateError('no package info'),
         abi: Abi.androidArm64,
       );
-      expect(await failing.findUpdate(), isNull);
+      await expectLater(failing.findUpdate(), throwsA(isA<StateError>()));
     });
 
     test('service returning null gives null', () async {

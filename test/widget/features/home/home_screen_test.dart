@@ -327,6 +327,103 @@ void main() {
     },
   );
 
+  testWidgets(
+    'WH02d: no-history Home with only a past-dated pending row shows the '
+    'empty state',
+    (tester) async {
+      // Recurring catch-up inserts rows dated on missed due days. The
+      // day-scoped PendingSection hides them on today's view, so Home must
+      // not switch to the pending-only body for them (it would be blank).
+      final today = DateTime.now();
+      final yesterday = DateTime(today.year, today.month, today.day - 1);
+      when(() => pendingRepo.watchAll()).thenAnswer(
+        (_) => Stream.value([
+          PendingTransaction(
+            id: 1,
+            source: 'recurring',
+            amountMinorUnits: 1599,
+            currency: _usd,
+            categoryId: 1,
+            accountId: 1,
+            memo: 'Netflix',
+            date: yesterday,
+            fetchedAt: yesterday,
+            recurringRuleId: 1,
+          ),
+        ]),
+      );
+
+      await tester.pumpWidget(makeApp());
+      await seedAll(tester);
+      dayCtrl.add(const []);
+      activityCtrl.add(const []);
+      todayTotalsCtrl.add(const {});
+      monthNetCtrl.add(const {});
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(find.text('No transactions yet'), findsOneWidget);
+      expect(find.text('Log first transaction'), findsOneWidget);
+      expect(find.text('Netflix'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'WH02e: Undo restores a skipped row after Home falls back to the empty '
+    'state',
+    (tester) async {
+      // Skipping today's only visible row swaps the pending-only body for
+      // the empty state, which unmounts PendingSection while its Undo
+      // snackbar is still showing. Undo must still reach the controller.
+      final today = DateTime.now();
+      final todayMidnight = DateTime(today.year, today.month, today.day);
+      final yesterday = DateTime(today.year, today.month, today.day - 1);
+      PendingTransaction pending(int id, String memo, DateTime date) =>
+          PendingTransaction(
+            id: id,
+            source: 'recurring',
+            amountMinorUnits: 1599,
+            currency: _usd,
+            categoryId: 1,
+            accountId: 1,
+            memo: memo,
+            date: date,
+            fetchedAt: date,
+            recurringRuleId: id,
+          );
+      when(() => pendingRepo.watchAll()).thenAnswer(
+        (_) => Stream.value([
+          pending(1, 'Netflix', todayMidnight),
+          pending(2, 'Spotify', yesterday),
+        ]),
+      );
+
+      await tester.pumpWidget(makeApp());
+      await seedAll(tester);
+      dayCtrl.add(const []);
+      activityCtrl.add(const []);
+      todayTotalsCtrl.add(const {});
+      monthNetCtrl.add(const {});
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.text('Netflix'), findsOneWidget);
+
+      await tester.drag(find.text('Netflix'), const Offset(-300, 0));
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.tap(find.text('Skip once'));
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('No transactions yet'), findsOneWidget);
+
+      // Invoke the action directly: in the 800x600 test view the snackbar
+      // sits below the FAB row, outside hit-testable bounds.
+      tester.widget<SnackBarAction>(find.byType(SnackBarAction)).onPressed();
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.text('Netflix'), findsOneWidget);
+
+      // Let the undo window lapse: the skip must not commit.
+      await tester.pump(const Duration(seconds: 5));
+      verifyNever(() => pendingRepo.reject(1));
+    },
+  );
+
   testWidgets('WH03: gap-day with prior history shows homeEmptyDayMessage', (
     tester,
   ) async {

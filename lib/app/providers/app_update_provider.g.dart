@@ -104,7 +104,7 @@ final class AvailableAppUpdateProvider
 }
 
 String _$availableAppUpdateHash() =>
-    r'77e609b51f4dcdf32cd95a771e52cb3ffe9f87de';
+    r'65724c10828cde06b7af5a7aeb67813aaeef5240';
 
 /// The newer release, or null. `build()` has no side effects; `App`
 /// triggers [checkAfter] once per launch after the first frame.
