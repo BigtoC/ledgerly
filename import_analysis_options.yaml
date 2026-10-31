@@ -25,12 +25,12 @@
 #                              never a violation.
 #
 # Import paths cannot show what a file reaches through a provider, so the
-# feature rules also forbid the app-layer files that build repositories
-# and services: `app/providers/service_providers.dart` (services)
-# everywhere under features/, and `app/providers/repository_providers.dart`
+# feature rules also forbid the app-layer files that build data-layer
+# objects: `app/providers/service_providers.dart` (services) and
+# `app/providers/app_database_provider.dart` (`AppDatabase`) everywhere
+# under features/, and `app/providers/repository_providers.dart`
 # (repositories and use cases) everywhere except controllers and
-# *_providers.dart. `app_database_provider.dart` is not policed yet; no
-# feature file imports it. App-level values that widgets may read, such as
+# *_providers.dart. App-level values that widgets may read, such as
 # `exchangeRatesProvider`, live in their own files under app/providers/.
 # Platform and I/O plugins belong in services (PRD), so every feature
 # rule forbids them too.
@@ -50,6 +50,7 @@ rules:
       - "^package:path_provider/"
       - "^package:ledgerly/app/providers/repository_providers\\.dart$"
       - "^package:ledgerly/app/providers/service_providers\\.dart$"
+      - "^package:ledgerly/app/providers/app_database_provider\\.dart$"
       - "^package:package_info_plus/"
       - "^package:dio/"
       - "^package:file_picker/"
@@ -67,6 +68,7 @@ rules:
       - "^package:path_provider/"
       - "^package:ledgerly/app/providers/repository_providers\\.dart$"
       - "^package:ledgerly/app/providers/service_providers\\.dart$"
+      - "^package:ledgerly/app/providers/app_database_provider\\.dart$"
       - "^package:package_info_plus/"
       - "^package:dio/"
       - "^package:file_picker/"
@@ -85,6 +87,7 @@ rules:
       - "^package:drift_flutter/"
       - "^package:path_provider/"
       - "^package:ledgerly/app/providers/service_providers\\.dart$"
+      - "^package:ledgerly/app/providers/app_database_provider\\.dart$"
       - "^package:package_info_plus/"
       - "^package:dio/"
       - "^package:file_picker/"
@@ -104,6 +107,7 @@ rules:
       - "^package:path_provider/"
       - "^package:ledgerly/app/providers/repository_providers\\.dart$"
       - "^package:ledgerly/app/providers/service_providers\\.dart$"
+      - "^package:ledgerly/app/providers/app_database_provider\\.dart$"
       - "^package:package_info_plus/"
       - "^package:dio/"
       - "^package:file_picker/"
@@ -123,6 +127,7 @@ rules:
       - "^package:drift_flutter/"
       - "^package:path_provider/"
       - "^package:ledgerly/app/providers/service_providers\\.dart$"
+      - "^package:ledgerly/app/providers/app_database_provider\\.dart$"
       - "^package:package_info_plus/"
       - "^package:dio/"
       - "^package:file_picker/"
@@ -148,6 +153,7 @@ rules:
       - "^package:path_provider/"
       - "^package:ledgerly/app/providers/repository_providers\\.dart$"
       - "^package:ledgerly/app/providers/service_providers\\.dart$"
+      - "^package:ledgerly/app/providers/app_database_provider\\.dart$"
       - "^package:package_info_plus/"
       - "^package:dio/"
       - "^package:file_picker/"
