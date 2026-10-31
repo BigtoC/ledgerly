@@ -677,4 +677,23 @@ void main() {
     );
     expect(segment, tester.getSize(bar));
   });
+
+  testWidgets('SS29: the summary card has no shadow', (tester) async {
+    await tester.pumpWidget(designStrip());
+    await tester.pumpAndSettle();
+    final surface = Theme.of(tester.element(find.byType(SummaryStrip)))
+        .colorScheme
+        .surfaceContainer;
+    final card = tester
+        .widgetList<Container>(
+          find.ancestor(
+            of: find.text('Day net'),
+            matching: find.byType(Container),
+          ),
+        )
+        .map((c) => c.decoration)
+        .whereType<BoxDecoration>()
+        .singleWhere((d) => d.color == surface);
+    expect(card.boxShadow, isNull);
+  });
 }

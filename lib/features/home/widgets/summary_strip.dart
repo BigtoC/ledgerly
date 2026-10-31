@@ -15,7 +15,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:ledgerly/core/utils/box_shadow.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../app/providers/repository_providers.dart';
@@ -367,7 +366,6 @@ class _SummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(homePageCardBorderRadius),
-        boxShadow: [buildBoxShadow(homePageCardBorderRadius)],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
