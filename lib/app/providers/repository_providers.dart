@@ -1,9 +1,13 @@
 import 'dart:async';
+import 'dart:ffi' show Abi;
+import 'dart:io';
 
+import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/repositories/account_repository.dart';
 import '../../data/repositories/account_type_repository.dart';
+import '../../data/repositories/app_update_repository.dart';
 import '../../data/repositories/category_repository.dart';
 import '../../data/repositories/currency_repository.dart';
 import '../../data/repositories/exchange_rate_repository.dart';
@@ -12,6 +16,8 @@ import '../../data/repositories/recurring_rules_repository.dart';
 import '../../data/repositories/shopping_list_repository.dart';
 import '../../data/repositories/transaction_repository.dart';
 import '../../data/repositories/user_preferences_repository.dart';
+import '../../data/services/apk_installer_service.dart';
+import '../../data/services/app_release_service.dart';
 import '../../data/use_cases/csv_export_use_case.dart';
 import '../../data/use_cases/csv_import_use_case.dart';
 import '../../data/use_cases/recurring_generation_use_case.dart';
@@ -160,4 +166,23 @@ ExchangeRateRepository exchangeRateRepository(Ref ref) {
   ref.onDispose(repo.dispose);
   ref.onDispose(defaultCurrencies.close);
   return repo;
+}
+
+/// GitHub release lookup, download and install for the app-update check.
+/// Unscoped: it shares the app-wide [dioProvider] client and reads nothing
+/// from the database. Lives here, not in `app_update_provider.dart`, so
+/// that widgets importing that file for `availableAppUpdateProvider` cannot
+/// reach the repository.
+@Riverpod(keepAlive: true)
+AppUpdateRepository appUpdateRepository(Ref ref) {
+  final packageInfo = ref.watch(packageInfoServiceProvider);
+  return AppUpdateRepository(
+    AppReleaseService(ref.watch(dioProvider)),
+    installer: const ApkInstallerService(),
+    updatesDir: () async =>
+        Directory('${(await getTemporaryDirectory()).path}/updates')
+            .create(recursive: true),
+    installedVersion: () async => (await packageInfo.read()).version,
+    abi: Abi.current(),
+  );
 }

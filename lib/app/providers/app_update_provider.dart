@@ -1,33 +1,10 @@
-import 'dart:ffi' show Abi;
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/models/app_update.dart';
-import '../../data/repositories/app_update_repository.dart';
-import '../../data/services/apk_installer_service.dart';
-import '../../data/services/app_release_service.dart';
-import 'service_providers.dart';
+import 'repository_providers.dart';
 
 part 'app_update_provider.g.dart';
-
-/// GitHub release lookup for the app-update check. Unscoped: it shares the
-/// app-wide [dioProvider] client and reads nothing from the database.
-@Riverpod(keepAlive: true)
-AppUpdateRepository appUpdateRepository(Ref ref) {
-  final packageInfo = ref.watch(packageInfoServiceProvider);
-  return AppUpdateRepository(
-    AppReleaseService(ref.watch(dioProvider)),
-    installer: const ApkInstallerService(),
-    updatesDir: () async =>
-        Directory('${(await getTemporaryDirectory()).path}/updates')
-            .create(recursive: true),
-    installedVersion: () async => (await packageInfo.read()).version,
-    abi: Abi.current(),
-  );
-}
 
 const _readyTimeout = Duration(seconds: 30);
 

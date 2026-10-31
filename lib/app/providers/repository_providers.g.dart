@@ -806,3 +806,68 @@ final class ExchangeRateRepositoryProvider
 
 String _$exchangeRateRepositoryHash() =>
     r'4b623ad800a14ff6ac4fd8e7555ba2552f1a8ebd';
+
+/// GitHub release lookup, download and install for the app-update check.
+/// Unscoped: it shares the app-wide [dioProvider] client and reads nothing
+/// from the database. Lives here, not in `app_update_provider.dart`, so
+/// that widgets importing that file for `availableAppUpdateProvider` cannot
+/// reach the repository.
+
+@ProviderFor(appUpdateRepository)
+final appUpdateRepositoryProvider = AppUpdateRepositoryProvider._();
+
+/// GitHub release lookup, download and install for the app-update check.
+/// Unscoped: it shares the app-wide [dioProvider] client and reads nothing
+/// from the database. Lives here, not in `app_update_provider.dart`, so
+/// that widgets importing that file for `availableAppUpdateProvider` cannot
+/// reach the repository.
+
+final class AppUpdateRepositoryProvider
+    extends
+        $FunctionalProvider<
+          AppUpdateRepository,
+          AppUpdateRepository,
+          AppUpdateRepository
+        >
+    with $Provider<AppUpdateRepository> {
+  /// GitHub release lookup, download and install for the app-update check.
+  /// Unscoped: it shares the app-wide [dioProvider] client and reads nothing
+  /// from the database. Lives here, not in `app_update_provider.dart`, so
+  /// that widgets importing that file for `availableAppUpdateProvider` cannot
+  /// reach the repository.
+  AppUpdateRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'appUpdateRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$appUpdateRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<AppUpdateRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  AppUpdateRepository create(Ref ref) {
+    return appUpdateRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AppUpdateRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AppUpdateRepository>(value),
+    );
+  }
+}
+
+String _$appUpdateRepositoryHash() =>
+    r'107ed987f42d1c9c3d96dccc666ca6a4044a1aaa';

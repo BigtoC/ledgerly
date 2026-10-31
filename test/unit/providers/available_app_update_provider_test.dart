@@ -16,6 +16,7 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:ledgerly/app/bootstrap.dart';
 import 'package:ledgerly/app/providers/app_update_provider.dart';
+import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/app_update.dart';
 import 'package:ledgerly/data/repositories/app_update_repository.dart';
 
