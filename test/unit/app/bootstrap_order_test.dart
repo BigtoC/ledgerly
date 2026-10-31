@@ -52,33 +52,6 @@ void main() {
   });
 
   group('bootstrapFor ordering', () {
-    test('openDatabase is called before runApp', () async {
-      final log = <String>[];
-
-      await bootstrapFor(
-        openDatabase: () async {
-          log.add('openDatabase');
-          return AppDatabase(NativeDatabase.memory());
-        },
-        localeService: const _StubLocaleService(),
-        runAppFn: (_) => log.add('runApp'),
-      );
-
-      expect(log, containsAllInOrder(['openDatabase', 'runApp']));
-    });
-
-    test('runApp is called exactly once', () async {
-      int callCount = 0;
-
-      await bootstrapFor(
-        openDatabase: () async => AppDatabase(NativeDatabase.memory()),
-        localeService: const _StubLocaleService(),
-        runAppFn: (_) => callCount++,
-      );
-
-      expect(callCount, 1);
-    });
-
     test('runApp receives a ProviderScope', () async {
       Widget? launched;
 

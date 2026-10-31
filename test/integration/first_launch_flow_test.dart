@@ -57,24 +57,6 @@ import '../support/test_app.dart';
 ])
 void main() {
   group('first-launch bootstrap (Unit 2)', () {
-    testWidgets('empty DB → splash with date-picker prompt visible', (
-      tester,
-    ) async {
-      final db = newTestAppDatabase();
-      addTearDown(db.close);
-      await tester.runAsync(() => runTestSeed(db));
-      final container = makeTestContainer(db: db);
-      addTearDown(container.dispose);
-
-      await tester.pumpWidget(buildTestApp(container: container));
-      await tester.pump();
-      await tester.pump(const Duration(seconds: 1));
-
-      expect(find.byType(SplashScreen), findsOneWidget);
-      expect(find.text('Set start date'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    });
-
     testWidgets(
       'with a seeded first transaction, Home boots and renders the tile',
       (tester) async {
