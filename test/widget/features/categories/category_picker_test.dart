@@ -11,6 +11,11 @@
 //   - Empty state renders the "Create one" CTA that resolves `null`.
 //   - Both adaptive containers (<600dp modal sheet, >=600dp dialog) render
 //     the same picker body and survive 2× text scale.
+//   - The <600dp sheet takes 90% of the screen height.
+//   - The grid shows five tiles per row, and a long label shrinks to fit
+//     its tile on one line instead of wrapping.
+//   - Omitting `type` lists expense categories, then income categories
+//     below them.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -326,4 +331,159 @@ void main() {
       ).called(1);
     },
   );
+
+  group('phone layout', () {
+    @Dependencies([categoriesByType])
+    Future<void> openPicker(
+      WidgetTester tester, {
+      required List<Category> expense,
+      List<Category> income = const [],
+      CategoryType? type = CategoryType.expense,
+      void Function(Category?)? onPicked,
+    }) async {
+      await tester.binding.setSurfaceSize(const Size(400, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final container = ProviderContainer(
+        overrides: [
+          categoriesByTypeProvider(CategoryType.expense)
+              .overrideWith((ref) => Stream.value(expense)),
+          categoriesByTypeProvider(CategoryType.income)
+              .overrideWith((ref) => Stream.value(income)),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        _hostApp(
+          container: container,
+          onLaunch: (ctx) async {
+            final picked = await showCategoryPicker(ctx, type: type);
+            onPicked?.call(picked);
+            return picked;
+          },
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('P07: the sheet takes 90% of the screen height', (
+      tester,
+    ) async {
+      await openPicker(
+        tester,
+        expense: [_c(id: 1, type: CategoryType.expense, customName: 'Food')],
+      );
+
+      expect(
+        tester.getSize(find.byType(BottomSheet)).height,
+        closeTo(800 * 0.9, 1),
+      );
+    });
+
+    testWidgets('P08: the grid shows five tiles per row', (tester) async {
+      await openPicker(
+        tester,
+        expense: [
+          for (var i = 1; i <= 7; i++)
+            _c(
+              id: i,
+              type: CategoryType.expense,
+              customName: 'C$i',
+              sortOrder: i,
+            ),
+        ],
+      );
+
+      final firstRowTop = tester.getTopLeft(find.text('C1')).dy;
+      for (var i = 2; i <= 5; i++) {
+        expect(tester.getTopLeft(find.text('C$i')).dy, firstRowTop);
+      }
+      expect(tester.getTopLeft(find.text('C6')).dy, greaterThan(firstRowTop));
+      expect(
+        tester.getTopLeft(find.text('C6')).dx,
+        tester.getTopLeft(find.text('C1')).dx,
+      );
+    });
+
+    testWidgets('P09: a long label shrinks onto one line inside its tile', (
+      tester,
+    ) async {
+      await openPicker(
+        tester,
+        expense: [
+          _c(
+            id: 1,
+            type: CategoryType.expense,
+            customName: 'Transportation',
+            sortOrder: 0,
+          ),
+          _c(
+            id: 2,
+            type: CategoryType.expense,
+            customName: 'Food',
+            sortOrder: 1,
+          ),
+        ],
+      );
+
+      final longLabel = tester.getRect(find.text('Transportation'));
+      final shortLabel = tester.getRect(find.text('Food'));
+      final tile = tester.getRect(
+        find.ancestor(
+          of: find.text('Transportation'),
+          matching: find.byType(InkWell),
+        ),
+      );
+      // One line: no taller than a label that certainly fits.
+      expect(longLabel.height, lessThanOrEqualTo(shortLabel.height));
+      expect(longLabel.left, greaterThanOrEqualTo(tile.left));
+      expect(longLabel.right, lessThanOrEqualTo(tile.right));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets(
+      'P10: without a type, income categories follow the expense ones',
+      (tester) async {
+        Category? picked;
+        await openPicker(
+          tester,
+          type: null,
+          expense: [_c(id: 1, type: CategoryType.expense, customName: 'Food')],
+          income: [_c(id: 2, type: CategoryType.income, customName: 'Salary')],
+          onPicked: (c) => picked = c,
+        );
+
+        expect(find.text('Pick expense category'), findsOneWidget);
+        expect(find.text('Pick income category'), findsOneWidget);
+        final foodTop = tester.getTopLeft(find.text('Food')).dy;
+        final incomeTitleTop = tester
+            .getTopLeft(find.text('Pick income category'))
+            .dy;
+        final salaryTop = tester.getTopLeft(find.text('Salary')).dy;
+        expect(incomeTitleTop, greaterThan(foodTop));
+        expect(salaryTop, greaterThan(incomeTitleTop));
+
+        await tester.tap(find.text('Salary'));
+        await tester.pumpAndSettle();
+        expect(picked?.id, 2);
+        expect(picked?.type, CategoryType.income);
+      },
+    );
+
+    testWidgets('P11: without a type, an empty type drops its section', (
+      tester,
+    ) async {
+      await openPicker(
+        tester,
+        type: null,
+        expense: const [],
+        income: [_c(id: 2, type: CategoryType.income, customName: 'Salary')],
+      );
+
+      expect(find.text('Pick expense category'), findsNothing);
+      expect(find.text('Pick income category'), findsOneWidget);
+      expect(find.text('Salary'), findsOneWidget);
+      expect(find.textContaining('Create one'), findsNothing);
+    });
+  });
 }
