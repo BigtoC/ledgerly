@@ -1,7 +1,10 @@
 // `CategoryChip` — Wave 2 §4.1.
 //
-// Single-row tile that renders the selected category (icon + name) or
-// an empty-state CTA when no category is selected. Tap is delegated to
+// Single-row tile that renders the selected category (icon, name and
+// type) or an empty-state CTA when no category is selected. The form has
+// no type toggle, so the type shown here is the only hint that a
+// category is expense or income (two seeded categories share the name
+// "Investment"). Tap is delegated to
 // the screen so the screen can branch on the picker-vs-management
 // routing rule (Wave 2 §7.1) before calling `showCategoryPicker`.
 
@@ -51,13 +54,16 @@ class CategoryChip extends StatelessWidget {
     }
     final color = colorForIndex(cat.color);
     final icon = iconForKey(cat.icon);
+    final typeLabel = cat.type == CategoryType.expense
+        ? l10n.transactionTypeExpense
+        : l10n.transactionTypeIncome;
     return ListTile(
       leading: CircleAvatar(
         backgroundColor: color.withValues(alpha: 0.15),
         child: Icon(icon, color: color),
       ),
       title: Text(l10n.txCategoryLabel),
-      subtitle: Text(categoryDisplayName(cat, l10n)),
+      subtitle: Text('${categoryDisplayName(cat, l10n)} · $typeLabel'),
       trailing: const Icon(Icons.chevron_right),
       onTap: onTap,
       tileColor: tileColor,

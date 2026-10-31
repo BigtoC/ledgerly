@@ -943,7 +943,7 @@ ShellRoute (bottom nav)
 
 ### Add/Edit Interaction Rules
 
-- There is no expense/income toggle: the transaction type comes from the picked category
+- There is no expense/income toggle: the transaction type comes from the picked category, and the category field shows it next to the name (for example "Investment · Income")
 - Category picker takes 90% of the screen height and shows all visible expense categories, then all visible income categories below them, in an icon grid of five per row; a label too long for its tile shrinks to fit on one line instead of wrapping
 - Default account uses the user's configured default account, otherwise the last used active account
 - Transaction currency is an explicit field in add, edit, and duplicate flows; seeded from the selected account's default but independently overridable by the user. Changing currency with a non-zero amount requires confirmation and clears the entered amount

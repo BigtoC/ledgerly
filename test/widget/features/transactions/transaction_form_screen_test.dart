@@ -440,7 +440,7 @@ void main() {
     await tester.tap(find.text('Salary'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Salary'), findsOneWidget);
+    expect(find.text('Salary · Income'), findsOneWidget);
     expect(find.text('Select a category'), findsNothing);
   });
 
