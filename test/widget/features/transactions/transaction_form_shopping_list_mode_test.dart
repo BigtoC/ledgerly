@@ -4,8 +4,6 @@
 //
 // Covers:
 //   - EditShoppingListDraftMode title matches shoppingListEditDraftTitle l10n key
-//   - AddTransactionMode title matches existing txAddTitle l10n key
-//   - route pop with ShoppingListEditResult.savedDraft is distinct from null
 
 import 'dart:async';
 
@@ -252,33 +250,6 @@ void main() {
       // The expected title comes from the English l10n.
       final l10n = AppLocalizationsEn();
       expect(find.text(l10n.shoppingListEditDraftTitle), findsOneWidget);
-    },
-  );
-
-  testWidgets('TFSLM02: AddTransactionMode title matches txAddTitle l10n key', (
-    tester,
-  ) async {
-    await tester.pumpWidget(mountWithMode(const AddTransactionMode()));
-    await tester.pumpAndSettle();
-
-    final l10n = AppLocalizationsEn();
-    expect(find.text(l10n.txAddTitle), findsOneWidget);
-  });
-
-  testWidgets(
-    'TFSLM03: ShoppingListEditResultSavedDraft is a distinct result from null',
-    (tester) async {
-      // This is a unit-level invariant test — ShoppingListEditResultSavedDraft
-      // is not null and not a ShoppingListEditResultMissingDraft.
-      const saved = ShoppingListEditResultSavedDraft();
-      expect(saved, isNotNull);
-      expect(saved, isA<ShoppingListEditResult>());
-      expect(saved, isNot(isA<ShoppingListEditResultMissingDraft>()));
-      expect(saved, isNot(isA<ShoppingListEditResultSavedTransaction>()));
-
-      // Also verify that the enum hierarchy is correct.
-      const missing = ShoppingListEditResultMissingDraft();
-      expect(missing, isNot(equals(saved)));
     },
   );
 

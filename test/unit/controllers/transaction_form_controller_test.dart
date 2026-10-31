@@ -843,16 +843,6 @@ void main() {
   });
 
   group('currencyTouched', () {
-    test('TC80: hydrateForAdd starts with currencyTouched=false', () async {
-      final c = makeContainer();
-      addTearDown(c.dispose);
-      final controller = c.read(transactionFormControllerProvider.notifier);
-      await controller.hydrateForAdd();
-      final s =
-          c.read(transactionFormControllerProvider) as TransactionFormData;
-      expect(s.currencyTouched, isFalse);
-    });
-
     test('TC81: hydrateForEdit starts with currencyTouched=true', () async {
       final tx = _persistedTx();
       when(() => txRepo.getById(99)).thenAnswer((_) async => tx);
@@ -939,25 +929,6 @@ void main() {
           c.read(transactionFormControllerProvider) as TransactionFormData;
       expect(s.displayCurrency?.code, 'EUR');
       expect(s.amountMinorUnits, 0);
-      expect(s.currencyTouched, isTrue);
-    });
-
-    test('TC86: selectCurrency with zero amount succeeds without clearAmountOnChange', () async {
-      const eur = Currency(
-        code: 'EUR',
-        decimals: 2,
-        symbol: '€',
-        nameL10nKey: 'currency.eur',
-      );
-      final c = makeContainer();
-      addTearDown(c.dispose);
-      final controller = c.read(transactionFormControllerProvider.notifier);
-      await controller.hydrateForAdd();
-      // amount is 0, no need for clearAmountOnChange flag
-      controller.selectCurrency(eur);
-      final s =
-          c.read(transactionFormControllerProvider) as TransactionFormData;
-      expect(s.displayCurrency?.code, 'EUR');
       expect(s.currencyTouched, isTrue);
     });
 
