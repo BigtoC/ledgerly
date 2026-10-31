@@ -33,16 +33,10 @@ class DayNavigationHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final today = DateHelpers.startOfDay(DateTime.now());
-    final yesterday = today.subtract(const Duration(days: 1));
-    final selDay = DateHelpers.startOfDay(selectedDay);
-
-    final label = switch (selDay) {
-      _ when DateHelpers.isSameDay(selDay, today) => l10n.homeDayLabelToday,
-      _ when DateHelpers.isSameDay(selDay, yesterday) =>
-        l10n.homeDayLabelYesterday,
-      _ => DateHelpers.formatDayHeader(selDay, locale),
-    };
+    final label = DateHelpers.formatDayHeader(
+      DateHelpers.startOfDay(selectedDay),
+      locale,
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),

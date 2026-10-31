@@ -460,9 +460,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeDayLabelToday => 'Today';
 
   @override
-  String get homeDayLabelYesterday => 'Yesterday';
-
-  @override
   String get homeDayNavPrevLabel => 'Previous day';
 
   @override

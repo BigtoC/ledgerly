@@ -460,9 +460,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeDayLabelToday => 'Today';
 
   @override
-  String get homeDayLabelYesterday => 'Yesterday';
-
-  @override
   String get homeDayNavPrevLabel => 'Previous day';
 
   @override
@@ -1631,9 +1628,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get homeDayLabelToday => '今天';
 
   @override
-  String get homeDayLabelYesterday => '昨天';
-
-  @override
   String get homeDayNavPrevLabel => '前一天';
 
   @override
@@ -2760,9 +2754,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get homeDayLabelToday => '今天';
-
-  @override
-  String get homeDayLabelYesterday => '昨天';
 
   @override
   String get homeDayNavPrevLabel => '前一天';

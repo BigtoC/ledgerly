@@ -970,17 +970,11 @@ abstract class AppLocalizations {
   /// **'Duplicate'**
   String get homeDuplicateAction;
 
-  /// Wave 3 §6. Day-nav header label override when selectedDay is today.
+  /// Home summary-strip jump button label when selectedDay is already today (button disabled).
   ///
   /// In en, this message translates to:
   /// **'Today'**
   String get homeDayLabelToday;
-
-  /// Wave 3 §6. Day-nav header label override when selectedDay is yesterday.
-  ///
-  /// In en, this message translates to:
-  /// **'Yesterday'**
-  String get homeDayLabelYesterday;
 
   /// Wave 3 §6, §10. A11y label for the day-nav prev (◀) chevron.
   ///

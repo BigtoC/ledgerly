@@ -1,11 +1,13 @@
 // DayNavigationHeader widget tests — Wave 3 §4.3.
 //
 // Covers: prev disabled at oldest day, next disabled when no newer
-// activity day, both active in between, label tap fires onPickDay.
+// activity day, both active in between, label tap fires onPickDay,
+// label is always the formatted date (no Today / Yesterday override).
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:ledgerly/core/utils/date_helpers.dart';
 import 'package:ledgerly/features/home/widgets/day_navigation_header.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
@@ -89,13 +91,14 @@ void main() {
     expect(picked, 1);
   });
 
-  testWidgets('DH04: today renders the localized "Today" label', (
+  testWidgets('DH04: today renders the date, not a "Today" label', (
     tester,
   ) async {
+    final now = DateTime.now();
     await tester.pumpWidget(
       _wrap(
         DayNavigationHeader(
-          selectedDay: DateTime.now(),
+          selectedDay: now,
           locale: 'en_US',
           onPrev: () {},
           onNext: () {},
@@ -106,7 +109,37 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Today'), findsOneWidget);
+    expect(find.text('Today'), findsNothing);
+    expect(
+      find.text(DateHelpers.formatDayHeader(now, 'en_US')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('DH06: yesterday renders the date, not a "Yesterday" label', (
+    tester,
+  ) async {
+    final now = DateTime.now();
+    final yesterday = DateTime(now.year, now.month, now.day - 1);
+    await tester.pumpWidget(
+      _wrap(
+        DayNavigationHeader(
+          selectedDay: yesterday,
+          locale: 'en_US',
+          onPrev: () {},
+          onNext: () {},
+          onPickDay: () {},
+          canGoPrev: true,
+          canGoNext: true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Yesterday'), findsNothing);
+    expect(
+      find.text(DateHelpers.formatDayHeader(yesterday, 'en_US')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('DH05: day label sits in a pill filled with the card colour', (

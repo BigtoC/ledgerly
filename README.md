@@ -364,12 +364,12 @@ from freezing the UI, `CsvImportUseCase`
 (`lib/data/use_cases/csv_import_use_case.dart`) splits the work. The
 commit is still one all-or-nothing `db.transaction`.
 
-| Step | How it is split |
-|------|-----------------|
-| Parse and validate | One `Isolate.run`, off the UI isolate. The currencies are read once and sent with the bytes. |
-| Duplicate signatures | `getImportSignatures` reads 2,000 rows per page, keyset-paged on `id` (a rowid range scan; no new index). |
-| Duplicate check | Both loops in `_withoutDuplicates` yield to the event loop every 5,000 rows (`_kDedupChunk`). It runs on load and again inside the commit. |
-| Commit | `insertImported` is called with 1,000 rows at a time (`_kInsertChunk`) inside the one transaction. Each call is a savepoint, so any failing chunk rolls back every chunk and every created account type, account and category. Drift sends one table-update notification after the outer commit. |
+| Step                 | How it is split                                                                                                                                                                                                                                                                                  |
+|----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Parse and validate   | One `Isolate.run`, off the UI isolate. The currencies are read once and sent with the bytes.                                                                                                                                                                                                     |
+| Duplicate signatures | `getImportSignatures` reads 2,000 rows per page, keyset-paged on `id` (a rowid range scan; no new index).                                                                                                                                                                                        |
+| Duplicate check      | Both loops in `_withoutDuplicates` yield to the event loop every 5,000 rows (`_kDedupChunk`). It runs on load and again inside the commit.                                                                                                                                                       |
+| Commit               | `insertImported` is called with 1,000 rows at a time (`_kInsertChunk`) inside the one transaction. Each call is a savepoint, so any failing chunk rolls back every chunk and every created account type, account and category. Drift sends one table-update notification after the outer commit. |
 
 The file is still read into memory whole; on Android the system picker
 does that anyway. A streaming parser, and moving the commit's sort into
@@ -401,12 +401,12 @@ Every row parsed and imported with no errors.
 `Timer.periodic` running alongside each step. A gap over about 100 ms is
 a visible freeze.
 
-| Rows (file size) | Load, before → after | Commit, before → after | Re-import all duplicates, before → after |
-|------------------|----------------------|------------------------|------------------------------------------|
-| 10,000 (0.5 MB) | 26 → 2 ms | 45 → 5 ms | 48 → 13 ms |
-| 50,000 (2.6 MB) | 111 → 5 ms | 207 → 14 ms | 264 → 42 ms |
-| 100,000 (5.2 MB) | 226 → 25 ms | 356 → 25 ms | 522 → 29 ms |
-| 200,000 (10.4 MB) | 536 → 53 ms | 693 → 56 ms | 1,731 → 71 ms |
+| Rows (file size)  | Load, before → after | Commit, before → after | Re-import all duplicates, before → after |
+|-------------------|----------------------|------------------------|------------------------------------------|
+| 10,000 (0.5 MB)   | 26 → 2 ms            | 45 → 5 ms              | 48 → 13 ms                               |
+| 50,000 (2.6 MB)   | 111 → 5 ms           | 207 → 14 ms            | 264 → 42 ms                              |
+| 100,000 (5.2 MB)  | 226 → 25 ms          | 356 → 25 ms            | 522 → 29 ms                              |
+| 200,000 (10.4 MB) | 536 → 53 ms          | 693 → 56 ms            | 1,731 → 71 ms                            |
 
 "Before" is the uncapped code with no chunking. Each pair of columns
 below is the longest block on load and on commit of a grown export: N
@@ -415,19 +415,19 @@ are the final code.
 
 | Rows already imported | Load, no dedup yields | Commit, no dedup yields | Load, dedup yields | Commit, dedup yields |
 |-----------------------|-----------------------|-------------------------|--------------------|----------------------|
-| 10,000 | 12 ms | 13 ms | 13 ms | 14 ms |
-| 50,000 | 15 ms | 27 ms | 14 ms | 30 ms |
-| 100,000 | 46 ms | 38 ms | 45 ms | 29 ms |
-| 200,000 | 98 ms | 78 ms | 79 ms | 52 ms |
+| 10,000                | 12 ms                 | 13 ms                   | 13 ms              | 14 ms                |
+| 50,000                | 15 ms                 | 27 ms                   | 14 ms              | 30 ms                |
+| 100,000               | 46 ms                 | 38 ms                   | 45 ms              | 29 ms                |
+| 200,000               | 98 ms                 | 78 ms                   | 79 ms              | 52 ms                |
 
 **Wall time**, with the final code:
 
-| Rows | Load | Commit | Re-import all duplicates | Test-process RSS peak |
-|------|------|--------|--------------------------|-----------------------|
-| 10,000 | 31 ms | 88 ms | 94 ms | 313 MB |
-| 50,000 | 165 ms | 404 ms | 590 ms | 368 MB |
-| 100,000 | 363 ms | 687 ms | 997 ms | 491 MB |
-| 200,000 | 752 ms | 1,373 ms | 2,089 ms | 758 MB |
+| Rows    | Load   | Commit   | Re-import all duplicates | Test-process RSS peak |
+|---------|--------|----------|--------------------------|-----------------------|
+| 10,000  | 31 ms  | 88 ms    | 94 ms                    | 313 MB                |
+| 50,000  | 165 ms | 404 ms   | 590 ms                   | 368 MB                |
+| 100,000 | 363 ms | 687 ms   | 997 ms                   | 491 MB                |
+| 200,000 | 752 ms | 1,373 ms | 2,089 ms                 | 758 MB                |
 
 - Every step scales linearly: about 4 µs per row to load, 7 µs to
   commit, and 0.1 µs to match accounts and categories.
