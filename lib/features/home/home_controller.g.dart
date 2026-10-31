@@ -20,7 +20,7 @@ final class HomeControllerProvider
         argument: null,
         retry: null,
         name: r'homeControllerProvider',
-        isAutoDispose: false,
+        isAutoDispose: true,
         dependencies: <ProviderOrFamily>[transactionRepositoryProvider],
         $allTransitiveDependencies: <ProviderOrFamily>[
           HomeControllerProvider.$allTransitiveDependencies0,
@@ -40,7 +40,7 @@ final class HomeControllerProvider
   HomeController create() => HomeController();
 }
 
-String _$homeControllerHash() => r'5bb19558a9be7a13e833b2e562483d698c9327c4';
+String _$homeControllerHash() => r'b9f315b0a41a10e21f7315aa061a922e3e60edab';
 
 abstract class _$HomeController extends $StreamNotifier<HomeState> {
   Stream<HomeState> build();

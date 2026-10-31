@@ -126,12 +126,12 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( DateTime selectedDay)?  empty,TResult Function( DateTime selectedDay,  DateTime today,  List<Transaction> transactionsForDay,  DailyTotals todayTotalsByCurrency,  Map<String, int> monthNetByCurrency,  bool canGoPrev,  bool canGoNext,  PendingDelete? pendingDelete)?  data,TResult Function( Object error,  StackTrace stack)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( DateTime selectedDay)?  empty,TResult Function( DateTime selectedDay,  DateTime today,  List<Transaction> transactionsForDay,  DailyTotals todayTotalsByCurrency,  Map<String, int> monthNetByCurrency,  bool canGoPrev,  bool canGoNext)?  data,TResult Function( Object error,  StackTrace stack)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case HomeLoading() when loading != null:
 return loading();case HomeEmpty() when empty != null:
 return empty(_that.selectedDay);case HomeData() when data != null:
-return data(_that.selectedDay,_that.today,_that.transactionsForDay,_that.todayTotalsByCurrency,_that.monthNetByCurrency,_that.canGoPrev,_that.canGoNext,_that.pendingDelete);case HomeError() when error != null:
+return data(_that.selectedDay,_that.today,_that.transactionsForDay,_that.todayTotalsByCurrency,_that.monthNetByCurrency,_that.canGoPrev,_that.canGoNext);case HomeError() when error != null:
 return error(_that.error,_that.stack);case _:
   return orElse();
 
@@ -150,12 +150,12 @@ return error(_that.error,_that.stack);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( DateTime selectedDay)  empty,required TResult Function( DateTime selectedDay,  DateTime today,  List<Transaction> transactionsForDay,  DailyTotals todayTotalsByCurrency,  Map<String, int> monthNetByCurrency,  bool canGoPrev,  bool canGoNext,  PendingDelete? pendingDelete)  data,required TResult Function( Object error,  StackTrace stack)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( DateTime selectedDay)  empty,required TResult Function( DateTime selectedDay,  DateTime today,  List<Transaction> transactionsForDay,  DailyTotals todayTotalsByCurrency,  Map<String, int> monthNetByCurrency,  bool canGoPrev,  bool canGoNext)  data,required TResult Function( Object error,  StackTrace stack)  error,}) {final _that = this;
 switch (_that) {
 case HomeLoading():
 return loading();case HomeEmpty():
 return empty(_that.selectedDay);case HomeData():
-return data(_that.selectedDay,_that.today,_that.transactionsForDay,_that.todayTotalsByCurrency,_that.monthNetByCurrency,_that.canGoPrev,_that.canGoNext,_that.pendingDelete);case HomeError():
+return data(_that.selectedDay,_that.today,_that.transactionsForDay,_that.todayTotalsByCurrency,_that.monthNetByCurrency,_that.canGoPrev,_that.canGoNext);case HomeError():
 return error(_that.error,_that.stack);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -170,12 +170,12 @@ return error(_that.error,_that.stack);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( DateTime selectedDay)?  empty,TResult? Function( DateTime selectedDay,  DateTime today,  List<Transaction> transactionsForDay,  DailyTotals todayTotalsByCurrency,  Map<String, int> monthNetByCurrency,  bool canGoPrev,  bool canGoNext,  PendingDelete? pendingDelete)?  data,TResult? Function( Object error,  StackTrace stack)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( DateTime selectedDay)?  empty,TResult? Function( DateTime selectedDay,  DateTime today,  List<Transaction> transactionsForDay,  DailyTotals todayTotalsByCurrency,  Map<String, int> monthNetByCurrency,  bool canGoPrev,  bool canGoNext)?  data,TResult? Function( Object error,  StackTrace stack)?  error,}) {final _that = this;
 switch (_that) {
 case HomeLoading() when loading != null:
 return loading();case HomeEmpty() when empty != null:
 return empty(_that.selectedDay);case HomeData() when data != null:
-return data(_that.selectedDay,_that.today,_that.transactionsForDay,_that.todayTotalsByCurrency,_that.monthNetByCurrency,_that.canGoPrev,_that.canGoNext,_that.pendingDelete);case HomeError() when error != null:
+return data(_that.selectedDay,_that.today,_that.transactionsForDay,_that.todayTotalsByCurrency,_that.monthNetByCurrency,_that.canGoPrev,_that.canGoNext);case HomeError() when error != null:
 return error(_that.error,_that.stack);case _:
   return null;
 
@@ -288,7 +288,7 @@ as DateTime,
 
 
 class HomeData implements HomeState {
-  const HomeData({required this.selectedDay, required this.today, required  List<Transaction> transactionsForDay, required  DailyTotals todayTotalsByCurrency, required  Map<String, int> monthNetByCurrency, required this.canGoPrev, required this.canGoNext, required this.pendingDelete}): _transactionsForDay = transactionsForDay,_todayTotalsByCurrency = todayTotalsByCurrency,_monthNetByCurrency = monthNetByCurrency;
+  const HomeData({required this.selectedDay, required this.today, required  List<Transaction> transactionsForDay, required  DailyTotals todayTotalsByCurrency, required  Map<String, int> monthNetByCurrency, required this.canGoPrev, required this.canGoNext}): _transactionsForDay = transactionsForDay,_todayTotalsByCurrency = todayTotalsByCurrency,_monthNetByCurrency = monthNetByCurrency;
   
 
  final  DateTime selectedDay;
@@ -316,7 +316,6 @@ class HomeData implements HomeState {
 
  final  bool canGoPrev;
  final  bool canGoNext;
- final  PendingDelete? pendingDelete;
 
 /// Create a copy of HomeState
 /// with the given fields replaced by the non-null parameter values.
@@ -328,18 +327,18 @@ $HomeDataCopyWith<HomeData> get copyWith => _$HomeDataCopyWithImpl<HomeData>(thi
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is HomeData&&(identical(other.selectedDay, selectedDay) || other.selectedDay == selectedDay)&&(identical(other.today, today) || other.today == today)&&const DeepCollectionEquality().equals(other.transactionsForDay, _transactionsForDay)&&const DeepCollectionEquality().equals(other.todayTotalsByCurrency, _todayTotalsByCurrency)&&const DeepCollectionEquality().equals(other.monthNetByCurrency, _monthNetByCurrency)&&(identical(other.canGoPrev, canGoPrev) || other.canGoPrev == canGoPrev)&&(identical(other.canGoNext, canGoNext) || other.canGoNext == canGoNext)&&(identical(other.pendingDelete, pendingDelete) || other.pendingDelete == pendingDelete));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is HomeData&&(identical(other.selectedDay, selectedDay) || other.selectedDay == selectedDay)&&(identical(other.today, today) || other.today == today)&&const DeepCollectionEquality().equals(other.transactionsForDay, _transactionsForDay)&&const DeepCollectionEquality().equals(other.todayTotalsByCurrency, _todayTotalsByCurrency)&&const DeepCollectionEquality().equals(other.monthNetByCurrency, _monthNetByCurrency)&&(identical(other.canGoPrev, canGoPrev) || other.canGoPrev == canGoPrev)&&(identical(other.canGoNext, canGoNext) || other.canGoNext == canGoNext));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,selectedDay,today,const DeepCollectionEquality().hash(_transactionsForDay),const DeepCollectionEquality().hash(_todayTotalsByCurrency),const DeepCollectionEquality().hash(_monthNetByCurrency),canGoPrev,canGoNext,pendingDelete);
+    return Object.hash(runtimeType,selectedDay,today,const DeepCollectionEquality().hash(_transactionsForDay),const DeepCollectionEquality().hash(_todayTotalsByCurrency),const DeepCollectionEquality().hash(_monthNetByCurrency),canGoPrev,canGoNext);
 }
 
 @override
 String toString() {
-    return 'HomeState.data(selectedDay: $selectedDay, today: $today, transactionsForDay: $transactionsForDay, todayTotalsByCurrency: $todayTotalsByCurrency, monthNetByCurrency: $monthNetByCurrency, canGoPrev: $canGoPrev, canGoNext: $canGoNext, pendingDelete: $pendingDelete)';
+    return 'HomeState.data(selectedDay: $selectedDay, today: $today, transactionsForDay: $transactionsForDay, todayTotalsByCurrency: $todayTotalsByCurrency, monthNetByCurrency: $monthNetByCurrency, canGoPrev: $canGoPrev, canGoNext: $canGoNext)';
 }
 
 
@@ -350,7 +349,7 @@ abstract mixin class $HomeDataCopyWith<$Res> implements $HomeStateCopyWith<$Res>
   factory $HomeDataCopyWith(HomeData value, $Res Function(HomeData) _then) = _$HomeDataCopyWithImpl;
 @useResult
 $Res call({
- DateTime selectedDay, DateTime today, List<Transaction> transactionsForDay, DailyTotals todayTotalsByCurrency, Map<String, int> monthNetByCurrency, bool canGoPrev, bool canGoNext, PendingDelete? pendingDelete
+ DateTime selectedDay, DateTime today, List<Transaction> transactionsForDay, DailyTotals todayTotalsByCurrency, Map<String, int> monthNetByCurrency, bool canGoPrev, bool canGoNext
 });
 
 
@@ -367,7 +366,7 @@ class _$HomeDataCopyWithImpl<$Res>
 
 /// Create a copy of HomeState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? selectedDay = null,Object? today = null,Object? transactionsForDay = null,Object? todayTotalsByCurrency = null,Object? monthNetByCurrency = null,Object? canGoPrev = null,Object? canGoNext = null,Object? pendingDelete = freezed,}) {
+@pragma('vm:prefer-inline') $Res call({Object? selectedDay = null,Object? today = null,Object? transactionsForDay = null,Object? todayTotalsByCurrency = null,Object? monthNetByCurrency = null,Object? canGoPrev = null,Object? canGoNext = null,}) {
   return _then(HomeData(
 selectedDay: null == selectedDay ? _self.selectedDay : selectedDay // ignore: cast_nullable_to_non_nullable
 as DateTime,today: null == today ? _self.today : today // ignore: cast_nullable_to_non_nullable
@@ -376,8 +375,7 @@ as List<Transaction>,todayTotalsByCurrency: null == todayTotalsByCurrency ? _sel
 as DailyTotals,monthNetByCurrency: null == monthNetByCurrency ? _self._monthNetByCurrency : monthNetByCurrency // ignore: cast_nullable_to_non_nullable
 as Map<String, int>,canGoPrev: null == canGoPrev ? _self.canGoPrev : canGoPrev // ignore: cast_nullable_to_non_nullable
 as bool,canGoNext: null == canGoNext ? _self.canGoNext : canGoNext // ignore: cast_nullable_to_non_nullable
-as bool,pendingDelete: freezed == pendingDelete ? _self.pendingDelete : pendingDelete // ignore: cast_nullable_to_non_nullable
-as PendingDelete?,
+as bool,
   ));
 }
 

@@ -12,14 +12,6 @@ import '../../data/models/transaction.dart';
 
 part 'home_state.freezed.dart';
 
-/// Pending-delete record set during the 4-second undo window.
-/// Plain class (not Freezed) — controller swaps it out by reference.
-class PendingDelete {
-  const PendingDelete({required this.transaction});
-
-  final Transaction transaction;
-}
-
 /// Per-currency expense/income split used by the summary strip.
 typedef DailyTotals = Map<String, ({int expense, int income})>;
 
@@ -41,7 +33,6 @@ sealed class HomeState with _$HomeState {
     required Map<String, int> monthNetByCurrency,
     required bool canGoPrev,
     required bool canGoNext,
-    required PendingDelete? pendingDelete,
   }) = HomeData;
 
   /// Upstream stream failure.

@@ -8,7 +8,7 @@
 // is popped. StatefulShellRoute.indexedStack keeps it alive during tab
 // switches because autoDispose only triggers when there are no listeners.
 //
-// The delete/undo pattern is identical to `HomeController`:
+// Delete/undo pattern:
 //   - `deleteItem(id)` hides the row immediately (pendingDelete) and starts a
 //     4-second timer.
 //   - `undoDelete()` cancels the timer without touching the repository.

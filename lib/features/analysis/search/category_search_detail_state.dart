@@ -8,9 +8,7 @@ import '../../../data/models/transaction.dart';
 
 part 'category_search_detail_state.freezed.dart';
 
-/// Pending-delete record set during the 4-second undo window. Mirrors
-/// `home/home_state.dart`'s `PendingDelete`; declared locally so the
-/// analysis slice does not import from the home feature.
+/// Pending-delete record set during the 4-second undo window.
 class CategorySearchPendingDelete {
   const CategorySearchPendingDelete({required this.transaction});
 
