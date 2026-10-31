@@ -34,9 +34,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoriesArchiveAction => 'Archive';
 
   @override
-  String get homeEditAction => 'Edit';
-
-  @override
   String get commonUndo => 'Undo';
 
   @override
@@ -460,9 +457,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeDeleteUndoSnackbar => 'Transaction deleted';
-
-  @override
-  String get homeDuplicateAction => 'Duplicate';
 
   @override
   String get homeDayLabelToday => 'Today';

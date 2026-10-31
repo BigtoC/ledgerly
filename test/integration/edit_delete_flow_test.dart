@@ -1,12 +1,9 @@
 // M6 Unit 7 — Integration tests for edit and delete data invariants.
 //
 // The form-modal edit save path (`hydrateForEdit` → controller.save →
-// pop) and the home overflow Delete + undo-snackbar UI flow are
-// covered at the widget layer in
-// `test/widget/features/transactions/transaction_form_screen_test.dart`
-// and `test/widget/features/home/home_screen_test.dart`. The
-// HomeController's timer-driven undo-window commit logic is covered by
-// `test/unit/controllers/home_controller_test.dart`.
+// pop) and the form's Delete button (the only delete path from Home)
+// are covered at the widget layer in
+// `test/widget/features/transactions/transaction_form_screen_test.dart`.
 //
 // Mid-test repository writes do not propagate reliably to already-
 // subscribed Home streams under FakeAsync, so this integration test

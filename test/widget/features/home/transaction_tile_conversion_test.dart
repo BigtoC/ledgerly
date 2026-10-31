@@ -10,7 +10,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
-import 'package:ledgerly/data/models/account.dart';
 import 'package:ledgerly/data/models/category.dart';
 import 'package:ledgerly/data/models/currency.dart';
 import 'package:ledgerly/data/models/transaction.dart';
@@ -38,13 +37,6 @@ void main() {
     l10nKey: 'category.food',
   );
 
-  const testAccount = Account(
-    id: 1,
-    name: 'Cash',
-    accountTypeId: 1,
-    currency: Currency(code: 'EUR', decimals: 2, symbol: '€'),
-  );
-
   Widget buildTile({required String defaultCurrency, Map<String, int>? rates}) {
     return ProviderScope(
       overrides: [
@@ -65,12 +57,9 @@ void main() {
           body: TransactionTile(
             transaction: testTransaction,
             category: testCategory,
-            account: testAccount,
             locale: 'en_US',
             defaultCurrency: defaultCurrency,
             onTap: () {},
-            onDuplicate: () {},
-            onDelete: () {},
           ),
         ),
       ),
@@ -130,5 +119,28 @@ void main() {
           .toList();
       expect(semantics, isNotEmpty);
     });
+
+    for (final scale in const [1.0, 2.0]) {
+      testWidgets(
+        'row is tall enough for the converted line at ${scale}x text',
+        (tester) async {
+          tester.platformDispatcher.textScaleFactorTestValue = scale;
+          addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+          await tester.pumpWidget(
+            buildTile(
+              defaultCurrency: 'USD',
+              rates: {'EUR→USD': (1.08 * 1000000000).round()},
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          final row = tester.getRect(find.byType(InkWell));
+          final converted = tester.getRect(find.textContaining('≈'));
+          final amount = tester.getRect(find.textContaining('€'));
+          expect(amount.top, greaterThanOrEqualTo(row.top));
+          expect(converted.bottom, lessThanOrEqualTo(row.bottom));
+        },
+      );
+    }
   });
 }

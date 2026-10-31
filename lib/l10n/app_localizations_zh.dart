@@ -34,9 +34,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get categoriesArchiveAction => 'Archive';
 
   @override
-  String get homeEditAction => 'Edit';
-
-  @override
   String get commonUndo => 'Undo';
 
   @override
@@ -460,9 +457,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get homeDeleteUndoSnackbar => 'Transaction deleted';
-
-  @override
-  String get homeDuplicateAction => 'Duplicate';
 
   @override
   String get homeDayLabelToday => 'Today';
@@ -1220,9 +1214,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get categoriesArchiveAction => '归档';
 
   @override
-  String get homeEditAction => '编辑';
-
-  @override
   String get commonUndo => '撤销';
 
   @override
@@ -1636,9 +1627,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get homeDeleteUndoSnackbar => '交易已删除';
-
-  @override
-  String get homeDuplicateAction => '复制';
 
   @override
   String get homeDayLabelToday => '今天';
@@ -2356,9 +2344,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get categoriesArchiveAction => '封存';
 
   @override
-  String get homeEditAction => '編輯';
-
-  @override
   String get commonUndo => '復原';
 
   @override
@@ -2772,9 +2757,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get homeDeleteUndoSnackbar => '交易已刪除';
-
-  @override
-  String get homeDuplicateAction => '複製';
 
   @override
   String get homeDayLabelToday => '今天';

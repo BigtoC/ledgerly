@@ -200,12 +200,9 @@ const Set<String> _expectedEnKeys = <String>{
   // (docs/plans/m5-ui-feature-slices/wave-3-home-plan.md §4.2).
   'homeDaySkeletonLabel',
   'homeDeleteUndoSnackbar',
-  'homeDuplicateAction',
   'homeDayLabelToday',
   'homeDayNavPrevLabel',
   'homeDayNavNextLabel',
-  // Wave 4 §3.2 rename: was commonEdit — only home used it.
-  'homeEditAction',
 
   // Home calendar-day browsing + transaction currency (plan 2026-04-28).
   'homeEmptyDayMessage',

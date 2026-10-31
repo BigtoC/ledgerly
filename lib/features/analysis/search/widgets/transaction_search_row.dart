@@ -4,8 +4,8 @@
 //   - `docs/superpowers/specs/2026-05-21-chart-slice-drilldown-design.md`
 //     § Items list (action-only delete; converted/original amount split).
 //
-// Visual layout matches Home's `TransactionTile` (icon, title,
-// "account • memo" subtitle, signed amount with type-driven color).
+// Layout: icon, title, "account • memo" subtitle, signed amount with
+// type-driven color.
 // Primary tap → edit (delegates to caller). Swipe → delete with a 4 s
 // undo window (delegates to caller; the owning controller owns the
 // optimistic-hide + commit timer).

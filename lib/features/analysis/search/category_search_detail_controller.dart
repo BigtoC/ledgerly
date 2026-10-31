@@ -1,10 +1,9 @@
 // Detail-screen controller — see spec § Detail Screen State & Controller.
 //
-// Owns the 4-second undo window for swipe-to-delete (mirrors
-// `HomeController.deleteTransaction`). State emission is driven by an
-// internal StreamController so `deleteTransaction` / `undoDelete` can
-// re-emit synchronously from the cached `_lastTransactions` without
-// waiting for the next repository emission.
+// Owns the 4-second undo window for swipe-to-delete. State emission is
+// driven by an internal StreamController so `deleteTransaction` /
+// `undoDelete` can re-emit synchronously from the cached
+// `_lastTransactions` without waiting for the next repository emission.
 //
 // Lifecycle: auto-disposed once the screen stops listening, except that a
 // pending delete holds a `KeepAliveLink` (`_undoLink`) until it is undone or

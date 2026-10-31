@@ -5,8 +5,8 @@
 //   - Per-day list renders rows + summary strip per currency.
 //   - Per-day empty state after navigating to a gap day.
 //   - >=600dp tablet renders the two-pane layout.
-//   - Archived category/account metadata still resolve on historical
-//     rows.
+//   - Archived category metadata still resolves on historical rows.
+//   - A horizontal fling over a transaction row steps the selected day.
 //
 // Repositories are mocked via `mocktail`; no live DB. The form route
 // is short-circuited so we don't need a real router.
@@ -15,6 +15,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
@@ -196,11 +197,7 @@ void main() {
               routes: [
                 GoRoute(
                   path: 'add',
-                  builder: (_, state) => _StubFormScreen(
-                    label: state.extra is Map<String, Object>
-                        ? 'ADD_DUPLICATE_${(state.extra! as Map<String, Object>)['duplicateSourceId'] ?? 'NONE'}'
-                        : 'ADD_ROUTE',
-                  ),
+                  builder: (_, _) => const _StubFormScreen(label: 'ADD_ROUTE'),
                 ),
                 GoRoute(
                   path: 'edit/:id',
@@ -446,8 +443,10 @@ void main() {
       accountsCtrl.add([_acc(id: 7, name: 'Old wallet', isArchived: true)]);
       await tester.pump(const Duration(milliseconds: 100));
 
+      // A memo-less row is titled by its category; the account name is
+      // no longer shown on Home rows.
       expect(find.text('Old food'), findsOneWidget);
-      expect(find.textContaining('Old wallet'), findsOneWidget);
+      expect(find.textContaining('Old wallet'), findsNothing);
     },
   );
 
@@ -483,102 +482,10 @@ void main() {
     monthNetCtrl.add(const {});
     await tester.pump(const Duration(milliseconds: 200));
 
-    await tester.tap(find.byType(ListTile).first);
+    await tester.tap(find.byType(TransactionTile).first);
     await tester.pumpAndSettle();
 
     expect(find.text('EDIT_ROUTE_1'), findsOneWidget);
-  });
-
-  testWidgets('WH07: duplicate action navigates with duplicateSourceId extra', (
-    tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(400, 800));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    await tester.pumpWidget(makeApp());
-    await seedAll(tester);
-
-    final today = DateTime.now();
-    final todayMidnight = DateTime(today.year, today.month, today.day);
-    dayCtrl.add([_tx(id: 1, date: todayMidnight)]);
-    activityCtrl.add([todayMidnight]);
-    todayTotalsCtrl.add(const {});
-    monthNetCtrl.add(const {});
-    await tester.pump(const Duration(milliseconds: 200));
-
-    await tester.tap(find.byKey(const ValueKey('homeTile:1:menu')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Duplicate'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('ADD_DUPLICATE_1'), findsOneWidget);
-  });
-
-  testWidgets(
-    'WH08: overflow delete shows undo snackbar and undo cancels commit',
-    (tester) async {
-      when(() => txRepo.delete(any())).thenAnswer((_) async => true);
-
-      await tester.binding.setSurfaceSize(const Size(400, 800));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
-      await tester.pumpWidget(makeApp());
-      await seedAll(tester);
-
-      final today = DateTime.now();
-      final todayMidnight = DateTime(today.year, today.month, today.day);
-      dayCtrl.add([_tx(id: 1, date: todayMidnight)]);
-      activityCtrl.add([todayMidnight]);
-      todayTotalsCtrl.add(const {});
-      monthNetCtrl.add(const {});
-      await tester.pump(const Duration(milliseconds: 200));
-
-      await tester.tap(find.byKey(const ValueKey('homeTile:1:menu')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Delete'));
-      await tester.pump();
-
-      expect(find.text('Transaction deleted'), findsOneWidget);
-      expect(find.text('Undo'), findsOneWidget);
-
-      await tester.tap(find.text('Undo'), warnIfMissed: false);
-      await tester.pump();
-      await tester.pump(const Duration(seconds: 5));
-
-      clearInteractions(txRepo);
-      verifyNever(() => txRepo.delete(any()));
-    },
-  );
-
-  testWidgets('WH09: swipe delete shows the same undo snackbar', (
-    tester,
-  ) async {
-    when(() => txRepo.delete(any())).thenAnswer((_) async => true);
-
-    await tester.binding.setSurfaceSize(const Size(400, 800));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    await tester.pumpWidget(makeApp());
-    await seedAll(tester);
-
-    final today = DateTime.now();
-    final todayMidnight = DateTime(today.year, today.month, today.day);
-    dayCtrl.add([_tx(id: 1, date: todayMidnight)]);
-    activityCtrl.add([todayMidnight]);
-    todayTotalsCtrl.add(const {});
-    monthNetCtrl.add(const {});
-    await tester.pump(const Duration(milliseconds: 200));
-
-    await tester.drag(
-      find.byKey(const ValueKey<int>(1)),
-      const Offset(-900, 0),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Delete').last);
-    await tester.pump();
-
-    expect(find.text('Transaction deleted'), findsOneWidget);
-    expect(find.text('Undo'), findsOneWidget);
   });
 
   testWidgets(
@@ -653,127 +560,6 @@ void main() {
 
       expect(find.textContaining(r'-$1.23'), findsNothing);
       expect(find.textContaining(r'$1.23'), findsOneWidget);
-    },
-  );
-
-  testWidgets(
-    'WH12: timed delete keeps the row hidden until slow delete completes',
-    (tester) async {
-      final deleteCompleter = Completer<bool>();
-      when(() => txRepo.delete(any()))
-          .thenAnswer((_) => deleteCompleter.future);
-
-      await tester.binding.setSurfaceSize(const Size(400, 800));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
-      await tester.pumpWidget(makeApp());
-      await seedAll(tester);
-
-      final today = DateTime.now();
-      final todayMidnight = DateTime(today.year, today.month, today.day);
-      dayCtrl.add([_tx(id: 1, date: todayMidnight)]);
-      activityCtrl.add([todayMidnight]);
-      todayTotalsCtrl.add(const {});
-      monthNetCtrl.add(const {});
-      await tester.pump(const Duration(milliseconds: 200));
-
-      expect(find.byKey(const ValueKey('homeTile:1:menu')), findsOneWidget);
-
-      await tester.tap(find.byKey(const ValueKey('homeTile:1:menu')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Delete'));
-      await tester.pump();
-
-      expect(find.byKey(const ValueKey('homeTile:1:menu')), findsNothing);
-
-      await tester.pump(const Duration(seconds: 5));
-      await tester.pump();
-
-      expect(find.byKey(const ValueKey('homeTile:1:menu')), findsNothing);
-
-      deleteCompleter.complete(true);
-      dayCtrl.add(const []);
-      await tester.pumpAndSettle();
-
-      verify(() => txRepo.delete(1)).called(1);
-      expect(find.byKey(const ValueKey('homeTile:1:menu')), findsNothing);
-    },
-  );
-
-  testWidgets(
-    'WH12b: timed delete failure restores the row and shows a generic snackbar',
-    (tester) async {
-      when(() => txRepo.delete(any()))
-          .thenAnswer((_) async => throw StateError('boom'));
-
-      await tester.binding.setSurfaceSize(const Size(400, 800));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
-      await tester.pumpWidget(makeApp());
-      await seedAll(tester);
-
-      final today = DateTime.now();
-      final todayMidnight = DateTime(today.year, today.month, today.day);
-      dayCtrl.add([_tx(id: 1, date: todayMidnight)]);
-      activityCtrl.add([todayMidnight]);
-      todayTotalsCtrl.add(const {});
-      monthNetCtrl.add(const {});
-      await tester.pump(const Duration(milliseconds: 200));
-
-      await tester.tap(find.byKey(const ValueKey('homeTile:1:menu')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Delete'));
-      await tester.pump();
-
-      expect(find.byKey(const ValueKey('homeTile:1:menu')), findsNothing);
-
-      await tester.pump(const Duration(seconds: 5));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
-
-      expect(
-        find.text('Something went wrong. Please try again.'),
-        findsOneWidget,
-      );
-      expect(find.byKey(const ValueKey('homeTile:1:menu')), findsOneWidget);
-      verify(() => txRepo.delete(1)).called(1);
-    },
-  );
-
-  testWidgets(
-    'WH12c: rapid second delete does not resurrect the first row before stream sync',
-    (tester) async {
-      when(() => txRepo.delete(any())).thenAnswer((_) async => true);
-
-      await tester.binding.setSurfaceSize(const Size(400, 800));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
-      await tester.pumpWidget(makeApp());
-      await seedAll(tester);
-
-      final today = DateTime.now();
-      final todayMidnight = DateTime(today.year, today.month, today.day);
-      dayCtrl.add([
-        _tx(id: 1, date: todayMidnight),
-        _tx(id: 2, date: todayMidnight),
-      ]);
-      activityCtrl.add([todayMidnight]);
-      todayTotalsCtrl.add(const {});
-      monthNetCtrl.add(const {});
-      await tester.pump(const Duration(milliseconds: 200));
-
-      await tester.tap(find.byKey(const ValueKey('homeTile:1:menu')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Delete'));
-      await tester.pump();
-
-      await tester.tap(find.byKey(const ValueKey('homeTile:2:menu')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Delete'));
-      await tester.pump();
-
-      expect(find.byKey(const ValueKey('homeTile:1:menu')), findsNothing);
-      expect(find.byKey(const ValueKey('homeTile:2:menu')), findsNothing);
     },
   );
 
@@ -975,6 +761,117 @@ void main() {
       expect(find.text('Today'), findsNothing);
     },
   );
+
+  testWidgets(
+    'WH19: a right fling over a transaction row steps to the previous day',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(400, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(makeApp());
+      await seedAll(tester);
+
+      final today = DateTime.now();
+      final todayMidnight = DateTime(today.year, today.month, today.day);
+      final yesterday = todayMidnight.subtract(const Duration(days: 1));
+      dayCtrl.add([_tx(id: 1, date: todayMidnight)]);
+      activityCtrl.add([todayMidnight, yesterday]);
+      todayTotalsCtrl.add(const {});
+      monthNetCtrl.add(const {});
+      await tester.pump(const Duration(milliseconds: 200));
+
+      await tester.fling(
+        find.byType(TransactionTile),
+        const Offset(300, 0),
+        1000,
+      );
+      await tester.pump(const Duration(milliseconds: 50));
+      dayCtrl.add(const []);
+      todayTotalsCtrl.add(const {});
+      monthNetCtrl.add(const {});
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(DateHelpers.formatDayHeader(yesterday, 'en')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'WH20: a left fling over a transaction row steps to the next day',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(400, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(makeApp());
+      await seedAll(tester);
+
+      final today = DateTime.now();
+      final todayMidnight = DateTime(today.year, today.month, today.day);
+      final yesterday = todayMidnight.subtract(const Duration(days: 1));
+      dayCtrl.add(const []);
+      activityCtrl.add([todayMidnight, yesterday]);
+      todayTotalsCtrl.add(const {});
+      monthNetCtrl.add(const {});
+      await tester.pump(const Duration(milliseconds: 200));
+
+      await tester.tap(find.widgetWithIcon(IconButton, Icons.chevron_left));
+      await tester.pump(const Duration(milliseconds: 50));
+      dayCtrl.add([_tx(id: 2, date: yesterday)]);
+      todayTotalsCtrl.add(const {});
+      monthNetCtrl.add(const {});
+      await tester.pumpAndSettle();
+      expect(find.byType(TransactionTile), findsOneWidget);
+
+      await tester.fling(
+        find.byType(TransactionTile),
+        const Offset(-300, 0),
+        1000,
+      );
+      await tester.pump(const Duration(milliseconds: 50));
+      dayCtrl.add(const []);
+      todayTotalsCtrl.add(const {});
+      monthNetCtrl.add(const {});
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(DateHelpers.formatDayHeader(todayMidnight, 'en')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('WH21: transaction rows have no overflow menu or swipe pane', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(400, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(makeApp());
+    await seedAll(tester);
+
+    final today = DateTime.now();
+    final todayMidnight = DateTime(today.year, today.month, today.day);
+    dayCtrl.add([_tx(id: 1, date: todayMidnight)]);
+    activityCtrl.add([todayMidnight]);
+    todayTotalsCtrl.add(const {});
+    monthNetCtrl.add(const {});
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(find.byType(TransactionTile), findsOneWidget);
+    expect(find.byKey(const ValueKey('homeTile:1:menu')), findsNothing);
+    expect(find.byIcon(Icons.more_vert), findsNothing);
+    expect(
+      find.descendant(
+        of: find.byType(TransactionTile),
+        matching: find.byType(Slidable),
+      ),
+      findsNothing,
+    );
+  });
 }
 
 class _StubFormScreen extends StatelessWidget {

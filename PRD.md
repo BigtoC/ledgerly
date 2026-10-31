@@ -956,7 +956,7 @@ ShellRoute (bottom nav)
 ### Screen States
 
 - **Splash:** shows day count when configured, date picker redirect when no start date set, skipped when disabled
-- **Home:** cold start pins the day to today and shows a skeleton row; `No transactions yet` empty state on first run; per-day empty card (`No transaction`) on a day with no activity when the user lands on a gap day; grouped summary chips when multiple currencies are present with a `Multiple currencies` note when more than 2 groups are present; `Jump to today` button appears when the selected day differs from today; undo snackbar after delete; inline pending-approval section when recurring rules have generated entries; prev/next advance by one calendar day; prev disables at the date-picker floor (year 1900), next disables at today
+- **Home:** cold start pins the day to today and shows a skeleton row; `No transactions yet` empty state on first run; per-day empty card (`No transaction`) on a day with no activity when the user lands on a gap day; grouped summary chips when multiple currencies are present with a `Multiple currencies` note when more than 2 groups are present; `Jump to today` button appears when the selected day differs from today; inline pending-approval section when recurring rules have generated entries; prev/next advance by one calendar day; prev disables at the date-picker floor (year 1900), next disables at today
 - **Add/Edit Transaction:** inline validation for missing amount/category/account, confirm-discard dialog, save-error snackbar
 - **Manage Accounts (Settings):** if no active account exists, show `Create account` CTA and block transaction save until one exists
 - **Categories:** if a type has no visible categories, show `Create category` CTA; used categories can be archived but not deleted
@@ -996,8 +996,10 @@ Shopping List Screen → swipe or tap delete icon → row hidden immediately
 
 ### Quick Repeat Flow
 
+Home no longer exposes a Duplicate action (removed with the row overflow menu, issue #72), so this flow has no UI entry point today. The transaction form still supports it when opened with a `duplicateSourceId` route extra:
+
 ```text
-Home → swipe or open overflow on an existing transaction → Duplicate
+/home/add with extra {duplicateSourceId}
   → Add Transaction screen opens with copied type/category/account/memo/amount
   → user adjusts amount or date if needed
   → tap Save → returns to Home with the day pinned to the duplicate's date and the duplicate visible at the top of that day's list
@@ -1027,7 +1029,7 @@ App open → WalletsController.sync() → auto-fetch transfers for all configure
 - Category picker as icon grid — visual, quick selection
 - Home screen sorted newest-first by default
 - Home summary stays a single compact strip, not a dashboard of generic metric cards
-- Swipe-to-delete on transactions with undo snackbar
+- Home transaction rows: tap to edit, delete from the edit screen (with a confirm dialog); a horizontal swipe anywhere on Home, including over the list, switches the day
 - Summaries show auto-converted totals in `default_currency` when exchange rates are available, with original-currency amounts preserved
 - Pending transactions reviewed inline on Home rather than a separate screen — keeps the main transaction list clean while making approval frictionless
 
@@ -1250,7 +1252,7 @@ Tests are organized by **architectural layer**, not by feature. This mirrors the
 
 - Override controller provider with a test double; assert rendering per state variant
 - Golden tests for the splash screen (visual design is a product requirement)
-- Home: first-run empty state, grouped-by-currency summary strip, delete-undo snackbar
+- Home: first-run empty state, grouped-by-currency summary strip, horizontal swipe switches the day
 - Add Transaction: keypad input, expense/income toggle, validation, duplicate flow
 - Category/Account: create, archive, reorder, empty-state CTAs
 - Settings: theme, locale, default-currency updates, splash settings
