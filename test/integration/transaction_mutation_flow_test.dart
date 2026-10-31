@@ -54,6 +54,7 @@ void main() {
         await tester.tap(find.text(String.fromCharCode(codeUnit)));
         await tester.pumpAndSettle();
       }
+      await tester.ensureVisible(find.byType(CategoryChip));
       await tester.tap(find.byType(CategoryChip));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Food').last);

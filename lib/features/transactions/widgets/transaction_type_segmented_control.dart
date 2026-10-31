@@ -1,10 +1,7 @@
 // `TransactionTypeSegmentedControl` — Wave 2 §4.1 / §7.
 //
-// Two-segment Material `SegmentedButton` for expense / income. Pre-
-// category-selection it edits `pendingType` directly; post-selection
-// it surfaces a confirm-then-clear dialog before swapping types. The
-// dialog logic lives on the screen so this widget stays a value-in /
-// callback-out segment selector.
+// Two-segment Material `SegmentedButton` for expense / income, kept as
+// a value-in / callback-out segment selector.
 
 import 'package:flutter/material.dart';
 

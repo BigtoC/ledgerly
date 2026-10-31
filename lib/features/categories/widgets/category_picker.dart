@@ -4,7 +4,8 @@
 // Wave 1 plan §5).
 //
 // * Signature is frozen — do not add or change parameters here without
-//   Wave 0 contract amendment.
+//   Wave 0 contract amendment. Amended for issue #81: `type` is optional,
+//   and omitting it lists expense then income categories.
 // * Presentation adapts at a single 600dp threshold: `showModalBottomSheet`
 //   on <600dp, `Dialog` on >=600dp. Both render the same
 //   `CustomScrollView → SliverGrid` body.
@@ -30,8 +31,11 @@ import 'category_display.dart';
 /// the empty-state CTA.
 ///
 /// `type` filters by expense/income per PRD §Add/Edit Interaction Rules.
-/// Archived categories are always excluded. Categories are sorted by
-/// `sortOrder` (nulls last) then display name ascending.
+/// When `type` is null the picker lists expense categories, then income
+/// categories below them, each under its own title; a type with no
+/// categories is left out. Archived categories are always excluded.
+/// Categories are sorted by `sortOrder` (nulls last) then display name
+/// ascending.
 ///
 /// Presents adaptively per PRD → Adaptive Layouts: modal bottom sheet on
 /// <600dp, constrained dialog on >=600dp. Both containers render the
@@ -40,7 +44,7 @@ import 'category_display.dart';
 @Dependencies([categoriesByType])
 Future<Category?> showCategoryPicker(
   BuildContext context, {
-  required CategoryType type,
+  CategoryType? type,
 }) {
   final width = MediaQuery.sizeOf(context).width;
   if (width >= 600) {
@@ -60,7 +64,7 @@ Future<Category?> showCategoryPicker(
     isScrollControlled: true,
     useSafeArea: true,
     builder: (ctx) => FractionallySizedBox(
-      heightFactor: 0.75,
+      heightFactor: 0.9,
       child: _CategoryPickerSheet(type: type),
     ),
   );
@@ -71,52 +75,63 @@ Future<Category?> showCategoryPicker(
 class _CategoryPickerSheet extends ConsumerWidget {
   const _CategoryPickerSheet({required this.type});
 
-  final CategoryType type;
+  final CategoryType? type;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final async = ref.watch(categoriesByTypeProvider(type));
-    final title = type == CategoryType.expense
-        ? l10n.categoriesPickerTitleExpense
-        : l10n.categoriesPickerTitleIncome;
+    final types = switch (type) {
+      final type? => [type],
+      null => const [CategoryType.expense, CategoryType.income],
+    };
+    final asyncs = [
+      for (final t in types) ref.watch(categoriesByTypeProvider(t)),
+    ];
+    final error = asyncs.where((a) => a.hasError).firstOrNull?.error;
 
     return SafeArea(
       top: false,
       child: CustomScrollView(
         slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-              child: Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-          ),
-          ...switch (async) {
-            AsyncData<List<Category>>(:final value) when value.isEmpty =>
-              _emptyStateSlivers(context, l10n),
-            AsyncData<List<Category>>(:final value) => _gridSlivers(
-              context,
-              l10n,
-              value,
-            ),
-            AsyncError(:final error) => [
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(child: Text('$error')),
-              ),
-            ],
-            _ => const [
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(child: CircularProgressIndicator()),
-              ),
-            ],
-          },
+          if (error != null)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(child: Text('$error')),
+            )
+          else if (!asyncs.every((a) => a.hasValue))
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else ...[
+            for (var i = 0; i < types.length; i++)
+              if (types.length == 1 || asyncs[i].requireValue.isNotEmpty) ...[
+                _titleSliver(context, l10n, types[i]),
+                ..._gridSlivers(context, l10n, asyncs[i].requireValue),
+              ],
+            if (asyncs.every((a) => a.requireValue.isEmpty))
+              ..._emptyStateSlivers(context, l10n),
+          ],
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
         ],
+      ),
+    );
+  }
+
+  Widget _titleSliver(
+    BuildContext context,
+    AppLocalizations l10n,
+    CategoryType type,
+  ) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+        child: Text(
+          type == CategoryType.expense
+              ? l10n.categoriesPickerTitleExpense
+              : l10n.categoriesPickerTitleIncome,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
       ),
     );
   }
@@ -130,9 +145,11 @@ class _CategoryPickerSheet extends ConsumerWidget {
       SliverPadding(
         padding: const EdgeInsets.symmetric(horizontal: 12),
         sliver: SliverGrid(
-          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 120,
-            childAspectRatio: 0.85,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 5,
+            // Padding, icon and gap take 70px; the label row grows with
+            // the text scale so a short label keeps its scaled size.
+            mainAxisExtent: 70 + MediaQuery.textScalerOf(context).scale(18),
             crossAxisSpacing: 8,
             mainAxisSpacing: 8,
           ),
@@ -190,7 +207,7 @@ class _CategoryPickerTile extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -204,13 +221,17 @@ class _CategoryPickerTile extends StatelessWidget {
               child: Icon(icon, color: color, size: 28),
             ),
             const SizedBox(height: 6),
+            // Shrink a long label instead of wrapping it, so every icon
+            // in a row stays on the same line.
             Flexible(
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  softWrap: false,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
               ),
             ),
           ],

@@ -5,9 +5,8 @@
 //     default-account fallback chain and not-found recoveries.
 //   - Keypad commands (digit / decimal / backspace / clear) propagate to
 //     `amountMinorUnits` and `isDirty`.
-//   - Type derivation: selectCategory updates pendingType; switching
-//     pendingType while a category is selected of the opposite type is
-//     refused (the screen handles the confirm-then-clear flow).
+//   - selectCategory accepts an income category; the category sets the
+//     transaction type.
 //   - Account swap with currency change refuses without
 //     `clearAmountOnCurrencyChange`; accepts and clears when allowed.
 //   - Save success returns the persisted Transaction; failure rethrows
@@ -188,7 +187,6 @@ void main() {
       expect(s, isA<TransactionFormData>());
       expect((s as TransactionFormData).selectedAccount?.id, 1);
       expect(s.displayCurrency?.code, 'USD');
-      expect(s.pendingType, CategoryType.expense);
     });
 
     test(
@@ -470,7 +468,7 @@ void main() {
   });
 
   group('type and category coordination', () {
-    test('TC40: selectCategory derives pendingType', () async {
+    test('TC40: selectCategory accepts an income category', () async {
       final c = makeContainer();
       addTearDown(c.dispose);
       final controller = c.read(transactionFormControllerProvider.notifier);
@@ -478,43 +476,8 @@ void main() {
       controller.selectCategory(_incomeCategory);
       final s =
           c.read(transactionFormControllerProvider) as TransactionFormData;
-      expect(s.pendingType, CategoryType.income);
       expect(s.selectedCategory?.id, _incomeCategory.id);
     });
-
-    test(
-      'TC41: setPendingType refuses a swap when category is the opposite type',
-      () async {
-        final c = makeContainer();
-        addTearDown(c.dispose);
-        final controller = c.read(transactionFormControllerProvider.notifier);
-        await controller.hydrateForAdd();
-        controller.selectCategory(_expenseCategory);
-        controller.setPendingType(CategoryType.income);
-        // The screen owns the confirm-then-clear flow; the controller
-        // alone must not silently drop the category.
-        final s =
-            c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(s.selectedCategory?.id, _expenseCategory.id);
-        expect(s.pendingType, CategoryType.expense);
-      },
-    );
-
-    test(
-      'TC42: clearCategoryForTypeChange drops category and switches type',
-      () async {
-        final c = makeContainer();
-        addTearDown(c.dispose);
-        final controller = c.read(transactionFormControllerProvider.notifier);
-        await controller.hydrateForAdd();
-        controller.selectCategory(_expenseCategory);
-        controller.clearCategoryForTypeChange(CategoryType.income);
-        final s =
-            c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(s.selectedCategory, isNull);
-        expect(s.pendingType, CategoryType.income);
-      },
-    );
   });
 
   group('account swap with currency change', () {

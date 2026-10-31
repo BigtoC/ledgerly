@@ -126,7 +126,6 @@ TransactionFormState _editableDraftState() => TransactionFormState.data(
   displayCurrency: _usd,
   currencyTouched: false,
   selectedCategory: _expenseCategory,
-  pendingType: CategoryType.expense,
   date: DateTime(2026, 5, 1),
   memo: 'Milk',
   isDirty: false,

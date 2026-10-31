@@ -5,7 +5,7 @@
 //   Scaffold(resizeToAvoidBottomInset: false)
 //     └─ SafeArea
 //         └─ Column
-//             ├─ Expanded → SingleChildScrollView (type, amount, category,
+//             ├─ Expanded → SingleChildScrollView (amount, category,
 //             │             account, date, memo, [shopping-list actions])
 //             └─ CalculatorKeypad (fixed height)
 //
@@ -45,7 +45,6 @@ import 'widgets/currency_selector_tile.dart';
 import 'widgets/date_field.dart';
 import 'widgets/memo_field.dart';
 import 'widgets/memo_suggestions.dart';
-import 'widgets/transaction_type_segmented_control.dart';
 
 @Dependencies([TransactionFormController, categoriesByType, accountRepository])
 class TransactionFormScreen extends ConsumerStatefulWidget {
@@ -250,12 +249,6 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  TransactionTypeSegmentedControl(
-                    value: state.pendingType,
-                    onChanged: (next) =>
-                        _onTypeChanged(context, l10n, state, controller, next),
-                  ),
-                  const SizedBox(height: 16),
                   AmountDisplay(
                     keypad: state.keypad,
                     currency: state.displayCurrency,
@@ -277,7 +270,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                   CategoryChip(
                     category: state.selectedCategory,
                     hasError: showCategoryError,
-                    onTap: () => _onTapCategoryChip(context, state, controller),
+                    onTap: () => _onTapCategoryChip(context, controller),
                   ),
                   AccountSelectorTile(
                     account: state.selectedAccount,
@@ -501,34 +494,35 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
 
   Future<void> _onTapCategoryChip(
     BuildContext context,
-    TransactionFormData state,
     TransactionFormController controller,
   ) async {
     // Wave 2 §7.1 — decide BEFORE opening the picker whether the picker
-    // is even useful for the current `pendingType`. If no categories
-    // exist, route directly to /settings/categories so the user can
-    // create one (the picker would just show its empty-state CTA and
-    // pop with `null`, which we cannot disambiguate from a dismiss).
-    final type = state.pendingType;
-    // Hold a subscription while awaiting: a bare `ref.read(...future)` on
+    // is even useful. The picker lists expense and income categories
+    // together (the category sets the transaction type), so if neither
+    // type has categories, route directly to /settings/categories so the
+    // user can create one (the picker would just show its empty-state CTA
+    // and pop with `null`, which we cannot disambiguate from a dismiss).
+    // Hold subscriptions while awaiting: a bare `ref.read(...future)` on
     // this auto-dispose stream provider pauses its stream as soon as the
     // read returns (Riverpod 3), so the future would never complete.
-    final sub = ref.listenManual(
-      categoriesByTypeProvider(type).future,
-      (_, _) {},
-    );
-    final List<Category> categories;
+    final subs = [
+      for (final type in CategoryType.values)
+        ref.listenManual(categoriesByTypeProvider(type).future, (_, _) {}),
+    ];
+    final List<List<Category>> categories;
     try {
-      categories = await sub.read();
+      categories = await Future.wait([for (final sub in subs) sub.read()]);
     } finally {
-      sub.close();
+      for (final sub in subs) {
+        sub.close();
+      }
     }
     if (!context.mounted) return;
-    if (categories.isEmpty) {
+    if (categories.every((c) => c.isEmpty)) {
       await context.push('/settings/categories');
       return;
     }
-    final picked = await showCategoryPicker(context, type: type);
+    final picked = await showCategoryPicker(context);
     if (picked == null) return; // dismissed
     controller.selectCategory(picked);
   }
@@ -620,44 +614,6 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       ),
     );
     return ok ?? false;
-  }
-
-  Future<void> _onTypeChanged(
-    BuildContext context,
-    AppLocalizations l10n,
-    TransactionFormData state,
-    TransactionFormController controller,
-    CategoryType next,
-  ) async {
-    if (state.selectedCategory == null) {
-      controller.setPendingType(next);
-      return;
-    }
-    if (state.selectedCategory!.type == next) return;
-    // Confirm-then-clear flow per Wave 2 §7.
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(
-          next == CategoryType.expense
-              ? l10n.transactionTypeExpense
-              : l10n.transactionTypeIncome,
-        ),
-        content: Text(l10n.txCategoryEmpty),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.txKeypadDone),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-    controller.clearCategoryForTypeChange(next);
   }
 
   void _onCreateAccount(
