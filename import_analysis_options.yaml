@@ -34,8 +34,9 @@
 # (repositories and use cases) everywhere except controllers and
 # *_providers.dart. App-level values that widgets may read, such as
 # `exchangeRatesProvider`, live in their own files under app/providers/.
-# Platform and I/O plugins belong in services (PRD), so every feature
-# rule forbids them too.
+# Platform and I/O plugins belong in services, or in a core/ wrapper such
+# as `core/utils/system_browser.dart` (PRD), so every feature rule forbids
+# them too.
 rules:
   # Widgets (features/*/*_screen.dart) may only import their own
   # controller and UI primitives — no repositories, services, DB, DAOs,
