@@ -19,6 +19,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/default_currency_provider.dart';
+import 'package:ledgerly/app/providers/exchange_rates_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/account.dart';
 import 'package:ledgerly/data/models/account_type.dart';

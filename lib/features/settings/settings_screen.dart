@@ -19,7 +19,7 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../app/providers/app_update_provider.dart';
 import '../../app/providers/default_currency_provider.dart';
-import '../../app/providers/repository_providers.dart';
+import '../../app/providers/exchange_rates_provider.dart';
 import '../../core/constants.dart';
 import '../../l10n/app_localizations.dart';
 import '../accounts/accounts_controller.dart';

@@ -9,7 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ledgerly/app/providers/default_currency_provider.dart';
-import 'package:ledgerly/app/providers/repository_providers.dart';
+import 'package:ledgerly/app/providers/exchange_rates_provider.dart';
 import 'package:ledgerly/data/models/account.dart';
 import 'package:ledgerly/data/models/currency.dart';
 import 'package:ledgerly/features/accounts/accounts_providers.dart';

@@ -187,10 +187,3 @@ ExchangeRateRepository exchangeRateRepository(Ref ref) {
   ref.onDispose(defaultCurrencies.close);
   return repo;
 }
-
-/// Stream of the exchange-rate snapshot map (scaled-e9 integer values
-/// keyed by `from→to`). Consumed by UI tiles via `ref.watch`.
-@Riverpod(keepAlive: true, dependencies: [exchangeRateRepository])
-Stream<Map<String, int>> exchangeRates(Ref ref) {
-  return ref.watch(exchangeRateRepositoryProvider).watchRates();
-}
