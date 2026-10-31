@@ -6,7 +6,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/utils/system_browser.dart';
 import '../../../data/models/app_update.dart';
@@ -18,7 +17,7 @@ class NewVersionBadge extends ConsumerWidget {
   const NewVersionBadge({
     super.key,
     required this.update,
-    @visibleForTesting this.launch = launchUrl,
+    @visibleForTesting this.launch = defaultLaunch,
   });
 
   final AppUpdate update;
