@@ -231,7 +231,13 @@ import 'e.dart' if (dart.library.io) 'f.dart';
 
     test('app files may not import platform plugins, except the service '
         'providers', () {
-      const appFile = 'lib/app/providers/app_update_provider.dart';
+      // One file from each lib/app subtree, so narrowing the rule's path
+      // regex to a single directory fails here.
+      const appFiles = [
+        'lib/app/bootstrap.dart',
+        'lib/app/providers/app_update_provider.dart',
+        'lib/app/widgets/adaptive_shell.dart',
+      ];
       const serviceProvidersFile = 'lib/app/providers/service_providers.dart';
       const plugins = [
         'package:package_info_plus/package_info_plus.dart',
@@ -239,8 +245,14 @@ import 'e.dart' if (dart.library.io) 'f.dart';
         'package:file_picker/file_picker.dart',
         'package:file_selector/file_selector.dart',
       ];
-      for (final plugin in plugins) {
-        expect(forbidden(appFile, plugin), isTrue, reason: plugin);
+      for (final appFile in appFiles) {
+        for (final plugin in plugins) {
+          expect(
+            forbidden(appFile, plugin),
+            isTrue,
+            reason: '$appFile -> $plugin',
+          );
+        }
       }
       for (final uri in [...plugins, 'package:dio/dio.dart']) {
         expect(forbidden(serviceProvidersFile, uri), isFalse, reason: uri);
