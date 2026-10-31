@@ -61,16 +61,12 @@ Future<void> _pumpCard(
   await tester.pumpAndSettle();
 }
 
-ChartsNetTotal _net(
-  int? minorUnits, {
-  bool isApproximate = false,
-  List<String> excluded = const [],
-}) => ChartsNetTotal(
-  currency: _usd,
-  netMinorUnits: minorUnits,
-  isApproximate: isApproximate,
-  excludedCurrencyCodes: excluded,
-);
+ChartsNetTotal _net(int? minorUnits, {List<String> excluded = const []}) =>
+    ChartsNetTotal(
+      currency: _usd,
+      netMinorUnits: minorUnits,
+      excludedCurrencyCodes: excluded,
+    );
 
 Color? _colorOf(WidgetTester tester, String text) =>
     tester.widget<Text>(find.text(text)).style?.color;
@@ -94,7 +90,6 @@ void main() {
     ) async {
       await _pumpCard(tester, _net(2005));
 
-      expect(find.text('Net'), findsOneWidget);
       expect(find.text(r'+$20.05'), findsOneWidget);
       // Darker shades in light mode keep WCAG AA contrast on
       // surfaceContainer.
@@ -134,10 +129,44 @@ void main() {
       expect(find.text('Excluded: JPY — no exchange rate yet'), findsOneWidget);
     });
 
-    testWidgets('prefixes converted totals with ≈', (tester) async {
-      await _pumpCard(tester, _net(2005, isApproximate: true));
+    testWidgets('shows only the amount, with "Net" kept for screen readers', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await _pumpCard(tester, _net(2005));
 
-      expect(find.text(r'≈ +$20.05'), findsOneWidget);
+      expect(find.text('Net'), findsNothing);
+      expect(find.textContaining('≈'), findsNothing);
+      expect(find.bySemanticsLabel(r'Net +$20.05'), findsOneWidget);
+      semantics.dispose();
+    });
+
+    testWidgets('is a pill like the segmented buttons above it', (
+      tester,
+    ) async {
+      await _pumpCard(tester, _net(2005));
+
+      final box = tester.widget<Container>(
+        find
+            .ancestor(
+              of: find.text(r'+$20.05'),
+              matching: find.byType(Container),
+            )
+            .first,
+      );
+      expect((box.decoration! as ShapeDecoration).shape, const StadiumBorder());
+    });
+
+    testWidgets('uses the segmented buttons\' label font size', (tester) async {
+      await _pumpCard(tester, _net(2005));
+
+      final labelLarge = Theme.of(tester.element(find.text(r'+$20.05')))
+          .textTheme
+          .labelLarge!;
+      expect(
+        tester.widget<Text>(find.text(r'+$20.05')).style?.fontSize,
+        labelLarge.fontSize,
+      );
     });
 
     testWidgets('names currencies left out for missing rates', (tester) async {
@@ -152,7 +181,7 @@ void main() {
     testWidgets('renders nothing until the net has loaded', (tester) async {
       await _pumpCard(tester, null);
 
-      expect(find.text('Net'), findsNothing);
+      expect(find.byType(Text), findsNothing);
     });
   });
 

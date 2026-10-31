@@ -23,7 +23,6 @@ class ChartsNetTotal {
   const ChartsNetTotal({
     required this.currency,
     required this.netMinorUnits,
-    required this.isApproximate,
     required this.excludedCurrencyCodes,
   });
 
@@ -34,10 +33,6 @@ class ChartsNetTotal {
   /// when every currency in the period lacks a rate, so there is nothing
   /// to show rather than a misleading zero.
   final int? netMinorUnits;
-
-  /// True when at least one other currency was converted into
-  /// [currency], so the UI prefixes the amount with `≈`.
-  final bool isApproximate;
 
   /// Currencies left out because their exchange rate is missing, sorted.
   final List<String> excludedCurrencyCodes;
@@ -74,7 +69,6 @@ ChartsNetTotal? chartsNetTotal(Ref ref) {
   final to =
       currencies[toCode] ?? Currency(code: toCode, decimals: 2, symbol: toCode);
   var total = 0;
-  var isApproximate = false;
   final excluded = <String>[];
   for (final MapEntry(key: code, value: net) in byCurrency.entries) {
     final rate = fx.scaledRate(code);
@@ -82,7 +76,6 @@ ChartsNetTotal? chartsNetTotal(Ref ref) {
       excluded.add(code);
       continue;
     }
-    if (code != toCode) isApproximate = true;
     total += CurrencyConverter.convertMinorUnits(
       amountMinorUnits: net,
       rateScaledE9: rate,
@@ -95,7 +88,6 @@ ChartsNetTotal? chartsNetTotal(Ref ref) {
     netMinorUnits: byCurrency.isNotEmpty && excluded.length == byCurrency.length
         ? null
         : total,
-    isApproximate: isApproximate,
     excludedCurrencyCodes: excluded..sort(),
   );
 }

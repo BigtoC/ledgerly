@@ -39,39 +39,29 @@ class ChartsNetTotalCard extends ConsumerWidget {
       final m? when m < 0 => isDark ? Colors.pinkAccent : Colors.pink.shade700,
       _ => theme.colorScheme.onSurface,
     };
-    final amountText = Text(
-      net.isApproximate ? '≈ $amount' : amount,
-      style: theme.textTheme.titleLarge?.copyWith(
-        color: color,
-        fontWeight: FontWeight.w600,
-      ),
-    );
-
     return Center(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
+        // Stadium matches the SegmentedButtons above it.
+        decoration: ShapeDecoration(
           color: theme.colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(12),
+          shape: const StadiumBorder(),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Wrap(
-              alignment: WrapAlignment.center,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 8,
-              children: [
-                Text(l10n.chartsNetTotal, style: theme.textTheme.bodySmall),
-                if (net.isApproximate)
-                  Semantics(
-                    label: '${l10n.approximatelyPrefix} $amount',
-                    excludeSemantics: true,
-                    child: amountText,
-                  )
-                else
-                  amountText,
-              ],
+            // Only the amount shows; "Net" stays for screen readers.
+            Semantics(
+              label: '${l10n.chartsNetTotal} $amount',
+              excludeSemantics: true,
+              child: Text(
+                amount,
+                // Same size as the SegmentedButton labels (labelLarge).
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
             if (net.excludedCurrencyCodes.isNotEmpty)
               Text(

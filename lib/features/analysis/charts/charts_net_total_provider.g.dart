@@ -155,4 +155,4 @@ final class ChartsNetTotalProvider
   }
 }
 
-String _$chartsNetTotalHash() => r'21d951289fe2b2e26ebe89e4c872af3fa4c40b3b';
+String _$chartsNetTotalHash() => r'499021f8f32748d65ecd4af0ae47e698c313c97a';

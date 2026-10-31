@@ -84,31 +84,26 @@ void main() {
 
     expect(net.currency, _usd);
     expect(net.netMinorUnits, -1250);
-    expect(net.isApproximate, isFalse);
     expect(net.excludedCurrencyCodes, isEmpty);
   });
 
-  test(
-    'converts other currencies and flags the total as approximate',
-    () async {
-      final repo = _MockTxRepo();
-      when(
-        () => repo.watchNetByCurrencyInRange(
-          start: any(named: 'start'),
-          end: any(named: 'end'),
-        ),
-      ).thenAnswer((_) => Stream.value({'USD': 1000, 'JPY': 1500}));
+  test('converts other currencies into the default currency', () async {
+    final repo = _MockTxRepo();
+    when(
+      () => repo.watchNetByCurrencyInRange(
+        start: any(named: 'start'),
+        end: any(named: 'end'),
+      ),
+    ).thenAnswer((_) => Stream.value({'USD': 1000, 'JPY': 1500}));
 
-      // 1 JPY = 0.0067 USD → ¥1,500 = $10.05 = 1005 minor units.
-      final net = await _settle(
-        _container(repo: repo, ratesToUsd: {'JPY': 6700000}),
-      );
+    // 1 JPY = 0.0067 USD → ¥1,500 = $10.05 = 1005 minor units.
+    final net = await _settle(
+      _container(repo: repo, ratesToUsd: {'JPY': 6700000}),
+    );
 
-      expect(net.netMinorUnits, 2005);
-      expect(net.isApproximate, isTrue);
-      expect(net.excludedCurrencyCodes, isEmpty);
-    },
-  );
+    expect(net.netMinorUnits, 2005);
+    expect(net.excludedCurrencyCodes, isEmpty);
+  });
 
   test('leaves out currencies without a rate and lists them', () async {
     final repo = _MockTxRepo();
@@ -122,7 +117,6 @@ void main() {
     final net = await _settle(_container(repo: repo));
 
     expect(net.netMinorUnits, 500);
-    expect(net.isApproximate, isFalse);
     expect(net.excludedCurrencyCodes, ['EUR', 'JPY']);
   });
 
