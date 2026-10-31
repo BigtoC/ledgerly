@@ -202,7 +202,6 @@ const Set<String> _expectedEnKeys = <String>{
   'homeDeleteUndoSnackbar',
   'homeDuplicateAction',
   'homeDayLabelToday',
-  'homeDayLabelYesterday',
   'homeDayNavPrevLabel',
   'homeDayNavNextLabel',
   // Wave 4 §3.2 rename: was commonEdit — only home used it.

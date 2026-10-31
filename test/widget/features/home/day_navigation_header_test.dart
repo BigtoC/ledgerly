@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:ledgerly/core/utils/date_helpers.dart';
 import 'package:ledgerly/features/home/widgets/day_navigation_header.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
@@ -107,6 +108,32 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Today'), findsOneWidget);
+  });
+
+  testWidgets('DH06: yesterday renders the date, not a "Yesterday" label', (
+    tester,
+  ) async {
+    final now = DateTime.now();
+    final yesterday = DateTime(now.year, now.month, now.day - 1);
+    await tester.pumpWidget(
+      _wrap(
+        DayNavigationHeader(
+          selectedDay: yesterday,
+          locale: 'en_US',
+          onPrev: () {},
+          onNext: () {},
+          onPickDay: () {},
+          canGoPrev: true,
+          canGoNext: true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Yesterday'), findsNothing);
+    expect(
+      find.text(DateHelpers.formatDayHeader(yesterday, 'en_US')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('DH05: day label sits in a pill filled with the card colour', (

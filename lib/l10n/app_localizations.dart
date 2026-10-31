@@ -976,12 +976,6 @@ abstract class AppLocalizations {
   /// **'Today'**
   String get homeDayLabelToday;
 
-  /// Wave 3 §6. Day-nav header label override when selectedDay is yesterday.
-  ///
-  /// In en, this message translates to:
-  /// **'Yesterday'**
-  String get homeDayLabelYesterday;
-
   /// Wave 3 §6, §10. A11y label for the day-nav prev (◀) chevron.
   ///
   /// In en, this message translates to:

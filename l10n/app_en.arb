@@ -604,10 +604,6 @@
   "@homeDayLabelToday": {
     "description": "Wave 3 §6. Day-nav header label override when selectedDay is today."
   },
-  "homeDayLabelYesterday": "Yesterday",
-  "@homeDayLabelYesterday": {
-    "description": "Wave 3 §6. Day-nav header label override when selectedDay is yesterday."
-  },
   "homeDayNavPrevLabel": "Previous day",
   "@homeDayNavPrevLabel": {
     "description": "Wave 3 §6, §10. A11y label for the day-nav prev (◀) chevron."
