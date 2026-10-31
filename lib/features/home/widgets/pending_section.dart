@@ -18,7 +18,6 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../core/constants.dart';
 import '../../../core/utils/color_palette.dart';
-import '../../../core/utils/date_helpers.dart';
 import '../../../core/utils/icon_registry.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../../../data/models/account.dart';
@@ -73,6 +72,11 @@ class _PendingSectionState extends ConsumerState<PendingSection> {
     switch (effect) {
       case PendingSkipStartedEffect():
         _skipUndoVisible = true;
+        // Capture the controller now: skipping the last visible row can
+        // unmount this section (Home swaps to its empty state) while the
+        // snackbar is still up, and `ref` is unusable after unmount.
+        // PendingController is keepAlive, so it outlives the section.
+        final controller = ref.read(pendingControllerProvider.notifier);
         messenger
           ..clearSnackBars()
           ..showSnackBar(
@@ -81,11 +85,7 @@ class _PendingSectionState extends ConsumerState<PendingSection> {
               duration: kUndoWindow,
               action: SnackBarAction(
                 label: l10n.commonUndo,
-                onPressed: () {
-                  unawaited(
-                    ref.read(pendingControllerProvider.notifier).undoSkip(),
-                  );
-                },
+                onPressed: () => unawaited(controller.undoSkip()),
               ),
             ),
           ).closed.then((_) {
@@ -135,22 +135,7 @@ class _PendingSectionState extends ConsumerState<PendingSection> {
 
     final l10n = AppLocalizations.of(context);
 
-    final selectedDay = _selectedDay(ref);
-    final skipId = data.skipScheduled?.pendingId;
-    final visible = data.items
-        .where((item) {
-          if (item.id == skipId) return false;
-          // Day-scope: only show pending rows whose date matches the day the
-          // user is currently viewing on Home. A globally rendered section
-          // misled users into approving today-dated tiles while looking at a
-          // past day's view (see plan doc → "Pin PendingSection to selectedDay").
-          if (selectedDay != null &&
-              !DateHelpers.isSameDay(item.date, selectedDay)) {
-            return false;
-          }
-          return true;
-        })
-        .toList(growable: false);
+    final visible = data.visibleOn(_selectedDay(ref));
 
     if (visible.isEmpty) {
       return const SliverToBoxAdapter(child: SizedBox.shrink());

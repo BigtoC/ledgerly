@@ -135,10 +135,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(homeControllerProvider);
     final pendingState = ref.watch(pendingControllerProvider);
-    final hasVisiblePending = switch (pendingState) {
-      AsyncData<PendingState>(value: final PendingData data) => data.items.any(
-        (item) => item.id != data.skipScheduled?.pendingId,
-      ),
+    bool hasVisiblePendingOn(DateTime day) => switch (pendingState) {
+      AsyncData<PendingState>(value: final PendingData data) =>
+        data.visibleOn(day).isNotEmpty,
       _ => false,
     };
 
@@ -205,7 +204,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             daySwitchAnimation: _incomingOffset,
           ),
           AsyncData<HomeState>(value: final HomeEmpty empty) =>
-            hasVisiblePending
+            hasVisiblePendingOn(empty.selectedDay)
                 ? _PendingOnlyBody(selectedDay: empty.selectedDay)
                 : _EmptyState(onAdd: () => _onAddPressed(context)),
           AsyncData<HomeState>(value: HomeError()) ||
