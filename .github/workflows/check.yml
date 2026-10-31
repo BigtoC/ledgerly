@@ -161,20 +161,6 @@ jobs:
         if: steps.check-secrets.outputs.available == 'true'
         run: flutter build apk --release --dart-define=FOREX_API_URL=${{ vars.FOREX_API_URL }}
 
-      - name: Upload signed release APK artifact
-        if: steps.check-secrets.outputs.available == 'true'
-        uses: actions/upload-artifact@v7
-        with:
-          name: ledgerly-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
-
       - name: Build debug APK
         if: steps.check-secrets.outputs.available != 'true'
         run: flutter build apk --debug --dart-define=FOREX_API_URL=${{ vars.FOREX_API_URL }}
-
-      - name: Upload debug APK artifact
-        if: steps.check-secrets.outputs.available != 'true'
-        uses: actions/upload-artifact@v7
-        with:
-          name: ledgerly-debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
