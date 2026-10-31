@@ -1,22 +1,21 @@
 // Home transaction row — Wave 3 §4.1, §9.
 //
-// Renders: category icon chip, category name, amount with `+`/`-`
-// prefix in the row's native currency, optional memo preview, account
-// name tag, time. Primary tap → edit. Overflow → Edit / Duplicate /
-// Delete. Swipe-to-delete is the destructive gesture (handled by
-// `flutter_slidable`); swipe and overflow share `onDelete`.
+// Renders: category icon chip, a title (the memo, or the category name
+// when the memo is empty or blank) and the amount with `+`/`-` prefix in the
+// row's native currency. Tap → edit; deleting happens from the edit
+// screen. The row claims no horizontal drag, so a swipe over it reaches
+// Home's day-switch gesture.
 //
 // Phase 2: when the transaction's currency differs from the user's
 // default currency, a secondary muted line shows the approximate
 // converted amount (`≈ $X.XX`). The `≈` glyph is read aloud by screen
 // readers as the localized "approximately" prefix via Semantics.
 //
-// Archived category / account rows still render with their archived
-// metadata so historical rows stay readable (Wave 3 §2 requirements).
+// Archived category rows still render with their archived metadata so
+// historical rows stay readable (Wave 3 §2 requirements).
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../app/providers/repository_providers.dart';
@@ -24,7 +23,6 @@ import '../../../core/utils/color_palette.dart';
 import '../../../core/utils/currency_converter.dart';
 import '../../../core/utils/icon_registry.dart';
 import '../../../core/utils/money_formatter.dart';
-import '../../../data/models/account.dart';
 import '../../../data/models/category.dart';
 import '../../../data/models/currency.dart';
 import '../../../data/models/transaction.dart';
@@ -38,12 +36,9 @@ class TransactionTile extends ConsumerWidget {
     super.key,
     required this.transaction,
     required this.category,
-    required this.account,
     required this.locale,
     required this.defaultCurrency,
     required this.onTap,
-    required this.onDuplicate,
-    required this.onDelete,
   });
 
   final Transaction transaction;
@@ -53,9 +48,6 @@ class TransactionTile extends ConsumerWidget {
   /// fallback in that case so the list never blank-rows.
   final Category? category;
 
-  /// Resolved account — same null fallback handling as [category].
-  final Account? account;
-
   final String locale;
 
   /// ISO 4217 code of the user's preferred default currency. Provided
@@ -64,15 +56,12 @@ class TransactionTile extends ConsumerWidget {
   final String defaultCurrency;
 
   final VoidCallback onTap;
-  final VoidCallback onDuplicate;
-  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final cat = category;
-    final acc = account;
 
     final color = cat != null ? colorForIndex(cat.color) : theme.disabledColor;
     final icon = cat != null ? iconForKey(cat.icon) : Icons.help_outline;
@@ -135,118 +124,67 @@ class TransactionTile extends ConsumerWidget {
     }
 
     final memo = transaction.memo;
+    final title = memo != null && memo.trim().isNotEmpty
+        ? memo
+        : (cat == null ? '' : categoryDisplayName(cat, l10n));
 
-    return Slidable(
-      key: ValueKey<int>(transaction.id),
-      groupTag: 'home',
-      endActionPane: ActionPane(
-        motion: const BehindMotion(),
-        extentRatio: 0.3,
-        dismissible: DismissiblePane(onDismissed: onDelete),
-        children: [
-          SlidableAction(
-            onPressed: (_) => onDelete(),
-            backgroundColor: theme.colorScheme.errorContainer,
-            foregroundColor: theme.colorScheme.onErrorContainer,
-            icon: Icons.delete_outline,
-            label: l10n.commonDelete,
-          ),
-        ],
-      ),
-      child: ListTile(
-        onTap: onTap,
-        isThreeLine: convertedText != null,
-        // The menu button pads its 24dp icon to a 48dp target, so a 4dp
-        // end inset puts the icon 16dp from the edge, matching the
-        // avatar's 16dp start inset.
-        contentPadding: const EdgeInsetsDirectional.only(start: 16, end: 4),
-        leading: CircleAvatar(
-          backgroundColor: color.withValues(alpha: 0.15),
-          child: Icon(icon, color: color),
-        ),
-        title: Text(
-          cat == null ? '' : categoryDisplayName(cat, l10n),
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Text(
-          memo == null || memo.isEmpty
-              ? (acc?.name ?? '')
-              : '${acc?.name ?? ''} • $memo',
-          overflow: TextOverflow.ellipsis,
-          style: theme.textTheme.bodySmall,
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  amountText,
-                  style: theme.textTheme.titleMedium?.copyWith(
+    // A plain Row rather than a ListTile: a one-line ListTile sizes itself
+    // from the title alone, so the two-line amount column would spill into
+    // the next row at large text scales. Metrics follow the M3 ListTile.
+    return InkWell(
+      onTap: onTap,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 56),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: color.withValues(alpha: 0.15),
+                child: Icon(icon, color: color),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyLarge?.copyWith(
                     color: theme.colorScheme.onSurface,
-                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                if (convertedText != null)
-                  Semantics(
-                    label:
-                        '${l10n.approximatelyPrefix} '
-                        '${convertedText.substring(2)}',
-                    excludeSemantics: true,
-                    child: Text(
-                      convertedText,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.outline,
-                      ),
+              ),
+              const SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    amountText,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-              ],
-            ),
-            PopupMenuButton<_RowAction>(
-              key: ValueKey('homeTile:${transaction.id}:menu'),
-              icon: const Icon(Icons.more_vert),
-              onSelected: (action) {
-                switch (action) {
-                  case _RowAction.edit:
-                    onTap();
-                  case _RowAction.duplicate:
-                    onDuplicate();
-                  case _RowAction.delete:
-                    onDelete();
-                }
-              },
-              itemBuilder: (ctx) => [
-                PopupMenuItem(
-                  value: _RowAction.edit,
-                  child: Text(l10n.homeEditAction),
-                ),
-                PopupMenuItem(
-                  value: _RowAction.duplicate,
-                  child: Semantics(
-                    button: true,
-                    label: l10n.homeDuplicateAction,
-                    child: Text(l10n.homeDuplicateAction),
-                  ),
-                ),
-                PopupMenuItem(
-                  value: _RowAction.delete,
-                  child: Semantics(
-                    button: true,
-                    label: l10n.commonDelete,
-                    child: Text(l10n.commonDelete),
-                  ),
-                ),
-              ],
-            ),
-          ],
+                  if (convertedText != null)
+                    Semantics(
+                      label:
+                          '${l10n.approximatelyPrefix} '
+                          '${convertedText.substring(2)}',
+                      excludeSemantics: true,
+                      child: Text(
+                        convertedText,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.outline,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
-
-enum _RowAction { edit, duplicate, delete }

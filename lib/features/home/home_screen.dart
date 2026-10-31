@@ -12,10 +12,10 @@
 // chooser, right selected-day detail). First-run empty spans the full
 // content region.
 //
-// Delete + undo: swipe-to-delete and overflow→Delete both call
-// `controller.deleteTransaction(id)`, which schedules a 4-second timer
-// (Wave 3 §8). The screen surfaces the SnackBar; the action button
-// fires `controller.undoDelete()`.
+// Gestures: a horizontal fling anywhere on the page, transaction rows
+// included, steps the selected day. Rows open the edit form on tap;
+// deleting a transaction happens from that form. Pending-approval rows
+// keep their own swipe-to-Skip.
 
 import 'dart:async';
 import 'dart:collection';
@@ -31,7 +31,6 @@ import '../../app/providers/repository_providers.dart';
 import '../../core/utils/box_shadow.dart';
 import '../shopping_list/shopping_list_providers.dart';
 import '../../core/utils/date_helpers.dart';
-import '../../data/models/account.dart';
 import '../../data/models/category.dart';
 import '../../data/models/transaction.dart';
 import '../../l10n/app_localizations.dart';
@@ -66,8 +65,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   static const _kDaySwitchDuration = Duration(milliseconds: 280);
   static const _kDaySwitchCurve = Curves.easeInOut;
 
-  PendingDelete? _lastShownPending;
-  late final HomeController _controller;
   late final AnimationController _daySwitchController;
   late Animation<Offset> _incomingOffset;
   final Queue<int> _directionQueue = Queue<int>();
@@ -75,8 +72,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   void initState() {
     super.initState();
-    _controller = ref.read(homeControllerProvider.notifier);
-    _controller.setEffectListener(_onEffect);
     _daySwitchController = AnimationController(
       duration: _kDaySwitchDuration,
       vsync: this,
@@ -88,7 +83,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   void dispose() {
     _daySwitchController.dispose();
-    _controller.setEffectListener(null);
     super.dispose();
   }
 
@@ -153,16 +147,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // `controller.pinDay(savedTx.date)` from the FAB / row-tap call
     // sites below.
 
-    // Surface SnackBar on pendingDelete transitions (null → set).
-    ref.listen(homeControllerProvider, (_, next) {
-      if (next is AsyncData<HomeState>) {
-        final value = next.value;
-        if (value is HomeData) {
-          _maybeShowUndoSnackbar(context, value.pendingDelete);
-        }
-      }
-    });
-
     final countAsync = ref.watch(shoppingListTotalCountProvider);
     final count = countAsync.value ?? 0;
     final badgeLabel = count > 99 ? '99+' : '$count';
@@ -218,9 +202,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               await _daySwitchController.forward();
             },
             onTapRow: _onEditRow,
-            onDuplicateRow: _onDuplicateRow,
-            onDeleteRow: (id) =>
-                ref.read(homeControllerProvider.notifier).deleteTransaction(id),
             daySwitchAnimation: _incomingOffset,
           ),
           AsyncData<HomeState>(value: final HomeEmpty empty) =>
@@ -260,17 +241,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
   }
 
-  Future<void> _onDuplicateRow(int id) async {
-    final saved = await context.push<Transaction>(
-      '/home/add',
-      extra: <String, Object>{'duplicateSourceId': id},
-    );
-    if (!mounted) return;
-    if (saved != null) {
-      await ref.read(homeControllerProvider.notifier).pinDay(saved.date);
-    }
-  }
-
   Future<void> _onPickDay(HomeData data) async {
     // Cap the date picker to [DateTime(1900), today] — consistent with
     // _minSelectableDay in HomeController and the prev/next boundaries.
@@ -294,44 +264,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       }
     }
   }
-
-  void _maybeShowUndoSnackbar(BuildContext context, PendingDelete? pending) {
-    final l10n = AppLocalizations.of(context);
-    if (pending == null) {
-      _lastShownPending = null;
-      return;
-    }
-    if (_lastShownPending?.transaction.id == pending.transaction.id) return;
-    _lastShownPending = pending;
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    messenger
-      ?..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(l10n.homeDeleteUndoSnackbar),
-          duration: kUndoWindow,
-          action: SnackBarAction(
-            label: l10n.commonUndo,
-            onPressed: () {
-              ref.read(homeControllerProvider.notifier).undoDelete();
-            },
-          ),
-        ),
-      );
-  }
-
-  void _onEffect(HomeEffect effect) {
-    if (!mounted) return;
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    final l10n = AppLocalizations.of(context);
-
-    switch (effect) {
-      case HomeDeleteFailedEffect():
-        messenger
-          ?..clearSnackBars()
-          ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
-    }
-  }
 }
 
 @Dependencies([
@@ -349,8 +281,6 @@ class _SinglePane extends ConsumerWidget {
     required this.onPickDay,
     required this.onJumpToToday,
     required this.onTapRow,
-    required this.onDuplicateRow,
-    required this.onDeleteRow,
     required this.daySwitchAnimation,
   });
 
@@ -360,8 +290,6 @@ class _SinglePane extends ConsumerWidget {
   final VoidCallback onPickDay;
   final VoidCallback onJumpToToday;
   final void Function(int id) onTapRow;
-  final void Function(int id) onDuplicateRow;
-  final void Function(int id) onDeleteRow;
   final Animation<Offset> daySwitchAnimation;
 
   @override
@@ -370,7 +298,6 @@ class _SinglePane extends ConsumerWidget {
     final currencies =
         ref.watch(homeCurrenciesByCodeProvider).value ?? const {};
     final categories = ref.watch(homeCategoriesByIdProvider).value ?? const {};
-    final accounts = ref.watch(homeAccountsByIdProvider).value ?? const {};
     final initialDefault = ref.read(initialDefaultCurrencyProvider);
     final defaultCurrency =
         ref.watch(defaultCurrencyProvider).value ?? initialDefault;
@@ -426,12 +353,9 @@ class _SinglePane extends ConsumerWidget {
               child: _TransactionListCard(
                 transactions: data.transactionsForDay,
                 categories: categories,
-                accounts: accounts,
                 locale: locale,
                 defaultCurrency: defaultCurrency,
                 onTapRow: onTapRow,
-                onDuplicateRow: onDuplicateRow,
-                onDeleteRow: onDeleteRow,
               ),
             ),
           ),
@@ -586,22 +510,16 @@ class _TransactionListCard extends StatelessWidget {
   const _TransactionListCard({
     required this.transactions,
     required this.categories,
-    required this.accounts,
     required this.locale,
     required this.defaultCurrency,
     required this.onTapRow,
-    required this.onDuplicateRow,
-    required this.onDeleteRow,
   });
 
   final List<Transaction> transactions;
   final Map<int, Category> categories;
-  final Map<int, Account> accounts;
   final String locale;
   final String defaultCurrency;
   final void Function(int id) onTapRow;
-  final void Function(int id) onDuplicateRow;
-  final void Function(int id) onDeleteRow;
 
   @override
   Widget build(BuildContext context) {
@@ -621,12 +539,9 @@ class _TransactionListCard extends StatelessWidget {
               TransactionTile(
                 transaction: tx,
                 category: categories[tx.categoryId],
-                account: accounts[tx.accountId],
                 locale: locale,
                 defaultCurrency: defaultCurrency,
                 onTap: () => onTapRow(tx.id),
-                onDuplicate: () => onDuplicateRow(tx.id),
-                onDelete: () => onDeleteRow(tx.id),
               ),
           ],
         ),

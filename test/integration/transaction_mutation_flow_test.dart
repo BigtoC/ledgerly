@@ -166,66 +166,6 @@ void main() {
       },
     );
 
-    testWidgets('Home duplicate action saves a second row dated today', (
-      tester,
-    ) async {
-      final db = newTestAppDatabase();
-      addTearDown(db.close);
-      await tester.runAsync(() async {
-        await runTestSeed(db);
-        final foodId = await getSeededCategoryId(db, 'category.food');
-        final cash = await getDefaultAccount(db);
-        await insertTestTransaction(
-          db,
-          accountId: cash.id,
-          categoryId: foodId,
-          currencyCode: 'USD',
-          amountMinorUnits: 500,
-          date: DateTime.now(),
-        );
-      });
-
-      final container = makeTestContainer(
-        db: db,
-        extraOverrides: [
-          splashGateSnapshotProvider.overrideWithValue(
-            SplashGateSnapshot.withInitial(enabled: false, startDate: null),
-          ),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      await tester.pumpWidget(buildTestApp(container: container));
-      await pumpHome(tester);
-
-      await tester.tap(find.byKey(const ValueKey('homeTile:1:menu')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Duplicate'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Add transaction'), findsOneWidget);
-      await tester.longPress(find.byIcon(Icons.backspace_outlined));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('2'));
-      await tester.pumpAndSettle();
-      await saveForm(tester);
-
-      expect(find.byType(HomeScreen), findsOneWidget);
-      final rows = await tester.runAsync(
-        () => db.select(db.transactions).get(),
-      );
-      expect(rows, hasLength(2));
-      rows!.sort((a, b) => a.id.compareTo(b.id));
-      expect(rows[0].amountMinorUnits, 500);
-      expect(rows[1].amountMinorUnits, 200);
-      expect(rows[1].categoryId, rows[0].categoryId);
-      final today = DateTime.now();
-      expect(rows[1].date.year, today.year);
-      expect(rows[1].date.month, today.month);
-      expect(rows[1].date.day, today.day);
-      expect(tester.takeException(), isNull);
-    });
-
     testWidgets(
       'gap day: Add from empty-day state pins the new row to that day',
       (tester) async {
