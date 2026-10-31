@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show RenderAbstractViewport;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
@@ -416,7 +418,7 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
 }
 
 @Dependencies([ChartsSelectionController])
-class _ChartBody extends ConsumerWidget {
+class _ChartBody extends ConsumerStatefulWidget {
   const _ChartBody({
     required this.data,
     required this.locale,
@@ -428,10 +430,164 @@ class _ChartBody extends ConsumerWidget {
   final Map<String, Currency> currencies;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ChartBody> createState() => _ChartBodyState();
+}
+
+class _ChartBodyState extends ConsumerState<_ChartBody> {
+  static const _kScrollDuration = Duration(milliseconds: 300);
+  static const _kScrollCurve = Curves.easeInOut;
+
+  /// Long enough for the drill-down rows to load and finish growing in.
+  static const _kFollowWindow = Duration(seconds: 2);
+
+  final _pieKey = GlobalKey();
+  final _legendKey = GlobalKey();
+
+  /// True from the moment a slice is selected until the legend card reaches
+  /// the top of the page, the user scrolls, or [_kFollowWindow] runs out.
+  /// The drill-down list below the card loads asynchronously and grows in
+  /// through an AnimatedSize, so the first scroll can stop short at the old
+  /// scroll extent; while this is set, every extent change scrolls the card
+  /// further up. The window stops a card that can never reach the top from
+  /// chasing later resizes, such as the keyboard opening.
+  bool _followLegend = false;
+  Timer? _followTimer;
+  ScrollNotificationObserverState? _scrollObserver;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final observer = ScrollNotificationObserver.maybeOf(context);
+    if (observer == _scrollObserver) return;
+    _scrollObserver?.removeListener(_onScrollNotification);
+    _scrollObserver = observer?..addListener(_onScrollNotification);
+  }
+
+  @override
+  void dispose() {
+    _followTimer?.cancel();
+    _scrollObserver?.removeListener(_onScrollNotification);
+    super.dispose();
+  }
+
+  /// Selecting a slice (or switching to another one) brings the legend card
+  /// to the top of the page so the card, the filtered bar chart and the
+  /// drill-down list are in view. Runs after the frame so the drill-down
+  /// list is mounted first.
+  ///
+  /// Clearing the selection scrolls back up until the whole pie chart shows.
+  /// A period change clears it too, and also remounts this widget under a
+  /// new period key, so the scroll is driven through the page's Scrollable,
+  /// which outlives this State, and the pie is measured after the frame:
+  /// the new period's banners above it can differ.
+  void _onSelectionChanged({required bool selected}) {
+    _followLegend = selected;
+    _followTimer?.cancel();
+    if (selected) {
+      _followTimer = Timer(_kFollowWindow, () => _followLegend = false);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(_revealLegend(animate: true));
+      });
+      return;
+    }
+    final scrollable = Scrollable.maybeOf(context);
+    if (scrollable == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!scrollable.mounted) return;
+      final position = scrollable.position;
+      final pie = _currentPie(scrollable.context);
+      final pieTop = pie == null || !pie.attached
+          ? position.minScrollExtent
+          : _revealOffset(pie);
+      final target = math.max(pieTop, position.minScrollExtent);
+      if (position.pixels <= target) return;
+      unawaited(
+        position.animateTo(
+          target,
+          duration: _kScrollDuration,
+          curve: _kScrollCurve,
+        ),
+      );
+    });
+  }
+
+  Future<void> _revealLegend({required bool animate}) async {
+    final legend = _legendKey.currentContext;
+    final legendBox = legend?.findRenderObject();
+    if (legend == null || legendBox == null) return;
+    final position = Scrollable.of(context).position;
+    final target = _revealOffset(legendBox)
+        .clamp(position.minScrollExtent, position.maxScrollExtent);
+    await Scrollable.ensureVisible(
+      legend,
+      duration: animate ? _kScrollDuration : Duration.zero,
+      curve: _kScrollCurve,
+    );
+    if (!mounted || !_followLegend) return;
+    if (_legendAtTop(position) || (position.pixels - target).abs() > 0.5) {
+      // At the top, or a touch interrupted the animation: stop following.
+      _followLegend = false;
+    } else if (animate) {
+      // The extent may have grown while the animation ran.
+      await _revealLegend(animate: false);
+    }
+  }
+
+  /// The pie of whichever [_ChartBody] is on the page now: this one, or the
+  /// one a period change mounted in its place.
+  RenderObject? _currentPie(BuildContext scrollContext) {
+    if (mounted) return _pieKey.currentContext?.findRenderObject();
+    _ChartBodyState? body;
+    void visit(Element element) {
+      if (element is StatefulElement && element.state is _ChartBodyState) {
+        body = element.state as _ChartBodyState;
+      } else {
+        element.visitChildren(visit);
+      }
+    }
+
+    scrollContext.visitChildElements(visit);
+    return body?._pieKey.currentContext?.findRenderObject();
+  }
+
+  /// Scroll offset that puts [box]'s top edge at the top of the page.
+  double _revealOffset(RenderObject box) =>
+      RenderAbstractViewport.of(box).getOffsetToReveal(box, 0).offset;
+
+  bool _legendAtTop(ScrollPosition position) {
+    final legend = _legendKey.currentContext?.findRenderObject();
+    if (legend == null || !legend.attached) return true;
+    return _revealOffset(legend) <= position.pixels + 0.5;
+  }
+
+  void _onScrollNotification(ScrollNotification notification) {
+    if (!_followLegend || notification.depth != 0) return;
+    if (notification is UserScrollNotification ||
+        (notification is ScrollStartNotification &&
+            notification.dragDetails != null)) {
+      _followLegend = false;
+      return;
+    }
+    // A content-size change reaches observers as an update with no delta.
+    if (notification is ScrollUpdateNotification &&
+        notification.scrollDelta == null &&
+        !Scrollable.of(context).position.isScrollingNotifier.value) {
+      unawaited(_revealLegend(animate: false));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final data = widget.data;
     final selection = ref
         .watch(chartsSelectionControllerProvider)
         .selectedSlice;
+    ref.listen(
+      chartsSelectionControllerProvider.select((s) => s.selectedSlice),
+      (previous, next) {
+        if (previous != next) _onSelectionChanged(selected: next != null);
+      },
+    );
     final hit = selection == null
         ? -1
         : data.slices.indexWhere((s) => s.selectionKey == selection);
@@ -455,10 +611,11 @@ class _ChartBody extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         RepaintBoundary(
+          key: _pieKey,
           child: CategoryPieChart(
             slices: data.slices,
-            currenciesByCode: currencies,
-            locale: locale,
+            currenciesByCode: widget.currencies,
+            locale: widget.locale,
             grandTotalMinorUnits: data.grandTotalMinorUnits,
             displayCurrencyCode: data.displayCurrencyCode,
             selectedIndex: selectedIndex,
@@ -467,10 +624,10 @@ class _ChartBody extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         ChartLegend(
+          key: _legendKey,
           slices: data.slices,
-          currenciesByCode: currencies,
-          locale: locale,
-          mixedCurrencies: data.mixedCurrencies,
+          currenciesByCode: widget.currencies,
+          locale: widget.locale,
           selectedSliceIndex: selectedIndex,
           onSelectSlice: selectSlice,
         ),
@@ -481,8 +638,8 @@ class _ChartBody extends ConsumerWidget {
               period: data.period,
               anchorDate: data.anchorDate,
               bucketTotals: data.bucketTotals,
-              locale: locale,
-              currenciesByCode: currencies,
+              locale: widget.locale,
+              currenciesByCode: widget.currencies,
               displayCurrencyCode: data.displayCurrencyCode,
             ),
           ),

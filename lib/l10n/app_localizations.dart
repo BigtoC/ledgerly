@@ -1666,29 +1666,11 @@ abstract class AppLocalizations {
   /// **'Waiting for exchange rates'**
   String get chartsRatesRequired;
 
-  /// Full-legend bottom sheet affordance
-  ///
-  /// In en, this message translates to:
-  /// **'View all'**
-  String get chartsViewAll;
-
   /// Grand-total label
   ///
   /// In en, this message translates to:
   /// **'Total'**
   String get chartsTotal;
-
-  /// Aggregated remainder legend entry
-  ///
-  /// In en, this message translates to:
-  /// **'Other'**
-  String get chartsOther;
-
-  /// Other-bucket legend label when slices are in mixed currencies and amounts cannot be summed; shows item count instead
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{Other (1 item)} other{Other ({count} items)}}'**
-  String chartsOtherCount(int count);
 
   /// Banner shown when ChartsController auto-switched from category to currency on cold-start because FX rates were missing
   ///

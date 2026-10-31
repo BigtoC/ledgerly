@@ -888,8 +888,8 @@ mixin _$ChartSlice {
  double? get fraction;/// Index into `core/utils/color_palette.dart`.
  int get colorIndex;/// `core/utils/icon_registry.dart` key for legend icon. Empty string
 /// for currency-dimension slices.
- String get iconKey;/// Drill-down identity for this slice. Null for the synthetic "Other"
-/// aggregate — that row stays non-interactive.
+ String get iconKey;/// Drill-down identity for this slice. A slice without one stays
+/// non-interactive.
 ///
 /// Named `selectionKey` (not `key`) to avoid confusion with Flutter's
 /// `Widget.key`. `ChartSlice` is a Freezed data class, not a widget,
@@ -1129,8 +1129,8 @@ class _ChartSlice implements ChartSlice {
 /// `core/utils/icon_registry.dart` key for legend icon. Empty string
 /// for currency-dimension slices.
 @override final  String iconKey;
-/// Drill-down identity for this slice. Null for the synthetic "Other"
-/// aggregate — that row stays non-interactive.
+/// Drill-down identity for this slice. A slice without one stays
+/// non-interactive.
 ///
 /// Named `selectionKey` (not `key`) to avoid confusion with Flutter's
 /// `Widget.key`. `ChartSlice` is a Freezed data class, not a widget,

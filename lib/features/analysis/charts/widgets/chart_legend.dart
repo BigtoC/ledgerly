@@ -14,7 +14,6 @@ class ChartLegend extends StatelessWidget {
     required this.slices,
     required this.currenciesByCode,
     required this.locale,
-    this.mixedCurrencies = false,
     this.selectedSliceIndex,
     this.onSelectSlice,
   });
@@ -22,11 +21,6 @@ class ChartLegend extends StatelessWidget {
   final List<ChartSlice> slices;
   final Map<String, Currency> currenciesByCode;
   final String locale;
-
-  /// When true, the legend's `Other` bucket renders an item count instead
-  /// of a summed amount, because the leftover slices are in different
-  /// source currencies and cannot be added meaningfully.
-  final bool mixedCurrencies;
 
   /// Index into [slices] of the chart's currently focused slice. Drives
   /// the dim/elevate treatment on legend rows so the legend mirrors the
@@ -37,11 +31,8 @@ class ChartLegend extends StatelessWidget {
   /// original order, not the visually-sorted order). Null toggles off.
   final ValueChanged<int?>? onSelectSlice;
 
-  static const int _maxVisible = 8;
-
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     // Index-tagged sort so taps can map back to the original slice index
     // (which is what the pie chart selection is keyed on).
     final indexed =
@@ -51,43 +42,27 @@ class ChartLegend extends StatelessWidget {
                 b.slice.totalMinorUnits.compareTo(a.slice.totalMinorUnits),
           );
 
-    final hasOther = indexed.length > _maxVisible;
-    final visible = hasOther ? indexed.take(_maxVisible - 1) : indexed;
-    final others = indexed.skip(_maxVisible - 1);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (final entry in visible)
-          _row(context, entry.slice, originalIndex: entry.index),
-        if (hasOther)
-          _otherRow(
-            context,
-            l10n: l10n,
-            total: others.fold<int>(
-              0,
-              (sum, entry) => sum + entry.slice.totalMinorUnits,
-            ),
-            count: others.length,
-            currencyCode: indexed.first.slice.currencyCode,
-          ),
-        if (hasOther)
-          Align(
-            alignment: AlignmentDirectional.centerEnd,
-            child: TextButton(
-              onPressed: () => _openFullLegend(context, indexed),
-              child: Text(l10n.chartsViewAll),
-            ),
-          ),
-      ],
+    // Every slice gets a row. The count is bounded by the user's
+    // categories / accounts / currencies, so a non-lazy Column is fine.
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final entry in indexed)
+              _row(context, entry.slice, originalIndex: entry.index),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _row(
     BuildContext context,
     ChartSlice s, {
-    int? originalIndex,
-    VoidCallback? onTapOverride,
+    required int originalIndex,
   }) {
     final l10n = AppLocalizations.of(context);
     final currency =
@@ -97,8 +72,7 @@ class ChartLegend extends StatelessWidget {
     // l10n key (no BuildContext available there). Re-resolve at render
     // time so the legend shows the localized name.
     final displayLabel = categoryDisplayNameForKey(s.label, l10n);
-    final isSelected =
-        originalIndex != null && originalIndex == selectedSliceIndex;
+    final isSelected = originalIndex == selectedSliceIndex;
     final hasAnySelection = selectedSliceIndex != null;
     final dim = hasAnySelection && !isSelected;
     final row = AnimatedContainer(
@@ -160,7 +134,7 @@ class ChartLegend extends StatelessWidget {
         ),
       ),
     );
-    if (originalIndex == null || onSelectSlice == null) {
+    if (onSelectSlice == null) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 2),
         child: row,
@@ -170,79 +144,8 @@ class ChartLegend extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: InkWell(
         borderRadius: BorderRadius.circular(8),
-        onTap:
-            onTapOverride ??
-            () => onSelectSlice!(isSelected ? null : originalIndex),
+        onTap: () => onSelectSlice!(isSelected ? null : originalIndex),
         child: row,
-      ),
-    );
-  }
-
-  Widget _otherRow(
-    BuildContext context, {
-    required AppLocalizations l10n,
-    required int total,
-    required int count,
-    required String currencyCode,
-  }) {
-    if (mixedCurrencies) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: [
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: colorForIndex(CategoryPaletteIndex.neutralVariant50),
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                l10n.chartsOtherCount(count),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-    return _row(
-      context,
-      ChartSlice(
-        label: l10n.chartsOther,
-        currencyCode: currencyCode,
-        totalMinorUnits: total,
-        colorIndex: CategoryPaletteIndex.neutralVariant50,
-        iconKey: '',
-      ),
-    );
-  }
-
-  void _openFullLegend(
-    BuildContext context,
-    List<({int index, ChartSlice slice})> all,
-  ) {
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (sheetCtx) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            for (final entry in all)
-              _row(
-                sheetCtx,
-                entry.slice,
-                originalIndex: entry.index,
-                onTapOverride: () {
-                  onSelectSlice?.call(entry.index);
-                  Navigator.pop(sheetCtx);
-                },
-              ),
-          ],
-        ),
       ),
     );
   }

@@ -1040,17 +1040,8 @@
   "@chartsMixedCurrencies": { "description": "Banner for currency-dimension chart when some FX rates are missing" },
   "chartsRatesRequired": "Waiting for exchange rates",
   "@chartsRatesRequired": { "description": "Blocked-state copy for category/account charts when FX rates are missing" },
-  "chartsViewAll": "View all",
-  "@chartsViewAll": { "description": "Full-legend bottom sheet affordance" },
   "chartsTotal": "Total",
   "@chartsTotal": { "description": "Grand-total label" },
-  "chartsOther": "Other",
-  "@chartsOther": { "description": "Aggregated remainder legend entry" },
-  "chartsOtherCount": "{count, plural, =1{Other (1 item)} other{Other ({count} items)}}",
-  "@chartsOtherCount": {
-    "description": "Other-bucket legend label when slices are in mixed currencies and amounts cannot be summed; shows item count instead",
-    "placeholders": { "count": { "type": "int" } }
-  },
   "chartsAutoSwitchedToCurrency": "Showing by currency — no exchange rates yet for category view.",
   "@chartsAutoSwitchedToCurrency": { "description": "Banner shown when ChartsController auto-switched from category to currency on cold-start because FX rates were missing" },
   "chartsPieChart": "Pie chart",
