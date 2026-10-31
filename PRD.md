@@ -932,7 +932,7 @@ ShellRoute (bottom nav)
 
 1. **Splash Screen** — Day counter with hnotes-style visual design, tap to enter Home
 2. **Home Screen** — Day-navigation row (prev ◀ date pill ▶ next, `Jump to today` on the right) above a summary card per currency group: `Day net` and `Month net` (signed, green when positive, red when negative), an income-vs-expense ratio bar, and `Income` / `Expense` tiles; auto-converted totals in `default_currency` when exchange rates are available. Below the card, the transaction list shows **one day at a time**, with prev/next day navigation to walk through days that have activity (empty gap days are skipped). Today is the default day on cold start. Empty-state CTA, FAB to add transaction, inline pending-approval section for recurring rules.
-3. **Add/Edit Transaction** — Expense/Income segmented control, calculator-style keypad for amount, category picker (icon grid), account selector with currency indicator, date picker, memo field for optional free-form detail (once a category is selected, up to 10 recently used distinct memos from that category appear as chips below it; tapping one fills the memo), save; delete only in edit mode. In add mode, an inline "Add to shopping list" action below the memo field captures the current form state as a draft and returns to the caller without creating a transaction.
+3. **Add/Edit Transaction** — calculator-style keypad for amount, category picker (icon grid of expense then income categories; the picked category sets the transaction type), account selector with currency indicator, date picker, memo field for optional free-form detail (once a category is selected, up to 10 recently used distinct memos from that category appear as chips below it; tapping one fills the memo), save; delete only in edit mode. In add mode, an inline "Add to shopping list" action below the memo field captures the current form state as a draft and returns to the caller without creating a transaction.
 4. **Analysis Screen** — Memo-based transaction search with SearchBar. Below the search bar, the ChartsSection renders pie + daily bar charts with period/type/dimension toggles, coordinated selection via `SelectedSlice`, and a per-slice items list with tap-to-edit and swipe-to-delete.
 4a. **Manage Accounts** (Settings > Manage Accounts, adaptive sheet/dialog) — Active accounts list with tracked balances in native currency. Add account, manage account types, set default account, archive account. Opened via the ManageAccountsTile in Settings. New and edit routes are `/settings/manage-accounts/new` and `/settings/manage-accounts/:id`.
 4b. **Shopping List Screen** (`/home/shopping-list`) — Full draft list sorted newest first. Accessed from the Home shopping-cart FAB. Swipe-delete or icon-button delete with a 4-second undo snackbar. Tapping a row opens the draft in the reused transaction form. Empty-state CTA opens `/home/add`. Delete is the only mutation on this screen; draft creation happens in `/home/add` only.
@@ -943,8 +943,8 @@ ShellRoute (bottom nav)
 
 ### Add/Edit Interaction Rules
 
-- Expense is the default selection when opening from Home; users can switch to Income via a segmented control at the top
-- Category picker shows all visible categories for the selected type in a single icon grid
+- There is no expense/income toggle: the transaction type comes from the picked category
+- Category picker takes 90% of the screen height and shows all visible expense categories, then all visible income categories below them, in an icon grid of five per row; a label too long for its tile shrinks to fit on one line instead of wrapping
 - Default account uses the user's configured default account, otherwise the last used active account
 - Transaction currency is an explicit field in add, edit, and duplicate flows; seeded from the selected account's default but independently overridable by the user. Changing currency with a non-zero amount requires confirmation and clears the entered amount
 - Date defaults to today
@@ -1080,7 +1080,7 @@ Fixed calculator keypad pinned to the bottom, scrollable form above, keyboard do
 Scaffold(resizeToAvoidBottomInset: false)
   └─ SafeArea
       └─ Column
-          ├─ Expanded → SingleChildScrollView (type toggle, amount display, category, account, date, memo)
+          ├─ Expanded → SingleChildScrollView (amount display, category, account, date, memo)
           └─ CalculatorKeypad (fixed height)
 ```
 
@@ -1253,7 +1253,7 @@ Tests are organized by **architectural layer**, not by feature. This mirrors the
 - Override controller provider with a test double; assert rendering per state variant
 - Golden tests for the splash screen (visual design is a product requirement)
 - Home: first-run empty state, grouped-by-currency summary strip, horizontal swipe switches the day
-- Add Transaction: keypad input, expense/income toggle, validation, duplicate flow
+- Add Transaction: keypad input, picking an income or expense category, validation, duplicate flow
 - Category/Account: create, archive, reorder, empty-state CTAs
 - Settings: theme, locale, default-currency updates, splash settings
 - Phase 2: pending badge, pending list approve/reject actions, wallet add/edit/delete
