@@ -680,7 +680,9 @@ class _RatioBar extends StatelessWidget {
       child: SizedBox(
         key: const ValueKey('summaryRatioBar'),
         height: 6,
+        // Stretch: a childless DecoratedBox otherwise collapses to 0px.
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (income > 0) segment(income, incomeColor),
             if (income > 0 && expense > 0) const SizedBox(width: 3),

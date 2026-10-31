@@ -635,4 +635,46 @@ void main() {
     expect(symbol.style?.letterSpacing, isNull);
     expect(gapAfter(tester, r'+HK$61,700.69', r'HK$'), 3);
   });
+
+  testWidgets('SS27: ratio bar segments render at the bar height and split '
+      'its width', (tester) async {
+    await tester.pumpWidget(designStrip());
+    await tester.pumpAndSettle();
+    final bar = find.byKey(const ValueKey('summaryRatioBar'));
+    final segments = find.descendant(
+      of: bar,
+      matching: find.byType(DecoratedBox),
+    );
+    final barSize = tester.getSize(bar);
+    final income = tester.getSize(segments.at(0));
+    final expense = tester.getSize(segments.at(1));
+    expect(barSize.height, 6);
+    expect(income.height, 6);
+    expect(expense.height, 6);
+    // 6170069 : 417940, after the 3px gap.
+    expect(income.width / (barSize.width - 3), closeTo(0.937, 0.001));
+    expect(income.width + expense.width + 3, closeTo(barSize.width, 0.01));
+  });
+
+  testWidgets('SS28: an expense-only day renders a full-width bar', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        const SummaryStrip(
+          todayTotalsByCurrency: {'USD': (expense: 72100, income: 0)},
+          monthNetByCurrency: {'USD': -9396606},
+          currenciesByCode: {'USD': _usd},
+          locale: 'en_US',
+          defaultCurrency: 'USD',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final bar = find.byKey(const ValueKey('summaryRatioBar'));
+    final segment = tester.getSize(
+      find.descendant(of: bar, matching: find.byType(DecoratedBox)),
+    );
+    expect(segment, tester.getSize(bar));
+  });
 }
