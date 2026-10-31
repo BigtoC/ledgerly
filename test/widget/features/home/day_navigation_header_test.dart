@@ -1,7 +1,8 @@
 // DayNavigationHeader widget tests — Wave 3 §4.3.
 //
 // Covers: prev disabled at oldest day, next disabled when no newer
-// activity day, both active in between, label tap fires onPickDay.
+// activity day, both active in between, label tap fires onPickDay,
+// label is always the formatted date (no Today / Yesterday override).
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -90,13 +91,14 @@ void main() {
     expect(picked, 1);
   });
 
-  testWidgets('DH04: today renders the localized "Today" label', (
+  testWidgets('DH04: today renders the date, not a "Today" label', (
     tester,
   ) async {
+    final now = DateTime.now();
     await tester.pumpWidget(
       _wrap(
         DayNavigationHeader(
-          selectedDay: DateTime.now(),
+          selectedDay: now,
           locale: 'en_US',
           onPrev: () {},
           onNext: () {},
@@ -107,7 +109,11 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Today'), findsOneWidget);
+    expect(find.text('Today'), findsNothing);
+    expect(
+      find.text(DateHelpers.formatDayHeader(now, 'en_US')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('DH06: yesterday renders the date, not a "Yesterday" label', (

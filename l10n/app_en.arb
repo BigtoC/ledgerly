@@ -602,7 +602,7 @@
   },
   "homeDayLabelToday": "Today",
   "@homeDayLabelToday": {
-    "description": "Wave 3 §6. Day-nav header label override when selectedDay is today."
+    "description": "Home summary-strip jump button label when selectedDay is already today (button disabled)."
   },
   "homeDayNavPrevLabel": "Previous day",
   "@homeDayNavPrevLabel": {

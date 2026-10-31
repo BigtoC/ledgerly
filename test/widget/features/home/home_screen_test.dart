@@ -22,6 +22,7 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
+import 'package:ledgerly/core/utils/date_helpers.dart';
 import 'package:ledgerly/data/models/account.dart';
 import 'package:ledgerly/data/models/category.dart';
 import 'package:ledgerly/data/models/currency.dart';
@@ -338,10 +339,11 @@ void main() {
       monthNetCtrl.add(const {});
       await tester.pump(const Duration(milliseconds: 200));
 
-      expect(find.text('Jump to today'), findsOneWidget);
+      expect(find.text('Jump to today'), findsNothing);
+      expect(find.text('Today'), findsOneWidget);
       final button = tester.widget<TextButton>(
         find.ancestor(
-          of: find.text('Jump to today'),
+          of: find.text('Today'),
           matching: find.byType(TextButton),
         ),
       );
@@ -800,8 +802,12 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 100));
 
-      // The day header should still show "Today" — no navigation occurred.
-      expect(find.text('Today'), findsOneWidget);
+      // The day header should still show today's date — no navigation
+      // occurred.
+      expect(
+        find.text(DateHelpers.formatDayHeader(todayMidnight, 'en')),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     },
   );
@@ -846,14 +852,15 @@ void main() {
     monthNetCtrl.add(const {'USD': -100});
     await tester.pump(const Duration(milliseconds: 400));
 
-    // After the transition, "Today" should be the header label
-    expect(find.text('Today'), findsOneWidget);
-    // Button still renders but is disabled when on today
+    // After the transition, today's date should be the header label
+    expect(
+      find.text(DateHelpers.formatDayHeader(todayMidnight, 'en')),
+      findsOneWidget,
+    );
+    // Button still renders, reads "Today" and is disabled when on today
+    expect(find.text('Jump to today'), findsNothing);
     final jumpBtn = tester.widget<TextButton>(
-      find.ancestor(
-        of: find.text('Jump to today'),
-        matching: find.byType(TextButton),
-      ),
+      find.ancestor(of: find.text('Today'), matching: find.byType(TextButton)),
     );
     expect(jumpBtn.onPressed, isNull);
     expect(tester.takeException(), isNull);

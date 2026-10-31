@@ -57,7 +57,9 @@ class SummaryStrip extends ConsumerWidget {
   /// `'USD'` fallback on cold start.
   final String defaultCurrency;
 
-  /// When true, renders a "Jump to today" button at the top of the strip.
+  /// When true, the button at the top of the strip reads "Jump to today"
+  /// and is enabled; when false (already on today) it reads "Today" and
+  /// is disabled.
   final bool showJumpToToday;
 
   /// Called when the "Jump to today" button is tapped.
@@ -218,7 +220,9 @@ class SummaryStrip extends ConsumerWidget {
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: showJumpToToday ? onJumpToToday : null,
-              child: Text(l10n.homeJumpToToday),
+              child: Text(
+                showJumpToToday ? l10n.homeJumpToToday : l10n.homeDayLabelToday,
+              ),
             ),
           ),
           content,

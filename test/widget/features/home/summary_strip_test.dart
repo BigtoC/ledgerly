@@ -168,32 +168,28 @@ void main() {
     },
   );
 
-  testWidgets(
-    'SS05: jump-to-today button disabled when showJumpToToday is false',
-    (tester) async {
-      await tester.pumpWidget(
-        _wrap(
-          const SummaryStrip(
-            todayTotalsByCurrency: {'USD': (expense: 100, income: 0)},
-            monthNetByCurrency: {'USD': -100},
-            currenciesByCode: {'USD': _usd},
-            locale: 'en_US',
-            defaultCurrency: 'USD',
-            showJumpToToday: false,
-          ),
+  testWidgets('SS05: jump-to-today button reads "Today" and is disabled when '
+      'showJumpToToday is false', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        const SummaryStrip(
+          todayTotalsByCurrency: {'USD': (expense: 100, income: 0)},
+          monthNetByCurrency: {'USD': -100},
+          currenciesByCode: {'USD': _usd},
+          locale: 'en_US',
+          defaultCurrency: 'USD',
+          showJumpToToday: false,
         ),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('Jump to today'), findsOneWidget);
-      final button = tester.widget<TextButton>(
-        find.ancestor(
-          of: find.text('Jump to today'),
-          matching: find.byType(TextButton),
-        ),
-      );
-      expect(button.onPressed, isNull);
-    },
-  );
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Jump to today'), findsNothing);
+    expect(find.text('Today'), findsOneWidget);
+    final button = tester.widget<TextButton>(
+      find.ancestor(of: find.text('Today'), matching: find.byType(TextButton)),
+    );
+    expect(button.onPressed, isNull);
+  });
 
   testWidgets('SS06: multi-currency with default present + others missing — '
       'unified default + fallback for others', (tester) async {
