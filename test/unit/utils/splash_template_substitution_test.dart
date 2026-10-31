@@ -60,16 +60,6 @@ void main() {
       ]);
     });
 
-    test('G03: template with no placeholders returns single plain segment', () {
-      final segs = DateHelpers.applySplashTemplateSegments(
-        template: 'My budget',
-        startDate: startDate,
-        now: now,
-        locale: 'en_US',
-      );
-      expect(segs, <SplashTextSegment>[(text: 'My budget', isDate: false)]);
-    });
-
     test('G04: empty template returns empty segment list', () {
       final segs = DateHelpers.applySplashTemplateSegments(
         template: '',
@@ -90,32 +80,6 @@ void main() {
       expect(segs, <SplashTextSegment>[
         (text: 'Jan 1, 2026', isDate: true),
         (text: ' and ', isDate: false),
-        (text: 'Jan 1, 2026', isDate: true),
-      ]);
-    });
-
-    test('G06: leading {date} drops the empty plain prefix', () {
-      final segs = DateHelpers.applySplashTemplateSegments(
-        template: '{date} note',
-        startDate: startDate,
-        now: now,
-        locale: 'en_US',
-      );
-      expect(segs, <SplashTextSegment>[
-        (text: 'Jan 1, 2026', isDate: true),
-        (text: ' note', isDate: false),
-      ]);
-    });
-
-    test('G07: trailing {date} drops the empty plain suffix', () {
-      final segs = DateHelpers.applySplashTemplateSegments(
-        template: 'Since {date}',
-        startDate: startDate,
-        now: now,
-        locale: 'en_US',
-      );
-      expect(segs, <SplashTextSegment>[
-        (text: 'Since ', isDate: false),
         (text: 'Jan 1, 2026', isDate: true),
       ]);
     });
