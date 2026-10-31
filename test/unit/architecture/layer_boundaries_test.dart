@@ -136,6 +136,21 @@ import 'package:late/late.dart';
       }
     });
 
+    test('feature files may not import the database provider', () {
+      // `ref.read(appDatabaseProvider)` would hand over `AppDatabase`
+      // without an import of data/database/.
+      for (final path in featureFiles) {
+        expect(
+          forbidden(
+            path,
+            'package:ledgerly/app/providers/app_database_provider.dart',
+          ),
+          isTrue,
+          reason: path,
+        );
+      }
+    });
+
     test('feature files may not import platform or I/O plugins', () {
       const plugins = [
         'package:package_info_plus/package_info_plus.dart',
