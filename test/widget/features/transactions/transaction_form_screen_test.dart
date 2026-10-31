@@ -1,7 +1,8 @@
 // TransactionFormScreen widget tests — Wave 2 §4.3.
 //
 // Covers:
-//   - Add mode renders with default account + expense pendingType.
+//   - Add mode renders with default account and no expense/income toggle;
+//     the category picker lists income categories below expense ones.
 //   - Save button disabled while form is invalid.
 //   - Save button enables once amount + account + category are all set
 //     (account is auto-resolved by hydrateForAdd → fallback chain).
@@ -84,6 +85,14 @@ const _expenseCategory = Category(
   l10nKey: 'category.food',
 );
 
+const _incomeCategory = Category(
+  id: 20,
+  icon: 'category',
+  color: 0,
+  type: CategoryType.income,
+  customName: 'Salary',
+);
+
 Transaction _persistedTx({
   int id = 99,
   int amountMinorUnits = 500,
@@ -133,6 +142,13 @@ void main() {
         .thenAnswer((_) => Stream.value(const [_account]));
     when(() => categoryRepo.getById(10))
         .thenAnswer((_) async => _expenseCategory);
+    // The category picker also lists income categories.
+    when(
+      () => categoryRepo.watchAll(
+        type: CategoryType.income,
+        includeArchived: false,
+      ),
+    ).thenAnswer((_) => Stream.value(const <Category>[]));
     when(() => currencyRepo.watchAll(includeTokens: false))
         .thenAnswer((_) => Stream.value(const [_usd, _jpy, _eur]));
   });
@@ -394,6 +410,60 @@ void main() {
 
     expect(find.text('Add transaction'), findsOneWidget);
     expect(find.text('draft memo'), findsOneWidget);
+  });
+
+  testWidgets('WS08b: Add mode has no expense/income toggle', (tester) async {
+    await tester.pumpWidget(mountAdd());
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SegmentedButton<CategoryType>), findsNothing);
+  });
+
+  testWidgets('WS08c: an income category can be picked straight away', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      mountAdd(
+        extraOverrides: [
+          categoriesByTypeProvider(CategoryType.expense)
+              .overrideWith((ref) => Stream.value(const [_expenseCategory])),
+          categoriesByTypeProvider(CategoryType.income)
+              .overrideWith((ref) => Stream.value(const [_incomeCategory])),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Select a category'));
+    await tester.pumpAndSettle();
+    expect(find.text('Pick income category'), findsOneWidget);
+    await tester.tap(find.text('Salary'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Salary'), findsOneWidget);
+    expect(find.text('Select a category'), findsNothing);
+  });
+
+  testWidgets('WS08d: income-only categories open the picker, not Settings', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      mountAdd(
+        extraOverrides: [
+          categoriesByTypeProvider(CategoryType.expense)
+              .overrideWith((ref) => Stream.value(const <Category>[])),
+          categoriesByTypeProvider(CategoryType.income)
+              .overrideWith((ref) => Stream.value(const [_incomeCategory])),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Select a category'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('categories-stub'), findsNothing);
+    expect(find.text('Salary'), findsOneWidget);
   });
 
   testWidgets('WS09: historical edit dates still open the date picker', (
