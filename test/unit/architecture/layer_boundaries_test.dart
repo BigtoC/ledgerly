@@ -228,6 +228,24 @@ import 'e.dart' if (dart.library.io) 'f.dart';
         isTrue,
       );
     });
+
+    test('app files may not import platform plugins, except the service '
+        'providers', () {
+      const appFile = 'lib/app/providers/app_update_provider.dart';
+      const serviceProvidersFile = 'lib/app/providers/service_providers.dart';
+      const plugins = [
+        'package:package_info_plus/package_info_plus.dart',
+        'package:path_provider/path_provider.dart',
+        'package:file_picker/file_picker.dart',
+        'package:file_selector/file_selector.dart',
+      ];
+      for (final plugin in plugins) {
+        expect(forbidden(appFile, plugin), isTrue, reason: plugin);
+      }
+      for (final uri in [...plugins, 'package:dio/dio.dart']) {
+        expect(forbidden(serviceProvidersFile, uri), isFalse, reason: uri);
+      }
+    });
   });
 
   test('lib/ respects the layer-boundary rules in $_rulesFile', () {

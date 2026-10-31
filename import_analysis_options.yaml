@@ -254,6 +254,19 @@ rules:
     ignore_import_reg_exps:
       - "^package:ledgerly/data/models/"
 
+  # app/ wires services into repositories, use cases and app-level values;
+  # it does not call platform plugins itself (PRD: external SDKs belong in
+  # services). `app/providers/service_providers.dart` builds the services
+  # and is the one app/ file the path regex leaves out.
+  app_forbids_platform_plugins:
+    search_file_path_reg_exp: "^lib/app/(?!providers/service_providers\\.dart$).*\\.dart$"
+    not_allow_import_reg_exps:
+      - "^package:package_info_plus/"
+      - "^package:path_provider/"
+      - "^package:file_picker/"
+      - "^package:file_selector/"
+    ignore_import_reg_exps: []
+
 # Violations that predate enforcement (import_lint 0.1.6 never matched a
 # rule, so nothing was checked until the test above replaced it). Each is
 # tolerated so that only NEW violations fail. Fix the code, then delete
