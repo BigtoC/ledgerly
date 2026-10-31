@@ -148,12 +148,6 @@ abstract class AppLocalizations {
   /// **'Archive'**
   String get categoriesArchiveAction;
 
-  /// Home transaction row overflow menu — Edit action label. Wave 4 §3.2 rename: was commonEdit — only used by home slice.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit'**
-  String get homeEditAction;
-
   /// PRD 695. Undo snackbar action after delete.
   ///
   /// In en, this message translates to:
@@ -975,12 +969,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Transaction deleted'**
   String get homeDeleteUndoSnackbar;
-
-  /// Wave 3 §9. Row overflow menu — duplicate action.
-  ///
-  /// In en, this message translates to:
-  /// **'Duplicate'**
-  String get homeDuplicateAction;
 
   /// Home summary-strip jump button label when selectedDay is already today (button disabled).
   ///
