@@ -2,8 +2,9 @@
 // conversion in Phase 2).
 //
 // When exchange rates are available for every in-use currency, the strip
-// renders a single unified total in the user's default currency
-// (today's expense / income, month-to-date net). When rates are missing
+// renders a single unified card in the user's default currency: day net
+// and month-to-date net, an income-vs-expense ratio bar, and the day's
+// income / expense tiles. When rates are missing
 // for some currencies, the strip shows the unified total plus a separator
 // labelled "Unconverted" plus a fallback per-currency group for each
 // missing-rate currency, in stable ascending currency-code order.
@@ -118,13 +119,12 @@ class SummaryStrip extends ConsumerWidget {
 
     final Widget content;
     if (allCodes.isEmpty) {
-      content = _PlaceholderBox(
-        theme: theme,
-        labels: [
-          l10n.homeSummaryTodayExpense,
-          l10n.homeSummaryTodayIncome,
-          l10n.homeSummaryMonthNet,
-        ],
+      const dash = _Figure(text: '—');
+      content = const _SummaryCard(
+        dayNet: dash,
+        monthNet: dash,
+        income: dash,
+        expense: dash,
       );
     } else {
       content = AnimatedSize(
@@ -139,11 +139,6 @@ class SummaryStrip extends ConsumerWidget {
                 income: convertedIncome,
                 monthNet: convertedMonthNet,
                 locale: locale,
-                labels: (
-                  expense: l10n.homeSummaryTodayExpense,
-                  income: l10n.homeSummaryTodayIncome,
-                  monthNet: l10n.homeSummaryMonthNet,
-                ),
                 isApproximate: hasAnyNonDefaultConvertible,
                 approximatelyPrefixLabel: l10n.approximatelyPrefix,
               ),
@@ -187,11 +182,6 @@ class SummaryStrip extends ConsumerWidget {
                 income: todayTotalsByCurrency[code]?.income ?? 0,
                 monthNet: monthNetByCurrency[code] ?? 0,
                 locale: locale,
-                labels: (
-                  expense: l10n.homeSummaryTodayExpense,
-                  income: l10n.homeSummaryTodayIncome,
-                  monthNet: l10n.homeSummaryMonthNet,
-                ),
                 isApproximate: false,
                 approximatelyPrefixLabel: l10n.approximatelyPrefix,
               ),
@@ -215,7 +205,6 @@ class _CurrencyGroup extends StatelessWidget {
     required this.income,
     required this.monthNet,
     required this.locale,
-    required this.labels,
     required this.isApproximate,
     required this.approximatelyPrefixLabel,
   });
@@ -225,32 +214,92 @@ class _CurrencyGroup extends StatelessWidget {
   final int income;
   final int monthNet;
   final String locale;
-  final ({String expense, String income, String monthNet}) labels;
   final bool isApproximate;
   final String approximatelyPrefixLabel;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final expenseStr = MoneyFormatter.format(
-      amountMinorUnits: expense,
-      currency: currency,
-      locale: locale,
-    );
-    final incomeStr = MoneyFormatter.format(
-      amountMinorUnits: income,
-      currency: currency,
-      locale: locale,
-    );
-    final monthNetStr = MoneyFormatter.formatSigned(
-      amountMinorUnits: monthNet,
-      currency: currency,
-      locale: locale,
-    );
     final prefix = isApproximate ? '≈ ' : '';
+
+    _Figure signed(int amount, {bool colored = false}) {
+      final text = MoneyFormatter.formatSigned(
+        amountMinorUnits: amount,
+        currency: currency,
+        locale: locale,
+      );
+      return _Figure(
+        text: '$prefix$text',
+        semanticValue: isApproximate ? '$approximatelyPrefixLabel $text' : null,
+        color: colored ? _netColor(theme, amount) : null,
+      );
+    }
+
+    return _SummaryCard(
+      dayNet: signed(income - expense, colored: true),
+      monthNet: signed(monthNet, colored: true),
+      income: signed(income),
+      expense: signed(-expense),
+      ratio: (income: income, expense: expense),
+    );
+  }
+}
+
+/// Green when positive, red when negative, the plain text colour at zero.
+/// Light mode takes darker shades so the amount keeps WCAG AA contrast on
+/// `surfaceContainer`.
+Color _netColor(ThemeData theme, int amount) {
+  final isDark = theme.brightness == Brightness.dark;
+  if (amount > 0) return isDark ? _positiveDark : _positiveLight;
+  if (amount < 0) return isDark ? _negativeDark : _negativeLight;
+  return theme.colorScheme.onSurface;
+}
+
+const _positiveLight = Color(0xFF13744A);
+const _positiveDark = Color(0xFF6DD5A3);
+const _negativeLight = Color(0xFFB8283F);
+const _negativeDark = Color(0xFFFF8F8F);
+
+/// One formatted amount. [semanticValue] replaces the visible text for
+/// screen readers (spelling out the `≈` prefix); [color] defaults to
+/// `onSurface`.
+class _Figure {
+  const _Figure({required this.text, this.semanticValue, this.color});
+
+  final String text;
+  final String? semanticValue;
+  final Color? color;
+}
+
+/// Day net and month net side by side, a divider, the income/expense
+/// ratio bar (when [ratio] has activity) and the income and expense tiles.
+class _SummaryCard extends StatelessWidget {
+  const _SummaryCard({
+    required this.dayNet,
+    required this.monthNet,
+    required this.income,
+    required this.expense,
+    this.ratio,
+  });
+
+  final _Figure dayNet;
+  final _Figure monthNet;
+  final _Figure income;
+  final _Figure expense;
+  final ({int income, int expense})? ratio;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final ratio = this.ratio;
+    final hasRatio = ratio != null && ratio.income + ratio.expense > 0;
+    final isDark = theme.brightness == Brightness.dark;
+    // Large text stacks each pair so every amount gets the full card width.
+    final stacked = MediaQuery.textScalerOf(context).scale(1) >= 1.5;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(homePageCardBorderRadius),
@@ -258,28 +307,55 @@ class _CurrencyGroup extends StatelessWidget {
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _Chip(
-            label: labels.expense,
-            value: '$prefix$expenseStr',
-            semanticValue: isApproximate
-                ? '$approximatelyPrefixLabel $expenseStr'
-                : null,
+          _Pair(
+            stacked: stacked,
+            gap: 12,
+            first: _NetFigure(
+              label: l10n.homeSummaryDayNet,
+              figure: dayNet,
+              alignment: CrossAxisAlignment.start,
+            ),
+            second: _NetFigure(
+              label: l10n.homeSummaryMonthNet,
+              figure: monthNet,
+              alignment: stacked
+                  ? CrossAxisAlignment.start
+                  : CrossAxisAlignment.end,
+            ),
           ),
-          _Chip(
-            label: labels.income,
-            value: '$prefix$incomeStr',
-            semanticValue: isApproximate
-                ? '$approximatelyPrefixLabel $incomeStr'
-                : null,
+          const SizedBox(height: 12),
+          Divider(
+            height: 1,
+            thickness: 1,
+            color: theme.colorScheme.outlineVariant,
           ),
-          _Chip(
-            label: labels.monthNet,
-            value: '$prefix$monthNetStr',
-            semanticValue: isApproximate
-                ? '$approximatelyPrefixLabel $monthNetStr'
-                : null,
+          const SizedBox(height: 12),
+          if (hasRatio) ...[
+            _RatioBar(
+              income: ratio.income,
+              expense: ratio.expense,
+              incomeColor: isDark ? _positiveDark : _positiveLight,
+              expenseColor: isDark ? _negativeDark : _negativeLight,
+            ),
+            const SizedBox(height: 12),
+          ],
+          _Pair(
+            stacked: stacked,
+            gap: 10,
+            first: _FlowTile(
+              label: l10n.homeSummaryTodayIncome,
+              figure: income,
+              icon: Icons.south_west,
+              accent: isDark ? _positiveDark : _positiveLight,
+            ),
+            second: _FlowTile(
+              label: l10n.homeSummaryTodayExpense,
+              figure: expense,
+              icon: Icons.north_east,
+              accent: isDark ? _negativeDark : _negativeLight,
+            ),
           ),
         ],
       ),
@@ -287,76 +363,222 @@ class _CurrencyGroup extends StatelessWidget {
   }
 }
 
-class _Chip extends StatelessWidget {
-  const _Chip({required this.label, required this.value, this.semanticValue});
+/// Two equal-width columns side by side, or one above the other when
+/// [stacked].
+class _Pair extends StatelessWidget {
+  const _Pair({
+    required this.stacked,
+    required this.gap,
+    required this.first,
+    required this.second,
+  });
+
+  final bool stacked;
+  final double gap;
+  final Widget first;
+  final Widget second;
+
+  @override
+  Widget build(BuildContext context) {
+    if (stacked) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          first,
+          SizedBox(height: gap),
+          second,
+        ],
+      );
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: first),
+        SizedBox(width: gap),
+        Expanded(child: second),
+      ],
+    );
+  }
+}
+
+class _NetFigure extends StatelessWidget {
+  const _NetFigure({
+    required this.label,
+    required this.figure,
+    required this.alignment,
+  });
 
   final String label;
-  final String value;
-  final String? semanticValue;
+  final _Figure figure;
+  final CrossAxisAlignment alignment;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final valueText = Text(
-      value,
-      style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+    final textAlign = alignment == CrossAxisAlignment.end
+        ? TextAlign.end
+        : TextAlign.start;
+    return Column(
+      crossAxisAlignment: alignment,
+      children: [
+        Text(
+          label,
+          textAlign: textAlign,
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 4),
+        _FigureText(
+          figure: figure,
+          textAlign: textAlign,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Wrap(
-        crossAxisAlignment: WrapCrossAlignment.center,
+  }
+}
+
+class _FlowTile extends StatelessWidget {
+  const _FlowTile({
+    required this.label,
+    required this.figure,
+    required this.icon,
+    required this.accent,
+  });
+
+  final String label;
+  final _Figure figure;
+  final IconData icon;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('$label: ', style: theme.textTheme.bodySmall),
-          if (semanticValue != null)
-            Semantics(
-              label: semanticValue,
-              excludeSemantics: true,
-              child: valueText,
-            )
-          else
-            valueText,
+          Row(
+            children: [
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.14),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 14, color: accent),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  label,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          _FigureText(
+            figure: figure,
+            textAlign: TextAlign.start,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _PlaceholderBox extends StatelessWidget {
-  const _PlaceholderBox({required this.theme, required this.labels});
+class _FigureText extends StatelessWidget {
+  const _FigureText({
+    required this.figure,
+    required this.textAlign,
+    required this.style,
+  });
 
-  final ThemeData theme;
-  final List<String> labels;
+  final _Figure figure;
+  final TextAlign textAlign;
+  final TextStyle? style;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
+    // One line always: a wrapped amount can strand its minus sign. A
+    // figure wider than its column scales down instead.
+    final text = FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: textAlign == TextAlign.end
+          ? AlignmentDirectional.centerEnd
+          : AlignmentDirectional.centerStart,
+      child: Text(
+        figure.text,
+        maxLines: 1,
+        softWrap: false,
+        style: style?.copyWith(
+          color: figure.color ?? Theme.of(context).colorScheme.onSurface,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (final label in labels)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2),
-              child: Wrap(
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Text('$label: ', style: theme.textTheme.bodySmall),
-                  Text(
-                    '—',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
+    );
+    final semanticValue = figure.semanticValue;
+    if (semanticValue == null) return text;
+    return Semantics(label: semanticValue, excludeSemantics: true, child: text);
+  }
+}
+
+/// Income share (left) against expense share (right). A side with no
+/// activity drops out, leaving one full-width segment.
+class _RatioBar extends StatelessWidget {
+  const _RatioBar({
+    required this.income,
+    required this.expense,
+    required this.incomeColor,
+    required this.expenseColor,
+  });
+
+  final int income;
+  final int expense;
+  final Color incomeColor;
+  final Color expenseColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final incomePercent = (income * 100 / (income + expense)).round();
+    Widget segment(int flex, Color color) => Expanded(
+      flex: flex,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(3),
+        ),
+      ),
+    );
+    return Semantics(
+      container: true,
+      label: l10n.homeSummaryRatioLabel(incomePercent, 100 - incomePercent),
+      child: SizedBox(
+        key: const ValueKey('summaryRatioBar'),
+        height: 6,
+        child: Row(
+          children: [
+            if (income > 0) segment(income, incomeColor),
+            if (income > 0 && expense > 0) const SizedBox(width: 3),
+            if (expense > 0) segment(expense, expenseColor),
+          ],
+        ),
       ),
     );
   }

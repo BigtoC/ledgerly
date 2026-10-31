@@ -85,6 +85,18 @@
   "@homeSummaryMonthNet": {
     "description": "PRD 672. Home summary strip — month net row label."
   },
+  "homeSummaryDayNet": "Day net",
+  "@homeSummaryDayNet": {
+    "description": "Home summary card label for the selected day's income minus expense."
+  },
+  "homeSummaryRatioLabel": "Income {incomePercent}%, expense {expensePercent}%",
+  "@homeSummaryRatioLabel": {
+    "description": "Screen-reader label of the Home summary card's bar comparing the selected day's income and expense.",
+    "placeholders": {
+      "incomePercent": { "type": "int", "example": "94" },
+      "expensePercent": { "type": "int", "example": "6" }
+    }
+  },
 
   "errorSnackbarGeneric": "Something went wrong. Please try again.",
   "@errorSnackbarGeneric": {

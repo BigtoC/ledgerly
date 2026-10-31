@@ -220,6 +220,18 @@ abstract class AppLocalizations {
   /// **'Month net'**
   String get homeSummaryMonthNet;
 
+  /// Home summary card label for the selected day's income minus expense.
+  ///
+  /// In en, this message translates to:
+  /// **'Day net'**
+  String get homeSummaryDayNet;
+
+  /// Screen-reader label of the Home summary card's bar comparing the selected day's income and expense.
+  ///
+  /// In en, this message translates to:
+  /// **'Income {incomePercent}%, expense {expensePercent}%'**
+  String homeSummaryRatioLabel(int incomePercent, int expensePercent);
+
   /// PRD 690, 696. Generic save-failure snackbar.
   ///
   /// In en, this message translates to:

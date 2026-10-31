@@ -70,6 +70,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeSummaryMonthNet => 'Month net';
 
   @override
+  String get homeSummaryDayNet => 'Day net';
+
+  @override
+  String homeSummaryRatioLabel(int incomePercent, int expensePercent) {
+    return 'Income $incomePercent%, expense $expensePercent%';
+  }
+
+  @override
   String get errorSnackbarGeneric => 'Something went wrong. Please try again.';
 
   @override
@@ -1248,6 +1256,14 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get homeSummaryMonthNet => '本月净额';
 
   @override
+  String get homeSummaryDayNet => '当日净额';
+
+  @override
+  String homeSummaryRatioLabel(int incomePercent, int expensePercent) {
+    return '收入占 $incomePercent%，支出占 $expensePercent%';
+  }
+
+  @override
   String get errorSnackbarGeneric => '出错了，请重试。';
 
   @override
@@ -2374,6 +2390,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get homeSummaryMonthNet => '本月淨額';
+
+  @override
+  String get homeSummaryDayNet => '當日淨額';
+
+  @override
+  String homeSummaryRatioLabel(int incomePercent, int expensePercent) {
+    return '收入佔 $incomePercent%，支出佔 $expensePercent%';
+  }
 
   @override
   String get errorSnackbarGeneric => '發生錯誤，請再試一次。';

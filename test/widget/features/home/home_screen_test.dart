@@ -256,9 +256,10 @@ void main() {
       monthNetCtrl.add(const {'USD': -100});
       await tester.pump(const Duration(milliseconds: 200));
 
-      // Summary strip renders the expense label and amount; the
-      // label changed from "Today expense" to "Expense" to be day-neutral.
-      expect(find.text('Expense: '), findsOneWidget);
+      // Summary card renders the day net, month net and expense tile.
+      expect(find.text('Day net'), findsOneWidget);
+      expect(find.text('Month net'), findsOneWidget);
+      expect(find.text('Expense'), findsOneWidget);
     },
   );
 
@@ -804,8 +805,8 @@ void main() {
     dayCtrl.add([_tx(id: 1, date: todayMidnight)]);
     activityCtrl.add([todayMidnight]);
     // Long formatted amounts (large minor-unit values) stress the
-    // summary chips most: `-$12,345.67` is wider than the chip's row
-    // can hold without `Flexible` wrappers.
+    // summary card most: at 2× its net and tile pairs stack so
+    // `-$12,345.67` keeps a full-width line.
     todayTotalsCtrl.add(const {'USD': (expense: 1234567, income: 0)});
     monthNetCtrl.add(const {'USD': -1234567});
     await tester.pump(const Duration(milliseconds: 200));

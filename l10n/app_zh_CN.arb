@@ -25,6 +25,9 @@
   "homeSummaryTodayExpense": "支出",
   "homeSummaryTodayIncome": "收入",
   "homeSummaryMonthNet": "本月净额",
+  "homeSummaryDayNet": "当日净额",
+  "homeSummaryRatioLabel": "收入占 {incomePercent}%，支出占 {expensePercent}%",
+  "@homeSummaryRatioLabel": { "placeholders": { "incomePercent": { "type": "int" }, "expensePercent": { "type": "int" } } },
 
   "errorSnackbarGeneric": "出错了，请重试。",
 
