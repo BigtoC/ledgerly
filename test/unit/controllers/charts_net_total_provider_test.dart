@@ -10,7 +10,7 @@ import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/currency.dart';
 import 'package:ledgerly/data/repositories/exchange_rate_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
-import 'package:ledgerly/features/analysis/charts/charts_net_total_provider.dart';
+import 'package:ledgerly/features/analysis/charts/charts_net_total_providers.dart';
 import 'package:ledgerly/features/analysis/charts/charts_providers.dart';
 import 'package:ledgerly/features/analysis/charts/charts_selection_controller.dart';
 import 'package:ledgerly/features/analysis/charts/charts_state.dart';

@@ -19,7 +19,7 @@ import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/features/analysis/analysis_screen.dart';
 import 'package:ledgerly/features/analysis/charts/charts_controller.dart';
-import 'package:ledgerly/features/analysis/charts/charts_net_total_provider.dart';
+import 'package:ledgerly/features/analysis/charts/charts_net_total_providers.dart';
 import 'package:ledgerly/features/analysis/charts/charts_providers.dart';
 import 'package:ledgerly/features/analysis/charts/charts_selection_controller.dart';
 import 'package:ledgerly/features/analysis/charts/slice_drilldown_controller.dart';

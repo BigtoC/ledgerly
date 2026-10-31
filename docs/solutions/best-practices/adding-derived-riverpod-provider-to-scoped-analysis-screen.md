@@ -43,7 +43,7 @@ tags:
 
 The Analysis charts screen gained a small "Net" box above the pie chart: income minus expense for the period picked in the time picker, recalculated whenever the period changes, green when positive and pink when negative. Its data comes from scoped providers (`ChartsSelectionController` is declared `dependencies: []`; `transactionRepository`, `chartsFxStatus` and `chartsCurrenciesByCode` are scoped too).
 
-The feature itself was two new files — `lib/features/analysis/charts/charts_net_total_provider.dart` (`chartsNetByCurrency` → `chartsNetTotal`) and `widgets/charts_net_total_card.dart` — plus a repository method (`TransactionRepository.watchNetByCurrencyInRange`). Getting it to pass CI surfaced the issues below; all were caught by the analyzer, tests or review before merge. (When every currency in the period lacks an FX rate, the box shows `—` plus the "Excluded: …" caption rather than a converted `$0.00`.)
+The feature itself was two new files — `lib/features/analysis/charts/charts_net_total_providers.dart` (`chartsNetByCurrency` → `chartsNetTotal`) and `widgets/charts_net_total_card.dart` — plus a repository method (`TransactionRepository.watchNetByCurrencyInRange`). Getting it to pass CI surfaced the issues below; all were caught by the analyzer, tests or review before merge. (When every currency in the period lacks an FX rate, the box shows `—` plus the "Excluded: …" caption rather than a converted `$0.00`.)
 
 ## Guidance
 

@@ -8,7 +8,7 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../../core/utils/money_formatter.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../charts_net_total_provider.dart';
+import '../charts_net_total_providers.dart';
 
 @Dependencies([chartsNetTotal])
 class ChartsNetTotalCard extends ConsumerWidget {
