@@ -23,10 +23,21 @@
 #                              covers both forms.
 #   ignore_import_reg_exps     optional; a URI matching one of these is
 #                              never a violation.
+#
+# Import paths cannot show what a file reaches through a provider, so the
+# feature rules also forbid the app-layer files that hand out data-layer
+# objects: `app/providers/service_providers.dart` (services) everywhere
+# under features/, and `app/providers/repository_providers.dart`
+# (repositories and use cases) everywhere except controllers and
+# *_providers.dart. App-level values that widgets may read, such as
+# `exchangeRatesProvider`, live in their own files under app/providers/.
+# Platform and I/O plugins belong in services (PRD), so every feature
+# rule forbids them too.
 rules:
   # Widgets (features/*/*_screen.dart) may only import their own
   # controller and UI primitives — no repositories, services, DB, DAOs,
-  # or Drift packages.
+  # Drift or platform packages, and not the providers that build
+  # repositories or services.
   widgets_forbid_data_internals:
     search_file_path_reg_exp: "^lib/features/.*_screen\\.dart$"
     not_allow_import_reg_exps:
@@ -36,6 +47,12 @@ rules:
       - "^package:drift/"
       - "^package:drift_flutter/"
       - "^package:path_provider/"
+      - "^package:ledgerly/app/providers/repository_providers\\.dart$"
+      - "^package:ledgerly/app/providers/service_providers\\.dart$"
+      - "^package:package_info_plus/"
+      - "^package:dio/"
+      - "^package:file_picker/"
+      - "^package:file_selector/"
     ignore_import_reg_exps: []
 
   widget_helpers_forbid_data_internals:
@@ -47,10 +64,17 @@ rules:
       - "^package:drift/"
       - "^package:drift_flutter/"
       - "^package:path_provider/"
+      - "^package:ledgerly/app/providers/repository_providers\\.dart$"
+      - "^package:ledgerly/app/providers/service_providers\\.dart$"
+      - "^package:package_info_plus/"
+      - "^package:dio/"
+      - "^package:file_picker/"
+      - "^package:file_selector/"
     ignore_import_reg_exps: []
 
   # Controllers may import repositories, use cases, domain models —
-  # never AppDatabase, DAOs, Drift, or services.
+  # never AppDatabase, DAOs, Drift, services, the providers that build
+  # services, or platform packages.
   controllers_forbid_db_and_services:
     search_file_path_reg_exp: "^lib/features/.*_controller\\.dart$"
     not_allow_import_reg_exps:
@@ -59,10 +83,15 @@ rules:
       - "^package:drift/"
       - "^package:drift_flutter/"
       - "^package:path_provider/"
+      - "^package:ledgerly/app/providers/service_providers\\.dart$"
+      - "^package:package_info_plus/"
+      - "^package:dio/"
+      - "^package:file_picker/"
+      - "^package:file_selector/"
     ignore_import_reg_exps: []
 
   # State classes stay presentation-only: domain models fine, data
-  # internals forbidden.
+  # internals and the providers that build them forbidden.
   states_forbid_data_internals:
     search_file_path_reg_exp: "^lib/features/.*_state\\.dart$"
     not_allow_import_reg_exps:
@@ -71,12 +100,18 @@ rules:
       - "^package:ledgerly/data/repositories/"
       - "^package:drift/"
       - "^package:drift_flutter/"
+      - "^package:ledgerly/app/providers/repository_providers\\.dart$"
+      - "^package:ledgerly/app/providers/service_providers\\.dart$"
+      - "^package:package_info_plus/"
+      - "^package:dio/"
+      - "^package:file_picker/"
+      - "^package:file_selector/"
     ignore_import_reg_exps: []
 
   # Slice-local helper providers (features/**/*_providers.dart) sit next
   # to controllers and follow the controller rule: repositories, domain
   # models and app/providers are fine — never AppDatabase, DAOs, Drift,
-  # or services.
+  # services, the providers that build services, or platform packages.
   feature_providers_forbid_db_and_services:
     search_file_path_reg_exp: "^lib/features/.*_providers\\.dart$"
     not_allow_import_reg_exps:
@@ -85,6 +120,11 @@ rules:
       - "^package:drift/"
       - "^package:drift_flutter/"
       - "^package:path_provider/"
+      - "^package:ledgerly/app/providers/service_providers\\.dart$"
+      - "^package:package_info_plus/"
+      - "^package:dio/"
+      - "^package:file_picker/"
+      - "^package:file_selector/"
     ignore_import_reg_exps: []
 
   # Catch-all for every other feature file: widgets not named
@@ -104,6 +144,12 @@ rules:
       - "^package:drift/"
       - "^package:drift_flutter/"
       - "^package:path_provider/"
+      - "^package:ledgerly/app/providers/repository_providers\\.dart$"
+      - "^package:ledgerly/app/providers/service_providers\\.dart$"
+      - "^package:package_info_plus/"
+      - "^package:dio/"
+      - "^package:file_picker/"
+      - "^package:file_selector/"
     ignore_import_reg_exps: []
 
   # Use cases (Phase 2) may import repositories, services, domain

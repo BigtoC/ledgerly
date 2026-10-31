@@ -82,6 +82,86 @@ import 'package:late/late.dart';
     });
   });
 
+  group('rules in $_rulesFile', () {
+    final config = _Config.load(File(_rulesFile).readAsStringSync());
+
+    /// Whether any rule that applies to [path] forbids [uri] (as written).
+    bool forbidden(String path, String uri) {
+      final normalised = _normalise(path, uri);
+      return config.rules
+          .where((r) => r.appliesTo(path))
+          .any((r) => r.forbids(normalised));
+    }
+
+    // One file per feature rule.
+    const screen = 'lib/features/home/home_screen.dart';
+    const widget =
+        'lib/features/transactions/widgets/account_picker_sheet.dart';
+    const state = 'lib/features/home/home_state.dart';
+    const otherFeatureFile = 'lib/features/analysis/charts/selected_slice.dart';
+    const controller = 'lib/features/home/home_controller.dart';
+    const featureProviders = 'lib/features/home/home_providers.dart';
+    const featureFiles = [
+      screen,
+      widget,
+      state,
+      otherFeatureFile,
+      controller,
+      featureProviders,
+    ];
+
+    const repositoryProviders =
+        'package:ledgerly/app/providers/repository_providers.dart';
+    const serviceProviders =
+        'package:ledgerly/app/providers/service_providers.dart';
+
+    test('widget, state and other feature files may not import the '
+        'repository or service providers', () {
+      for (final path in [screen, widget, state, otherFeatureFile]) {
+        expect(forbidden(path, repositoryProviders), isTrue, reason: path);
+        expect(forbidden(path, serviceProviders), isTrue, reason: path);
+      }
+      // Relative imports are resolved before matching.
+      expect(
+        forbidden(widget, '../../../app/providers/repository_providers.dart'),
+        isTrue,
+      );
+    });
+
+    test('controllers and feature providers may import the repository '
+        'providers but not the service providers', () {
+      for (final path in [controller, featureProviders]) {
+        expect(forbidden(path, repositoryProviders), isFalse, reason: path);
+        expect(forbidden(path, serviceProviders), isTrue, reason: path);
+      }
+    });
+
+    test('feature files may not import platform or I/O plugins', () {
+      const plugins = [
+        'package:package_info_plus/package_info_plus.dart',
+        'package:dio/dio.dart',
+        'package:file_picker/file_picker.dart',
+        'package:file_selector/file_selector.dart',
+      ];
+      for (final path in featureFiles) {
+        for (final plugin in plugins) {
+          expect(forbidden(path, plugin), isTrue, reason: '$path -> $plugin');
+        }
+      }
+    });
+
+    test('feature files may import the app-level value providers', () {
+      for (final path in featureFiles) {
+        for (final uri in [
+          'package:ledgerly/app/providers/exchange_rates_provider.dart',
+          'package:ledgerly/app/providers/app_version_provider.dart',
+        ]) {
+          expect(forbidden(path, uri), isFalse, reason: '$path -> $uri');
+        }
+      }
+    });
+  });
+
   test('lib/ respects the layer-boundary rules in $_rulesFile', () {
     final config = _Config.load(File(_rulesFile).readAsStringSync());
     final files =
