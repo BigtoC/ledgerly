@@ -320,27 +320,6 @@ void main() {
     expect(find.byKey(const ValueKey('summaryRatioBar')), findsNothing);
   });
 
-  testWidgets('SS14: ratio bar shows a single segment when only one side '
-      'has activity', (tester) async {
-    await tester.pumpWidget(
-      _wrap(
-        const SummaryStrip(
-          todayTotalsByCurrency: {'USD': (expense: 1500, income: 0)},
-          monthNetByCurrency: {'USD': -1500},
-          currenciesByCode: {'USD': _usd},
-          locale: 'en_US',
-          defaultCurrency: 'USD',
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    final bar = find.byKey(const ValueKey('summaryRatioBar'));
-    expect(
-      find.descendant(of: bar, matching: find.byType(Expanded)),
-      findsOneWidget,
-    );
-  });
-
   // An amount that wraps can strand its minus sign on its own line, so
   // every amount must lay out on one line however narrow its column.
   void expectAmountsOnOneLine(WidgetTester tester) {

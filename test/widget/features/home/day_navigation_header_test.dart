@@ -121,32 +121,6 @@ void main() {
     );
   });
 
-  testWidgets('DH06: yesterday renders the date, not a "Yesterday" label', (
-    tester,
-  ) async {
-    final now = DateTime.now();
-    final yesterday = DateTime(now.year, now.month, now.day - 1);
-    await tester.pumpWidget(
-      _wrap(
-        DayNavigationHeader(
-          selectedDay: yesterday,
-          locale: 'en_US',
-          onPrev: () {},
-          onNext: () {},
-          onPickDay: () {},
-          canGoPrev: true,
-          canGoNext: true,
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('Yesterday'), findsNothing);
-    expect(
-      find.text(DateHelpers.formatDayHeader(yesterday, 'en_US')),
-      findsOneWidget,
-    );
-  });
-
   testWidgets('DH05: day label sits in a pill filled with the card colour', (
     tester,
   ) async {

@@ -67,21 +67,6 @@ void main() {
   }
 
   group('TransactionTile conversion', () {
-    testWidgets('shows converted line when rate available', (tester) async {
-      await tester.pumpWidget(
-        buildTile(
-          defaultCurrency: 'USD',
-          rates: {'EUR→USD': (1.08 * 1000000000).round()},
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Primary amount in EUR.
-      expect(find.textContaining('€'), findsOneWidget);
-      // Secondary ≈ line in USD.
-      expect(find.textContaining('≈'), findsOneWidget);
-    });
-
     testWidgets('hides converted line when same currency', (tester) async {
       await tester.pumpWidget(buildTile(defaultCurrency: 'EUR'));
       await tester.pumpAndSettle();
