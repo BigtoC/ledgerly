@@ -176,7 +176,7 @@ lib/
     services/
       locale_service.dart
       exchange_rate_service.dart    # Dio-based HTTP client for FX rates
-      app_release_service.dart      # Dio: latest GitHub release lookup + APK download
+      app_release_service.dart      # Dio: latest GitHub release lookup + APK download; path_provider: <cache>/updates/
       apk_installer_service.dart    # Platform channel to Android's PackageInstaller
       csv_file_service.dart         # file_selector picker + file_picker save dialog; deletes platform temp copies
       package_info_service.dart     # package_info_plus: installed version + build number

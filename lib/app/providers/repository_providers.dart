@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:ffi' show Abi;
-import 'dart:io';
 
-import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/repositories/account_repository.dart';
@@ -176,12 +174,11 @@ ExchangeRateRepository exchangeRateRepository(Ref ref) {
 @Riverpod(keepAlive: true)
 AppUpdateRepository appUpdateRepository(Ref ref) {
   final packageInfo = ref.watch(packageInfoServiceProvider);
+  final releases = AppReleaseService(ref.watch(dioProvider));
   return AppUpdateRepository(
-    AppReleaseService(ref.watch(dioProvider)),
+    releases,
     installer: const ApkInstallerService(),
-    updatesDir: () async =>
-        Directory('${(await getTemporaryDirectory()).path}/updates')
-            .create(recursive: true),
+    updatesDir: releases.updatesDirectory,
     installedVersion: () async => (await packageInfo.read()).version,
     abi: Abi.current(),
   );
