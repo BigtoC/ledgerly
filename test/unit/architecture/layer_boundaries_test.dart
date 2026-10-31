@@ -80,6 +80,26 @@ import 'package:late/late.dart';
         'package:ledgerly/data/x.dart',
       );
     });
+
+    test('tells import directives from export directives', () {
+      const source = '''
+import 'a.dart';
+export 'b.dart' show B;
+export 'c.dart' if (dart.library.io) 'd.dart';
+import 'e.dart' if (dart.library.io) 'f.dart';
+''';
+      final found = _scanDirectives(source)
+          .map((d) => '${d.isExport ? 'export' : 'import'} ${d.uri}')
+          .toList();
+      expect(found, [
+        'import a.dart',
+        'export b.dart',
+        'export c.dart',
+        'export d.dart',
+        'import e.dart',
+        'import f.dart',
+      ]);
+    });
   });
 
   group('rules in $_rulesFile', () {
@@ -350,16 +370,20 @@ String _normalise(String path, String uri) {
 }
 
 class _Directive {
-  _Directive(this.line, this.uri);
+  _Directive(this.line, this.uri, {required this.isExport});
 
   final int line;
   final String uri;
+
+  /// Whether this came from an `export` directive rather than an `import`.
+  final bool isExport;
 }
 
 /// Reads the directive header of a Dart file: `library`, `import`,
 /// `export`, `part`, `part of`, and annotations, up to the first
 /// declaration. Dart only allows directives there, so the rest of the file
-/// is never parsed. Returns import/export URIs with their 1-based line.
+/// is never parsed. Returns import/export URIs with their 1-based line and
+/// whether the directive was an `export`.
 List<_Directive> _scanDirectives(String source) {
   final s = _Cursor(source);
   final result = <_Directive>[];
@@ -375,7 +399,9 @@ List<_Directive> _scanDirectives(String source) {
     if (!const {'library', 'import', 'export', 'part'}.contains(word)) break;
     final uris = s.readStatementStrings();
     if (word == 'import' || word == 'export') {
-      result.addAll(uris.map((u) => _Directive(line, u)));
+      result.addAll(
+        uris.map((u) => _Directive(line, u, isExport: word == 'export')),
+      );
     }
   }
   return result;
