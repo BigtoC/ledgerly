@@ -16,9 +16,9 @@
 #                              each lib/**/*.dart file (generated
 #                              *.g.dart / *.freezed.dart excluded), e.g.
 #                              `lib/features/home/home_screen.dart`.
-#   not_allow_import_reg_exps  matched against every import / export URI
-#                              in that file. Relative URIs are resolved
-#                              first and rewritten to
+#   not_allow_import_reg_exps  optional; matched against every import /
+#                              export URI in that file. Relative URIs are
+#                              resolved first and rewritten to
 #                              `package:ledgerly/...`, so one pattern
 #                              covers both forms.
 #   ignore_import_reg_exps     optional; a URI matching one of these is
