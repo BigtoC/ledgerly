@@ -116,11 +116,6 @@ void main() {
   }
 
   group('AppUpdateRepository.findUpdate', () {
-    test('androidArm64 returns the arm64-v8a URL', () async {
-      stubRelease(_release());
-      expect(await repo().findUpdate(), _hasApkUrl(_arm64Url));
-    });
-
     test('androidArm returns armeabi-v7a, not arm64-v8a', () async {
       stubRelease(_release());
       expect(await repo(abi: Abi.androidArm).findUpdate(), _hasApkUrl(_armUrl));

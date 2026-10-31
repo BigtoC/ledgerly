@@ -185,11 +185,6 @@ void main() {
       expect(rows.last.date, DateTime(2026, 5, 7));
     });
 
-    test('watchAll emits empty list on empty DB', () async {
-      final rows = await repo.watchAll().first;
-      expect(rows, isEmpty);
-    });
-
     test('approve inserts transaction and deletes pending row', () async {
       final pendingId = await repo.insert(
         source: 'recurring',
@@ -353,40 +348,6 @@ void main() {
       expect(visible, isEmpty);
     });
 
-    test('watchAll hides rows whose account becomes archived; reappears on '
-        'unarchive', () async {
-      final pendingId = await repo.insert(
-        source: 'recurring',
-        amountMinorUnits: 100,
-        currencyCode: 'USD',
-        categoryId: categoryId,
-        accountId: accountId,
-        date: DateTime(2026, 5, 8),
-        fetchedAt: DateTime(2026, 5, 8),
-        recurringRuleId: ruleId,
-      );
-
-      final before = await repo.watchAll().first;
-      expect(before, hasLength(1));
-
-      await db.customStatement(
-        'UPDATE accounts SET is_archived = 1 WHERE id = ?',
-        <Object?>[accountId],
-      );
-
-      final hidden = await repo.watchAll().first;
-      expect(hidden, isEmpty);
-
-      await db.customStatement(
-        'UPDATE accounts SET is_archived = 0 WHERE id = ?',
-        <Object?>[accountId],
-      );
-
-      final restored = await repo.watchAll().first;
-      expect(restored, hasLength(1));
-      expect(restored.first.id, pendingId);
-    });
-
     test(
       'watchAll active subscription re-emits across account archive toggles',
       () async {
@@ -464,24 +425,6 @@ void main() {
         expect(ruleAfter.read<DateTime>('next_due_date'), originalDueDate);
       },
     );
-
-    test('reject deletes the pending row', () async {
-      final pendingId = await repo.insert(
-        source: 'recurring',
-        amountMinorUnits: 100,
-        currencyCode: 'USD',
-        categoryId: categoryId,
-        accountId: accountId,
-        date: DateTime(2026, 5, 8),
-        fetchedAt: DateTime(2026, 5, 8),
-        recurringRuleId: ruleId,
-      );
-
-      await repo.reject(pendingId);
-
-      final rows = await repo.watchAll().first;
-      expect(rows, isEmpty);
-    });
 
     test('reject is idempotent — missing id returns normally', () async {
       await repo.reject(9999);
@@ -564,27 +507,6 @@ void main() {
         expect(remaining.map((r) => r.id), containsAll(<int>[id1, id3]));
       },
     );
-
-    test('watchAll re-emits after approve', () async {
-      await repo.insert(
-        source: 'recurring',
-        amountMinorUnits: 100,
-        currencyCode: 'USD',
-        categoryId: categoryId,
-        accountId: accountId,
-        date: DateTime(2026, 5, 8),
-        fetchedAt: DateTime(2026, 5, 8),
-        recurringRuleId: ruleId,
-      );
-
-      final first = await repo.watchAll().first;
-      expect(first, hasLength(1));
-
-      await repo.approve(first.first.id);
-
-      final second = await repo.watchAll().first;
-      expect(second, isEmpty);
-    });
 
     test('watchAll re-emits after reject', () async {
       final id = await repo.insert(

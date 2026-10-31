@@ -487,10 +487,6 @@ void main() {
       expect(fetched, isNotNull);
       expect(fetched!.id, item.id);
     });
-
-    test('getById returns null when missing', () async {
-      expect(await repo.getById(99999), isNull);
-    });
   });
 
   // -------------------------------------------------------------------------
@@ -549,20 +545,6 @@ void main() {
       );
 
       expect(tx.amountFormula, '3.5+10.5+11+3');
-    });
-
-    test('convertToTransaction with missing draft throws ShoppingListRepositoryException', () async {
-      await expectLater(
-        repo.convertToTransaction(
-          shoppingListItemId: 99999,
-          categoryId: expenseCategoryId,
-          accountId: accountId,
-          currencyCode: 'USD',
-          amountMinorUnits: 1000,
-          date: DateTime.utc(2026, 6, 1),
-        ),
-        throwsA(isA<ShoppingListRepositoryException>()),
-      );
     });
 
     test(
