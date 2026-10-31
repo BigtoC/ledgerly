@@ -23,8 +23,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  analyze-test:
-    name: Analyse + test
+  # The three jobs run in parallel. Generated files are committed, so only
+  # `analyze` runs build_runner, and it fails if the committed output is
+  # stale. `test` and `android-build` use the committed files as they are.
+  analyze:
+    name: Analyse
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -42,15 +45,14 @@ jobs:
       - name: Fetch packages
         run: flutter pub get --enforce-lockfile
 
-      - name: Enforce layer boundaries
-        # Rules and the baseline of known violations live in
-        # import_analysis_options.yaml. Fails on a new violation or a stale
-        # baseline entry. Also runs in the full suite below. See
-        # docs/architecture/dependencies.md.
-        run: flutter test test/unit/architecture/
-
-      - name: Generate code (Drift / Freezed / Riverpod / json_serializable)
-        run: dart run build_runner build --delete-conflicting-outputs
+      - name: Check generated code is up to date (Drift / Freezed / Riverpod / json_serializable)
+        run: |
+          dart run build_runner build --delete-conflicting-outputs
+          if [ -n "$(git status --porcelain)" ]; then
+            git status --porcelain
+            echo '::error::Generated files are stale. Run build_runner and commit the result.'
+            exit 1
+          fi
 
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed .
@@ -71,6 +73,30 @@ jobs:
             exit 1
           fi
 
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Flutter (stable)
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.9
+          cache: true
+
+      - name: Fetch packages
+        run: flutter pub get --enforce-lockfile
+
+      - name: Enforce layer boundaries
+        # Rules and the baseline of known violations live in
+        # import_analysis_options.yaml. Fails on a new violation or a stale
+        # baseline entry. Also runs in the full suite below. See
+        # docs/architecture/dependencies.md.
+        run: flutter test test/unit/architecture/
+
       - name: Run tests
         run: flutter test --reporter expanded
 
@@ -78,7 +104,6 @@ jobs:
     name: Android APK builds
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: analyze-test
     steps:
       - uses: actions/checkout@v7
 
@@ -87,6 +112,7 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
+          cache: gradle
 
       - name: Set up Flutter (stable)
         uses: subosito/flutter-action@v2
@@ -96,7 +122,6 @@ jobs:
           cache: true
 
       - run: flutter pub get --enforce-lockfile
-      - run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Check if signing secrets exist
         id: check-secrets
