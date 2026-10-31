@@ -35,6 +35,8 @@ import 'package:ledgerly/data/repositories/pending_transaction_repository.dart';
 import 'package:ledgerly/data/repositories/shopping_list_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/features/home/home_screen.dart';
+import 'package:ledgerly/features/home/widgets/day_navigation_header.dart';
+import 'package:ledgerly/features/home/widgets/summary_strip.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockTxRepo extends Mock implements TransactionRepository {}
@@ -350,6 +352,42 @@ void main() {
       expect(button.onPressed, isNull);
     },
   );
+
+  testWidgets('WH03c: day-nav row sits above the summary card and owns the '
+      'jump-to-today button', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(makeApp());
+    await seedAll(tester);
+
+    final today = DateTime.now();
+    final todayMidnight = DateTime(today.year, today.month, today.day);
+    dayCtrl.add(const []);
+    activityCtrl.add([todayMidnight]);
+    todayTotalsCtrl.add(const {'USD': (expense: 100, income: 0)});
+    monthNetCtrl.add(const {'USD': -100});
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(
+      tester.getRect(find.byType(DayNavigationHeader)).bottom,
+      lessThanOrEqualTo(tester.getRect(find.byType(SummaryStrip)).top),
+    );
+    expect(
+      find.descendant(
+        of: find.byType(DayNavigationHeader),
+        matching: find.text('Today'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(SummaryStrip),
+        matching: find.byType(TextButton),
+      ),
+      findsNothing,
+    );
+  });
 
   testWidgets(
     'WH04: archived category metadata still renders on historical row',

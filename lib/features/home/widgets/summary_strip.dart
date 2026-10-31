@@ -34,8 +34,6 @@ class SummaryStrip extends ConsumerWidget {
     required this.currenciesByCode,
     required this.locale,
     required this.defaultCurrency,
-    this.showJumpToToday = false,
-    this.onJumpToToday,
   });
 
   /// Selected-day's per-currency expense/income split.
@@ -56,14 +54,6 @@ class SummaryStrip extends ConsumerWidget {
   /// synchronously by the parent so the strip does not flicker through a
   /// `'USD'` fallback on cold start.
   final String defaultCurrency;
-
-  /// When true, the button at the top of the strip reads "Jump to today"
-  /// and is enabled; when false (already on today) it reads "Today" and
-  /// is disabled.
-  final bool showJumpToToday;
-
-  /// Called when the "Jump to today" button is tapped.
-  final VoidCallback? onJumpToToday;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -213,21 +203,7 @@ class SummaryStrip extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: showJumpToToday ? onJumpToToday : null,
-              child: Text(
-                showJumpToToday ? l10n.homeJumpToToday : l10n.homeDayLabelToday,
-              ),
-            ),
-          ),
-          content,
-        ],
-      ),
+      child: content,
     );
   }
 }

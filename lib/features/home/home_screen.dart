@@ -3,8 +3,8 @@
 // Layout (PRD → Layout Primitives → Home):
 //   Scaffold
 //     └─ CustomScrollView
+//         ├─ SliverToBoxAdapter — day-nav header (◀ {label} ▶ · jump to today)
 //         ├─ SliverToBoxAdapter — summary strip (currency-grouped)
-//         ├─ SliverToBoxAdapter — day-nav header (prev ◀ {label} ▶ next)
 //         ├─ SliverList — TransactionTile per row (reverse-chronological)
 //         └─ SliverPadding — FAB clearance
 //
@@ -381,20 +381,6 @@ class _SinglePane extends ConsumerWidget {
       slivers: [
         const SliverPadding(padding: EdgeInsets.only(top: 38)),
         SliverToBoxAdapter(
-          child: SummaryStrip(
-            todayTotalsByCurrency: data.todayTotalsByCurrency,
-            monthNetByCurrency: data.monthNetByCurrency,
-            currenciesByCode: currencies,
-            locale: locale,
-            defaultCurrency: defaultCurrency,
-            showJumpToToday: !DateHelpers.isSameDay(
-              data.selectedDay,
-              data.today,
-            ),
-            onJumpToToday: onJumpToToday,
-          ),
-        ),
-        SliverToBoxAdapter(
           child: DayNavigationHeader(
             selectedDay: data.selectedDay,
             locale: locale,
@@ -403,6 +389,20 @@ class _SinglePane extends ConsumerWidget {
             onPickDay: onPickDay,
             canGoPrev: data.canGoPrev,
             canGoNext: data.canGoNext,
+            showJumpToToday: !DateHelpers.isSameDay(
+              data.selectedDay,
+              data.today,
+            ),
+            onJumpToToday: onJumpToToday,
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: SummaryStrip(
+            todayTotalsByCurrency: data.todayTotalsByCurrency,
+            monthNetByCurrency: data.monthNetByCurrency,
+            currenciesByCode: currencies,
+            locale: locale,
+            defaultCurrency: defaultCurrency,
           ),
         ),
         const PendingSection(),

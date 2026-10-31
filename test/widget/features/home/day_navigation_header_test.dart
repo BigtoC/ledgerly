@@ -86,7 +86,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(TextButton));
+    await tester.tap(find.byKey(const ValueKey('homeDayHeader.pickDay')));
     await tester.pumpAndSettle();
     expect(picked, 1);
   });
@@ -109,7 +109,12 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Today'), findsNothing);
+    // The jump button on the right reads "Today"; the pill never does.
+    final pill = find.byKey(const ValueKey('homeDayHeader.pickDay'));
+    expect(
+      find.descendant(of: pill, matching: find.text('Today')),
+      findsNothing,
+    );
     expect(
       find.text(DateHelpers.formatDayHeader(now, 'en_US')),
       findsOneWidget,
@@ -159,9 +164,9 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    final button = tester.widget<TextButton>(find.byType(TextButton));
-    final colorScheme = Theme.of(tester.element(find.byType(TextButton)))
-        .colorScheme;
+    final pill = find.byKey(const ValueKey('homeDayHeader.pickDay'));
+    final button = tester.widget<TextButton>(pill);
+    final colorScheme = Theme.of(tester.element(pill)).colorScheme;
     expect(
       button.style?.backgroundColor?.resolve(<WidgetState>{}),
       colorScheme.surfaceContainer,
@@ -169,8 +174,135 @@ void main() {
     expect(button.style?.shape?.resolve(<WidgetState>{}), isA<StadiumBorder>());
     // The pill hugs the label instead of stretching between the chevrons.
     expect(
-      tester.getSize(find.byType(TextButton)).width,
-      lessThan(tester.getSize(find.byType(Row)).width / 2),
+      tester.getSize(pill).width,
+      lessThan(tester.getSize(find.byType(DayNavigationHeader)).width / 2),
     );
+  });
+
+  testWidgets('DH07: jump-to-today button fires onJumpToToday', (tester) async {
+    var jumped = false;
+    await tester.pumpWidget(
+      _wrap(
+        DayNavigationHeader(
+          selectedDay: DateTime.now(),
+          locale: 'en_US',
+          onPrev: () {},
+          onNext: () {},
+          onPickDay: () {},
+          canGoPrev: true,
+          canGoNext: true,
+          showJumpToToday: true,
+          onJumpToToday: () => jumped = true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Jump to today'));
+    await tester.pumpAndSettle();
+    expect(jumped, isTrue);
+  });
+
+  testWidgets('DH08: on today the button reads "Today" and is disabled', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        DayNavigationHeader(
+          selectedDay: DateTime.now(),
+          locale: 'en_US',
+          onPrev: () {},
+          onNext: () {},
+          onPickDay: () {},
+          canGoPrev: true,
+          canGoNext: false,
+          onJumpToToday: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Jump to today'), findsNothing);
+    final button = tester.widget<TextButton>(
+      find.ancestor(of: find.text('Today'), matching: find.byType(TextButton)),
+    );
+    expect(button.onPressed, isNull);
+  });
+
+  testWidgets('DH09: chevrons hug the pill on the left; jump button sits '
+      'at the right edge', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        DayNavigationHeader(
+          selectedDay: DateTime.now(),
+          locale: 'en_US',
+          onPrev: () {},
+          onNext: () {},
+          onPickDay: () {},
+          canGoPrev: true,
+          canGoNext: true,
+          showJumpToToday: true,
+          onJumpToToday: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final screenWidth = tester.getSize(find.byType(Scaffold)).width;
+    final pill = tester.getRect(
+      find.byKey(const ValueKey('homeDayHeader.pickDay')),
+    );
+    final next = tester.getRect(
+      find.widgetWithIcon(IconButton, Icons.chevron_right),
+    );
+    final jump = tester.getRect(
+      find.byKey(const ValueKey('homeDayHeader.jumpToToday')),
+    );
+    expect(next.left - pill.right, lessThan(8));
+    expect(next.right, lessThan(screenWidth / 2 + 40));
+    expect(jump.left, greaterThan(next.right));
+    expect(screenWidth - jump.right, lessThan(24));
+  });
+
+  testWidgets('DH10: at 2x text scale on a 360dp phone the date pill keeps '
+      'the row and the jump button moves below it', (tester) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.view.reset);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await tester.pumpWidget(
+      _wrap(
+        DayNavigationHeader(
+          selectedDay: DateTime(2026, 9, 30),
+          locale: 'en_US',
+          onPrev: () {},
+          onNext: () {},
+          onPickDay: () {},
+          canGoPrev: true,
+          canGoNext: true,
+          showJumpToToday: true,
+          onJumpToToday: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    final pill = tester.getRect(
+      find.byKey(const ValueKey('homeDayHeader.pickDay')),
+    );
+    final jump = tester.getRect(
+      find.byKey(const ValueKey('homeDayHeader.jumpToToday')),
+    );
+    final prev = tester.getRect(
+      find.widgetWithIcon(IconButton, Icons.chevron_left),
+    );
+    final next = tester.getRect(
+      find.widgetWithIcon(IconButton, Icons.chevron_right),
+    );
+    // The long label fills everything between the chevrons instead of
+    // ceding space to the jump button.
+    expect(
+      pill.width,
+      greaterThanOrEqualTo(360 - 16 - prev.width - next.width),
+    );
+    expect(jump.top, greaterThanOrEqualTo(pill.bottom));
   });
 }
