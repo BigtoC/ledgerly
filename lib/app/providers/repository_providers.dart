@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/repositories/account_repository.dart';
@@ -13,13 +12,12 @@ import '../../data/repositories/recurring_rules_repository.dart';
 import '../../data/repositories/shopping_list_repository.dart';
 import '../../data/repositories/transaction_repository.dart';
 import '../../data/repositories/user_preferences_repository.dart';
-import '../../data/services/csv_file_service.dart';
-import '../../data/services/exchange_rate_service.dart';
 import '../../data/use_cases/csv_export_use_case.dart';
 import '../../data/use_cases/csv_import_use_case.dart';
 import '../../data/use_cases/recurring_generation_use_case.dart';
 import 'app_database_provider.dart';
 import 'default_currency_provider.dart';
+import 'service_providers.dart';
 
 part 'repository_providers.g.dart';
 
@@ -95,11 +93,6 @@ RecurringGenerationUseCase recurringGenerationUseCase(Ref ref) {
   );
 }
 
-/// System file picker for CSV import. Tests override it with a fake that
-/// returns fixture bytes.
-@Riverpod(keepAlive: true, dependencies: [])
-CsvFileService csvFileService(Ref ref) => CsvFileService();
-
 /// CSV import use case. Lives here for the same reason as
 /// [recurringGenerationUseCase]: the controller reads it without importing
 /// `data/services/` or `data/database/`.
@@ -142,25 +135,6 @@ CsvExportUseCase csvExportUseCase(Ref ref) => CsvExportUseCase(
   categoryRepo: ref.watch(categoryRepositoryProvider),
   accountRepo: ref.watch(accountRepositoryProvider),
 );
-
-/// Shared HTTP client for every HTTP service. Conservative timeouts; the
-/// client is closed when the owning container is disposed.
-@Riverpod(keepAlive: true)
-Dio dio(Ref ref) {
-  final dio = Dio(
-    BaseOptions(
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
-    ),
-  );
-  ref.onDispose(dio.close);
-  return dio;
-}
-
-/// Exchange-rate HTTP service. Uses the shared [dioProvider] client.
-@Riverpod(keepAlive: true, dependencies: [])
-ExchangeRateService exchangeRateService(Ref ref) =>
-    ExchangeRateService(ref.watch(dioProvider));
 
 /// Exchange-rate repository. The constructor subscribes to DAO changes
 /// and default-currency changes immediately — so simply reading this

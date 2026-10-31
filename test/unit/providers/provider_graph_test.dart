@@ -15,6 +15,7 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 import 'package:ledgerly/app/providers/app_database_provider.dart';
 import 'package:ledgerly/app/providers/locale_service_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
+import 'package:ledgerly/app/providers/service_providers.dart';
 import 'package:ledgerly/data/database/app_database.dart';
 import 'package:ledgerly/data/services/csv_file_service.dart';
 import 'package:ledgerly/data/use_cases/csv_import_use_case.dart';

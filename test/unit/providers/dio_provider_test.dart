@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import 'package:ledgerly/app/providers/repository_providers.dart';
+import 'package:ledgerly/app/providers/service_providers.dart';
 
 class _MockDio extends Mock implements Dio {}
 

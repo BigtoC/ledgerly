@@ -10,7 +10,7 @@ import '../../data/models/app_update.dart';
 import '../../data/repositories/app_update_repository.dart';
 import '../../data/services/apk_installer_service.dart';
 import '../../data/services/app_release_service.dart';
-import 'repository_providers.dart';
+import 'service_providers.dart';
 
 part 'app_update_provider.g.dart';
 
