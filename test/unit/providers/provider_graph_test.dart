@@ -13,7 +13,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/app_database_provider.dart';
-import 'package:ledgerly/app/providers/locale_service_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/app/providers/service_providers.dart';
 import 'package:ledgerly/data/database/app_database.dart';
@@ -62,7 +61,6 @@ void main() {
         container.read(accountRepositoryProvider);
         container.read(transactionRepositoryProvider);
         container.read(userPreferencesRepositoryProvider);
-        container.read(localeServiceProvider);
       }, returnsNormally);
     });
 

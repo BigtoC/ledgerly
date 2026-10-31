@@ -130,7 +130,6 @@ lib/
       app_version_provider.dart
       theme_provider.dart
       locale_provider.dart
-      locale_service_provider.dart
       default_currency_provider.dart
       splash_redirect_provider.dart
       app_update_provider.dart

@@ -29,9 +29,8 @@
 # and services: `app/providers/service_providers.dart` (services)
 # everywhere under features/, and `app/providers/repository_providers.dart`
 # (repositories and use cases) everywhere except controllers and
-# *_providers.dart. `app_database_provider.dart` and
-# `locale_service_provider.dart` are not policed yet; no feature file
-# imports them. App-level values that widgets may read, such as
+# *_providers.dart. `app_database_provider.dart` is not policed yet; no
+# feature file imports it. App-level values that widgets may read, such as
 # `exchangeRatesProvider`, live in their own files under app/providers/.
 # Platform and I/O plugins belong in services (PRD), so every feature
 # rule forbids them too.
