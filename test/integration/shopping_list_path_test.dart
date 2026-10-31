@@ -221,57 +221,6 @@ void main() {
   // ---------------------------------------------------------------------------
 
   group('Path 2: category-name fallback for rows without memo', () {
-    testWidgets('preview card shows category name when draft has no memo', (
-      tester,
-    ) async {
-      final db = newTestAppDatabase();
-      addTearDown(db.close);
-
-      await tester.runAsync(() async {
-        await runTestSeed(db);
-        final foodId = await getSeededCategoryId(db, 'category.food');
-        final cash = await getDefaultAccount(db);
-
-        final repo = DriftShoppingListRepository(
-          db,
-          DriftTransactionRepository(db),
-        );
-        // Insert draft with NO memo — label should fall back to category name.
-        await repo.insert(
-          categoryId: foodId,
-          accountId: cash.id,
-          // memo intentionally omitted
-          draftDate: DateTime.now(),
-        );
-      });
-
-      final container = makeTestContainer(
-        db: db,
-        extraOverrides: [
-          splashGateSnapshotProvider.overrideWithValue(
-            SplashGateSnapshot.withInitial(enabled: false, startDate: null),
-          ),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      await tester.pumpWidget(buildTestApp(container: container));
-      await pumpToHome(tester);
-
-      // Tap the shopping-cart FAB on Home to navigate to ShoppingListScreen.
-      expect(find.byKey(const Key('homeShoppingListFab')), findsWidgets);
-      await tester.tap(find.byKey(const Key('homeShoppingListFab')).first);
-      await tester.pumpAndSettle();
-
-      expect(find.byType(ShoppingListScreen), findsOneWidget);
-      // The screen is in data state (not empty-state).
-      expect(find.text('No upcoming expenses saved'), findsNothing);
-      // At least one ListTile is rendered (data state confirmed).
-      expect(find.byType(ListTile), findsAtLeastNWidgets(1));
-
-      expect(tester.takeException(), isNull);
-    });
-
     testWidgets(
       'ShoppingListScreen row shows category name when draft has no memo',
       (tester) async {

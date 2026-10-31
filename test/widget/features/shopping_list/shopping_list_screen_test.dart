@@ -6,7 +6,6 @@
 //   - list of rows in data state
 //   - row tap navigates to /home/shopping-list/:id
 //   - row tap is disabled while pending delete is active
-//   - delete action shows undo snackbar
 //   - undo snackbar action cancels delete
 //   - error state shows retry button
 //   - rows have non-swipe delete affordance (overflow/trailing icon)
@@ -272,47 +271,6 @@ void main() {
 
     // Should NOT have navigated to the detail page
     expect(find.text('SHOPPING_ITEM_10'), findsNothing);
-  });
-
-  testWidgets('SLS06: delete action shows undo snackbar', (tester) async {
-    final mockRepo = _MockShoppingListRepository();
-    // The controller in this test needs a live (not fixed) stream to work.
-    // We use a stream that keeps open so the controller stays alive.
-    final ctrl = StreamController<List<ShoppingListItem>>.broadcast();
-    when(() => mockRepo.watchAll()).thenAnswer((_) => ctrl.stream);
-    when(() => mockRepo.delete(any())).thenAnswer((_) async => true);
-
-    final container = ProviderContainer(
-      overrides: [shoppingListRepositoryProvider.overrideWithValue(mockRepo)],
-    );
-    addTearDown(container.dispose);
-    addTearDown(ctrl.close);
-
-    final item = _item(id: 5, memo: 'Tea');
-    await tester.pumpWidget(_wrap(container: container));
-    await tester.pump();
-
-    // Feed the items
-    ctrl.add([item]);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Tea'), findsOneWidget);
-
-    // Slide item to reveal delete action
-    await tester.drag(find.text('Tea'), const Offset(-300, 0));
-    await tester.pumpAndSettle();
-
-    // Tap the delete action button
-    await tester.tap(find.text('Delete').last);
-    await tester.pumpAndSettle();
-
-    // Undo snackbar should appear
-    expect(find.text('Draft deleted'), findsOneWidget);
-    expect(find.text('Undo'), findsOneWidget);
-
-    // Cancel the pending timer by tapping Undo so no timer leaks.
-    await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
   });
 
   testWidgets('SLS07: undo snackbar action cancels delete', (tester) async {
