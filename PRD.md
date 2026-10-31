@@ -87,7 +87,7 @@ Ledgerly uses a strict 3-layer architecture: a **Data** layer (SSOT), an optiona
 
 These rules are enforced by `test/unit/architecture/layer_boundaries_test.dart` (rules and the pre-existing-violation baseline live in `import_analysis_options.yaml`; run as `flutter test test/unit/architecture/`) and by the `riverpod_lint` analysis-server plugin configured under `plugins:` in `analysis_options.yaml`.
 
-"Repositories" and "services" include the providers that build them. Only controllers and `*_providers.dart` may import `app/providers/repository_providers.dart`; no feature file may import `app/providers/service_providers.dart`. External SDKs belong in services, so no feature file may import a platform or I/O plugin such as `package_info_plus`, `dio`, `file_picker` or `file_selector`.
+"Repositories" and "services" include the providers that build them. Under `features/`, only controllers and `*_providers.dart` may import `app/providers/repository_providers.dart`, and no file may import `app/providers/service_providers.dart`. External SDKs belong in services, so no feature file may import a platform or I/O plugin such as `package_info_plus`, `dio`, `file_picker`, `file_selector` or `path_provider`.
 
 ### SSOT Rule
 
@@ -124,7 +124,7 @@ lib/
     bootstrap.dart           # Async init sequence, provider overrides
     providers/
       app_database_provider.dart
-      repository_providers.dart     # repositories + use cases; controllers and *_providers.dart only
+      repository_providers.dart     # repositories + use cases; in features/, controllers and *_providers.dart only
       service_providers.dart        # services (Dio, CSV files, package info); app/providers/ only
       exchange_rates_provider.dart
       app_version_provider.dart
