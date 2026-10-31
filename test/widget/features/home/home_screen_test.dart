@@ -35,6 +35,9 @@ import 'package:ledgerly/data/repositories/pending_transaction_repository.dart';
 import 'package:ledgerly/data/repositories/shopping_list_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/features/home/home_screen.dart';
+import 'package:ledgerly/features/home/widgets/day_navigation_header.dart';
+import 'package:ledgerly/features/home/widgets/summary_strip.dart';
+import 'package:ledgerly/features/home/widgets/transaction_tile.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockTxRepo extends Mock implements TransactionRepository {}
@@ -254,11 +257,39 @@ void main() {
       monthNetCtrl.add(const {'USD': -100});
       await tester.pump(const Duration(milliseconds: 200));
 
-      // Summary strip renders the expense label and amount; the
-      // label changed from "Today expense" to "Expense" to be day-neutral.
-      expect(find.text('Expense: '), findsOneWidget);
+      // Summary card renders the day net, month net and expense tile.
+      expect(find.text('Day net'), findsOneWidget);
+      expect(find.text('Month net'), findsOneWidget);
+      expect(find.text('Expense'), findsOneWidget);
     },
   );
+
+  testWidgets('WH02c: transaction list card has no shadow', (tester) async {
+    await tester.pumpWidget(makeApp());
+    await seedAll(tester);
+
+    final today = DateTime.now();
+    final todayMidnight = DateTime(today.year, today.month, today.day);
+    dayCtrl.add([
+      _tx(id: 1, date: todayMidnight.add(const Duration(hours: 9))),
+    ]);
+    activityCtrl.add([todayMidnight]);
+    todayTotalsCtrl.add(const {'USD': (expense: 100, income: 0)});
+    monthNetCtrl.add(const {'USD': -100});
+    await tester.pump(const Duration(milliseconds: 200));
+
+    final card = tester
+        .widgetList<Container>(
+          find.ancestor(
+            of: find.byType(TransactionTile),
+            matching: find.byType(Container),
+          ),
+        )
+        .map((c) => c.decoration)
+        .whereType<BoxDecoration>()
+        .single;
+    expect(card.boxShadow, isNull);
+  });
 
   testWidgets(
     'WH02b: no-history Home still shows pending section when rows exist',
@@ -350,6 +381,42 @@ void main() {
       expect(button.onPressed, isNull);
     },
   );
+
+  testWidgets('WH03c: day-nav row sits above the summary card and owns the '
+      'jump-to-today button', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(makeApp());
+    await seedAll(tester);
+
+    final today = DateTime.now();
+    final todayMidnight = DateTime(today.year, today.month, today.day);
+    dayCtrl.add(const []);
+    activityCtrl.add([todayMidnight]);
+    todayTotalsCtrl.add(const {'USD': (expense: 100, income: 0)});
+    monthNetCtrl.add(const {'USD': -100});
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(
+      tester.getRect(find.byType(DayNavigationHeader)).bottom,
+      lessThanOrEqualTo(tester.getRect(find.byType(SummaryStrip)).top),
+    );
+    expect(
+      find.descendant(
+        of: find.byType(DayNavigationHeader),
+        matching: find.text('Today'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(SummaryStrip),
+        matching: find.byType(TextButton),
+      ),
+      findsNothing,
+    );
+  });
 
   testWidgets(
     'WH04: archived category metadata still renders on historical row',
@@ -766,8 +833,8 @@ void main() {
     dayCtrl.add([_tx(id: 1, date: todayMidnight)]);
     activityCtrl.add([todayMidnight]);
     // Long formatted amounts (large minor-unit values) stress the
-    // summary chips most: `-$12,345.67` is wider than the chip's row
-    // can hold without `Flexible` wrappers.
+    // summary card most: at 2× its net and tile pairs stack so
+    // `-$12,345.67` keeps a full-width line.
     todayTotalsCtrl.add(const {'USD': (expense: 1234567, income: 0)});
     monthNetCtrl.add(const {'USD': -1234567});
     await tester.pump(const Duration(milliseconds: 200));

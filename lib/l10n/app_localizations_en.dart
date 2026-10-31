@@ -70,6 +70,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeSummaryMonthNet => 'Month net';
 
   @override
+  String get homeSummaryDayNet => 'Day net';
+
+  @override
+  String homeSummaryRatioLabel(int incomePercent, int expensePercent) {
+    return 'Income $incomePercent%, expense $expensePercent%';
+  }
+
+  @override
   String get errorSnackbarGeneric => 'Something went wrong. Please try again.';
 
   @override

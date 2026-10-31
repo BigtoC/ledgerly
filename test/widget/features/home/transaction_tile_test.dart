@@ -78,4 +78,24 @@ void main() {
         .colorScheme;
     expect(amount.style?.color, colorScheme.onSurface);
   });
+
+  testWidgets('TT02: the more-actions icon sits as far from the right edge '
+      'as the category avatar sits from the left', (tester) async {
+    await tester.pumpWidget(buildTile(CategoryType.expense));
+    await tester.pumpAndSettle();
+
+    final row = tester.getRect(find.byType(ListTile));
+    final avatar = tester.getRect(find.byType(CircleAvatar));
+    final more = tester.getRect(find.byIcon(Icons.more_vert));
+    expect(avatar.left - row.left, 16);
+    expect(row.right - more.right, avatar.left - row.left);
+    // The menu keeps a full 48dp touch target.
+    final button = tester.getSize(
+      find.ancestor(
+        of: find.byIcon(Icons.more_vert),
+        matching: find.byType(IconButton),
+      ),
+    );
+    expect(button.width, greaterThanOrEqualTo(48));
+  });
 }

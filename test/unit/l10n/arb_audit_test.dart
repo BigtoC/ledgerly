@@ -327,6 +327,10 @@ const Set<String> _expectedEnKeys = <String>{
   'convertedTotalLabel',
   'homeSummaryUnconvertedHeader',
 
+  // Home summary card redesign.
+  'homeSummaryDayNet',
+  'homeSummaryRatioLabel',
+
   // Basic charts (Phase 2)
   // (docs/superpowers/plans/2026-05-19-basic-charts.md).
   'chartsPeriodDay',

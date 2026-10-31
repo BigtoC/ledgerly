@@ -3,8 +3,8 @@
 // Layout (PRD → Layout Primitives → Home):
 //   Scaffold
 //     └─ CustomScrollView
+//         ├─ SliverToBoxAdapter — day-nav header (◀ {label} ▶ · jump to today)
 //         ├─ SliverToBoxAdapter — summary strip (currency-grouped)
-//         ├─ SliverToBoxAdapter — day-nav header (prev ◀ {label} ▶ next)
 //         ├─ SliverList — TransactionTile per row (reverse-chronological)
 //         └─ SliverPadding — FAB clearance
 //
@@ -381,20 +381,6 @@ class _SinglePane extends ConsumerWidget {
       slivers: [
         const SliverPadding(padding: EdgeInsets.only(top: 38)),
         SliverToBoxAdapter(
-          child: SummaryStrip(
-            todayTotalsByCurrency: data.todayTotalsByCurrency,
-            monthNetByCurrency: data.monthNetByCurrency,
-            currenciesByCode: currencies,
-            locale: locale,
-            defaultCurrency: defaultCurrency,
-            showJumpToToday: !DateHelpers.isSameDay(
-              data.selectedDay,
-              data.today,
-            ),
-            onJumpToToday: onJumpToToday,
-          ),
-        ),
-        SliverToBoxAdapter(
           child: DayNavigationHeader(
             selectedDay: data.selectedDay,
             locale: locale,
@@ -403,6 +389,20 @@ class _SinglePane extends ConsumerWidget {
             onPickDay: onPickDay,
             canGoPrev: data.canGoPrev,
             canGoNext: data.canGoNext,
+            showJumpToToday: !DateHelpers.isSameDay(
+              data.selectedDay,
+              data.today,
+            ),
+            onJumpToToday: onJumpToToday,
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: SummaryStrip(
+            todayTotalsByCurrency: data.todayTotalsByCurrency,
+            monthNetByCurrency: data.monthNetByCurrency,
+            currenciesByCode: currencies,
+            locale: locale,
+            defaultCurrency: defaultCurrency,
           ),
         ),
         const PendingSection(),
@@ -577,8 +577,8 @@ class _EmptyDayCard extends StatelessWidget {
 
 /// Rounded surface that wraps a single day's transaction rows. Mirrors
 /// the summary-strip card styling (`homePageCardBorderRadius`,
-/// `buildBoxShadow`, `surfaceContainer`) so the home page reads as a
-/// stack of consistent cards. The list is rendered as a `Column` rather
+/// `surfaceContainer`, no shadow) so the home page reads as a stack of
+/// consistent cards. The list is rendered as a `Column` rather
 /// than a sliver because a single day's row count is bounded; the
 /// outer `CustomScrollView` still drives vertical scrolling.
 @Dependencies([exchangeRates])
@@ -611,7 +611,6 @@ class _TransactionListCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(homePageCardBorderRadius),
-        boxShadow: [buildBoxShadow(homePageCardBorderRadius)],
       ),
       clipBehavior: Clip.antiAlias,
       child: Material(

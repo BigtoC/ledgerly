@@ -6,7 +6,7 @@ Layout primitives below cover screens with known unbounded-constraint or keyboar
 
 ## Required Widget Trees
 
-- **Home:** `CustomScrollView` with `SliverToBoxAdapter` (summary strip) + `SliverToBoxAdapter` (day-nav header with prev/next) + `PendingSection` sliver (auto-hides when no pending rows; cap at 5 visible tiles, rest behind "Show N more") + `SliverList` (selected day's transaction rows). Home shows one day at a time — there is no combined infinite day-list. Never nest `ListView` in `Column`.
+- **Home:** `CustomScrollView` with `SliverToBoxAdapter` (day-nav header with prev/next and `Jump to today`) + `SliverToBoxAdapter` (summary strip) + `PendingSection` sliver (auto-hides when no pending rows; cap at 5 visible tiles, rest behind "Show N more") + `SliverList` (selected day's transaction rows). Home shows one day at a time — there is no combined infinite day-list. Never nest `ListView` in `Column`.
 - **Add/Edit Transaction:** `Scaffold(resizeToAvoidBottomInset: false)` → `SafeArea` → `Column` with scrollable form `Expanded` above a fixed-height `CalculatorKeypad`. The keypad must not be covered by the soft keyboard.
 - **Category picker:** `ModalBottomSheet` → `CustomScrollView` with `SliverGrid` + `SliverList`.
 

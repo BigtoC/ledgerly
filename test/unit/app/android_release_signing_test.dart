@@ -23,13 +23,26 @@ void main() {
       expect(workflowSource, contains(r'[ -n "$STORE_PASSWORD" ]'));
     });
 
-    test('release and debug artifacts are published under different paths', () {
-      expect(workflowSource, contains('flutter build apk --release'));
-      expect(workflowSource, contains('flutter build apk --debug'));
-      expect(workflowSource, contains('ledgerly-release-apk'));
-      expect(workflowSource, contains('app-release.apk'));
-      expect(workflowSource, contains('ledgerly-debug-apk'));
-      expect(workflowSource, contains('app-debug.apk'));
+    test('signing secrets choose between a release and a debug build', () {
+      expect(
+        workflowSource,
+        contains(
+          "if: steps.check-secrets.outputs.available == 'true'\n"
+          '        run: flutter build apk --release',
+        ),
+      );
+      expect(
+        workflowSource,
+        contains(
+          "if: steps.check-secrets.outputs.available != 'true'\n"
+          '        run: flutter build apk --debug',
+        ),
+      );
+    });
+
+    test('Check builds APKs as a compile check without uploading them', () {
+      // Release APKs ship from android-release.yml on version tags.
+      expect(workflowSource, isNot(contains('actions/upload-artifact')));
     });
 
     test('key.properties path matches the decoded keystore location', () {

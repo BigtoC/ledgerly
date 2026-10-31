@@ -156,6 +156,10 @@ class TransactionTile extends ConsumerWidget {
       child: ListTile(
         onTap: onTap,
         isThreeLine: convertedText != null,
+        // The menu button pads its 24dp icon to a 48dp target, so a 4dp
+        // end inset puts the icon 16dp from the edge, matching the
+        // avatar's 16dp start inset.
+        contentPadding: const EdgeInsetsDirectional.only(start: 16, end: 4),
         leading: CircleAvatar(
           backgroundColor: color.withValues(alpha: 0.15),
           child: Icon(icon, color: color),
