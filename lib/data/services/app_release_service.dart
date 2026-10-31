@@ -11,8 +11,10 @@ typedef ReleaseAsset = ({String name, String url, String? digest, int? size});
 /// import rule forbids this layer from importing models or repositories.
 /// The download is a GET of a release asset URL with no user data.
 ///
-/// Throws [DioException] on network or HTTP errors; the repository catches
-/// it and logs only the exception type.
+/// Throws [DioException] on network or HTTP errors. A failed release lookup
+/// propagates through `AppUpdateRepository.findUpdate` to
+/// `AvailableAppUpdate.checkAfter`, which logs only the exception type; a
+/// failed download is wrapped by the repository.
 class AppReleaseService {
   AppReleaseService(this._dio);
 

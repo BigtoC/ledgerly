@@ -3,10 +3,12 @@
 // container, and exposes the update it found. It stops waiting after a
 // timeout so a startup refresh that never settles cannot cancel the check,
 // and it does not wait at all where no APK can be installed. Stale update
-// files are cleaned up once the check has finished.
+// files are cleaned up once the check has finished, but not after a failed
+// check, and a failure never escapes to the unawaited caller.
 
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -90,6 +92,27 @@ void main() {
         .checkAfter(Future.value());
 
     verify(() => repo.cleanUp(keep: _update)).called(1);
+  });
+
+  test('a failed check skips clean-up', () async {
+    when(() => repo.findUpdate())
+        .thenThrow(DioException(requestOptions: RequestOptions(path: '')));
+
+    await container
+        .read(availableAppUpdateProvider.notifier)
+        .checkAfter(Future.value());
+
+    verifyNever(() => repo.cleanUp(keep: any(named: 'keep')));
+  });
+
+  test('an Error during the check does not escape', () async {
+    when(() => repo.findUpdate()).thenThrow(StateError('no package info'));
+
+    await container
+        .read(availableAppUpdateProvider.notifier)
+        .checkAfter(Future.value());
+
+    verifyNever(() => repo.cleanUp(keep: any(named: 'keep')));
   });
 
   test('checks after the timeout when ready never completes', () {
