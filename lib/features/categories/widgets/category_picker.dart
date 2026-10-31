@@ -145,9 +145,11 @@ class _CategoryPickerSheet extends ConsumerWidget {
       SliverPadding(
         padding: const EdgeInsets.symmetric(horizontal: 12),
         sliver: SliverGrid(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 5,
-            mainAxisExtent: 88,
+            // Padding, icon and gap take 70px; the label row grows with
+            // the text scale so a short label keeps its scaled size.
+            mainAxisExtent: 70 + MediaQuery.textScalerOf(context).scale(18),
             crossAxisSpacing: 8,
             mainAxisSpacing: 8,
           ),
@@ -205,7 +207,7 @@ class _CategoryPickerTile extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

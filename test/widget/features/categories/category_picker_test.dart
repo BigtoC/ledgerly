@@ -13,7 +13,8 @@
 //     the same picker body and survive 2× text scale.
 //   - The <600dp sheet takes 90% of the screen height.
 //   - The grid shows five tiles per row, and a long label shrinks to fit
-//     its tile on one line instead of wrapping.
+//     its tile on one line instead of wrapping. Tiles grow with the text
+//     scale, and the icon keeps its size on a 320dp phone.
 //   - Omitting `type` lists expense categories, then income categories
 //     below them.
 
@@ -50,11 +51,12 @@ Widget _hostApp({
   required ProviderContainer container,
   required Future<Category?> Function(BuildContext) onLaunch,
   Size size = const Size(400, 800),
+  TextScaler textScaler = TextScaler.noScaling,
 }) {
   return UncontrolledProviderScope(
     container: container,
     child: MediaQuery(
-      data: MediaQueryData(size: size),
+      data: MediaQueryData(size: size, textScaler: textScaler),
       child: MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
@@ -340,8 +342,10 @@ void main() {
       List<Category> income = const [],
       CategoryType? type = CategoryType.expense,
       void Function(Category?)? onPicked,
+      Size size = const Size(400, 800),
+      TextScaler textScaler = TextScaler.noScaling,
     }) async {
-      await tester.binding.setSurfaceSize(const Size(400, 800));
+      await tester.binding.setSurfaceSize(size);
       addTearDown(() => tester.binding.setSurfaceSize(null));
       final container = ProviderContainer(
         overrides: [
@@ -355,6 +359,8 @@ void main() {
       await tester.pumpWidget(
         _hostApp(
           container: container,
+          size: size,
+          textScaler: textScaler,
           onLaunch: (ctx) async {
             final picked = await showCategoryPicker(ctx, type: type);
             onPicked?.call(picked);
@@ -484,6 +490,38 @@ void main() {
       expect(find.text('Pick income category'), findsOneWidget);
       expect(find.text('Salary'), findsOneWidget);
       expect(find.textContaining('Create one'), findsNothing);
+    });
+
+    testWidgets('P12: at 2x text scale a short label renders at 2x', (
+      tester,
+    ) async {
+      await openPicker(
+        tester,
+        // The test font draws square glyphs; two letters fit the tile's
+        // width at 2x, so only the tile height could shrink the label.
+        expense: [_c(id: 1, type: CategoryType.expense, customName: 'TV')],
+        textScaler: const TextScaler.linear(2),
+      );
+
+      // bodySmall has a 16px line height, so 2x is 32px.
+      expect(tester.getRect(find.text('TV')).height, closeTo(32, 0.5));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('P13: the icon keeps its 48px circle on a 320dp phone', (
+      tester,
+    ) async {
+      await openPicker(
+        tester,
+        size: const Size(320, 640),
+        expense: [_c(id: 1, type: CategoryType.expense, customName: 'Food')],
+      );
+
+      final circle = find.ancestor(
+        of: find.byType(Icon),
+        matching: find.byType(Container),
+      );
+      expect(tester.getSize(circle.first), const Size(48, 48));
     });
   });
 }
