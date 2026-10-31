@@ -44,4 +44,8 @@ void main() {
 
     expect(opened, isFalse);
   });
+
+  test("defaultLaunch is url_launcher's launchUrl", () {
+    expect(defaultLaunch, same(launchUrl));
+  });
 }

@@ -34,8 +34,9 @@
 # (repositories and use cases) everywhere except controllers and
 # *_providers.dart. App-level values that widgets may read, such as
 # `exchangeRatesProvider`, live in their own files under app/providers/.
-# Platform and I/O plugins belong in services (PRD), so every feature
-# rule forbids them too.
+# Platform and I/O plugins belong in services, or in a core/ wrapper such
+# as `core/utils/system_browser.dart` (PRD), so every feature rule forbids
+# them too.
 rules:
   # Widgets (features/*/*_screen.dart) may only import their own
   # controller and UI primitives — no repositories, services, DB, DAOs,
@@ -57,6 +58,7 @@ rules:
       - "^package:dio/"
       - "^package:file_picker/"
       - "^package:file_selector/"
+      - "^package:url_launcher/"
     ignore_import_reg_exps: []
 
   widget_helpers_forbid_data_internals:
@@ -75,6 +77,7 @@ rules:
       - "^package:dio/"
       - "^package:file_picker/"
       - "^package:file_selector/"
+      - "^package:url_launcher/"
     ignore_import_reg_exps: []
 
   # Controllers may import repositories, use cases, domain models —
@@ -94,6 +97,7 @@ rules:
       - "^package:dio/"
       - "^package:file_picker/"
       - "^package:file_selector/"
+      - "^package:url_launcher/"
     ignore_import_reg_exps: []
 
   # State classes stay presentation-only: domain models fine, data
@@ -114,6 +118,7 @@ rules:
       - "^package:dio/"
       - "^package:file_picker/"
       - "^package:file_selector/"
+      - "^package:url_launcher/"
     ignore_import_reg_exps: []
 
   # Slice-local helper providers (features/**/*_providers.dart) sit next
@@ -134,6 +139,7 @@ rules:
       - "^package:dio/"
       - "^package:file_picker/"
       - "^package:file_selector/"
+      - "^package:url_launcher/"
     ignore_import_reg_exps: []
 
   # Catch-all for every other feature file: widgets not named
@@ -160,6 +166,7 @@ rules:
       - "^package:dio/"
       - "^package:file_picker/"
       - "^package:file_selector/"
+      - "^package:url_launcher/"
     ignore_import_reg_exps: []
 
   # No feature file may re-export what widgets may not import. Each rule

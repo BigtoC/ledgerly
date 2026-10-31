@@ -181,6 +181,7 @@ import 'e.dart' if (dart.library.io) 'f.dart';
         'package:file_picker/file_picker.dart',
         'package:file_selector/file_selector.dart',
         'package:path_provider/path_provider.dart',
+        'package:url_launcher/url_launcher.dart',
       ];
       for (final path in featureFiles) {
         for (final plugin in plugins) {
