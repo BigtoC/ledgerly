@@ -267,6 +267,17 @@ rules:
       - "^package:file_selector/"
     ignore_import_reg_exps: []
 
+  # App-level widgets (e.g. the adaptive shell) follow the feature widget
+  # rule's repository and service restrictions: they read app-level values
+  # such as `availableAppUpdateProvider`, never the providers that build
+  # repositories or services.
+  app_widgets_forbid_repository_and_service_providers:
+    search_file_path_reg_exp: "^lib/app/widgets/.*\\.dart$"
+    not_allow_import_reg_exps:
+      - "^package:ledgerly/app/providers/repository_providers\\.dart$"
+      - "^package:ledgerly/app/providers/service_providers\\.dart$"
+    ignore_import_reg_exps: []
+
 # Violations that predate enforcement (import_lint 0.1.6 never matched a
 # rule, so nothing was checked until the test above replaced it). Each is
 # tolerated so that only NEW violations fail. Fix the code, then delete

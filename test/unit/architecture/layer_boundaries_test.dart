@@ -246,6 +246,23 @@ import 'e.dart' if (dart.library.io) 'f.dart';
         expect(forbidden(serviceProvidersFile, uri), isFalse, reason: uri);
       }
     });
+
+    test('app widgets may not import the repository or service providers', () {
+      const appWidget = 'lib/app/widgets/adaptive_shell.dart';
+      expect(forbidden(appWidget, repositoryProviders), isTrue);
+      expect(forbidden(appWidget, serviceProviders), isTrue);
+      expect(
+        forbidden(appWidget, '../providers/repository_providers.dart'),
+        isTrue,
+      );
+      expect(
+        forbidden(
+          appWidget,
+          'package:ledgerly/app/providers/app_update_provider.dart',
+        ),
+        isFalse,
+      );
+    });
   });
 
   test('lib/ respects the layer-boundary rules in $_rulesFile', () {
