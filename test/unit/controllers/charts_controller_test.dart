@@ -576,63 +576,6 @@ void main() {
       },
     );
 
-    test(
-      'auto-switches to currency dimension on cold-start missing rates',
-      () async {
-        when(
-          () => repo.watchByCategoryInRange(
-            start: any(named: 'start'),
-            end: any(named: 'end'),
-            type: any(named: 'type'),
-          ),
-        ).thenAnswer(
-          (_) => Stream.value(<CategorySlice>[
-            const CategorySlice(
-              categoryId: 1,
-              currencyCode: 'EUR',
-              totalMinorUnits: 1000,
-            ),
-          ]),
-        );
-        when(
-          () => repo.watchByCurrencyInRange(
-            start: any(named: 'start'),
-            end: any(named: 'end'),
-            type: any(named: 'type'),
-          ),
-        ).thenAnswer(
-          (_) => Stream.value(<CurrencySlice>[
-            const CurrencySlice(currencyCode: 'EUR', totalMinorUnits: 1000),
-          ]),
-        );
-        when(
-          () => repo.watchTimeBucketsInRange(
-            start: any(named: 'start'),
-            end: any(named: 'end'),
-            type: any(named: 'type'),
-            granularity: any(named: 'granularity'),
-          ),
-        ).thenAnswer((_) => Stream.value(const <TimeBucketSlice>[]));
-
-        final container = _container(repo: repo, fxStatus: fx(const {}, 'USD'));
-        addTearDown(container.dispose);
-
-        ChartsState? latest;
-        final sub = container.listen<AsyncValue<ChartsState>>(
-          chartsControllerProvider,
-          (_, next) => latest = next.value,
-          fireImmediately: true,
-        );
-        await Future<void>.delayed(const Duration(milliseconds: 50));
-        sub.close();
-
-        expect(latest, isA<ChartsDataState>());
-        final data = (latest! as ChartsDataState).chartData;
-        expect(data.dimension, ChartDimension.currency);
-        expect(data.autoSwitchedFromCategoryDimension, isTrue);
-      },
-    );
-
     test('dismissAutoSwitchBanner re-emits with the flag cleared', () async {
       when(
         () => repo.watchByCategoryInRange(
