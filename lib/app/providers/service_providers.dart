@@ -3,14 +3,14 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/services/csv_file_service.dart';
 import '../../data/services/exchange_rate_service.dart';
+import '../../data/services/package_info_service.dart';
 
 part 'service_providers.g.dart';
 
-// Service providers. Only app-layer providers that build repositories,
-// use cases or the app-update check import this file. The layer rules in
+// Service providers. Only `lib/app/providers/` imports this file, to
+// build repositories, use cases and app-level values. The layer rules in
 // `import_analysis_options.yaml` forbid it everywhere under
-// `lib/features/`, so features reach services only through a repository
-// or a use case.
+// `lib/features/`, so features reach a service only through one of those.
 
 /// Shared HTTP client for every HTTP service. Conservative timeouts; the
 /// client is closed when the owning container is disposed.
@@ -35,3 +35,7 @@ ExchangeRateService exchangeRateService(Ref ref) =>
 /// returns fixture bytes.
 @Riverpod(keepAlive: true, dependencies: [])
 CsvFileService csvFileService(Ref ref) => CsvFileService();
+
+/// Installed app version, read from the platform.
+@Riverpod(keepAlive: true)
+PackageInfoService packageInfoService(Ref ref) => const PackageInfoService();

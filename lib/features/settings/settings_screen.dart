@@ -18,13 +18,13 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../app/providers/app_update_provider.dart';
+import '../../app/providers/app_version_provider.dart';
 import '../../app/providers/default_currency_provider.dart';
 import '../../app/providers/exchange_rates_provider.dart';
 import '../../core/constants.dart';
 import '../../l10n/app_localizations.dart';
 import '../accounts/accounts_controller.dart';
 import 'settings_controller.dart';
-import 'settings_providers.dart';
 import 'settings_state.dart';
 import 'widgets/manage_accounts_tile.dart';
 import 'widgets/default_currency_tile.dart';
@@ -77,7 +77,7 @@ class _SettingsBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final packageInfo = ref.watch(packageInfoProvider);
+    final appVersion = ref.watch(appVersionProvider);
     final update = ref.watch(availableAppUpdateProvider);
     const EdgeInsets cardPadding = EdgeInsets.symmetric(
       horizontal: homePageCardHorizontalPadding - 16,
@@ -164,7 +164,7 @@ class _SettingsBody extends ConsumerWidget {
                   GestureDetector(
                     onTap: () => context.push('/settings/about'),
                     child: Text(
-                      packageInfo
+                      appVersion
                               .whenData(
                                 (info) =>
                                     'v${info.version}+${info.buildNumber}',

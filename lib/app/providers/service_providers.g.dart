@@ -157,3 +157,56 @@ final class CsvFileServiceProvider
 }
 
 String _$csvFileServiceHash() => r'55d5f03b94b6deba083b3656e22a9bc1598b0cb1';
+
+/// Installed app version, read from the platform.
+
+@ProviderFor(packageInfoService)
+final packageInfoServiceProvider = PackageInfoServiceProvider._();
+
+/// Installed app version, read from the platform.
+
+final class PackageInfoServiceProvider
+    extends
+        $FunctionalProvider<
+          PackageInfoService,
+          PackageInfoService,
+          PackageInfoService
+        >
+    with $Provider<PackageInfoService> {
+  /// Installed app version, read from the platform.
+  PackageInfoServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'packageInfoServiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$packageInfoServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<PackageInfoService> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  PackageInfoService create(Ref ref) {
+    return packageInfoService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PackageInfoService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PackageInfoService>(value),
+    );
+  }
+}
+
+String _$packageInfoServiceHash() =>
+    r'a1fa9d164b92ae9a9e54e503b578a34f81ce8b61';

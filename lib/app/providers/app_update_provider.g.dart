@@ -62,7 +62,7 @@ final class AppUpdateRepositoryProvider
 }
 
 String _$appUpdateRepositoryHash() =>
-    r'27feb361942b9a87e74db8d0a4b1e559911e1c3c';
+    r'107ed987f42d1c9c3d96dccc666ca6a4044a1aaa';
 
 /// The newer release, or null. `build()` has no side effects; `App`
 /// triggers [checkAfter] once per launch after the first frame.
