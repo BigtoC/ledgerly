@@ -15,10 +15,6 @@ import 'package:ledgerly/core/utils/color_palette.dart';
 
 void main() {
   group('kCategoryColorPalette', () {
-    test('exposes at least one MD3 baseline colour', () {
-      expect(kCategoryColorPalette, isNotEmpty);
-    });
-
     test('palette indices resolve to PRD-specified MD3 baseline hexes', () {
       // PRD.md 459-491, 497-500 — MD3 baseline hexes.
       expect(

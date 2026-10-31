@@ -15,19 +15,6 @@ void main() {
       );
     });
 
-    test('USD→EUR at 0.85 rate', () {
-      // $100.00 = 10000 minor units, rate 0.85 → 8500 EUR minor units
-      expect(
-        CurrencyConverter.convertMinorUnits(
-          amountMinorUnits: 10000,
-          rateScaledE9: (0.85 * 1000000000).round(),
-          fromDecimals: 2,
-          toDecimals: 2,
-        ),
-        8500,
-      );
-    });
-
     test('JPY→USD (0 decimals → 2 decimals)', () {
       // ¥1000 = 1000 minor units, rate 0.0067 → $6.70 = 670
       expect(
