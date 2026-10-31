@@ -319,6 +319,7 @@
   "chartsBarChart": "長條圖",
   "chartsExcludedCurrencies": "已排除：{codes} — 尚未取得匯率",
   "@chartsExcludedCurrencies": { "placeholders": { "codes": { "type": "String" } } },
+  "chartsNetTotal": "淨額",
   "settingsNewVersionBadge": "新版本",
   "settingsNewVersionOpenFailed": "無法開啟下載連結",
   "settingsUpdateConfirmTitle": "更新至 {version}？",

@@ -1062,6 +1062,8 @@
     "description": "Ribbon shown above a category/account chart when some currencies were dropped because their FX rate was missing. {codes} is a comma-separated currency-code list (e.g. 'EUR, JPY').",
     "placeholders": { "codes": { "type": "String" } }
   },
+  "chartsNetTotal": "Net",
+  "@chartsNetTotal": { "description": "Label of the small box above the Analysis chart showing income minus expense for the selected period." },
   "settingsNewVersionBadge": "new version",
   "@settingsNewVersionBadge": { "description": "Pink badge to the right of the app version at the bottom of Settings when a newer GitHub release exists; tapping offers to download and install the APK in the app." },
   "settingsNewVersionOpenFailed": "Could not open the download link",

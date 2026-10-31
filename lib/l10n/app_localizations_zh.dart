@@ -902,6 +902,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get chartsNetTotal => 'Net';
+
+  @override
   String get settingsNewVersionBadge => 'new version';
 
   @override
@@ -2065,6 +2068,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
+  String get chartsNetTotal => '净额';
+
+  @override
   String get settingsNewVersionBadge => '新版本';
 
   @override
@@ -3208,6 +3214,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String chartsExcludedCurrencies(String codes) {
     return '已排除：$codes — 尚未取得匯率';
   }
+
+  @override
+  String get chartsNetTotal => '淨額';
 
   @override
   String get settingsNewVersionBadge => '新版本';

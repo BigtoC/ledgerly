@@ -13,7 +13,7 @@ symptoms:
 root_cause: config_error
 resolution_type: code_fix
 severity: high
-last_refreshed: 2026-10-23
+last_refreshed: 2026-10-31
 related_components:
   - category_search_detail_controller
   - analysis_controller
@@ -96,7 +96,7 @@ Strengthen the widget test so this regression class can't slip through again. Th
 `test/widget/features/analysis/category_search_detail_screen_test.dart`:
 
 ```dart
-verifyNever(() => tx.watchByMemo('coffee'));
+verify(() => tx.watchByMemo('coffee')).called(1); // detail always opens its own subscription
 expect(find.byType(CategorySearchDetailScreen), findsOneWidget);
 // Detail must render the row from cached data, not the error state.
 // Without this assertion, a Riverpod `dependencies` violation in the
@@ -114,16 +114,17 @@ expect(find.text(l10n.analysisErrorMessage), findsNothing);
 Before the assertion was visible, the bug looked like a generic feature failure. Attaching a `ProviderObserver` to the root `ProviderScope` made the underlying error visible:
 
 ```dart
-class _ProviderErrorLogger extends ProviderObserver {
+// Riverpod 3 API (ProviderObserver is an abstract base class).
+final class _ProviderErrorLogger extends ProviderObserver {
   const _ProviderErrorLogger();
 
   @override
   void providerDidFail(
-    ProviderBase<Object?> provider,
+    ProviderObserverContext context,
     Object error,
     StackTrace stackTrace,
-    ProviderContainer container,
   ) {
+    final provider = context.provider;
     debugPrint(
       '[provider-fail] ${provider.name ?? provider.runtimeType}: $error\n$stackTrace',
     );
@@ -141,11 +142,11 @@ Use this any time an `AsyncValue` enters the error branch but no exception lands
 
 ## Why This Works
 
-Riverpod's `dependencies` parameter declares the scoping contract: any scoped provider this provider reads must either share the same scope ancestry or be listed in `dependencies`. The runtime assertion at `_debugAssertCanDependOn` (`element.dart:639`) enforces this in debug builds. Adding `AnalysisController` to the list:
+Riverpod's `dependencies` parameter declares the scoping contract: any scoped provider this provider reads must either share the same scope ancestry or be listed in `dependencies`. A runtime assertion enforces this in debug builds (`_debugAssertCanDependOn` at `element.dart:639` in Riverpod 2.6), and riverpod_lint's `provider_dependencies` rule now also flags it statically. Adding `AnalysisController` to the list:
 
 1. Tells Riverpod that this provider's transitive dependency closure includes `analysisControllerProvider` and everything *it* depends on.
-2. Allows `ref.read(analysisControllerProvider)` and `ref.read(analysisControllerProvider.notifier).lastTransactions` to pass the assertion.
-3. Keeps the cache-reuse path working without regressing the standalone path (the detail provider still falls back to `repo.watchByMemo` when no active analysis state exists).
+2. Allows `ref.read(analysisControllerProvider)` to pass the assertion. (The `.notifier).lastTransactions` read was later removed; the detail controller now pre-fills from `AnalysisResults.transactions`.)
+3. Keeps the cache-reuse path working. (The detail provider was later changed to always open its own `repo.watchByMemo` subscription; the cached results are only a synchronous pre-fill.)
 
 At the time, regenerating for `keepAlive: true` was a separate fix that was also needed. The family provider was running as `autoDispose` at runtime because the source annotation had drifted ahead of the generated code. Both issues had to be fixed; fixing either one alone left the bug.
 
@@ -159,7 +160,7 @@ At the time, regenerating for `keepAlive: true` was a separate fix that was also
 
 ## Prevention
 
-- **Whenever you add `ref.read(otherScopedProvider)` or `ref.watch(otherScopedProvider)` inside a `@Riverpod`-annotated provider, immediately add that provider to your own `dependencies` list.** The runtime assertion only fires in debug builds and only when the read path is exercised — easy to miss in static review.
+- **Whenever you add `ref.read(otherScopedProvider)` or `ref.watch(otherScopedProvider)` inside a `@Riverpod`-annotated provider, immediately add that provider to your own `dependencies` list.** For `@Riverpod`-annotated providers, riverpod_lint's `provider_dependencies` rule now flags the missing entry, and CI fails on it via `dart analyze --fatal-infos` (`flutter analyze` does not reliably report plugin warnings). When this bug happened, riverpod_lint ran only through custom_lint, which CI never invoked, so only the debug-build runtime assertion could catch it. Adding the entry also cascades into `@Dependencies` lists on widgets, `lib/app/router.dart` and tests; see [the derived-provider learning](../best-practices/adding-derived-riverpod-provider-to-scoped-analysis-screen.md).
 
 - **Re-run `dart run build_runner build --delete-conflicting-outputs` after every edit to a file that has a generated part.** This covers more than changes to a `@Riverpod` annotation (`keepAlive`, `dependencies`, `family` parameters).
   - The generated `.g.dart` encodes runtime behavior. An annotation change has no effect until you regenerate.
@@ -174,7 +175,8 @@ At the time, regenerating for `keepAlive: true` was a separate fix that was also
 
 ## Related Issues
 
-- [`docs/solutions/logic-errors/transaction-search-analysis-regressions-2026-05-10.md`](../logic-errors/transaction-search-analysis-regressions-2026-05-10.md) — same module, same day, same files. Covers a different root cause (state-machine flattening of metadata-readiness) but flags the same `category_search_detail_controller.dart` as a hotspot for reuse-of-shared-analysis-state regressions. Should be updated to add a back-reference to this doc.
+- [`docs/solutions/logic-errors/transaction-search-analysis-regressions-2026-05-10.md`](../logic-errors/transaction-search-analysis-regressions-2026-05-10.md) — same module, same day, same files. Covers a different root cause (state-machine flattening of metadata-readiness) but flags the same `category_search_detail_controller.dart` as a hotspot for reuse-of-shared-analysis-state regressions.
+- [`docs/solutions/best-practices/adding-derived-riverpod-provider-to-scoped-analysis-screen.md`](../best-practices/adding-derived-riverpod-provider-to-scoped-analysis-screen.md) — the static side of the same contract: the `provider_dependencies` lint and its cascade into widget, router and test `@Dependencies` lists.
 - [`docs/solutions/performance-issues/flutter-performance-audit-riverpod-lifecycle-and-emit-path-fixes.md`](../performance-issues/flutter-performance-audit-riverpod-lifecycle-and-emit-path-fixes.md) — removed this provider's `keepAlive` (family leak) and widened the regen rule to body-only edits.
 - [`docs/solutions/best-practices/reactive-feature-flow-ownership-2026-04-25.md`](../best-practices/reactive-feature-flow-ownership-2026-04-25.md) — broader Riverpod ownership pattern (router → repo → controller → widget). This learning reinforces the contract at the provider-declaration layer.
 - Verified with:

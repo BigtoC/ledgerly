@@ -1714,6 +1714,12 @@ abstract class AppLocalizations {
   /// **'Excluded: {codes} — no exchange rate yet'**
   String chartsExcludedCurrencies(String codes);
 
+  /// Label of the small box above the Analysis chart showing income minus expense for the selected period.
+  ///
+  /// In en, this message translates to:
+  /// **'Net'**
+  String get chartsNetTotal;
+
   /// Pink badge to the right of the app version at the bottom of Settings when a newer GitHub release exists; tapping offers to download and install the APK in the app.
   ///
   /// In en, this message translates to:

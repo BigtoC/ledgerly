@@ -901,6 +901,44 @@ void main() {
     });
   });
 
+  group('watchNetByCurrencyInRange', () {
+    test('R-bound-01: start is inclusive, end is exclusive', () async {
+      final start = DateTime(2026, 4, 6);
+      final end = DateTime(2026, 4, 13);
+
+      await txRepo.save(
+        sampleTx(
+          amount: 100,
+          categoryId: fixtures.expenseCategoryId,
+          date: DateTime(2026, 4, 5, 23, 59),
+        ),
+      );
+      await txRepo.save(
+        sampleTx(
+          amount: 300,
+          categoryId: fixtures.incomeCategoryId,
+          date: start,
+        ),
+      );
+      await txRepo.save(
+        sampleTx(
+          amount: 50,
+          categoryId: fixtures.expenseCategoryId,
+          date: DateTime(2026, 4, 12, 23, 59),
+        ),
+      );
+      await txRepo.save(
+        sampleTx(amount: 999, categoryId: fixtures.incomeCategoryId, date: end),
+      );
+
+      final net = await txRepo
+          .watchNetByCurrencyInRange(start: start, end: end)
+          .first;
+      // +300 - 50 = +250
+      expect(net, {'USD': 250});
+    });
+  });
+
   // -------------------------------------------------------------------------
   // CSV import write + duplicate-detection read paths.
   // -------------------------------------------------------------------------

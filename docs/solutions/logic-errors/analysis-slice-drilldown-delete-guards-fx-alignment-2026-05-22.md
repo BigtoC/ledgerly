@@ -80,9 +80,9 @@ Future<void> delete(int id) async {
   _emitFromCache();
   _undoTimer = Timer(kUndoWindow, () async {
     if (startedGeneration != _generation) return;
-    final pending = _pendingDeleteId;
-    if (pending == null) return;
-    await _commitOnce(pending, generation: startedGeneration);
+    final p = _pendingDeleteId;
+    if (p == null) return;
+    await _commit(p, generation: startedGeneration);
   });
 }
 ```

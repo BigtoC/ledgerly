@@ -10,12 +10,14 @@ import '../../../data/models/currency.dart';
 import '../../../l10n/app_localizations.dart';
 import '../search/analysis_providers.dart';
 import 'charts_controller.dart';
+import 'charts_net_total_provider.dart';
 import 'charts_providers.dart';
 import 'charts_selection_controller.dart';
 import 'charts_state.dart';
 import 'slice_drilldown_controller.dart';
 import 'widgets/category_pie_chart.dart';
 import 'widgets/chart_legend.dart';
+import 'widgets/charts_net_total_card.dart';
 import 'widgets/daily_bar_chart.dart';
 import 'widgets/dimension_toggle.dart';
 import 'widgets/period_selector.dart';
@@ -31,6 +33,7 @@ import 'widgets/type_toggle.dart';
   analysisCategoriesById,
   analysisAccountsById,
   chartsFxStatus,
+  chartsNetTotal,
 ])
 class ChartsSection extends ConsumerStatefulWidget {
   const ChartsSection({super.key});
@@ -349,6 +352,8 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
           dimension: dimension,
           onChanged: selectionNotifier.setDimension,
         ),
+        const SizedBox(height: 16),
+        const ChartsNetTotalCard(),
         const SizedBox(height: 16),
         if (chartData?.autoSwitchedFromCategoryDimension ?? false)
           Padding(

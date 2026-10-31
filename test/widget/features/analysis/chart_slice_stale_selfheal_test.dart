@@ -15,6 +15,7 @@ import 'package:ledgerly/data/repositories/exchange_rate_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/services/exchange_rate_service.dart';
 import 'package:ledgerly/features/analysis/charts/charts_controller.dart';
+import 'package:ledgerly/features/analysis/charts/charts_net_total_provider.dart';
 import 'package:ledgerly/features/analysis/charts/charts_providers.dart';
 import 'package:ledgerly/features/analysis/charts/charts_section.dart';
 import 'package:ledgerly/features/analysis/charts/charts_selection_controller.dart';
@@ -42,6 +43,7 @@ const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
   analysisCategoriesById,
   analysisAccountsById,
   chartsFxStatus,
+  chartsNetTotal,
 ])
 void main() {
   setUpAll(() {
