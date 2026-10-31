@@ -55,7 +55,6 @@ final class RouterProvider
           csvImportControllerProvider,
           csvExportControllerProvider,
           categoriesByTypeProvider,
-          accountRepositoryProvider,
           transactionFormControllerProvider,
         ],
         $allTransitiveDependencies: <ProviderOrFamily>{
@@ -218,4 +217,4 @@ final class RouterProvider
   }
 }
 
-String _$routerHash() => r'c010feff4bb2c4cc625a1fe7760980253a4d057f';
+String _$routerHash() => r'3ac10ccfb7fdb966ae426e142be3ef353cd74c6a';

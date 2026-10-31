@@ -25,6 +25,21 @@ final txActiveAccountsProvider = StreamProvider.autoDispose<List<Account>>((
   return repo.watchAll();
 }, dependencies: [accountRepositoryProvider]);
 
+/// One-shot account lookup by id. The account picker uses it after
+/// "Create account" to return the account the user just saved, so the
+/// picker never touches the repository itself.
+///
+/// A function rather than a `FutureProvider.family`: the picker calls it
+/// with `ref.read` and nothing listens, so an autoDispose provider would
+/// be disposed while its `.future` is still loading. The function holds
+/// the app-wide repository and keeps working after this provider goes.
+@Dependencies([accountRepository])
+final txAccountLookupProvider =
+    Provider.autoDispose<Future<Account?> Function(int id)>(
+      (ref) => ref.watch(accountRepositoryProvider).getById,
+      dependencies: [accountRepositoryProvider],
+    );
+
 /// Upper bound on memo suggestions shown under the Memo field. The query
 /// cost is dominated by aggregating the category's rows, not by the
 /// LIMIT, so 6/8/10 benchmark the same.

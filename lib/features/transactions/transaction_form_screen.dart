@@ -27,7 +27,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../app/providers/repository_providers.dart';
 import '../../data/models/category.dart';
 import '../../data/models/transaction.dart';
 import '../../l10n/app_localizations.dart';
@@ -46,7 +45,7 @@ import 'widgets/date_field.dart';
 import 'widgets/memo_field.dart';
 import 'widgets/memo_suggestions.dart';
 
-@Dependencies([TransactionFormController, categoriesByType, accountRepository])
+@Dependencies([TransactionFormController, categoriesByType])
 class TransactionFormScreen extends ConsumerStatefulWidget {
   const TransactionFormScreen({super.key, this.transactionId, this.mode});
 

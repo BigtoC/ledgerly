@@ -46,11 +46,7 @@ class _FakeFormController extends RecurringRuleFormController {
   Future<void> deleteRule() async {}
 }
 
-@Dependencies([
-  RecurringRuleFormController,
-  categoriesByType,
-  accountRepository,
-])
+@Dependencies([RecurringRuleFormController, categoriesByType])
 Widget _wrap(ProviderContainer container) {
   return UncontrolledProviderScope(
     container: container,
@@ -105,11 +101,7 @@ void _useTallViewport(WidgetTester tester) {
   addTearDown(tester.view.resetDevicePixelRatio);
 }
 
-@Dependencies([
-  RecurringRuleFormController,
-  categoriesByType,
-  accountRepository,
-])
+@Dependencies([RecurringRuleFormController, categoriesByType])
 void main() {
   testWidgets('RFS01: create-mode app bar title and Create action label', (
     tester,

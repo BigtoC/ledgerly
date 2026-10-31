@@ -43,7 +43,6 @@ import '../features/transactions/transaction_form_screen.dart';
 import '../features/transactions/transaction_form_state.dart';
 import 'providers/default_currency_provider.dart';
 import 'providers/exchange_rates_provider.dart';
-import 'providers/repository_providers.dart';
 import 'providers/splash_redirect_provider.dart';
 import 'widgets/adaptive_shell.dart';
 
@@ -86,7 +85,6 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
     CsvImportController,
     CsvExportController,
     categoriesByType,
-    accountRepository,
     TransactionFormController,
   ],
 )
@@ -347,7 +345,7 @@ GoRouter router(Ref ref) {
   );
 }
 
-@Dependencies([TransactionFormController, categoriesByType, accountRepository])
+@Dependencies([TransactionFormController, categoriesByType])
 class _AdaptiveTransactionFormRoute extends StatelessWidget {
   const _AdaptiveTransactionFormRoute({
     this.transactionId,
