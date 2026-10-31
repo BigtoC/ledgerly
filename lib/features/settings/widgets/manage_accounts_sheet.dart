@@ -13,7 +13,7 @@ import '../../accounts/accounts_controller.dart';
 import '../../accounts/accounts_state.dart';
 import '../../accounts/widgets/manage_accounts_body.dart';
 import '../../../app/providers/default_currency_provider.dart';
-import '../../../app/providers/repository_providers.dart';
+import '../../../app/providers/exchange_rates_provider.dart';
 import '../../../l10n/app_localizations.dart';
 
 /// Opens the Manage accounts surface and returns when the user dismisses it.

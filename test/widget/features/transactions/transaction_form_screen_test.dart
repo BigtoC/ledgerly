@@ -115,7 +115,7 @@ Transaction _persistedTx({
   );
 }
 
-@Dependencies([TransactionFormController, categoriesByType, accountRepository])
+@Dependencies([TransactionFormController, categoriesByType])
 void main() {
   setUpAll(() {
     registerFallbackValue(_persistedTx());
@@ -153,11 +153,7 @@ void main() {
         .thenAnswer((_) => Stream.value(const [_usd, _jpy, _eur]));
   });
 
-  @Dependencies([
-    TransactionFormController,
-    categoriesByType,
-    accountRepository,
-  ])
+  @Dependencies([TransactionFormController, categoriesByType])
   Widget mountAdd({
     Object? extra,
     List<Override> extraOverrides = const [],
@@ -216,11 +212,7 @@ void main() {
     );
   }
 
-  @Dependencies([
-    TransactionFormController,
-    categoriesByType,
-    accountRepository,
-  ])
+  @Dependencies([TransactionFormController, categoriesByType])
   Widget mountEdit(int id, {double? textScale}) {
     final router = GoRouter(
       initialLocation: '/home/edit/$id',

@@ -9,7 +9,7 @@ import '../features/accounts/account_form_screen.dart';
 import '../features/accounts/accounts_controller.dart';
 import '../features/analysis/analysis_screen.dart';
 import '../features/analysis/charts/charts_controller.dart';
-import '../features/analysis/charts/charts_net_total_provider.dart';
+import '../features/analysis/charts/charts_net_total_providers.dart';
 import '../features/analysis/charts/charts_providers.dart';
 import '../features/analysis/charts/charts_selection_controller.dart';
 import '../features/analysis/charts/slice_drilldown_controller.dart';
@@ -42,7 +42,7 @@ import '../features/transactions/transaction_form_controller.dart';
 import '../features/transactions/transaction_form_screen.dart';
 import '../features/transactions/transaction_form_state.dart';
 import 'providers/default_currency_provider.dart';
-import 'providers/repository_providers.dart';
+import 'providers/exchange_rates_provider.dart';
 import 'providers/splash_redirect_provider.dart';
 import 'widgets/adaptive_shell.dart';
 
@@ -85,7 +85,6 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
     CsvImportController,
     CsvExportController,
     categoriesByType,
-    accountRepository,
     TransactionFormController,
   ],
 )
@@ -346,7 +345,7 @@ GoRouter router(Ref ref) {
   );
 }
 
-@Dependencies([TransactionFormController, categoriesByType, accountRepository])
+@Dependencies([TransactionFormController, categoriesByType])
 class _AdaptiveTransactionFormRoute extends StatelessWidget {
   const _AdaptiveTransactionFormRoute({
     this.transactionId,

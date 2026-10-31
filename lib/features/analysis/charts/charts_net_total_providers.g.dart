@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'charts_net_total_provider.dart';
+part of 'charts_net_total_providers.dart';
 
 // **************************************************************************
 // RiverpodGenerator

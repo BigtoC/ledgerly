@@ -19,7 +19,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../app/providers/default_currency_provider.dart';
-import '../../../app/providers/repository_providers.dart';
+import '../../../app/providers/exchange_rates_provider.dart';
 import '../../../core/utils/color_palette.dart';
 import '../../../core/utils/currency_converter.dart';
 import '../../../core/utils/icon_registry.dart';

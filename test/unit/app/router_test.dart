@@ -11,6 +11,7 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/app/providers/locale_provider.dart';
+import 'package:ledgerly/app/providers/exchange_rates_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/app/router.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
@@ -19,7 +20,7 @@ import 'package:ledgerly/app/widgets/adaptive_shell.dart';
 import 'package:ledgerly/features/accounts/account_form_screen.dart';
 import 'package:ledgerly/features/analysis/analysis_screen.dart';
 import 'package:ledgerly/features/analysis/charts/charts_controller.dart';
-import 'package:ledgerly/features/analysis/charts/charts_net_total_provider.dart';
+import 'package:ledgerly/features/analysis/charts/charts_net_total_providers.dart';
 import 'package:ledgerly/features/analysis/charts/charts_providers.dart';
 import 'package:ledgerly/features/analysis/charts/charts_selection_controller.dart';
 import 'package:ledgerly/features/analysis/charts/slice_drilldown_controller.dart';

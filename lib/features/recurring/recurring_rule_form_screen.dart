@@ -11,7 +11,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../app/providers/repository_providers.dart';
 import '../../data/models/account.dart';
 import '../../data/models/category.dart';
 import '../../l10n/app_localizations.dart';
@@ -26,11 +25,7 @@ import 'recurring_rule_form_controller.dart';
 import 'recurring_rule_form_state.dart';
 import 'recurring_rules_providers.dart';
 
-@Dependencies([
-  RecurringRuleFormController,
-  categoriesByType,
-  accountRepository,
-])
+@Dependencies([RecurringRuleFormController, categoriesByType])
 class RecurringRuleFormScreen extends ConsumerStatefulWidget {
   const RecurringRuleFormScreen({super.key, this.ruleId});
 
@@ -100,7 +95,7 @@ class _RecurringRuleFormScreenState
   }
 }
 
-@Dependencies([categoriesByType, accountRepository])
+@Dependencies([categoriesByType])
 class _FormBody extends ConsumerWidget {
   const _FormBody({
     required this.state,
@@ -530,7 +525,6 @@ class _CategoryPickerTile extends ConsumerWidget {
 /// Tile that opens the shared account picker and renders the selected
 /// account once chosen. Reuses [AccountSelectorTile] from the
 /// transactions slice for visual parity.
-@Dependencies([accountRepository])
 class _AccountPickerTile extends ConsumerWidget {
   const _AccountPickerTile({required this.state, required this.onPick});
 

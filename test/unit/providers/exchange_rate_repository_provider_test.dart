@@ -15,6 +15,7 @@ import 'package:ledgerly/app/bootstrap.dart';
 import 'package:ledgerly/app/providers/app_database_provider.dart';
 import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
+import 'package:ledgerly/app/providers/service_providers.dart';
 import 'package:ledgerly/data/services/exchange_rate_service.dart';
 
 import '../../support/test_app.dart';

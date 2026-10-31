@@ -107,7 +107,7 @@ class _HomeStub extends StatelessWidget {
   Widget build(BuildContext context) => const Scaffold(body: Text('home-stub'));
 }
 
-@Dependencies([TransactionFormController, categoriesByType, accountRepository])
+@Dependencies([TransactionFormController, categoriesByType])
 void main() {
   late _MockTransactionRepository txRepo;
   late _MockAccountRepository accountRepo;
@@ -142,11 +142,7 @@ void main() {
   });
 
   /// Mount the form screen with a typed [mode] under a minimal GoRouter.
-  @Dependencies([
-    TransactionFormController,
-    categoriesByType,
-    accountRepository,
-  ])
+  @Dependencies([TransactionFormController, categoriesByType])
   Widget mountWithMode(TransactionFormMode mode) {
     final router = GoRouter(
       initialLocation: '/form',

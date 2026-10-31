@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'dart:ffi' show Abi;
+import 'dart:io';
 
-import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/repositories/account_repository.dart';
 import '../../data/repositories/account_type_repository.dart';
+import '../../data/repositories/app_update_repository.dart';
 import '../../data/repositories/category_repository.dart';
 import '../../data/repositories/currency_repository.dart';
 import '../../data/repositories/exchange_rate_repository.dart';
@@ -13,13 +16,14 @@ import '../../data/repositories/recurring_rules_repository.dart';
 import '../../data/repositories/shopping_list_repository.dart';
 import '../../data/repositories/transaction_repository.dart';
 import '../../data/repositories/user_preferences_repository.dart';
-import '../../data/services/csv_file_service.dart';
-import '../../data/services/exchange_rate_service.dart';
+import '../../data/services/apk_installer_service.dart';
+import '../../data/services/app_release_service.dart';
 import '../../data/use_cases/csv_export_use_case.dart';
 import '../../data/use_cases/csv_import_use_case.dart';
 import '../../data/use_cases/recurring_generation_use_case.dart';
 import 'app_database_provider.dart';
 import 'default_currency_provider.dart';
+import 'service_providers.dart';
 
 part 'repository_providers.g.dart';
 
@@ -95,11 +99,6 @@ RecurringGenerationUseCase recurringGenerationUseCase(Ref ref) {
   );
 }
 
-/// System file picker for CSV import. Tests override it with a fake that
-/// returns fixture bytes.
-@Riverpod(keepAlive: true, dependencies: [])
-CsvFileService csvFileService(Ref ref) => CsvFileService();
-
 /// CSV import use case. Lives here for the same reason as
 /// [recurringGenerationUseCase]: the controller reads it without importing
 /// `data/services/` or `data/database/`.
@@ -143,25 +142,6 @@ CsvExportUseCase csvExportUseCase(Ref ref) => CsvExportUseCase(
   accountRepo: ref.watch(accountRepositoryProvider),
 );
 
-/// Shared HTTP client for every HTTP service. Conservative timeouts; the
-/// client is closed when the owning container is disposed.
-@Riverpod(keepAlive: true)
-Dio dio(Ref ref) {
-  final dio = Dio(
-    BaseOptions(
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
-    ),
-  );
-  ref.onDispose(dio.close);
-  return dio;
-}
-
-/// Exchange-rate HTTP service. Uses the shared [dioProvider] client.
-@Riverpod(keepAlive: true, dependencies: [])
-ExchangeRateService exchangeRateService(Ref ref) =>
-    ExchangeRateService(ref.watch(dioProvider));
-
 /// Exchange-rate repository. The constructor subscribes to DAO changes
 /// and default-currency changes immediately — so simply reading this
 /// provider is enough to start the cache pipeline.
@@ -188,9 +168,21 @@ ExchangeRateRepository exchangeRateRepository(Ref ref) {
   return repo;
 }
 
-/// Stream of the exchange-rate snapshot map (scaled-e9 integer values
-/// keyed by `from→to`). Consumed by UI tiles via `ref.watch`.
-@Riverpod(keepAlive: true, dependencies: [exchangeRateRepository])
-Stream<Map<String, int>> exchangeRates(Ref ref) {
-  return ref.watch(exchangeRateRepositoryProvider).watchRates();
+/// GitHub release lookup, download and install for the app-update check.
+/// Unscoped: it shares the app-wide [dioProvider] client and reads nothing
+/// from the database. Lives here, not in `app_update_provider.dart`, so
+/// that widgets importing that file for `availableAppUpdateProvider` cannot
+/// reach the repository.
+@Riverpod(keepAlive: true)
+AppUpdateRepository appUpdateRepository(Ref ref) {
+  final packageInfo = ref.watch(packageInfoServiceProvider);
+  return AppUpdateRepository(
+    AppReleaseService(ref.watch(dioProvider)),
+    installer: const ApkInstallerService(),
+    updatesDir: () async =>
+        Directory('${(await getTemporaryDirectory()).path}/updates')
+            .create(recursive: true),
+    installedVersion: () async => (await packageInfo.read()).version,
+    abi: Abi.current(),
+  );
 }

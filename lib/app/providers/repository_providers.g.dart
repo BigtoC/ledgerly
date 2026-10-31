@@ -576,55 +576,6 @@ final class RecurringGenerationUseCaseProvider
 String _$recurringGenerationUseCaseHash() =>
     r'350e388f51b864c88329360e1078cac008904655';
 
-/// System file picker for CSV import. Tests override it with a fake that
-/// returns fixture bytes.
-
-@ProviderFor(csvFileService)
-final csvFileServiceProvider = CsvFileServiceProvider._();
-
-/// System file picker for CSV import. Tests override it with a fake that
-/// returns fixture bytes.
-
-final class CsvFileServiceProvider
-    extends $FunctionalProvider<CsvFileService, CsvFileService, CsvFileService>
-    with $Provider<CsvFileService> {
-  /// System file picker for CSV import. Tests override it with a fake that
-  /// returns fixture bytes.
-  CsvFileServiceProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'csvFileServiceProvider',
-        isAutoDispose: false,
-        dependencies: <ProviderOrFamily>[],
-        $allTransitiveDependencies: <ProviderOrFamily>[],
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$csvFileServiceHash();
-
-  @$internal
-  @override
-  $ProviderElement<CsvFileService> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
-
-  @override
-  CsvFileService create(Ref ref) {
-    return csvFileService(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(CsvFileService value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<CsvFileService>(value),
-    );
-  }
-}
-
-String _$csvFileServiceHash() => r'55d5f03b94b6deba083b3656e22a9bc1598b0cb1';
-
 /// CSV import use case. Lives here for the same reason as
 /// [recurringGenerationUseCase]: the controller reads it without importing
 /// `data/services/` or `data/database/`.
@@ -782,107 +733,6 @@ final class CsvExportUseCaseProvider
 
 String _$csvExportUseCaseHash() => r'515768f963276c92ac5348cc6c8f262a828fc16c';
 
-/// Shared HTTP client for every HTTP service. Conservative timeouts; the
-/// client is closed when the owning container is disposed.
-
-@ProviderFor(dio)
-final dioProvider = DioProvider._();
-
-/// Shared HTTP client for every HTTP service. Conservative timeouts; the
-/// client is closed when the owning container is disposed.
-
-final class DioProvider extends $FunctionalProvider<Dio, Dio, Dio>
-    with $Provider<Dio> {
-  /// Shared HTTP client for every HTTP service. Conservative timeouts; the
-  /// client is closed when the owning container is disposed.
-  DioProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'dioProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$dioHash();
-
-  @$internal
-  @override
-  $ProviderElement<Dio> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
-
-  @override
-  Dio create(Ref ref) {
-    return dio(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(Dio value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<Dio>(value),
-    );
-  }
-}
-
-String _$dioHash() => r'609f409fd9322951631485f1281f0561805462f7';
-
-/// Exchange-rate HTTP service. Uses the shared [dioProvider] client.
-
-@ProviderFor(exchangeRateService)
-final exchangeRateServiceProvider = ExchangeRateServiceProvider._();
-
-/// Exchange-rate HTTP service. Uses the shared [dioProvider] client.
-
-final class ExchangeRateServiceProvider
-    extends
-        $FunctionalProvider<
-          ExchangeRateService,
-          ExchangeRateService,
-          ExchangeRateService
-        >
-    with $Provider<ExchangeRateService> {
-  /// Exchange-rate HTTP service. Uses the shared [dioProvider] client.
-  ExchangeRateServiceProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'exchangeRateServiceProvider',
-        isAutoDispose: false,
-        dependencies: <ProviderOrFamily>[],
-        $allTransitiveDependencies: <ProviderOrFamily>[],
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$exchangeRateServiceHash();
-
-  @$internal
-  @override
-  $ProviderElement<ExchangeRateService> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
-
-  @override
-  ExchangeRateService create(Ref ref) {
-    return exchangeRateService(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(ExchangeRateService value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<ExchangeRateService>(value),
-    );
-  }
-}
-
-String _$exchangeRateServiceHash() =>
-    r'54cac23382bca3bc90ff6bca49f4643fc47a093d';
-
 /// Exchange-rate repository. The constructor subscribes to DAO changes
 /// and default-currency changes immediately — so simply reading this
 /// provider is enough to start the cache pipeline.
@@ -957,65 +807,67 @@ final class ExchangeRateRepositoryProvider
 String _$exchangeRateRepositoryHash() =>
     r'4b623ad800a14ff6ac4fd8e7555ba2552f1a8ebd';
 
-/// Stream of the exchange-rate snapshot map (scaled-e9 integer values
-/// keyed by `from→to`). Consumed by UI tiles via `ref.watch`.
+/// GitHub release lookup, download and install for the app-update check.
+/// Unscoped: it shares the app-wide [dioProvider] client and reads nothing
+/// from the database. Lives here, not in `app_update_provider.dart`, so
+/// that widgets importing that file for `availableAppUpdateProvider` cannot
+/// reach the repository.
 
-@ProviderFor(exchangeRates)
-final exchangeRatesProvider = ExchangeRatesProvider._();
+@ProviderFor(appUpdateRepository)
+final appUpdateRepositoryProvider = AppUpdateRepositoryProvider._();
 
-/// Stream of the exchange-rate snapshot map (scaled-e9 integer values
-/// keyed by `from→to`). Consumed by UI tiles via `ref.watch`.
+/// GitHub release lookup, download and install for the app-update check.
+/// Unscoped: it shares the app-wide [dioProvider] client and reads nothing
+/// from the database. Lives here, not in `app_update_provider.dart`, so
+/// that widgets importing that file for `availableAppUpdateProvider` cannot
+/// reach the repository.
 
-final class ExchangeRatesProvider
+final class AppUpdateRepositoryProvider
     extends
         $FunctionalProvider<
-          AsyncValue<Map<String, int>>,
-          Map<String, int>,
-          Stream<Map<String, int>>
+          AppUpdateRepository,
+          AppUpdateRepository,
+          AppUpdateRepository
         >
-    with $FutureModifier<Map<String, int>>, $StreamProvider<Map<String, int>> {
-  /// Stream of the exchange-rate snapshot map (scaled-e9 integer values
-  /// keyed by `from→to`). Consumed by UI tiles via `ref.watch`.
-  ExchangeRatesProvider._()
+    with $Provider<AppUpdateRepository> {
+  /// GitHub release lookup, download and install for the app-update check.
+  /// Unscoped: it shares the app-wide [dioProvider] client and reads nothing
+  /// from the database. Lives here, not in `app_update_provider.dart`, so
+  /// that widgets importing that file for `availableAppUpdateProvider` cannot
+  /// reach the repository.
+  AppUpdateRepositoryProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'exchangeRatesProvider',
+        name: r'appUpdateRepositoryProvider',
         isAutoDispose: false,
-        dependencies: <ProviderOrFamily>[exchangeRateRepositoryProvider],
-        $allTransitiveDependencies: <ProviderOrFamily>{
-          ExchangeRatesProvider.$allTransitiveDependencies0,
-          ExchangeRatesProvider.$allTransitiveDependencies1,
-          ExchangeRatesProvider.$allTransitiveDependencies2,
-          ExchangeRatesProvider.$allTransitiveDependencies3,
-          ExchangeRatesProvider.$allTransitiveDependencies4,
-        },
+        dependencies: null,
+        $allTransitiveDependencies: null,
       );
 
-  static final $allTransitiveDependencies0 = exchangeRateRepositoryProvider;
-  static final $allTransitiveDependencies1 =
-      ExchangeRateRepositoryProvider.$allTransitiveDependencies0;
-  static final $allTransitiveDependencies2 =
-      ExchangeRateRepositoryProvider.$allTransitiveDependencies1;
-  static final $allTransitiveDependencies3 =
-      ExchangeRateRepositoryProvider.$allTransitiveDependencies2;
-  static final $allTransitiveDependencies4 =
-      ExchangeRateRepositoryProvider.$allTransitiveDependencies3;
-
   @override
-  String debugGetCreateSourceHash() => _$exchangeRatesHash();
+  String debugGetCreateSourceHash() => _$appUpdateRepositoryHash();
 
   @$internal
   @override
-  $StreamProviderElement<Map<String, int>> $createElement(
+  $ProviderElement<AppUpdateRepository> $createElement(
     $ProviderPointer pointer,
-  ) => $StreamProviderElement(pointer);
+  ) => $ProviderElement(pointer);
 
   @override
-  Stream<Map<String, int>> create(Ref ref) {
-    return exchangeRates(ref);
+  AppUpdateRepository create(Ref ref) {
+    return appUpdateRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AppUpdateRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AppUpdateRepository>(value),
+    );
   }
 }
 
-String _$exchangeRatesHash() => r'90a7e84860a077c637713b43a1bcc7e8c461ea09';
+String _$appUpdateRepositoryHash() =>
+    r'107ed987f42d1c9c3d96dccc666ca6a4044a1aaa';

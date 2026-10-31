@@ -135,7 +135,7 @@ TransactionFormState _editableDraftState() => TransactionFormState.data(
   shoppingListItemId: 77,
 );
 
-@Dependencies([TransactionFormController, categoriesByType, accountRepository])
+@Dependencies([TransactionFormController, categoriesByType])
 void main() {
   late _MockTransactionRepository txRepo;
   late _MockAccountRepository accountRepo;
@@ -184,11 +184,7 @@ void main() {
     );
   }
 
-  @Dependencies([
-    TransactionFormController,
-    categoriesByType,
-    accountRepository,
-  ])
+  @Dependencies([TransactionFormController, categoriesByType])
   Widget mountWithMode(TransactionFormMode mode) {
     final router = GoRouter(
       initialLocation: '/form',
@@ -208,11 +204,7 @@ void main() {
     return mountWithRouter(router);
   }
 
-  @Dependencies([
-    TransactionFormController,
-    categoriesByType,
-    accountRepository,
-  ])
+  @Dependencies([TransactionFormController, categoriesByType])
   GoRouter buildPushRouter(TransactionFormMode mode) {
     final router = GoRouter(
       initialLocation: '/',

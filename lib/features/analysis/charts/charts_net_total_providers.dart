@@ -16,7 +16,7 @@ import 'charts_providers.dart';
 import 'charts_selection_controller.dart';
 import 'charts_state.dart' show PeriodType;
 
-part 'charts_net_total_provider.g.dart';
+part 'charts_net_total_providers.g.dart';
 
 /// Net for the selected period, in [currency] minor units.
 class ChartsNetTotal {

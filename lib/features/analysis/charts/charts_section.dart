@@ -12,7 +12,7 @@ import '../../../data/models/currency.dart';
 import '../../../l10n/app_localizations.dart';
 import '../search/analysis_providers.dart';
 import 'charts_controller.dart';
-import 'charts_net_total_provider.dart';
+import 'charts_net_total_providers.dart';
 import 'charts_providers.dart';
 import 'charts_selection_controller.dart';
 import 'charts_state.dart';

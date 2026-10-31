@@ -19,6 +19,7 @@
 //   - 2× text scale survives.
 //   - "new version" badge appears beside the app version only when an
 //     update URL is available, and survives 2× text scale.
+//   - The footer shows the installed version and build number.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,7 +29,9 @@ import 'package:mocktail/mocktail.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/app_update_provider.dart';
+import 'package:ledgerly/app/providers/app_version_provider.dart';
 import 'package:ledgerly/app/providers/default_currency_provider.dart';
+import 'package:ledgerly/app/providers/exchange_rates_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/account.dart';
 import 'package:ledgerly/data/models/app_update.dart';
@@ -138,6 +141,7 @@ ProviderContainer _makeContainer({
   required SettingsState fixed,
   AccountsState? accountsFixed,
   AppUpdate? update,
+  ({String version, String buildNumber})? appVersion,
 }) {
   final defaultAccountsState =
       accountsFixed ??
@@ -158,6 +162,8 @@ ProviderContainer _makeContainer({
         () => _FakeAccountsController(defaultAccountsState),
       ),
       availableAppUpdateProvider.overrideWithBuild((ref, notifier) => update),
+      if (appVersion != null)
+        appVersionProvider.overrideWith((ref) async => appVersion),
     ],
   );
 }
@@ -674,6 +680,24 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.byKey(_badgeKey), findsOneWidget);
+  });
+
+  testWidgets('SS11: footer shows the installed version and build number', (
+    tester,
+  ) async {
+    final container = _makeContainer(
+      prefs: _MockUserPreferencesRepository(),
+      accountRepo: _MockAccountRepository(),
+      currencyRepo: _MockCurrencyRepository(),
+      fixed: _data(),
+      appVersion: (version: '1.2.3', buildNumber: '45'),
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
+
+    expect(find.text('v1.2.3+45', skipOffstage: false), findsOneWidget);
   });
 }
 
