@@ -102,7 +102,6 @@ class TransactionFormController extends _$TransactionFormController {
         displayCurrency: account.currency,
         currencyTouched: false,
         selectedCategory: null,
-        pendingType: CategoryType.expense,
         date: initialDate == null
             ? _today()
             : DateTime(initialDate.year, initialDate.month, initialDate.day),
@@ -201,7 +200,6 @@ class TransactionFormController extends _$TransactionFormController {
         displayCurrency: existing.currency,
         currencyTouched: true,
         selectedCategory: category,
-        pendingType: category?.type ?? CategoryType.expense,
         date: existing.date,
         memo: existing.memo ?? '',
         isDirty: false,
@@ -287,7 +285,6 @@ class TransactionFormController extends _$TransactionFormController {
         displayCurrency: displayCurrency,
         currencyTouched: currencyTouched,
         selectedCategory: category,
-        pendingType: category?.type ?? CategoryType.expense,
         date: draft.draftDate,
         memo: draft.memo ?? '',
         isDirty: false,
@@ -400,36 +397,8 @@ class TransactionFormController extends _$TransactionFormController {
     if (s.submissionAction != TransactionFormSubmissionAction.none) return;
     state = s.copyWith(
       selectedCategory: category,
-      pendingType: category.type,
       isDirty: true,
       selectedCategoryIsArchived: category.isArchived,
-    );
-  }
-
-  /// Switches the segmented type control. Allowed only before a category
-  /// is selected, or as the second leg of the confirm-then-clear flow
-  /// (the widget calls [clearCategoryForTypeChange] first).
-  void setPendingType(CategoryType type) {
-    final s = state;
-    if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
-    if (s.selectedCategory != null && s.selectedCategory!.type != type) {
-      // Caller must clear the incompatible category first (Wave 2 §7).
-      return;
-    }
-    if (s.pendingType == type) return;
-    state = s.copyWith(pendingType: type, isDirty: true);
-  }
-
-  /// Confirm-then-clear leg of the type-swap flow (Wave 2 §7). Drops the
-  /// incompatible category and switches `pendingType` to the new value
-  /// in a single transition so the chip renders empty immediately.
-  void clearCategoryForTypeChange(CategoryType newType) {
-    final s = state;
-    if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
-    state = s.copyWith(
-      selectedCategory: null,
-      pendingType: newType,
-      isDirty: true,
     );
   }
 
@@ -794,7 +763,6 @@ class TransactionFormController extends _$TransactionFormController {
       displayCurrency: account.currency,
       currencyTouched: false,
       selectedCategory: category,
-      pendingType: category?.type ?? CategoryType.expense,
       date: _today(),
       memo: source.memo ?? '',
       isDirty: false,

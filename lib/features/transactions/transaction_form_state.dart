@@ -170,12 +170,6 @@ sealed class TransactionFormState with _$TransactionFormState {
 
     required Category? selectedCategory,
 
-    /// Drives the picker filter before category selection. After a
-    /// category is selected, `selectedCategory.type` is the source of
-    /// truth; `pendingType` only differs during the confirm-then-clear
-    /// flow that swaps types.
-    required CategoryType pendingType,
-
     required DateTime date,
 
     /// Free-form note. Empty string is valid; nullability is collapsed
