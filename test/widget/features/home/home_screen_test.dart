@@ -37,6 +37,7 @@ import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/features/home/home_screen.dart';
 import 'package:ledgerly/features/home/widgets/day_navigation_header.dart';
 import 'package:ledgerly/features/home/widgets/summary_strip.dart';
+import 'package:ledgerly/features/home/widgets/transaction_tile.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockTxRepo extends Mock implements TransactionRepository {}
@@ -262,6 +263,33 @@ void main() {
       expect(find.text('Expense'), findsOneWidget);
     },
   );
+
+  testWidgets('WH02c: transaction list card has no shadow', (tester) async {
+    await tester.pumpWidget(makeApp());
+    await seedAll(tester);
+
+    final today = DateTime.now();
+    final todayMidnight = DateTime(today.year, today.month, today.day);
+    dayCtrl.add([
+      _tx(id: 1, date: todayMidnight.add(const Duration(hours: 9))),
+    ]);
+    activityCtrl.add([todayMidnight]);
+    todayTotalsCtrl.add(const {'USD': (expense: 100, income: 0)});
+    monthNetCtrl.add(const {'USD': -100});
+    await tester.pump(const Duration(milliseconds: 200));
+
+    final card = tester
+        .widgetList<Container>(
+          find.ancestor(
+            of: find.byType(TransactionTile),
+            matching: find.byType(Container),
+          ),
+        )
+        .map((c) => c.decoration)
+        .whereType<BoxDecoration>()
+        .single;
+    expect(card.boxShadow, isNull);
+  });
 
   testWidgets(
     'WH02b: no-history Home still shows pending section when rows exist',

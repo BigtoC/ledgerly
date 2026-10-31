@@ -577,8 +577,8 @@ class _EmptyDayCard extends StatelessWidget {
 
 /// Rounded surface that wraps a single day's transaction rows. Mirrors
 /// the summary-strip card styling (`homePageCardBorderRadius`,
-/// `buildBoxShadow`, `surfaceContainer`) so the home page reads as a
-/// stack of consistent cards. The list is rendered as a `Column` rather
+/// `surfaceContainer`, no shadow) so the home page reads as a stack of
+/// consistent cards. The list is rendered as a `Column` rather
 /// than a sliver because a single day's row count is bounded; the
 /// outer `CustomScrollView` still drives vertical scrolling.
 @Dependencies([exchangeRates])
@@ -611,7 +611,6 @@ class _TransactionListCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(homePageCardBorderRadius),
-        boxShadow: [buildBoxShadow(homePageCardBorderRadius)],
       ),
       clipBehavior: Clip.antiAlias,
       child: Material(
