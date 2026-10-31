@@ -14,7 +14,9 @@
 //     against the file and rewritten to `package:ledgerly/...`; `package:`
 //     and `dart:` URIs are used as written. A URI matching any
 //     `not_allow_import_reg_exps` entry and no `ignore_import_reg_exps`
-//     entry is a violation.
+//     entry is a violation. An `export` URI is also checked against the
+//     rule's optional `not_allow_export_reg_exps`, so a file cannot hand
+//     its importers what their own rules forbid.
 //   - `part` / `part of` are not dependency edges and are skipped.
 //   - A violation listed under `baseline:` is tolerated. A baseline entry
 //     that no longer occurs fails the test, so the list only shrinks.
@@ -80,17 +82,38 @@ import 'package:late/late.dart';
         'package:ledgerly/data/x.dart',
       );
     });
+
+    test('tells import directives from export directives', () {
+      const source = '''
+import 'a.dart';
+export 'b.dart' show B;
+export 'c.dart' if (dart.library.io) 'd.dart';
+import 'e.dart' if (dart.library.io) 'f.dart';
+''';
+      final found = _scanDirectives(source)
+          .map((d) => '${d.isExport ? 'export' : 'import'} ${d.uri}')
+          .toList();
+      expect(found, [
+        'import a.dart',
+        'export b.dart',
+        'export c.dart',
+        'export d.dart',
+        'import e.dart',
+        'import f.dart',
+      ]);
+    });
   });
 
   group('rules in $_rulesFile', () {
     final config = _Config.load(File(_rulesFile).readAsStringSync());
 
-    /// Whether any rule that applies to [path] forbids [uri] (as written).
-    bool forbidden(String path, String uri) {
+    /// Whether any rule that applies to [path] forbids [uri] (as written)
+    /// in an `import`, or in an `export` when [export] is true.
+    bool forbidden(String path, String uri, {bool export = false}) {
       final normalised = _normalise(path, uri);
       return config.rules
           .where((r) => r.appliesTo(path))
-          .any((r) => r.forbids(normalised));
+          .any((r) => r.forbids(normalised, export: export));
     }
 
     // One file per feature rule.
@@ -176,6 +199,35 @@ import 'package:late/late.dart';
         }
       }
     });
+
+    test('no feature file may re-export the repository or service '
+        'providers or data internals', () {
+      const reexported = [
+        repositoryProviders,
+        serviceProviders,
+        'package:ledgerly/data/repositories/account_repository.dart',
+        'package:ledgerly/data/services/exchange_rate_service.dart',
+        'package:ledgerly/data/database/app_database.dart',
+      ];
+      for (final path in featureFiles) {
+        for (final uri in reexported) {
+          expect(
+            forbidden(path, uri, export: true),
+            isTrue,
+            reason: '$path -> $uri',
+          );
+        }
+      }
+      // Relative exports are resolved before matching.
+      expect(
+        forbidden(
+          'lib/features/transactions/transactions_providers.dart',
+          '../../app/providers/repository_providers.dart',
+          export: true,
+        ),
+        isTrue,
+      );
+    });
   });
 
   test('lib/ respects the layer-boundary rules in $_rulesFile', () {
@@ -212,7 +264,7 @@ import 'package:late/late.dart';
       for (final d in directives) {
         final uri = _normalise(path, d.uri);
         for (final rule in rules) {
-          if (rule.forbids(uri)) {
+          if (rule.forbids(uri, export: d.isExport)) {
             violations.add(_Violation(rule.name, path, d.line, d.uri, uri));
           }
         }
@@ -242,17 +294,27 @@ import 'package:late/late.dart';
 }
 
 class _Rule {
-  _Rule(this.name, this.searchFilePath, this.notAllowed, this.ignored);
+  _Rule(
+    this.name,
+    this.searchFilePath,
+    this.notAllowed,
+    this.notAllowedExports,
+    this.ignored,
+  );
 
   final String name;
   final RegExp searchFilePath;
   final List<RegExp> notAllowed;
+
+  /// Checked against `export` URIs only, on top of [notAllowed].
+  final List<RegExp> notAllowedExports;
   final List<RegExp> ignored;
 
   bool appliesTo(String path) => searchFilePath.hasMatch(path);
 
-  bool forbids(String uri) =>
-      notAllowed.any((r) => r.hasMatch(uri)) &&
+  bool forbids(String uri, {required bool export}) =>
+      (notAllowed.any((r) => r.hasMatch(uri)) ||
+          (export && notAllowedExports.any((r) => r.hasMatch(uri)))) &&
       !ignored.any((r) => r.hasMatch(uri));
 }
 
@@ -268,6 +330,7 @@ class _Config {
     'search_file_path_reg_exp',
     'not_allow_import_reg_exps',
     'ignore_import_reg_exps',
+    'not_allow_export_reg_exps',
   };
   static const _baselineKeys = {'rule', 'file', 'import'};
 
@@ -290,6 +353,7 @@ class _Config {
           name,
           RegExp(body['search_file_path_reg_exp'] as String),
           regExps('not_allow_import_reg_exps'),
+          regExps('not_allow_export_reg_exps'),
           regExps('ignore_import_reg_exps'),
         ),
       );
@@ -350,16 +414,20 @@ String _normalise(String path, String uri) {
 }
 
 class _Directive {
-  _Directive(this.line, this.uri);
+  _Directive(this.line, this.uri, {required this.isExport});
 
   final int line;
   final String uri;
+
+  /// Whether this came from an `export` directive rather than an `import`.
+  final bool isExport;
 }
 
 /// Reads the directive header of a Dart file: `library`, `import`,
 /// `export`, `part`, `part of`, and annotations, up to the first
 /// declaration. Dart only allows directives there, so the rest of the file
-/// is never parsed. Returns import/export URIs with their 1-based line.
+/// is never parsed. Returns import/export URIs with their 1-based line and
+/// whether the directive was an `export`.
 List<_Directive> _scanDirectives(String source) {
   final s = _Cursor(source);
   final result = <_Directive>[];
@@ -375,7 +443,9 @@ List<_Directive> _scanDirectives(String source) {
     if (!const {'library', 'import', 'export', 'part'}.contains(word)) break;
     final uris = s.readStatementStrings();
     if (word == 'import' || word == 'export') {
-      result.addAll(uris.map((u) => _Directive(line, u)));
+      result.addAll(
+        uris.map((u) => _Directive(line, u, isExport: word == 'export')),
+      );
     }
   }
   return result;

@@ -16,13 +16,15 @@
 #                              each lib/**/*.dart file (generated
 #                              *.g.dart / *.freezed.dart excluded), e.g.
 #                              `lib/features/home/home_screen.dart`.
-#   not_allow_import_reg_exps  matched against every import / export URI
-#                              in that file. Relative URIs are resolved
-#                              first and rewritten to
+#   not_allow_import_reg_exps  optional; matched against every import /
+#                              export URI in that file. Relative URIs are
+#                              resolved first and rewritten to
 #                              `package:ledgerly/...`, so one pattern
 #                              covers both forms.
 #   ignore_import_reg_exps     optional; a URI matching one of these is
 #                              never a violation.
+#   not_allow_export_reg_exps  optional; like not_allow_import_reg_exps,
+#                              but matched against `export` URIs only.
 #
 # Import paths cannot show what a file reaches through a provider, so the
 # feature rules also forbid the app-layer files that build data-layer
@@ -158,6 +160,23 @@ rules:
       - "^package:dio/"
       - "^package:file_picker/"
       - "^package:file_selector/"
+    ignore_import_reg_exps: []
+
+  # No feature file may re-export what widgets may not import. Each rule
+  # checks a file's own directives only, so a controller or
+  # *_providers.dart that exports repository_providers.dart would hand
+  # repository providers to every widget importing it, and no widget rule
+  # would see it. The widget-like rules above already forbid these URIs
+  # in exports too; this rule closes the gap for controllers and
+  # *_providers.dart.
+  features_forbid_data_reexports:
+    search_file_path_reg_exp: "^lib/features/.*\\.dart$"
+    not_allow_export_reg_exps:
+      - "^package:ledgerly/data/database/"
+      - "^package:ledgerly/data/services/"
+      - "^package:ledgerly/data/repositories/"
+      - "^package:ledgerly/app/providers/repository_providers\\.dart$"
+      - "^package:ledgerly/app/providers/service_providers\\.dart$"
     ignore_import_reg_exps: []
 
   # Use cases (Phase 2) may import repositories, services, domain
