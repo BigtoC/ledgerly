@@ -87,6 +87,8 @@ Ledgerly uses a strict 3-layer architecture: a **Data** layer (SSOT), an optiona
 
 These rules are enforced by `test/unit/architecture/layer_boundaries_test.dart` (rules and the pre-existing-violation baseline live in `import_analysis_options.yaml`; run as `flutter test test/unit/architecture/`) and by the `riverpod_lint` analysis-server plugin configured under `plugins:` in `analysis_options.yaml`.
 
+"Repositories" and "services" include the providers that build them. Only controllers and `*_providers.dart` may import `app/providers/repository_providers.dart`; no feature file may import `app/providers/service_providers.dart`. External SDKs belong in services, so no feature file may import a platform or I/O plugin such as `package_info_plus`, `dio`, `file_picker` or `file_selector`.
+
 ### SSOT Rule
 
 Only repositories write to the database or to external stores. Controllers and use cases invoke repository methods; they never construct `Insertable` rows, call `.insert()` on DAOs, or write to `flutter_secure_storage` directly.
@@ -122,7 +124,10 @@ lib/
     bootstrap.dart           # Async init sequence, provider overrides
     providers/
       app_database_provider.dart
-      repository_providers.dart
+      repository_providers.dart     # repositories + use cases; controllers and *_providers.dart only
+      service_providers.dart        # services (Dio, CSV files, package info); app/providers/ only
+      exchange_rates_provider.dart
+      app_version_provider.dart
       theme_provider.dart
       locale_provider.dart
       locale_service_provider.dart
@@ -175,6 +180,7 @@ lib/
       app_release_service.dart      # Dio: latest GitHub release lookup + APK download
       apk_installer_service.dart    # Platform channel to Android's PackageInstaller
       csv_file_service.dart         # file_selector picker + file_picker save dialog; deletes platform temp copies
+      package_info_service.dart     # package_info_plus: installed version + build number
     repositories/
       transaction_repository.dart
       category_repository.dart
@@ -319,7 +325,6 @@ lib/
       settings_screen.dart
       settings_controller.dart
       settings_state.dart
-      settings_providers.dart
       about_screen.dart
       app_update_controller.dart
       app_update_state.dart
