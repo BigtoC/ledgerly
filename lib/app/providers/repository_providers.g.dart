@@ -870,4 +870,4 @@ final class AppUpdateRepositoryProvider
 }
 
 String _$appUpdateRepositoryHash() =>
-    r'107ed987f42d1c9c3d96dccc666ca6a4044a1aaa';
+    r'324339fd76c50bb6bff1711fa23276db0ad29331';

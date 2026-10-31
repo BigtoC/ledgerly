@@ -228,6 +228,53 @@ import 'e.dart' if (dart.library.io) 'f.dart';
         isTrue,
       );
     });
+
+    test('app files may not import platform plugins, except the service '
+        'providers', () {
+      // One file from each lib/app subtree, so narrowing the rule's path
+      // regex to a single directory fails here.
+      const appFiles = [
+        'lib/app/bootstrap.dart',
+        'lib/app/providers/app_update_provider.dart',
+        'lib/app/widgets/adaptive_shell.dart',
+      ];
+      const serviceProvidersFile = 'lib/app/providers/service_providers.dart';
+      const plugins = [
+        'package:package_info_plus/package_info_plus.dart',
+        'package:path_provider/path_provider.dart',
+        'package:file_picker/file_picker.dart',
+        'package:file_selector/file_selector.dart',
+      ];
+      for (final appFile in appFiles) {
+        for (final plugin in plugins) {
+          expect(
+            forbidden(appFile, plugin),
+            isTrue,
+            reason: '$appFile -> $plugin',
+          );
+        }
+      }
+      for (final uri in [...plugins, 'package:dio/dio.dart']) {
+        expect(forbidden(serviceProvidersFile, uri), isFalse, reason: uri);
+      }
+    });
+
+    test('app widgets may not import the repository or service providers', () {
+      const appWidget = 'lib/app/widgets/adaptive_shell.dart';
+      expect(forbidden(appWidget, repositoryProviders), isTrue);
+      expect(forbidden(appWidget, serviceProviders), isTrue);
+      expect(
+        forbidden(appWidget, '../providers/repository_providers.dart'),
+        isTrue,
+      );
+      expect(
+        forbidden(
+          appWidget,
+          'package:ledgerly/app/providers/app_update_provider.dart',
+        ),
+        isFalse,
+      );
+    });
   });
 
   test('lib/ respects the layer-boundary rules in $_rulesFile', () {

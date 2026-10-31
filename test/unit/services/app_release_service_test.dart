@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/data/services/app_release_service.dart';
@@ -210,6 +212,42 @@ void main() {
       );
 
       expect(progress, [(5, 10)]);
+    });
+  });
+
+  group('AppReleaseService.updatesDirectory', () {
+    late Directory root;
+
+    setUp(() {
+      root = Directory.systemTemp.createTempSync('app_release_service_test');
+      addTearDown(() => root.deleteSync(recursive: true));
+    });
+
+    test('creates <cache>/updates, including missing parents', () async {
+      final cache = Directory('${root.path}/cache');
+      final service = AppReleaseService(
+        mockDio,
+        temporaryDirectory: () async => cache,
+      );
+
+      final dir = await service.updatesDirectory();
+
+      expect(dir.path, '${cache.path}/updates');
+      expect(dir.existsSync(), isTrue);
+    });
+
+    test('returns the directory when it already exists', () async {
+      final updates = Directory('${root.path}/updates')..createSync();
+      File('${updates.path}/a.apk').writeAsBytesSync([1]);
+      final service = AppReleaseService(
+        mockDio,
+        temporaryDirectory: () async => root,
+      );
+
+      final dir = await service.updatesDirectory();
+
+      expect(dir.path, updates.path);
+      expect(File('${dir.path}/a.apk').existsSync(), isTrue);
     });
   });
 }

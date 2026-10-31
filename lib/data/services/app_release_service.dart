@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
 
 /// One release asset. `digest` is GitHub's `sha256:<hex>` string and
 /// `size` its byte count; either is null when the API omits it.
@@ -9,16 +12,21 @@ typedef ReleaseAsset = ({String name, String url, String? digest, int? size});
 /// A fixed GET with no query parameters and no user data. Returns raw
 /// parsed data as records: the `services_forbid_upstream_and_siblings`
 /// import rule forbids this layer from importing models or repositories.
-/// The download is a GET of a release asset URL with no user data.
+/// The download is a GET of a release asset URL with no user data, saved
+/// under [updatesDirectory].
 ///
 /// Throws [DioException] on network or HTTP errors. A failed release lookup
 /// propagates through `AppUpdateRepository.findUpdate` to
 /// `AvailableAppUpdate.checkAfter`, which logs only the exception type; a
 /// failed download is wrapped by the repository.
 class AppReleaseService {
-  AppReleaseService(this._dio);
+  AppReleaseService(
+    this._dio, {
+    Future<Directory> Function()? temporaryDirectory,
+  }) : _temporaryDirectory = temporaryDirectory ?? getTemporaryDirectory;
 
   final Dio _dio;
+  final Future<Directory> Function() _temporaryDirectory;
 
   static const _latestReleaseUrl =
       'https://api.github.com/repos/BigtoC/ledgerly/releases/latest';
@@ -77,4 +85,10 @@ class AppReleaseService {
     onReceiveProgress: onProgress,
     deleteOnError: true,
   );
+
+  /// `<cache>/updates`, where downloaded update APKs are kept. Created,
+  /// with any missing parents, when it does not exist yet.
+  Future<Directory> updatesDirectory() async =>
+      Directory('${(await _temporaryDirectory()).path}/updates')
+          .create(recursive: true);
 }
