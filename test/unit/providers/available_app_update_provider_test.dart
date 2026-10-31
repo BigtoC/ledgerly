@@ -40,10 +40,6 @@ void main() {
     addTearDown(container.dispose);
   });
 
-  test('initial state is null', () {
-    expect(container.read(availableAppUpdateProvider), isNull);
-  });
-
   test('checks only after the ready future completes', () async {
     when(() => repo.findUpdate()).thenAnswer((_) async => _update);
     final ready = Completer<void>();

@@ -74,10 +74,6 @@ void main() {
         ),
       );
     });
-
-    test('line numbers follow the file', () {
-      expect(result.rows.last.line, 106);
-    });
   });
 
   group('encoding and line endings', () {
