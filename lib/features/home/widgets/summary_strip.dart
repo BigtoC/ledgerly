@@ -222,22 +222,34 @@ class _CurrencyGroup extends StatelessWidget {
     final theme = Theme.of(context);
     final prefix = isApproximate ? '≈ ' : '';
 
-    _Figure signed(int amount, {bool colored = false}) {
+    _Figure signed(int amount, {bool isNet = false}) {
       final text = MoneyFormatter.formatSigned(
         amountMinorUnits: amount,
         currency: currency,
         locale: locale,
       );
+      final shown = '$prefix$text';
       return _Figure(
-        text: '$prefix$text',
+        text: shown,
         semanticValue: isApproximate ? '$approximatelyPrefixLabel $text' : null,
-        color: colored ? _netColor(theme, amount) : null,
+        color: isNet ? _netColor(theme, amount) : null,
+        parts: isNet
+            ? _AmountParts.split(
+                shown,
+                bare: MoneyFormatter.formatBare(
+                  amountMinorUnits: amount.abs(),
+                  currency: currency,
+                  locale: locale,
+                ),
+                decimals: currency.decimals,
+              )
+            : null,
       );
     }
 
     return _SummaryCard(
-      dayNet: signed(income - expense, colored: true),
-      monthNet: signed(monthNet, colored: true),
+      dayNet: signed(income - expense, isNet: true),
+      monthNet: signed(monthNet, isNet: true),
       income: signed(income),
       expense: signed(-expense),
       ratio: (income: income, expense: expense),
@@ -264,11 +276,63 @@ const _negativeDark = Color(0xFFFF8F8F);
 /// screen readers (spelling out the `≈` prefix); [color] defaults to
 /// `onSurface`.
 class _Figure {
-  const _Figure({required this.text, this.semanticValue, this.color});
+  const _Figure({
+    required this.text,
+    this.semanticValue,
+    this.color,
+    this.parts,
+  });
 
   final String text;
   final String? semanticValue;
   final Color? color;
+
+  /// When set, [text] renders in the design's mixed sizes.
+  final _AmountParts? parts;
+}
+
+/// [_Figure.text] cut into the runs the design sizes separately: sign
+/// (with any `≈`), currency symbol, integer part, and decimal separator
+/// plus fraction. [trailing] holds a symbol that a locale puts after the
+/// number.
+class _AmountParts {
+  const _AmountParts({
+    required this.sign,
+    required this.symbol,
+    required this.integer,
+    required this.fraction,
+    required this.trailing,
+  });
+
+  final String sign;
+  final String symbol;
+  final String integer;
+  final String fraction;
+  final String trailing;
+
+  static final _signRun = RegExp(r'^[≈+\-−\s]*');
+
+  /// Locates [bare] (the unsigned number without symbol) inside [text].
+  /// Returns null when it is not there, so the caller falls back to one
+  /// size rather than guessing.
+  static _AmountParts? split(
+    String text, {
+    required String bare,
+    required int decimals,
+  }) {
+    final start = text.indexOf(bare);
+    if (start < 0) return null;
+    final lead = text.substring(0, start);
+    final signLength = _signRun.firstMatch(lead)!.end;
+    final fractionLength = decimals > 0 ? decimals + 1 : 0;
+    return _AmountParts(
+      sign: lead.substring(0, signLength),
+      symbol: lead.substring(signLength),
+      integer: bare.substring(0, bare.length - fractionLength),
+      fraction: bare.substring(bare.length - fractionLength),
+      trailing: text.substring(start + bare.length),
+    );
+  }
 }
 
 /// Day net and month net side by side, a divider, the income/expense
@@ -522,11 +586,8 @@ class _FigureText extends StatelessWidget {
       alignment: textAlign == TextAlign.end
           ? AlignmentDirectional.centerEnd
           : AlignmentDirectional.centerStart,
-      child: Text(
-        figure.text,
-        maxLines: 1,
-        softWrap: false,
-        style: style?.copyWith(
+      child: _text(
+        style?.copyWith(
           color: figure.color ?? Theme.of(context).colorScheme.onSurface,
           fontFeatures: const [FontFeature.tabularFigures()],
         ),
@@ -535,6 +596,53 @@ class _FigureText extends StatelessWidget {
     final semanticValue = figure.semanticValue;
     if (semanticValue == null) return text;
     return Semantics(label: semanticValue, excludeSemantics: true, child: text);
+  }
+
+  Text _text(TextStyle? style) {
+    final parts = figure.parts;
+    final size = style?.fontSize;
+    if (parts == null || size == null) {
+      return Text(figure.text, maxLines: 1, softWrap: false, style: style);
+    }
+    // Design sizes against a 20px integer part: sign 18px, currency
+    // symbol 14px, decimals 15px. The 1px gap after the sign and 3px gap
+    // after the symbol are letter spacing on their last glyph, so the
+    // text itself (read by screen readers) gains no characters.
+    TextSpan run(String text, double scale, {double? gapAfter}) {
+      final style = TextStyle(fontSize: size * scale);
+      if (gapAfter == null) return TextSpan(text: text, style: style);
+      final runes = text.runes.toList();
+      final last = TextSpan(
+        text: String.fromCharCode(runes.last),
+        style: TextStyle(letterSpacing: gapAfter),
+      );
+      if (runes.length == 1) {
+        return TextSpan(style: style, children: [last]);
+      }
+      return TextSpan(
+        text: String.fromCharCodes(runes.take(runes.length - 1)),
+        style: style,
+        children: [last],
+      );
+    }
+
+    return Text.rich(
+      TextSpan(
+        children: [
+          if (parts.sign.isNotEmpty) run(parts.sign, 0.9, gapAfter: 1),
+          if (parts.symbol.isNotEmpty) run(parts.symbol, 0.7, gapAfter: 3),
+          TextSpan(
+            text: parts.integer,
+            style: const TextStyle(letterSpacing: -0.2),
+          ),
+          if (parts.fraction.isNotEmpty) run(parts.fraction, 0.75),
+          if (parts.trailing.isNotEmpty) run(parts.trailing, 0.7),
+        ],
+      ),
+      maxLines: 1,
+      softWrap: false,
+      style: style,
+    );
   }
 }
 

@@ -460,4 +460,179 @@ void main() {
     expect(iconColor(tester, Icons.south_west), const Color(0xFF6DD5A3));
     expect(iconColor(tester, Icons.north_east), const Color(0xFFFF8F8F));
   });
+
+  // Font size of each styled run in [text]'s Text.rich, keyed by run text.
+  Map<String, double?> runSizes(WidgetTester tester, String text) {
+    // Day net, month net and a tile can share a string; take the first
+    // figure that renders as split runs.
+    final span = tester
+        .widgetList<Text>(find.text(text))
+        .map((t) => t.textSpan)
+        .whereType<TextSpan>()
+        .first;
+    return {
+      for (final child in span.children!.cast<TextSpan>())
+        child.toPlainText(): child.style?.fontSize,
+    };
+  }
+
+  testWidgets('SS20: net figures shrink the sign, currency symbol and '
+      'decimals around the integer part, as in the design', (tester) async {
+    await tester.pumpWidget(designStrip());
+    await tester.pumpAndSettle();
+
+    for (final (text, sign, integer, fraction) in [
+      (r'+$57,521.29', '+', '57,521', '.29'),
+      (r'-$93,966.06', '-', '93,966', '.06'),
+    ]) {
+      final sizes = runSizes(tester, text);
+      final base = tester.widget<Text>(find.text(text)).style!.fontSize!;
+      expect(sizes.keys, [sign, r'$', integer, fraction], reason: text);
+      // Design: sign 18px, symbol 14px, integer 20px, decimals 15px.
+      expect(sizes[sign], closeTo(base * 0.9, 0.01), reason: text);
+      expect(sizes[r'$'], closeTo(base * 0.7, 0.01), reason: text);
+      expect(sizes[integer], isNull, reason: '$text integer uses the base');
+      expect(sizes[fraction], closeTo(base * 0.75, 0.01), reason: text);
+    }
+  });
+
+  testWidgets('SS21: zero-decimal currencies split without a fraction run', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        const SummaryStrip(
+          todayTotalsByCurrency: {'JPY': (expense: 500, income: 0)},
+          monthNetByCurrency: {'JPY': -500},
+          currenciesByCode: {'JPY': _jpy},
+          locale: 'en_US',
+          defaultCurrency: 'JPY',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(runSizes(tester, '-¥500').keys, ['-', '¥', '500']);
+  });
+
+  testWidgets('SS23: the ≈ prefix of a converted total sizes with the sign', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        const SummaryStrip(
+          todayTotalsByCurrency: {'JPY': (expense: 500, income: 0)},
+          monthNetByCurrency: {'JPY': -500},
+          currenciesByCode: {'USD': _usd, 'JPY': _jpy},
+          locale: 'en_US',
+          defaultCurrency: 'USD',
+        ),
+        rates: {'JPY→USD': (0.01 * 1000000000).round()},
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(runSizes(tester, r'≈ -$5.00').keys, ['≈ -', r'$', '5', '.00']);
+  });
+
+  testWidgets('SS22: income and expense tile amounts stay one size', (
+    tester,
+  ) async {
+    await tester.pumpWidget(designStrip());
+    await tester.pumpAndSettle();
+    for (final text in [r'+$61,700.69', r'-$4,179.40']) {
+      expect(tester.widget<Text>(find.text(text)).textSpan, isNull);
+    }
+  });
+
+  for (final locale in ['zh_TW', 'zh_Hant_TW', 'zh_CN', 'zh_Hans_CN']) {
+    testWidgets('SS24: $locale net figures split into sized runs', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          SummaryStrip(
+            todayTotalsByCurrency: const {
+              'USD': (expense: 417940, income: 6170069),
+            },
+            monthNetByCurrency: const {'USD': -9396606},
+            currenciesByCode: const {'USD': _usd},
+            locale: locale,
+            defaultCurrency: 'USD',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final day = tester
+          .widgetList<Text>(find.byType(Text))
+          .map((t) => t.textSpan)
+          .whereType<TextSpan>()
+          .map(
+            (span) =>
+                span.children!.cast<TextSpan>().map((c) => c.toPlainText()),
+          )
+          .toList();
+      expect(day, [
+        ['+', r'$', '57,521', '.29'],
+        ['-', r'$', '93,966', '.06'],
+      ]);
+    });
+  }
+
+  // Letter spacing after the last glyph of [run] in [text]'s split figure.
+  double? gapAfter(WidgetTester tester, String text, String run) {
+    final span = tester
+        .widgetList<Text>(find.text(text))
+        .map((t) => t.textSpan)
+        .whereType<TextSpan>()
+        .first;
+    var leaf = span.children!.cast<TextSpan>().firstWhere(
+      (c) => c.toPlainText() == run,
+    );
+    while (leaf.children?.isNotEmpty ?? false) {
+      leaf = leaf.children!.last as TextSpan;
+    }
+    return leaf.style?.letterSpacing;
+  }
+
+  testWidgets('SS25: net figures keep the design gaps after the sign and '
+      'after the currency symbol', (tester) async {
+    await tester.pumpWidget(designStrip());
+    await tester.pumpAndSettle();
+    // Design: sign margin-right 1px, currency margin-right 3px. The gap is
+    // spacing, not a character, so the text stays "+$57,521.29".
+    expect(gapAfter(tester, r'+$57,521.29', '+'), 1);
+    expect(gapAfter(tester, r'+$57,521.29', r'$'), 3);
+    expect(gapAfter(tester, r'-$93,966.06', '-'), 1);
+    expect(gapAfter(tester, r'-$93,966.06', r'$'), 3);
+    // The integer part is set slightly tight (letter-spacing -0.2px).
+    expect(gapAfter(tester, r'+$57,521.29', '57,521'), -0.2);
+  });
+
+  testWidgets('SS26: only the last glyph of a multi-character symbol or '
+      'sign carries the gap', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        const SummaryStrip(
+          todayTotalsByCurrency: {'HKD': (expense: 0, income: 6170069)},
+          monthNetByCurrency: {'HKD': 6170069},
+          currenciesByCode: {
+            'HKD': Currency(code: 'HKD', decimals: 2, symbol: r'HK$'),
+          },
+          locale: 'en_US',
+          defaultCurrency: 'HKD',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final figure = tester
+        .widgetList<Text>(find.text(r'+HK$61,700.69'))
+        .map((t) => t.textSpan)
+        .whereType<TextSpan>()
+        .first;
+    final symbol = figure.children!.cast<TextSpan>().firstWhere(
+      (c) => c.toPlainText() == r'HK$',
+    );
+    expect(symbol.text, 'HK');
+    expect(symbol.style?.letterSpacing, isNull);
+    expect(gapAfter(tester, r'+HK$61,700.69', r'HK$'), 3);
+  });
 }
