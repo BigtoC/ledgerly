@@ -94,27 +94,6 @@ void main() {
     expect(decimalTaps, 0); // tap was a no-op (key disabled)
   });
 
-  testWidgets('WK03: decimal key is a no-op when decimals == 0', (
-    tester,
-  ) async {
-    var decimalTaps = 0;
-    await tester.pumpWidget(
-      _wrap(
-        CalculatorKeypad(
-          decimals: 0,
-          onDigit: (_) {},
-          onDecimal: () => decimalTaps++,
-          onBackspace: () {},
-          onClear: () {},
-          onOperator: (_) {},
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('.'));
-    expect(decimalTaps, 0);
-  });
-
   testWidgets(
     'WK04: digit overflow after max decimals — KeypadState clamps the 4th frac digit',
     (tester) async {

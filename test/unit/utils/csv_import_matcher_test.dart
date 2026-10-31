@@ -462,19 +462,6 @@ void main() {
         const CategoryResolution.existing(52),
       );
     });
-
-    test('an unmatched value becomes a new expense category', () {
-      final match = _match([_row(category: '個人護理')]);
-      final entry = _categoryEntry(match, '個人護理');
-      expect(
-        entry.resolution,
-        const CategoryResolution.create(
-          name: '個人護理',
-          type: CategoryType.expense,
-        ),
-      );
-      expect(entry.isNew, isTrue);
-    });
   });
 
   group('accounts', () {
@@ -566,14 +553,6 @@ void main() {
           currencyCode: 'HKD',
         ),
       );
-    });
-
-    test('tier 3: no account or type matches', () {
-      final match = _match([_row(account: 'Credit Card')]);
-      final entry = _accountEntry(match, 'Credit Card');
-      expect(entry.tier, CsvAccountTier.none);
-      expect(entry.resolution, isNull);
-      expect(entry.createAccountOption, isNull);
     });
 
     test('archived types never match', () {

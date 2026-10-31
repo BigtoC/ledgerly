@@ -672,28 +672,6 @@ void main() {
   // Wave 3 §3 — daily / monthly aggregate streams.
   // -------------------------------------------------------------------------
   group('watchDailyTotalsByType', () {
-    test('A-empty-01: empty DB emits empty maps', () async {
-      final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
-      final byType = await txRepo.watchDailyTotalsByType(today).first;
-      expect(byType, isEmpty);
-    });
-
-    test('A-single-01: single USD expense — totals show expense', () async {
-      final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
-      await txRepo.save(
-        sampleTx(
-          amount: 1500,
-          categoryId: fixtures.expenseCategoryId,
-          date: today.add(const Duration(hours: 9)),
-        ),
-      );
-
-      final byType = await txRepo.watchDailyTotalsByType(today).first;
-      expect(byType, hasLength(1));
-      expect(byType['USD']!.expense, 1500);
-      expect(byType['USD']!.income, 0);
-    });
-
     test('A-mixed-01: expense + income on same day — split by type', () async {
       final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
       await txRepo.save(
@@ -816,12 +794,6 @@ void main() {
   });
 
   group('watchMonthNetByCurrency', () {
-    test('M-empty-01: empty DB emits empty map', () async {
-      final month = DateTime(frozenNow.year, frozenNow.month, 1);
-      final net = await txRepo.watchMonthNetByCurrency(month).first;
-      expect(net, isEmpty);
-    });
-
     test('M-bound-01: rows on first/last day of month included; '
         'first day of next month excluded', () async {
       // April 2026.

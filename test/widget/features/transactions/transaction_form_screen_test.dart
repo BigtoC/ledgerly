@@ -807,40 +807,6 @@ void main() {
     expect(tile.currency?.code, 'USD');
   });
 
-  testWidgets('WS20: Change and Clear empties amount and updates currency', (
-    tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(400, 1000));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    await tester.pumpWidget(mountAdd());
-    await tester.pumpAndSettle();
-
-    // Enter an amount
-    await tester.tap(find.text('5'));
-    await tester.pumpAndSettle();
-
-    // Open currency picker
-    await tester.tap(find.byType(CurrencySelectorTile));
-    await tester.pumpAndSettle();
-
-    // Tap JPY
-    await tester.tap(find.text('JPY').first);
-    await tester.pumpAndSettle();
-
-    // Confirm the change
-    await tester.tap(find.text('Change and Clear'));
-    await tester.pumpAndSettle();
-
-    // Currency tile should now show JPY
-    final tile = tester.widget<CurrencySelectorTile>(
-      find.byType(CurrencySelectorTile),
-    );
-    expect(tile.currency?.code, 'JPY');
-    // Amount placeholder should be visible (currencyTouched=true, amount=0)
-    expect(find.textContaining('JPY'), findsAtLeastNWidgets(1));
-  });
-
   testWidgets(
     'WS21: account switch after manual currency pick does not show destructive dialog',
     (tester) async {

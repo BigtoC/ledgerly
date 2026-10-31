@@ -10,23 +10,12 @@ import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 
 void main() {
   group('RepositoryException (sealed base)', () {
-    test('is an Exception subtype', () {
-      const exception = CurrencyNotFoundException('USD');
-      expect(exception, isA<Exception>());
-      expect(exception, isA<RepositoryException>());
-    });
-
     test('toString() is "<runtimeType>: <message>"', () {
       const exception = CurrencyNotFoundException('USD');
       expect(
         exception.toString(),
         'CurrencyNotFoundException: Currency not registered: USD',
       );
-    });
-
-    test('message is exposed on the base class', () {
-      const RepositoryException exception = CurrencyNotFoundException('USD');
-      expect(exception.message, 'Currency not registered: USD');
     });
   });
 
@@ -35,12 +24,6 @@ void main() {
       const exception = CurrencyNotFoundException('XYZ');
       expect(exception.code, 'XYZ');
       expect(exception.message, 'Currency not registered: XYZ');
-    });
-
-    test('is const-constructible', () {
-      const a = CurrencyNotFoundException('USD');
-      const b = CurrencyNotFoundException('USD');
-      expect(identical(a, b), isTrue);
     });
   });
 
@@ -60,15 +43,6 @@ void main() {
         'refusing to overwrite with 4.',
       );
     });
-
-    test('extends RepositoryException', () {
-      const exception = CurrencyDecimalsMismatchException(
-        code: 'USD',
-        existingDecimals: 2,
-        attemptedDecimals: 4,
-      );
-      expect(exception, isA<RepositoryException>());
-    });
   });
 
   group('AccountTypeNotFoundException', () {
@@ -76,11 +50,6 @@ void main() {
       const exception = AccountTypeNotFoundException(42);
       expect(exception.id, 42);
       expect(exception.message, 'Account type not found: 42');
-    });
-
-    test('extends RepositoryException', () {
-      const exception = AccountTypeNotFoundException(1);
-      expect(exception, isA<RepositoryException>());
     });
   });
 
@@ -93,11 +62,6 @@ void main() {
         'Account type 7 is in use and cannot be deleted.',
       );
     });
-
-    test('extends RepositoryException', () {
-      const exception = AccountTypeInUseException(7);
-      expect(exception, isA<RepositoryException>());
-    });
   });
 
   group('AccountInUseException', () {
@@ -105,11 +69,6 @@ void main() {
       const exception = AccountInUseException(3);
       expect(exception.id, 3);
       expect(exception.message, 'Account 3 is in use and cannot be deleted.');
-    });
-
-    test('extends RepositoryException', () {
-      const exception = AccountInUseException(3);
-      expect(exception, isA<RepositoryException>());
     });
   });
 

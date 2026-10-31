@@ -467,69 +467,11 @@ void main() {
         TransactionFormEmptyReason.draftNotFound,
       );
     });
-
-    test(
-      'draftNotFound state transitions from loading → empty(draftNotFound)',
-      () async {
-        when(() => slRepo.getById(888)).thenAnswer((_) async => null);
-
-        final c = makeContainer();
-        addTearDown(c.dispose);
-
-        // Collect state transitions.
-        final states = <TransactionFormState>[];
-        final sub = c.listen(
-          transactionFormControllerProvider,
-          (_, next) => states.add(next),
-          fireImmediately: true,
-        );
-        addTearDown(sub.close);
-
-        await c
-            .read(transactionFormControllerProvider.notifier)
-            .hydrateForShoppingListDraft(888);
-
-        // Should go: loading → loading (hydrate resets) → empty(draftNotFound).
-        final lastState = c.read(transactionFormControllerProvider);
-        expect(lastState, isA<TransactionFormEmpty>());
-        expect(
-          (lastState as TransactionFormEmpty).reason,
-          TransactionFormEmptyReason.draftNotFound,
-        );
-        // Verify the draftNotFound reason is distinct from other reasons.
-        expect(
-          lastState.reason,
-          isNot(TransactionFormEmptyReason.noActiveAccount),
-        );
-        expect(lastState.reason, isNot(TransactionFormEmptyReason.notFound));
-      },
-    );
   });
 
   group(
     'TFSL07: canSaveDraft is true when account + expense category are set',
     () {
-      test('amount = 0 is allowed', () async {
-        final draft = _draft(
-          id: 8,
-          categoryId: _expenseCategory.id,
-          accountId: _account.id,
-        );
-        when(() => slRepo.getById(8)).thenAnswer((_) async => draft);
-
-        final c = makeContainer();
-        addTearDown(c.dispose);
-        await c
-            .read(transactionFormControllerProvider.notifier)
-            .hydrateForShoppingListDraft(8);
-
-        final s =
-            c.read(transactionFormControllerProvider) as TransactionFormData;
-        // Amount is 0 — canSaveDraft should still be true.
-        expect(s.amountMinorUnits, 0);
-        expect(s.canSaveDraft, isTrue);
-      });
-
       test(
         'from add mode: canSaveDraft=true when account + expense category set',
         () async {

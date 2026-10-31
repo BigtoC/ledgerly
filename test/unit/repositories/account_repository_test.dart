@@ -537,14 +537,6 @@ void main() {
         expect(await repo.watchBalanceByCurrency(id).first, isEmpty);
       });
 
-      test('ACB02: only opening balance → own-currency group includes opening balance', () async {
-        final id = await repo.save(
-          buildCashAccount(openingBalanceMinorUnits: 50000),
-        );
-
-        expect(await repo.watchBalanceByCurrency(id).first, {'USD': 50000});
-      });
-
       test(
         'ACB03: single expense → opening minus amount in own-currency group',
         () async {

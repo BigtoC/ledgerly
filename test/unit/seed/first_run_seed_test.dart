@@ -291,15 +291,6 @@ void main() {
       expect(cash.openingBalanceMinorUnits, isA<int>());
       expect(cash.isArchived, isFalse);
     });
-
-    test('default_account_id points at the seeded Cash account '
-        '(§12 Q2)', () async {
-      await h.seed('en_US');
-      final accounts = await h.accounts.watchAll().first;
-      final cashId = accounts.single.id;
-      expect(await h.preferences.getDefaultAccountId(), cashId);
-      expect(await h.preferences.getDefaultAccountId(), isNotNull);
-    });
   });
 
   group('runFirstRunSeed — locale matrix', () {

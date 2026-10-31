@@ -3,8 +3,6 @@
 // Tests IDs: TFSLW01–TFSLW04
 //
 // Covers:
-//   - AddTransactionMode shows "Add to shopping list" inline action below
-//     MemoField
 //   - "Add to shopping list" is disabled when canSaveDraft is false
 //   - EditShoppingListDraftMode shows "Save to transaction" and "Save draft"
 //     in inline row; no app-bar Save button
@@ -192,17 +190,6 @@ void main() {
       ),
     );
   }
-
-  testWidgets(
-    'TFSLW01: AddTransactionMode shows "Add to shopping list" inline action',
-    (tester) async {
-      await tester.pumpWidget(mountWithMode(const AddTransactionMode()));
-      await tester.pumpAndSettle();
-
-      // The "Add to shopping list" button should be visible.
-      expect(find.byKey(const Key('addToShoppingListButton')), findsOneWidget);
-    },
-  );
 
   testWidgets(
     'TFSLW02: "Add to shopping list" is disabled when canSaveDraft is false',

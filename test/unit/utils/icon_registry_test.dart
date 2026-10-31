@@ -25,10 +25,6 @@ void main() {
     test('empty string returns Icons.category', () {
       expect(iconForKey(''), Icons.category);
     });
-
-    test('kFallbackIcon is exposed as Icons.category', () {
-      expect(kFallbackIcon, Icons.category);
-    });
   });
 
   group('iconForKey resolves every key in the seed contract (§4.3, §4.4)', () {

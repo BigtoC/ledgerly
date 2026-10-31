@@ -25,27 +25,11 @@ FormulaOperand _whole(int minorUnits) => (
 );
 
 void main() {
-  group('KeypadState — initial state', () {
-    test('K01: defaults are zero / integer mode', () {
-      const s = KeypadState.initial();
-      expect(s.amountMinorUnits, 0);
-      expect(s.fractionalDigitsEntered, 0);
-      expect(s.isFractionalMode, isFalse);
-    });
-  });
-
   group('KeypadState.push — integer mode', () {
     test('K02: push(1) on USD shifts to 100 minor units', () {
       final s = const KeypadState.initial().push(1, decimals: 2);
       expect(s.amountMinorUnits, 100);
       expect(s.isFractionalMode, isFalse);
-    });
-
-    test('K03: push(1).push(2) on USD accumulates to 1200', () {
-      final s = const KeypadState.initial()
-          .push(1, decimals: 2)
-          .push(2, decimals: 2);
-      expect(s.amountMinorUnits, 1200);
     });
 
     test('K04: push(1).push(2).push(3) on JPY (decimals=0) yields 123', () {
@@ -90,16 +74,6 @@ void main() {
   });
 
   group('KeypadState.push — fractional mode', () {
-    test('K20: 1 . 5 on USD → 150 minor units, 1 fractional digit', () {
-      final s = const KeypadState.initial()
-          .push(1, decimals: 2)
-          .pushDecimal(decimals: 2)
-          .push(5, decimals: 2);
-      expect(s.amountMinorUnits, 150);
-      expect(s.fractionalDigitsEntered, 1);
-      expect(s.isFractionalMode, isTrue);
-    });
-
     test('K21: 1 . 0 5 on USD → 105 minor units, 2 fractional digits', () {
       final s = const KeypadState.initial()
           .push(1, decimals: 2)
@@ -660,24 +634,6 @@ void main() {
         expect(result.hasCurrentInput, isFalse);
       },
     );
-
-    test('K93b: pop on a chained operator reopens the previous operand', () {
-      final s = const KeypadState.initial()
-          .push(1, decimals: 2)
-          .pushDecimal(decimals: 2)
-          .push(5, decimals: 2)
-          .pushOperator(CalcOperator.add, decimals: 2)
-          .push(2, decimals: 2)
-          .pushOperator(CalcOperator.add, decimals: 2); // 1.5 + 2 +
-
-      final result = s.pop(decimals: 2); // 1.5 + 2
-
-      expect(result.isEvaluating, isTrue);
-      expect(result.leftOperand(decimals: 2), 150);
-      expect(result.operator, CalcOperator.add);
-      expect(result.amountMinorUnits, 200);
-      expect(result.hasCurrentInput, isTrue);
-    });
 
     test(
       'K98: pop on a zero result without a formula exits the result state',

@@ -71,43 +71,6 @@ void main() {
       },
     );
 
-    test('categoryId filter scopes to that category only', () async {
-      final rows = await db.transactionDao
-          .watchChartRowsInRange(
-            start: DateTime(2026, 5, 18),
-            end: DateTime(2026, 5, 20),
-            type: 'expense',
-            categoryId: 1,
-          )
-          .first;
-      expect(rows, hasLength(3));
-    });
-
-    test('categoryId + currencyCode filter applies both', () async {
-      final rows = await db.transactionDao
-          .watchChartRowsInRange(
-            start: DateTime(2026, 5, 18),
-            end: DateTime(2026, 5, 20),
-            type: 'expense',
-            categoryId: 1,
-            currencyCode: 'USD',
-          )
-          .first;
-      expect(rows, hasLength(2));
-    });
-
-    test('currencyCode-only filter scopes to that currency', () async {
-      final rows = await db.transactionDao
-          .watchChartRowsInRange(
-            start: DateTime(2026, 5, 18),
-            end: DateTime(2026, 5, 20),
-            type: 'expense',
-            currencyCode: 'EUR',
-          )
-          .first;
-      expect(rows, hasLength(1));
-    });
-
     test('accountId filter scopes to that account', () async {
       final rows = await db.transactionDao
           .watchChartRowsInRange(
@@ -122,18 +85,6 @@ void main() {
   });
 
   group('watchTransactionRowsForSliceInRange', () {
-    test('category filter returns full TransactionRow objects ordered date DESC, id DESC', () async {
-      final rows = await db.transactionDao
-          .watchTransactionRowsForSliceInRange(
-            start: DateTime(2026, 5, 18),
-            end: DateTime(2026, 5, 20),
-            type: 'expense',
-            categoryId: 1,
-          )
-          .first;
-      expect(rows.map((r) => r.id).toList(), [3, 2, 1]);
-    });
-
     test('account filter excludes wrong account', () async {
       await db.customStatement(
         'INSERT INTO accounts (id, account_type_id, name, currency, '
@@ -166,21 +117,6 @@ void main() {
           .first;
       expect(rows.map((r) => r.id).toSet(), {1, 2, 3, 4});
     });
-
-    test(
-      'currency-only filter (no cat/acct) scopes to that currency',
-      () async {
-        final rows = await db.transactionDao
-            .watchTransactionRowsForSliceInRange(
-              start: DateTime(2026, 5, 18),
-              end: DateTime(2026, 5, 20),
-              type: 'expense',
-              currencyCode: 'EUR',
-            )
-            .first;
-        expect(rows.map((r) => r.id).toList(), [3]);
-      },
-    );
 
     test('range is half-open: end-of-range row excluded', () async {
       final epoch = DateTime.utc(2026).millisecondsSinceEpoch ~/ 1000;

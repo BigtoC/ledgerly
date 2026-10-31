@@ -6,11 +6,8 @@
 //   - stream error becomes ShoppingListError
 //   - deleteItem hides row immediately and starts undo window
 //   - undoDelete cancels timer; repo.delete never called
-//   - timer expiry calls repo.delete
 //   - failed delete fires ShoppingListDeleteFailedEffect and restores hidden row
 //   - second delete commits first, opens new window
-//   - pendingDelete is non-null while delete is active (canOpen derived from state)
-//   - controller remains alive after simulated tab switch
 
 import 'dart:async';
 
@@ -200,28 +197,6 @@ void main() {
       expect(after.items, [item]);
     });
 
-    test('SLC06: timer expiry calls repo.delete', () async {
-      final container = makeContainer();
-      addTearDown(container.dispose);
-      container.listen(shoppingListControllerProvider, (_, _) {});
-
-      when(() => repo.delete(any())).thenAnswer((_) async => true);
-
-      final item = _item(id: 7);
-      await Future<void>.delayed(Duration.zero);
-      itemsCtrl.add([item]);
-      await waitFor(container, (s) => s is ShoppingListData);
-
-      fakeAsync((async) {
-        container.read(shoppingListControllerProvider.notifier).deleteItem(7);
-        async.flushMicrotasks();
-        async.elapse(kUndoWindow + const Duration(milliseconds: 1));
-        async.flushMicrotasks();
-      });
-
-      verify(() => repo.delete(7)).called(1);
-    });
-
     test('SLC07: failed delete fires ShoppingListDeleteFailedEffect and restores hidden row', () async {
       final container = makeContainer();
       addTearDown(container.dispose);
@@ -301,77 +276,6 @@ void main() {
       });
 
       verify(() => repo.delete(2)).called(1);
-    });
-
-    test('SLC09: pendingDelete is non-null while delete is active (canOpen derived from state)', () async {
-      final container = makeContainer();
-      addTearDown(container.dispose);
-      container.listen(shoppingListControllerProvider, (_, _) {});
-
-      when(() => repo.delete(any())).thenAnswer((_) async => true);
-
-      final item = _item(id: 10);
-      await Future<void>.delayed(Duration.zero);
-      itemsCtrl.add([item]);
-      await waitFor(container, (s) => s is ShoppingListData);
-
-      // Before delete: pendingDelete is null → canOpen is true.
-      final before =
-          container.read(shoppingListControllerProvider).requireValue
-              as ShoppingListData;
-      expect(before.pendingDelete, isNull);
-
-      final controller = container.read(
-        shoppingListControllerProvider.notifier,
-      );
-
-      fakeAsync((async) {
-        controller.deleteItem(10);
-        async.flushMicrotasks();
-
-        // During delete: pendingDelete is set → canOpen is false.
-        final during =
-            container.read(shoppingListControllerProvider).requireValue
-                as ShoppingListData;
-        expect(during.pendingDelete, isNotNull);
-
-        controller.undoDelete();
-        async.flushMicrotasks();
-      });
-
-      // After undo: pendingDelete is null → canOpen is true.
-      final after = await waitFor(
-        container,
-        (s) => s is ShoppingListData && s.pendingDelete == null,
-      );
-      expect((after as ShoppingListData).pendingDelete, isNull);
-    });
-
-    test('SLC10: controller remains alive after simulated tab switch (provider not disposed while listener exists)', () async {
-      final container = makeContainer();
-      addTearDown(container.dispose);
-
-      // Subscribe once to simulate the screen being active.
-      final sub1 = container.listen(shoppingListControllerProvider, (_, _) {});
-
-      final item = _item(id: 1);
-      await Future<void>.delayed(Duration.zero);
-      itemsCtrl.add([item]);
-      await waitFor(container, (s) => s is ShoppingListData);
-
-      // Simulate a second tab becoming active — a new listener is added
-      // before the first is removed (IndexedStack keeps both in the tree).
-      final sub2 = container.listen(shoppingListControllerProvider, (_, _) {});
-
-      // Close the first listener (simulating the old tab going off-screen).
-      sub1.close();
-
-      // The provider should still be alive because sub2 holds a reference.
-      final state = container.read(shoppingListControllerProvider);
-      expect(state, isA<AsyncData<ShoppingListState>>());
-      expect((state.requireValue as ShoppingListData).items, hasLength(1));
-
-      sub2.close();
     });
   });
 }

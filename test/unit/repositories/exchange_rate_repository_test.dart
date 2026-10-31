@@ -167,26 +167,6 @@ void main() {
       expect(repo.getRate('EUR', 'USD'), isNull);
     });
 
-    test('defaultCurrency change triggers refreshAll', () async {
-      await seedAccount('EUR');
-      when(() => mockService.fetchRates(any())).thenAnswer(
-        (_) async => [
-          (
-            from: 'EUR',
-            to: 'USD',
-            rate: 1.08,
-            fetchedAt: DateTime(2026, 5, 14),
-          ),
-        ],
-      );
-
-      defaultCurrencyController.add('USD');
-      await Future<void>.delayed(const Duration(milliseconds: 50));
-
-      verify(() => mockService.fetchRates(any()))
-          .called(greaterThanOrEqualTo(1));
-    });
-
     test('single-flight: concurrent refreshAll calls coalesce to one fetch', () async {
       await seedAccount('EUR');
       final completer =

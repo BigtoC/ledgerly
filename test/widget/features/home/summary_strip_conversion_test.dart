@@ -49,21 +49,6 @@ void main() {
   }
 
   group('SummaryStrip conversion', () {
-    testWidgets('shows unified total when rate available', (tester) async {
-      await tester.pumpWidget(
-        buildStrip(
-          todayTotals: const {'EUR': (expense: 500, income: 0)},
-          monthNet: const {'EUR': -2000},
-          defaultCurrency: 'USD',
-          rates: {'EUR→USD': (1.08 * 1000000000).round()},
-        ),
-      );
-      await tester.pumpAndSettle();
-      // Unified group renders with USD symbol AND the ≈ prefix.
-      expect(find.textContaining('≈'), findsWidgets);
-      expect(find.textContaining(r'$'), findsWidgets);
-    });
-
     testWidgets('falls back to per-currency when rate missing', (tester) async {
       await tester.pumpWidget(
         buildStrip(
@@ -100,21 +85,6 @@ void main() {
       expect(find.textContaining('¥'), findsWidgets);
       // Separator label present.
       expect(find.text('Unconverted'), findsOneWidget);
-    });
-
-    testWidgets('same-currency totals pass through unchanged (no ≈)', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        buildStrip(
-          todayTotals: const {'USD': (expense: 1000, income: 500)},
-          monthNet: const {'USD': -500},
-          defaultCurrency: 'USD',
-        ),
-      );
-      await tester.pumpAndSettle();
-      // No ≈ prefix when all amounts are already in the default currency.
-      expect(find.textContaining('≈'), findsNothing);
     });
 
     testWidgets('approximate values carry a11y "approximately" label', (

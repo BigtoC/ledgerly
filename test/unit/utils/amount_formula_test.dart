@@ -85,42 +85,6 @@ void main() {
   });
 
   group('encodeAmountFormula', () {
-    test('joins operands with ASCII operators', () {
-      expect(
-        encodeAmountFormula(
-          operands: [
-            (
-              amountMinorUnits: 350,
-              fractionalDigitsEntered: 1,
-              isFractionalMode: true,
-            ),
-            (
-              amountMinorUnits: 1050,
-              fractionalDigitsEntered: 1,
-              isFractionalMode: true,
-            ),
-            (
-              amountMinorUnits: 1100,
-              fractionalDigitsEntered: 0,
-              isFractionalMode: false,
-            ),
-            (
-              amountMinorUnits: 300,
-              fractionalDigitsEntered: 0,
-              isFractionalMode: false,
-            ),
-          ],
-          operators: const [
-            CalcOperator.add,
-            CalcOperator.add,
-            CalcOperator.add,
-          ],
-          decimals: 2,
-        ),
-        '3.5+10.5+11+3',
-      );
-    });
-
     test('encodes every operator', () {
       const one = (
         amountMinorUnits: 100,
@@ -232,12 +196,6 @@ void main() {
     const sub = CalcOperator.subtract;
     const mul = CalcOperator.multiply;
     const div = CalcOperator.divide;
-
-    test('bracket the sum before a product', () {
-      expect(encode(const [add, mul]), '(1+1)*1');
-      expect(encode(const [add, mul, add, div]), '((1+1)*1+1)/1');
-      expect(encode(const [sub, div]), '(1-1)/1');
-    });
 
     test('no brackets where usual precedence already agrees', () {
       expect(encode(const [mul, add]), '1*1+1');

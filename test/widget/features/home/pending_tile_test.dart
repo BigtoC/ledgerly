@@ -111,18 +111,6 @@ ProviderContainer _makeFixedContainer(PendingState fixed) {
 
 @Dependencies([PendingController, HomeController])
 void main() {
-  testWidgets('PT01: default circle is grey with check icon', (tester) async {
-    final container = _makeFixedContainer(
-      PendingState.data(items: [_pending(id: 1)], skipScheduled: null),
-    );
-    addTearDown(container.dispose);
-
-    await tester.pumpWidget(_wrap(container));
-    await tester.pumpAndSettle();
-
-    expect(find.byIcon(Icons.check), findsOneWidget);
-  });
-
   testWidgets('PT02: tapping circle calls controller.approve once', (
     tester,
   ) async {

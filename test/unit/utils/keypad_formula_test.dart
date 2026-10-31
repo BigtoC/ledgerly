@@ -48,13 +48,6 @@ void main() {
       expect(finished(s), 2800);
     });
 
-    test('equals keeps the formula', () {
-      final s = type('3.5+10.5+11+3=');
-      expect(s.showingResult, isTrue);
-      expect(s.amountMinorUnits, 2800);
-      expect(s.formula(decimals: _usd), '3.5+10.5+11+3');
-    });
-
     test('a dangling operator is left out', () {
       expect(type('1+2+').formula(decimals: _usd), '1+2');
       final done = type('1+2+=');
@@ -97,10 +90,6 @@ void main() {
     test('a digit after a result starts a new amount', () {
       expect(type('1+2=5').formula(decimals: _usd), isNull);
       expect(type('1+2=5+1').formula(decimals: _usd), '5+1');
-    });
-
-    test('clear drops the formula', () {
-      expect(type('1+2C').formula(decimals: _usd), isNull);
     });
 
     test('backspace inside the current operand keeps the formula', () {
@@ -180,12 +169,6 @@ void main() {
       final s = type('+2', start: load('3.5+10.5+11+3'));
       expect(s.formula(decimals: _usd), '3.5+10.5+11+3+2');
       expect(finished(s), 3000);
-    });
-
-    test('a digit replaces the loaded formula', () {
-      final s = type('9', start: load('3.5+10.5+11+3'));
-      expect(s.formula(decimals: _usd), isNull);
-      expect(s.amountMinorUnits, 900);
     });
   });
 

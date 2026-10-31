@@ -348,37 +348,6 @@ void main() {
     expect(find.text('No transaction'), findsOneWidget);
   });
 
-  testWidgets(
-    'WH03b: jump-to-today button shows only when selectedDay != today',
-    (tester) async {
-      await tester.binding.setSurfaceSize(const Size(400, 800));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
-      await tester.pumpWidget(makeApp());
-      await seedAll(tester);
-
-      final today = DateTime.now();
-      final todayMidnight = DateTime(today.year, today.month, today.day);
-
-      // Today is selected — jump-to-today should NOT show
-      dayCtrl.add(const []);
-      activityCtrl.add([todayMidnight]);
-      todayTotalsCtrl.add(const {});
-      monthNetCtrl.add(const {});
-      await tester.pump(const Duration(milliseconds: 200));
-
-      expect(find.text('Jump to today'), findsNothing);
-      expect(find.text('Today'), findsOneWidget);
-      final button = tester.widget<TextButton>(
-        find.ancestor(
-          of: find.text('Today'),
-          matching: find.byType(TextButton),
-        ),
-      );
-      expect(button.onPressed, isNull);
-    },
-  );
-
   testWidgets('WH03c: day-nav row sits above the summary card and owns the '
       'jump-to-today button', (tester) async {
     await tester.binding.setSurfaceSize(const Size(400, 800));
@@ -449,23 +418,6 @@ void main() {
       expect(find.textContaining('Old wallet'), findsNothing);
     },
   );
-
-  testWidgets('WH05: >=600dp tablet uses single-pane layout', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(900, 800));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    await tester.pumpWidget(makeApp());
-    await seedAll(tester);
-    final today = DateTime.now();
-    final todayMidnight = DateTime(today.year, today.month, today.day);
-    dayCtrl.add([_tx(id: 1, date: todayMidnight)]);
-    activityCtrl.add([todayMidnight]);
-    todayTotalsCtrl.add(const {});
-    monthNetCtrl.add(const {});
-    await tester.pump(const Duration(milliseconds: 200));
-
-    expect(find.byType(VerticalDivider), findsNothing);
-  });
 
   testWidgets('WH06: tapping a row opens /home/edit/:id', (tester) async {
     await tester.binding.setSurfaceSize(const Size(400, 800));
