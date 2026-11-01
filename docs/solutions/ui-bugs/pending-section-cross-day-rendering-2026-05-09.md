@@ -14,10 +14,10 @@ root_cause: scope_issue
 resolution_type: code_fix
 severity: high
 related_components:
-  - features/home/home_controller
-  - features/home/home_state
+  - ui/features/home/view_models/home_controller
+  - ui/features/home/view_models/home_state
   - data/repositories/pending_transaction_repository
-  - data/use_cases/recurring_generation_use_case
+  - domain/use_cases/recurring_generation_use_case
 tags:
   - flutter
   - riverpod
@@ -60,7 +60,7 @@ The breakthrough came only after the user shared their `ledgerly.sqlite` and SQL
 
 ## Solution
 
-**Day-scope `PendingSection` to `homeControllerProvider`'s `selectedDay`.** Single-file change in `lib/features/home/widgets/pending_section.dart`.
+**Day-scope `PendingSection` to `homeControllerProvider`'s `selectedDay`.** Single-file change in `lib/ui/features/home/views/pending_section.dart`.
 
 Imports added:
 

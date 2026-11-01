@@ -303,20 +303,25 @@ time and falls back to the Releases page when release metadata is unavailable.
 ```text
 lib/
   app/        # bootstrap, router, MaterialApp, providers
-  core/       # theme, utils (money_formatter, icon_registry, color_palette, date_helpers)
-  data/       # database + tables, DAOs, services, repositories, Freezed models, use_cases
-  features/
-    splash/         # sun-themed splash with day count + inline rainbow {date}
-    home/           # day-at-a-time list with summary strip, search, pending section
-    transactions/   # add/edit form with calculator keypad
-    categories/     # category list + form sheet with icon/color pickers
-    analysis/       # charts (pie + bar with drill-down) + memo search
-      charts/       # ChartsSection, pie/bar/legend/period/dimension/toggle widgets
-      search/       # SearchBar-based transaction search + category detail
-    accounts/       # account list + form (currency/type pickers; opened from Settings)
-    recurring/      # recurring-rule list/form; generates pending approvals on Home
-    shopping_list/  # draft-capture list that converts items into transactions
-    settings/       # language, theme, defaults, splash + recurring entry points, CSV import/export, about
+  core/       # non-widget helpers (money_formatter, icon_registry, color_palette, date_helpers, CSV codecs)
+  data/       # database (tables, DAOs), seed, services, repositories
+  domain/
+    models/     # Freezed models
+    use_cases/  # cross-repository work (recurring generation, CSV import/export)
+  ui/
+    core/       # theme + shared widgets (adaptive shell)
+    features/   # each slice has view_models/ (controllers, state, providers) and views/ (screens, widgets)
+      splash/         # sun-themed splash with day count + inline rainbow {date}
+      home/           # day-at-a-time list with summary strip, search, pending section
+      transactions/   # add/edit form with calculator keypad
+      categories/     # category list + form sheet with icon/color pickers
+      analysis/       # charts (pie + bar with drill-down) + memo search
+        charts/       # ChartsSection, pie/bar/legend/period/dimension/toggle widgets
+        search/       # SearchBar-based transaction search + category detail
+      accounts/       # account list + form (currency/type pickers; opened from Settings)
+      recurring/      # recurring-rule list/form; generates pending approvals on Home
+      shopping_list/  # draft-capture list that converts items into transactions
+      settings/       # language, theme, defaults, splash + recurring entry points, CSV import/export, about
 l10n/         # Source ARB files (app_en, app_zh, app_zh_CN, app_zh_TW)
 test/
   unit/       # services / repositories / controllers / utils
@@ -328,10 +333,10 @@ assets/
   splash/     # Sun-themed splash background image (shipped)
 ```
 
-Cross-repository orchestration lives in `lib/data/use_cases/` (e.g.
-`RecurringGenerationUseCase`). PRD reserves a dedicated `lib/domain/`
-layer for further Phase 2/3 work; until then, use cases sit inside the
-data layer alongside repositories.
+Cross-repository orchestration lives in `lib/domain/use_cases/` (e.g.
+`RecurringGenerationUseCase`). A use case may take `AppDatabase` to run
+one `db.transaction` across repositories, but never touches a DAO, a
+table or Drift directly.
 
 ## Architecture guardrails
 
@@ -360,7 +365,7 @@ file's `baseline:`; anything new fails CI.
 
 The Fortune City CSV import has no row or size cap. To keep large files
 from freezing the UI, `CsvImportUseCase`
-(`lib/data/use_cases/csv_import_use_case.dart`) splits the work. The
+(`lib/domain/use_cases/csv_import_use_case.dart`) splits the work. The
 commit is still one all-or-nothing `db.transaction`.
 
 | Step                 | How it is split                                                                                                                                                                                                                                                                                  |

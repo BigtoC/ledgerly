@@ -203,9 +203,9 @@ This pattern prevents the same class of bug from reappearing under different UI 
 ## Examples
 
 - Modal edit/create flows: root-modal routes plus redirect-based invalid-id recovery in `lib/app/router.dart`
-- Destructive account actions: reactive reference tracking in `lib/data/repositories/account_repository.dart` plus default-account guard in `lib/features/accounts/accounts_controller.dart`
-- First-run splash input: `lib/features/splash/splash_screen.dart` waits for explicit `showDatePicker(...)` selection before persisting the start date
-- Cross-screen derived state: `lib/features/accounts/accounts_providers.dart` and `lib/features/transactions/transactions_providers.dart` expose stream-backed lookups and feature-facing actions so widgets stay render-and-dispatch only
+- Destructive account actions: reactive reference tracking in `lib/data/repositories/account_repository.dart` plus default-account guard in `lib/ui/features/accounts/view_models/accounts_controller.dart`
+- First-run splash input: `lib/ui/features/splash/views/splash_screen.dart` waits for explicit `showDatePicker(...)` selection before persisting the start date
+- Cross-screen derived state: `lib/ui/features/accounts/view_models/accounts_providers.dart` and `lib/ui/features/transactions/view_models/transactions_providers.dart` expose stream-backed lookups and feature-facing actions so widgets stay render-and-dispatch only
 
 ## Related
 

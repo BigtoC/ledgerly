@@ -24,7 +24,7 @@ On the Analysis page, tapping a category should scroll the legend card to the to
 
 A single `Scrollable.ensureVisible` call managed neither reliably. The drill-down list below the card loads after the tap, and a period change remounts the whole chart body under a new key.
 
-The code is `_ChartBodyState` in `lib/features/analysis/charts/charts_section.dart`.
+The code is `_ChartBodyState` in `lib/ui/features/analysis/charts/views/charts_section.dart`.
 
 ## Symptoms
 - **Selecting stopped short.** The card stopped about 100px below the top (card top 231 against viewport top 128). `ensureVisible` clamps to the scroll extent as it is when it runs, and the drill-down rows weren't there yet.

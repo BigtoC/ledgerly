@@ -55,7 +55,7 @@ The Home pending-approval flow treated transaction history, controller lifetime,
 
 1. Keep `PendingController` alive across screen disposal and let failed skip commits restore visibility automatically.
 
-`lib/features/home/pending_controller.dart`
+`lib/ui/features/home/view_models/pending_controller.dart`
 
 ```dart
 @Riverpod(keepAlive: true, dependencies: [pendingTransactionRepository])
@@ -78,7 +78,7 @@ class PendingController extends _$PendingController {
 
 2. Let Home's empty-state branch render pending approvals when there is no transaction history.
 
-`lib/features/home/home_screen.dart`
+`lib/ui/features/home/views/home_screen.dart`
 
 ```dart
 final pendingState = ref.watch(pendingControllerProvider);
@@ -99,7 +99,7 @@ This keeps pending approvals reachable even when `HomeController` has no day act
 
 3. Separate skip-undo feedback from approve-success feedback, and make the joined pending query explicitly reactive to archive changes.
 
-`lib/features/home/widgets/pending_section.dart`
+`lib/ui/features/home/views/pending_section.dart`
 
 ```dart
 case PendingSkipStartedEffect():

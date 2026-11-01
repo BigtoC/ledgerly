@@ -64,8 +64,8 @@ The choice: about 150 lines of our own Kotlin behind a `ledgerly/apk_installer` 
 | Service | `lib/data/services/app_release_service.dart` | Parses each asset's `digest` (`"sha256:<hex>"`) and `size` from the GitHub release JSON, so there is no `checksums.txt` to parse. Downloads with `dio.downloadUri(..., deleteOnError: true)`. |
 | Service | `lib/data/services/apk_installer_service.dart` | A thin `const` channel wrapper: `canRequestInstalls`, `openInstallSettings`, and `install(path) → int` (a `PackageInstaller.STATUS_*` code). |
 | Repository | `lib/data/repositories/app_update_repository.dart` | See the list below. |
-| Controller | `lib/features/settings/app_update_controller.dart` | `keepAlive` and not a family, so a download survives leaving Settings. State goes `idle → downloading(percent) → ready(path, needsPermission) → installing(path)`, or `failed(UpdateFailure)`. |
-| Widget | `lib/features/settings/widgets/new_version_badge.dart` | Shows the confirm dialog and the progress label. Every failure SnackBar has an "Open in browser" action. |
+| Controller | `lib/ui/features/settings/view_models/app_update_controller.dart` | `keepAlive` and not a family, so a download survives leaving Settings. State goes `idle → downloading(percent) → ready(path, needsPermission) → installing(path)`, or `failed(UpdateFailure)`. |
+| Widget | `lib/ui/features/settings/views/new_version_badge.dart` | Shows the confirm dialog and the progress label. Every failure SnackBar has an "Open in browser" action. |
 
 The repository does the following:
 - **`findUpdate()`** sets `sha256` and `sizeBytes` only when both are valid. When they aren't, the badge **fails closed** to the browser.

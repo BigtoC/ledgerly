@@ -57,7 +57,7 @@ Home's calendar-day browsing mixed three different responsibilities: UI transiti
 
 Drive the screen transition from the requested navigation action, not from a synchronous read of provider state after the command completes.
 
-In `lib/features/home/home_screen.dart`:
+In `lib/ui/features/home/views/home_screen.dart`:
 
 ```dart
 void _enqueueDayStep(int delta) {
@@ -108,7 +108,7 @@ onJumpToToday: () async {
 
 Also make the controller avoid unnecessary stream resubscriptions when the subscribed day has not changed. That keeps rapid calendar steps from canceling and recreating streams unnecessarily.
 
-In `lib/features/home/home_controller.dart`:
+In `lib/ui/features/home/view_models/home_controller.dart`:
 
 ```dart
 void _subscribeDay(DateTime day) {
@@ -134,7 +134,7 @@ void _subscribeSummaryStreams(DateTime today) {
 
 Finally, prioritize selected-day currencies in the summary strip cap.
 
-In `lib/features/home/widgets/summary_strip.dart`:
+In `lib/ui/features/home/views/summary_strip.dart`:
 
 ```dart
 final todayCodes = todayTotalsByCurrency.keys.toSet();

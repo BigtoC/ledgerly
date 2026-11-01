@@ -25,7 +25,7 @@ The category contract had diverged from the updated product decision. Documentat
 
 - `lib/data/database/tables/categories_table.dart` still declared `parentId` and `categories_parent_idx`
 - `lib/data/database/daos/category_dao.dart` still exposed `watchChildren(...)`
-- `lib/data/models/category.dart` and generated output still carried `parentId`
+- `lib/domain/models/category.dart` and generated output still carried `parentId`
 - `drift_schemas/drift_schema_v1.json` still serialized the old hierarchy column and index
 
 ## What Didn't Work
@@ -39,8 +39,8 @@ Flatten the M1 category contract end-to-end:
 
 - Remove `@TableIndex(name: 'categories_parent_idx', columns: {#parentId})` and the `parentId` column from `lib/data/database/tables/categories_table.dart`
 - Remove `watchChildren(int parentId)` from `lib/data/database/daos/category_dao.dart`
-- Remove `parentId` from `lib/data/models/category.dart`
-- Regenerate `lib/data/database/app_database.g.dart` and `lib/data/models/category.freezed.dart`
+- Remove `parentId` from `lib/domain/models/category.dart`
+- Regenerate `lib/data/database/app_database.g.dart` and `lib/domain/models/category.freezed.dart`
 - Regenerate `drift_schemas/drift_schema_v1.json`
 - Add a narrow repository test that asserts a fresh `categories` table no longer contains `parent_id` or `categories_parent_idx`
 

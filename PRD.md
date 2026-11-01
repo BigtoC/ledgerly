@@ -20,7 +20,7 @@ Ledgerly is a local-first mobile expense tracker built with Flutter. It is aimed
 
 **Phase 2 — In progress.** Shipped slices on `main`: **Recurring transactions** + Home pending approval (2026-05-08; see [`recurring_rules`](#recurring_rules-phase-2--shipped-2026-05-08) table), **Transaction search** (2026-05-10), **Extended multi-currency conversion** (2026-05-17), **Basic charts** — pie + daily bar (2026-05-20), **Chart slice drill-down** (2026-05-22) — coordinated pie/legend/bar selection plus a per-slice items list with edit, delete + 4 s undo, FX-converted/original amount split, and stale-rate notice. Selection identity lives in the analysis layer as a sealed `SelectedSlice` (category | account | currency); the repository boundary stays filter-based via `{categoryId, accountId, currencyCode}` arguments. **Fortune City CSV import** (2026-10-30) — `/settings/import` previews a Fortune City export (account and category matching, duplicate and invalid-row skipping) and writes it in one Drift transaction; see the `transactions` table note on imported `created_at`. **CSV export** (2026-10-30) — `/settings/export` writes the transactions of a chosen date range (all by default) to a CSV the user saves through the system save dialog. Remaining Phase 2 work: wallet sync (Ankr integration), credit-card / transfer flows.
 
-Inline `# Phase 2` annotations throughout the rest of the document mark code paths and surfaces that have **not** yet shipped. The recurring-rules slice is the canonical example of how a Phase 2 feature lands: data layer first (DAOs, repos, migration), then a use case in `lib/data/use_cases/` (Phase 2's `domain/` layer is reserved for cross-feature orchestration), then UI.
+Inline `# Phase 2` annotations throughout the rest of the document mark code paths and surfaces that have **not** yet shipped. The recurring-rules slice is the canonical example of how a Phase 2 feature lands: data layer first (DAOs, repos, migration), then a use case in `lib/domain/use_cases/`, then UI.
 
 ---
 
@@ -65,7 +65,7 @@ Inline `# Phase 2` annotations throughout the rest of the document mark code pat
 
 ## Architecture
 
-Ledgerly uses a strict 3-layer architecture: a **Data** layer (SSOT), an optional **Domain** layer (Phase 2 only, for orchestration across repositories), and a **UI** layer organized feature-first. Each layer may only communicate with the layer directly adjacent to it.
+Ledgerly uses a strict 3-layer architecture: a **Data** layer (SSOT), a **Domain** layer (Freezed domain models, plus use cases that coordinate several repositories), and a **UI** layer organized feature-first into view models and views. Each layer may only communicate with the layer directly adjacent to it.
 
 ### Core Principles
 
@@ -76,18 +76,21 @@ Ledgerly uses a strict 3-layer architecture: a **Data** layer (SSOT), an optiona
 
 ### Layer Boundaries (Forbidden Imports)
 
-| Layer                                        | May import                                                                | Must not import                                                             |
-|----------------------------------------------|---------------------------------------------------------------------------|-----------------------------------------------------------------------------|
-| Widgets (`features/*/*_screen.dart`)         | Own controller + UI primitives                                            | Repositories, services, `AppDatabase`, Drift tables                         |
-| Controllers (`features/*/*_controller.dart`) | Repositories, use cases, domain models                                    | `AppDatabase`, services, Drift tables, DAOs                                 |
-| Use Cases (`domain/*.dart`) — Phase 2        | Repositories, services, domain models                                     | Controllers, widgets                                                        |
-| Repositories (`data/repositories/*.dart`)    | Services, `AppDatabase`, DAOs, domain models                              | Controllers, widgets, use cases                                             |
-| Services (`data/services/*.dart`)            | External SDKs only (Drift, Dio, flutter_secure_storage, …)                | Upstream layers                                                             |
-| Core (`core/*`)                              | Flutter SDK and pure packages (`intl`, …), domain models (`data/models/`) | Repositories, services, use cases, seed, `AppDatabase`, DAOs, features, app |
+| Layer                                                                                    | May import                                                                         | Must not import                                                                     | Rule                                    |
+|------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------|-----------------------------------------|
+| Views and other UI files (`ui/**`, except the theme, controllers and `*_providers.dart`) | Own controller and state, domain models, `core/`, `ui/core/`, UI primitives        | Repositories, services, `AppDatabase`, Drift tables, DAOs, platform and I/O plugins | `widgets_forbid_data_internals`         |
+| Controllers (`ui/features/**/view_models/*_controller.dart`, `*_providers.dart`)         | Repositories, use cases, domain models                                             | `AppDatabase`, services, Drift tables, DAOs, platform and I/O plugins               | `controllers_forbid_db_and_services`    |
+| Use cases (`domain/use_cases/*.dart`) and seed (`data/seed/`)                            | Repositories, services, domain models, `AppDatabase` (to run one `db.transaction`) | UI, `app/`, Drift tables, DAOs, Drift                                               | `use_cases_forbid_ui`                   |
+| Repositories (`data/repositories/*.dart`)                                                | Services, `AppDatabase`, DAOs, domain models                                       | UI, use cases, `app/`                                                               | `repositories_forbid_upstream`          |
+| Services (`data/services/*.dart`)                                                        | External SDKs only (Drift, Dio, flutter_secure_storage, …)                         | Repositories, `data/database/`, domain models, use cases, UI, `app/`                | `services_forbid_upstream_and_siblings` |
+| Domain models (`domain/models/*.dart`)                                                   | Pure packages (Freezed, `json_annotation`, …), other domain models                 | `data/`, use cases, UI, `app/`, Drift                                               | `models_forbid_non_pure`                |
+| Database (`data/database/*.dart`)                                                        | Drift, its own tables and DAOs                                                     | Services, repositories, `domain/`, UI, `app/`                                       | `database_forbid_upstream`              |
+| Core (`core/*`, `ui/core/theme/`)                                                        | Flutter SDK and pure packages (`intl`, …), domain models (`domain/models/`)        | `data/`, use cases, UI other than the theme, `app/`                                 | `core_stays_pure`                       |
+| App (`app/*`, except `app/providers/service_providers.dart`)                             | Any layer, to wire it up                                                           | `package_info_plus`, `path_provider`, `file_picker`, `file_selector`                | `app_forbids_platform_plugins`          |
 
-These rules are enforced by `test/unit/architecture/layer_boundaries_test.dart` (rules and the pre-existing-violation baseline live in `import_analysis_options.yaml`; run as `flutter test test/unit/architecture/`) and by the `riverpod_lint` analysis-server plugin configured under `plugins:` in `analysis_options.yaml`.
+These rules are enforced by `test/unit/architecture/layer_boundaries_test.dart` (rules and the pre-existing-violation baseline live in `import_analysis_options.yaml`; run as `flutter test test/unit/architecture/`) and by the `riverpod_lint` analysis-server plugin configured under `plugins:` in `analysis_options.yaml`. The test also fails when a file under `lib/ui/`, `lib/domain/` or `lib/data/` matches no rule, or a `lib/ui/` file matches more than one.
 
-"Repositories" and "services" include the providers that build them. Under `features/`, only controllers and `*_providers.dart` may import `app/providers/repository_providers.dart`, and no file may import `app/providers/service_providers.dart` or `app/providers/app_database_provider.dart`. External SDKs belong in services, so no feature file may import a platform or I/O plugin such as `package_info_plus`, `dio`, `file_picker`, `file_selector`, `path_provider` or `url_launcher` (which `core/utils/system_browser.dart` wraps). No feature file may export `app/providers/repository_providers.dart`, `app/providers/service_providers.dart` or anything under `data/repositories/`, `data/services/` or `data/database/`, so a controller cannot pass them on to widgets. In `app/`, only `app/providers/service_providers.dart` may import `package_info_plus`, `path_provider`, `file_picker` or `file_selector`, and `app/widgets/` may import neither `repository_providers.dart` nor `service_providers.dart`.
+"Repositories" and "services" include the providers that build them. Under `ui/`, only controllers and `*_providers.dart` in `view_models/` may import `app/providers/repository_providers.dart`, and no file may import `app/providers/service_providers.dart` or `app/providers/app_database_provider.dart`. External SDKs belong in services, so no `ui/` file may import a platform or I/O plugin such as `package_info_plus`, `dio`, `file_picker`, `file_selector`, `path_provider` or `url_launcher` (which `core/utils/system_browser.dart` wraps). No `ui/` file may export `app/providers/repository_providers.dart`, `app/providers/service_providers.dart` or anything under `data/repositories/`, `data/services/` or `data/database/`, so a controller cannot pass them on to widgets. In `app/`, only `app/providers/service_providers.dart` may import `package_info_plus`, `path_provider`, `file_picker` or `file_selector`.
 
 ### SSOT Rule
 
@@ -108,7 +111,7 @@ Controllers transform domain models into presentation-friendly state. For exampl
 
 ### Domain Models vs Drift Data Classes
 
-Drift generates data classes from each table definition; these stay **inside repositories only**. Repositories map Drift rows into Freezed domain models in `data/models/` and return those to controllers. This isolates the UI and domain layers from schema changes.
+Drift generates data classes from each table definition; these stay **inside repositories only**. Repositories map Drift rows into Freezed domain models in `domain/models/` and return those to controllers. This isolates the UI and domain layers from schema changes.
 
 ### Reactive Data Flow
 
@@ -124,7 +127,7 @@ lib/
     bootstrap.dart           # Async init sequence, provider overrides
     providers/
       app_database_provider.dart
-      repository_providers.dart     # repositories + use cases; in features/, controllers and *_providers.dart only
+      repository_providers.dart     # repositories + use cases; in ui/, controllers and *_providers.dart only
       service_providers.dart        # services (Dio, CSV files, package info); app/providers/ only
       exchange_rates_provider.dart
       app_version_provider.dart
@@ -133,13 +136,8 @@ lib/
       default_currency_provider.dart
       splash_redirect_provider.dart
       app_update_provider.dart
-    widgets/
-      adaptive_shell.dart    # 600dp nav switch (NavigationBar ↔ NavigationRail)
   core/
     l10n/
-    theme/
-      app_theme.dart
-      color_schemes.dart
     utils/
       money_formatter.dart
       icon_registry.dart
@@ -195,10 +193,7 @@ lib/
       repository_exceptions.dart
     seed/                                  # First-run seed orchestration
       first_run_seed.dart
-    use_cases/
-      recurring_generation_use_case.dart   # Cold-start recurring rule engine
-      csv_import_use_case.dart             # CSV load, dedup and atomic commit
-      csv_export_use_case.dart             # Date-range CSV export through the save dialog
+  domain/
     models/                                # Freezed domain models
       transaction.dart
       category.dart
@@ -215,141 +210,168 @@ lib/
       time_bucket_slice.dart
       app_update.dart
       csv_import.dart                      # CSV import rows, errors, plan and result
-  features/
-    splash/
-      splash_screen.dart
-      splash_controller.dart
-      splash_state.dart
+    use_cases/                             # Work that coordinates several repositories
+      recurring_generation_use_case.dart   # Cold-start recurring rule engine
+      csv_import_use_case.dart             # CSV load, dedup and atomic commit
+      csv_export_use_case.dart             # Date-range CSV export through the save dialog
+  ui/
+    core/
+      theme/
+        app_theme.dart
+        color_schemes.dart
       widgets/
-        splash_sun_background.dart
-        splash_day_count.dart
-        splash_rainbow_gradient_text.dart
-        splash_enter_button.dart
-    home/
-      home_screen.dart
-      home_controller.dart
-      home_state.dart
-      home_providers.dart
-      pending_controller.dart
-      pending_state.dart
-      widgets/
-        summary_strip.dart
-        day_navigation_header.dart
-        transaction_tile.dart
-        pending_section.dart
-        pending_badge.dart
-    transactions/
-      transaction_form_screen.dart
-      transaction_form_controller.dart
-      transaction_form_state.dart
-      transactions_providers.dart
-      keypad_state.dart
-      widgets/
-        calculator_keypad.dart
-        category_chip.dart
-        account_selector_tile.dart
-        account_picker_sheet.dart
-        currency_selector_tile.dart
-        currency_picker_sheet.dart
-        date_field.dart
-        memo_field.dart
-        memo_suggestions.dart
-        amount_display.dart
-        transaction_type_segmented_control.dart
-    categories/
-      categories_screen.dart
-      categories_controller.dart
-      categories_state.dart
-      widgets/
-        category_tile.dart
-        category_display.dart
-        category_form_sheet.dart
-        category_picker.dart
-        category_icon_picker.dart
-        category_color_picker.dart
-    analysis/
-      analysis_screen.dart
-      charts/
-        charts_section.dart
-        charts_controller.dart
-        charts_state.dart
-        charts_providers.dart
-        charts_selection_controller.dart
-        selected_slice.dart
-        slice_drilldown_controller.dart
-        slice_drilldown_data.dart
-        widgets/
-          category_pie_chart.dart
-          daily_bar_chart.dart
-          chart_legend.dart
-          period_selector.dart
-          type_toggle.dart
-          dimension_toggle.dart
-          selected_slice_items_list.dart
-      search/
-        analysis_controller.dart
-        analysis_state.dart
-        analysis_providers.dart
-        category_search_detail_screen.dart
-        category_search_detail_controller.dart
-        category_search_detail_state.dart
-        widgets/
-          category_search_tile.dart
-          transaction_search_row.dart
-    accounts/
-      account_form_screen.dart
-      accounts_controller.dart
-      accounts_state.dart
-      widgets/
-        manage_accounts_body.dart
-        account_tile.dart
-        account_type_display.dart
-        account_type_picker_sheet.dart
-        currency_picker_sheet.dart
-    shopping_list/
-      shopping_list_screen.dart
-      shopping_list_controller.dart
-      shopping_list_state.dart
-      shopping_list_providers.dart
-      shopping_list_item_labels.dart
-    recurring/
-      recurring_rules_screen.dart
-      recurring_rules_controller.dart
-      recurring_rules_state.dart
-      recurring_rules_providers.dart
-      recurring_rule_form_screen.dart
-      recurring_rule_form_controller.dart
-      recurring_rule_form_state.dart
-    settings/
-      settings_screen.dart
-      settings_controller.dart
-      settings_state.dart
-      about_screen.dart
-      app_update_controller.dart
-      app_update_state.dart
-      csv_export/
-        csv_export_screen.dart
-        csv_export_controller.dart
-        csv_export_state.dart
-      csv_import/
-        csv_import_screen.dart
-        csv_import_controller.dart
-        csv_import_state.dart
-        csv_import_matcher.dart      # account/category matching against l10n labels
-        widgets/
-          csv_import_preview_sections.dart
-          csv_account_resolution_sheet.dart
-      widgets/
-        manage_accounts_sheet.dart   # adaptive sheet/dialog for account management
-        manage_accounts_tile.dart    # Settings list tile that opens the sheet
-        splash_settings_section.dart
-        settings_section.dart
-        theme_mode_selector.dart
-        language_selector.dart
-        default_currency_tile.dart
-        default_currency_picker_sheet.dart
-        manage_categories_tile.dart
-        new_version_badge.dart
+        adaptive_shell.dart  # 600dp nav switch (NavigationBar ↔ NavigationRail)
+    features/
+      splash/
+        view_models/
+          splash_controller.dart
+          splash_state.dart
+        views/
+          splash_screen.dart
+          splash_sun_background.dart
+          splash_day_count.dart
+          splash_rainbow_gradient_text.dart
+          splash_enter_button.dart
+      home/
+        view_models/
+          home_controller.dart
+          home_state.dart
+          home_providers.dart
+          pending_controller.dart
+          pending_state.dart
+        views/
+          home_screen.dart
+          summary_strip.dart
+          day_navigation_header.dart
+          transaction_tile.dart
+          pending_section.dart
+          pending_badge.dart
+      transactions/
+        view_models/
+          transaction_form_controller.dart
+          transaction_form_state.dart
+          transactions_providers.dart
+          keypad_state.dart
+        views/
+          transaction_form_screen.dart
+          calculator_keypad.dart
+          category_chip.dart
+          account_selector_tile.dart
+          account_picker_sheet.dart
+          currency_selector_tile.dart
+          currency_picker_sheet.dart
+          date_field.dart
+          memo_field.dart
+          memo_suggestions.dart
+          amount_display.dart
+          transaction_type_segmented_control.dart
+      categories/
+        view_models/
+          categories_controller.dart
+          categories_state.dart
+        views/
+          categories_screen.dart
+          category_tile.dart
+          category_display.dart
+          category_form_sheet.dart
+          category_picker.dart
+          category_icon_picker.dart
+          category_color_picker.dart
+      analysis/
+        views/
+          analysis_screen.dart
+        charts/
+          view_models/
+            charts_controller.dart
+            charts_state.dart
+            charts_providers.dart
+            charts_selection_controller.dart
+            selected_slice.dart
+            slice_drilldown_controller.dart
+            slice_drilldown_data.dart
+          views/
+            charts_section.dart
+            category_pie_chart.dart
+            daily_bar_chart.dart
+            chart_legend.dart
+            period_selector.dart
+            type_toggle.dart
+            dimension_toggle.dart
+            selected_slice_items_list.dart
+        search/
+          view_models/
+            analysis_controller.dart
+            analysis_state.dart
+            analysis_providers.dart
+            category_search_detail_controller.dart
+            category_search_detail_state.dart
+          views/
+            category_search_detail_screen.dart
+            category_search_tile.dart
+            transaction_search_row.dart
+      accounts/
+        view_models/
+          accounts_controller.dart
+          accounts_state.dart
+        views/
+          account_form_screen.dart
+          manage_accounts_body.dart
+          account_tile.dart
+          account_type_display.dart
+          account_type_picker_sheet.dart
+          currency_picker_sheet.dart
+      shopping_list/
+        view_models/
+          shopping_list_controller.dart
+          shopping_list_state.dart
+          shopping_list_providers.dart
+        views/
+          shopping_list_screen.dart
+          shopping_list_item_labels.dart
+      recurring/
+        view_models/
+          recurring_rules_controller.dart
+          recurring_rules_state.dart
+          recurring_rules_providers.dart
+          recurring_rule_form_controller.dart
+          recurring_rule_form_state.dart
+        views/
+          recurring_rules_screen.dart
+          recurring_rule_form_screen.dart
+      settings/
+        view_models/
+          settings_controller.dart
+          settings_state.dart
+          app_update_controller.dart
+          app_update_state.dart
+        views/
+          settings_screen.dart
+          about_screen.dart
+          manage_accounts_sheet.dart   # adaptive sheet/dialog for account management
+          manage_accounts_tile.dart    # Settings list tile that opens the sheet
+          splash_settings_section.dart
+          settings_section.dart
+          theme_mode_selector.dart
+          language_selector.dart
+          default_currency_tile.dart
+          default_currency_picker_sheet.dart
+          manage_categories_tile.dart
+          new_version_badge.dart
+        csv_export/
+          view_models/
+            csv_export_controller.dart
+            csv_export_state.dart
+          views/
+            csv_export_screen.dart
+        csv_import/
+          view_models/
+            csv_import_controller.dart
+            csv_import_state.dart
+            csv_import_matcher.dart  # account/category matching against l10n labels
+          views/
+            csv_import_screen.dart
+            csv_import_preview_sections.dart
+            csv_account_resolution_sheet.dart
 test/
   unit/
     services/
@@ -812,7 +834,7 @@ Day counter label and "Enter" button label need entries in all three ARB files. 
 
 Users add EVM wallet addresses, each linked to a Ledgerly account. The app fetches token transfers via [Ankr's Advanced Multichain API](https://www.ankr.com/docs/advanced-api/token-methods/#ankr_gettokentransfers) and creates pending transactions for user review.
 
-The sync flow is implemented as `domain/wallet_sync_use_case.dart`, which orchestrates `AnkrService`, `WalletAddressRepository`, `TransactionRepository`, `PendingTransactionRepository`, and `CurrencyRepository` (to register unknown tokens on first sight). The `WalletsController` exposes a `sync()` command that invokes the use case and manages loading/error state only.
+The sync flow is implemented as `domain/use_cases/wallet_sync_use_case.dart`, which orchestrates `AnkrService`, `WalletAddressRepository`, `TransactionRepository`, `PendingTransactionRepository`, and `CurrencyRepository` (to register unknown tokens on first sight). The `WalletsController` exposes a `sync()` command that invokes the use case and manages loading/error state only.
 
 ### Supported Chains
 
@@ -1192,8 +1214,8 @@ User-renamed categories are not auto-translated after rename; they display the u
 
 Material Design 3 with `ColorScheme.fromSeed()` for both light and dark variants.
 
-- `core/theme/app_theme.dart` — defines `lightTheme` and `darkTheme` ThemeData
-- `core/theme/color_schemes.dart` — custom ColorScheme definitions
+- `ui/core/theme/app_theme.dart` — defines `lightTheme` and `darkTheme` ThemeData
+- `ui/core/theme/color_schemes.dart` — custom ColorScheme definitions
 - Theme preference stored in `user_preferences` via `UserPreferencesRepository`
 - A Riverpod provider watches the preference and rebuilds MaterialApp on change
 - Splash screen respects current theme for native splash; day counter screen uses its own visual style (sun background, rainbow gradient) independent of theme

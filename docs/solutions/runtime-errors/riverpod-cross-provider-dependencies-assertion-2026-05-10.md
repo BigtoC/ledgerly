@@ -60,7 +60,7 @@ tags:
 
 Declare every scoped provider that the controller reads. `analysisControllerProvider` itself has `dependencies: [transactionRepository]`, so reading it from another scoped provider requires listing it explicitly:
 
-`lib/features/analysis/search/category_search_detail_controller.dart`:
+`lib/ui/features/analysis/search/view_models/category_search_detail_controller.dart`:
 
 ```dart
 // Before — assertion violation
@@ -181,5 +181,5 @@ At the time, regenerating for `keepAlive: true` was a separate fix that was also
 - [`docs/solutions/best-practices/reactive-feature-flow-ownership-2026-04-25.md`](../best-practices/reactive-feature-flow-ownership-2026-04-25.md) — broader Riverpod ownership pattern (router → repo → controller → widget). This learning reinforces the contract at the provider-declaration layer.
 - Verified with:
   - `dart run build_runner build --delete-conflicting-outputs`
-  - `flutter analyze lib/features/analysis lib/app/bootstrap.dart test/widget/features/analysis`
+  - `flutter analyze lib/ui/features/analysis lib/app/bootstrap.dart test/widget/features/analysis`
   - `flutter test test/widget/features/analysis/ test/unit/controllers/category_search_detail_controller_test.dart test/unit/controllers/analysis_controller_test.dart test/unit/app/router_test.dart`
