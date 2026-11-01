@@ -168,13 +168,23 @@ See [`PRD.md` → *Security & Privacy*](PRD.md#security--privacy). Operational s
 
 ## Skills Available
 
-Three Flutter-specific skills are installed at `.agents/skills/` and symlinked into `.claude/skills/`:
+Three Flutter-specific skills are installed with `npx skills` at `.agents/skills/`, symlinked into `.claude/skills/` and pinned in `skills-lock.json`:
 
-- `flutter-architecting-apps` — recommended layered structure; aligns with the stricter version in `PRD.md`.
+- `flutter-apply-architecture-best-practices` — the Flutter team's layered architecture (UI, optional domain, data); read it with the notes below.
 - `flutter-building-layouts` — Flutter constraint/layout guidance for building the screens above.
 - `flutter-animating-apps` — animation / transition guidance for feature polish work.
 
-When the user asks to structure a new feature, invoke `flutter-architecting-apps`; when building or refining UI, invoke `flutter-building-layouts`; when adding motion or transitions, invoke `flutter-animating-apps`.
+When the user asks to structure a new feature, invoke `flutter-apply-architecture-best-practices`; when building or refining UI, invoke `flutter-building-layouts`; when adding motion or transitions, invoke `flutter-animating-apps`.
+
+From `flutter-apply-architecture-best-practices`, take the layers and the order of work: models → services → repositories → optional use case → view model → view. Don't take its folder tree, state management, dependency injection or error handling. Where it disagrees with `PRD.md` or `docs/architecture/`, those win. Map its terms like this:
+
+- **Project structure** → keep the `PRD.md` tree (`lib/app/`, `lib/core/`, `lib/data/`, `lib/features/<feature>/`). The move to the skill's `lib/{data,domain,ui}/` tree is tracked in issue #87; don't start it in feature work.
+- **ViewModel extending `ChangeNotifier`** → a `@riverpod` controller in `lib/features/<feature>/*_controller.dart`. It holds immutable Freezed state, usually a sealed `*_state.dart`, and exposes commands as methods. Slice-local helper providers go in `*_providers.dart`; only these two kinds of feature file may import `app/providers/repository_providers.dart`.
+- **View with `ListenableBuilder`** → `*_screen.dart` and the slice's `widgets/`. A widget that reads state is a `ConsumerWidget` or `ConsumerStatefulWidget` that `ref.watch`es the controller and calls commands through `ref.read(...Provider.notifier)`; other widgets take constructor arguments.
+- **Constructor injection, `provider` / `get_it` (Step 7)** → Riverpod providers in `lib/app/providers/`: `repository_providers.dart` builds repositories and use cases, and `service_providers.dart` builds services. Controllers `ref.watch` them and tests override them. Run `build_runner` after adding or editing a provider.
+- **Services return API models or `Result`** → services return plain Dart values (records, primitives, SDK types) and repositories map them to the Freezed models in `lib/data/models/`. Repositories throw typed exceptions rather than return results, because Drift rolls back a `db.transaction` only when an exception escapes it. Controllers expose reads as `AsyncValue` and return a Freezed sealed outcome from each command that can fail ([`PRD.md` → *Error Handling Pattern*](PRD.md#error-handling-pattern)). Never add a generic `Result` wrapper.
+- **Use cases (Step 4)** → only when the work coordinates several repositories, in `lib/data/use_cases/` (see `PRD.md`).
+- **Step 8 (tests)** → write the failing test first (TDD rule above), in the layer folders of `docs/architecture/testing.md`.
 
 ## Knowledge Consolidation
 

@@ -6,10 +6,11 @@
       "sourceType": "github",
       "computedHash": "85c3483e4b5da7abefc7de8ad8fb4211b6680a2ba03e727aa000ad139e0b9565"
     },
-    "flutter-architecting-apps": {
-      "source": "flutter/skills",
+    "flutter-apply-architecture-best-practices": {
+      "source": "flutter/agent-plugins",
       "sourceType": "github",
-      "computedHash": "eb8640b807ea631973fa259880abf07d0cb0f26d327da9970e56fbfc95650ada"
+      "skillPath": "skills/flutter-apply-architecture-best-practices/SKILL.md",
+      "computedHash": "2b1b63214d6b153c50aacd4bbcb76ce91dece449de9e06f477f8aad3163d667f"
     },
     "flutter-building-layouts": {
       "source": "flutter/skills",
