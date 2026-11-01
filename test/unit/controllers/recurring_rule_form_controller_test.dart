@@ -1,3 +1,8 @@
+// RecurringRuleFormController unit tests.
+//
+// `save` and `deleteRule` return outcomes and never throw, so each
+// variant is asserted on the returned outcome.
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -159,9 +164,9 @@ void main() {
       controller.updateAccount(20);
       controller.updateDayOfMonth(15);
 
-      final id = await controller.save();
+      final outcome = await controller.save();
 
-      expect(id, 42);
+      expect(outcome, const SaveRecurringRuleOutcome.saved(42, false));
       verify(() => recurringRepo.insert(any(), today: any(named: 'today')))
           .called(1);
       verify(
@@ -205,7 +210,7 @@ void main() {
     });
 
     test(
-      'save edit updates draft and records generation failure flag',
+      'save edit updates draft and reports generation failure in the outcome',
       () async {
         when(() => recurringRepo.getById(7))
             .thenAnswer((_) async => _rule(id: 7));
@@ -223,12 +228,10 @@ void main() {
         final provider = recurringRuleFormControllerProvider(ruleId: 7);
         final controller = c.read(provider.notifier);
 
-        final id = await controller.save();
+        final outcome = await controller.save();
 
-        expect(id, 7);
+        expect(outcome, const SaveRecurringRuleOutcome.saved(7, true));
         verify(() => recurringRepo.update(7, any())).called(1);
-        final state = c.read(provider).value!;
-        expect(state.postSaveGenerationFailed, isTrue);
       },
     );
 
@@ -239,9 +242,9 @@ void main() {
       final provider = recurringRuleFormControllerProvider();
       final controller = c.read(provider.notifier);
 
-      final id = await controller.save();
+      final outcome = await controller.save();
 
-      expect(id, isNull);
+      expect(outcome, const SaveRecurringRuleOutcome.rejected());
       final state = c.read(provider).value!;
       expect(state.nameError, RecurringFormErrorKey.nameRequired);
       expect(state.categoryError, RecurringFormErrorKey.categoryRequired);
@@ -268,9 +271,9 @@ void main() {
       controller.updateAccount(20);
       controller.updateDayOfMonth(15);
 
-      final id = await controller.save();
+      final outcome = await controller.save();
 
-      expect(id, isNull);
+      expect(outcome, const SaveRecurringRuleOutcome.rejected());
       final state = c.read(provider).value!;
       expect(state.formError, isA<ArchivedRefErr>());
       expect(
@@ -310,10 +313,140 @@ void main() {
           capped: false,
         ),
       );
-      final id = await pendingSave;
+      final outcome = await pendingSave;
 
-      expect(id, 42);
+      expect(outcome, const SaveRecurringRuleOutcome.saved(42, false));
       expect(c.read(provider).value!.isLoading, isFalse);
+    });
+
+    test('save returns failed on an unexpected repository error', () async {
+      when(() => recurringRepo.insert(any(), today: any(named: 'today')))
+          .thenThrow(StateError('disk full'));
+
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      await buildState(c);
+      final provider = recurringRuleFormControllerProvider();
+      final controller = c.read(provider.notifier);
+
+      controller.updateMemo('Netflix');
+      controller.appendDigit(1);
+      controller.appendDigit(5);
+      controller.updateCategory(10);
+      controller.updateAccount(20);
+      controller.updateDayOfMonth(15);
+
+      final outcome = await controller.save();
+
+      expect(outcome, const SaveRecurringRuleOutcome.failed());
+      final state = c.read(provider).value!;
+      expect(state.isLoading, isFalse);
+      expect(state.formError, isNull);
+      verifyNever(
+        () =>
+            generationUseCase.executeForRule(any(), clock: any(named: 'clock')),
+      );
+    });
+
+    test(
+      'save reports saved with generationFailed when generation throws',
+      () async {
+        when(() => recurringRepo.insert(any(), today: any(named: 'today')))
+            .thenAnswer((_) async => 42);
+        when(
+          () => generationUseCase.executeForRule(
+            any(),
+            clock: any(named: 'clock'),
+          ),
+        ).thenThrow(StateError('database locked'));
+
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        await buildState(c);
+        final provider = recurringRuleFormControllerProvider();
+        final controller = c.read(provider.notifier);
+
+        controller.updateMemo('Netflix');
+        controller.appendDigit(1);
+        controller.appendDigit(5);
+        controller.updateCategory(10);
+        controller.updateAccount(20);
+        controller.updateDayOfMonth(15);
+
+        final outcome = await controller.save();
+
+        // The rule is already saved; reporting failed would invite a
+        // retry that inserts a duplicate rule.
+        expect(outcome, const SaveRecurringRuleOutcome.saved(42, true));
+        final state = c.read(provider).value!;
+        expect(state.isLoading, isFalse);
+        expect(state.formError, isNull);
+      },
+    );
+
+    test('closing the form mid-save still runs post-save generation', () async {
+      final insert = Completer<int>();
+      when(() => recurringRepo.insert(any(), today: any(named: 'today')))
+          .thenAnswer((_) => insert.future);
+
+      final c = makeContainer();
+      await buildState(c);
+      final controller = c.read(recurringRuleFormControllerProvider().notifier);
+
+      controller.updateMemo('Netflix');
+      controller.appendDigit(1);
+      controller.appendDigit(5);
+      controller.updateCategory(10);
+      controller.updateAccount(20);
+      controller.updateDayOfMonth(15);
+
+      final pendingSave = controller.save();
+      // The form closes while the insert is in flight.
+      c.dispose();
+      insert.complete(42);
+
+      await expectLater(
+        pendingSave,
+        completion(const SaveRecurringRuleOutcome.saved(42, false)),
+      );
+      verify(
+        () => generationUseCase.executeForRule(42, clock: any(named: 'clock')),
+      ).called(1);
+    });
+
+    test('deleteRule archives the rule → ok', () async {
+      when(() => recurringRepo.getById(7))
+          .thenAnswer((_) async => _rule(id: 7));
+      when(() => recurringRepo.archive(7)).thenAnswer((_) async {});
+
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      await buildState(c, ruleId: 7);
+      final controller = c.read(
+        recurringRuleFormControllerProvider(ruleId: 7).notifier,
+      );
+
+      final outcome = await controller.deleteRule();
+
+      expect(outcome, const ArchiveRecurringRuleOutcome.ok());
+      verify(() => recurringRepo.archive(7)).called(1);
+    });
+
+    test('deleteRule returns failed when archive throws', () async {
+      when(() => recurringRepo.getById(7))
+          .thenAnswer((_) async => _rule(id: 7));
+      when(() => recurringRepo.archive(7)).thenThrow(StateError('disk full'));
+
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      await buildState(c, ruleId: 7);
+      final controller = c.read(
+        recurringRuleFormControllerProvider(ruleId: 7).notifier,
+      );
+
+      final outcome = await controller.deleteRule();
+
+      expect(outcome, const ArchiveRecurringRuleOutcome.failed());
     });
   });
 }

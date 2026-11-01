@@ -86,7 +86,6 @@ class _RecurringRuleFormScreenState
         return _FormBody(
           state: state,
           controller: controller,
-          providerKey: provider,
           memoCtl: _memoCtl,
           dayOfMonthCtl: _dayOfMonthCtl,
         );
@@ -96,23 +95,21 @@ class _RecurringRuleFormScreenState
 }
 
 @Dependencies([categoriesByType])
-class _FormBody extends ConsumerWidget {
+class _FormBody extends StatelessWidget {
   const _FormBody({
     required this.state,
     required this.controller,
-    required this.providerKey,
     required this.memoCtl,
     required this.dayOfMonthCtl,
   });
 
   final RecurringRuleFormState state;
   final RecurringRuleFormController controller;
-  final RecurringRuleFormControllerProvider providerKey;
   final TextEditingController memoCtl;
   final TextEditingController dayOfMonthCtl;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final title = state.isEdit
         ? l10n.recurringFormEditTitle
@@ -124,7 +121,7 @@ class _FormBody extends ConsumerWidget {
         title: Text(title),
         actions: [
           TextButton(
-            onPressed: state.isLoading ? null : () => _onSave(context, ref),
+            onPressed: state.isLoading ? null : () => _onSave(context),
             child: Text(
               state.isEdit
                   ? l10n.recurringSaveUpdate
@@ -263,29 +260,37 @@ class _FormBody extends ConsumerWidget {
     );
   }
 
-  Future<void> _onSave(BuildContext context, WidgetRef ref) async {
+  Future<void> _onSave(BuildContext context) async {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final navigator = GoRouter.of(context);
     final wasEdit = state.isEdit;
-    final id = await controller.save();
-    if (id == null) return;
+    final outcome = await controller.save();
     if (!context.mounted) return;
-    final updated = ref.read(providerKey).value;
-    if (updated?.postSaveGenerationFailed ?? false) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.recurringSavedButGenerationFailed)),
-      );
-    } else {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            wasEdit ? l10n.recurringSavedUpdate : l10n.recurringSavedCreate,
-          ),
-        ),
-      );
+    switch (outcome) {
+      case SaveRecurringRuleSaved(:final generationFailed):
+        if (generationFailed) {
+          messenger.showSnackBar(
+            SnackBar(content: Text(l10n.recurringSavedButGenerationFailed)),
+          );
+        } else {
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(
+                wasEdit ? l10n.recurringSavedUpdate : l10n.recurringSavedCreate,
+              ),
+            ),
+          );
+        }
+        navigator.pop();
+      case SaveRecurringRuleRejected():
+        // The reason is already on the form (field errors or banner).
+        break;
+      case SaveRecurringRuleFailed():
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.errorSnackbarGeneric)),
+        );
     }
-    navigator.pop();
   }
 
   Future<void> _confirmDelete(BuildContext context) async {
@@ -310,10 +315,19 @@ class _FormBody extends ConsumerWidget {
     );
     if (confirmed != true) return;
     if (!context.mounted) return;
-    await controller.deleteRule();
+    final outcome = await controller.deleteRule();
     if (!context.mounted) return;
-    messenger.showSnackBar(SnackBar(content: Text(l10n.recurringDeletedSnack)));
-    navigator.pop();
+    switch (outcome) {
+      case ArchiveRecurringRuleOk():
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.recurringDeletedSnack)),
+        );
+        navigator.pop();
+      case ArchiveRecurringRuleFailed():
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.errorSnackbarGeneric)),
+        );
+    }
   }
 }
 

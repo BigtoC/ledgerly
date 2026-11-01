@@ -42,7 +42,7 @@ final class RecurringRulesControllerProvider
 }
 
 String _$recurringRulesControllerHash() =>
-    r'99c023dc86725bb9c07ba6eabf8165650f49e4b4';
+    r'0440fe200fd53ccb57bba328dc2c05e4f1b2a2c3';
 
 abstract class _$RecurringRulesController
     extends $StreamNotifier<RecurringRulesState> {

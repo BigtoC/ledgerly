@@ -113,41 +113,68 @@ class _RuleList extends ConsumerWidget {
           rule: rule,
           onTap: () => context.push('/settings/recurring/${rule.id}'),
           onPause: () async {
-            await controller.pauseRule(rule.id);
+            final outcome = await controller.pauseRule(rule.id);
             if (!ctx.mounted) return;
-            ScaffoldMessenger.of(ctx).showSnackBar(
-              SnackBar(content: Text(l10n.recurringPausedSnack(rule.name))),
-            );
+            switch (outcome) {
+              case PauseRecurringRuleOk():
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  SnackBar(content: Text(l10n.recurringPausedSnack(rule.name))),
+                );
+              case PauseRecurringRuleFailed():
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  SnackBar(content: Text(l10n.errorSnackbarGeneric)),
+                );
+            }
           },
           onResume: () async {
-            final updated = await controller.resumeRule(rule.id);
+            final outcome = await controller.resumeRule(rule.id);
             if (!ctx.mounted) return;
-            ScaffoldMessenger.of(ctx).showSnackBar(
-              SnackBar(
-                content: Text(
-                  l10n.recurringResumedSnack(
-                    rule.name,
-                    DateFormat.yMMMd().format(
-                      updated?.nextDueDate ?? rule.nextDueDate,
+            switch (outcome) {
+              case ResumeRecurringRuleOk(:final nextDueDate):
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      l10n.recurringResumedSnack(
+                        rule.name,
+                        DateFormat.yMMMd().format(
+                          nextDueDate ?? rule.nextDueDate,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-            );
+                );
+              case ResumeRecurringRuleFailed():
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  SnackBar(content: Text(l10n.errorSnackbarGeneric)),
+                );
+            }
           },
           onDelete: () async {
-            await controller.deleteRule(rule.id);
+            final outcome = await controller.deleteRule(rule.id);
             if (!ctx.mounted) return;
-            ScaffoldMessenger.of(ctx).showSnackBar(
-              SnackBar(
-                content: Text(l10n.recurringDeletedSnack),
-                action: SnackBarAction(
-                  label: l10n.commonUndo,
-                  onPressed: controller.undoDelete,
-                ),
-                duration: kUndoWindow,
-              ),
-            );
+            switch (outcome) {
+              case DeleteRecurringRulePending():
+                // Clear first so an older Undo snackbar cannot outlive the
+                // delete it belongs to.
+                ScaffoldMessenger.of(ctx)
+                  ..clearSnackBars()
+                  ..showSnackBar(
+                    SnackBar(
+                      content: Text(l10n.recurringDeletedSnack),
+                      action: SnackBarAction(
+                        label: l10n.commonUndo,
+                        onPressed: () => controller.undoDelete(rule.id),
+                      ),
+                      duration: kUndoWindow,
+                    ),
+                  );
+              case DeleteRecurringRuleNotStarted():
+                ScaffoldMessenger.of(ctx)
+                  ..clearSnackBars()
+                  ..showSnackBar(
+                    SnackBar(content: Text(l10n.errorSnackbarGeneric)),
+                  );
+            }
           },
         );
       },

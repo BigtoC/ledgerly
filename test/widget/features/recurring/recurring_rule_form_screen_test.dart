@@ -1,14 +1,16 @@
 // RecurringRuleFormScreen widget tests.
 //
-// These cover the screen's projection of [RecurringRuleFormState]:
-// frequency-conditional fields, name validation, the edit-mode pending
-// notice, and that the save action triggers the controller. They do
-// NOT exercise the real repository or use case — those are covered by
+// These cover the screen's projection of [RecurringRuleFormState]
+// (titles, frequency-conditional fields, the edit-mode pending notice and
+// the form-error banner) and how the screen handles the save and delete
+// outcomes a fake controller returns. They do NOT exercise the real
+// controller, repository or use case — those are covered by controller,
 // repository and use-case unit tests respectively.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
@@ -30,9 +32,27 @@ class _MockCategoryRepository extends Mock implements CategoryRepository {}
 
 const _usd = Currency(code: 'USD', decimals: 2);
 
+const _genericError = 'Something went wrong. Please try again.';
+
+const _editState = RecurringRuleFormState(
+  currency: _usd,
+  isEdit: true,
+  memo: 'Netflix',
+  amountMinorUnits: 1599,
+  categoryId: 1,
+  accountId: 1,
+  dayOfMonth: 15,
+);
+
 class _FakeFormController extends RecurringRuleFormController {
-  _FakeFormController(this._initial);
+  _FakeFormController(
+    this._initial, {
+    this.saveOutcome = const SaveRecurringRuleOutcome.rejected(),
+    this.archiveOutcome = const ArchiveRecurringRuleOutcome.ok(),
+  });
   final RecurringRuleFormState _initial;
+  final SaveRecurringRuleOutcome saveOutcome;
+  final ArchiveRecurringRuleOutcome archiveOutcome;
 
   @override
   Future<RecurringRuleFormState> build({int? ruleId}) async {
@@ -40,10 +60,10 @@ class _FakeFormController extends RecurringRuleFormController {
   }
 
   @override
-  Future<int?> save() async => null;
+  Future<SaveRecurringRuleOutcome> save() async => saveOutcome;
 
   @override
-  Future<void> deleteRule() async {}
+  Future<ArchiveRecurringRuleOutcome> deleteRule() async => archiveOutcome;
 }
 
 @Dependencies([RecurringRuleFormController, categoriesByType])
@@ -58,9 +78,41 @@ Widget _wrap(ProviderContainer container) {
   );
 }
 
+/// Hosts the form as a child route of a 'LIST' page so the screen's
+/// `GoRouter.of(context)` resolves and a pop lands on 'LIST'.
+@Dependencies([RecurringRuleFormController, categoriesByType])
+Widget _wrapRouted(ProviderContainer container, {int? ruleId}) {
+  return UncontrolledProviderScope(
+    container: container,
+    child: MaterialApp.router(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      routerConfig: GoRouter(
+        initialLocation: '/form',
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, _) => const Scaffold(body: Text('LIST')),
+            routes: [
+              GoRoute(
+                path: 'form',
+                builder: (_, _) => RecurringRuleFormScreen(ruleId: ruleId),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 ProviderContainer _makeContainer({
   required RecurringRuleFormState initial,
   int? ruleId,
+  SaveRecurringRuleOutcome saveOutcome =
+      const SaveRecurringRuleOutcome.rejected(),
+  ArchiveRecurringRuleOutcome archiveOutcome =
+      const ArchiveRecurringRuleOutcome.ok(),
 }) {
   // The form's category and account picker tiles watch the repos so they
   // can render the picked entity's name + icon. Stub both with empty
@@ -82,8 +134,13 @@ ProviderContainer _makeContainer({
 
   return ProviderContainer(
     overrides: [
-      recurringRuleFormControllerProvider(ruleId: ruleId)
-          .overrideWith(() => _FakeFormController(initial)),
+      recurringRuleFormControllerProvider(ruleId: ruleId).overrideWith(
+        () => _FakeFormController(
+          initial,
+          saveOutcome: saveOutcome,
+          archiveOutcome: archiveOutcome,
+        ),
+      ),
       accountRepositoryProvider.overrideWithValue(accountRepo),
       categoryRepositoryProvider.overrideWithValue(categoryRepo),
       categoriesByTypeProvider(CategoryType.expense)
@@ -288,4 +345,78 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('RFS09: failed delete shows the generic error and stays open', (
+    tester,
+  ) async {
+    _useTallViewport(tester);
+    final container = _makeContainer(
+      initial: _editState,
+      ruleId: 1,
+      archiveOutcome: const ArchiveRecurringRuleOutcome.failed(),
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrapRouted(container, ruleId: 1));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Delete rule'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Delete rule'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text(_genericError), findsOneWidget);
+    expect(find.text('Rule deleted'), findsNothing);
+    expect(find.text('Edit rule'), findsOneWidget);
+  });
+
+  testWidgets('RFS10: failed save shows the generic error and stays open', (
+    tester,
+  ) async {
+    final container = _makeContainer(
+      initial: _editState,
+      ruleId: 1,
+      saveOutcome: const SaveRecurringRuleOutcome.failed(),
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrapRouted(container, ruleId: 1));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text(_genericError), findsOneWidget);
+    expect(find.text('Edit rule'), findsOneWidget);
+  });
+
+  testWidgets(
+    'RFS11: saved with a generation failure says so and closes the form',
+    (tester) async {
+      final container = _makeContainer(
+        initial: _editState,
+        ruleId: 1,
+        saveOutcome: const SaveRecurringRuleOutcome.saved(1, true),
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrapRouted(container, ruleId: 1));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          "Saved — but the first run hit an issue. We'll retry on the next "
+          'launch.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('LIST'), findsOneWidget);
+      expect(find.text('Edit rule'), findsNothing);
+    },
+  );
 }

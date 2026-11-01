@@ -1,7 +1,9 @@
 // RecurringRulesScreen widget tests.
 //
 // Covers loading / empty / data / error rendering, FAB navigation, paused
-// chip rendering, and the swipe-delete + undo snackbar contract.
+// chip rendering, the pause / resume failure snackbars, and the
+// swipe-delete + undo snackbar contract (including a delete that cannot
+// start and a stale Undo).
 
 import 'dart:async';
 
@@ -13,6 +15,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
+import 'package:ledgerly/core/constants.dart';
 import 'package:ledgerly/data/models/currency.dart';
 import 'package:ledgerly/data/models/recurring_rule.dart';
 import 'package:ledgerly/data/repositories/recurring_rules_repository.dart';
@@ -25,6 +28,8 @@ class _MockRecurringRulesRepository extends Mock
     implements RecurringRulesRepository {}
 
 const _usd = Currency(code: 'USD', decimals: 2);
+
+const _genericError = 'Something went wrong. Please try again.';
 
 RecurringRule _rule({
   required int id,
@@ -87,15 +92,20 @@ Widget _wrap(ProviderContainer container) {
   );
 }
 
-ProviderContainer _makeContainer(RecurringRulesState fixed) {
-  final repo = _MockRecurringRulesRepository();
-  when(() => repo.watchActive()).thenAnswer((_) => const Stream.empty());
-  when(() => repo.setActive(any(), active: any(named: 'active')))
+/// Stubs [repo]'s writes to succeed. Pass a [repo] and re-stub a write
+/// with `thenThrow` after this call to make that command fail.
+ProviderContainer _makeContainer(
+  RecurringRulesState fixed, {
+  _MockRecurringRulesRepository? repo,
+}) {
+  final r = repo ?? _MockRecurringRulesRepository();
+  when(() => r.watchActive()).thenAnswer((_) => const Stream.empty());
+  when(() => r.setActive(any(), active: any(named: 'active')))
       .thenAnswer((_) async {});
-  when(() => repo.archive(any())).thenAnswer((_) async {});
+  when(() => r.archive(any())).thenAnswer((_) async {});
   return ProviderContainer(
     overrides: [
-      recurringRulesRepositoryProvider.overrideWithValue(repo),
+      recurringRulesRepositoryProvider.overrideWithValue(r),
       recurringRulesControllerProvider.overrideWith(
         () => _FakeController(fixed),
       ),
@@ -209,5 +219,169 @@ void main() {
 
     expect(find.text("Couldn't load your rules."), findsOneWidget);
     expect(find.text('Retry'), findsOneWidget);
+  });
+
+  testWidgets('RRS08: failed pause shows the generic error snackbar', (
+    tester,
+  ) async {
+    final repo = _MockRecurringRulesRepository();
+    final container = _makeContainer(
+      RecurringRulesState.data(rules: [_rule(id: 1)], pendingDelete: null),
+      repo: repo,
+    );
+    addTearDown(container.dispose);
+    when(() => repo.setActive(any(), active: any(named: 'active')))
+        .thenThrow(StateError('disk full'));
+
+    await tester.pumpWidget(_wrap(container));
+    await tester.pumpAndSettle();
+
+    await tester.drag(find.text('Netflix'), const Offset(300, 0));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Pause'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text(_genericError), findsOneWidget);
+    expect(find.text('Paused — Netflix'), findsNothing);
+  });
+
+  testWidgets('RRS09: failed resume shows the generic error snackbar', (
+    tester,
+  ) async {
+    final repo = _MockRecurringRulesRepository();
+    final container = _makeContainer(
+      RecurringRulesState.data(
+        rules: [_rule(id: 1, isActive: false)],
+        pendingDelete: null,
+      ),
+      repo: repo,
+    );
+    addTearDown(container.dispose);
+    when(() => repo.setActive(any(), active: any(named: 'active')))
+        .thenThrow(StateError('disk full'));
+
+    await tester.pumpWidget(_wrap(container));
+    await tester.pumpAndSettle();
+
+    await tester.drag(find.text('Netflix'), const Offset(300, 0));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Resume'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text(_genericError), findsOneWidget);
+    expect(find.textContaining('Resumed'), findsNothing);
+  });
+
+  testWidgets('RRS10: swipe-delete shows Undo, and Undo cancels the delete', (
+    tester,
+  ) async {
+    final repo = _MockRecurringRulesRepository();
+    final container = _makeContainer(
+      RecurringRulesState.data(rules: [_rule(id: 1)], pendingDelete: null),
+      repo: repo,
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container));
+    await tester.pumpAndSettle();
+
+    await tester.drag(find.text('Netflix'), const Offset(-300, 0));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Rule deleted'), findsOneWidget);
+    await tester.tap(find.text('Undo'));
+    await tester.pump(kUndoWindow);
+    await tester.pumpAndSettle();
+
+    verifyNever(() => repo.archive(any()));
+  });
+
+  testWidgets(
+    'RRS11: a delete that cannot start shows the error and no "Rule deleted"',
+    (tester) async {
+      final repo = _MockRecurringRulesRepository();
+      final container = _makeContainer(
+        RecurringRulesState.data(
+          rules: [
+            _rule(id: 1),
+            _rule(id: 2, name: 'Rent'),
+          ],
+          pendingDelete: null,
+        ),
+        repo: repo,
+      );
+      addTearDown(container.dispose);
+      when(() => repo.archive(1)).thenThrow(StateError('disk full'));
+
+      await tester.pumpWidget(_wrap(container));
+      await tester.pumpAndSettle();
+
+      await tester.drag(find.text('Netflix'), const Offset(-300, 0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete').last);
+      await tester.pumpAndSettle();
+      expect(find.text('Rule deleted'), findsOneWidget);
+
+      // Deleting Rent commits Netflix's pending delete first, which fails,
+      // so Rent's delete never starts.
+      await tester.drag(find.text('Rent'), const Offset(-300, 0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete').last);
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text(_genericError), findsOneWidget);
+      expect(find.text('Rule deleted'), findsNothing);
+
+      // Nothing is queued behind the error either.
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+      expect(find.text('Rule deleted'), findsNothing);
+    },
+  );
+
+  testWidgets('RRS12: a stale Undo cannot cancel a newer pending delete', (
+    tester,
+  ) async {
+    final repo = _MockRecurringRulesRepository();
+    final container = _makeContainer(
+      RecurringRulesState.data(
+        rules: [
+          _rule(id: 1),
+          _rule(id: 2, name: 'Rent'),
+        ],
+        pendingDelete: null,
+      ),
+      repo: repo,
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container));
+    await tester.pumpAndSettle();
+
+    await tester.drag(find.text('Netflix'), const Offset(-300, 0));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete').last);
+    await tester.pumpAndSettle();
+    final staleUndo = tester
+        .widget<SnackBarAction>(find.byType(SnackBarAction))
+        .onPressed;
+
+    // Deleting Rent commits Netflix's delete and makes Rent pending.
+    await tester.drag(find.text('Rent'), const Offset(-300, 0));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete').last);
+    await tester.pumpAndSettle();
+    verify(() => repo.archive(1)).called(1);
+
+    staleUndo();
+    await tester.pump(kUndoWindow);
+    await tester.pumpAndSettle();
+
+    verify(() => repo.archive(2)).called(1);
   });
 }
