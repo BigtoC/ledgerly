@@ -5,8 +5,10 @@ import '../../l10n/app_localizations.dart';
 import '../providers/app_update_provider.dart';
 
 /// Adaptive navigation shell. Renders a [NavigationBar] below 600dp and a
-/// [NavigationRail] at 600dp and above. The breakpoint is enforced here at
-/// the shell level, not inside individual feature screens (guardrail G11).
+/// [NavigationRail] at 600dp and above. This is the main 600dp switch; the
+/// form-route wrapper in `router.dart`, the picker and sheet helpers and the
+/// recurring rules screen switch at the same width. See
+/// `docs/architecture/ui-and-layout.md` for the full list.
 class AdaptiveShell extends StatelessWidget {
   const AdaptiveShell({
     super.key,
