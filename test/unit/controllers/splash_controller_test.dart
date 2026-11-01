@@ -4,7 +4,8 @@
 //   - Day-count math (today → 0; 100 days ago → 100; future → negative).
 //   - Template substitution integration (`{date}` / `{days}`) into the
 //     segmented `displayTextSegments` exposed by `SplashData`.
-//   - `setStartDate` writes to the `UserPreferencesRepository`.
+//   - `setStartDate` writes to the `UserPreferencesRepository` and returns
+//     `SetSplashStartDateOutcome.ok`; a repository throw returns `.failed`.
 //   - Empty / whitespace-only custom display text falls back to the default.
 //   - User templates that don't contain `{date}` get the date auto-prepended
 //     so the splash never renders without a visible start-date span.
@@ -239,12 +240,31 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       final picked = DateTime(2026, 1, 1);
-      await container
+      final outcome = await container
           .read(splashControllerProvider.notifier)
           .setStartDate(picked);
 
+      expect(outcome, const SetSplashStartDateOutcome.ok());
       verify(() => repo.setSplashStartDate(picked)).called(1);
     });
+
+    test(
+      'C08b: setStartDate returns failed when the repository write throws',
+      () async {
+        when(() => repo.setSplashStartDate(any()))
+            .thenThrow(Exception('write failed'));
+        final container = makeContainer(now: DateTime(2026, 4, 11));
+        addTearDown(container.dispose);
+        container.listen(splashControllerProvider, (_, _) {});
+        await Future<void>.delayed(Duration.zero);
+
+        final outcome = await container
+            .read(splashControllerProvider.notifier)
+            .setStartDate(DateTime(2026, 1, 1));
+
+        expect(outcome, const SetSplashStartDateOutcome.failed());
+      },
+    );
 
     test('C09: zh_TW locale formats {date} using zh_TW conventions', () async {
       final container = makeContainer(

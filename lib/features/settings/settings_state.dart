@@ -4,7 +4,8 @@
 // shape of `user_preferences` into a single immutable `Data` variant,
 // composed by `SettingsController` from multiple `UserPreferencesRepository`
 // streams. Widgets read this shape directly; commands write through the
-// controller, which in turn writes through the repository.
+// controller, which in turn writes through the repository, and return a
+// [SettingsWriteOutcome] instead of throwing.
 //
 // No top-level `empty` variant: the bootstrap sequence guarantees
 // `user_preferences` is populated (first-run seed) before the Settings
@@ -43,4 +44,19 @@ sealed class SettingsState with _$SettingsState {
   /// corrupted `user_preferences` cell.
   const factory SettingsState.error(Object error, StackTrace stack) =
       SettingsError;
+}
+
+/// Result of every [SettingsController] preference write: `setThemeMode`,
+/// `setLocale`, `setDefaultCurrency`, `setSplashEnabled`,
+/// `setSplashStartDate`, `setSplashDisplayText` and `setSplashButtonLabel`.
+@freezed
+sealed class SettingsWriteOutcome with _$SettingsWriteOutcome {
+  /// Written. The repository stream re-emits and the control shows the new
+  /// value. A splash text field also records the value as synced.
+  const factory SettingsWriteOutcome.ok() = SettingsWriteOk;
+
+  /// The write failed. The widget shows `errorSnackbarGeneric`. Toggles and
+  /// pickers keep showing the stored value; a splash text field keeps the
+  /// typed text, so its next submit retries the write.
+  const factory SettingsWriteOutcome.failed() = SettingsWriteFailed;
 }

@@ -10,6 +10,7 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../settings_controller.dart';
+import '../settings_state.dart';
 import 'default_currency_picker_sheet.dart';
 
 @Dependencies([SettingsController])
@@ -29,9 +30,19 @@ class DefaultCurrencyTile extends ConsumerWidget {
       onTap: () async {
         final picked = await showDefaultCurrencyPickerSheet(context);
         if (picked == null) return;
-        await ref
+        if (!context.mounted) return;
+        final messenger = ScaffoldMessenger.of(context);
+        final outcome = await ref
             .read(settingsControllerProvider.notifier)
             .setDefaultCurrency(picked);
+        switch (outcome) {
+          case SettingsWriteOk():
+            break;
+          case SettingsWriteFailed():
+            messenger.showSnackBar(
+              SnackBar(content: Text(l10n.errorSnackbarGeneric)),
+            );
+        }
       },
     );
   }

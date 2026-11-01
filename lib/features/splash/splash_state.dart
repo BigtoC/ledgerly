@@ -34,3 +34,15 @@ sealed class SplashState with _$SplashState {
   /// corrupted `user_preferences` cell.
   const factory SplashState.error(Object error, StackTrace stack) = SplashError;
 }
+
+/// Result of [SplashController.setStartDate].
+@freezed
+sealed class SetSplashStartDateOutcome with _$SetSplashStartDateOutcome {
+  /// Written. The start-date stream re-emits and the screen swaps the prompt
+  /// for the day counter; the widget does nothing more.
+  const factory SetSplashStartDateOutcome.ok() = SetSplashStartDateOk;
+
+  /// The write failed. The prompt stays; the widget shows
+  /// `errorSnackbarGeneric`.
+  const factory SetSplashStartDateOutcome.failed() = SetSplashStartDateFailed;
+}

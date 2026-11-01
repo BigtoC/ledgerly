@@ -15,6 +15,7 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../settings_controller.dart';
+import '../settings_state.dart';
 
 const _zhTw = Locale('zh', 'TW');
 const _zhCn = Locale('zh', 'CN');
@@ -85,9 +86,19 @@ class LanguageSelector extends ConsumerWidget {
       ),
     );
     if (selected == null) return;
-    await ref
+    if (!context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final outcome = await ref
         .read(settingsControllerProvider.notifier)
         .setLocale(selected.value);
+    switch (outcome) {
+      case SettingsWriteOk():
+        break;
+      case SettingsWriteFailed():
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.errorSnackbarGeneric)),
+        );
+    }
   }
 }
 

@@ -27,6 +27,9 @@ import 'package:ledgerly/l10n/app_localizations.dart';
 class _MockUserPreferencesRepository extends Mock
     implements UserPreferencesRepository {}
 
+final _genericError = lookupAppLocalizations(const Locale('en'))
+    .errorSnackbarGeneric;
+
 @Dependencies([
   splashGateSnapshot,
   splashStartDate,
@@ -208,6 +211,43 @@ void main() {
 
     verify(() => repo.setSplashStartDate(fixedNow)).called(1);
   });
+
+  testWidgets(
+    'W03c: a failed launch-time start-date write shows the generic error',
+    (tester) async {
+      final repo = _MockUserPreferencesRepository();
+      when(() => repo.setSplashStartDate(any()))
+          .thenThrow(Exception('write failed'));
+
+      final container = ProviderContainer(
+        overrides: [
+          userPreferencesRepositoryProvider.overrideWithValue(repo),
+          splashGateSnapshotProvider.overrideWithValue(
+            SplashGateSnapshot.withInitial(enabled: true, startDate: null),
+          ),
+          splashStartDateProvider.overrideWith((ref) => Stream.value(null)),
+          splashClockProvider.overrideWithValue(() => DateTime(2026, 1, 10)),
+          splashControllerProvider.overrideWith(
+            () => _FakeSplashController(const SplashState.loading()),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(wrap(container));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Set start date'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text(_genericError), findsOneWidget);
+      // The user stays on the prompt and can try again.
+      expect(find.text('Set start date'), findsOneWidget);
+    },
+  );
 
   testWidgets('W03b: Enter button navigates to /home', (tester) async {
     final repo = _MockUserPreferencesRepository();

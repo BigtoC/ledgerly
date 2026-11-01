@@ -11,6 +11,7 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../settings_controller.dart';
+import '../settings_state.dart';
 
 @Dependencies([SettingsController])
 class ThemeModeSelector extends ConsumerWidget {
@@ -47,10 +48,19 @@ class ThemeModeSelector extends ConsumerWidget {
               ),
             ],
             selected: {value},
-            onSelectionChanged: (selection) {
-              ref
+            onSelectionChanged: (selection) async {
+              final messenger = ScaffoldMessenger.of(context);
+              final outcome = await ref
                   .read(settingsControllerProvider.notifier)
                   .setThemeMode(selection.first);
+              switch (outcome) {
+                case SettingsWriteOk():
+                  break;
+                case SettingsWriteFailed():
+                  messenger.showSnackBar(
+                    SnackBar(content: Text(l10n.errorSnackbarGeneric)),
+                  );
+              }
             },
           ),
         ],

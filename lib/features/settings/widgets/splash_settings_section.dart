@@ -11,6 +11,8 @@
 // upstream edits (e.g. resetting to defaults from another path) still
 // reflect in the UI.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -19,6 +21,7 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../settings_controller.dart';
+import '../settings_state.dart';
 import 'settings_section.dart';
 
 @Dependencies([SettingsController])
@@ -49,8 +52,20 @@ class SplashSettingsSection extends ConsumerWidget {
           key: const ValueKey('splashSettings:enabledSwitch'),
           title: Text(l10n.settingsSplashEnabled),
           value: splashEnabled,
-          onChanged: (v) =>
-              ref.read(settingsControllerProvider.notifier).setSplashEnabled(v),
+          onChanged: (v) async {
+            final messenger = ScaffoldMessenger.of(context);
+            final outcome = await ref
+                .read(settingsControllerProvider.notifier)
+                .setSplashEnabled(v);
+            switch (outcome) {
+              case SettingsWriteOk():
+                break;
+              case SettingsWriteFailed():
+                messenger.showSnackBar(
+                  SnackBar(content: Text(l10n.errorSnackbarGeneric)),
+                );
+            }
+          },
         ),
         if (splashEnabled) ...[
           _SplashStartDateRow(startDate: splashStartDate),
@@ -130,9 +145,19 @@ class _SplashStartDateRow extends ConsumerWidget {
           lastDate: DateTime(9999, 12, 31),
         );
         if (picked == null) return;
-        await ref
+        if (!context.mounted) return;
+        final messenger = ScaffoldMessenger.of(context);
+        final outcome = await ref
             .read(settingsControllerProvider.notifier)
             .setSplashStartDate(picked);
+        switch (outcome) {
+          case SettingsWriteOk():
+            break;
+          case SettingsWriteFailed():
+            messenger.showSnackBar(
+              SnackBar(content: Text(l10n.errorSnackbarGeneric)),
+            );
+        }
       },
     );
   }
@@ -153,7 +178,10 @@ class _SplashTextField extends ConsumerStatefulWidget {
   final String? value;
   final String labelText;
   final String hintText;
-  final Future<void> Function(SettingsController controller, String value)
+  final Future<SettingsWriteOutcome> Function(
+    SettingsController controller,
+    String value,
+  )
   write;
   final bool multiline;
 
@@ -165,6 +193,10 @@ class _SplashTextFieldState extends ConsumerState<_SplashTextField> {
   late final TextEditingController _controller;
   late final FocusNode _focusNode;
   String _lastSynced = '';
+
+  /// The value whose write is in flight. A submit via the keyboard action
+  /// also unfocuses the field, and that focus-out must not write it again.
+  String? _writing;
 
   @override
   void initState() {
@@ -197,15 +229,31 @@ class _SplashTextFieldState extends ConsumerState<_SplashTextField> {
 
   void _onFocusChange() {
     if (!_focusNode.hasFocus) {
-      _submit();
+      unawaited(_submit());
     }
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     final value = _controller.text;
-    if (value == _lastSynced) return;
-    _lastSynced = value;
-    widget.write(ref.read(settingsControllerProvider.notifier), value);
+    if (value == _lastSynced || value == _writing) return;
+    _writing = value;
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
+    final outcome = await widget.write(
+      ref.read(settingsControllerProvider.notifier),
+      value,
+    );
+    if (_writing == value) _writing = null;
+    switch (outcome) {
+      case SettingsWriteOk():
+        // Record the value as synced only once it is stored, so a failed
+        // write is retried on the next submit or focus-out.
+        _lastSynced = value;
+      case SettingsWriteFailed():
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.errorSnackbarGeneric)),
+        );
+    }
   }
 
   @override
@@ -220,7 +268,7 @@ class _SplashTextFieldState extends ConsumerState<_SplashTextField> {
         minLines: widget.multiline ? 1 : null,
         keyboardType: widget.multiline ? TextInputType.multiline : null,
         textInputAction: widget.multiline ? null : TextInputAction.done,
-        onSubmitted: (_) => _submit(),
+        onSubmitted: (_) => unawaited(_submit()),
         decoration: InputDecoration(
           labelText: widget.labelText,
           hintText: widget.hintText,

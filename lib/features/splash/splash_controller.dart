@@ -11,11 +11,13 @@
 // future start dates (no clamp).
 //
 // Command surface per plan §3.1 is minimal: `setStartDate(DateTime)` for
-// the PRD cold-start date-picker path. The Enter button is pure navigation
-// and stays on the widget.
+// the PRD cold-start date-picker path. It never throws; it returns a
+// [SetSplashStartDateOutcome]. The Enter button is pure navigation and
+// stays on the widget.
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../app/providers/locale_provider.dart';
@@ -87,10 +89,17 @@ class SplashController extends _$SplashController {
 
   /// Writes `splash_start_date` via the repository. Called from the
   /// launch-time start-date prompt; Settings owns ongoing edits per
-  /// wave-0 §2.3.
-  Future<void> setStartDate(DateTime date) async {
-    final repo = ref.read(userPreferencesRepositoryProvider);
-    await repo.setSplashStartDate(date);
+  /// wave-0 §2.3. A failed write (today only a Drift write error) returns
+  /// `.failed`.
+  Future<SetSplashStartDateOutcome> setStartDate(DateTime date) async {
+    try {
+      final repo = ref.read(userPreferencesRepositoryProvider);
+      await repo.setSplashStartDate(date);
+      return const SetSplashStartDateOutcome.ok();
+    } catch (e) {
+      debugPrint('[SplashController] setStartDate failed: ${e.runtimeType}');
+      return const SetSplashStartDateOutcome.failed();
+    }
   }
 
   /// Resolves the persisted display text into a final template that is
