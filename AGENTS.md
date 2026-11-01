@@ -103,7 +103,7 @@ Detailed agent-facing rules live under [`docs/architecture/`](docs/architecture/
 - [`data-model.md`](docs/architecture/data-model.md) — Money in minor units, immutable category `type`, `l10n_key` identity, archive-instead-of-delete, indirect icons/colors, `pending_transactions` staging, pagination cap.
 - [`ui-and-layout.md`](docs/architecture/ui-and-layout.md) — Required layout primitives, 600dp adaptive breakpoint, 2× text scale, reference live screens.
 - [`bootstrap.md`](docs/architecture/bootstrap.md) — First-run + bootstrap order, splash redirect, route table.
-- [`testing.md`](docs/architecture/testing.md) — Test organization by layer; repository/controller/golden/migration patterns; per-slice coverage map.
+- [`testing.md`](docs/architecture/testing.md) — Test organization by layer; repository/controller/migration patterns; per-slice coverage map.
 - [`dependencies.md`](docs/architecture/dependencies.md) — layer-boundary check (replaced `import_lint`), base `app_zh.arb` requirement, Android and iOS build toolchains.
 
 Code generation is required whenever a `@freezed`, `@riverpod`, or Drift `@DriftDatabase`/`@DataClassName` annotation changes — the build fails loudly if generated files are stale.

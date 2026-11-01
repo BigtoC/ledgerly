@@ -10,7 +10,7 @@ Each doc captures the rules that are easy to get wrong by defaulting to a generi
 - [`data-model.md`](./data-model.md) — Money in minor units, immutable category `type`, `l10n_key` identity, archive-instead-of-delete, indirect icons/colors, `pending_transactions` staging, pagination cap.
 - [`ui-and-layout.md`](./ui-and-layout.md) — Required layout primitives for Home, Add/Edit Transaction, and Category picker; the 600dp adaptive breakpoint; 2× text scale.
 - [`bootstrap.md`](./bootstrap.md) — First-run + bootstrap sequence, splash redirect, route table.
-- [`testing.md`](./testing.md) — Test organization by architectural layer; in-memory Drift, `ProviderContainer` overrides, splash goldens, migration tests.
+- [`testing.md`](./testing.md) — Test organization by architectural layer; in-memory Drift, `ProviderContainer` overrides, the canonical test harness, migration tests.
 - [`dependencies.md`](./dependencies.md) — Pinned versions and the non-obvious reasons behind them (base `app_zh.arb`), and the layer-boundary check that replaced `import_lint`.
 
 ## Source precedence

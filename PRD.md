@@ -1260,7 +1260,7 @@ Tests are organized by **architectural layer**, not by feature. This mirrors the
 ### Widget Tests (`test/widget/`)
 
 - Override controller provider with a test double; assert rendering per state variant
-- Golden tests for the splash screen (visual design is a product requirement)
+- Splash screen: rendering per state through controller overrides (no golden tests)
 - Home: first-run empty state, grouped-by-currency summary strip, horizontal swipe switches the day
 - Add Transaction: keypad input, picking an income or expense category, validation, duplicate flow
 - Category/Account: create, archive, reorder, empty-state CTAs
