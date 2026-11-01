@@ -27,7 +27,7 @@ import 'package:ledgerly/data/repositories/pending_transaction_repository.dart';
 import 'package:ledgerly/data/repositories/recurring_rules_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/services/locale_service.dart';
-import 'package:ledgerly/data/use_cases/recurring_generation_use_case.dart';
+import 'package:ledgerly/domain/use_cases/recurring_generation_use_case.dart';
 
 import '../support/test_app.dart';
 

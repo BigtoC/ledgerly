@@ -1,7 +1,7 @@
 // `CsvImportUseCase` — loads a Fortune City CSV export and commits it in
 // one Drift transaction.
 //
-// Lives in `data/use_cases/` because the commit coordinates four
+// A use case because the commit coordinates four
 // repositories inside one `db.transaction`, the role
 // `RecurringGenerationUseCase` already plays. It also owns the file
 // service call, so controllers never import `data/services/`. Never
@@ -16,20 +16,20 @@ import '../../core/utils/csv_import_keys.dart';
 import '../../core/utils/date_helpers.dart';
 import '../../core/utils/decimal_rounding.dart';
 import '../../core/utils/fortune_city_csv_parser.dart';
-import '../database/app_database.dart' show AppDatabase;
-import '../../domain/models/account.dart';
-import '../../domain/models/account_type.dart';
-import '../../domain/models/category.dart';
-import '../../domain/models/csv_import.dart';
-import '../../domain/models/currency.dart';
-import '../../domain/models/transaction.dart';
-import '../repositories/account_repository.dart';
-import '../repositories/account_type_repository.dart';
-import '../repositories/category_repository.dart';
-import '../repositories/currency_repository.dart';
-import '../repositories/repository_exceptions.dart';
-import '../repositories/transaction_repository.dart';
-import '../services/csv_file_service.dart';
+import '../../data/database/app_database.dart' show AppDatabase;
+import '../models/account.dart';
+import '../models/account_type.dart';
+import '../models/category.dart';
+import '../models/csv_import.dart';
+import '../models/currency.dart';
+import '../models/transaction.dart';
+import '../../data/repositories/account_repository.dart';
+import '../../data/repositories/account_type_repository.dart';
+import '../../data/repositories/category_repository.dart';
+import '../../data/repositories/currency_repository.dart';
+import '../../data/repositories/repository_exceptions.dart';
+import '../../data/repositories/transaction_repository.dart';
+import '../../data/services/csv_file_service.dart';
 
 /// Duplicate key: `(createdAt unix seconds, amount, currency, memo ?? '')`.
 /// Only CSV-derived values, so preview choices never change the result.

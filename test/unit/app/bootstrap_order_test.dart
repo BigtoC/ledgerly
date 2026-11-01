@@ -25,7 +25,7 @@ import 'package:ledgerly/app/providers/theme_provider.dart';
 import 'package:ledgerly/app/router.dart';
 import 'package:ledgerly/data/database/app_database.dart';
 import 'package:ledgerly/data/services/locale_service.dart';
-import 'package:ledgerly/data/use_cases/recurring_generation_use_case.dart';
+import 'package:ledgerly/domain/use_cases/recurring_generation_use_case.dart';
 
 /// Fixed-locale stub — keeps the seed from reading the OS locale.
 class _StubLocaleService implements LocaleService {

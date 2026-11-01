@@ -17,7 +17,7 @@ import '../data/repositories/transaction_repository.dart';
 import '../data/repositories/user_preferences_repository.dart';
 import '../data/seed/first_run_seed.dart';
 import '../data/services/locale_service.dart';
-import '../data/use_cases/recurring_generation_use_case.dart';
+import '../domain/use_cases/recurring_generation_use_case.dart';
 import 'app.dart';
 import 'providers/app_database_provider.dart';
 import 'providers/default_currency_provider.dart';

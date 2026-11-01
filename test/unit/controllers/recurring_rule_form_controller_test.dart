@@ -18,7 +18,7 @@ import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/pending_transaction_repository.dart';
 import 'package:ledgerly/data/repositories/recurring_rules_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
-import 'package:ledgerly/data/use_cases/recurring_generation_use_case.dart';
+import 'package:ledgerly/domain/use_cases/recurring_generation_use_case.dart';
 import 'package:ledgerly/features/recurring/recurring_rule_form_controller.dart';
 import 'package:ledgerly/features/recurring/recurring_rule_form_state.dart';
 import 'package:ledgerly/features/transactions/keypad_state.dart';

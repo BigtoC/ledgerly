@@ -1,17 +1,16 @@
 // `RecurringGenerationUseCase` — scans active rules, creates pending rows,
 // advances next_due_date.
 //
-// Lives in `data/use_cases/`, not `domain/`. Callers (bootstrap, the form
-// controller after save) construct it manually with the two repositories
-// and an `AppDatabase` handle. The DB handle is required because the use
-// case wraps each rule's per-rule generation in a SAVEPOINT (Drift's
-// nested `db.transaction(...)`) for failure isolation while amortizing
-// the outer fsync cost.
+// Callers (bootstrap, the form controller after save) construct it
+// manually with the two repositories and an `AppDatabase` handle. The DB
+// handle is required because the use case wraps each rule's per-rule
+// generation in a SAVEPOINT (Drift's nested `db.transaction(...)`) for
+// failure isolation while amortizing the outer fsync cost.
 
-import '../database/app_database.dart';
-import '../../domain/models/recurring_rule.dart';
-import '../repositories/pending_transaction_repository.dart';
-import '../repositories/recurring_rules_repository.dart';
+import '../../data/database/app_database.dart';
+import '../models/recurring_rule.dart';
+import '../../data/repositories/pending_transaction_repository.dart';
+import '../../data/repositories/recurring_rules_repository.dart';
 
 class RecurringGenerationUseCase {
   RecurringGenerationUseCase({

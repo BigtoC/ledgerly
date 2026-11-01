@@ -1,20 +1,19 @@
 // `CsvExportUseCase` — writes the transactions of a date range to a CSV
 // file the user saves through the system save dialog.
 //
-// Lives in `data/use_cases/` for the same reason as `CsvImportUseCase`:
-// it reads three repositories and owns the file service call, so
-// controllers never import `data/services/`. Never logs: rows carry memos
-// and amounts.
+// A use case for the same reason as `CsvImportUseCase`: it reads three
+// repositories and owns the file service call, so controllers never
+// import `data/services/`. Never logs: rows carry memos and amounts.
 
 import 'dart:isolate';
 
 import '../../core/utils/date_helpers.dart';
 import '../../core/utils/transactions_csv.dart';
-import '../../domain/models/category.dart';
-import '../repositories/account_repository.dart';
-import '../repositories/category_repository.dart';
-import '../repositories/transaction_repository.dart';
-import '../services/csv_file_service.dart';
+import '../models/category.dart';
+import '../../data/repositories/account_repository.dart';
+import '../../data/repositories/category_repository.dart';
+import '../../data/repositories/transaction_repository.dart';
+import '../../data/services/csv_file_service.dart';
 
 class CsvExportUseCase {
   CsvExportUseCase({

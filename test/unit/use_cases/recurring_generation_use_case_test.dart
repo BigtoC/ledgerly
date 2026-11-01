@@ -13,7 +13,7 @@ import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/domain/models/recurring_rule.dart';
 import 'package:ledgerly/data/repositories/pending_transaction_repository.dart';
 import 'package:ledgerly/data/repositories/recurring_rules_repository.dart';
-import 'package:ledgerly/data/use_cases/recurring_generation_use_case.dart';
+import 'package:ledgerly/domain/use_cases/recurring_generation_use_case.dart';
 
 import '../repositories/_harness/test_app_database.dart';
 

@@ -17,7 +17,7 @@ import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/app/providers/service_providers.dart';
 import 'package:ledgerly/data/database/app_database.dart';
 import 'package:ledgerly/data/services/csv_file_service.dart';
-import 'package:ledgerly/data/use_cases/csv_import_use_case.dart';
+import 'package:ledgerly/domain/use_cases/csv_import_use_case.dart';
 
 class _CancellingCsvFileService implements CsvFileService {
   @override
