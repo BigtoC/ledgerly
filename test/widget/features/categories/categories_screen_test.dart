@@ -11,6 +11,8 @@
 //   - Blocked delete / archive / save show localized messages, never the
 //     repository's English developer strings.
 //   - Edit-mode disables the Type toggle (plan §12 risk #2).
+//   - Edit Save with a blank name: allowed for seeded rows (issue #83),
+//     blocked for custom rows.
 //   - 2× text scale survives.
 
 import 'package:flutter/material.dart';
@@ -454,4 +456,127 @@ void main() {
       expect(save.onPressed, isNotNull);
     },
   );
+
+  // Issue #83: a seeded row has no customName, so its Name field opens
+  // empty. A blank name on a seeded row means "use the localized name",
+  // so it must not block Save.
+  group('edit Save with a blank name', () {
+    const seededFood = Category(
+      id: 1,
+      icon: 'category',
+      color: 0,
+      type: CategoryType.expense,
+      l10nKey: 'category.food',
+    );
+
+    FilledButton saveButton(WidgetTester tester) =>
+        tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Save'));
+
+    Future<void> openEditSheet(WidgetTester tester, String tileLabel) async {
+      await tester.tap(find.text(tileLabel));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('seeded row saves a color-only change', (tester) async {
+      final repo = _MockCategoryRepository();
+      when(() => repo.getById(1)).thenAnswer((_) async => seededFood);
+      when(() => repo.save(any()))
+          .thenAnswer((inv) async => inv.positionalArguments.first as Category);
+      final container = singleRowContainer(
+        repo,
+        seededFood,
+        CategoryRowAffordance.archive,
+      );
+
+      await tester.pumpWidget(_wrap(container: container));
+      await tester.pumpAndSettle();
+      await openEditSheet(tester, 'Food');
+
+      // The form's color swatch is the only bordered circle in the sheet.
+      await tester.tap(
+        find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.byWidgetPredicate(
+            (w) =>
+                w is Container &&
+                w.decoration is BoxDecoration &&
+                (w.decoration! as BoxDecoration).shape == BoxShape.circle &&
+                (w.decoration! as BoxDecoration).border != null,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find
+            .descendant(
+              of: find.byType(GridView),
+              matching: find.byType(InkWell),
+            )
+            .at(3),
+      );
+      await tester.pumpAndSettle();
+
+      expect(saveButton(tester).onPressed, isNotNull);
+      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+      await tester.pumpAndSettle();
+
+      final saved =
+          verify(() => repo.save(captureAny())).captured.single as Category;
+      expect(saved.id, 1);
+      expect(saved.color, 3);
+      expect(saved.l10nKey, 'category.food');
+      expect(saved.customName, isNull);
+      verifyNever(() => repo.rename(any(), any()));
+      // Sheet closed after a successful save.
+      expect(find.byType(BottomSheet), findsNothing);
+    });
+
+    testWidgets('clearing a seeded row\'s custom name reverts it on Save', (
+      tester,
+    ) async {
+      final repo = _MockCategoryRepository();
+      final renamed = seededFood.copyWith(customName: 'Groceries');
+      when(() => repo.rename(1, any())).thenAnswer((_) async => seededFood);
+      final container = singleRowContainer(
+        repo,
+        renamed,
+        CategoryRowAffordance.archive,
+      );
+
+      await tester.pumpWidget(_wrap(container: container));
+      await tester.pumpAndSettle();
+      await openEditSheet(tester, 'Groceries');
+      await tester.enterText(find.byType(TextField), '');
+      await tester.pump();
+
+      expect(saveButton(tester).onPressed, isNotNull);
+      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+      await tester.pumpAndSettle();
+
+      // The repository maps a blank name to null: the localized default.
+      final name = verify(() => repo.rename(1, captureAny())).captured.single;
+      expect(name, anyOf(isNull, isEmpty));
+      verifyNever(() => repo.save(any()));
+    });
+
+    testWidgets('custom row keeps Save disabled with a blank name', (
+      tester,
+    ) async {
+      final repo = _MockCategoryRepository();
+      final cat = _c(id: 5, type: CategoryType.expense, customName: 'Hobby');
+      final container = singleRowContainer(
+        repo,
+        cat,
+        CategoryRowAffordance.delete,
+      );
+
+      await tester.pumpWidget(_wrap(container: container));
+      await tester.pumpAndSettle();
+      await openEditSheet(tester, 'Hobby');
+      await tester.enterText(find.byType(TextField), '   ');
+      await tester.pump();
+
+      expect(saveButton(tester).onPressed, isNull);
+    });
+  });
 }

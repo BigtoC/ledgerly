@@ -3,7 +3,8 @@
 // - Fields: display name, icon, color, type (segmented control).
 // - Type toggle is disabled in Edit mode with
 //   `categoriesFormTypeLockedHint` visible beneath (plan §12 risk #2).
-// - Save enabled when display-name non-empty AND icon selected.
+// - Save enabled when an icon is selected AND the name is non-empty;
+//   a seeded row (Edit mode) may leave the name blank.
 // - Color defaults to palette index 0 when the user never opens the
 //   color picker.
 // - Wrapped in `SingleChildScrollView` so the soft keyboard does not
@@ -78,13 +79,17 @@ class _CategoryFormSheetState extends ConsumerState<_CategoryFormSheet> {
     super.dispose();
   }
 
+  // A seeded row's name may stay blank: `rename` stores a blank name as
+  // null, which falls back to the localized default.
   bool get _canSave =>
-      !_saving && _nameCtrl.text.trim().isNotEmpty && _icon != null;
+      !_saving &&
+      _icon != null &&
+      (_nameCtrl.text.trim().isNotEmpty || widget.initial?.l10nKey != null);
 
   Future<void> _save() async {
     final l10n = AppLocalizations.of(context);
     final name = _nameCtrl.text.trim();
-    if (name.isEmpty || _icon == null) return;
+    if (!_canSave) return;
 
     setState(() {
       _saving = true;
