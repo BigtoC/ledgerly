@@ -14,7 +14,7 @@ import '../../../core/utils/color_palette.dart';
 import '../../../core/utils/icon_registry.dart';
 import '../../../domain/models/category.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../categories/widgets/category_display.dart';
+import '../../../ui/features/categories/views/category_display.dart';
 
 class CategoryChip extends StatelessWidget {
   const CategoryChip({

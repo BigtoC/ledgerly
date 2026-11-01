@@ -27,8 +27,8 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
-import 'package:ledgerly/features/categories/categories_controller.dart';
-import 'package:ledgerly/features/categories/widgets/category_picker.dart';
+import 'package:ledgerly/ui/features/categories/view_models/categories_controller.dart';
+import 'package:ledgerly/ui/features/categories/views/category_picker.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockCategoryRepository extends Mock implements CategoryRepository {}

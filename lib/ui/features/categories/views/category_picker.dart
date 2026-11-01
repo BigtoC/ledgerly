@@ -19,11 +19,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../../core/utils/color_palette.dart';
-import '../../../core/utils/icon_registry.dart';
-import '../../../domain/models/category.dart';
-import '../../../l10n/app_localizations.dart';
-import '../categories_controller.dart';
+import '../../../../core/utils/color_palette.dart';
+import '../../../../core/utils/icon_registry.dart';
+import '../../../../domain/models/category.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../view_models/categories_controller.dart';
 import 'category_display.dart';
 
 /// Opens the category picker sheet and resolves with the user's selection.

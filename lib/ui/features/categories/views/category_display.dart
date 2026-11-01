@@ -7,8 +7,8 @@
 // l10n-keys fall back to the raw key so orphaned rows still render
 // something.
 
-import '../../../domain/models/category.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../../domain/models/category.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Resolves [category] to a display name using [l10n].
 String categoryDisplayName(Category category, AppLocalizations l10n) {

@@ -10,7 +10,7 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../core/utils/date_helpers.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../categories/widgets/category_display.dart';
+import '../../../ui/features/categories/views/category_display.dart';
 import 'csv_export_controller.dart';
 import 'csv_export_state.dart';
 

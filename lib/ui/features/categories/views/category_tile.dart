@@ -11,10 +11,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
-import '../../../core/utils/color_palette.dart';
-import '../../../core/utils/icon_registry.dart';
-import '../../../l10n/app_localizations.dart';
-import '../categories_state.dart';
+import '../../../../core/utils/color_palette.dart';
+import '../../../../core/utils/icon_registry.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../view_models/categories_state.dart';
 import 'category_display.dart';
 
 class CategoryTile extends StatelessWidget {

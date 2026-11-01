@@ -6,7 +6,7 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../core/utils/icon_registry.dart';
+import '../../../../core/utils/icon_registry.dart';
 
 Future<String?> showCategoryIconPicker(
   BuildContext context, {

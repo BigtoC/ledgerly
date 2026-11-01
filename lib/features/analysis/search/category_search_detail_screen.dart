@@ -10,7 +10,7 @@ import '../../../core/utils/money_formatter.dart';
 import '../../../domain/models/category.dart';
 import '../../../domain/models/transaction.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../categories/widgets/category_display.dart';
+import '../../../ui/features/categories/views/category_display.dart';
 import 'analysis_providers.dart';
 import 'category_search_detail_controller.dart';
 import 'category_search_detail_state.dart';

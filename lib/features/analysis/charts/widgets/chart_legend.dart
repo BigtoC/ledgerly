@@ -5,7 +5,7 @@ import '../../../../core/utils/icon_registry.dart';
 import '../../../../core/utils/money_formatter.dart';
 import '../../../../domain/models/currency.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../categories/widgets/category_display.dart';
+import '../../../../ui/features/categories/views/category_display.dart';
 import '../charts_state.dart';
 
 class ChartLegend extends StatelessWidget {

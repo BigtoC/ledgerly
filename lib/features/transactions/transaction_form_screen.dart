@@ -30,8 +30,8 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../l10n/app_localizations.dart';
-import '../categories/categories_controller.dart';
-import '../categories/widgets/category_picker.dart';
+import '../../ui/features/categories/view_models/categories_controller.dart';
+import '../../ui/features/categories/views/category_picker.dart';
 import 'transaction_form_controller.dart';
 import 'transaction_form_state.dart';
 import 'widgets/account_picker_sheet.dart';

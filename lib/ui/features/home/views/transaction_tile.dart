@@ -27,7 +27,7 @@ import '../../../../domain/models/category.dart';
 import '../../../../domain/models/currency.dart';
 import '../../../../domain/models/transaction.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../features/categories/widgets/category_display.dart';
+import '../../categories/views/category_display.dart';
 import '../view_models/home_providers.dart';
 
 @Dependencies([exchangeRates])

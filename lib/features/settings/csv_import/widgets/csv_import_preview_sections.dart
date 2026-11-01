@@ -12,7 +12,7 @@ import '../../../../domain/models/category.dart';
 import '../../../../domain/models/csv_import.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../accounts/widgets/account_type_display.dart';
-import '../../../categories/widgets/category_display.dart';
+import '../../../../ui/features/categories/views/category_display.dart';
 import '../../../transactions/widgets/transaction_type_segmented_control.dart';
 import '../csv_import_matcher.dart';
 import '../csv_import_state.dart';

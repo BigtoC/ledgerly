@@ -20,7 +20,7 @@ import '../../../../domain/models/category.dart';
 import '../../../../domain/models/currency.dart';
 import '../../../../domain/models/transaction.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../categories/widgets/category_display.dart';
+import '../../../../ui/features/categories/views/category_display.dart';
 import '../../search/analysis_providers.dart';
 import '../../search/widgets/transaction_search_row.dart';
 import '../charts_providers.dart';

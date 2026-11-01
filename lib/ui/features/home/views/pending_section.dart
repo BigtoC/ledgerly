@@ -24,7 +24,7 @@ import '../../../../domain/models/account.dart';
 import '../../../../domain/models/category.dart';
 import '../../../../domain/models/pending_transaction.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../features/categories/widgets/category_display.dart';
+import '../../categories/views/category_display.dart';
 import '../view_models/home_controller.dart';
 import '../view_models/home_providers.dart';
 import '../view_models/home_state.dart';

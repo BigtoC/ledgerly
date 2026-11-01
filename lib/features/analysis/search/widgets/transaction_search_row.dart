@@ -20,7 +20,7 @@ import '../../../../domain/models/account.dart';
 import '../../../../domain/models/category.dart';
 import '../../../../domain/models/transaction.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../categories/widgets/category_display.dart';
+import '../../../../ui/features/categories/views/category_display.dart';
 
 /// Swipe-delete affordance variants used by `TransactionSearchRow`.
 ///

@@ -29,7 +29,7 @@ import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/shopping_list_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
-import 'package:ledgerly/features/categories/categories_controller.dart';
+import 'package:ledgerly/ui/features/categories/view_models/categories_controller.dart';
 import 'package:ledgerly/features/transactions/keypad_state.dart';
 import 'package:ledgerly/features/transactions/transaction_form_controller.dart';
 import 'package:ledgerly/features/transactions/transaction_form_screen.dart';

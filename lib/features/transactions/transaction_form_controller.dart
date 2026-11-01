@@ -42,7 +42,7 @@ import '../../domain/models/currency.dart';
 import '../../domain/models/shopping_list_item.dart';
 import '../../domain/models/transaction.dart';
 import '../../data/repositories/category_repository.dart';
-import '../categories/categories_controller.dart';
+import '../../ui/features/categories/view_models/categories_controller.dart';
 import 'amount_formula.dart';
 import 'keypad_state.dart';
 import 'transaction_form_state.dart';

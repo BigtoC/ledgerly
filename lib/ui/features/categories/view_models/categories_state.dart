@@ -14,7 +14,7 @@
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../domain/models/category.dart';
+import '../../../../domain/models/category.dart';
 
 part 'categories_state.freezed.dart';
 

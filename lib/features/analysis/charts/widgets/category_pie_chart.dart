@@ -5,7 +5,7 @@ import '../../../../core/utils/color_palette.dart';
 import '../../../../core/utils/money_formatter.dart';
 import '../../../../domain/models/currency.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../categories/widgets/category_display.dart';
+import '../../../../ui/features/categories/views/category_display.dart';
 import '../charts_state.dart';
 
 /// Pie chart with tap-to-focus interaction. The selected slice grows, its

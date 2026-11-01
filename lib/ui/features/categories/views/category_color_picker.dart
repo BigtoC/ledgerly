@@ -6,7 +6,7 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../core/utils/color_palette.dart';
+import '../../../../core/utils/color_palette.dart';
 
 Future<int?> showCategoryColorPicker(
   BuildContext context, {

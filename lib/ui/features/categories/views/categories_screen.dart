@@ -22,12 +22,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../domain/models/category.dart';
-import '../../l10n/app_localizations.dart';
-import 'categories_controller.dart';
-import 'categories_state.dart';
-import 'widgets/category_form_sheet.dart';
-import 'widgets/category_tile.dart';
+import '../../../../domain/models/category.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../view_models/categories_controller.dart';
+import '../view_models/categories_state.dart';
+import 'category_form_sheet.dart';
+import 'category_tile.dart';
 
 @Dependencies([CategoriesController])
 class CategoriesScreen extends ConsumerWidget {
