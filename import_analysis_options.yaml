@@ -38,12 +38,15 @@
 # as `core/utils/system_browser.dart` (PRD), so every feature rule forbids
 # them too.
 rules:
-  # Widgets (features/*/*_screen.dart) may only import their own
-  # controller and UI primitives — no repositories, services, DB, DAOs,
-  # Drift or platform packages, and not the providers that build
-  # repositories or services.
+  # Widgets may only import their own controller and UI primitives — no
+  # repositories, services, DB, DAOs, Drift or platform packages, and not
+  # the providers that build repositories or services. Under lib/ui/ this
+  # rule is deny-by-default: it covers every file except the theme
+  # (core_stays_pure) and the view-model controllers and *_providers.dart
+  # (controllers_forbid_db_and_services). TRANSITIONAL (issue #87): the
+  # lib/features/ alternative goes once the last slice has moved.
   widgets_forbid_data_internals:
-    search_file_path_reg_exp: "^lib/features/.*_screen\\.dart$"
+    search_file_path_reg_exp: "^lib/(?:features/.*_screen\\.dart$|ui/(?!core/theme/)(?!features/.*/view_models/[^/]+_(controller|providers)\\.dart$).*\\.dart$)"
     not_allow_import_reg_exps:
       - "^package:ledgerly/data/database/"
       - "^package:ledgerly/data/services/"
@@ -80,11 +83,15 @@ rules:
       - "^package:url_launcher/"
     ignore_import_reg_exps: []
 
-  # Controllers may import repositories, use cases, domain models —
-  # never AppDatabase, DAOs, Drift, services, the providers that build
-  # services, or platform packages.
+  # Controllers and slice-local *_providers.dart may import repositories,
+  # use cases, domain models — never AppDatabase, DAOs, Drift, services,
+  # the providers that build services, or platform packages. They may not
+  # re-export repositories or the providers that build them either: each
+  # rule checks a file's own directives only, so such an export would hand
+  # them to every widget that imports the controller. TRANSITIONAL (issue
+  # #87): the lib/features/ alternative goes once the last slice has moved.
   controllers_forbid_db_and_services:
-    search_file_path_reg_exp: "^lib/features/.*_controller\\.dart$"
+    search_file_path_reg_exp: "^lib/(?:features/.*_controller|ui/features/.*/view_models/[^/]+_(controller|providers))\\.dart$"
     not_allow_import_reg_exps:
       - "^package:ledgerly/data/database/"
       - "^package:ledgerly/data/services/"
@@ -98,6 +105,9 @@ rules:
       - "^package:file_picker/"
       - "^package:file_selector/"
       - "^package:url_launcher/"
+    not_allow_export_reg_exps:
+      - "^package:ledgerly/data/repositories/"
+      - "^package:ledgerly/app/providers/repository_providers\\.dart$"
     ignore_import_reg_exps: []
 
   # State classes stay presentation-only: domain models fine, data
@@ -186,22 +196,32 @@ rules:
       - "^package:ledgerly/app/providers/service_providers\\.dart$"
     ignore_import_reg_exps: []
 
-  # Use cases (Phase 2) may import repositories, services, domain
-  # models — never controllers or widgets.
+  # Use cases and the first-run seed may import repositories, services and
+  # domain models — never UI or app code. They may take `AppDatabase` from
+  # app_database.dart to run one `db.transaction` across repositories, but
+  # never a DAO, a table or Drift itself. TRANSITIONAL (issue #87): the
+  # data/use_cases/ path and the features/ ban go once the moves are done.
   use_cases_forbid_ui:
-    search_file_path_reg_exp: "^lib/(domain|data/use_cases)/.*\\.dart$"
+    search_file_path_reg_exp: "^lib/(domain/(?!models/)|data/(use_cases|seed)/).*\\.dart$"
     not_allow_import_reg_exps:
       - "^package:ledgerly/features/"
+      - "^package:ledgerly/ui/"
       - "^package:ledgerly/app/"
+      - "^package:ledgerly/data/database/(?!app_database\\.dart$)"
+      - "^package:drift/"
+      - "^package:drift_flutter/"
     ignore_import_reg_exps: []
 
   # Repositories may import services, AppDatabase, DAOs, domain models —
-  # never upstream layers.
+  # never use cases or upstream layers. TRANSITIONAL (issue #87): the
+  # features/ and data/use_cases/ bans go once the moves are done.
   repositories_forbid_upstream:
     search_file_path_reg_exp: "^lib/data/repositories/.*\\.dart$"
     not_allow_import_reg_exps:
       - "^package:ledgerly/features/"
-      - "^package:ledgerly/domain/"
+      - "^package:ledgerly/ui/"
+      - "^package:ledgerly/domain/(?!models/)"
+      - "^package:ledgerly/data/use_cases/"
       - "^package:ledgerly/app/"
     ignore_import_reg_exps: []
 
@@ -214,20 +234,21 @@ rules:
       - "^package:ledgerly/data/models/"
       - "^package:ledgerly/data/database/"
       - "^package:ledgerly/features/"
+      - "^package:ledgerly/ui/"
       - "^package:ledgerly/domain/"
       - "^package:ledgerly/app/"
     ignore_import_reg_exps: []
 
   # Domain models (Freezed) stay pure. No Drift, no services,
-  # no repositories, no upstream.
+  # no repositories, no use cases, no upstream. TRANSITIONAL (issue #87):
+  # the data/models/ path and the features/ ban go once the moves are done.
   models_forbid_non_pure:
-    search_file_path_reg_exp: "^lib/data/models/.*\\.dart$"
+    search_file_path_reg_exp: "^lib/(data|domain)/models/.*\\.dart$"
     not_allow_import_reg_exps:
-      - "^package:ledgerly/data/database/"
-      - "^package:ledgerly/data/services/"
-      - "^package:ledgerly/data/repositories/"
+      - "^package:ledgerly/data/(?!models/)"
+      - "^package:ledgerly/domain/(?!models/)"
       - "^package:ledgerly/features/"
-      - "^package:ledgerly/domain/"
+      - "^package:ledgerly/ui/"
       - "^package:ledgerly/app/"
       - "^package:drift/"
       - "^package:drift_flutter/"
@@ -240,6 +261,7 @@ rules:
       - "^package:ledgerly/data/services/"
       - "^package:ledgerly/data/repositories/"
       - "^package:ledgerly/features/"
+      - "^package:ledgerly/ui/"
       - "^package:ledgerly/domain/"
       - "^package:ledgerly/app/"
     ignore_import_reg_exps: []
@@ -251,15 +273,21 @@ rules:
   # services, seed, use cases) or the feature / domain / app layers.
   # data/ is forbidden as a whole and only data/models/ is exempted, so a
   # new data/ subdirectory is forbidden until a rule says otherwise.
+  #
+  # The theme in ui/core/theme/ follows the same rule. TRANSITIONAL (issue
+  # #87): the features/ ban and the data/models/ exemption go once the
+  # moves are done.
   core_stays_pure:
-    search_file_path_reg_exp: "^lib/core/.*\\.dart$"
+    search_file_path_reg_exp: "^lib/(core|ui/core/theme)/.*\\.dart$"
     not_allow_import_reg_exps:
       - "^package:ledgerly/data/"
       - "^package:ledgerly/features/"
+      - "^package:ledgerly/ui/(?!core/theme/)"
       - "^package:ledgerly/domain/"
       - "^package:ledgerly/app/"
     ignore_import_reg_exps:
       - "^package:ledgerly/data/models/"
+      - "^package:ledgerly/domain/models/"
 
   # app/ wires services into repositories, use cases and app-level values;
   # it does not call platform plugins itself (PRD: external SDKs belong in

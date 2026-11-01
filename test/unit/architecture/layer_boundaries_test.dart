@@ -116,22 +116,28 @@ import 'e.dart' if (dart.library.io) 'f.dart';
           .any((r) => r.forbids(normalised, export: export));
     }
 
-    // One file per feature rule.
-    const screen = 'lib/features/home/home_screen.dart';
-    const widget =
-        'lib/features/transactions/widgets/account_picker_sheet.dart';
-    const state = 'lib/features/home/home_state.dart';
-    const otherFeatureFile = 'lib/features/analysis/charts/selected_slice.dart';
-    const controller = 'lib/features/home/home_controller.dart';
-    const featureProviders = 'lib/features/home/home_providers.dart';
-    const featureFiles = [
-      screen,
-      widget,
-      state,
-      otherFeatureFile,
-      controller,
-      featureProviders,
+    // One file per feature rule, in the lib/features/ tree and in the
+    // lib/ui/ tree that replaces it (issue #87).
+    const widgetLikeFiles = [
+      'lib/features/home/home_screen.dart',
+      'lib/features/transactions/widgets/account_picker_sheet.dart',
+      'lib/features/home/home_state.dart',
+      'lib/features/analysis/charts/selected_slice.dart',
+      'lib/ui/features/home/views/home_screen.dart',
+      'lib/ui/features/transactions/views/account_picker_sheet.dart',
+      'lib/ui/features/home/view_models/home_state.dart',
+      'lib/ui/features/analysis/charts/view_models/selected_slice.dart',
+      'lib/ui/core/widgets/adaptive_shell.dart',
     ];
+    const controllerLikeFiles = [
+      'lib/features/home/home_controller.dart',
+      'lib/features/home/home_providers.dart',
+      'lib/ui/features/home/view_models/home_controller.dart',
+      'lib/ui/features/home/view_models/home_providers.dart',
+      'lib/ui/features/analysis/charts/view_models/'
+          'charts_net_total_providers.dart',
+    ];
+    const featureFiles = [...widgetLikeFiles, ...controllerLikeFiles];
 
     const repositoryProviders =
         'package:ledgerly/app/providers/repository_providers.dart';
@@ -140,20 +146,23 @@ import 'e.dart' if (dart.library.io) 'f.dart';
 
     test('widget, state and other feature files may not import the '
         'repository or service providers', () {
-      for (final path in [screen, widget, state, otherFeatureFile]) {
+      for (final path in widgetLikeFiles) {
         expect(forbidden(path, repositoryProviders), isTrue, reason: path);
         expect(forbidden(path, serviceProviders), isTrue, reason: path);
       }
       // Relative imports are resolved before matching.
       expect(
-        forbidden(widget, '../../../app/providers/repository_providers.dart'),
+        forbidden(
+          'lib/ui/features/transactions/views/account_picker_sheet.dart',
+          '../../../../app/providers/repository_providers.dart',
+        ),
         isTrue,
       );
     });
 
     test('controllers and feature providers may import the repository '
         'providers but not the service providers', () {
-      for (final path in [controller, featureProviders]) {
+      for (final path in controllerLikeFiles) {
         expect(forbidden(path, repositoryProviders), isFalse, reason: path);
         expect(forbidden(path, serviceProviders), isTrue, reason: path);
       }
@@ -222,12 +231,100 @@ import 'e.dart' if (dart.library.io) 'f.dart';
       // Relative exports are resolved before matching.
       expect(
         forbidden(
-          'lib/features/transactions/transactions_providers.dart',
-          '../../app/providers/repository_providers.dart',
+          'lib/ui/features/transactions/view_models/transactions_providers.dart',
+          '../../../../app/providers/repository_providers.dart',
           export: true,
         ),
         isTrue,
       );
+    });
+
+    test('the theme stays pure and may import domain models', () {
+      const theme = 'lib/ui/core/theme/app_theme.dart';
+      for (final uri in [
+        'package:ledgerly/data/repositories/account_repository.dart',
+        'package:ledgerly/domain/use_cases/csv_import_use_case.dart',
+        'package:ledgerly/ui/features/home/views/home_screen.dart',
+        'package:ledgerly/ui/core/widgets/adaptive_shell.dart',
+        'package:ledgerly/app/router.dart',
+      ]) {
+        expect(forbidden(theme, uri), isTrue, reason: uri);
+      }
+      for (final uri in [
+        'package:ledgerly/domain/models/currency.dart',
+        'color_schemes.dart',
+      ]) {
+        expect(forbidden(theme, uri), isFalse, reason: uri);
+      }
+    });
+
+    test('domain models may not import data, use cases, ui or app', () {
+      const model = 'lib/domain/models/account.dart';
+      for (final uri in [
+        'package:ledgerly/data/database/app_database.dart',
+        'package:ledgerly/data/repositories/account_repository.dart',
+        'package:ledgerly/domain/use_cases/csv_import_use_case.dart',
+        'package:ledgerly/ui/features/home/views/home_screen.dart',
+        'package:ledgerly/app/router.dart',
+        'package:drift/drift.dart',
+      ]) {
+        expect(forbidden(model, uri), isTrue, reason: uri);
+      }
+      expect(forbidden(model, 'currency.dart'), isFalse);
+    });
+
+    test('use cases and the seed may import repositories, services, models '
+        'and AppDatabase only', () {
+      for (final path in [
+        'lib/domain/use_cases/csv_import_use_case.dart',
+        'lib/data/seed/first_run_seed.dart',
+      ]) {
+        for (final uri in [
+          'package:ledgerly/data/database/daos/account_dao.dart',
+          'package:ledgerly/ui/features/home/views/home_screen.dart',
+          'package:ledgerly/app/providers/repository_providers.dart',
+          'package:drift/drift.dart',
+        ]) {
+          expect(forbidden(path, uri), isTrue, reason: '$path -> $uri');
+        }
+        for (final uri in [
+          'package:ledgerly/data/database/app_database.dart',
+          'package:ledgerly/data/repositories/account_repository.dart',
+          'package:ledgerly/data/services/csv_file_service.dart',
+          'package:ledgerly/domain/models/account.dart',
+        ]) {
+          expect(forbidden(path, uri), isFalse, reason: '$path -> $uri');
+        }
+      }
+    });
+
+    test('repositories may import domain models but not use cases', () {
+      const repository = 'lib/data/repositories/account_repository.dart';
+      expect(
+        forbidden(repository, 'package:ledgerly/domain/models/account.dart'),
+        isFalse,
+      );
+      for (final uri in [
+        'package:ledgerly/domain/use_cases/csv_import_use_case.dart',
+        'package:ledgerly/ui/features/home/views/home_screen.dart',
+        'package:ledgerly/app/router.dart',
+      ]) {
+        expect(forbidden(repository, uri), isTrue, reason: uri);
+      }
+    });
+
+    test('services and the database may not import ui or domain', () {
+      for (final path in [
+        'lib/data/services/exchange_rate_service.dart',
+        'lib/data/database/app_database.dart',
+      ]) {
+        for (final uri in [
+          'package:ledgerly/ui/features/home/views/home_screen.dart',
+          'package:ledgerly/domain/models/account.dart',
+        ]) {
+          expect(forbidden(path, uri), isTrue, reason: '$path -> $uri');
+        }
+      }
     });
 
     test('app files may not import platform plugins, except the service '
@@ -278,21 +375,35 @@ import 'e.dart' if (dart.library.io) 'f.dart';
     });
   });
 
+  test('every lib/ui, lib/domain and lib/data file matches a rule', () {
+    final config = _Config.load(File(_rulesFile).readAsStringSync());
+    final layered = RegExp(r'^lib/(ui|domain|data)/');
+    final unmatched = [
+      for (final path in _libFiles())
+        if (layered.hasMatch(path) &&
+            !config.rules.any((r) => r.appliesTo(path)))
+          path,
+    ];
+    expect(unmatched, isEmpty);
+  });
+
+  test('every lib/ui file matches exactly one rule', () {
+    // The ui/ rules split the folder between them; a file matching two
+    // would be judged by the stricter one only by accident.
+    final config = _Config.load(File(_rulesFile).readAsStringSync());
+    final problems = [
+      for (final path in _libFiles())
+        if (path.startsWith('lib/ui/'))
+          if (config.rules.where((r) => r.appliesTo(path)).map((r) => r.name)
+              case final names when names.length != 1)
+            '$path: $names',
+    ];
+    expect(problems, isEmpty);
+  });
+
   test('lib/ respects the layer-boundary rules in $_rulesFile', () {
     final config = _Config.load(File(_rulesFile).readAsStringSync());
-    final files =
-        Directory('lib')
-            .listSync(recursive: true, followLinks: false)
-            .whereType<File>()
-            .map((f) => f.path.replaceAll(r'\', '/'))
-            .where(
-              (p) =>
-                  p.endsWith('.dart') &&
-                  !p.endsWith('.g.dart') &&
-                  !p.endsWith('.freezed.dart'),
-            )
-            .toList()
-          ..sort();
+    final files = _libFiles();
     expect(files, isNotEmpty, reason: 'no Dart files found under lib/');
 
     final violations = <_Violation>[];
@@ -340,6 +451,22 @@ import 'e.dart' if (dart.library.io) 'f.dart';
     }
   });
 }
+
+/// Repo-relative paths of the hand-written `lib/**/*.dart` files, sorted.
+/// Generated `*.g.dart` / `*.freezed.dart` parts are left out.
+List<String> _libFiles() =>
+    Directory('lib')
+        .listSync(recursive: true, followLinks: false)
+        .whereType<File>()
+        .map((f) => f.path.replaceAll(r'\', '/'))
+        .where(
+          (p) =>
+              p.endsWith('.dart') &&
+              !p.endsWith('.g.dart') &&
+              !p.endsWith('.freezed.dart'),
+        )
+        .toList()
+      ..sort();
 
 class _Rule {
   _Rule(
