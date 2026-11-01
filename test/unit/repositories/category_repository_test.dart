@@ -545,6 +545,83 @@ void main() {
     });
   });
 
+  group('reorder', () {
+    // The seeded food row (sortOrder 1) plus two custom expense rows with
+    // no sortOrder.
+    Future<List<int>> threeExpenseIds() async {
+      final a = await catRepo.save(
+        const Category(id: 0, icon: 'a', color: 0, type: CategoryType.expense),
+      );
+      final b = await catRepo.save(
+        const Category(id: 0, icon: 'b', color: 0, type: CategoryType.expense),
+      );
+      return [fixtures.expenseCategoryId, a.id, b.id];
+    }
+
+    Future<int?> sortOrderOf(int id) async =>
+        (await catRepo.getById(id))!.sortOrder;
+
+    test('C-reorder-01: writes each sortOrder as its list index', () async {
+      final ids = await threeExpenseIds();
+
+      await catRepo.reorder([ids[2], ids[0], ids[1]]);
+
+      expect(await sortOrderOf(ids[2]), 0);
+      expect(await sortOrderOf(ids[0]), 1);
+      expect(await sortOrderOf(ids[1]), 2);
+    });
+
+    test('C-reorder-02: an id with no row is skipped', () async {
+      final ids = await threeExpenseIds();
+
+      await catRepo.reorder([ids[1], 9999, ids[0]]);
+
+      expect(await sortOrderOf(ids[1]), 0);
+      expect(await sortOrderOf(ids[0]), 2);
+      expect(await sortOrderOf(ids[2]), isNull);
+      expect(await catRepo.getById(9999), isNull);
+    });
+
+    test(
+      'C-reorder-03: watchers see one emission for the whole reorder',
+      () async {
+        final ids = await threeExpenseIds();
+        final emissions = <List<Category>>[];
+        final sub = catRepo
+            .watchAll(type: CategoryType.expense)
+            .listen(emissions.add);
+        addTearDown(sub.cancel);
+        await pumpEventQueue();
+        expect(emissions, hasLength(1));
+
+        await catRepo.reorder([ids[2], ids[1], ids[0]]);
+        await pumpEventQueue();
+
+        expect(emissions, hasLength(2));
+        expect(emissions.last.map((c) => c.id), [ids[2], ids[1], ids[0]]);
+      },
+    );
+
+    test('C-reorder-04: a failed write rolls back every sortOrder', () async {
+      final ids = await threeExpenseIds();
+      // Test-only temp trigger: the second UPDATE fails.
+      await db.customStatement(
+        'CREATE TEMP TRIGGER fail_reorder BEFORE UPDATE OF sort_order '
+        'ON categories WHEN NEW.id = ${ids[0]} '
+        "BEGIN SELECT RAISE(ABORT, 'injected'); END",
+      );
+
+      await expectLater(
+        catRepo.reorder([ids[2], ids[0], ids[1]]),
+        throwsA(anything),
+      );
+
+      expect(await sortOrderOf(ids[2]), isNull);
+      expect(await sortOrderOf(ids[0]), 1);
+      expect(await sortOrderOf(ids[1]), isNull);
+    });
+  });
+
   group('save → l10nKey lock (G7 defence)', () {
     test('C-l10nkey-lock-01: mutating l10nKey via save throws', () async {
       final cat = await catRepo.getById(fixtures.expenseCategoryId);
