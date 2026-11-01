@@ -168,13 +168,62 @@ See [`PRD.md` → *Security & Privacy*](PRD.md#security--privacy). Operational s
 
 ## Skills Available
 
-Three Flutter-specific skills are installed at `.agents/skills/` and symlinked into `.claude/skills/`:
+Four Flutter skills from `flutter/agent-plugins` are installed with `npx skills` at `.agents/skills/`, symlinked into `.claude/skills/` and pinned in `skills-lock.json`. They are written for a generic Flutter app, so read each one with its notes below. Where a skill disagrees with `PRD.md` or `docs/architecture/`, those win.
 
-- `flutter-architecting-apps` — recommended layered structure; aligns with the stricter version in `PRD.md`.
-- `flutter-building-layouts` — Flutter constraint/layout guidance for building the screens above.
-- `flutter-animating-apps` — animation / transition guidance for feature polish work.
+- `flutter-apply-architecture-best-practices` — layered architecture (UI, optional domain, data). Invoke it when structuring a new feature.
+- `flutter-build-responsive-layout` — layouts that adapt to the window size. Invoke it when building or refining UI.
+- `flutter-add-widget-test` — `WidgetTester` tests of one widget's rendering and interactions. Invoke it when writing a widget test.
+- `flutter-add-integration-test` — end-to-end flow tests. Invoke it when writing a flow test; only its test-authoring advice applies.
 
-When the user asks to structure a new feature, invoke `flutter-architecting-apps`; when building or refining UI, invoke `flutter-building-layouts`; when adding motion or transitions, invoke `flutter-animating-apps`.
+### `flutter-apply-architecture-best-practices`
+
+Take the layers and the order of work: models → services → repositories → optional use case → view model → view. Don't take its folder tree, state management, dependency injection or error handling. Map its terms like this:
+
+- **Project structure** → keep the `PRD.md` tree (`lib/app/`, `lib/core/`, `lib/data/`, `lib/features/<feature>/`). The move to the skill's `lib/{data,domain,ui}/` tree is tracked in issue #87; don't start it in feature work.
+- **ViewModel extending `ChangeNotifier`** → a `@riverpod` controller in `lib/features/<feature>/*_controller.dart`. It holds immutable Freezed state, usually a sealed `*_state.dart`, and exposes commands as methods. Slice-local helper providers go in `*_providers.dart`; only these two kinds of feature file may import `app/providers/repository_providers.dart`.
+- **View with `ListenableBuilder`** → `*_screen.dart` and the slice's `widgets/`. A widget that reads state is a `ConsumerWidget` or `ConsumerStatefulWidget` that `ref.watch`es the controller and calls commands through `ref.read(...Provider.notifier)`; other widgets take constructor arguments.
+- **Constructor injection, `provider` / `get_it` (Step 7)** → Riverpod providers in `lib/app/providers/`: `repository_providers.dart` builds repositories and use cases, and `service_providers.dart` builds services. Controllers `ref.watch` them and tests override them. Run `build_runner` after adding or editing a provider.
+- **Services return API models or `Result`** → services return plain Dart values (records, primitives, SDK types) and repositories map them to the Freezed models in `lib/data/models/`. Repositories throw typed exceptions rather than return results, because Drift rolls back a `db.transaction` only when an exception escapes it. Controllers expose reads as `AsyncValue` and return a Freezed sealed outcome from each command that can fail ([`PRD.md` → *Error Handling Pattern*](PRD.md#error-handling-pattern)). Never add a generic `Result` wrapper.
+- **Use cases (Step 4)** → only when the work coordinates several repositories, in `lib/data/use_cases/` (see `PRD.md`).
+- **Step 8 (tests)** → write the failing test first (TDD rule above), in the layer folders of `docs/architecture/testing.md`.
+
+### `flutter-build-responsive-layout`
+
+Take its advice on measuring space (`MediaQuery.sizeOf`, `LayoutBuilder` on the parent's constraints), on `Expanded` and `Flexible`, on lazy builders and on not locking orientation. Then:
+
+- **Breakpoint** → Ledgerly has one: a width of 600dp or more is wide (`>= 600`; the skill's `>` would put exactly 600 on the narrow side). Reuse the existing switches instead of writing a new one:
+  - A modal form route goes inside `_AdaptiveFormRoute` in `lib/app/router.dart`, which shows it as a dialog at most 560dp wide on wide windows.
+  - A picker or sheet checks `MediaQuery.sizeOf(context).width >= 600` and opens a constrained `Dialog` or a modal bottom sheet, as `category_picker.dart` and `account_picker_sheet.dart` do.
+- **New layouts** → beyond those patterns, don't add a breakpoint, an in-screen layout switch or a list-to-grid conversion without changing `PRD.md` first. PRD's *Adaptive Layouts* table also lists a Home two-pane and a category-picker side sheet. Neither was built: Home is single-pane at every width and the picker is a `Dialog`. Ask before building either.
+- **Large screens** → skip the skill's *Optimizing for Large Screens* workflow and its `Center`/`ConstrainedBox` width caps. Form routes and pickers already get their width limit from their dialog, and screen bodies stay full width.
+- **Widget trees** → follow the required trees in `docs/architecture/ui-and-layout.md`, such as Home's slivers and the transaction form's fixed keypad.
+- **Text scale** → the skill doesn't cover it. Every scrollable region must survive 2× text scale. Fixed-height widgets, such as the keypad, clamp at 1.5× (`textScaler.clamp(maxScaleFactor: 1.5)`) or reflow. See also the `itemExtent` and grid `mainAxisExtent` rules under *Performance rules*.
+- **Verifying** → instead of resizing a window, write a widget test on each side of 600 (for example 390 and 1000 wide). Routes use `tester.binding.setSurfaceSize` (`test/unit/app/router_test.dart`). Picker and sheet helpers use a `MediaQuery(data: MediaQueryData(size: ...))` host.
+
+### `flutter-add-widget-test`
+
+Take its `WidgetTester`, `Finder` and pump workflow, and skip its setup step: `flutter_test` and `mocktail` are already dev dependencies. Then:
+
+- **Location** → `test/widget/features/<feature>/`, or `test/widget/app/` for `lib/app/` widgets; never the root of `test/`.
+- **Building the widget** → wrap it in a `MaterialApp` with `localizationsDelegates: AppLocalizations.localizationsDelegates` and `supportedLocales: AppLocalizations.supportedLocales`. Without `supportedLocales`, a `zh_TW` test silently renders English. A test of the whole app shell uses `test/support/test_app.dart` instead.
+- **Navigation** → if the widget calls `context.go`, `push` or `pop`, use `MaterialApp.router` with a local `GoRouter` whose other routes are stubs, as `test/widget/features/home/home_screen_test.dart` does.
+- **Providers** → prefer an `UncontrolledProviderScope` whose container you dispose with `addTearDown(container.dispose)`, so Drift's stream timers don't fail the test at teardown. Override repositories with `mocktail` mocks or the controller with a fake. Pass `retry: noProviderRetry` when a provider is meant to fail, as production does.
+- **`@Dependencies`** → `main()` and every helper or test-only widget that pumps a widget annotated with `@Dependencies`, or reads a scoped provider, needs `@Dependencies([...])`. That covers most feature screens, because every repository provider is scoped. Copy the names from the lint's "Missing dependencies" message (`docs/architecture/testing.md`).
+- **Drift** → most widget tests mock repositories. A test that uses a database runs every Drift query inside `tester.runAsync(...)`: the seed, inserts and lookups, and reads after the flow. Creating the database and the container can stay outside.
+- **`pumpAndSettle`** → don't use it while a loading spinner is on screen, whatever the skill says about async updates. It times out if the spinner stays, and if the spinner ends after a delay it silently advances fake time past it, which can hide timing bugs. Step time explicitly: `await tester.pump(); await tester.pump(const Duration(seconds: 1));`.
+- **Text scale** → for text in a scrollable or fixed-size region, add a 2× case through `MaterialApp.builder` (`MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(2))`). Check the rendered size, not only that nothing threw.
+- **Goldens** → none run today; the splash golden test was deleted in 3947f73. Ask before adding `matchesGoldenFile`.
+- **Verify** → after `flutter test <file>`, run `dart format` on it and `dart analyze --fatal-infos`. Only `dart analyze` reliably reports riverpod_lint's missing-`@Dependencies` warnings, and CI fails on them.
+
+### `flutter-add-integration-test`
+
+Ledgerly's integration tests are host-side flow tests in `test/integration/`. They run under `flutter test` against an in-memory Drift database, and CI runs them with the rest of the suite. Most pump the app through `test/support/test_app.dart`. A flow that needs no UI drives a `ProviderContainer` in a plain `test()`, as `amount_formula_flow_test.dart` does. Run one with `flutter test test/integration/<name>_test.dart`. The widget-test notes above apply here too. From the skill:
+
+- **Setup** → skip it. There is no `integration_test` package, `integration_test/` or `test_driver/` folder, Flutter Driver or `flutter drive` step. Skip `IntegrationTestWidgetsFlutterBinding.ensureInitialized()` too. Instead of `pumpWidget(MyApp())`, pump `buildTestApp(container: makeTestContainer(db: db))`, or `buildBootstrappedTestApp(db: db)` when the flow covers bootstrap.
+- **MCP exploration** (`launch_app`, `get_widget_tree`) → skip it; no Dart MCP server is configured. Find widgets from the screen source and the existing tests instead.
+- **Execution targets** → ignore its Chrome, web-server and Firebase Test Lab targets and its `traceAction` perf driver. For performance, follow *Performance rules*.
+- **On-device tests** → ask before adding them. They need new dev dependencies and a CI job with a device or emulator. On a device, HTTP isn't mocked and `bootstrap()` opens the real database, so such tests must still override `appDatabaseProvider` and the exchange-rate service.
+- **Driver extension** → never call `enableFlutterDriverExtension()` from a file under `lib/`, including the skill's `lib/main_test.dart`. There, the `flutter_driver` import fails CI's `dart analyze --fatal-infos` (`depend_on_referenced_packages`), and in `lib/main.dart` it would also ship in release builds.
 
 ## Knowledge Consolidation
 
