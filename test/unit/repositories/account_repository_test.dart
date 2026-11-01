@@ -434,6 +434,20 @@ void main() {
     });
 
     test(
+      'AC11b2: currency lock throws the typed AccountCurrencyLockedException',
+      () async {
+        final id = await repo.save(buildCashAccount(currency: _usd));
+        final categoryId = await _insertCategoryRaw(db);
+        await _insertTransactionRaw(db, accountId: id, categoryId: categoryId);
+
+        await expectLater(
+          repo.save(buildCashAccount(id: id, currency: _jpy)),
+          throwsA(isA<AccountCurrencyLockedException>()),
+        );
+      },
+    );
+
+    test(
       'AC12: watchAll excludes archived by default; sortOrder respected',
       () async {
         final firstId = await repo.save(

@@ -46,6 +46,13 @@ class AccountRepositoryException implements Exception {
   String toString() => 'AccountRepositoryException: $message';
 }
 
+/// [AccountRepository.save] refused to change the currency of an account
+/// that a transaction or an active recurring rule already references.
+class AccountCurrencyLockedException extends AccountRepositoryException {
+  const AccountCurrencyLockedException(int id)
+    : super('Account $id currency cannot change after transactions exist');
+}
+
 /// SSOT for `accounts`. Owns every write path to the Drift `accounts`
 /// table. Drift data classes never leave this file.
 abstract class AccountRepository {
@@ -64,6 +71,8 @@ abstract class AccountRepository {
   ///     [CurrencyNotFoundException] on miss.
   ///   - `account.accountTypeId` exists in `account_types` — throws
   ///     [AccountTypeNotFoundException] on miss.
+  ///   - an update keeps the stored currency once the account is
+  ///     referenced — throws [AccountCurrencyLockedException] otherwise.
   Future<int> save(Account account);
 
   /// Marks the account archived (`is_archived = 1`). Does NOT delete
@@ -182,9 +191,7 @@ final class DriftAccountRepository implements AccountRepository {
     }
     if (stored.currency != account.currency.code &&
         await isReferenced(account.id)) {
-      throw AccountRepositoryException(
-        'Account ${account.id} currency cannot change after transactions exist',
-      );
+      throw AccountCurrencyLockedException(account.id);
     }
 
     final updated = await _dao.updateRow(_toCompanion(account));
