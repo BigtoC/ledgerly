@@ -4,7 +4,7 @@
 //   - First-run empty state renders `homeEmptyTitle` + `homeEmptyCta`.
 //   - Per-day list renders rows + summary strip per currency.
 //   - Per-day empty state after navigating to a gap day.
-//   - >=600dp tablet renders the two-pane layout.
+//   - >=600dp tablet stays single-pane (WH10).
 //   - Archived category metadata still resolves on historical rows.
 //   - A horizontal fling over a transaction row steps the selected day.
 //

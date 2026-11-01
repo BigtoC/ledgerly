@@ -16,11 +16,14 @@ All scrollable regions must survive **2× text scale**; fixed-height widgets (ke
 
 ## Adaptive Breakpoint
 
-The only adaptive breakpoint is a single threshold at **600dp**, switched at the shell level via `LayoutBuilder`:
+The only adaptive breakpoint is a single threshold at **600dp**: a width of 600 or more is wide (`>= 600`). It switches in these places:
 
-- `lib/app/widgets/adaptive_shell.dart` — bottom `NavigationBar` ↔ `NavigationRail`
-- `lib/app/router.dart` — `/home/add` + `/home/edit/:id` wrap in `_AdaptiveTransactionFormRoute` so wide layouts render inside a constrained dialog
-- `lib/features/categories/widgets/category_picker.dart` — bottom sheet ↔ dialog at the same threshold
+- `lib/app/widgets/adaptive_shell.dart` — bottom `NavigationBar` ↔ `NavigationRail`, via `LayoutBuilder`.
+- `lib/app/router.dart` — `_AdaptiveFormRoute` renders a form route full-screen below 600dp and inside a centered `Dialog` at most 560dp wide from 600dp, via `LayoutBuilder`. It wraps `/settings/recurring/new`, `/settings/recurring/:id`, `/settings/import` and `/settings/export`, and, through `_AdaptiveTransactionFormRoute`, `/home/add`, `/home/edit/:id` and `/home/shopping-list/:itemId`. The account form routes (`/settings/manage-accounts/new`, `/settings/manage-accounts/:id`) stay full-screen at every width.
+- Picker and sheet helpers check `MediaQuery.sizeOf(context).width >= 600` and open a constrained `Dialog` instead of a modal bottom sheet: `lib/features/categories/widgets/category_picker.dart` (dialog up to 560×600), `lib/features/transactions/widgets/account_picker_sheet.dart`, `lib/features/settings/widgets/manage_accounts_sheet.dart` and `lib/features/settings/csv_import/widgets/csv_account_resolution_sheet.dart` (dialogs up to 480×560).
+- `lib/features/recurring/recurring_rules_screen.dart` — the one in-screen switch: the extended FAB becomes an `AppBar` add action.
+
+Home is single-pane at every width.
 
 ## Reference UI slices
 

@@ -8,9 +8,8 @@
 //         ├─ SliverList — TransactionTile per row (reverse-chronological)
 //         └─ SliverPadding — FAB clearance
 //
-// Adaptive: <600dp single-pane sliver; >=600dp two-pane (left activity
-// chooser, right selected-day detail). First-run empty spans the full
-// content region.
+// Adaptive: single-pane sliver at every width; the PRD's >=600dp
+// two-pane is not built. First-run empty spans the full content region.
 //
 // Gestures: a horizontal fling anywhere on the page, transaction rows
 // included, steps the selected day. Rows open the edit form on tap;

@@ -320,7 +320,7 @@ lib/
 l10n/         # Source ARB files (app_en, app_zh, app_zh_CN, app_zh_TW)
 test/
   unit/       # services / repositories / controllers / utils
-  widget/     # widget + golden tests (organized by feature)
+  widget/     # widget tests (organized by feature)
   integration/
   support/    # shared in-memory DB + ProviderContainer fixtures
 drift_schemas/ # Committed schema snapshots per schemaVersion (v1 – v7)

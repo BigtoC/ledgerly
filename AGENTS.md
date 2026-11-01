@@ -103,7 +103,7 @@ Detailed agent-facing rules live under [`docs/architecture/`](docs/architecture/
 - [`data-model.md`](docs/architecture/data-model.md) — Money in minor units, immutable category `type`, `l10n_key` identity, archive-instead-of-delete, indirect icons/colors, `pending_transactions` staging, pagination cap.
 - [`ui-and-layout.md`](docs/architecture/ui-and-layout.md) — Required layout primitives, 600dp adaptive breakpoint, 2× text scale, reference live screens.
 - [`bootstrap.md`](docs/architecture/bootstrap.md) — First-run + bootstrap order, splash redirect, route table.
-- [`testing.md`](docs/architecture/testing.md) — Test organization by layer; repository/controller/golden/migration patterns; per-slice coverage map.
+- [`testing.md`](docs/architecture/testing.md) — Test organization by layer; repository/controller/migration patterns; per-slice coverage map.
 - [`dependencies.md`](docs/architecture/dependencies.md) — layer-boundary check (replaced `import_lint`), base `app_zh.arb` requirement, Android and iOS build toolchains.
 
 Code generation is required whenever a `@freezed`, `@riverpod`, or Drift `@DriftDatabase`/`@DataClassName` annotation changes — the build fails loudly if generated files are stale.
@@ -194,7 +194,7 @@ Take its advice on measuring space (`MediaQuery.sizeOf`, `LayoutBuilder` on the 
 - **Breakpoint** → Ledgerly has one: a width of 600dp or more is wide (`>= 600`; the skill's `>` would put exactly 600 on the narrow side). Reuse the existing switches instead of writing a new one:
   - A modal form route goes inside `_AdaptiveFormRoute` in `lib/app/router.dart`, which shows it as a dialog at most 560dp wide on wide windows.
   - A picker or sheet checks `MediaQuery.sizeOf(context).width >= 600` and opens a constrained `Dialog` or a modal bottom sheet, as `category_picker.dart` and `account_picker_sheet.dart` do.
-- **New layouts** → beyond those patterns, don't add a breakpoint, an in-screen layout switch or a list-to-grid conversion without changing `PRD.md` first. PRD's *Adaptive Layouts* table also lists a Home two-pane and a category-picker side sheet. Neither was built: Home is single-pane at every width and the picker is a `Dialog`. Ask before building either.
+- **New layouts** → beyond those patterns, don't add a breakpoint, an in-screen layout switch or a list-to-grid conversion without changing `PRD.md` first. PRD's *Adaptive Layouts* table also lists a Home two-pane, marked pending: Home is single-pane at every width. Ask before building it.
 - **Large screens** → skip the skill's *Optimizing for Large Screens* workflow and its `Center`/`ConstrainedBox` width caps. Form routes and pickers already get their width limit from their dialog, and screen bodies stay full width.
 - **Widget trees** → follow the required trees in `docs/architecture/ui-and-layout.md`, such as Home's slivers and the transaction form's fixed keypad.
 - **Text scale** → the skill doesn't cover it. Every scrollable region must survive 2× text scale. Fixed-height widgets, such as the keypad, clamp at 1.5× (`textScaler.clamp(maxScaleFactor: 1.5)`) or reflow. See also the `itemExtent` and grid `mainAxisExtent` rules under *Performance rules*.

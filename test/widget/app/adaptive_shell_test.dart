@@ -1,8 +1,7 @@
 // M4 §7.4 — `AdaptiveShell` adaptive breakpoint test (guardrail G11).
 //
 // Verifies the shell switches between `NavigationBar` (<600dp) and
-// `NavigationRail` (≥600dp) at the shell level, not inside individual
-// feature screens.
+// `NavigationRail` (≥600dp).
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
