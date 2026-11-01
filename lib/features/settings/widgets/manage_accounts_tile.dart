@@ -11,8 +11,8 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 import '../../../app/providers/default_currency_provider.dart';
 import '../../../app/providers/exchange_rates_provider.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../accounts/accounts_controller.dart';
-import '../../accounts/accounts_state.dart';
+import '../../../ui/features/accounts/view_models/accounts_controller.dart';
+import '../../../ui/features/accounts/view_models/accounts_state.dart';
 import 'manage_accounts_sheet.dart';
 
 @Dependencies([

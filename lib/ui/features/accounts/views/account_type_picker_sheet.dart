@@ -10,13 +10,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/utils/color_palette.dart';
-import '../../../core/utils/icon_registry.dart';
-import '../../../domain/models/account_type.dart';
-import '../../../domain/models/currency.dart';
-import '../../../l10n/app_localizations.dart';
-import '../accounts_providers.dart';
-import '../accounts_state.dart';
+import '../../../../core/utils/color_palette.dart';
+import '../../../../core/utils/icon_registry.dart';
+import '../../../../domain/models/account_type.dart';
+import '../../../../domain/models/currency.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../view_models/accounts_providers.dart';
+import '../view_models/accounts_state.dart';
 import 'account_type_display.dart';
 import 'currency_picker_sheet.dart';
 

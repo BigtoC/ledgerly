@@ -23,7 +23,7 @@ import '../../app/providers/default_currency_provider.dart';
 import '../../app/providers/exchange_rates_provider.dart';
 import '../../core/constants.dart';
 import '../../l10n/app_localizations.dart';
-import '../accounts/accounts_controller.dart';
+import '../../ui/features/accounts/view_models/accounts_controller.dart';
 import 'settings_controller.dart';
 import 'settings_state.dart';
 import 'widgets/manage_accounts_tile.dart';

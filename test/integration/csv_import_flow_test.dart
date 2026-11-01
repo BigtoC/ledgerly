@@ -26,7 +26,7 @@ import 'package:ledgerly/app/router.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/services/csv_file_service.dart';
 import 'package:ledgerly/data/services/exchange_rate_service.dart';
-import 'package:ledgerly/features/accounts/accounts_controller.dart';
+import 'package:ledgerly/ui/features/accounts/view_models/accounts_controller.dart';
 import 'package:ledgerly/features/settings/csv_import/csv_import_controller.dart';
 import 'package:ledgerly/features/settings/csv_import/csv_import_screen.dart';
 import 'package:ledgerly/features/settings/settings_controller.dart';

@@ -8,14 +8,14 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../../app/providers/default_currency_provider.dart';
-import '../../../app/providers/exchange_rates_provider.dart';
-import '../../../core/constants.dart';
-import '../../../core/utils/box_shadow.dart';
-import '../../../l10n/app_localizations.dart';
-import '../accounts_controller.dart';
-import '../accounts_providers.dart';
-import '../accounts_state.dart';
+import '../../../../app/providers/default_currency_provider.dart';
+import '../../../../app/providers/exchange_rates_provider.dart';
+import '../../../../core/constants.dart';
+import '../../../../core/utils/box_shadow.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../view_models/accounts_controller.dart';
+import '../view_models/accounts_providers.dart';
+import '../view_models/accounts_state.dart';
 import 'account_tile.dart';
 import 'account_type_display.dart';
 

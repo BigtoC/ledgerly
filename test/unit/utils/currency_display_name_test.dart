@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/domain/models/currency.dart';
-import 'package:ledgerly/features/accounts/widgets/currency_display.dart';
+import 'package:ledgerly/ui/features/accounts/views/currency_display.dart';
 import 'package:ledgerly/l10n/app_localizations_en.dart';
 
 void main() {

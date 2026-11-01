@@ -18,16 +18,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../../app/providers/default_currency_provider.dart';
-import '../../../app/providers/exchange_rates_provider.dart';
-import '../../../core/utils/color_palette.dart';
-import '../../../core/utils/currency_converter.dart';
-import '../../../core/utils/icon_registry.dart';
-import '../../../core/utils/money_formatter.dart';
-import '../../../domain/models/currency.dart';
-import '../../../l10n/app_localizations.dart';
-import '../accounts_providers.dart';
-import '../accounts_state.dart';
+import '../../../../app/providers/default_currency_provider.dart';
+import '../../../../app/providers/exchange_rates_provider.dart';
+import '../../../../core/utils/color_palette.dart';
+import '../../../../core/utils/currency_converter.dart';
+import '../../../../core/utils/icon_registry.dart';
+import '../../../../core/utils/money_formatter.dart';
+import '../../../../domain/models/currency.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../view_models/accounts_providers.dart';
+import '../view_models/accounts_state.dart';
 
 @Dependencies([exchangeRates, initialDefaultCurrency, defaultCurrency])
 class AccountTile extends ConsumerWidget {

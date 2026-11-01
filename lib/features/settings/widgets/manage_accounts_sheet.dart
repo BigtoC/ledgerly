@@ -9,9 +9,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../accounts/accounts_controller.dart';
-import '../../accounts/accounts_state.dart';
-import '../../accounts/widgets/manage_accounts_body.dart';
+import '../../../ui/features/accounts/view_models/accounts_controller.dart';
+import '../../../ui/features/accounts/view_models/accounts_state.dart';
+import '../../../ui/features/accounts/views/manage_accounts_body.dart';
 import '../../../app/providers/default_currency_provider.dart';
 import '../../../app/providers/exchange_rates_provider.dart';
 import '../../../l10n/app_localizations.dart';

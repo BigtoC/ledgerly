@@ -20,18 +20,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/utils/color_palette.dart';
-import '../../core/utils/icon_registry.dart';
-import '../../domain/models/account.dart';
-import '../../domain/models/account_type.dart';
-import '../../domain/models/currency.dart';
-import '../../l10n/app_localizations.dart';
-import 'accounts_providers.dart';
-import 'accounts_state.dart';
-import 'widgets/account_type_display.dart';
-import 'widgets/account_type_picker_sheet.dart';
-import 'widgets/amount_minor_units_field.dart';
-import 'widgets/currency_picker_sheet.dart';
+import '../../../../core/utils/color_palette.dart';
+import '../../../../core/utils/icon_registry.dart';
+import '../../../../domain/models/account.dart';
+import '../../../../domain/models/account_type.dart';
+import '../../../../domain/models/currency.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../view_models/accounts_providers.dart';
+import '../view_models/accounts_state.dart';
+import 'account_type_display.dart';
+import 'account_type_picker_sheet.dart';
+import 'amount_minor_units_field.dart';
+import 'currency_picker_sheet.dart';
 
 class AccountFormScreen extends ConsumerStatefulWidget {
   const AccountFormScreen({super.key, this.accountId});

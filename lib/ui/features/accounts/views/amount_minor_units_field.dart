@@ -15,8 +15,8 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../core/utils/money_formatter.dart';
-import '../../../domain/models/currency.dart';
+import '../../../../core/utils/money_formatter.dart';
+import '../../../../domain/models/currency.dart';
 
 class AmountMinorUnitsField extends StatefulWidget {
   const AmountMinorUnitsField({

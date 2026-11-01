@@ -17,7 +17,7 @@ import 'package:ledgerly/app/router.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
 import 'package:ledgerly/app/providers/theme_provider.dart';
 import 'package:ledgerly/ui/core/widgets/adaptive_shell.dart';
-import 'package:ledgerly/features/accounts/account_form_screen.dart';
+import 'package:ledgerly/ui/features/accounts/views/account_form_screen.dart';
 import 'package:ledgerly/features/analysis/analysis_screen.dart';
 import 'package:ledgerly/features/analysis/charts/charts_controller.dart';
 import 'package:ledgerly/features/analysis/charts/charts_net_total_providers.dart';

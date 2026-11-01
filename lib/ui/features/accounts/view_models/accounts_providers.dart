@@ -4,13 +4,13 @@ import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../app/providers/default_currency_provider.dart';
-import '../../app/providers/repository_providers.dart';
-import '../../domain/models/account.dart';
-import '../../domain/models/account_type.dart';
-import '../../domain/models/currency.dart';
-import '../../data/repositories/account_repository.dart';
-import '../../data/repositories/account_type_repository.dart';
+import '../../../../app/providers/default_currency_provider.dart';
+import '../../../../app/providers/repository_providers.dart';
+import '../../../../domain/models/account.dart';
+import '../../../../domain/models/account_type.dart';
+import '../../../../domain/models/currency.dart';
+import '../../../../data/repositories/account_repository.dart';
+import '../../../../data/repositories/account_type_repository.dart';
 import 'accounts_state.dart';
 
 final accountTypeByIdProvider = StreamProvider.autoDispose

@@ -12,9 +12,9 @@ import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/app/providers/exchange_rates_provider.dart';
 import 'package:ledgerly/domain/models/account.dart';
 import 'package:ledgerly/domain/models/currency.dart';
-import 'package:ledgerly/features/accounts/accounts_providers.dart';
-import 'package:ledgerly/features/accounts/accounts_state.dart';
-import 'package:ledgerly/features/accounts/widgets/account_tile.dart';
+import 'package:ledgerly/ui/features/accounts/view_models/accounts_providers.dart';
+import 'package:ledgerly/ui/features/accounts/view_models/accounts_state.dart';
+import 'package:ledgerly/ui/features/accounts/views/account_tile.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 void main() {

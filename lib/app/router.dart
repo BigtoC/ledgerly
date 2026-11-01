@@ -5,8 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../features/accounts/account_form_screen.dart';
-import '../features/accounts/accounts_controller.dart';
+import '../ui/features/accounts/views/account_form_screen.dart';
+import '../ui/features/accounts/view_models/accounts_controller.dart';
 import '../features/analysis/analysis_screen.dart';
 import '../features/analysis/charts/charts_controller.dart';
 import '../features/analysis/charts/charts_net_total_providers.dart';

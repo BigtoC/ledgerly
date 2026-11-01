@@ -4,8 +4,8 @@
 // names; `custom_name` overrides. Unknown / missing keys fall back to
 // the ISO code so orphaned rows still render.
 
-import '../../../domain/models/currency.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../../domain/models/currency.dart';
+import '../../../../l10n/app_localizations.dart';
 
 String currencyDisplayName(Currency currency, AppLocalizations l10n) {
   final custom = currency.customName;

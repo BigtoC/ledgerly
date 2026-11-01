@@ -33,7 +33,7 @@ import 'package:ledgerly/data/repositories/account_type_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/repository_exceptions.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
-import 'package:ledgerly/features/accounts/account_form_screen.dart';
+import 'package:ledgerly/ui/features/accounts/views/account_form_screen.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockAccountRepository extends Mock implements AccountRepository {}
