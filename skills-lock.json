@@ -1,10 +1,17 @@
 {
   "version": 1,
   "skills": {
-    "flutter-animating-apps": {
-      "source": "flutter/skills",
+    "flutter-add-integration-test": {
+      "source": "flutter/agent-plugins",
       "sourceType": "github",
-      "computedHash": "85c3483e4b5da7abefc7de8ad8fb4211b6680a2ba03e727aa000ad139e0b9565"
+      "skillPath": "skills/flutter-add-integration-test/SKILL.md",
+      "computedHash": "9ead37fef54371fed6ad07a9ba3de7a908135a0867b05baf74c28b7095343999"
+    },
+    "flutter-add-widget-test": {
+      "source": "flutter/agent-plugins",
+      "sourceType": "github",
+      "skillPath": "skills/flutter-add-widget-test/SKILL.md",
+      "computedHash": "c4f263c59cfe331ef42dba2aa81e25142aa4f7284518907c6b847e04502676b0"
     },
     "flutter-apply-architecture-best-practices": {
       "source": "flutter/agent-plugins",
@@ -12,10 +19,11 @@
       "skillPath": "skills/flutter-apply-architecture-best-practices/SKILL.md",
       "computedHash": "2b1b63214d6b153c50aacd4bbcb76ce91dece449de9e06f477f8aad3163d667f"
     },
-    "flutter-building-layouts": {
-      "source": "flutter/skills",
+    "flutter-build-responsive-layout": {
+      "source": "flutter/agent-plugins",
       "sourceType": "github",
-      "computedHash": "2fc5b3828e53902e4e61d79d2bbd5557409e27e9713ea0aa4efb307a6c9cda43"
+      "skillPath": "skills/flutter-build-responsive-layout/SKILL.md",
+      "computedHash": "f762ea2ee83d4f1f35d9093b41d2520dd024ab80c9539d4860b9ae7f2a4dc6a0"
     }
   }
 }
