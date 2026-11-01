@@ -78,8 +78,8 @@ RecurringRulesRepository recurringRulesRepository(Ref ref) =>
     DriftRecurringRulesRepository(ref.watch(appDatabaseProvider));
 
 /// Use-case provider. Lives here so that controllers in
-/// `lib/features/.../*_controller.dart` can `ref.read` the use case
-/// without importing `data/database/...` (forbidden by
+/// `lib/ui/features/.../view_models/*_controller.dart` can `ref.read`
+/// the use case without importing `data/database/...` (forbidden by
 /// `controllers_forbid_db_and_services` in import_analysis_options.yaml).
 @Riverpod(
   keepAlive: true,

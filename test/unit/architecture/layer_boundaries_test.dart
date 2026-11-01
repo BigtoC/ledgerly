@@ -8,7 +8,8 @@
 //   - Every `lib/**/*.dart` file is checked, except generated
 //     `*.g.dart` / `*.freezed.dart` parts (parts cannot hold directives).
 //   - A rule applies to a file when `search_file_path_reg_exp` matches the
-//     file's repo-relative path (`lib/features/home/home_screen.dart`).
+//     file's repo-relative path
+//     (`lib/ui/features/home/views/home_screen.dart`).
 //   - Every `import` and `export` URI in that file (both branches of a
 //     conditional import) is normalised first: relative URIs are resolved
 //     against the file and rewritten to `package:ledgerly/...`; `package:`
@@ -66,19 +67,22 @@ import 'package:late/late.dart';
 
     test('resolves relative URIs to package:ledgerly paths', () {
       expect(
-        _normalise('lib/features/home/home_screen.dart', '../../data/x.dart'),
+        _normalise(
+          'lib/ui/features/home/views/home_screen.dart',
+          '../../../../data/x.dart',
+        ),
         'package:ledgerly/data/x.dart',
       );
       expect(
-        _normalise('lib/features/home/home_screen.dart', 'widgets/y.dart'),
-        'package:ledgerly/features/home/widgets/y.dart',
+        _normalise('lib/ui/features/home/views/home_screen.dart', 'y.dart'),
+        'package:ledgerly/ui/features/home/views/y.dart',
       );
       expect(
         _normalise('lib/a.dart', 'package:drift/drift.dart'),
         'package:drift/drift.dart',
       );
       expect(
-        _normalise('lib/a.dart', 'package:ledgerly/features/../data/x.dart'),
+        _normalise('lib/a.dart', 'package:ledgerly/ui/../data/x.dart'),
         'package:ledgerly/data/x.dart',
       );
     });
@@ -116,28 +120,61 @@ import 'e.dart' if (dart.library.io) 'f.dart';
           .any((r) => r.forbids(normalised, export: export));
     }
 
-    // One file per feature rule, in the lib/features/ tree and in the
-    // lib/ui/ tree that replaces it (issue #87).
+    // Files that widgets_forbid_data_internals covers: a screen, another
+    // view, a state, a pure view-model helper and a shared ui/core widget.
     const widgetLikeFiles = [
-      'lib/features/home/home_screen.dart',
-      'lib/features/transactions/widgets/account_picker_sheet.dart',
-      'lib/features/home/home_state.dart',
-      'lib/features/analysis/charts/selected_slice.dart',
       'lib/ui/features/home/views/home_screen.dart',
       'lib/ui/features/transactions/views/account_picker_sheet.dart',
       'lib/ui/features/home/view_models/home_state.dart',
       'lib/ui/features/analysis/charts/view_models/selected_slice.dart',
       'lib/ui/core/widgets/adaptive_shell.dart',
     ];
+    // Files that controllers_forbid_db_and_services covers, including a
+    // sub-slice's *_providers.dart.
     const controllerLikeFiles = [
-      'lib/features/home/home_controller.dart',
-      'lib/features/home/home_providers.dart',
       'lib/ui/features/home/view_models/home_controller.dart',
       'lib/ui/features/home/view_models/home_providers.dart',
       'lib/ui/features/analysis/charts/view_models/'
           'charts_net_total_providers.dart',
     ];
     const featureFiles = [...widgetLikeFiles, ...controllerLikeFiles];
+    const theme = 'lib/ui/core/theme/app_theme.dart';
+    const model = 'lib/domain/models/account.dart';
+    const useCaseFiles = [
+      'lib/domain/use_cases/csv_import_use_case.dart',
+      'lib/data/seed/first_run_seed.dart',
+    ];
+    const repository = 'lib/data/repositories/account_repository.dart';
+    const lowerDataFiles = [
+      'lib/data/services/exchange_rate_service.dart',
+      'lib/data/database/app_database.dart',
+    ];
+    // One file from each lib/app subtree, so narrowing the rule's path
+    // regex to a single directory fails here.
+    const appFiles = [
+      'lib/app/bootstrap.dart',
+      'lib/app/providers/app_update_provider.dart',
+    ];
+    const serviceProvidersFile = 'lib/app/providers/service_providers.dart';
+
+    test('the example files these tests use exist', () {
+      // A rule checked only against a path that no longer exists keeps
+      // passing after the file moves, so every example must be real.
+      final missing = [
+        for (final path in [
+          ...featureFiles,
+          theme,
+          model,
+          ...useCaseFiles,
+          repository,
+          ...lowerDataFiles,
+          ...appFiles,
+          serviceProvidersFile,
+        ])
+          if (!File(path).existsSync()) path,
+      ];
+      expect(missing, isEmpty);
+    });
 
     const repositoryProviders =
         'package:ledgerly/app/providers/repository_providers.dart';
@@ -241,7 +278,6 @@ import 'e.dart' if (dart.library.io) 'f.dart';
     });
 
     test('the theme stays pure and may import domain models', () {
-      const theme = 'lib/ui/core/theme/app_theme.dart';
       for (final uri in [
         'package:ledgerly/data/repositories/account_repository.dart',
         'package:ledgerly/domain/use_cases/csv_import_use_case.dart',
@@ -260,7 +296,6 @@ import 'e.dart' if (dart.library.io) 'f.dart';
     });
 
     test('domain models may not import data, use cases, ui or app', () {
-      const model = 'lib/domain/models/account.dart';
       for (final uri in [
         'package:ledgerly/data/database/app_database.dart',
         'package:ledgerly/data/repositories/account_repository.dart',
@@ -276,10 +311,7 @@ import 'e.dart' if (dart.library.io) 'f.dart';
 
     test('use cases and the seed may import repositories, services, models '
         'and AppDatabase only', () {
-      for (final path in [
-        'lib/domain/use_cases/csv_import_use_case.dart',
-        'lib/data/seed/first_run_seed.dart',
-      ]) {
+      for (final path in useCaseFiles) {
         for (final uri in [
           'package:ledgerly/data/database/daos/account_dao.dart',
           'package:ledgerly/ui/features/home/views/home_screen.dart',
@@ -300,7 +332,6 @@ import 'e.dart' if (dart.library.io) 'f.dart';
     });
 
     test('repositories may import domain models but not use cases', () {
-      const repository = 'lib/data/repositories/account_repository.dart';
       expect(
         forbidden(repository, 'package:ledgerly/domain/models/account.dart'),
         isFalse,
@@ -315,10 +346,7 @@ import 'e.dart' if (dart.library.io) 'f.dart';
     });
 
     test('services and the database may not import ui or domain', () {
-      for (final path in [
-        'lib/data/services/exchange_rate_service.dart',
-        'lib/data/database/app_database.dart',
-      ]) {
+      for (final path in lowerDataFiles) {
         for (final uri in [
           'package:ledgerly/ui/features/home/views/home_screen.dart',
           'package:ledgerly/domain/models/account.dart',
@@ -330,13 +358,6 @@ import 'e.dart' if (dart.library.io) 'f.dart';
 
     test('app files may not import platform plugins, except the service '
         'providers', () {
-      // One file from each lib/app subtree, so narrowing the rule's path
-      // regex to a single directory fails here.
-      const appFiles = [
-        'lib/app/bootstrap.dart',
-        'lib/app/providers/app_update_provider.dart',
-      ];
-      const serviceProvidersFile = 'lib/app/providers/service_providers.dart';
       const plugins = [
         'package:package_info_plus/package_info_plus.dart',
         'package:path_provider/path_provider.dart',
@@ -356,6 +377,18 @@ import 'e.dart' if (dart.library.io) 'f.dart';
         expect(forbidden(serviceProvidersFile, uri), isFalse, reason: uri);
       }
     });
+  });
+
+  test('every rule applies to at least one lib file', () {
+    // A rule whose path regex matches nothing checks nothing, e.g. after
+    // the folder it names has moved.
+    final config = _Config.load(File(_rulesFile).readAsStringSync());
+    final files = _libFiles();
+    final dead = [
+      for (final rule in config.rules)
+        if (!files.any(rule.appliesTo)) rule.name,
+    ];
+    expect(dead, isEmpty);
   });
 
   test('every lib/ui, lib/domain and lib/data file matches a rule', () {
@@ -559,7 +592,7 @@ class _Violation {
 /// the rules match against.
 String _normalise(String path, String uri) {
   // Dart removes `..` segments from package: URIs before loading them, so
-  // do the same here; otherwise `package:ledgerly/features/../data/...`
+  // do the same here; otherwise `package:ledgerly/ui/../data/...`
   // would slip past every `^package:ledgerly/<layer>/` pattern.
   if (uri.startsWith('package:')) {
     return Uri.parse(uri).normalizePath().toString();

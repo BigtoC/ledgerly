@@ -10,7 +10,7 @@ part 'service_providers.g.dart';
 // Service providers. Only `lib/app/providers/` imports this file, to
 // build repositories, use cases and app-level values. The layer rules in
 // `import_analysis_options.yaml` forbid it everywhere under
-// `lib/features/`, so features reach a service only through one of those.
+// `lib/ui/`, so features reach a service only through one of those.
 
 /// Shared HTTP client for every HTTP service. Conservative timeouts; the
 /// client is closed when the owning container is disposed.
