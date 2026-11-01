@@ -402,6 +402,45 @@ void main() {
       expect(after.pendingDelete, isNull);
     });
 
+    test('RRC09b: a delete still committing the prior rule when the screen '
+        'closes opens no undo window', () {
+      fakeAsync((async) {
+        final priorCommit = Completer<void>();
+        when(() => repo.archive(1)).thenAnswer((_) => priorCommit.future);
+
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        final sub = container.listen(
+          recurringRulesControllerProvider,
+          (_, _) {},
+        );
+        rulesCtrl.add([_rule(id: 1), _rule(id: 2, name: 'Rent')]);
+        async.flushMicrotasks();
+
+        final notifier = container.read(
+          recurringRulesControllerProvider.notifier,
+        );
+        // ignore: unawaited_futures
+        notifier.deleteRule(1);
+        async.flushMicrotasks();
+        DeleteRecurringRuleOutcome? outcome;
+        notifier.deleteRule(2).then((o) => outcome = o);
+        async.flushMicrotasks();
+        verify(() => repo.archive(1)).called(1);
+
+        // The screen closes while rule 1's commit is in flight.
+        sub.close();
+        // ignore: unawaited_futures
+        container.pump();
+        async.elapse(Duration.zero);
+        priorCommit.complete();
+        async.flushMicrotasks();
+
+        expect(outcome, const DeleteRecurringRuleOutcome.notStarted());
+        expect(async.pendingTimers, isEmpty);
+      });
+    });
+
     test(
       'RRC10: failed timer commit fires the effect and restores the row',
       () {

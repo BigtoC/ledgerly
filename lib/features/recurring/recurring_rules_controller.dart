@@ -115,7 +115,11 @@ class RecurringRulesController extends _$RecurringRulesController {
       _undoTimer = null;
       final prior = _pendingDelete!;
       final committed = await _commitDelete(prior.ruleId);
-      if (!committed) return const DeleteRecurringRuleOutcome.notStarted();
+      // A screen that closed during the commit has disposed this
+      // controller, and a timer started now would never be cancelled.
+      if (!committed || !ref.mounted) {
+        return const DeleteRecurringRuleOutcome.notStarted();
+      }
     }
 
     _pendingDelete = RecurringRulesPendingDelete(ruleId: id);

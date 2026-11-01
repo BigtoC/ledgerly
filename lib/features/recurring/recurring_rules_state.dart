@@ -53,8 +53,9 @@ sealed class DeleteRecurringRuleOutcome with _$DeleteRecurringRuleOutcome {
   const factory DeleteRecurringRuleOutcome.pending() =
       DeleteRecurringRulePending;
 
-  /// An earlier pending delete failed to commit, so this row was not
-  /// hidden. The widget shows the generic error snackbar and no Undo.
+  /// An earlier pending delete failed to commit, or the screen closed
+  /// while it was committing, so this row was not hidden. The widget
+  /// shows the generic error snackbar and no Undo.
   const factory DeleteRecurringRuleOutcome.notStarted() =
       DeleteRecurringRuleNotStarted;
 }
