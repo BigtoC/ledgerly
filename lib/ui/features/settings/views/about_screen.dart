@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-import '../../core/utils/system_browser.dart';
+import '../../../../core/utils/system_browser.dart';
 
 class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});

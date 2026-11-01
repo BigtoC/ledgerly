@@ -8,9 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../../l10n/app_localizations.dart';
-import '../settings_controller.dart';
-import '../settings_state.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../view_models/settings_controller.dart';
+import '../view_models/settings_state.dart';
 import 'default_currency_picker_sheet.dart';
 
 @Dependencies([SettingsController])

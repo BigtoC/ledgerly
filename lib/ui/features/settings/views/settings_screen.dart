@@ -17,23 +17,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../app/providers/app_update_provider.dart';
-import '../../app/providers/app_version_provider.dart';
-import '../../app/providers/default_currency_provider.dart';
-import '../../app/providers/exchange_rates_provider.dart';
-import '../../core/constants.dart';
-import '../../l10n/app_localizations.dart';
-import '../../ui/features/accounts/view_models/accounts_controller.dart';
-import 'settings_controller.dart';
-import 'settings_state.dart';
-import 'widgets/manage_accounts_tile.dart';
-import 'widgets/default_currency_tile.dart';
-import 'widgets/language_selector.dart';
-import 'widgets/manage_categories_tile.dart';
-import 'widgets/new_version_badge.dart';
-import 'widgets/settings_section.dart';
-import 'widgets/splash_settings_section.dart';
-import 'widgets/theme_mode_selector.dart';
+import '../../../../app/providers/app_update_provider.dart';
+import '../../../../app/providers/app_version_provider.dart';
+import '../../../../app/providers/default_currency_provider.dart';
+import '../../../../app/providers/exchange_rates_provider.dart';
+import '../../../../core/constants.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../accounts/view_models/accounts_controller.dart';
+import '../view_models/settings_controller.dart';
+import '../view_models/settings_state.dart';
+import 'manage_accounts_tile.dart';
+import 'default_currency_tile.dart';
+import 'language_selector.dart';
+import 'manage_categories_tile.dart';
+import 'new_version_badge.dart';
+import 'settings_section.dart';
+import 'splash_settings_section.dart';
+import 'theme_mode_selector.dart';
 
 @Dependencies([
   SettingsController,

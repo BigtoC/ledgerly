@@ -6,7 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../l10n/app_localizations.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class ManageCategoriesTile extends StatelessWidget {
   const ManageCategoriesTile({super.key});

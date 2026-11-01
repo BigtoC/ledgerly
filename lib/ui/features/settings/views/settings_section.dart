@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/constants.dart';
-import '../../../core/utils/box_shadow.dart';
+import '../../../../core/constants.dart';
+import '../../../../core/utils/box_shadow.dart';
 
 class SettingsSection extends StatelessWidget {
   const SettingsSection({

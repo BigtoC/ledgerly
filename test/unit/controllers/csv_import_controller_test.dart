@@ -25,9 +25,9 @@ import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/exchange_rate_repository.dart';
 import 'package:ledgerly/data/services/exchange_rate_service.dart';
 import 'package:ledgerly/domain/use_cases/csv_import_use_case.dart';
-import 'package:ledgerly/features/settings/csv_import/csv_import_controller.dart';
-import 'package:ledgerly/features/settings/csv_import/csv_import_matcher.dart';
-import 'package:ledgerly/features/settings/csv_import/csv_import_state.dart';
+import 'package:ledgerly/ui/features/settings/csv_import/view_models/csv_import_controller.dart';
+import 'package:ledgerly/ui/features/settings/csv_import/view_models/csv_import_matcher.dart';
+import 'package:ledgerly/ui/features/settings/csv_import/view_models/csv_import_state.dart';
 
 class _MockCsvImportUseCase extends Mock implements CsvImportUseCase {}
 

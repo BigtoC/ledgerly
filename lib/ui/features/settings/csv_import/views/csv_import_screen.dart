@@ -10,12 +10,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../../domain/models/csv_import.dart';
-import '../../../l10n/app_localizations.dart';
-import 'csv_import_controller.dart';
-import 'csv_import_state.dart';
-import 'widgets/csv_account_resolution_sheet.dart';
-import 'widgets/csv_import_preview_sections.dart';
+import '../../../../../domain/models/csv_import.dart';
+import '../../../../../l10n/app_localizations.dart';
+import '../view_models/csv_import_controller.dart';
+import '../view_models/csv_import_state.dart';
+import 'csv_account_resolution_sheet.dart';
+import 'csv_import_preview_sections.dart';
 
 @Dependencies([CsvImportController])
 class CsvImportScreen extends ConsumerWidget {

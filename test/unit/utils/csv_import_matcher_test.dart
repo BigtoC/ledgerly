@@ -17,7 +17,7 @@ import 'package:ledgerly/data/repositories/account_type_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/seed/first_run_seed.dart';
-import 'package:ledgerly/features/settings/csv_import/csv_import_matcher.dart';
+import 'package:ledgerly/ui/features/settings/csv_import/view_models/csv_import_matcher.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 import '../../support/test_app.dart';

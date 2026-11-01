@@ -7,15 +7,15 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../../core/utils/date_helpers.dart';
-import '../../../../domain/models/category.dart';
-import '../../../../domain/models/csv_import.dart';
-import '../../../../l10n/app_localizations.dart';
-import '../../../../ui/features/accounts/views/account_type_display.dart';
-import '../../../../ui/features/categories/views/category_display.dart';
-import '../../../transactions/widgets/transaction_type_segmented_control.dart';
-import '../csv_import_matcher.dart';
-import '../csv_import_state.dart';
+import '../../../../../core/utils/date_helpers.dart';
+import '../../../../../domain/models/category.dart';
+import '../../../../../domain/models/csv_import.dart';
+import '../../../../../l10n/app_localizations.dart';
+import '../../../accounts/views/account_type_display.dart';
+import '../../../categories/views/category_display.dart';
+import '../../../../../features/transactions/widgets/transaction_type_segmented_control.dart';
+import '../view_models/csv_import_matcher.dart';
+import '../view_models/csv_import_state.dart';
 
 /// File name, rows to import, their date range and the balance note.
 class CsvImportSummary extends StatelessWidget {

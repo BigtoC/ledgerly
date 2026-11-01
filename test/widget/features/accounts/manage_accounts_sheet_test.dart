@@ -33,7 +33,7 @@ import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/ui/features/accounts/view_models/accounts_controller.dart';
 import 'package:ledgerly/ui/features/accounts/view_models/accounts_state.dart';
-import 'package:ledgerly/features/settings/widgets/manage_accounts_sheet.dart';
+import 'package:ledgerly/ui/features/settings/views/manage_accounts_sheet.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockAccountRepository extends Mock implements AccountRepository {}

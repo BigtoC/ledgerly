@@ -16,10 +16,10 @@ import 'package:ledgerly/domain/models/account_type.dart';
 import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/domain/models/csv_import.dart';
 import 'package:ledgerly/domain/models/currency.dart';
-import 'package:ledgerly/features/settings/csv_import/csv_import_controller.dart';
-import 'package:ledgerly/features/settings/csv_import/csv_import_matcher.dart';
-import 'package:ledgerly/features/settings/csv_import/csv_import_screen.dart';
-import 'package:ledgerly/features/settings/csv_import/csv_import_state.dart';
+import 'package:ledgerly/ui/features/settings/csv_import/view_models/csv_import_controller.dart';
+import 'package:ledgerly/ui/features/settings/csv_import/view_models/csv_import_matcher.dart';
+import 'package:ledgerly/ui/features/settings/csv_import/views/csv_import_screen.dart';
+import 'package:ledgerly/ui/features/settings/csv_import/view_models/csv_import_state.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _FakeCsvImportController extends CsvImportController {

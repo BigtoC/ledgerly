@@ -21,8 +21,8 @@ import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter/material.dart' show ThemeMode, Locale;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../app/providers/repository_providers.dart';
-import '../../data/repositories/user_preferences_repository.dart';
+import '../../../../app/providers/repository_providers.dart';
+import '../../../../data/repositories/user_preferences_repository.dart';
 import 'settings_state.dart';
 
 part 'settings_controller.g.dart';

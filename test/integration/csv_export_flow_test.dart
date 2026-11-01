@@ -19,8 +19,8 @@ import 'package:ledgerly/app/providers/theme_provider.dart';
 import 'package:ledgerly/app/router.dart';
 import 'package:ledgerly/core/utils/transactions_csv.dart';
 import 'package:ledgerly/data/services/csv_file_service.dart';
-import 'package:ledgerly/features/settings/csv_export/csv_export_controller.dart';
-import 'package:ledgerly/features/settings/csv_export/csv_export_screen.dart';
+import 'package:ledgerly/ui/features/settings/csv_export/view_models/csv_export_controller.dart';
+import 'package:ledgerly/ui/features/settings/csv_export/views/csv_export_screen.dart';
 
 import '../support/test_app.dart';
 

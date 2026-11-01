@@ -11,10 +11,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../domain/models/currency.dart';
-import '../../../l10n/app_localizations.dart';
-import '../../../ui/features/accounts/view_models/accounts_providers.dart';
-import '../../../ui/features/accounts/views/currency_display.dart';
+import '../../../../domain/models/currency.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../accounts/view_models/accounts_providers.dart';
+import '../../accounts/views/currency_display.dart';
 
 /// Opens the default-currency picker sheet and resolves with the chosen
 /// ISO code, or null if the user dismisses.

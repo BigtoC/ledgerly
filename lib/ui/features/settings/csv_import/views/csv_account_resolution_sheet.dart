@@ -7,11 +7,11 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../../domain/models/account.dart';
-import '../../../../domain/models/csv_import.dart';
-import '../../../../l10n/app_localizations.dart';
-import '../../../../ui/features/accounts/views/account_type_display.dart';
-import '../csv_import_matcher.dart';
+import '../../../../../domain/models/account.dart';
+import '../../../../../domain/models/csv_import.dart';
+import '../../../../../l10n/app_localizations.dart';
+import '../../../accounts/views/account_type_display.dart';
+import '../view_models/csv_import_matcher.dart';
 
 /// Shows the decision sheet for [match] and returns the chosen
 /// resolution, or null when dismissed.

@@ -11,8 +11,8 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/domain/use_cases/csv_export_use_case.dart';
-import 'package:ledgerly/features/settings/csv_export/csv_export_controller.dart';
-import 'package:ledgerly/features/settings/csv_export/csv_export_state.dart';
+import 'package:ledgerly/ui/features/settings/csv_export/view_models/csv_export_controller.dart';
+import 'package:ledgerly/ui/features/settings/csv_export/view_models/csv_export_state.dart';
 
 class _MockCsvExportUseCase extends Mock implements CsvExportUseCase {}
 

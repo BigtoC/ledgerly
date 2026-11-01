@@ -4,20 +4,20 @@
 // Pure: the controller passes in the rows to import, the domain lists
 // (archived rows included) and one `AppLocalizations` per supported
 // locale, so the result never depends on the app locale. Lives in
-// features/ because label matching needs `AppLocalizations` and the
+// ui/ because label matching needs `AppLocalizations` and the
 // `*_display.dart` key helpers; the data layer stays locale-free. See
 // docs/superpowers/specs/2026-10-30-csv-import-design.md.
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../../core/utils/csv_import_keys.dart';
-import '../../../domain/models/account.dart';
-import '../../../domain/models/account_type.dart';
-import '../../../domain/models/category.dart';
-import '../../../domain/models/csv_import.dart';
-import '../../../l10n/app_localizations.dart';
-import '../../../ui/features/accounts/views/account_type_display.dart';
-import '../../../ui/features/categories/views/category_display.dart';
+import '../../../../../core/utils/csv_import_keys.dart';
+import '../../../../../domain/models/account.dart';
+import '../../../../../domain/models/account_type.dart';
+import '../../../../../domain/models/category.dart';
+import '../../../../../domain/models/csv_import.dart';
+import '../../../../../l10n/app_localizations.dart';
+import '../../../accounts/views/account_type_display.dart';
+import '../../../categories/views/category_display.dart';
 
 part 'csv_import_matcher.freezed.dart';
 
