@@ -50,9 +50,6 @@ class AccountsController extends _$AccountsController {
   }
 
   // ---------- Commands ----------
-  //
-  // Each command returns an outcome from `accounts_state.dart` and never
-  // throws: every failure is caught here and mapped to a variant.
 
   /// Writes `default_account_id` via `UserPreferencesRepository`. The
   /// accounts stream re-emits via its default-id subscription, so the

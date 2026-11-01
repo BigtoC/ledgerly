@@ -13,11 +13,9 @@
 // file switches on (it never imports the repository). A delete blocked
 // by references and an archive blocked by an active recurring rule show
 // localized snackbars; every other failure, including a failed reorder
-// or Undo, shows `errorSnackbarGeneric`. The Undo action reads the
-// controller through the `ProviderContainer`, because it can run after
-// this screen is gone. Every snackbar clears the current one first: an
-// Undo snackbar has an action, so it stays until dismissed, and anything
-// shown after it would wait behind it.
+// or Undo, shows `errorSnackbarGeneric`. Every snackbar clears the
+// current one first: an Undo snackbar has an action, so it stays until
+// dismissed, and anything shown after it would wait behind it.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

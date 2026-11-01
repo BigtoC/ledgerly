@@ -421,7 +421,7 @@ void main() {
       await expectLater(
         repo.save(buildCashAccount(id: id, currency: _jpy)),
         throwsA(
-          isA<AccountRepositoryException>().having(
+          isA<AccountCurrencyLockedException>().having(
             (e) => e.message,
             'message',
             'Account $id currency cannot change after transactions exist',
@@ -432,20 +432,6 @@ void main() {
       final fetched = await repo.getById(id);
       expect(fetched!.currency.code, 'USD');
     });
-
-    test(
-      'AC11b2: currency lock throws the typed AccountCurrencyLockedException',
-      () async {
-        final id = await repo.save(buildCashAccount(currency: _usd));
-        final categoryId = await _insertCategoryRaw(db);
-        await _insertTransactionRaw(db, accountId: id, categoryId: categoryId);
-
-        await expectLater(
-          repo.save(buildCashAccount(id: id, currency: _jpy)),
-          throwsA(isA<AccountCurrencyLockedException>()),
-        );
-      },
-    );
 
     test(
       'AC12: watchAll excludes archived by default; sortOrder respected',

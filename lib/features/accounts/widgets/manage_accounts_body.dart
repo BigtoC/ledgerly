@@ -150,20 +150,13 @@ class _AccountTileWithLookups extends ConsumerWidget {
         .read(accountsControllerProvider.notifier)
         .setDefault(id);
     if (!context.mounted) return;
-    switch (outcome) {
-      case SetDefaultAccountOk():
-        messenger
-          ..clearSnackBars()
-          ..showSnackBar(
-            SnackBar(content: Text(l10n.manageAccountsSetDefaultSuccess(name))),
-          );
-      case SetDefaultAccountFailed():
-        messenger
-          ..clearSnackBars()
-          ..showSnackBar(
-            SnackBar(content: Text(l10n.manageAccountsSetDefaultFailed)),
-          );
-    }
+    final message = switch (outcome) {
+      SetDefaultAccountOk() => l10n.manageAccountsSetDefaultSuccess(name),
+      SetDefaultAccountFailed() => l10n.manageAccountsSetDefaultFailed,
+    };
+    messenger
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _onArchive(BuildContext context, WidgetRef ref, int id) async {

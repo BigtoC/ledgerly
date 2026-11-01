@@ -619,10 +619,7 @@ class TransactionFormController extends _$TransactionFormController {
     TransactionFormData? deleting;
     try {
       final s = state;
-      if (s is! TransactionFormData) {
-        return const DeleteTransactionOutcome.ignored();
-      }
-      if (s.isSaving || s.isDeleting) {
+      if (s is! TransactionFormData || s.isSaving || s.isDeleting) {
         return const DeleteTransactionOutcome.ignored();
       }
       final id = s.editingId;
@@ -676,6 +673,7 @@ class TransactionFormController extends _$TransactionFormController {
           ? s.displayCurrency?.code
           : null;
 
+      final ShoppingListEditResult result;
       if (s.shoppingListItemId != null) {
         // Edit mode: update the existing draft row.
         final updatedItem = ShoppingListItem(
@@ -691,14 +689,7 @@ class TransactionFormController extends _$TransactionFormController {
           updatedAt: DateTime.utc(0),
         );
         await slRepo.update(updatedItem);
-        if (ref.mounted) {
-          state = s.copyWith(
-            submissionAction: TransactionFormSubmissionAction.none,
-          );
-        }
-        return const DraftSubmissionOutcome.ok(
-          ShoppingListEditResultSavedDraft(),
-        );
+        result = const ShoppingListEditResultSavedDraft();
       } else {
         // Add mode: insert a new draft row.
         await slRepo.insert(
@@ -709,16 +700,15 @@ class TransactionFormController extends _$TransactionFormController {
           draftCurrencyCode: draftCurrency,
           draftDate: s.date,
         );
-        if (ref.mounted) {
-          state = s.copyWith(
-            submissionAction: TransactionFormSubmissionAction.none,
-          );
-        }
         // Add mode: signal that the item was added to the list.
-        return const DraftSubmissionOutcome.ok(
-          ShoppingListEditResultAddedToList(),
+        result = const ShoppingListEditResultAddedToList();
+      }
+      if (ref.mounted) {
+        state = s.copyWith(
+          submissionAction: TransactionFormSubmissionAction.none,
         );
       }
+      return DraftSubmissionOutcome.ok(result);
     } catch (e) {
       debugPrint(
         '[TransactionFormController] saveDraft failed: ${e.runtimeType}',

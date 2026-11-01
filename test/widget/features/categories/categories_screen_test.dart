@@ -611,46 +611,6 @@ void main() {
     expect(find.textContaining('Category 12'), findsNothing);
   });
 
-  testWidgets('S16: a failed reorder shows the generic snackbar', (
-    tester,
-  ) async {
-    final repo = _MockCategoryRepository();
-    final alpha = _c(id: 1, type: CategoryType.expense, customName: 'Alpha');
-    final beta = _c(id: 2, type: CategoryType.expense, customName: 'Beta');
-    when(() => repo.reorder([2, 1])).thenThrow(Exception('injected'));
-    final container = ProviderContainer(
-      overrides: [
-        categoryRepositoryProvider.overrideWithValue(repo),
-        categoriesControllerProvider.overrideWith(
-          () => _FakeCategoriesController(
-            CategoriesState.data(
-              expense: [_row(alpha), _row(beta)],
-              income: const [],
-            ),
-          ),
-        ),
-      ],
-    );
-    addTearDown(container.dispose);
-
-    await tester.pumpWidget(_wrap(container: container));
-    await tester.pumpAndSettle();
-
-    // Move Beta above Alpha through the list's drop callback. A real drag
-    // builds the drag proxy, which has no Material ancestor here.
-    tester
-        .widget<SliverReorderableList>(find.byType(SliverReorderableList))
-        .onReorderItem!(1, 0);
-    await tester.pumpAndSettle();
-
-    verify(() => repo.reorder([2, 1])).called(1);
-    expect(tester.takeException(), isNull);
-    expect(
-      find.text('Something went wrong. Please try again.'),
-      findsOneWidget,
-    );
-  });
-
   testWidgets(
     'S16b: a failed reorder shows its message while an Undo snackbar is up',
     (tester) async {
@@ -682,11 +642,15 @@ void main() {
       // A SnackBar with an action stays until dismissed.
       expect(find.text('Category archived'), findsOneWidget);
 
+      // Move Beta above Alpha through the list's drop callback. A real drag
+      // builds the drag proxy, which has no Material ancestor here.
       tester
           .widget<SliverReorderableList>(find.byType(SliverReorderableList))
           .onReorderItem!(1, 0);
       await tester.pumpAndSettle();
 
+      verify(() => repo.reorder([2, 1])).called(1);
+      expect(tester.takeException(), isNull);
       expect(
         find.text('Something went wrong. Please try again.'),
         findsOneWidget,
