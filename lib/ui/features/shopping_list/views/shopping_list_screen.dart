@@ -24,15 +24,15 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../core/constants.dart';
-import '../../core/utils/box_shadow.dart';
-import '../../domain/models/shopping_list_item.dart';
-import '../../l10n/app_localizations.dart';
-import '../transactions/transaction_form_state.dart';
-import 'shopping_list_controller.dart';
+import '../../../../core/constants.dart';
+import '../../../../core/utils/box_shadow.dart';
+import '../../../../domain/models/shopping_list_item.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../../features/transactions/transaction_form_state.dart';
+import '../view_models/shopping_list_controller.dart';
 import 'shopping_list_item_labels.dart';
-import 'shopping_list_providers.dart';
-import 'shopping_list_state.dart';
+import '../view_models/shopping_list_providers.dart';
+import '../view_models/shopping_list_state.dart';
 
 @Dependencies([
   ShoppingListController,

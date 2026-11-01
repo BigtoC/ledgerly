@@ -5,13 +5,13 @@
 
 import 'package:intl/intl.dart';
 
-import '../../core/utils/money_formatter.dart';
-import '../../domain/models/account.dart';
-import '../../domain/models/category.dart';
-import '../../domain/models/currency.dart';
-import '../../domain/models/shopping_list_item.dart';
-import '../../l10n/app_localizations.dart';
-import '../categories/widgets/category_display.dart';
+import '../../../../core/utils/money_formatter.dart';
+import '../../../../domain/models/account.dart';
+import '../../../../domain/models/category.dart';
+import '../../../../domain/models/currency.dart';
+import '../../../../domain/models/shopping_list_item.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../../features/categories/widgets/category_display.dart';
 
 /// Returns memo if present and non-empty, otherwise category's display name.
 String resolvePrimaryLabel(

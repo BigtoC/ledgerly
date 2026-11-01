@@ -28,7 +28,7 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 import '../../app/providers/default_currency_provider.dart';
 import '../../app/providers/exchange_rates_provider.dart';
 import '../../core/utils/box_shadow.dart';
-import '../shopping_list/shopping_list_providers.dart';
+import '../../ui/features/shopping_list/view_models/shopping_list_providers.dart';
 import '../../core/utils/date_helpers.dart';
 import '../../domain/models/category.dart';
 import '../../domain/models/transaction.dart';

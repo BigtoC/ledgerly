@@ -20,10 +20,10 @@ import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../app/providers/repository_providers.dart';
-import '../../core/constants.dart';
-import '../../domain/models/shopping_list_item.dart';
-import '../../data/repositories/shopping_list_repository.dart';
+import '../../../../app/providers/repository_providers.dart';
+import '../../../../core/constants.dart';
+import '../../../../domain/models/shopping_list_item.dart';
+import '../../../../data/repositories/shopping_list_repository.dart';
 import 'shopping_list_state.dart';
 
 part 'shopping_list_controller.g.dart';

@@ -5,10 +5,10 @@
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../app/providers/repository_providers.dart';
-import '../../domain/models/account.dart';
-import '../../domain/models/category.dart';
-import '../../domain/models/currency.dart';
+import '../../../../app/providers/repository_providers.dart';
+import '../../../../domain/models/account.dart';
+import '../../../../domain/models/category.dart';
+import '../../../../domain/models/currency.dart';
 
 part 'shopping_list_providers.g.dart';
 

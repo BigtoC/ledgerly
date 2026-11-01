@@ -29,9 +29,9 @@ import 'package:ledgerly/features/analysis/search/analysis_providers.dart';
 import 'package:ledgerly/features/home/home_controller.dart';
 import 'package:ledgerly/features/home/home_screen.dart';
 import 'package:ledgerly/features/home/pending_controller.dart';
-import 'package:ledgerly/features/shopping_list/shopping_list_controller.dart';
-import 'package:ledgerly/features/shopping_list/shopping_list_providers.dart';
-import 'package:ledgerly/features/shopping_list/shopping_list_screen.dart';
+import 'package:ledgerly/ui/features/shopping_list/view_models/shopping_list_controller.dart';
+import 'package:ledgerly/ui/features/shopping_list/view_models/shopping_list_providers.dart';
+import 'package:ledgerly/ui/features/shopping_list/views/shopping_list_screen.dart';
 import 'package:ledgerly/ui/features/splash/view_models/splash_controller.dart';
 import 'package:ledgerly/ui/features/splash/views/splash_screen.dart';
 
