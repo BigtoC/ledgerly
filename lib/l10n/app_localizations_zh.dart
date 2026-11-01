@@ -261,6 +261,14 @@ class AppLocalizationsZh extends AppLocalizations {
       'Choose another default account before deleting this one.';
 
   @override
+  String get accountsArchiveRecurringRuleError =>
+      'An active recurring transaction uses this account, so it can\'t be archived.';
+
+  @override
+  String get accountsDeleteInUseError =>
+      'This account is still in use, so it can\'t be deleted.';
+
+  @override
   String get accountsFormAddTitle => 'New account';
 
   @override
@@ -292,6 +300,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get accountsFormNotFound => 'This account no longer exists.';
+
+  @override
+  String get accountFormCurrencyLockedError =>
+      'This account\'s currency can\'t change after transactions use it.';
 
   @override
   String get accountsTypePickerTitle => 'Pick account type';
@@ -1435,6 +1447,12 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get accountsDeleteDefaultBlockedBody => '删除前请先选择其他默认账户。';
 
   @override
+  String get accountsArchiveRecurringRuleError => '有启用中的周期性交易使用此账户，无法归档。';
+
+  @override
+  String get accountsDeleteInUseError => '此账户仍在使用中，无法删除。';
+
+  @override
   String get accountsFormAddTitle => '新账户';
 
   @override
@@ -1466,6 +1484,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get accountsFormNotFound => '此账户已不存在。';
+
+  @override
+  String get accountFormCurrencyLockedError => '此账户已有交易使用，无法更改币种。';
 
   @override
   String get accountsTypePickerTitle => '选择账户类型';
@@ -2565,6 +2586,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get accountsDeleteDefaultBlockedBody => '刪除前請先選擇其他預設帳戶。';
 
   @override
+  String get accountsArchiveRecurringRuleError => '有啟用中的週期性交易使用此帳戶，無法封存。';
+
+  @override
+  String get accountsDeleteInUseError => '此帳戶仍在使用中，無法刪除。';
+
+  @override
   String get accountsFormAddTitle => '新帳戶';
 
   @override
@@ -2596,6 +2623,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get accountsFormNotFound => '此帳戶已不存在。';
+
+  @override
+  String get accountFormCurrencyLockedError => '此帳戶已有交易使用，無法變更幣別。';
 
   @override
   String get accountsTypePickerTitle => '選擇帳戶類型';

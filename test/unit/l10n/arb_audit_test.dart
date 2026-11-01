@@ -125,6 +125,11 @@ const Set<String> _expectedEnKeys = <String>{
   'accountsArchiveLastActiveBlocked',
   'accountsDeleteDefaultBlockedTitle',
   'accountsDeleteDefaultBlockedBody',
+  // Localized messages for blocked commands, mapped from the accounts
+  // command outcomes (were the generic error).
+  'accountsArchiveRecurringRuleError',
+  'accountsDeleteInUseError',
+  'accountFormCurrencyLockedError',
   'accountsFormAddTitle',
   'accountsFormEditTitle',
   'accountsFormName',

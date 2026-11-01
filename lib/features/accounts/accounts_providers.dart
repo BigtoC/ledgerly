@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
@@ -10,6 +11,7 @@ import '../../data/models/account_type.dart';
 import '../../data/models/currency.dart';
 import '../../data/repositories/account_repository.dart';
 import '../../data/repositories/account_type_repository.dart';
+import 'accounts_state.dart';
 
 final accountTypeByIdProvider = StreamProvider.autoDispose
     .family<AccountType?, int>((ref, id) {
@@ -109,25 +111,33 @@ class AccountFormActions {
   Timer? _debounce;
   static const _debounceWindow = Duration(seconds: 30);
 
-  Future<int> save(Account draft) async {
-    final id = await _accountRepository.save(draft);
+  /// Saves [draft] and never throws; the form switches on the outcome.
+  Future<SaveAccountOutcome> save(Account draft) async {
+    try {
+      final initialDefault = _ref.read(initialDefaultCurrencyProvider);
+      final currentDefault =
+          _ref.read(defaultCurrencyProvider).value ?? initialDefault;
 
-    final initialDefault = _ref.read(initialDefaultCurrencyProvider);
-    final currentDefault =
-        _ref.read(defaultCurrencyProvider).value ?? initialDefault;
+      final id = await _accountRepository.save(draft);
 
-    if (draft.currency.code != currentDefault) {
-      _pendingCodes.add(draft.currency.code);
-      _debounce?.cancel();
-      _debounce = Timer(_debounceWindow, () {
-        final repo = _ref.read(exchangeRateRepositoryProvider);
-        for (final code in _pendingCodes) {
-          unawaited(repo.fetchRate(code, currentDefault));
-        }
-        _pendingCodes.clear();
-      });
+      if (draft.currency.code != currentDefault) {
+        _pendingCodes.add(draft.currency.code);
+        _debounce?.cancel();
+        _debounce = Timer(_debounceWindow, () {
+          final repo = _ref.read(exchangeRateRepositoryProvider);
+          for (final code in _pendingCodes) {
+            unawaited(repo.fetchRate(code, currentDefault));
+          }
+          _pendingCodes.clear();
+        });
+      }
+      return SaveAccountOutcome.ok(id);
+    } on AccountCurrencyLockedException {
+      return const SaveAccountOutcome.currencyLocked();
+    } catch (e) {
+      debugPrint('[AccountFormActions] save failed: ${e.runtimeType}');
+      return const SaveAccountOutcome.failed();
     }
-    return id;
   }
 }
 
@@ -160,20 +170,31 @@ class AccountTypeCreationActions {
 
   final AccountTypeRepository _repository;
 
-  Future<AccountType?> create({
+  /// Creates a custom account type and never throws; the sheet switches
+  /// on the outcome.
+  Future<CreateAccountTypeOutcome> create({
     required String name,
     Currency? defaultCurrency,
   }) async {
-    final id = await _repository.save(
-      AccountType(
-        id: 0,
-        customName: name,
-        icon: 'wallet',
-        color: 10,
-        defaultCurrency: defaultCurrency,
-      ),
-    );
-    return _repository.getById(id);
+    try {
+      final id = await _repository.save(
+        AccountType(
+          id: 0,
+          customName: name,
+          icon: 'wallet',
+          color: 10,
+          defaultCurrency: defaultCurrency,
+        ),
+      );
+      final created = await _repository.getById(id);
+      if (created == null) return const CreateAccountTypeOutcome.failed();
+      return CreateAccountTypeOutcome.ok(created);
+    } catch (e) {
+      debugPrint(
+        '[AccountTypeCreationActions] create failed: ${e.runtimeType}',
+      );
+      return const CreateAccountTypeOutcome.failed();
+    }
   }
 }
 

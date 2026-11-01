@@ -586,6 +586,18 @@ abstract class AppLocalizations {
   /// **'Choose another default account before deleting this one.'**
   String get accountsDeleteDefaultBlockedBody;
 
+  /// Accounts plan §7. SnackBar shown when an archive is blocked because an active recurring rule still uses the account.
+  ///
+  /// In en, this message translates to:
+  /// **'An active recurring transaction uses this account, so it can\'t be archived.'**
+  String get accountsArchiveRecurringRuleError;
+
+  /// Accounts plan §7. SnackBar shown when a delete is blocked because transactions, recurring rules or shopping-list drafts still reference the account.
+  ///
+  /// In en, this message translates to:
+  /// **'This account is still in use, so it can\'t be deleted.'**
+  String get accountsDeleteInUseError;
+
   /// PRD 643. AppBar title for /settings/manage-accounts/new (Add mode).
   ///
   /// In en, this message translates to:
@@ -651,6 +663,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This account no longer exists.'**
   String get accountsFormNotFound;
+
+  /// Accounts plan §5. Inline error in the account form when the repository rejects a currency change on an account that transactions or active recurring rules already use.
+  ///
+  /// In en, this message translates to:
+  /// **'This account\'s currency can\'t change after transactions use it.'**
+  String get accountFormCurrencyLockedError;
 
   /// Accounts plan §5. Title for the account-type picker sheet.
   ///

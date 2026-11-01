@@ -12,6 +12,11 @@
 //     and either pops back to the caller or falls back to `/settings`.
 //   - Opening balance respects `currency.decimals` — "100.5" into a JPY
 //     field (`decimals = 0`) is rejected (Save remains disabled).
+//   - A save that fails after the form or the inline account-type sheet
+//     was closed raises no error.
+//   - An edit save rejected by the currency lock shows its inline message.
+
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,6 +31,7 @@ import 'package:ledgerly/data/models/currency.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/account_type_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
+import 'package:ledgerly/data/repositories/repository_exceptions.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/features/accounts/account_form_screen.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
@@ -520,6 +526,189 @@ void main() {
       // The type button now shows the new type label.
       expect(find.text('Crypto'), findsWidgets);
       verify(() => typeRepo.save(any())).called(1);
+    },
+  );
+
+  testWidgets(
+    'AF07: a save that fails after the form was closed raises no error',
+    (tester) async {
+      final accountRepo = _MockAccountRepository();
+      final typeRepo = _MockAccountTypeRepository();
+      final currencyRepo = _MockCurrencyRepository();
+      final prefs = _MockUserPreferencesRepository();
+
+      when(() => prefs.getDefaultCurrency()).thenAnswer((_) async => 'USD');
+      when(() => currencyRepo.getByCode('USD')).thenAnswer((_) async => _usd);
+      when(() => typeRepo.watchAll())
+          .thenAnswer((_) => Stream.value([_cashType]));
+      when(() => currencyRepo.watchAll())
+          .thenAnswer((_) => Stream.value([_usd, _jpy, _twd]));
+      final saveGate = Completer<int>();
+      when(() => accountRepo.save(any())).thenAnswer((_) => saveGate.future);
+
+      final container = _makeContainer(
+        accountRepo: accountRepo,
+        typeRepo: typeRepo,
+        currencyRepo: currencyRepo,
+        prefs: prefs,
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        _hostApp(container: container, router: _router(onPopped: null)),
+      );
+      await tester.tap(find.byKey(const ValueKey('open-form')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('accountForm:name')),
+        'Wallet',
+      );
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('accountForm:type')));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(ValueKey('accountTypePicker:${_cashType.id}')),
+      );
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('accountForm:save')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('accountForm:save')));
+      await tester.pump();
+
+      // Close the form while the save is still running.
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('accountForm:save')), findsNothing);
+
+      saveGate.completeError(const CurrencyNotFoundException('USD'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'AF08: a save that fails after the account-type sheet was closed raises '
+    'no error',
+    (tester) async {
+      final accountRepo = _MockAccountRepository();
+      final typeRepo = _MockAccountTypeRepository();
+      final currencyRepo = _MockCurrencyRepository();
+      final prefs = _MockUserPreferencesRepository();
+
+      when(() => prefs.getDefaultCurrency()).thenAnswer((_) async => 'USD');
+      when(() => currencyRepo.getByCode('USD')).thenAnswer((_) async => _usd);
+      when(() => typeRepo.watchAll())
+          .thenAnswer((_) => Stream.value([_cashType]));
+      when(() => currencyRepo.watchAll())
+          .thenAnswer((_) => Stream.value([_usd, _jpy, _twd]));
+      final saveGate = Completer<int>();
+      when(() => typeRepo.save(any())).thenAnswer((_) => saveGate.future);
+
+      final container = _makeContainer(
+        accountRepo: accountRepo,
+        typeRepo: typeRepo,
+        currencyRepo: currencyRepo,
+        prefs: prefs,
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        _hostApp(container: container, router: _router(onPopped: null)),
+      );
+      await tester.tap(find.byKey(const ValueKey('open-form')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('accountForm:type')));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('accountTypePicker:createInline')),
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('accountTypeForm:name')),
+        'Crypto',
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('accountTypeForm:save')));
+      await tester.pump();
+
+      // Dismiss the create sheet through its barrier while saving.
+      await tester.tapAt(const Offset(20, 20));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('accountTypeForm:name')), findsNothing);
+
+      saveGate.completeError(const CurrencyNotFoundException('USD'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'AF09: an edit save rejected by the currency lock shows its message',
+    (tester) async {
+      final accountRepo = _MockAccountRepository();
+      final typeRepo = _MockAccountTypeRepository();
+      final currencyRepo = _MockCurrencyRepository();
+      final prefs = _MockUserPreferencesRepository();
+
+      const stored = Account(
+        id: 7,
+        name: 'Checking',
+        accountTypeId: 1,
+        currency: _twd,
+        icon: 'wallet',
+        color: 3,
+      );
+      when(() => accountRepo.getById(7)).thenAnswer((_) async => stored);
+      when(() => typeRepo.getById(1)).thenAnswer((_) async => _cashType);
+      when(() => typeRepo.watchAll())
+          .thenAnswer((_) => Stream.value([_cashType]));
+      when(() => currencyRepo.watchAll())
+          .thenAnswer((_) => Stream.value([_usd, _jpy, _twd]));
+      when(() => accountRepo.save(any()))
+          .thenThrow(const AccountCurrencyLockedException(7));
+
+      final container = _makeContainer(
+        accountRepo: accountRepo,
+        typeRepo: typeRepo,
+        currencyRepo: currencyRepo,
+        prefs: prefs,
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        _hostApp(
+          container: container,
+          router: _router(accountId: 7, onPopped: null),
+        ),
+      );
+      await tester.tap(find.byKey(const ValueKey('open-form')));
+      await tester.pumpAndSettle();
+
+      // Switch the referenced account to another currency.
+      await tester.tap(find.byKey(const ValueKey('accountForm:currency')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('currencyPicker:USD')));
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('accountForm:save')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('accountForm:save')));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          "This account's currency can't change after transactions use it.",
+        ),
+        findsOneWidget,
+      );
+      // The form stays open so the user can pick the old currency back.
+      expect(find.byKey(const ValueKey('accountForm:save')), findsOneWidget);
     },
   );
 }

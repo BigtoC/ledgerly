@@ -341,6 +341,14 @@
   "@accountsDeleteDefaultBlockedBody": {
     "description": "Accounts plan §7. Dialog body — cannot delete the default account until a different default is selected."
   },
+  "accountsArchiveRecurringRuleError": "An active recurring transaction uses this account, so it can't be archived.",
+  "@accountsArchiveRecurringRuleError": {
+    "description": "Accounts plan §7. SnackBar shown when an archive is blocked because an active recurring rule still uses the account."
+  },
+  "accountsDeleteInUseError": "This account is still in use, so it can't be deleted.",
+  "@accountsDeleteInUseError": {
+    "description": "Accounts plan §7. SnackBar shown when a delete is blocked because transactions, recurring rules or shopping-list drafts still reference the account."
+  },
   "accountsFormAddTitle": "New account",
   "@accountsFormAddTitle": {
     "description": "PRD 643. AppBar title for /settings/manage-accounts/new (Add mode)."
@@ -384,6 +392,10 @@
   "accountsFormNotFound": "This account no longer exists.",
   "@accountsFormNotFound": {
     "description": "Accounts plan §5. Recoverable not-found state shown when /settings/manage-accounts/:id targets a row that has been deleted."
+  },
+  "accountFormCurrencyLockedError": "This account's currency can't change after transactions use it.",
+  "@accountFormCurrencyLockedError": {
+    "description": "Accounts plan §5. Inline error in the account form when the repository rejects a currency change on an account that transactions or active recurring rules already use."
   },
   "accountsTypePickerTitle": "Pick account type",
   "@accountsTypePickerTitle": {

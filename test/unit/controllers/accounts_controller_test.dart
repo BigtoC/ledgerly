@@ -7,10 +7,13 @@
 //     stream fires.
 //   - Default-account id propagates into `AccountsData.defaultAccountId`
 //     and flips when `userPreferences.setDefaultAccountId` writes.
-//   - Archive command writes via the repository.
-//   - Archive refuses to leave the user with zero active accounts.
-//   - Delete refuses to operate on the current default account.
-//   - `setDefault` delegates to `UserPreferencesRepository`.
+//   - Every command returns a sealed outcome and never throws. One test
+//     per outcome variant:
+//     - `setDefault`: ok, failed.
+//     - `archive`: ok, isDefault, lastActive (refuses to leave the user
+//       with zero active accounts), hasActiveRecurringRule, failed.
+//     - `unarchive`: ok, ok without a write when the row is gone, failed.
+//     - `delete`: ok, isDefault, inUse, failed.
 //
 // Repositories mocked via `mocktail`; no live DB.
 
@@ -25,6 +28,7 @@ import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/account.dart';
 import 'package:ledgerly/data/models/currency.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
+import 'package:ledgerly/data/repositories/repository_exceptions.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/features/accounts/accounts_controller.dart';
 import 'package:ledgerly/features/accounts/accounts_state.dart';
@@ -123,6 +127,27 @@ void main() {
       throw StateError('AccountsController never produced data');
     }
 
+    /// A container whose controller already holds [rows] as data, with
+    /// [defaultId] as the default account.
+    @Dependencies([AccountsController])
+    Future<ProviderContainer> containerWithData(
+      List<Account> rows, {
+      int? defaultId,
+    }) async {
+      final container = makeContainer();
+      addTearDown(container.dispose);
+      container.listen(accountsControllerProvider, (_, _) {});
+      await Future<void>.delayed(Duration.zero);
+      accountsCtrl.add(rows);
+      defaultCtrl.add(defaultId);
+      await Future<void>.delayed(Duration.zero);
+      for (final a in rows) {
+        balanceCtrls[a.id]!.add({});
+      }
+      await waitForData(container);
+      return container;
+    }
+
     test(
       'A01: starts loading, transitions to data on joint first emit',
       () async {
@@ -214,9 +239,24 @@ void main() {
       balanceCtrls[7]!.add({});
       await waitForData(container);
 
-      await container.read(accountsControllerProvider.notifier).setDefault(7);
+      final outcome = await container
+          .read(accountsControllerProvider.notifier)
+          .setDefault(7);
 
+      expect(outcome, const SetDefaultAccountOutcome.ok());
       verify(() => prefs.setDefaultAccountId(7)).called(1);
+    });
+
+    test('A04b: setDefault returns failed when the write throws', () async {
+      when(() => prefs.setDefaultAccountId(7))
+          .thenThrow(StateError('disk full'));
+      final container = await containerWithData([_a(id: 7, name: 'Target')]);
+
+      final outcome = await container
+          .read(accountsControllerProvider.notifier)
+          .setDefault(7);
+
+      expect(outcome, const SetDefaultAccountOutcome.failed());
     });
 
     test('A05: archive delegates to repository', () async {
@@ -232,8 +272,11 @@ void main() {
       balanceCtrls[2]!.add({});
       await waitForData(container);
 
-      await container.read(accountsControllerProvider.notifier).archive(2);
+      final outcome = await container
+          .read(accountsControllerProvider.notifier)
+          .archive(2);
 
+      expect(outcome, const ArchiveAccountOutcome.ok());
       verify(() => accountRepo.archive(2)).called(1);
     });
 
@@ -250,16 +293,11 @@ void main() {
         balanceCtrls[1]!.add({});
         await waitForData(container);
 
-        expect(
-          () => container.read(accountsControllerProvider.notifier).archive(1),
-          throwsA(
-            isA<AccountsOperationException>().having(
-              (e) => e.kind,
-              'kind',
-              AccountsOperationError.lastActiveAccount,
-            ),
-          ),
-        );
+        final outcome = await container
+            .read(accountsControllerProvider.notifier)
+            .archive(1);
+
+        expect(outcome, const ArchiveAccountOutcome.lastActive());
         verifyNever(() => accountRepo.archive(any()));
       },
     );
@@ -276,17 +314,42 @@ void main() {
       balanceCtrls[2]!.add({});
       await waitForData(container);
 
-      expect(
-        () => container.read(accountsControllerProvider.notifier).archive(1),
-        throwsA(
-          isA<AccountsOperationException>().having(
-            (e) => e.kind,
-            'kind',
-            AccountsOperationError.defaultAccount,
-          ),
-        ),
-      );
+      final outcome = await container
+          .read(accountsControllerProvider.notifier)
+          .archive(1);
+
+      expect(outcome, const ArchiveAccountOutcome.isDefault());
       verifyNever(() => accountRepo.archive(any()));
+    });
+
+    test('A06c: archive maps AccountHasRecurringRuleException to '
+        'hasActiveRecurringRule', () async {
+      when(() => accountRepo.archive(2))
+          .thenThrow(const AccountHasRecurringRuleException(2));
+      final container = await containerWithData([
+        _a(id: 1, name: 'Cash'),
+        _a(id: 2, name: 'Spare'),
+      ], defaultId: 1);
+
+      final outcome = await container
+          .read(accountsControllerProvider.notifier)
+          .archive(2);
+
+      expect(outcome, const ArchiveAccountOutcome.hasActiveRecurringRule());
+    });
+
+    test('A06d: archive returns failed on any other error', () async {
+      when(() => accountRepo.archive(2)).thenThrow(StateError('db closed'));
+      final container = await containerWithData([
+        _a(id: 1, name: 'Cash'),
+        _a(id: 2, name: 'Spare'),
+      ], defaultId: 1);
+
+      final outcome = await container
+          .read(accountsControllerProvider.notifier)
+          .archive(2);
+
+      expect(outcome, const ArchiveAccountOutcome.failed());
     });
 
     test('A07: delete refuses the current default account', () async {
@@ -302,16 +365,59 @@ void main() {
       balanceCtrls[2]!.add({});
       await waitForData(container);
 
-      expect(
-        () => container.read(accountsControllerProvider.notifier).delete(1),
-        throwsA(
-          isA<AccountsOperationException>().having(
-            (e) => e.kind,
-            'kind',
-            AccountsOperationError.defaultAccount,
-          ),
-        ),
-      );
+      final outcome = await container
+          .read(accountsControllerProvider.notifier)
+          .delete(1);
+
+      expect(outcome, const DeleteAccountOutcome.isDefault());
+      verifyNever(() => accountRepo.delete(any()));
+    });
+
+    test('A07b: delete returns ok after the repository deletes', () async {
+      when(() => prefs.getDefaultAccountId()).thenAnswer((_) async => 1);
+      when(() => accountRepo.delete(2)).thenAnswer((_) async {});
+      final container = await containerWithData([
+        _a(id: 1, name: 'Cash'),
+        _a(id: 2, name: 'Spare'),
+      ], defaultId: 1);
+
+      final outcome = await container
+          .read(accountsControllerProvider.notifier)
+          .delete(2);
+
+      expect(outcome, const DeleteAccountOutcome.ok());
+      verify(() => accountRepo.delete(2)).called(1);
+    });
+
+    test('A07c: delete maps AccountInUseException to inUse', () async {
+      when(() => prefs.getDefaultAccountId()).thenAnswer((_) async => 1);
+      when(() => accountRepo.delete(2))
+          .thenThrow(const AccountInUseException(2));
+      final container = await containerWithData([
+        _a(id: 1, name: 'Cash'),
+        _a(id: 2, name: 'Spare'),
+      ], defaultId: 1);
+
+      final outcome = await container
+          .read(accountsControllerProvider.notifier)
+          .delete(2);
+
+      expect(outcome, const DeleteAccountOutcome.inUse());
+    });
+
+    test('A07d: delete returns failed on any other error', () async {
+      when(() => prefs.getDefaultAccountId())
+          .thenThrow(StateError('corrupt preference'));
+      final container = await containerWithData([
+        _a(id: 1, name: 'Cash'),
+        _a(id: 2, name: 'Spare'),
+      ], defaultId: 1);
+
+      final outcome = await container
+          .read(accountsControllerProvider.notifier)
+          .delete(2);
+
+      expect(outcome, const DeleteAccountOutcome.failed());
       verifyNever(() => accountRepo.delete(any()));
     });
 
@@ -400,13 +506,50 @@ void main() {
       balanceCtrls[9]!.add({});
       await waitForData(container);
 
-      await container.read(accountsControllerProvider.notifier).unarchive(9);
+      final outcome = await container
+          .read(accountsControllerProvider.notifier)
+          .unarchive(9);
 
+      expect(outcome, const UnarchiveAccountOutcome.ok());
       final captured =
           verify(() => accountRepo.save(captureAny())).captured.single
               as Account;
       expect(captured.id, 9);
       expect(captured.isArchived, isFalse);
+    });
+
+    test(
+      'A11b: unarchive of a row that is gone is ok and writes nothing',
+      () async {
+        when(() => accountRepo.getById(9)).thenAnswer((_) async => null);
+        final container = await containerWithData([
+          _a(id: 1, name: 'Cash'),
+        ], defaultId: 1);
+
+        final outcome = await container
+            .read(accountsControllerProvider.notifier)
+            .unarchive(9);
+
+        expect(outcome, const UnarchiveAccountOutcome.ok());
+        verifyNever(() => accountRepo.save(any()));
+      },
+    );
+
+    test('A11c: unarchive returns failed when the save throws', () async {
+      final stored = _a(id: 9, name: 'Old', isArchived: true);
+      when(() => accountRepo.getById(9)).thenAnswer((_) async => stored);
+      when(() => accountRepo.save(any()))
+          .thenThrow(const AccountRepositoryException('Account 9 not found'));
+      final container = await containerWithData([
+        _a(id: 1, name: 'Cash'),
+        stored,
+      ], defaultId: 1);
+
+      final outcome = await container
+          .read(accountsControllerProvider.notifier)
+          .unarchive(9);
+
+      expect(outcome, const UnarchiveAccountOutcome.failed());
     });
   });
 }

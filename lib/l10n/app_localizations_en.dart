@@ -261,6 +261,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Choose another default account before deleting this one.';
 
   @override
+  String get accountsArchiveRecurringRuleError =>
+      'An active recurring transaction uses this account, so it can\'t be archived.';
+
+  @override
+  String get accountsDeleteInUseError =>
+      'This account is still in use, so it can\'t be deleted.';
+
+  @override
   String get accountsFormAddTitle => 'New account';
 
   @override
@@ -292,6 +300,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountsFormNotFound => 'This account no longer exists.';
+
+  @override
+  String get accountFormCurrencyLockedError =>
+      'This account\'s currency can\'t change after transactions use it.';
 
   @override
   String get accountsTypePickerTitle => 'Pick account type';
