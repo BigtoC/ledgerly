@@ -213,10 +213,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'An active recurring transaction uses this category, so it can\'t be archived.';
 
   @override
-  String get categoriesFormTypeLockedError =>
-      'This category\'s type can\'t change after it has been used. Create a new category instead.';
-
-  @override
   String get categoriesPickerTitleExpense => 'Pick expense category';
 
   @override

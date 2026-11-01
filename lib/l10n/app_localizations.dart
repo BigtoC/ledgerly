@@ -496,12 +496,6 @@ abstract class AppLocalizations {
   /// **'An active recurring transaction uses this category, so it can\'t be archived.'**
   String get categoriesArchiveRecurringRuleError;
 
-  /// PRD 735-737. Inline error in the category form sheet when the repository rejects a type change on a category that is already in use.
-  ///
-  /// In en, this message translates to:
-  /// **'This category\'s type can\'t change after it has been used. Create a new category instead.'**
-  String get categoriesFormTypeLockedError;
-
   /// PRD 683, 715. Category picker sheet title when opened for an expense transaction.
   ///
   /// In en, this message translates to:

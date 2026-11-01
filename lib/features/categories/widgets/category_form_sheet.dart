@@ -9,11 +9,11 @@
 //   color picker.
 // - Wrapped in `SingleChildScrollView` so the soft keyboard does not
 //   clip the body (plan §12 risk #5).
-// - A type-locked save arrives from `CategoriesController` as
-//   `CategoriesOperationException(CategoriesOperationError.typeLocked)`
-//   and surfaces inline as the localized `categoriesFormTypeLockedError`
-//   banner; any other failure shows `errorSnackbarGeneric` there. The
-//   sheet stays open for retry.
+// - A save returns `SaveCategoryOutcome` from `CategoriesController`.
+//   Edit mode runs rename, then icon/color, and stops at the first
+//   failure. A failure shows `errorSnackbarGeneric` in an inline banner
+//   and the sheet stays open for retry. If the sheet was closed during
+//   the save, the result is dropped.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,6 +24,7 @@ import '../../../core/utils/icon_registry.dart';
 import '../../../data/models/category.dart';
 import '../../../l10n/app_localizations.dart';
 import '../categories_controller.dart';
+import '../categories_state.dart';
 import 'category_color_picker.dart';
 import 'category_display.dart';
 import 'category_icon_picker.dart';
@@ -87,55 +88,52 @@ class _CategoryFormSheetState extends ConsumerState<_CategoryFormSheet> {
       (_nameCtrl.text.trim().isNotEmpty || widget.initial?.l10nKey != null);
 
   Future<void> _save() async {
+    if (!_canSave) return;
     final l10n = AppLocalizations.of(context);
     final name = _nameCtrl.text.trim();
-    if (!_canSave) return;
 
     setState(() {
       _saving = true;
       _errorMessage = null;
     });
 
-    try {
-      final notifier = ref.read(categoriesControllerProvider.notifier);
-      final initial = widget.initial;
-      if (initial == null) {
-        await notifier.createCategory(
-          Category(
-            id: 0,
-            icon: _icon!,
-            color: _color,
-            type: _type,
-            customName: name,
-          ),
-        );
-      } else {
-        // Rename + icon/color. Type is locked in Edit mode and cannot
-        // have changed here.
-        if ((initial.customName ?? '') != name) {
-          await notifier.renameCategory(initial.id, name);
-        }
-        if (initial.icon != _icon || initial.color != _color) {
-          await notifier.updateIconColor(
-            id: initial.id,
-            icon: _icon!,
-            color: _color,
-          );
-        }
+    final notifier = ref.read(categoriesControllerProvider.notifier);
+    final initial = widget.initial;
+    var outcome = const SaveCategoryOutcome.ok();
+    if (initial == null) {
+      outcome = await notifier.createCategory(
+        Category(
+          id: 0,
+          icon: _icon!,
+          color: _color,
+          type: _type,
+          customName: name,
+        ),
+      );
+    } else {
+      // Rename + icon/color, two writes; stop at the first failure. Type
+      // is locked in Edit mode and cannot have changed here.
+      if ((initial.customName ?? '') != name) {
+        outcome = await notifier.renameCategory(initial.id, name);
       }
-      if (mounted) Navigator.of(context).pop();
-    } on CategoriesOperationException catch (e) {
-      setState(() {
-        _errorMessage = e.kind == CategoriesOperationError.typeLocked
-            ? l10n.categoriesFormTypeLockedError
-            : l10n.errorSnackbarGeneric;
-        _saving = false;
-      });
-    } catch (_) {
-      setState(() {
-        _errorMessage = l10n.errorSnackbarGeneric;
-        _saving = false;
-      });
+      if (outcome is SaveCategoryOk &&
+          (initial.icon != _icon || initial.color != _color)) {
+        outcome = await notifier.updateIconColor(
+          id: initial.id,
+          icon: _icon!,
+          color: _color,
+        );
+      }
+    }
+    if (!mounted) return;
+    switch (outcome) {
+      case SaveCategoryOk():
+        Navigator.of(context).pop();
+      case SaveCategoryFailed():
+        setState(() {
+          _errorMessage = l10n.errorSnackbarGeneric;
+          _saving = false;
+        });
     }
   }
 
@@ -176,6 +174,7 @@ class _CategoryFormSheetState extends ConsumerState<_CategoryFormSheet> {
                   context,
                   selected: _icon,
                 );
+                if (!mounted) return;
                 if (key != null) setState(() => _icon = key);
               },
             ),
@@ -188,6 +187,7 @@ class _CategoryFormSheetState extends ConsumerState<_CategoryFormSheet> {
                   context,
                   selectedIndex: _color,
                 );
+                if (!mounted) return;
                 if (idx != null) setState(() => _color = idx);
               },
               child: Container(

@@ -646,4 +646,1200 @@ $CategoryCopyWith<$Res> get category {
 }
 }
 
+/// @nodoc
+mixin _$SaveCategoryOutcome {
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SaveCategoryOutcome);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'SaveCategoryOutcome()';
+}
+
+
+}
+
+/// @nodoc
+class $SaveCategoryOutcomeCopyWith<$Res>  {
+$SaveCategoryOutcomeCopyWith(SaveCategoryOutcome _, $Res Function(SaveCategoryOutcome) __);
+}
+
+
+/// Adds pattern-matching-related methods to [SaveCategoryOutcome].
+extension SaveCategoryOutcomePatterns on SaveCategoryOutcome {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( SaveCategoryOk value)?  ok,TResult Function( SaveCategoryFailed value)?  failed,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case SaveCategoryOk() when ok != null:
+return ok(_that);case SaveCategoryFailed() when failed != null:
+return failed(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( SaveCategoryOk value)  ok,required TResult Function( SaveCategoryFailed value)  failed,}){
+final _that = this;
+switch (_that) {
+case SaveCategoryOk():
+return ok(_that);case SaveCategoryFailed():
+return failed(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( SaveCategoryOk value)?  ok,TResult? Function( SaveCategoryFailed value)?  failed,}){
+final _that = this;
+switch (_that) {
+case SaveCategoryOk() when ok != null:
+return ok(_that);case SaveCategoryFailed() when failed != null:
+return failed(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  ok,TResult Function()?  failed,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case SaveCategoryOk() when ok != null:
+return ok();case SaveCategoryFailed() when failed != null:
+return failed();case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  ok,required TResult Function()  failed,}) {final _that = this;
+switch (_that) {
+case SaveCategoryOk():
+return ok();case SaveCategoryFailed():
+return failed();}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  ok,TResult? Function()?  failed,}) {final _that = this;
+switch (_that) {
+case SaveCategoryOk() when ok != null:
+return ok();case SaveCategoryFailed() when failed != null:
+return failed();case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class SaveCategoryOk implements SaveCategoryOutcome {
+  const SaveCategoryOk();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SaveCategoryOk);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'SaveCategoryOutcome.ok()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class SaveCategoryFailed implements SaveCategoryOutcome {
+  const SaveCategoryFailed();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SaveCategoryFailed);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'SaveCategoryOutcome.failed()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+mixin _$ArchiveCategoryOutcome {
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ArchiveCategoryOutcome);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'ArchiveCategoryOutcome()';
+}
+
+
+}
+
+/// @nodoc
+class $ArchiveCategoryOutcomeCopyWith<$Res>  {
+$ArchiveCategoryOutcomeCopyWith(ArchiveCategoryOutcome _, $Res Function(ArchiveCategoryOutcome) __);
+}
+
+
+/// Adds pattern-matching-related methods to [ArchiveCategoryOutcome].
+extension ArchiveCategoryOutcomePatterns on ArchiveCategoryOutcome {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ArchiveCategoryOk value)?  ok,TResult Function( ArchiveCategoryHasActiveRecurringRule value)?  hasActiveRecurringRule,TResult Function( ArchiveCategoryFailed value)?  failed,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case ArchiveCategoryOk() when ok != null:
+return ok(_that);case ArchiveCategoryHasActiveRecurringRule() when hasActiveRecurringRule != null:
+return hasActiveRecurringRule(_that);case ArchiveCategoryFailed() when failed != null:
+return failed(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ArchiveCategoryOk value)  ok,required TResult Function( ArchiveCategoryHasActiveRecurringRule value)  hasActiveRecurringRule,required TResult Function( ArchiveCategoryFailed value)  failed,}){
+final _that = this;
+switch (_that) {
+case ArchiveCategoryOk():
+return ok(_that);case ArchiveCategoryHasActiveRecurringRule():
+return hasActiveRecurringRule(_that);case ArchiveCategoryFailed():
+return failed(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ArchiveCategoryOk value)?  ok,TResult? Function( ArchiveCategoryHasActiveRecurringRule value)?  hasActiveRecurringRule,TResult? Function( ArchiveCategoryFailed value)?  failed,}){
+final _that = this;
+switch (_that) {
+case ArchiveCategoryOk() when ok != null:
+return ok(_that);case ArchiveCategoryHasActiveRecurringRule() when hasActiveRecurringRule != null:
+return hasActiveRecurringRule(_that);case ArchiveCategoryFailed() when failed != null:
+return failed(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  ok,TResult Function()?  hasActiveRecurringRule,TResult Function()?  failed,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case ArchiveCategoryOk() when ok != null:
+return ok();case ArchiveCategoryHasActiveRecurringRule() when hasActiveRecurringRule != null:
+return hasActiveRecurringRule();case ArchiveCategoryFailed() when failed != null:
+return failed();case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  ok,required TResult Function()  hasActiveRecurringRule,required TResult Function()  failed,}) {final _that = this;
+switch (_that) {
+case ArchiveCategoryOk():
+return ok();case ArchiveCategoryHasActiveRecurringRule():
+return hasActiveRecurringRule();case ArchiveCategoryFailed():
+return failed();}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  ok,TResult? Function()?  hasActiveRecurringRule,TResult? Function()?  failed,}) {final _that = this;
+switch (_that) {
+case ArchiveCategoryOk() when ok != null:
+return ok();case ArchiveCategoryHasActiveRecurringRule() when hasActiveRecurringRule != null:
+return hasActiveRecurringRule();case ArchiveCategoryFailed() when failed != null:
+return failed();case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class ArchiveCategoryOk implements ArchiveCategoryOutcome {
+  const ArchiveCategoryOk();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ArchiveCategoryOk);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'ArchiveCategoryOutcome.ok()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class ArchiveCategoryHasActiveRecurringRule implements ArchiveCategoryOutcome {
+  const ArchiveCategoryHasActiveRecurringRule();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ArchiveCategoryHasActiveRecurringRule);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'ArchiveCategoryOutcome.hasActiveRecurringRule()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class ArchiveCategoryFailed implements ArchiveCategoryOutcome {
+  const ArchiveCategoryFailed();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ArchiveCategoryFailed);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'ArchiveCategoryOutcome.failed()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+mixin _$UndoArchiveCategoryOutcome {
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is UndoArchiveCategoryOutcome);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'UndoArchiveCategoryOutcome()';
+}
+
+
+}
+
+/// @nodoc
+class $UndoArchiveCategoryOutcomeCopyWith<$Res>  {
+$UndoArchiveCategoryOutcomeCopyWith(UndoArchiveCategoryOutcome _, $Res Function(UndoArchiveCategoryOutcome) __);
+}
+
+
+/// Adds pattern-matching-related methods to [UndoArchiveCategoryOutcome].
+extension UndoArchiveCategoryOutcomePatterns on UndoArchiveCategoryOutcome {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( UndoArchiveCategoryOk value)?  ok,TResult Function( UndoArchiveCategoryFailed value)?  failed,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case UndoArchiveCategoryOk() when ok != null:
+return ok(_that);case UndoArchiveCategoryFailed() when failed != null:
+return failed(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( UndoArchiveCategoryOk value)  ok,required TResult Function( UndoArchiveCategoryFailed value)  failed,}){
+final _that = this;
+switch (_that) {
+case UndoArchiveCategoryOk():
+return ok(_that);case UndoArchiveCategoryFailed():
+return failed(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( UndoArchiveCategoryOk value)?  ok,TResult? Function( UndoArchiveCategoryFailed value)?  failed,}){
+final _that = this;
+switch (_that) {
+case UndoArchiveCategoryOk() when ok != null:
+return ok(_that);case UndoArchiveCategoryFailed() when failed != null:
+return failed(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  ok,TResult Function()?  failed,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case UndoArchiveCategoryOk() when ok != null:
+return ok();case UndoArchiveCategoryFailed() when failed != null:
+return failed();case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  ok,required TResult Function()  failed,}) {final _that = this;
+switch (_that) {
+case UndoArchiveCategoryOk():
+return ok();case UndoArchiveCategoryFailed():
+return failed();}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  ok,TResult? Function()?  failed,}) {final _that = this;
+switch (_that) {
+case UndoArchiveCategoryOk() when ok != null:
+return ok();case UndoArchiveCategoryFailed() when failed != null:
+return failed();case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class UndoArchiveCategoryOk implements UndoArchiveCategoryOutcome {
+  const UndoArchiveCategoryOk();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is UndoArchiveCategoryOk);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'UndoArchiveCategoryOutcome.ok()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class UndoArchiveCategoryFailed implements UndoArchiveCategoryOutcome {
+  const UndoArchiveCategoryFailed();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is UndoArchiveCategoryFailed);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'UndoArchiveCategoryOutcome.failed()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+mixin _$DeleteCategoryOutcome {
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is DeleteCategoryOutcome);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'DeleteCategoryOutcome()';
+}
+
+
+}
+
+/// @nodoc
+class $DeleteCategoryOutcomeCopyWith<$Res>  {
+$DeleteCategoryOutcomeCopyWith(DeleteCategoryOutcome _, $Res Function(DeleteCategoryOutcome) __);
+}
+
+
+/// Adds pattern-matching-related methods to [DeleteCategoryOutcome].
+extension DeleteCategoryOutcomePatterns on DeleteCategoryOutcome {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( DeleteCategoryOk value)?  ok,TResult Function( DeleteCategoryInUse value)?  inUse,TResult Function( DeleteCategoryFailed value)?  failed,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case DeleteCategoryOk() when ok != null:
+return ok(_that);case DeleteCategoryInUse() when inUse != null:
+return inUse(_that);case DeleteCategoryFailed() when failed != null:
+return failed(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( DeleteCategoryOk value)  ok,required TResult Function( DeleteCategoryInUse value)  inUse,required TResult Function( DeleteCategoryFailed value)  failed,}){
+final _that = this;
+switch (_that) {
+case DeleteCategoryOk():
+return ok(_that);case DeleteCategoryInUse():
+return inUse(_that);case DeleteCategoryFailed():
+return failed(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( DeleteCategoryOk value)?  ok,TResult? Function( DeleteCategoryInUse value)?  inUse,TResult? Function( DeleteCategoryFailed value)?  failed,}){
+final _that = this;
+switch (_that) {
+case DeleteCategoryOk() when ok != null:
+return ok(_that);case DeleteCategoryInUse() when inUse != null:
+return inUse(_that);case DeleteCategoryFailed() when failed != null:
+return failed(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  ok,TResult Function()?  inUse,TResult Function()?  failed,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case DeleteCategoryOk() when ok != null:
+return ok();case DeleteCategoryInUse() when inUse != null:
+return inUse();case DeleteCategoryFailed() when failed != null:
+return failed();case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  ok,required TResult Function()  inUse,required TResult Function()  failed,}) {final _that = this;
+switch (_that) {
+case DeleteCategoryOk():
+return ok();case DeleteCategoryInUse():
+return inUse();case DeleteCategoryFailed():
+return failed();}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  ok,TResult? Function()?  inUse,TResult? Function()?  failed,}) {final _that = this;
+switch (_that) {
+case DeleteCategoryOk() when ok != null:
+return ok();case DeleteCategoryInUse() when inUse != null:
+return inUse();case DeleteCategoryFailed() when failed != null:
+return failed();case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class DeleteCategoryOk implements DeleteCategoryOutcome {
+  const DeleteCategoryOk();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is DeleteCategoryOk);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'DeleteCategoryOutcome.ok()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class DeleteCategoryInUse implements DeleteCategoryOutcome {
+  const DeleteCategoryInUse();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is DeleteCategoryInUse);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'DeleteCategoryOutcome.inUse()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class DeleteCategoryFailed implements DeleteCategoryOutcome {
+  const DeleteCategoryFailed();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is DeleteCategoryFailed);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'DeleteCategoryOutcome.failed()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+mixin _$ReorderCategoriesOutcome {
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ReorderCategoriesOutcome);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'ReorderCategoriesOutcome()';
+}
+
+
+}
+
+/// @nodoc
+class $ReorderCategoriesOutcomeCopyWith<$Res>  {
+$ReorderCategoriesOutcomeCopyWith(ReorderCategoriesOutcome _, $Res Function(ReorderCategoriesOutcome) __);
+}
+
+
+/// Adds pattern-matching-related methods to [ReorderCategoriesOutcome].
+extension ReorderCategoriesOutcomePatterns on ReorderCategoriesOutcome {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ReorderCategoriesOk value)?  ok,TResult Function( ReorderCategoriesFailed value)?  failed,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case ReorderCategoriesOk() when ok != null:
+return ok(_that);case ReorderCategoriesFailed() when failed != null:
+return failed(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ReorderCategoriesOk value)  ok,required TResult Function( ReorderCategoriesFailed value)  failed,}){
+final _that = this;
+switch (_that) {
+case ReorderCategoriesOk():
+return ok(_that);case ReorderCategoriesFailed():
+return failed(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ReorderCategoriesOk value)?  ok,TResult? Function( ReorderCategoriesFailed value)?  failed,}){
+final _that = this;
+switch (_that) {
+case ReorderCategoriesOk() when ok != null:
+return ok(_that);case ReorderCategoriesFailed() when failed != null:
+return failed(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  ok,TResult Function()?  failed,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case ReorderCategoriesOk() when ok != null:
+return ok();case ReorderCategoriesFailed() when failed != null:
+return failed();case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  ok,required TResult Function()  failed,}) {final _that = this;
+switch (_that) {
+case ReorderCategoriesOk():
+return ok();case ReorderCategoriesFailed():
+return failed();}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  ok,TResult? Function()?  failed,}) {final _that = this;
+switch (_that) {
+case ReorderCategoriesOk() when ok != null:
+return ok();case ReorderCategoriesFailed() when failed != null:
+return failed();case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class ReorderCategoriesOk implements ReorderCategoriesOutcome {
+  const ReorderCategoriesOk();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ReorderCategoriesOk);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'ReorderCategoriesOutcome.ok()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class ReorderCategoriesFailed implements ReorderCategoriesOutcome {
+  const ReorderCategoriesFailed();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ReorderCategoriesFailed);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'ReorderCategoriesOutcome.failed()';
+}
+
+
+}
+
+
+
+
 // dart format on

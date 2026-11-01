@@ -6,8 +6,9 @@
 //     archive for referenced custom, delete for unused custom).
 //   - Seeded + unreferenced → Archive, not Delete (plan §12 risk #3).
 //   - Archived rows are excluded from the state.
-//   - Commands route to the repository and translate the repository's
-//     typed exceptions into `CategoriesOperationException(kind)`.
+//   - Commands route to the repository and return an outcome per
+//     command, never throwing: typed repository exceptions map to their
+//     variants and every other failure to `failed`.
 //
 // Repository is mocked via `mocktail`; no live DB.
 
@@ -43,9 +44,6 @@ Category _c({
   sortOrder: sortOrder,
   isArchived: isArchived,
 );
-
-Matcher _operationError(CategoriesOperationError kind) =>
-    isA<CategoriesOperationException>().having((e) => e.kind, 'kind', kind);
 
 @Dependencies([CategoriesController])
 void main() {
@@ -240,11 +238,11 @@ void main() {
       final saved = draft.copyWith(id: 42);
       when(() => repo.save(any())).thenAnswer((_) async => saved);
 
-      final result = await container
+      final outcome = await container
           .read(categoriesControllerProvider.notifier)
           .createCategory(draft);
 
-      expect(result.id, 42);
+      expect(outcome, const SaveCategoryOutcome.ok());
       final captured =
           verify(() => repo.save(captureAny())).captured.single as Category;
       expect(captured.id, 0);
@@ -262,10 +260,10 @@ void main() {
       final after = _c(id: 7, type: CategoryType.expense, customName: 'X');
       when(() => repo.rename(7, 'X')).thenAnswer((_) async => after);
 
-      final result = await container
+      final outcome = await container
           .read(categoriesControllerProvider.notifier)
           .renameCategory(7, 'X');
-      expect(result.customName, 'X');
+      expect(outcome, const SaveCategoryOutcome.ok());
       verify(() => repo.rename(7, 'X')).called(1);
     });
 
@@ -285,10 +283,10 @@ void main() {
       );
       when(() => repo.archive(3)).thenAnswer((_) async => archived);
 
-      final result = await container
+      final outcome = await container
           .read(categoriesControllerProvider.notifier)
           .archiveCategory(3);
-      expect(result.isArchived, isTrue);
+      expect(outcome, const ArchiveCategoryOutcome.ok());
       verify(() => repo.archive(3)).called(1);
     });
 
@@ -310,17 +308,37 @@ void main() {
       when(() => repo.save(any()))
           .thenAnswer((_) async => stored.copyWith(isArchived: false));
 
-      await container
+      final outcome = await container
           .read(categoriesControllerProvider.notifier)
           .undoArchive(4);
 
+      expect(outcome, const UndoArchiveCategoryOutcome.ok());
       final captured =
           verify(() => repo.save(captureAny())).captured.single as Category;
       expect(captured.id, 4);
       expect(captured.isArchived, isFalse);
     });
 
-    test('C12: deleteCategory translates CategoryInUseException', () async {
+    test(
+      'C12: deleteCategory returns inUse for CategoryInUseException',
+      () async {
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        container.listen(categoriesControllerProvider, (_, _) {});
+        await Future<void>.delayed(Duration.zero);
+        rowsCtrl.add(const []);
+        await waitForData(container);
+
+        when(() => repo.delete(11)).thenThrow(const CategoryInUseException(11));
+
+        final outcome = await container
+            .read(categoriesControllerProvider.notifier)
+            .deleteCategory(11);
+        expect(outcome, const DeleteCategoryOutcome.inUse());
+      },
+    );
+
+    test('C12b: deleteCategory returns ok when the row is deleted', () async {
       final container = makeContainer();
       addTearDown(container.dispose);
       container.listen(categoriesControllerProvider, (_, _) {});
@@ -328,18 +346,16 @@ void main() {
       rowsCtrl.add(const []);
       await waitForData(container);
 
-      when(() => repo.delete(11)).thenThrow(const CategoryInUseException(11));
+      when(() => repo.delete(11)).thenAnswer((_) async => true);
 
-      await expectLater(
-        container
-            .read(categoriesControllerProvider.notifier)
-            .deleteCategory(11),
-        throwsA(_operationError(CategoriesOperationError.inUse)),
-      );
+      final outcome = await container
+          .read(categoriesControllerProvider.notifier)
+          .deleteCategory(11);
+      expect(outcome, const DeleteCategoryOutcome.ok());
     });
 
     test(
-      'C13: createCategory translates CategoryTypeLockedException',
+      'C12c: deleteCategory returns ok when the row is already gone',
       () async {
         final container = makeContainer();
         addTearDown(container.dispose);
@@ -348,70 +364,98 @@ void main() {
         rowsCtrl.add(const []);
         await waitForData(container);
 
-        when(() => repo.save(any()))
-            .thenThrow(const CategoryTypeLockedException(1));
+        when(() => repo.delete(11)).thenAnswer((_) async => false);
 
-        await expectLater(
-          container
-              .read(categoriesControllerProvider.notifier)
-              .createCategory(
-                _c(id: 1, type: CategoryType.income, customName: 'X'),
-              ),
-          throwsA(_operationError(CategoriesOperationError.typeLocked)),
-        );
+        final outcome = await container
+            .read(categoriesControllerProvider.notifier)
+            .deleteCategory(11);
+        expect(outcome, const DeleteCategoryOutcome.ok());
       },
     );
 
-    test(
-      'C13b: updateIconColor translates CategoryTypeLockedException',
-      () async {
-        final container = makeContainer();
-        addTearDown(container.dispose);
-        container.listen(categoriesControllerProvider, (_, _) {});
-        await Future<void>.delayed(Duration.zero);
-        rowsCtrl.add(const []);
-        await waitForData(container);
+    test('C12d: deleteCategory returns failed on other failures', () async {
+      final container = makeContainer();
+      addTearDown(container.dispose);
+      container.listen(categoriesControllerProvider, (_, _) {});
+      await Future<void>.delayed(Duration.zero);
+      rowsCtrl.add(const []);
+      await waitForData(container);
 
-        when(() => repo.getById(5)).thenAnswer(
-          (_) async => _c(id: 5, type: CategoryType.expense, customName: 'A'),
-        );
-        when(() => repo.save(any()))
-            .thenThrow(const CategoryTypeLockedException(5));
+      when(() => repo.delete(11)).thenThrow(
+        const CategoryRepositoryException(
+          'Seeded category 11 cannot be deleted',
+        ),
+      );
 
-        await expectLater(
-          container
-              .read(categoriesControllerProvider.notifier)
-              .updateIconColor(id: 5, icon: 'home', color: 1),
-          throwsA(_operationError(CategoriesOperationError.typeLocked)),
-        );
-      },
-    );
+      final outcome = await container
+          .read(categoriesControllerProvider.notifier)
+          .deleteCategory(11);
+      expect(outcome, const DeleteCategoryOutcome.failed());
+    });
 
-    test(
-      'C13c: archiveCategory translates CategoryHasRecurringRuleException',
-      () async {
-        final container = makeContainer();
-        addTearDown(container.dispose);
-        container.listen(categoriesControllerProvider, (_, _) {});
-        await Future<void>.delayed(Duration.zero);
-        rowsCtrl.add(const []);
-        await waitForData(container);
+    test('C13: createCategory returns failed when save throws', () async {
+      final container = makeContainer();
+      addTearDown(container.dispose);
+      container.listen(categoriesControllerProvider, (_, _) {});
+      await Future<void>.delayed(Duration.zero);
+      rowsCtrl.add(const []);
+      await waitForData(container);
 
-        when(() => repo.archive(7))
-            .thenThrow(const CategoryHasRecurringRuleException(7));
+      when(() => repo.save(any())).thenThrow(
+        const CategoryRepositoryException(
+          'Insert disappeared before read-back',
+        ),
+      );
 
-        await expectLater(
-          container
-              .read(categoriesControllerProvider.notifier)
-              .archiveCategory(7),
-          throwsA(
-            _operationError(CategoriesOperationError.hasActiveRecurringRule),
-          ),
-        );
-      },
-    );
+      final outcome = await container
+          .read(categoriesControllerProvider.notifier)
+          .createCategory(
+            _c(id: 1, type: CategoryType.income, customName: 'X'),
+          );
+      expect(outcome, const SaveCategoryOutcome.failed());
+    });
 
-    test('C13d: other repository failures pass through untranslated', () async {
+    test('C13b: updateIconColor returns failed when save throws, even for a '
+        'type lock', () async {
+      final container = makeContainer();
+      addTearDown(container.dispose);
+      container.listen(categoriesControllerProvider, (_, _) {});
+      await Future<void>.delayed(Duration.zero);
+      rowsCtrl.add(const []);
+      await waitForData(container);
+
+      when(() => repo.getById(5)).thenAnswer(
+        (_) async => _c(id: 5, type: CategoryType.expense, customName: 'A'),
+      );
+      // Synthetic: the stored type is copied, so save never type-locks.
+      when(() => repo.save(any()))
+          .thenThrow(const CategoryTypeLockedException(5));
+
+      final outcome = await container
+          .read(categoriesControllerProvider.notifier)
+          .updateIconColor(id: 5, icon: 'home', color: 1);
+      expect(outcome, const SaveCategoryOutcome.failed());
+    });
+
+    test('C13c: archiveCategory returns hasActiveRecurringRule for '
+        'CategoryHasRecurringRuleException', () async {
+      final container = makeContainer();
+      addTearDown(container.dispose);
+      container.listen(categoriesControllerProvider, (_, _) {});
+      await Future<void>.delayed(Duration.zero);
+      rowsCtrl.add(const []);
+      await waitForData(container);
+
+      when(() => repo.archive(7))
+          .thenThrow(const CategoryHasRecurringRuleException(7));
+
+      final outcome = await container
+          .read(categoriesControllerProvider.notifier)
+          .archiveCategory(7);
+      expect(outcome, const ArchiveCategoryOutcome.hasActiveRecurringRule());
+    });
+
+    test('C13d: renameCategory returns failed when rename throws', () async {
       final container = makeContainer();
       addTearDown(container.dispose);
       container.listen(categoriesControllerProvider, (_, _) {});
@@ -422,15 +466,13 @@ void main() {
       when(() => repo.rename(8, 'B'))
           .thenThrow(const CategoryRepositoryException('Category 8 not found'));
 
-      await expectLater(
-        container
-            .read(categoriesControllerProvider.notifier)
-            .renameCategory(8, 'B'),
-        throwsA(isA<CategoryRepositoryException>()),
-      );
+      final outcome = await container
+          .read(categoriesControllerProvider.notifier)
+          .renameCategory(8, 'B');
+      expect(outcome, const SaveCategoryOutcome.failed());
     });
 
-    test('C14: reorder writes sortOrder per list index', () async {
+    test('C13e: archiveCategory returns failed on other failures', () async {
       final container = makeContainer();
       addTearDown(container.dispose);
       container.listen(categoriesControllerProvider, (_, _) {});
@@ -438,26 +480,135 @@ void main() {
       rowsCtrl.add(const []);
       await waitForData(container);
 
-      final a = _c(id: 10, type: CategoryType.expense, customName: 'A');
-      final b = _c(id: 20, type: CategoryType.expense, customName: 'B');
-      when(() => repo.getById(10)).thenAnswer((_) async => a);
-      when(() => repo.getById(20)).thenAnswer((_) async => b);
+      when(() => repo.archive(7))
+          .thenThrow(const CategoryRepositoryException('Category 7 not found'));
+
+      final outcome = await container
+          .read(categoriesControllerProvider.notifier)
+          .archiveCategory(7);
+      expect(outcome, const ArchiveCategoryOutcome.failed());
+    });
+
+    test(
+      'C13f: updateIconColor returns failed when the row is missing',
+      () async {
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        container.listen(categoriesControllerProvider, (_, _) {});
+        await Future<void>.delayed(Duration.zero);
+        rowsCtrl.add(const []);
+        await waitForData(container);
+
+        when(() => repo.getById(5)).thenAnswer((_) async => null);
+
+        final outcome = await container
+            .read(categoriesControllerProvider.notifier)
+            .updateIconColor(id: 5, icon: 'home', color: 1);
+        expect(outcome, const SaveCategoryOutcome.failed());
+        verifyNever(() => repo.save(any()));
+      },
+    );
+
+    test(
+      'C13g: undoArchive returns ok and writes nothing when the row is missing',
+      () async {
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        container.listen(categoriesControllerProvider, (_, _) {});
+        await Future<void>.delayed(Duration.zero);
+        rowsCtrl.add(const []);
+        await waitForData(container);
+
+        when(() => repo.getById(4)).thenAnswer((_) async => null);
+
+        final outcome = await container
+            .read(categoriesControllerProvider.notifier)
+            .undoArchive(4);
+        expect(outcome, const UndoArchiveCategoryOutcome.ok());
+        verifyNever(() => repo.save(any()));
+      },
+    );
+
+    test('C13h: undoArchive returns failed when save throws', () async {
+      final container = makeContainer();
+      addTearDown(container.dispose);
+      container.listen(categoriesControllerProvider, (_, _) {});
+      await Future<void>.delayed(Duration.zero);
+      rowsCtrl.add(const []);
+      await waitForData(container);
+
+      when(() => repo.getById(4)).thenAnswer(
+        (_) async => _c(
+          id: 4,
+          type: CategoryType.expense,
+          customName: 'Z',
+          isArchived: true,
+        ),
+      );
       when(() => repo.save(any()))
-          .thenAnswer((inv) async => inv.positionalArguments.first as Category);
+          .thenThrow(const CategoryRepositoryException('Category 4 not found'));
 
-      await container.read(categoriesControllerProvider.notifier).reorder([
-        20,
-        10,
-      ]);
+      final outcome = await container
+          .read(categoriesControllerProvider.notifier)
+          .undoArchive(4);
+      expect(outcome, const UndoArchiveCategoryOutcome.failed());
+    });
 
-      final captures = verify(() => repo.save(captureAny())).captured;
-      expect(captures, hasLength(2));
-      final first = captures[0] as Category;
-      final second = captures[1] as Category;
-      expect(first.id, 20);
-      expect(first.sortOrder, 0);
-      expect(second.id, 10);
-      expect(second.sortOrder, 1);
+    test('C14: reorder passes the new order to repo.reorder', () async {
+      final container = makeContainer();
+      addTearDown(container.dispose);
+      container.listen(categoriesControllerProvider, (_, _) {});
+      await Future<void>.delayed(Duration.zero);
+      rowsCtrl.add(const []);
+      await waitForData(container);
+
+      when(() => repo.reorder([20, 10])).thenAnswer((_) async {});
+
+      final outcome = await container
+          .read(categoriesControllerProvider.notifier)
+          .reorder([20, 10]);
+
+      expect(outcome, const ReorderCategoriesOutcome.ok());
+      verify(() => repo.reorder([20, 10])).called(1);
+    });
+
+    test('C14b: reorder returns failed when repo.reorder throws', () async {
+      final container = makeContainer();
+      addTearDown(container.dispose);
+      container.listen(categoriesControllerProvider, (_, _) {});
+      await Future<void>.delayed(Duration.zero);
+      rowsCtrl.add(const []);
+      await waitForData(container);
+
+      when(() => repo.reorder([20, 10])).thenThrow(Exception('injected'));
+
+      final outcome = await container
+          .read(categoriesControllerProvider.notifier)
+          .reorder([20, 10]);
+      expect(outcome, const ReorderCategoriesOutcome.failed());
+    });
+
+    test('C14c: a command on a disposed controller returns failed instead of '
+        'throwing', () async {
+      final container = makeContainer();
+      addTearDown(container.dispose);
+      final sub = container.listen(categoriesControllerProvider, (_, _) {});
+      await Future<void>.delayed(Duration.zero);
+      rowsCtrl.add(const []);
+      await waitForData(container);
+      final notifier = container.read(categoriesControllerProvider.notifier);
+
+      // The screen closed: the auto-dispose controller is gone.
+      sub.close();
+      await container.pump();
+
+      final outcome = await notifier.updateIconColor(
+        id: 5,
+        icon: 'home',
+        color: 1,
+      );
+      expect(outcome, const SaveCategoryOutcome.failed());
+      verifyNever(() => repo.getById(any()));
     });
 
     test('C15: updateIconColor preserves other fields', () async {
@@ -477,10 +628,11 @@ void main() {
       when(() => repo.save(any()))
           .thenAnswer((inv) async => inv.positionalArguments.first as Category);
 
-      await container
+      final outcome = await container
           .read(categoriesControllerProvider.notifier)
           .updateIconColor(id: 50, icon: 'home', color: 3);
 
+      expect(outcome, const SaveCategoryOutcome.ok());
       final captured =
           verify(() => repo.save(captureAny())).captured.single as Category;
       expect(captured.id, 50);

@@ -280,10 +280,6 @@
   "@categoriesArchiveRecurringRuleError": {
     "description": "PRD 737. SnackBar shown when an archive is blocked because an active recurring rule still uses the category."
   },
-  "categoriesFormTypeLockedError": "This category's type can't change after it has been used. Create a new category instead.",
-  "@categoriesFormTypeLockedError": {
-    "description": "PRD 735-737. Inline error in the category form sheet when the repository rejects a type change on a category that is already in use."
-  },
   "categoriesPickerTitleExpense": "Pick expense category",
   "@categoriesPickerTitleExpense": {
     "description": "PRD 683, 715. Category picker sheet title when opened for an expense transaction."
