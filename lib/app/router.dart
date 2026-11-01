@@ -44,7 +44,7 @@ import '../features/transactions/transaction_form_state.dart';
 import 'providers/default_currency_provider.dart';
 import 'providers/exchange_rates_provider.dart';
 import 'providers/splash_redirect_provider.dart';
-import 'widgets/adaptive_shell.dart';
+import '../ui/core/widgets/adaptive_shell.dart';
 
 part 'router.g.dart';
 

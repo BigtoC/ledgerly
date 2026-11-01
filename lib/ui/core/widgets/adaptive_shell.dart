@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../l10n/app_localizations.dart';
-import '../providers/app_update_provider.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../app/providers/app_update_provider.dart';
 
 /// Adaptive navigation shell. Renders a [NavigationBar] below 600dp and a
 /// [NavigationRail] at 600dp and above. This is the main 600dp switch; the

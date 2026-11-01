@@ -204,6 +204,7 @@ import 'e.dart' if (dart.library.io) 'f.dart';
         for (final uri in [
           'package:ledgerly/app/providers/exchange_rates_provider.dart',
           'package:ledgerly/app/providers/app_version_provider.dart',
+          'package:ledgerly/app/providers/app_update_provider.dart',
         ]) {
           expect(forbidden(path, uri), isFalse, reason: '$path -> $uri');
         }
@@ -334,7 +335,6 @@ import 'e.dart' if (dart.library.io) 'f.dart';
       const appFiles = [
         'lib/app/bootstrap.dart',
         'lib/app/providers/app_update_provider.dart',
-        'lib/app/widgets/adaptive_shell.dart',
       ];
       const serviceProvidersFile = 'lib/app/providers/service_providers.dart';
       const plugins = [
@@ -355,23 +355,6 @@ import 'e.dart' if (dart.library.io) 'f.dart';
       for (final uri in [...plugins, 'package:dio/dio.dart']) {
         expect(forbidden(serviceProvidersFile, uri), isFalse, reason: uri);
       }
-    });
-
-    test('app widgets may not import the repository or service providers', () {
-      const appWidget = 'lib/app/widgets/adaptive_shell.dart';
-      expect(forbidden(appWidget, repositoryProviders), isTrue);
-      expect(forbidden(appWidget, serviceProviders), isTrue);
-      expect(
-        forbidden(appWidget, '../providers/repository_providers.dart'),
-        isTrue,
-      );
-      expect(
-        forbidden(
-          appWidget,
-          'package:ledgerly/app/providers/app_update_provider.dart',
-        ),
-        isFalse,
-      );
     });
   });
 
