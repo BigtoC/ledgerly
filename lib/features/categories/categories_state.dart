@@ -8,6 +8,9 @@
 // Both `expense` and `income` lists are pre-sorted by the controller:
 // `sortOrder ASC (nulls last)`, then display name ASC (resolved via
 // `customName` first, `l10nKey` otherwise).
+//
+// The `*Outcome` unions at the end are what the controller's commands
+// return; widgets switch on them to pick a message.
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -50,4 +53,66 @@ abstract class CategoryRowView with _$CategoryRowView {
     required Category category,
     required CategoryRowAffordance affordance,
   }) = _CategoryRowView;
+}
+
+/// Result of [CategoriesController.createCategory],
+/// [CategoriesController.renameCategory] and
+/// [CategoriesController.updateIconColor]. Shared because all three feed
+/// the form sheet's one inline banner.
+@freezed
+sealed class SaveCategoryOutcome with _$SaveCategoryOutcome {
+  /// Saved. The form sheet closes.
+  const factory SaveCategoryOutcome.ok() = SaveCategoryOk;
+
+  /// Any failure. The sheet stays open with `errorSnackbarGeneric` inline.
+  const factory SaveCategoryOutcome.failed() = SaveCategoryFailed;
+}
+
+/// Result of [CategoriesController.archiveCategory].
+@freezed
+sealed class ArchiveCategoryOutcome with _$ArchiveCategoryOutcome {
+  /// Archived. The widget shows the Undo snackbar.
+  const factory ArchiveCategoryOutcome.ok() = ArchiveCategoryOk;
+
+  /// An active recurring rule uses the category. The widget shows
+  /// `categoriesArchiveRecurringRuleError`.
+  const factory ArchiveCategoryOutcome.hasActiveRecurringRule() =
+      ArchiveCategoryHasActiveRecurringRule;
+
+  /// Any other failure. The widget shows `errorSnackbarGeneric`.
+  const factory ArchiveCategoryOutcome.failed() = ArchiveCategoryFailed;
+}
+
+/// Result of [CategoriesController.undoArchive].
+@freezed
+sealed class UndoArchiveCategoryOutcome with _$UndoArchiveCategoryOutcome {
+  /// Restored, or the row no longer exists. The widget shows nothing.
+  const factory UndoArchiveCategoryOutcome.ok() = UndoArchiveCategoryOk;
+
+  /// Any failure. The widget shows `errorSnackbarGeneric`.
+  const factory UndoArchiveCategoryOutcome.failed() = UndoArchiveCategoryFailed;
+}
+
+/// Result of [CategoriesController.deleteCategory].
+@freezed
+sealed class DeleteCategoryOutcome with _$DeleteCategoryOutcome {
+  /// Deleted, or the row was already gone. The widget shows nothing.
+  const factory DeleteCategoryOutcome.ok() = DeleteCategoryOk;
+
+  /// Transactions, recurring rules or shopping-list drafts still use the
+  /// category. The widget shows `categoriesDeleteInUseError`.
+  const factory DeleteCategoryOutcome.inUse() = DeleteCategoryInUse;
+
+  /// Any other failure. The widget shows `errorSnackbarGeneric`.
+  const factory DeleteCategoryOutcome.failed() = DeleteCategoryFailed;
+}
+
+/// Result of [CategoriesController.reorder].
+@freezed
+sealed class ReorderCategoriesOutcome with _$ReorderCategoriesOutcome {
+  /// Every row has its new `sortOrder`. The widget shows nothing.
+  const factory ReorderCategoriesOutcome.ok() = ReorderCategoriesOk;
+
+  /// Nothing was written. The widget shows `errorSnackbarGeneric`.
+  const factory ReorderCategoriesOutcome.failed() = ReorderCategoriesFailed;
 }

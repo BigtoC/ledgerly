@@ -12,18 +12,18 @@
 //
 // Repository-layer invariants (category-type lock, seeded-row-cannot-
 // delete) stay in `CategoryRepository`; the controller only derives
-// which affordance to show and routes the correct command. The create,
-// rename, updateIconColor, archive, undoArchive and delete commands
-// translate the repository's typed exceptions
-// (`CategoryInUseException`, `CategoryTypeLockedException`,
-// `CategoryHasRecurringRuleException`) into
-// `CategoriesOperationException(kind)`, which the widgets map to
-// localized messages without importing the repository. The form sheet
-// stays open for retry (plan §6). Any other failure is rethrown as is
-// and the widgets show their generic fallback.
+// which affordance to show and routes the correct command. Every
+// command returns a sealed outcome from `categories_state.dart` and
+// never throws: `CategoryInUseException` and
+// `CategoryHasRecurringRuleException` map to their own variants, and
+// every other failure is logged by type and returned as `failed`. The
+// widgets switch on the outcome to pick a localized message without
+// importing the repository. The form sheet stays open for retry
+// (plan §6).
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../app/providers/repository_providers.dart';
@@ -70,96 +70,130 @@ class CategoriesController extends _$CategoriesController {
   // ---------- Commands ----------
 
   /// Create a new category. `category.id` must be `0`.
-  Future<Category> createCategory(Category category) {
-    final repo = ref.read(categoryRepositoryProvider);
-    return _translate(() => repo.save(category.copyWith(id: 0)));
+  Future<SaveCategoryOutcome> createCategory(Category category) async {
+    try {
+      final repo = ref.read(categoryRepositoryProvider);
+      await repo.save(category.copyWith(id: 0));
+      return const SaveCategoryOutcome.ok();
+    } catch (e) {
+      debugPrint(
+        '[CategoriesController] createCategory failed: ${e.runtimeType}',
+      );
+      return const SaveCategoryOutcome.failed();
+    }
   }
 
   /// Rename an existing category. Writes `customName` only.
-  Future<Category> renameCategory(int id, String? customName) {
-    final repo = ref.read(categoryRepositoryProvider);
-    return _translate(() => repo.rename(id, customName));
+  Future<SaveCategoryOutcome> renameCategory(int id, String? customName) async {
+    try {
+      final repo = ref.read(categoryRepositoryProvider);
+      await repo.rename(id, customName);
+      return const SaveCategoryOutcome.ok();
+    } catch (e) {
+      debugPrint(
+        '[CategoriesController] renameCategory failed: ${e.runtimeType}',
+      );
+      return const SaveCategoryOutcome.failed();
+    }
   }
 
   /// Updates icon + color on an existing category, preserving every other
   /// field. Never mutates `type` or `l10nKey`; those have repo-level
-  /// locks.
-  Future<Category> updateIconColor({
+  /// locks. A missing row is [SaveCategoryOutcome.failed].
+  Future<SaveCategoryOutcome> updateIconColor({
     required int id,
     required String icon,
     required int color,
   }) async {
-    final repo = ref.read(categoryRepositoryProvider);
-    final existing = await repo.getById(id);
-    if (existing == null) {
-      throw CategoryRepositoryException('Category $id not found');
+    try {
+      final repo = ref.read(categoryRepositoryProvider);
+      final existing = await repo.getById(id);
+      if (existing == null) return const SaveCategoryOutcome.failed();
+      await repo.save(existing.copyWith(icon: icon, color: color));
+      return const SaveCategoryOutcome.ok();
+    } catch (e) {
+      debugPrint(
+        '[CategoriesController] updateIconColor failed: ${e.runtimeType}',
+      );
+      return const SaveCategoryOutcome.failed();
     }
-    return _translate(
-      () => repo.save(existing.copyWith(icon: icon, color: color)),
-    );
   }
 
-  /// Archive a category. Idempotent at repo level. Throws
-  /// [CategoriesOperationException] with
-  /// [CategoriesOperationError.hasActiveRecurringRule] when an active
+  /// Archive a category. Idempotent at repo level. Returns
+  /// [ArchiveCategoryOutcome.hasActiveRecurringRule] when an active
   /// recurring rule still uses the category.
-  Future<Category> archiveCategory(int id) {
-    final repo = ref.read(categoryRepositoryProvider);
-    return _translate(() => repo.archive(id));
-  }
-
-  /// Un-archive after an undo-snackbar action.
-  Future<Category> undoArchive(int id) async {
-    final repo = ref.read(categoryRepositoryProvider);
-    final existing = await repo.getById(id);
-    if (existing == null) {
-      throw CategoryRepositoryException('Category $id not found');
+  Future<ArchiveCategoryOutcome> archiveCategory(int id) async {
+    try {
+      final repo = ref.read(categoryRepositoryProvider);
+      await repo.archive(id);
+      return const ArchiveCategoryOutcome.ok();
+    } on CategoryHasRecurringRuleException {
+      return const ArchiveCategoryOutcome.hasActiveRecurringRule();
+    } catch (e) {
+      debugPrint(
+        '[CategoriesController] archiveCategory failed: ${e.runtimeType}',
+      );
+      return const ArchiveCategoryOutcome.failed();
     }
-    return _translate(() => repo.save(existing.copyWith(isArchived: false)));
   }
 
-  /// Hard-delete a custom, unused category. Throws
-  /// [CategoriesOperationException] with [CategoriesOperationError.inUse]
-  /// when transactions, recurring rules or shopping-list drafts still
-  /// reference the row.
-  Future<bool> deleteCategory(int id) {
-    final repo = ref.read(categoryRepositoryProvider);
-    return _translate(() => repo.delete(id));
+  /// Un-archive after an undo-snackbar action. A row that no longer
+  /// exists has nothing to restore, so it is [UndoArchiveCategoryOutcome.ok]
+  /// and writes nothing.
+  ///
+  /// The action can run after the screen is gone, on a controller that
+  /// `container.read` just rebuilt and will dispose again, so the
+  /// repository is read before the first await and `ref` is not used
+  /// after it.
+  Future<UndoArchiveCategoryOutcome> undoArchive(int id) async {
+    try {
+      final repo = ref.read(categoryRepositoryProvider);
+      final existing = await repo.getById(id);
+      if (existing == null) return const UndoArchiveCategoryOutcome.ok();
+      await repo.save(existing.copyWith(isArchived: false));
+      return const UndoArchiveCategoryOutcome.ok();
+    } catch (e) {
+      debugPrint('[CategoriesController] undoArchive failed: ${e.runtimeType}');
+      return const UndoArchiveCategoryOutcome.failed();
+    }
+  }
+
+  /// Hard-delete a custom, unused category. Returns
+  /// [DeleteCategoryOutcome.inUse] when transactions, recurring rules or
+  /// shopping-list drafts still reference the row. A row that is already
+  /// gone is [DeleteCategoryOutcome.ok].
+  Future<DeleteCategoryOutcome> deleteCategory(int id) async {
+    try {
+      final repo = ref.read(categoryRepositoryProvider);
+      await repo.delete(id);
+      return const DeleteCategoryOutcome.ok();
+    } on CategoryInUseException {
+      return const DeleteCategoryOutcome.inUse();
+    } catch (e) {
+      debugPrint(
+        '[CategoriesController] deleteCategory failed: ${e.runtimeType}',
+      );
+      return const DeleteCategoryOutcome.failed();
+    }
   }
 
   /// Re-order within a single type section. `orderedIds` is the new
   /// top-to-bottom order for the section (no cross-type moves).
   ///
-  /// Writes `sortOrder` as the list index. Other fields are preserved.
-  Future<void> reorder(List<int> orderedIds) async {
-    final repo = ref.read(categoryRepositoryProvider);
-    for (var i = 0; i < orderedIds.length; i++) {
-      final id = orderedIds[i];
-      final existing = await repo.getById(id);
-      if (existing == null) continue;
-      await repo.save(existing.copyWith(sortOrder: i));
+  /// Writes `sortOrder` as the list index in one transaction, so a
+  /// failure leaves the old order untouched. Other fields are preserved.
+  Future<ReorderCategoriesOutcome> reorder(List<int> orderedIds) async {
+    try {
+      final repo = ref.read(categoryRepositoryProvider);
+      await repo.reorder(orderedIds);
+      return const ReorderCategoriesOutcome.ok();
+    } catch (e) {
+      debugPrint('[CategoriesController] reorder failed: ${e.runtimeType}');
+      return const ReorderCategoriesOutcome.failed();
     }
   }
 
   // ---------- Private helpers ----------
-
-  /// Runs a repository write and rethrows its typed exceptions as
-  /// [CategoriesOperationException]. Other failures pass through.
-  Future<T> _translate<T>(Future<T> Function() write) async {
-    try {
-      return await write();
-    } on CategoryInUseException {
-      throw const CategoriesOperationException(CategoriesOperationError.inUse);
-    } on CategoryTypeLockedException {
-      throw const CategoriesOperationException(
-        CategoriesOperationError.typeLocked,
-      );
-    } on CategoryHasRecurringRuleException {
-      throw const CategoriesOperationException(
-        CategoriesOperationError.hasActiveRecurringRule,
-      );
-    }
-  }
 
   Future<List<CategoryRowView>> _withAffordance(
     List<Category> rows,
@@ -185,29 +219,6 @@ class CategoriesController extends _$CategoriesController {
         ? CategoryRowAffordance.archive
         : CategoryRowAffordance.delete;
   }
-}
-
-/// Typed failure surface for [CategoriesController] commands. Widgets
-/// branch on `kind` to pick a localized message.
-class CategoriesOperationException implements Exception {
-  const CategoriesOperationException(this.kind);
-
-  final CategoriesOperationError kind;
-
-  @override
-  String toString() => 'CategoriesOperationException($kind)';
-}
-
-enum CategoriesOperationError {
-  /// Delete blocked: transactions, recurring rules or shopping-list
-  /// drafts still reference the category.
-  inUse,
-
-  /// Save blocked: the category's type cannot change after first use.
-  typeLocked,
-
-  /// Archive blocked: an active recurring rule still uses the category.
-  hasActiveRecurringRule,
 }
 
 // ---------- Shared sort helpers ----------

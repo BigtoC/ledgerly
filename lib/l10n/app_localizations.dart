@@ -496,12 +496,6 @@ abstract class AppLocalizations {
   /// **'An active recurring transaction uses this category, so it can\'t be archived.'**
   String get categoriesArchiveRecurringRuleError;
 
-  /// PRD 735-737. Inline error in the category form sheet when the repository rejects a type change on a category that is already in use.
-  ///
-  /// In en, this message translates to:
-  /// **'This category\'s type can\'t change after it has been used. Create a new category instead.'**
-  String get categoriesFormTypeLockedError;
-
   /// PRD 683, 715. Category picker sheet title when opened for an expense transaction.
   ///
   /// In en, this message translates to:
@@ -586,6 +580,18 @@ abstract class AppLocalizations {
   /// **'Choose another default account before deleting this one.'**
   String get accountsDeleteDefaultBlockedBody;
 
+  /// Accounts plan §7. SnackBar shown when an archive is blocked because an active recurring rule still uses the account.
+  ///
+  /// In en, this message translates to:
+  /// **'An active recurring transaction uses this account, so it can\'t be archived.'**
+  String get accountsArchiveRecurringRuleError;
+
+  /// Accounts plan §7. SnackBar shown when a delete is blocked because transactions, recurring rules or shopping-list drafts still reference the account.
+  ///
+  /// In en, this message translates to:
+  /// **'This account is still in use, so it can\'t be deleted.'**
+  String get accountsDeleteInUseError;
+
   /// PRD 643. AppBar title for /settings/manage-accounts/new (Add mode).
   ///
   /// In en, this message translates to:
@@ -651,6 +657,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This account no longer exists.'**
   String get accountsFormNotFound;
+
+  /// Accounts plan §5. Inline error in the account form when the repository rejects a currency change on an account that transactions or active recurring rules already use.
+  ///
+  /// In en, this message translates to:
+  /// **'This account\'s currency can\'t change because transactions or an active recurring transaction use it.'**
+  String get accountFormCurrencyLockedError;
 
   /// Accounts plan §5. Title for the account-type picker sheet.
   ///

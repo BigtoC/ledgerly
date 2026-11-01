@@ -3,14 +3,20 @@
 // Composes `recurringRulesRepository.watchActive()` into a single
 // [RecurringRulesState]. Mirrors `ShoppingListController`'s delete-with-
 // undo pattern: swipe-delete hides the row immediately and starts a
-// 4-second timer; `undoDelete` cancels without touching the repository;
-// timer fires → `repo.archive(id)`.
+// 4-second timer; `undoDelete(id)` cancels that rule's pending delete
+// without touching the repository; timer fires → `repo.archive(id)`.
 //
 // Pause/resume calls `repo.setActive(id, active: ...)`. The repository
 // handles next_due_date recomputation on resume.
+//
+// Commands never throw. Each returns an outcome from
+// `recurring_rules_state.dart` that the screen switches on. Only the
+// timer-driven delete commit, which fails after `deleteRule` has
+// returned, reports through [RecurringRulesDeleteFailedEffect].
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../app/providers/repository_providers.dart';
@@ -59,25 +65,61 @@ class RecurringRulesController extends _$RecurringRulesController {
 
   // ---------- Commands ----------
 
-  Future<void> pauseRule(int id) async {
-    await ref
-        .read(recurringRulesRepositoryProvider)
-        .setActive(id, active: false);
+  Future<PauseRecurringRuleOutcome> pauseRule(int id) async {
+    try {
+      await ref
+          .read(recurringRulesRepositoryProvider)
+          .setActive(id, active: false);
+      return const PauseRecurringRuleOutcome.ok();
+    } catch (e) {
+      debugPrint(
+        '[RecurringRulesController] pauseRule failed: ${e.runtimeType}',
+      );
+      return const PauseRecurringRuleOutcome.failed();
+    }
   }
 
-  Future<RecurringRule?> resumeRule(int id) async {
-    final repo = ref.read(recurringRulesRepositoryProvider);
-    await repo.setActive(id, active: true);
-    return repo.getById(id);
+  Future<ResumeRecurringRuleOutcome> resumeRule(int id) async {
+    final RecurringRulesRepository repo;
+    try {
+      repo = ref.read(recurringRulesRepositoryProvider);
+      await repo.setActive(id, active: true);
+    } catch (e) {
+      debugPrint(
+        '[RecurringRulesController] resumeRule failed: ${e.runtimeType}',
+      );
+      return const ResumeRecurringRuleOutcome.failed();
+    }
+    // The rule is resumed now, so a failed re-read only loses the date.
+    try {
+      final updated = await repo.getById(id);
+      return ResumeRecurringRuleOutcome.ok(updated?.nextDueDate);
+    } catch (e) {
+      debugPrint(
+        '[RecurringRulesController] resumeRule re-read failed: '
+        '${e.runtimeType}',
+      );
+      return const ResumeRecurringRuleOutcome.ok(null);
+    }
   }
 
-  Future<void> deleteRule(int id) async {
+  /// Hides the row and opens its undo window. A pending delete for another
+  /// rule commits first; if that commit fails, this delete does not start
+  /// and the result is [DeleteRecurringRuleNotStarted].
+  ///
+  /// Needs no catch-all: nothing here throws, because `_commitDelete`
+  /// catches its own failures and reports them as `false`.
+  Future<DeleteRecurringRuleOutcome> deleteRule(int id) async {
     if (_pendingDelete != null) {
       _undoTimer?.cancel();
       _undoTimer = null;
       final prior = _pendingDelete!;
       final committed = await _commitDelete(prior.ruleId);
-      if (!committed) return;
+      // A screen that closed during the commit has disposed this
+      // controller, and a timer started now would never be cancelled.
+      if (!committed || !ref.mounted) {
+        return const DeleteRecurringRuleOutcome.notStarted();
+      }
     }
 
     _pendingDelete = RecurringRulesPendingDelete(ruleId: id);
@@ -86,11 +128,19 @@ class RecurringRulesController extends _$RecurringRulesController {
     _undoTimer = Timer(kUndoWindow, () async {
       final pending = _pendingDelete;
       if (pending == null) return;
-      await _commitDelete(pending.ruleId);
+      final committed = await _commitDelete(pending.ruleId);
+      if (!committed) {
+        _effectListener?.call(const RecurringRulesDeleteFailedEffect());
+      }
     });
+    return const DeleteRecurringRuleOutcome.pending();
   }
 
-  Future<void> undoDelete() async {
+  /// Cancels the pending delete of rule [id]. A no-op when the pending
+  /// delete is for another rule, so a stale Undo snackbar cannot cancel a
+  /// newer delete.
+  void undoDelete(int id) {
+    if (_pendingDelete?.ruleId != id) return;
     _undoTimer?.cancel();
     _undoTimer = null;
     _pendingDelete = null;
@@ -115,7 +165,6 @@ class RecurringRulesController extends _$RecurringRulesController {
         _pendingDelete = null;
       }
       _composer?.notifyPendingDeleteChanged();
-      _effectListener?.call(const RecurringRulesDeleteFailedEffect());
       return false;
     }
   }

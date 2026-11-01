@@ -64,7 +64,6 @@ abstract class RecurringRuleFormState with _$RecurringRuleFormState {
     RecurringFormErrorKey? accountError,
     RecurringFormErrorKey? frequencyFieldError,
     RecurringFormError? formError,
-    @Default(false) bool postSaveGenerationFailed,
   }) = _RecurringRuleFormState;
 
   const RecurringRuleFormState._();
@@ -88,4 +87,35 @@ abstract class RecurringRuleFormState with _$RecurringRuleFormState {
       categoryId != null &&
       accountId != null &&
       !hasFrequencyFieldError;
+}
+
+/// Result of [RecurringRuleFormController.save].
+@freezed
+sealed class SaveRecurringRuleOutcome with _$SaveRecurringRuleOutcome {
+  /// Saved as rule [ruleId]. The widget shows the saved snackbar, or the
+  /// saved-but-generation-failed one when [generationFailed], and pops.
+  const factory SaveRecurringRuleOutcome.saved(
+    int ruleId,
+    bool generationFailed,
+  ) = SaveRecurringRuleSaved;
+
+  /// Not saved, and the reason is already in the form state (field error
+  /// keys or `formError`). The widget does nothing more.
+  const factory SaveRecurringRuleOutcome.rejected() = SaveRecurringRuleRejected;
+
+  /// Not saved for another reason. The widget shows the generic error
+  /// snackbar and keeps the form open.
+  const factory SaveRecurringRuleOutcome.failed() = SaveRecurringRuleFailed;
+}
+
+/// Result of [RecurringRuleFormController.deleteRule].
+@freezed
+sealed class ArchiveRecurringRuleOutcome with _$ArchiveRecurringRuleOutcome {
+  /// Archived. The widget shows the "Rule deleted" snackbar and pops.
+  const factory ArchiveRecurringRuleOutcome.ok() = ArchiveRecurringRuleOk;
+
+  /// Not archived. The widget shows the generic error snackbar and keeps
+  /// the form open.
+  const factory ArchiveRecurringRuleOutcome.failed() =
+      ArchiveRecurringRuleFailed;
 }

@@ -16,6 +16,7 @@ import '../../../data/models/account_type.dart';
 import '../../../data/models/currency.dart';
 import '../../../l10n/app_localizations.dart';
 import '../accounts_providers.dart';
+import '../accounts_state.dart';
 import 'account_type_display.dart';
 import 'currency_picker_sheet.dart';
 
@@ -160,16 +161,18 @@ class _CreateAccountTypeFormState
       _saving = true;
       _errorMessage = null;
     });
-    try {
-      final saved = await ref
-          .read(accountTypeCreationActionsProvider)
-          .create(name: name, defaultCurrency: _defaultCurrency);
-      if (mounted && saved != null) Navigator.of(context).pop(saved);
-    } catch (_) {
-      setState(() {
-        _saving = false;
-        _errorMessage = AppLocalizations.of(context).errorSnackbarGeneric;
-      });
+    final outcome = await ref
+        .read(accountTypeCreationActionsProvider)
+        .create(name: name, defaultCurrency: _defaultCurrency);
+    if (!mounted) return;
+    switch (outcome) {
+      case CreateAccountTypeOk(:final accountType):
+        Navigator.of(context).pop(accountType);
+      case CreateAccountTypeFailed():
+        setState(() {
+          _saving = false;
+          _errorMessage = AppLocalizations.of(context).errorSnackbarGeneric;
+        });
     }
   }
 
@@ -212,6 +215,7 @@ class _CreateAccountTypeFormState
                       ? null
                       : () async {
                           final picked = await showCurrencyPickerSheet(context);
+                          if (!mounted) return;
                           if (picked != null) {
                             setState(() => _defaultCurrency = picked);
                           }

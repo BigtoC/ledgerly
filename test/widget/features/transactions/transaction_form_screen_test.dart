@@ -10,6 +10,11 @@
 //   - Duplicate mode prefills amount + memo and resets date to today.
 //   - Discard confirm dialog fires on back-nav when state is dirty;
 //     does not fire on clean back.
+//   - A failed save or delete shows its snackbar and keeps the form open;
+//     deleting a row that is already gone says so and pops; a failed
+//     category check shows the generic error with no uncaught error.
+//   - Closing the form while it is still loading leaves no uncaught
+//     error.
 //
 // Repositories mocked via mocktail; the screen is mounted under a
 // minimal GoRouter so `GoRouterState.extra` works for duplicate.
@@ -24,6 +29,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
+import 'package:ledgerly/app/bootstrap.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/models/account.dart';
 import 'package:ledgerly/data/models/category.dart';
@@ -42,6 +48,7 @@ import 'package:ledgerly/features/transactions/widgets/amount_display.dart';
 import 'package:ledgerly/features/transactions/widgets/calculator_keypad.dart';
 import 'package:ledgerly/features/transactions/widgets/currency_selector_tile.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
+import 'package:ledgerly/l10n/app_localizations_en.dart';
 
 class _MockTransactionRepository extends Mock
     implements TransactionRepository {}
@@ -158,6 +165,7 @@ void main() {
     Object? extra,
     List<Override> extraOverrides = const [],
     double? textScale,
+    Duration? Function(int retryCount, Object error)? retry,
   }) {
     final router = GoRouter(
       initialLocation: '/home/add',
@@ -189,6 +197,7 @@ void main() {
       ],
     );
     return ProviderScope(
+      retry: retry,
       overrides: [
         transactionRepositoryProvider.overrideWithValue(txRepo),
         accountRepositoryProvider.overrideWithValue(accountRepo),
@@ -1129,6 +1138,121 @@ void main() {
       expect(capturedTx?.id, 99);
       expect(capturedTx?.amountMinorUnits, 3000);
       expect(capturedTx?.amountFormula, '3.5+10.5+11+5');
+    },
+  );
+
+  testWidgets('WS30: a failed save shows the save-failed snackbar', (
+    tester,
+  ) async {
+    when(() => txRepo.getById(99)).thenAnswer((_) async => _persistedTx());
+    when(() => txRepo.save(any())).thenThrow(Exception('db down'));
+
+    await tester.pumpWidget(mountEdit(99));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(TextButton, 'Save'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(AppLocalizationsEn().txSaveFailedSnackbar),
+      findsOneWidget,
+    );
+    expect(find.text('Edit transaction'), findsOneWidget);
+    expect(find.text('home-stub'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('WS31: a failed delete shows the delete-failed snackbar', (
+    tester,
+  ) async {
+    when(() => txRepo.getById(99)).thenAnswer((_) async => _persistedTx());
+    when(() => txRepo.delete(99)).thenThrow(Exception('db down'));
+
+    await tester.pumpWidget(mountEdit(99));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Delete'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(AppLocalizationsEn().txDeleteFailedSnackbar),
+      findsOneWidget,
+    );
+    expect(find.text('Edit transaction'), findsOneWidget);
+    expect(find.text('home-stub'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('WS32: deleting a row that is already gone says so and pops', (
+    tester,
+  ) async {
+    when(() => txRepo.getById(99)).thenAnswer((_) async => _persistedTx());
+    when(() => txRepo.delete(99)).thenAnswer((_) async => false);
+
+    await tester.pumpWidget(mountEdit(99));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Delete'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(AppLocalizationsEn().txTransactionNotFound),
+      findsOneWidget,
+    );
+    expect(find.text('home-stub'), findsOneWidget);
+    expect(find.text('Edit transaction'), findsNothing);
+  });
+
+  testWidgets(
+    'WS33: a failed category check shows the generic error, uncaught-free',
+    (tester) async {
+      await tester.pumpWidget(
+        mountAdd(
+          // Production never retries a failed provider (bootstrap.dart).
+          retry: noProviderRetry,
+          extraOverrides: [
+            categoriesByTypeProvider(CategoryType.expense)
+                .overrideWith((ref) => Stream.error(Exception('db down'))),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Select a category'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(AppLocalizationsEn().errorSnackbarGeneric),
+        findsOneWidget,
+      );
+      expect(find.text('Add transaction'), findsOneWidget);
+      expect(find.text('categories-stub'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'WS34: closing the form while it is still loading is uncaught-free',
+    (tester) async {
+      final read = Completer<Transaction?>();
+      when(() => txRepo.getById(99)).thenAnswer((_) => read.future);
+
+      await tester.pumpWidget(mountEdit(99));
+      await tester.pump();
+      verify(() => txRepo.getById(99)).called(1);
+
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
+      expect(find.text('home-stub'), findsOneWidget);
+
+      read.complete(_persistedTx());
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
     },
   );
 }

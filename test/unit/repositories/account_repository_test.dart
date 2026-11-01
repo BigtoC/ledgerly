@@ -421,7 +421,7 @@ void main() {
       await expectLater(
         repo.save(buildCashAccount(id: id, currency: _jpy)),
         throwsA(
-          isA<AccountRepositoryException>().having(
+          isA<AccountCurrencyLockedException>().having(
             (e) => e.message,
             'message',
             'Account $id currency cannot change after transactions exist',

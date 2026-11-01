@@ -5,7 +5,8 @@
 // typed command methods for every preference mutation. Widgets never call
 // the repository directly (PRD → Controller Contract); each command
 // writes via `UserPreferencesRepository.set*` and the repo stream
-// re-emits to drive the UI.
+// re-emits to drive the UI. Commands never throw: each returns a
+// [SettingsWriteOutcome], `.failed` when the write did not land.
 //
 // The splash_display_text and splash_button_label preferences are stored
 // as non-nullable `String` at the repository layer (with default values
@@ -16,6 +17,7 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter/material.dart' show ThemeMode, Locale;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -37,47 +39,58 @@ class SettingsController extends _$SettingsController {
 
   // ---------- Commands ----------
 
-  Future<void> setThemeMode(ThemeMode mode) async {
-    final repo = ref.read(userPreferencesRepositoryProvider);
-    await repo.setThemeMode(mode);
-  }
+  Future<SettingsWriteOutcome> setThemeMode(ThemeMode mode) =>
+      _write('setThemeMode', (repo) => repo.setThemeMode(mode));
 
-  Future<void> setLocale(Locale? locale) async {
-    final repo = ref.read(userPreferencesRepositoryProvider);
-    await repo.setLocale(locale);
-  }
+  Future<SettingsWriteOutcome> setLocale(Locale? locale) =>
+      _write('setLocale', (repo) => repo.setLocale(locale));
 
-  Future<void> setDefaultCurrency(String code) async {
-    final repo = ref.read(userPreferencesRepositoryProvider);
-    await repo.setDefaultCurrency(code);
-  }
+  Future<SettingsWriteOutcome> setDefaultCurrency(String code) =>
+      _write('setDefaultCurrency', (repo) => repo.setDefaultCurrency(code));
 
-  Future<void> setSplashEnabled(bool enabled) async {
-    final repo = ref.read(userPreferencesRepositoryProvider);
-    await repo.setSplashEnabled(enabled);
-  }
+  Future<SettingsWriteOutcome> setSplashEnabled(bool enabled) =>
+      _write('setSplashEnabled', (repo) => repo.setSplashEnabled(enabled));
 
-  Future<void> setSplashStartDate(DateTime? date) async {
-    final repo = ref.read(userPreferencesRepositoryProvider);
-    await repo.setSplashStartDate(date);
-  }
+  Future<SettingsWriteOutcome> setSplashStartDate(DateTime? date) =>
+      _write('setSplashStartDate', (repo) => repo.setSplashStartDate(date));
 
   /// Writes the custom splash display-text template. Empty / whitespace-only
   /// input clears the override so the default template
   /// (`kDefaultSplashDisplayText`) is used at render time.
-  Future<void> setSplashDisplayText(String text) async {
-    final repo = ref.read(userPreferencesRepositoryProvider);
-    final normalized = text.trim().isEmpty ? kDefaultSplashDisplayText : text;
-    await repo.setSplashDisplayText(normalized);
-  }
+  Future<SettingsWriteOutcome> setSplashDisplayText(String text) => _write(
+    'setSplashDisplayText',
+    (repo) {
+      final normalized = text.trim().isEmpty ? kDefaultSplashDisplayText : text;
+      return repo.setSplashDisplayText(normalized);
+    },
+  );
 
   /// Writes the custom splash button label. Empty / whitespace-only input
   /// clears the override so the localized default (`splashEnter`) is used
   /// at render time.
-  Future<void> setSplashButtonLabel(String label) async {
-    final repo = ref.read(userPreferencesRepositoryProvider);
-    final normalized = label.trim().isEmpty ? kDefaultSplashButtonLabel : label;
-    await repo.setSplashButtonLabel(normalized);
+  Future<SettingsWriteOutcome> setSplashButtonLabel(String label) =>
+      _write('setSplashButtonLabel', (repo) {
+        final normalized = label.trim().isEmpty
+            ? kDefaultSplashButtonLabel
+            : label;
+        return repo.setSplashButtonLabel(normalized);
+      });
+
+  /// Shared command boundary: reads the repository and runs [write] inside
+  /// one `try`, mapping any failure (today only a Drift write error) to
+  /// `.failed` and logging the exception type alone.
+  Future<SettingsWriteOutcome> _write(
+    String command,
+    Future<void> Function(UserPreferencesRepository repo) write,
+  ) async {
+    try {
+      final repo = ref.read(userPreferencesRepositoryProvider);
+      await write(repo);
+      return const SettingsWriteOutcome.ok();
+    } catch (e) {
+      debugPrint('[SettingsController] $command failed: ${e.runtimeType}');
+      return const SettingsWriteOutcome.failed();
+    }
   }
 }
 

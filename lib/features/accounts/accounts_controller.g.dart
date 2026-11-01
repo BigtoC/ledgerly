@@ -49,7 +49,7 @@ final class AccountsControllerProvider
 }
 
 String _$accountsControllerHash() =>
-    r'ff23d404c2ad2febe4e3599b591092c180ad4c57';
+    r'2569891e7227b842eee0e34bcbba4ebb94258573';
 
 abstract class _$AccountsController extends $StreamNotifier<AccountsState> {
   Stream<AccountsState> build();

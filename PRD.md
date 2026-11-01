@@ -98,7 +98,7 @@ Only repositories write to the database or to external stores. Controllers and u
 Every controller exposes two surfaces:
 
 - **State** — an immutable Freezed sealed union (e.g., `HomeState.loading | .empty | .data(...) | .error`)
-- **Commands** — typed methods for user actions (`saveTransaction(...)`, `deleteTransaction(id)`, `duplicateTransaction(id)`)
+- **Commands** — typed methods for user actions (`saveTransaction(...)`, `deleteTransaction(id)`, `duplicateTransaction(id)`). A command that can fail in a way the user must see returns a Freezed sealed **outcome** instead of throwing (e.g., `ArchiveCategoryOutcome.ok | .hasActiveRecurringRule | .failed`); see [Error Handling Pattern](#error-handling-pattern).
 
 Widgets read state and invoke commands. Widgets never mutate state directly and never perform data-layer work (grouping, formatting, aggregation) in `build()`.
 
@@ -1120,12 +1120,16 @@ This avoids storing raw `IconData` symbols or ARGB ints in the DB (both fragile 
 Errors propagate through the layers with typed boundaries:
 
 - **Services** throw typed exceptions (`AnkrApiException`, `RateLimitException`, `DatabaseException`). No swallowing.
-- **Repositories** either re-throw or wrap lower-layer exceptions; they never catch-and-return-null.
+- **Repositories** either re-throw or wrap lower-layer exceptions; they never catch-and-return-null. They throw rather than return results because Drift rolls back a `db.transaction` only when an exception escapes it.
 - **Use cases (Phase 2)** catch and translate to domain-level errors (`WalletSyncFailure.rateLimited`, `.network`, `.invalidKey`).
-- **Controllers** use Riverpod's `AsyncValue<State>` at the boundary; errors become `AsyncError(error, stack)` which the widget renders as an error state.
-- **Widgets** render three states (loading / data / error); errors surface via snackbar for recoverable actions (save failed) or a full-screen error state for unrecoverable reads.
+- **Controllers** report a failure in one of four ways, chosen by when it happens:
+  - **Reads** use Riverpod's `AsyncValue<State>`; errors become `AsyncError(error, stack)`, which the widget renders as an error state.
+  - **Commands** return a Freezed sealed outcome declared in the slice's `*_state.dart`, for example `ArchiveCategoryOutcome.ok | .hasActiveRecurringRule | .failed`. The controller catches every failure at the command boundary. It maps the typed repository exceptions the user must see to their own variants, logs anything else as `${e.runtimeType}` and returns `.failed`. A command that returns an outcome never throws. A variant exists only when the widget does something different for it, and data the caller needs, such as a saved row's id, rides in the success variant.
+  - **Effects** (`setEffectListener` with a sealed `*Effect` class) carry failures that arrive after the command has returned, such as a delete that commits when its undo window closes.
+  - **State variants** carry the failure of a long-running flow that renders its own progress, such as CSV import and export, app update and form hydration.
+- **Widgets** render three states (loading / data / error) and `switch` on command outcomes to choose a message: a snackbar or inline message for recoverable actions (save failed), a full-screen error state for unrecoverable reads.
 
-No `try/catch` in widgets. No unhandled `Future` anywhere.
+No `try/catch` in widgets. No unhandled `Future` anywhere: a widget either awaits a command and handles its outcome, or uses `unawaited(...)` only on a command that cannot throw. After an `await`, a widget checks `mounted` (or `context.mounted`) before it touches `setState`, `context` or its `ref`. A SnackBar action can outlive the widget that showed it, so it never calls that widget's `ref` once the widget is unmounted.
 
 ---
 
@@ -1244,6 +1248,7 @@ Tests are organized by **architectural layer**, not by feature. This mirrors the
 
 - Mock repositories (or use cases in Phase 2) via Riverpod `ProviderContainer` overrides
 - Assert state transitions: loading → data, loading → error, command → new state
+- Assert command outcomes: one test per outcome variant of each command, instead of expecting a thrown exception
 - Assert presentation transformation: grouping, summary aggregation, badge-count derivation
 
 ### Utility Tests (`test/unit/utils/`)

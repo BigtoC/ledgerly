@@ -10,6 +10,14 @@
 //   MAB04 - archive action via overflow menu shows undo snackbar
 //   MAB05 - balance renders in native currency (USD, JPY, TWD)
 //   MAB06 - 2× text scale survives
+//   MAB07 - Undo after the archived row was deleted is a silent no-op
+//   MAB08 - Undo restores the bottom row of the Active card after it moved
+//   MAB09 - archive blocked by an active recurring rule shows its message
+//   MAB10 - delete blocked because the account is in use shows its message
+//   MAB11 - a failed Undo shows the generic error snackbar
+//   MAB12 - a later snackbar shows while an Undo snackbar is up
+
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,6 +35,7 @@ import 'package:ledgerly/data/models/currency.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/account_type_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
+import 'package:ledgerly/data/repositories/repository_exceptions.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/features/accounts/accounts_controller.dart';
 import 'package:ledgerly/features/accounts/accounts_state.dart';
@@ -73,12 +82,34 @@ AccountWithBalance _wb(
 );
 
 class _FakeAccountsController extends AccountsController {
-  _FakeAccountsController(this._fixed);
+  _FakeAccountsController(this._fixed, [this._updates]);
   final AccountsState _fixed;
+  final Stream<AccountsState>? _updates;
 
   @override
   Stream<AccountsState> build() async* {
     yield _fixed;
+    if (_updates != null) yield* _updates;
+  }
+}
+
+/// Renders [ManageAccountsBody] from the controller's live state, the way
+/// ManageAccountsSheet does, so rows move when the state changes.
+@Dependencies([
+  AccountsController,
+  exchangeRates,
+  initialDefaultCurrency,
+  defaultCurrency,
+])
+class _LiveBody extends ConsumerWidget {
+  const _LiveBody();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(accountsControllerProvider).value;
+    return state is AccountsData
+        ? ManageAccountsBody(data: state)
+        : const SizedBox.shrink();
   }
 }
 
@@ -89,12 +120,14 @@ class _FakeAccountsController extends AccountsController {
   defaultCurrency,
 ])
 class _StubRouter {
-  static GoRouter build(AccountsData data) {
+  static GoRouter build(AccountsData data, {bool live = false}) {
     return GoRouter(
       routes: [
         GoRoute(
           path: '/',
-          builder: (_, _) => Scaffold(body: ManageAccountsBody(data: data)),
+          builder: (_, _) => Scaffold(
+            body: live ? const _LiveBody() : ManageAccountsBody(data: data),
+          ),
         ),
         GoRoute(
           path: '/settings/manage-accounts/new',
@@ -121,6 +154,7 @@ Widget _wrap({
   required ProviderContainer container,
   required AccountsData data,
   double textScale = 1.0,
+  bool live = false,
 }) {
   return UncontrolledProviderScope(
     container: container,
@@ -132,7 +166,7 @@ Widget _wrap({
             .copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
-      routerConfig: _StubRouter.build(data),
+      routerConfig: _StubRouter.build(data, live: live),
     ),
   );
 }
@@ -143,6 +177,7 @@ ProviderContainer _makeContainer({
   required AccountTypeRepository typeRepo,
   required UserPreferencesRepository prefs,
   required AccountsState fixed,
+  Stream<AccountsState>? updates,
 }) {
   final currencyRepo = _MockCurrencyRepository();
   when(() => currencyRepo.watchAll())
@@ -157,7 +192,7 @@ ProviderContainer _makeContainer({
       userPreferencesRepositoryProvider.overrideWithValue(prefs),
       currencyRepositoryProvider.overrideWithValue(currencyRepo),
       accountsControllerProvider.overrideWith(
-        () => _FakeAccountsController(fixed),
+        () => _FakeAccountsController(fixed, updates),
       ),
     ],
   );
@@ -408,5 +443,270 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
+  });
+
+  // Two active rows; Spare (id 2) is the bottom row and can be archived.
+  AccountsData twoActive({
+    AccountRowAffordance spareAffordance = AccountRowAffordance.archive,
+  }) => AccountsData(
+    active: [
+      _wb(
+        _a(id: 1, name: 'Cash'),
+        affordance: AccountRowAffordance.archiveBlocked,
+      ),
+      _wb(_a(id: 2, name: 'Spare'), affordance: spareAffordance),
+    ],
+    archived: const [],
+    defaultAccountId: 1,
+  );
+
+  Future<void> archiveSpareViaMenu(WidgetTester tester) async {
+    await tester.tap(find.byKey(const ValueKey('accountTile:2:menu')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Archive').last);
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets(
+    'MAB07: Undo after the archived account was deleted saves nothing',
+    (tester) async {
+      final accountRepo = _MockAccountRepository();
+      final typeRepo = _MockAccountTypeRepository();
+      final prefs = _MockUserPreferencesRepository();
+      when(() => typeRepo.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([cashType]));
+      when(() => accountRepo.archive(2)).thenAnswer((_) async {});
+      // The row is gone by the time Undo runs.
+      when(() => accountRepo.getById(2)).thenAnswer((_) async => null);
+
+      final data = twoActive();
+      final container = _makeContainer(
+        accountRepo: accountRepo,
+        typeRepo: typeRepo,
+        prefs: prefs,
+        fixed: data,
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container, data: data));
+      await tester.pumpAndSettle();
+      await archiveSpareViaMenu(tester);
+
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      verifyNever(() => accountRepo.save(any()));
+      expect(
+        find.text('Something went wrong. Please try again.'),
+        findsNothing,
+      );
+    },
+  );
+
+  testWidgets(
+    'MAB08: Undo restores the bottom row of the Active card after it moved',
+    (tester) async {
+      final accountRepo = _MockAccountRepository();
+      final typeRepo = _MockAccountTypeRepository();
+      final prefs = _MockUserPreferencesRepository();
+      when(() => typeRepo.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([cashType]));
+
+      final archivedSpare = _a(id: 2, name: 'Spare', isArchived: true);
+      final updates = StreamController<AccountsState>();
+      addTearDown(updates.close);
+      // Archiving moves Spare out of the Active card, which unmounts the
+      // tile that showed the Undo snackbar.
+      when(() => accountRepo.archive(2)).thenAnswer((_) async {
+        updates.add(
+          AccountsData(
+            active: [
+              _wb(
+                _a(id: 1, name: 'Cash'),
+                affordance: AccountRowAffordance.archiveBlocked,
+              ),
+            ],
+            archived: [_wb(archivedSpare)],
+            defaultAccountId: 1,
+          ),
+        );
+      });
+      when(() => accountRepo.getById(2)).thenAnswer((_) async => archivedSpare);
+      when(() => accountRepo.save(any())).thenAnswer((_) async => 2);
+
+      final data = twoActive();
+      final container = _makeContainer(
+        accountRepo: accountRepo,
+        typeRepo: typeRepo,
+        prefs: prefs,
+        fixed: data,
+        updates: updates.stream,
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        _wrap(container: container, data: data, live: true),
+      );
+      await tester.pumpAndSettle();
+      await archiveSpareViaMenu(tester);
+      expect(find.text('Archived'), findsOneWidget);
+
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      final restored =
+          verify(() => accountRepo.save(captureAny())).captured.single
+              as Account;
+      expect(restored.id, 2);
+      expect(restored.isArchived, isFalse);
+    },
+  );
+
+  testWidgets(
+    'MAB09: archive blocked by an active recurring rule shows its message',
+    (tester) async {
+      final accountRepo = _MockAccountRepository();
+      final typeRepo = _MockAccountTypeRepository();
+      final prefs = _MockUserPreferencesRepository();
+      when(() => typeRepo.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([cashType]));
+      when(() => accountRepo.archive(2))
+          .thenThrow(const AccountHasRecurringRuleException(2));
+
+      final data = twoActive();
+      final container = _makeContainer(
+        accountRepo: accountRepo,
+        typeRepo: typeRepo,
+        prefs: prefs,
+        fixed: data,
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container, data: data));
+      await tester.pumpAndSettle();
+      await archiveSpareViaMenu(tester);
+
+      expect(
+        find.text(
+          "An active recurring transaction uses this account, so it can't be "
+          'archived.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Undo'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'MAB10: delete blocked because the account is in use shows its message',
+    (tester) async {
+      final accountRepo = _MockAccountRepository();
+      final typeRepo = _MockAccountTypeRepository();
+      final prefs = _MockUserPreferencesRepository();
+      when(() => typeRepo.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([cashType]));
+      when(() => prefs.getDefaultAccountId()).thenAnswer((_) async => 1);
+      when(() => accountRepo.delete(2))
+          .thenThrow(const AccountInUseException(2));
+
+      final data = twoActive(spareAffordance: AccountRowAffordance.delete);
+      final container = _makeContainer(
+        accountRepo: accountRepo,
+        typeRepo: typeRepo,
+        prefs: prefs,
+        fixed: data,
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container, data: data));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const ValueKey('accountTile:2:menu')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete').last);
+      await tester.pumpAndSettle();
+      // Confirm dialog.
+      await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text("This account is still in use, so it can't be deleted."),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets('MAB11: a failed Undo shows the generic error snackbar', (
+    tester,
+  ) async {
+    final accountRepo = _MockAccountRepository();
+    final typeRepo = _MockAccountTypeRepository();
+    final prefs = _MockUserPreferencesRepository();
+    when(() => typeRepo.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([cashType]));
+    when(() => accountRepo.archive(2)).thenAnswer((_) async {});
+    when(() => accountRepo.getById(2))
+        .thenAnswer((_) async => _a(id: 2, name: 'Spare', isArchived: true));
+    when(() => accountRepo.save(any()))
+        .thenThrow(const CurrencyNotFoundException('USD'));
+
+    final data = twoActive();
+    final container = _makeContainer(
+      accountRepo: accountRepo,
+      typeRepo: typeRepo,
+      prefs: prefs,
+      fixed: data,
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container: container, data: data));
+    await tester.pumpAndSettle();
+    await archiveSpareViaMenu(tester);
+
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(
+      find.text('Something went wrong. Please try again.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('MAB12: a later snackbar shows while an Undo snackbar is up', (
+    tester,
+  ) async {
+    final accountRepo = _MockAccountRepository();
+    final typeRepo = _MockAccountTypeRepository();
+    final prefs = _MockUserPreferencesRepository();
+    when(() => typeRepo.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([cashType]));
+    when(() => accountRepo.archive(2)).thenAnswer((_) async {});
+    when(() => prefs.setDefaultAccountId(2)).thenAnswer((_) async {});
+
+    final data = twoActive();
+    final container = _makeContainer(
+      accountRepo: accountRepo,
+      typeRepo: typeRepo,
+      prefs: prefs,
+      fixed: data,
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container: container, data: data));
+    await tester.pumpAndSettle();
+    await archiveSpareViaMenu(tester);
+    // A SnackBar with an action stays until dismissed.
+    expect(find.text('Account archived'), findsOneWidget);
+
+    // The fixed state still lists Spare as active, so its menu is there.
+    await tester.tap(find.byKey(const ValueKey('accountTile:2:menu')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Set as default').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Spare is now the default account.'), findsOneWidget);
   });
 }

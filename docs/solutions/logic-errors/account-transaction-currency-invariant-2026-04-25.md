@@ -72,11 +72,11 @@ if (account != null && account.currency != tx.currency.code) {
 ```dart
 final stored = await _dao.findById(account.id);
 if (stored.currency != account.currency.code && await isReferenced(account.id)) {
-  throw AccountRepositoryException(
-    'Account ${account.id} currency cannot change after transactions exist',
-  );
+  throw AccountCurrencyLockedException(account.id);
 }
 ```
+
+`AccountCurrencyLockedException` extends `AccountRepositoryException`. `isReferenced` counts transactions and active recurring rules, so either one locks the currency. `AccountFormActions.save` maps the exception to `SaveAccountOutcome.currencyLocked()`, and the form shows `accountFormCurrencyLockedError` inline (see `docs/solutions/architecture-patterns/controller-command-outcomes-and-snackbar-actions-outliving-widgets.md`).
 
 3. Narrow `watchBalanceMinorUnits()` invalidation to the tables that actually change the computed value at runtime: `accounts` and `transactions`.
 

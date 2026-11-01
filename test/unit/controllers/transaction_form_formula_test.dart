@@ -161,9 +161,10 @@ void main() {
       controller.selectCategory(_expenseCategory);
       type(controller, '3.5+10.5+11+3');
 
-      final saved = await controller.save();
+      final saved =
+          (await controller.save() as SaveTransactionSaved).transaction;
 
-      expect(saved!.amountMinorUnits, 2800);
+      expect(saved.amountMinorUnits, 2800);
       expect(saved.amountFormula, '3.5+10.5+11+3');
     });
 
@@ -174,9 +175,10 @@ void main() {
       controller.selectCategory(_expenseCategory);
       type(controller, '3.5+10.5+11+3=');
 
-      final saved = await controller.save();
+      final saved =
+          (await controller.save() as SaveTransactionSaved).transaction;
 
-      expect(saved!.amountMinorUnits, 2800);
+      expect(saved.amountMinorUnits, 2800);
       expect(saved.amountFormula, '3.5+10.5+11+3');
     });
 
@@ -187,9 +189,10 @@ void main() {
       controller.selectCategory(_expenseCategory);
       type(controller, '28');
 
-      final saved = await controller.save();
+      final saved =
+          (await controller.save() as SaveTransactionSaved).transaction;
 
-      expect(saved!.amountMinorUnits, 2800);
+      expect(saved.amountMinorUnits, 2800);
       expect(saved.amountFormula, isNull);
     });
 
@@ -200,9 +203,10 @@ void main() {
       controller.selectCategory(_expenseCategory);
       type(controller, '1+2+');
 
-      final saved = await controller.save();
+      final saved =
+          (await controller.save() as SaveTransactionSaved).transaction;
 
-      expect(saved!.amountMinorUnits, 300);
+      expect(saved.amountMinorUnits, 300);
       expect(saved.amountFormula, '1+2');
     });
   });
@@ -243,8 +247,9 @@ void main() {
         expect(data(c).amountMinorUnits, 3000);
         expect(data(c).keypad.formula(decimals: 2), '3.5+10.5+11+5');
 
-        final saved = await controller.save();
-        expect(saved!.id, 99);
+        final saved =
+            (await controller.save() as SaveTransactionSaved).transaction;
+        expect(saved.id, 99);
         expect(saved.amountMinorUnits, 3000);
         expect(saved.amountFormula, '3.5+10.5+11+5');
       },
@@ -259,9 +264,10 @@ void main() {
       await controller.hydrateForEdit(99);
 
       type(controller, '*2');
-      final saved = await controller.save();
+      final saved =
+          (await controller.save() as SaveTransactionSaved).transaction;
 
-      expect(saved!.amountMinorUnits, 5600);
+      expect(saved.amountMinorUnits, 5600);
       expect(saved.amountFormula, '(3.5+10.5+11+3)*2');
     });
 
@@ -276,9 +282,10 @@ void main() {
         await controller.hydrateForEdit(99);
 
         type(controller, 'C42');
-        final saved = await controller.save();
+        final saved =
+            (await controller.save() as SaveTransactionSaved).transaction;
 
-        expect(saved!.amountMinorUnits, 4200);
+        expect(saved.amountMinorUnits, 4200);
         expect(saved.amountFormula, isNull);
       },
     );
@@ -291,9 +298,10 @@ void main() {
       final controller = c.read(transactionFormControllerProvider.notifier);
       await controller.hydrateForEdit(99);
 
-      final saved = await controller.save();
+      final saved =
+          (await controller.save() as SaveTransactionSaved).transaction;
 
-      expect(saved!.amountMinorUnits, 2800);
+      expect(saved.amountMinorUnits, 2800);
       expect(saved.amountFormula, '3.5+10.5+11+3');
     });
 
@@ -357,8 +365,9 @@ void main() {
       expect(data(c).amountMinorUnits, 2800);
       expect(data(c).keypad.formula(decimals: 2), '3.5+10.5+11+3');
 
-      final saved = await controller.save();
-      expect(saved!.id, 0);
+      final saved =
+          (await controller.save() as SaveTransactionSaved).transaction;
+      expect(saved.id, 0);
       expect(saved.amountFormula, '3.5+10.5+11+3');
     });
   });

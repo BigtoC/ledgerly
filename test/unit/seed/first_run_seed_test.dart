@@ -511,5 +511,8 @@ class _ThrowingCategoryRepository implements CategoryRepository {
   Future<bool> delete(int id) => _inner.delete(id);
 
   @override
+  Future<void> reorder(List<int> orderedIds) => _inner.reorder(orderedIds);
+
+  @override
   Future<bool> isReferenced(int id) => _inner.isReferenced(id);
 }

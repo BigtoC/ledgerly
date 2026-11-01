@@ -9,13 +9,13 @@
 // rendered by `CategoryTile` via `flutter_slidable`. Archive actions
 // emit an undo snackbar; delete actions confirm via a dialog first.
 //
-// Blocked commands arrive as `CategoriesOperationException(kind)` from
-// `CategoriesController` (this file never imports the repository). A
-// delete blocked by references and an archive blocked by an active
-// recurring rule show localized snackbars; every other failure shows
-// `errorSnackbarGeneric`.
-
-import 'dart:async';
+// `CategoriesController` commands return sealed outcomes, which this
+// file switches on (it never imports the repository). A delete blocked
+// by references and an archive blocked by an active recurring rule show
+// localized snackbars; every other failure, including a failed reorder
+// or Undo, shows `errorSnackbarGeneric`. Every snackbar clears the
+// current one first: an Undo snackbar has an action, so it stays until
+// dismissed, and anything shown after it would wait behind it.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -130,17 +130,33 @@ class _Section extends ConsumerWidget {
           onDelete: () => _onDelete(context, ref, view.category),
         );
       },
-      onReorderItem: (oldIndex, newIndex) {
-        final reordered = [...rows];
-        final moved = reordered.removeAt(oldIndex);
-        reordered.insert(newIndex, moved);
-        unawaited(
-          ref
-              .read(categoriesControllerProvider.notifier)
-              .reorder(reordered.map((v) => v.category.id).toList()),
-        );
-      },
+      onReorderItem: (oldIndex, newIndex) =>
+          _onReorder(context, ref, oldIndex, newIndex),
     );
+  }
+
+  Future<void> _onReorder(
+    BuildContext context,
+    WidgetRef ref,
+    int oldIndex,
+    int newIndex,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
+    final reordered = [...rows];
+    final moved = reordered.removeAt(oldIndex);
+    reordered.insert(newIndex, moved);
+    final outcome = await ref
+        .read(categoriesControllerProvider.notifier)
+        .reorder(reordered.map((v) => v.category.id).toList());
+    switch (outcome) {
+      case ReorderCategoriesOk():
+        break;
+      case ReorderCategoriesFailed():
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
+    }
   }
 
   Future<void> _onArchive(
@@ -150,33 +166,49 @@ class _Section extends ConsumerWidget {
   ) async {
     final messenger = ScaffoldMessenger.of(context);
     final l10n = AppLocalizations.of(context);
-    try {
-      await ref
-          .read(categoriesControllerProvider.notifier)
-          .archiveCategory(cat.id);
-    } on CategoriesOperationException catch (e) {
-      final message = e.kind == CategoriesOperationError.hasActiveRecurringRule
-          ? l10n.categoriesArchiveRecurringRuleError
-          : l10n.errorSnackbarGeneric;
-      messenger.showSnackBar(SnackBar(content: Text(message)));
-      return;
-    } catch (_) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.errorSnackbarGeneric)),
-      );
-      return;
+    // Undo can be tapped after this screen is gone, when `ref` throws.
+    final container = ProviderScope.containerOf(context, listen: false);
+    final outcome = await ref
+        .read(categoriesControllerProvider.notifier)
+        .archiveCategory(cat.id);
+    switch (outcome) {
+      case ArchiveCategoryOk():
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(l10n.categoriesArchiveUndoSnackbar),
+              action: SnackBarAction(
+                label: l10n.commonUndo,
+                onPressed: () async {
+                  final undone = await container
+                      .read(categoriesControllerProvider.notifier)
+                      .undoArchive(cat.id);
+                  switch (undone) {
+                    case UndoArchiveCategoryOk():
+                      break;
+                    case UndoArchiveCategoryFailed():
+                      messenger
+                        ..clearSnackBars()
+                        ..showSnackBar(
+                          SnackBar(content: Text(l10n.errorSnackbarGeneric)),
+                        );
+                  }
+                },
+              ),
+            ),
+          );
+      case ArchiveCategoryHasActiveRecurringRule():
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(content: Text(l10n.categoriesArchiveRecurringRuleError)),
+          );
+      case ArchiveCategoryFailed():
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
     }
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(l10n.categoriesArchiveUndoSnackbar),
-        action: SnackBarAction(
-          label: l10n.commonUndo,
-          onPressed: () => unawaited(
-            ref.read(categoriesControllerProvider.notifier).undoArchive(cat.id),
-          ),
-        ),
-      ),
-    );
   }
 
   Future<void> _onDelete(
@@ -205,19 +237,22 @@ class _Section extends ConsumerWidget {
     if (confirmed != true) return;
     if (!context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
-    try {
-      await ref
-          .read(categoriesControllerProvider.notifier)
-          .deleteCategory(cat.id);
-    } on CategoriesOperationException catch (e) {
-      final message = e.kind == CategoriesOperationError.inUse
-          ? l10n.categoriesDeleteInUseError
-          : l10n.errorSnackbarGeneric;
-      messenger.showSnackBar(SnackBar(content: Text(message)));
-    } catch (_) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.errorSnackbarGeneric)),
-      );
+    final outcome = await ref
+        .read(categoriesControllerProvider.notifier)
+        .deleteCategory(cat.id);
+    switch (outcome) {
+      case DeleteCategoryOk():
+        break;
+      case DeleteCategoryInUse():
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(content: Text(l10n.categoriesDeleteInUseError)),
+          );
+      case DeleteCategoryFailed():
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
     }
   }
 }

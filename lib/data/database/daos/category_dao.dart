@@ -83,4 +83,12 @@ class CategoryDao extends DatabaseAccessor<AppDatabase>
       const CategoriesCompanion(isArchived: Value(true)),
     );
   }
+
+  /// `UPDATE categories SET sort_order = ? WHERE id = ?`. Returns the
+  /// number of rows changed, 0 when no row has that id.
+  Future<int> updateSortOrder(int id, int sortOrder) {
+    return (update(categories)..where((c) => c.id.equals(id))).write(
+      CategoriesCompanion(sortOrder: Value(sortOrder)),
+    );
+  }
 }

@@ -10,7 +10,7 @@ Ledgerly uses a strict **3-layer architecture** (Data → UI), with a `domain/` 
 - **Drift stays inside repositories.** Repositories map Drift data classes into Freezed domain models in `data/models/` and return those. Controllers and widgets must never see a Drift row type — that is the seam that protects the UI from schema churn.
 - **Controllers expose state + commands, not data access.** Each `*_controller.dart` owns an immutable Freezed sealed state (`loading | empty | data(...) | error`) and typed command methods. Widgets read state and call commands; no data transformation in `build()`.
 - **Reactive by default.** Repositories return `Stream<T>` backed by Drift `.watch()`; controllers consume via Riverpod `StreamNotifier` / `AsyncNotifier`. Avoid manual refresh patterns.
-- **Error propagation is typed.** Services throw typed exceptions, repositories re-throw or wrap, use cases translate to domain failures, controllers expose `AsyncValue`. No `try/catch` in widgets. No unhandled `Future`.
+- **Error propagation is typed.** Services throw typed exceptions, repositories re-throw or wrap, use cases translate to domain failures. Controllers expose reads as `AsyncValue`, return a Freezed sealed outcome (declared in the slice's `*_state.dart`) from each command that can fail in a way the user must see, and keep effect listeners for failures that arrive after a command has returned ([`PRD.md` → *Error Handling Pattern*](../../PRD.md#error-handling-pattern)). No `try/catch` in widgets: they `switch` on outcomes. No unhandled `Future`: a widget awaits a command and handles its outcome, or uses `unawaited(...)` only on a command that cannot throw, and checks `mounted` after every `await`.
 
 ## Where things live
 

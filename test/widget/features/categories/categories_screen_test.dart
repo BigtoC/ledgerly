@@ -8,12 +8,19 @@
 //   - Per-section empty CTA renders when a type has no visible rows.
 //   - FAB opens the form sheet.
 //   - Archive action surfaces the undo snackbar.
-//   - Blocked delete / archive / save show localized messages, never the
-//     repository's English developer strings.
+//   - Blocked delete / archive show localized messages; other failed
+//     saves, deletes, archives, undos and reorders show the generic one,
+//     never the repository's English developer strings, even while an
+//     Undo snackbar is still up.
+//   - Undo still restores the category after the screen is gone, and a
+//     save that fails after its sheet closed raises no error.
+//   - A failed rename skips the icon/color write.
 //   - Edit-mode disables the Type toggle (plan §12 risk #2).
 //   - Edit Save with a blank name: allowed for seeded rows (issue #83),
 //     blocked for custom rows.
 //   - 2× text scale survives.
+
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -76,6 +83,33 @@ Widget _wrap({
         child: child!,
       ),
       home: const CategoriesScreen(),
+    ),
+  );
+}
+
+/// Starts on a plain page that pushes [CategoriesScreen], so a test can
+/// leave the screen with the back button.
+@Dependencies([CategoriesController])
+Widget _wrapBehindLauncher({required ProviderContainer container}) {
+  return UncontrolledProviderScope(
+    container: container,
+    child: MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Builder(
+        builder: (context) => Scaffold(
+          body: Center(
+            child: TextButton(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const CategoriesScreen(),
+                ),
+              ),
+              child: const Text('Open categories'),
+            ),
+          ),
+        ),
+      ),
     ),
   );
 }
@@ -416,16 +450,46 @@ void main() {
     );
   });
 
+  testWidgets('S11: a failed save shows the generic inline error and keeps the '
+      'sheet open', (tester) async {
+    final repo = _MockCategoryRepository();
+    final cat = _c(id: 3, type: CategoryType.expense, customName: 'Food');
+    when(() => repo.rename(3, 'Groceries'))
+        .thenThrow(const CategoryRepositoryException('Category 3 not found'));
+    final container = singleRowContainer(
+      repo,
+      cat,
+      CategoryRowAffordance.archive,
+    );
+
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Food'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Groceries');
+    await tester.pump();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Something went wrong. Please try again.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Category 3'), findsNothing);
+    // Sheet stays open and Save is enabled again for a retry.
+    final save = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Save'),
+    );
+    expect(save.onPressed, isNotNull);
+  });
+
   testWidgets(
-    'S11: type-locked save shows the localized inline error and keeps the '
-    'sheet open',
+    'S12: a save that fails after the sheet is closed raises no error',
     (tester) async {
       final repo = _MockCategoryRepository();
       final cat = _c(id: 3, type: CategoryType.expense, customName: 'Food');
-      // Synthetic: the real rename() never type-locks (Edit keeps the
-      // stored type). This only exercises the typeLocked -> message map.
-      when(() => repo.rename(3, 'Groceries'))
-          .thenThrow(const CategoryTypeLockedException(3));
+      final rename = Completer<Category>();
+      when(() => repo.rename(3, 'Groceries')).thenAnswer((_) => rename.future);
       final container = singleRowContainer(
         repo,
         cat,
@@ -439,23 +503,212 @@ void main() {
       await tester.enterText(find.byType(TextField), 'Groceries');
       await tester.pump();
       await tester.tap(find.text('Save'));
+      await tester.pump();
+
+      // Barrier tap closes the sheet while the rename is still running.
+      await tester.tapAt(const Offset(20, 20));
+      await tester.pumpAndSettle();
+      expect(find.byType(BottomSheet), findsNothing);
+
+      rename.completeError(
+        const CategoryRepositoryException('Category 3 not found'),
+      );
       await tester.pumpAndSettle();
 
-      expect(
-        find.text(
-          "This category's type can't change after it has been used. "
-          'Create a new category instead.',
-        ),
-        findsOneWidget,
-      );
-      expect(find.textContaining('id: 3'), findsNothing);
-      // Sheet stays open and Save is enabled again for a retry.
-      final save = tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, 'Save'),
-      );
-      expect(save.onPressed, isNotNull);
+      expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets(
+    'S13: Undo tapped after leaving the screen restores the category',
+    (tester) async {
+      final repo = _MockCategoryRepository();
+      final cat = _c(id: 9, type: CategoryType.expense, customName: 'Hobby');
+      final archived = cat.copyWith(isArchived: true);
+      when(() => repo.archive(9)).thenAnswer((_) async => archived);
+      when(() => repo.getById(9)).thenAnswer((_) async => archived);
+      when(() => repo.save(any()))
+          .thenAnswer((inv) async => inv.positionalArguments.first as Category);
+      final container = singleRowContainer(
+        repo,
+        cat,
+        CategoryRowAffordance.archive,
+      );
+
+      await tester.pumpWidget(_wrapBehindLauncher(container: container));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Open categories'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('categoryTile:9:archive')));
+      await tester.pumpAndSettle();
+      expect(find.text('Category archived'), findsOneWidget);
+
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      expect(find.byType(CategoriesScreen), findsNothing);
+
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      final saved =
+          verify(() => repo.save(captureAny())).captured.single as Category;
+      expect(saved.id, 9);
+      expect(saved.isArchived, isFalse);
+      expect(find.text('Category archived'), findsNothing);
+    },
+  );
+
+  testWidgets('S14: a failed Undo shows the generic snackbar', (tester) async {
+    final repo = _MockCategoryRepository();
+    final cat = _c(id: 9, type: CategoryType.expense, customName: 'Hobby');
+    final archived = cat.copyWith(isArchived: true);
+    when(() => repo.archive(9)).thenAnswer((_) async => archived);
+    when(() => repo.getById(9)).thenAnswer((_) async => archived);
+    when(() => repo.save(any()))
+        .thenThrow(const CategoryRepositoryException('Category 9 not found'));
+    final container = singleRowContainer(
+      repo,
+      cat,
+      CategoryRowAffordance.archive,
+    );
+
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('categoryTile:9:archive')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(
+      find.text('Something went wrong. Please try again.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('S15: other delete failures show the generic snackbar', (
+    tester,
+  ) async {
+    final repo = _MockCategoryRepository();
+    final cat = _c(id: 12, type: CategoryType.expense, customName: 'Hobby');
+    when(() => repo.delete(12))
+        .thenThrow(const CategoryRepositoryException('Category 12 failed'));
+    final container = singleRowContainer(
+      repo,
+      cat,
+      CategoryRowAffordance.delete,
+    );
+
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
+    await deleteAndConfirm(tester, 12);
+
+    expect(
+      find.text('Something went wrong. Please try again.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Category 12'), findsNothing);
+  });
+
+  testWidgets(
+    'S16b: a failed reorder shows its message while an Undo snackbar is up',
+    (tester) async {
+      final repo = _MockCategoryRepository();
+      final alpha = _c(id: 1, type: CategoryType.expense, customName: 'Alpha');
+      final beta = _c(id: 2, type: CategoryType.expense, customName: 'Beta');
+      when(() => repo.archive(1))
+          .thenAnswer((_) async => alpha.copyWith(isArchived: true));
+      when(() => repo.reorder([2, 1])).thenThrow(Exception('injected'));
+      final container = ProviderContainer(
+        overrides: [
+          categoryRepositoryProvider.overrideWithValue(repo),
+          categoriesControllerProvider.overrideWith(
+            () => _FakeCategoriesController(
+              CategoriesState.data(
+                expense: [_row(alpha), _row(beta)],
+                income: const [],
+              ),
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('categoryTile:1:archive')));
+      await tester.pumpAndSettle();
+      // A SnackBar with an action stays until dismissed.
+      expect(find.text('Category archived'), findsOneWidget);
+
+      // Move Beta above Alpha through the list's drop callback. A real drag
+      // builds the drag proxy, which has no Material ancestor here.
+      tester
+          .widget<SliverReorderableList>(find.byType(SliverReorderableList))
+          .onReorderItem!(1, 0);
+      await tester.pumpAndSettle();
+
+      verify(() => repo.reorder([2, 1])).called(1);
+      expect(tester.takeException(), isNull);
+      expect(
+        find.text('Something went wrong. Please try again.'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets('S17: a failed rename skips the icon and color update', (
+    tester,
+  ) async {
+    final repo = _MockCategoryRepository();
+    final cat = _c(id: 3, type: CategoryType.expense, customName: 'Food');
+    when(() => repo.rename(3, 'Groceries'))
+        .thenThrow(const CategoryRepositoryException('Category 3 not found'));
+    when(() => repo.getById(3)).thenAnswer((_) async => cat);
+    when(() => repo.save(any()))
+        .thenAnswer((inv) async => inv.positionalArguments.first as Category);
+    final container = singleRowContainer(
+      repo,
+      cat,
+      CategoryRowAffordance.archive,
+    );
+
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Food'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Groceries');
+    await tester.pump();
+    // The form's color swatch is the only bordered circle in the sheet.
+    await tester.tap(
+      find.descendant(
+        of: find.byType(BottomSheet),
+        matching: find.byWidgetPredicate(
+          (w) =>
+              w is Container &&
+              w.decoration is BoxDecoration &&
+              (w.decoration! as BoxDecoration).shape == BoxShape.circle &&
+              (w.decoration! as BoxDecoration).border != null,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find
+          .descendant(of: find.byType(GridView), matching: find.byType(InkWell))
+          .at(3),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Something went wrong. Please try again.'),
+      findsOneWidget,
+    );
+    verifyNever(() => repo.save(any()));
+  });
 
   // Issue #83: a seeded row has no customName, so its Name field opens
   // empty. A blank name on a seeded row means "use the localized name",

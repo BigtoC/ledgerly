@@ -81,21 +81,29 @@ Stream<bool> watchIsReferenced(int id) {
 }
 ```
 
-The controller also became the correct place to block archiving the current default account before the repository write runs:
+The controller also became the correct place to block archiving the current default account before the repository write runs. It reports the block as an outcome instead of throwing, and maps the repository's typed exceptions to their own variants, so the widget only has to switch on the result:
 
 ```dart
-Future<void> archive(int accountId) async {
-  final prefs = ref.read(userPreferencesRepositoryProvider);
-  final currentDefault = state.value is AccountsData
-      ? (state.value! as AccountsData).defaultAccountId
-      : await prefs.getDefaultAccountId();
-  if (currentDefault == accountId) {
-    throw const AccountsOperationException(
-      AccountsOperationError.defaultAccount,
-    );
+Future<ArchiveAccountOutcome> archive(int accountId) async {
+  try {
+    final prefs = ref.read(userPreferencesRepositoryProvider);
+    final repo = ref.read(accountRepositoryProvider);
+    final snapshot = state.value;
+    final currentDefault = snapshot is AccountsData
+        ? snapshot.defaultAccountId
+        : await prefs.getDefaultAccountId();
+    if (currentDefault == accountId) {
+      return const ArchiveAccountOutcome.isDefault();
+    }
+    ...
+    await repo.archive(accountId);
+    return const ArchiveAccountOutcome.ok();
+  } on AccountHasRecurringRuleException {
+    return const ArchiveAccountOutcome.hasActiveRecurringRule();
+  } catch (e) {
+    debugPrint('[AccountsController] archive failed: ${e.runtimeType}');
+    return const ArchiveAccountOutcome.failed();
   }
-  ...
-  await repo.archive(accountId);
 }
 ```
 
@@ -123,8 +131,23 @@ final subtitle = id == null
 ```
 
 ```dart
-final id = await ref.read(accountFormActionsProvider).save(draft);
-if (mounted) context.pop(id);
+final outcome = await ref.read(accountFormActionsProvider).save(draft);
+if (!mounted) return;
+switch (outcome) {
+  case SaveAccountOk(:final accountId):
+    context.pop(accountId);
+  case SaveAccountCurrencyLocked():
+    setState(() {
+      _saving = false;
+      _errorMessage = AppLocalizations.of(context)
+          .accountFormCurrencyLockedError;
+    });
+  case SaveAccountFailed():
+    setState(() {
+      _saving = false;
+      _errorMessage = AppLocalizations.of(context).errorSnackbarGeneric;
+    });
+}
 ```
 
 Use explicit user input flows before persisting first-run state.
@@ -142,9 +165,19 @@ onPressed: () async {
   );
   if (picked == null) return;
   if (!context.mounted) return;
-  await ref
+  final messenger = ScaffoldMessenger.of(context);
+  final l10n = AppLocalizations.of(context);
+  final outcome = await ref
       .read(splashControllerProvider.notifier)
       .setStartDate(picked);
+  switch (outcome) {
+    case SetSplashStartDateOk():
+      break;
+    case SetSplashStartDateFailed():
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.errorSnackbarGeneric)),
+      );
+  }
 },
 ```
 

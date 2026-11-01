@@ -41,7 +41,7 @@ final class SettingsControllerProvider
 }
 
 String _$settingsControllerHash() =>
-    r'9590d7ea89315defaffff136f153cab016a7db3a';
+    r'8a02b149076c8f7864a6b1e99daa0201eb814c9c';
 
 abstract class _$SettingsController extends $StreamNotifier<SettingsState> {
   Stream<SettingsState> build();

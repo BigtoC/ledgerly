@@ -145,6 +145,11 @@ abstract class CategoryRepository {
   /// recurring rule references the id.
   Future<bool> delete(int id);
 
+  /// Writes each row's `sortOrder` as its index in [orderedIds], in one
+  /// transaction: either every row is written or none is. An id with no
+  /// row is skipped.
+  Future<void> reorder(List<int> orderedIds);
+
   /// Returns `true` when at least one row in `transactions` or an active
   /// recurring rule references this category.
   ///
@@ -388,6 +393,16 @@ final class DriftCategoryRepository implements CategoryRepository {
 
     final removed = await _dao.deleteById(id);
     return removed > 0;
+  }
+
+  @override
+  Future<void> reorder(List<int> orderedIds) {
+    return _db.transaction(() async {
+      for (var i = 0; i < orderedIds.length; i++) {
+        // A missing id updates 0 rows.
+        await _dao.updateSortOrder(orderedIds[i], i);
+      }
+    });
   }
 
   @override

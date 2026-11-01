@@ -1,9 +1,12 @@
 // TransactionFormScreen shopping-list mode widget tests — Task 5.
 //
-// Tests IDs: TFSLM01–TFSLM03
+// Tests IDs: TFSLM01–TFSLM09
 //
 // Covers:
 //   - EditShoppingListDraftMode title matches shoppingListEditDraftTitle l10n key
+//   - An ignored draft save / conversion does not pop the form
+//   - A failed draft save, draft conversion or "Add to shopping list" shows
+//     its failure snackbar and keeps the form open
 
 import 'dart:async';
 
@@ -88,13 +91,13 @@ class _HomeStub extends StatelessWidget {
 class _FakeTransactionFormController extends TransactionFormController {
   _FakeTransactionFormController({
     required this._fixed,
-    this._saveDraftResult,
-    this._convertDraftResult,
+    this._saveDraftOutcome = const DraftSubmissionOutcome.ignored(),
+    this._convertDraftOutcome = const DraftSubmissionOutcome.ignored(),
   });
 
   final TransactionFormState _fixed;
-  final ShoppingListEditResult? _saveDraftResult;
-  final ShoppingListEditResult? _convertDraftResult;
+  final DraftSubmissionOutcome _saveDraftOutcome;
+  final DraftSubmissionOutcome _convertDraftOutcome;
 
   @override
   TransactionFormState build() => _fixed;
@@ -105,10 +108,10 @@ class _FakeTransactionFormController extends TransactionFormController {
   }
 
   @override
-  Future<ShoppingListEditResult?> saveDraft() async => _saveDraftResult;
+  Future<DraftSubmissionOutcome> saveDraft() async => _saveDraftOutcome;
 
   @override
-  Future<ShoppingListEditResult?> convertDraft() async => _convertDraftResult;
+  Future<DraftSubmissionOutcome> convertDraft() async => _convertDraftOutcome;
 }
 
 TransactionFormState _editableDraftState() => TransactionFormState.data(
@@ -137,6 +140,10 @@ TransactionFormState _editableDraftState() => TransactionFormState.data(
 
 @Dependencies([TransactionFormController, categoriesByType])
 void main() {
+  setUpAll(() {
+    registerFallbackValue(_draft());
+  });
+
   late _MockTransactionRepository txRepo;
   late _MockAccountRepository accountRepo;
   late _MockCategoryRepository categoryRepo;
@@ -275,7 +282,7 @@ void main() {
     },
   );
 
-  testWidgets('TFSLM05: save draft null result does not pop edit-draft form', (
+  testWidgets('TFSLM05: an ignored draft save does not pop edit-draft form', (
     tester,
   ) async {
     var didPop = false;
@@ -285,7 +292,7 @@ void main() {
     );
     final fakeController = _FakeTransactionFormController(
       fixed: _editableDraftState(),
-      saveDraftResult: null,
+      saveDraftOutcome: const DraftSubmissionOutcome.ignored(),
     );
 
     await tester.pumpWidget(
@@ -320,7 +327,7 @@ void main() {
   });
 
   testWidgets(
-    'TFSLM06: convert draft null result does not pop edit-draft form',
+    'TFSLM06: an ignored draft conversion does not pop edit-draft form',
     (tester) async {
       var didPop = false;
       ShoppingListEditResult? poppedResult;
@@ -329,7 +336,7 @@ void main() {
       );
       final fakeController = _FakeTransactionFormController(
         fixed: _editableDraftState(),
-        convertDraftResult: null,
+        convertDraftOutcome: const DraftSubmissionOutcome.ignored(),
       );
 
       await tester.pumpWidget(
@@ -365,6 +372,120 @@ void main() {
       expect(poppedResult, isNull);
       expect(find.byType(TransactionFormScreen), findsOneWidget);
       expect(find.byKey(const Key('saveToTransactionButton')), findsOneWidget);
+    },
+  );
+
+  testWidgets('TFSLM07: a failed draft save shows the save-failed snackbar', (
+    tester,
+  ) async {
+    when(() => slRepo.getById(77)).thenAnswer(
+      (_) async =>
+          _draft(id: 77, draftAmountMinorUnits: 500, draftCurrencyCode: 'USD'),
+    );
+    when(() => slRepo.update(any())).thenThrow(Exception('db down'));
+
+    await tester.pumpWidget(
+      mountWithMode(const EditShoppingListDraftMode(shoppingListItemId: 77)),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.byKey(const Key('saveDraftButton')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('saveDraftButton')));
+    await tester.pumpAndSettle();
+
+    final l10n = AppLocalizationsEn();
+    expect(find.text(l10n.shoppingListSaveFailedSnackbar), findsOneWidget);
+    expect(find.byType(TransactionFormScreen), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'TFSLM08: a failed draft conversion shows the convert-failed snackbar',
+    (tester) async {
+      when(() => slRepo.getById(77)).thenAnswer(
+        (_) async => _draft(
+          id: 77,
+          draftAmountMinorUnits: 500,
+          draftCurrencyCode: 'USD',
+        ),
+      );
+      when(
+        () => slRepo.convertToTransaction(
+          shoppingListItemId: any(named: 'shoppingListItemId'),
+          categoryId: any(named: 'categoryId'),
+          accountId: any(named: 'accountId'),
+          currencyCode: any(named: 'currencyCode'),
+          amountMinorUnits: any(named: 'amountMinorUnits'),
+          date: any(named: 'date'),
+          memo: any(named: 'memo'),
+          amountFormula: any(named: 'amountFormula'),
+        ),
+      ).thenThrow(Exception('db down'));
+
+      await tester.pumpWidget(
+        mountWithMode(const EditShoppingListDraftMode(shoppingListItemId: 77)),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(
+        find.byKey(const Key('saveToTransactionButton')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('saveToTransactionButton')));
+      await tester.pumpAndSettle();
+
+      final l10n = AppLocalizationsEn();
+      expect(find.text(l10n.shoppingListConvertFailedSnackbar), findsOneWidget);
+      expect(find.byType(TransactionFormScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'TFSLM09: a failed "Add to shopping list" shows the save-failed snackbar',
+    (tester) async {
+      when(
+        () => slRepo.insert(
+          categoryId: any(named: 'categoryId'),
+          accountId: any(named: 'accountId'),
+          memo: any(named: 'memo'),
+          draftAmountMinorUnits: any(named: 'draftAmountMinorUnits'),
+          draftCurrencyCode: any(named: 'draftCurrencyCode'),
+          draftDate: any(named: 'draftDate'),
+        ),
+      ).thenThrow(Exception('db down'));
+      final router = buildPushRouter(const AddTransactionMode());
+
+      await tester.pumpWidget(
+        mountWithRouter(
+          router,
+          extra: [
+            categoriesByTypeProvider(CategoryType.expense)
+                .overrideWith((ref) => Stream.value(const [_expenseCategory])),
+            categoriesByTypeProvider(CategoryType.income)
+                .overrideWith((ref) => Stream.value(const <Category>[])),
+          ],
+        ),
+      );
+      unawaited(router.push<Object?>('/form'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Select a category'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Food'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(
+        find.byKey(const Key('addToShoppingListButton')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('addToShoppingListButton')));
+      await tester.pumpAndSettle();
+
+      final l10n = AppLocalizationsEn();
+      expect(find.text(l10n.shoppingListSaveFailedSnackbar), findsOneWidget);
+      expect(find.byType(TransactionFormScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
     },
   );
 }

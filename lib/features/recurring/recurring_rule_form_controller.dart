@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../app/providers/repository_providers.dart';
@@ -206,37 +207,45 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
 
   // ---------- Commands ----------
 
-  /// Save the draft. Returns the rule id on success (creates or updates),
-  /// `null` if `canSave` was false or a known repository error fired.
+  /// Save the draft (creates or updates). Never throws; see
+  /// [SaveRecurringRuleOutcome]. Validation failures and known repository
+  /// errors are written to the form state and reported as `rejected`.
   /// On success, immediately runs generation for the new rule so the user
-  /// sees today's pending row without waiting for a cold start.
-  Future<int?> save() async {
-    final current = state.value;
-    if (current == null) return null;
-    if (!current.canSave) {
-      _update(
-        (s) => s.copyWith(
-          nameError: s.memo.trim().isEmpty
-              ? RecurringFormErrorKey.nameRequired
-              : null,
-          categoryError: s.categoryId == null
-              ? RecurringFormErrorKey.categoryRequired
-              : null,
-          accountError: s.accountId == null
-              ? RecurringFormErrorKey.accountRequired
-              : null,
-          frequencyFieldError: s.hasFrequencyFieldError
-              ? RecurringFormErrorKey.frequencyFieldRequired
-              : null,
-        ),
-      );
-      return null;
-    }
-
-    // Saving finishes a pending expression, as if `=` had been pressed.
-    equals();
-    _update((s) => s.copyWith(isLoading: true, formError: null));
+  /// sees today's pending row without waiting for a cold start; a
+  /// generation error, returned or thrown, is reported as `saved` with
+  /// `generationFailed`. The repository and use case are read before the
+  /// first await, so closing the form mid-save still runs generation for
+  /// the saved rule.
+  Future<SaveRecurringRuleOutcome> save() async {
     try {
+      final current = state.value;
+      if (current == null) return const SaveRecurringRuleOutcome.failed();
+      if (!current.canSave) {
+        _update(
+          (s) => s.copyWith(
+            nameError: s.memo.trim().isEmpty
+                ? RecurringFormErrorKey.nameRequired
+                : null,
+            categoryError: s.categoryId == null
+                ? RecurringFormErrorKey.categoryRequired
+                : null,
+            accountError: s.accountId == null
+                ? RecurringFormErrorKey.accountRequired
+                : null,
+            frequencyFieldError: s.hasFrequencyFieldError
+                ? RecurringFormErrorKey.frequencyFieldRequired
+                : null,
+          ),
+        );
+        return const SaveRecurringRuleOutcome.rejected();
+      }
+      final repo = ref.read(recurringRulesRepositoryProvider);
+      final useCase = ref.read(recurringGenerationUseCaseProvider);
+
+      // Saving finishes a pending expression, as if `=` had been pressed.
+      equals();
+      _update((s) => s.copyWith(isLoading: true, formError: null));
+
       // Memo doubles as the rule's user-visible name; both columns get
       // the same trimmed value so list tiles and pending-row memos stay
       // in sync.
@@ -254,7 +263,6 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
         monthOfYear: current.monthOfYear,
       );
 
-      final repo = ref.read(recurringRulesRepositoryProvider);
       final int savedId;
       if (current.isEdit && ruleId != null) {
         await repo.update(ruleId!, draft);
@@ -263,28 +271,55 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
         savedId = await repo.insert(draft);
       }
 
-      final useCase = ref.read(recurringGenerationUseCaseProvider);
-      final outcome = await useCase.executeForRule(savedId);
-      _update((s) => s.copyWith(postSaveGenerationFailed: outcome.failed));
-      return savedId;
+      // The rule is saved from here on, so a generation error must not
+      // turn into `failed`: the user would retry and insert it twice.
+      bool generationFailed;
+      try {
+        generationFailed = (await useCase.executeForRule(savedId)).failed;
+      } catch (e) {
+        debugPrint(
+          '[RecurringRuleFormController] save generation failed: '
+          '${e.runtimeType}',
+        );
+        generationFailed = true;
+      }
+      return SaveRecurringRuleOutcome.saved(savedId, generationFailed);
     } on ArchivedReferenceException catch (e) {
-      _update(
-        (s) => s.copyWith(formError: RecurringFormError.archivedRef(e.message)),
-      );
-      return null;
+      if (ref.mounted) {
+        _update(
+          (s) =>
+              s.copyWith(formError: RecurringFormError.archivedRef(e.message)),
+        );
+      }
+      return const SaveRecurringRuleOutcome.rejected();
     } on RecurringRulesRepositoryException catch (e) {
-      _update(
-        (s) => s.copyWith(formError: RecurringFormError.unknown(e.message)),
-      );
-      return null;
+      if (ref.mounted) {
+        _update(
+          (s) => s.copyWith(formError: RecurringFormError.unknown(e.message)),
+        );
+      }
+      return const SaveRecurringRuleOutcome.rejected();
+    } catch (e) {
+      debugPrint('[RecurringRuleFormController] save failed: ${e.runtimeType}');
+      return const SaveRecurringRuleOutcome.failed();
     } finally {
-      _update((s) => s.copyWith(isLoading: false));
+      if (ref.mounted) _update((s) => s.copyWith(isLoading: false));
     }
   }
 
-  Future<void> deleteRule() async {
-    if (ruleId == null) return;
-    await ref.read(recurringRulesRepositoryProvider).archive(ruleId!);
+  /// Archives the rule being edited. Never throws; see
+  /// [ArchiveRecurringRuleOutcome].
+  Future<ArchiveRecurringRuleOutcome> deleteRule() async {
+    try {
+      if (ruleId == null) return const ArchiveRecurringRuleOutcome.failed();
+      await ref.read(recurringRulesRepositoryProvider).archive(ruleId!);
+      return const ArchiveRecurringRuleOutcome.ok();
+    } catch (e) {
+      debugPrint(
+        '[RecurringRuleFormController] deleteRule failed: ${e.runtimeType}',
+      );
+      return const ArchiveRecurringRuleOutcome.failed();
+    }
   }
 
   void _update(RecurringRuleFormState Function(RecurringRuleFormState) fn) {

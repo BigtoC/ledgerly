@@ -19,9 +19,19 @@
 //   - `submissionAction` tracks in-flight shopping-list commands the same
 //     way `isSaving`/`isDeleting` track transaction commands — repeat calls
 //     during in-flight are ignored (Task 5 §10).
+//   - Commands that can fail in a way the user sees (`save`,
+//     `deleteExisting`, `saveDraft`, `convertDraft`,
+//     `resolveCategoryChipTap`) never throw: they return a sealed outcome
+//     from `transaction_form_state.dart` that the screen switches on.
+//   - Hydration commands never throw either: a failed read lands in
+//     `.error`, and a hydration still awaiting when the form closes stops
+//     at its next `await` without touching `state`.
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show ProviderSubscription;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../app/providers/default_currency_provider.dart';
@@ -32,6 +42,7 @@ import '../../data/models/currency.dart';
 import '../../data/models/shopping_list_item.dart';
 import '../../data/models/transaction.dart';
 import '../../data/repositories/category_repository.dart';
+import '../categories/categories_controller.dart';
 import 'amount_formula.dart';
 import 'keypad_state.dart';
 import 'transaction_form_state.dart';
@@ -49,6 +60,7 @@ part 'transaction_form_controller.g.dart';
     defaultCurrency,
     exchangeRateRepository,
     initialDefaultCurrency,
+    categoriesByType,
   ],
 )
 class TransactionFormController extends _$TransactionFormController {
@@ -82,9 +94,10 @@ class TransactionFormController extends _$TransactionFormController {
   Future<void> hydrateForAdd({DateTime? initialDate}) async {
     _formMode = AddTransactionMode(initialDate: initialDate);
     _lastRequestedMode = AddTransactionMode(initialDate: initialDate);
-    state = TransactionFormState.loading(formMode: _formMode);
     try {
+      state = TransactionFormState.loading(formMode: _formMode);
       final account = await _resolveDefaultAccount();
+      if (!ref.mounted) return;
       if (account == null) {
         state = TransactionFormState.empty(
           reason: TransactionFormEmptyReason.noActiveAccount,
@@ -114,7 +127,9 @@ class TransactionFormController extends _$TransactionFormController {
         originalCreatedAt: null,
       );
     } catch (e, st) {
-      state = TransactionFormState.error(e, st, formMode: _formMode);
+      if (ref.mounted) {
+        state = TransactionFormState.error(e, st, formMode: _formMode);
+      }
     }
   }
 
@@ -123,10 +138,11 @@ class TransactionFormController extends _$TransactionFormController {
     _lastRequestedMode = DuplicateTransactionMode(
       sourceTransactionId: sourceId,
     );
-    state = TransactionFormState.loading(formMode: _formMode);
     try {
+      state = TransactionFormState.loading(formMode: _formMode);
       final txRepo = ref.read(transactionRepositoryProvider);
       final source = await txRepo.getById(sourceId);
+      if (!ref.mounted) return;
       if (source == null) {
         state = TransactionFormState.empty(
           reason: TransactionFormEmptyReason.notFound,
@@ -137,12 +153,14 @@ class TransactionFormController extends _$TransactionFormController {
       final accountRepo = ref.read(accountRepositoryProvider);
       final categoryRepo = ref.read(categoryRepositoryProvider);
       final sourceAccount = await accountRepo.getById(source.accountId);
+      if (!ref.mounted) return;
       // Source account no longer usable — fall back to the standard
       // default-resolution chain, like an Add hydration but with
       // amount/category/memo prefilled.
       final account = sourceAccount == null || sourceAccount.isArchived
           ? await _resolveDefaultAccount()
           : sourceAccount;
+      if (!ref.mounted) return;
       if (account == null) {
         state = TransactionFormState.empty(
           reason: TransactionFormEmptyReason.noActiveAccount,
@@ -157,17 +175,20 @@ class TransactionFormController extends _$TransactionFormController {
         duplicateSourceId: sourceId,
       );
     } catch (e, st) {
-      state = TransactionFormState.error(e, st, formMode: _formMode);
+      if (ref.mounted) {
+        state = TransactionFormState.error(e, st, formMode: _formMode);
+      }
     }
   }
 
   Future<void> hydrateForEdit(int id) async {
     _formMode = EditTransactionMode(transactionId: id);
     _lastRequestedMode = EditTransactionMode(transactionId: id);
-    state = TransactionFormState.loading(formMode: _formMode);
     try {
+      state = TransactionFormState.loading(formMode: _formMode);
       final txRepo = ref.read(transactionRepositoryProvider);
       final existing = await txRepo.getById(id);
+      if (!ref.mounted) return;
       if (existing == null) {
         state = TransactionFormState.empty(
           reason: TransactionFormEmptyReason.notFound,
@@ -178,6 +199,7 @@ class TransactionFormController extends _$TransactionFormController {
       final accountRepo = ref.read(accountRepositoryProvider);
       final categoryRepo = ref.read(categoryRepositoryProvider);
       final account = await accountRepo.getById(existing.accountId);
+      if (!ref.mounted) return;
       if (account == null) {
         state = TransactionFormState.empty(
           reason: TransactionFormEmptyReason.notFound,
@@ -186,6 +208,7 @@ class TransactionFormController extends _$TransactionFormController {
         return;
       }
       final category = await categoryRepo.getById(existing.categoryId);
+      if (!ref.mounted) return;
       _keypad = _keypadForStored(
         existing.amountMinorUnits,
         existing.amountFormula,
@@ -210,7 +233,9 @@ class TransactionFormController extends _$TransactionFormController {
         originalCreatedAt: existing.createdAt,
       );
     } catch (e, st) {
-      state = TransactionFormState.error(e, st, formMode: _formMode);
+      if (ref.mounted) {
+        state = TransactionFormState.error(e, st, formMode: _formMode);
+      }
     }
   }
 
@@ -229,10 +254,11 @@ class TransactionFormController extends _$TransactionFormController {
     _lastRequestedMode = EditShoppingListDraftMode(
       shoppingListItemId: shoppingListItemId,
     );
-    state = TransactionFormState.loading(formMode: _formMode);
     try {
+      state = TransactionFormState.loading(formMode: _formMode);
       final slRepo = ref.read(shoppingListRepositoryProvider);
       final draft = await slRepo.getById(shoppingListItemId);
+      if (!ref.mounted) return;
       if (draft == null) {
         state = TransactionFormState.empty(
           reason: TransactionFormEmptyReason.draftNotFound,
@@ -245,6 +271,7 @@ class TransactionFormController extends _$TransactionFormController {
       final categoryRepo = ref.read(categoryRepositoryProvider);
 
       final account = await accountRepo.getById(draft.accountId);
+      if (!ref.mounted) return;
       if (account == null) {
         state = TransactionFormState.empty(
           reason: TransactionFormEmptyReason.noActiveAccount,
@@ -254,6 +281,7 @@ class TransactionFormController extends _$TransactionFormController {
       }
 
       final category = await categoryRepo.getById(draft.categoryId);
+      if (!ref.mounted) return;
 
       // Resolve currency: use draft currency when present, otherwise
       // seed from the selected account.
@@ -262,6 +290,7 @@ class TransactionFormController extends _$TransactionFormController {
       if (draft.draftCurrencyCode != null) {
         final currencyRepo = ref.read(currencyRepositoryProvider);
         final resolved = await currencyRepo.getByCode(draft.draftCurrencyCode!);
+        if (!ref.mounted) return;
         if (resolved != null) {
           displayCurrency = resolved;
           currencyTouched = true;
@@ -298,7 +327,9 @@ class TransactionFormController extends _$TransactionFormController {
         selectedCategoryIsArchived: category?.isArchived ?? false,
       );
     } catch (e, st) {
-      state = TransactionFormState.error(e, st, formMode: _formMode);
+      if (ref.mounted) {
+        state = TransactionFormState.error(e, st, formMode: _formMode);
+      }
     }
   }
 
@@ -509,18 +540,28 @@ class TransactionFormController extends _$TransactionFormController {
 
   // ---------- Save / delete ----------
 
-  /// Persists the form. Returns the persisted [Transaction] on success
-  /// (caller pops with this; Home pins the day to `tx.date`). Returns
-  /// `null` and surfaces a re-thrown failure on the caller's await
-  /// chain when the repository call fails — `isSaving` is always
-  /// cleared before the throw so the AppBar Save button re-enables.
-  Future<Transaction?> save() async {
-    final current = state;
-    if (current is! TransactionFormData) return null;
-    if (!current.canSave) return null;
-    final s = _finishPendingExpression(current);
-    state = s.copyWith(isSaving: true);
+  /// Persists the form. Never throws. Returns:
+  ///   - `saved(tx)` → the caller pops with `tx`; Home pins the day to
+  ///                   `tx.date`.
+  ///   - `invalid`   → `canSave` was false (or the state is not `.data`);
+  ///                   nothing was written.
+  ///   - `failed`    → the repository write failed. `isSaving` is cleared
+  ///                   so the AppBar Save button re-enables.
+  ///
+  /// Only the write can produce `failed`: the exchange-rate dependencies
+  /// are read before it and the fetch starts after it, outside the `try`,
+  /// so a row that was saved is never reported as failed.
+  Future<SaveTransactionOutcome> save() async {
+    TransactionFormData? saving;
+    final Transaction saved;
+    final Future<void> Function()? fetchRate;
     try {
+      final current = state;
+      if (current is! TransactionFormData || !current.canSave) {
+        return const SaveTransactionOutcome.invalid();
+      }
+      final s = saving = _finishPendingExpression(current);
+      state = s.copyWith(isSaving: true);
       final tx = Transaction(
         id: s.editingId ?? 0,
         amountMinorUnits: s.amountMinorUnits,
@@ -534,81 +575,105 @@ class TransactionFormController extends _$TransactionFormController {
         updatedAt: s.date,
       );
       final repo = ref.read(transactionRepositoryProvider);
-      final saved = await repo.save(tx);
 
       // On-demand exchange-rate fetch for non-default-currency transactions.
-      // Fire immediately after save without blocking the navigation path back
-      // to the caller.
+      // Its dependencies are read now, before the await; it fires right
+      // after the save without blocking the navigation path back to the
+      // caller.
       final initialDefault = ref.read(initialDefaultCurrencyProvider);
       final currentDefault =
           ref.read(defaultCurrencyProvider).value ?? initialDefault;
       if (tx.currency.code != currentDefault) {
         final rateRepo = ref.read(exchangeRateRepositoryProvider);
-        unawaited(rateRepo.fetchRate(tx.currency.code, currentDefault));
+        fetchRate = () => rateRepo.fetchRate(tx.currency.code, currentDefault);
+      } else {
+        fetchRate = null;
       }
 
-      // Clear isSaving on the path back to the widget; pop occurs in
-      // the screen layer so navigation stays widget-owned.
-      state = s.copyWith(isSaving: false);
-      return saved;
+      saved = await repo.save(tx);
     } catch (e) {
-      // Restore the editable state and let the caller surface the error
-      // via `txSaveFailedSnackbar`. Reserving `.error` for hydration
+      // Restore the editable state; the widget shows
+      // `txSaveFailedSnackbar`. `.error` stays reserved for hydration
       // failures (Wave 2 §9.5).
-      state = s.copyWith(isSaving: false);
-      rethrow;
+      debugPrint('[TransactionFormController] save failed: ${e.runtimeType}');
+      final s = saving;
+      if (s != null && ref.mounted) state = s.copyWith(isSaving: false);
+      return const SaveTransactionOutcome.failed();
     }
+
+    if (fetchRate != null) unawaited(fetchRate());
+    // Clear isSaving on the path back to the widget; pop occurs in
+    // the screen layer so navigation stays widget-owned.
+    if (ref.mounted) state = saving.copyWith(isSaving: false);
+    return SaveTransactionOutcome.saved(saved);
   }
 
-  /// Edit-mode delete. Returns:
-  ///   - `true`  → row removed; widget pops with `null`.
-  ///   - `false` → row was already gone; widget surfaces a recoverable
-  ///               not-found message and pops back to Home.
-  Future<bool> deleteExisting() async {
-    final s = state;
-    if (s is! TransactionFormData) return false;
-    if (s.isSaving || s.isDeleting) return false;
-    final id = s.editingId;
-    if (id == null) return false;
-    state = s.copyWith(isDeleting: true);
+  /// Edit-mode delete. Never throws. Returns:
+  ///   - `deleted`  → row removed; widget pops with `null`.
+  ///   - `notFound` → row was already gone; widget surfaces a recoverable
+  ///                  not-found message and pops back to Home.
+  ///   - `ignored`  → not in Edit mode, or a save/delete is in flight.
+  ///   - `failed`   → the repository delete failed; `isDeleting` is
+  ///                  cleared and the widget keeps the form open.
+  Future<DeleteTransactionOutcome> deleteExisting() async {
+    TransactionFormData? deleting;
     try {
+      final s = state;
+      if (s is! TransactionFormData || s.isSaving || s.isDeleting) {
+        return const DeleteTransactionOutcome.ignored();
+      }
+      final id = s.editingId;
+      if (id == null) return const DeleteTransactionOutcome.ignored();
       final repo = ref.read(transactionRepositoryProvider);
+      deleting = s;
+      state = s.copyWith(isDeleting: true);
       final removed = await repo.delete(id);
-      state = s.copyWith(isDeleting: false);
-      return removed;
+      if (ref.mounted) state = s.copyWith(isDeleting: false);
+      return removed
+          ? const DeleteTransactionOutcome.deleted()
+          : const DeleteTransactionOutcome.notFound();
     } catch (e) {
-      state = s.copyWith(isDeleting: false);
-      rethrow;
+      debugPrint(
+        '[TransactionFormController] deleteExisting failed: ${e.runtimeType}',
+      );
+      final s = deleting;
+      if (s != null && ref.mounted) state = s.copyWith(isDeleting: false);
+      return const DeleteTransactionOutcome.failed();
     }
   }
 
-  /// Saves the current form snapshot as a shopping-list draft.
+  /// Saves the current form snapshot as a shopping-list draft. Never
+  /// throws.
   ///
   /// In [AddTransactionMode]: calls `ShoppingListRepository.insert(...)` and
-  /// pops with `null` (no transaction result, just closes the form).
+  /// returns `ok(ShoppingListEditResultAddedToList)`; the screen closes the
+  /// form with `null` (no transaction result).
   ///
   /// In [EditShoppingListDraftMode]: calls `ShoppingListRepository.update(...)`
-  /// and returns `ShoppingListEditResultSavedDraft` to the screen for popping.
+  /// and returns `ok(ShoppingListEditResultSavedDraft)` to the screen for
+  /// popping.
   ///
-  /// Returns `null` when `canSaveDraft` is false or a submission is already
-  /// in flight. Rethrows on repository failure after resetting
+  /// Returns `ignored` when `canSaveDraft` is false or a submission is
+  /// already in flight, and `failed` on repository failure after resetting
   /// `submissionAction` to `none`.
-  Future<ShoppingListEditResult?> saveDraft() async {
-    final current = state;
-    if (current is! TransactionFormData) return null;
-    if (!current.canSaveDraft) return null;
-    final s = _finishPendingExpression(current);
-
-    state = s.copyWith(
-      submissionAction: TransactionFormSubmissionAction.saveDraft,
-    );
+  Future<DraftSubmissionOutcome> saveDraft() async {
+    TransactionFormData? submitting;
     try {
+      final current = state;
+      if (current is! TransactionFormData || !current.canSaveDraft) {
+        return const DraftSubmissionOutcome.ignored();
+      }
+      final s = submitting = _finishPendingExpression(current);
       final slRepo = ref.read(shoppingListRepositoryProvider);
+      state = s.copyWith(
+        submissionAction: TransactionFormSubmissionAction.saveDraft,
+      );
       final draftAmount = s.amountMinorUnits > 0 ? s.amountMinorUnits : null;
       final draftCurrency = s.amountMinorUnits > 0
           ? s.displayCurrency?.code
           : null;
 
+      final ShoppingListEditResult result;
       if (s.shoppingListItemId != null) {
         // Edit mode: update the existing draft row.
         final updatedItem = ShoppingListItem(
@@ -624,10 +689,7 @@ class TransactionFormController extends _$TransactionFormController {
           updatedAt: DateTime.utc(0),
         );
         await slRepo.update(updatedItem);
-        state = s.copyWith(
-          submissionAction: TransactionFormSubmissionAction.none,
-        );
-        return const ShoppingListEditResultSavedDraft();
+        result = const ShoppingListEditResultSavedDraft();
       } else {
         // Add mode: insert a new draft row.
         await slRepo.insert(
@@ -638,42 +700,53 @@ class TransactionFormController extends _$TransactionFormController {
           draftCurrencyCode: draftCurrency,
           draftDate: s.date,
         );
+        // Add mode: signal that the item was added to the list.
+        result = const ShoppingListEditResultAddedToList();
+      }
+      if (ref.mounted) {
         state = s.copyWith(
           submissionAction: TransactionFormSubmissionAction.none,
         );
-        // Add mode: signal that the item was added to the list.
-        return const ShoppingListEditResultAddedToList();
       }
+      return DraftSubmissionOutcome.ok(result);
     } catch (e) {
-      state = s.copyWith(
-        submissionAction: TransactionFormSubmissionAction.none,
+      debugPrint(
+        '[TransactionFormController] saveDraft failed: ${e.runtimeType}',
       );
-      rethrow;
+      final s = submitting;
+      if (s != null && ref.mounted) {
+        state = s.copyWith(
+          submissionAction: TransactionFormSubmissionAction.none,
+        );
+      }
+      return const DraftSubmissionOutcome.failed();
     }
   }
 
   /// Converts the current shopping-list draft into a real transaction.
+  /// Never throws.
   ///
   /// Only available in [EditShoppingListDraftMode]. Calls
   /// `ShoppingListRepository.convertToTransaction(...)` and returns
-  /// `ShoppingListEditResultSavedTransaction()` to the screen for popping.
+  /// `ok(ShoppingListEditResultSavedTransaction)` to the screen for popping.
   ///
-  /// Returns `null` when `canConvertDraft` is false or a submission is already
-  /// in flight. Rethrows on repository failure after resetting
+  /// Returns `ignored` when `canConvertDraft` is false or a submission is
+  /// already in flight, and `failed` on repository failure after resetting
   /// `submissionAction` to `none`.
-  Future<ShoppingListEditResult?> convertDraft() async {
-    final current = state;
-    if (current is! TransactionFormData) return null;
-    if (!current.canConvertDraft) return null;
-    final itemId = current.shoppingListItemId;
-    if (itemId == null) return null;
-    final s = _finishPendingExpression(current);
-
-    state = s.copyWith(
-      submissionAction: TransactionFormSubmissionAction.convertDraft,
-    );
+  Future<DraftSubmissionOutcome> convertDraft() async {
+    TransactionFormData? submitting;
     try {
+      final current = state;
+      if (current is! TransactionFormData || !current.canConvertDraft) {
+        return const DraftSubmissionOutcome.ignored();
+      }
+      final itemId = current.shoppingListItemId;
+      if (itemId == null) return const DraftSubmissionOutcome.ignored();
+      final s = submitting = _finishPendingExpression(current);
       final slRepo = ref.read(shoppingListRepositoryProvider);
+      state = s.copyWith(
+        submissionAction: TransactionFormSubmissionAction.convertDraft,
+      );
       await slRepo.convertToTransaction(
         shoppingListItemId: itemId,
         categoryId: s.selectedCategory!.id,
@@ -684,15 +757,59 @@ class TransactionFormController extends _$TransactionFormController {
         memo: s.memo.isEmpty ? null : s.memo,
         amountFormula: _keypad.formula(decimals: s.displayCurrency!.decimals),
       );
-      state = s.copyWith(
-        submissionAction: TransactionFormSubmissionAction.none,
+      if (ref.mounted) {
+        state = s.copyWith(
+          submissionAction: TransactionFormSubmissionAction.none,
+        );
+      }
+      return const DraftSubmissionOutcome.ok(
+        ShoppingListEditResultSavedTransaction(),
       );
-      return const ShoppingListEditResultSavedTransaction();
     } catch (e) {
-      state = s.copyWith(
-        submissionAction: TransactionFormSubmissionAction.none,
+      debugPrint(
+        '[TransactionFormController] convertDraft failed: ${e.runtimeType}',
       );
-      rethrow;
+      final s = submitting;
+      if (s != null && ref.mounted) {
+        state = s.copyWith(
+          submissionAction: TransactionFormSubmissionAction.none,
+        );
+      }
+      return const DraftSubmissionOutcome.failed();
+    }
+  }
+
+  /// Decides, BEFORE the picker opens, whether it is even useful (Wave 2
+  /// §7.1). Never throws. The picker lists expense and income categories
+  /// together (the category sets the transaction type), so if neither type
+  /// has categories the screen routes straight to /settings/categories
+  /// (the picker would just show its empty-state CTA and pop with `null`,
+  /// which the screen cannot tell apart from a dismiss).
+  Future<CategoryChipTapOutcome> resolveCategoryChipTap() async {
+    final subs = <ProviderSubscription<Future<List<Category>>>>[];
+    try {
+      // Hold subscriptions while awaiting: a bare `ref.read(...future)` on
+      // this auto-dispose stream provider pauses its stream as soon as the
+      // read returns (Riverpod 3), so the future would never complete.
+      for (final type in CategoryType.values) {
+        subs.add(ref.listen(categoriesByTypeProvider(type).future, (_, _) {}));
+      }
+      final categories = await Future.wait([
+        for (final sub in subs) sub.read(),
+      ]);
+      return categories.every((c) => c.isEmpty)
+          ? const CategoryChipTapOutcome.manageCategories()
+          : const CategoryChipTapOutcome.openPicker();
+    } catch (e) {
+      debugPrint(
+        '[TransactionFormController] resolveCategoryChipTap failed: '
+        '${e.runtimeType}',
+      );
+      return const CategoryChipTapOutcome.failed();
+    } finally {
+      for (final sub in subs) {
+        sub.close();
+      }
     }
   }
 
@@ -740,6 +857,7 @@ class TransactionFormController extends _$TransactionFormController {
     // Resolve category against the live row so an archived source
     // category still renders historically (risk #8).
     final category = await categoryRepo.getById(source.categoryId);
+    if (!ref.mounted) return;
     final preservesAmount = source.currency.code == account.currency.code;
     final amountMinorUnits = preservesAmount ? source.amountMinorUnits : 0;
     _keypad = preservesAmount

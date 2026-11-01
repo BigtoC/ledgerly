@@ -657,4 +657,1657 @@ as StackTrace,
 
 }
 
+/// @nodoc
+mixin _$SetDefaultAccountOutcome {
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SetDefaultAccountOutcome);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'SetDefaultAccountOutcome()';
+}
+
+
+}
+
+/// @nodoc
+class $SetDefaultAccountOutcomeCopyWith<$Res>  {
+$SetDefaultAccountOutcomeCopyWith(SetDefaultAccountOutcome _, $Res Function(SetDefaultAccountOutcome) __);
+}
+
+
+/// Adds pattern-matching-related methods to [SetDefaultAccountOutcome].
+extension SetDefaultAccountOutcomePatterns on SetDefaultAccountOutcome {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( SetDefaultAccountOk value)?  ok,TResult Function( SetDefaultAccountFailed value)?  failed,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case SetDefaultAccountOk() when ok != null:
+return ok(_that);case SetDefaultAccountFailed() when failed != null:
+return failed(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( SetDefaultAccountOk value)  ok,required TResult Function( SetDefaultAccountFailed value)  failed,}){
+final _that = this;
+switch (_that) {
+case SetDefaultAccountOk():
+return ok(_that);case SetDefaultAccountFailed():
+return failed(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( SetDefaultAccountOk value)?  ok,TResult? Function( SetDefaultAccountFailed value)?  failed,}){
+final _that = this;
+switch (_that) {
+case SetDefaultAccountOk() when ok != null:
+return ok(_that);case SetDefaultAccountFailed() when failed != null:
+return failed(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  ok,TResult Function()?  failed,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case SetDefaultAccountOk() when ok != null:
+return ok();case SetDefaultAccountFailed() when failed != null:
+return failed();case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  ok,required TResult Function()  failed,}) {final _that = this;
+switch (_that) {
+case SetDefaultAccountOk():
+return ok();case SetDefaultAccountFailed():
+return failed();}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  ok,TResult? Function()?  failed,}) {final _that = this;
+switch (_that) {
+case SetDefaultAccountOk() when ok != null:
+return ok();case SetDefaultAccountFailed() when failed != null:
+return failed();case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class SetDefaultAccountOk implements SetDefaultAccountOutcome {
+  const SetDefaultAccountOk();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SetDefaultAccountOk);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'SetDefaultAccountOutcome.ok()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class SetDefaultAccountFailed implements SetDefaultAccountOutcome {
+  const SetDefaultAccountFailed();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SetDefaultAccountFailed);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'SetDefaultAccountOutcome.failed()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+mixin _$ArchiveAccountOutcome {
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ArchiveAccountOutcome);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'ArchiveAccountOutcome()';
+}
+
+
+}
+
+/// @nodoc
+class $ArchiveAccountOutcomeCopyWith<$Res>  {
+$ArchiveAccountOutcomeCopyWith(ArchiveAccountOutcome _, $Res Function(ArchiveAccountOutcome) __);
+}
+
+
+/// Adds pattern-matching-related methods to [ArchiveAccountOutcome].
+extension ArchiveAccountOutcomePatterns on ArchiveAccountOutcome {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ArchiveAccountOk value)?  ok,TResult Function( ArchiveAccountIsDefault value)?  isDefault,TResult Function( ArchiveAccountLastActive value)?  lastActive,TResult Function( ArchiveAccountHasActiveRecurringRule value)?  hasActiveRecurringRule,TResult Function( ArchiveAccountFailed value)?  failed,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case ArchiveAccountOk() when ok != null:
+return ok(_that);case ArchiveAccountIsDefault() when isDefault != null:
+return isDefault(_that);case ArchiveAccountLastActive() when lastActive != null:
+return lastActive(_that);case ArchiveAccountHasActiveRecurringRule() when hasActiveRecurringRule != null:
+return hasActiveRecurringRule(_that);case ArchiveAccountFailed() when failed != null:
+return failed(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ArchiveAccountOk value)  ok,required TResult Function( ArchiveAccountIsDefault value)  isDefault,required TResult Function( ArchiveAccountLastActive value)  lastActive,required TResult Function( ArchiveAccountHasActiveRecurringRule value)  hasActiveRecurringRule,required TResult Function( ArchiveAccountFailed value)  failed,}){
+final _that = this;
+switch (_that) {
+case ArchiveAccountOk():
+return ok(_that);case ArchiveAccountIsDefault():
+return isDefault(_that);case ArchiveAccountLastActive():
+return lastActive(_that);case ArchiveAccountHasActiveRecurringRule():
+return hasActiveRecurringRule(_that);case ArchiveAccountFailed():
+return failed(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ArchiveAccountOk value)?  ok,TResult? Function( ArchiveAccountIsDefault value)?  isDefault,TResult? Function( ArchiveAccountLastActive value)?  lastActive,TResult? Function( ArchiveAccountHasActiveRecurringRule value)?  hasActiveRecurringRule,TResult? Function( ArchiveAccountFailed value)?  failed,}){
+final _that = this;
+switch (_that) {
+case ArchiveAccountOk() when ok != null:
+return ok(_that);case ArchiveAccountIsDefault() when isDefault != null:
+return isDefault(_that);case ArchiveAccountLastActive() when lastActive != null:
+return lastActive(_that);case ArchiveAccountHasActiveRecurringRule() when hasActiveRecurringRule != null:
+return hasActiveRecurringRule(_that);case ArchiveAccountFailed() when failed != null:
+return failed(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  ok,TResult Function()?  isDefault,TResult Function()?  lastActive,TResult Function()?  hasActiveRecurringRule,TResult Function()?  failed,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case ArchiveAccountOk() when ok != null:
+return ok();case ArchiveAccountIsDefault() when isDefault != null:
+return isDefault();case ArchiveAccountLastActive() when lastActive != null:
+return lastActive();case ArchiveAccountHasActiveRecurringRule() when hasActiveRecurringRule != null:
+return hasActiveRecurringRule();case ArchiveAccountFailed() when failed != null:
+return failed();case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  ok,required TResult Function()  isDefault,required TResult Function()  lastActive,required TResult Function()  hasActiveRecurringRule,required TResult Function()  failed,}) {final _that = this;
+switch (_that) {
+case ArchiveAccountOk():
+return ok();case ArchiveAccountIsDefault():
+return isDefault();case ArchiveAccountLastActive():
+return lastActive();case ArchiveAccountHasActiveRecurringRule():
+return hasActiveRecurringRule();case ArchiveAccountFailed():
+return failed();}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  ok,TResult? Function()?  isDefault,TResult? Function()?  lastActive,TResult? Function()?  hasActiveRecurringRule,TResult? Function()?  failed,}) {final _that = this;
+switch (_that) {
+case ArchiveAccountOk() when ok != null:
+return ok();case ArchiveAccountIsDefault() when isDefault != null:
+return isDefault();case ArchiveAccountLastActive() when lastActive != null:
+return lastActive();case ArchiveAccountHasActiveRecurringRule() when hasActiveRecurringRule != null:
+return hasActiveRecurringRule();case ArchiveAccountFailed() when failed != null:
+return failed();case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class ArchiveAccountOk implements ArchiveAccountOutcome {
+  const ArchiveAccountOk();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ArchiveAccountOk);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'ArchiveAccountOutcome.ok()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class ArchiveAccountIsDefault implements ArchiveAccountOutcome {
+  const ArchiveAccountIsDefault();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ArchiveAccountIsDefault);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'ArchiveAccountOutcome.isDefault()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class ArchiveAccountLastActive implements ArchiveAccountOutcome {
+  const ArchiveAccountLastActive();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ArchiveAccountLastActive);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'ArchiveAccountOutcome.lastActive()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class ArchiveAccountHasActiveRecurringRule implements ArchiveAccountOutcome {
+  const ArchiveAccountHasActiveRecurringRule();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ArchiveAccountHasActiveRecurringRule);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'ArchiveAccountOutcome.hasActiveRecurringRule()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class ArchiveAccountFailed implements ArchiveAccountOutcome {
+  const ArchiveAccountFailed();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ArchiveAccountFailed);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'ArchiveAccountOutcome.failed()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+mixin _$UnarchiveAccountOutcome {
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is UnarchiveAccountOutcome);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'UnarchiveAccountOutcome()';
+}
+
+
+}
+
+/// @nodoc
+class $UnarchiveAccountOutcomeCopyWith<$Res>  {
+$UnarchiveAccountOutcomeCopyWith(UnarchiveAccountOutcome _, $Res Function(UnarchiveAccountOutcome) __);
+}
+
+
+/// Adds pattern-matching-related methods to [UnarchiveAccountOutcome].
+extension UnarchiveAccountOutcomePatterns on UnarchiveAccountOutcome {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( UnarchiveAccountOk value)?  ok,TResult Function( UnarchiveAccountFailed value)?  failed,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case UnarchiveAccountOk() when ok != null:
+return ok(_that);case UnarchiveAccountFailed() when failed != null:
+return failed(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( UnarchiveAccountOk value)  ok,required TResult Function( UnarchiveAccountFailed value)  failed,}){
+final _that = this;
+switch (_that) {
+case UnarchiveAccountOk():
+return ok(_that);case UnarchiveAccountFailed():
+return failed(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( UnarchiveAccountOk value)?  ok,TResult? Function( UnarchiveAccountFailed value)?  failed,}){
+final _that = this;
+switch (_that) {
+case UnarchiveAccountOk() when ok != null:
+return ok(_that);case UnarchiveAccountFailed() when failed != null:
+return failed(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  ok,TResult Function()?  failed,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case UnarchiveAccountOk() when ok != null:
+return ok();case UnarchiveAccountFailed() when failed != null:
+return failed();case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  ok,required TResult Function()  failed,}) {final _that = this;
+switch (_that) {
+case UnarchiveAccountOk():
+return ok();case UnarchiveAccountFailed():
+return failed();}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  ok,TResult? Function()?  failed,}) {final _that = this;
+switch (_that) {
+case UnarchiveAccountOk() when ok != null:
+return ok();case UnarchiveAccountFailed() when failed != null:
+return failed();case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class UnarchiveAccountOk implements UnarchiveAccountOutcome {
+  const UnarchiveAccountOk();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is UnarchiveAccountOk);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'UnarchiveAccountOutcome.ok()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class UnarchiveAccountFailed implements UnarchiveAccountOutcome {
+  const UnarchiveAccountFailed();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is UnarchiveAccountFailed);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'UnarchiveAccountOutcome.failed()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+mixin _$DeleteAccountOutcome {
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is DeleteAccountOutcome);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'DeleteAccountOutcome()';
+}
+
+
+}
+
+/// @nodoc
+class $DeleteAccountOutcomeCopyWith<$Res>  {
+$DeleteAccountOutcomeCopyWith(DeleteAccountOutcome _, $Res Function(DeleteAccountOutcome) __);
+}
+
+
+/// Adds pattern-matching-related methods to [DeleteAccountOutcome].
+extension DeleteAccountOutcomePatterns on DeleteAccountOutcome {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( DeleteAccountOk value)?  ok,TResult Function( DeleteAccountIsDefault value)?  isDefault,TResult Function( DeleteAccountInUse value)?  inUse,TResult Function( DeleteAccountFailed value)?  failed,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case DeleteAccountOk() when ok != null:
+return ok(_that);case DeleteAccountIsDefault() when isDefault != null:
+return isDefault(_that);case DeleteAccountInUse() when inUse != null:
+return inUse(_that);case DeleteAccountFailed() when failed != null:
+return failed(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( DeleteAccountOk value)  ok,required TResult Function( DeleteAccountIsDefault value)  isDefault,required TResult Function( DeleteAccountInUse value)  inUse,required TResult Function( DeleteAccountFailed value)  failed,}){
+final _that = this;
+switch (_that) {
+case DeleteAccountOk():
+return ok(_that);case DeleteAccountIsDefault():
+return isDefault(_that);case DeleteAccountInUse():
+return inUse(_that);case DeleteAccountFailed():
+return failed(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( DeleteAccountOk value)?  ok,TResult? Function( DeleteAccountIsDefault value)?  isDefault,TResult? Function( DeleteAccountInUse value)?  inUse,TResult? Function( DeleteAccountFailed value)?  failed,}){
+final _that = this;
+switch (_that) {
+case DeleteAccountOk() when ok != null:
+return ok(_that);case DeleteAccountIsDefault() when isDefault != null:
+return isDefault(_that);case DeleteAccountInUse() when inUse != null:
+return inUse(_that);case DeleteAccountFailed() when failed != null:
+return failed(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  ok,TResult Function()?  isDefault,TResult Function()?  inUse,TResult Function()?  failed,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case DeleteAccountOk() when ok != null:
+return ok();case DeleteAccountIsDefault() when isDefault != null:
+return isDefault();case DeleteAccountInUse() when inUse != null:
+return inUse();case DeleteAccountFailed() when failed != null:
+return failed();case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  ok,required TResult Function()  isDefault,required TResult Function()  inUse,required TResult Function()  failed,}) {final _that = this;
+switch (_that) {
+case DeleteAccountOk():
+return ok();case DeleteAccountIsDefault():
+return isDefault();case DeleteAccountInUse():
+return inUse();case DeleteAccountFailed():
+return failed();}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  ok,TResult? Function()?  isDefault,TResult? Function()?  inUse,TResult? Function()?  failed,}) {final _that = this;
+switch (_that) {
+case DeleteAccountOk() when ok != null:
+return ok();case DeleteAccountIsDefault() when isDefault != null:
+return isDefault();case DeleteAccountInUse() when inUse != null:
+return inUse();case DeleteAccountFailed() when failed != null:
+return failed();case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class DeleteAccountOk implements DeleteAccountOutcome {
+  const DeleteAccountOk();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is DeleteAccountOk);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'DeleteAccountOutcome.ok()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class DeleteAccountIsDefault implements DeleteAccountOutcome {
+  const DeleteAccountIsDefault();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is DeleteAccountIsDefault);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'DeleteAccountOutcome.isDefault()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class DeleteAccountInUse implements DeleteAccountOutcome {
+  const DeleteAccountInUse();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is DeleteAccountInUse);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'DeleteAccountOutcome.inUse()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class DeleteAccountFailed implements DeleteAccountOutcome {
+  const DeleteAccountFailed();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is DeleteAccountFailed);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'DeleteAccountOutcome.failed()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+mixin _$SaveAccountOutcome {
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SaveAccountOutcome);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'SaveAccountOutcome()';
+}
+
+
+}
+
+/// @nodoc
+class $SaveAccountOutcomeCopyWith<$Res>  {
+$SaveAccountOutcomeCopyWith(SaveAccountOutcome _, $Res Function(SaveAccountOutcome) __);
+}
+
+
+/// Adds pattern-matching-related methods to [SaveAccountOutcome].
+extension SaveAccountOutcomePatterns on SaveAccountOutcome {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( SaveAccountOk value)?  ok,TResult Function( SaveAccountCurrencyLocked value)?  currencyLocked,TResult Function( SaveAccountFailed value)?  failed,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case SaveAccountOk() when ok != null:
+return ok(_that);case SaveAccountCurrencyLocked() when currencyLocked != null:
+return currencyLocked(_that);case SaveAccountFailed() when failed != null:
+return failed(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( SaveAccountOk value)  ok,required TResult Function( SaveAccountCurrencyLocked value)  currencyLocked,required TResult Function( SaveAccountFailed value)  failed,}){
+final _that = this;
+switch (_that) {
+case SaveAccountOk():
+return ok(_that);case SaveAccountCurrencyLocked():
+return currencyLocked(_that);case SaveAccountFailed():
+return failed(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( SaveAccountOk value)?  ok,TResult? Function( SaveAccountCurrencyLocked value)?  currencyLocked,TResult? Function( SaveAccountFailed value)?  failed,}){
+final _that = this;
+switch (_that) {
+case SaveAccountOk() when ok != null:
+return ok(_that);case SaveAccountCurrencyLocked() when currencyLocked != null:
+return currencyLocked(_that);case SaveAccountFailed() when failed != null:
+return failed(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( int accountId)?  ok,TResult Function()?  currencyLocked,TResult Function()?  failed,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case SaveAccountOk() when ok != null:
+return ok(_that.accountId);case SaveAccountCurrencyLocked() when currencyLocked != null:
+return currencyLocked();case SaveAccountFailed() when failed != null:
+return failed();case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( int accountId)  ok,required TResult Function()  currencyLocked,required TResult Function()  failed,}) {final _that = this;
+switch (_that) {
+case SaveAccountOk():
+return ok(_that.accountId);case SaveAccountCurrencyLocked():
+return currencyLocked();case SaveAccountFailed():
+return failed();}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( int accountId)?  ok,TResult? Function()?  currencyLocked,TResult? Function()?  failed,}) {final _that = this;
+switch (_that) {
+case SaveAccountOk() when ok != null:
+return ok(_that.accountId);case SaveAccountCurrencyLocked() when currencyLocked != null:
+return currencyLocked();case SaveAccountFailed() when failed != null:
+return failed();case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class SaveAccountOk implements SaveAccountOutcome {
+  const SaveAccountOk(this.accountId);
+  
+
+ final  int accountId;
+
+/// Create a copy of SaveAccountOutcome
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$SaveAccountOkCopyWith<SaveAccountOk> get copyWith => _$SaveAccountOkCopyWithImpl<SaveAccountOk>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SaveAccountOk&&(identical(other.accountId, accountId) || other.accountId == accountId));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,accountId);
+}
+
+@override
+String toString() {
+    return 'SaveAccountOutcome.ok(accountId: $accountId)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $SaveAccountOkCopyWith<$Res> implements $SaveAccountOutcomeCopyWith<$Res> {
+  factory $SaveAccountOkCopyWith(SaveAccountOk value, $Res Function(SaveAccountOk) _then) = _$SaveAccountOkCopyWithImpl;
+@useResult
+$Res call({
+ int accountId
+});
+
+
+
+
+}
+/// @nodoc
+class _$SaveAccountOkCopyWithImpl<$Res>
+    implements $SaveAccountOkCopyWith<$Res> {
+  _$SaveAccountOkCopyWithImpl(this._self, this._then);
+
+  final SaveAccountOk _self;
+  final $Res Function(SaveAccountOk) _then;
+
+/// Create a copy of SaveAccountOutcome
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? accountId = null,}) {
+  return _then(SaveAccountOk(
+null == accountId ? _self.accountId : accountId // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class SaveAccountCurrencyLocked implements SaveAccountOutcome {
+  const SaveAccountCurrencyLocked();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SaveAccountCurrencyLocked);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'SaveAccountOutcome.currencyLocked()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class SaveAccountFailed implements SaveAccountOutcome {
+  const SaveAccountFailed();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SaveAccountFailed);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'SaveAccountOutcome.failed()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+mixin _$CreateAccountTypeOutcome {
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is CreateAccountTypeOutcome);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'CreateAccountTypeOutcome()';
+}
+
+
+}
+
+/// @nodoc
+class $CreateAccountTypeOutcomeCopyWith<$Res>  {
+$CreateAccountTypeOutcomeCopyWith(CreateAccountTypeOutcome _, $Res Function(CreateAccountTypeOutcome) __);
+}
+
+
+/// Adds pattern-matching-related methods to [CreateAccountTypeOutcome].
+extension CreateAccountTypeOutcomePatterns on CreateAccountTypeOutcome {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( CreateAccountTypeOk value)?  ok,TResult Function( CreateAccountTypeFailed value)?  failed,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case CreateAccountTypeOk() when ok != null:
+return ok(_that);case CreateAccountTypeFailed() when failed != null:
+return failed(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( CreateAccountTypeOk value)  ok,required TResult Function( CreateAccountTypeFailed value)  failed,}){
+final _that = this;
+switch (_that) {
+case CreateAccountTypeOk():
+return ok(_that);case CreateAccountTypeFailed():
+return failed(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( CreateAccountTypeOk value)?  ok,TResult? Function( CreateAccountTypeFailed value)?  failed,}){
+final _that = this;
+switch (_that) {
+case CreateAccountTypeOk() when ok != null:
+return ok(_that);case CreateAccountTypeFailed() when failed != null:
+return failed(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( AccountType accountType)?  ok,TResult Function()?  failed,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case CreateAccountTypeOk() when ok != null:
+return ok(_that.accountType);case CreateAccountTypeFailed() when failed != null:
+return failed();case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( AccountType accountType)  ok,required TResult Function()  failed,}) {final _that = this;
+switch (_that) {
+case CreateAccountTypeOk():
+return ok(_that.accountType);case CreateAccountTypeFailed():
+return failed();}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( AccountType accountType)?  ok,TResult? Function()?  failed,}) {final _that = this;
+switch (_that) {
+case CreateAccountTypeOk() when ok != null:
+return ok(_that.accountType);case CreateAccountTypeFailed() when failed != null:
+return failed();case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class CreateAccountTypeOk implements CreateAccountTypeOutcome {
+  const CreateAccountTypeOk(this.accountType);
+  
+
+ final  AccountType accountType;
+
+/// Create a copy of CreateAccountTypeOutcome
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$CreateAccountTypeOkCopyWith<CreateAccountTypeOk> get copyWith => _$CreateAccountTypeOkCopyWithImpl<CreateAccountTypeOk>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is CreateAccountTypeOk&&(identical(other.accountType, accountType) || other.accountType == accountType));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,accountType);
+}
+
+@override
+String toString() {
+    return 'CreateAccountTypeOutcome.ok(accountType: $accountType)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $CreateAccountTypeOkCopyWith<$Res> implements $CreateAccountTypeOutcomeCopyWith<$Res> {
+  factory $CreateAccountTypeOkCopyWith(CreateAccountTypeOk value, $Res Function(CreateAccountTypeOk) _then) = _$CreateAccountTypeOkCopyWithImpl;
+@useResult
+$Res call({
+ AccountType accountType
+});
+
+
+$AccountTypeCopyWith<$Res> get accountType;
+
+}
+/// @nodoc
+class _$CreateAccountTypeOkCopyWithImpl<$Res>
+    implements $CreateAccountTypeOkCopyWith<$Res> {
+  _$CreateAccountTypeOkCopyWithImpl(this._self, this._then);
+
+  final CreateAccountTypeOk _self;
+  final $Res Function(CreateAccountTypeOk) _then;
+
+/// Create a copy of CreateAccountTypeOutcome
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? accountType = null,}) {
+  return _then(CreateAccountTypeOk(
+null == accountType ? _self.accountType : accountType // ignore: cast_nullable_to_non_nullable
+as AccountType,
+  ));
+}
+
+/// Create a copy of CreateAccountTypeOutcome
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$AccountTypeCopyWith<$Res> get accountType {
+  
+  return $AccountTypeCopyWith<$Res>(_self.accountType, (value) {
+    return _then(_self.copyWith(accountType: value));
+  });
+}
+}
+
+/// @nodoc
+
+
+class CreateAccountTypeFailed implements CreateAccountTypeOutcome {
+  const CreateAccountTypeFailed();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is CreateAccountTypeFailed);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'CreateAccountTypeOutcome.failed()';
+}
+
+
+}
+
+
+
+
 // dart format on

@@ -213,10 +213,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'An active recurring transaction uses this category, so it can\'t be archived.';
 
   @override
-  String get categoriesFormTypeLockedError =>
-      'This category\'s type can\'t change after it has been used. Create a new category instead.';
-
-  @override
   String get categoriesPickerTitleExpense => 'Pick expense category';
 
   @override
@@ -261,6 +257,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Choose another default account before deleting this one.';
 
   @override
+  String get accountsArchiveRecurringRuleError =>
+      'An active recurring transaction uses this account, so it can\'t be archived.';
+
+  @override
+  String get accountsDeleteInUseError =>
+      'This account is still in use, so it can\'t be deleted.';
+
+  @override
   String get accountsFormAddTitle => 'New account';
 
   @override
@@ -292,6 +296,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountsFormNotFound => 'This account no longer exists.';
+
+  @override
+  String get accountFormCurrencyLockedError =>
+      'This account\'s currency can\'t change because transactions or an active recurring transaction use it.';
 
   @override
   String get accountsTypePickerTitle => 'Pick account type';

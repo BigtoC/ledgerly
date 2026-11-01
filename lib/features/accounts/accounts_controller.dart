@@ -16,17 +16,19 @@
 // directly (layer-boundary rules in import_analysis_options.yaml); only
 // repositories and domain models flow through here.
 //
-// Commands: `setDefault`, `archive`, `delete`, `unarchive`, plus an
-// internal `canArchive` hint for the widget to surface disabled
-// affordances without poking the repository.
+// Commands: `setDefault`, `archive`, `delete`, `unarchive`. Each returns
+// a sealed outcome from `accounts_state.dart` and never throws; the
+// widget switches on the outcome to choose a message.
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../app/providers/repository_providers.dart';
 import '../../data/models/account.dart';
 import '../../data/repositories/account_repository.dart';
+import '../../data/repositories/repository_exceptions.dart';
 import '../../data/repositories/user_preferences_repository.dart';
 import 'accounts_state.dart';
 
@@ -52,82 +54,95 @@ class AccountsController extends _$AccountsController {
   /// Writes `default_account_id` via `UserPreferencesRepository`. The
   /// accounts stream re-emits via its default-id subscription, so the
   /// badge flips without manual state mutation.
-  Future<void> setDefault(int accountId) async {
-    final prefs = ref.read(userPreferencesRepositoryProvider);
-    await prefs.setDefaultAccountId(accountId);
+  Future<SetDefaultAccountOutcome> setDefault(int accountId) async {
+    try {
+      final prefs = ref.read(userPreferencesRepositoryProvider);
+      await prefs.setDefaultAccountId(accountId);
+      return const SetDefaultAccountOutcome.ok();
+    } catch (e) {
+      debugPrint('[AccountsController] setDefault failed: ${e.runtimeType}');
+      return const SetDefaultAccountOutcome.failed();
+    }
   }
 
-  /// Archive an account. Throws [AccountsOperationException] when the
-  /// account is the only active one remaining (plan §7 invariant).
+  /// Archive an account. Returns `isDefault` for the current default
+  /// account, `lastActive` when it is the only active one remaining
+  /// (plan §7 invariant), and `hasActiveRecurringRule` when an active
+  /// recurring rule still uses it.
   ///
   /// Uses the currently-projected state to count active rows — the
   /// Riverpod stream has the same view the widget does, so the archive
   /// guard matches what the user sees.
-  Future<void> archive(int accountId) async {
-    final prefs = ref.read(userPreferencesRepositoryProvider);
-    final currentDefault = state.value is AccountsData
-        ? (state.value! as AccountsData).defaultAccountId
-        : await prefs.getDefaultAccountId();
-    if (currentDefault == accountId) {
-      throw const AccountsOperationException(
-        AccountsOperationError.defaultAccount,
-      );
-    }
-
-    final snapshot = state.value;
-    if (snapshot is AccountsData) {
-      final activeCount = snapshot.active.length;
-      final targetIsActive = snapshot.active.any(
-        (r) => r.account.id == accountId,
-      );
-      if (activeCount <= 1 && targetIsActive) {
-        throw const AccountsOperationException(
-          AccountsOperationError.lastActiveAccount,
-        );
+  Future<ArchiveAccountOutcome> archive(int accountId) async {
+    try {
+      final prefs = ref.read(userPreferencesRepositoryProvider);
+      final repo = ref.read(accountRepositoryProvider);
+      final snapshot = state.value;
+      final currentDefault = snapshot is AccountsData
+          ? snapshot.defaultAccountId
+          : await prefs.getDefaultAccountId();
+      if (currentDefault == accountId) {
+        return const ArchiveAccountOutcome.isDefault();
       }
+
+      if (snapshot is AccountsData) {
+        final activeCount = snapshot.active.length;
+        final targetIsActive = snapshot.active.any(
+          (r) => r.account.id == accountId,
+        );
+        if (activeCount <= 1 && targetIsActive) {
+          return const ArchiveAccountOutcome.lastActive();
+        }
+      }
+      await repo.archive(accountId);
+      return const ArchiveAccountOutcome.ok();
+    } on AccountHasRecurringRuleException {
+      return const ArchiveAccountOutcome.hasActiveRecurringRule();
+    } catch (e) {
+      debugPrint('[AccountsController] archive failed: ${e.runtimeType}');
+      return const ArchiveAccountOutcome.failed();
     }
-    final repo = ref.read(accountRepositoryProvider);
-    await repo.archive(accountId);
   }
 
   /// Undo an archive (widget calls this from the SnackBar `commonUndo`).
-  Future<void> unarchive(int accountId) async {
-    final repo = ref.read(accountRepositoryProvider);
-    final existing = await repo.getById(accountId);
-    if (existing == null) {
-      throw const AccountsOperationException(AccountsOperationError.missingRow);
+  /// A row that no longer exists has nothing to restore, so that is `ok`
+  /// too. The repository is read before the first await, so this works
+  /// even when the auto-dispose provider was rebuilt just for this call.
+  Future<UnarchiveAccountOutcome> unarchive(int accountId) async {
+    try {
+      final repo = ref.read(accountRepositoryProvider);
+      final existing = await repo.getById(accountId);
+      if (existing == null) return const UnarchiveAccountOutcome.ok();
+      await repo.save(existing.copyWith(isArchived: false));
+      return const UnarchiveAccountOutcome.ok();
+    } catch (e) {
+      debugPrint('[AccountsController] unarchive failed: ${e.runtimeType}');
+      return const UnarchiveAccountOutcome.failed();
     }
-    await repo.save(existing.copyWith(isArchived: false));
   }
 
-  /// Hard-delete a custom, unused account. Throws when the account is
-  /// the current default — caller must prompt the user to pick a new
-  /// default first (plan §7).
-  Future<void> delete(int accountId) async {
-    final repo = ref.read(accountRepositoryProvider);
-    final prefs = ref.read(userPreferencesRepositoryProvider);
-    final currentDefault = await prefs.getDefaultAccountId();
-    if (currentDefault == accountId) {
-      throw const AccountsOperationException(
-        AccountsOperationError.defaultAccount,
-      );
+  /// Hard-delete a custom, unused account. Returns `isDefault` when the
+  /// account is the current default — the widget prompts the user to
+  /// pick a new default first (plan §7) — and `inUse` when something
+  /// still references it.
+  Future<DeleteAccountOutcome> delete(int accountId) async {
+    try {
+      final repo = ref.read(accountRepositoryProvider);
+      final prefs = ref.read(userPreferencesRepositoryProvider);
+      final currentDefault = await prefs.getDefaultAccountId();
+      if (currentDefault == accountId) {
+        return const DeleteAccountOutcome.isDefault();
+      }
+      await repo.delete(accountId);
+      return const DeleteAccountOutcome.ok();
+    } on AccountInUseException {
+      return const DeleteAccountOutcome.inUse();
+    } catch (e) {
+      debugPrint('[AccountsController] delete failed: ${e.runtimeType}');
+      return const DeleteAccountOutcome.failed();
     }
-    await repo.delete(accountId);
   }
 }
-
-/// Typed failure surface for [AccountsController] commands. Widgets
-/// branch on `kind` to decide which dialog / snackbar to show.
-class AccountsOperationException implements Exception {
-  const AccountsOperationException(this.kind);
-
-  final AccountsOperationError kind;
-
-  @override
-  String toString() => 'AccountsOperationException($kind)';
-}
-
-enum AccountsOperationError { lastActiveAccount, defaultAccount, missingRow }
 
 // ---------- Internal stream composition ----------
 

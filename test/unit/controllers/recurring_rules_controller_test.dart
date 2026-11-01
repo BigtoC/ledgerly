@@ -2,6 +2,9 @@
 //
 // Mirrors the ShoppingListController pattern: stream driven by a mocked
 // repository, deletion flows asserted via fake-async timers and Mocktail.
+// Commands return outcomes and never throw, so failures are asserted on
+// the returned outcome; only the timer-driven delete commit reports
+// through an effect.
 
 import 'dart:async';
 
@@ -132,7 +135,7 @@ void main() {
       expect((state as RecurringRulesError).error, isA<StateError>());
     });
 
-    test('RRC04: pauseRule calls setActive(active: false)', () async {
+    test('RRC04: pauseRule calls setActive(active: false) → ok', () async {
       when(() => repo.setActive(any(), active: any(named: 'active')))
           .thenAnswer((_) async {});
 
@@ -143,14 +146,33 @@ void main() {
       rulesCtrl.add([_rule(id: 1)]);
       await waitFor(container, (s) => s is RecurringRulesData);
 
-      await container
+      final outcome = await container
           .read(recurringRulesControllerProvider.notifier)
           .pauseRule(1);
 
       verify(() => repo.setActive(1, active: false)).called(1);
+      expect(outcome, const PauseRecurringRuleOutcome.ok());
     });
 
-    test('RRC05: resumeRule calls setActive(active: true)', () async {
+    test('RRC04b: pauseRule returns failed when setActive throws', () async {
+      when(() => repo.setActive(any(), active: any(named: 'active')))
+          .thenThrow(StateError('disk full'));
+
+      final container = makeContainer();
+      addTearDown(container.dispose);
+      container.listen(recurringRulesControllerProvider, (_, _) {});
+
+      rulesCtrl.add([_rule(id: 1)]);
+      await waitFor(container, (s) => s is RecurringRulesData);
+
+      final outcome = await container
+          .read(recurringRulesControllerProvider.notifier)
+          .pauseRule(1);
+
+      expect(outcome, const PauseRecurringRuleOutcome.failed());
+    });
+
+    test('RRC05: resumeRule calls setActive(active: true) → ok', () async {
       final resumedRule = _rule(id: 1, isActive: true);
       when(() => repo.setActive(any(), active: any(named: 'active')))
           .thenAnswer((_) async {});
@@ -163,13 +185,53 @@ void main() {
       rulesCtrl.add([_rule(id: 1, isActive: false)]);
       await waitFor(container, (s) => s is RecurringRulesData);
 
-      final result = await container
+      final outcome = await container
           .read(recurringRulesControllerProvider.notifier)
           .resumeRule(1);
 
       verify(() => repo.setActive(1, active: true)).called(1);
       verify(() => repo.getById(1)).called(1);
-      expect(result, resumedRule);
+      expect(outcome, ResumeRecurringRuleOutcome.ok(resumedRule.nextDueDate));
+    });
+
+    test('RRC05b: resumeRule returns failed when setActive throws', () async {
+      when(() => repo.setActive(any(), active: any(named: 'active')))
+          .thenThrow(StateError('disk full'));
+
+      final container = makeContainer();
+      addTearDown(container.dispose);
+      container.listen(recurringRulesControllerProvider, (_, _) {});
+
+      rulesCtrl.add([_rule(id: 1, isActive: false)]);
+      await waitFor(container, (s) => s is RecurringRulesData);
+
+      final outcome = await container
+          .read(recurringRulesControllerProvider.notifier)
+          .resumeRule(1);
+
+      expect(outcome, const ResumeRecurringRuleOutcome.failed());
+      verifyNever(() => repo.getById(any()));
+    });
+
+    test('RRC05c: resumeRule returns ok without a date when only the re-read '
+        'fails', () async {
+      when(() => repo.setActive(any(), active: any(named: 'active')))
+          .thenAnswer((_) async {});
+      when(() => repo.getById(1)).thenThrow(StateError('db closed'));
+
+      final container = makeContainer();
+      addTearDown(container.dispose);
+      container.listen(recurringRulesControllerProvider, (_, _) {});
+
+      rulesCtrl.add([_rule(id: 1, isActive: false)]);
+      await waitFor(container, (s) => s is RecurringRulesData);
+
+      final outcome = await container
+          .read(recurringRulesControllerProvider.notifier)
+          .resumeRule(1);
+
+      // The rule was resumed, so the outcome must not say it failed.
+      expect(outcome, const ResumeRecurringRuleOutcome.ok(null));
     });
 
     test(
@@ -184,8 +246,10 @@ void main() {
         rulesCtrl.add([_rule(id: 1), _rule(id: 2, name: 'Rent')]);
         await waitFor(container, (s) => s is RecurringRulesData);
 
-        // ignore: unawaited_futures
-        container.read(recurringRulesControllerProvider.notifier).deleteRule(1);
+        final outcome = await container
+            .read(recurringRulesControllerProvider.notifier)
+            .deleteRule(1);
+        expect(outcome, const DeleteRecurringRuleOutcome.pending());
 
         final state = await waitFor(
           container,
@@ -222,7 +286,7 @@ void main() {
           (s) => s is RecurringRulesData && s.pendingDelete != null,
         );
 
-        await notifier.undoDelete();
+        notifier.undoDelete(1);
         await pump();
 
         // The hidden row reappears; repo.archive must not have run.
@@ -235,6 +299,44 @@ void main() {
         );
         expect(restored, isA<RecurringRulesData>());
         verifyNever(() => repo.archive(any()));
+      },
+    );
+
+    test(
+      'RRC07b: undoDelete for another rule leaves the pending delete alone',
+      () {
+        fakeAsync((async) {
+          when(() => repo.archive(any())).thenAnswer((_) async {});
+
+          final container = makeContainer();
+          addTearDown(container.dispose);
+          container.listen(recurringRulesControllerProvider, (_, _) {});
+
+          rulesCtrl.add([_rule(id: 1), _rule(id: 2, name: 'Rent')]);
+          async.flushMicrotasks();
+
+          final notifier = container.read(
+            recurringRulesControllerProvider.notifier,
+          );
+          // ignore: unawaited_futures
+          notifier.deleteRule(1);
+          async.flushMicrotasks();
+
+          // A stale Undo for a rule that is no longer pending.
+          notifier.undoDelete(2);
+          async.flushMicrotasks();
+
+          final state =
+              container.read(recurringRulesControllerProvider).value!
+                  as RecurringRulesData;
+          expect(state.pendingDelete?.ruleId, 1);
+          expect(state.rules.map((r) => r.id), [2]);
+
+          async.elapse(kUndoWindow + const Duration(seconds: 1));
+          async.flushMicrotasks();
+
+          verify(() => repo.archive(1)).called(1);
+        });
       },
     );
 
@@ -260,7 +362,8 @@ void main() {
       });
     });
 
-    test('RRC09: failed delete fires effect and restores row', () async {
+    test('RRC09: deleteRule returns notStarted when the prior commit fails, '
+        'without firing the effect', () async {
       when(() => repo.archive(any())).thenThrow(StateError('disk full'));
 
       final container = makeContainer();
@@ -277,25 +380,102 @@ void main() {
       notifier.setEffectListener((effect) => effectCaptured = effect);
 
       // Trigger first deletion → start timer. Then a SECOND deletion will
-      // commit the prior, which throws → effect fires.
-      // ignore: unawaited_futures
-      notifier.deleteRule(1);
+      // commit the prior, which throws → the second delete never starts.
+      await notifier.deleteRule(1);
       await waitFor(
         container,
         (s) => s is RecurringRulesData && s.pendingDelete?.ruleId == 1,
       );
 
-      // ignore: unawaited_futures
-      notifier.deleteRule(2);
+      final outcome = await notifier.deleteRule(2);
       await pump();
 
-      expect(effectCaptured, isA<RecurringRulesDeleteFailedEffect>());
-      // Rule 1 must reappear after the failed commit.
+      expect(outcome, const DeleteRecurringRuleOutcome.notStarted());
+      // The outcome reports it; the widget shows the error, not the effect.
+      expect(effectCaptured, isNull);
+      // Rule 1 reappears after the failed commit; rule 2 was never hidden.
       final after = await waitFor(
         container,
         (s) => s is RecurringRulesData && s.rules.any((r) => r.id == 1),
-      );
-      expect(after, isA<RecurringRulesData>());
+      ) as RecurringRulesData;
+      expect(after.rules.map((r) => r.id), [1, 2]);
+      expect(after.pendingDelete, isNull);
     });
+
+    test('RRC09b: a delete still committing the prior rule when the screen '
+        'closes opens no undo window', () {
+      fakeAsync((async) {
+        final priorCommit = Completer<void>();
+        when(() => repo.archive(1)).thenAnswer((_) => priorCommit.future);
+
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        final sub = container.listen(
+          recurringRulesControllerProvider,
+          (_, _) {},
+        );
+        rulesCtrl.add([_rule(id: 1), _rule(id: 2, name: 'Rent')]);
+        async.flushMicrotasks();
+
+        final notifier = container.read(
+          recurringRulesControllerProvider.notifier,
+        );
+        // ignore: unawaited_futures
+        notifier.deleteRule(1);
+        async.flushMicrotasks();
+        DeleteRecurringRuleOutcome? outcome;
+        notifier.deleteRule(2).then((o) => outcome = o);
+        async.flushMicrotasks();
+        verify(() => repo.archive(1)).called(1);
+
+        // The screen closes while rule 1's commit is in flight.
+        sub.close();
+        // ignore: unawaited_futures
+        container.pump();
+        async.elapse(Duration.zero);
+        priorCommit.complete();
+        async.flushMicrotasks();
+
+        expect(outcome, const DeleteRecurringRuleOutcome.notStarted());
+        expect(async.pendingTimers, isEmpty);
+      });
+    });
+
+    test(
+      'RRC10: failed timer commit fires the effect and restores the row',
+      () {
+        fakeAsync((async) {
+          when(() => repo.archive(any())).thenThrow(StateError('disk full'));
+
+          final container = makeContainer();
+          addTearDown(container.dispose);
+          container.listen(recurringRulesControllerProvider, (_, _) {});
+
+          rulesCtrl.add([_rule(id: 1)]);
+          async.flushMicrotasks();
+
+          final notifier = container.read(
+            recurringRulesControllerProvider.notifier,
+          );
+          RecurringRulesEffect? effectCaptured;
+          notifier.setEffectListener((effect) => effectCaptured = effect);
+
+          // ignore: unawaited_futures
+          notifier.deleteRule(1);
+          async.flushMicrotasks();
+          expect(effectCaptured, isNull);
+
+          async.elapse(kUndoWindow + const Duration(seconds: 1));
+          async.flushMicrotasks();
+
+          expect(effectCaptured, isA<RecurringRulesDeleteFailedEffect>());
+          final state =
+              container.read(recurringRulesControllerProvider).value!
+                  as RecurringRulesData;
+          expect(state.rules.map((r) => r.id), [1]);
+          expect(state.pendingDelete, isNull);
+        });
+      },
+    );
   });
 }

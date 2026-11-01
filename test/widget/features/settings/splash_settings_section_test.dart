@@ -10,6 +10,9 @@
 //   - Button-label field persists on submit via `setSplashButtonLabel`.
 //   - Existing start date renders formatted; null renders the label as
 //     a placeholder.
+//   - A failed write from the switch, the start-date picker or either text
+//     field shows `errorSnackbarGeneric` instead of escaping as an
+//     uncaught error; a failed text write is retried on the next submit.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,6 +29,9 @@ import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockUserPreferencesRepository extends Mock
     implements UserPreferencesRepository {}
+
+final _genericError = lookupAppLocalizations(const Locale('en'))
+    .errorSnackbarGeneric;
 
 class _FakeSettingsController extends SettingsController {
   _FakeSettingsController(this._fixed);
@@ -310,6 +316,130 @@ void main() {
 
       verify(() => prefs.setSplashDisplayText('On {date}\nstart of journey'))
           .called(1);
+    },
+  );
+
+  testWidgets(
+    'SSS09: a failed enabled-switch write shows the generic error snackbar',
+    (tester) async {
+      final prefs = _MockUserPreferencesRepository();
+      when(() => prefs.setSplashEnabled(false))
+          .thenThrow(Exception('write failed'));
+      final container = _makeContainer(prefs);
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container, splashEnabled: true));
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey('splashSettings:enabledSwitch')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text(_genericError), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'SSS10: a failed start-date write shows the generic error snackbar',
+    (tester) async {
+      final prefs = _MockUserPreferencesRepository();
+      when(() => prefs.setSplashStartDate(any()))
+          .thenThrow(Exception('write failed'));
+      final container = _makeContainer(prefs);
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container, splashEnabled: true));
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey('splashSettings:startDateTile')),
+      );
+      await tester.pumpAndSettle();
+      await pickToday(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(find.text(_genericError), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'SSS11: a failed display-text write shows the generic error snackbar',
+    (tester) async {
+      final prefs = _MockUserPreferencesRepository();
+      when(() => prefs.setSplashDisplayText(any()))
+          .thenThrow(Exception('write failed'));
+      final container = _makeContainer(prefs);
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container, splashEnabled: true));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(const ValueKey('splashSettings:displayTextField')),
+        'Day {days}',
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text(_genericError), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'SSS12: a failed button-label write shows the generic error snackbar',
+    (tester) async {
+      final prefs = _MockUserPreferencesRepository();
+      when(() => prefs.setSplashButtonLabel(any()))
+          .thenThrow(Exception('write failed'));
+      final container = _makeContainer(prefs);
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container, splashEnabled: true));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(const ValueKey('splashSettings:buttonLabelField')),
+        'Go',
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text(_genericError), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'SSS13: a failed display-text write is retried on the next submit',
+    (tester) async {
+      final prefs = _MockUserPreferencesRepository();
+      when(() => prefs.setSplashDisplayText(any()))
+          .thenThrow(Exception('write failed'));
+      final container = _makeContainer(prefs);
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container, splashEnabled: true));
+      await tester.pumpAndSettle();
+
+      final field = find.byKey(
+        const ValueKey('splashSettings:displayTextField'),
+      );
+      await tester.enterText(field, 'Day {days}');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      // The same text, submitted again, must reach the repository: the
+      // failed write must not be recorded as synced. The first submit
+      // unfocused the field, so focus it again first.
+      when(() => prefs.setSplashDisplayText(any())).thenAnswer((_) async {});
+      await tester.showKeyboard(field);
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      verify(() => prefs.setSplashDisplayText('Day {days}')).called(2);
     },
   );
 }

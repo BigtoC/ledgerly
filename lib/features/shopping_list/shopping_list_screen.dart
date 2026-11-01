@@ -103,6 +103,10 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
           action: SnackBarAction(
             label: l10n.commonUndo,
             onPressed: () {
+              // The snackbar outlives this screen. Once the screen is gone,
+              // the auto-dispose controller has dropped the pending delete,
+              // so there is nothing to undo and `ref` is unusable.
+              if (!mounted) return;
               unawaited(
                 ref.read(shoppingListControllerProvider.notifier).undoDelete(),
               );

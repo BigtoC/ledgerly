@@ -7,6 +7,7 @@
 //   - row tap navigates to /home/shopping-list/:id
 //   - row tap is disabled while pending delete is active
 //   - undo snackbar action cancels delete
+//   - undo tapped after leaving the screen raises no error
 //   - error state shows retry button
 //   - rows have non-swipe delete affordance (overflow/trailing icon)
 
@@ -305,6 +306,67 @@ void main() {
     await tester.pumpAndSettle();
 
     // Repo.delete should never have been called (timer cancelled)
+    verifyNever(() => mockRepo.delete(any()));
+  });
+
+  testWidgets('SLS07b: undo tapped after leaving the screen raises no error', (
+    tester,
+  ) async {
+    final mockRepo = _MockShoppingListRepository();
+    final ctrl = StreamController<List<ShoppingListItem>>.broadcast();
+    when(() => mockRepo.watchAll()).thenAnswer((_) => ctrl.stream);
+    when(() => mockRepo.delete(any())).thenAnswer((_) async => true);
+
+    final container = ProviderContainer(
+      overrides: [shoppingListRepositoryProvider.overrideWithValue(mockRepo)],
+    );
+    addTearDown(container.dispose);
+    addTearDown(ctrl.close);
+
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, _) => const Scaffold(body: Text('HOME')),
+        ),
+        GoRoute(path: '/list', builder: (_, _) => const ShoppingListScreen()),
+      ],
+    );
+    addTearDown(router.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp.router(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: router,
+        ),
+      ),
+    );
+    unawaited(router.push('/list'));
+    // The loading spinner never settles, so pump the route in.
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    ctrl.add([_item(id: 6, memo: 'Sugar')]);
+    await tester.pumpAndSettle();
+
+    await tester.drag(find.text('Sugar'), const Offset(-300, 0));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Draft deleted'), findsOneWidget);
+
+    // Leaving disposes the controller, which drops the pending delete.
+    // The Undo snackbar stays on the root messenger.
+    router.pop();
+    await tester.pumpAndSettle();
+    expect(find.text('HOME'), findsOneWidget);
+
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
     verifyNever(() => mockRepo.delete(any()));
   });
 

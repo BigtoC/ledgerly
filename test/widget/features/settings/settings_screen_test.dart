@@ -20,6 +20,8 @@
 //   - "new version" badge appears beside the app version only when an
 //     update URL is available, and survives 2× text scale.
 //   - The footer shows the installed version and build number.
+//   - A failed theme, language or default-currency write shows
+//     `errorSnackbarGeneric` instead of escaping as an uncaught error.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -76,6 +78,10 @@ class _FakeAccountsController extends AccountsController {
 }
 
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
+const _jpy = Currency(code: 'JPY', decimals: 0, symbol: '¥');
+
+final _genericError = lookupAppLocalizations(const Locale('en'))
+    .errorSnackbarGeneric;
 
 Account _a({required int id, required String name}) =>
     Account(id: id, name: name, accountTypeId: 1, currency: _usd);
@@ -699,6 +705,93 @@ void main() {
 
     expect(find.text('v1.2.3+45', skipOffstage: false), findsOneWidget);
   });
+
+  testWidgets('SS12: a failed theme write shows the generic error snackbar', (
+    tester,
+  ) async {
+    final prefs = _MockUserPreferencesRepository();
+    when(() => prefs.setThemeMode(ThemeMode.dark))
+        .thenThrow(Exception('write failed'));
+    final container = _makeContainer(
+      prefs: prefs,
+      accountRepo: _MockAccountRepository(),
+      currencyRepo: _MockCurrencyRepository(),
+      fixed: _data(),
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Dark'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text(_genericError), findsOneWidget);
+  });
+
+  testWidgets(
+    'SS13: a failed language write shows the generic error snackbar',
+    (tester) async {
+      final prefs = _MockUserPreferencesRepository();
+      when(() => prefs.setLocale(const Locale('zh', 'TW')))
+          .thenThrow(Exception('write failed'));
+      final container = _makeContainer(
+        prefs: prefs,
+        accountRepo: _MockAccountRepository(),
+        currencyRepo: _MockCurrencyRepository(),
+        fixed: _data(),
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Language'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('languageOption:zh_TW')));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text(_genericError), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'SS14: a failed default-currency write shows the generic error snackbar',
+    (tester) async {
+      final prefs = _MockUserPreferencesRepository();
+      final currencyRepo = _MockCurrencyRepository();
+      when(() => currencyRepo.watchAll())
+          .thenAnswer((_) => Stream.value(const [_usd, _jpy]));
+      when(() => prefs.setDefaultCurrency('JPY'))
+          .thenThrow(Exception('write failed'));
+      final container = _makeContainer(
+        prefs: prefs,
+        accountRepo: _MockAccountRepository(),
+        currencyRepo: currencyRepo,
+        fixed: _data(),
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container));
+      await tester.pumpAndSettle();
+
+      const tile = ValueKey('settingsDefaultCurrencyTile');
+      await tester.scrollUntilVisible(
+        find.byKey(tile),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.byKey(tile));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('defaultCurrencyOption:JPY')));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text(_genericError), findsOneWidget);
+    },
+  );
 }
 
 Finder _dataManagementSection() => find.byWidgetPredicate(

@@ -14,7 +14,7 @@ test/
 ## Patterns
 
 - **Repository tests** use Drift's **in-memory database**; assert rules like category type locking, archive-instead-of-delete, FK integrity, and reactive stream emissions.
-- **Controller tests** use Riverpod `ProviderContainer` overrides with `mocktail`.
+- **Controller tests** use Riverpod `ProviderContainer` overrides with `mocktail`. A command test asserts the outcome the command returns, with one test per outcome variant, not a thrown exception.
 - **Splash screen** has **golden tests** because its visual design is a product requirement. Widget coverage lives in `test/widget/features/splash/splash_screen_test.dart`; route-level redirect coverage lives in `test/unit/app/router_test.dart`; controller/template coverage for the inline-date behavior lives in `test/unit/controllers/splash_controller_test.dart` and `test/unit/utils/splash_template_substitution_test.dart`.
 - **Migration tests** run `onUpgrade` against every committed snapshot in `drift_schemas/` on both empty and seeded DBs. The live tests are in `test/unit/repositories/migration_test.dart` and validate the v1–v7 generated schema helpers (`test/unit/repositories/_harness/generated/schema_v{1..7}.dart`), seeded and empty DB opens, and `PRAGMA foreign_keys` after upgrade. **Never rewrite a merged migration in place** — add a new schema version instead.
 - **Drift-backed setup and direct repository writes that happen before the first `pump`** must run inside `tester.runAsync(...)`; see `test/widget/smoke_test.dart` and `test/integration/bootstrap_to_home_test.dart`.

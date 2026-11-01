@@ -27,6 +27,7 @@ import '../../data/models/account_type.dart';
 import '../../data/models/currency.dart';
 import '../../l10n/app_localizations.dart';
 import 'accounts_providers.dart';
+import 'accounts_state.dart';
 import 'widgets/account_type_display.dart';
 import 'widgets/account_type_picker_sheet.dart';
 import 'widgets/amount_minor_units_field.dart';
@@ -113,24 +114,32 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
       _saving = true;
       _errorMessage = null;
     });
-    try {
-      final draft = Account(
-        id: widget.accountId ?? 0,
-        name: name,
-        accountTypeId: _type!.id,
-        currency: _currency!,
-        openingBalanceMinorUnits: _openingBalanceMinorUnits,
-        icon: _icon,
-        color: _color,
-        sortOrder: null,
-      );
-      final id = await ref.read(accountFormActionsProvider).save(draft);
-      if (mounted) context.pop(id);
-    } catch (_) {
-      setState(() {
-        _saving = false;
-        _errorMessage = AppLocalizations.of(context).errorSnackbarGeneric;
-      });
+    final draft = Account(
+      id: widget.accountId ?? 0,
+      name: name,
+      accountTypeId: _type!.id,
+      currency: _currency!,
+      openingBalanceMinorUnits: _openingBalanceMinorUnits,
+      icon: _icon,
+      color: _color,
+      sortOrder: null,
+    );
+    final outcome = await ref.read(accountFormActionsProvider).save(draft);
+    if (!mounted) return;
+    switch (outcome) {
+      case SaveAccountOk(:final accountId):
+        context.pop(accountId);
+      case SaveAccountCurrencyLocked():
+        setState(() {
+          _saving = false;
+          _errorMessage = AppLocalizations.of(context)
+              .accountFormCurrencyLockedError;
+        });
+      case SaveAccountFailed():
+        setState(() {
+          _saving = false;
+          _errorMessage = AppLocalizations.of(context).errorSnackbarGeneric;
+        });
     }
   }
 
@@ -194,6 +203,7 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
                               final picked = await showAccountTypePickerSheet(
                                 context,
                               );
+                              if (!mounted) return;
                               if (picked != null) {
                                 setState(() {
                                   _type = picked;
@@ -214,6 +224,7 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
                               final picked = await showCurrencyPickerSheet(
                                 context,
                               );
+                              if (!mounted) return;
                               if (picked != null) {
                                 setState(() => _currency = picked);
                               }

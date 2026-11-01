@@ -146,64 +146,83 @@ class _AccountTileWithLookups extends ConsumerWidget {
   ) async {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    try {
-      await ref.read(accountsControllerProvider.notifier).setDefault(id);
-      if (context.mounted) {
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.manageAccountsSetDefaultSuccess(name))),
-        );
-      }
-    } catch (_) {
-      if (context.mounted) {
-        messenger
-          ..clearSnackBars()
-          ..showSnackBar(
-            SnackBar(content: Text(l10n.manageAccountsSetDefaultFailed)),
-          );
-      }
-    }
+    final outcome = await ref
+        .read(accountsControllerProvider.notifier)
+        .setDefault(id);
+    if (!context.mounted) return;
+    final message = switch (outcome) {
+      SetDefaultAccountOk() => l10n.manageAccountsSetDefaultSuccess(name),
+      SetDefaultAccountFailed() => l10n.manageAccountsSetDefaultFailed,
+    };
+    messenger
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _onArchive(BuildContext context, WidgetRef ref, int id) async {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    try {
-      await ref.read(accountsControllerProvider.notifier).archive(id);
-    } on AccountsOperationException catch (e) {
-      if (e.kind == AccountsOperationError.lastActiveAccount) {
+    // The Undo action can run after this tile is gone (the row moved to
+    // the Archived card, or the sheet closed), so it must not use `ref`.
+    final container = ProviderScope.containerOf(context, listen: false);
+    final outcome = await ref
+        .read(accountsControllerProvider.notifier)
+        .archive(id);
+    switch (outcome) {
+      case ArchiveAccountOk():
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(l10n.accountsArchiveUndoSnackbar),
+              action: SnackBarAction(
+                label: l10n.commonUndo,
+                onPressed: () =>
+                    unawaited(_undoArchive(container, messenger, l10n, id)),
+              ),
+            ),
+          );
+      case ArchiveAccountIsDefault():
+        if (!context.mounted) return;
+        await _showDefaultBlockedDialog(context, l10n);
+      case ArchiveAccountLastActive():
         messenger
           ..clearSnackBars()
           ..showSnackBar(
             SnackBar(content: Text(l10n.accountsArchiveLastActiveBlocked)),
           );
-        return;
-      }
-      if (e.kind == AccountsOperationError.defaultAccount) {
-        if (!context.mounted) return;
-        await _showDefaultBlockedDialog(context, l10n);
-        return;
-      }
-      messenger
-        ..clearSnackBars()
-        ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
-      return;
-    } catch (_) {
-      messenger
-        ..clearSnackBars()
-        ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
-      return;
+      case ArchiveAccountHasActiveRecurringRule():
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(content: Text(l10n.accountsArchiveRecurringRuleError)),
+          );
+      case ArchiveAccountFailed():
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
     }
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(l10n.accountsArchiveUndoSnackbar),
-        action: SnackBarAction(
-          label: l10n.commonUndo,
-          onPressed: () => unawaited(
-            ref.read(accountsControllerProvider.notifier).unarchive(id),
-          ),
-        ),
-      ),
-    );
+  }
+
+  /// Uses only what [_onArchive] captured while the tile was mounted.
+  /// `unarchive` never throws, so this future cannot fail.
+  static Future<void> _undoArchive(
+    ProviderContainer container,
+    ScaffoldMessengerState messenger,
+    AppLocalizations l10n,
+    int id,
+  ) async {
+    final outcome = await container
+        .read(accountsControllerProvider.notifier)
+        .unarchive(id);
+    switch (outcome) {
+      case UnarchiveAccountOk():
+        break;
+      case UnarchiveAccountFailed():
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
+    }
   }
 
   Future<void> _onDelete(BuildContext context, WidgetRef ref, int id) async {
@@ -228,21 +247,25 @@ class _AccountTileWithLookups extends ConsumerWidget {
     if (confirmed != true) return;
     if (!context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
-    try {
-      await ref.read(accountsControllerProvider.notifier).delete(id);
-    } on AccountsOperationException catch (e) {
-      if (e.kind == AccountsOperationError.defaultAccount) {
+    final outcome = await ref
+        .read(accountsControllerProvider.notifier)
+        .delete(id);
+    switch (outcome) {
+      case DeleteAccountOk():
+        break;
+      case DeleteAccountIsDefault():
         if (!context.mounted) return;
         await _showDefaultBlockedDialog(context, l10n);
-        return;
-      }
-      messenger
-        ..clearSnackBars()
-        ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
-    } catch (_) {
-      messenger
-        ..clearSnackBars()
-        ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
+      case DeleteAccountInUse():
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(content: Text(l10n.accountsDeleteInUseError)),
+          );
+      case DeleteAccountFailed():
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
     }
   }
 

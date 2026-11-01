@@ -3,7 +3,9 @@
 // Covers:
 //   - State transitions: loading → data on joint first emit of all
 //     eight preference streams.
-//   - Each command writes through the repository with the expected value.
+//   - Each command writes through the repository with the expected value
+//     and returns `SettingsWriteOutcome.ok`; a repository throw returns
+//     `SettingsWriteOutcome.failed` instead of escaping.
 //   - State re-emits on upstream stream updates (write → read loop).
 //   - Empty / whitespace-only free-text writes normalize to the
 //     seed defaults (so the UI renders the localized placeholder instead
@@ -148,9 +150,11 @@ void main() {
       await pushAllInitial();
       await waitForData(container);
 
-      await container
+      final outcome = await container
           .read(settingsControllerProvider.notifier)
           .setThemeMode(ThemeMode.dark);
+
+      expect(outcome, const SettingsWriteOutcome.ok());
       verify(() => repo.setThemeMode(ThemeMode.dark)).called(1);
     });
 
@@ -163,9 +167,11 @@ void main() {
       await pushAllInitial();
       await waitForData(container);
 
-      await container
+      final outcome = await container
           .read(settingsControllerProvider.notifier)
           .setLocale(const Locale('zh', 'TW'));
+
+      expect(outcome, const SettingsWriteOutcome.ok());
       verify(() => repo.setLocale(const Locale('zh', 'TW'))).called(1);
     });
 
@@ -177,9 +183,11 @@ void main() {
       await pushAllInitial();
       await waitForData(container);
 
-      await container
+      final outcome = await container
           .read(settingsControllerProvider.notifier)
           .setDefaultCurrency('JPY');
+
+      expect(outcome, const SettingsWriteOutcome.ok());
       verify(() => repo.setDefaultCurrency('JPY')).called(1);
     });
 
@@ -191,9 +199,11 @@ void main() {
       await pushAllInitial();
       await waitForData(container);
 
-      await container
+      final outcome = await container
           .read(settingsControllerProvider.notifier)
           .setSplashEnabled(false);
+
+      expect(outcome, const SettingsWriteOutcome.ok());
       verify(() => repo.setSplashEnabled(false)).called(1);
     });
 
@@ -206,9 +216,11 @@ void main() {
       await pushAllInitial();
       await waitForData(container);
 
-      await container
+      final outcome = await container
           .read(settingsControllerProvider.notifier)
           .setSplashStartDate(d);
+
+      expect(outcome, const SettingsWriteOutcome.ok());
       verify(() => repo.setSplashStartDate(d)).called(1);
     });
 
@@ -221,9 +233,11 @@ void main() {
       await pushAllInitial();
       await waitForData(container);
 
-      await container
+      final outcome = await container
           .read(settingsControllerProvider.notifier)
           .setSplashDisplayText('Day {days}');
+
+      expect(outcome, const SettingsWriteOutcome.ok());
       verify(() => repo.setSplashDisplayText('Day {days}')).called(1);
     });
 
@@ -238,9 +252,11 @@ void main() {
         await pushAllInitial();
         await waitForData(container);
 
-        await container
+        final outcome = await container
             .read(settingsControllerProvider.notifier)
             .setSplashDisplayText('   ');
+
+        expect(outcome, const SettingsWriteOutcome.ok());
         verify(() => repo.setSplashDisplayText(kDefaultSplashDisplayText))
             .called(1);
       },
@@ -254,9 +270,11 @@ void main() {
       await pushAllInitial();
       await waitForData(container);
 
-      await container
+      final outcome = await container
           .read(settingsControllerProvider.notifier)
           .setSplashButtonLabel('Go!');
+
+      expect(outcome, const SettingsWriteOutcome.ok());
       verify(() => repo.setSplashButtonLabel('Go!')).called(1);
     });
 
@@ -271,13 +289,79 @@ void main() {
         await pushAllInitial();
         await waitForData(container);
 
-        await container
+        final outcome = await container
             .read(settingsControllerProvider.notifier)
             .setSplashButtonLabel('');
+
+        expect(outcome, const SettingsWriteOutcome.ok());
         verify(() => repo.setSplashButtonLabel(kDefaultSplashButtonLabel))
             .called(1);
       },
     );
+
+    final failingWrites =
+        <
+          ({
+            String command,
+            Future<void> Function() write,
+            Future<SettingsWriteOutcome> Function(SettingsController c) call,
+          })
+        >[
+          (
+            command: 'setThemeMode',
+            write: () => repo.setThemeMode(any()),
+            call: (c) => c.setThemeMode(ThemeMode.dark),
+          ),
+          (
+            command: 'setLocale',
+            write: () => repo.setLocale(any()),
+            call: (c) => c.setLocale(const Locale('zh', 'TW')),
+          ),
+          (
+            command: 'setDefaultCurrency',
+            write: () => repo.setDefaultCurrency(any()),
+            call: (c) => c.setDefaultCurrency('JPY'),
+          ),
+          (
+            command: 'setSplashEnabled',
+            write: () => repo.setSplashEnabled(any()),
+            call: (c) => c.setSplashEnabled(false),
+          ),
+          (
+            command: 'setSplashStartDate',
+            write: () => repo.setSplashStartDate(any()),
+            call: (c) => c.setSplashStartDate(DateTime(2024, 1, 15)),
+          ),
+          (
+            command: 'setSplashDisplayText',
+            write: () => repo.setSplashDisplayText(any()),
+            call: (c) => c.setSplashDisplayText('Day {days}'),
+          ),
+          (
+            command: 'setSplashButtonLabel',
+            write: () => repo.setSplashButtonLabel(any()),
+            call: (c) => c.setSplashButtonLabel('Go!'),
+          ),
+        ];
+
+    for (final w in failingWrites) {
+      test(
+        'SC14 ${w.command}: returns failed when the repository write throws',
+        () async {
+          when(w.write).thenThrow(Exception('write failed'));
+          final container = makeContainer();
+          addTearDown(container.dispose);
+          container.listen(settingsControllerProvider, (_, _) {});
+          await pushAllInitial();
+          await waitForData(container);
+
+          final outcome = await w.call(
+            container.read(settingsControllerProvider.notifier),
+          );
+          expect(outcome, const SettingsWriteOutcome.failed());
+        },
+      );
+    }
 
     test('SC12: state re-emits when upstream streams update', () async {
       final container = makeContainer();
