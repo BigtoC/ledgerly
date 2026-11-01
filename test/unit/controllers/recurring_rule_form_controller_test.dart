@@ -21,7 +21,7 @@ import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/domain/use_cases/recurring_generation_use_case.dart';
 import 'package:ledgerly/ui/features/recurring/view_models/recurring_rule_form_controller.dart';
 import 'package:ledgerly/ui/features/recurring/view_models/recurring_rule_form_state.dart';
-import 'package:ledgerly/features/transactions/keypad_state.dart';
+import 'package:ledgerly/ui/features/transactions/view_models/keypad_state.dart';
 
 class _MockRecurringRulesRepository extends Mock
     implements RecurringRulesRepository {}

@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ledgerly/domain/models/category.dart';
-import 'package:ledgerly/features/transactions/widgets/category_chip.dart';
+import 'package:ledgerly/ui/features/transactions/views/category_chip.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 Widget _host(Category category) => MaterialApp(

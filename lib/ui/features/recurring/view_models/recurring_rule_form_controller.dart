@@ -5,7 +5,7 @@ import '../../../../app/providers/repository_providers.dart';
 import '../../../../domain/models/currency.dart';
 import '../../../../domain/models/recurring_rule_draft.dart';
 import '../../../../data/repositories/recurring_rules_repository.dart';
-import '../../../../features/transactions/keypad_state.dart';
+import '../../transactions/view_models/keypad_state.dart';
 import 'recurring_rule_form_state.dart';
 
 part 'recurring_rule_form_controller.g.dart';

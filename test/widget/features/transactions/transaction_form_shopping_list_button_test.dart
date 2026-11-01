@@ -28,10 +28,10 @@ import 'package:ledgerly/data/repositories/shopping_list_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/ui/features/categories/view_models/categories_controller.dart';
-import 'package:ledgerly/features/transactions/transaction_form_controller.dart';
-import 'package:ledgerly/features/transactions/transaction_form_screen.dart';
-import 'package:ledgerly/features/transactions/transaction_form_state.dart';
-import 'package:ledgerly/features/transactions/widgets/account_selector_tile.dart';
+import 'package:ledgerly/ui/features/transactions/view_models/transaction_form_controller.dart';
+import 'package:ledgerly/ui/features/transactions/views/transaction_form_screen.dart';
+import 'package:ledgerly/ui/features/transactions/view_models/transaction_form_state.dart';
+import 'package:ledgerly/ui/features/transactions/views/account_selector_tile.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 // ---------- Mocks ----------

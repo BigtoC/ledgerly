@@ -14,8 +14,8 @@
 //     once `fractionalDigitsEntered == decimals`.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ledgerly/features/transactions/amount_formula.dart';
-import 'package:ledgerly/features/transactions/keypad_state.dart';
+import 'package:ledgerly/ui/features/transactions/view_models/amount_formula.dart';
+import 'package:ledgerly/ui/features/transactions/view_models/keypad_state.dart';
 
 /// A whole-number operand as the keypad records it.
 FormulaOperand _whole(int minorUnits) => (

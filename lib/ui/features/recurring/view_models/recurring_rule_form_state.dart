@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../../domain/models/currency.dart';
-import '../../../../features/transactions/keypad_state.dart';
+import '../../transactions/view_models/keypad_state.dart';
 
 part 'recurring_rule_form_state.freezed.dart';
 

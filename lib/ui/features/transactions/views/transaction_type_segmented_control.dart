@@ -5,8 +5,8 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../domain/models/category.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../../domain/models/category.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class TransactionTypeSegmentedControl extends StatelessWidget {
   const TransactionTypeSegmentedControl({

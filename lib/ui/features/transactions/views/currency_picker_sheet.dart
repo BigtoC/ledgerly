@@ -4,7 +4,7 @@
 // `selectableCurrenciesProvider` from the Accounts slice (shared SSOT).
 // Returns the selected Currency, or null on dismiss.
 //
-// Differs from `accounts/widgets/currency_picker_sheet.dart` by adding:
+// Differs from `accounts/views/currency_picker_sheet.dart` by adding:
 //   - search TextField (autofocus, filters by code or localized name)
 //   - no-results message when search matches nothing
 //   - `isScrollControlled: true` so the list is not hidden behind the IME
@@ -12,10 +12,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../domain/models/currency.dart';
-import '../../../l10n/app_localizations.dart';
-import '../../../ui/features/accounts/view_models/accounts_providers.dart';
-import '../../../ui/features/accounts/views/currency_display.dart';
+import '../../../../domain/models/currency.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../accounts/view_models/accounts_providers.dart';
+import '../../accounts/views/currency_display.dart';
 
 /// Opens the transaction currency picker sheet and resolves with the
 /// user's selection, or null if the sheet is dismissed.

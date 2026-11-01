@@ -29,21 +29,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../l10n/app_localizations.dart';
-import '../../ui/features/categories/view_models/categories_controller.dart';
-import '../../ui/features/categories/views/category_picker.dart';
-import 'transaction_form_controller.dart';
-import 'transaction_form_state.dart';
-import 'widgets/account_picker_sheet.dart';
-import 'widgets/account_selector_tile.dart';
-import 'widgets/amount_display.dart';
-import 'widgets/calculator_keypad.dart';
-import 'widgets/category_chip.dart';
-import 'widgets/currency_picker_sheet.dart';
-import 'widgets/currency_selector_tile.dart';
-import 'widgets/date_field.dart';
-import 'widgets/memo_field.dart';
-import 'widgets/memo_suggestions.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../categories/view_models/categories_controller.dart';
+import '../../categories/views/category_picker.dart';
+import '../view_models/transaction_form_controller.dart';
+import '../view_models/transaction_form_state.dart';
+import 'account_picker_sheet.dart';
+import 'account_selector_tile.dart';
+import 'amount_display.dart';
+import 'calculator_keypad.dart';
+import 'category_chip.dart';
+import 'currency_picker_sheet.dart';
+import 'currency_selector_tile.dart';
+import 'date_field.dart';
+import 'memo_field.dart';
+import 'memo_suggestions.dart';
 
 @Dependencies([TransactionFormController, categoriesByType])
 class TransactionFormScreen extends ConsumerStatefulWidget {

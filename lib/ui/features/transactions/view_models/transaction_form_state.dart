@@ -20,10 +20,10 @@
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../domain/models/account.dart';
-import '../../domain/models/category.dart';
-import '../../domain/models/currency.dart';
-import '../../domain/models/transaction.dart';
+import '../../../../domain/models/account.dart';
+import '../../../../domain/models/category.dart';
+import '../../../../domain/models/currency.dart';
+import '../../../../domain/models/transaction.dart';
 import 'keypad_state.dart';
 
 part 'transaction_form_state.freezed.dart';

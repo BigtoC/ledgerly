@@ -13,7 +13,7 @@ import '../../../../../domain/models/csv_import.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../accounts/views/account_type_display.dart';
 import '../../../categories/views/category_display.dart';
-import '../../../../../features/transactions/widgets/transaction_type_segmented_control.dart';
+import '../../../transactions/views/transaction_type_segmented_control.dart';
 import '../view_models/csv_import_matcher.dart';
 import '../view_models/csv_import_state.dart';
 

@@ -28,7 +28,7 @@ import '../../../../core/constants.dart';
 import '../../../../core/utils/box_shadow.dart';
 import '../../../../domain/models/shopping_list_item.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../features/transactions/transaction_form_state.dart';
+import '../../transactions/view_models/transaction_form_state.dart';
 import '../view_models/shopping_list_controller.dart';
 import 'shopping_list_item_labels.dart';
 import '../view_models/shopping_list_providers.dart';

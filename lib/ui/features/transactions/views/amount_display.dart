@@ -38,11 +38,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/utils/money_formatter.dart';
-import '../../../domain/models/currency.dart';
-import '../../../l10n/app_localizations.dart';
-import '../amount_formula.dart';
-import '../keypad_state.dart';
+import '../../../../core/utils/money_formatter.dart';
+import '../../../../domain/models/currency.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../view_models/amount_formula.dart';
+import '../view_models/keypad_state.dart';
 
 class AmountDisplay extends StatelessWidget {
   const AmountDisplay({

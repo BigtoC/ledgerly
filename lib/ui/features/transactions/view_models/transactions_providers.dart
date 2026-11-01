@@ -7,14 +7,14 @@
 //     seed that the controller consumes once on screen entry.
 //
 // The picker's data source (`categoriesByTypeProvider`) is the Wave 1
-// family in `features/categories/categories_controller.dart`; reuse it
+// family in `categories/view_models/categories_controller.dart`; reuse it
 // directly rather than declaring a transactions-local copy.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../app/providers/repository_providers.dart';
-import '../../domain/models/account.dart';
+import '../../../../app/providers/repository_providers.dart';
+import '../../../../domain/models/account.dart';
 
 /// Non-archived accounts for the in-form account selector sheet.
 @Dependencies([accountRepository])

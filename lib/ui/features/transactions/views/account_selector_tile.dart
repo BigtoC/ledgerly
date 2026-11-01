@@ -6,8 +6,8 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../domain/models/account.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../../domain/models/account.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class AccountSelectorTile extends StatelessWidget {
   const AccountSelectorTile({

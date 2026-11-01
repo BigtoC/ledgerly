@@ -6,8 +6,8 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../domain/models/currency.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../../domain/models/currency.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class CurrencySelectorTile extends StatelessWidget {
   const CurrencySelectorTile({

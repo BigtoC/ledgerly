@@ -34,15 +34,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart'
     show ProviderSubscription;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../app/providers/default_currency_provider.dart';
-import '../../app/providers/repository_providers.dart';
-import '../../domain/models/account.dart';
-import '../../domain/models/category.dart';
-import '../../domain/models/currency.dart';
-import '../../domain/models/shopping_list_item.dart';
-import '../../domain/models/transaction.dart';
-import '../../data/repositories/category_repository.dart';
-import '../../ui/features/categories/view_models/categories_controller.dart';
+import '../../../../app/providers/default_currency_provider.dart';
+import '../../../../app/providers/repository_providers.dart';
+import '../../../../domain/models/account.dart';
+import '../../../../domain/models/category.dart';
+import '../../../../domain/models/currency.dart';
+import '../../../../domain/models/shopping_list_item.dart';
+import '../../../../domain/models/transaction.dart';
+import '../../../../data/repositories/category_repository.dart';
+import '../../categories/view_models/categories_controller.dart';
 import 'amount_formula.dart';
 import 'keypad_state.dart';
 import 'transaction_form_state.dart';

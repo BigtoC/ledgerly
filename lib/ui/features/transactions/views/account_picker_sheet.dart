@@ -13,9 +13,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../domain/models/account.dart';
-import '../../../l10n/app_localizations.dart';
-import '../transactions_providers.dart';
+import '../../../../domain/models/account.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../view_models/transactions_providers.dart';
 
 Future<Account?> showAccountPickerSheet(BuildContext context) {
   final width = MediaQuery.sizeOf(context).width;
