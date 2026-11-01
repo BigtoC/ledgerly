@@ -8,7 +8,7 @@
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../../domain/models/category.dart' show CategoryType;
+import '../../../../../domain/models/category.dart' show CategoryType;
 import 'selected_slice.dart';
 
 part 'charts_state.freezed.dart';

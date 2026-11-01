@@ -7,9 +7,9 @@
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../app/providers/repository_providers.dart';
-import '../../../domain/models/account.dart';
-import '../../../domain/models/category.dart';
+import '../../../../../app/providers/repository_providers.dart';
+import '../../../../../domain/models/account.dart';
+import '../../../../../domain/models/category.dart';
 
 part 'analysis_providers.g.dart';
 

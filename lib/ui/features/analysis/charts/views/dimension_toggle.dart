@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../l10n/app_localizations.dart';
-import '../charts_state.dart';
+import '../../../../../l10n/app_localizations.dart';
+import '../view_models/charts_state.dart';
 
 class DimensionToggle extends StatelessWidget {
   const DimensionToggle({

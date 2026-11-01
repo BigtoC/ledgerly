@@ -13,14 +13,14 @@ import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
 import 'package:ledgerly/app/providers/theme_provider.dart';
 import 'package:ledgerly/app/router.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
-import 'package:ledgerly/features/analysis/analysis_screen.dart';
-import 'package:ledgerly/features/analysis/charts/charts_controller.dart';
-import 'package:ledgerly/features/analysis/charts/charts_net_total_providers.dart';
-import 'package:ledgerly/features/analysis/charts/charts_providers.dart';
-import 'package:ledgerly/features/analysis/charts/charts_selection_controller.dart';
-import 'package:ledgerly/features/analysis/charts/slice_drilldown_controller.dart';
-import 'package:ledgerly/features/analysis/search/analysis_controller.dart';
-import 'package:ledgerly/features/analysis/search/analysis_providers.dart';
+import 'package:ledgerly/ui/features/analysis/views/analysis_screen.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_controller.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_net_total_providers.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_providers.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_selection_controller.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/slice_drilldown_controller.dart';
+import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_controller.dart';
+import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_providers.dart';
 
 import '../support/test_app.dart';
 

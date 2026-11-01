@@ -6,9 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../../../core/utils/money_formatter.dart';
-import '../../../../l10n/app_localizations.dart';
-import '../charts_net_total_providers.dart';
+import '../../../../../core/utils/money_formatter.dart';
+import '../../../../../l10n/app_localizations.dart';
+import '../view_models/charts_net_total_providers.dart';
 
 @Dependencies([chartsNetTotal])
 class ChartsNetTotalCard extends ConsumerWidget {

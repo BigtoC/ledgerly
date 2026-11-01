@@ -12,22 +12,22 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../../../core/constants.dart';
-import '../../../../core/utils/currency_converter.dart';
-import '../../../../core/utils/money_formatter.dart';
-import '../../../../domain/models/account.dart';
-import '../../../../domain/models/category.dart';
-import '../../../../domain/models/currency.dart';
-import '../../../../domain/models/transaction.dart';
-import '../../../../l10n/app_localizations.dart';
-import '../../../../ui/features/categories/views/category_display.dart';
-import '../../search/analysis_providers.dart';
-import '../../search/widgets/transaction_search_row.dart';
-import '../charts_providers.dart';
-import '../charts_selection_controller.dart';
-import '../charts_state.dart';
-import '../selected_slice.dart';
-import '../slice_drilldown_controller.dart';
+import '../../../../../core/constants.dart';
+import '../../../../../core/utils/currency_converter.dart';
+import '../../../../../core/utils/money_formatter.dart';
+import '../../../../../domain/models/account.dart';
+import '../../../../../domain/models/category.dart';
+import '../../../../../domain/models/currency.dart';
+import '../../../../../domain/models/transaction.dart';
+import '../../../../../l10n/app_localizations.dart';
+import '../../../categories/views/category_display.dart';
+import '../../search/view_models/analysis_providers.dart';
+import '../../search/views/transaction_search_row.dart';
+import '../view_models/charts_providers.dart';
+import '../view_models/charts_selection_controller.dart';
+import '../view_models/charts_state.dart';
+import '../view_models/selected_slice.dart';
+import '../view_models/slice_drilldown_controller.dart';
 
 /// Number of drill-down rows rendered per "Show N more" step. The rows sit
 /// in a non-lazy `Column`, so this bounds the build/layout cost when a

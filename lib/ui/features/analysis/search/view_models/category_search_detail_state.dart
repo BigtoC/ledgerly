@@ -3,8 +3,8 @@
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../../domain/models/currency.dart';
-import '../../../domain/models/transaction.dart';
+import '../../../../../domain/models/currency.dart';
+import '../../../../../domain/models/transaction.dart';
 
 part 'category_search_detail_state.freezed.dart';
 

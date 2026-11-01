@@ -21,10 +21,10 @@ import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../app/providers/repository_providers.dart';
-import '../../../domain/models/category.dart';
-import '../../../domain/models/currency.dart';
-import '../../../domain/models/transaction.dart';
+import '../../../../../app/providers/repository_providers.dart';
+import '../../../../../domain/models/category.dart';
+import '../../../../../domain/models/currency.dart';
+import '../../../../../domain/models/transaction.dart';
 import 'analysis_providers.dart';
 import 'analysis_state.dart';
 

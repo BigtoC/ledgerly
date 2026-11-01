@@ -9,9 +9,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart'
     show ProviderListenableSelect;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../app/providers/repository_providers.dart';
-import '../../../core/utils/currency_converter.dart';
-import '../../../domain/models/currency.dart';
+import '../../../../../app/providers/repository_providers.dart';
+import '../../../../../core/utils/currency_converter.dart';
+import '../../../../../domain/models/currency.dart';
 import 'charts_providers.dart';
 import 'charts_selection_controller.dart';
 import 'charts_state.dart' show PeriodType;

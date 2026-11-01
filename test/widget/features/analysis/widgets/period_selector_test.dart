@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ledgerly/features/analysis/charts/charts_state.dart';
-import 'package:ledgerly/features/analysis/charts/widgets/period_selector.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_state.dart';
+import 'package:ledgerly/ui/features/analysis/charts/views/period_selector.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 void main() {

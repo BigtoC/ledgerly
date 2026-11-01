@@ -7,24 +7,24 @@ import 'package:flutter/rendering.dart' show RenderAbstractViewport;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../../app/providers/default_currency_provider.dart';
-import '../../../domain/models/currency.dart';
-import '../../../l10n/app_localizations.dart';
-import '../search/analysis_providers.dart';
-import 'charts_controller.dart';
-import 'charts_net_total_providers.dart';
-import 'charts_providers.dart';
-import 'charts_selection_controller.dart';
-import 'charts_state.dart';
-import 'slice_drilldown_controller.dart';
-import 'widgets/category_pie_chart.dart';
-import 'widgets/chart_legend.dart';
-import 'widgets/charts_net_total_card.dart';
-import 'widgets/daily_bar_chart.dart';
-import 'widgets/dimension_toggle.dart';
-import 'widgets/period_selector.dart';
-import 'widgets/selected_slice_items_list.dart';
-import 'widgets/type_toggle.dart';
+import '../../../../../app/providers/default_currency_provider.dart';
+import '../../../../../domain/models/currency.dart';
+import '../../../../../l10n/app_localizations.dart';
+import '../../search/view_models/analysis_providers.dart';
+import '../view_models/charts_controller.dart';
+import '../view_models/charts_net_total_providers.dart';
+import '../view_models/charts_providers.dart';
+import '../view_models/charts_selection_controller.dart';
+import '../view_models/charts_state.dart';
+import '../view_models/slice_drilldown_controller.dart';
+import 'category_pie_chart.dart';
+import 'chart_legend.dart';
+import 'charts_net_total_card.dart';
+import 'daily_bar_chart.dart';
+import 'dimension_toggle.dart';
+import 'period_selector.dart';
+import 'selected_slice_items_list.dart';
+import 'type_toggle.dart';
 
 @Dependencies([
   ChartsSelectionController,

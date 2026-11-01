@@ -5,18 +5,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../app/providers/default_currency_provider.dart';
-import '../../l10n/app_localizations.dart';
-import 'charts/charts_controller.dart';
-import 'charts/charts_net_total_providers.dart';
-import 'charts/charts_providers.dart';
-import 'charts/charts_section.dart';
-import 'charts/charts_selection_controller.dart';
-import 'charts/slice_drilldown_controller.dart';
-import 'search/analysis_controller.dart';
-import 'search/analysis_providers.dart';
-import 'search/analysis_state.dart';
-import 'search/widgets/category_search_tile.dart';
+import '../../../../app/providers/default_currency_provider.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../charts/view_models/charts_controller.dart';
+import '../charts/view_models/charts_net_total_providers.dart';
+import '../charts/view_models/charts_providers.dart';
+import '../charts/views/charts_section.dart';
+import '../charts/view_models/charts_selection_controller.dart';
+import '../charts/view_models/slice_drilldown_controller.dart';
+import '../search/view_models/analysis_controller.dart';
+import '../search/view_models/analysis_providers.dart';
+import '../search/view_models/analysis_state.dart';
+import '../search/views/category_search_tile.dart';
 
 /// Material 3 SearchBar default height (56dp).
 const double _kSearchBarBaseHeight = 56;

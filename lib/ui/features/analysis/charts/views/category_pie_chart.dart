@@ -1,12 +1,12 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../core/utils/color_palette.dart';
-import '../../../../core/utils/money_formatter.dart';
-import '../../../../domain/models/currency.dart';
-import '../../../../l10n/app_localizations.dart';
-import '../../../../ui/features/categories/views/category_display.dart';
-import '../charts_state.dart';
+import '../../../../../core/utils/color_palette.dart';
+import '../../../../../core/utils/money_formatter.dart';
+import '../../../../../domain/models/currency.dart';
+import '../../../../../l10n/app_localizations.dart';
+import '../../../categories/views/category_display.dart';
+import '../view_models/charts_state.dart';
 
 /// Pie chart with tap-to-focus interaction. The selected slice grows, its
 /// neighbours dim, and the centre hole surfaces label + amount. Selection

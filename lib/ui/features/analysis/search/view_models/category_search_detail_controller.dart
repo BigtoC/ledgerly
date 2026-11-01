@@ -21,10 +21,10 @@ import 'dart:async';
 import 'package:flutter_riverpod/misc.dart' show KeepAliveLink;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../app/providers/repository_providers.dart';
-import '../../../core/constants.dart';
-import '../../../core/utils/date_helpers.dart';
-import '../../../domain/models/transaction.dart';
+import '../../../../../app/providers/repository_providers.dart';
+import '../../../../../core/constants.dart';
+import '../../../../../core/utils/date_helpers.dart';
+import '../../../../../domain/models/transaction.dart';
 import 'analysis_controller.dart';
 import 'analysis_state.dart';
 import 'category_search_detail_state.dart';

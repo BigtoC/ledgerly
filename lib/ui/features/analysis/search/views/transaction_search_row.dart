@@ -13,14 +13,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
-import '../../../../core/utils/color_palette.dart';
-import '../../../../core/utils/icon_registry.dart';
-import '../../../../core/utils/money_formatter.dart';
-import '../../../../domain/models/account.dart';
-import '../../../../domain/models/category.dart';
-import '../../../../domain/models/transaction.dart';
-import '../../../../l10n/app_localizations.dart';
-import '../../../../ui/features/categories/views/category_display.dart';
+import '../../../../../core/utils/color_palette.dart';
+import '../../../../../core/utils/icon_registry.dart';
+import '../../../../../core/utils/money_formatter.dart';
+import '../../../../../domain/models/account.dart';
+import '../../../../../domain/models/category.dart';
+import '../../../../../domain/models/transaction.dart';
+import '../../../../../l10n/app_localizations.dart';
+import '../../../categories/views/category_display.dart';
 
 /// Swipe-delete affordance variants used by `TransactionSearchRow`.
 ///

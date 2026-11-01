@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
-import 'package:ledgerly/features/analysis/charts/selected_slice.dart';
-import 'package:ledgerly/features/analysis/charts/charts_selection_controller.dart';
-import 'package:ledgerly/features/analysis/charts/charts_state.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/selected_slice.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_selection_controller.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_state.dart';
 
 @Dependencies([ChartsSelectionController])
 void main() {
