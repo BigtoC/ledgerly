@@ -12,10 +12,10 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:ledgerly/data/database/app_database.dart'
     show AppDatabase, TransactionRow;
-import 'package:ledgerly/data/models/account.dart';
-import 'package:ledgerly/data/models/category.dart';
-import 'package:ledgerly/data/models/csv_import.dart';
-import 'package:ledgerly/data/models/transaction.dart';
+import 'package:ledgerly/domain/models/account.dart';
+import 'package:ledgerly/domain/models/category.dart';
+import 'package:ledgerly/domain/models/csv_import.dart';
+import 'package:ledgerly/domain/models/transaction.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/account_type_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';

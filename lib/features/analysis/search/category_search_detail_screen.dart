@@ -7,8 +7,8 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../core/constants.dart';
 import '../../../core/utils/money_formatter.dart';
-import '../../../data/models/category.dart';
-import '../../../data/models/transaction.dart';
+import '../../../domain/models/category.dart';
+import '../../../domain/models/transaction.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../categories/widgets/category_display.dart';
 import 'analysis_providers.dart';

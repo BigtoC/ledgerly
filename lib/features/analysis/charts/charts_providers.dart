@@ -11,7 +11,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../app/providers/default_currency_provider.dart';
 import '../../../app/providers/repository_providers.dart';
-import '../../../data/models/currency.dart';
+import '../../../domain/models/currency.dart';
 import '../../../data/repositories/exchange_rate_repository.dart';
 
 part 'charts_providers.g.dart';

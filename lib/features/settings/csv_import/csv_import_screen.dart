@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../../data/models/csv_import.dart';
+import '../../../domain/models/csv_import.dart';
 import '../../../l10n/app_localizations.dart';
 import 'csv_import_controller.dart';
 import 'csv_import_state.dart';

@@ -11,7 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import 'package:ledgerly/data/models/category.dart';
+import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/features/settings/csv_export/csv_export_controller.dart';
 import 'package:ledgerly/features/settings/csv_export/csv_export_screen.dart';
 import 'package:ledgerly/features/settings/csv_export/csv_export_state.dart';

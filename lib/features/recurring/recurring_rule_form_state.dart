@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../data/models/currency.dart';
+import '../../domain/models/currency.dart';
 import '../transactions/keypad_state.dart';
 
 part 'recurring_rule_form_state.freezed.dart';

@@ -12,7 +12,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../app/providers/repository_providers.dart';
 import '../../core/constants.dart';
-import '../../data/models/pending_transaction.dart';
+import '../../domain/models/pending_transaction.dart';
 import '../../data/repositories/pending_transaction_repository.dart';
 import 'pending_state.dart';
 

@@ -6,7 +6,7 @@ import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart' show PlatformException;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ledgerly/data/models/app_update.dart';
+import 'package:ledgerly/domain/models/app_update.dart';
 import 'package:ledgerly/data/repositories/app_update_repository.dart';
 import 'package:ledgerly/data/services/apk_installer_service.dart';
 import 'package:ledgerly/data/services/app_release_service.dart';

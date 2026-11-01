@@ -21,7 +21,7 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../core/utils/color_palette.dart';
 import '../../../core/utils/icon_registry.dart';
-import '../../../data/models/category.dart';
+import '../../../domain/models/category.dart';
 import '../../../l10n/app_localizations.dart';
 import '../categories_controller.dart';
 import 'category_display.dart';

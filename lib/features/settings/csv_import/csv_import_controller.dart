@@ -13,10 +13,10 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../app/providers/default_currency_provider.dart';
 import '../../../app/providers/repository_providers.dart';
-import '../../../data/models/account.dart';
-import '../../../data/models/account_type.dart';
-import '../../../data/models/category.dart';
-import '../../../data/models/csv_import.dart';
+import '../../../domain/models/account.dart';
+import '../../../domain/models/account_type.dart';
+import '../../../domain/models/category.dart';
+import '../../../domain/models/csv_import.dart';
 import '../../../l10n/app_localizations.dart';
 import 'csv_import_matcher.dart';
 import 'csv_import_state.dart';

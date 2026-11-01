@@ -6,7 +6,7 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../data/models/account.dart';
+import '../../../domain/models/account.dart';
 import '../../../l10n/app_localizations.dart';
 
 class AccountSelectorTile extends StatelessWidget {

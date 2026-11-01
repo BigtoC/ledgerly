@@ -29,7 +29,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../app/providers/repository_providers.dart';
 import '../../core/utils/date_helpers.dart';
-import '../../data/models/transaction.dart';
+import '../../domain/models/transaction.dart';
 import '../../data/repositories/transaction_repository.dart';
 import 'home_state.dart';
 

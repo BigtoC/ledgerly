@@ -16,8 +16,8 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/core/constants.dart';
-import 'package:ledgerly/data/models/currency.dart';
-import 'package:ledgerly/data/models/recurring_rule.dart';
+import 'package:ledgerly/domain/models/currency.dart';
+import 'package:ledgerly/domain/models/recurring_rule.dart';
 import 'package:ledgerly/data/repositories/recurring_rules_repository.dart';
 import 'package:ledgerly/features/recurring/recurring_rules_controller.dart';
 import 'package:ledgerly/features/recurring/recurring_rules_screen.dart';

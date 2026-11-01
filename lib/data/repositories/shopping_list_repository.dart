@@ -23,9 +23,9 @@ import '../database/daos/account_dao.dart';
 import '../database/daos/category_dao.dart';
 import '../database/daos/currency_dao.dart';
 import '../database/daos/shopping_list_dao.dart';
-import '../models/currency.dart';
-import '../models/shopping_list_item.dart';
-import '../models/transaction.dart';
+import '../../domain/models/currency.dart';
+import '../../domain/models/shopping_list_item.dart';
+import '../../domain/models/transaction.dart';
 import 'transaction_repository.dart';
 
 /// Typed exception for shopping-list repository failures.

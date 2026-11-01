@@ -24,7 +24,7 @@ import '../../../core/utils/color_palette.dart';
 import '../../../core/utils/currency_converter.dart';
 import '../../../core/utils/icon_registry.dart';
 import '../../../core/utils/money_formatter.dart';
-import '../../../data/models/currency.dart';
+import '../../../domain/models/currency.dart';
 import '../../../l10n/app_localizations.dart';
 import '../accounts_providers.dart';
 import '../accounts_state.dart';

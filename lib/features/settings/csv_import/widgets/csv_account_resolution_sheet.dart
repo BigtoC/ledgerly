@@ -7,8 +7,8 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../../data/models/account.dart';
-import '../../../../data/models/csv_import.dart';
+import '../../../../domain/models/account.dart';
+import '../../../../domain/models/csv_import.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../accounts/widgets/account_type_display.dart';
 import '../csv_import_matcher.dart';

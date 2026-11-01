@@ -9,8 +9,8 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
-import 'package:ledgerly/data/models/account.dart';
-import 'package:ledgerly/data/models/currency.dart';
+import 'package:ledgerly/domain/models/account.dart';
+import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/features/transactions/widgets/account_picker_sheet.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';

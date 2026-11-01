@@ -22,7 +22,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../app/providers/repository_providers.dart';
 import '../../core/constants.dart';
-import '../../data/models/shopping_list_item.dart';
+import '../../domain/models/shopping_list_item.dart';
 import '../../data/repositories/shopping_list_repository.dart';
 import 'shopping_list_state.dart';
 

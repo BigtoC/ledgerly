@@ -13,7 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../data/models/account.dart';
+import '../../../domain/models/account.dart';
 import '../../../l10n/app_localizations.dart';
 import '../transactions_providers.dart';
 

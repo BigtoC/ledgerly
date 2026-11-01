@@ -7,7 +7,7 @@
 // l10n-keys fall back to the raw key so orphaned rows still render
 // something.
 
-import '../../../data/models/category.dart';
+import '../../../domain/models/category.dart';
 import '../../../l10n/app_localizations.dart';
 
 /// Resolves [category] to a display name using [l10n].

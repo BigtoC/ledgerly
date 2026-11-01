@@ -9,7 +9,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../core/utils/date_helpers.dart';
-import '../../data/models/pending_transaction.dart';
+import '../../domain/models/pending_transaction.dart';
 
 part 'pending_state.freezed.dart';
 

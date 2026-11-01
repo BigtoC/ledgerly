@@ -9,7 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ledgerly/app/providers/app_update_provider.dart';
 import 'package:ledgerly/ui/core/widgets/adaptive_shell.dart';
-import 'package:ledgerly/data/models/app_update.dart';
+import 'package:ledgerly/domain/models/app_update.dart';
 
 import 'package:ledgerly/l10n/app_localizations.dart';
 

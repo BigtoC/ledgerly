@@ -21,7 +21,7 @@ import '../../../app/providers/exchange_rates_provider.dart';
 import '../../../core/constants.dart';
 import '../../../core/utils/currency_converter.dart';
 import '../../../core/utils/money_formatter.dart';
-import '../../../data/models/currency.dart';
+import '../../../domain/models/currency.dart';
 import '../../../l10n/app_localizations.dart';
 import '../home_state.dart';
 

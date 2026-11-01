@@ -11,10 +11,10 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
-import 'package:ledgerly/data/models/account.dart';
-import 'package:ledgerly/data/models/category.dart';
-import 'package:ledgerly/data/models/currency.dart';
-import 'package:ledgerly/data/models/pending_transaction.dart';
+import 'package:ledgerly/domain/models/account.dart';
+import 'package:ledgerly/domain/models/category.dart';
+import 'package:ledgerly/domain/models/currency.dart';
+import 'package:ledgerly/domain/models/pending_transaction.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/pending_transaction_repository.dart';

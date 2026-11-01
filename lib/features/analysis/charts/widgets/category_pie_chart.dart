@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/utils/color_palette.dart';
 import '../../../../core/utils/money_formatter.dart';
-import '../../../../data/models/currency.dart';
+import '../../../../domain/models/currency.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../categories/widgets/category_display.dart';
 import '../charts_state.dart';

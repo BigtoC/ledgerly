@@ -8,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../app/providers/default_currency_provider.dart';
-import '../../../data/models/currency.dart';
+import '../../../domain/models/currency.dart';
 import '../../../l10n/app_localizations.dart';
 import '../search/analysis_providers.dart';
 import 'charts_controller.dart';

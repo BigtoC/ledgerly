@@ -10,7 +10,7 @@ import 'dart:isolate';
 
 import '../../core/utils/date_helpers.dart';
 import '../../core/utils/transactions_csv.dart';
-import '../models/category.dart';
+import '../../domain/models/category.dart';
 import '../repositories/account_repository.dart';
 import '../repositories/category_repository.dart';
 import '../repositories/transaction_repository.dart';

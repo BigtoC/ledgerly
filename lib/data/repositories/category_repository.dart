@@ -20,7 +20,7 @@ import '../database/daos/category_dao.dart';
 import '../database/daos/recurring_rule_dao.dart';
 import '../database/daos/shopping_list_dao.dart';
 import '../database/daos/transaction_dao.dart';
-import '../models/category.dart';
+import '../../domain/models/category.dart';
 
 /// Generic category-layer failure. Stream-A-local per §1.3.
 ///

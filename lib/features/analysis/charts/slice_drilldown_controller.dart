@@ -19,7 +19,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../app/providers/repository_providers.dart';
 import '../../../core/constants.dart';
 import 'selected_slice.dart';
-import '../../../data/models/transaction.dart';
+import '../../../domain/models/transaction.dart';
 import 'charts_providers.dart';
 import 'charts_selection_controller.dart';
 import 'slice_drilldown_data.dart';

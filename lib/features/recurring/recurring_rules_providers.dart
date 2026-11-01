@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../app/providers/repository_providers.dart';
-import '../../data/models/account.dart';
+import '../../domain/models/account.dart';
 
 @Dependencies([accountRepository])
 final recurringActiveAccountsProvider =

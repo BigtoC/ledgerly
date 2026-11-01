@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../data/models/category.dart';
+import '../../../../domain/models/category.dart';
 import '../../../../l10n/app_localizations.dart';
 
 class TypeToggle extends StatelessWidget {

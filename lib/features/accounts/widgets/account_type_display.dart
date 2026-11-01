@@ -6,7 +6,7 @@
 // localized labels; custom rows fall back to `customName`. Unknown keys
 // surface the raw key so orphaned rows still render something.
 
-import '../../../data/models/account_type.dart';
+import '../../../domain/models/account_type.dart';
 import '../../../l10n/app_localizations.dart';
 
 /// Resolves [type] to a display name using [l10n].

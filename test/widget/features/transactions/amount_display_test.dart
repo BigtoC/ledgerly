@@ -3,7 +3,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ledgerly/data/models/currency.dart';
+import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/features/transactions/amount_formula.dart';
 import 'package:ledgerly/features/transactions/keypad_state.dart';
 import 'package:ledgerly/features/transactions/widgets/amount_display.dart';

@@ -17,7 +17,7 @@ import 'package:ledgerly/app/providers/service_providers.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
 import 'package:ledgerly/app/providers/theme_provider.dart';
 import 'package:ledgerly/app/router.dart';
-import 'package:ledgerly/data/models/app_update.dart';
+import 'package:ledgerly/domain/models/app_update.dart';
 import 'package:ledgerly/data/repositories/app_update_repository.dart';
 import 'package:ledgerly/data/services/exchange_rate_service.dart';
 

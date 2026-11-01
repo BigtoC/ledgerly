@@ -11,7 +11,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/utils/date_helpers.dart';
-import '../../../data/models/category.dart' show CategoryType;
+import '../../../domain/models/category.dart' show CategoryType;
 import 'charts_state.dart' show ChartDimension, PeriodType;
 import 'selected_slice.dart';
 

@@ -8,9 +8,9 @@
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../../data/models/category.dart';
-import '../../../data/models/currency.dart';
-import '../../../data/models/transaction.dart';
+import '../../../domain/models/category.dart';
+import '../../../domain/models/currency.dart';
+import '../../../domain/models/transaction.dart';
 
 part 'analysis_state.freezed.dart';
 

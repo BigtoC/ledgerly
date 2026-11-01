@@ -36,11 +36,11 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../app/providers/default_currency_provider.dart';
 import '../../app/providers/repository_providers.dart';
-import '../../data/models/account.dart';
-import '../../data/models/category.dart';
-import '../../data/models/currency.dart';
-import '../../data/models/shopping_list_item.dart';
-import '../../data/models/transaction.dart';
+import '../../domain/models/account.dart';
+import '../../domain/models/category.dart';
+import '../../domain/models/currency.dart';
+import '../../domain/models/shopping_list_item.dart';
+import '../../domain/models/transaction.dart';
 import '../../data/repositories/category_repository.dart';
 import '../categories/categories_controller.dart';
 import 'amount_formula.dart';

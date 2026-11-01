@@ -25,7 +25,7 @@ import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
 import 'package:ledgerly/app/providers/theme_provider.dart';
 import 'package:ledgerly/app/router.dart';
-import 'package:ledgerly/data/models/category.dart';
+import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';

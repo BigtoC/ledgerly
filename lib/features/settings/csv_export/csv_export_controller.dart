@@ -9,7 +9,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../app/providers/repository_providers.dart';
 import '../../../core/utils/date_helpers.dart';
-import '../../../data/models/category.dart';
+import '../../../domain/models/category.dart';
 import 'csv_export_state.dart';
 
 part 'csv_export_controller.g.dart';

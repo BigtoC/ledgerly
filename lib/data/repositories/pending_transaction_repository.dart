@@ -11,9 +11,9 @@ import 'package:drift/drift.dart' show Value;
 
 import '../database/app_database.dart' as drift;
 import '../database/daos/pending_transaction_dao.dart';
-import '../models/currency.dart';
-import '../models/pending_transaction.dart';
-import '../models/transaction.dart';
+import '../../domain/models/currency.dart';
+import '../../domain/models/pending_transaction.dart';
+import '../../domain/models/transaction.dart';
 import 'transaction_repository.dart';
 
 class PendingTransactionRepositoryException implements Exception {

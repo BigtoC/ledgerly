@@ -26,7 +26,7 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../core/constants.dart';
 import '../../core/utils/box_shadow.dart';
-import '../../data/models/shopping_list_item.dart';
+import '../../domain/models/shopping_list_item.dart';
 import '../../l10n/app_localizations.dart';
 import '../transactions/transaction_form_state.dart';
 import 'shopping_list_controller.dart';

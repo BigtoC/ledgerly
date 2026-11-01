@@ -11,7 +11,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../data/models/currency.dart';
+import '../../../domain/models/currency.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../accounts/accounts_providers.dart';
 import '../../accounts/widgets/currency_display.dart';

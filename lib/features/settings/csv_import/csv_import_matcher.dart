@@ -11,10 +11,10 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../core/utils/csv_import_keys.dart';
-import '../../../data/models/account.dart';
-import '../../../data/models/account_type.dart';
-import '../../../data/models/category.dart';
-import '../../../data/models/csv_import.dart';
+import '../../../domain/models/account.dart';
+import '../../../domain/models/account_type.dart';
+import '../../../domain/models/category.dart';
+import '../../../domain/models/csv_import.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../accounts/widgets/account_type_display.dart';
 import '../../categories/widgets/category_display.dart';

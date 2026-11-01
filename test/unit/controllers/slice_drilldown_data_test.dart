@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ledgerly/data/models/currency.dart';
-import 'package:ledgerly/data/models/transaction.dart';
+import 'package:ledgerly/domain/models/currency.dart';
+import 'package:ledgerly/domain/models/transaction.dart';
 import 'package:ledgerly/features/analysis/charts/slice_drilldown_data.dart';
 
 void main() {

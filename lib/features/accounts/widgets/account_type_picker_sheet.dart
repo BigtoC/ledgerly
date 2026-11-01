@@ -12,8 +12,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/utils/color_palette.dart';
 import '../../../core/utils/icon_registry.dart';
-import '../../../data/models/account_type.dart';
-import '../../../data/models/currency.dart';
+import '../../../domain/models/account_type.dart';
+import '../../../domain/models/currency.dart';
 import '../../../l10n/app_localizations.dart';
 import '../accounts_providers.dart';
 import '../accounts_state.dart';

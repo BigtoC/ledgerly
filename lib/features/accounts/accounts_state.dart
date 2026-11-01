@@ -15,8 +15,8 @@
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../data/models/account.dart';
-import '../../data/models/account_type.dart';
+import '../../domain/models/account.dart';
+import '../../domain/models/account_type.dart';
 
 part 'accounts_state.freezed.dart';
 

@@ -4,7 +4,7 @@
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../data/models/shopping_list_item.dart';
+import '../../domain/models/shopping_list_item.dart';
 
 part 'shopping_list_state.freezed.dart';
 

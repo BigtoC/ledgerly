@@ -26,7 +26,7 @@ import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../app/providers/repository_providers.dart';
-import '../../data/models/account.dart';
+import '../../domain/models/account.dart';
 import '../../data/repositories/account_repository.dart';
 import '../../data/repositories/repository_exceptions.dart';
 import '../../data/repositories/user_preferences_repository.dart';

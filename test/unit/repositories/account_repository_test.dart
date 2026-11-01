@@ -15,9 +15,9 @@
 import 'package:drift/drift.dart' show Variable;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/data/database/app_database.dart' show AppDatabase;
-import 'package:ledgerly/data/models/account.dart';
-import 'package:ledgerly/data/models/currency.dart';
-import 'package:ledgerly/data/models/recurring_rule_draft.dart';
+import 'package:ledgerly/domain/models/account.dart';
+import 'package:ledgerly/domain/models/currency.dart';
+import 'package:ledgerly/domain/models/recurring_rule_draft.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/account_type_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';

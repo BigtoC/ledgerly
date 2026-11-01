@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ledgerly/data/models/account.dart';
-import 'package:ledgerly/data/models/category.dart';
-import 'package:ledgerly/data/models/currency.dart';
-import 'package:ledgerly/data/models/transaction.dart';
+import 'package:ledgerly/domain/models/account.dart';
+import 'package:ledgerly/domain/models/category.dart';
+import 'package:ledgerly/domain/models/currency.dart';
+import 'package:ledgerly/domain/models/transaction.dart';
 import 'package:ledgerly/features/analysis/search/widgets/transaction_search_row.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 

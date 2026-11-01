@@ -9,7 +9,7 @@
 // the outer fsync cost.
 
 import '../database/app_database.dart';
-import '../models/recurring_rule.dart';
+import '../../domain/models/recurring_rule.dart';
 import '../repositories/pending_transaction_repository.dart';
 import '../repositories/recurring_rules_repository.dart';
 

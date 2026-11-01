@@ -30,8 +30,8 @@ import '../database/daos/account_type_dao.dart';
 import '../database/daos/recurring_rule_dao.dart';
 import '../database/daos/shopping_list_dao.dart';
 import '../database/daos/transaction_dao.dart';
-import '../models/account.dart';
-import '../models/currency.dart';
+import '../../domain/models/account.dart';
+import '../../domain/models/currency.dart';
 import 'currency_repository.dart';
 import 'repository_exceptions.dart';
 

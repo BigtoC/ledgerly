@@ -21,7 +21,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../app/providers/repository_providers.dart';
 import '../../core/constants.dart';
-import '../../data/models/recurring_rule.dart';
+import '../../domain/models/recurring_rule.dart';
 import '../../data/repositories/recurring_rules_repository.dart';
 import 'recurring_rules_state.dart';
 

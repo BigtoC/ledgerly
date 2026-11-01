@@ -8,7 +8,7 @@
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../data/models/transaction.dart';
+import '../../domain/models/transaction.dart';
 
 part 'home_state.freezed.dart';
 

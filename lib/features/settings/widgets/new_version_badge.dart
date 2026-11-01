@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/utils/system_browser.dart';
-import '../../../data/models/app_update.dart';
+import '../../../domain/models/app_update.dart';
 import '../../../l10n/app_localizations.dart';
 import '../app_update_controller.dart';
 import '../app_update_state.dart';

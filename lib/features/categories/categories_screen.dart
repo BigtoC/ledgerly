@@ -22,7 +22,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../data/models/category.dart';
+import '../../domain/models/category.dart';
 import '../../l10n/app_localizations.dart';
 import 'categories_controller.dart';
 import 'categories_state.dart';

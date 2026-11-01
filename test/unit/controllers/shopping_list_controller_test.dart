@@ -19,7 +19,7 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/core/constants.dart';
-import 'package:ledgerly/data/models/shopping_list_item.dart';
+import 'package:ledgerly/domain/models/shopping_list_item.dart';
 import 'package:ledgerly/data/repositories/shopping_list_repository.dart';
 import 'package:ledgerly/features/shopping_list/shopping_list_controller.dart';
 import 'package:ledgerly/features/shopping_list/shopping_list_state.dart';

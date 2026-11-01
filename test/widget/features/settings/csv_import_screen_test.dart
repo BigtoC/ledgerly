@@ -11,11 +11,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import 'package:ledgerly/data/models/account.dart';
-import 'package:ledgerly/data/models/account_type.dart';
-import 'package:ledgerly/data/models/category.dart';
-import 'package:ledgerly/data/models/csv_import.dart';
-import 'package:ledgerly/data/models/currency.dart';
+import 'package:ledgerly/domain/models/account.dart';
+import 'package:ledgerly/domain/models/account_type.dart';
+import 'package:ledgerly/domain/models/category.dart';
+import 'package:ledgerly/domain/models/csv_import.dart';
+import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/features/settings/csv_import/csv_import_controller.dart';
 import 'package:ledgerly/features/settings/csv_import/csv_import_matcher.dart';
 import 'package:ledgerly/features/settings/csv_import/csv_import_screen.dart';

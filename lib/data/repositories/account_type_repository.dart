@@ -19,8 +19,8 @@ import 'package:drift/drift.dart' show Value;
 
 import '../database/app_database.dart' as drift;
 import '../database/daos/account_type_dao.dart';
-import '../models/account_type.dart';
-import '../models/currency.dart';
+import '../../domain/models/account_type.dart';
+import '../../domain/models/currency.dart';
 import 'currency_repository.dart';
 import 'repository_exceptions.dart';
 

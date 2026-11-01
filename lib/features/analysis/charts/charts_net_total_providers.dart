@@ -11,7 +11,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../app/providers/repository_providers.dart';
 import '../../../core/utils/currency_converter.dart';
-import '../../../data/models/currency.dart';
+import '../../../domain/models/currency.dart';
 import 'charts_providers.dart';
 import 'charts_selection_controller.dart';
 import 'charts_state.dart' show PeriodType;

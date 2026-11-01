@@ -20,7 +20,7 @@ import 'package:drift/drift.dart';
 
 import '../database/app_database.dart' as drift;
 import '../database/daos/currency_dao.dart';
-import '../models/currency.dart';
+import '../../domain/models/currency.dart';
 import 'repository_exceptions.dart';
 
 /// Abstract contract consumed by controllers (M5) and by the first-run

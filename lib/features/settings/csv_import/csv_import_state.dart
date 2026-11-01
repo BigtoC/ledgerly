@@ -6,8 +6,8 @@
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../../data/models/category.dart';
-import '../../../data/models/csv_import.dart';
+import '../../../domain/models/category.dart';
+import '../../../domain/models/csv_import.dart';
 import 'csv_import_matcher.dart';
 
 part 'csv_import_state.freezed.dart';

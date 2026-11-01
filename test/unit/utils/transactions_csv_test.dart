@@ -2,9 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/core/utils/transactions_csv.dart';
-import 'package:ledgerly/data/models/category.dart';
-import 'package:ledgerly/data/models/currency.dart';
-import 'package:ledgerly/data/models/transaction.dart';
+import 'package:ledgerly/domain/models/category.dart';
+import 'package:ledgerly/domain/models/currency.dart';
+import 'package:ledgerly/domain/models/transaction.dart';
 
 const _hkd = Currency(code: 'HKD', decimals: 2);
 const _jpy = Currency(code: 'JPY', decimals: 0);

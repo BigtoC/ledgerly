@@ -12,7 +12,7 @@ import 'package:intl/intl.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../core/constants.dart';
-import '../../data/models/recurring_rule.dart';
+import '../../domain/models/recurring_rule.dart';
 import '../../l10n/app_localizations.dart';
 import 'recurring_rules_controller.dart';
 import 'recurring_rules_state.dart';

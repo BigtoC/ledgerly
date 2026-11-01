@@ -3,8 +3,8 @@ import 'dart:typed_data';
 
 import 'package:csv/csv.dart';
 
-import '../../data/models/category.dart';
-import '../../data/models/transaction.dart';
+import '../../domain/models/category.dart';
+import '../../domain/models/transaction.dart';
 import 'decimal_rounding.dart';
 
 /// A category as the export writes it. The caller resolves [name], because

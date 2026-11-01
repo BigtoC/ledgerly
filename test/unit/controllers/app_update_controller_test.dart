@@ -9,7 +9,7 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:ledgerly/app/bootstrap.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
-import 'package:ledgerly/data/models/app_update.dart';
+import 'package:ledgerly/domain/models/app_update.dart';
 import 'package:ledgerly/data/repositories/app_update_repository.dart';
 import 'package:ledgerly/features/settings/app_update_controller.dart';
 import 'package:ledgerly/features/settings/app_update_state.dart';

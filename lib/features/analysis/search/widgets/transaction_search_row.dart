@@ -16,9 +16,9 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../../../core/utils/color_palette.dart';
 import '../../../../core/utils/icon_registry.dart';
 import '../../../../core/utils/money_formatter.dart';
-import '../../../../data/models/account.dart';
-import '../../../../data/models/category.dart';
-import '../../../../data/models/transaction.dart';
+import '../../../../domain/models/account.dart';
+import '../../../../domain/models/category.dart';
+import '../../../../domain/models/transaction.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../categories/widgets/category_display.dart';
 

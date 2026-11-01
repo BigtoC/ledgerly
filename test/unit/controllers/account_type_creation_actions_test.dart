@@ -14,8 +14,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
-import 'package:ledgerly/data/models/account_type.dart';
-import 'package:ledgerly/data/models/currency.dart';
+import 'package:ledgerly/domain/models/account_type.dart';
+import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/data/repositories/account_type_repository.dart';
 import 'package:ledgerly/data/repositories/repository_exceptions.dart';
 import 'package:ledgerly/features/accounts/accounts_providers.dart';

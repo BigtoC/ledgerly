@@ -6,10 +6,10 @@
 import 'package:intl/intl.dart';
 
 import '../../core/utils/money_formatter.dart';
-import '../../data/models/account.dart';
-import '../../data/models/category.dart';
-import '../../data/models/currency.dart';
-import '../../data/models/shopping_list_item.dart';
+import '../../domain/models/account.dart';
+import '../../domain/models/category.dart';
+import '../../domain/models/currency.dart';
+import '../../domain/models/shopping_list_item.dart';
 import '../../l10n/app_localizations.dart';
 import '../categories/widgets/category_display.dart';
 

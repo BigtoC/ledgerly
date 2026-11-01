@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/utils/color_palette.dart';
 import '../../../../core/utils/icon_registry.dart';
 import '../../../../core/utils/money_formatter.dart';
-import '../../../../data/models/category.dart';
+import '../../../../domain/models/category.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../categories/widgets/category_display.dart';
 import '../analysis_state.dart';

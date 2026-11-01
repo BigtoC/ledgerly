@@ -2,7 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ledgerly/data/models/currency.dart';
+import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/features/analysis/charts/charts_state.dart';
 import 'package:ledgerly/features/analysis/charts/selected_slice.dart';
 import 'package:ledgerly/features/analysis/charts/widgets/category_pie_chart.dart';

@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../app/providers/repository_providers.dart';
-import '../../data/models/currency.dart';
-import '../../data/models/recurring_rule_draft.dart';
+import '../../domain/models/currency.dart';
+import '../../domain/models/recurring_rule_draft.dart';
 import '../../data/repositories/recurring_rules_repository.dart';
 import '../transactions/keypad_state.dart';
 import 'recurring_rule_form_state.dart';

@@ -6,7 +6,7 @@ import 'package:dio/dio.dart' show DioException;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show PlatformException;
 
-import '../models/app_update.dart';
+import '../../domain/models/app_update.dart';
 import '../services/apk_installer_service.dart';
 import '../services/app_release_service.dart';
 import 'repository_exceptions.dart';

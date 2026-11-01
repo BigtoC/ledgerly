@@ -13,7 +13,7 @@ import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
 import 'package:ledgerly/app/providers/theme_provider.dart';
 import 'package:ledgerly/app/router.dart';
 import 'package:ledgerly/data/database/app_database.dart';
-import 'package:ledgerly/data/models/account.dart';
+import 'package:ledgerly/domain/models/account.dart';
 import 'package:ledgerly/data/repositories/pending_transaction_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 

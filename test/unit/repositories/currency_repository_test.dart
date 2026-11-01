@@ -5,7 +5,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/data/database/app_database.dart' show AppDatabase;
-import 'package:ledgerly/data/models/currency.dart';
+import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/repository_exceptions.dart';
 

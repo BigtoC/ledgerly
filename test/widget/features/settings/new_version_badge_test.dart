@@ -23,7 +23,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:ledgerly/ui/core/theme/app_theme.dart';
-import 'package:ledgerly/data/models/app_update.dart';
+import 'package:ledgerly/domain/models/app_update.dart';
 import 'package:ledgerly/features/settings/app_update_controller.dart';
 import 'package:ledgerly/features/settings/app_update_state.dart';
 import 'package:ledgerly/features/settings/widgets/new_version_badge.dart';
