@@ -6,12 +6,17 @@
 //   - EditShoppingListDraftMode hydration (account, category, memo, amount,
 //     currency, date)
 //   - Null amount/currency seeds displayCurrency from selected account
-//   - saveDraft() in add mode calls ShoppingListRepository.insert and pops null
-//   - saveDraft() in edit mode calls ShoppingListRepository.update and pops
-//     ShoppingListEditResultSavedDraft
-//   - convertDraft() calls ShoppingListRepository.convertToTransaction and pops
-//     ShoppingListEditResultSavedTransaction
+//   - saveDraft() in add mode calls ShoppingListRepository.insert and returns
+//     ok(ShoppingListEditResultAddedToList)
+//   - saveDraft() in edit mode calls ShoppingListRepository.update and returns
+//     ok(ShoppingListEditResultSavedDraft)
+//   - convertDraft() calls ShoppingListRepository.convertToTransaction and
+//     returns ok(ShoppingListEditResultSavedTransaction)
+//   - saveDraft() / convertDraft() return `ignored` when their guard trips
+//     and `failed` on repository error, resetting submissionAction
 //   - Missing draft id emits TransactionFormEmpty(draftNotFound)
+//   - Draft hydration that finishes after the form closed completes
+//     normally and stops reading
 //   - canSaveDraft / canConvertDraft rules
 //   - submissionAction serializes in-flight state (double-tap protection)
 //
@@ -287,7 +292,10 @@ void main() {
 
       // In add mode, saveDraft returns ShoppingListEditResultAddedToList
       // so the screen can distinguish a successful add from a guard no-op.
-      expect(result, isA<ShoppingListEditResultAddedToList>());
+      expect(
+        result,
+        const DraftSubmissionOutcome.ok(ShoppingListEditResultAddedToList()),
+      );
       verify(
         () => slRepo.insert(
           categoryId: _expenseCategory.id,
@@ -340,14 +348,14 @@ void main() {
       expect(data.keypad.showingResult, isTrue);
     });
 
-    test('saveDraft() returns null when canSaveDraft is false', () async {
+    test('saveDraft() returns ignored when canSaveDraft is false', () async {
       final c = makeContainer();
       addTearDown(c.dispose);
       final controller = c.read(transactionFormControllerProvider.notifier);
       await controller.hydrateForAdd();
       // No category selected → canSaveDraft is false.
       final result = await controller.saveDraft();
-      expect(result, isNull);
+      expect(result, const DraftSubmissionOutcome.ignored());
       verifyNever(
         () => slRepo.insert(
           categoryId: any(named: 'categoryId'),
@@ -358,6 +366,33 @@ void main() {
           draftDate: any(named: 'draftDate'),
         ),
       );
+    });
+
+    test('saveDraft() returns failed when insert throws and resets '
+        'submissionAction', () async {
+      when(
+        () => slRepo.insert(
+          categoryId: any(named: 'categoryId'),
+          accountId: any(named: 'accountId'),
+          memo: any(named: 'memo'),
+          draftAmountMinorUnits: any(named: 'draftAmountMinorUnits'),
+          draftCurrencyCode: any(named: 'draftCurrencyCode'),
+          draftDate: any(named: 'draftDate'),
+        ),
+      ).thenThrow(Exception('repo offline'));
+
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+      await controller.hydrateForAdd();
+      controller.selectCategory(_expenseCategory);
+
+      final result = await controller.saveDraft();
+
+      expect(result, const DraftSubmissionOutcome.failed());
+      final s =
+          c.read(transactionFormControllerProvider) as TransactionFormData;
+      expect(s.submissionAction, TransactionFormSubmissionAction.none);
     });
   });
 
@@ -385,7 +420,10 @@ void main() {
 
           final result = await controller.saveDraft();
 
-          expect(result, isA<ShoppingListEditResultSavedDraft>());
+          expect(
+            result,
+            const DraftSubmissionOutcome.ok(ShoppingListEditResultSavedDraft()),
+          );
           verify(() => slRepo.update(any())).called(1);
           verifyNever(
             () => slRepo.insert(
@@ -397,6 +435,31 @@ void main() {
               draftDate: any(named: 'draftDate'),
             ),
           );
+        },
+      );
+
+      test(
+        'returns failed when update throws and resets submissionAction',
+        () async {
+          final draft = _draft(
+            id: 55,
+            categoryId: _expenseCategory.id,
+            accountId: _account.id,
+          );
+          when(() => slRepo.getById(55)).thenAnswer((_) async => draft);
+          when(() => slRepo.update(any())).thenThrow(Exception('repo offline'));
+
+          final c = makeContainer();
+          addTearDown(c.dispose);
+          final controller = c.read(transactionFormControllerProvider.notifier);
+          await controller.hydrateForShoppingListDraft(55);
+
+          final result = await controller.saveDraft();
+
+          expect(result, const DraftSubmissionOutcome.failed());
+          final s =
+              c.read(transactionFormControllerProvider) as TransactionFormData;
+          expect(s.submissionAction, TransactionFormSubmissionAction.none);
         },
       );
     },
@@ -434,7 +497,12 @@ void main() {
 
         final result = await controller.convertDraft();
 
-        expect(result, isA<ShoppingListEditResultSavedTransaction>());
+        expect(
+          result,
+          const DraftSubmissionOutcome.ok(
+            ShoppingListEditResultSavedTransaction(),
+          ),
+        );
         verify(
           () => slRepo.convertToTransaction(
             shoppingListItemId: 33,
@@ -446,6 +514,76 @@ void main() {
             memo: null,
           ),
         ).called(1);
+      },
+    );
+
+    test('returns failed when convertToTransaction throws and resets '
+        'submissionAction', () async {
+      final draft = _draft(
+        id: 33,
+        categoryId: _expenseCategory.id,
+        accountId: _account.id,
+        draftAmountMinorUnits: 2000,
+        draftCurrencyCode: 'USD',
+      );
+      when(() => slRepo.getById(33)).thenAnswer((_) async => draft);
+      when(
+        () => slRepo.convertToTransaction(
+          shoppingListItemId: any(named: 'shoppingListItemId'),
+          categoryId: any(named: 'categoryId'),
+          accountId: any(named: 'accountId'),
+          currencyCode: any(named: 'currencyCode'),
+          amountMinorUnits: any(named: 'amountMinorUnits'),
+          date: any(named: 'date'),
+          memo: any(named: 'memo'),
+          amountFormula: any(named: 'amountFormula'),
+        ),
+      ).thenThrow(Exception('repo offline'));
+
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+      await controller.hydrateForShoppingListDraft(33);
+
+      final result = await controller.convertDraft();
+
+      expect(result, const DraftSubmissionOutcome.failed());
+      final s =
+          c.read(transactionFormControllerProvider) as TransactionFormData;
+      expect(s.submissionAction, TransactionFormSubmissionAction.none);
+    });
+
+    test(
+      'returns ignored without a repo call when canConvertDraft is false',
+      () async {
+        // Zero amount → canConvertDraft is false.
+        final draft = _draft(
+          id: 34,
+          categoryId: _expenseCategory.id,
+          accountId: _account.id,
+        );
+        when(() => slRepo.getById(34)).thenAnswer((_) async => draft);
+
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+        await controller.hydrateForShoppingListDraft(34);
+
+        final result = await controller.convertDraft();
+
+        expect(result, const DraftSubmissionOutcome.ignored());
+        verifyNever(
+          () => slRepo.convertToTransaction(
+            shoppingListItemId: any(named: 'shoppingListItemId'),
+            categoryId: any(named: 'categoryId'),
+            accountId: any(named: 'accountId'),
+            currencyCode: any(named: 'currencyCode'),
+            amountMinorUnits: any(named: 'amountMinorUnits'),
+            date: any(named: 'date'),
+            memo: any(named: 'memo'),
+            amountFormula: any(named: 'amountFormula'),
+          ),
+        );
       },
     );
   });
@@ -466,6 +604,59 @@ void main() {
         (s as TransactionFormEmpty).reason,
         TransactionFormEmptyReason.draftNotFound,
       );
+    });
+
+    // The form can be popped while hydration is still awaiting a read.
+    // The command must then finish normally instead of writing state on
+    // the disposed controller.
+    for (final readFails in [false, true]) {
+      final how = readFails ? 'fails' : 'succeeds';
+      test('hydrateForShoppingListDraft completes normally when its read '
+          '$how after the form closed', () async {
+        final gate = Completer<ShoppingListItem?>();
+        when(() => slRepo.getById(42)).thenAnswer((_) => gate.future);
+
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final sub = c.listen(transactionFormControllerProvider, (_, _) {});
+        final hydration = c
+            .read(transactionFormControllerProvider.notifier)
+            .hydrateForShoppingListDraft(42);
+
+        sub.close();
+        await c.pump();
+        if (readFails) {
+          gate.completeError(Exception('db closed'));
+        } else {
+          gate.complete(_draft(id: 42));
+        }
+
+        await expectLater(hydration, completes);
+      });
+    }
+
+    test('hydrateForShoppingListDraft stops reading once the form '
+        'closed', () async {
+      when(() => slRepo.getById(42)).thenAnswer((_) async => _draft(id: 42));
+      final gate = Completer<Account?>();
+      when(() => accountRepo.getById(_account.id))
+          .thenAnswer((_) => gate.future);
+
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final sub = c.listen(transactionFormControllerProvider, (_, _) {});
+      final hydration = c
+          .read(transactionFormControllerProvider.notifier)
+          .hydrateForShoppingListDraft(42);
+      await pumpEventQueue();
+      verify(() => accountRepo.getById(_account.id)).called(1);
+
+      sub.close();
+      await c.pump();
+      gate.complete(_account);
+
+      await expectLater(hydration, completes);
+      verifyNever(() => categoryRepo.getById(any()));
     });
   });
 
@@ -583,10 +774,10 @@ void main() {
             c.read(transactionFormControllerProvider) as TransactionFormData;
         expect(s.submissionAction, TransactionFormSubmissionAction.saveDraft);
 
-        // Second call during in-flight should return null without calling
+        // Second call during in-flight should be ignored without calling
         // insert again.
         final second = await controller.saveDraft();
-        expect(second, isNull);
+        expect(second, const DraftSubmissionOutcome.ignored());
         // Only one insert was called.
         verify(
           () => slRepo.insert(

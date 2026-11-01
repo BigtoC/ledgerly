@@ -13,6 +13,1173 @@ part of 'transaction_form_state.dart';
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
+mixin _$SaveTransactionOutcome {
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SaveTransactionOutcome);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'SaveTransactionOutcome()';
+}
+
+
+}
+
+/// @nodoc
+class $SaveTransactionOutcomeCopyWith<$Res>  {
+$SaveTransactionOutcomeCopyWith(SaveTransactionOutcome _, $Res Function(SaveTransactionOutcome) __);
+}
+
+
+/// Adds pattern-matching-related methods to [SaveTransactionOutcome].
+extension SaveTransactionOutcomePatterns on SaveTransactionOutcome {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( SaveTransactionSaved value)?  saved,TResult Function( SaveTransactionInvalid value)?  invalid,TResult Function( SaveTransactionFailed value)?  failed,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case SaveTransactionSaved() when saved != null:
+return saved(_that);case SaveTransactionInvalid() when invalid != null:
+return invalid(_that);case SaveTransactionFailed() when failed != null:
+return failed(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( SaveTransactionSaved value)  saved,required TResult Function( SaveTransactionInvalid value)  invalid,required TResult Function( SaveTransactionFailed value)  failed,}){
+final _that = this;
+switch (_that) {
+case SaveTransactionSaved():
+return saved(_that);case SaveTransactionInvalid():
+return invalid(_that);case SaveTransactionFailed():
+return failed(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( SaveTransactionSaved value)?  saved,TResult? Function( SaveTransactionInvalid value)?  invalid,TResult? Function( SaveTransactionFailed value)?  failed,}){
+final _that = this;
+switch (_that) {
+case SaveTransactionSaved() when saved != null:
+return saved(_that);case SaveTransactionInvalid() when invalid != null:
+return invalid(_that);case SaveTransactionFailed() when failed != null:
+return failed(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( Transaction transaction)?  saved,TResult Function()?  invalid,TResult Function()?  failed,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case SaveTransactionSaved() when saved != null:
+return saved(_that.transaction);case SaveTransactionInvalid() when invalid != null:
+return invalid();case SaveTransactionFailed() when failed != null:
+return failed();case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( Transaction transaction)  saved,required TResult Function()  invalid,required TResult Function()  failed,}) {final _that = this;
+switch (_that) {
+case SaveTransactionSaved():
+return saved(_that.transaction);case SaveTransactionInvalid():
+return invalid();case SaveTransactionFailed():
+return failed();}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( Transaction transaction)?  saved,TResult? Function()?  invalid,TResult? Function()?  failed,}) {final _that = this;
+switch (_that) {
+case SaveTransactionSaved() when saved != null:
+return saved(_that.transaction);case SaveTransactionInvalid() when invalid != null:
+return invalid();case SaveTransactionFailed() when failed != null:
+return failed();case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class SaveTransactionSaved implements SaveTransactionOutcome {
+  const SaveTransactionSaved(this.transaction);
+  
+
+ final  Transaction transaction;
+
+/// Create a copy of SaveTransactionOutcome
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$SaveTransactionSavedCopyWith<SaveTransactionSaved> get copyWith => _$SaveTransactionSavedCopyWithImpl<SaveTransactionSaved>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SaveTransactionSaved&&(identical(other.transaction, transaction) || other.transaction == transaction));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,transaction);
+}
+
+@override
+String toString() {
+    return 'SaveTransactionOutcome.saved(transaction: $transaction)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $SaveTransactionSavedCopyWith<$Res> implements $SaveTransactionOutcomeCopyWith<$Res> {
+  factory $SaveTransactionSavedCopyWith(SaveTransactionSaved value, $Res Function(SaveTransactionSaved) _then) = _$SaveTransactionSavedCopyWithImpl;
+@useResult
+$Res call({
+ Transaction transaction
+});
+
+
+$TransactionCopyWith<$Res> get transaction;
+
+}
+/// @nodoc
+class _$SaveTransactionSavedCopyWithImpl<$Res>
+    implements $SaveTransactionSavedCopyWith<$Res> {
+  _$SaveTransactionSavedCopyWithImpl(this._self, this._then);
+
+  final SaveTransactionSaved _self;
+  final $Res Function(SaveTransactionSaved) _then;
+
+/// Create a copy of SaveTransactionOutcome
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? transaction = null,}) {
+  return _then(SaveTransactionSaved(
+null == transaction ? _self.transaction : transaction // ignore: cast_nullable_to_non_nullable
+as Transaction,
+  ));
+}
+
+/// Create a copy of SaveTransactionOutcome
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$TransactionCopyWith<$Res> get transaction {
+  
+  return $TransactionCopyWith<$Res>(_self.transaction, (value) {
+    return _then(_self.copyWith(transaction: value));
+  });
+}
+}
+
+/// @nodoc
+
+
+class SaveTransactionInvalid implements SaveTransactionOutcome {
+  const SaveTransactionInvalid();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SaveTransactionInvalid);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'SaveTransactionOutcome.invalid()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class SaveTransactionFailed implements SaveTransactionOutcome {
+  const SaveTransactionFailed();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SaveTransactionFailed);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'SaveTransactionOutcome.failed()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+mixin _$DeleteTransactionOutcome {
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is DeleteTransactionOutcome);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'DeleteTransactionOutcome()';
+}
+
+
+}
+
+/// @nodoc
+class $DeleteTransactionOutcomeCopyWith<$Res>  {
+$DeleteTransactionOutcomeCopyWith(DeleteTransactionOutcome _, $Res Function(DeleteTransactionOutcome) __);
+}
+
+
+/// Adds pattern-matching-related methods to [DeleteTransactionOutcome].
+extension DeleteTransactionOutcomePatterns on DeleteTransactionOutcome {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( DeleteTransactionDeleted value)?  deleted,TResult Function( DeleteTransactionNotFound value)?  notFound,TResult Function( DeleteTransactionIgnored value)?  ignored,TResult Function( DeleteTransactionFailed value)?  failed,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case DeleteTransactionDeleted() when deleted != null:
+return deleted(_that);case DeleteTransactionNotFound() when notFound != null:
+return notFound(_that);case DeleteTransactionIgnored() when ignored != null:
+return ignored(_that);case DeleteTransactionFailed() when failed != null:
+return failed(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( DeleteTransactionDeleted value)  deleted,required TResult Function( DeleteTransactionNotFound value)  notFound,required TResult Function( DeleteTransactionIgnored value)  ignored,required TResult Function( DeleteTransactionFailed value)  failed,}){
+final _that = this;
+switch (_that) {
+case DeleteTransactionDeleted():
+return deleted(_that);case DeleteTransactionNotFound():
+return notFound(_that);case DeleteTransactionIgnored():
+return ignored(_that);case DeleteTransactionFailed():
+return failed(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( DeleteTransactionDeleted value)?  deleted,TResult? Function( DeleteTransactionNotFound value)?  notFound,TResult? Function( DeleteTransactionIgnored value)?  ignored,TResult? Function( DeleteTransactionFailed value)?  failed,}){
+final _that = this;
+switch (_that) {
+case DeleteTransactionDeleted() when deleted != null:
+return deleted(_that);case DeleteTransactionNotFound() when notFound != null:
+return notFound(_that);case DeleteTransactionIgnored() when ignored != null:
+return ignored(_that);case DeleteTransactionFailed() when failed != null:
+return failed(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  deleted,TResult Function()?  notFound,TResult Function()?  ignored,TResult Function()?  failed,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case DeleteTransactionDeleted() when deleted != null:
+return deleted();case DeleteTransactionNotFound() when notFound != null:
+return notFound();case DeleteTransactionIgnored() when ignored != null:
+return ignored();case DeleteTransactionFailed() when failed != null:
+return failed();case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  deleted,required TResult Function()  notFound,required TResult Function()  ignored,required TResult Function()  failed,}) {final _that = this;
+switch (_that) {
+case DeleteTransactionDeleted():
+return deleted();case DeleteTransactionNotFound():
+return notFound();case DeleteTransactionIgnored():
+return ignored();case DeleteTransactionFailed():
+return failed();}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  deleted,TResult? Function()?  notFound,TResult? Function()?  ignored,TResult? Function()?  failed,}) {final _that = this;
+switch (_that) {
+case DeleteTransactionDeleted() when deleted != null:
+return deleted();case DeleteTransactionNotFound() when notFound != null:
+return notFound();case DeleteTransactionIgnored() when ignored != null:
+return ignored();case DeleteTransactionFailed() when failed != null:
+return failed();case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class DeleteTransactionDeleted implements DeleteTransactionOutcome {
+  const DeleteTransactionDeleted();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is DeleteTransactionDeleted);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'DeleteTransactionOutcome.deleted()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class DeleteTransactionNotFound implements DeleteTransactionOutcome {
+  const DeleteTransactionNotFound();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is DeleteTransactionNotFound);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'DeleteTransactionOutcome.notFound()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class DeleteTransactionIgnored implements DeleteTransactionOutcome {
+  const DeleteTransactionIgnored();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is DeleteTransactionIgnored);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'DeleteTransactionOutcome.ignored()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class DeleteTransactionFailed implements DeleteTransactionOutcome {
+  const DeleteTransactionFailed();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is DeleteTransactionFailed);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'DeleteTransactionOutcome.failed()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+mixin _$DraftSubmissionOutcome {
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is DraftSubmissionOutcome);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'DraftSubmissionOutcome()';
+}
+
+
+}
+
+/// @nodoc
+class $DraftSubmissionOutcomeCopyWith<$Res>  {
+$DraftSubmissionOutcomeCopyWith(DraftSubmissionOutcome _, $Res Function(DraftSubmissionOutcome) __);
+}
+
+
+/// Adds pattern-matching-related methods to [DraftSubmissionOutcome].
+extension DraftSubmissionOutcomePatterns on DraftSubmissionOutcome {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( DraftSubmissionOk value)?  ok,TResult Function( DraftSubmissionIgnored value)?  ignored,TResult Function( DraftSubmissionFailed value)?  failed,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case DraftSubmissionOk() when ok != null:
+return ok(_that);case DraftSubmissionIgnored() when ignored != null:
+return ignored(_that);case DraftSubmissionFailed() when failed != null:
+return failed(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( DraftSubmissionOk value)  ok,required TResult Function( DraftSubmissionIgnored value)  ignored,required TResult Function( DraftSubmissionFailed value)  failed,}){
+final _that = this;
+switch (_that) {
+case DraftSubmissionOk():
+return ok(_that);case DraftSubmissionIgnored():
+return ignored(_that);case DraftSubmissionFailed():
+return failed(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( DraftSubmissionOk value)?  ok,TResult? Function( DraftSubmissionIgnored value)?  ignored,TResult? Function( DraftSubmissionFailed value)?  failed,}){
+final _that = this;
+switch (_that) {
+case DraftSubmissionOk() when ok != null:
+return ok(_that);case DraftSubmissionIgnored() when ignored != null:
+return ignored(_that);case DraftSubmissionFailed() when failed != null:
+return failed(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( ShoppingListEditResult result)?  ok,TResult Function()?  ignored,TResult Function()?  failed,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case DraftSubmissionOk() when ok != null:
+return ok(_that.result);case DraftSubmissionIgnored() when ignored != null:
+return ignored();case DraftSubmissionFailed() when failed != null:
+return failed();case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( ShoppingListEditResult result)  ok,required TResult Function()  ignored,required TResult Function()  failed,}) {final _that = this;
+switch (_that) {
+case DraftSubmissionOk():
+return ok(_that.result);case DraftSubmissionIgnored():
+return ignored();case DraftSubmissionFailed():
+return failed();}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( ShoppingListEditResult result)?  ok,TResult? Function()?  ignored,TResult? Function()?  failed,}) {final _that = this;
+switch (_that) {
+case DraftSubmissionOk() when ok != null:
+return ok(_that.result);case DraftSubmissionIgnored() when ignored != null:
+return ignored();case DraftSubmissionFailed() when failed != null:
+return failed();case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class DraftSubmissionOk implements DraftSubmissionOutcome {
+  const DraftSubmissionOk(this.result);
+  
+
+ final  ShoppingListEditResult result;
+
+/// Create a copy of DraftSubmissionOutcome
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$DraftSubmissionOkCopyWith<DraftSubmissionOk> get copyWith => _$DraftSubmissionOkCopyWithImpl<DraftSubmissionOk>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is DraftSubmissionOk&&(identical(other.result, result) || other.result == result));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,result);
+}
+
+@override
+String toString() {
+    return 'DraftSubmissionOutcome.ok(result: $result)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $DraftSubmissionOkCopyWith<$Res> implements $DraftSubmissionOutcomeCopyWith<$Res> {
+  factory $DraftSubmissionOkCopyWith(DraftSubmissionOk value, $Res Function(DraftSubmissionOk) _then) = _$DraftSubmissionOkCopyWithImpl;
+@useResult
+$Res call({
+ ShoppingListEditResult result
+});
+
+
+
+
+}
+/// @nodoc
+class _$DraftSubmissionOkCopyWithImpl<$Res>
+    implements $DraftSubmissionOkCopyWith<$Res> {
+  _$DraftSubmissionOkCopyWithImpl(this._self, this._then);
+
+  final DraftSubmissionOk _self;
+  final $Res Function(DraftSubmissionOk) _then;
+
+/// Create a copy of DraftSubmissionOutcome
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? result = null,}) {
+  return _then(DraftSubmissionOk(
+null == result ? _self.result : result // ignore: cast_nullable_to_non_nullable
+as ShoppingListEditResult,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class DraftSubmissionIgnored implements DraftSubmissionOutcome {
+  const DraftSubmissionIgnored();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is DraftSubmissionIgnored);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'DraftSubmissionOutcome.ignored()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class DraftSubmissionFailed implements DraftSubmissionOutcome {
+  const DraftSubmissionFailed();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is DraftSubmissionFailed);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'DraftSubmissionOutcome.failed()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+mixin _$CategoryChipTapOutcome {
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoryChipTapOutcome);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'CategoryChipTapOutcome()';
+}
+
+
+}
+
+/// @nodoc
+class $CategoryChipTapOutcomeCopyWith<$Res>  {
+$CategoryChipTapOutcomeCopyWith(CategoryChipTapOutcome _, $Res Function(CategoryChipTapOutcome) __);
+}
+
+
+/// Adds pattern-matching-related methods to [CategoryChipTapOutcome].
+extension CategoryChipTapOutcomePatterns on CategoryChipTapOutcome {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( CategoryChipTapOpenPicker value)?  openPicker,TResult Function( CategoryChipTapManageCategories value)?  manageCategories,TResult Function( CategoryChipTapFailed value)?  failed,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case CategoryChipTapOpenPicker() when openPicker != null:
+return openPicker(_that);case CategoryChipTapManageCategories() when manageCategories != null:
+return manageCategories(_that);case CategoryChipTapFailed() when failed != null:
+return failed(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( CategoryChipTapOpenPicker value)  openPicker,required TResult Function( CategoryChipTapManageCategories value)  manageCategories,required TResult Function( CategoryChipTapFailed value)  failed,}){
+final _that = this;
+switch (_that) {
+case CategoryChipTapOpenPicker():
+return openPicker(_that);case CategoryChipTapManageCategories():
+return manageCategories(_that);case CategoryChipTapFailed():
+return failed(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( CategoryChipTapOpenPicker value)?  openPicker,TResult? Function( CategoryChipTapManageCategories value)?  manageCategories,TResult? Function( CategoryChipTapFailed value)?  failed,}){
+final _that = this;
+switch (_that) {
+case CategoryChipTapOpenPicker() when openPicker != null:
+return openPicker(_that);case CategoryChipTapManageCategories() when manageCategories != null:
+return manageCategories(_that);case CategoryChipTapFailed() when failed != null:
+return failed(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  openPicker,TResult Function()?  manageCategories,TResult Function()?  failed,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case CategoryChipTapOpenPicker() when openPicker != null:
+return openPicker();case CategoryChipTapManageCategories() when manageCategories != null:
+return manageCategories();case CategoryChipTapFailed() when failed != null:
+return failed();case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  openPicker,required TResult Function()  manageCategories,required TResult Function()  failed,}) {final _that = this;
+switch (_that) {
+case CategoryChipTapOpenPicker():
+return openPicker();case CategoryChipTapManageCategories():
+return manageCategories();case CategoryChipTapFailed():
+return failed();}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  openPicker,TResult? Function()?  manageCategories,TResult? Function()?  failed,}) {final _that = this;
+switch (_that) {
+case CategoryChipTapOpenPicker() when openPicker != null:
+return openPicker();case CategoryChipTapManageCategories() when manageCategories != null:
+return manageCategories();case CategoryChipTapFailed() when failed != null:
+return failed();case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class CategoryChipTapOpenPicker implements CategoryChipTapOutcome {
+  const CategoryChipTapOpenPicker();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoryChipTapOpenPicker);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'CategoryChipTapOutcome.openPicker()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class CategoryChipTapManageCategories implements CategoryChipTapOutcome {
+  const CategoryChipTapManageCategories();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoryChipTapManageCategories);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'CategoryChipTapOutcome.manageCategories()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class CategoryChipTapFailed implements CategoryChipTapOutcome {
+  const CategoryChipTapFailed();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoryChipTapFailed);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'CategoryChipTapOutcome.failed()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
 mixin _$TransactionFormState {
 
 /// Discriminates which entry point opened the form so widgets can derive

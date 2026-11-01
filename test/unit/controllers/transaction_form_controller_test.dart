@@ -2,17 +2,24 @@
 //
 // Covers:
 //   - Hydration paths (Add / Edit / Duplicate) including the
-//     default-account fallback chain and not-found recoveries.
+//     default-account fallback chain and not-found recoveries. A
+//     hydration that finishes after the form closed completes normally
+//     and stops reading; one called after the form closed completes
+//     normally too.
 //   - Keypad commands (digit / decimal / backspace / clear) propagate to
 //     `amountMinorUnits` and `isDirty`.
 //   - selectCategory accepts an income category; the category sets the
 //     transaction type.
 //   - Account swap with currency change refuses without
 //     `clearAmountOnCurrencyChange`; accepts and clears when allowed.
-//   - Save success returns the persisted Transaction; failure rethrows
-//     and clears `isSaving` (state stays `.data`).
-//   - Delete returns false on missing rows, true on actual deletion;
-//     rethrows on repository error.
+//   - Save returns `saved(tx)` with the persisted Transaction, `invalid`
+//     when `canSave` is false, and `failed` on repository error after
+//     clearing `isSaving` (state stays `.data`). A save that completes
+//     after the form closed still reports `saved`.
+//   - Delete returns `deleted`, `notFound` when no row matched, `ignored`
+//     outside Edit mode, and `failed` on repository error.
+//   - `resolveCategoryChipTap` returns `openPicker`, `manageCategories`
+//     or `failed`.
 //   - `canSave` getter is false outside `.data` and false until amount,
 //     category, and account are all present.
 //
@@ -25,6 +32,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
+import 'package:ledgerly/app/bootstrap.dart';
 import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/database/app_database.dart' as drift;
@@ -166,8 +174,11 @@ void main() {
     await defaultCurrencyCtrl.close();
   });
 
-  ProviderContainer makeContainer() {
+  ProviderContainer makeContainer({
+    Duration? Function(int retryCount, Object error)? retry,
+  }) {
     return ProviderContainer(
+      retry: retry,
       overrides: [
         transactionRepositoryProvider.overrideWithValue(txRepo),
         accountRepositoryProvider.overrideWithValue(accountRepo),
@@ -386,6 +397,142 @@ void main() {
     );
   });
 
+  group('hydration after the form closed', () {
+    // The form can be popped while hydration is still awaiting a read
+    // (`_canPop` allows it during loading). The command must then finish
+    // normally instead of writing state on the disposed controller.
+    @Dependencies([TransactionFormController])
+    Future<void> closeMidHydration<T>(
+      Completer<T> gate,
+      Future<void> Function(TransactionFormController) hydrate, {
+      required T value,
+      required bool readFails,
+    }) async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final sub = c.listen(transactionFormControllerProvider, (_, _) {});
+      final hydration = hydrate(
+        c.read(transactionFormControllerProvider.notifier),
+      );
+
+      sub.close();
+      await c.pump();
+      if (readFails) {
+        gate.completeError(Exception('db closed'));
+      } else {
+        gate.complete(value);
+      }
+
+      await expectLater(hydration, completes);
+    }
+
+    for (final readFails in [false, true]) {
+      final how = readFails ? 'fails' : 'succeeds';
+
+      test('TC05: hydrateForAdd completes normally when its read $how '
+          'after the form closed', () async {
+        final gate = Completer<int?>();
+        when(() => prefs.getDefaultAccountId()).thenAnswer((_) => gate.future);
+        await closeMidHydration(
+          gate,
+          (controller) => controller.hydrateForAdd(),
+          value: null,
+          readFails: readFails,
+        );
+      });
+
+      test('TC12: hydrateForEdit completes normally when its read $how '
+          'after the form closed', () async {
+        final gate = Completer<Transaction?>();
+        when(() => txRepo.getById(99)).thenAnswer((_) => gate.future);
+        await closeMidHydration(
+          gate,
+          (controller) => controller.hydrateForEdit(99),
+          value: _persistedTx(),
+          readFails: readFails,
+        );
+      });
+
+      test('TC24: hydrateForDuplicate completes normally when its read $how '
+          'after the form closed', () async {
+        final gate = Completer<Transaction?>();
+        when(() => txRepo.getById(99)).thenAnswer((_) => gate.future);
+        await closeMidHydration(
+          gate,
+          (controller) => controller.hydrateForDuplicate(99),
+          value: _persistedTx(),
+          readFails: readFails,
+        );
+      });
+    }
+
+    /// Lets hydration get past its first read, closes the form while the
+    /// account read is pending, then releases it.
+    @Dependencies([TransactionFormController])
+    Future<void> closeAtAccountRead(
+      Future<void> Function(TransactionFormController) hydrate,
+    ) async {
+      final gate = Completer<Account?>();
+      when(() => accountRepo.getById(_account.id))
+          .thenAnswer((_) => gate.future);
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final sub = c.listen(transactionFormControllerProvider, (_, _) {});
+      final hydration = hydrate(
+        c.read(transactionFormControllerProvider.notifier),
+      );
+      await pumpEventQueue();
+      verify(() => accountRepo.getById(_account.id)).called(1);
+
+      sub.close();
+      await c.pump();
+      gate.complete(_account);
+
+      await expectLater(hydration, completes);
+    }
+
+    test('TC13: hydrateForEdit stops reading once the form closed', () async {
+      when(() => txRepo.getById(99)).thenAnswer((_) async => _persistedTx());
+      await closeAtAccountRead((controller) => controller.hydrateForEdit(99));
+      verifyNever(() => categoryRepo.getById(any()));
+    });
+
+    test(
+      'TC25: hydrateForDuplicate stops reading once the form closed',
+      () async {
+        when(() => txRepo.getById(99)).thenAnswer((_) async => _persistedTx());
+        await closeAtAccountRead(
+          (controller) => controller.hydrateForDuplicate(99),
+        );
+        verifyNever(() => categoryRepo.getById(any()));
+      },
+    );
+
+    final calledAfterClose =
+        <String, Future<void> Function(TransactionFormController)>{
+          'hydrateForAdd': (controller) => controller.hydrateForAdd(),
+          'hydrateForEdit': (controller) => controller.hydrateForEdit(99),
+          'hydrateForDuplicate': (controller) =>
+              controller.hydrateForDuplicate(99),
+          'hydrateForShoppingListDraft': (controller) =>
+              controller.hydrateForShoppingListDraft(5),
+        };
+    for (final MapEntry(key: name, value: hydrate)
+        in calledAfterClose.entries) {
+      test('TC05c: $name called after the form closed completes '
+          'normally', () async {
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final sub = c.listen(transactionFormControllerProvider, (_, _) {});
+        final controller = c.read(transactionFormControllerProvider.notifier);
+        sub.close();
+        await c.pump();
+
+        await expectLater(hydrate(controller), completes);
+      });
+    }
+  });
+
   group('keypad commands', () {
     test('TC30: appendDigit USD shifts to 100 / 1200', () async {
       final c = makeContainer();
@@ -553,7 +700,7 @@ void main() {
       final saved = _persistedTx(amountMinorUnits: 100, id: 5);
       when(() => txRepo.save(any())).thenAnswer((_) async => saved);
       final result = await controller.save();
-      expect(result, saved);
+      expect(result, SaveTransactionOutcome.saved(saved));
       final s =
           c.read(transactionFormControllerProvider) as TransactionFormData;
       expect(s.isSaving, isFalse);
@@ -612,7 +759,7 @@ void main() {
     );
 
     test(
-      'TC61: save rethrows on repository failure and clears isSaving',
+      'TC61: save returns failed on repository failure and clears isSaving',
       () async {
         final c = makeContainer();
         addTearDown(c.dispose);
@@ -622,7 +769,7 @@ void main() {
           ..appendDigit(1)
           ..selectCategory(_expenseCategory);
         when(() => txRepo.save(any())).thenThrow(Exception('repo offline'));
-        await expectLater(controller.save(), throwsA(isA<Exception>()));
+        expect(await controller.save(), const SaveTransactionOutcome.failed());
         final s =
             c.read(transactionFormControllerProvider) as TransactionFormData;
         expect(s.isSaving, isFalse);
@@ -700,30 +847,90 @@ void main() {
       verify(() => exchangeService.fetchRates(any())).called(1);
     });
 
-    test('TC62: save returns null when canSave is false', () async {
+    test('TC61c: a save that completes after the form closed still reports '
+        'saved and fetches the rate', () async {
+      final db = _MockAppDatabase();
+      final dao = _MockExchangeRateDao();
+      final exchangeService = _MockExchangeRateService();
+      when(() => db.exchangeRateDao).thenReturn(dao);
+      when(() => dao.watchAll())
+          .thenAnswer((_) => Stream.value(const <drift.ExchangeRateRow>[]));
+      when(() => dao.upsertAll(any())).thenAnswer((_) async {});
+      when(() => exchangeService.fetchRates(any())).thenAnswer((_) async => []);
+
+      final exchangeRepo = ExchangeRateRepository(
+        db,
+        exchangeService,
+        const Stream<String>.empty(),
+      );
+      addTearDown(exchangeRepo.dispose);
+
+      final c = ProviderContainer(
+        overrides: [
+          transactionRepositoryProvider.overrideWithValue(txRepo),
+          accountRepositoryProvider.overrideWithValue(accountRepo),
+          categoryRepositoryProvider.overrideWithValue(categoryRepo),
+          userPreferencesRepositoryProvider.overrideWithValue(prefs),
+          defaultCurrencyProvider.overrideWith(
+            (ref) => const Stream<String>.empty(),
+          ),
+          initialDefaultCurrencyProvider.overrideWithValue('USD'),
+          exchangeRateRepositoryProvider.overrideWithValue(exchangeRepo),
+        ],
+      );
+      addTearDown(c.dispose);
+
+      final sub = c.listen(transactionFormControllerProvider, (_, _) {});
+      final controller = c.read(transactionFormControllerProvider.notifier);
+      await controller.hydrateForAdd();
+      controller
+        ..selectCurrency(_eur)
+        ..appendDigit(1)
+        ..selectCategory(_expenseCategory);
+
+      final completer = Completer<Transaction>();
+      when(() => txRepo.save(any())).thenAnswer((_) => completer.future);
+      final saveFuture = controller.save();
+
+      // The form closes while the write is still in flight.
+      sub.close();
+      await c.pump();
+
+      final saved = _persistedTx(amountMinorUnits: 100, currency: _eur);
+      completer.complete(saved);
+
+      expect(await saveFuture, SaveTransactionOutcome.saved(saved));
+      await pumpEventQueue();
+      verify(() => exchangeService.fetchRates(any())).called(1);
+    });
+
+    test('TC62: save returns invalid when canSave is false', () async {
       final c = makeContainer();
       addTearDown(c.dispose);
       final controller = c.read(transactionFormControllerProvider.notifier);
       await controller.hydrateForAdd(); // amount=0, category=null
       final result = await controller.save();
-      expect(result, isNull);
+      expect(result, const SaveTransactionOutcome.invalid());
       verifyNever(() => txRepo.save(any()));
     });
 
-    test('TC63: deleteExisting in Edit mode returns repo result', () async {
-      final tx = _persistedTx();
-      when(() => txRepo.getById(99)).thenAnswer((_) async => tx);
-      when(() => txRepo.delete(99)).thenAnswer((_) async => true);
-      final c = makeContainer();
-      addTearDown(c.dispose);
-      final controller = c.read(transactionFormControllerProvider.notifier);
-      await controller.hydrateForEdit(99);
-      final removed = await controller.deleteExisting();
-      expect(removed, isTrue);
-    });
+    test(
+      'TC63: deleteExisting returns deleted when the row is removed',
+      () async {
+        final tx = _persistedTx();
+        when(() => txRepo.getById(99)).thenAnswer((_) async => tx);
+        when(() => txRepo.delete(99)).thenAnswer((_) async => true);
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+        await controller.hydrateForEdit(99);
+        final outcome = await controller.deleteExisting();
+        expect(outcome, const DeleteTransactionOutcome.deleted());
+      },
+    );
 
     test(
-      'TC64: deleteExisting returns false when repo returns false',
+      'TC64: deleteExisting returns notFound when repo returns false',
       () async {
         final tx = _persistedTx();
         when(() => txRepo.getById(99)).thenAnswer((_) async => tx);
@@ -732,18 +939,42 @@ void main() {
         addTearDown(c.dispose);
         final controller = c.read(transactionFormControllerProvider.notifier);
         await controller.hydrateForEdit(99);
-        expect(await controller.deleteExisting(), isFalse);
+        expect(
+          await controller.deleteExisting(),
+          const DeleteTransactionOutcome.notFound(),
+        );
       },
     );
 
+    test('TC64b: deleteExisting returns failed on repository failure and '
+        'clears isDeleting', () async {
+      final tx = _persistedTx();
+      when(() => txRepo.getById(99)).thenAnswer((_) async => tx);
+      when(() => txRepo.delete(99)).thenThrow(Exception('repo offline'));
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+      await controller.hydrateForEdit(99);
+      expect(
+        await controller.deleteExisting(),
+        const DeleteTransactionOutcome.failed(),
+      );
+      final s =
+          c.read(transactionFormControllerProvider) as TransactionFormData;
+      expect(s.isDeleting, isFalse);
+    });
+
     test(
-      'TC65: deleteExisting in Add mode is a no-op (returns false)',
+      'TC65: deleteExisting in Add mode is ignored without a repo call',
       () async {
         final c = makeContainer();
         addTearDown(c.dispose);
         final controller = c.read(transactionFormControllerProvider.notifier);
         await controller.hydrateForAdd();
-        expect(await controller.deleteExisting(), isFalse);
+        expect(
+          await controller.deleteExisting(),
+          const DeleteTransactionOutcome.ignored(),
+        );
         verifyNever(() => txRepo.delete(any()));
       },
     );
@@ -809,6 +1040,62 @@ void main() {
         await deleteFuture;
       },
     );
+  });
+
+  group('resolveCategoryChipTap', () {
+    void stubCategories(CategoryType type, Stream<List<Category>> rows) {
+      when(() => categoryRepo.watchAll(type: type, includeArchived: false))
+          .thenAnswer((_) => rows);
+    }
+
+    test('TC90: openPicker when any category exists', () async {
+      stubCategories(CategoryType.expense, Stream.value(const []));
+      stubCategories(
+        CategoryType.income,
+        Stream.value(const [_incomeCategory]),
+      );
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+
+      expect(
+        await controller.resolveCategoryChipTap(),
+        const CategoryChipTapOutcome.openPicker(),
+      );
+    });
+
+    test('TC91: manageCategories when no category exists', () async {
+      stubCategories(CategoryType.expense, Stream.value(const []));
+      stubCategories(CategoryType.income, Stream.value(const []));
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+
+      expect(
+        await controller.resolveCategoryChipTap(),
+        const CategoryChipTapOutcome.manageCategories(),
+      );
+    });
+
+    test('TC92: failed when the category read fails', () async {
+      stubCategories(
+        CategoryType.expense,
+        Stream.error(Exception('db offline')),
+      );
+      stubCategories(
+        CategoryType.income,
+        Stream.value(const [_incomeCategory]),
+      );
+      // Production never retries a failed provider (bootstrap.dart).
+      final c = makeContainer(retry: noProviderRetry);
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+
+      expect(
+        await controller.resolveCategoryChipTap(),
+        const CategoryChipTapOutcome.failed(),
+      );
+    });
   });
 
   group('canSave', () {

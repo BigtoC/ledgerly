@@ -56,11 +56,11 @@ void main() {
         ..appendDigit(1)
         ..applyOperator(CalcOperator.add)
         ..appendDigit(3);
-      final saved = await adder.save();
+      final saved = (await adder.save() as SaveTransactionSaved).transaction;
 
       final row = await (db.select(
         db.transactions,
-      )..where((t) => t.id.equals(saved!.id))).getSingle();
+      )..where((t) => t.id.equals(saved.id))).getSingle();
       expect(row.amountMinorUnits, 2800);
       expect(row.amountFormula, '3.5+10.5+11+3');
 

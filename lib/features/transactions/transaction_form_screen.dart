@@ -22,13 +22,13 @@
 //     with "Save to transaction" (primary) + "Save draft" (secondary) +
 //     archived-ref warning text.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../data/models/category.dart';
-import '../../data/models/transaction.dart';
 import '../../l10n/app_localizations.dart';
 import '../categories/categories_controller.dart';
 import '../categories/widgets/category_picker.dart';
@@ -84,13 +84,13 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     if (typedMode != null) {
       switch (typedMode) {
         case AddTransactionMode(:final initialDate):
-          controller.hydrateForAdd(initialDate: initialDate);
+          unawaited(controller.hydrateForAdd(initialDate: initialDate));
         case DuplicateTransactionMode(:final sourceTransactionId):
-          controller.hydrateForDuplicate(sourceTransactionId);
+          unawaited(controller.hydrateForDuplicate(sourceTransactionId));
         case EditTransactionMode(:final transactionId):
-          controller.hydrateForEdit(transactionId);
+          unawaited(controller.hydrateForEdit(transactionId));
         case EditShoppingListDraftMode(:final shoppingListItemId):
-          controller.hydrateForShoppingListDraft(shoppingListItemId);
+          unawaited(controller.hydrateForShoppingListDraft(shoppingListItemId));
       }
       return;
     }
@@ -114,11 +114,11 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     }
     final transactionId = widget.transactionId;
     if (transactionId != null) {
-      controller.hydrateForEdit(transactionId);
+      unawaited(controller.hydrateForEdit(transactionId));
     } else if (duplicateSourceId != null) {
-      controller.hydrateForDuplicate(duplicateSourceId);
+      unawaited(controller.hydrateForDuplicate(duplicateSourceId));
     } else {
-      controller.hydrateForAdd(initialDate: initialDate);
+      unawaited(controller.hydrateForAdd(initialDate: initialDate));
     }
   }
 
@@ -269,7 +269,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                   CategoryChip(
                     category: state.selectedCategory,
                     hasError: showCategoryError,
-                    onTap: () => _onTapCategoryChip(context, controller),
+                    onTap: () => _onTapCategoryChip(context, l10n, controller),
                   ),
                   AccountSelectorTile(
                     account: state.selectedAccount,
@@ -343,22 +343,20 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     AppLocalizations l10n,
     TransactionFormController controller,
   ) async {
-    ShoppingListEditResult? result;
-    try {
-      result = await controller.saveDraft();
-    } catch (_) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.shoppingListSaveFailedSnackbar)),
-      );
-      return;
-    }
-    // null means the guard prevented saving (canSaveDraft was false or a
-    // submission was already in flight) — do NOT pop.
-    if (result is ShoppingListEditResultAddedToList) {
-      if (!context.mounted) return;
-      // Add mode: close the form (pop with null — no Transaction result).
-      context.pop(null);
+    final outcome = await controller.saveDraft();
+    if (!context.mounted) return;
+    switch (outcome) {
+      case DraftSubmissionOk():
+        // Add mode: close the form (pop with null — no Transaction result).
+        context.pop(null);
+      case DraftSubmissionIgnored():
+        // The guard prevented saving (canSaveDraft was false or a
+        // submission was already in flight) — do NOT pop.
+        break;
+      case DraftSubmissionFailed():
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.shoppingListSaveFailedSnackbar)),
+        );
     }
   }
 
@@ -366,21 +364,20 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   /// convertDraft) and pops with its result.
   Future<void> _submitDraft(
     BuildContext context,
-    Future<ShoppingListEditResult?> Function() submit,
+    Future<DraftSubmissionOutcome> Function() submit,
     String failureMessage,
   ) async {
-    ShoppingListEditResult? result;
-    try {
-      result = await submit();
-    } catch (_) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(failureMessage)));
-      return;
-    }
-    if (result == null) return;
+    final outcome = await submit();
     if (!context.mounted) return;
-    context.pop(result);
+    switch (outcome) {
+      case DraftSubmissionOk(:final result):
+        context.pop(result);
+      case DraftSubmissionIgnored():
+        break;
+      case DraftSubmissionFailed():
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(failureMessage)));
+    }
   }
 
   bool _isDirty(TransactionFormState state) {
@@ -428,22 +425,19 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     AppLocalizations l10n,
     TransactionFormController controller,
   ) async {
-    Transaction? saved;
-    try {
-      saved = await controller.save();
-    } catch (_) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l10n.txSaveFailedSnackbar)));
-      return;
+    final outcome = await controller.save();
+    // `mounted` guards the setState below; `context.mounted` the context.
+    if (!mounted || !context.mounted) return;
+    switch (outcome) {
+      case SaveTransactionSaved(:final transaction):
+        context.pop(transaction);
+      case SaveTransactionInvalid():
+        // canSave was false — surface inline hints.
+        setState(() => _showValidationHints = true);
+      case SaveTransactionFailed():
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l10n.txSaveFailedSnackbar)));
     }
-    if (saved == null) {
-      // canSave was false — surface inline hints.
-      setState(() => _showValidationHints = true);
-      return;
-    }
-    if (!context.mounted) return;
-    context.pop(saved);
   }
 
   Future<void> _delete(
@@ -474,56 +468,44 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     );
     if (confirmed != true) return;
 
-    bool removed;
-    try {
-      removed = await controller.deleteExisting();
-    } catch (_) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l10n.txDeleteFailedSnackbar)));
-      return;
-    }
+    final outcome = await controller.deleteExisting();
     if (!context.mounted) return;
-    if (!removed) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l10n.txTransactionNotFound)));
+    switch (outcome) {
+      case DeleteTransactionDeleted():
+        context.pop();
+      case DeleteTransactionNotFound():
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l10n.txTransactionNotFound)));
+        context.pop();
+      case DeleteTransactionIgnored():
+        break;
+      case DeleteTransactionFailed():
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l10n.txDeleteFailedSnackbar)));
     }
-    context.pop();
   }
 
   Future<void> _onTapCategoryChip(
     BuildContext context,
+    AppLocalizations l10n,
     TransactionFormController controller,
   ) async {
-    // Wave 2 §7.1 — decide BEFORE opening the picker whether the picker
-    // is even useful. The picker lists expense and income categories
-    // together (the category sets the transaction type), so if neither
-    // type has categories, route directly to /settings/categories so the
-    // user can create one (the picker would just show its empty-state CTA
-    // and pop with `null`, which we cannot disambiguate from a dismiss).
-    // Hold subscriptions while awaiting: a bare `ref.read(...future)` on
-    // this auto-dispose stream provider pauses its stream as soon as the
-    // read returns (Riverpod 3), so the future would never complete.
-    final subs = [
-      for (final type in CategoryType.values)
-        ref.listenManual(categoriesByTypeProvider(type).future, (_, _) {}),
-    ];
-    final List<List<Category>> categories;
-    try {
-      categories = await Future.wait([for (final sub in subs) sub.read()]);
-    } finally {
-      for (final sub in subs) {
-        sub.close();
-      }
-    }
+    // Wave 2 §7.1 — the controller decides BEFORE the picker opens whether
+    // it is even useful; with no categories at all, route straight to
+    // /settings/categories so the user can create one.
+    final outcome = await controller.resolveCategoryChipTap();
     if (!context.mounted) return;
-    if (categories.every((c) => c.isEmpty)) {
-      await context.push('/settings/categories');
-      return;
+    switch (outcome) {
+      case CategoryChipTapOpenPicker():
+        final picked = await showCategoryPicker(context);
+        if (picked == null || !context.mounted) return; // dismissed
+        controller.selectCategory(picked);
+      case CategoryChipTapManageCategories():
+        await context.push('/settings/categories');
+      case CategoryChipTapFailed():
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
     }
-    final picked = await showCategoryPicker(context);
-    if (picked == null) return; // dismissed
-    controller.selectCategory(picked);
   }
 
   Future<void> _onTapAccountTile(
@@ -623,7 +605,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     // and duplicate flows both recover correctly.
     context.push('/settings/manage-accounts/new').then((_) {
       if (!mounted) return;
-      controller.retryHydration();
+      unawaited(controller.retryHydration());
     });
   }
 }

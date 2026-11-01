@@ -31,6 +31,7 @@ final class TransactionFormControllerProvider
           defaultCurrencyProvider,
           exchangeRateRepositoryProvider,
           initialDefaultCurrencyProvider,
+          categoriesByTypeProvider,
         ],
         $allTransitiveDependencies: <ProviderOrFamily>{
           TransactionFormControllerProvider.$allTransitiveDependencies0,
@@ -44,6 +45,7 @@ final class TransactionFormControllerProvider
           TransactionFormControllerProvider.$allTransitiveDependencies8,
           TransactionFormControllerProvider.$allTransitiveDependencies9,
           TransactionFormControllerProvider.$allTransitiveDependencies10,
+          TransactionFormControllerProvider.$allTransitiveDependencies11,
         },
       );
 
@@ -61,6 +63,7 @@ final class TransactionFormControllerProvider
   static final $allTransitiveDependencies9 =
       ExchangeRateRepositoryProvider.$allTransitiveDependencies1;
   static final $allTransitiveDependencies10 = initialDefaultCurrencyProvider;
+  static final $allTransitiveDependencies11 = categoriesByTypeProvider;
 
   @override
   String debugGetCreateSourceHash() => _$transactionFormControllerHash();
@@ -79,7 +82,7 @@ final class TransactionFormControllerProvider
 }
 
 String _$transactionFormControllerHash() =>
-    r'304d1c388e83164fe83f6c254bbd4aa91440dc6f';
+    r'd60ace84936f92820af3c535f2f0ceb0793f7e08';
 
 abstract class _$TransactionFormController
     extends $Notifier<TransactionFormState> {

@@ -7,10 +7,12 @@
 //                   dependency (create account, or pop back to Home).
 //   - `data`      — the live form. Every keypad / picker / save command
 //                   maps to a `copyWith` on this variant.
-//   - `error`     — irrecoverable hydration / delete failure. Save-action
-//                   errors do NOT enter this variant; they keep the form
-//                   in `.data` with `isSaving = false` and surface via
-//                   `txSaveFailedSnackbar`.
+//   - `error`     — irrecoverable hydration failure. Command failures
+//                   (save, delete, draft save/convert) do NOT enter this
+//                   variant: the command keeps the form in `.data`, clears
+//                   its in-flight flag and returns a `failed` outcome (see
+//                   "Command outcomes" below) that the screen maps to a
+//                   snackbar such as `txSaveFailedSnackbar`.
 //
 // `canSave` / `canSaveDraft` / `canConvertDraft` are getters on the union
 // (Freezed `const _();` pattern); they return `false` on every variant
@@ -21,6 +23,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../data/models/account.dart';
 import '../../data/models/category.dart';
 import '../../data/models/currency.dart';
+import '../../data/models/transaction.dart';
 import 'keypad_state.dart';
 
 part 'transaction_form_state.freezed.dart';
@@ -94,6 +97,82 @@ class ShoppingListEditResultMissingDraft extends ShoppingListEditResult {
 /// A new draft was added to the shopping list from AddTransactionMode.
 class ShoppingListEditResultAddedToList extends ShoppingListEditResult {
   const ShoppingListEditResultAddedToList();
+}
+
+// ---------------------------------------------------------------------------
+// Command outcomes
+// ---------------------------------------------------------------------------
+
+/// Result of [TransactionFormController.save].
+@freezed
+sealed class SaveTransactionOutcome with _$SaveTransactionOutcome {
+  /// Persisted. The screen pops with [transaction]; Home pins its day.
+  const factory SaveTransactionOutcome.saved(Transaction transaction) =
+      SaveTransactionSaved;
+
+  /// Nothing was saved because the form is not ready (`!canSave`). The
+  /// screen shows the inline validation hints.
+  const factory SaveTransactionOutcome.invalid() = SaveTransactionInvalid;
+
+  /// The repository write failed. The screen shows `txSaveFailedSnackbar`
+  /// and stays open.
+  const factory SaveTransactionOutcome.failed() = SaveTransactionFailed;
+}
+
+/// Result of [TransactionFormController.deleteExisting].
+@freezed
+sealed class DeleteTransactionOutcome with _$DeleteTransactionOutcome {
+  /// Removed. The screen pops.
+  const factory DeleteTransactionOutcome.deleted() = DeleteTransactionDeleted;
+
+  /// The row was already gone. The screen shows `txTransactionNotFound`
+  /// and pops.
+  const factory DeleteTransactionOutcome.notFound() = DeleteTransactionNotFound;
+
+  /// Not in Edit mode, or a save/delete is in flight. The screen does
+  /// nothing.
+  const factory DeleteTransactionOutcome.ignored() = DeleteTransactionIgnored;
+
+  /// The repository delete failed. The screen shows
+  /// `txDeleteFailedSnackbar` and stays open.
+  const factory DeleteTransactionOutcome.failed() = DeleteTransactionFailed;
+}
+
+/// Result of [TransactionFormController.saveDraft] and
+/// [TransactionFormController.convertDraft]. Shared because the screen
+/// handles both with one helper; each call site picks its own failure
+/// message.
+@freezed
+sealed class DraftSubmissionOutcome with _$DraftSubmissionOutcome {
+  /// Done. The screen closes the form, popping with [result] in
+  /// [EditShoppingListDraftMode].
+  const factory DraftSubmissionOutcome.ok(ShoppingListEditResult result) =
+      DraftSubmissionOk;
+
+  /// The form is not ready or a submission is already in flight. The
+  /// screen does nothing.
+  const factory DraftSubmissionOutcome.ignored() = DraftSubmissionIgnored;
+
+  /// The repository call failed. The screen shows the call site's failure
+  /// snackbar and stays open.
+  const factory DraftSubmissionOutcome.failed() = DraftSubmissionFailed;
+}
+
+/// Result of [TransactionFormController.resolveCategoryChipTap]: what
+/// tapping the category chip opens.
+@freezed
+sealed class CategoryChipTapOutcome with _$CategoryChipTapOutcome {
+  /// At least one expense or income category exists. The screen opens the
+  /// category picker.
+  const factory CategoryChipTapOutcome.openPicker() = CategoryChipTapOpenPicker;
+
+  /// No active category of either type exists. The screen routes to
+  /// `/settings/categories` so the user can create one.
+  const factory CategoryChipTapOutcome.manageCategories() =
+      CategoryChipTapManageCategories;
+
+  /// The category read failed. The screen shows `errorSnackbarGeneric`.
+  const factory CategoryChipTapOutcome.failed() = CategoryChipTapFailed;
 }
 
 // ---------------------------------------------------------------------------
