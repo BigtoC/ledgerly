@@ -15,7 +15,9 @@
 // localized snackbars; every other failure, including a failed reorder
 // or Undo, shows `errorSnackbarGeneric`. The Undo action reads the
 // controller through the `ProviderContainer`, because it can run after
-// this screen is gone.
+// this screen is gone. Every snackbar clears the current one first: an
+// Undo snackbar has an action, so it stays until dismissed, and anything
+// shown after it would wait behind it.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -153,9 +155,9 @@ class _Section extends ConsumerWidget {
       case ReorderCategoriesOk():
         break;
       case ReorderCategoriesFailed():
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.errorSnackbarGeneric)),
-        );
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
     }
   }
 
@@ -173,35 +175,41 @@ class _Section extends ConsumerWidget {
         .archiveCategory(cat.id);
     switch (outcome) {
       case ArchiveCategoryOk():
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(l10n.categoriesArchiveUndoSnackbar),
-            action: SnackBarAction(
-              label: l10n.commonUndo,
-              onPressed: () async {
-                final undone = await container
-                    .read(categoriesControllerProvider.notifier)
-                    .undoArchive(cat.id);
-                switch (undone) {
-                  case UndoArchiveCategoryOk():
-                    break;
-                  case UndoArchiveCategoryFailed():
-                    messenger.showSnackBar(
-                      SnackBar(content: Text(l10n.errorSnackbarGeneric)),
-                    );
-                }
-              },
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(l10n.categoriesArchiveUndoSnackbar),
+              action: SnackBarAction(
+                label: l10n.commonUndo,
+                onPressed: () async {
+                  final undone = await container
+                      .read(categoriesControllerProvider.notifier)
+                      .undoArchive(cat.id);
+                  switch (undone) {
+                    case UndoArchiveCategoryOk():
+                      break;
+                    case UndoArchiveCategoryFailed():
+                      messenger
+                        ..clearSnackBars()
+                        ..showSnackBar(
+                          SnackBar(content: Text(l10n.errorSnackbarGeneric)),
+                        );
+                  }
+                },
+              ),
             ),
-          ),
-        );
+          );
       case ArchiveCategoryHasActiveRecurringRule():
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.categoriesArchiveRecurringRuleError)),
-        );
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(content: Text(l10n.categoriesArchiveRecurringRuleError)),
+          );
       case ArchiveCategoryFailed():
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.errorSnackbarGeneric)),
-        );
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
     }
   }
 
@@ -238,13 +246,15 @@ class _Section extends ConsumerWidget {
       case DeleteCategoryOk():
         break;
       case DeleteCategoryInUse():
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.categoriesDeleteInUseError)),
-        );
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(content: Text(l10n.categoriesDeleteInUseError)),
+          );
       case DeleteCategoryFailed():
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.errorSnackbarGeneric)),
-        );
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
     }
   }
 }

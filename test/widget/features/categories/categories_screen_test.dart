@@ -10,7 +10,8 @@
 //   - Archive action surfaces the undo snackbar.
 //   - Blocked delete / archive show localized messages; other failed
 //     saves, deletes, archives, undos and reorders show the generic one,
-//     never the repository's English developer strings.
+//     never the repository's English developer strings, even while an
+//     Undo snackbar is still up.
 //   - Undo still restores the category after the screen is gone, and a
 //     save that fails after its sheet closed raises no error.
 //   - A failed rename skips the icon/color write.
@@ -649,6 +650,49 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets(
+    'S16b: a failed reorder shows its message while an Undo snackbar is up',
+    (tester) async {
+      final repo = _MockCategoryRepository();
+      final alpha = _c(id: 1, type: CategoryType.expense, customName: 'Alpha');
+      final beta = _c(id: 2, type: CategoryType.expense, customName: 'Beta');
+      when(() => repo.archive(1))
+          .thenAnswer((_) async => alpha.copyWith(isArchived: true));
+      when(() => repo.reorder([2, 1])).thenThrow(Exception('injected'));
+      final container = ProviderContainer(
+        overrides: [
+          categoryRepositoryProvider.overrideWithValue(repo),
+          categoriesControllerProvider.overrideWith(
+            () => _FakeCategoriesController(
+              CategoriesState.data(
+                expense: [_row(alpha), _row(beta)],
+                income: const [],
+              ),
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('categoryTile:1:archive')));
+      await tester.pumpAndSettle();
+      // A SnackBar with an action stays until dismissed.
+      expect(find.text('Category archived'), findsOneWidget);
+
+      tester
+          .widget<SliverReorderableList>(find.byType(SliverReorderableList))
+          .onReorderItem!(1, 0);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Something went wrong. Please try again.'),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets('S17: a failed rename skips the icon and color update', (
     tester,
