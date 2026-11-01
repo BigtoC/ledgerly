@@ -152,9 +152,11 @@ class _AccountTileWithLookups extends ConsumerWidget {
     if (!context.mounted) return;
     switch (outcome) {
       case SetDefaultAccountOk():
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.manageAccountsSetDefaultSuccess(name))),
-        );
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(content: Text(l10n.manageAccountsSetDefaultSuccess(name))),
+          );
       case SetDefaultAccountFailed():
         messenger
           ..clearSnackBars()
@@ -175,16 +177,18 @@ class _AccountTileWithLookups extends ConsumerWidget {
         .archive(id);
     switch (outcome) {
       case ArchiveAccountOk():
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(l10n.accountsArchiveUndoSnackbar),
-            action: SnackBarAction(
-              label: l10n.commonUndo,
-              onPressed: () =>
-                  unawaited(_undoArchive(container, messenger, l10n, id)),
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(l10n.accountsArchiveUndoSnackbar),
+              action: SnackBarAction(
+                label: l10n.commonUndo,
+                onPressed: () =>
+                    unawaited(_undoArchive(container, messenger, l10n, id)),
+              ),
             ),
-          ),
-        );
+          );
       case ArchiveAccountIsDefault():
         if (!context.mounted) return;
         await _showDefaultBlockedDialog(context, l10n);

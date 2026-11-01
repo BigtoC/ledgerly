@@ -15,6 +15,7 @@
 //   MAB09 - archive blocked by an active recurring rule shows its message
 //   MAB10 - delete blocked because the account is in use shows its message
 //   MAB11 - a failed Undo shows the generic error snackbar
+//   MAB12 - a later snackbar shows while an Undo snackbar is up
 
 import 'dart:async';
 
@@ -672,5 +673,40 @@ void main() {
       find.text('Something went wrong. Please try again.'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('MAB12: a later snackbar shows while an Undo snackbar is up', (
+    tester,
+  ) async {
+    final accountRepo = _MockAccountRepository();
+    final typeRepo = _MockAccountTypeRepository();
+    final prefs = _MockUserPreferencesRepository();
+    when(() => typeRepo.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([cashType]));
+    when(() => accountRepo.archive(2)).thenAnswer((_) async {});
+    when(() => prefs.setDefaultAccountId(2)).thenAnswer((_) async {});
+
+    final data = twoActive();
+    final container = _makeContainer(
+      accountRepo: accountRepo,
+      typeRepo: typeRepo,
+      prefs: prefs,
+      fixed: data,
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container: container, data: data));
+    await tester.pumpAndSettle();
+    await archiveSpareViaMenu(tester);
+    // A SnackBar with an action stays until dismissed.
+    expect(find.text('Account archived'), findsOneWidget);
+
+    // The fixed state still lists Spare as active, so its menu is there.
+    await tester.tap(find.byKey(const ValueKey('accountTile:2:menu')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Set as default').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Spare is now the default account.'), findsOneWidget);
   });
 }
