@@ -11,19 +11,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../domain/models/account.dart';
-import '../../domain/models/category.dart';
-import '../../l10n/app_localizations.dart';
-import '../categories/categories_controller.dart';
-import '../categories/widgets/category_picker.dart';
-import '../transactions/widgets/account_picker_sheet.dart';
-import '../transactions/widgets/account_selector_tile.dart';
-import '../transactions/widgets/amount_display.dart';
-import '../transactions/widgets/calculator_keypad.dart';
-import '../transactions/widgets/category_chip.dart';
-import 'recurring_rule_form_controller.dart';
-import 'recurring_rule_form_state.dart';
-import 'recurring_rules_providers.dart';
+import '../../../../domain/models/account.dart';
+import '../../../../domain/models/category.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../../features/categories/categories_controller.dart';
+import '../../../../features/categories/widgets/category_picker.dart';
+import '../../../../features/transactions/widgets/account_picker_sheet.dart';
+import '../../../../features/transactions/widgets/account_selector_tile.dart';
+import '../../../../features/transactions/widgets/amount_display.dart';
+import '../../../../features/transactions/widgets/calculator_keypad.dart';
+import '../../../../features/transactions/widgets/category_chip.dart';
+import '../view_models/recurring_rule_form_controller.dart';
+import '../view_models/recurring_rule_form_state.dart';
+import '../view_models/recurring_rules_providers.dart';
 
 @Dependencies([RecurringRuleFormController, categoriesByType])
 class RecurringRuleFormScreen extends ConsumerStatefulWidget {

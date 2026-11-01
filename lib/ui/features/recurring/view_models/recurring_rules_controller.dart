@@ -19,10 +19,10 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../app/providers/repository_providers.dart';
-import '../../core/constants.dart';
-import '../../domain/models/recurring_rule.dart';
-import '../../data/repositories/recurring_rules_repository.dart';
+import '../../../../app/providers/repository_providers.dart';
+import '../../../../core/constants.dart';
+import '../../../../domain/models/recurring_rule.dart';
+import '../../../../data/repositories/recurring_rules_repository.dart';
 import 'recurring_rules_state.dart';
 
 part 'recurring_rules_controller.g.dart';

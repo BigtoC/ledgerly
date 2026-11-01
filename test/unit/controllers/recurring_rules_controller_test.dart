@@ -19,8 +19,8 @@ import 'package:ledgerly/core/constants.dart';
 import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/domain/models/recurring_rule.dart';
 import 'package:ledgerly/data/repositories/recurring_rules_repository.dart';
-import 'package:ledgerly/features/recurring/recurring_rules_controller.dart';
-import 'package:ledgerly/features/recurring/recurring_rules_state.dart';
+import 'package:ledgerly/ui/features/recurring/view_models/recurring_rules_controller.dart';
+import 'package:ledgerly/ui/features/recurring/view_models/recurring_rules_state.dart';
 
 class _MockRecurringRulesRepository extends Mock
     implements RecurringRulesRepository {}

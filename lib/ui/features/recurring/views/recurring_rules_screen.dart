@@ -11,11 +11,11 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../core/constants.dart';
-import '../../domain/models/recurring_rule.dart';
-import '../../l10n/app_localizations.dart';
-import 'recurring_rules_controller.dart';
-import 'recurring_rules_state.dart';
+import '../../../../core/constants.dart';
+import '../../../../domain/models/recurring_rule.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../view_models/recurring_rules_controller.dart';
+import '../view_models/recurring_rules_state.dart';
 
 @Dependencies([RecurringRulesController])
 class RecurringRulesScreen extends ConsumerStatefulWidget {

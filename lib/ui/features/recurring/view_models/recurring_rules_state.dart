@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../domain/models/recurring_rule.dart';
+import '../../../../domain/models/recurring_rule.dart';
 
 part 'recurring_rules_state.freezed.dart';
 

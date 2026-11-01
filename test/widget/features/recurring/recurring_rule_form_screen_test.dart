@@ -21,9 +21,9 @@ import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/features/categories/categories_controller.dart';
-import 'package:ledgerly/features/recurring/recurring_rule_form_controller.dart';
-import 'package:ledgerly/features/recurring/recurring_rule_form_screen.dart';
-import 'package:ledgerly/features/recurring/recurring_rule_form_state.dart';
+import 'package:ledgerly/ui/features/recurring/view_models/recurring_rule_form_controller.dart';
+import 'package:ledgerly/ui/features/recurring/views/recurring_rule_form_screen.dart';
+import 'package:ledgerly/ui/features/recurring/view_models/recurring_rule_form_state.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockAccountRepository extends Mock implements AccountRepository {}
