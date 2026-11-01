@@ -29,10 +29,10 @@ import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
-import 'package:ledgerly/features/home/home_controller.dart';
-import 'package:ledgerly/features/home/home_screen.dart';
-import 'package:ledgerly/features/home/pending_controller.dart';
-import 'package:ledgerly/features/home/widgets/transaction_tile.dart';
+import 'package:ledgerly/ui/features/home/view_models/home_controller.dart';
+import 'package:ledgerly/ui/features/home/views/home_screen.dart';
+import 'package:ledgerly/ui/features/home/view_models/pending_controller.dart';
+import 'package:ledgerly/ui/features/home/views/transaction_tile.dart';
 import 'package:ledgerly/ui/features/shopping_list/view_models/shopping_list_providers.dart';
 
 import '../support/test_app.dart';

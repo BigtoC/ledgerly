@@ -12,7 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ledgerly/app/providers/exchange_rates_provider.dart';
 import 'package:ledgerly/domain/models/currency.dart';
-import 'package:ledgerly/features/home/widgets/summary_strip.dart';
+import 'package:ledgerly/ui/features/home/views/summary_strip.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 void main() {

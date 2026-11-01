@@ -18,17 +18,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../../app/providers/exchange_rates_provider.dart';
-import '../../../core/utils/color_palette.dart';
-import '../../../core/utils/currency_converter.dart';
-import '../../../core/utils/icon_registry.dart';
-import '../../../core/utils/money_formatter.dart';
-import '../../../domain/models/category.dart';
-import '../../../domain/models/currency.dart';
-import '../../../domain/models/transaction.dart';
-import '../../../l10n/app_localizations.dart';
-import '../../categories/widgets/category_display.dart';
-import '../home_providers.dart';
+import '../../../../app/providers/exchange_rates_provider.dart';
+import '../../../../core/utils/color_palette.dart';
+import '../../../../core/utils/currency_converter.dart';
+import '../../../../core/utils/icon_registry.dart';
+import '../../../../core/utils/money_formatter.dart';
+import '../../../../domain/models/category.dart';
+import '../../../../domain/models/currency.dart';
+import '../../../../domain/models/transaction.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../../features/categories/widgets/category_display.dart';
+import '../view_models/home_providers.dart';
 
 @Dependencies([exchangeRates])
 class TransactionTile extends ConsumerWidget {

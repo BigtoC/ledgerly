@@ -36,10 +36,10 @@ import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/pending_transaction_repository.dart';
 import 'package:ledgerly/data/repositories/shopping_list_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
-import 'package:ledgerly/features/home/home_screen.dart';
-import 'package:ledgerly/features/home/widgets/day_navigation_header.dart';
-import 'package:ledgerly/features/home/widgets/summary_strip.dart';
-import 'package:ledgerly/features/home/widgets/transaction_tile.dart';
+import 'package:ledgerly/ui/features/home/views/home_screen.dart';
+import 'package:ledgerly/ui/features/home/views/day_navigation_header.dart';
+import 'package:ledgerly/ui/features/home/views/summary_strip.dart';
+import 'package:ledgerly/ui/features/home/views/transaction_tile.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockTxRepo extends Mock implements TransactionRepository {}

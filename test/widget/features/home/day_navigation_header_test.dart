@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ledgerly/core/utils/date_helpers.dart';
-import 'package:ledgerly/features/home/widgets/day_navigation_header.dart';
+import 'package:ledgerly/ui/features/home/views/day_navigation_header.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 Widget _wrap(Widget child) => MaterialApp(

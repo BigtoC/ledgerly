@@ -16,20 +16,20 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../../core/constants.dart';
-import '../../../core/utils/color_palette.dart';
-import '../../../core/utils/icon_registry.dart';
-import '../../../core/utils/money_formatter.dart';
-import '../../../domain/models/account.dart';
-import '../../../domain/models/category.dart';
-import '../../../domain/models/pending_transaction.dart';
-import '../../../l10n/app_localizations.dart';
-import '../../categories/widgets/category_display.dart';
-import '../home_controller.dart';
-import '../home_providers.dart';
-import '../home_state.dart';
-import '../pending_controller.dart';
-import '../pending_state.dart';
+import '../../../../core/constants.dart';
+import '../../../../core/utils/color_palette.dart';
+import '../../../../core/utils/icon_registry.dart';
+import '../../../../core/utils/money_formatter.dart';
+import '../../../../domain/models/account.dart';
+import '../../../../domain/models/category.dart';
+import '../../../../domain/models/pending_transaction.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../../features/categories/widgets/category_display.dart';
+import '../view_models/home_controller.dart';
+import '../view_models/home_providers.dart';
+import '../view_models/home_state.dart';
+import '../view_models/pending_controller.dart';
+import '../view_models/pending_state.dart';
 import 'pending_badge.dart';
 
 /// Maximum number of pending tiles to render before collapsing the rest

@@ -25,24 +25,24 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../app/providers/default_currency_provider.dart';
-import '../../app/providers/exchange_rates_provider.dart';
-import '../../core/utils/box_shadow.dart';
-import '../../ui/features/shopping_list/view_models/shopping_list_providers.dart';
-import '../../core/utils/date_helpers.dart';
-import '../../domain/models/category.dart';
-import '../../domain/models/transaction.dart';
-import '../../l10n/app_localizations.dart';
-import '../../core/constants.dart';
-import 'home_controller.dart';
-import 'home_providers.dart';
-import 'home_state.dart';
-import 'pending_controller.dart';
-import 'pending_state.dart';
-import 'widgets/day_navigation_header.dart';
-import 'widgets/pending_section.dart';
-import 'widgets/summary_strip.dart';
-import 'widgets/transaction_tile.dart';
+import '../../../../app/providers/default_currency_provider.dart';
+import '../../../../app/providers/exchange_rates_provider.dart';
+import '../../../../core/utils/box_shadow.dart';
+import '../../shopping_list/view_models/shopping_list_providers.dart';
+import '../../../../core/utils/date_helpers.dart';
+import '../../../../domain/models/category.dart';
+import '../../../../domain/models/transaction.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../../core/constants.dart';
+import '../view_models/home_controller.dart';
+import '../view_models/home_providers.dart';
+import '../view_models/home_state.dart';
+import '../view_models/pending_controller.dart';
+import '../view_models/pending_state.dart';
+import 'day_navigation_header.dart';
+import 'pending_section.dart';
+import 'summary_strip.dart';
+import 'transaction_tile.dart';
 
 @Dependencies([
   HomeController,

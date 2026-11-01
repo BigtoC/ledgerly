@@ -28,8 +28,8 @@ import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/shopping_list_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
-import 'package:ledgerly/features/home/home_screen.dart';
-import 'package:ledgerly/features/home/pending_controller.dart';
+import 'package:ledgerly/ui/features/home/views/home_screen.dart';
+import 'package:ledgerly/ui/features/home/view_models/pending_controller.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 // ── Mocks ─────────────────────────────────────────────────────────────────

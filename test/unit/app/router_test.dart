@@ -26,9 +26,9 @@ import 'package:ledgerly/features/analysis/charts/charts_selection_controller.da
 import 'package:ledgerly/features/analysis/charts/slice_drilldown_controller.dart';
 import 'package:ledgerly/features/analysis/search/analysis_controller.dart';
 import 'package:ledgerly/features/analysis/search/analysis_providers.dart';
-import 'package:ledgerly/features/home/home_controller.dart';
-import 'package:ledgerly/features/home/home_screen.dart';
-import 'package:ledgerly/features/home/pending_controller.dart';
+import 'package:ledgerly/ui/features/home/view_models/home_controller.dart';
+import 'package:ledgerly/ui/features/home/views/home_screen.dart';
+import 'package:ledgerly/ui/features/home/view_models/pending_controller.dart';
 import 'package:ledgerly/ui/features/shopping_list/view_models/shopping_list_controller.dart';
 import 'package:ledgerly/ui/features/shopping_list/view_models/shopping_list_providers.dart';
 import 'package:ledgerly/ui/features/shopping_list/views/shopping_list_screen.dart';

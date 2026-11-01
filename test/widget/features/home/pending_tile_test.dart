@@ -20,10 +20,10 @@ import 'package:ledgerly/domain/models/transaction.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/pending_transaction_repository.dart';
-import 'package:ledgerly/features/home/home_controller.dart';
-import 'package:ledgerly/features/home/pending_controller.dart';
-import 'package:ledgerly/features/home/pending_state.dart';
-import 'package:ledgerly/features/home/widgets/pending_section.dart';
+import 'package:ledgerly/ui/features/home/view_models/home_controller.dart';
+import 'package:ledgerly/ui/features/home/view_models/pending_controller.dart';
+import 'package:ledgerly/ui/features/home/view_models/pending_state.dart';
+import 'package:ledgerly/ui/features/home/views/pending_section.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockPendingRepo extends Mock implements PendingTransactionRepository {}

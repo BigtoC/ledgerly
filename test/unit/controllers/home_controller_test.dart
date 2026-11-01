@@ -20,8 +20,8 @@ import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/domain/models/transaction.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
-import 'package:ledgerly/features/home/home_controller.dart';
-import 'package:ledgerly/features/home/home_state.dart';
+import 'package:ledgerly/ui/features/home/view_models/home_controller.dart';
+import 'package:ledgerly/ui/features/home/view_models/home_state.dart';
 
 class _MockTransactionRepository extends Mock
     implements TransactionRepository {}
