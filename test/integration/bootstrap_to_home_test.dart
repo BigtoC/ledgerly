@@ -25,8 +25,8 @@ import 'package:ledgerly/features/home/home_controller.dart';
 import 'package:ledgerly/features/home/home_screen.dart';
 import 'package:ledgerly/features/home/pending_controller.dart';
 import 'package:ledgerly/features/shopping_list/shopping_list_providers.dart';
-import 'package:ledgerly/features/splash/splash_controller.dart';
-import 'package:ledgerly/features/splash/splash_screen.dart';
+import 'package:ledgerly/ui/features/splash/view_models/splash_controller.dart';
+import 'package:ledgerly/ui/features/splash/views/splash_screen.dart';
 
 import '../support/test_app.dart';
 

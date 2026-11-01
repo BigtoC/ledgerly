@@ -7,7 +7,7 @@
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../core/utils/date_helpers.dart';
+import '../../../../core/utils/date_helpers.dart';
 
 part 'splash_state.freezed.dart';
 

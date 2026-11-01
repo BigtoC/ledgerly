@@ -20,11 +20,11 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../app/providers/locale_provider.dart';
-import '../../app/providers/repository_providers.dart';
-import '../../app/providers/splash_redirect_provider.dart';
-import '../../core/utils/date_helpers.dart';
-import '../../data/repositories/user_preferences_repository.dart';
+import '../../../../app/providers/locale_provider.dart';
+import '../../../../app/providers/repository_providers.dart';
+import '../../../../app/providers/splash_redirect_provider.dart';
+import '../../../../core/utils/date_helpers.dart';
+import '../../../../data/repositories/user_preferences_repository.dart';
 import 'splash_state.dart';
 
 part 'splash_controller.g.dart';

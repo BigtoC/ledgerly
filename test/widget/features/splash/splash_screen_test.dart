@@ -16,12 +16,12 @@ import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
 import 'package:ledgerly/core/utils/date_helpers.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
-import 'package:ledgerly/features/splash/splash_controller.dart';
-import 'package:ledgerly/features/splash/splash_screen.dart';
-import 'package:ledgerly/features/splash/splash_state.dart';
-import 'package:ledgerly/features/splash/widgets/splash_day_count.dart';
-import 'package:ledgerly/features/splash/widgets/splash_enter_button.dart';
-import 'package:ledgerly/features/splash/widgets/splash_rainbow_gradient_text.dart';
+import 'package:ledgerly/ui/features/splash/view_models/splash_controller.dart';
+import 'package:ledgerly/ui/features/splash/views/splash_screen.dart';
+import 'package:ledgerly/ui/features/splash/view_models/splash_state.dart';
+import 'package:ledgerly/ui/features/splash/views/splash_day_count.dart';
+import 'package:ledgerly/ui/features/splash/views/splash_enter_button.dart';
+import 'package:ledgerly/ui/features/splash/views/splash_rainbow_gradient_text.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockUserPreferencesRepository extends Mock

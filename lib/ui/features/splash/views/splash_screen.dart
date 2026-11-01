@@ -20,15 +20,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../app/providers/splash_redirect_provider.dart';
-import '../../core/utils/date_helpers.dart';
-import '../../l10n/app_localizations.dart';
-import 'splash_controller.dart';
-import 'splash_state.dart';
-import 'widgets/splash_day_count.dart';
-import 'widgets/splash_enter_button.dart';
-import 'widgets/splash_rainbow_gradient_text.dart';
-import 'widgets/splash_sun_background.dart';
+import '../../../../app/providers/splash_redirect_provider.dart';
+import '../../../../core/utils/date_helpers.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../view_models/splash_controller.dart';
+import '../view_models/splash_state.dart';
+import 'splash_day_count.dart';
+import 'splash_enter_button.dart';
+import 'splash_rainbow_gradient_text.dart';
+import 'splash_sun_background.dart';
 
 @Dependencies([
   splashGateSnapshot,

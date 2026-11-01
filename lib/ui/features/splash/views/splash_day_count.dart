@@ -7,7 +7,7 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../l10n/app_localizations.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class SplashDayCount extends StatelessWidget {
   const SplashDayCount({required this.count, super.key});
