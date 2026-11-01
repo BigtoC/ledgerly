@@ -165,9 +165,19 @@ onPressed: () async {
   );
   if (picked == null) return;
   if (!context.mounted) return;
-  await ref
+  final messenger = ScaffoldMessenger.of(context);
+  final l10n = AppLocalizations.of(context);
+  final outcome = await ref
       .read(splashControllerProvider.notifier)
       .setStartDate(picked);
+  switch (outcome) {
+    case SetSplashStartDateOk():
+      break;
+    case SetSplashStartDateFailed():
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.errorSnackbarGeneric)),
+      );
+  }
 },
 ```
 
