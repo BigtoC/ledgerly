@@ -1041,14 +1041,14 @@ App open → WalletsController.sync() → auto-fetch transfers for all configure
 
 ## Adaptive Layouts
 
-Ledgerly is phone-first but must not break on larger form factors. A single breakpoint at **600dp** switches between compact and expanded layouts using `LayoutBuilder` at the shell level.
+Ledgerly is phone-first but must not break on larger form factors. A single breakpoint at **600dp** (`>= 600` is wide) switches between compact and expanded layouts. The shell and form routes read `LayoutBuilder` constraints; modal pickers and sheets read `MediaQuery.sizeOf`. [`docs/architecture/ui-and-layout.md`](docs/architecture/ui-and-layout.md#adaptive-breakpoint) lists every switch.
 
 | Region               | <600dp (phone)        | ≥600dp (tablet/foldable)                       |
 |----------------------|-----------------------|------------------------------------------------|
-| Primary navigation   | `BottomNavigationBar` | `NavigationRail` (left)                        |
-| Home                 | Single-pane list      | Two-pane: list left, selected-day detail right |
+| Primary navigation   | `NavigationBar`       | `NavigationRail` (left)                        |
+| Home                 | Single-pane list      | **[Pending]** Two-pane: list left, selected-day detail right. Not built; Home is single-pane at every width |
 | Add/Edit Transaction | Full-screen modal     | Constrained dialog (max 560dp wide)            |
-| Category picker      | Modal bottom sheet    | Side sheet                                     |
+| Category picker      | Modal bottom sheet    | Constrained dialog (max 560dp wide)            |
 
 Orientation policy:
 - Phone: portrait-primary; landscape allowed but not optimized (calculator keypad reflows)
