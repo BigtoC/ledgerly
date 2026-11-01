@@ -299,7 +299,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountFormCurrencyLockedError =>
-      'This account\'s currency can\'t change after transactions use it.';
+      'This account\'s currency can\'t change because transactions or an active recurring transaction use it.';
 
   @override
   String get accountsTypePickerTitle => 'Pick account type';

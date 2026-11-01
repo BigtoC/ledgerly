@@ -661,7 +661,7 @@ abstract class AppLocalizations {
   /// Accounts plan §5. Inline error in the account form when the repository rejects a currency change on an account that transactions or active recurring rules already use.
   ///
   /// In en, this message translates to:
-  /// **'This account\'s currency can\'t change after transactions use it.'**
+  /// **'This account\'s currency can\'t change because transactions or an active recurring transaction use it.'**
   String get accountFormCurrencyLockedError;
 
   /// Accounts plan §5. Title for the account-type picker sheet.

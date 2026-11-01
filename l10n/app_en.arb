@@ -389,7 +389,7 @@
   "@accountsFormNotFound": {
     "description": "Accounts plan §5. Recoverable not-found state shown when /settings/manage-accounts/:id targets a row that has been deleted."
   },
-  "accountFormCurrencyLockedError": "This account's currency can't change after transactions use it.",
+  "accountFormCurrencyLockedError": "This account's currency can't change because transactions or an active recurring transaction use it.",
   "@accountFormCurrencyLockedError": {
     "description": "Accounts plan §5. Inline error in the account form when the repository rejects a currency change on an account that transactions or active recurring rules already use."
   },

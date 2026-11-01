@@ -107,7 +107,7 @@
   "accountsFormPickType": "選擇帳戶類型",
   "accountsFormPickCurrency": "選擇幣別",
   "accountsFormNotFound": "此帳戶已不存在。",
-  "accountFormCurrencyLockedError": "此帳戶已有交易使用，無法變更幣別。",
+  "accountFormCurrencyLockedError": "此帳戶已有交易或啟用中的週期性交易使用，無法變更幣別。",
   "accountsTypePickerTitle": "選擇帳戶類型",
   "accountsTypeCreateInlineCta": "建立新的帳戶類型",
   "accountsTypeFormTitle": "新帳戶類型",

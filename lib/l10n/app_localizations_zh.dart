@@ -299,7 +299,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get accountFormCurrencyLockedError =>
-      'This account\'s currency can\'t change after transactions use it.';
+      'This account\'s currency can\'t change because transactions or an active recurring transaction use it.';
 
   @override
   String get accountsTypePickerTitle => 'Pick account type';
@@ -1479,7 +1479,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get accountsFormNotFound => '此账户已不存在。';
 
   @override
-  String get accountFormCurrencyLockedError => '此账户已有交易使用，无法更改币种。';
+  String get accountFormCurrencyLockedError => '此账户已有交易或启用中的周期性交易使用，无法更改币种。';
 
   @override
   String get accountsTypePickerTitle => '选择账户类型';
@@ -2615,7 +2615,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get accountsFormNotFound => '此帳戶已不存在。';
 
   @override
-  String get accountFormCurrencyLockedError => '此帳戶已有交易使用，無法變更幣別。';
+  String get accountFormCurrencyLockedError => '此帳戶已有交易或啟用中的週期性交易使用，無法變更幣別。';
 
   @override
   String get accountsTypePickerTitle => '選擇帳戶類型';

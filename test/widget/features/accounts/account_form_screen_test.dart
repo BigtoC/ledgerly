@@ -703,7 +703,8 @@ void main() {
 
       expect(
         find.text(
-          "This account's currency can't change after transactions use it.",
+          "This account's currency can't change because transactions or an "
+          'active recurring transaction use it.',
         ),
         findsOneWidget,
       );
