@@ -111,52 +111,25 @@ class ChartsSummaryCard extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                MergeSemantics(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          switch (period) {
-                            PeriodType.day => l10n.chartsNetToday,
-                            PeriodType.week => l10n.chartsNetThisWeek,
-                            PeriodType.month => l10n.chartsNetThisMonth,
-                            PeriodType.year => l10n.chartsNetThisYear,
-                          },
-                          style: analysisText(
-                            size: 14,
-                            lineHeight: 20,
-                            color: colors.fg2,
-                          ),
+                _NetRow(
+                  label: switch (period) {
+                    PeriodType.day => l10n.chartsNetToday,
+                    PeriodType.week => l10n.chartsNetThisWeek,
+                    PeriodType.month => l10n.chartsNetThisMonth,
+                    PeriodType.year => l10n.chartsNetThisYear,
+                  },
+                  amount: totals == null || net == null
+                      ? _dash
+                      : MoneyFormatter.formatSigned(
+                          amountMinorUnits: net,
+                          currency: totals.currency,
+                          locale: locale,
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        totals == null || net == null
-                            ? _dash
-                            : MoneyFormatter.formatSigned(
-                                amountMinorUnits: net,
-                                currency: totals.currency,
-                                locale: locale,
-                              ),
-                        maxLines: 1,
-                        softWrap: false,
-                        style: analysisText(
-                          size: 16,
-                          lineHeight: 24,
-                          weight: FontWeight.w500,
-                          tabular: true,
-                          color: switch (net) {
-                            final n? when n > 0 => colors.incText,
-                            final n? when n < 0 => colors.expText,
-                            _ => colors.fg,
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
+                  amountColor: switch (net) {
+                    final n? when n > 0 => colors.incText,
+                    final n? when n < 0 => colors.expText,
+                    _ => colors.fg,
+                  },
                 ),
                 if (excluded.isNotEmpty)
                   Text(
@@ -167,6 +140,79 @@ class ChartsSummaryCard extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// The period's net: the label on the left, the signed amount on the
+/// right, 12 apart. As in the design's flex row, the label may wrap down to
+/// its longest word; past that the amount scales down (D2), never cut off.
+class _NetRow extends StatelessWidget {
+  const _NetRow({
+    required this.label,
+    required this.amount,
+    required this.amountColor,
+  });
+
+  final String label;
+  final String amount;
+  final Color amountColor;
+
+  static const _gap = 12.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AnalysisColors.of(context);
+    final labelStyle = analysisText(
+      size: 14,
+      lineHeight: 20,
+      color: colors.fg2,
+    );
+    return MergeSemantics(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final painter = TextPainter(
+            text: TextSpan(
+              text: label,
+              style: DefaultTextStyle.of(context).style.merge(labelStyle),
+            ),
+            textDirection: Directionality.of(context),
+            textScaler: MediaQuery.textScalerOf(context),
+          )..layout();
+          final labelMinWidth = painter.minIntrinsicWidth;
+          painter.dispose();
+          final amountMaxWidth = (constraints.maxWidth - _gap - labelMinWidth)
+              .clamp(0.0, double.infinity);
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Flexible(child: Text(label, style: labelStyle)),
+              const SizedBox(width: _gap),
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: amountMaxWidth),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: Text(
+                    amount,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: analysisText(
+                      size: 16,
+                      lineHeight: 24,
+                      weight: FontWeight.w500,
+                      tabular: true,
+                      color: amountColor,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

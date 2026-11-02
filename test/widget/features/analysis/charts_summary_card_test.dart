@@ -41,8 +41,14 @@ ChartsNetTotal _totals({
   excludedCurrencyCodes: excluded,
 );
 
+/// A phone window: 360 dp wide, so the card is 328 inside the page's 16 dp
+/// gutters.
+const _phone = Size(360, 800);
+
 /// Pumps the card at [width] with the provider fixed to [totals]; returns
-/// the container so a test can drive or read the selection.
+/// the container so a test can drive or read the selection. With
+/// [surface], the test window takes that size and the card fills it minus
+/// the 16 dp page gutters.
 @Dependencies([chartsNetTotal, ChartsSelectionController])
 Future<ProviderContainer> _pump(
   WidgetTester tester,
@@ -50,7 +56,14 @@ Future<ProviderContainer> _pump(
   double width = 358,
   double textScale = 1,
   ThemeData? theme,
+  Size? surface,
 }) async {
+  if (surface != null) {
+    tester.view.physicalSize = surface;
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    width = surface.width - 32;
+  }
   final container = ProviderContainer(
     overrides: [chartsNetTotalProvider.overrideWithValue(totals)],
   );
@@ -259,13 +272,13 @@ void main() {
       expect(tester.getTopLeft(find.text('Income')).dx - dot.right, 6);
     });
 
-    testWidgets('long amounts shrink to fit their tile at 2× text scale', (
+    testWidgets('long amounts shrink to fit their tile at 2× on a phone', (
       tester,
     ) async {
       await _pump(
         tester,
         _totals(expense: 123456789012, income: 98765432109, net: 0),
-        width: 358,
+        surface: _phone,
         textScale: 2,
       );
       expect(tester.takeException(), isNull);
@@ -295,18 +308,18 @@ void main() {
       }
     });
 
-    testWidgets('short amounts render at full size at 2× text scale', (
-      tester,
-    ) async {
-      await _pump(tester, _totals(), textScale: 2);
+    testWidgets('amounts that fit render 1:1 at 2× text scale', (tester) async {
+      // Wide enough for the test font's square glyphs to fit unscaled.
+      await _pump(tester, _totals(), width: 760, textScale: 2);
 
       expect(tester.takeException(), isNull);
-      // Line heights double: amount 24, label 18, net label 20, net 24.
-      expect(tester.getSize(find.text(r'$20.00')).height, 48);
+      // Drawn (not just laid out) at the doubled line heights: amount 24,
+      // label 18, net label 20, net 24.
+      expect(tester.getRect(find.text(r'$20.00')).height, 48);
       // Labels may wrap (the test font is wide) but keep whole lines.
       expect(tester.getSize(find.text('Expense')).height % 36, 0);
       expect(tester.getSize(find.text('Net this week')).height % 40, 0);
-      expect(tester.getSize(find.text(r'-$12.50')).height, 48);
+      expect(tester.getRect(find.text(r'-$12.50')).height, 48);
       // Nothing is pushed out of the card.
       final card = tester.getRect(find.byKey(const ValueKey('summaryCard')));
       expect(
@@ -563,6 +576,42 @@ void main() {
       );
       expect(net, findsOneWidget);
       expect(_textColor(tester, net), _c.fg);
+    });
+
+    testWidgets('a long net shrinks beside its label at 2× on a phone', (
+      tester,
+    ) async {
+      const text = r'-$1,234,567,890.12';
+      await _pump(
+        tester,
+        _totals(expense: 123456789012, income: 0, net: -123456789012),
+        surface: _phone,
+        textScale: 2,
+      );
+      expect(tester.takeException(), isNull);
+
+      final card = tester.getRect(find.byKey(const ValueKey('summaryCard')));
+      final amount = tester.getRect(find.text(text));
+      final paragraph = tester.renderObject<RenderParagraph>(find.text(text));
+      // The whole string is laid out, then drawn smaller to fit.
+      expect(
+        paragraph.size.width,
+        moreOrLessEquals(paragraph.getMaxIntrinsicWidth(double.infinity)),
+      );
+      expect(amount.width, lessThan(paragraph.size.width));
+      expect(amount.right, lessThanOrEqualTo(card.right - 13 - 4 + 0.01));
+
+      // The label keeps its place: 12 before the amount, no word broken.
+      final label = tester.renderObject<RenderParagraph>(
+        find.text('Net this week'),
+      );
+      final labelRect = tester.getRect(find.text('Net this week'));
+      expect(labelRect.left, card.left + 13 + 4);
+      expect(labelRect.right + 12, lessThanOrEqualTo(amount.left + 0.01));
+      expect(
+        label.size.width,
+        greaterThanOrEqualTo(label.getMinIntrinsicWidth(double.infinity)),
+      );
     });
 
     testWidgets('shows a dash, not a zero, when no currency had a rate', (
