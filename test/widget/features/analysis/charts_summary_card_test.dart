@@ -3,6 +3,7 @@
 // (spec § 5, acceptance criteria 2 and 3).
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/domain/models/category.dart';
@@ -47,6 +48,7 @@ Future<ProviderContainer> _pump(
   ChartsNetTotal? totals, {
   double width = 358,
   double textScale = 1,
+  ThemeData? theme,
 }) async {
   final container = ProviderContainer(
     overrides: [chartsNetTotalProvider.overrideWithValue(totals)],
@@ -56,7 +58,7 @@ Future<ProviderContainer> _pump(
     UncontrolledProviderScope(
       container: container,
       child: MaterialApp(
-        theme: lightTheme,
+        theme: theme ?? lightTheme,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         builder: (context, child) => MediaQuery(
@@ -187,6 +189,25 @@ void main() {
       expect(_textColor(tester, find.text('Expense')), _c.fg2);
     });
 
+    testWidgets('dark theme uses the dark analysis colours', (tester) async {
+      const dark = AnalysisColors.dark;
+      await _pump(tester, _totals(net: 2005), theme: darkTheme);
+
+      final expense = _decorationOf(tester, _expenseTile);
+      expect(expense.color, dark.expTint);
+      expect(expense.border, Border.all(color: dark.exp, width: 1.5));
+      expect(
+        _decorationOf(tester, _incomeTile).border,
+        Border.all(color: dark.line, width: 1.5),
+      );
+      expect(_textColor(tester, find.text('Expense')), dark.expText);
+      expect(_textColor(tester, find.text(r'+$20.05')), dark.incText);
+      final card = tester.widget<Container>(
+        find.byKey(const ValueKey('summaryCard')),
+      );
+      expect((card.decoration! as BoxDecoration).color, dark.card);
+    });
+
     testWidgets('tiles animate on the standard 200 ms curve', (tester) async {
       await _pump(tester, _totals());
 
@@ -239,6 +260,16 @@ void main() {
       ]) {
         final tileRect = tester.getRect(find.byKey(tile));
         final amountRect = tester.getRect(_inTile(tile, text));
+        // The whole string is laid out (not clipped at the tile edge) and
+        // drawn smaller than its laid-out width, i.e. it was scaled down.
+        final paragraph = tester.renderObject<RenderParagraph>(
+          _inTile(tile, text),
+        );
+        expect(
+          paragraph.size.width,
+          moreOrLessEquals(paragraph.getMaxIntrinsicWidth(double.infinity)),
+        );
+        expect(amountRect.width, lessThan(paragraph.size.width));
         // Inside the 1.5 border and the 14 horizontal padding.
         expect(amountRect.left, greaterThanOrEqualTo(tileRect.left + 15.5));
         expect(
