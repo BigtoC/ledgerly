@@ -28,6 +28,7 @@ final class ChartsControllerProvider
           chartsCurrenciesByCodeProvider,
           analysisCategoriesByIdProvider,
           analysisAccountsByIdProvider,
+          analysisAccountTypesByIdProvider,
           chartsSelectionControllerProvider,
         ],
         $allTransitiveDependencies: <ProviderOrFamily>{
@@ -46,6 +47,8 @@ final class ChartsControllerProvider
           ChartsControllerProvider.$allTransitiveDependencies12,
           ChartsControllerProvider.$allTransitiveDependencies13,
           ChartsControllerProvider.$allTransitiveDependencies14,
+          ChartsControllerProvider.$allTransitiveDependencies15,
+          ChartsControllerProvider.$allTransitiveDependencies16,
         },
       );
 
@@ -71,7 +74,10 @@ final class ChartsControllerProvider
   static final $allTransitiveDependencies12 = analysisAccountsByIdProvider;
   static final $allTransitiveDependencies13 =
       AnalysisAccountsByIdProvider.$allTransitiveDependencies0;
-  static final $allTransitiveDependencies14 = chartsSelectionControllerProvider;
+  static final $allTransitiveDependencies14 = analysisAccountTypesByIdProvider;
+  static final $allTransitiveDependencies15 =
+      AnalysisAccountTypesByIdProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies16 = chartsSelectionControllerProvider;
 
   @override
   String debugGetCreateSourceHash() => _$chartsControllerHash();
@@ -81,7 +87,7 @@ final class ChartsControllerProvider
   ChartsController create() => ChartsController();
 }
 
-String _$chartsControllerHash() => r'700eb48091e00d3367b5ec3dc520a46d05374169';
+String _$chartsControllerHash() => r'ff3833618a4c8ca9a8e33473f25a99750880af7d';
 
 abstract class _$ChartsController extends $StreamNotifier<ChartsState> {
   Stream<ChartsState> build();

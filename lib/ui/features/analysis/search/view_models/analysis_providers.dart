@@ -9,6 +9,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../../app/providers/repository_providers.dart';
 import '../../../../../domain/models/account.dart';
+import '../../../../../domain/models/account_type.dart';
 import '../../../../../domain/models/category.dart';
 
 part 'analysis_providers.g.dart';
@@ -35,4 +36,17 @@ Stream<Map<int, Account>> analysisAccountsById(Ref ref) {
   return repo
       .watchAll(includeArchived: true)
       .map((rows) => {for (final a in rows) a.id: a});
+}
+
+/// `id → AccountType` lookup (active + archived), so account slices can
+/// fall back to their type's icon and colour (`account.icon ??
+/// accountType.icon`, `account.color ?? accountType.color`).
+///
+/// `keepAlive` because the kept-alive `ChartsController` listens to it.
+@Riverpod(keepAlive: true, dependencies: [accountTypeRepository])
+Stream<Map<int, AccountType>> analysisAccountTypesById(Ref ref) {
+  final repo = ref.watch(accountTypeRepositoryProvider);
+  return repo
+      .watchAll(includeArchived: true)
+      .map((rows) => {for (final t in rows) t.id: t});
 }

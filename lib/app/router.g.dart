@@ -111,6 +111,7 @@ final class RouterProvider
           RouterProvider.$allTransitiveDependencies50,
           RouterProvider.$allTransitiveDependencies51,
           RouterProvider.$allTransitiveDependencies52,
+          RouterProvider.$allTransitiveDependencies53,
         },
       );
 
@@ -166,34 +167,36 @@ final class RouterProvider
       ChartsControllerProvider.$allTransitiveDependencies8;
   static final $allTransitiveDependencies33 =
       ChartsControllerProvider.$allTransitiveDependencies12;
-  static final $allTransitiveDependencies34 = sliceDrilldownControllerProvider;
-  static final $allTransitiveDependencies35 = chartsNetTotalProvider;
-  static final $allTransitiveDependencies36 =
+  static final $allTransitiveDependencies34 =
+      ChartsControllerProvider.$allTransitiveDependencies14;
+  static final $allTransitiveDependencies35 =
+      ChartsControllerProvider.$allTransitiveDependencies15;
+  static final $allTransitiveDependencies36 = sliceDrilldownControllerProvider;
+  static final $allTransitiveDependencies37 = chartsNetTotalProvider;
+  static final $allTransitiveDependencies38 =
       ChartsNetTotalProvider.$allTransitiveDependencies0;
-  static final $allTransitiveDependencies37 =
+  static final $allTransitiveDependencies39 =
       categorySearchDetailControllerProvider;
-  static final $allTransitiveDependencies38 = settingsControllerProvider;
-  static final $allTransitiveDependencies39 = accountsControllerProvider;
-  static final $allTransitiveDependencies40 = categoriesControllerProvider;
-  static final $allTransitiveDependencies41 = recurringRulesControllerProvider;
-  static final $allTransitiveDependencies42 =
-      RecurringRulesControllerProvider.$allTransitiveDependencies0;
-  static final $allTransitiveDependencies43 =
-      recurringRuleFormControllerProvider;
+  static final $allTransitiveDependencies40 = settingsControllerProvider;
+  static final $allTransitiveDependencies41 = accountsControllerProvider;
+  static final $allTransitiveDependencies42 = categoriesControllerProvider;
+  static final $allTransitiveDependencies43 = recurringRulesControllerProvider;
   static final $allTransitiveDependencies44 =
-      RecurringRuleFormControllerProvider.$allTransitiveDependencies4;
-  static final $allTransitiveDependencies45 = csvImportControllerProvider;
+      RecurringRulesControllerProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies45 =
+      recurringRuleFormControllerProvider;
   static final $allTransitiveDependencies46 =
-      CsvImportControllerProvider.$allTransitiveDependencies0;
-  static final $allTransitiveDependencies47 =
-      CsvImportControllerProvider.$allTransitiveDependencies2;
+      RecurringRuleFormControllerProvider.$allTransitiveDependencies4;
+  static final $allTransitiveDependencies47 = csvImportControllerProvider;
   static final $allTransitiveDependencies48 =
-      CsvImportControllerProvider.$allTransitiveDependencies7;
-  static final $allTransitiveDependencies49 = csvExportControllerProvider;
-  static final $allTransitiveDependencies50 =
+      CsvImportControllerProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies49 =
+      CsvImportControllerProvider.$allTransitiveDependencies2;
+  static final $allTransitiveDependencies50 = csvExportControllerProvider;
+  static final $allTransitiveDependencies51 =
       CsvExportControllerProvider.$allTransitiveDependencies0;
-  static final $allTransitiveDependencies51 = categoriesByTypeProvider;
-  static final $allTransitiveDependencies52 = transactionFormControllerProvider;
+  static final $allTransitiveDependencies52 = categoriesByTypeProvider;
+  static final $allTransitiveDependencies53 = transactionFormControllerProvider;
 
   @override
   String debugGetCreateSourceHash() => _$routerHash();
