@@ -160,27 +160,32 @@ class _PeriodSegment extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: AnalysisMotion.standardDuration,
-          curve: AnalysisMotion.standardCurve,
-          constraints: const BoxConstraints(minHeight: 44),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: selected ? colors.thumb : const Color(0x00000000),
+      child: AnimatedContainer(
+        duration: AnalysisMotion.standardDuration,
+        curve: AnalysisMotion.standardCurve,
+        constraints: const BoxConstraints(minHeight: 44),
+        decoration: BoxDecoration(
+          color: selected ? colors.thumb : const Color(0x00000000),
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: selected ? colors.thumbShadow : const <BoxShadow>[],
+        ),
+        // The ink paints on this Material, above the thumb's fill (plan D16).
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: onTap,
             borderRadius: BorderRadius.circular(22),
-            boxShadow: selected ? colors.thumbShadow : const <BoxShadow>[],
-          ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0,
-              color: selected ? colors.fg : colors.fg2,
+            child: Center(
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0,
+                  color: selected ? colors.fg : colors.fg2,
+                ),
+              ),
             ),
           ),
         ),

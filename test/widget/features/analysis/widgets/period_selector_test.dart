@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
@@ -116,6 +117,81 @@ void main() {
       await tester.tap(find.text('Year'));
       await tester.pump();
       expect(picked, PeriodType.year);
+    });
+
+    testWidgets('pressing a segment ripples, clipped to its 22 radius', (
+      tester,
+    ) async {
+      await pump(tester, selector());
+
+      for (final label in ['Day', 'Week']) {
+        final ink = find.ancestor(
+          of: find.text(label),
+          matching: find.byType(InkWell),
+        );
+        expect(ink, findsOneWidget, reason: label);
+        expect(
+          tester.widget<InkWell>(ink).borderRadius,
+          BorderRadius.circular(22),
+        );
+
+        // The ink paints on a Material inside the segment, so the selected
+        // thumb's fill does not hide it.
+        final material = find
+            .ancestor(of: find.text(label), matching: find.byType(Material))
+            .first;
+        final segment = find
+            .ancestor(of: find.text(label), matching: find.byType(DecoratedBox))
+            .first;
+        expect(
+          find.descendant(of: segment, matching: material),
+          findsOneWidget,
+          reason: label,
+        );
+
+        final gesture = await tester.startGesture(
+          tester.getCenter(find.text(label)),
+        );
+        await tester.pump(const Duration(milliseconds: 200));
+        final size = tester.getSize(segment);
+        expect(
+          tester.renderObject(material),
+          paints..clipRRect(
+            rrect: RRect.fromRectAndRadius(
+              Offset.zero & size,
+              const Radius.circular(22),
+            ),
+          ),
+          reason: label,
+        );
+        await gesture.up();
+        await tester.pumpAndSettle();
+      }
+    });
+
+    testWidgets('segments take keyboard focus; Enter picks the period', (
+      tester,
+    ) async {
+      PeriodType? picked;
+      await pump(tester, selector(onPeriodChanged: (p) => picked = p));
+
+      // The segments come first in traversal order, before the chevrons.
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      final primary = FocusManager.instance.primaryFocus!.context!;
+      expect(
+        find.ancestor(
+          of: find.text('Week'),
+          matching: find.byWidget(primary.widget),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(picked, PeriodType.week);
     });
 
     testWidgets('selected segment: thumb fill + shadow, fg text; '
