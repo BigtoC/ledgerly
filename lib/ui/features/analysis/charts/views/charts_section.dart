@@ -605,8 +605,9 @@ class _ChartBodyState extends ConsumerState<_ChartBody> {
   @override
   Widget build(BuildContext context) {
     final data = widget.data;
-    final chartsSelection = ref.watch(chartsSelectionControllerProvider);
-    final selection = chartsSelection.selectedSlice;
+    final selection = ref
+        .watch(chartsSelectionControllerProvider)
+        .selectedSlice;
     ref.listen(
       chartsSelectionControllerProvider.select((s) => s.selectedSlice),
       (previous, next) {
@@ -636,9 +637,11 @@ class _ChartBodyState extends ConsumerState<_ChartBody> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Header from the charted data, like the donut centre, so the card
+        // stays consistent while a previous chart is still on screen.
         ChartsBreakdownCard(
-          type: chartsSelection.type,
-          dimension: chartsSelection.dimension,
+          type: data.type,
+          dimension: data.dimension,
           onDimensionChanged: ref
               .read(chartsSelectionControllerProvider.notifier)
               .setDimension,

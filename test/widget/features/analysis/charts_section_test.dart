@@ -189,6 +189,65 @@ void main() {
       );
     });
 
+    group('while the previous chart is still shown', () {
+      const food = [
+        CategorySlice(
+          categoryId: 1,
+          currencyCode: 'USD',
+          totalMinorUnits: 5000,
+        ),
+      ];
+
+      testWidgets('the title follows the charted type, like the centre', (
+        tester,
+      ) async {
+        // Income never answers, so the expense chart stays on screen.
+        await _pumpSection(
+          tester,
+          categoryStream: (type) => type == CategoryType.income
+              ? const Stream.empty()
+              : Stream.value(food),
+        );
+        ProviderScope.containerOf(tester.element(find.byType(MaterialApp)))
+            .read(chartsSelectionControllerProvider.notifier)
+            .toggleType();
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+
+        expect(inCard(find.byType(CategoryPieChart)), findsOneWidget);
+        expect(inCard(find.text('Total expense')), findsOneWidget);
+        expect(inCard(find.text('Expense breakdown')), findsOneWidget);
+        expect(inCard(find.text('Income breakdown')), findsNothing);
+      });
+
+      testWidgets('the chips follow the charted dimension, like the centre', (
+        tester,
+      ) async {
+        final handle = tester.ensureSemantics();
+        // Accounts never answer, so the category chart stays on screen.
+        await _pumpSection(tester, accountStream: const Stream.empty());
+        await tester.tap(inCard(find.text('Account')));
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+
+        expect(inCard(find.byType(CategoryPieChart)), findsOneWidget);
+        expect(inCard(find.text('1 category')), findsOneWidget);
+        expect(
+          tester.getSemantics(inCard(find.text('Category'))),
+          isSemantics(isButton: true, hasSelectedState: true, isSelected: true),
+        );
+        expect(
+          tester.getSemantics(inCard(find.text('Account'))),
+          isSemantics(
+            isButton: true,
+            hasSelectedState: true,
+            isSelected: false,
+          ),
+        );
+        handle.dispose();
+      });
+    });
+
     testWidgets('FX banners stay above the card', (tester) async {
       await _pumpSection(
         tester,
@@ -304,6 +363,7 @@ Future<_MockTxRepo> _pumpSection(
   ],
   bool withBuckets = true,
   Stream<List<CategorySlice>> Function(CategoryType type)? categoryStream,
+  Stream<List<AccountSlice>>? accountStream,
   bool settle = true,
 }) async {
   final repo = _MockTxRepo();
@@ -345,7 +405,7 @@ Future<_MockTxRepo> _pumpSection(
       end: any(named: 'end'),
       type: any(named: 'type'),
     ),
-  ).thenAnswer((_) => Stream.value(const <AccountSlice>[]));
+  ).thenAnswer((_) => accountStream ?? Stream.value(const <AccountSlice>[]));
   when(
     () => repo.watchTimeBucketsInRange(
       start: any(named: 'start'),
