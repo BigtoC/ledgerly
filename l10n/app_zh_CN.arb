@@ -308,7 +308,6 @@
   "chartsDimensionCategory": "类别",
   "chartsDimensionAccount": "账户",
   "chartsDimensionCurrency": "币种",
-  "chartsNoData": "暂无交易",
   "chartsMixedCurrencies": "显示原始币种金额",
   "chartsRatesRequired": "等待汇率数据",
   "chartsTotal": "总计",

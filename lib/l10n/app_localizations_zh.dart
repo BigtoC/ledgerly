@@ -865,9 +865,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chartsDimensionCurrency => 'Currency';
 
   @override
-  String get chartsNoData => 'No transactions yet';
-
-  @override
   String get chartsMixedCurrencies => 'Showing original currency amounts';
 
   @override
@@ -2199,9 +2196,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get chartsDimensionCurrency => '币种';
 
   @override
-  String get chartsNoData => '暂无交易';
-
-  @override
   String get chartsMixedCurrencies => '显示原始币种金额';
 
   @override
@@ -3509,9 +3503,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get chartsDimensionCurrency => '幣別';
-
-  @override
-  String get chartsNoData => '尚無交易';
 
   @override
   String get chartsMixedCurrencies => '顯示原始幣別金額';

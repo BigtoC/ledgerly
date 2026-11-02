@@ -1042,8 +1042,6 @@
   "@chartsDimensionAccount": { "description": "Charts dimension toggle — account" },
   "chartsDimensionCurrency": "Currency",
   "@chartsDimensionCurrency": { "description": "Charts dimension toggle — currency" },
-  "chartsNoData": "No transactions yet",
-  "@chartsNoData": { "description": "Charts empty state copy" },
   "chartsMixedCurrencies": "Showing original currency amounts",
   "@chartsMixedCurrencies": { "description": "Banner for currency-dimension chart when some FX rates are missing" },
   "chartsRatesRequired": "Waiting for exchange rates",

@@ -1654,12 +1654,6 @@ abstract class AppLocalizations {
   /// **'Currency'**
   String get chartsDimensionCurrency;
 
-  /// Charts empty state copy
-  ///
-  /// In en, this message translates to:
-  /// **'No transactions yet'**
-  String get chartsNoData;
-
   /// Banner for currency-dimension chart when some FX rates are missing
   ///
   /// In en, this message translates to:

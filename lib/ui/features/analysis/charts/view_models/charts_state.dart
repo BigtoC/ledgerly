@@ -32,7 +32,8 @@ sealed class ChartsState with _$ChartsState {
       ChartsDataState;
 
   /// Range has no transactions matching the active type. Shows the
-  /// `chartsNoData` copy under the controls.
+  /// breakdown card's empty state (`chartsEmptyTitleExpense` /
+  /// `chartsEmptyTitleIncome` and `chartsEmptySwitchType`).
   const factory ChartsState.empty() = ChartsEmpty;
 
   /// FX rates missing for category/account dimensions. Keeps the prior
