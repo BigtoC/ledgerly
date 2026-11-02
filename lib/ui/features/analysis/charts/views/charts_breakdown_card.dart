@@ -49,6 +49,7 @@ class ChartsBreakdownCard extends StatelessWidget {
                       : l10n.chartsBreakdownExpense,
                   maxLines: 1,
                   softWrap: false,
+                  overflow: TextOverflow.ellipsis,
                   style: analysisText(
                     size: 16,
                     lineHeight: 24,

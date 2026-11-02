@@ -364,6 +364,60 @@ void main() {
     expect(picked, 1);
   });
 
+  group('long amount on a 360 phone', () {
+    const longSlices = [
+      ChartSlice(
+        label: 'Transport',
+        currencyCode: 'USD',
+        totalMinorUnits: 123456789,
+        fraction: 1,
+        colorIndex: CategoryPaletteIndex.blue30,
+        iconKey: 'car',
+        selectionKey: SelectedSlice.category(2),
+      ),
+    ];
+    const amount = r'$1,234,567.89';
+
+    Future<void> pumpPhone(WidgetTester tester, double textScale) async {
+      await tester.binding.setSurfaceSize(const Size(360, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await _pump(tester, slices: longSlices, textScale: textScale);
+    }
+
+    // Row content box: 8 list inset + 8 row padding on each side.
+    double contentRight(WidgetTester tester) =>
+        tester.getRect(_row('Transport')).right - 8;
+
+    testWidgets('shows in full at 1x', (tester) async {
+      await pumpPhone(tester, 1);
+      expect(tester.takeException(), isNull);
+      expect(
+        tester
+            .renderObject<RenderParagraph>(find.text(amount))
+            .didExceedMaxLines,
+        isFalse,
+      );
+    });
+
+    testWidgets('ends in an ellipsis instead of overflowing at 2x', (
+      tester,
+    ) async {
+      await pumpPhone(tester, 2);
+      expect(tester.takeException(), isNull);
+      final amountRect = tester.getRect(find.text(amount));
+      // Left of the 12 gap and the 18 chevron.
+      expect(
+        amountRect.right,
+        lessThanOrEqualTo(contentRight(tester) - 12 - 18),
+      );
+      expect(
+        tester.widget<Text>(find.text(amount)).overflow,
+        TextOverflow.ellipsis,
+      );
+      expect(tester.getSize(find.text(amount)).height, 40);
+    });
+  });
+
   testWidgets('rows grow at 2x text scale', (tester) async {
     await _pump(tester, textScale: 2);
     expect(tester.takeException(), isNull);

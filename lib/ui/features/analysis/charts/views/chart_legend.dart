@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../../../core/utils/color_palette.dart';
@@ -152,38 +154,50 @@ class _RankedRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        label,
-                        maxLines: 1,
-                        softWrap: false,
-                        overflow: TextOverflow.ellipsis,
-                        style: analysisText(
-                          size: 15,
-                          lineHeight: 20,
-                          weight: selected ? FontWeight.w700 : FontWeight.w500,
-                          color: colors.fg,
+                // The amount keeps its full width and the label ellipsizes;
+                // only an amount wider than the whole line ellipsizes too.
+                LayoutBuilder(
+                  builder: (context, constraints) => Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          softWrap: false,
+                          overflow: TextOverflow.ellipsis,
+                          style: analysisText(
+                            size: 15,
+                            lineHeight: 20,
+                            weight: selected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: colors.fg,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      amount,
-                      maxLines: 1,
-                      softWrap: false,
-                      style: analysisText(
-                        size: 15,
-                        lineHeight: 20,
-                        weight: FontWeight.w500,
-                        color: colors.fg,
-                        tabular: true,
+                      const SizedBox(width: 8),
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: math.max(0, constraints.maxWidth - 8),
+                        ),
+                        child: Text(
+                          amount,
+                          maxLines: 1,
+                          softWrap: false,
+                          overflow: TextOverflow.ellipsis,
+                          style: analysisText(
+                            size: 15,
+                            lineHeight: 20,
+                            weight: FontWeight.w500,
+                            color: colors.fg,
+                            tabular: true,
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 // Mixed currencies have no share: hide the bar and the %.
                 if (fraction != null) ...[

@@ -126,6 +126,23 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(tester.getSize(find.text('Expense breakdown')).height, 48);
     });
+
+    testWidgets('title ends in an ellipsis on a 360 phone at 2x', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(360, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await _pumpCard(tester, textScale: 2);
+      expect(tester.takeException(), isNull);
+
+      final title = find.text('Expense breakdown');
+      expect(tester.widget<Text>(title).overflow, TextOverflow.ellipsis);
+      // Inside the 1 px border and the 16 header padding on each side.
+      final card = tester.getRect(find.byType(ChartsBreakdownCard));
+      expect(tester.getRect(title).left, card.left + 17);
+      expect(tester.getRect(title).right, lessThanOrEqualTo(card.right - 17));
+      expect(tester.getSize(title).height, 48);
+    });
   });
 
   group('BreakdownEmptyState', () {
