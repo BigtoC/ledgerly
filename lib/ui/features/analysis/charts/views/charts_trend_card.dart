@@ -211,6 +211,7 @@ class _FilterChip extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
+                        letterSpacing: 0,
                         color: colors.fg,
                       ),
                     ),
