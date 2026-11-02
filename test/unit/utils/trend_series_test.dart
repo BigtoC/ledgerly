@@ -232,4 +232,127 @@ void main() {
       expect(s.labelIndices, {0, 7, 14, 21});
     });
   });
+
+  group('All (monthly, from the first month to now)', () {
+    test('one bucket per month from the anchor month to the current month, '
+        'none future', () {
+      final s = trendSeries(
+        period: PeriodType.all,
+        anchorDate: DateTime(2025, 1, 1),
+        bucketTotals: [
+          _b(DateTime(2025, 1, 1), 100),
+          _b(DateTime(2026, 10, 1), 300),
+        ],
+        now: DateTime(2026, 10, 31, 15),
+      );
+
+      expect(s.buckets, hasLength(22));
+      expect(s.buckets.first.bucketStart, DateTime(2025, 1, 1));
+      expect(s.buckets.last.bucketStart, DateTime(2026, 10, 1));
+      expect(s.buckets.first.totalMinorUnits, 100);
+      expect(s.buckets.last.totalMinorUnits, 300);
+      expect(s.buckets.where((b) => b.isFuture), isEmpty);
+      expect(s.elapsedCount, 22);
+      expect(s.currentIndex, 21);
+    });
+
+    test('average per month over every month (D8 unchanged)', () {
+      final s = trendSeries(
+        period: PeriodType.all,
+        anchorDate: DateTime(2026, 7, 1),
+        bucketTotals: [
+          _b(DateTime(2026, 7, 1), 400),
+          _b(DateTime(2026, 9, 1), 800),
+        ],
+        now: DateTime(2026, 10, 2),
+      );
+
+      expect(s.elapsedCount, 4);
+      expect(s.averageMinorUnits, 300);
+    });
+
+    test('labels: the year under each January, the month name under the '
+        'last bar', () {
+      final s = trendSeries(
+        period: PeriodType.all,
+        anchorDate: DateTime(2025, 1, 1),
+        bucketTotals: const [],
+        now: DateTime(2026, 10, 31),
+      );
+
+      expect(s.labelIndices, {0, 12, 21});
+      expect(s.yearLabelIndices, {0, 12});
+    });
+
+    test('a first month that is not January gets no year label (D15)', () {
+      final s = trendSeries(
+        period: PeriodType.all,
+        anchorDate: DateTime(2024, 6, 1),
+        bucketTotals: const [],
+        now: DateTime(2026, 3, 10),
+      );
+
+      expect(s.buckets, hasLength(22));
+      expect(s.labelIndices, {7, 19, 21});
+      expect(s.yearLabelIndices, {7, 19});
+    });
+
+    test('when the current month is January the last bar shows the month '
+        'name, not the year (D15)', () {
+      final s = trendSeries(
+        period: PeriodType.all,
+        anchorDate: DateTime(2025, 3, 1),
+        bucketTotals: const [],
+        now: DateTime(2027, 1, 5),
+      );
+
+      expect(s.buckets.last.bucketStart, DateTime(2027, 1, 1));
+      expect(s.labelIndices, {10, 22});
+      expect(s.yearLabelIndices, {10});
+      expect(s.currentIndex, 22);
+    });
+
+    test('a single month that is January shows only its month name', () {
+      final s = trendSeries(
+        period: PeriodType.all,
+        anchorDate: DateTime(2026, 1, 1),
+        bucketTotals: [_b(DateTime(2026, 1, 1), 5)],
+        now: DateTime(2026, 1, 20),
+      );
+
+      expect(s.buckets, hasLength(1));
+      expect(s.labelIndices, {0});
+      expect(s.yearLabelIndices, isEmpty);
+      expect(s.currentIndex, 0);
+    });
+
+    test('more than 24 months keep one bucket per month', () {
+      final s = trendSeries(
+        period: PeriodType.all,
+        anchorDate: DateTime(2024, 4, 1),
+        bucketTotals: const [],
+        now: DateTime(2026, 10, 31),
+      );
+
+      expect(s.buckets, hasLength(31));
+      expect(s.yearLabelIndices, {9, 21});
+      expect(s.labelIndices, {9, 21, 30});
+    });
+
+    test('other periods have no year labels', () {
+      for (final period in [
+        PeriodType.week,
+        PeriodType.month,
+        PeriodType.year,
+      ]) {
+        final s = trendSeries(
+          period: period,
+          anchorDate: DateTime(2026, 1, 1),
+          bucketTotals: const [],
+          now: DateTime(2026, 10, 31),
+        );
+        expect(s.yearLabelIndices, isEmpty, reason: '$period');
+      }
+    });
+  });
 }

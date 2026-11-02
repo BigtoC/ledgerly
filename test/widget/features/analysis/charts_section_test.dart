@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart' show BarChart;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -376,6 +377,77 @@ void main() {
       ).called(greaterThanOrEqualTo(1));
     });
 
+    testWidgets('the trend shows one bar per month from the first '
+        "transaction's month to now", (tester) async {
+      await _pumpSection(
+        tester,
+        bounds: (first: DateTime(2025, 1, 20, 9), last: now),
+      );
+
+      await pickAll(tester);
+
+      expect(find.byType(ChartsTrendCard), findsOneWidget);
+      expect(find.text('Monthly spending'), findsOneWidget);
+      final series = tester
+          .widget<DailyBarChart>(find.byType(DailyBarChart))
+          .series;
+      final months = (now.year - 2025) * 12 + now.month;
+      expect(series.buckets, hasLength(months));
+      expect(series.buckets.first.bucketStart, DateTime(2025));
+      expect(series.buckets.last.bucketStart, DateTime(now.year, now.month));
+      expect(series.currentIndex, months - 1);
+      // The card header stays put; only the chart may scroll sideways.
+      expect(
+        find.ancestor(
+          of: find.text('Monthly spending'),
+          matching: find.byWidgetPredicate(
+            (w) => w is Scrollable && w.axisDirection == AxisDirection.left,
+          ),
+        ),
+        findsNothing,
+      );
+    });
+
+    testWidgets('2× text scale at 390: navigator, summary and a scrolling '
+        'trend render without overflow', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      // 2023 onwards: more than 24 months, so the trend scrolls.
+      await _pumpSection(
+        tester,
+        bounds: (first: DateTime(2023, 1, 2), last: now),
+        textScale: 2,
+      );
+
+      await pickAll(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        tester.getSize(find.text('All time')).height,
+        greaterThanOrEqualTo(48),
+      );
+      expect(find.text('Net all time'), findsOneWidget);
+      final card = tester.getRect(find.byType(ChartsTrendCard));
+      expect(card.width, 390 - 32);
+      // Header and chart stay inside the card; the bars keep the 24-month
+      // width of the 324 plot.
+      final chart = tester.getRect(find.byType(DailyBarChart));
+      expect(chart.left, card.left + 17);
+      expect(chart.right, card.right - 17);
+      final rod = tester
+          .widget<BarChart>(find.byType(BarChart))
+          .data
+          .barGroups
+          .first
+          .barRods
+          .single;
+      expect(rod.width, closeTo((324 - 23 * 4) / 24, 1e-9));
+      expect(
+        tester.getSize(find.text('Monthly spending')).height,
+        greaterThanOrEqualTo(48),
+      );
+    });
+
     testWidgets('a horizontal swipe does nothing on All', (tester) async {
       await _pumpSection(
         tester,
@@ -516,6 +588,7 @@ Future<_MockTxRepo> _pumpSection(
   Stream<List<AccountSlice>>? accountStream,
   bool settle = true,
   DateBounds? bounds,
+  double textScale = 1,
 }) async {
   final repo = _MockTxRepo();
   when(() => repo.watchDateBounds()).thenAnswer((_) => Stream.value(bounds));
@@ -628,6 +701,11 @@ Future<_MockTxRepo> _pumpSection(
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: AppLocalizations.supportedLocales,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: TextScaler.linear(textScale)),
+          child: child!,
+        ),
         home: const Scaffold(
           body: SingleChildScrollView(child: ChartsSection()),
         ),

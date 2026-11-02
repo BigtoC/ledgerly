@@ -474,6 +474,249 @@ void main() {
     });
   });
 
+  group('All (D14, D15)', () {
+    /// Months from [first] to [now]'s month, with [totals] keyed by month.
+    TrendSeries all(
+      DateTime first, {
+      required DateTime now,
+      Map<DateTime, int> totals = const {},
+    }) => trendSeries(
+      period: PeriodType.all,
+      anchorDate: first,
+      bucketTotals: [
+        for (final e in totals.entries)
+          ChartBucketTotal(bucketStart: e.key, totalMinorUnits: e.value),
+      ],
+      now: now,
+    );
+
+    // The trend card's plot width in a 390 phone: 390 − 2 × 16 margin −
+    // 2 × 1 border − 2 × 16 padding.
+    const phone = 324.0;
+    const rod24 = (phone - 23 * 4) / 24;
+
+    Finder horizontalScrollable() => find.byWidgetPredicate(
+      (w) => w is Scrollable && w.axisDirection == AxisDirection.left,
+    );
+
+    testWidgets('up to 24 months fill the width with 4 gaps and 3/1 radii, '
+        'without scrolling', (tester) async {
+      await _pump(
+        tester,
+        period: PeriodType.all,
+        series: all(
+          DateTime(2025, 1),
+          now: DateTime(2026, 10, 31),
+          totals: {DateTime(2025, 2): 1000},
+        ),
+        width: phone,
+      );
+
+      final rods = _rods(tester);
+      expect(rods, hasLength(22));
+      for (final rod in rods) {
+        expect(rod.width, closeTo((phone - 21 * 4) / 22, 1e-9));
+      }
+      expect(
+        rods[1].borderRadius,
+        const BorderRadius.vertical(
+          top: Radius.circular(3),
+          bottom: Radius.circular(1),
+        ),
+      );
+      expect(_data(tester).alignment, BarChartAlignment.spaceBetween);
+      expect(tester.getSize(find.byType(BarChart)).width, phone);
+      expect(horizontalScrollable(), findsNothing);
+    });
+
+    testWidgets('labels: the year under each January and the current month '
+        'in 700 fg under the last bar; nothing else', (tester) async {
+      await _pump(
+        tester,
+        period: PeriodType.all,
+        series: all(DateTime(2025, 1), now: DateTime(2026, 10, 31)),
+        width: phone,
+      );
+
+      final plot = tester.getRect(find.byType(BarChart));
+      const rod = (phone - 21 * 4) / 22;
+      double center(int i) => plot.left + i * (rod + 4) + rod / 2;
+      expect(
+        tester.getRect(find.text('2025')).center.dx,
+        closeTo(center(0), 0.01),
+      );
+      expect(
+        tester.getRect(find.text('2026')).center.dx,
+        closeTo(center(12), 0.01),
+      );
+      expect(
+        tester.getRect(find.text('Oct')).center.dx,
+        closeTo(center(21), 0.01),
+      );
+      final current = tester.widget<Text>(find.text('Oct'));
+      expect(current.style!.fontWeight, FontWeight.w700);
+      expect(current.style!.color, _colors.fg);
+      final year = tester.widget<Text>(find.text('2025'));
+      expect(year.style!.fontWeight, FontWeight.w400);
+      expect(year.style!.color, _colors.fg3);
+      expect(find.text('Jan'), findsNothing);
+      expect(find.text('Feb'), findsNothing);
+    });
+
+    testWidgets('a January current month shows its month name (D15)', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        period: PeriodType.all,
+        series: all(DateTime(2025, 6), now: DateTime(2027, 1, 4)),
+        width: phone,
+      );
+
+      expect(find.text('2026'), findsOneWidget);
+      expect(find.text('Jan'), findsOneWidget);
+      expect(find.text('2027'), findsNothing);
+      // June 2025 is the first month but not a January: no year label.
+      expect(find.text('2025'), findsNothing);
+    });
+
+    testWidgets('beyond 24 months each bar keeps the 24-month width, the '
+        'chart scrolls and opens at the right end', (tester) async {
+      // May 2024 … Oct 2026: 30 months.
+      await _pump(
+        tester,
+        period: PeriodType.all,
+        series: all(DateTime(2024, 5), now: DateTime(2026, 10, 31)),
+        width: phone,
+      );
+
+      final rods = _rods(tester);
+      expect(rods, hasLength(30));
+      for (final rod in rods) {
+        expect(rod.width, closeTo(rod24, 1e-9));
+      }
+      const content = 30 * rod24 + 29 * 4;
+      // The plot and its average line span every month, not the viewport.
+      expect(
+        tester.getSize(find.byType(BarChart)).width,
+        closeTo(content, 1e-6),
+      );
+      expect(horizontalScrollable(), findsOneWidget);
+
+      // At the right end: the last bar sits at the viewport's right edge.
+      final viewport = tester.getRect(find.byType(DailyBarChart));
+      final plot = tester.getRect(find.byType(BarChart));
+      expect(plot.right, closeTo(viewport.right, 0.01));
+      expect(plot.left, closeTo(viewport.right - content, 0.01));
+      // Wider than its bar, the last label ends at the viewport's edge
+      // instead of being clipped there.
+      expect(
+        tester.getRect(find.text('Oct')).right,
+        closeTo(viewport.right, 0.01),
+      );
+    });
+
+    testWidgets('beyond 24 months the y scale and the average use every '
+        'month, also the scrolled-away ones', (tester) async {
+      await _pump(
+        tester,
+        period: PeriodType.all,
+        series: all(
+          DateTime(2024, 5),
+          now: DateTime(2026, 10, 31),
+          // The biggest month is the first, far left of the viewport.
+          totals: {DateTime(2024, 5): 3000, DateTime(2026, 10): 600},
+        ),
+        width: phone,
+      );
+
+      final data = _data(tester);
+      expect(data.maxY, closeTo(3000 * 1.12, 1e-9));
+      final line = data.extraLinesData.horizontalLines.single;
+      // (3000 + 600) / 30 months.
+      expect(line.y, closeTo(120 + 0.75 * data.maxY / 140, 1e-9));
+    });
+
+    testWidgets('the x labels scroll with the bars', (tester) async {
+      await _pump(
+        tester,
+        period: PeriodType.all,
+        series: all(DateTime(2024, 5), now: DateTime(2026, 10, 31)),
+        width: phone,
+      );
+      final plotBefore = tester.getRect(find.byType(BarChart));
+      final labelBefore = tester.getRect(find.text('2026'));
+
+      await tester.drag(find.byType(BarChart), const Offset(100, 0));
+      await tester.pump();
+
+      final dx = tester.getRect(find.byType(BarChart)).left - plotBefore.left;
+      expect(dx, greaterThan(50));
+      expect(
+        tester.getRect(find.text('2026')).left - labelBefore.left,
+        closeTo(dx, 0.01),
+      );
+    });
+
+    testWidgets('touches on a scrolled bar still reach the chart', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        period: PeriodType.all,
+        series: all(
+          DateTime(2024, 5),
+          now: DateTime(2026, 10, 31),
+          totals: {DateTime(2026, 10): 600},
+        ),
+        width: phone,
+      );
+
+      final plot = tester.getRect(find.byType(BarChart));
+      final chart = tester.renderObject(
+        find.descendant(
+          of: find.byType(BarChart),
+          matching: find.byWidgetPredicate((w) => w is LeafRenderObjectWidget),
+        ),
+      );
+      final result = tester.hitTestOnBinding(
+        Offset(plot.right - rod24 / 2, plot.bottom - 20),
+      );
+      expect(result.path.map((e) => e.target), contains(chart));
+      // The tooltip names the month and year.
+      final data = _data(tester);
+      final item = data.barTouchData.touchTooltipData.getTooltipItem(
+        data.barGroups[29],
+        29,
+        data.barGroups[29].barRods.single,
+        0,
+      );
+      expect(item!.text, 'Oct 2026\n');
+    });
+
+    testWidgets('2× text scale at phone width: labels grow, no overflow', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        period: PeriodType.all,
+        series: all(DateTime(2024, 5), now: DateTime(2026, 10, 31)),
+        width: phone,
+        textScale: 2,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(tester.getSize(find.text('2026')).height, 28);
+      expect(tester.getSize(find.text('Oct')).height, 28);
+      // The last label stays inside the viewport, ending at its edge.
+      final viewport = tester.getRect(find.byType(DailyBarChart));
+      expect(
+        tester.getRect(find.text('Oct')).right,
+        lessThanOrEqualTo(viewport.right + 0.01),
+      );
+    });
+  });
+
   testWidgets('semantics list non-zero buckets and skip empty future ones', (
     tester,
   ) async {

@@ -642,7 +642,6 @@ class _ChartBodyState extends ConsumerState<_ChartBody> {
     final selectedIndex = hit == -1 ? null : hit;
     final showBar =
         data.period != PeriodType.day &&
-        data.period != PeriodType.all &&
         data.bucketTotals.isNotEmpty &&
         !(data.dimension == ChartDimension.currency && data.mixedCurrencies);
     @Dependencies([ChartsSelectionController])

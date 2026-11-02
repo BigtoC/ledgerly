@@ -110,6 +110,8 @@ void main() {
       (PeriodType.week, CategoryType.income, 'Daily income'),
       (PeriodType.month, CategoryType.income, 'Daily income'),
       (PeriodType.year, CategoryType.income, 'Monthly income'),
+      (PeriodType.all, CategoryType.expense, 'Monthly spending'),
+      (PeriodType.all, CategoryType.income, 'Monthly income'),
     ]) {
       testWidgets('${period.name} ${type.name} reads "$title"', (tester) async {
         await _pump(tester, _data(period: period, type: type));
@@ -151,6 +153,30 @@ void main() {
       );
 
       expect(find.text(r'Avg $1.00 / month'), findsOneWidget);
+    });
+
+    testWidgets('All averages per month over every month since the first', (
+      tester,
+    ) async {
+      final now = DateTime.now();
+      // From Jan 2025 to the current month.
+      final months = (now.year - 2025) * 12 + now.month;
+      await _pump(
+        tester,
+        _data(
+          period: PeriodType.all,
+          buckets: [
+            ChartBucketTotal(
+              bucketStart: DateTime(2025, 3, 1),
+              totalMinorUnits: 100 * months,
+            ),
+          ],
+        ),
+      );
+
+      expect(find.text(r'Avg $1.00 / month'), findsOneWidget);
+      final chart = tester.widget<DailyBarChart>(find.byType(DailyBarChart));
+      expect(chart.series.buckets, hasLength(months));
     });
 
     testWidgets('is led by a 14 px dashed legend line', (tester) async {

@@ -16,8 +16,14 @@ const double _kPlotHeight = 140;
 /// The x labels overlap the plot's bottom by this much (CSS margin-top −4).
 const double _kLabelOverlap = 4;
 
+/// On All, up to this many months fill the width; beyond it each bar keeps
+/// this many months' width and the chart scrolls (plan D14).
+const int _kAllFullWidthMonths = 24;
+
 final Map<String, DateFormat> _weekdayFormats = {};
 final Map<String, DateFormat> _monthFormats = {};
+final Map<String, DateFormat> _yearFormats = {};
+final Map<String, DateFormat> _yearMonthFormats = {};
 
 /// The trend card's bars, average line and x labels.
 class DailyBarChart extends StatelessWidget {
@@ -75,10 +81,12 @@ class DailyBarChart extends StatelessWidget {
       builder: (context, constraints) {
         final width = constraints.maxWidth;
         final n = buckets.length;
-        final rodWidth = (width - (n - 1) * gap) / n;
+        final scrolls = period == PeriodType.all && n > _kAllFullWidthMonths;
+        final columns = scrolls ? _kAllFullWidthMonths : n;
+        final rodWidth = (width - (columns - 1) * gap) / columns;
         // The labels overlap the plot's bottom; they ignore touches so the
         // plot's full height stays touchable.
-        return Stack(
+        final chart = Stack(
           clipBehavior: Clip.none,
           children: [
             Positioned(
@@ -116,7 +124,7 @@ class DailyBarChart extends StatelessWidget {
                             return null;
                           }
                           return BarTooltipItem(
-                            '${_axisLabel(bucket.bucketStart)}\n',
+                            '${_bucketLabel(bucket.bucketStart)}\n',
                             TextStyle(
                               color: scheme.onInverseSurface,
                               fontWeight: FontWeight.w600,
@@ -176,10 +184,21 @@ class DailyBarChart extends StatelessWidget {
                 padding: const EdgeInsets.only(
                   top: _kPlotHeight + 1 - _kLabelOverlap,
                 ),
-                child: ExcludeSemantics(child: _labels(colors, gap)),
+                child: ExcludeSemantics(
+                  child: _labels(colors, gap, keepEndsInside: scrolls),
+                ),
               ),
             ),
           ],
+        );
+        if (!scrolls) return chart;
+        // The plot, its average line and the labels scroll together; the y
+        // scale and the average still cover every month.
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          // Opens at the right end, on the current month.
+          reverse: true,
+          child: SizedBox(width: n * rodWidth + (n - 1) * gap, child: chart),
         );
       },
     );
@@ -218,7 +237,14 @@ class DailyBarChart extends StatelessWidget {
     );
   }
 
-  Widget _labels(AnalysisColors colors, double gap) {
+  /// With [keepEndsInside] (a scrolling chart, which clips at its edges),
+  /// the first and last labels align to their bar's outer edge rather than
+  /// its centre, so a label wider than its bar is not cut off.
+  Widget _labels(
+    AnalysisColors colors,
+    double gap, {
+    required bool keepEndsInside,
+  }) {
     final buckets = series.buckets;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -230,8 +256,19 @@ class DailyBarChart extends StatelessWidget {
                 ? OverflowBox(
                     fit: OverflowBoxFit.deferToChild,
                     maxWidth: double.infinity,
+                    alignment: !keepEndsInside
+                        ? Alignment.center
+                        : i == buckets.length - 1
+                        ? Alignment.centerRight
+                        : i == 0
+                        ? Alignment.centerLeft
+                        : Alignment.center,
                     child: Text(
-                      _axisLabel(buckets[i].bucketStart),
+                      series.yearLabelIndices.contains(i)
+                          ? _yearFormats
+                                .putIfAbsent(locale, () => DateFormat.y(locale))
+                                .format(buckets[i].bucketStart)
+                          : _axisLabel(buckets[i].bucketStart),
                       maxLines: 1,
                       softWrap: false,
                       style: analysisText(
@@ -266,11 +303,20 @@ class DailyBarChart extends StatelessWidget {
     for (final b in series.buckets) {
       if (b.totalMinorUnits == 0) continue;
       parts.add(
-        '${_axisLabel(b.bucketStart)}: ${_amount(b.totalMinorUnits, currency)}',
+        '${_bucketLabel(b.bucketStart)}: '
+        '${_amount(b.totalMinorUnits, currency)}',
       );
     }
     return parts.join('. ');
   }
+
+  /// The tooltip and semantics name of a bucket: All spans years, so its
+  /// months carry the year.
+  String _bucketLabel(DateTime bucketStart) => period == PeriodType.all
+      ? _yearMonthFormats
+            .putIfAbsent(locale, () => DateFormat.yMMM(locale))
+            .format(bucketStart)
+      : _axisLabel(bucketStart);
 
   String _axisLabel(DateTime bucketStart) {
     switch (period) {
