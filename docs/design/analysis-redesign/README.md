@@ -8,7 +8,7 @@ The spec defines behaviour; this folder defines exact visual values.
 | File | What it is |
 |---|---|
 | `Main.dc.html` | Full source of the design prototype (one component, all states). |
-| `screens/*.png` | Exported artboards (add them here from the design canvas: Share › Export). |
+
 
 `Main.dc.html` is a Design Component file. It needs the design canvas runtime
 (`support.js`) to render, so **read it as source** rather than opening it in a
