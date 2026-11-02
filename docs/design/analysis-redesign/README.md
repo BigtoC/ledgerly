@@ -34,6 +34,8 @@ browser:
 | Dark mode | `period=month dark=true` | Dark tokens |
 | Account filter — pick an account | `sheet=true` | Bottom sheet open |
 | Account filter — Visa card by category | `period=month acc="Visa card"` | Breakdown scoped to one account |
+| Search expanded | `layout=phone search=true` | Search field expanded leftwards; account button hidden |
+| All time | `layout=full period=all` | All records; chevrons hidden; monthly trend across the whole range |
 
 Design canvas: https://claude.ai/artifact/W29pRjtFLFugrTfbvANCpr (private to the owner).
 

@@ -14,24 +14,41 @@
 <div style="{{rootStyle}}">
 <div style="{{scrollStyle}}">
 
-<header style="height: 64px; display: flex; align-items: center; padding: 0 20px">
-<h1 style="margin: 0; font-size: 24px; line-height: 32px; font-weight: 500; color: var(--fg)">Analysis</h1>
-</header>
-
-<div style="padding: 0 16px 8px">
-<label style="display: flex; align-items: center; gap: 12px; height: 48px; padding: 0 16px; border-radius: 24px; background: var(--card); border: 1px solid var(--line); color: var(--fg2); box-sizing: border-box">
-<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+<header style="height: 64px; display: flex; align-items: center; gap: 12px; padding: 0 8px 0 20px">
+<h1 style="margin: 0; flex: none; font-size: 24px; line-height: 32px; font-weight: 500; color: var(--fg)">Analysis</h1>
+<div style="flex: 1; min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: 4px">
+<sc-if value="{{showAccBtn}}" hint-placeholder-val="{{ true }}">
+<button type="button" aria-haspopup="dialog" aria-label="{{accBtnAria}}" onClick="{{openSheet}}" style="height: 44px; padding: 0 2px; border: 0; background: transparent; display: flex; align-items: center; cursor: pointer; font-family: inherit; min-width: 0">
+<span style="{{accPillStyle}}">
+<span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{accBtnLabel}}</span>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m6 9 6 6 6-6"></path></svg>
+</span>
+</button>
+</sc-if>
+<div style="{{searchBoxStyle}}">
+<sc-if value="{{searchClosed}}" hint-placeholder-val="{{ true }}">
+<button type="button" aria-label="Search memos" aria-expanded="{{ false }}" onClick="{{openSearch}}" style="width: 46px; height: 46px; flex: none; border: 0; border-radius: 23px; background: transparent; color: var(--fg); display: flex; align-items: center; justify-content: center; cursor: pointer">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+</button>
+</sc-if>
+<sc-if value="{{searchOpen}}" hint-placeholder-val="{{ false }}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-left: 14px; color: var(--fg2)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
 <span style="position: relative; flex: 1; min-width: 0; height: 100%; display: flex; align-items: center">
 <sc-if value="{{showHint}}" hint-placeholder-val="{{ true }}">
-<span aria-hidden="true" style="position: absolute; left: 0; right: 0; font-size: 15px; line-height: 20px; color: var(--fg2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none">Search memos to find transactions</span>
+<span aria-hidden="true" style="position: absolute; left: 0; right: 0; font-size: 15px; line-height: 20px; color: var(--fg2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none">Search memos</span>
 </sc-if>
 <input type="text" aria-label="Search memos to find transactions" value="{{q}}" onChange="{{onQ}}" style="width: 100%; height: 100%; border: 0; outline: none; background: transparent; padding: 0; font-family: inherit; font-size: 15px; color: var(--fg)">
 </span>
-</label>
+<button type="button" aria-label="Close search" onClick="{{closeSearch}}" style="width: 44px; height: 44px; flex: none; border: 0; border-radius: 22px; background: transparent; color: var(--fg2); display: flex; align-items: center; justify-content: center; cursor: pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+</button>
+</sc-if>
 </div>
+</div>
+</header>
 
 <div style="padding: 8px 16px 0">
-<div role="group" aria-label="Period" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 3px; border-radius: 25px; background: var(--track)">
+<div role="group" aria-label="Period" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; padding: 3px; border-radius: 25px; background: var(--track)">
 <sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
 <button type="button" aria-pressed="{{t.pressed}}" onClick="{{t.pick}}" style="{{t.style}}">{{t.label}}</button>
 </sc-for>
@@ -39,14 +56,14 @@
 </div>
 
 <div style="display: flex; align-items: center; gap: 4px; padding: 8px 8px 0">
-<button type="button" aria-label="Previous period" style="width: 48px; height: 48px; flex: none; border: 0; border-radius: 24px; background: transparent; color: var(--fg); display: flex; align-items: center; justify-content: center; cursor: pointer">
+<button type="button" aria-label="Previous period" style="{{prevStyle}}">
 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
 </button>
 <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center">
 <div style="font-size: 18px; line-height: 24px; font-weight: 500; color: var(--fg)">{{periodLabel}}</div>
 <div style="font-size: 12px; line-height: 16px; color: var(--fg3)">{{periodCaption}}</div>
 </div>
-<button type="button" aria-label="Next period" disabled="{{ true }}" style="width: 48px; height: 48px; flex: none; border: 0; border-radius: 24px; background: transparent; color: var(--off); display: flex; align-items: center; justify-content: center">
+<button type="button" aria-label="Next period" disabled="{{ true }}" style="{{nextStyle}}">
 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
 </button>
 </div>
@@ -72,16 +89,7 @@
 
 <section aria-label="Breakdown" style="margin: 12px 16px 0; padding: 16px 0 8px; border-radius: 20px; background: var(--card); border: 1px solid var(--line)">
 <div style="padding: 0 16px; display: flex; flex-direction: column; gap: 4px">
-<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 24px">
 <h2 style="margin: 0; font-size: 16px; line-height: 24px; font-weight: 500; color: var(--fg); white-space: nowrap">{{breakdownTitle}}</h2>
-<button type="button" aria-haspopup="dialog" aria-label="{{accBtnAria}}" onClick="{{openSheet}}" style="height: 44px; margin: -10px -6px -10px 0; padding: 0 6px; border: 0; background: transparent; display: flex; align-items: center; cursor: pointer; font-family: inherit; min-width: 0">
-<span style="{{accPillStyle}}">
-<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"></path><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"></path></svg>
-<span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{accBtnLabel}}</span>
-<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m6 9 6 6 6-6"></path></svg>
-</span>
-</button>
-</div>
 <div role="group" aria-label="Group by" style="display: flex; flex-wrap: wrap; gap: 8px">
 <sc-for list="{{chips}}" as="c" hint-placeholder-count="3">
 <button type="button" aria-pressed="{{c.pressed}}" onClick="{{c.pick}}" style="height: 44px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; cursor: pointer; font-family: inherit">
@@ -282,12 +290,12 @@
 </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"period":{"editor":"enum","options":["day","week","month","year"],"default":"month"},"layout":{"editor":"enum","options":["phone","full"],"default":"phone"},"type":{"editor":null,"default":"expense"},"dim":{"editor":null,"default":"category"},"sel":{"editor":null,"default":-1},"acc":{"editor":null,"default":""},"sheet":{"editor":null,"default":false},"$preview":{"width":390,"height":844}}'>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"period":{"editor":"enum","options":["day","week","month","year"],"default":"month"},"layout":{"editor":"enum","options":["phone","full"],"default":"phone"},"type":{"editor":null,"default":"expense"},"dim":{"editor":null,"default":"category"},"sel":{"editor":null,"default":-1},"acc":{"editor":null,"default":""},"sheet":{"editor":null,"default":false},"search":{"editor":null,"default":false},"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
   componentDidUpdate(prev) {
     const p = this.props || {};
-    if (prev.period !== p.period || prev.type !== p.type || prev.dim !== p.dim || prev.sel !== p.sel || prev.acc !== p.acc || prev.sheet !== p.sheet) {
-      this.setState({ period: undefined, type: undefined, dim: undefined, sel: undefined, acc: undefined, sheet: undefined });
+    if (prev.period !== p.period || prev.type !== p.type || prev.dim !== p.dim || prev.sel !== p.sel || prev.acc !== p.acc || prev.sheet !== p.sheet || prev.search !== p.search) {
+      this.setState({ period: undefined, type: undefined, dim: undefined, sel: undefined, acc: undefined, sheet: undefined, search: undefined });
     }
   }
 
@@ -306,6 +314,7 @@ class Component extends DCLogic {
     const q = S.q ?? '';
     const accSel = S.acc !== undefined ? S.acc : (P.acc ?? '');
     const sheetOpen = S.sheet !== undefined ? S.sheet : (P.sheet === true || P.sheet === 'true');
+    const searchOpen = S.search !== undefined ? S.search : (P.search === true || P.search === 'true');
 
     // Theme tokens: Ledgerly M3 (grey seed, pinkAccent primary).
     const LIGHT = {
@@ -398,15 +407,22 @@ class Component extends DCLogic {
         income: { salary: { 'HSBC Savings': 280000 }, freelance: { Cash: 21600 }, investment: { 'HSBC Savings': 9460 } },
       },
     };
-    const JPY = { expense: { day: 0, week: 0, month: 386.40, year: 4120.80 }, income: { day: 0, week: 0, month: 0, year: 0 } };
+    // All time = Jan 2025 – Oct 2026.
+    MATRIX.all = {
+      expense: spread({ food: 97041.00, shopping: 52002.00, threeC: 39400.00, transportation: 29101.00, drinks: 15651.00, entertainment: 13600.00, other: 9225.00 }),
+      income: { salary: { 'HSBC Savings': 592000 }, freelance: { Cash: 40000 }, investment: { 'HSBC Savings': 17660 } },
+    };
+    const JPY = { expense: { day: 0, week: 0, month: 386.40, year: 4120.80, all: 6980.80 }, income: { day: 0, week: 0, month: 0, year: 0, all: 0 } };
+    const ALL_ACCTS = [['Visa card', 'card', '#04409F'], ['Cash', 'wallet', '#AEA9B4'], ['Octopus', 'card', '#00BBDF'], ['HSBC Savings', 'bank', '#04409F']];
 
-    const matAll = (t) => r2(Object.values(MATRIX[period][t]).reduce((s, row) => s + Object.values(row).reduce((a, b) => a + b, 0), 0));
-    const expTot = matAll('expense');
-    const incTot = matAll('income');
-    const totAll = type === 'expense' ? expTot : incTot;
     const typeWord = type === 'expense' ? 'expense' : 'income';
     const accList = ACCTS[type];
-    const acc = dim !== 'account' && accList.some((a) => a[0] === accSel) ? accSel : '';
+    // The account filter scopes the whole page (summary, breakdown, trend, transactions).
+    const acc = dim !== 'account' && ALL_ACCTS.some((a) => a[0] === accSel) ? accSel : '';
+    const typeTotal = (t, a) => r2(Object.values(MATRIX[period][t]).reduce((s, row) => s + (a ? row[a] || 0 : Object.values(row).reduce((x, y) => x + y, 0)), 0));
+    const expTot = typeTotal('expense', acc);
+    const incTot = typeTotal('income', acc);
+    const totAll = typeTotal(type, '');
     const M = MATRIX[period][type];
     const cats = Object.keys(M);
     const amt = (k, a) => {
@@ -520,6 +536,10 @@ class Component extends DCLogic {
         income: [32900, 28000, 34100, 29240, 33500, 28000, 30820, 32100, 30380, 32020, null, null],
       },
     };
+    SERIES.all = {
+      expense: [10820.40, 9940.60, 11230.00, 10410.20, 11880.80, 10620.00, 11940.30, 12110.70, 10280.40, 10760.20, 10450.10, 9976.30].concat(SERIES.year.expense.slice(0, 10)),
+      income: [27200, 26000, 29400, 26800, 28900, 26000, 27650, 30100, 26000, 28300, 27250, 35000].concat(SERIES.year.income.slice(0, 10)),
+    };
     const showTrend = period !== 'day' && slices.length > 0;
     // Portion of each category that falls inside the account filter and the selected slice.
     let scope = {};
@@ -547,21 +567,21 @@ class Component extends DCLogic {
       const f = totAll > 0 ? scopeSum / totAll : 0;
       series = SERIES[period][type].map((v) => (v == null ? null : v * f));
     }
-    const nowIdx = { week: 5, month: 30, year: 9 }[period];
+    const nowIdx = { week: 5, month: 30, year: 9, all: 21 }[period];
     const known = series.filter((v) => v != null);
     const maxV = known.length ? Math.max(...known) : 0;
     const top = maxV > 0 ? maxV * 1.12 : 1;
     const barColor = selSlice ? selSlice.color : type === 'expense' ? 'var(--exp)' : 'var(--inc)';
-    const radius = period === 'month' ? '3px 3px 1px 1px' : '6px 6px 2px 2px';
-    const barGap = { week: '10px', month: '3px', year: '6px' }[period] || '3px';
+    const radius = period === 'month' || period === 'all' ? '3px 3px 1px 1px' : '6px 6px 2px 2px';
+    const barGap = { week: '10px', month: '3px', year: '6px', all: '4px' }[period] || '3px';
     const bars = series.map((v) => ({
       style: v == null
         ? { flex: '1 1 0', minWidth: 0, height: '3px', borderRadius: '2px', background: 'var(--track)' }
         : { flex: '1 1 0', minWidth: 0, height: v > 0 ? `max(2px, ${((v / top) * 100).toFixed(2)}%)` : '0px', borderRadius: radius, background: barColor, transition: 'height 360ms cubic-bezier(.16,1,.3,1)' },
     }));
     const avg = known.length ? known.reduce((a, b) => a + b, 0) / known.length : 0;
-    const unit = period === 'year' ? 'month' : 'day';
-    const trendTitle = (period === 'year' ? 'Monthly ' : 'Daily ') + (type === 'expense' ? 'spending' : 'income');
+    const unit = period === 'year' || period === 'all' ? 'month' : 'day';
+    const trendTitle = (period === 'year' || period === 'all' ? 'Monthly ' : 'Daily ') + (type === 'expense' ? 'spending' : 'income');
     const trendSub = (acc ? `${acc} · ` : '') + `Avg ${money(avg)} / ${unit}`;
     const avgStyle = {
       position: 'absolute', left: 0, right: 0, bottom: `${((avg / top) * 100).toFixed(2)}%`,
@@ -571,7 +591,9 @@ class Component extends DCLogic {
     const MO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const showDays = [0, 7, 14, 21, 28, 30];
     const labels = series.map((_, i) => ({
-      t: period === 'week' ? WD[i] : period === 'year' ? MO[i] : showDays.includes(i) ? String(i + 1) : '',
+      t: period === 'week' ? WD[i] : period === 'year' ? MO[i]
+        : period === 'all' ? (i === 0 ? '2025' : i === 12 ? '2026' : i === 21 ? 'Oct' : '')
+        : showDays.includes(i) ? String(i + 1) : '',
       style: {
         flex: '1 1 0', minWidth: 0, display: 'flex', justifyContent: 'center', whiteSpace: 'nowrap',
         fontSize: '11px', lineHeight: '14px', color: i === nowIdx ? 'var(--fg)' : 'var(--fg3)', fontWeight: i === nowIdx ? 700 : 400,
@@ -585,6 +607,7 @@ class Component extends DCLogic {
       week: ['Oct 26 – Nov 1, 2026', 'This week'],
       month: ['October 2026', 'This month'],
       year: ['2026', 'This year'],
+      all: ['All time', 'Jan 2025 – Oct 2026'],
     }[period];
     const chartAria = `Bar chart: ${trendTitle.toLowerCase()}, ${PL[0]}. Average ${money(avg)} per ${unit}.`;
 
@@ -621,7 +644,7 @@ class Component extends DCLogic {
     const shown = txAll.slice(0, 5);
     const count = !selSlice ? 0 : type === 'expense'
       ? Math.max(txAll.length, Math.round(selSlice.amount / 210))
-      : txAll.length * (period === 'year' ? 10 : 1);
+      : txAll.length * (period === 'year' ? 10 : period === 'all' ? 22 : 1);
     const more = count - shown.length;
     const tx = shown.map((t) => ({
       memo: t[0],
@@ -654,17 +677,17 @@ class Component extends DCLogic {
       };
     };
     const net = r2(incTot - expTot);
-    const netLabel = { day: 'Net today', week: 'Net this week', month: 'Net this month', year: 'Net this year' }[period];
+    const netLabel = { day: 'Net today', week: 'Net this week', month: 'Net this month', year: 'Net this year', all: 'Net all time' }[period];
     const netStyle = {
       fontSize: '16px', lineHeight: '24px', fontWeight: 500, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap',
       color: net > 0 ? 'var(--inc-text)' : net < 0 ? 'var(--exp-text)' : 'var(--fg)',
     };
 
-    const when = { day: 'today', week: 'this week', month: 'this month', year: 'this year' }[period];
+    const when = { day: 'today', week: 'this week', month: 'this month', year: 'this year', all: 'yet' }[period];
 
     // Account filter (bottom sheet).
     const sheetItems = [['', 'All accounts', 'stack', null]]
-      .concat(accList.map((a) => [a[0], a[0], a[1], a[2]]))
+      .concat(ALL_ACCTS.map((a) => [a[0], a[0], a[1], a[2]]))
       .map(([key, label, icon, color]) => {
         const on = key === acc;
         const a = key ? accTotal(key) : totAll;
@@ -685,8 +708,8 @@ class Component extends DCLogic {
         };
       });
     const accPillStyle = {
-      height: '32px', padding: '0 8px 0 10px', borderRadius: '16px', display: 'inline-flex', alignItems: 'center', gap: '6px',
-      fontSize: '13px', lineHeight: '18px', fontWeight: 500, boxSizing: 'border-box', maxWidth: '170px',
+      height: '32px', padding: '0 8px 0 12px', borderRadius: '16px', display: 'inline-flex', alignItems: 'center', gap: '4px',
+      fontSize: '13px', lineHeight: '18px', fontWeight: 500, boxSizing: 'border-box', maxWidth: '150px',
       background: acc ? 'var(--sel)' : 'transparent', color: acc ? 'var(--fg)' : 'var(--fg2)',
       border: `1px solid ${acc ? 'var(--fg2)' : 'var(--outline)'}`, transition: `background 200ms ${ease}`,
     };
@@ -703,7 +726,15 @@ class Component extends DCLogic {
     return {
       rootStyle, scrollStyle, showNav: !full,
       q, showHint: q === '', onQ: (e) => set({ q: e.target.value }),
-      tabs: ['day', 'week', 'month', 'year'].map((k) => {
+      prevStyle: {
+        width: '48px', height: '48px', flex: 'none', border: 0, borderRadius: '24px', background: 'transparent', color: 'var(--fg)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', visibility: period === 'all' ? 'hidden' : 'visible',
+      },
+      nextStyle: {
+        width: '48px', height: '48px', flex: 'none', border: 0, borderRadius: '24px', background: 'transparent', color: 'var(--off)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', visibility: period === 'all' ? 'hidden' : 'visible',
+      },
+      tabs: ['day', 'week', 'month', 'year', 'all'].map((k) => {
         const on = k === period;
         return {
           label: k[0].toUpperCase() + k.slice(1), pressed: on, pick: () => set({ period: k, sel: -1 }),
@@ -735,13 +766,22 @@ class Component extends DCLogic {
       hasData: slices.length > 0, noData: slices.length === 0,
       emptyTitle: acc ? `No ${typeWord} on ${acc} ${when}` : `No ${typeWord} ${when}`,
       emptySub: acc ? 'Pick another account or period.' : `Switch to ${type === 'expense' ? 'Income' : 'Expense'} or pick another period.`,
+      showAccBtn: !searchOpen, searchClosed: !searchOpen, searchOpen,
+      searchBoxStyle: {
+        height: '48px', width: searchOpen ? '100%' : '48px', flex: 'none', boxSizing: 'border-box', borderRadius: '24px',
+        display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden',
+        background: searchOpen ? 'var(--card)' : 'transparent', border: `1px solid ${searchOpen ? 'var(--line)' : 'transparent'}`,
+        transition: `width 280ms cubic-bezier(.16,1,.3,1), background 200ms ${ease}, border-color 200ms ${ease}`,
+      },
+      openSearch: () => set({ search: true }),
+      closeSearch: () => set({ search: false, q: '' }),
       accBtnLabel: acc || 'All accounts',
       accBtnAria: `Account filter: ${acc || 'All accounts'}`,
       accPillStyle,
       openSheet: () => set({ sheet: true }),
       closeSheet: () => set({ sheet: false }),
       showSheet: sheetOpen && !full,
-      sheetSub: `${type === 'expense' ? 'Expense' : 'Income'} breakdown · ${PL[0]}`,
+      sheetSub: `Filters the whole page · ${PL[0]}`,
       sheetItems,
       showBridge: !!selSlice && dim === 'account',
       bridgeLabel: selSlice ? `See categories in ${selSlice.label}` : '',

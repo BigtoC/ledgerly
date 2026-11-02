@@ -31,8 +31,9 @@ redesign:
    tiles (Expense / Income) are the type toggle and show both totals.
 3. Restyles the pie + legend into a **breakdown card** (donut + ranked rows with
    share bars) and moves the dimension toggle into it as chips.
-4. Adds an **account filter** to the breakdown card ("show me the categories
-   inside one account").
+4. Adds a page-wide **account filter** in the app bar ("show me everything,
+   including the categories, for one account") and an **All** period that
+   covers every record.
 5. Restyles the bar chart into a **trend card** with an average line, and
    **hides it entirely when the period is Day**.
 6. Restyles the drill-down list into a **transactions card**.
@@ -102,21 +103,38 @@ All cards: margin 16 horizontal, radius 20, `card` fill, 1px `line` border, no
 shadow. Vertical gap between blocks as in the design (16 above the summary card,
 12 between cards, 24 bottom padding).
 
-### 1. App bar
+### 1. App bar (title, account filter, collapsible search)
 
-Height 64, horizontal padding 20. Title "Analysis" 24/32, w500, `fg`.
+There is no permanent search field any more. Height 64, padding 0 8 0 20,
+gap 12. Title "Analysis" 24/32 w500 `fg` on the left (never hidden). On the
+right, a row aligned to the end with gap 4:
 
-### 2. Search field
+- **Collapsed (default):** the **account filter button** (§ Account filter)
+  followed by a 48×48 search icon button (`Icons.search` 24 `fg`, semantics
+  "Search memos", collapsed).
+- **Expanded:** tapping the search button grows a search field **leftwards**
+  from the button's position until it fills the space to the right of the
+  title (width 48 → 100% of the right-hand area, 280 ms, `Cubic(0.16, 1, 0.3, 1)`;
+  right edge fixed). The account filter button is **hidden** while expanded.
+  - Field: height 48, radius 24, `card` fill + 1px `line` border (transparent
+    border/fill while collapsed), gap 10.
+  - Contents: `Icons.search` 20 `fg2` (left inset 14) · input (15/20 `fg`;
+    hint "Search memos" `fg2`; semantics label `analysisSearchPrompt`) ·
+    44×44 close button (`Icons.close` 20 `fg2`, "Close search").
+  - Opening focuses the input. Close collapses the field, clears the query
+    (same as today's clear) and brings the account button back.
+  - Keep the IME composing guard, the 300 ms debounce, and the search results
+    / empty / loading states that replace the charts while a query is active.
+  - At large text scales the hint may ellipsize; the row height stays 64 and
+    the field clamps at 1.5× like the old search bar.
 
-Padding 0 16 8. Height 48, radius 24, `card` fill + 1px `line` border, inner
-padding 0 16, gap 12. Leading `Icons.search` 20 `fg2`; hint
-`analysisSearchPrompt` 15/20 `fg2`. Keep the existing clear button, IME
-composing guard, and 1.5× text-scale height clamp.
+### 2. (removed — the search field now lives in the app bar)
 
 ### 3. Period track (replaces the 4-way `SegmentedButton`)
 
-Padding 8 16 0. Track: `track` fill, radius 25, padding 3, 4 equal columns,
-gap 4. Segment: height 44, radius 22, label 14 w500. Selected: `thumb` fill +
+Five options: **Day · Week · Month · Year · All** (All is new — see § All
+time). Padding 8 16 0. Track: `track` fill, radius 25, padding 3, 5 equal
+columns, gap 2. Segment: height 44, radius 22, label 14 w500. Selected: `thumb` fill +
 thumb shadow, `fg` text. Unselected: transparent, `fg2` text. Each segment is a
 button with selected semantics.
 
@@ -130,6 +148,24 @@ the current period — existing rule).
 - Line 2: caption 12/16 `fg3` — "Today" / "This week" / "This month" / "This
   year" **only when at the current period**; otherwise omit the line (no new
   behaviour beyond that).
+- **All:** label "All time"; caption = the covered range, "<MMM yyyy of the
+  first transaction> – <MMM yyyy now>" (e.g. "Jan 2025 – Oct 2026"). Both
+  chevron buttons are hidden (keep their 48 px slots so the label stays
+  centred) and the period swipe gesture does nothing.
+
+### All time (new period)
+
+- Add `PeriodType.all`. Range = `[first day of the month of the earliest
+  transaction, start of next month)`, using `getDateBounds()`; with no
+  transactions it behaves like an empty period.
+- Every surface uses that range: summary card, breakdown, trend, transactions.
+- Trend uses **monthly** buckets across the whole range (like Year), title
+  "Monthly spending/income", average per month over elapsed months.
+- X labels: the year ("2025", "2026") under each January, plus the current
+  month's short name ("Oct") under the last bar; everything else blank. Bar
+  gap 4, top radius 3.
+- `previousPeriod` / `nextPeriod` / swipe are no-ops on All; switching to All
+  ignores `anchorDate`.
 
 ### 5. Summary card (replaces `TypeToggle` and `ChartsNetTotalCard`)
 
@@ -153,23 +189,21 @@ totals. Decorative (exclude from semantics).
 
 **Net row** — horizontal padding 4, space-between, baseline aligned.
 - Label 14/20 `fg2`: "Net today" / "Net this week" / "Net this month" / "Net
-  this year" by period.
+  this year" / "Net all time" by period.
 - Amount 16/24 w500 tabular, signed (`MoneyFormatter.formatSigned`):
   `incText` when > 0, `expText` when < 0, `fg` at 0, "—" when unavailable.
 - Keep the existing excluded-currencies line under it (bodySmall) when non-empty.
 
-The summary card always shows **all accounts**; the account filter does not
-affect it.
+The summary card **follows the account filter**: with an account selected,
+both tiles, the ratio bar and the net show only that account's transactions.
 
 ### 6. Breakdown card (restyles pie + legend; hosts dimension + account filter)
 
 Padding 16 0 8.
 
 **Header** (padding 0 16, column gap 4)
-- Row, height 24, space-between:
-  - Title 16/24 w500 `fg`: "Expense breakdown" / "Income breakdown".
-  - **Account filter button** (see § Account filter). Visual pill 32 high
-    inside a 44-high hit target (negative vertical margin so the row stays 24).
+- Title 16/24 w500 `fg`: "Expense breakdown" / "Income breakdown". (The
+  account filter button moved to the app bar.)
 - Dimension chips (replaces `DimensionToggle`): wrap row, gap 8. Each chip is a
   44-high button containing a 32-high pill: padding 0 14, radius 16, 14/20 w500,
   1px border. Selected: `onBg` fill + border, `onFg` text. Unselected:
@@ -285,7 +319,8 @@ Shown only when a slice is selected (existing). Padding 8 0.
 
 ## Account filter (new)
 
-**Goal:** inside the breakdown, pick one account and see its categories.
+**Goal:** pick one account and see the whole page — totals, categories,
+trend, transactions — for that account only.
 
 ### State
 
@@ -302,7 +337,7 @@ Shown only when a slice is selected (existing). Padding 8 0.
 
 | Area | Filtered? |
 |---|---|
-| Summary card | No (always all accounts) |
+| Summary card (both tiles, ratio bar, net) | Yes |
 | Breakdown slices — Category, Currency dimensions | Yes |
 | Donut centre text | Yes ("<Account> expense") |
 | Trend buckets + average | Yes (`watchTimeBucketsInRange(accountId:)` already exists) |
@@ -320,15 +355,18 @@ selected slice so a category slice under an account filter queries
 - Summary tiles need converted **expense and income totals** for the period
   (today only the net is available). Extend the net-total provider path to
   expose per-currency expense and income totals (one query grouped by
-  type + currency), and derive net from them so the card stays consistent.
+  type + currency, with the same optional `accountId` filter), and derive net
+  from them so the card stays consistent.
 - Account sheet rows need each account's converted total for the period and
   type (reuse `watchByAccountInRange`).
 
-### Filter button (breakdown header)
+### Filter button (app bar, left of the search button)
 
-- 44-high hit target; pill 32 high, padding 0 8 0 10, radius 16, gap 6, 13/18
-  w500, max width 170, label ellipsis. Content: `Icons.account_balance_wallet_outlined`
-  16 + label + `Icons.arrow_drop_down` (or `expand_more`) 16.
+- Lives in the app bar (§ 1), immediately left of the search icon button;
+  hidden while search is expanded.
+- 44-high hit target; pill 32 high, padding 0 8 0 12, radius 16, gap 4, 13/18
+  w500, max width 150, label ellipsis. Content: label + `Icons.expand_more` 16.
+  **No wallet icon.**
 - Inactive: label "All accounts", transparent, `outline` border, `fg2`.
 - Active: label = account name, `sel` fill, `fg2` border, `fg` text.
 - Semantics: button, "Account filter: <label>", opens a dialog.
@@ -340,11 +378,13 @@ sheets), `card` fill, top radius 28, bottom padding 24, scrim at 32% black.
 
 - Drag handle: 32×4, radius 2, `outline`, padding 16 0 8.
 - Header (padding 8 24 12, gap 2): "Filter by account" 20/28 w500 `fg`;
-  subtitle 14/20 `fg2` "<Expense|Income> breakdown · <period label>".
+  subtitle 14/20 `fg2` "Filters the whole page · <period label>".
 - Rows (list padding 0 12, gap 2), one radio group:
   - First row "All accounts" (icon `Icons.layers_outlined` on a `track`
-    circle, `fg2`), then the active accounts sorted by amount desc; accounts
-    with 0 in the period come last and stay selectable.
+    circle, `fg2`), then **every active account** (expense and income
+    accounts alike), sorted by the current type's amount desc; accounts with
+    0 in the period come last and stay selectable. Row amounts and shares
+    are for the current chart type.
   - Row: min height 64, padding 8 12, radius 16, gap 16; selected row `sel`
     fill. 40×40 circle (account type colour + account type icon 20, ink by the
     same luminance rule). Column: name 16/22 (w700 when selected, else w400)
@@ -372,10 +412,15 @@ suggestion; follow the file's existing `@key` description convention):
 | `chartsCategoryCount` / `AccountCount` / `CurrencyCount` (plural) | {count} categories… | {count} 個類別 / 帳戶 / 幣別 | {count} 个类别 / 账户 / 币种 |
 | `chartsTrendDailySpending` / `MonthlySpending` / `DailyIncome` / `MonthlyIncome` | Daily spending / Monthly spending / Daily income / Monthly income | 每日支出 / 每月支出 / 每日收入 / 每月收入 | 每日支出 / 每月支出 / 每日收入 / 每月收入 |
 | `chartsAvgPerDay` / `PerMonth` (`{amount}`) | Avg {amount} / day · Avg {amount} / month | 平均每日 {amount} / 平均每月 {amount} | 平均每日 {amount} / 平均每月 {amount} |
+| `analysisSearchHint` | Search memos | 搜尋備註 | 搜索备注 |
+| `analysisSearchOpen` / `analysisSearchClose` | Search memos / Close search | 搜尋備註 / 關閉搜尋 | 搜索备注 / 关闭搜索 |
 | `chartsAllAccounts` | All accounts | 所有帳戶 | 所有账户 |
 | `chartsAccountFilterLabel` (`{label}`) | Account filter: {label} | 帳戶篩選：{label} | 账户筛选：{label} |
 | `chartsFilterByAccount` | Filter by account | 依帳戶篩選 | 按账户筛选 |
-| `chartsFilterSheetSubtitle` (`{breakdown}`, `{period}`) | {breakdown} · {period} | {breakdown} · {period} | {breakdown} · {period} |
+| `chartsFilterSheetSubtitle` (`{period}`) | Filters the whole page · {period} | 套用到整個頁面 · {period} | 应用到整个页面 · {period} |
+| `chartsPeriodAll` | All | 全部 | 全部 |
+| `chartsAllTime` | All time | 全部時間 | 全部时间 |
+| `chartsNetAllTime` | Net all time | 累計淨額 | 累计净额 |
 | `chartsSeeCategoriesIn` (`{account}`) | See categories in {account} | 查看 {account} 的類別 | 查看 {account} 的类别 |
 | `chartsClearSliceFilter` (`{label}`) | Showing {label} only. Clear filter | 只顯示 {label}，清除篩選 | 只显示 {label}，清除筛选 |
 | `chartsCloseTransactions` | Close transactions | 關閉交易列表 | 关闭交易列表 |
@@ -423,16 +468,26 @@ use golden tests.
    header shows the filter chip and tapping it clears the selection.
 9. Mixed-currency slices hide share bars and percentages.
 10. No overflow at 2× text scale (light and dark).
-11. Repository: `watchByCategoryInRange` / `watchByCurrencyInRange` with
+11. Search: the app bar shows the account button + a search icon; tapping the
+    icon expands the field (input focused) and hides the account button;
+    close collapses it, clears the query and shows the account button again;
+    typing still shows search results in place of the charts.
+12. Account filter also changes the summary tiles and net (e.g. Visa card →
+    Expense = Visa card's expense, Income = Visa card's income).
+13. All: five period options; All shows "All time" with the covered range,
+    hides both chevrons, ignores swipes, and the trend shows one bar per
+    month from the first transaction's month to now.
+14. Repository: `watchByCategoryInRange` / `watchByCurrencyInRange` with
     `accountId` return only that account's rows; null keeps current output.
 
 ## Suggested order (one PR-sized slice each)
 
 1. Hide the trend card on Day (+ test 1).
-2. `AnalysisColors` theme extension; period track + navigator.
+2. `AnalysisColors` theme extension; app bar (collapsible search); period
+   track + navigator.
 3. Summary card (data: per-type totals) — replaces TypeToggle + net card.
 4. Breakdown card: chips, donut, ranked rows, empty state.
-5. Trend card restyle + average line + filter chip.
+5. Trend card restyle + average line + filter chip; then the All period.
 6. Transactions card restyle.
 7. Account filter: repository filters → selection state → button + sheet →
    bridge button.
