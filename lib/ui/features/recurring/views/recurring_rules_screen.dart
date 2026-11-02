@@ -217,6 +217,13 @@ class _RuleTile extends StatelessWidget {
     final dueText = l10n.recurringTileNextDue(
       DateFormat.yMMMd().format(rule.nextDueDate),
     );
+    final period = switch (rule.frequency) {
+      'daily' => l10n.recurringFrequencyDaily,
+      'weekly' => l10n.recurringFrequencyWeekly,
+      'monthly' => l10n.recurringFrequencyMonthly,
+      'yearly' => l10n.recurringFrequencyYearly,
+      _ => rule.frequency,
+    };
     final cat = category;
     final color = cat != null ? colorForIndex(cat.color) : theme.disabledColor;
     final inactive = !rule.isActive;
@@ -231,7 +238,7 @@ class _RuleTile extends StatelessWidget {
           ),
         ),
         title: Text(rule.name),
-        subtitle: Text(dueText),
+        subtitle: Text('$period · $dueText'),
         trailing: inactive
             ? Chip(
                 label: Text(l10n.recurringTilePaused),

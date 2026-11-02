@@ -8,6 +8,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -57,6 +58,7 @@ RecurringRule _rule({
   String name = 'Netflix',
   bool isActive = true,
   int categoryId = 1,
+  String frequency = 'monthly',
 }) => RecurringRule(
   id: id,
   name: name,
@@ -64,7 +66,7 @@ RecurringRule _rule({
   currency: _usd,
   categoryId: categoryId,
   accountId: 1,
-  frequency: 'monthly',
+  frequency: frequency,
   dayOfMonth: 15,
   isActive: isActive,
   isArchived: false,
@@ -103,12 +105,17 @@ class _StubRouter {
 }
 
 @Dependencies([RecurringRulesController])
-Widget _wrap(ProviderContainer container) {
+Widget _wrap(ProviderContainer container, {double textScale = 1}) {
   return UncontrolledProviderScope(
     container: container,
     child: MaterialApp.router(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: TextScaler.linear(textScale)),
+        child: child!,
+      ),
       routerConfig: _StubRouter.build(const RecurringRulesScreen()),
     ),
   );
@@ -472,5 +479,62 @@ void main() {
       find.descendant(of: tile, matching: find.byIcon(Icons.help_outline)),
       findsOneWidget,
     );
+  });
+
+  testWidgets('RRS16: subtitle shows the period next to the next due date', (
+    tester,
+  ) async {
+    final container = _makeContainer(
+      RecurringRulesState.data(
+        rules: [
+          _rule(id: 1, name: 'Coffee', frequency: 'daily'),
+          _rule(id: 2, name: 'Gym', frequency: 'weekly'),
+          _rule(id: 3, name: 'Rent', frequency: 'monthly'),
+          _rule(id: 4, name: 'Domain', frequency: 'yearly'),
+        ],
+        pendingDelete: null,
+      ),
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Daily · Next: Jun 15, 2026'), findsOneWidget);
+    expect(find.text('Weekly · Next: Jun 15, 2026'), findsOneWidget);
+    expect(find.text('Monthly · Next: Jun 15, 2026'), findsOneWidget);
+    expect(find.text('Yearly · Next: Jun 15, 2026'), findsOneWidget);
+  });
+  testWidgets('RRS17: period subtitle scales to 2x without truncating', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390 * 3, 800 * 3);
+    tester.view.devicePixelRatio = 3.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final container = _makeContainer(
+      RecurringRulesState.data(rules: [_rule(id: 1)], pendingDelete: null),
+    );
+    addTearDown(container.dispose);
+    final subtitle = find.text('Monthly · Next: Jun 15, 2026');
+
+    await tester.pumpWidget(_wrap(container));
+    await tester.pumpAndSettle();
+    final heightAt1x = tester.getRect(subtitle).height;
+
+    await tester.pumpWidget(_wrap(container, textScale: 2));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    // Rendered (on-screen) height, so a FittedBox shrink or a disabled
+    // text scaler would fail here too.
+    expect(tester.getRect(subtitle).height, greaterThan(heightAt1x * 1.8));
+    final paragraph = tester.renderObject<RenderParagraph>(subtitle);
+    expect(paragraph.didExceedMaxLines, isFalse);
+    final iconBottom = tester.getRect(find.byIcon(Icons.restaurant)).bottom;
+    final tileBottom = tester
+        .getRect(find.byKey(const ValueKey('recurringRuleTile:1')))
+        .bottom;
+    expect(iconBottom, lessThanOrEqualTo(tileBottom));
   });
 }
