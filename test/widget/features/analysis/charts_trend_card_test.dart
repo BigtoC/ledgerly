@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/core/utils/color_palette.dart';
@@ -252,7 +253,12 @@ void main() {
       final pill = find.byKey(const ValueKey('trendFilterPill'));
       expect(tester.getSize(pill).height, 32);
       final decoration =
-          tester.widget<Container>(pill).decoration! as BoxDecoration;
+          tester
+                  .widget<Ink>(
+                    find.descendant(of: pill, matching: find.byType(Ink)),
+                  )
+                  .decoration!
+              as BoxDecoration;
       expect(decoration.color, _colors.sel);
       expect(decoration.borderRadius, BorderRadius.circular(16));
       // Padding 0 8 0 10, gap 6.
@@ -281,6 +287,82 @@ void main() {
       );
 
       await tester.tap(find.text('Food'));
+      expect(cleared, 1);
+    });
+
+    testWidgets('a tap in the 44 px target above the pill clears the slice', (
+      tester,
+    ) async {
+      var cleared = 0;
+      await _pump(
+        tester,
+        _data(),
+        selectedSlice: _food,
+        onClearSlice: () => cleared++,
+      );
+
+      final target = tester.getRect(
+        find.bySemanticsLabel('Showing Food only. Clear filter'),
+      );
+      await tester.tapAt(Offset(target.center.dx, target.top + 2));
+      expect(cleared, 1);
+    });
+
+    testWidgets('pressing it shows an ink ripple clipped to the pill (D16)', (
+      tester,
+    ) async {
+      await _pump(tester, _data(), selectedSlice: _food);
+
+      final target = tester.getRect(
+        find.bySemanticsLabel('Showing Food only. Clear filter'),
+      );
+      final pill = tester.getRect(
+        find.byKey(const ValueKey('trendFilterPill')),
+      );
+      final gesture = await tester.startGesture(pill.center);
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // The ink is painted in the hit target's coordinates; the clip is the
+      // 16-radius pill, not the 44 px target.
+      final inPill = pill.shift(-target.topLeft);
+      expect(
+        Material.of(tester.element(find.text('Food'))),
+        paints..clipPath(
+          pathMatcher: isPathThat(
+            includes: [inPill.center, inPill.centerLeft + const Offset(1, 0)],
+            excludes: [
+              Offset(inPill.center.dx, inPill.top - 2),
+              Offset(inPill.center.dx, inPill.bottom + 2),
+              inPill.topLeft + const Offset(1, 1),
+              inPill.bottomRight - const Offset(1, 1),
+            ],
+          ),
+        ),
+      );
+      await gesture.up();
+      await tester.pump(const Duration(seconds: 1));
+    });
+
+    testWidgets('takes keyboard focus and clears on Enter (D16)', (
+      tester,
+    ) async {
+      var cleared = 0;
+      await _pump(
+        tester,
+        _data(),
+        selectedSlice: _food,
+        onClearSlice: () => cleared++,
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      expect(
+        Focus.of(tester.element(find.text('Food'))).hasPrimaryFocus,
+        isTrue,
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
       expect(cleared, 1);
     });
 

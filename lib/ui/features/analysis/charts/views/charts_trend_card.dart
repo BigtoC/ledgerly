@@ -156,69 +156,89 @@ class ChartsTrendCard extends StatelessWidget {
   }
 }
 
-class _FilterChip extends StatelessWidget {
+class _FilterChip extends StatefulWidget {
   const _FilterChip({required this.slice, required this.onTap});
 
   final ChartSlice slice;
   final VoidCallback onTap;
 
   @override
+  State<_FilterChip> createState() => _FilterChipState();
+}
+
+class _FilterChipState extends State<_FilterChip> {
+  final _pillKey = GlobalKey();
+
+  @override
   Widget build(BuildContext context) {
     final colors = AnalysisColors.of(context);
     final l10n = AppLocalizations.of(context);
+    final slice = widget.slice;
     final label = categoryDisplayNameForKey(slice.label, l10n);
     return Semantics(
       container: true,
       button: true,
       label: l10n.chartsClearSliceFilter(label),
-      onTap: onTap,
+      onTap: widget.onTap,
       excludeSemantics: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 44),
-          child: Center(
-            widthFactor: 1,
-            heightFactor: 1,
-            child: Container(
-              key: const ValueKey('trendFilterPill'),
-              constraints: const BoxConstraints(minHeight: 32),
-              padding: const EdgeInsets.fromLTRB(10, 0, 8, 0),
-              decoration: BoxDecoration(
-                color: colors.sel,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    key: const ValueKey('trendFilterDot'),
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: colorForIndex(slice.colorIndex),
-                      shape: BoxShape.circle,
-                    ),
+      // The card's fill hides the Scaffold's Material, so the ink needs its
+      // own.
+      child: Material(
+        type: MaterialType.transparency,
+        child: _PillInkWell(
+          pillKey: _pillKey,
+          onTap: widget.onTap,
+          customBorder: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 44),
+            child: Center(
+              widthFactor: 1,
+              heightFactor: 1,
+              child: ConstrainedBox(
+                key: const ValueKey('trendFilterPill'),
+                constraints: const BoxConstraints(minHeight: 32),
+                // Ink, not a Container fill, so the ripple paints above it.
+                child: Ink(
+                  key: _pillKey,
+                  padding: const EdgeInsets.fromLTRB(10, 0, 8, 0),
+                  decoration: BoxDecoration(
+                    color: colors.sel,
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      softWrap: false,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 0,
-                        color: colors.fg,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        key: const ValueKey('trendFilterDot'),
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: colorForIndex(slice.colorIndex),
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          softWrap: false,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0,
+                            color: colors.fg,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(Icons.close, size: 16, color: colors.fg2),
+                    ],
                   ),
-                  const SizedBox(width: 6),
-                  Icon(Icons.close, size: 16, color: colors.fg2),
-                ],
+                ),
               ),
             ),
           ),
@@ -226,6 +246,31 @@ class _FilterChip extends StatelessWidget {
       ),
     );
   }
+}
+
+/// An [InkWell] over the whole 44 px hit target whose ripple, highlight and
+/// focus ink cover only the pill inside it (D16).
+class _PillInkWell extends InkWell {
+  const _PillInkWell({
+    required this.pillKey,
+    super.onTap,
+    super.customBorder,
+    super.child,
+  });
+
+  final GlobalKey pillKey;
+
+  @override
+  RectCallback getRectCallback(RenderBox referenceBox) => () {
+    final pill = pillKey.currentContext?.findRenderObject();
+    if (pill is! RenderBox || !pill.attached) {
+      return Offset.zero & referenceBox.size;
+    }
+    return MatrixUtils.transformRect(
+      pill.getTransformTo(referenceBox),
+      Offset.zero & pill.size,
+    );
+  };
 }
 
 /// The average line's legend: a 1.5 px `[3, 3]` dashed stroke.
