@@ -413,6 +413,12 @@ class _ListHeader extends StatelessWidget {
       currency: currency,
       locale: locale,
     );
+    final subtitleStyle = analysisText(
+      size: 13,
+      lineHeight: 18,
+      color: colors.fg2,
+      tabular: true,
+    );
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
       child: Row(
@@ -441,14 +447,25 @@ class _ListHeader extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  '${l10n.analysisTransactionCount(count)} · $total',
-                  style: analysisText(
-                    size: 13,
-                    lineHeight: 18,
-                    color: colors.fg2,
-                    tabular: true,
-                  ),
+                // Wraps like one string would, but the total is one piece:
+                // it never breaks mid-number and scales down only when it
+                // alone is wider than the line (plan D2).
+                Wrap(
+                  children: [
+                    Text(
+                      '${l10n.analysisTransactionCount(count)} · ',
+                      style: subtitleStyle,
+                    ),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        total,
+                        maxLines: 1,
+                        softWrap: false,
+                        style: subtitleStyle,
+                      ),
+                    ),
+                  ],
                 ),
                 if (showStaleRates) ...[
                   const SizedBox(height: 2),

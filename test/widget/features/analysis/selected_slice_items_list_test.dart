@@ -350,13 +350,24 @@ void main() {
       expect(title.style!.fontWeight, FontWeight.w500);
       expect(title.style!.color, _colors.fg);
 
-      final subtitle = _text(tester, r'2 transactions · $10.00');
-      expect(subtitle.style!.fontSize, 13);
-      expect(subtitle.style!.height, 18 / 13);
-      expect(subtitle.style!.color, _colors.fg2);
+      for (final piece in ['2 transactions · ', r'$10.00']) {
+        final subtitle = _text(tester, piece);
+        expect(subtitle.style!.fontSize, 13);
+        expect(subtitle.style!.height, 18 / 13);
+        expect(subtitle.style!.color, _colors.fg2);
+        expect(
+          subtitle.style!.fontFeatures,
+          contains(const FontFeature.tabularFigures()),
+        );
+      }
+      // One line, read as one string: the total follows the count.
+      final count = tester.getRect(find.text('2 transactions · '));
+      final total = tester.getRect(find.text(r'$10.00'));
+      expect(total.left, moreOrLessEquals(count.right));
+      expect(total.top, count.top);
       expect(
-        subtitle.style!.fontFeatures,
-        contains(const FontFeature.tabularFigures()),
+        total.size,
+        tester.renderObject<RenderBox>(find.text(r'$10.00')).size,
       );
 
       // Padding 8 8 8 16 inside the 1px border + 8 card padding; gap 12.
@@ -370,8 +381,7 @@ void main() {
       expect(card.right - close.right, 1 + 8);
       expect(dot.center.dy, close.center.dy);
       expect(
-        tester.getRect(find.text(r'2 transactions · $10.00')).top -
-            titleRect.bottom,
+        tester.getRect(find.text('2 transactions · ')).top - titleRect.bottom,
         2,
       );
       // Header bottom padding 8, then the first row's divider.
@@ -451,7 +461,7 @@ void main() {
         expect(stale.style!.color, _colors.fg2);
         expect(
           tester.getRect(find.text('Using last known exchange rates')).top -
-              tester.getRect(find.text(r'1 transaction · $1.10')).bottom,
+              tester.getRect(find.text('1 transaction · ')).bottom,
           2,
         );
       },
@@ -515,13 +525,49 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(tester.getSize(find.text('Food')).height, 48);
-      expect(tester.getSize(find.text(r'1 transaction · $10.00')).height, 36);
+      expect(tester.getSize(find.text('1 transaction · ')).height, 36);
+      expect(tester.getSize(find.text(r'$10.00')).height, 36);
       expect(
         tester.getSize(find.byTooltip('Close transactions')),
         const Size(48, 48),
       );
       expect(tester.getSize(_dot), const Size(12, 12));
     });
+  });
+
+  group('long header total (D2)', () {
+    testWidgets(
+      '360 phone at 2x: a long total stays on one line and scales down to '
+      'fit, never cut off',
+      (tester) async {
+        tester.view.physicalSize = const Size(360, 800);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final repo = _MockRepo();
+        _stubRows(repo, () => Stream.value([_tx(1, memo: 'Lunch')]));
+        await tester.pumpWidget(
+          _harness(
+            repo: repo,
+            slice: _slice(const SelectedSlice.category(1))
+                .copyWith(totalMinorUnits: 123456789012),
+            activeSelection: const SelectedSlice.category(1),
+            textScale: 2,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(tester.takeException(), isNull);
+        final total = find.textContaining(r'$1,234,567,890.12');
+        expect(total, findsOneWidget);
+        // Laid out on one 36-high line (18 x 2), not broken mid-number.
+        expect(tester.renderObject<RenderBox>(total).size.height, 36);
+        final rendered = tester.getRect(total);
+        final title = tester.getRect(find.text('Food'));
+        final close = tester.getRect(find.byTooltip('Close transactions'));
+        expect(rendered.left, greaterThanOrEqualTo(title.left));
+        expect(rendered.right, lessThanOrEqualTo(close.left - 12 + 0.01));
+      },
+    );
   });
 
   group('rows', () {
@@ -694,13 +740,13 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(SliceTransactionRow), findsNWidgets(50));
-      expect(find.text(r'120 transactions · $10.00'), findsOneWidget);
+      expect(find.text('120 transactions · '), findsOneWidget);
 
       await tester.ensureVisible(find.text('Show 50 more'));
       await tester.tap(find.text('Show 50 more'));
       await tester.pumpAndSettle();
       expect(find.byType(SliceTransactionRow), findsNWidgets(100));
-      expect(find.text(r'120 transactions · $10.00'), findsOneWidget);
+      expect(find.text('120 transactions · '), findsOneWidget);
 
       await tester.ensureVisible(find.text('Show 20 more'));
       await tester.tap(find.text('Show 20 more'));
