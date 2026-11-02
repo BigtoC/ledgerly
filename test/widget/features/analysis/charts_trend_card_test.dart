@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/core/utils/color_palette.dart';
@@ -280,6 +281,31 @@ void main() {
 
       await tester.tap(find.text('Food'));
       expect(cleared, 1);
+    });
+
+    testWidgets('a screen reader can activate it', (tester) async {
+      final handle = tester.ensureSemantics();
+      var cleared = 0;
+      await _pump(
+        tester,
+        _data(),
+        selectedSlice: _food,
+        onClearSlice: () => cleared++,
+      );
+
+      final target = find.bySemanticsLabel('Showing Food only. Clear filter');
+      expect(
+        tester
+            .getSemantics(target)
+            .getSemanticsData()
+            .hasAction(SemanticsAction.tap),
+        isTrue,
+      );
+      tester.semantics.tap(
+        find.semantics.byLabel('Showing Food only. Clear filter'),
+      );
+      expect(cleared, 1);
+      handle.dispose();
     });
   });
 

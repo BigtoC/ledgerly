@@ -171,6 +171,7 @@ class _FilterChip extends StatelessWidget {
       container: true,
       button: true,
       label: l10n.chartsClearSliceFilter(label),
+      onTap: onTap,
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
