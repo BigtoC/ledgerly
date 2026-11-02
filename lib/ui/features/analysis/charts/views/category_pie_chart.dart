@@ -3,20 +3,25 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/utils/color_palette.dart';
 import '../../../../../core/utils/money_formatter.dart';
+import '../../../../../domain/models/category.dart';
 import '../../../../../domain/models/currency.dart';
 import '../../../../../l10n/app_localizations.dart';
+import '../../../../core/theme/analysis_colors.dart';
 import '../../../categories/views/category_display.dart';
 import '../view_models/charts_state.dart';
 
-/// Pie chart with tap-to-focus interaction. The selected slice grows, its
-/// neighbours dim, and the centre hole surfaces label + amount. Selection
-/// is hoisted via [onSelectionChanged] so [ChartLegend] can mirror it.
+/// Breakdown donut with tap-to-focus interaction. A selected slice keeps
+/// its colour while the others fade, and the centre shows its label,
+/// amount and share. Selection is hoisted via [onSelectionChanged] so
+/// [ChartLegend] can mirror it.
 class CategoryPieChart extends StatefulWidget {
   const CategoryPieChart({
     super.key,
     required this.slices,
     required this.currenciesByCode,
     required this.locale,
+    required this.type,
+    required this.dimension,
     this.grandTotalMinorUnits,
     this.displayCurrencyCode,
     this.selectedIndex,
@@ -26,6 +31,12 @@ class CategoryPieChart extends StatefulWidget {
   final List<ChartSlice> slices;
   final Map<String, Currency> currenciesByCode;
   final String locale;
+
+  /// Chart type, for the centre's "Total expense" / "of income" wording.
+  final CategoryType type;
+
+  /// Grouping, for the centre's "N categories / accounts / currencies".
+  final ChartDimension dimension;
   final int? grandTotalMinorUnits;
   final String? displayCurrencyCode;
 
@@ -43,6 +54,18 @@ class CategoryPieChart extends StatefulWidget {
 }
 
 class _CategoryPieChartState extends State<CategoryPieChart> {
+  static const double _kSize = 200;
+  static const double _kHoleRadius = 74;
+  static const double _kRingWidth = 26;
+
+  /// D6: fl_chart draws a constant-width gap, not the design's 0.6 %
+  /// wedge; 3.28 is the wedge's width at mid-ring.
+  static const double _kSectionsSpace = 3.28;
+
+  /// D6: start at 12 o'clock, shifted back by half the 0.6 % wedge
+  /// (1.08°) so each gap sits where the design ends its slice.
+  static const double _kStartDegreeOffset = -90 - 1.08;
+
   void _select(int? index) {
     widget.onSelectionChanged?.call(index);
   }
@@ -50,72 +73,76 @@ class _CategoryPieChartState extends State<CategoryPieChart> {
   @override
   Widget build(BuildContext context) {
     if (widget.slices.isEmpty) {
-      return const SizedBox(height: 200);
+      return const SizedBox(height: _kSize);
     }
-    final showLabels = widget.slices.first.fraction != null;
     final l10n = AppLocalizations.of(context);
+    final colors = AnalysisColors.of(context);
     final selection = widget.selectedIndex;
-    final scheme = Theme.of(context).colorScheme;
 
     return Semantics(
       label: _semanticsLabel(l10n),
       image: true,
       excludeSemantics: true,
-      child: AspectRatio(
-        aspectRatio: 1.4,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            PieChart(
-              PieChartData(
-                sectionsSpace: 2,
-                centerSpaceRadius: 44,
-                pieTouchData: PieTouchData(
-                  enabled: true,
-                  touchCallback: (event, response) {
-                    // Don't gate on `isInterestedForInteractions`: fl_chart
-                    // reports FlTapUpEvent as uninteresting on mobile, which
-                    // would drop every slice tap.
-                    if ((event is! FlTapUpEvent && event is! FlLongPressEnd) ||
-                        response == null ||
-                        response.touchedSection == null) {
-                      return;
-                    }
-                    final idx = response.touchedSection!.touchedSectionIndex;
-                    if (idx < 0 || idx >= widget.slices.length) {
-                      // Tap landed in the centre hole — clear selection.
-                      _select(null);
-                      return;
-                    }
-                    _select(selection == idx ? null : idx);
-                  },
-                ),
-                sections: [
-                  for (var i = 0; i < widget.slices.length; i++)
-                    _section(
-                      slice: widget.slices[i],
-                      isSelected: i == selection,
-                      anySelected: selection != null,
-                      showLabels: showLabels,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Center(
+          heightFactor: 1,
+          child: SizedBox.square(
+            dimension: _kSize,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                PieChart(
+                  PieChartData(
+                    sectionsSpace: _kSectionsSpace,
+                    centerSpaceRadius: _kHoleRadius,
+                    startDegreeOffset: _kStartDegreeOffset,
+                    pieTouchData: PieTouchData(
+                      enabled: true,
+                      touchCallback: (event, response) {
+                        // Don't gate on `isInterestedForInteractions`:
+                        // fl_chart reports FlTapUpEvent as uninteresting on
+                        // mobile, which would drop every slice tap.
+                        if ((event is! FlTapUpEvent &&
+                                event is! FlLongPressEnd) ||
+                            response == null ||
+                            response.touchedSection == null) {
+                          return;
+                        }
+                        final idx =
+                            response.touchedSection!.touchedSectionIndex;
+                        if (idx < 0 || idx >= widget.slices.length) {
+                          // Tap landed in the centre hole — clear selection.
+                          _select(null);
+                          return;
+                        }
+                        _select(selection == idx ? null : idx);
+                      },
                     ),
-                ],
-              ),
-              duration: const Duration(milliseconds: 600),
-              curve: Curves.easeOutCubic,
-            ),
-            IgnorePointer(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 220),
-                switchInCurve: Curves.easeOut,
-                switchOutCurve: Curves.easeIn,
-                child: _centerLabel(
-                  l10n: l10n,
-                  scheme: scheme,
-                  selection: selection,
+                    sections: [
+                      for (var i = 0; i < widget.slices.length; i++)
+                        _section(
+                          slice: widget.slices[i],
+                          faded: selection != null && i != selection,
+                        ),
+                    ],
+                  ),
+                  duration: AnalysisMotion.standardDuration,
+                  curve: AnalysisMotion.standardCurve,
                 ),
-              ),
+                IgnorePointer(
+                  // Fixed-size box: clamp the centre text at 1.5x (D2).
+                  child: MediaQuery.withClampedTextScaling(
+                    maxScaleFactor: 1.5,
+                    child: SizedBox.square(
+                      dimension: _kHoleRadius * 2,
+                      child: _center(l10n, colors, selection),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -123,113 +150,95 @@ class _CategoryPieChartState extends State<CategoryPieChart> {
 
   PieChartSectionData _section({
     required ChartSlice slice,
-    required bool isSelected,
-    required bool anySelected,
-    required bool showLabels,
+    required bool faded,
   }) {
     final baseColor = colorForIndex(slice.colorIndex);
-    final color = anySelected && !isSelected
-        ? baseColor.withValues(alpha: 0.4)
-        : baseColor;
     return PieChartSectionData(
       value: slice.totalMinorUnits.abs().toDouble(),
-      color: color,
-      title: showLabels ? '${(slice.fraction! * 100).round()}%' : '',
-      radius: isSelected ? 72 : 60,
-      titleStyle: TextStyle(
-        fontSize: isSelected ? 14 : 12,
-        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-        color: Colors.white,
-        shadows: isSelected
-            ? const [Shadow(blurRadius: 2, color: Colors.black54)]
-            : null,
-      ),
+      color: faded ? baseColor.withAlpha(0x4D) : baseColor,
+      radius: _kRingWidth,
+      showTitle: false,
     );
   }
 
-  Widget _centerLabel({
-    required AppLocalizations l10n,
-    required ColorScheme scheme,
-    required int? selection,
-  }) {
+  Widget _center(AppLocalizations l10n, AnalysisColors colors, int? selection) {
+    final isIncome = widget.type == CategoryType.income;
+    final String top;
+    final Color topColor;
+    final FontWeight topWeight;
+    final String amount;
+    final String? sub;
     if (selection == null) {
-      if (widget.grandTotalMinorUnits == null ||
-          widget.displayCurrencyCode == null) {
-        return const SizedBox.shrink(key: ValueKey('empty'));
+      top = isIncome ? l10n.chartsTotalIncome : l10n.chartsTotalExpense;
+      topColor = colors.fg2;
+      topWeight = FontWeight.w400;
+      final total = widget.grandTotalMinorUnits;
+      final code = widget.displayCurrencyCode;
+      // D12: no grand total when currencies are mixed.
+      amount = total == null || code == null ? '—' : _format(total, code);
+      final count = widget.slices.length;
+      sub = switch (widget.dimension) {
+        ChartDimension.category => l10n.chartsCategoryCount(count),
+        ChartDimension.account => l10n.chartsAccountCount(count),
+        ChartDimension.currency => l10n.chartsCurrencyCount(count),
+      };
+    } else {
+      final slice = widget.slices[selection];
+      top = categoryDisplayNameForKey(slice.label, l10n);
+      topColor = colors.fg;
+      topWeight = FontWeight.w500;
+      amount = _format(slice.totalMinorUnits, slice.currencyCode);
+      final fraction = slice.fraction;
+      if (fraction == null) {
+        sub = null;
+      } else {
+        final percent = '${(fraction * 100).toStringAsFixed(1)}%';
+        sub = isIncome
+            ? l10n.chartsShareOfIncome(percent)
+            : l10n.chartsShareOfExpense(percent);
       }
-      final currency =
-          widget.currenciesByCode[widget.displayCurrencyCode!] ??
-          Currency(code: widget.displayCurrencyCode!, decimals: 2);
-      final amount = MoneyFormatter.format(
-        amountMinorUnits: widget.grandTotalMinorUnits!,
-        currency: currency,
-        locale: widget.locale,
-      );
-      return Column(
-        key: const ValueKey('total'),
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            l10n.chartsTotal,
-            style: TextStyle(
-              fontSize: 10,
-              color: scheme.onSurfaceVariant,
-              letterSpacing: 0.6,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            amount,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: scheme.onSurface,
-            ),
-          ),
-        ],
-      );
     }
-    final slice = widget.slices[selection];
-    final currency =
-        widget.currenciesByCode[slice.currencyCode] ??
-        Currency(code: slice.currencyCode, decimals: 2);
-    final amount = MoneyFormatter.format(
-      amountMinorUnits: slice.totalMinorUnits,
-      currency: currency,
-      locale: widget.locale,
-    );
-    final displayLabel = categoryDisplayNameForKey(slice.label, l10n);
     return Padding(
-      key: ValueKey('slice-$selection'),
-      padding: const EdgeInsets.symmetric(horizontal: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            displayLabel,
+            top,
             textAlign: TextAlign.center,
-            maxLines: 2,
+            maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: scheme.onSurface,
+            style: analysisText(
+              size: 12,
+              lineHeight: 16,
+              weight: topWeight,
+              color: topColor,
             ),
           ),
           const SizedBox(height: 2),
-          Text(
-            amount,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: colorForIndex(slice.colorIndex),
+          // D2: shrink long amounts to the 128 dp line instead of
+          // overflowing it; 1:1 when they fit.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              amount,
+              maxLines: 1,
+              softWrap: false,
+              style: analysisText(
+                size: 17,
+                lineHeight: 24,
+                weight: FontWeight.w500,
+                color: colors.fg,
+                tabular: true,
+              ),
             ),
           ),
-          if (slice.fraction != null) ...[
+          if (sub != null) ...[
             const SizedBox(height: 2),
             Text(
-              '${(slice.fraction! * 100).toStringAsFixed(1)}%',
-              style: TextStyle(fontSize: 10, color: scheme.onSurfaceVariant),
+              sub,
+              textAlign: TextAlign.center,
+              style: analysisText(size: 12, lineHeight: 16, color: colors.fg3),
             ),
           ],
         ],
@@ -237,17 +246,17 @@ class _CategoryPieChartState extends State<CategoryPieChart> {
     );
   }
 
+  String _format(int minorUnits, String code) => MoneyFormatter.format(
+    amountMinorUnits: minorUnits,
+    currency:
+        widget.currenciesByCode[code] ?? Currency(code: code, decimals: 2),
+    locale: widget.locale,
+  );
+
   String _semanticsLabel(AppLocalizations l10n) {
     final parts = <String>[l10n.chartsPieChart];
     for (final s in widget.slices) {
-      final currency =
-          widget.currenciesByCode[s.currencyCode] ??
-          Currency(code: s.currencyCode, decimals: 2);
-      final amount = MoneyFormatter.format(
-        amountMinorUnits: s.totalMinorUnits,
-        currency: currency,
-        locale: widget.locale,
-      );
+      final amount = _format(s.totalMinorUnits, s.currencyCode);
       final displayLabel = categoryDisplayNameForKey(s.label, l10n);
       if (s.fraction != null) {
         parts.add('$displayLabel ${(s.fraction! * 100).round()}%, $amount');
@@ -257,13 +266,9 @@ class _CategoryPieChartState extends State<CategoryPieChart> {
     }
     if (widget.grandTotalMinorUnits != null &&
         widget.displayCurrencyCode != null) {
-      final currency =
-          widget.currenciesByCode[widget.displayCurrencyCode!] ??
-          Currency(code: widget.displayCurrencyCode!, decimals: 2);
-      final total = MoneyFormatter.format(
-        amountMinorUnits: widget.grandTotalMinorUnits!,
-        currency: currency,
-        locale: widget.locale,
+      final total = _format(
+        widget.grandTotalMinorUnits!,
+        widget.displayCurrencyCode!,
       );
       parts.add('${l10n.chartsTotal} $total');
     }

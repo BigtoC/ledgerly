@@ -193,11 +193,11 @@ void main() {
     tester,
   ) async {
     final container = await _pumpChartsSection(tester);
-    // Food is the only slice, so any point on the ring hits it. 74 is
-    // midway between the centre hole (44) and the outer edge (104). Tap
+    // Food is the only slice, so any point on the ring hits it. 87 is
+    // midway between the centre hole (74) and the outer edge (100). Tap
     // above the centre: the chart's lower half runs past the test viewport.
     await tester.tapAt(
-      tester.getCenter(find.byType(PieChart)) + const Offset(0, -74),
+      tester.getCenter(find.byType(PieChart)) + const Offset(0, -87),
     );
     await tester.pumpAndSettle();
     final selection = container
