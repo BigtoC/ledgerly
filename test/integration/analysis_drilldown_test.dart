@@ -421,7 +421,7 @@ void main() {
       await pumpPhone(
         tester,
         drilldownDelay: const Duration(seconds: 1),
-        size: const Size(360, 590),
+        size: const Size(360, 560),
       );
       await tapLegendRow(tester, 'Food');
       await pumpPastReveal(tester);
