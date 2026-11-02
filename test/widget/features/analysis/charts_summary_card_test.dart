@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/domain/models/category.dart';
@@ -220,8 +221,17 @@ void main() {
       final tile = tester.widget<AnimatedContainer>(find.byKey(_expenseTile));
       expect(tile.duration, AnalysisMotion.standardDuration);
       expect(tile.curve, AnalysisMotion.standardCurve);
+      // The padding sits inside the InkWell so the ripple covers it.
+      final padding = tester.widget<Padding>(
+        find
+            .descendant(
+              of: find.byType(InkWell).first,
+              matching: find.byType(Padding),
+            )
+            .first,
+      );
       expect(
-        tile.padding,
+        padding.padding,
         const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
       );
     });
@@ -302,6 +312,76 @@ void main() {
       expect(
         tester.getRect(find.text(r'-$12.50')).right,
         lessThanOrEqualTo(card.right - 13 - 4),
+      );
+    });
+  });
+
+  group('press and focus feedback (D16)', () {
+    testWidgets('a pressed tile shows an ink ripple clipped to its shape', (
+      tester,
+    ) async {
+      await _pump(tester, _totals());
+
+      for (final (tile, label) in [
+        (_expenseTile, 'Expense'),
+        (_incomeTile, 'Income'),
+      ]) {
+        // Hit target stays at least 44 dp.
+        expect(
+          tester.getSize(find.byKey(tile)).height,
+          greaterThanOrEqualTo(44),
+        );
+        final ink = find.descendant(
+          of: find.byKey(tile),
+          matching: find.byType(InkWell),
+        );
+        expect(ink, findsOneWidget);
+        // Inside the 1.5 border of the radius-14 tile.
+        expect(
+          tester.widget<InkWell>(ink).borderRadius,
+          BorderRadius.circular(12.5),
+        );
+        // The ink paints on a Material inside the tile, above its tint.
+        expect(
+          find.descendant(
+            of: find.byKey(tile),
+            matching: find.byType(Material),
+          ),
+          findsOneWidget,
+        );
+
+        final material =
+            Material.of(tester.element(_inTile(tile, label))) as RenderObject;
+        expect(material, isNot(paints..rect()));
+        final gesture = await tester.press(find.byKey(tile));
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(material, paints..rect());
+        await gesture.up();
+        await tester.pump(const Duration(seconds: 1));
+      }
+    });
+
+    testWidgets('tiles take keyboard focus and Enter activates them', (
+      tester,
+    ) async {
+      final container = await _pump(tester, _totals());
+
+      bool focused(String label) =>
+          Focus.of(tester.element(find.text(label))).hasPrimaryFocus;
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      expect(focused('Expense'), isTrue);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      expect(focused('Income'), isTrue);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(
+        container.read(chartsSelectionControllerProvider).type,
+        CategoryType.income,
       );
     });
   });

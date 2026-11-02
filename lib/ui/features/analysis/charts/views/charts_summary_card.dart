@@ -207,69 +207,73 @@ class _TypeTile extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: AnimatedContainer(
-          key: tileKey,
-          duration: AnalysisMotion.standardDuration,
-          curve: AnalysisMotion.standardCurve,
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-          decoration: BoxDecoration(
-            color: selected ? tint : Colors.transparent,
-            border: Border.all(
-              color: selected ? fill : colors.line,
-              width: 1.5,
-            ),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+      child: AnimatedContainer(
+        key: tileKey,
+        duration: AnalysisMotion.standardDuration,
+        curve: AnalysisMotion.standardCurve,
+        decoration: BoxDecoration(
+          color: selected ? tint : Colors.transparent,
+          border: Border.all(color: selected ? fill : colors.line, width: 1.5),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        // D16: ink ripple and keyboard focus. The Material sits inside the
+        // tile so the ink paints above the tint, clipped inside the border.
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(12.5),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    key: dotKey,
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: fill,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
+                  Row(
+                    children: [
+                      Container(
+                        key: dotKey,
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: fill,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          label,
+                          style: analysisText(
+                            size: 13,
+                            lineHeight: 18,
+                            weight: FontWeight.w500,
+                            color: selected ? text : colors.fg2,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 6),
-                  Flexible(
+                  const SizedBox(height: 4),
+                  // D2: shrink only when the amount does not fit.
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerStart,
                     child: Text(
-                      label,
+                      amount,
+                      maxLines: 1,
+                      softWrap: false,
                       style: analysisText(
-                        size: 13,
-                        lineHeight: 18,
+                        size: 18,
+                        lineHeight: 24,
                         weight: FontWeight.w500,
-                        color: selected ? text : colors.fg2,
+                        tabular: true,
+                        color: colors.fg,
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
-              // D2: shrink only when the amount does not fit.
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: AlignmentDirectional.centerStart,
-                child: Text(
-                  amount,
-                  maxLines: 1,
-                  softWrap: false,
-                  style: analysisText(
-                    size: 18,
-                    lineHeight: 24,
-                    weight: FontWeight.w500,
-                    tabular: true,
-                    color: colors.fg,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
