@@ -57,6 +57,7 @@ Future<ProviderContainer> _pump(
   double textScale = 1,
   ThemeData? theme,
   Size? surface,
+  Locale? locale,
 }) async {
   if (surface != null) {
     tester.view.physicalSize = surface;
@@ -73,6 +74,7 @@ Future<ProviderContainer> _pump(
       container: container,
       child: MaterialApp(
         theme: theme ?? lightTheme,
+        locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         builder: (context, child) => MediaQuery(
@@ -104,6 +106,24 @@ Color? _textColor(WidgetTester tester, Finder finder) =>
 
 Finder _inTile(Key tile, String text) =>
     find.descendant(of: find.byKey(tile), matching: find.text(text));
+
+/// The net label sits at the row start on one 2× line (40), cut off with an
+/// ellipsis, and ends at least 12 before [amount].
+void _expectEllipsizedLabel(
+  WidgetTester tester,
+  String label,
+  Rect card,
+  Rect amount,
+) {
+  final paragraph = tester.renderObject<RenderParagraph>(find.text(label));
+  final rect = tester.getRect(find.text(label));
+  expect(paragraph.maxLines, 1);
+  expect(paragraph.overflow, TextOverflow.ellipsis);
+  expect(paragraph.didExceedMaxLines, isTrue);
+  expect(rect.height, 40);
+  expect(rect.left, card.left + 13 + 4);
+  expect(rect.right + 12, lessThanOrEqualTo(amount.left + 0.01));
+}
 
 @Dependencies([chartsNetTotal, ChartsSelectionController])
 void main() {
@@ -601,17 +621,46 @@ void main() {
       expect(amount.width, lessThan(paragraph.size.width));
       expect(amount.right, lessThanOrEqualTo(card.right - 13 - 4 + 0.01));
 
-      // The label keeps its place: 12 before the amount, no word broken.
-      final label = tester.renderObject<RenderParagraph>(
-        find.text('Net this week'),
+      // D2: the label ellipsized first, on one line, 12 before the amount.
+      _expectEllipsizedLabel(tester, 'Net this week', card, amount);
+    });
+
+    testWidgets('a long zh_TW net keeps its label on one line at 2× on a '
+        'phone', (tester) async {
+      final text = find.text(r'-$1,234,567,890.12');
+      await _pump(
+        tester,
+        _totals(expense: 123456789012, income: 0, net: -123456789012),
+        surface: _phone,
+        textScale: 2,
+        locale: const Locale('zh', 'TW'),
       );
-      final labelRect = tester.getRect(find.text('Net this week'));
-      expect(labelRect.left, card.left + 13 + 4);
-      expect(labelRect.right + 12, lessThanOrEqualTo(amount.left + 0.01));
-      expect(
-        label.size.width,
-        greaterThanOrEqualTo(label.getMinIntrinsicWidth(double.infinity)),
+      expect(tester.takeException(), isNull);
+
+      final card = tester.getRect(find.byKey(const ValueKey('summaryCard')));
+      final amount = tester.getRect(text);
+      final paragraph = tester.renderObject<RenderParagraph>(text);
+      expect(amount.width, lessThan(paragraph.size.width));
+      expect(amount.right, lessThanOrEqualTo(card.right - 13 - 4 + 0.01));
+      _expectEllipsizedLabel(tester, '本週淨額', card, amount);
+    });
+
+    testWidgets('the label ellipsizes before the amount shrinks', (
+      tester,
+    ) async {
+      // At 2× the test font gives the label 28 dp and the amount 32 dp per
+      // glyph: "-$0.50" (about 194) fits the 294 row only if the label
+      // gives up most of its 364.
+      await _pump(tester, _totals(net: -50), surface: _phone, textScale: 2);
+      expect(tester.takeException(), isNull);
+
+      final card = tester.getRect(find.byKey(const ValueKey('summaryCard')));
+      final amount = tester.getRect(find.text(r'-$0.50'));
+      final paragraph = tester.renderObject<RenderParagraph>(
+        find.text(r'-$0.50'),
       );
+      expect(amount.width, moreOrLessEquals(paragraph.size.width));
+      _expectEllipsizedLabel(tester, 'Net this week', card, amount);
     });
 
     testWidgets('shows a dash, not a zero, when no currency had a rate', (

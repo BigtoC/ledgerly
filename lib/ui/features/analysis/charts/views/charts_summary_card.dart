@@ -146,8 +146,9 @@ class ChartsSummaryCard extends ConsumerWidget {
 }
 
 /// The period's net: the label on the left, the signed amount on the
-/// right, 12 apart. As in the design's flex row, the label may wrap down to
-/// its longest word; past that the amount scales down (D2), never cut off.
+/// right, 12 apart. D2: the label ellipsizes first, down to its first
+/// character and the ellipsis; past that the amount scales down, never cut
+/// off.
 class _NetRow extends StatelessWidget {
   const _NetRow({
     required this.label,
@@ -177,10 +178,20 @@ class _NetRow extends StatelessWidget {
               text: label,
               style: DefaultTextStyle.of(context).style.merge(labelStyle),
             ),
+            maxLines: 1,
+            ellipsis: '…',
             textDirection: Directionality.of(context),
             textScaler: MediaQuery.textScalerOf(context),
           )..layout();
-          final labelMinWidth = painter.minIntrinsicWidth;
+          final labelWidth = painter.width;
+          painter.text = TextSpan(
+            text: '${label.characters.take(1)}…',
+            style: DefaultTextStyle.of(context).style.merge(labelStyle),
+          );
+          painter.layout();
+          final labelMinWidth = painter.width < labelWidth
+              ? painter.width.ceilToDouble()
+              : labelWidth;
           painter.dispose();
           final amountMaxWidth = (constraints.maxWidth - _gap - labelMinWidth)
               .clamp(0.0, double.infinity);
@@ -189,7 +200,14 @@ class _NetRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Flexible(child: Text(label, style: labelStyle)),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: labelStyle,
+                ),
+              ),
               const SizedBox(width: _gap),
               ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: amountMaxWidth),
