@@ -1,294 +1,285 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show OverflowBoxFit;
 import 'package:intl/intl.dart';
 
 import '../../../../../core/utils/money_formatter.dart';
 import '../../../../../domain/models/currency.dart';
 import '../../../../../l10n/app_localizations.dart';
+import '../../../../core/theme/analysis_colors.dart';
 import '../view_models/charts_state.dart';
+import '../view_models/trend_series.dart';
 
-class DailyBarChart extends StatefulWidget {
+/// Plot height of the trend chart, above its 1 px baseline.
+const double _kPlotHeight = 140;
+
+/// The x labels overlap the plot's bottom by this much (CSS margin-top −4).
+const double _kLabelOverlap = 4;
+
+final Map<String, DateFormat> _weekdayFormats = {};
+final Map<String, DateFormat> _monthFormats = {};
+
+/// The trend card's bars, average line and x labels.
+class DailyBarChart extends StatelessWidget {
   const DailyBarChart({
     super.key,
     required this.period,
-    required this.anchorDate,
-    required this.bucketTotals,
+    required this.series,
+    required this.barColor,
     required this.locale,
     required this.currenciesByCode,
     this.displayCurrencyCode,
   });
 
   final PeriodType period;
-  final DateTime anchorDate;
-  final List<ChartBucketTotal> bucketTotals;
+  final TrendSeries series;
+
+  /// Solid fill of every bar: the selected slice's colour, else the type's.
+  final Color barColor;
   final String locale;
   final Map<String, Currency> currenciesByCode;
   final String? displayCurrencyCode;
 
-  @override
-  State<DailyBarChart> createState() => _DailyBarChartState();
-}
+  double get _gap => switch (period) {
+    PeriodType.week => 10,
+    PeriodType.year => 6,
+    PeriodType.day || PeriodType.month => 3,
+  };
 
-class _DailyBarChartState extends State<DailyBarChart> {
-  int? _touchedIndex;
-
-  @override
-  void didUpdateWidget(covariant DailyBarChart oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Drop the highlight when the bucket set changes — the previously
-    // touched index points at a different time bucket after a period or
-    // dimension swap and would mislead the reader.
-    if (oldWidget.period != widget.period ||
-        oldWidget.anchorDate != widget.anchorDate ||
-        oldWidget.bucketTotals.length != widget.bucketTotals.length) {
-      _touchedIndex = null;
-    }
-  }
+  (double top, double bottom) get _radii => switch (period) {
+    PeriodType.week || PeriodType.year => (6, 2),
+    PeriodType.day || PeriodType.month => (3, 1),
+  };
 
   @override
   Widget build(BuildContext context) {
+    final colors = AnalysisColors.of(context);
     final scheme = Theme.of(context).colorScheme;
-    final now = DateTime.now();
-    final filledBuckets = _zeroFill(
-      widget.anchorDate,
-      widget.period,
-      widget.bucketTotals,
-    );
-    final maxY = filledBuckets
+    final l10n = AppLocalizations.of(context);
+    final buckets = series.buckets;
+    final currency = displayCurrencyCode == null
+        ? null
+        : (currenciesByCode[displayCurrencyCode!] ??
+              Currency(code: displayCurrencyCode!, decimals: 2));
+    final maxBucket = buckets
         .map((b) => b.totalMinorUnits.abs())
         .fold<int>(0, (a, b) => a > b ? a : b);
-    final headroom = (maxY * 1.1).round();
-    final l10n = AppLocalizations.of(context);
-    final currency = widget.displayCurrencyCode == null
-        ? null
-        : (widget.currenciesByCode[widget.displayCurrencyCode!] ??
-              Currency(code: widget.displayCurrencyCode!, decimals: 2));
+    final maxY = maxBucket == 0 ? 1.0 : maxBucket * 1.12;
+    // Value units per plot pixel.
+    final perPixel = maxY / _kPlotHeight;
+    final average = series.averageMinorUnits;
+    final gap = _gap;
 
-    final gradientBottom = Color.lerp(scheme.primary, Colors.black, 0.2)!;
-    final gradientTop = scheme.secondary;
-    final barsGradient = LinearGradient(
-      colors: [gradientBottom, gradientTop],
-      begin: Alignment.bottomCenter,
-      end: Alignment.topCenter,
-    );
-    final futureGradient = LinearGradient(
-      colors: [
-        gradientBottom.withValues(alpha: 0.3),
-        gradientTop.withValues(alpha: 0.3),
-      ],
-      begin: Alignment.bottomCenter,
-      end: Alignment.topCenter,
-    );
-
-    return Semantics(
-      label: _semanticsLabel(l10n, filledBuckets, currency),
-      image: true,
-      excludeSemantics: true,
-      child: AspectRatio(
-        aspectRatio: 1.6,
-        child: BarChart(
-          BarChartData(
-            maxY: headroom == 0 ? 1 : headroom.toDouble(),
-            alignment: BarChartAlignment.spaceAround,
-            barTouchData: BarTouchData(
-              enabled: true,
-              handleBuiltInTouches: true,
-              touchTooltipData: BarTouchTooltipData(
-                tooltipBorderRadius: BorderRadius.circular(8),
-                tooltipPadding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                tooltipMargin: 8,
-                fitInsideHorizontally: true,
-                fitInsideVertically: true,
-                getTooltipColor: (_) =>
-                    scheme.inverseSurface.withValues(alpha: 0.92),
-                getTooltipItem: (group, _, rod, rodIdx) {
-                  final idx = group.x;
-                  if (idx < 0 || idx >= filledBuckets.length) return null;
-                  final bucket = filledBuckets[idx];
-                  final amount = currency == null
-                      ? bucket.totalMinorUnits.toString()
-                      : MoneyFormatter.format(
-                          amountMinorUnits: bucket.totalMinorUnits,
-                          currency: currency,
-                          locale: widget.locale,
-                        );
-                  final label = _axisLabel(bucket.bucketStart);
-                  return BarTooltipItem(
-                    '$label\n',
-                    TextStyle(
-                      color: scheme.onInverseSurface,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 11,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final n = buckets.length;
+        final rodWidth = (width - (n - 1) * gap) / n;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedOverflowBox(
+              size: Size(width, _kPlotHeight + 1 - _kLabelOverlap),
+              alignment: Alignment.topCenter,
+              child: SizedBox(
+                height: _kPlotHeight + 1,
+                child: Semantics(
+                  label: _semanticsLabel(l10n, currency),
+                  image: true,
+                  excludeSemantics: true,
+                  child: BarChart(
+                    BarChartData(
+                      maxY: maxY,
+                      alignment: BarChartAlignment.spaceBetween,
+                      barTouchData: BarTouchData(
+                        enabled: true,
+                        handleBuiltInTouches: true,
+                        touchTooltipData: BarTouchTooltipData(
+                          tooltipBorderRadius: BorderRadius.circular(8),
+                          tooltipPadding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          tooltipMargin: 8,
+                          fitInsideHorizontally: true,
+                          fitInsideVertically: true,
+                          getTooltipColor: (_) =>
+                              scheme.inverseSurface.withValues(alpha: 0.92),
+                          getTooltipItem: (group, _, rod, rodIdx) {
+                            final idx = group.x;
+                            if (idx < 0 || idx >= buckets.length) return null;
+                            final bucket = buckets[idx];
+                            if (bucket.isFuture &&
+                                bucket.totalMinorUnits == 0) {
+                              return null;
+                            }
+                            return BarTooltipItem(
+                              '${_axisLabel(bucket.bucketStart)}\n',
+                              TextStyle(
+                                color: scheme.onInverseSurface,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 11,
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: _amount(
+                                    bucket.totalMinorUnits,
+                                    currency,
+                                  ),
+                                  style: TextStyle(
+                                    color: scheme.onInverseSurface,
+                                    fontWeight: FontWeight.w400,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                      gridData: const FlGridData(show: false),
+                      borderData: FlBorderData(
+                        show: true,
+                        border: Border(bottom: BorderSide(color: colors.line)),
+                      ),
+                      titlesData: const FlTitlesData(show: false),
+                      extraLinesData: ExtraLinesData(
+                        horizontalLines: [
+                          if (average > 0)
+                            HorizontalLine(
+                              // The CSS border's 1.5 px stroke sits on top of
+                              // the average, so its centre is 0.75 px higher.
+                              y: average + 0.75 * perPixel,
+                              strokeWidth: 1.5,
+                              color: colors.fg3,
+                              dashArray: const [3, 3],
+                            ),
+                        ],
+                      ),
+                      barGroups: [
+                        for (var i = 0; i < n; i++)
+                          BarChartGroupData(
+                            x: i,
+                            barRods: [
+                              _rod(buckets[i], rodWidth, perPixel, colors),
+                            ],
+                          ),
+                      ],
                     ),
-                    children: [
-                      TextSpan(
-                        text: amount,
-                        style: TextStyle(
-                          color: scheme.onInverseSurface,
-                          fontWeight: FontWeight.w400,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-              touchCallback: (event, response) {
-                final next =
-                    (!event.isInterestedForInteractions ||
-                        response?.spot == null)
-                    ? null
-                    : response!.spot!.touchedBarGroupIndex;
-                // Pointer moves inside the same bar fire this on every
-                // event; skip the rebuild when the index is unchanged.
-                if (next != _touchedIndex) setState(() => _touchedIndex = next);
-              },
-            ),
-            gridData: const FlGridData(show: false),
-            borderData: FlBorderData(show: false),
-            titlesData: FlTitlesData(
-              show: true,
-              leftTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-              rightTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-              topTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 30,
-                  getTitlesWidget: (value, meta) {
-                    final idx = value.toInt();
-                    if (idx < 0 || idx >= filledBuckets.length) {
-                      return const SizedBox.shrink();
-                    }
-                    final selected = idx == _touchedIndex;
-                    return SideTitleWidget(
-                      meta: meta,
-                      space: 4,
-                      child: Text(
-                        _axisLabel(filledBuckets[idx].bucketStart),
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: selected
-                              ? gradientTop
-                              : gradientBottom.withValues(alpha: 0.8),
-                        ),
-                      ),
-                    );
-                  },
+                    duration: AnalysisMotion.emphasizedDuration,
+                    curve: AnalysisMotion.emphasizedCurve,
+                  ),
                 ),
               ),
             ),
-            barGroups: [
-              for (var i = 0; i < filledBuckets.length; i++)
-                BarChartGroupData(
-                  x: i,
-                  barRods: [
-                    BarChartRodData(
-                      toY: filledBuckets[i].totalMinorUnits.abs().toDouble(),
-                      gradient: filledBuckets[i].bucketStart.isAfter(now)
-                          ? futureGradient
-                          : barsGradient,
-                      width: i == _touchedIndex ? 14 : 10,
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(4),
-                        topRight: Radius.circular(4),
-                      ),
-                    ),
-                  ],
-                ),
-            ],
-          ),
-          duration: const Duration(milliseconds: 100),
-          curve: Curves.easeOutQuad,
-        ),
+            ExcludeSemantics(child: _labels(colors, gap)),
+          ],
+        );
+      },
+    );
+  }
+
+  BarChartRodData _rod(
+    TrendBucket bucket,
+    double width,
+    double perPixel,
+    AnalysisColors colors,
+  ) {
+    final value = bucket.totalMinorUnits.abs();
+    if (value == 0) {
+      if (!bucket.isFuture) {
+        return BarChartRodData(toY: 0, width: width, color: barColor);
+      }
+      return BarChartRodData(
+        toY: 3 * perPixel,
+        width: width,
+        color: colors.track,
+        borderRadius: BorderRadius.circular(1.5),
+      );
+    }
+    final (top, bottom) = _radii;
+    final height = value / perPixel < 2 ? 2.0 : value / perPixel;
+    // fl_chart stretches a bar to fit its corners; shrink the corners instead.
+    final scale = height < top + bottom ? height / (top + bottom) : 1.0;
+    return BarChartRodData(
+      toY: height * perPixel,
+      width: width,
+      color: barColor,
+      borderRadius: BorderRadius.vertical(
+        top: Radius.circular(top * scale),
+        bottom: Radius.circular(bottom * scale),
       ),
     );
   }
 
-  String _semanticsLabel(
-    AppLocalizations l10n,
-    List<ChartBucketTotal> filledBuckets,
-    Currency? currency,
-  ) {
+  Widget _labels(AnalysisColors colors, double gap) {
+    final buckets = series.buckets;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < buckets.length; i++) ...[
+          if (i > 0) SizedBox(width: gap),
+          Expanded(
+            child: series.labelIndices.contains(i)
+                ? OverflowBox(
+                    fit: OverflowBoxFit.deferToChild,
+                    maxWidth: double.infinity,
+                    child: Text(
+                      _axisLabel(buckets[i].bucketStart),
+                      maxLines: 1,
+                      softWrap: false,
+                      style: analysisText(
+                        size: 11,
+                        lineHeight: 14,
+                        weight: i == series.currentIndex
+                            ? FontWeight.w700
+                            : FontWeight.w400,
+                        color: i == series.currentIndex
+                            ? colors.fg
+                            : colors.fg3,
+                      ),
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ],
+      ],
+    );
+  }
+
+  String _amount(int minorUnits, Currency? currency) => currency == null
+      ? minorUnits.toString()
+      : MoneyFormatter.format(
+          amountMinorUnits: minorUnits,
+          currency: currency,
+          locale: locale,
+        );
+
+  String _semanticsLabel(AppLocalizations l10n, Currency? currency) {
     final parts = <String>[l10n.chartsBarChart];
-    for (final b in filledBuckets) {
+    for (final b in series.buckets) {
       if (b.totalMinorUnits == 0) continue;
-      final amount = currency == null
-          ? b.totalMinorUnits.toString()
-          : MoneyFormatter.format(
-              amountMinorUnits: b.totalMinorUnits,
-              currency: currency,
-              locale: widget.locale,
-            );
-      parts.add('${_axisLabel(b.bucketStart)}: $amount');
+      parts.add(
+        '${_axisLabel(b.bucketStart)}: ${_amount(b.totalMinorUnits, currency)}',
+      );
     }
     return parts.join('. ');
   }
 
-  List<ChartBucketTotal> _zeroFill(
-    DateTime anchor,
-    PeriodType period,
-    List<ChartBucketTotal> raw,
-  ) {
-    final map = {for (final b in raw) b.bucketStart: b.totalMinorUnits};
-    final out = <ChartBucketTotal>[];
-    switch (period) {
-      case PeriodType.day:
-        for (var h = 0; h < 24; h++) {
-          final ts = DateTime(anchor.year, anchor.month, anchor.day, h);
-          out.add(
-            ChartBucketTotal(bucketStart: ts, totalMinorUnits: map[ts] ?? 0),
-          );
-        }
-      case PeriodType.week:
-        for (var d = 0; d < 7; d++) {
-          final ts = DateTime(anchor.year, anchor.month, anchor.day + d);
-          out.add(
-            ChartBucketTotal(bucketStart: ts, totalMinorUnits: map[ts] ?? 0),
-          );
-        }
-      case PeriodType.month:
-        var cursor = DateTime(anchor.year, anchor.month, 1);
-        while (cursor.month == anchor.month) {
-          out.add(
-            ChartBucketTotal(
-              bucketStart: cursor,
-              totalMinorUnits: map[cursor] ?? 0,
-            ),
-          );
-          cursor = DateTime(cursor.year, cursor.month, cursor.day + 1);
-        }
-      case PeriodType.year:
-        for (var m = 1; m <= 12; m++) {
-          final ts = DateTime(anchor.year, m, 1);
-          out.add(
-            ChartBucketTotal(bucketStart: ts, totalMinorUnits: map[ts] ?? 0),
-          );
-        }
-    }
-    return out;
-  }
-
   String _axisLabel(DateTime bucketStart) {
-    switch (widget.period) {
+    switch (period) {
       case PeriodType.day:
         return bucketStart.hour.toString().padLeft(2, '0');
       case PeriodType.week:
-        return DateFormat.E(widget.locale).format(bucketStart);
+        return _weekdayFormats
+            .putIfAbsent(locale, () => DateFormat.E(locale))
+            .format(bucketStart);
       case PeriodType.month:
         return bucketStart.day.toString();
       case PeriodType.year:
-        return DateFormat.MMM(widget.locale).format(bucketStart);
+        return _monthFormats
+            .putIfAbsent(locale, () => DateFormat.MMM(locale))
+            .format(bucketStart);
     }
   }
 }

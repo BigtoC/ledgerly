@@ -21,7 +21,7 @@ import 'category_pie_chart.dart';
 import 'chart_legend.dart';
 import 'charts_breakdown_card.dart';
 import 'charts_summary_card.dart';
-import 'daily_bar_chart.dart';
+import 'charts_trend_card.dart';
 import 'period_selector.dart';
 import 'selected_slice_items_list.dart';
 
@@ -674,16 +674,15 @@ class _ChartBodyState extends ConsumerState<_ChartBody> {
           ),
         ),
         if (showBar) ...[
-          const SizedBox(height: 16),
-          RepaintBoundary(
-            child: DailyBarChart(
-              period: data.period,
-              anchorDate: data.anchorDate,
-              bucketTotals: data.bucketTotals,
-              locale: widget.locale,
-              currenciesByCode: widget.currencies,
-              displayCurrencyCode: data.displayCurrencyCode,
-            ),
+          const SizedBox(height: 12),
+          ChartsTrendCard(
+            data: data,
+            selectedSlice: selectedIndex == null
+                ? null
+                : data.slices[selectedIndex],
+            onClearSlice: () => selectSlice(null),
+            locale: widget.locale,
+            currenciesByCode: widget.currencies,
           ),
         ],
       ],
