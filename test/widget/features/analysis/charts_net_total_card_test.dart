@@ -65,6 +65,8 @@ Future<void> _pumpCard(
 ChartsNetTotal _net(int? minorUnits, {List<String> excluded = const []}) =>
     ChartsNetTotal(
       currency: _usd,
+      expenseMinorUnits: null,
+      incomeMinorUnits: null,
       netMinorUnits: minorUnits,
       excludedCurrencyCodes: excluded,
     );
@@ -214,14 +216,19 @@ void main() {
     // crosses a week boundary cannot flake.
     DateTime? firstStart;
     when(
-      () => repo.watchNetByCurrencyInRange(
+      () => repo.watchTotalsByTypeInRange(
         start: any(named: 'start'),
         end: any(named: 'end'),
+        accountId: any(named: 'accountId'),
       ),
     ).thenAnswer((invocation) {
       final start = invocation.namedArguments[#start] as DateTime;
       firstStart ??= start;
-      return Stream.value({'USD': start == firstStart ? 3000 : -700});
+      return Stream.value({
+        'USD': start == firstStart
+            ? (expense: 0, income: 3000)
+            : (expense: 700, income: 0),
+      });
     });
 
     final fxService = _MockExchangeRateService();
