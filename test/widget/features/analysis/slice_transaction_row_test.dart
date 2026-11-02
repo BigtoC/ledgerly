@@ -108,6 +108,12 @@ void _usePhoneWidth(WidgetTester tester) {
   addTearDown(tester.view.reset);
 }
 
+/// [row] at its width in the app: ChartsSection pads 16 a side and the
+/// transactions card's 1 px border takes 1 more, so on a 360 phone the
+/// row is 326 wide.
+Widget _inCard(Widget row) =>
+    Padding(padding: const EdgeInsets.symmetric(horizontal: 17), child: row);
+
 /// Ink features (ripples, highlights) on the Material that [finder] paints
 /// its ink on.
 List<InkFeature> _ink(WidgetTester tester, Finder finder) =>
@@ -290,8 +296,10 @@ void main() {
       _usePhoneWidth(tester);
       await tester.pumpWidget(
         _wrap(
-          _row(
-            transaction: _tx(memo: _longMemo, amountMinorUnits: 123456789012),
+          _inCard(
+            _row(
+              transaction: _tx(memo: _longMemo, amountMinorUnits: 123456789012),
+            ),
           ),
         ),
       );
@@ -314,8 +322,13 @@ void main() {
         _usePhoneWidth(tester);
         await tester.pumpWidget(
           _wrap(
-            _row(
-              transaction: _tx(memo: _longMemo, amountMinorUnits: 123456789012),
+            _inCard(
+              _row(
+                transaction: _tx(
+                  memo: _longMemo,
+                  amountMinorUnits: 123456789012,
+                ),
+              ),
             ),
             textScale: 2,
           ),
@@ -346,14 +359,16 @@ void main() {
         _usePhoneWidth(tester);
         await tester.pumpWidget(
           _wrap(
-            _row(
-              transaction: _tx(
-                memo: 'Lunch',
-                currency: _eur,
-                amountMinorUnits: 123456789012,
+            _inCard(
+              _row(
+                transaction: _tx(
+                  memo: 'Lunch',
+                  currency: _eur,
+                  amountMinorUnits: 123456789012,
+                ),
+                account: _cash.copyWith(name: 'Everyday spending account'),
+                convertedAmount: r'-$1.00',
               ),
-              account: _cash.copyWith(name: 'Everyday spending account'),
-              convertedAmount: r'-$1.00',
             ),
             textScale: 2,
           ),
@@ -502,13 +517,15 @@ void main() {
         _usePhoneWidth(tester);
         await tester.pumpWidget(
           _wrap(
-            _row(
-              transaction: _tx(
-                memo: 'Lunch',
-                currency: _eur,
-                amountMinorUnits: 123456789012,
+            _inCard(
+              _row(
+                transaction: _tx(
+                  memo: 'Lunch',
+                  currency: _eur,
+                  amountMinorUnits: 123456789012,
+                ),
+                convertedAmount: r'-$1,234,567,890.12',
               ),
-              convertedAmount: r'-$1,234,567,890.12',
             ),
             textScale: 2,
           ),
@@ -523,7 +540,10 @@ void main() {
         expect(booked.left, greaterThanOrEqualTo(row.left + 16));
         expect(booked.right, lessThanOrEqualTo(converted.left - 12 + 0.01));
         expect(converted.right, lessThanOrEqualTo(row.right - 16 + 0.01));
-        // Neither amount is scaled to nothing to make room for the other.
+        expect(row.width, 326);
+        // Neither amount is scaled to nothing to make room for the other:
+        // on the real row they render at about 0.53 and 0.58. A longer
+        // amount, or a currency code in place of a symbol, can go lower.
         expect(scaleOf(tester, convertedText), greaterThanOrEqualTo(0.5));
         expect(scaleOf(tester, bookedText), greaterThanOrEqualTo(0.5));
         expect(_paragraph(tester, convertedText).didExceedMaxLines, isFalse);
