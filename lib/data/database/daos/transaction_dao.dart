@@ -178,6 +178,22 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
     return (first: firstDate, last: lastDate);
   }
 
+  /// [getDateBounds] as a stream: re-emits whenever `transactions` changes,
+  /// so adding or deleting the earliest row is seen. Backs
+  /// `TransactionRepository.watchDateBounds`.
+  Stream<({DateTime first, DateTime last})?> watchDateBounds() {
+    final first = transactions.date.min();
+    final last = transactions.date.max();
+    return (selectOnly(
+      transactions,
+    )..addColumns([first, last])).watchSingle().map((row) {
+      final firstDate = row.read(first);
+      final lastDate = row.read(last);
+      if (firstDate == null || lastDate == null) return null;
+      return (first: firstDate, last: lastDate);
+    });
+  }
+
   /// One-shot read of rows whose `date` falls in `[start, end)`, ordered
   /// by `date ASC, id ASC`. Backs `TransactionRepository.getInDateRange`.
   Future<List<TransactionRow>> getInDateRange({

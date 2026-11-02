@@ -201,6 +201,11 @@ abstract class TransactionRepository {
   /// transactions. One-shot.
   Future<DateBounds?> getDateBounds();
 
+  /// [getDateBounds] as a stream that re-emits whenever a transaction is
+  /// added, edited or deleted. Covers every transaction regardless of
+  /// type or account.
+  Stream<DateBounds?> watchDateBounds();
+
   /// One-shot read of every transaction whose `date` falls in the
   /// half-open range `[start, end)`, oldest first (ties by id). Not
   /// capped: the CSV export reads the whole range.
@@ -571,6 +576,9 @@ final class DriftTransactionRepository implements TransactionRepository {
 
   @override
   Future<DateBounds?> getDateBounds() => _dao.getDateBounds();
+
+  @override
+  Stream<DateBounds?> watchDateBounds() => _dao.watchDateBounds();
 
   @override
   Future<List<Transaction>> getInDateRange(DateTime start, DateTime end) async {
