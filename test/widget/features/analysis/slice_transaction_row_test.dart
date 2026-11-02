@@ -383,6 +383,27 @@ void main() {
       expect(tapped, 1);
     });
 
+    testWidgets(
+      'reports itself as an enabled, focusable button with a tap action '
+      '(D16: semantics unchanged from the ListTile row)',
+      (tester) async {
+        final handle = tester.ensureSemantics();
+        await tester.pumpWidget(_wrap(_row()));
+
+        expect(
+          tester.getSemantics(find.text('Lunch')),
+          isSemantics(
+            isButton: true,
+            hasTapAction: true,
+            isFocusable: true,
+            hasEnabledState: true,
+            isEnabled: true,
+          ),
+        );
+        handle.dispose();
+      },
+    );
+
     testWidgets('press shows an ink ripple clipped to the row (D16)', (
       tester,
     ) async {

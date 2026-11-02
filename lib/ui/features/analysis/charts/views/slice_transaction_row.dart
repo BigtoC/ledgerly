@@ -114,52 +114,58 @@ class SliceTransactionRow extends StatelessWidget {
             ),
           ],
         ),
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: _LabelThenAmount(
-              gap: 12,
-              expandLabel: true,
-              label: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: analysisText(
-                      size: 15,
-                      lineHeight: 20,
-                      color: colors.fg,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  if (convertedAmount == null)
-                    metaText
-                  else
-                    _LabelThenAmount(
-                      label: metaText,
-                      amount: Text(
-                        ' · $bookedAmount',
-                        maxLines: 1,
-                        softWrap: false,
-                        style: subtitleStyle,
+        // A bare InkWell adds only the tap action; the button role and
+        // enabled state keep the ListTile row's semantics (plan D16).
+        child: Semantics(
+          button: true,
+          enabled: true,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: _LabelThenAmount(
+                gap: 12,
+                expandLabel: true,
+                label: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: analysisText(
+                        size: 15,
+                        lineHeight: 20,
+                        color: colors.fg,
                       ),
                     ),
-                ],
-              ),
-              amount: Text(
-                convertedAmount ?? bookedAmount,
-                maxLines: 1,
-                softWrap: false,
-                style: analysisText(
-                  size: 15,
-                  lineHeight: 20,
-                  weight: FontWeight.w500,
-                  color: isIncome ? colors.incText : colors.expText,
-                  tabular: true,
+                    const SizedBox(height: 2),
+                    if (convertedAmount == null)
+                      metaText
+                    else
+                      _LabelThenAmount(
+                        label: metaText,
+                        amount: Text(
+                          ' · $bookedAmount',
+                          maxLines: 1,
+                          softWrap: false,
+                          style: subtitleStyle,
+                        ),
+                      ),
+                  ],
+                ),
+                amount: Text(
+                  convertedAmount ?? bookedAmount,
+                  maxLines: 1,
+                  softWrap: false,
+                  style: analysisText(
+                    size: 15,
+                    lineHeight: 20,
+                    weight: FontWeight.w500,
+                    color: isIncome ? colors.incText : colors.expText,
+                    tabular: true,
+                  ),
                 ),
               ),
             ),
