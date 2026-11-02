@@ -60,6 +60,10 @@ typedef TransactionImportSignature = ({
   String? memo,
 });
 
+/// Earliest and latest transaction date. See
+/// [TransactionRepository.getDateBounds].
+typedef DateBounds = ({DateTime first, DateTime last});
+
 /// SSOT for `transactions`. Owns every write path to the Drift
 /// `transactions` table. Drift data classes never leave this file.
 ///
@@ -93,9 +97,7 @@ abstract class TransactionRepository {
   /// grouped by currency. Both values are unsigned sums (non-negative).
   /// Day window is the device-local midnight-to-midnight boundary.
   /// Re-emits on every relevant mutation — Wave 3 §3.
-  Stream<Map<String, ({int expense, int income})>> watchDailyTotalsByType(
-    DateTime day,
-  );
+  Stream<DailyTotals> watchDailyTotalsByType(DateTime day);
 
   /// Net per currency for the calendar month containing `month` (device
   /// local timezone). Income contributes positively, expense negatively
@@ -187,7 +189,7 @@ abstract class TransactionRepository {
 
   /// Earliest and latest transaction `date`, or null when there are no
   /// transactions. One-shot.
-  Future<({DateTime first, DateTime last})?> getDateBounds();
+  Future<DateBounds?> getDateBounds();
 
   /// One-shot read of every transaction whose `date` falls in the
   /// half-open range `[start, end)`, oldest first (ties by id). Not
@@ -271,9 +273,7 @@ final class DriftTransactionRepository implements TransactionRepository {
   }
 
   @override
-  Stream<Map<String, ({int expense, int income})>> watchDailyTotalsByType(
-    DateTime day,
-  ) {
+  Stream<DailyTotals> watchDailyTotalsByType(DateTime day) {
     final start = DateHelpers.startOfDay(day);
     final end = DateHelpers.startOfDay(
       DateTime(day.year, day.month, day.day + 1),
@@ -297,7 +297,7 @@ final class DriftTransactionRepository implements TransactionRepository {
       readsFrom: {_db.transactions, _db.categories},
     );
     return query.watch().map((rows) {
-      final out = <String, ({int expense, int income})>{};
+      final DailyTotals out = {};
       for (final row in rows) {
         out[row.read<String>('code')] = (
           expense: row.read<int>('expense'),
@@ -527,8 +527,7 @@ final class DriftTransactionRepository implements TransactionRepository {
   }
 
   @override
-  Future<({DateTime first, DateTime last})?> getDateBounds() =>
-      _dao.getDateBounds();
+  Future<DateBounds?> getDateBounds() => _dao.getDateBounds();
 
   @override
   Future<List<Transaction>> getInDateRange(DateTime start, DateTime end) async {

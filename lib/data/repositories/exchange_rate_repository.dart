@@ -218,9 +218,7 @@ final class ExchangeRateRepository {
     }
   }
 
-  Future<void> _upsertValidRates(
-    List<({String from, String to, double rate, DateTime fetchedAt})> results,
-  ) async {
+  Future<void> _upsertValidRates(List<FetchedRate> results) async {
     if (results.isEmpty) return;
 
     final companions = <drift.ExchangeRatesCompanion>[];

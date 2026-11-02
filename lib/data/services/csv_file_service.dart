@@ -12,6 +12,9 @@ typedef SaveFile = Future<bool> Function({
   required Uint8List bytes,
 });
 
+/// A file the user picked: its name and contents.
+typedef PickedFile = ({String name, Uint8List bytes});
+
 /// Picks a CSV file through the system picker and returns its bytes, and
 /// saves one through the system save dialog. Knows nothing about the CSV
 /// format.
@@ -101,7 +104,7 @@ class CsvFileService {
   }
 
   /// The chosen file's name and bytes, or null when the user cancels.
-  Future<({String name, Uint8List bytes})?> pick() async {
+  Future<PickedFile?> pick() async {
     final file = await _openFile();
     if (file == null) return null;
     try {

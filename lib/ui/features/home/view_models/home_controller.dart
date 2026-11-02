@@ -124,7 +124,7 @@ class _Composer {
 
   StreamSubscription<List<Transaction>>? _daySub;
   StreamSubscription<List<DateTime>>? _activitySub;
-  StreamSubscription<Map<String, ({int expense, int income})>>? _totalsSub;
+  StreamSubscription<DailyTotals>? _totalsSub;
   StreamSubscription<Map<String, int>>? _monthNetSub;
   DateTime? _subscribedDay;
   DateTime? _subscribedSummaryDay;
@@ -132,7 +132,7 @@ class _Composer {
   // Latest values; null until first emit.
   List<Transaction>? _txForDay;
   List<DateTime>? _activityDays;
-  Map<String, ({int expense, int income})>? _todayTotals;
+  DailyTotals? _todayTotals;
   Map<String, int>? _monthNet;
   int _dayGeneration = 0;
   bool _emitScheduled = false;

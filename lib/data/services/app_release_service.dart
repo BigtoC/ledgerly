@@ -7,6 +7,9 @@ import 'package:path_provider/path_provider.dart';
 /// `size` its byte count; either is null when the API omits it.
 typedef ReleaseAsset = ({String name, String url, String? digest, int? size});
 
+/// A published release: its git tag and downloadable assets.
+typedef LatestRelease = ({String tagName, List<ReleaseAsset> assets});
+
 /// Reads the latest published Ledgerly release from the GitHub API.
 ///
 /// A fixed GET with no query parameters and no user data. Returns raw
@@ -34,8 +37,7 @@ class AppReleaseService {
   /// The latest release's tag and assets, or null when the body does not
   /// have the expected shape. Asset entries without a string `name` and
   /// `browser_download_url` are skipped.
-  Future<({String tagName, List<ReleaseAsset> assets})?>
-  fetchLatestRelease() async {
+  Future<LatestRelease?> fetchLatestRelease() async {
     final response = await _dio.get<Object?>(
       _latestReleaseUrl,
       options: Options(

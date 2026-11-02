@@ -21,7 +21,7 @@ import 'package:ledgerly/domain/use_cases/csv_import_use_case.dart';
 
 class _CancellingCsvFileService implements CsvFileService {
   @override
-  Future<({String name, Uint8List bytes})?> pick() async => null;
+  Future<PickedFile?> pick() async => null;
 
   @override
   Future<bool> save(String fileName, Uint8List bytes) =>

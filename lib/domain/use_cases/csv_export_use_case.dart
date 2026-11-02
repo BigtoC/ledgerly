@@ -29,8 +29,7 @@ class CsvExportUseCase {
   final AccountRepository accountRepo;
 
   /// Earliest and latest transaction date; null when there are none.
-  Future<({DateTime first, DateTime last})?> getDateBounds() =>
-      transactionRepo.getDateBounds();
+  Future<DateBounds?> getDateBounds() => transactionRepo.getDateBounds();
 
   /// Exports every transaction dated on the local days [firstDay] through
   /// [lastDay] (times ignored) and shows the save dialog. Archived

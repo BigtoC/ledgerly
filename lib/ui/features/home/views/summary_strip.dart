@@ -22,8 +22,8 @@ import '../../../../core/constants.dart';
 import '../../../../core/utils/currency_converter.dart';
 import '../../../../core/utils/money_formatter.dart';
 import '../../../../domain/models/currency.dart';
+import '../../../../domain/models/transaction.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../view_models/home_state.dart';
 
 @Dependencies([exchangeRates])
 class SummaryStrip extends ConsumerWidget {

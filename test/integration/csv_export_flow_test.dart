@@ -28,8 +28,7 @@ class _SavingCsvFileService implements CsvFileService {
   final saves = <({String fileName, Uint8List bytes})>[];
 
   @override
-  Future<({String name, Uint8List bytes})?> pick() =>
-      throw UnimplementedError();
+  Future<PickedFile?> pick() => throw UnimplementedError();
 
   @override
   Future<bool> save(String fileName, Uint8List bytes) async {

@@ -40,7 +40,7 @@ class _FakeCsvFileService implements CsvFileService {
   final Uint8List _bytes;
 
   @override
-  Future<({String name, Uint8List bytes})?> pick() async =>
+  Future<PickedFile?> pick() async =>
       (name: 'import_fortune_city_data.csv', bytes: _bytes);
 
   @override

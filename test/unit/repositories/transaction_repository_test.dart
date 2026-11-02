@@ -759,7 +759,7 @@ void main() {
       'A-reactive-02: totals stream re-emits after insert and delete',
       () async {
         final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
-        final emissions = <Map<String, ({int expense, int income})>>[];
+        final emissions = <DailyTotals>[];
         final sub = txRepo.watchDailyTotalsByType(today).listen(emissions.add);
         addTearDown(sub.cancel);
 
@@ -779,7 +779,7 @@ void main() {
 
     test('A-reactive-03: daily totals re-emit after update', () async {
       final today = DateTime(frozenNow.year, frozenNow.month, frozenNow.day);
-      final emissions = <Map<String, ({int expense, int income})>>[];
+      final emissions = <DailyTotals>[];
       final sub = txRepo.watchDailyTotalsByType(today).listen(emissions.add);
       addTearDown(sub.cancel);
 
