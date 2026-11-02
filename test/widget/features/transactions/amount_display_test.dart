@@ -341,4 +341,22 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   });
+
+  testWidgets('AD15: the box is the amount line plus 8dp above and below', (
+    tester,
+  ) async {
+    // Issue #100: the amount box used 16dp vertical padding.
+    await tester.pumpWidget(
+      _wrap(
+        const Align(
+          alignment: Alignment.topCenter,
+          child: AmountDisplay(keypad: KeypadState.initial(), currency: _usd),
+        ),
+      ),
+    );
+
+    final box = tester.getSize(find.byType(AmountDisplay)).height;
+    final amountLine = tester.getSize(find.text('0')).height;
+    expect(box, amountLine + 16);
+  });
 }

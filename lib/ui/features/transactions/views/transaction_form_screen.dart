@@ -5,9 +5,15 @@
 //   Scaffold(resizeToAvoidBottomInset: false)
 //     └─ SafeArea
 //         └─ Column
-//             ├─ Expanded → SingleChildScrollView (amount, category,
-//             │             account, date, memo, [shopping-list actions])
-//             └─ CalculatorKeypad (fixed height)
+//             ├─ ConstrainedBox(max: height − keypad minimum)
+//             │   └─ SingleChildScrollView (amount; category | account;
+//             │      currency | date; memo; [shopping-list actions])
+//             └─ Expanded → CalculatorKeypad, pinned to the bottom
+//
+// Issue #100: the form takes its natural height and the keypad's keys
+// shrink (down to 48dp) into the height left over, so on a phone the form
+// does not scroll. Only when even 48dp keys leave too little room (short
+// phones, landscape, large text) does the form scroll.
 //
 // `resizeToAvoidBottomInset: false` is mandatory — the keypad must stay
 // visible while the memo field's soft keyboard is open. Save lives in
@@ -23,6 +29,7 @@
 //     archived-ref warning text.
 
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -240,97 +247,144 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
 
     return IgnorePointer(
       ignoring: controlsLocked,
-      child: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  AmountDisplay(
-                    keypad: state.keypad,
-                    currency: state.displayCurrency,
-                    currencyTouched: state.currencyTouched,
-                    hasError: showAmountError,
-                    onEquals: controller.equals,
-                  ),
-                  if (showAmountError)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4, left: 8),
-                      child: Text(
-                        l10n.txAmountRequired,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
+      child: LayoutBuilder(
+        builder: (context, constraints) => Column(
+          children: [
+            ConstrainedBox(
+              // The form takes its natural height and the keypad's keys
+              // shrink into what is left, down to 48dp. Past that, the form
+              // scrolls rather than push the keypad off screen.
+              constraints: BoxConstraints(
+                maxHeight: math.max(
+                  0,
+                  constraints.maxHeight - CalculatorKeypad.minHeight,
+                ),
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AmountDisplay(
+                      keypad: state.keypad,
+                      currency: state.displayCurrency,
+                      currencyTouched: state.currencyTouched,
+                      hasError: showAmountError,
+                      onEquals: controller.equals,
+                    ),
+                    if (showAmountError)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4, left: 8),
+                        child: Text(
+                          l10n.txAmountRequired,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
                         ),
                       ),
+                    const SizedBox(height: 8),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: CategoryChip(
+                            category: state.selectedCategory,
+                            hasError: showCategoryError,
+                            onTap: () =>
+                                _onTapCategoryChip(context, l10n, controller),
+                          ),
+                        ),
+                        Expanded(
+                          child: AccountSelectorTile(
+                            account: state.selectedAccount,
+                            hasError: showAccountError,
+                            onTap: () => _onTapAccountTile(
+                              context,
+                              l10n,
+                              state,
+                              controller,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  const SizedBox(height: 12),
-                  CategoryChip(
-                    category: state.selectedCategory,
-                    hasError: showCategoryError,
-                    onTap: () => _onTapCategoryChip(context, l10n, controller),
-                  ),
-                  AccountSelectorTile(
-                    account: state.selectedAccount,
-                    hasError: showAccountError,
-                    onTap: () =>
-                        _onTapAccountTile(context, l10n, state, controller),
-                  ),
-                  CurrencySelectorTile(
-                    currency: state.displayCurrency,
-                    onTap: () =>
-                        _onTapCurrencyTile(context, l10n, state, controller),
-                  ),
-                  DateField(value: state.date, onChanged: controller.setDate),
-                  const SizedBox(height: 8),
-                  MemoField(
-                    initialValue: state.memo,
-                    onChanged: controller.setMemo,
-                  ),
-                  if (state.selectedCategory case final category?)
-                    MemoSuggestions(
-                      categoryId: category.id,
-                      onSelected: controller.setMemo,
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: CurrencySelectorTile(
+                            currency: state.displayCurrency,
+                            onTap: () => _onTapCurrencyTile(
+                              context,
+                              l10n,
+                              state,
+                              controller,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: DateField(
+                            value: state.date,
+                            onChanged: controller.setDate,
+                          ),
+                        ),
+                      ],
                     ),
-                  // Shopping-list inline action rows — shown below MemoField.
-                  if (isShoppingListDraftMode)
-                    _ShoppingListDraftActions(
-                      state: state,
-                      l10n: l10n,
-                      onSaveToTransaction: () => _submitDraft(
-                        context,
-                        controller.convertDraft,
-                        l10n.shoppingListConvertFailedSnackbar,
+                    const SizedBox(height: 8),
+                    MemoField(
+                      initialValue: state.memo,
+                      onChanged: controller.setMemo,
+                    ),
+                    if (state.selectedCategory case final category?)
+                      MemoSuggestions(
+                        categoryId: category.id,
+                        onSelected: controller.setMemo,
                       ),
-                      onSaveDraft: () => _submitDraft(
-                        context,
-                        controller.saveDraft,
-                        l10n.shoppingListSaveFailedSnackbar,
+                    // Shopping-list inline action rows — shown below MemoField.
+                    if (isShoppingListDraftMode)
+                      _ShoppingListDraftActions(
+                        state: state,
+                        l10n: l10n,
+                        onSaveToTransaction: () => _submitDraft(
+                          context,
+                          controller.convertDraft,
+                          l10n.shoppingListConvertFailedSnackbar,
+                        ),
+                        onSaveDraft: () => _submitDraft(
+                          context,
+                          controller.saveDraft,
+                          l10n.shoppingListSaveFailedSnackbar,
+                        ),
+                      )
+                    else if (activeMode is AddTransactionMode)
+                      _AddToShoppingListAction(
+                        canSaveDraft: state.canSaveDraft,
+                        label: l10n.shoppingListAddToListAction,
+                        inFlight:
+                            state.submissionAction ==
+                            TransactionFormSubmissionAction.saveDraft,
+                        onPressed: () =>
+                            _saveAsDraft(context, l10n, controller),
                       ),
-                    )
-                  else if (activeMode is AddTransactionMode)
-                    _AddToShoppingListAction(
-                      canSaveDraft: state.canSaveDraft,
-                      label: l10n.shoppingListAddToListAction,
-                      inFlight:
-                          state.submissionAction ==
-                          TransactionFormSubmissionAction.saveDraft,
-                      onPressed: () => _saveAsDraft(context, l10n, controller),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          CalculatorKeypad(
-            decimals: state.displayCurrency?.decimals ?? 2,
-            onDigit: controller.appendDigit,
-            onDecimal: controller.appendDecimal,
-            onBackspace: controller.backspace,
-            onClear: controller.clearAmount,
-            onOperator: controller.applyOperator,
-          ),
-        ],
+            Expanded(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: CalculatorKeypad(
+                  decimals: state.displayCurrency?.decimals ?? 2,
+                  onDigit: controller.appendDigit,
+                  onDecimal: controller.appendDecimal,
+                  onBackspace: controller.backspace,
+                  onClear: controller.clearAmount,
+                  onOperator: controller.applyOperator,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

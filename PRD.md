@@ -1114,15 +1114,18 @@ The prev/next controls advance by one calendar day at a time. The selected-day t
 
 ### Add/Edit Transaction
 
-Fixed calculator keypad pinned to the bottom, scrollable form above, keyboard does not cover the keypad:
+Calculator keypad pinned to the bottom, form above, keyboard does not cover the keypad:
 
 ```text
 Scaffold(resizeToAvoidBottomInset: false)
   └─ SafeArea
       └─ Column
-          ├─ Expanded → SingleChildScrollView (amount display, category, account, date, memo)
-          └─ CalculatorKeypad (fixed height)
+          ├─ ConstrainedBox(max: height − CalculatorKeypad.minHeight)
+          │   └─ SingleChildScrollView (amount display; category | account; currency | date; memo)
+          └─ Expanded → CalculatorKeypad (bottom-aligned)
 ```
+
+Category and account share one row, and currency and date the row below, as half-width tiles without a chevron. The form takes its natural height and the keypad's keys shrink from 56dp toward the 48dp tap target to fit the height left over, so on a typical phone the form does not scroll. The form scrolls only when even 48dp keys leave too little room (short phones, landscape, large text); the keypad is never pushed off screen.
 
 ### Category picker
 
