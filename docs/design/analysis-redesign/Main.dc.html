@@ -1,0 +1,766 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ledgerly — Analysis</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="{{rootStyle}}">
+<div style="{{scrollStyle}}">
+
+<header style="height: 64px; display: flex; align-items: center; padding: 0 20px">
+<h1 style="margin: 0; font-size: 24px; line-height: 32px; font-weight: 500; color: var(--fg)">Analysis</h1>
+</header>
+
+<div style="padding: 0 16px 8px">
+<label style="display: flex; align-items: center; gap: 12px; height: 48px; padding: 0 16px; border-radius: 24px; background: var(--card); border: 1px solid var(--line); color: var(--fg2); box-sizing: border-box">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+<span style="position: relative; flex: 1; min-width: 0; height: 100%; display: flex; align-items: center">
+<sc-if value="{{showHint}}" hint-placeholder-val="{{ true }}">
+<span aria-hidden="true" style="position: absolute; left: 0; right: 0; font-size: 15px; line-height: 20px; color: var(--fg2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none">Search memos to find transactions</span>
+</sc-if>
+<input type="text" aria-label="Search memos to find transactions" value="{{q}}" onChange="{{onQ}}" style="width: 100%; height: 100%; border: 0; outline: none; background: transparent; padding: 0; font-family: inherit; font-size: 15px; color: var(--fg)">
+</span>
+</label>
+</div>
+
+<div style="padding: 8px 16px 0">
+<div role="group" aria-label="Period" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 3px; border-radius: 25px; background: var(--track)">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+<button type="button" aria-pressed="{{t.pressed}}" onClick="{{t.pick}}" style="{{t.style}}">{{t.label}}</button>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 4px; padding: 8px 8px 0">
+<button type="button" aria-label="Previous period" style="width: 48px; height: 48px; flex: none; border: 0; border-radius: 24px; background: transparent; color: var(--fg); display: flex; align-items: center; justify-content: center; cursor: pointer">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
+</button>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center">
+<div style="font-size: 18px; line-height: 24px; font-weight: 500; color: var(--fg)">{{periodLabel}}</div>
+<div style="font-size: 12px; line-height: 16px; color: var(--fg3)">{{periodCaption}}</div>
+</div>
+<button type="button" aria-label="Next period" disabled="{{ true }}" style="width: 48px; height: 48px; flex: none; border: 0; border-radius: 24px; background: transparent; color: var(--off); display: flex; align-items: center; justify-content: center">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+</button>
+</div>
+
+<section aria-label="Summary" style="margin: 16px 16px 0; padding: 12px; border-radius: 20px; background: var(--card); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 12px">
+<div role="group" aria-label="Chart type" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{tiles}}" as="t" hint-placeholder-count="2">
+<button type="button" aria-pressed="{{t.pressed}}" onClick="{{t.pick}}" style="{{t.style}}">
+<span style="{{t.labelStyle}}"><span style="{{t.dotStyle}}"></span>{{t.label}}</span>
+<span style="font-size: 18px; line-height: 24px; font-weight: 500; color: var(--fg); font-variant-numeric: tabular-nums; white-space: nowrap">{{t.amount}}</span>
+</button>
+</sc-for>
+</div>
+<div aria-hidden="true" style="display: flex; gap: 3px; height: 6px; border-radius: 3px; overflow: hidden; background: var(--track)">
+<div style="{{ratioExp}}"></div>
+<div style="{{ratioInc}}"></div>
+</div>
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 0 4px">
+<span style="font-size: 14px; line-height: 20px; color: var(--fg2)">{{netLabel}}</span>
+<span style="{{netStyle}}">{{netAmount}}</span>
+</div>
+</section>
+
+<section aria-label="Breakdown" style="margin: 12px 16px 0; padding: 16px 0 8px; border-radius: 20px; background: var(--card); border: 1px solid var(--line)">
+<div style="padding: 0 16px; display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 24px">
+<h2 style="margin: 0; font-size: 16px; line-height: 24px; font-weight: 500; color: var(--fg); white-space: nowrap">{{breakdownTitle}}</h2>
+<button type="button" aria-haspopup="dialog" aria-label="{{accBtnAria}}" onClick="{{openSheet}}" style="height: 44px; margin: -10px -6px -10px 0; padding: 0 6px; border: 0; background: transparent; display: flex; align-items: center; cursor: pointer; font-family: inherit; min-width: 0">
+<span style="{{accPillStyle}}">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"></path><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"></path></svg>
+<span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{accBtnLabel}}</span>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m6 9 6 6 6-6"></path></svg>
+</span>
+</button>
+</div>
+<div role="group" aria-label="Group by" style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{chips}}" as="c" hint-placeholder-count="3">
+<button type="button" aria-pressed="{{c.pressed}}" onClick="{{c.pick}}" style="height: 44px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; cursor: pointer; font-family: inherit">
+<span style="{{c.style}}">{{c.label}}</span>
+</button>
+</sc-for>
+</div>
+</div>
+
+<sc-if value="{{hasData}}" hint-placeholder-val="{{ true }}">
+<div style="position: relative; width: 200px; height: 200px; margin: 12px auto">
+<div role="img" aria-label="{{donutAria}}" style="{{donutStyle}}"></div>
+<div aria-hidden="true" style="position: absolute; inset: 26px; border-radius: 50%; background: var(--card); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 0 10px; text-align: center">
+<span style="{{centerTopStyle}}">{{centerTop}}</span>
+<span style="font-size: 17px; line-height: 24px; font-weight: 500; color: var(--fg); font-variant-numeric: tabular-nums; white-space: nowrap">{{centerAmount}}</span>
+<span style="font-size: 12px; line-height: 16px; color: var(--fg3)">{{centerSub}}</span>
+</div>
+</div>
+
+<ul style="list-style: none; margin: 0; padding: 0 8px; display: flex; flex-direction: column">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+<li style="display: flex">
+<button type="button" aria-pressed="{{r.pressed}}" onClick="{{r.pick}}" style="{{r.style}}">
+<span aria-hidden="true" style="{{r.iconStyle}}">
+<sc-if value="{{r.i.food}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"></path><path d="M7 2v20"></path><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"></path></svg></sc-if>
+<sc-if value="{{r.i.cup}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"></path><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"></path><path d="M6 2v2"></path><path d="M10 2v2"></path><path d="M14 2v2"></path></svg></sc-if>
+<sc-if value="{{r.i.car}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle></svg></sc-if>
+<sc-if value="{{r.i.bag}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg></sc-if>
+<sc-if value="{{r.i.device}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="14" height="10" rx="1.5"></rect><path d="M6 18h6"></path><path d="M9 14v4"></path><rect x="17" y="9" width="5" height="11" rx="1"></rect></svg></sc-if>
+<sc-if value="{{r.i.film}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M2 9h20"></path><path d="m7 4 2 5"></path><path d="m12 4 2 5"></path><path d="m17 4 2 5"></path></svg></sc-if>
+<sc-if value="{{r.i.dots}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle></svg></sc-if>
+<sc-if value="{{r.i.cash}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="12" cy="12" r="2"></circle><path d="M6 12h.01"></path><path d="M18 12h.01"></path></svg></sc-if>
+<sc-if value="{{r.i.case}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg></sc-if>
+<sc-if value="{{r.i.trend}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 7-8.5 8.5-5-5L2 17"></path><path d="M16 7h6v6"></path></svg></sc-if>
+<sc-if value="{{r.i.card}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><path d="M2 10h20"></path></svg></sc-if>
+<sc-if value="{{r.i.wallet}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"></path><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"></path></svg></sc-if>
+<sc-if value="{{r.i.bank}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M5 18v-7"></path><path d="M10 18v-7"></path><path d="M14 18v-7"></path><path d="M19 18v-7"></path><path d="m12 3 8 5H4z"></path></svg></sc-if>
+<sc-if value="{{r.i.code}}" hint-placeholder-val="{{ false }}"><span>{{r.code}}</span></sc-if>
+</span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+<span style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+<span style="{{r.labelStyle}}">{{r.label}}</span>
+<span style="font-size: 15px; line-height: 20px; font-weight: 500; color: var(--fg); font-variant-numeric: tabular-nums; white-space: nowrap">{{r.amount}}</span>
+</span>
+<span style="display: flex; align-items: center; gap: 8px">
+<span style="flex: 1; height: 4px; border-radius: 2px; background: var(--track); overflow: hidden; display: flex"><span style="{{r.barStyle}}"></span></span>
+<span style="min-width: 40px; text-align: right; font-size: 12px; line-height: 16px; color: var(--fg3); font-variant-numeric: tabular-nums">{{r.pct}}</span>
+</span>
+</span>
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; color: var(--fg3)"><path d="m9 18 6-6-6-6"></path></svg>
+</button>
+</li>
+</sc-for>
+</ul>
+</sc-if>
+
+<sc-if value="{{noData}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 32px 24px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center">
+<span aria-hidden="true" style="width: 48px; height: 48px; border-radius: 24px; background: var(--track); color: var(--fg2); display: flex; align-items: center; justify-content: center">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M8 17v-4"></path><path d="M13 17V7"></path><path d="M18 17v-7"></path></svg>
+</span>
+<span style="font-size: 15px; line-height: 20px; font-weight: 500; color: var(--fg)">{{emptyTitle}}</span>
+<span style="font-size: 13px; line-height: 18px; color: var(--fg2)">{{emptySub}}</span>
+</div>
+</sc-if>
+</section>
+
+<sc-if value="{{showTrend}}" hint-placeholder-val="{{ true }}">
+<section aria-label="Trend" style="margin: 12px 16px 0; padding: 16px; border-radius: 20px; background: var(--card); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; min-height: 44px">
+<div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+<h2 style="margin: 0; font-size: 16px; line-height: 24px; font-weight: 500; color: var(--fg)">{{trendTitle}}</h2>
+<span style="display: flex; align-items: center; gap: 6px; font-size: 13px; line-height: 18px; color: var(--fg2); font-variant-numeric: tabular-nums"><span aria-hidden="true" style="width: 14px; border-top: 1.5px dashed var(--fg3)"></span>{{trendSub}}</span>
+</div>
+<sc-if value="{{hasSel}}" hint-placeholder-val="{{ false }}">
+<button type="button" aria-label="{{filterAria}}" onClick="{{clearSel}}" style="height: 44px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; cursor: pointer; font-family: inherit; flex: none">
+<span style="height: 32px; padding: 0 8px 0 10px; border-radius: 16px; background: var(--sel); color: var(--fg); display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500">
+<span style="{{filterDot}}"></span>{{selLabel}}
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--fg2)"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+</span>
+</button>
+</sc-if>
+</div>
+<div role="img" aria-label="{{chartAria}}" style="position: relative; height: 140px; border-bottom: 1px solid var(--line)">
+<div aria-hidden="true" style="{{barsStyle}}">
+<sc-for list="{{bars}}" as="b" hint-placeholder-count="12">
+<div style="{{b.style}}"></div>
+</sc-for>
+</div>
+<div aria-hidden="true" style="{{avgStyle}}"></div>
+</div>
+<div aria-hidden="true" style="{{labelsStyle}}">
+<sc-for list="{{labels}}" as="l" hint-placeholder-count="12">
+<span style="{{l.style}}">{{l.t}}</span>
+</sc-for>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{hasSel}}" hint-placeholder-val="{{ false }}">
+<section aria-label="Transactions" style="margin: 12px 16px 0; padding: 8px 0; border-radius: 20px; background: var(--card); border: 1px solid var(--line)">
+<div style="display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 16px">
+<span aria-hidden="true" style="{{selDot}}"></span>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<h2 style="margin: 0; font-size: 16px; line-height: 24px; font-weight: 500; color: var(--fg)">{{selLabel}}</h2>
+<span style="font-size: 13px; line-height: 18px; color: var(--fg2); font-variant-numeric: tabular-nums">{{selSub}}</span>
+</div>
+<button type="button" aria-label="Close transactions" onClick="{{clearSel}}" style="width: 48px; height: 48px; flex: none; border: 0; border-radius: 24px; background: transparent; color: var(--fg2); display: flex; align-items: center; justify-content: center; cursor: pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+</button>
+</div>
+<sc-if value="{{showBridge}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 0 16px 8px">
+<button type="button" onClick="{{bridge}}" style="height: 44px; padding: 0 12px 0 14px; border-radius: 22px; border: 1px solid var(--outline); background: transparent; color: var(--fg); font-family: inherit; font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; cursor: pointer">{{bridgeLabel}}
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+</button>
+</div>
+</sc-if>
+<sc-if value="{{hasTx}}" hint-placeholder-val="{{ true }}">
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+<sc-for list="{{tx}}" as="x" hint-placeholder-count="5">
+<li style="display: flex; border-top: 1px solid var(--line)">
+<button type="button" style="width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 16px; border: 0; background: transparent; cursor: pointer; font-family: inherit; text-align: left; color: var(--fg)">
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 15px; line-height: 20px; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{x.memo}}</span>
+<span style="font-size: 13px; line-height: 18px; color: var(--fg2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{x.meta}}</span>
+</span>
+<span style="{{x.amountStyle}}">{{x.amount}}</span>
+</button>
+</li>
+</sc-for>
+</ul>
+</sc-if>
+<sc-if value="{{noTx}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 16px; border-top: 1px solid var(--line); text-align: center; font-size: 14px; line-height: 20px; color: var(--fg2)">No transactions in this period</div>
+</sc-if>
+<sc-if value="{{showMore}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; justify-content: center; padding: 4px 8px 0; border-top: 1px solid var(--line)">
+<button type="button" style="height: 44px; padding: 0 16px; border: 0; border-radius: 22px; background: transparent; color: var(--accent-text); font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer">{{moreLabel}}</button>
+</div>
+</sc-if>
+</section>
+</sc-if>
+
+</div>
+
+<sc-if value="{{showNav}}" hint-placeholder-val="{{ true }}">
+<nav aria-label="Main" style="flex: none; height: 80px; box-sizing: border-box; padding: 12px 0 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: var(--nav)">
+<button type="button" style="border: 0; background: transparent; padding: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; font-family: inherit; color: var(--fg2)">
+<span style="width: 64px; height: 32px; border-radius: 16px; display: flex; align-items: center; justify-content: center">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path></svg>
+</span>
+<span style="font-size: 12px; line-height: 16px; font-weight: 500">Home</span>
+</button>
+<button type="button" aria-current="page" style="border: 0; background: transparent; padding: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; font-family: inherit; color: var(--fg)">
+<span style="width: 64px; height: 32px; border-radius: 16px; background: var(--nav-ind); display: flex; align-items: center; justify-content: center">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"></path><path d="M8 17v-4"></path><path d="M13 17V7"></path><path d="M18 17v-7"></path></svg>
+</span>
+<span style="font-size: 12px; line-height: 16px; font-weight: 700">Analysis</span>
+</button>
+<button type="button" style="border: 0; background: transparent; padding: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; font-family: inherit; color: var(--fg2)">
+<span style="width: 64px; height: 32px; border-radius: 16px; display: flex; align-items: center; justify-content: center">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+</span>
+<span style="font-size: 12px; line-height: 16px; font-weight: 500">Settings</span>
+</button>
+</nav>
+</sc-if>
+
+<sc-if value="{{showSheet}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; justify-content: flex-end">
+<button type="button" aria-label="Close account filter" onClick="{{closeSheet}}" style="position: absolute; inset: 0; border: 0; padding: 0; background: rgba(0,0,0,0.32); cursor: pointer"></button>
+<div role="dialog" aria-modal="true" aria-label="Filter breakdown by account" style="position: relative; background: var(--card); border-radius: 28px 28px 0 0; padding: 0 0 24px; box-shadow: 0 -2px 16px rgba(0,0,0,0.12)">
+<div aria-hidden="true" style="display: flex; justify-content: center; padding: 16px 0 8px"><span style="width: 32px; height: 4px; border-radius: 2px; background: var(--outline)"></span></div>
+<div style="padding: 8px 24px 12px; display: flex; flex-direction: column; gap: 2px">
+<h2 style="margin: 0; font-size: 20px; line-height: 28px; font-weight: 500; color: var(--fg)">Filter by account</h2>
+<span style="font-size: 14px; line-height: 20px; color: var(--fg2)">{{sheetSub}}</span>
+</div>
+<div role="radiogroup" aria-label="Account" style="padding: 0 12px; display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{sheetItems}}" as="a" hint-placeholder-count="4">
+<label style="{{a.rowStyle}}">
+<span aria-hidden="true" style="{{a.iconStyle}}">
+<sc-if value="{{a.i.stack}}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 10 5-10 5L2 7z"></path><path d="m2 12 10 5 10-5"></path><path d="m2 17 10 5 10-5"></path></svg></sc-if>
+<sc-if value="{{a.i.card}}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><path d="M2 10h20"></path></svg></sc-if>
+<sc-if value="{{a.i.wallet}}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"></path><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"></path></svg></sc-if>
+<sc-if value="{{a.i.bank}}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M5 18v-7"></path><path d="M10 18v-7"></path><path d="M14 18v-7"></path><path d="M19 18v-7"></path><path d="m12 3 8 5H4z"></path></svg></sc-if>
+</span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<span style="{{a.labelStyle}}">{{a.label}}</span>
+<span style="font-size: 13px; line-height: 18px; color: var(--fg2); font-variant-numeric: tabular-nums">{{a.sub}}</span>
+</span>
+<input type="radio" name="acct-filter" checked="{{a.pressed}}" onChange="{{a.pick}}" onClick="{{a.pick}}" style="width: 20px; height: 20px; margin: 0 4px 0 0; flex: none; accent-color: var(--accent-text); cursor: pointer">
+</label>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"period":{"editor":"enum","options":["day","week","month","year"],"default":"month"},"layout":{"editor":"enum","options":["phone","full"],"default":"phone"},"type":{"editor":null,"default":"expense"},"dim":{"editor":null,"default":"category"},"sel":{"editor":null,"default":-1},"acc":{"editor":null,"default":""},"sheet":{"editor":null,"default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  componentDidUpdate(prev) {
+    const p = this.props || {};
+    if (prev.period !== p.period || prev.type !== p.type || prev.dim !== p.dim || prev.sel !== p.sel || prev.acc !== p.acc || prev.sheet !== p.sheet) {
+      this.setState({ period: undefined, type: undefined, dim: undefined, sel: undefined, acc: undefined, sheet: undefined });
+    }
+  }
+
+  renderVals() {
+    const P = this.props || {};
+    const S = this.state || {};
+    const set = (o) => this.setState(o);
+
+    const dark = P.dark === true || P.dark === 'true';
+    const full = (P.layout ?? 'phone') === 'full';
+    const period = S.period ?? P.period ?? 'month';
+    const type = S.type ?? P.type ?? 'expense';
+    const dim = S.dim ?? P.dim ?? 'category';
+    let sel = S.sel !== undefined ? S.sel : Number(P.sel ?? -1);
+    if (!Number.isFinite(sel)) sel = -1;
+    const q = S.q ?? '';
+    const accSel = S.acc !== undefined ? S.acc : (P.acc ?? '');
+    const sheetOpen = S.sheet !== undefined ? S.sheet : (P.sheet === true || P.sheet === 'true');
+
+    // Theme tokens: Ledgerly M3 (grey seed, pinkAccent primary).
+    const LIGHT = {
+      '--bg': '#F3F3F3', '--card': '#FFFFFF', '--line': '#E3E3E3', '--outline': '#C4C4C4',
+      '--track': '#EAEAEA', '--thumb': '#FFFFFF', '--thumb-shadow': '0 1px 3px rgba(0,0,0,0.12), 0 1px 1px rgba(0,0,0,0.06)',
+      '--fg': '#1B1B1B', '--fg2': '#474747', '--fg3': '#5E5E5E', '--off': '#BDBDBD', '--sel': '#F0F0F0',
+      '--on-bg': '#1B1B1B', '--on-fg': '#FFFFFF',
+      '--exp': '#FF4081', '--exp-text': '#C2185B', '--exp-tint': '#FFF0F5',
+      '--inc': '#43A047', '--inc-text': '#1B5E20', '--inc-tint': '#EFF7EF',
+      '--accent-text': '#C2185B', '--nav': '#EBEBEB', '--nav-ind': '#D6D6D6',
+    };
+    const DARK = {
+      '--bg': '#131313', '--card': '#1E1E1E', '--line': '#2E2E2E', '--outline': '#4A4A4A',
+      '--track': '#2A2A2A', '--thumb': '#3D3D3D', '--thumb-shadow': '0 1px 2px rgba(0,0,0,0.5)',
+      '--fg': '#E6E6E6', '--fg2': '#C6C6C6', '--fg3': '#A3A3A3', '--off': '#555555', '--sel': '#2C2C2C',
+      '--on-bg': '#E6E6E6', '--on-fg': '#1B1B1B',
+      '--exp': '#FF4081', '--exp-text': '#FF79A3', '--exp-tint': '#35161F',
+      '--inc': '#66BB6A', '--inc-text': '#81C784', '--inc-tint': '#16271A',
+      '--accent-text': '#FF79A3', '--nav': '#1E1E1E', '--nav-ind': '#3A3A3A',
+    };
+    const ease = 'cubic-bezier(.2,.6,.2,1)';
+
+    const money = (n) => 'HK$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const signed = (n) => (n > 0.004 ? '+' : n < -0.004 ? '−' : '') + money(n);
+    const r2 = (n) => Math.round(n * 100) / 100;
+    const sum = (a) => r2(a.reduce((x, y) => x + y, 0));
+
+    // Sample data (HKD). Category colors are the app's palette indices.
+    const CAT = {
+      food: ['Food', 'food', '#F55E57'],
+      drinks: ['Drinks', 'cup', '#006C35'],
+      transportation: ['Transportation', 'car', '#00BBDF'],
+      shopping: ['Shopping', 'bag', '#5629A4'],
+      threeC: ['3C', 'device', '#04409F'],
+      entertainment: ['Entertainment', 'film', '#FF8D41'],
+      other: ['Other', 'dots', '#79747E'],
+      salary: ['Salary', 'cash', '#FCBD00'],
+      freelance: ['Freelance', 'case', '#FF8D41'],
+      investment: ['Investment', 'trend', '#00BBDF'],
+    };
+    const ACCTS = {
+      expense: [['Visa card', 'card', '#04409F'], ['Cash', 'wallet', '#AEA9B4'], ['Octopus', 'card', '#00BBDF']],
+      income: [['HSBC Savings', 'bank', '#04409F'], ['Cash', 'wallet', '#AEA9B4']],
+    };
+    // Category x account amounts per period. All JPY spend is Food on the Visa card.
+    const MONTH_EXP = {
+      food: { 'Visa card': 2210.80, Cash: 1452.30, Octopus: 1199.40 },
+      shopping: { 'Visa card': 1815.00 },
+      threeC: { 'Visa card': 1580.00 },
+      transportation: { Cash: 612.40, Octopus: 824.40 },
+      drinks: { 'Visa card': 286.40, Octopus: 496.00 },
+      entertainment: { 'Visa card': 640.00 },
+      other: { Cash: 463.30 },
+    };
+    const spread = (catTotals) => {
+      const out = {};
+      Object.keys(catTotals).forEach((k) => {
+        const shares = MONTH_EXP[k];
+        const keys = Object.keys(shares);
+        const mt = keys.reduce((a, x) => a + shares[x], 0);
+        let run = 0;
+        out[k] = {};
+        keys.forEach((a, i) => {
+          const v = i === keys.length - 1 ? r2(catTotals[k] - run) : r2((catTotals[k] * shares[a]) / mt);
+          run += v;
+          out[k][a] = v;
+        });
+      });
+      return out;
+    };
+    const MATRIX = {
+      day: {
+        expense: { food: { Cash: 186.50 }, drinks: { Octopus: 42.00 }, transportation: { Cash: 38.60 } },
+        income: {},
+      },
+      week: {
+        expense: {
+          food: { 'Visa card': 768.80, Cash: 186.50, Octopus: 169.50 }, shopping: { 'Visa card': 415.00 },
+          transportation: { Cash: 238.60, Octopus: 104.00 }, entertainment: { 'Visa card': 240.00 },
+          drinks: { 'Visa card': 106.40, Octopus: 80.00 },
+        },
+        income: { freelance: { Cash: 3200 } },
+      },
+      month: {
+        expense: MONTH_EXP,
+        income: { salary: { 'HSBC Savings': 28000 }, freelance: { Cash: 3200 }, investment: { 'HSBC Savings': 820 } },
+      },
+      year: {
+        expense: spread({ food: 46210.40, shopping: 26842.00, threeC: 20800.00, transportation: 13980.20, drinks: 7410.60, entertainment: 6120.00, other: 4236.80 }),
+        income: { salary: { 'HSBC Savings': 280000 }, freelance: { Cash: 21600 }, investment: { 'HSBC Savings': 9460 } },
+      },
+    };
+    const JPY = { expense: { day: 0, week: 0, month: 386.40, year: 4120.80 }, income: { day: 0, week: 0, month: 0, year: 0 } };
+
+    const matAll = (t) => r2(Object.values(MATRIX[period][t]).reduce((s, row) => s + Object.values(row).reduce((a, b) => a + b, 0), 0));
+    const expTot = matAll('expense');
+    const incTot = matAll('income');
+    const totAll = type === 'expense' ? expTot : incTot;
+    const typeWord = type === 'expense' ? 'expense' : 'income';
+    const accList = ACCTS[type];
+    const acc = dim !== 'account' && accList.some((a) => a[0] === accSel) ? accSel : '';
+    const M = MATRIX[period][type];
+    const cats = Object.keys(M);
+    const amt = (k, a) => {
+      const row = M[k] || {};
+      return a ? row[a] || 0 : Object.values(row).reduce((x, y) => x + y, 0);
+    };
+    const accTotal = (a) => r2(cats.reduce((s, k) => s + amt(k, a), 0));
+    const tot = acc ? accTotal(acc) : totAll;
+
+    let slices = [];
+    if (tot > 0) {
+      if (dim === 'category') {
+        slices = cats
+          .map((k) => ({ key: k, label: CAT[k][0], icon: CAT[k][1], color: CAT[k][2], amount: r2(amt(k, acc)) }))
+          .filter((s) => s.amount > 0);
+      } else if (dim === 'account') {
+        slices = accList
+          .map(([label, icon, color]) => ({ key: label, label, icon, color, amount: accTotal(label) }))
+          .filter((s) => s.amount > 0);
+      } else {
+        const j = !acc || acc === 'Visa card' ? JPY[type][period] : 0;
+        slices = [{ key: 'HKD', label: 'HKD', icon: 'code', code: 'HKD', color: '#04409F', amount: r2(tot - j) }];
+        if (j > 0) slices.push({ key: 'JPY', label: 'JPY', icon: 'code', code: 'JPY', color: '#FF8D41', amount: j });
+      }
+      slices.sort((a, b) => b.amount - a.amount);
+    }
+    if (sel >= slices.length) sel = -1;
+    const selSlice = sel >= 0 ? slices[sel] : null;
+    const pct = (a) => (tot > 0 ? ((a / tot) * 100).toFixed(1) + '%' : '0%');
+
+    const lum = (hex) => {
+      const n = parseInt(hex.slice(1), 16);
+      const f = (c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+      return 0.2126 * f((n >> 16) & 255) + 0.7152 * f((n >> 8) & 255) + 0.0722 * f(n & 255);
+    };
+    const ICONS = ['food', 'cup', 'car', 'bag', 'device', 'film', 'dots', 'cash', 'case', 'trend', 'card', 'wallet', 'bank', 'code'];
+
+    const rows = slices.map((s, idx) => {
+      const on = idx === sel;
+      const faded = sel >= 0 && !on;
+      const i = {};
+      ICONS.forEach((n) => { i[n] = s.icon === n; });
+      return {
+        label: s.label, amount: money(s.amount), pct: pct(s.amount), code: s.code || '', pressed: on, i,
+        pick: () => set({ sel: on ? -1 : idx }),
+        style: {
+          width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 8px',
+          border: 0, borderRadius: '14px', background: on ? 'var(--sel)' : 'transparent', cursor: 'pointer',
+          fontFamily: 'inherit', color: 'var(--fg)', textAlign: 'left', transition: `background 200ms ${ease}`,
+        },
+        iconStyle: {
+          width: '36px', height: '36px', borderRadius: '18px', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: s.color, color: lum(s.color) > 0.35 ? '#1B1B1B' : '#FFFFFF', opacity: faded ? 0.35 : 1,
+          fontSize: '10px', fontWeight: 700, letterSpacing: '0.3px', transition: `opacity 200ms ${ease}`,
+        },
+        labelStyle: {
+          fontSize: '15px', lineHeight: '20px', fontWeight: on ? 700 : 500, color: 'var(--fg)',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0,
+        },
+        barStyle: {
+          width: tot > 0 ? ((s.amount / tot) * 100).toFixed(2) + '%' : '0%', height: '100%', borderRadius: '2px',
+          background: s.color, opacity: faded ? 0.35 : 1, transition: `opacity 200ms ${ease}, width 360ms cubic-bezier(.16,1,.3,1)`,
+        },
+      };
+    });
+
+    // Donut (conic gradient, thin gaps between slices).
+    let accPct = 0;
+    const parts = [];
+    const gap = slices.length > 1 ? 0.6 : 0;
+    slices.forEach((s, idx) => {
+      const p = (s.amount / tot) * 100;
+      const start = accPct;
+      const end = accPct + p;
+      const col = sel >= 0 && idx !== sel ? s.color + '4D' : s.color;
+      parts.push(`${col} ${start.toFixed(3)}% ${Math.max(start, end - gap).toFixed(3)}%`);
+      if (gap) parts.push(`var(--card) ${Math.max(start, end - gap).toFixed(3)}% ${end.toFixed(3)}%`);
+      accPct = end;
+    });
+    const donutStyle = { width: '200px', height: '200px', borderRadius: '50%', background: parts.length ? `conic-gradient(${parts.join(', ')})` : 'var(--track)' };
+    const dimWords = { category: ['category', 'categories'], account: ['account', 'accounts'], currency: ['currency', 'currencies'] }[dim];
+    const centerTop = selSlice ? selSlice.label : acc ? `${acc} ${typeWord}` : `Total ${typeWord}`;
+    const centerAmount = money(selSlice ? selSlice.amount : tot);
+    const centerSub = selSlice ? `${pct(selSlice.amount)} of ${typeWord}` : `${slices.length} ${slices.length === 1 ? dimWords[0] : dimWords[1]}`;
+    const centerTopStyle = {
+      fontSize: '12px', lineHeight: '16px', color: selSlice ? 'var(--fg)' : 'var(--fg2)', fontWeight: selSlice ? 500 : 400,
+      maxWidth: '128px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+    };
+    const donutAria = `Pie chart. ${slices.map((s) => `${s.label} ${pct(s.amount)}, ${money(s.amount)}`).join('. ')}. Total ${money(tot)}.`;
+
+    // Trend series.
+    const regMonth = (() => {
+      const w = [];
+      for (let d = 1; d <= 30; d++) {
+        const x = Math.sin(d * 12.9898) * 43758.5453;
+        const f = x - Math.floor(x);
+        w.push(0.45 + 1.1 * f + (d % 7 === 3 || d % 7 === 4 ? 0.4 : 0));
+      }
+      const s = w.reduce((a, b) => a + b, 0);
+      const target = 11580 - 1580 - 267.10;
+      return w.map((v) => (v / s) * target).concat([267.10]);
+    })();
+    const SERIES = {
+      week: { expense: [286.40, 412.30, 198.60, 524.10, 620.30, 267.10, null], income: [0, 0, 0, 0, 3200, 0, null] },
+      month: {
+        expense: regMonth.map((v, i) => (i === 13 ? v + 1580 : v)),
+        income: Array.from({ length: 31 }, (_, i) => (i === 19 ? 820 : i === 24 ? 28000 : i === 29 ? 3200 : 0)),
+      },
+      year: {
+        expense: [13240.50, 11860.20, 12410.80, 12980.00, 13520.40, 11930.60, 12880.30, 13105.90, 12091.30, 11580.00, null, null],
+        income: [32900, 28000, 34100, 29240, 33500, 28000, 30820, 32100, 30380, 32020, null, null],
+      },
+    };
+    const showTrend = period !== 'day' && slices.length > 0;
+    // Portion of each category that falls inside the account filter and the selected slice.
+    let scope = {};
+    cats.forEach((k) => { scope[k] = amt(k, acc); });
+    if (selSlice) {
+      if (dim === 'category') {
+        scope = { [selSlice.key]: selSlice.amount };
+      } else if (dim === 'account') {
+        scope = {};
+        cats.forEach((k) => { scope[k] = amt(k, selSlice.label); });
+      } else {
+        const f = tot > 0 ? selSlice.amount / tot : 0;
+        Object.keys(scope).forEach((k) => { scope[k] *= f; });
+      }
+    }
+    const scopeSum = Object.values(scope).reduce((a, b) => a + b, 0);
+    let series = [];
+    if (period === 'month' && type === 'expense') {
+      const s3 = scope.threeC || 0;
+      series = regMonth.map((v, i) => v * ((scopeSum - s3) / 10000) + (i === 13 ? s3 : 0));
+    } else if (period === 'month' && type === 'income') {
+      const payday = { investment: 19, salary: 24, freelance: 29 };
+      series = Array.from({ length: 31 }, (_, i) => Object.keys(scope).reduce((a, k) => a + (payday[k] === i ? scope[k] : 0), 0));
+    } else if (period !== 'day') {
+      const f = totAll > 0 ? scopeSum / totAll : 0;
+      series = SERIES[period][type].map((v) => (v == null ? null : v * f));
+    }
+    const nowIdx = { week: 5, month: 30, year: 9 }[period];
+    const known = series.filter((v) => v != null);
+    const maxV = known.length ? Math.max(...known) : 0;
+    const top = maxV > 0 ? maxV * 1.12 : 1;
+    const barColor = selSlice ? selSlice.color : type === 'expense' ? 'var(--exp)' : 'var(--inc)';
+    const radius = period === 'month' ? '3px 3px 1px 1px' : '6px 6px 2px 2px';
+    const barGap = { week: '10px', month: '3px', year: '6px' }[period] || '3px';
+    const bars = series.map((v) => ({
+      style: v == null
+        ? { flex: '1 1 0', minWidth: 0, height: '3px', borderRadius: '2px', background: 'var(--track)' }
+        : { flex: '1 1 0', minWidth: 0, height: v > 0 ? `max(2px, ${((v / top) * 100).toFixed(2)}%)` : '0px', borderRadius: radius, background: barColor, transition: 'height 360ms cubic-bezier(.16,1,.3,1)' },
+    }));
+    const avg = known.length ? known.reduce((a, b) => a + b, 0) / known.length : 0;
+    const unit = period === 'year' ? 'month' : 'day';
+    const trendTitle = (period === 'year' ? 'Monthly ' : 'Daily ') + (type === 'expense' ? 'spending' : 'income');
+    const trendSub = (acc ? `${acc} · ` : '') + `Avg ${money(avg)} / ${unit}`;
+    const avgStyle = {
+      position: 'absolute', left: 0, right: 0, bottom: `${((avg / top) * 100).toFixed(2)}%`,
+      borderTop: '1.5px dashed var(--fg3)', pointerEvents: 'none', display: avg > 0 ? 'block' : 'none',
+    };
+    const WD = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const MO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const showDays = [0, 7, 14, 21, 28, 30];
+    const labels = series.map((_, i) => ({
+      t: period === 'week' ? WD[i] : period === 'year' ? MO[i] : showDays.includes(i) ? String(i + 1) : '',
+      style: {
+        flex: '1 1 0', minWidth: 0, display: 'flex', justifyContent: 'center', whiteSpace: 'nowrap',
+        fontSize: '11px', lineHeight: '14px', color: i === nowIdx ? 'var(--fg)' : 'var(--fg3)', fontWeight: i === nowIdx ? 700 : 400,
+      },
+    }));
+    const barsStyle = { position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-end', gap: barGap };
+    const labelsStyle = { display: 'flex', gap: barGap, marginTop: '-4px' };
+
+    const PL = {
+      day: ['Sat, Oct 31, 2026', 'Today'],
+      week: ['Oct 26 – Nov 1, 2026', 'This week'],
+      month: ['October 2026', 'This month'],
+      year: ['2026', 'This year'],
+    }[period];
+    const chartAria = `Bar chart: ${trendTitle.toLowerCase()}, ${PL[0]}. Average ${money(avg)} per ${unit}.`;
+
+    // Drill-down transactions (memo, day in Oct, account, currency, key, amount, type, original).
+    const TX = [
+      ['Dim sum', 31, 'Cash', 'HKD', 'food', 186.50, 'expense'],
+      ['Milk tea', 31, 'Octopus', 'HKD', 'drinks', 42.00, 'expense'],
+      ['Taxi', 31, 'Cash', 'HKD', 'transportation', 38.60, 'expense'],
+      ['Lunch', 30, 'Octopus', 'HKD', 'food', 71.50, 'expense'],
+      ['Cinema', 30, 'Visa card', 'HKD', 'entertainment', 240.00, 'expense'],
+      ['Groceries', 29, 'Visa card', 'HKD', 'food', 412.80, 'expense'],
+      ['Household supplies', 29, 'Visa card', 'HKD', 'shopping', 265.00, 'expense'],
+      ['Airport Express', 29, 'Octopus', 'HKD', 'transportation', 104.00, 'expense'],
+      ['Team lunch', 28, 'Octopus', 'HKD', 'food', 98.00, 'expense'],
+      ['MTR', 28, 'Cash', 'HKD', 'transportation', 200.00, 'expense'],
+      ['Books', 27, 'Visa card', 'HKD', 'shopping', 150.00, 'expense'],
+      ['Coffee beans', 27, 'Visa card', 'HKD', 'drinks', 106.40, 'expense'],
+      ['Dinner', 26, 'Visa card', 'HKD', 'food', 356.00, 'expense'],
+      ['Coffee', 26, 'Octopus', 'HKD', 'drinks', 38.00, 'expense'],
+      ['Breakfast', 24, 'Octopus', 'HKD', 'food', 42.50, 'expense'],
+      ['Running shoes', 21, 'Visa card', 'HKD', 'shopping', 780.00, 'expense'],
+      ['Haircut', 18, 'Cash', 'HKD', 'other', 180.00, 'expense'],
+      ['Headphones', 14, 'Visa card', 'HKD', 'threeC', 1580.00, 'expense'],
+      ['Postage', 9, 'Cash', 'HKD', 'other', 46.30, 'expense'],
+      ['Streaming subscription', 5, 'Visa card', 'HKD', 'entertainment', 78.00, 'expense'],
+      ['Ramen (Tokyo trip)', 3, 'Visa card', 'JPY', 'food', 386.40, 'expense', '¥7,350'],
+      ['Website project', 30, 'Cash', 'HKD', 'freelance', 3200.00, 'income'],
+      ['October salary', 25, 'HSBC Savings', 'HKD', 'salary', 28000.00, 'income'],
+      ['Dividend', 20, 'HSBC Savings', 'HKD', 'investment', 820.00, 'income'],
+    ];
+    const inPeriod = (d) => (period === 'day' ? d === 31 : period === 'week' ? d >= 26 : true);
+    const matches = (t) => (dim === 'category' ? t[4] === selSlice.key : dim === 'account' ? t[2] === selSlice.label : t[3] === selSlice.label);
+    const txAll = selSlice ? TX.filter((t) => t[6] === type && inPeriod(t[1]) && matches(t) && (!acc || t[2] === acc)).sort((a, b) => b[1] - a[1]) : [];
+    const shown = txAll.slice(0, 5);
+    const count = !selSlice ? 0 : type === 'expense'
+      ? Math.max(txAll.length, Math.round(selSlice.amount / 210))
+      : txAll.length * (period === 'year' ? 10 : 1);
+    const more = count - shown.length;
+    const tx = shown.map((t) => ({
+      memo: t[0],
+      meta: `Oct ${t[1]} · ${t[2]}` + (t[7] ? ` · ${t[7]}` : ''),
+      amount: (t[6] === 'expense' ? '−' : '+') + money(t[5]),
+      amountStyle: {
+        flex: 'none', fontSize: '15px', lineHeight: '20px', fontWeight: 500, fontVariantNumeric: 'tabular-nums',
+        color: t[6] === 'expense' ? 'var(--exp-text)' : 'var(--inc-text)',
+      },
+    }));
+
+    // Summary tiles.
+    const tile = (k, label, amount) => {
+      const on = type === k;
+      const c = k === 'expense' ? 'exp' : 'inc';
+      return {
+        label, amount: money(amount), pressed: on,
+        pick: () => set({ type: k, sel: -1 }),
+        style: {
+          display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px', padding: '12px 14px', minWidth: 0,
+          borderRadius: '14px', border: `1.5px solid ${on ? `var(--${c})` : 'var(--line)'}`, background: on ? `var(--${c}-tint)` : 'transparent',
+          cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', color: 'var(--fg)',
+          transition: `background 200ms ${ease}, border-color 200ms ${ease}`,
+        },
+        labelStyle: {
+          display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', lineHeight: '18px', fontWeight: 500,
+          color: on ? `var(--${c}-text)` : 'var(--fg2)',
+        },
+        dotStyle: { width: '8px', height: '8px', borderRadius: '4px', background: `var(--${c})`, flex: 'none' },
+      };
+    };
+    const net = r2(incTot - expTot);
+    const netLabel = { day: 'Net today', week: 'Net this week', month: 'Net this month', year: 'Net this year' }[period];
+    const netStyle = {
+      fontSize: '16px', lineHeight: '24px', fontWeight: 500, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap',
+      color: net > 0 ? 'var(--inc-text)' : net < 0 ? 'var(--exp-text)' : 'var(--fg)',
+    };
+
+    const when = { day: 'today', week: 'this week', month: 'this month', year: 'this year' }[period];
+
+    // Account filter (bottom sheet).
+    const sheetItems = [['', 'All accounts', 'stack', null]]
+      .concat(accList.map((a) => [a[0], a[0], a[1], a[2]]))
+      .map(([key, label, icon, color]) => {
+        const on = key === acc;
+        const a = key ? accTotal(key) : totAll;
+        return {
+          label, pressed: on,
+          i: { stack: icon === 'stack', card: icon === 'card', wallet: icon === 'wallet', bank: icon === 'bank' },
+          sub: `${money(a)} · ${totAll > 0 ? ((a / totAll) * 100).toFixed(1) : '0.0'}%`,
+          pick: () => set({ acc: key, sheet: false, sel: -1, dim: key && dim === 'account' ? 'category' : dim }),
+          rowStyle: {
+            display: 'flex', alignItems: 'center', gap: '16px', minHeight: '64px', padding: '8px 12px', boxSizing: 'border-box',
+            borderRadius: '16px', cursor: 'pointer', background: on ? 'var(--sel)' : 'transparent',
+          },
+          iconStyle: {
+            width: '40px', height: '40px', borderRadius: '20px', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: color || 'var(--track)', color: color ? (lum(color) > 0.35 ? '#1B1B1B' : '#FFFFFF') : 'var(--fg2)',
+          },
+          labelStyle: { fontSize: '16px', lineHeight: '22px', fontWeight: on ? 700 : 400, color: 'var(--fg)' },
+        };
+      });
+    const accPillStyle = {
+      height: '32px', padding: '0 8px 0 10px', borderRadius: '16px', display: 'inline-flex', alignItems: 'center', gap: '6px',
+      fontSize: '13px', lineHeight: '18px', fontWeight: 500, boxSizing: 'border-box', maxWidth: '170px',
+      background: acc ? 'var(--sel)' : 'transparent', color: acc ? 'var(--fg)' : 'var(--fg2)',
+      border: `1px solid ${acc ? 'var(--fg2)' : 'var(--outline)'}`, transition: `background 200ms ${ease}`,
+    };
+
+    const rootStyle = Object.assign({}, dark ? DARK : LIGHT, {
+      width: '390px', height: full ? 'auto' : '844px', display: 'flex', flexDirection: 'column',
+      background: 'var(--bg)', color: 'var(--fg)', overflow: 'hidden', position: 'relative', boxSizing: 'border-box',
+      fontFamily: "'Roboto', system-ui, -apple-system, 'Segoe UI', sans-serif", WebkitFontSmoothing: 'antialiased',
+    });
+    const scrollStyle = full
+      ? { paddingBottom: '24px' }
+      : { flex: '1 1 auto', minHeight: 0, overflowY: 'auto', paddingBottom: '24px' };
+
+    return {
+      rootStyle, scrollStyle, showNav: !full,
+      q, showHint: q === '', onQ: (e) => set({ q: e.target.value }),
+      tabs: ['day', 'week', 'month', 'year'].map((k) => {
+        const on = k === period;
+        return {
+          label: k[0].toUpperCase() + k.slice(1), pressed: on, pick: () => set({ period: k, sel: -1 }),
+          style: {
+            height: '44px', border: 0, borderRadius: '22px', cursor: 'pointer', fontFamily: 'inherit', fontSize: '14px', fontWeight: 500,
+            background: on ? 'var(--thumb)' : 'transparent', boxShadow: on ? 'var(--thumb-shadow)' : 'none',
+            color: on ? 'var(--fg)' : 'var(--fg2)', transition: `background 200ms ${ease}, box-shadow 200ms ${ease}`,
+          },
+        };
+      }),
+      periodLabel: PL[0], periodCaption: PL[1],
+      tiles: [tile('expense', 'Expense', expTot), tile('income', 'Income', incTot)],
+      ratioExp: { flex: `${expTot} 1 0`, background: 'var(--exp)', borderRadius: '3px', transition: `flex-grow 360ms ${ease}` },
+      ratioInc: { flex: `${incTot} 1 0`, background: 'var(--inc)', borderRadius: '3px', transition: `flex-grow 360ms ${ease}` },
+      netLabel, netAmount: signed(net), netStyle,
+      breakdownTitle: (type === 'expense' ? 'Expense' : 'Income') + ' breakdown',
+      chips: ['category', 'account', 'currency'].map((k) => {
+        const on = k === dim;
+        return {
+          label: k[0].toUpperCase() + k.slice(1), pressed: on, pick: () => set(k === 'account' ? { dim: k, sel: -1, acc: '' } : { dim: k, sel: -1 }),
+          style: {
+            height: '32px', padding: '0 14px', borderRadius: '16px', display: 'inline-flex', alignItems: 'center',
+            fontSize: '14px', lineHeight: '20px', fontWeight: 500, boxSizing: 'border-box',
+            background: on ? 'var(--on-bg)' : 'transparent', color: on ? 'var(--on-fg)' : 'var(--fg2)',
+            border: `1px solid ${on ? 'var(--on-bg)' : 'var(--outline)'}`, transition: `background 200ms ${ease}, color 200ms ${ease}`,
+          },
+        };
+      }),
+      hasData: slices.length > 0, noData: slices.length === 0,
+      emptyTitle: acc ? `No ${typeWord} on ${acc} ${when}` : `No ${typeWord} ${when}`,
+      emptySub: acc ? 'Pick another account or period.' : `Switch to ${type === 'expense' ? 'Income' : 'Expense'} or pick another period.`,
+      accBtnLabel: acc || 'All accounts',
+      accBtnAria: `Account filter: ${acc || 'All accounts'}`,
+      accPillStyle,
+      openSheet: () => set({ sheet: true }),
+      closeSheet: () => set({ sheet: false }),
+      showSheet: sheetOpen && !full,
+      sheetSub: `${type === 'expense' ? 'Expense' : 'Income'} breakdown · ${PL[0]}`,
+      sheetItems,
+      showBridge: !!selSlice && dim === 'account',
+      bridgeLabel: selSlice ? `See categories in ${selSlice.label}` : '',
+      bridge: () => set({ acc: selSlice ? selSlice.label : '', dim: 'category', sel: -1 }),
+      donutStyle, donutAria, centerTop, centerTopStyle, centerAmount, centerSub,
+      rows,
+      showTrend, trendTitle, trendSub, chartAria, bars, barsStyle, avgStyle, labels, labelsStyle,
+      hasSel: !!selSlice,
+      selLabel: selSlice ? selSlice.label : '',
+      filterAria: selSlice ? `Showing ${selSlice.label} only. Clear filter` : '',
+      filterDot: { width: '8px', height: '8px', borderRadius: '4px', background: selSlice ? selSlice.color : 'transparent', flex: 'none' },
+      selDot: { width: '12px', height: '12px', borderRadius: '6px', background: selSlice ? selSlice.color : 'transparent', flex: 'none' },
+      selSub: selSlice ? `${count} transaction${count === 1 ? '' : 's'} · ${money(selSlice.amount)}` : '',
+      clearSel: () => set({ sel: -1 }),
+      tx, hasTx: tx.length > 0, noTx: !!selSlice && tx.length === 0,
+      showMore: more > 0, moreLabel: `Show ${Math.min(50, more)} more`,
+    };
+  }
+}
+</script>
+</body>
+</html>

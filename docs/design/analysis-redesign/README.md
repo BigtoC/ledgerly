@@ -1,0 +1,47 @@
+# Analysis redesign — design reference
+
+Visual source for [`docs/superpowers/specs/2026-11-02-analysis-redesign-design.md`](../../superpowers/specs/2026-11-02-analysis-redesign-design.md).
+The spec defines behaviour; this folder defines exact visual values.
+
+## Files
+
+| File | What it is |
+|---|---|
+| `Main.dc.html` | Full source of the design prototype (one component, all states). |
+
+
+`Main.dc.html` is a Design Component file. It needs the design canvas runtime
+(`support.js`) to render, so **read it as source** rather than opening it in a
+browser:
+
+- Markup (between `<x-dc>` and `</x-dc>`): layout, paddings, radii, font sizes,
+  line-heights, gaps — every value is an inline `style`.
+- `renderVals()` in the `<script type="text/x-dc">` block: the light/dark
+  colour tokens (`LIGHT` / `DARK`), per-state styles (selected tabs, tiles,
+  chips, rows, bars), copy strings, and the interaction rules (what each tap
+  sets and clears).
+- Sample data (`CAT`, `MONTH_EXP`, `MATRIX`, `TX`, `SERIES`) is **mock data** for
+  the prototype only. Never port it into the app.
+
+## Artboards on the canvas
+
+| Artboard | Props on `Main` | Shows |
+|---|---|---|
+| Prototype — tap around | `layout=phone` | 390×844 interactive phone screen with bottom nav |
+| Month — full page | `layout=full period=month` | Whole scroll page, default state |
+| Day — no trend chart | `period=day` | Trend card hidden on Day |
+| Category tapped — transactions | `period=month sel=0` | Food selected: dimmed donut, filtered trend, drill-down card |
+| Dark mode | `period=month dark=true` | Dark tokens |
+| Account filter — pick an account | `sheet=true` | Bottom sheet open |
+| Account filter — Visa card by category | `period=month acc="Visa card"` | Breakdown scoped to one account |
+
+Design canvas: https://claude.ai/artifact/W29pRjtFLFugrTfbvANCpr (private to the owner).
+
+## Translating to Flutter
+
+- 1 CSS px = 1 logical pixel (dp). Font sizes are in logical pixels.
+- Icons in the mock are stroke stand-ins. Use the app's real icons: category
+  icons from `icon_registry.dart`, account icons from the account type, and the
+  Material icons listed in the spec for UI glyphs.
+- The mock loads Roboto only to imitate Android. Do not add a font package;
+  keep the platform default.
