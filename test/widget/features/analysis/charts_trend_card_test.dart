@@ -60,6 +60,7 @@ Future<void> _pump(
   ChartSlice? selectedSlice,
   VoidCallback? onClearSlice,
   double textScale = 1,
+  double cardWidth = 358,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -79,7 +80,7 @@ Future<void> _pump(
       home: Scaffold(
         body: SingleChildScrollView(
           child: SizedBox(
-            width: 358,
+            width: cardWidth,
             child: ChartsTrendCard(
               data: data,
               selectedSlice: selectedSlice,
@@ -402,5 +403,42 @@ void main() {
       tester.getSize(find.byKey(const ValueKey('trendFilterPill'))).height,
       greaterThan(32),
     );
+  });
+
+  testWidgets('a long average scales down on one line at 2× on a phone (D2)', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(360, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    // 7 elapsed days averaging $123,456,789.00.
+    await _pump(
+      tester,
+      _data(
+        buckets: [
+          ChartBucketTotal(
+            bucketStart: DateTime(2025, 10, 20),
+            totalMinorUnits: 7 * 12345678900,
+          ),
+        ],
+      ),
+      selectedSlice: _food,
+      textScale: 2,
+      cardWidth: 328,
+    );
+
+    expect(tester.takeException(), isNull);
+    const subtitle = r'Avg $123,456,789.00 / day';
+    final text = find.text(subtitle);
+    expect(text, findsOneWidget);
+    final rect = tester.getRect(text);
+    // One line (18 px at 2×), never wrapped or broken mid-amount.
+    expect(rect.height, lessThanOrEqualTo(36.01));
+    // Inside its slot: right of the legend, left of the chip's 12 px gap.
+    final legend = tester.getRect(find.byKey(const ValueKey('trendAvgLegend')));
+    final chip = tester.getRect(
+      find.bySemanticsLabel('Showing Food only. Clear filter'),
+    );
+    expect(rect.left, greaterThanOrEqualTo(legend.right + 6 - 0.01));
+    expect(rect.right, lessThanOrEqualTo(chip.left - 12 + 0.01));
   });
 }

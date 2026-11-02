@@ -98,14 +98,22 @@ class ChartsTrendCard extends StatelessWidget {
                               painter: _DashPainter(colors.fg3),
                             ),
                             const SizedBox(width: 6),
+                            // The amount is never cut off: one line,
+                            // scaled down only when it does not fit (D2).
                             Flexible(
-                              child: Text(
-                                subtitle,
-                                style: analysisText(
-                                  size: 13,
-                                  lineHeight: 18,
-                                  color: colors.fg2,
-                                  tabular: true,
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  subtitle,
+                                  maxLines: 1,
+                                  softWrap: false,
+                                  style: analysisText(
+                                    size: 13,
+                                    lineHeight: 18,
+                                    color: colors.fg2,
+                                    tabular: true,
+                                  ),
                                 ),
                               ),
                             ),
