@@ -112,6 +112,16 @@ abstract class TransactionRepository {
     required DateTime end,
   });
 
+  /// Expense and income totals per currency for transactions in
+  /// `[start, end)`, both unsigned (non-negative). [accountId] limits the
+  /// totals to one account; null covers every account. Used by the
+  /// Analysis summary card, which derives the net as income − expense.
+  Stream<Map<String, ({int expense, int income})>> watchTotalsByTypeInRange({
+    required DateTime start,
+    required DateTime end,
+    int? accountId,
+  });
+
   /// Transactions for a single account, reverse-chronological.
   Stream<List<Transaction>> watchForAccount(int accountId, {int limit = 200});
 
@@ -357,6 +367,41 @@ final class DriftTransactionRepository implements TransactionRepository {
       }
       return out;
     });
+  }
+
+  @override
+  Stream<Map<String, ({int expense, int income})>> watchTotalsByTypeInRange({
+    required DateTime start,
+    required DateTime end,
+    int? accountId,
+  }) {
+    final query = _db.customSelect(
+      'SELECT t.currency AS code, '
+      "COALESCE(SUM(CASE WHEN c.type = 'expense' "
+      'THEN t.amount_minor_units ELSE 0 END), 0) AS expense, '
+      "COALESCE(SUM(CASE WHEN c.type = 'income' "
+      'THEN t.amount_minor_units ELSE 0 END), 0) AS income '
+      'FROM transactions t '
+      'JOIN categories c ON c.id = t.category_id '
+      'WHERE t.date >= ? AND t.date < ? '
+      '${accountId == null ? '' : 'AND t.account_id = ? '}'
+      'GROUP BY t.currency',
+      variables: <Variable<Object>>[
+        Variable<DateTime>(start),
+        Variable<DateTime>(end),
+        if (accountId != null) Variable<int>(accountId),
+      ],
+      readsFrom: {_db.transactions, _db.categories},
+    );
+    return query.watch().map(
+      (rows) => {
+        for (final row in rows)
+          row.read<String>('code'): (
+            expense: row.read<int>('expense'),
+            income: row.read<int>('income'),
+          ),
+      },
+    );
   }
 
   @override

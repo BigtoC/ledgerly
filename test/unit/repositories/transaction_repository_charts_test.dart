@@ -606,4 +606,229 @@ void main() {
       expect(await currencyTotals(accountId: 3), isEmpty);
     });
   });
+
+  group('watchTotalsByTypeInRange', () {
+    // Two accounts: 1 = Cash (USD), 2 = EUR Cash.
+    Future<void> seedTwoAccounts() async {
+      // Cash: USD expense 500 + 700, USD income 2000.
+      await _insertTx(
+        db,
+        id: 1,
+        date: DateTime(2026, 5, 18, 10),
+        amountMinorUnits: 500,
+        currency: 'USD',
+        categoryId: 1,
+      );
+      await _insertTx(
+        db,
+        id: 2,
+        date: DateTime(2026, 5, 19, 10),
+        amountMinorUnits: 700,
+        currency: 'USD',
+        categoryId: 2,
+      );
+      await _insertTx(
+        db,
+        id: 3,
+        date: DateTime(2026, 5, 20, 10),
+        amountMinorUnits: 2000,
+        currency: 'USD',
+        categoryId: 3,
+      );
+      // EUR Cash: EUR expense 300, USD income 100.
+      await _insertTx(
+        db,
+        id: 4,
+        date: DateTime(2026, 5, 21, 10),
+        amountMinorUnits: 300,
+        currency: 'EUR',
+        categoryId: 1,
+        accountId: 2,
+      );
+      await _insertTx(
+        db,
+        id: 5,
+        date: DateTime(2026, 5, 22, 10),
+        amountMinorUnits: 100,
+        currency: 'USD',
+        categoryId: 3,
+        accountId: 2,
+      );
+    }
+
+    test('sums expense and income per currency within [start, end)', () async {
+      await seedTwoAccounts();
+      // Start is inclusive, end is exclusive.
+      await _insertTx(
+        db,
+        id: 6,
+        date: DateTime(2026, 5, 17, 23, 59),
+        amountMinorUnits: 9999,
+        currency: 'USD',
+        categoryId: 1,
+      );
+      await _insertTx(
+        db,
+        id: 7,
+        date: DateTime(2026, 5, 25),
+        amountMinorUnits: 9999,
+        currency: 'USD',
+        categoryId: 3,
+      );
+      await _insertTx(
+        db,
+        id: 8,
+        date: DateTime(2026, 5, 18),
+        amountMinorUnits: 1,
+        currency: 'USD',
+        categoryId: 3,
+      );
+
+      final totals = await repo
+          .watchTotalsByTypeInRange(
+            start: DateTime(2026, 5, 18),
+            end: DateTime(2026, 5, 25),
+          )
+          .first;
+
+      expect(totals, {
+        'USD': (expense: 1200, income: 2101),
+        'EUR': (expense: 300, income: 0),
+      });
+    });
+
+    test('accountId limits the totals to that account', () async {
+      await seedTwoAccounts();
+
+      final cash = await repo
+          .watchTotalsByTypeInRange(
+            start: DateTime(2026, 5, 18),
+            end: DateTime(2026, 5, 25),
+            accountId: 1,
+          )
+          .first;
+      final eurCash = await repo
+          .watchTotalsByTypeInRange(
+            start: DateTime(2026, 5, 18),
+            end: DateTime(2026, 5, 25),
+            accountId: 2,
+          )
+          .first;
+
+      expect(cash, {'USD': (expense: 1200, income: 2000)});
+      expect(eurCash, {
+        'EUR': (expense: 300, income: 0),
+        'USD': (expense: 0, income: 100),
+      });
+    });
+
+    test('null accountId covers every account', () async {
+      await seedTwoAccounts();
+
+      final totals = await repo
+          .watchTotalsByTypeInRange(
+            start: DateTime(2026, 5, 18),
+            end: DateTime(2026, 5, 25),
+            accountId: null,
+          )
+          .first;
+
+      expect(totals, {
+        'USD': (expense: 1200, income: 2100),
+        'EUR': (expense: 300, income: 0),
+      });
+    });
+
+    test(
+      'income minus expense matches the old net-by-currency cases',
+      () async {
+        // The case watchNetByCurrencyInRange covered: start inclusive, end
+        // exclusive, net = +300 - 50 = +250.
+        final start = DateTime(2026, 4, 6);
+        final end = DateTime(2026, 4, 13);
+        await _insertTx(
+          db,
+          id: 1,
+          date: DateTime(2026, 4, 5, 23, 59),
+          amountMinorUnits: 100,
+          currency: 'USD',
+          categoryId: 1,
+        );
+        await _insertTx(
+          db,
+          id: 2,
+          date: start,
+          amountMinorUnits: 300,
+          currency: 'USD',
+          categoryId: 3,
+        );
+        await _insertTx(
+          db,
+          id: 3,
+          date: DateTime(2026, 4, 12, 23, 59),
+          amountMinorUnits: 50,
+          currency: 'USD',
+          categoryId: 1,
+        );
+        await _insertTx(
+          db,
+          id: 4,
+          date: end,
+          amountMinorUnits: 999,
+          currency: 'USD',
+          categoryId: 3,
+        );
+
+        final totals = await repo
+            .watchTotalsByTypeInRange(start: start, end: end)
+            .first;
+
+        final net = {
+          for (final MapEntry(:key, :value) in totals.entries)
+            key: value.income - value.expense,
+        };
+        expect(net, {'USD': 250});
+      },
+    );
+
+    test('emits an empty map for a range with no transactions', () async {
+      final totals = await repo
+          .watchTotalsByTypeInRange(
+            start: DateTime(2026, 1, 1),
+            end: DateTime(2026, 1, 8),
+          )
+          .first;
+      expect(totals, isEmpty);
+    });
+
+    test('reactive: re-emits on save', () async {
+      final emissions = <Map<String, ({int expense, int income})>>[];
+      final sub = repo
+          .watchTotalsByTypeInRange(
+            start: DateTime(2026, 5, 18),
+            end: DateTime(2026, 5, 25),
+          )
+          .listen(emissions.add);
+      addTearDown(sub.cancel);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(emissions.last, isEmpty);
+
+      await repo.save(
+        Transaction(
+          id: 0,
+          amountMinorUnits: 500,
+          currency: _usd,
+          categoryId: 3,
+          accountId: 1,
+          date: DateTime(2026, 5, 19, 10),
+          memo: null,
+          createdAt: DateTime.utc(0),
+          updatedAt: DateTime.utc(0),
+        ),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(emissions.last, {'USD': (expense: 0, income: 500)});
+    });
+  });
 }
