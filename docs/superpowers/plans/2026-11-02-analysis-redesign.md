@@ -2,8 +2,8 @@
 
 **Spec:** [`docs/superpowers/specs/2026-11-02-analysis-redesign-design.md`](../specs/2026-11-02-analysis-redesign-design.md) (revision `36207a9`)
 **Visual source:** [`docs/design/analysis-redesign/Main.dc.html`](../../design/analysis-redesign/Main.dc.html) (identical to the design canvas, checked byte for byte)
-**Branch:** `feat/analysis-redesign-impl` (on `main` @ `8c0fe07`)
-**Status:** Draft — waiting for the deviation list (§ 4) to be confirmed before any code is written.
+**Branches:** one per PR, each cut from the latest `main` (§ 5)
+**Status:** Approved 2026-11-02 — every deviation in § 4 is confirmed by the owner.
 
 ## 0. Ground rules
 
@@ -127,14 +127,76 @@ Each step: tests first (AC = spec acceptance criterion), then code, then
 
 ## 4. Deviation list
 
-See the chat summary; confirmed decisions are recorded here once answered.
+All items below are **confirmed**. They are the only places where the build
+departs from `Main.dc.html` or fills a gap in the spec; anything else that
+cannot be built as drawn must be raised before coding it.
 
-- **D14 (confirmed):** All's trend chart keeps one bar per month and scrolls
-  horizontally instead of squeezing bars. Proposed detail (pending): up to 24
-  months fill the width exactly as drawn (gap 4); beyond 24, each bar keeps the
-  24-month width and the chart scrolls, opening at the right end (current
-  month); the y scale and the average line use every month, not only the visible
-  ones; the x labels scroll with the bars.
+- **D1 App bar stays pinned.** The design scrolls the header with the page.
+  The app keeps a pinned `AppBar` because search results replace the charts and
+  the search field must stay reachable. No scroll-under tint
+  (`scrolledUnderElevation: 0`, `surfaceTintColor: transparent`). The app bar is
+  fixed at 64, so its title, pill and field clamp text at 1.5×.
+- **D2 Long amounts.** The summary-tile amount and the donut-centre amount
+  (max width 128) are `nowrap` in the design and overflow for long values even
+  at 1×. Wrap only these two in `FittedBox(fit: BoxFit.scaleDown)`: 1:1 when
+  they fit, shrunk only when they do not. The donut centre also clamps text at
+  1.5× (fixed-size box). Tests assert rendered sizes at 2×.
+- **D3 Minus glyph.** Use `MoneyFormatter.formatSigned` (intl's `-`), not the
+  design's U+2212 `−`, everywhere a signed amount shows.
+- **D4 Account icon and colour.** `account.icon ?? accountType.icon` and
+  `account.color ?? accountType.color`, used by the Account-dimension rows and
+  the account sheet (needs an analysis-local account-types lookup). The seeded
+  Cash account therefore shows `#AEA9B4` + the wallet icon.
+- **D5 Account sheet order.** Follow the spec: every active account, sorted by
+  the current type's amount desc, zero-amount accounts last. Archived accounts
+  are not listed. The "All accounts" row subtitle is `<type total> · 100.0%`
+  (from the design).
+- **D6 Donut gaps.** fl_chart draws a constant-width band, not the design's
+  0.6 % wedge (2.79 → 3.77 px). Use `sectionsSpace: 3.28` (the wedge width at
+  mid-ring), error ≤ 0.49 px; the gap is transparent, i.e. the card colour.
+  Start at 12 o'clock (`startDegreeOffset: -90`, minus 1.08° so gaps sit where
+  the CSS puts them).
+- **D7 Dash pattern.** The design gives only `1.5px dashed`. Use `[3, 3]` for the
+  average line and the 14 px legend dash.
+- **D8 Future-dated transactions.** A future bucket with an amount draws a
+  normal bar; an empty future bucket draws the 3 px `track` stub. The average
+  counts elapsed buckets only. All's range ends at the start of next month, so
+  transactions dated later are outside All (spec rule, accepted).
+- **D9 Empty-state copy.** Use the spec strings ("No expense in this period"),
+  also for All, not the design's "this month" / "yet". The account variant is
+  two keys, `chartsEmptyTitleAccountExpense` / `chartsEmptyTitleAccountIncome`
+  (`{account}`), because English needs a lowercase type word.
+- **D10 Wide windows.** The account sheet opens as a `Dialog` (max width 480,
+  radius 28, `card` fill) at width ≥ 600, per AGENTS.md; a bottom sheet below.
+- **D12 Gaps the spec leaves open:**
+  - A tile whose type has no convertible currency shows "—"; the excluded line
+    lists both types' missing currencies; with both totals 0 the ratio bar is an
+    empty track.
+  - The summary card always renders (it is the type toggle); amounts show "—"
+    while loading.
+  - Mixed currencies (no grand total): donut-centre line 2 shows "—", line 3
+    hides the percentage.
+  - The stale-rate notice (`analysisRatesStale`) stays, as a line under the
+    transactions-card subtitle, 13/18 `fg2`.
+  - "Today" in the month x labels and the bold current-bucket label appear only
+    at the current period.
+  - Bar tooltips keep today's styling; the touched-bar width growth is removed.
+  - All with no transactions: the navigator shows "All time" with no caption.
+- **D13 All range source.** Add a reactive `watchDateBounds()` (the same MIN/MAX
+  query as `getDateBounds()`, as a Drift stream) so adding or deleting the
+  earliest transaction updates All. Bounds cover every transaction, unaffected
+  by the type and account filters.
+- **D14 All trend scrolls.** One bar per month, never squeezed. Up to 24 months
+  fill the width exactly as drawn (gap 4). Beyond 24, each bar keeps the
+  24-month width and the chart scrolls horizontally, opening at the right end
+  (current month). The y scale and the average line use every month, not only
+  the visible ones; the x labels scroll with the bars. The period swipe is
+  already a no-op on All, so the gestures do not conflict.
+- **D15 All x labels.** When the current month is January, the last bar shows
+  the month name (bold), not the year. When the first month is not January, no
+  year label is added for it (spec rule).
+
+(D11 was dropped: the account button left the breakdown header.)
 
 ## 5. PRs and parallel work (confirmed: one PR per step)
 
