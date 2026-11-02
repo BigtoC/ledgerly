@@ -93,6 +93,9 @@ class _RankedRow extends StatelessWidget {
   static const _darkInk = Color(0xFF1B1B1B);
   static const _lightInk = Color(0xFFFFFFFF);
 
+  /// Width the label keeps before a long amount starts to scale down.
+  static const double _minLabelWidth = 40;
+
   final ChartSlice slice;
   final String amount;
   final bool selected;
@@ -154,8 +157,9 @@ class _RankedRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // The amount keeps its full width and the label ellipsizes;
-                // only an amount wider than the whole line ellipsizes too.
+                // D2: the label ellipsizes first. The amount never
+                // ellipsizes; it scales down only when it cannot fit beside
+                // a minimal label.
                 LayoutBuilder(
                   builder: (context, constraints) => Row(
                     crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -180,19 +184,24 @@ class _RankedRow extends StatelessWidget {
                       const SizedBox(width: 8),
                       ConstrainedBox(
                         constraints: BoxConstraints(
-                          maxWidth: math.max(0, constraints.maxWidth - 8),
+                          maxWidth: math.max(
+                            0,
+                            constraints.maxWidth - 8 - _minLabelWidth,
+                          ),
                         ),
-                        child: Text(
-                          amount,
-                          maxLines: 1,
-                          softWrap: false,
-                          overflow: TextOverflow.ellipsis,
-                          style: analysisText(
-                            size: 15,
-                            lineHeight: 20,
-                            weight: FontWeight.w500,
-                            color: colors.fg,
-                            tabular: true,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            amount,
+                            maxLines: 1,
+                            softWrap: false,
+                            style: analysisText(
+                              size: 15,
+                              lineHeight: 20,
+                              weight: FontWeight.w500,
+                              color: colors.fg,
+                              tabular: true,
+                            ),
                           ),
                         ),
                       ),

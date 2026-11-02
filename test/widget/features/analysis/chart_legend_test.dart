@@ -365,56 +365,78 @@ void main() {
   });
 
   group('long amount on a 360 phone', () {
-    const longSlices = [
-      ChartSlice(
-        label: 'Transport',
-        currencyCode: 'USD',
-        totalMinorUnits: 123456789,
-        fraction: 1,
-        colorIndex: CategoryPaletteIndex.blue30,
-        iconKey: 'car',
-        selectionKey: SelectedSlice.category(2),
-      ),
-    ];
-    const amount = r'$1,234,567.89';
+    const longLabel = 'Transport and commuting costs';
+    ChartSlice slice(int minorUnits) => ChartSlice(
+      label: longLabel,
+      currencyCode: 'USD',
+      totalMinorUnits: minorUnits,
+      fraction: 1,
+      colorIndex: CategoryPaletteIndex.blue30,
+      iconKey: 'car',
+      selectionKey: const SelectedSlice.category(2),
+    );
 
-    Future<void> pumpPhone(WidgetTester tester, double textScale) async {
+    Future<void> pumpPhone(
+      WidgetTester tester,
+      double textScale,
+      int minorUnits,
+    ) async {
       await tester.binding.setSurfaceSize(const Size(360, 800));
       addTearDown(() => tester.binding.setSurfaceSize(null));
-      await _pump(tester, slices: longSlices, textScale: textScale);
+      await _pump(tester, slices: [slice(minorUnits)], textScale: textScale);
     }
 
-    // Row content box: 8 list inset + 8 row padding on each side.
-    double contentRight(WidgetTester tester) =>
-        tester.getRect(_row('Transport')).right - 8;
+    // Row content box: 8 list inset + 8 row padding on each side; the
+    // amount sits left of the 12 gap and the 18 chevron.
+    double amountSlotRight(WidgetTester tester) =>
+        tester.getRect(_row(longLabel)).right - 8 - 12 - 18;
+
+    RenderParagraph paragraph(WidgetTester tester, String text) =>
+        tester.renderObject<RenderParagraph>(find.text(text));
 
     testWidgets('shows in full at 1x', (tester) async {
-      await pumpPhone(tester, 1);
+      await pumpPhone(tester, 1, 123456789);
       expect(tester.takeException(), isNull);
+      expect(paragraph(tester, r'$1,234,567.89').didExceedMaxLines, isFalse);
+    });
+
+    testWidgets('at 2x the label ellipsizes first; the amount stays 1:1', (
+      tester,
+    ) async {
+      await pumpPhone(tester, 2, 1234);
+      expect(tester.takeException(), isNull);
+      const amount = r'$12.34';
+      expect(paragraph(tester, longLabel).didExceedMaxLines, isTrue);
+      expect(paragraph(tester, amount).didExceedMaxLines, isFalse);
+      // Unscaled: 20 px line height doubled.
+      expect(tester.getRect(find.text(amount)).height, 40);
       expect(
-        tester
-            .renderObject<RenderParagraph>(find.text(amount))
-            .didExceedMaxLines,
-        isFalse,
+        tester.getRect(find.text(amount)).right,
+        lessThanOrEqualTo(amountSlotRight(tester)),
       );
     });
 
-    testWidgets('ends in an ellipsis instead of overflowing at 2x', (
+    testWidgets('at 2x a too-long amount scales down, never ellipsizes', (
       tester,
     ) async {
-      await pumpPhone(tester, 2);
+      await pumpPhone(tester, 2, 123456789);
       expect(tester.takeException(), isNull);
-      final amountRect = tester.getRect(find.text(amount));
-      // Left of the 12 gap and the 18 chevron.
-      expect(
-        amountRect.right,
-        lessThanOrEqualTo(contentRight(tester) - 12 - 18),
-      );
+      const amount = r'$1,234,567.89';
+      expect(find.text(amount), findsOneWidget);
       expect(
         tester.widget<Text>(find.text(amount)).overflow,
-        TextOverflow.ellipsis,
+        isNot(TextOverflow.ellipsis),
       );
-      expect(tester.getSize(find.text(amount)).height, 40);
+      expect(paragraph(tester, amount).didExceedMaxLines, isFalse);
+      final amountRect = tester.getRect(find.text(amount));
+      final labelRect = tester.getRect(find.text(longLabel));
+      expect(amountRect.right, lessThanOrEqualTo(amountSlotRight(tester)));
+      // The label keeps its minimal width and the 8 gap.
+      expect(labelRect.width, greaterThanOrEqualTo(40));
+      expect(amountRect.left, greaterThanOrEqualTo(labelRect.right + 8));
+      expect(paragraph(tester, longLabel).didExceedMaxLines, isTrue);
+      // Shrunk below the 40 px line it would take at 2x.
+      expect(amountRect.height, lessThan(40));
     });
   });
 
