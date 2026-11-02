@@ -492,7 +492,7 @@ void main() {
   // measured with it says nothing about a phone. Measure with the font
   // phones use. Fonts stay loaded for the rest of the file, so keep this
   // group last.
-  group('readable amounts at 2x (D2, Roboto)', () {
+  group('readable amounts (D2, Roboto)', () {
     setUpAll(() async {
       final root = Platform.environment['FLUTTER_ROOT']!;
       for (final face in ['Regular', 'Medium']) {
@@ -509,6 +509,44 @@ void main() {
     double scaleOf(WidgetTester tester, Finder text) =>
         tester.getRect(text).width /
         tester.renderObject<RenderBox>(text).size.width;
+
+    for (final converted in [
+      r'-NT$312,500,000.00',
+      '-IDR 12,345,678,901,234.00',
+    ]) {
+      testWidgets(
+        '360 phone at 1x: a long converted amount ($converted) stays 1:1 '
+        'while "date · account" ellipsizes first',
+        (tester) async {
+          _usePhoneWidth(tester);
+          await tester.pumpWidget(
+            _wrap(
+              _inCard(
+                _row(
+                  transaction: _tx(memo: 'Lunch', amountMinorUnits: 1234),
+                  convertedAmount: converted,
+                ),
+              ),
+            ),
+          );
+
+          expect(tester.takeException(), isNull);
+          final convertedText = find.text(converted);
+          final bookedText = find.text(r' · -$12.34');
+          final metaText = find.text('May 18 · Cash');
+          expect(scaleOf(tester, convertedText), moreOrLessEquals(1));
+          expect(scaleOf(tester, bookedText), moreOrLessEquals(1));
+          expect(_paragraph(tester, metaText).didExceedMaxLines, isTrue);
+          final row = tester.getRect(find.byType(SliceTransactionRow));
+          final convertedRect = tester.getRect(convertedText);
+          expect(convertedRect.right, moreOrLessEquals(row.right - 16));
+          expect(
+            tester.getRect(bookedText).right,
+            lessThanOrEqualTo(convertedRect.left - 12 + 0.01),
+          );
+        },
+      );
+    }
 
     testWidgets(
       '360 phone at 2x: with both amounts long, the converted amount and the '

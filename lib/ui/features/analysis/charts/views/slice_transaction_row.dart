@@ -87,6 +87,7 @@ class SliceTransactionRow extends StatelessWidget {
       lineHeight: 18,
       color: colors.fg2,
     );
+    final bookedSuffix = ' · $bookedAmount';
     final metaText = Text(
       meta,
       maxLines: 1,
@@ -128,8 +129,14 @@ class SliceTransactionRow extends StatelessWidget {
               child: _LabelThenAmount(
                 gap: 12,
                 expandLabel: true,
-                // The booked amount in the subtitle needs room too.
+                // The booked amount in the subtitle needs room too: the
+                // main amount keeps its size while that still fits beside
+                // it ("date · account" ellipsizes first), then the two
+                // share the line.
                 amountShare: convertedAmount == null ? 1 : 0.5,
+                labelReserve: convertedAmount == null
+                    ? 0
+                    : _naturalWidth(context, bookedSuffix, subtitleStyle),
                 label: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -151,7 +158,7 @@ class SliceTransactionRow extends StatelessWidget {
                       _LabelThenAmount(
                         label: metaText,
                         amount: Text(
-                          ' · $bookedAmount',
+                          bookedSuffix,
                           maxLines: 1,
                           softWrap: false,
                           style: subtitleStyle,
@@ -178,12 +185,34 @@ class SliceTransactionRow extends StatelessWidget {
       ),
     );
   }
+
+  /// The width [text] takes in one line, laid out as a [Text] in [context]
+  /// would lay it out.
+  static double _naturalWidth(
+    BuildContext context,
+    String text,
+    TextStyle style,
+  ) {
+    final painter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: DefaultTextStyle.of(context).style.merge(style),
+      ),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      locale: Localizations.maybeLocaleOf(context),
+      maxLines: 1,
+    )..layout();
+    final width = painter.width;
+    painter.dispose();
+    return width;
+  }
 }
 
 /// [label], an optional [gap], then [amount] on one line. The amount keeps
 /// its natural size and the label gives way (ellipsizes) first; the amount
-/// scales down only when it alone is wider than its [amountShare] of the
-/// line, so it is never cut off (plan D2).
+/// scales down only when it is wider than both its [amountShare] of the
+/// line and the line less [labelReserve], so it is never cut off (plan D2).
 class _LabelThenAmount extends StatelessWidget {
   const _LabelThenAmount({
     required this.label,
@@ -191,6 +220,7 @@ class _LabelThenAmount extends StatelessWidget {
     this.gap = 0,
     this.expandLabel = false,
     this.amountShare = 1,
+    this.labelReserve = 0,
   });
 
   final Widget label;
@@ -200,25 +230,35 @@ class _LabelThenAmount extends StatelessWidget {
   /// Whether the label fills the line, pushing the amount to the end.
   final bool expandLabel;
 
-  /// The most of the line, after [gap], the amount may take before it
-  /// scales down; the label keeps the rest.
+  /// The share of the line, after [gap], the amount may always take
+  /// before it scales down.
   final double amountShare;
+
+  /// The width the label must keep. The amount may take the rest of the
+  /// line, beyond its [amountShare], before it scales down.
+  final double labelReserve;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
-      builder: (context, constraints) => Row(
-        children: [
-          if (expandLabel) Expanded(child: label) else Flexible(child: label),
-          if (gap > 0) SizedBox(width: gap),
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: math.max(0, (constraints.maxWidth - gap) * amountShare),
+      builder: (context, constraints) {
+        final line = constraints.maxWidth - gap;
+        return Row(
+          children: [
+            if (expandLabel) Expanded(child: label) else Flexible(child: label),
+            if (gap > 0) SizedBox(width: gap),
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: math.max(
+                  0,
+                  math.max(line * amountShare, line - labelReserve),
+                ),
+              ),
+              child: FittedBox(fit: BoxFit.scaleDown, child: amount),
             ),
-            child: FittedBox(fit: BoxFit.scaleDown, child: amount),
-          ),
-        ],
-      ),
+          ],
+        );
+      },
     );
   }
 }
