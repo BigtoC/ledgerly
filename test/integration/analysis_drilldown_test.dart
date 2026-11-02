@@ -25,6 +25,7 @@ import 'package:ledgerly/ui/features/analysis/charts/view_models/selected_slice.
 import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_controller.dart';
 import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_providers.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
+import 'package:ledgerly/ui/core/theme/app_theme.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
@@ -196,15 +197,16 @@ Future<ProviderContainer> _pumpAnalysisScreen(
   await tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
-      child: const MaterialApp(
-        localizationsDelegates: [
+      child: MaterialApp(
+        theme: lightTheme,
+        localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: AppLocalizations.supportedLocales,
-        home: AnalysisScreen(),
+        home: const AnalysisScreen(),
       ),
     ),
   );
@@ -333,7 +335,9 @@ void main() {
       WidgetTester tester, {
       Duration? drilldownDelay,
       bool seedPreviousWeek = false,
-      Size size = const Size(360, 560),
+      // A 432 dp viewport under the 64 dp app bar: short enough that the
+      // page scrolls the legend card to the top.
+      Size size = const Size(360, 496),
     }) async {
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1;

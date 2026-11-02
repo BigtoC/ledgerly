@@ -13,6 +13,7 @@ import 'package:ledgerly/domain/models/category_slice.dart';
 import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/domain/models/time_bucket_slice.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
+import 'package:ledgerly/ui/core/theme/app_theme.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_controller.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_net_total_providers.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_providers.dart';
@@ -21,6 +22,7 @@ import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_state.da
 import 'package:ledgerly/ui/features/analysis/charts/view_models/slice_drilldown_controller.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/charts_section.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/daily_bar_chart.dart';
+import 'package:ledgerly/ui/features/analysis/charts/views/period_selector.dart';
 import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_providers.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
@@ -43,6 +45,11 @@ const _usd = Currency(
   ChartsController,
   SliceDrilldownController,
   chartsNetTotal,
+  chartsCurrenciesByCode,
+  initialDefaultCurrency,
+  analysisCategoriesById,
+  analysisAccountsById,
+  chartsFxStatus,
 ])
 void main() {
   setUpAll(() {
@@ -60,6 +67,23 @@ void main() {
     // Period, type and dimension toggles mark the selected segment by fill
     // only, without a leading check icon.
     expect(find.byIcon(Icons.check), findsNothing);
+  });
+
+  testWidgets('period selector sits flush; the cards get 16 sides and '
+      '24 bottom', (tester) async {
+    await _pumpSection(tester);
+
+    final section = tester.getRect(find.byType(ChartsSection));
+    final selector = tester.getRect(find.byType(PeriodSelector));
+    expect(selector.top, section.top);
+    expect(selector.left, section.left);
+    expect(selector.right, section.right);
+
+    // The trend chart is the last block in the column at Week.
+    final trend = tester.getRect(find.byType(DailyBarChart));
+    expect(trend.left - section.left, 16);
+    expect(section.right - trend.right, 16);
+    expect(section.bottom - trend.bottom, 24);
   });
 
   group('trend card visibility by period', () {
@@ -165,15 +189,18 @@ Future<void> _pumpSection(WidgetTester tester, {PeriodType? period}) async {
         ),
         initialDefaultCurrencyProvider.overrideWithValue('USD'),
       ],
-      child: const MaterialApp(
-        localizationsDelegates: [
+      child: MaterialApp(
+        theme: lightTheme,
+        localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(body: SingleChildScrollView(child: ChartsSection())),
+        home: const Scaffold(
+          body: SingleChildScrollView(child: ChartsSection()),
+        ),
       ),
     ),
   );
