@@ -445,4 +445,165 @@ void main() {
       await sub.cancel();
     });
   });
+
+  group('account filter on category / currency slices', () {
+    // Two accounts in one range: account 1 holds USD rows only, account 2
+    // holds USD and EUR rows. Income and out-of-range rows must stay out.
+    Future<void> seedTwoAccounts() async {
+      await _insertTx(
+        db,
+        id: 1,
+        date: DateTime(2026, 5, 18, 10),
+        amountMinorUnits: 500,
+        currency: 'USD',
+        categoryId: 1,
+        accountId: 1,
+      );
+      await _insertTx(
+        db,
+        id: 2,
+        date: DateTime(2026, 5, 19, 10),
+        amountMinorUnits: 700,
+        currency: 'USD',
+        categoryId: 1,
+        accountId: 2,
+      );
+      await _insertTx(
+        db,
+        id: 3,
+        date: DateTime(2026, 5, 20, 10),
+        amountMinorUnits: 300,
+        currency: 'EUR',
+        categoryId: 2,
+        accountId: 2,
+      );
+      await _insertTx(
+        db,
+        id: 4,
+        date: DateTime(2026, 5, 21, 10),
+        amountMinorUnits: 1000,
+        currency: 'USD',
+        categoryId: 2,
+        accountId: 1,
+      );
+      // Income on account 1 — excluded by the type filter.
+      await _insertTx(
+        db,
+        id: 5,
+        date: DateTime(2026, 5, 19, 12),
+        amountMinorUnits: 5000,
+        currency: 'USD',
+        categoryId: 3,
+        accountId: 1,
+      );
+      // Account 2, outside the range.
+      await _insertTx(
+        db,
+        id: 6,
+        date: DateTime(2026, 5, 17, 10),
+        amountMinorUnits: 9999,
+        currency: 'USD',
+        categoryId: 1,
+        accountId: 2,
+      );
+    }
+
+    Future<Map<(int, String), int>> categoryTotals({int? accountId}) async {
+      final slices = await repo
+          .watchByCategoryInRange(
+            start: DateTime(2026, 5, 18),
+            end: DateTime(2026, 5, 25),
+            type: CategoryType.expense,
+            accountId: accountId,
+          )
+          .first;
+      return {
+        for (final s in slices)
+          (s.categoryId, s.currencyCode): s.totalMinorUnits,
+      };
+    }
+
+    Future<Map<String, int>> currencyTotals({int? accountId}) async {
+      final slices = await repo
+          .watchByCurrencyInRange(
+            start: DateTime(2026, 5, 18),
+            end: DateTime(2026, 5, 25),
+            type: CategoryType.expense,
+            accountId: accountId,
+          )
+          .first;
+      return {for (final s in slices) s.currencyCode: s.totalMinorUnits};
+    }
+
+    test('watchByCategoryInRange with accountId returns only that '
+        "account's rows", () async {
+      await seedTwoAccounts();
+
+      expect(await categoryTotals(accountId: 1), {
+        (1, 'USD'): 500,
+        (2, 'USD'): 1000,
+      });
+      expect(await categoryTotals(accountId: 2), {
+        (1, 'USD'): 700,
+        (2, 'EUR'): 300,
+      });
+    });
+
+    test('watchByCategoryInRange with null accountId keeps the '
+        'all-accounts output', () async {
+      await seedTwoAccounts();
+
+      final expected = {(1, 'USD'): 1200, (2, 'EUR'): 300, (2, 'USD'): 1000};
+      expect(await categoryTotals(), expected);
+      final omitted = await repo
+          .watchByCategoryInRange(
+            start: DateTime(2026, 5, 18),
+            end: DateTime(2026, 5, 25),
+            type: CategoryType.expense,
+          )
+          .first;
+      expect({
+        for (final s in omitted)
+          (s.categoryId, s.currencyCode): s.totalMinorUnits,
+      }, expected);
+    });
+
+    test('watchByCurrencyInRange with accountId returns only that '
+        "account's rows", () async {
+      await seedTwoAccounts();
+
+      expect(await currencyTotals(accountId: 1), {'USD': 1500});
+      expect(await currencyTotals(accountId: 2), {'USD': 700, 'EUR': 300});
+    });
+
+    test('watchByCurrencyInRange with null accountId keeps the '
+        'all-accounts output', () async {
+      await seedTwoAccounts();
+
+      final expected = {'USD': 2200, 'EUR': 300};
+      expect(await currencyTotals(), expected);
+      final omitted = await repo
+          .watchByCurrencyInRange(
+            start: DateTime(2026, 5, 18),
+            end: DateTime(2026, 5, 25),
+            type: CategoryType.expense,
+          )
+          .first;
+      expect({
+        for (final s in omitted) s.currencyCode: s.totalMinorUnits,
+      }, expected);
+    });
+
+    test('an account with no rows in range yields no slices', () async {
+      await seedTwoAccounts();
+      await db.customStatement(
+        'INSERT INTO accounts (id, account_type_id, name, currency, '
+        'opening_balance_minor_units, sort_order, is_archived) VALUES '
+        "(3, 1, 'Empty', 'USD', 0, 3, 0)",
+      );
+
+      expect(await categoryTotals(accountId: 3), isEmpty);
+      expect(await currencyTotals(accountId: 3), isEmpty);
+    });
+  });
 }
