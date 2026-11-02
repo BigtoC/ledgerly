@@ -166,8 +166,8 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
       }
     });
 
-    return Padding(
-      padding: const EdgeInsets.all(16),
+    final charts = Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       child: stateAsync.when(
         // Skip the AsyncLoading flash that fires between Stream swaps when
         // ChartsController.build() re-runs (e.g. on slice toggle). Without
@@ -282,6 +282,24 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
         },
       ),
     );
+
+    // The period selector carries its own design paddings and sits flush;
+    // the cards below get 16 on each side and 24 at the bottom.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        PeriodSelector(
+          period: selection.period,
+          anchorDate: selection.anchorDate,
+          isAtCurrent: selectionNotifier.isAtCurrentPeriod(),
+          locale: locale,
+          onPrevious: () => _enqueuePeriodStep(-1),
+          onNext: () => _enqueuePeriodStep(1),
+          onPeriodChanged: selectionNotifier.setPeriod,
+        ),
+        charts,
+      ],
+    );
   }
 
   Widget _errorBody(Object error, ChartsController controller) => Column(
@@ -327,15 +345,6 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        PeriodSelector(
-          period: period,
-          anchorDate: anchor,
-          isAtCurrent: selectionNotifier.isAtCurrentPeriod(),
-          locale: locale ?? 'en',
-          onPrevious: () => _enqueuePeriodStep(-1),
-          onNext: () => _enqueuePeriodStep(1),
-          onPeriodChanged: selectionNotifier.setPeriod,
-        ),
         const SizedBox(height: 12),
         Row(
           children: [
