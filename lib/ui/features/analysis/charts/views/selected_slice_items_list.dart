@@ -1,8 +1,9 @@
-// Drill-down items list — sibling of `_ChartBody` inside `ChartsSection`'s
-// Column. Renders nothing when no slice is selected, otherwise shows a
-// header (label + transaction count + total + optional stale-rate notice)
-// followed by `TransactionSearchRow` instances in action-only delete
-// mode. Owns its own snackbar undo wiring via `SliceDrilldownController`.
+// Transactions card (slice drill-down) — sibling of `_ChartBody` inside
+// `ChartsSection`'s Column; Main.dc.html lines 193-234. Renders nothing
+// when no slice is selected, otherwise a card with a header (slice dot,
+// label, "N transactions · total", optional stale-rate notice, close
+// button) followed by `SliceTransactionRow`s with action-only delete.
+// Owns its own snackbar undo wiring via `SliceDrilldownController`.
 
 import 'dart:math' as math;
 
@@ -13,6 +14,7 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../../../core/constants.dart';
+import '../../../../../core/utils/color_palette.dart';
 import '../../../../../core/utils/currency_converter.dart';
 import '../../../../../core/utils/money_formatter.dart';
 import '../../../../../domain/models/account.dart';
@@ -20,14 +22,15 @@ import '../../../../../domain/models/category.dart';
 import '../../../../../domain/models/currency.dart';
 import '../../../../../domain/models/transaction.dart';
 import '../../../../../l10n/app_localizations.dart';
+import '../../../../core/theme/analysis_colors.dart';
 import '../../../categories/views/category_display.dart';
 import '../../search/view_models/analysis_providers.dart';
-import '../../search/views/transaction_search_row.dart';
 import '../view_models/charts_providers.dart';
 import '../view_models/charts_selection_controller.dart';
 import '../view_models/charts_state.dart';
 import '../view_models/selected_slice.dart';
 import '../view_models/slice_drilldown_controller.dart';
+import 'slice_transaction_row.dart';
 
 /// Number of drill-down rows rendered per "Show N more" step. The rows sit
 /// in a non-lazy `Column`, so this bounds the build/layout cost when a
@@ -138,94 +141,141 @@ class _SelectedSliceItemsListState
         );
     });
 
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOut,
-      child: state.when(
-        loading: () => const Padding(
-          padding: EdgeInsets.symmetric(vertical: 24),
-          child: Center(child: CircularProgressIndicator()),
+    final colors = AnalysisColors.of(context);
+    final divider = BoxDecoration(
+      border: Border(top: BorderSide(color: colors.line)),
+    );
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Material(
+        color: colors.card,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: colors.line),
         ),
-        error: (e, _) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Center(child: Text(l10n.analysisErrorMessage)),
-        ),
-        data: (data) => SlidableAutoCloseBehavior(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _ListHeader(
-                label: _labelFor(
-                  selection: selection,
-                  slice: widget.slice,
-                  categoriesById: categoriesById,
-                  accountsById: accountsById,
-                  l10n: l10n,
-                ),
-                count: data.rows.length,
-                totalMinorUnits: widget.slice.totalMinorUnits,
-                currencyCode: widget.slice.currencyCode,
-                currenciesByCode: currenciesByCode,
-                locale: widget.locale,
-                l10n: l10n,
-                showStaleRates: _showStaleRates(
-                  fxStatus: fxStatus,
-                  rows: data.rows,
-                  slice: widget.slice,
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          // The 1px border, then the card's own padding of 8 0.
+          padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 9),
+          child: AnimatedSize(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+            child: state.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (e, _) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Center(child: Text(l10n.analysisErrorMessage)),
+              ),
+              data: (data) => SlidableAutoCloseBehavior(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _ListHeader(
+                      label: _labelFor(
+                        selection: selection,
+                        slice: widget.slice,
+                        categoriesById: categoriesById,
+                        accountsById: accountsById,
+                        l10n: l10n,
+                      ),
+                      color: colorForIndex(widget.slice.colorIndex),
+                      count: data.rows.length,
+                      totalMinorUnits: widget.slice.totalMinorUnits,
+                      currencyCode: widget.slice.currencyCode,
+                      currenciesByCode: currenciesByCode,
+                      locale: widget.locale,
+                      l10n: l10n,
+                      showStaleRates: _showStaleRates(
+                        fxStatus: fxStatus,
+                        rows: data.rows,
+                        slice: widget.slice,
+                      ),
+                      onClose: ref
+                          .read(chartsSelectionControllerProvider.notifier)
+                          .clearSlice,
+                    ),
+                    if (data.rows.isEmpty)
+                      Container(
+                        decoration: divider,
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          l10n.analysisDrilldownEmpty,
+                          textAlign: TextAlign.center,
+                          style: analysisText(
+                            size: 14,
+                            lineHeight: 20,
+                            color: colors.fg2,
+                          ),
+                        ),
+                      )
+                    else
+                      for (final tx in data.rows.take(_visibleCount))
+                        Opacity(
+                          opacity: data.pendingDeleteId == tx.id ? 0.55 : 1,
+                          child: IgnorePointer(
+                            ignoring: data.pendingDeleteId == tx.id,
+                            child: SliceTransactionRow(
+                              key: ValueKey<int>(tx.id),
+                              transaction: tx,
+                              category: categoriesById[tx.categoryId],
+                              account: accountsById[tx.accountId],
+                              locale: widget.locale,
+                              convertedAmount: _convertedAmount(
+                                tx: tx,
+                                category: categoriesById[tx.categoryId],
+                                slice: widget.slice,
+                                currenciesByCode: currenciesByCode,
+                                fxStatus: fxStatus,
+                              ),
+                              onTap: () => context.push('/home/edit/${tx.id}'),
+                              onDelete: () => _controller.delete(tx.id),
+                            ),
+                          ),
+                        ),
+                    if (data.rows.length > _visibleCount)
+                      Container(
+                        decoration: divider,
+                        padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+                        child: Center(
+                          child: TextButton(
+                            onPressed: () => setState(
+                              () => _visibleCount += _kDrilldownPageSize,
+                            ),
+                            style: TextButton.styleFrom(
+                              foregroundColor: colors.expText,
+                              minimumSize: const Size(0, 44),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(22),
+                              ),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: Text(
+                              l10n.analysisDrilldownShowMore(
+                                math.min(
+                                  _kDrilldownPageSize,
+                                  data.rows.length - _visibleCount,
+                                ),
+                              ),
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 0,
+                                color: colors.expText,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
-              if (data.rows.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Center(child: Text(l10n.analysisDrilldownEmpty)),
-                )
-              else
-                for (final tx in data.rows.take(_visibleCount))
-                  Opacity(
-                    opacity: data.pendingDeleteId == tx.id ? 0.55 : 1,
-                    child: IgnorePointer(
-                      ignoring: data.pendingDeleteId == tx.id,
-                      child: TransactionSearchRow(
-                        key: ValueKey<int>(tx.id),
-                        transaction: tx,
-                        category: categoriesById[tx.categoryId],
-                        account: accountsById[tx.accountId],
-                        locale: widget.locale,
-                        deleteMode: TransactionSearchRowDeleteMode.actionOnly,
-                        convertedAmount: _convertedAmount(
-                          tx: tx,
-                          category: categoriesById[tx.categoryId],
-                          slice: widget.slice,
-                          currenciesByCode: currenciesByCode,
-                          fxStatus: fxStatus,
-                        ),
-                        originalAmountLabel:
-                            _shouldShowOriginalAmount(
-                              tx: tx,
-                              slice: widget.slice,
-                              fxStatus: fxStatus,
-                            )
-                            ? l10n.analysisOriginalAmount
-                            : null,
-                        onTap: () => context.push('/home/edit/${tx.id}'),
-                        onDelete: () => _controller.delete(tx.id),
-                      ),
-                    ),
-                  ),
-              if (data.rows.length > _visibleCount)
-                TextButton(
-                  onPressed: () =>
-                      setState(() => _visibleCount += _kDrilldownPageSize),
-                  child: Text(
-                    l10n.analysisDrilldownShowMore(
-                      math.min(
-                        _kDrilldownPageSize,
-                        data.rows.length - _visibleCount,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
+            ),
           ),
         ),
       ),
@@ -330,6 +380,7 @@ class _SelectedSliceItemsListState
 class _ListHeader extends StatelessWidget {
   const _ListHeader({
     required this.label,
+    required this.color,
     required this.count,
     required this.totalMinorUnits,
     required this.currencyCode,
@@ -337,9 +388,11 @@ class _ListHeader extends StatelessWidget {
     required this.locale,
     required this.l10n,
     required this.showStaleRates,
+    required this.onClose,
   });
 
   final String label;
+  final Color color;
   final int count;
   final int totalMinorUnits;
   final String currencyCode;
@@ -347,10 +400,11 @@ class _ListHeader extends StatelessWidget {
   final String locale;
   final AppLocalizations l10n;
   final bool showStaleRates;
+  final VoidCallback onClose;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colors = AnalysisColors.of(context);
     final currency =
         currenciesByCode[currencyCode] ??
         Currency(code: currencyCode, decimals: 2);
@@ -359,43 +413,88 @@ class _ListHeader extends StatelessWidget {
       currency: currency,
       locale: locale,
     );
-    return Semantics(
-      header: true,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
+    final subtitleStyle = analysisText(
+      size: 13,
+      lineHeight: 18,
+      color: colors.fg2,
+      tabular: true,
+    );
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+      child: Row(
+        children: [
+          Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Semantics(
+                  header: true,
+                  child: Text(
                     label,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium,
+                    style: analysisText(
+                      size: 16,
+                      lineHeight: 24,
+                      weight: FontWeight.w500,
+                      color: colors.fg,
+                    ),
                   ),
-                  Text(
-                    l10n.analysisTransactionCount(count),
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  if (showStaleRates)
+                ),
+                const SizedBox(height: 2),
+                // Wraps like one string would, but the total is one piece:
+                // it never breaks mid-number and scales down only when it
+                // alone is wider than the line (plan D2).
+                Wrap(
+                  children: [
                     Text(
-                      l10n.analysisRatesStale,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                      '${l10n.analysisTransactionCount(count)} · ',
+                      style: subtitleStyle,
+                    ),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        total,
+                        maxLines: 1,
+                        softWrap: false,
+                        style: subtitleStyle,
                       ),
                     ),
+                  ],
+                ),
+                if (showStaleRates) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    l10n.analysisRatesStale,
+                    style: analysisText(
+                      size: 13,
+                      lineHeight: 18,
+                      color: colors.fg2,
+                    ),
+                  ),
                 ],
-              ),
+              ],
             ),
-            Text(
-              total,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+          ),
+          const SizedBox(width: 12),
+          IconButton(
+            onPressed: onClose,
+            tooltip: l10n.chartsCloseTransactions,
+            icon: const Icon(Icons.close, size: 20),
+            color: colors.fg2,
+            style: IconButton.styleFrom(
+              fixedSize: const Size(48, 48),
+              minimumSize: const Size(48, 48),
+              padding: EdgeInsets.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

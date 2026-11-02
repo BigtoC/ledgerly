@@ -26,6 +26,7 @@ import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_contro
 import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_providers.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/core/theme/app_theme.dart';
+import 'package:ledgerly/ui/features/analysis/charts/views/slice_transaction_row.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
@@ -261,7 +262,7 @@ void main() {
       container.read(chartsSelectionControllerProvider).selectedSlice,
       equals(const SelectedSlice.category(1)),
     );
-    expect(find.byType(ListTile), findsOneWidget);
+    expect(find.byType(SliceTransactionRow), findsOneWidget);
     expect(
       container
           .read(sliceDrilldownControllerProvider)
@@ -298,7 +299,7 @@ void main() {
       container.read(chartsSelectionControllerProvider).selectedSlice,
       isNull,
     );
-    expect(find.byType(ListTile), findsNothing);
+    expect(find.byType(SliceTransactionRow), findsNothing);
     expect(
       ((container.read(chartsControllerProvider).value! as ChartsDataState)
               .chartData
@@ -416,8 +417,9 @@ void main() {
     testWidgets('keeps lifting the card when the drill-down rows load late', (
       tester,
     ) async {
-      // Tall enough that the trend card and spinner alone cannot fill the
-      // space below the ranked rows, short enough that the loaded row can.
+      // Tall enough that the trend card and the transactions card's loading
+      // state alone cannot fill the space below the ranked rows, short
+      // enough that the loaded row can.
       await pumpPhone(
         tester,
         drilldownDelay: const Duration(seconds: 1),
@@ -425,9 +427,9 @@ void main() {
       );
       await tapLegendRow(tester, 'Food');
       await pumpPastReveal(tester);
-      // Only the trend card and the loading spinner sit below the card so
+      // Only the trend card and the loading state sit below the card so
       // far, so the first scroll stops short of the top.
-      expect(find.byType(ListTile), findsNothing);
+      expect(find.byType(SliceTransactionRow), findsNothing);
       expect(
         tester.getRect(legendRows).top,
         greaterThan(tester.getRect(scrollable).top + 1),
@@ -435,7 +437,7 @@ void main() {
 
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
-      expect(find.byType(ListTile), findsOneWidget);
+      expect(find.byType(SliceTransactionRow), findsOneWidget);
       expectCardAtTop(tester);
     });
 
@@ -445,12 +447,12 @@ void main() {
       await pumpPastReveal(tester);
       await tester.drag(scrollable, const Offset(0, 100));
       await pumpPastReveal(tester);
-      expect(find.byType(ListTile), findsNothing);
+      expect(find.byType(SliceTransactionRow), findsNothing);
       final pixels = position(tester).pixels;
 
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
-      expect(find.byType(ListTile), findsOneWidget);
+      expect(find.byType(SliceTransactionRow), findsOneWidget);
       expect(position(tester).pixels, pixels);
     });
 
