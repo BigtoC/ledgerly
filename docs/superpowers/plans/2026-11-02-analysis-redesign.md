@@ -118,12 +118,55 @@ Each step: tests first (AC = spec acceptance criterion), then code, then
 4. App-bar button + sheet (AC 5a-c): label, pill states, hidden while search is expanded, "Account filter: <label>" semantics; sheet lists every active account sorted by the current type's amount desc, zeros last, radio, tap applies + closes; donut centre "<Account> expense"; empty-state copy with account.
 5. Bridge (AC 7): "See categories in <Account>" in the Account-dimension drill-down.
 
-### Step 8 — Docs + whole-page check (AC 10)
-- Whole-page widget test at 2× text scale, light and dark, Roboto loaded through `FontLoader`, asserting no overflow and rendered sizes.
-- `PRD.md` § Analysis Screen; `docs/architecture/testing.md` § Charts.
+### Step 8 — Whole-page code review, whole-page check (AC 10), docs
+Starts on the latest `main` once wave 2 has merged, so the page is reviewed as
+users will get it. The per-PR reviews only saw one step's diff at a time.
+
+1. **Whole-page code review.** Review every file that makes up the Analysis
+   page as it stands now: not a diff, but `lib/ui/features/analysis/**`,
+   `lib/ui/core/theme/analysis_colors.dart`, the repository / DAO methods the
+   redesign added or changed, and their tests. Run it as parallel reviewers, one
+   per lens below. Each finding is then checked by an independent agent trying
+   to refute it, and only findings that survive are kept.
+   - **Design fidelity, end to end:** every element against `Main.dc.html` in
+     light and dark, state by state, following the artboard list in
+     `docs/design/analysis-redesign/README.md` (default, Day, slice selected,
+     dark, account sheet, account filtered, search expanded, All time).
+     Deviations are allowed only as written in § 4.
+   - **Behaviour across cards:** the account filter on every surface (summary,
+     breakdown, trend, transactions, sheet, bridge); the All period on every
+     surface; Day hiding the trend; every way to select and clear a slice (row,
+     donut, donut centre, trend chip, close button); the stale-slice self-heal;
+     scroll-to-rows; search replacing the charts.
+   - **Consistency between the step PRs:** one way to read tokens, text styles
+     (`analysisText`, `letterSpacing: 0`) and motion; the ripple policy the owner
+     chose applied everywhere; no duplicated helpers, formatters or providers;
+     consistent naming.
+   - **Leftovers:** orphaned widgets, providers, ARB keys, tests, generated
+     files and comments that still name removed pieces (`TypeToggle`,
+     `ChartsNetTotalCard`, the `SegmentedButton`s, `chartsNoData`,
+     `chartsNetTotal`, `watchNetByCurrencyInRange`, …).
+   - **Architecture and performance** (AGENTS.md): layer boundaries,
+     `@Dependencies`, no `keepAlive` on a family, no per-row `DateFormat` /
+     `NumberFormat`, `setState` only on change, one `RepaintBoundary` per
+     animated chart, no financial data in logs.
+   - **Accessibility:** tap targets of at least 44 dp, semantics labels and
+     selected states, text contrast with the tokens, 1.5× clamps only on
+     fixed-size boxes.
+   - **Test coverage:** each acceptance criterion (1–14) maps to at least one
+     test that would fail without the behaviour; list any gaps.
+
+   Fix the confirmed findings with TDD in the Step 8 PR. Anything that changes
+   the design or the spec goes to the owner first.
+2. **Whole-page check (AC 10).** A whole-page widget test at 2× text scale, in
+   light and dark, with Roboto loaded through `FontLoader`. It asserts no
+   overflow and checks rendered sizes, with the account filter on and the All
+   period selected.
+3. **Docs.** Update `PRD.md` § Analysis Screen and its folder tree, and
+   `docs/architecture/testing.md` § Charts.
 
 ### After step 8
-`/code-review high` → fix → `/ce:compound`.
+`/code-review high` on the Step 8 PR → fix → `/ce:compound`.
 
 ## 4. Deviation list
 
@@ -211,4 +254,4 @@ a different block, so the conflicts are small rebases.
 | 0    | **A** `AnalysisColors` + every new ARB key + audit · **Step 1** Day hides the trend                                                                                                                                                                                          | —                  |
 | 1    | **Step 2** app bar, search, period track · **Step 3** summary card + totals query · **Step 4** breakdown card · **Step 5a** trend card · **Step 6** transactions card · **Step 7a** account-filter data layer (repo `accountId`, selection state, controller merging; no UI) | A                  |
 | 2    | **Step 5b** All period (needs 2, 3, 5a, 7a) · **Step 7b** account-filter UI: app-bar button, sheet, summary filtering, centre text, empty-state copy, trend prefix, bridge (needs 2–6, 7a)                                                                                   | wave 1             |
-| 3    | **Step 8** docs + whole-page 2× test                                                                                                                                                                                                                                         | wave 2             |
+| 3    | **Step 8** whole-page code review + fixes, whole-page 2× test, docs                                                                                                                                                                                                          | wave 2             |
