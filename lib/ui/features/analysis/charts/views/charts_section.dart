@@ -593,6 +593,7 @@ class _ChartBodyState extends ConsumerState<_ChartBody> {
         : data.slices.indexWhere((s) => s.selectionKey == selection);
     final selectedIndex = hit == -1 ? null : hit;
     final showBar =
+        data.period != PeriodType.day &&
         data.bucketTotals.isNotEmpty &&
         !(data.dimension == ChartDimension.currency && data.mixedCurrencies);
     @Dependencies([ChartsSelectionController])
