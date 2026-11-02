@@ -8,22 +8,27 @@ part of 'charts_net_total_providers.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Per-currency net for the selected period's `[start, end)` range.
+/// Per-currency expense and income for the selected period's
+/// `[start, end)` range.
 
 @ProviderFor(chartsNetByCurrency)
 final chartsNetByCurrencyProvider = ChartsNetByCurrencyProvider._();
 
-/// Per-currency net for the selected period's `[start, end)` range.
+/// Per-currency expense and income for the selected period's
+/// `[start, end)` range.
 
 final class ChartsNetByCurrencyProvider
     extends
         $FunctionalProvider<
-          AsyncValue<Map<String, int>>,
-          Map<String, int>,
-          Stream<Map<String, int>>
+          AsyncValue<Map<String, ({int expense, int income})>>,
+          Map<String, ({int expense, int income})>,
+          Stream<Map<String, ({int expense, int income})>>
         >
-    with $FutureModifier<Map<String, int>>, $StreamProvider<Map<String, int>> {
-  /// Per-currency net for the selected period's `[start, end)` range.
+    with
+        $FutureModifier<Map<String, ({int expense, int income})>>,
+        $StreamProvider<Map<String, ({int expense, int income})>> {
+  /// Per-currency expense and income for the selected period's
+  /// `[start, end)` range.
   ChartsNetByCurrencyProvider._()
     : super(
         from: null,
@@ -52,37 +57,36 @@ final class ChartsNetByCurrencyProvider
 
   @$internal
   @override
-  $StreamProviderElement<Map<String, int>> $createElement(
-    $ProviderPointer pointer,
-  ) => $StreamProviderElement(pointer);
+  $StreamProviderElement<Map<String, ({int expense, int income})>>
+  $createElement($ProviderPointer pointer) => $StreamProviderElement(pointer);
 
   @override
-  Stream<Map<String, int>> create(Ref ref) {
+  Stream<Map<String, ({int expense, int income})>> create(Ref ref) {
     return chartsNetByCurrency(ref);
   }
 }
 
 String _$chartsNetByCurrencyHash() =>
-    r'd6848b7c6fab3c29f36d14a145c9273060082d95';
+    r'24da2e86ec5fe8bb180797170556d574093eb1d5';
 
 /// [chartsNetByCurrency] folded into the default currency. Null until the
-/// net, FX status and currency metadata have all loaded, and while the
-/// net query is in error so the previous period's net is not shown.
+/// totals, FX status and currency metadata have all loaded, and while the
+/// totals query is in error so the previous period's totals are not shown.
 
 @ProviderFor(chartsNetTotal)
 final chartsNetTotalProvider = ChartsNetTotalProvider._();
 
 /// [chartsNetByCurrency] folded into the default currency. Null until the
-/// net, FX status and currency metadata have all loaded, and while the
-/// net query is in error so the previous period's net is not shown.
+/// totals, FX status and currency metadata have all loaded, and while the
+/// totals query is in error so the previous period's totals are not shown.
 
 final class ChartsNetTotalProvider
     extends
         $FunctionalProvider<ChartsNetTotal?, ChartsNetTotal?, ChartsNetTotal?>
     with $Provider<ChartsNetTotal?> {
   /// [chartsNetByCurrency] folded into the default currency. Null until the
-  /// net, FX status and currency metadata have all loaded, and while the
-  /// net query is in error so the previous period's net is not shown.
+  /// totals, FX status and currency metadata have all loaded, and while the
+  /// totals query is in error so the previous period's totals are not shown.
   ChartsNetTotalProvider._()
     : super(
         from: null,
@@ -155,4 +159,4 @@ final class ChartsNetTotalProvider
   }
 }
 
-String _$chartsNetTotalHash() => r'499021f8f32748d65ecd4af0ae47e698c313c97a';
+String _$chartsNetTotalHash() => r'718a11885e1095de4dc527841ba7ba810b1baaf8';

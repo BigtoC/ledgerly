@@ -1,6 +1,6 @@
-// chartsNetTotalProvider tests — the Analysis net-total box recomputes
-// for the period picked in the time picker and converts every currency
-// into the default currency.
+// chartsNetTotalProvider tests — the Analysis summary card's expense,
+// income and net totals recompute for the period picked in the time
+// picker and convert every currency into the default currency.
 
 import 'dart:async';
 
@@ -18,6 +18,8 @@ import 'package:mocktail/mocktail.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 class _MockTxRepo extends Mock implements TransactionRepository {}
+
+typedef _Totals = Map<String, ({int expense, int income})>;
 
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 const _jpy = Currency(code: 'JPY', decimals: 0, symbol: '¥');
@@ -53,6 +55,16 @@ ProviderContainer _container({
   return container;
 }
 
+void _stubTotals(_MockTxRepo repo, _Totals totals) {
+  when(
+    () => repo.watchTotalsByTypeInRange(
+      start: any(named: 'start'),
+      end: any(named: 'end'),
+      accountId: any(named: 'accountId'),
+    ),
+  ).thenAnswer((_) => Stream.value(totals));
+}
+
 /// Keeps the provider alive and waits until it has a non-null value.
 @Dependencies([chartsNetTotal])
 Future<ChartsNetTotal> _settle(ProviderContainer container) async {
@@ -71,99 +83,134 @@ void main() {
     registerFallbackValue(DateTime(2026));
   });
 
-  test('sums the net of the selected period in the default currency', () async {
-    final repo = _MockTxRepo();
-    when(
-      () => repo.watchNetByCurrencyInRange(
-        start: any(named: 'start'),
-        end: any(named: 'end'),
-      ),
-    ).thenAnswer((_) => Stream.value({'USD': -1250}));
+  test(
+    'exposes expense, income and their net in the default currency',
+    () async {
+      final repo = _MockTxRepo();
+      _stubTotals(repo, {'USD': (expense: 2000, income: 750)});
 
-    final net = await _settle(_container(repo: repo));
+      final totals = await _settle(_container(repo: repo));
 
-    expect(net.currency, _usd);
-    expect(net.netMinorUnits, -1250);
-    expect(net.excludedCurrencyCodes, isEmpty);
-  });
+      expect(totals.currency, _usd);
+      expect(totals.expenseMinorUnits, 2000);
+      expect(totals.incomeMinorUnits, 750);
+      expect(totals.netMinorUnits, -1250);
+      expect(totals.excludedCurrencyCodes, isEmpty);
+    },
+  );
 
   test('converts other currencies into the default currency', () async {
     final repo = _MockTxRepo();
-    when(
-      () => repo.watchNetByCurrencyInRange(
-        start: any(named: 'start'),
-        end: any(named: 'end'),
-      ),
-    ).thenAnswer((_) => Stream.value({'USD': 1000, 'JPY': 1500}));
+    _stubTotals(repo, {
+      'USD': (expense: 0, income: 1000),
+      'JPY': (expense: 3000, income: 1500),
+    });
 
-    // 1 JPY = 0.0067 USD → ¥1,500 = $10.05 = 1005 minor units.
-    final net = await _settle(
+    // 1 JPY = 0.0067 USD → ¥1,500 = $10.05, ¥3,000 = $20.10.
+    final totals = await _settle(
       _container(repo: repo, ratesToUsd: {'JPY': 6700000}),
     );
 
-    expect(net.netMinorUnits, 2005);
-    expect(net.excludedCurrencyCodes, isEmpty);
+    expect(totals.expenseMinorUnits, 2010);
+    expect(totals.incomeMinorUnits, 2005);
+    expect(totals.netMinorUnits, -5);
+    expect(totals.excludedCurrencyCodes, isEmpty);
   });
 
-  test('leaves out currencies without a rate and lists them', () async {
+  test(
+    'leaves currencies without a rate out of all three and lists them',
+    () async {
+      final repo = _MockTxRepo();
+      _stubTotals(repo, {
+        'USD': (expense: 200, income: 700),
+        'JPY': (expense: 0, income: 900),
+        'EUR': (expense: 100, income: 0),
+      });
+
+      final totals = await _settle(_container(repo: repo));
+
+      expect(totals.expenseMinorUnits, 200);
+      expect(totals.incomeMinorUnits, 700);
+      expect(totals.netMinorUnits, 500);
+      expect(totals.excludedCurrencyCodes, ['EUR', 'JPY']);
+    },
+  );
+
+  test(
+    'a type is unavailable when every currency carrying it lacks a rate',
+    () async {
+      final repo = _MockTxRepo();
+      _stubTotals(repo, {
+        'USD': (expense: 400, income: 0),
+        'JPY': (expense: 0, income: 900),
+      });
+
+      final totals = await _settle(_container(repo: repo));
+
+      expect(totals.expenseMinorUnits, 400);
+      expect(totals.incomeMinorUnits, isNull);
+      expect(totals.netMinorUnits, -400);
+      expect(totals.excludedCurrencyCodes, ['JPY']);
+    },
+  );
+
+  test('has no amounts when every currency lacks a rate', () async {
     final repo = _MockTxRepo();
-    when(
-      () => repo.watchNetByCurrencyInRange(
-        start: any(named: 'start'),
-        end: any(named: 'end'),
-      ),
-    ).thenAnswer((_) => Stream.value({'USD': 500, 'JPY': 900, 'EUR': -100}));
+    _stubTotals(repo, {
+      'JPY': (expense: 900, income: 0),
+      'EUR': (expense: 50, income: 70),
+    });
 
-    final net = await _settle(_container(repo: repo));
+    final totals = await _settle(_container(repo: repo));
 
-    expect(net.netMinorUnits, 500);
-    expect(net.excludedCurrencyCodes, ['EUR', 'JPY']);
+    expect(totals.expenseMinorUnits, isNull);
+    expect(totals.incomeMinorUnits, isNull);
+    expect(totals.netMinorUnits, isNull);
+    expect(totals.excludedCurrencyCodes, ['EUR', 'JPY']);
   });
 
-  test('has no net amount when every currency lacks a rate', () async {
+  test('a period with no transactions totals zero', () async {
     final repo = _MockTxRepo();
-    when(
-      () => repo.watchNetByCurrencyInRange(
-        start: any(named: 'start'),
-        end: any(named: 'end'),
-      ),
-    ).thenAnswer((_) => Stream.value({'JPY': -900}));
+    _stubTotals(repo, const {});
 
-    final net = await _settle(_container(repo: repo));
+    final totals = await _settle(_container(repo: repo));
 
-    expect(net.netMinorUnits, isNull);
-    expect(net.excludedCurrencyCodes, ['JPY']);
+    expect(totals.expenseMinorUnits, 0);
+    expect(totals.incomeMinorUnits, 0);
+    expect(totals.netMinorUnits, 0);
+    expect(totals.excludedCurrencyCodes, isEmpty);
   });
 
-  test('a period with no transactions nets zero', () async {
+  test('queries every account', () async {
     final repo = _MockTxRepo();
-    when(
-      () => repo.watchNetByCurrencyInRange(
+    _stubTotals(repo, const {});
+
+    await _settle(_container(repo: repo));
+
+    verify(
+      () => repo.watchTotalsByTypeInRange(
         start: any(named: 'start'),
         end: any(named: 'end'),
+        accountId: null,
       ),
-    ).thenAnswer((_) => Stream.value(const <String, int>{}));
-
-    final net = await _settle(_container(repo: repo));
-
-    expect(net.netMinorUnits, 0);
-    expect(net.excludedCurrencyCodes, isEmpty);
+    ).called(1);
   });
 
   test('re-queries with the new range when the period type changes', () async {
     final repo = _MockTxRepo();
     final ranges = <({DateTime start, DateTime end})>[];
     when(
-      () => repo.watchNetByCurrencyInRange(
+      () => repo.watchTotalsByTypeInRange(
         start: any(named: 'start'),
         end: any(named: 'end'),
+        accountId: any(named: 'accountId'),
       ),
     ).thenAnswer((invocation) {
       ranges.add((
         start: invocation.namedArguments[#start] as DateTime,
         end: invocation.namedArguments[#end] as DateTime,
       ));
-      return Stream.value({'USD': ranges.length * 100});
+      return Stream.value({'USD': (expense: 0, income: ranges.length * 100)});
     });
 
     final container = _container(repo: repo);
@@ -196,16 +243,17 @@ void main() {
       final repo = _MockTxRepo();
       final ranges = <({DateTime start, DateTime end})>[];
       when(
-        () => repo.watchNetByCurrencyInRange(
+        () => repo.watchTotalsByTypeInRange(
           start: any(named: 'start'),
           end: any(named: 'end'),
+          accountId: any(named: 'accountId'),
         ),
       ).thenAnswer((invocation) {
         final start = invocation.namedArguments[#start] as DateTime;
         final end = invocation.namedArguments[#end] as DateTime;
         ranges.add((start: start, end: end));
         // A distinct net per query so the test can tell the periods apart.
-        return Stream.value({'USD': ranges.length * 100});
+        return Stream.value({'USD': (expense: 0, income: ranges.length * 100)});
       });
 
       final container = _container(repo: repo);
@@ -232,18 +280,19 @@ void main() {
     },
   );
 
-  test('hides the previous period net when the new query fails', () async {
+  test('hides the previous period totals when the new query fails', () async {
     final repo = _MockTxRepo();
     var queries = 0;
     when(
-      () => repo.watchNetByCurrencyInRange(
+      () => repo.watchTotalsByTypeInRange(
         start: any(named: 'start'),
         end: any(named: 'end'),
+        accountId: any(named: 'accountId'),
       ),
     ).thenAnswer((_) {
       queries++;
       return queries == 1
-          ? Stream.value({'USD': 100})
+          ? Stream.value({'USD': (expense: 0, income: 100)})
           : Stream.error(StateError('query failed'));
     });
 
@@ -264,13 +313,14 @@ void main() {
       final repo = _MockTxRepo();
       var queries = 0;
       when(
-        () => repo.watchNetByCurrencyInRange(
+        () => repo.watchTotalsByTypeInRange(
           start: any(named: 'start'),
           end: any(named: 'end'),
+          accountId: any(named: 'accountId'),
         ),
       ).thenAnswer((_) {
         queries++;
-        return Stream.value({'USD': 100});
+        return Stream.value({'USD': (expense: 0, income: 100)});
       });
 
       final container = _container(repo: repo);

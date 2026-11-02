@@ -19,12 +19,11 @@ import '../view_models/charts_state.dart';
 import '../view_models/slice_drilldown_controller.dart';
 import 'category_pie_chart.dart';
 import 'chart_legend.dart';
-import 'charts_net_total_card.dart';
+import 'charts_summary_card.dart';
 import 'daily_bar_chart.dart';
 import 'dimension_toggle.dart';
 import 'period_selector.dart';
 import 'selected_slice_items_list.dart';
-import 'type_toggle.dart';
 
 @Dependencies([
   ChartsSelectionController,
@@ -327,7 +326,6 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
     // notifier keeps the segmented buttons in sync with whatever the user
     // just tapped.
     final dimension = selection.dimension;
-    final type = selection.type;
     final period = selection.period;
     final anchor = selection.anchorDate;
 
@@ -345,26 +343,13 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: TypeToggle(
-                type: type,
-                onChanged: (t) {
-                  if (t != type) selectionNotifier.toggleType();
-                },
-              ),
-            ),
-          ],
-        ),
+        const SizedBox(height: 16),
+        const ChartsSummaryCard(),
         const SizedBox(height: 8),
         DimensionToggle(
           dimension: dimension,
           onChanged: selectionNotifier.setDimension,
         ),
-        const SizedBox(height: 16),
-        const ChartsNetTotalCard(),
         const SizedBox(height: 16),
         if (chartData?.autoSwitchedFromCategoryDimension ?? false)
           Padding(
