@@ -1191,6 +1191,188 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get csvExportNoneInRange =>
       'There are no transactions in this date range.';
+
+  @override
+  String get chartsNetToday => 'Net today';
+
+  @override
+  String get chartsNetThisWeek => 'Net this week';
+
+  @override
+  String get chartsNetThisMonth => 'Net this month';
+
+  @override
+  String get chartsNetThisYear => 'Net this year';
+
+  @override
+  String get chartsNetAllTime => 'Net all time';
+
+  @override
+  String get chartsCaptionToday => 'Today';
+
+  @override
+  String get chartsCaptionThisWeek => 'This week';
+
+  @override
+  String get chartsCaptionThisMonth => 'This month';
+
+  @override
+  String get chartsCaptionThisYear => 'This year';
+
+  @override
+  String get chartsBreakdownExpense => 'Expense breakdown';
+
+  @override
+  String get chartsBreakdownIncome => 'Income breakdown';
+
+  @override
+  String get chartsTotalExpense => 'Total expense';
+
+  @override
+  String get chartsTotalIncome => 'Total income';
+
+  @override
+  String chartsAccountExpense(String account) {
+    return '$account expense';
+  }
+
+  @override
+  String chartsAccountIncome(String account) {
+    return '$account income';
+  }
+
+  @override
+  String chartsShareOfExpense(String percent) {
+    return '$percent of expense';
+  }
+
+  @override
+  String chartsShareOfIncome(String percent) {
+    return '$percent of income';
+  }
+
+  @override
+  String chartsCategoryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count categories',
+      one: '$count category',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String chartsAccountCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count accounts',
+      one: '$count account',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String chartsCurrencyCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count currencies',
+      one: '$count currency',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get chartsTrendDailySpending => 'Daily spending';
+
+  @override
+  String get chartsTrendMonthlySpending => 'Monthly spending';
+
+  @override
+  String get chartsTrendDailyIncome => 'Daily income';
+
+  @override
+  String get chartsTrendMonthlyIncome => 'Monthly income';
+
+  @override
+  String chartsAvgPerDay(String amount) {
+    return 'Avg $amount / day';
+  }
+
+  @override
+  String chartsAvgPerMonth(String amount) {
+    return 'Avg $amount / month';
+  }
+
+  @override
+  String get analysisSearchHint => 'Search memos';
+
+  @override
+  String get analysisSearchOpen => 'Search memos';
+
+  @override
+  String get analysisSearchClose => 'Close search';
+
+  @override
+  String get chartsAllAccounts => 'All accounts';
+
+  @override
+  String chartsAccountFilterLabel(String label) {
+    return 'Account filter: $label';
+  }
+
+  @override
+  String get chartsFilterByAccount => 'Filter by account';
+
+  @override
+  String chartsFilterSheetSubtitle(String period) {
+    return 'Filters the whole page · $period';
+  }
+
+  @override
+  String get chartsPeriodAll => 'All';
+
+  @override
+  String get chartsAllTime => 'All time';
+
+  @override
+  String chartsSeeCategoriesIn(String account) {
+    return 'See categories in $account';
+  }
+
+  @override
+  String chartsClearSliceFilter(String label) {
+    return 'Showing $label only. Clear filter';
+  }
+
+  @override
+  String get chartsCloseTransactions => 'Close transactions';
+
+  @override
+  String get chartsEmptyTitleExpense => 'No expense in this period';
+
+  @override
+  String get chartsEmptyTitleIncome => 'No income in this period';
+
+  @override
+  String chartsEmptyTitleAccountExpense(String account) {
+    return 'No expense on $account in this period';
+  }
+
+  @override
+  String chartsEmptyTitleAccountIncome(String account) {
+    return 'No income on $account in this period';
+  }
+
+  @override
+  String chartsEmptySwitchType(String type) {
+    return 'Switch to $type or pick another period.';
+  }
+
+  @override
+  String get chartsEmptyPickAnother => 'Pick another account or period.';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -2327,6 +2509,185 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get csvExportNoneInRange => '此日期范围内没有交易。';
+
+  @override
+  String get chartsNetToday => '今日净额';
+
+  @override
+  String get chartsNetThisWeek => '本周净额';
+
+  @override
+  String get chartsNetThisMonth => '本月净额';
+
+  @override
+  String get chartsNetThisYear => '今年净额';
+
+  @override
+  String get chartsNetAllTime => '累计净额';
+
+  @override
+  String get chartsCaptionToday => '今天';
+
+  @override
+  String get chartsCaptionThisWeek => '本周';
+
+  @override
+  String get chartsCaptionThisMonth => '本月';
+
+  @override
+  String get chartsCaptionThisYear => '今年';
+
+  @override
+  String get chartsBreakdownExpense => '支出分布';
+
+  @override
+  String get chartsBreakdownIncome => '收入分布';
+
+  @override
+  String get chartsTotalExpense => '总支出';
+
+  @override
+  String get chartsTotalIncome => '总收入';
+
+  @override
+  String chartsAccountExpense(String account) {
+    return '$account 支出';
+  }
+
+  @override
+  String chartsAccountIncome(String account) {
+    return '$account 收入';
+  }
+
+  @override
+  String chartsShareOfExpense(String percent) {
+    return '占支出 $percent';
+  }
+
+  @override
+  String chartsShareOfIncome(String percent) {
+    return '占收入 $percent';
+  }
+
+  @override
+  String chartsCategoryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个类别',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String chartsAccountCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个账户',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String chartsCurrencyCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 个币种',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get chartsTrendDailySpending => '每日支出';
+
+  @override
+  String get chartsTrendMonthlySpending => '每月支出';
+
+  @override
+  String get chartsTrendDailyIncome => '每日收入';
+
+  @override
+  String get chartsTrendMonthlyIncome => '每月收入';
+
+  @override
+  String chartsAvgPerDay(String amount) {
+    return '平均每日 $amount';
+  }
+
+  @override
+  String chartsAvgPerMonth(String amount) {
+    return '平均每月 $amount';
+  }
+
+  @override
+  String get analysisSearchHint => '搜索备注';
+
+  @override
+  String get analysisSearchOpen => '搜索备注';
+
+  @override
+  String get analysisSearchClose => '关闭搜索';
+
+  @override
+  String get chartsAllAccounts => '所有账户';
+
+  @override
+  String chartsAccountFilterLabel(String label) {
+    return '账户筛选：$label';
+  }
+
+  @override
+  String get chartsFilterByAccount => '按账户筛选';
+
+  @override
+  String chartsFilterSheetSubtitle(String period) {
+    return '应用到整个页面 · $period';
+  }
+
+  @override
+  String get chartsPeriodAll => '全部';
+
+  @override
+  String get chartsAllTime => '全部时间';
+
+  @override
+  String chartsSeeCategoriesIn(String account) {
+    return '查看 $account 的类别';
+  }
+
+  @override
+  String chartsClearSliceFilter(String label) {
+    return '只显示 $label，清除筛选';
+  }
+
+  @override
+  String get chartsCloseTransactions => '关闭交易列表';
+
+  @override
+  String get chartsEmptyTitleExpense => '此期间没有支出';
+
+  @override
+  String get chartsEmptyTitleIncome => '此期间没有收入';
+
+  @override
+  String chartsEmptyTitleAccountExpense(String account) {
+    return '$account 此期间没有支出';
+  }
+
+  @override
+  String chartsEmptyTitleAccountIncome(String account) {
+    return '$account 此期间没有收入';
+  }
+
+  @override
+  String chartsEmptySwitchType(String type) {
+    return '切换到$type或选择其他期间。';
+  }
+
+  @override
+  String get chartsEmptyPickAnother => '请选择其他账户或期间。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -3463,4 +3824,183 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get csvExportNoneInRange => '此日期範圍內沒有交易。';
+
+  @override
+  String get chartsNetToday => '今日淨額';
+
+  @override
+  String get chartsNetThisWeek => '本週淨額';
+
+  @override
+  String get chartsNetThisMonth => '本月淨額';
+
+  @override
+  String get chartsNetThisYear => '今年淨額';
+
+  @override
+  String get chartsNetAllTime => '累計淨額';
+
+  @override
+  String get chartsCaptionToday => '今天';
+
+  @override
+  String get chartsCaptionThisWeek => '本週';
+
+  @override
+  String get chartsCaptionThisMonth => '本月';
+
+  @override
+  String get chartsCaptionThisYear => '今年';
+
+  @override
+  String get chartsBreakdownExpense => '支出分佈';
+
+  @override
+  String get chartsBreakdownIncome => '收入分佈';
+
+  @override
+  String get chartsTotalExpense => '總支出';
+
+  @override
+  String get chartsTotalIncome => '總收入';
+
+  @override
+  String chartsAccountExpense(String account) {
+    return '$account 支出';
+  }
+
+  @override
+  String chartsAccountIncome(String account) {
+    return '$account 收入';
+  }
+
+  @override
+  String chartsShareOfExpense(String percent) {
+    return '佔支出 $percent';
+  }
+
+  @override
+  String chartsShareOfIncome(String percent) {
+    return '佔收入 $percent';
+  }
+
+  @override
+  String chartsCategoryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 個類別',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String chartsAccountCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 個帳戶',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String chartsCurrencyCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 個幣別',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get chartsTrendDailySpending => '每日支出';
+
+  @override
+  String get chartsTrendMonthlySpending => '每月支出';
+
+  @override
+  String get chartsTrendDailyIncome => '每日收入';
+
+  @override
+  String get chartsTrendMonthlyIncome => '每月收入';
+
+  @override
+  String chartsAvgPerDay(String amount) {
+    return '平均每日 $amount';
+  }
+
+  @override
+  String chartsAvgPerMonth(String amount) {
+    return '平均每月 $amount';
+  }
+
+  @override
+  String get analysisSearchHint => '搜尋備註';
+
+  @override
+  String get analysisSearchOpen => '搜尋備註';
+
+  @override
+  String get analysisSearchClose => '關閉搜尋';
+
+  @override
+  String get chartsAllAccounts => '所有帳戶';
+
+  @override
+  String chartsAccountFilterLabel(String label) {
+    return '帳戶篩選：$label';
+  }
+
+  @override
+  String get chartsFilterByAccount => '依帳戶篩選';
+
+  @override
+  String chartsFilterSheetSubtitle(String period) {
+    return '套用到整個頁面 · $period';
+  }
+
+  @override
+  String get chartsPeriodAll => '全部';
+
+  @override
+  String get chartsAllTime => '全部時間';
+
+  @override
+  String chartsSeeCategoriesIn(String account) {
+    return '查看 $account 的類別';
+  }
+
+  @override
+  String chartsClearSliceFilter(String label) {
+    return '只顯示 $label，清除篩選';
+  }
+
+  @override
+  String get chartsCloseTransactions => '關閉交易列表';
+
+  @override
+  String get chartsEmptyTitleExpense => '此期間沒有支出';
+
+  @override
+  String get chartsEmptyTitleIncome => '此期間沒有收入';
+
+  @override
+  String chartsEmptyTitleAccountExpense(String account) {
+    return '$account 此期間沒有支出';
+  }
+
+  @override
+  String chartsEmptyTitleAccountIncome(String account) {
+    return '$account 此期間沒有收入';
+  }
+
+  @override
+  String chartsEmptySwitchType(String type) {
+    return '切換到$type或選擇其他期間。';
+  }
+
+  @override
+  String get chartsEmptyPickAnother => '請選擇其他帳戶或期間。';
 }

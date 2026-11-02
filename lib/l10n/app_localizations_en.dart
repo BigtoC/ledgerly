@@ -1191,4 +1191,186 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get csvExportNoneInRange =>
       'There are no transactions in this date range.';
+
+  @override
+  String get chartsNetToday => 'Net today';
+
+  @override
+  String get chartsNetThisWeek => 'Net this week';
+
+  @override
+  String get chartsNetThisMonth => 'Net this month';
+
+  @override
+  String get chartsNetThisYear => 'Net this year';
+
+  @override
+  String get chartsNetAllTime => 'Net all time';
+
+  @override
+  String get chartsCaptionToday => 'Today';
+
+  @override
+  String get chartsCaptionThisWeek => 'This week';
+
+  @override
+  String get chartsCaptionThisMonth => 'This month';
+
+  @override
+  String get chartsCaptionThisYear => 'This year';
+
+  @override
+  String get chartsBreakdownExpense => 'Expense breakdown';
+
+  @override
+  String get chartsBreakdownIncome => 'Income breakdown';
+
+  @override
+  String get chartsTotalExpense => 'Total expense';
+
+  @override
+  String get chartsTotalIncome => 'Total income';
+
+  @override
+  String chartsAccountExpense(String account) {
+    return '$account expense';
+  }
+
+  @override
+  String chartsAccountIncome(String account) {
+    return '$account income';
+  }
+
+  @override
+  String chartsShareOfExpense(String percent) {
+    return '$percent of expense';
+  }
+
+  @override
+  String chartsShareOfIncome(String percent) {
+    return '$percent of income';
+  }
+
+  @override
+  String chartsCategoryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count categories',
+      one: '$count category',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String chartsAccountCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count accounts',
+      one: '$count account',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String chartsCurrencyCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count currencies',
+      one: '$count currency',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get chartsTrendDailySpending => 'Daily spending';
+
+  @override
+  String get chartsTrendMonthlySpending => 'Monthly spending';
+
+  @override
+  String get chartsTrendDailyIncome => 'Daily income';
+
+  @override
+  String get chartsTrendMonthlyIncome => 'Monthly income';
+
+  @override
+  String chartsAvgPerDay(String amount) {
+    return 'Avg $amount / day';
+  }
+
+  @override
+  String chartsAvgPerMonth(String amount) {
+    return 'Avg $amount / month';
+  }
+
+  @override
+  String get analysisSearchHint => 'Search memos';
+
+  @override
+  String get analysisSearchOpen => 'Search memos';
+
+  @override
+  String get analysisSearchClose => 'Close search';
+
+  @override
+  String get chartsAllAccounts => 'All accounts';
+
+  @override
+  String chartsAccountFilterLabel(String label) {
+    return 'Account filter: $label';
+  }
+
+  @override
+  String get chartsFilterByAccount => 'Filter by account';
+
+  @override
+  String chartsFilterSheetSubtitle(String period) {
+    return 'Filters the whole page · $period';
+  }
+
+  @override
+  String get chartsPeriodAll => 'All';
+
+  @override
+  String get chartsAllTime => 'All time';
+
+  @override
+  String chartsSeeCategoriesIn(String account) {
+    return 'See categories in $account';
+  }
+
+  @override
+  String chartsClearSliceFilter(String label) {
+    return 'Showing $label only. Clear filter';
+  }
+
+  @override
+  String get chartsCloseTransactions => 'Close transactions';
+
+  @override
+  String get chartsEmptyTitleExpense => 'No expense in this period';
+
+  @override
+  String get chartsEmptyTitleIncome => 'No income in this period';
+
+  @override
+  String chartsEmptyTitleAccountExpense(String account) {
+    return 'No expense on $account in this period';
+  }
+
+  @override
+  String chartsEmptyTitleAccountIncome(String account) {
+    return 'No income on $account in this period';
+  }
+
+  @override
+  String chartsEmptySwitchType(String type) {
+    return 'Switch to $type or pick another period.';
+  }
+
+  @override
+  String get chartsEmptyPickAnother => 'Pick another account or period.';
 }

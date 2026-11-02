@@ -2139,6 +2139,270 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'There are no transactions in this date range.'**
   String get csvExportNoneInRange;
+
+  /// Summary card net line label for the Day period.
+  ///
+  /// In en, this message translates to:
+  /// **'Net today'**
+  String get chartsNetToday;
+
+  /// Summary card net line label for the Week period.
+  ///
+  /// In en, this message translates to:
+  /// **'Net this week'**
+  String get chartsNetThisWeek;
+
+  /// Summary card net line label for the Month period.
+  ///
+  /// In en, this message translates to:
+  /// **'Net this month'**
+  String get chartsNetThisMonth;
+
+  /// Summary card net line label for the Year period.
+  ///
+  /// In en, this message translates to:
+  /// **'Net this year'**
+  String get chartsNetThisYear;
+
+  /// Summary card net line label for the All period.
+  ///
+  /// In en, this message translates to:
+  /// **'Net all time'**
+  String get chartsNetAllTime;
+
+  /// Period navigator caption under the date label when the Day period shows the current day.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get chartsCaptionToday;
+
+  /// Period navigator caption under the date label when the Week period shows the current week.
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get chartsCaptionThisWeek;
+
+  /// Period navigator caption under the date label when the Month period shows the current month.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get chartsCaptionThisMonth;
+
+  /// Period navigator caption under the date label when the Year period shows the current year.
+  ///
+  /// In en, this message translates to:
+  /// **'This year'**
+  String get chartsCaptionThisYear;
+
+  /// Analysis breakdown card title while the Expense type is selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense breakdown'**
+  String get chartsBreakdownExpense;
+
+  /// Analysis breakdown card title while the Income type is selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Income breakdown'**
+  String get chartsBreakdownIncome;
+
+  /// Donut centre caption: the period's expense total, with no account filter.
+  ///
+  /// In en, this message translates to:
+  /// **'Total expense'**
+  String get chartsTotalExpense;
+
+  /// Donut centre caption: the period's income total, with no account filter.
+  ///
+  /// In en, this message translates to:
+  /// **'Total income'**
+  String get chartsTotalIncome;
+
+  /// Donut centre caption while one account is filtered: that account's expense total. {account} is the account name.
+  ///
+  /// In en, this message translates to:
+  /// **'{account} expense'**
+  String chartsAccountExpense(String account);
+
+  /// Donut centre caption while one account is filtered: that account's income total. {account} is the account name.
+  ///
+  /// In en, this message translates to:
+  /// **'{account} income'**
+  String chartsAccountIncome(String account);
+
+  /// Donut centre line while a slice is selected: its share of the expense total. {percent} is a formatted percentage such as '12.5%'.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent} of expense'**
+  String chartsShareOfExpense(String percent);
+
+  /// Donut centre line while a slice is selected: its share of the income total. {percent} is a formatted percentage such as '12.5%'.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent} of income'**
+  String chartsShareOfIncome(String percent);
+
+  /// Donut centre line: number of categories in the breakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{{count} category} other{{count} categories}}'**
+  String chartsCategoryCount(int count);
+
+  /// Donut centre line: number of accounts in the breakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{{count} account} other{{count} accounts}}'**
+  String chartsAccountCount(int count);
+
+  /// Donut centre line: number of currencies in the breakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{{count} currency} other{{count} currencies}}'**
+  String chartsCurrencyCount(int count);
+
+  /// Trend card title for daily expense bars (Week and Month periods).
+  ///
+  /// In en, this message translates to:
+  /// **'Daily spending'**
+  String get chartsTrendDailySpending;
+
+  /// Trend card title for monthly expense bars (Year and All periods).
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly spending'**
+  String get chartsTrendMonthlySpending;
+
+  /// Trend card title for daily income bars (Week and Month periods).
+  ///
+  /// In en, this message translates to:
+  /// **'Daily income'**
+  String get chartsTrendDailyIncome;
+
+  /// Trend card title for monthly income bars (Year and All periods).
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly income'**
+  String get chartsTrendMonthlyIncome;
+
+  /// Trend card average line legend for daily bars. {amount} is a formatted money amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg {amount} / day'**
+  String chartsAvgPerDay(String amount);
+
+  /// Trend card average line legend for monthly bars. {amount} is a formatted money amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg {amount} / month'**
+  String chartsAvgPerMonth(String amount);
+
+  /// Hint text of the collapsible memo search field in the Analysis app bar.
+  ///
+  /// In en, this message translates to:
+  /// **'Search memos'**
+  String get analysisSearchHint;
+
+  /// Tooltip and semantics label of the Analysis app-bar button that opens the memo search field.
+  ///
+  /// In en, this message translates to:
+  /// **'Search memos'**
+  String get analysisSearchOpen;
+
+  /// Tooltip and semantics label of the button that closes the Analysis memo search field.
+  ///
+  /// In en, this message translates to:
+  /// **'Close search'**
+  String get analysisSearchClose;
+
+  /// Account filter value meaning no account filter: the app-bar pill label and the first row of the account sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'All accounts'**
+  String get chartsAllAccounts;
+
+  /// Semantics label of the Analysis app-bar account filter button. {label} is the account name or 'All accounts'.
+  ///
+  /// In en, this message translates to:
+  /// **'Account filter: {label}'**
+  String chartsAccountFilterLabel(String label);
+
+  /// Account sheet title.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by account'**
+  String get chartsFilterByAccount;
+
+  /// Account sheet subtitle. {period} is the selected period's label, such as 'November 2026'.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters the whole page · {period}'**
+  String chartsFilterSheetSubtitle(String period);
+
+  /// Analysis period track segment that shows every transaction (all time).
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get chartsPeriodAll;
+
+  /// Period navigator label for the All period.
+  ///
+  /// In en, this message translates to:
+  /// **'All time'**
+  String get chartsAllTime;
+
+  /// Transactions card bridge button, shown in the Account dimension; tapping it filters the page by that account and switches to the Category dimension. {account} is the account name.
+  ///
+  /// In en, this message translates to:
+  /// **'See categories in {account}'**
+  String chartsSeeCategoriesIn(String account);
+
+  /// Semantics label of the trend card's slice filter chip; tapping it clears the slice selection. {label} is the slice name.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing {label} only. Clear filter'**
+  String chartsClearSliceFilter(String label);
+
+  /// Tooltip and semantics label of the button that closes the transactions card.
+  ///
+  /// In en, this message translates to:
+  /// **'Close transactions'**
+  String get chartsCloseTransactions;
+
+  /// Breakdown card empty-state title when the period has no expense and no account filter is set.
+  ///
+  /// In en, this message translates to:
+  /// **'No expense in this period'**
+  String get chartsEmptyTitleExpense;
+
+  /// Breakdown card empty-state title when the period has no income and no account filter is set.
+  ///
+  /// In en, this message translates to:
+  /// **'No income in this period'**
+  String get chartsEmptyTitleIncome;
+
+  /// Breakdown card empty-state title when the filtered account has no expense in the period. {account} is the account name.
+  ///
+  /// In en, this message translates to:
+  /// **'No expense on {account} in this period'**
+  String chartsEmptyTitleAccountExpense(String account);
+
+  /// Breakdown card empty-state title when the filtered account has no income in the period. {account} is the account name.
+  ///
+  /// In en, this message translates to:
+  /// **'No income on {account} in this period'**
+  String chartsEmptyTitleAccountIncome(String account);
+
+  /// Breakdown card empty-state body when no account filter is set. {type} is the other type's label ('Expense' or 'Income').
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to {type} or pick another period.'**
+  String chartsEmptySwitchType(String type);
+
+  /// Breakdown card empty-state body when an account filter is set.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick another account or period.'**
+  String get chartsEmptyPickAnother;
 }
 
 class _AppLocalizationsDelegate
