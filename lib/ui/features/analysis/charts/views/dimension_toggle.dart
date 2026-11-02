@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../core/theme/analysis_colors.dart';
@@ -57,11 +58,8 @@ class _DimensionChip extends StatelessWidget {
         selected: selected,
         // 44-high hit target around a 32-high pill; both are minimums so
         // the chip grows at large text scales. The pill's InkWell takes taps,
-        // focus and the ripple; this detector only catches the margin.
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          excludeFromSemantics: true,
-          onTap: onTap,
+        // focus and the ripple; presses on the margin are sent to it too.
+        child: _RedirectToCenter(
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 44),
             child: Align(
@@ -120,6 +118,31 @@ class _DimensionChip extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Sends a press that lands on the child's margin (inside this box but
+/// missing every hit target) to the box's centre, as Material buttons do
+/// with their padded tap target, so the centred pill's InkWell gets it.
+class _RedirectToCenter extends SingleChildRenderObjectWidget {
+  const _RedirectToCenter({required super.child});
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderRedirectToCenter();
+}
+
+class _RenderRedirectToCenter extends RenderProxyBox {
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) {
+    if (!size.contains(position)) return false;
+    if (super.hitTest(result, position: position)) return true;
+    final center = size.center(Offset.zero);
+    return result.addWithRawTransform(
+      transform: MatrixUtils.forceToPoint(center),
+      position: center,
+      hitTest: (result, _) => child!.hitTest(result, position: center),
     );
   }
 }

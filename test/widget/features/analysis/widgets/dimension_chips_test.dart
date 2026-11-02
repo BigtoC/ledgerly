@@ -133,9 +133,10 @@ void main() {
   testWidgets('pill is 32 high inside a 44-high hit target', (tester) async {
     await _pump(tester);
     expect(tester.getSize(_pill('Category')).height, 32);
-    final target = find
-        .ancestor(of: _pill('Category'), matching: find.byType(GestureDetector))
-        .first;
+    final target = find.ancestor(
+      of: _pill('Category'),
+      matching: find.byType(MergeSemantics),
+    );
     expect(tester.getSize(target).height, 44);
     // 14 padding + 1 border on each side of the label.
     expect(
@@ -189,6 +190,32 @@ void main() {
     // 3 dp above the pill: inside the 44 target, outside the 32 pill.
     await tester.tapAt(Offset(pill.center.dx, pill.top - 3));
     expect(picked, ChartDimension.currency);
+  });
+
+  testWidgets('a press anywhere in the 44 target ripples on the pill', (
+    tester,
+  ) async {
+    await _pump(tester);
+    final pill = tester.getRect(_pill('Currency'));
+    final ink = Material.of(tester.element(find.text('Currency')));
+    // 3 dp above the pill: inside the 44 target, outside the 32 pill.
+    for (final point in [pill.center, Offset(pill.center.dx, pill.top - 3)]) {
+      final gesture = await tester.startGesture(point);
+      await tester.pump(const Duration(milliseconds: 200));
+      // The pressed highlight paints clipped to the 16 pill radius.
+      expect(
+        ink as RenderObject,
+        paints..rrect(
+          rrect: RRect.fromRectAndRadius(
+            Offset.zero & pill.size,
+            const Radius.circular(16),
+          ),
+        ),
+        reason: '$point',
+      );
+      await gesture.up();
+      await tester.pumpAndSettle();
+    }
   });
 
   testWidgets('chips grow instead of clipping at 2x text scale', (
