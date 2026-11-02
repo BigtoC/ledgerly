@@ -505,9 +505,9 @@ void main() {
         tester,
         period: PeriodType.all,
         series: all(
-          DateTime(2025, 1),
-          now: DateTime(2026, 10, 31),
-          totals: {DateTime(2025, 2): 1000},
+          DateTime(2024, 8),
+          now: DateTime(2026, 5, 31),
+          totals: {DateTime(2024, 9): 1000},
         ),
         width: phone,
       );
@@ -534,29 +534,29 @@ void main() {
       await _pump(
         tester,
         period: PeriodType.all,
-        series: all(DateTime(2025, 1), now: DateTime(2026, 10, 31)),
+        series: all(DateTime(2024, 1), now: DateTime(2025, 9, 30)),
         width: phone,
       );
 
       final plot = tester.getRect(find.byType(BarChart));
-      const rod = (phone - 21 * 4) / 22;
+      const rod = (phone - 20 * 4) / 21;
       double center(int i) => plot.left + i * (rod + 4) + rod / 2;
       expect(
-        tester.getRect(find.text('2025')).center.dx,
+        tester.getRect(find.text('2024')).center.dx,
         closeTo(center(0), 0.01),
       );
       expect(
-        tester.getRect(find.text('2026')).center.dx,
+        tester.getRect(find.text('2025')).center.dx,
         closeTo(center(12), 0.01),
       );
       expect(
-        tester.getRect(find.text('Oct')).center.dx,
-        closeTo(center(21), 0.01),
+        tester.getRect(find.text('Sep')).center.dx,
+        closeTo(center(20), 0.01),
       );
-      final current = tester.widget<Text>(find.text('Oct'));
+      final current = tester.widget<Text>(find.text('Sep'));
       expect(current.style!.fontWeight, FontWeight.w700);
       expect(current.style!.color, _colors.fg);
-      final year = tester.widget<Text>(find.text('2025'));
+      final year = tester.widget<Text>(find.text('2024'));
       expect(year.style!.fontWeight, FontWeight.w400);
       expect(year.style!.color, _colors.fg3);
       expect(find.text('Jan'), findsNothing);
@@ -569,24 +569,24 @@ void main() {
       await _pump(
         tester,
         period: PeriodType.all,
-        series: all(DateTime(2025, 6), now: DateTime(2027, 1, 4)),
+        series: all(DateTime(2023, 6), now: DateTime(2025, 1, 4)),
         width: phone,
       );
 
-      expect(find.text('2026'), findsOneWidget);
+      expect(find.text('2024'), findsOneWidget);
       expect(find.text('Jan'), findsOneWidget);
-      expect(find.text('2027'), findsNothing);
-      // June 2025 is the first month but not a January: no year label.
       expect(find.text('2025'), findsNothing);
+      // June 2023 is the first month but not a January: no year label.
+      expect(find.text('2023'), findsNothing);
     });
 
     testWidgets('beyond 24 months each bar keeps the 24-month width, the '
         'chart scrolls and opens at the right end', (tester) async {
-      // May 2024 … Oct 2026: 30 months.
+      // Sep 2023 … Feb 2026: 30 months.
       await _pump(
         tester,
         period: PeriodType.all,
-        series: all(DateTime(2024, 5), now: DateTime(2026, 10, 31)),
+        series: all(DateTime(2023, 9), now: DateTime(2026, 2, 28)),
         width: phone,
       );
 
@@ -611,7 +611,7 @@ void main() {
       // Wider than its bar, the last label ends at the viewport's edge
       // instead of being clipped there.
       expect(
-        tester.getRect(find.text('Oct')).right,
+        tester.getRect(find.text('Feb')).right,
         closeTo(viewport.right, 0.01),
       );
     });
@@ -622,10 +622,10 @@ void main() {
         tester,
         period: PeriodType.all,
         series: all(
-          DateTime(2024, 5),
-          now: DateTime(2026, 10, 31),
+          DateTime(2023, 9),
+          now: DateTime(2026, 2, 28),
           // The biggest month is the first, far left of the viewport.
-          totals: {DateTime(2024, 5): 3000, DateTime(2026, 10): 600},
+          totals: {DateTime(2023, 9): 3000, DateTime(2026, 2): 600},
         ),
         width: phone,
       );
@@ -641,7 +641,7 @@ void main() {
       await _pump(
         tester,
         period: PeriodType.all,
-        series: all(DateTime(2024, 5), now: DateTime(2026, 10, 31)),
+        series: all(DateTime(2023, 9), now: DateTime(2026, 2, 28)),
         width: phone,
       );
       final plotBefore = tester.getRect(find.byType(BarChart));
@@ -665,9 +665,9 @@ void main() {
         tester,
         period: PeriodType.all,
         series: all(
-          DateTime(2024, 5),
-          now: DateTime(2026, 10, 31),
-          totals: {DateTime(2026, 10): 600},
+          DateTime(2023, 9),
+          now: DateTime(2026, 2, 28),
+          totals: {DateTime(2026, 2): 600},
         ),
         width: phone,
       );
@@ -691,7 +691,7 @@ void main() {
         data.barGroups[29].barRods.single,
         0,
       );
-      expect(item!.text, 'Oct 2026\n');
+      expect(item!.text, 'Feb 2026\n');
     });
 
     testWidgets('2× text scale at phone width: labels grow, no overflow', (
@@ -700,18 +700,18 @@ void main() {
       await _pump(
         tester,
         period: PeriodType.all,
-        series: all(DateTime(2024, 5), now: DateTime(2026, 10, 31)),
+        series: all(DateTime(2023, 9), now: DateTime(2026, 2, 28)),
         width: phone,
         textScale: 2,
       );
 
       expect(tester.takeException(), isNull);
       expect(tester.getSize(find.text('2026')).height, 28);
-      expect(tester.getSize(find.text('Oct')).height, 28);
+      expect(tester.getSize(find.text('Feb')).height, 28);
       // The last label stays inside the viewport, ending at its edge.
       final viewport = tester.getRect(find.byType(DailyBarChart));
       expect(
-        tester.getRect(find.text('Oct')).right,
+        tester.getRect(find.text('Feb')).right,
         lessThanOrEqualTo(viewport.right + 0.01),
       );
     });

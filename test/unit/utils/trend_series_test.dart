@@ -238,17 +238,17 @@ void main() {
         'none future', () {
       final s = trendSeries(
         period: PeriodType.all,
-        anchorDate: DateTime(2025, 1, 1),
+        anchorDate: DateTime(2024, 8, 1),
         bucketTotals: [
-          _b(DateTime(2025, 1, 1), 100),
-          _b(DateTime(2026, 10, 1), 300),
+          _b(DateTime(2024, 8, 1), 100),
+          _b(DateTime(2026, 5, 1), 300),
         ],
-        now: DateTime(2026, 10, 31, 15),
+        now: DateTime(2026, 5, 31, 15),
       );
 
       expect(s.buckets, hasLength(22));
-      expect(s.buckets.first.bucketStart, DateTime(2025, 1, 1));
-      expect(s.buckets.last.bucketStart, DateTime(2026, 10, 1));
+      expect(s.buckets.first.bucketStart, DateTime(2024, 8, 1));
+      expect(s.buckets.last.bucketStart, DateTime(2026, 5, 1));
       expect(s.buckets.first.totalMinorUnits, 100);
       expect(s.buckets.last.totalMinorUnits, 300);
       expect(s.buckets.where((b) => b.isFuture), isEmpty);
@@ -275,12 +275,12 @@ void main() {
         'last bar', () {
       final s = trendSeries(
         period: PeriodType.all,
-        anchorDate: DateTime(2025, 1, 1),
+        anchorDate: DateTime(2024, 1, 1),
         bucketTotals: const [],
-        now: DateTime(2026, 10, 31),
+        now: DateTime(2025, 9, 30),
       );
 
-      expect(s.labelIndices, {0, 12, 21});
+      expect(s.labelIndices, {0, 12, 20});
       expect(s.yearLabelIndices, {0, 12});
     });
 

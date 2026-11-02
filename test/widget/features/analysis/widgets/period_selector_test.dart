@@ -363,7 +363,7 @@ void main() {
     });
 
     group('on All', () {
-      final range = (start: DateTime(2025), end: DateTime(2026, 11));
+      final range = (start: DateTime(2024, 3), end: DateTime(2026, 7));
 
       testWidgets('label "All time"; caption is the covered range, '
           '12/16 fg3', (tester) async {
@@ -379,7 +379,7 @@ void main() {
         expect(find.text('All time'), findsOneWidget);
         // No "This …" caption: the range replaces it.
         expect(find.textContaining('This'), findsNothing);
-        final caption = find.text('Jan 2025 – Oct 2026');
+        final caption = find.text('Mar 2024 – Jun 2026');
         expect(caption, findsOneWidget);
         final style = tester.widget<Text>(caption).style!;
         expect(style.fontSize, 12);
@@ -400,7 +400,7 @@ void main() {
         );
 
         expect(find.text('全部時間'), findsOneWidget);
-        expect(find.text('2025年1月 – 2026年10月'), findsOneWidget);
+        expect(find.text('2024年3月 – 2026年6月'), findsOneWidget);
       });
 
       testWidgets('no caption without transactions (an empty range) or '
@@ -500,7 +500,7 @@ void main() {
       selector(
         period: PeriodType.all,
         isAtCurrent: true,
-        allTimeRange: (start: DateTime(2025), end: DateTime(2026, 11)),
+        allTimeRange: (start: DateTime(2024, 3), end: DateTime(2026, 7)),
       ),
       textScale: 2,
     );
@@ -514,7 +514,7 @@ void main() {
       tester.getSize(find.text('All time')).height,
       greaterThanOrEqualTo(48),
     );
-    final caption = tester.getRect(find.text('Jan 2025 – Oct 2026'));
+    final caption = tester.getRect(find.text('Mar 2024 – Jun 2026'));
     expect(caption.height, greaterThanOrEqualTo(32));
     // The caption stays between the two kept 48 slots.
     expect(caption.left, greaterThanOrEqualTo(8 + 48 + 4));

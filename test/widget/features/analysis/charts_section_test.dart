@@ -317,7 +317,7 @@ void main() {
         'covered range and hides both chevrons', (tester) async {
       await _pumpSection(
         tester,
-        bounds: (first: DateTime(2025, 1, 20, 9), last: now),
+        bounds: (first: DateTime(2024, 3, 20, 9), last: now),
       );
       for (final label in ['Day', 'Week', 'Month', 'Year', 'All']) {
         expect(
@@ -332,7 +332,7 @@ void main() {
       await pickAll(tester);
 
       expect(find.text('All time'), findsOneWidget);
-      expect(find.text('Jan 2025 – ${nowLabel()}'), findsOneWidget);
+      expect(find.text('Mar 2024 – ${nowLabel()}'), findsOneWidget);
       expect(find.byTooltip('Previous period'), findsNothing);
       expect(find.byTooltip('Next period'), findsNothing);
       expect(find.text('Net all time'), findsOneWidget);
@@ -343,12 +343,12 @@ void main() {
     ) async {
       final repo = await _pumpSection(
         tester,
-        bounds: (first: DateTime(2025, 1, 20, 9), last: now),
+        bounds: (first: DateTime(2024, 3, 20, 9), last: now),
       );
 
       await pickAll(tester);
 
-      final start = DateTime(2025);
+      final start = DateTime(2024, 3);
       verify(
         () => repo.watchByCategoryInRange(
           start: start,
@@ -381,7 +381,7 @@ void main() {
         "transaction's month to now", (tester) async {
       await _pumpSection(
         tester,
-        bounds: (first: DateTime(2025, 1, 20, 9), last: now),
+        bounds: (first: DateTime(2024, 3, 20, 9), last: now),
       );
 
       await pickAll(tester);
@@ -391,9 +391,9 @@ void main() {
       final series = tester
           .widget<DailyBarChart>(find.byType(DailyBarChart))
           .series;
-      final months = (now.year - 2025) * 12 + now.month;
+      final months = (now.year - 2024) * 12 + now.month - 2;
       expect(series.buckets, hasLength(months));
-      expect(series.buckets.first.bucketStart, DateTime(2025));
+      expect(series.buckets.first.bucketStart, DateTime(2024, 3));
       expect(series.buckets.last.bucketStart, DateTime(now.year, now.month));
       expect(series.currentIndex, months - 1);
       // The card header stays put; only the chart may scroll sideways.
@@ -451,7 +451,7 @@ void main() {
     testWidgets('a horizontal swipe does nothing on All', (tester) async {
       await _pumpSection(
         tester,
-        bounds: (first: DateTime(2025, 1, 20, 9), last: now),
+        bounds: (first: DateTime(2024, 3, 20, 9), last: now),
       );
       bool listensForSwipes() => tester
           .widgetList<GestureDetector>(
