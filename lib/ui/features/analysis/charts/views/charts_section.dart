@@ -19,9 +19,9 @@ import '../view_models/charts_state.dart';
 import '../view_models/slice_drilldown_controller.dart';
 import 'category_pie_chart.dart';
 import 'chart_legend.dart';
+import 'charts_breakdown_card.dart';
 import 'charts_summary_card.dart';
 import 'daily_bar_chart.dart';
-import 'dimension_toggle.dart';
 import 'period_selector.dart';
 import 'selected_slice_items_list.dart';
 
@@ -179,7 +179,11 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
           controller,
           selection,
           selectionNotifier,
-          body: const Center(child: CircularProgressIndicator()),
+          body: _inCard(
+            selection,
+            selectionNotifier,
+            const Center(child: CircularProgressIndicator()),
+          ),
           l10n: l10n,
         ),
         error: (e, _) => _frame(
@@ -187,7 +191,11 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
           controller,
           selection,
           selectionNotifier,
-          body: _errorBody(e, controller),
+          body: _inCard(
+            selection,
+            selectionNotifier,
+            _errorBody(e, controller),
+          ),
           l10n: l10n,
         ),
         data: (state) => switch (state) {
@@ -202,7 +210,11 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
             // DataState body, which forced fl_chart's pie/bar StatefulWidget
             // state to remount on every slice tap.
             body: previous == null
-                ? const Center(child: CircularProgressIndicator())
+                ? _inCard(
+                    selection,
+                    selectionNotifier,
+                    const Center(child: CircularProgressIndicator()),
+                  )
                 : _ChartBody(
                     data: previous,
                     locale: locale,
@@ -217,9 +229,10 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
             controller,
             selection,
             selectionNotifier,
-            body: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Center(child: Text(l10n.chartsNoData)),
+            body: _inCard(
+              selection,
+              selectionNotifier,
+              BreakdownEmptyState(type: selection.type),
             ),
             l10n: l10n,
           ),
@@ -229,9 +242,16 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
             selection,
             selectionNotifier,
             body: previous == null
-                ? Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 24),
-                    child: Center(child: Text(l10n.chartsRatesRequired)),
+                ? _inCard(
+                    selection,
+                    selectionNotifier,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 24,
+                        horizontal: 16,
+                      ),
+                      child: Center(child: Text(l10n.chartsRatesRequired)),
+                    ),
                   )
                 : Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -275,7 +295,11 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
             controller,
             selection,
             selectionNotifier,
-            body: _errorBody(error, controller),
+            body: _inCard(
+              selection,
+              selectionNotifier,
+              _errorBody(error, controller),
+            ),
             l10n: l10n,
           ),
         },
@@ -301,13 +325,29 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
     );
   }
 
-  Widget _errorBody(Object error, ChartsController controller) => Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Text('$error'),
-      const SizedBox(height: 8),
-      TextButton(onPressed: controller.retry, child: const Text('Retry')),
-    ],
+  Widget _errorBody(Object error, ChartsController controller) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('$error'),
+        const SizedBox(height: 8),
+        TextButton(onPressed: controller.retry, child: const Text('Retry')),
+      ],
+    ),
+  );
+
+  /// A body without chart data (loading, empty, blocked, error) inside the
+  /// breakdown card, so the title and dimension chips stay in place.
+  Widget _inCard(
+    ChartsSelection selection,
+    ChartsSelectionController selectionNotifier,
+    Widget child,
+  ) => ChartsBreakdownCard(
+    type: selection.type,
+    dimension: selection.dimension,
+    onDimensionChanged: selectionNotifier.setDimension,
+    child: child,
   );
 
   Widget _frame(
@@ -325,7 +365,6 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
     // variants `chartData` is null. Either way, reading from the selection
     // notifier keeps the segmented buttons in sync with whatever the user
     // just tapped.
-    final dimension = selection.dimension;
     final period = selection.period;
     final anchor = selection.anchorDate;
 
@@ -345,12 +384,7 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
       children: [
         const SizedBox(height: 16),
         const ChartsSummaryCard(),
-        const SizedBox(height: 8),
-        DimensionChips(
-          dimension: dimension,
-          onChanged: selectionNotifier.setDimension,
-        ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         if (chartData?.autoSwitchedFromCategoryDimension ?? false)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
@@ -573,9 +607,8 @@ class _ChartBodyState extends ConsumerState<_ChartBody> {
   @override
   Widget build(BuildContext context) {
     final data = widget.data;
-    final selection = ref
-        .watch(chartsSelectionControllerProvider)
-        .selectedSlice;
+    final chartsSelection = ref.watch(chartsSelectionControllerProvider);
+    final selection = chartsSelection.selectedSlice;
     ref.listen(
       chartsSelectionControllerProvider.select((s) => s.selectedSlice),
       (previous, next) {
@@ -605,27 +638,39 @@ class _ChartBodyState extends ConsumerState<_ChartBody> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        RepaintBoundary(
-          key: _pieKey,
-          child: CategoryPieChart(
-            slices: data.slices,
-            currenciesByCode: widget.currencies,
-            locale: widget.locale,
-            type: data.type,
-            dimension: data.dimension,
-            grandTotalMinorUnits: data.grandTotalMinorUnits,
-            displayCurrencyCode: data.displayCurrencyCode,
-            selectedIndex: selectedIndex,
-            onSelectionChanged: selectSlice,
+        ChartsBreakdownCard(
+          type: chartsSelection.type,
+          dimension: chartsSelection.dimension,
+          onDimensionChanged: ref
+              .read(chartsSelectionControllerProvider.notifier)
+              .setDimension,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              RepaintBoundary(
+                key: _pieKey,
+                child: CategoryPieChart(
+                  slices: data.slices,
+                  currenciesByCode: widget.currencies,
+                  locale: widget.locale,
+                  type: data.type,
+                  dimension: data.dimension,
+                  grandTotalMinorUnits: data.grandTotalMinorUnits,
+                  displayCurrencyCode: data.displayCurrencyCode,
+                  selectedIndex: selectedIndex,
+                  onSelectionChanged: selectSlice,
+                ),
+              ),
+              ChartLegend(
+                key: _legendKey,
+                slices: data.slices,
+                currenciesByCode: widget.currencies,
+                locale: widget.locale,
+                selectedSliceIndex: selectedIndex,
+                onSelectSlice: selectSlice,
+              ),
+            ],
           ),
-        ),
-        ChartLegend(
-          key: _legendKey,
-          slices: data.slices,
-          currenciesByCode: widget.currencies,
-          locale: widget.locale,
-          selectedSliceIndex: selectedIndex,
-          onSelectSlice: selectSlice,
         ),
         if (showBar) ...[
           const SizedBox(height: 16),
