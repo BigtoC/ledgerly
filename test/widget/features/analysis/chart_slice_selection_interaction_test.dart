@@ -205,4 +205,30 @@ void main() {
         .selectedSlice;
     expect(selection, equals(const SelectedSlice.category(1)));
   }, variant: TargetPlatformVariant.mobile());
+
+  testWidgets('trend filter chip shows with a slice and clears it (AC 8)', (
+    tester,
+  ) async {
+    final container = await _pumpChartsSection(tester);
+    final chip = find.bySemanticsLabel('Showing Food only. Clear filter');
+    expect(chip, findsNothing);
+
+    container
+        .read(chartsSelectionControllerProvider.notifier)
+        .toggleSlice(const SelectedSlice.category(1));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('trendFilterPill')),
+      50,
+    );
+    expect(chip, findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('trendFilterPill')));
+    await tester.pumpAndSettle();
+    expect(
+      container.read(chartsSelectionControllerProvider).selectedSlice,
+      isNull,
+    );
+    expect(chip, findsNothing);
+  });
 }

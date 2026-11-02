@@ -416,17 +416,17 @@ void main() {
     testWidgets('keeps lifting the card when the drill-down rows load late', (
       tester,
     ) async {
-      // Tall enough that the trend chart and spinner alone cannot fill the
+      // Tall enough that the trend card and spinner alone cannot fill the
       // space below the ranked rows, short enough that the loaded row can.
       await pumpPhone(
         tester,
         drilldownDelay: const Duration(seconds: 1),
-        size: const Size(360, 560),
+        size: const Size(360, 620),
       );
       await tapLegendRow(tester, 'Food');
       await pumpPastReveal(tester);
-      // Only the loading spinner sits below the card so far, so the first
-      // scroll stops short of the top.
+      // Only the trend card and the loading spinner sit below the card so
+      // far, so the first scroll stops short of the top.
       expect(find.byType(ListTile), findsNothing);
       expect(
         tester.getRect(legendRows).top,

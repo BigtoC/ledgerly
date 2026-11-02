@@ -27,6 +27,7 @@ import 'package:ledgerly/ui/features/analysis/charts/views/chart_legend.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/charts_breakdown_card.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/charts_section.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/charts_summary_card.dart';
+import 'package:ledgerly/ui/features/analysis/charts/views/charts_trend_card.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/daily_bar_chart.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/dimension_toggle.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/period_selector.dart';
@@ -86,8 +87,8 @@ void main() {
     expect(selector.left, section.left);
     expect(selector.right, section.right);
 
-    // The trend chart is the last block in the column at Week.
-    final trend = tester.getRect(find.byType(DailyBarChart));
+    // The trend card is the last block in the column at Week.
+    final trend = tester.getRect(find.byType(ChartsTrendCard));
     expect(trend.left - section.left, 16);
     expect(section.right - trend.right, 16);
     expect(section.bottom - trend.bottom, 24);
