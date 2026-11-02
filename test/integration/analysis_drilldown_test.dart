@@ -25,6 +25,7 @@ import 'package:ledgerly/ui/features/analysis/charts/view_models/selected_slice.
 import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_controller.dart';
 import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_providers.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
+import 'package:ledgerly/ui/core/theme/app_theme.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
@@ -196,15 +197,16 @@ Future<ProviderContainer> _pumpAnalysisScreen(
   await tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
-      child: const MaterialApp(
-        localizationsDelegates: [
+      child: MaterialApp(
+        theme: lightTheme,
+        localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: AppLocalizations.supportedLocales,
-        home: AnalysisScreen(),
+        home: const AnalysisScreen(),
       ),
     ),
   );

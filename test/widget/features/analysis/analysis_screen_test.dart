@@ -27,6 +27,7 @@ import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_contro
 import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_providers.dart';
 import 'package:ledgerly/ui/features/analysis/search/views/category_search_tile.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
+import 'package:ledgerly/ui/core/theme/app_theme.dart';
 
 class _MockTransactionRepository extends Mock
     implements TransactionRepository {}
@@ -85,15 +86,16 @@ Widget _harness({
       categoryRepositoryProvider.overrideWithValue(cat),
       accountRepositoryProvider.overrideWithValue(acct),
     ],
-    child: const MaterialApp(
-      localizationsDelegates: [
+    child: MaterialApp(
+      theme: lightTheme,
+      localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: AppLocalizations.supportedLocales,
-      home: AnalysisScreen(),
+      home: const AnalysisScreen(),
     ),
   );
 }
@@ -153,6 +155,7 @@ Widget _routerHarness({
       accountRepositoryProvider.overrideWithValue(acct),
     ],
     child: MaterialApp.router(
+      theme: lightTheme,
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,

@@ -13,6 +13,7 @@ import 'package:ledgerly/domain/models/category_slice.dart';
 import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/domain/models/time_bucket_slice.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
+import 'package:ledgerly/ui/core/theme/app_theme.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_controller.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_net_total_providers.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_providers.dart';
@@ -165,15 +166,18 @@ Future<void> _pumpSection(WidgetTester tester, {PeriodType? period}) async {
         ),
         initialDefaultCurrencyProvider.overrideWithValue('USD'),
       ],
-      child: const MaterialApp(
-        localizationsDelegates: [
+      child: MaterialApp(
+        theme: lightTheme,
+        localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(body: SingleChildScrollView(child: ChartsSection())),
+        home: const Scaffold(
+          body: SingleChildScrollView(child: ChartsSection()),
+        ),
       ),
     ),
   );
