@@ -179,11 +179,13 @@ cannot be built as drawn must be raised before coding it.
   the search field must stay reachable. No scroll-under tint
   (`scrolledUnderElevation: 0`, `surfaceTintColor: transparent`). The app bar is
   fixed at 64, so its title, pill and field clamp text at 1.5×.
-- **D2 Long amounts.** The summary-tile amount and the donut-centre amount
-  (max width 128) are `nowrap` in the design and overflow for long values even
-  at 1×. Wrap only these two in `FittedBox(fit: BoxFit.scaleDown)`: 1:1 when
-  they fit, shrunk only when they do not. The donut centre also clamps text at
-  1.5× (fixed-size box). Tests assert rendered sizes at 2×.
+- **D2 An amount is never cut off** (widened 2026-11-02). Every money amount
+  that is `nowrap` in the design and may not fit its space (summary tiles, net
+  row, donut centre (max width 128), ranked rows, transaction rows, sheet rows,
+  trend subtitle) is wrapped in `FittedBox(fit: BoxFit.scaleDown)`: 1:1 when it
+  fits, shrunk only when it does not. An amount never ellipsizes or clips;
+  the label next to it ellipsizes first. The donut centre also clamps text at
+  1.5× (fixed-size box). Tests assert rendered sizes at 2× on a phone width.
 - **D3 Minus glyph.** Use `MoneyFormatter.formatSigned` (intl's `-`), not the
   design's U+2212 `−`, everywhere a signed amount shows.
 - **D4 Account icon and colour.** `account.icon ?? accountType.icon` and
@@ -238,6 +240,29 @@ cannot be built as drawn must be raised before coding it.
 - **D15 All x labels.** When the current month is January, the last bar shows
   the month name (bold), not the year. When the first month is not January, no
   year label is added for it (spec rule).
+
+- **D16 Press and focus feedback.** The design draws no pressed, hover or
+  focus states. Every tappable element keeps Material's default ink ripple and
+  keyboard focus (`InkWell` / buttons, never a bare `GestureDetector`),
+  including the period segments, chips, tiles, rows and the trend filter chip.
+  The ripple is clipped to the element's visual shape (pill, tile, row radius).
+- **D17 Trend filter chip width.** The chip is capped at half the header width
+  minus the 12 gap and its label ellipsizes past that, so a long category name
+  cannot squeeze the title away or overflow at 2×.
+- **D18 Tapping the selected summary tile** clears the slice selection, as the
+  design's `pick` does (the spec does not cover it).
+- **D19 Accepted small choices** (spec and design silent):
+  - Breakdown card: the title ellipsizes at 2× on a phone width; the loading
+    spinner gets 24 vertical padding inside the card; while an older chart is
+    still shown, the title and chips follow the charted data; the empty-state
+    icon is `Icons.bar_chart`; the currency code in the 36 circle clamps at
+    1.5×; `analysisAccountTypesById` lives in
+    `search/view_models/analysis_providers.dart` (Step 7b reuses it).
+  - Transactions card: a row whose account is missing shows only the date; the
+    error state is the plain `analysisErrorMessage` text inside the card; the
+    stale-rate line has no tabular figures.
+  - Trend card: the average is rounded to whole minor units before formatting;
+    the empty future stub has radius 1.5 (CSS caps a 2 px radius on a 3 px box).
 
 (D11 was dropped: the account button left the breakdown header.)
 
