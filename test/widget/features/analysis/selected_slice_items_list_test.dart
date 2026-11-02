@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -216,6 +217,45 @@ Finder get _dot => find.byWidgetPredicate(
 Text _text(WidgetTester tester, String data) =>
     tester.widget<Text>(find.text(data));
 
+/// Ink features (ripples, highlights) on the Material that [finder] paints
+/// its ink on.
+List<InkFeature> _ink(WidgetTester tester, Finder finder) =>
+    ((Material.of(tester.element(finder)) as dynamic).debugInkFeatures
+        as List<InkFeature>?) ??
+    const [];
+
+/// Presses [finder] and expects a ripple on its own Material, whose shape
+/// is the element's visual shape (D16).
+Future<void> _expectRipple(
+  WidgetTester tester,
+  Finder finder, {
+  required ShapeBorder shape,
+}) async {
+  final material = tester.widget<Material>(
+    find.ancestor(of: finder, matching: find.byType(Material)).first,
+  );
+  expect(material.shape, shape);
+  expect(_ink(tester, finder), isEmpty);
+  final gesture = await tester.startGesture(tester.getCenter(finder));
+  await tester.pump(const Duration(milliseconds: 200));
+  expect(_ink(tester, finder), isNotEmpty);
+  // Cancel rather than lift, so the press does not also activate it.
+  await gesture.cancel();
+  await tester.pump(const Duration(seconds: 1));
+}
+
+/// Focuses the element around [finder] from the keyboard side, then
+/// activates it with Enter (D16).
+Future<void> _focusAndActivate(WidgetTester tester, Finder finder) async {
+  final node = Focus.of(tester.element(finder));
+  expect(node.canRequestFocus, isTrue);
+  node.requestFocus();
+  await tester.pump();
+  expect(node.hasPrimaryFocus, isTrue);
+  await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+  await tester.pump();
+}
+
 @Dependencies([
   ChartsSelectionController,
   SliceDrilldownController,
@@ -427,6 +467,50 @@ void main() {
         isNull,
       );
       expect(_materials, findsNothing);
+    });
+
+    testWidgets('close button: ripple clipped to its 48 circle (D16)', (
+      tester,
+    ) async {
+      final repo = _MockRepo();
+      _stubRows(repo, () => Stream.value([_tx(1, memo: 'Lunch')]));
+      await tester.pumpWidget(
+        _harness(
+          repo: repo,
+          slice: _slice(const SelectedSlice.category(1)),
+          activeSelection: const SelectedSlice.category(1),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await _expectRipple(
+        tester,
+        find.byIcon(Icons.close),
+        shape: const StadiumBorder(),
+      );
+    });
+
+    testWidgets('close button takes keyboard focus; Enter clears the slice '
+        '(D16)', (tester) async {
+      final repo = _MockRepo();
+      _stubRows(repo, () => Stream.value([_tx(1, memo: 'Lunch')]));
+      await tester.pumpWidget(
+        _harness(
+          repo: repo,
+          slice: _slice(const SelectedSlice.category(1)),
+          activeSelection: const SelectedSlice.category(1),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(SelectedSliceItemsList)),
+      );
+      await _focusAndActivate(tester, find.byIcon(Icons.close));
+      expect(
+        container.read(chartsSelectionControllerProvider).selectedSlice,
+        isNull,
+      );
     });
 
     testWidgets(
@@ -804,6 +888,35 @@ void main() {
       expect(buttonRect.center.dx, block.center.dx);
       // Card padding 8 + 1px border below the button.
       expect(tester.getRect(_card).bottom - buttonRect.bottom, 8 + 1);
+    });
+
+    testWidgets('button: ripple clipped to its 22-radius pill, takes '
+        'keyboard focus, Enter shows more (D16)', (tester) async {
+      final repo = _MockRepo();
+      _stubRows(
+        repo,
+        () => Stream.value([for (var i = 1; i <= 51; i++) _tx(i)]),
+      );
+      await tester.pumpWidget(
+        _harness(
+          repo: repo,
+          slice: _slice(const SelectedSlice.category(1)),
+          activeSelection: const SelectedSlice.category(1),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Show 1 more'));
+      await tester.pumpAndSettle();
+
+      await _expectRipple(
+        tester,
+        find.text('Show 1 more'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+      );
+      await _focusAndActivate(tester, find.text('Show 1 more'));
+      await tester.pumpAndSettle();
+      expect(find.byType(SliceTransactionRow), findsNWidgets(51));
+      expect(find.text('Show 1 more'), findsNothing);
     });
 
     testWidgets('switching to another slice resets the cap to 50', (

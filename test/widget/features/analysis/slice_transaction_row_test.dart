@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show RenderParagraph;
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -104,6 +105,13 @@ void _usePhoneWidth(WidgetTester tester) {
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
 }
+
+/// Ink features (ripples, highlights) on the Material that [finder] paints
+/// its ink on.
+List<InkFeature> _ink(WidgetTester tester, Finder finder) =>
+    ((Material.of(tester.element(finder)) as dynamic).debugInkFeatures
+        as List<InkFeature>?) ??
+    const [];
 
 const _longMemo = 'A very long memo that cannot fit on one line at all';
 
@@ -372,6 +380,52 @@ void main() {
       var tapped = 0;
       await tester.pumpWidget(_wrap(_row(onTap: () => tapped++)));
       await tester.tap(find.text('Lunch'));
+      expect(tapped, 1);
+    });
+
+    testWidgets('press shows an ink ripple clipped to the row (D16)', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap(_row()));
+
+      final row = tester.getRect(find.byType(SliceTransactionRow));
+      final inkWell = find.ancestor(
+        of: find.text('Lunch'),
+        matching: find.byType(InkWell),
+      );
+      expect(inkWell, findsOneWidget);
+      // The row is square-cornered: the ink fills it below the divider.
+      expect(tester.getRect(inkWell), Rect.fromLTRB(0, 1, 360, row.height));
+      final widget = tester.widget<InkWell>(inkWell);
+      expect(widget.borderRadius, isNull);
+      expect(widget.customBorder, isNull);
+      expect(widget.containedInkWell, isTrue);
+
+      expect(_ink(tester, find.text('Lunch')), isEmpty);
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.text('Lunch')),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(_ink(tester, find.text('Lunch')), isNotEmpty);
+      await gesture.up();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('takes keyboard focus; Enter calls onTap (D16)', (
+      tester,
+    ) async {
+      var tapped = 0;
+      await tester.pumpWidget(_wrap(_row(onTap: () => tapped++)));
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      expect(
+        Focus.of(tester.element(find.text('Lunch'))).hasPrimaryFocus,
+        true,
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
       expect(tapped, 1);
     });
 
