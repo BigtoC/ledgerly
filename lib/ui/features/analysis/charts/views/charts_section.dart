@@ -346,7 +346,7 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
         const SizedBox(height: 16),
         const ChartsSummaryCard(),
         const SizedBox(height: 8),
-        DimensionToggle(
+        DimensionChips(
           dimension: dimension,
           onChanged: selectionNotifier.setDimension,
         ),
