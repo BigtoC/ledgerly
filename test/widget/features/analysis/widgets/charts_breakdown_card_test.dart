@@ -150,8 +150,12 @@ void main() {
       WidgetTester tester,
       CategoryType type, {
       double textScale = 1,
+      String? accountName,
     }) => tester.pumpWidget(
-      _wrap(BreakdownEmptyState(type: type), textScale: textScale),
+      _wrap(
+        BreakdownEmptyState(type: type, accountName: accountName),
+        textScale: textScale,
+      ),
     );
 
     testWidgets('expense copy points to Income', (tester) async {
@@ -179,6 +183,32 @@ void main() {
         find.text('Switch to Expense or pick another period.'),
         findsOneWidget,
       );
+    });
+
+    testWidgets('with an account filter the copy names the account', (
+      tester,
+    ) async {
+      await pumpEmpty(tester, CategoryType.expense, accountName: 'Visa card');
+      expect(
+        find.text('No expense on Visa card in this period'),
+        findsOneWidget,
+      );
+      expect(find.text('Pick another account or period.'), findsOneWidget);
+      expect(find.textContaining('Switch to'), findsNothing);
+      final title = _style(tester, 'No expense on Visa card in this period');
+      expect(title.fontSize, 15);
+      expect(title.fontWeight, FontWeight.w500);
+      expect(title.color, _colors.fg);
+      final sub = _style(tester, 'Pick another account or period.');
+      expect(sub.fontSize, 13);
+      expect(sub.color, _colors.fg2);
+
+      await pumpEmpty(tester, CategoryType.income, accountName: 'Visa card');
+      expect(
+        find.text('No income on Visa card in this period'),
+        findsOneWidget,
+      );
+      expect(find.text('Pick another account or period.'), findsOneWidget);
     });
 
     testWidgets('48 dp track circle with a 22 dp chart icon', (tester) async {

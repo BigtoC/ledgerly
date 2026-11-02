@@ -1,6 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -61,6 +61,7 @@ Future<void> _pump(
   VoidCallback? onClearSlice,
   double textScale = 1,
   double cardWidth = 358,
+  String? accountName,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -87,6 +88,7 @@ Future<void> _pump(
               onClearSlice: onClearSlice ?? () {},
               locale: 'en',
               currenciesByCode: const {'USD': _usd},
+              accountName: accountName,
             ),
           ),
         ),
@@ -159,6 +161,62 @@ void main() {
       final text = tester.getRect(find.text(r'Avg $1.00 / day'));
       expect(text.left - tester.getRect(legend).right, 6);
       expect(tester.getRect(legend).center.dy, closeTo(text.center.dy, 0.01));
+    });
+  });
+
+  group('account prefix', () {
+    testWidgets('the subtitle is prefixed "<Account> · " with the filter', (
+      tester,
+    ) async {
+      await _pump(tester, _data(), accountName: 'Visa card');
+
+      final prefix = find.text('Visa card · ');
+      expect(prefix, findsOneWidget);
+      final style = tester.widget<Text>(prefix).style!;
+      expect(style.fontSize, 13);
+      expect(style.height, 18 / 13);
+      expect(style.color, _colors.fg2);
+      expect(style.fontFeatures, const [FontFeature.tabularFigures()]);
+      final avg = tester.getRect(find.text(r'Avg $1.00 / day'));
+      final legend = tester.getRect(
+        find.byKey(const ValueKey('trendAvgLegend')),
+      );
+      // Legend, 6, prefix, then the average right after it.
+      expect(tester.getRect(prefix).left - legend.right, 6);
+      expect(avg.left, closeTo(tester.getRect(prefix).right, 0.01));
+    });
+
+    testWidgets('no prefix without the filter', (tester) async {
+      await _pump(tester, _data());
+      expect(find.textContaining(' · '), findsNothing);
+    });
+
+    testWidgets('a long name ellipsizes before the amount, which keeps its '
+        'size (D2)', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(360, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await _pump(
+        tester,
+        _data(),
+        accountName: 'A very long account name that cannot fit the header',
+        textScale: 2,
+        cardWidth: 328,
+      );
+
+      expect(tester.takeException(), isNull);
+      final prefix = find.textContaining('A very long account name');
+      expect(tester.widget<Text>(prefix).overflow, TextOverflow.ellipsis);
+      expect(
+        tester.renderObject<RenderParagraph>(prefix).didExceedMaxLines,
+        isTrue,
+      );
+      final avg = find.text(r'Avg $1.00 / day');
+      // Full size: 18 px line at 2×, no scale-down.
+      expect(tester.getSize(avg).height, 36);
+      final unscaled = tester.renderObject<RenderParagraph>(avg).size;
+      expect(tester.getSize(avg), unscaled);
+      // Both inside the card's 16 padding.
+      expect(tester.getRect(avg).right, lessThanOrEqualTo(328 - 16 + 0.01));
     });
   });
 

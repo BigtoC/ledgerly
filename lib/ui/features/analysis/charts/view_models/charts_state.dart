@@ -80,6 +80,11 @@ abstract class ChartsData with _$ChartsData {
     /// a ribbon listing them above the chart body. Category/account
     /// dimension only — currency dimension shows source amounts inline.
     @Default(<String>[]) List<String> excludedCurrencyCodes,
+
+    /// The account filter these slices and buckets were queried with; null
+    /// = all accounts. The donut centre and the trend subtitle read it from
+    /// here, so they follow the chart on screen while a newer one loads.
+    int? accountFilterId,
   }) = _ChartsData;
 }
 

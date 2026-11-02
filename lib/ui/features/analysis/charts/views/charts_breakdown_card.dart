@@ -74,15 +74,31 @@ class ChartsBreakdownCard extends StatelessWidget {
 
 /// Breakdown body when the period has no transactions of [type].
 class BreakdownEmptyState extends StatelessWidget {
-  const BreakdownEmptyState({super.key, required this.type});
+  const BreakdownEmptyState({super.key, required this.type, this.accountName});
 
   final CategoryType type;
+
+  /// The filtered account's name; null = all accounts.
+  final String? accountName;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = AnalysisColors.of(context);
     final isIncome = type == CategoryType.income;
+    final account = accountName;
+    final title = account != null
+        ? (isIncome
+              ? l10n.chartsEmptyTitleAccountIncome(account)
+              : l10n.chartsEmptyTitleAccountExpense(account))
+        : (isIncome
+              ? l10n.chartsEmptyTitleIncome
+              : l10n.chartsEmptyTitleExpense);
+    final subtitle = account != null
+        ? l10n.chartsEmptyPickAnother
+        : l10n.chartsEmptySwitchType(
+            isIncome ? l10n.chartsTypeExpense : l10n.chartsTypeIncome,
+          );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
       child: Column(
@@ -98,9 +114,7 @@ class BreakdownEmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            isIncome
-                ? l10n.chartsEmptyTitleIncome
-                : l10n.chartsEmptyTitleExpense,
+            title,
             textAlign: TextAlign.center,
             style: analysisText(
               size: 15,
@@ -111,9 +125,7 @@ class BreakdownEmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            l10n.chartsEmptySwitchType(
-              isIncome ? l10n.chartsTypeExpense : l10n.chartsTypeIncome,
-            ),
+            subtitle,
             textAlign: TextAlign.center,
             style: analysisText(size: 13, lineHeight: 18, color: colors.fg2),
           ),

@@ -224,7 +224,15 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
             body: _inCard(
               selection,
               selectionNotifier,
-              BreakdownEmptyState(type: selection.type),
+              BreakdownEmptyState(
+                type: selection.type,
+                accountName: selection.accountFilterId == null
+                    ? null
+                    : ref
+                          .watch(analysisAccountsByIdProvider)
+                          .value?[selection.accountFilterId]
+                          ?.name,
+              ),
             ),
             l10n: l10n,
           ),
@@ -443,7 +451,7 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
   }
 }
 
-@Dependencies([ChartsSelectionController])
+@Dependencies([ChartsSelectionController, analysisAccountsById])
 class _ChartBody extends ConsumerStatefulWidget {
   const _ChartBody({
     required this.data,
@@ -614,6 +622,12 @@ class _ChartBodyState extends ConsumerState<_ChartBody> {
         if (previous != next) _onSelectionChanged(selected: next != null);
       },
     );
+    // The account the charted data was queried with, so the centre and the
+    // trend follow the chart on screen while a newer one loads.
+    final accountFilterId = data.accountFilterId;
+    final accountName = accountFilterId == null
+        ? null
+        : ref.watch(analysisAccountsByIdProvider).value?[accountFilterId]?.name;
     final hit = selection == null
         ? -1
         : data.slices.indexWhere((s) => s.selectionKey == selection);
@@ -660,6 +674,7 @@ class _ChartBodyState extends ConsumerState<_ChartBody> {
                   displayCurrencyCode: data.displayCurrencyCode,
                   selectedIndex: selectedIndex,
                   onSelectionChanged: selectSlice,
+                  accountName: accountName,
                 ),
               ),
               ChartLegend(
@@ -683,6 +698,7 @@ class _ChartBodyState extends ConsumerState<_ChartBody> {
             onClearSlice: () => selectSlice(null),
             locale: widget.locale,
             currenciesByCode: widget.currencies,
+            accountName: accountName,
           ),
         ],
       ],

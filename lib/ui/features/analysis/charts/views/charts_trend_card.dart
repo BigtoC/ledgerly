@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../../../core/utils/color_palette.dart';
@@ -21,6 +23,7 @@ class ChartsTrendCard extends StatelessWidget {
     required this.onClearSlice,
     required this.locale,
     required this.currenciesByCode,
+    this.accountName,
   });
 
   final ChartsData data;
@@ -30,6 +33,10 @@ class ChartsTrendCard extends StatelessWidget {
   final VoidCallback onClearSlice;
   final String locale;
   final Map<String, Currency> currenciesByCode;
+
+  /// The filtered account's name, shown as `<Account> · ` before the
+  /// average. Null = all accounts.
+  final String? accountName;
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +60,12 @@ class ChartsTrendCard extends StatelessWidget {
     final subtitle = monthly
         ? l10n.chartsAvgPerMonth(average)
         : l10n.chartsAvgPerDay(average);
+    final subtitleStyle = analysisText(
+      size: 13,
+      lineHeight: 18,
+      color: colors.fg2,
+      tabular: true,
+    );
     final slice = selectedSlice;
     final barColor = slice != null
         ? colorForIndex(slice.colorIndex)
@@ -90,34 +103,47 @@ class ChartsTrendCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            CustomPaint(
-                              key: const ValueKey('trendAvgLegend'),
-                              size: const Size(14, 1.5),
-                              painter: _DashPainter(colors.fg3),
-                            ),
-                            const SizedBox(width: 6),
-                            // The amount is never cut off: one line,
-                            // scaled down only when it does not fit (D2).
-                            Flexible(
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: AlignmentDirectional.centerStart,
-                                child: Text(
-                                  subtitle,
-                                  maxLines: 1,
-                                  softWrap: false,
-                                  style: analysisText(
-                                    size: 13,
-                                    lineHeight: 18,
-                                    color: colors.fg2,
-                                    tabular: true,
+                        LayoutBuilder(
+                          builder: (context, line) => Row(
+                            children: [
+                              CustomPaint(
+                                key: const ValueKey('trendAvgLegend'),
+                                size: const Size(14, 1.5),
+                                painter: _DashPainter(colors.fg3),
+                              ),
+                              const SizedBox(width: 6),
+                              // The account prefix takes what the average
+                              // leaves and ellipsizes first (D2).
+                              if (accountName != null)
+                                Flexible(
+                                  child: Text(
+                                    '$accountName · ',
+                                    maxLines: 1,
+                                    softWrap: false,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: subtitleStyle,
+                                  ),
+                                ),
+                              // The amount is never cut off: one line,
+                              // scaled down only when it alone does not fit
+                              // beside the legend (D2).
+                              ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  maxWidth: math.max(0, line.maxWidth - 20),
+                                ),
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: AlignmentDirectional.centerStart,
+                                  child: Text(
+                                    subtitle,
+                                    maxLines: 1,
+                                    softWrap: false,
+                                    style: subtitleStyle,
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     ),
