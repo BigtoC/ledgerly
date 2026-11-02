@@ -1,8 +1,9 @@
 // `AccountSelectorTile` — Wave 2 §4.1.
 //
-// Tile that shows the selected account's name + currency code. Tap
-// opens the account picker sheet (caller decides whether the result
-// triggers the currency-change confirm dialog).
+// Half-width tile (no chevron; issue #100) that shows the selected
+// account's name + currency code. Tap opens the account picker sheet
+// (caller decides whether the result triggers the currency-change
+// confirm dialog).
 
 import 'package:flutter/material.dart';
 
@@ -38,7 +39,9 @@ class AccountSelectorTile extends StatelessWidget {
           l10n.txAccountEmpty,
           style: TextStyle(color: hasError ? theme.colorScheme.error : null),
         ),
-        trailing: const Icon(Icons.chevron_right),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+        horizontalTitleGap: 12,
+        visualDensity: VisualDensity.compact,
         onTap: onTap,
         tileColor: tileColor,
       );
@@ -66,7 +69,9 @@ class AccountSelectorTile extends StatelessWidget {
           ),
         ],
       ),
-      trailing: const Icon(Icons.chevron_right),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+      horizontalTitleGap: 12,
+      visualDensity: VisualDensity.compact,
       onTap: onTap,
       tileColor: tileColor,
     );

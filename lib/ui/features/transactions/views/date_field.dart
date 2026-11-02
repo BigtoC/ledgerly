@@ -1,8 +1,8 @@
 // `DateField` — Wave 2 §4.1.
 //
-// Tile that displays the current transaction date and opens
-// `showDatePicker` on tap. Uses `core/utils/date_helpers.dart` for the
-// locale-aware display string.
+// Half-width tile (no chevron; issue #100) that displays the current
+// transaction date and opens `showDatePicker` on tap. Uses
+// `core/utils/date_helpers.dart` for the locale-aware display string.
 
 import 'package:flutter/material.dart';
 
@@ -23,7 +23,9 @@ class DateField extends StatelessWidget {
       leading: const Icon(Icons.calendar_today_outlined),
       title: Text(l10n.txDateLabel),
       subtitle: Text(DateHelpers.formatDisplayDate(value, locale)),
-      trailing: const Icon(Icons.chevron_right),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+      horizontalTitleGap: 12,
+      visualDensity: VisualDensity.compact,
       onTap: () => _pick(context),
     );
   }

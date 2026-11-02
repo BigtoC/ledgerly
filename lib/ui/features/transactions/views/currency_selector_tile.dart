@@ -1,8 +1,9 @@
 // `CurrencySelectorTile` — Chunk 4 Task 8 Step 5.
 //
-// Tile that shows the selected transaction currency code. Tap opens the
-// currency picker sheet. When `currency` is null (before an account is
-// selected), the tile renders in a disabled state with a `—` placeholder.
+// Half-width tile (no chevron; issue #100) that shows the selected
+// transaction currency code. Tap opens the currency picker sheet. When
+// `currency` is null (before an account is selected), the tile renders in
+// a disabled state with a `—` placeholder.
 
 import 'package:flutter/material.dart';
 
@@ -32,7 +33,9 @@ class CurrencySelectorTile extends StatelessWidget {
         leading: const Icon(Icons.currency_exchange),
         title: Text(l10n.txCurrencyLabel),
         subtitle: const Text('—'),
-        trailing: const Icon(Icons.chevron_right),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+        horizontalTitleGap: 12,
+        visualDensity: VisualDensity.compact,
         onTap: null,
       );
     }
@@ -57,7 +60,9 @@ class CurrencySelectorTile extends StatelessWidget {
           ),
         ],
       ),
-      trailing: const Icon(Icons.chevron_right),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+      horizontalTitleGap: 12,
+      visualDensity: VisualDensity.compact,
       onTap: onTap,
     );
   }

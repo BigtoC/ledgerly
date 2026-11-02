@@ -58,6 +58,7 @@ class _MemoFieldState extends State<MemoField> {
       controller: _controller,
       decoration: InputDecoration(
         labelText: l10n.txMemoLabel,
+        isDense: true,
         border: const OutlineInputBorder(),
         prefixIcon: const Icon(Icons.notes_outlined),
       ),

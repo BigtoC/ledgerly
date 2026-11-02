@@ -20,8 +20,11 @@
 // minimal GoRouter so `GoRouterState.extra` works for duplicate.
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
@@ -46,7 +49,9 @@ import 'package:ledgerly/ui/features/transactions/views/transaction_form_screen.
 import 'package:ledgerly/ui/features/transactions/views/account_selector_tile.dart';
 import 'package:ledgerly/ui/features/transactions/views/amount_display.dart';
 import 'package:ledgerly/ui/features/transactions/views/calculator_keypad.dart';
+import 'package:ledgerly/ui/features/transactions/views/category_chip.dart';
 import 'package:ledgerly/ui/features/transactions/views/currency_selector_tile.dart';
+import 'package:ledgerly/ui/features/transactions/views/date_field.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/l10n/app_localizations_en.dart';
 
@@ -1255,6 +1260,260 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  // Issue #100 — on a normal phone the form fits above the keypad
+  // without scrolling: two selector tiles per row and a shorter amount
+  // box. On a shorter screen the keypad's keys shrink, down to the 48dp
+  // tap target; only past that does the form scroll, never the keypad.
+  group('compact form (issue #100)', () {
+    // The reporter's Android phone (1220×2656 px at ~3.2 dpr) without its
+    // status and gesture bars.
+    const phone = Size(381, 760);
+    // An iPhone SE (375×667) without its status bar.
+    const shortPhone = Size(375, 647);
+
+    // The test font's glyphs are 1em wide, about twice Roboto's, so every
+    // half-width tile value would wrap. Measure with the font phones use.
+    // Fonts stay loaded for the rest of the file, so keep this group last.
+    setUpAll(() async {
+      final root = Platform.environment['FLUTTER_ROOT']!;
+      final roboto = File(
+        '$root/bin/cache/artifacts/material_fonts/Roboto-Regular.ttf',
+      ).readAsBytesSync();
+      await (FontLoader(
+        'Roboto',
+      )..addFont(Future.value(ByteData.sublistView(roboto)))).load();
+    });
+
+    Future<void> setSurface(WidgetTester tester, Size size) async {
+      await tester.binding.setSurfaceSize(size);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+    }
+
+    double keyHeight(WidgetTester tester) => tester
+        .getSize(
+          find
+              .ancestor(of: find.text('7'), matching: find.byType(Material))
+              .first,
+        )
+        .height;
+
+    @Dependencies([TransactionFormController, categoriesByType])
+    ScrollPosition formScroll(WidgetTester tester) => tester
+        .state<ScrollableState>(
+          find.descendant(
+            of: find.byType(TransactionFormScreen),
+            matching: find.byWidgetPredicate(
+              (w) =>
+                  w is Scrollable &&
+                  axisDirectionToAxis(w.axisDirection) == Axis.vertical,
+            ),
+          ),
+        )
+        .position;
+
+    /// The tallest Add form: a category picked (memo chips showing), an
+    /// expression in progress (formula line showing) and the "Add to
+    /// shopping list" action.
+    @Dependencies([TransactionFormController, categoriesByType])
+    Future<void> pumpTallestAddForm(
+      WidgetTester tester, {
+      double? textScale,
+    }) async {
+      when(
+        () =>
+            txRepo.watchRecentMemosForCategory(10, limit: any(named: 'limit')),
+      ).thenAnswer((_) => Stream.value(const ['lunch', 'coffee']));
+      await tester.pumpWidget(
+        mountAdd(
+          textScale: textScale,
+          extraOverrides: [
+            categoriesByTypeProvider(CategoryType.expense)
+                .overrideWith((ref) => Stream.value(const [_expenseCategory])),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Select a category'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Food'));
+      await tester.pumpAndSettle();
+      for (final key in ['1', '+', '2']) {
+        await tester.tap(find.text(key));
+        await tester.pump();
+      }
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(ActionChip, 'coffee'), findsOneWidget);
+      expect(find.text('1 +'), findsOneWidget);
+    }
+
+    /// The whole keypad is on screen with keys of at least 48dp, and the
+    /// form above it reaches its last control by scrolling.
+    @Dependencies([TransactionFormController, categoriesByType])
+    Future<void> expectKeypadWholeAndFormScrolls(
+      WidgetTester tester,
+      Size surface,
+    ) async {
+      expect(tester.takeException(), isNull);
+      expect(
+        tester.getRect(find.byType(CalculatorKeypad)).bottom,
+        surface.height,
+      );
+      expect(keyHeight(tester), 48);
+      expect(formScroll(tester).maxScrollExtent, greaterThan(0));
+
+      final action = find.byKey(const Key('addToShoppingListButton'));
+      await tester.ensureVisible(action);
+      await tester.pumpAndSettle();
+      expect(
+        tester.getRect(action).bottom,
+        lessThanOrEqualTo(tester.getRect(find.byType(CalculatorKeypad)).top),
+      );
+    }
+
+    testWidgets('WS40: category and account share the first row', (
+      tester,
+    ) async {
+      await setSurface(tester, phone);
+      await tester.pumpWidget(mountAdd());
+      await tester.pumpAndSettle();
+
+      final category = tester.getRect(find.byType(CategoryChip));
+      final account = tester.getRect(find.byType(AccountSelectorTile));
+      expect(account.top, category.top);
+      expect(account.left, greaterThanOrEqualTo(category.right));
+    });
+
+    testWidgets('WS41: currency and date share the row below', (tester) async {
+      await setSurface(tester, phone);
+      await tester.pumpWidget(mountAdd());
+      await tester.pumpAndSettle();
+
+      final category = tester.getRect(find.byType(CategoryChip));
+      final currency = tester.getRect(find.byType(CurrencySelectorTile));
+      final date = tester.getRect(find.byType(DateField));
+      expect(date.top, currency.top);
+      expect(date.left, greaterThanOrEqualTo(currency.right));
+      expect(currency.top, greaterThanOrEqualTo(category.bottom));
+    });
+
+    testWidgets('WS42: half-width tiles drop the chevron', (tester) async {
+      await setSurface(tester, phone);
+      await tester.pumpWidget(mountAdd());
+      await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.chevron_right), findsNothing);
+    });
+
+    testWidgets('WS42b: a picked category drops the chevron too', (
+      tester,
+    ) async {
+      await setSurface(tester, phone);
+      await pumpTallestAddForm(tester);
+
+      expect(find.byIcon(Icons.chevron_right), findsNothing);
+    });
+
+    testWidgets('WS43: the tallest Add form fits the phone unscrolled', (
+      tester,
+    ) async {
+      await setSurface(tester, phone);
+      await pumpTallestAddForm(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(formScroll(tester).maxScrollExtent, 0);
+      expect(keyHeight(tester), 56);
+      final action = find.byKey(const Key('addToShoppingListButton'));
+      expect(
+        tester.getRect(action).bottom,
+        lessThanOrEqualTo(tester.getRect(find.byType(CalculatorKeypad)).top),
+      );
+    });
+
+    testWidgets('WS44: on a short phone the keys shrink so Edit fits', (
+      tester,
+    ) async {
+      await setSurface(tester, shortPhone);
+      when(
+        () =>
+            txRepo.watchRecentMemosForCategory(10, limit: any(named: 'limit')),
+      ).thenAnswer((_) => Stream.value(const ['lunch', 'coffee']));
+      when(() => txRepo.getById(99))
+          .thenAnswer((_) async => _persistedTx(memo: 'lunch'));
+      await tester.pumpWidget(mountEdit(99));
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(ActionChip, 'coffee'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      expect(formScroll(tester).maxScrollExtent, 0);
+      expect(keyHeight(tester), allOf(greaterThanOrEqualTo(48), lessThan(56)));
+    });
+
+    testWidgets('WS45: past 48dp keys, the form scrolls, not the keypad', (
+      tester,
+    ) async {
+      await setSurface(tester, shortPhone);
+      await pumpTallestAddForm(tester);
+
+      await expectKeypadWholeAndFormScrolls(tester, shortPhone);
+    });
+
+    testWidgets('WS46: at 2× text the form scrolls above a whole keypad', (
+      tester,
+    ) async {
+      await setSurface(tester, phone);
+      await pumpTallestAddForm(tester, textScale: 2);
+
+      await expectKeypadWholeAndFormScrolls(tester, phone);
+    });
+
+    /// Whether [text] rendered in full rather than cut off by an ellipsis.
+    bool shownInFull(WidgetTester tester, String text) => !tester
+        .renderObject<RenderParagraph>(find.text(text))
+        .didExceedMaxLines;
+
+    @Dependencies([TransactionFormController, categoriesByType])
+    Future<void> pumpInvestmentEdit(
+      WidgetTester tester, {
+      double? textScale,
+    }) async {
+      when(() => categoryRepo.getById(10)).thenAnswer(
+        (_) async => const Category(
+          id: 10,
+          icon: 'category',
+          color: 0,
+          type: CategoryType.expense,
+          l10nKey: 'category.investment',
+        ),
+      );
+      when(() => txRepo.getById(99)).thenAnswer((_) async => _persistedTx());
+      await tester.pumpWidget(mountEdit(99, textScale: textScale));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('WS47: a half-width tile wraps rather than cut its value', (
+      tester,
+    ) async {
+      // The type is the form's only expense/income hint, and two seeded
+      // categories are both called "Investment".
+      await setSurface(tester, phone);
+      await pumpInvestmentEdit(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(shownInFull(tester, 'Investment · Expense'), isTrue);
+    });
+
+    testWidgets('WS48: at 2× text the tile values still show in full', (
+      tester,
+    ) async {
+      await setSurface(tester, phone);
+      await pumpInvestmentEdit(tester, textScale: 2);
+
+      expect(tester.takeException(), isNull);
+      for (final text in ['Investment · Expense', 'Cash', 'Apr 25, 2026']) {
+        expect(shownInFull(tester, text), isTrue, reason: text);
+      }
+    });
+  });
 }
 
 class _HomeStub extends StatelessWidget {
