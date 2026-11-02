@@ -16,6 +16,8 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/core/constants.dart';
+import 'package:ledgerly/data/repositories/category_repository.dart';
+import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/domain/models/recurring_rule.dart';
 import 'package:ledgerly/data/repositories/recurring_rules_repository.dart';
@@ -27,6 +29,25 @@ import 'package:ledgerly/l10n/app_localizations.dart';
 class _MockRecurringRulesRepository extends Mock
     implements RecurringRulesRepository {}
 
+class _MockCategoryRepository extends Mock implements CategoryRepository {}
+
+const _food = Category(
+  id: 1,
+  icon: 'restaurant',
+  color: 0,
+  type: CategoryType.expense,
+  l10nKey: 'category.food',
+);
+
+const _archivedHousing = Category(
+  id: 2,
+  icon: 'home',
+  color: 1,
+  type: CategoryType.expense,
+  l10nKey: 'category.housing',
+  isArchived: true,
+);
+
 const _usd = Currency(code: 'USD', decimals: 2);
 
 const _genericError = 'Something went wrong. Please try again.';
@@ -35,12 +56,13 @@ RecurringRule _rule({
   required int id,
   String name = 'Netflix',
   bool isActive = true,
+  int categoryId = 1,
 }) => RecurringRule(
   id: id,
   name: name,
   amountMinorUnits: 1599,
   currency: _usd,
-  categoryId: 1,
+  categoryId: categoryId,
   accountId: 1,
   frequency: 'monthly',
   dayOfMonth: 15,
@@ -99,6 +121,9 @@ ProviderContainer _makeContainer(
   _MockRecurringRulesRepository? repo,
 }) {
   final r = repo ?? _MockRecurringRulesRepository();
+  final categoryRepo = _MockCategoryRepository();
+  when(() => categoryRepo.watchAll(includeArchived: true))
+      .thenAnswer((_) => Stream.value(const [_food, _archivedHousing]));
   when(() => r.watchActive()).thenAnswer((_) => const Stream.empty());
   when(() => r.setActive(any(), active: any(named: 'active')))
       .thenAnswer((_) async {});
@@ -106,6 +131,7 @@ ProviderContainer _makeContainer(
   return ProviderContainer(
     overrides: [
       recurringRulesRepositoryProvider.overrideWithValue(r),
+      categoryRepositoryProvider.overrideWithValue(categoryRepo),
       recurringRulesControllerProvider.overrideWith(
         () => _FakeController(fixed),
       ),
@@ -383,5 +409,68 @@ void main() {
     await tester.pumpAndSettle();
 
     verify(() => repo.archive(2)).called(1);
+  });
+
+  testWidgets('RRS13: tile shows the category icon, as Home rows do', (
+    tester,
+  ) async {
+    final container = _makeContainer(
+      RecurringRulesState.data(
+        rules: [_rule(id: 1, categoryId: _food.id)],
+        pendingDelete: null,
+      ),
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container));
+    await tester.pumpAndSettle();
+
+    final tile = find.byKey(const ValueKey('recurringRuleTile:1'));
+    expect(
+      find.descendant(of: tile, matching: find.byIcon(Icons.restaurant)),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('RRS14: a rule on an archived category still shows its icon', (
+    tester,
+  ) async {
+    final container = _makeContainer(
+      RecurringRulesState.data(
+        rules: [_rule(id: 1, categoryId: _archivedHousing.id)],
+        pendingDelete: null,
+      ),
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container));
+    await tester.pumpAndSettle();
+
+    final tile = find.byKey(const ValueKey('recurringRuleTile:1'));
+    expect(
+      find.descendant(of: tile, matching: find.byIcon(Icons.home)),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('RRS15: an unknown category falls back to the neutral icon', (
+    tester,
+  ) async {
+    final container = _makeContainer(
+      RecurringRulesState.data(
+        rules: [_rule(id: 1, categoryId: 99)],
+        pendingDelete: null,
+      ),
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container));
+    await tester.pumpAndSettle();
+
+    final tile = find.byKey(const ValueKey('recurringRuleTile:1'));
+    expect(
+      find.descendant(of: tile, matching: find.byIcon(Icons.help_outline)),
+      findsOneWidget,
+    );
   });
 }
