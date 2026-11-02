@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -94,6 +95,18 @@ SliceTransactionRow _row({
 Text _text(WidgetTester tester, String data) =>
     tester.widget<Text>(find.text(data));
 
+RenderParagraph _paragraph(WidgetTester tester, Finder text) =>
+    tester.renderObject<RenderParagraph>(text);
+
+/// A 360-wide phone at 1 dp per pixel (plan D2 tests on a phone width).
+void _usePhoneWidth(WidgetTester tester) {
+  tester.view.physicalSize = const Size(360, 800);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
+}
+
+const _longMemo = 'A very long memo that cannot fit on one line at all';
+
 void main() {
   group('title', () {
     testWidgets('shows the memo, 15/20 fg, one line with ellipsis', (
@@ -153,7 +166,19 @@ void main() {
           ),
         );
 
-        expect(find.text('May 18 · Cash · -€12.50'), findsOneWidget);
+        // One line: "date · account", then " · <booked>" right after it.
+        final meta = tester.getRect(find.text('May 18 · Cash'));
+        final booked = tester.getRect(find.text(' · -€12.50'));
+        expect(booked.left, moreOrLessEquals(meta.right));
+        expect(booked.top, meta.top);
+        expect(
+          booked.size,
+          tester.renderObject<RenderBox>(find.text(' · -€12.50')).size,
+        );
+        final style = _text(tester, ' · -€12.50').style!;
+        expect(style.fontSize, 13);
+        expect(style.height, 18 / 13);
+        expect(style.color, _colors.fg2);
         expect(find.text(r'-$13.75'), findsOneWidget);
         expect(find.text('-€12.50'), findsNothing);
         expect(find.text('Original amount'), findsNothing);
@@ -246,6 +271,100 @@ void main() {
       );
       expect(tester.getSize(find.text(r'-$12.50')).height, 40);
     });
+  });
+
+  group('long amounts (D2)', () {
+    testWidgets('1x: the memo ellipsizes first and the amount stays 1:1', (
+      tester,
+    ) async {
+      _usePhoneWidth(tester);
+      await tester.pumpWidget(
+        _wrap(
+          _row(
+            transaction: _tx(memo: _longMemo, amountMinorUnits: 123456789012),
+          ),
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(_paragraph(tester, find.text(_longMemo)).didExceedMaxLines, true);
+      final amount = find.text(r'-$1,234,567,890.12');
+      final natural = tester.renderObject<RenderBox>(amount).size;
+      expect(tester.getSize(amount), natural);
+      expect(
+        tester.getRect(amount).left -
+            tester.getRect(find.text(_longMemo)).right,
+        greaterThanOrEqualTo(12),
+      );
+    });
+
+    testWidgets(
+      '360 phone at 2x: a long amount scales down to fit, never cut off',
+      (tester) async {
+        _usePhoneWidth(tester);
+        await tester.pumpWidget(
+          _wrap(
+            _row(
+              transaction: _tx(memo: _longMemo, amountMinorUnits: 123456789012),
+            ),
+            textScale: 2,
+          ),
+        );
+
+        expect(tester.takeException(), isNull);
+        final amount = find.text(r'-$1,234,567,890.12');
+        expect(amount, findsOneWidget);
+        expect(_paragraph(tester, amount).didExceedMaxLines, isFalse);
+        final row = tester.getRect(find.byType(SliceTransactionRow));
+        final rendered = tester.getRect(amount);
+        expect(rendered.left, greaterThanOrEqualTo(row.left + 16));
+        expect(rendered.right, lessThanOrEqualTo(row.right - 16 + 0.01));
+        // Shrunk as a whole, not clipped: smaller than its laid-out size.
+        final natural = tester.renderObject<RenderBox>(amount).size;
+        expect(rendered.width, lessThan(natural.width));
+        expect(
+          rendered.width / rendered.height,
+          moreOrLessEquals(natural.width / natural.height),
+        );
+      },
+    );
+
+    testWidgets(
+      '360 phone at 2x: a long booked amount in the subtitle is never cut '
+      'off; "date · account" ellipsizes first',
+      (tester) async {
+        _usePhoneWidth(tester);
+        await tester.pumpWidget(
+          _wrap(
+            _row(
+              transaction: _tx(
+                memo: 'Lunch',
+                currency: _eur,
+                amountMinorUnits: 123456789012,
+              ),
+              account: _cash.copyWith(name: 'Everyday spending account'),
+              convertedAmount: r'-$1.00',
+            ),
+            textScale: 2,
+          ),
+        );
+
+        expect(tester.takeException(), isNull);
+        final booked = find.textContaining('-€1,234,567,890.12');
+        expect(booked, findsOneWidget);
+        expect(_paragraph(tester, booked).didExceedMaxLines, isFalse);
+        final meta = find.textContaining('May 18 · Everyday');
+        expect(meta, findsOneWidget);
+        expect(_paragraph(tester, meta).didExceedMaxLines, isTrue);
+        final row = tester.getRect(find.byType(SliceTransactionRow));
+        final title = tester.getRect(find.text('Lunch'));
+        final amount = tester.getRect(find.text(r'-$1.00'));
+        final rendered = tester.getRect(booked);
+        expect(rendered.left, greaterThanOrEqualTo(title.left));
+        expect(rendered.right, lessThanOrEqualTo(amount.left - 12 + 0.01));
+        expect(rendered.right, lessThanOrEqualTo(row.right - 16));
+      },
+    );
   });
 
   group('interaction', () {

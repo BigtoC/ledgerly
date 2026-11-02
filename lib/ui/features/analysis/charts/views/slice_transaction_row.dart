@@ -7,6 +7,8 @@
 // converted amount. Tap → edit (caller); action-only swipe delete (caller
 // owns the undo window).
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
@@ -79,11 +81,18 @@ class SliceTransactionRow extends StatelessWidget {
     final date = _monthDayFormats
         .putIfAbsent(locale, () => DateFormat.MMMd(locale))
         .format(transaction.date);
-    final subtitle = [
-      date,
-      ?account?.name,
-      if (convertedAmount != null) bookedAmount,
-    ].join(' · ');
+    final meta = [date, ?account?.name].join(' · ');
+    final subtitleStyle = analysisText(
+      size: 13,
+      lineHeight: 18,
+      color: colors.fg2,
+    );
+    final metaText = Text(
+      meta,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: subtitleStyle,
+    );
 
     return Container(
       decoration: BoxDecoration(
@@ -109,54 +118,91 @@ class SliceTransactionRow extends StatelessWidget {
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: analysisText(
-                          size: 15,
-                          lineHeight: 20,
-                          color: colors.fg,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: analysisText(
-                          size: 13,
-                          lineHeight: 18,
-                          color: colors.fg2,
-                        ),
-                      ),
-                    ],
+            child: _LabelThenAmount(
+              gap: 12,
+              expandLabel: true,
+              label: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: analysisText(
+                      size: 15,
+                      lineHeight: 20,
+                      color: colors.fg,
+                    ),
                   ),
+                  const SizedBox(height: 2),
+                  if (convertedAmount == null)
+                    metaText
+                  else
+                    _LabelThenAmount(
+                      label: metaText,
+                      amount: Text(
+                        ' · $bookedAmount',
+                        maxLines: 1,
+                        softWrap: false,
+                        style: subtitleStyle,
+                      ),
+                    ),
+                ],
+              ),
+              amount: Text(
+                convertedAmount ?? bookedAmount,
+                maxLines: 1,
+                softWrap: false,
+                style: analysisText(
+                  size: 15,
+                  lineHeight: 20,
+                  weight: FontWeight.w500,
+                  color: isIncome ? colors.incText : colors.expText,
+                  tabular: true,
                 ),
-                const SizedBox(width: 12),
-                Text(
-                  convertedAmount ?? bookedAmount,
-                  maxLines: 1,
-                  softWrap: false,
-                  style: analysisText(
-                    size: 15,
-                    lineHeight: 20,
-                    weight: FontWeight.w500,
-                    color: isIncome ? colors.incText : colors.expText,
-                    tabular: true,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// [label], an optional [gap], then [amount] on one line. The amount keeps
+/// its natural size and the label gives way (ellipsizes) first; the amount
+/// scales down only when it alone is wider than the line, so it is never
+/// cut off (plan D2).
+class _LabelThenAmount extends StatelessWidget {
+  const _LabelThenAmount({
+    required this.label,
+    required this.amount,
+    this.gap = 0,
+    this.expandLabel = false,
+  });
+
+  final Widget label;
+  final Widget amount;
+  final double gap;
+
+  /// Whether the label fills the line, pushing the amount to the end.
+  final bool expandLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) => Row(
+        children: [
+          if (expandLabel) Expanded(child: label) else Flexible(child: label),
+          if (gap > 0) SizedBox(width: gap),
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: math.max(0, constraints.maxWidth - gap),
+            ),
+            child: FittedBox(fit: BoxFit.scaleDown, child: amount),
+          ),
+        ],
       ),
     );
   }

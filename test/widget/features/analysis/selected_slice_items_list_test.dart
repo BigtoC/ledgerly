@@ -492,7 +492,8 @@ void main() {
         // The converted amount is the row amount; the booked amount moves
         // into the subtitle instead of an "Original amount" label.
         expect(find.text(r'-$1.10'), findsOneWidget);
-        expect(find.text('May 18 · Cash · -€1.00'), findsOneWidget);
+        expect(find.text('May 18 · Cash'), findsOneWidget);
+        expect(find.text(' · -€1.00'), findsOneWidget);
         expect(find.text('Original amount'), findsNothing);
       },
     );
