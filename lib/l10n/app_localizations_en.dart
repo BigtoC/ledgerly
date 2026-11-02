@@ -892,9 +892,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get chartsNetTotal => 'Net';
-
-  @override
   String get settingsNewVersionBadge => 'new version';
 
   @override

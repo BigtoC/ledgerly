@@ -13,6 +13,7 @@ import 'package:ledgerly/domain/models/category_slice.dart';
 import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/domain/models/time_bucket_slice.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
+import 'package:ledgerly/ui/core/theme/analysis_colors.dart';
 import 'package:ledgerly/ui/core/theme/app_theme.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_controller.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_net_total_providers.dart';
@@ -21,6 +22,7 @@ import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_selectio
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_state.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/slice_drilldown_controller.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/charts_section.dart';
+import 'package:ledgerly/ui/features/analysis/charts/views/charts_summary_card.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/daily_bar_chart.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/period_selector.dart';
 import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_providers.dart';
@@ -104,6 +106,57 @@ void main() {
       });
     }
   });
+
+  group('summary card', () {
+    testWidgets('replaces the type toggle and the net pill, 16 below the '
+        'period selector', (tester) async {
+      await _pumpSection(tester);
+
+      expect(find.byType(ChartsSummaryCard), findsOneWidget);
+      expect(find.byType(SegmentedButton<CategoryType>), findsNothing);
+      expect(
+        tester.getTopLeft(find.byType(ChartsSummaryCard)).dy -
+            tester.getBottomLeft(find.byType(PeriodSelector)).dy,
+        16,
+      );
+    });
+
+    testWidgets('tapping the Income tile charts income', (tester) async {
+      final repo = await _pumpSection(tester);
+
+      await tester.tap(find.byKey(const ValueKey('summaryTile.income')));
+      await tester.pumpAndSettle();
+
+      verify(
+        () => repo.watchByCategoryInRange(
+          start: any(named: 'start'),
+          end: any(named: 'end'),
+          type: CategoryType.income,
+        ),
+      ).called(greaterThanOrEqualTo(1));
+    });
+
+    testWidgets('recalculates the net when the period changes', (tester) async {
+      await _pumpSection(tester);
+      const colors = AnalysisColors.light;
+
+      expect(find.text(r'+$30.00'), findsOneWidget);
+      expect(
+        tester.widget<Text>(find.text(r'+$30.00')).style?.color,
+        colors.incText,
+      );
+
+      await tester.tap(find.byTooltip('Previous period'));
+      await tester.pumpAndSettle();
+
+      expect(find.text(r'+$30.00'), findsNothing);
+      expect(find.text(r'-$7.00'), findsOneWidget);
+      expect(
+        tester.widget<Text>(find.text(r'-$7.00')).style?.color,
+        colors.expText,
+      );
+    });
+  });
 }
 
 @Dependencies([
@@ -112,8 +165,30 @@ void main() {
   SliceDrilldownController,
   chartsNetTotal,
 ])
-Future<void> _pumpSection(WidgetTester tester, {PeriodType? period}) async {
+Future<_MockTxRepo> _pumpSection(
+  WidgetTester tester, {
+  PeriodType? period,
+}) async {
   final repo = _MockTxRepo();
+  // The first period queried has income +\$30.00; any other period has
+  // expense \$7.00. Keyed on the first query rather than DateTime.now() so
+  // a run that crosses a week boundary cannot flake.
+  DateTime? firstStart;
+  when(
+    () => repo.watchTotalsByTypeInRange(
+      start: any(named: 'start'),
+      end: any(named: 'end'),
+      accountId: any(named: 'accountId'),
+    ),
+  ).thenAnswer((invocation) {
+    final start = invocation.namedArguments[#start] as DateTime;
+    firstStart ??= start;
+    return Stream.value({
+      'USD': start == firstStart
+          ? (expense: 0, income: 3000)
+          : (expense: 700, income: 0),
+    });
+  });
   when(
     () => repo.watchByCategoryInRange(
       start: any(named: 'start'),
@@ -212,4 +287,5 @@ Future<void> _pumpSection(WidgetTester tester, {PeriodType? period}) async {
         .setPeriod(period);
     await tester.pumpAndSettle();
   }
+  return repo;
 }

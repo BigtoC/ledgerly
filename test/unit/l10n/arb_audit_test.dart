@@ -351,7 +351,6 @@ const Set<String> _expectedEnKeys = <String>{
   'chartsPieChart',
   'chartsBarChart',
   'chartsExcludedCurrencies',
-  'chartsNetTotal',
 
   // Chart slice drill-down (2026-05-22)
   // (docs/superpowers/plans/2026-05-22-chart-slice-drilldown.md §9).
