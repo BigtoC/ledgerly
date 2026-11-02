@@ -75,104 +75,109 @@ class DailyBarChart extends StatelessWidget {
         final width = constraints.maxWidth;
         final n = buckets.length;
         final rodWidth = (width - (n - 1) * gap) / n;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        // The labels overlap the plot's bottom; they ignore touches so the
+        // plot's full height stays touchable.
+        return Stack(
+          clipBehavior: Clip.none,
           children: [
-            SizedOverflowBox(
-              size: Size(width, _kPlotHeight + 1 - _kLabelOverlap),
-              alignment: Alignment.topCenter,
-              child: SizedBox(
-                height: _kPlotHeight + 1,
-                child: Semantics(
-                  label: _semanticsLabel(l10n, currency),
-                  image: true,
-                  excludeSemantics: true,
-                  child: BarChart(
-                    BarChartData(
-                      maxY: maxY,
-                      alignment: BarChartAlignment.spaceBetween,
-                      barTouchData: BarTouchData(
-                        enabled: true,
-                        handleBuiltInTouches: true,
-                        touchTooltipData: BarTouchTooltipData(
-                          tooltipBorderRadius: BorderRadius.circular(8),
-                          tooltipPadding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          tooltipMargin: 8,
-                          fitInsideHorizontally: true,
-                          fitInsideVertically: true,
-                          getTooltipColor: (_) =>
-                              scheme.inverseSurface.withValues(alpha: 0.92),
-                          getTooltipItem: (group, _, rod, rodIdx) {
-                            final idx = group.x;
-                            if (idx < 0 || idx >= buckets.length) return null;
-                            final bucket = buckets[idx];
-                            if (bucket.isFuture &&
-                                bucket.totalMinorUnits == 0) {
-                              return null;
-                            }
-                            return BarTooltipItem(
-                              '${_axisLabel(bucket.bucketStart)}\n',
-                              TextStyle(
-                                color: scheme.onInverseSurface,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 11,
-                              ),
-                              children: [
-                                TextSpan(
-                                  text: _amount(
-                                    bucket.totalMinorUnits,
-                                    currency,
-                                  ),
-                                  style: TextStyle(
-                                    color: scheme.onInverseSurface,
-                                    fontWeight: FontWeight.w400,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: _kPlotHeight + 1,
+              child: Semantics(
+                label: _semanticsLabel(l10n, currency),
+                image: true,
+                excludeSemantics: true,
+                child: BarChart(
+                  BarChartData(
+                    maxY: maxY,
+                    alignment: BarChartAlignment.spaceBetween,
+                    barTouchData: BarTouchData(
+                      enabled: true,
+                      handleBuiltInTouches: true,
+                      touchTooltipData: BarTouchTooltipData(
+                        tooltipBorderRadius: BorderRadius.circular(8),
+                        tooltipPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
                         ),
-                      ),
-                      gridData: const FlGridData(show: false),
-                      borderData: FlBorderData(
-                        show: true,
-                        border: Border(bottom: BorderSide(color: colors.line)),
-                      ),
-                      titlesData: const FlTitlesData(show: false),
-                      extraLinesData: ExtraLinesData(
-                        horizontalLines: [
-                          if (average > 0)
-                            HorizontalLine(
-                              // The CSS border's 1.5 px stroke sits on top of
-                              // the average, so its centre is 0.75 px higher.
-                              y: average + 0.75 * perPixel,
-                              strokeWidth: 1.5,
-                              color: colors.fg3,
-                              dashArray: const [3, 3],
+                        tooltipMargin: 8,
+                        fitInsideHorizontally: true,
+                        fitInsideVertically: true,
+                        getTooltipColor: (_) =>
+                            scheme.inverseSurface.withValues(alpha: 0.92),
+                        getTooltipItem: (group, _, rod, rodIdx) {
+                          final idx = group.x;
+                          if (idx < 0 || idx >= buckets.length) return null;
+                          final bucket = buckets[idx];
+                          if (bucket.isFuture && bucket.totalMinorUnits == 0) {
+                            return null;
+                          }
+                          return BarTooltipItem(
+                            '${_axisLabel(bucket.bucketStart)}\n',
+                            TextStyle(
+                              color: scheme.onInverseSurface,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 11,
                             ),
-                        ],
-                      ),
-                      barGroups: [
-                        for (var i = 0; i < n; i++)
-                          BarChartGroupData(
-                            x: i,
-                            barRods: [
-                              _rod(buckets[i], rodWidth, perPixel, colors),
+                            children: [
+                              TextSpan(
+                                text: _amount(bucket.totalMinorUnits, currency),
+                                style: TextStyle(
+                                  color: scheme.onInverseSurface,
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 12,
+                                ),
+                              ),
                             ],
+                          );
+                        },
+                      ),
+                    ),
+                    gridData: const FlGridData(show: false),
+                    borderData: FlBorderData(
+                      show: true,
+                      border: Border(bottom: BorderSide(color: colors.line)),
+                    ),
+                    titlesData: const FlTitlesData(show: false),
+                    extraLinesData: ExtraLinesData(
+                      horizontalLines: [
+                        if (average > 0)
+                          HorizontalLine(
+                            // The CSS border's 1.5 px stroke sits on top of
+                            // the average, so its centre is 0.75 px higher.
+                            y: average + 0.75 * perPixel,
+                            strokeWidth: 1.5,
+                            color: colors.fg3,
+                            dashArray: const [3, 3],
                           ),
                       ],
                     ),
-                    duration: AnalysisMotion.emphasizedDuration,
-                    curve: AnalysisMotion.emphasizedCurve,
+                    barGroups: [
+                      for (var i = 0; i < n; i++)
+                        BarChartGroupData(
+                          x: i,
+                          barRods: [
+                            _rod(buckets[i], rodWidth, perPixel, colors),
+                          ],
+                        ),
+                    ],
                   ),
+                  duration: AnalysisMotion.emphasizedDuration,
+                  curve: AnalysisMotion.emphasizedCurve,
                 ),
               ),
             ),
-            ExcludeSemantics(child: _labels(colors, gap)),
+            // Not positioned, so the labels set the layout's height.
+            IgnorePointer(
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  top: _kPlotHeight + 1 - _kLabelOverlap,
+                ),
+                child: ExcludeSemantics(child: _labels(colors, gap)),
+              ),
+            ),
           ],
         );
       },

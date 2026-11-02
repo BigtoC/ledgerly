@@ -303,6 +303,32 @@ void main() {
       });
     }
 
+    testWidgets('touches just above the baseline reach the chart', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        period: PeriodType.week,
+        series: _week([1000, 1000, 1000, 1000, 1000, 1000, 1000]),
+      );
+
+      // The x labels overlap the plot's bottom 4 px; a touch there must
+      // still reach fl_chart.
+      final plot = tester.getRect(find.byType(BarChart));
+      final chart = tester.renderObject(
+        find.descendant(
+          of: find.byType(BarChart),
+          matching: find.byWidgetPredicate((w) => w is LeafRenderObjectWidget),
+        ),
+      );
+      final result = tester.hitTestOnBinding(
+        Offset(plot.left + 10, plot.bottom - 1 - 2),
+      );
+      expect(result.path.map((e) => e.target), contains(chart));
+      // The layout still ends under the labels: 141 − 4 + 14.
+      expect(tester.getSize(find.byType(DailyBarChart)).height, 151);
+    });
+
     testWidgets('bar heights animate for 360 ms on the emphasized curve', (
       tester,
     ) async {
