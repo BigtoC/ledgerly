@@ -516,6 +516,30 @@ void main() {
     );
   });
 
+  testWidgets('the bridge in an account drill-down applies the filter, '
+      'switches to Category and clears the slice (AC 7)', (tester) async {
+    final container = await _pumpScreen(tester);
+    await tester.tap(_inside(ChartsBreakdownCard, find.text('Account')));
+    await _settle(tester);
+    await tester.tap(_inside(ChartLegend, find.text('Visa card')));
+    await _settle(tester);
+
+    await tester.tap(find.text('See categories in Visa card'));
+    await _settle(tester);
+
+    final selection = container.read(chartsSelectionControllerProvider);
+    expect(selection.accountFilterId, 2);
+    expect(selection.dimension, ChartDimension.category);
+    expect(selection.selectedSlice, isNull);
+    expect(find.text('See categories in Visa card'), findsNothing);
+    expect(
+      _inside(AccountFilterButton, find.text('Visa card')),
+      findsOneWidget,
+    );
+    expect(_inside(ChartLegend, find.text('Food')), findsOneWidget);
+    expect(_inside(ChartLegend, find.text('Transport')), findsNothing);
+  });
+
   testWidgets('choosing the Account chip clears the filter (AC 4)', (
     tester,
   ) async {

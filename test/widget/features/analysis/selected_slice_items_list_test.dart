@@ -92,6 +92,7 @@ Widget _harness({
   ),
   double textScale = 1,
   bool withEditRoute = false,
+  ChartDimension? dimension,
 }) {
   final container = ProviderContainer(
     retry: noProviderRetry,
@@ -126,6 +127,11 @@ Widget _harness({
     ],
   );
   addTearDown(container.dispose);
+  if (dimension != null) {
+    container
+        .read(chartsSelectionControllerProvider.notifier)
+        .setDimension(dimension);
+  }
   if (activeSelection != null) {
     container
         .read(chartsSelectionControllerProvider.notifier)
@@ -652,6 +658,175 @@ void main() {
         expect(rendered.right, lessThanOrEqualTo(close.left - 12 + 0.01));
       },
     );
+  });
+
+  group('bridge button (AC 7)', () {
+    const account = SelectedSlice.account(1);
+    ChartSlice accountSlice() => _slice(account).copyWith(label: 'Cash');
+    Finder bridge() => find.byKey(const ValueKey('sliceBridgeButton'));
+
+    @Dependencies([
+      ChartsSelectionController,
+      SliceDrilldownController,
+      analysisCategoriesById,
+      analysisAccountsById,
+      chartsCurrenciesByCode,
+      chartsFxStatus,
+    ])
+    Future<ProviderContainer> pumpAccount(
+      WidgetTester tester, {
+      double textScale = 1,
+    }) async {
+      final repo = _MockRepo();
+      _stubRows(repo, () => Stream.value([_tx(1, memo: 'Lunch')]));
+      await tester.pumpWidget(
+        _harness(
+          repo: repo,
+          slice: accountSlice(),
+          activeSelection: account,
+          dimension: ChartDimension.account,
+          textScale: textScale,
+        ),
+      );
+      await tester.pumpAndSettle();
+      return ProviderScope.containerOf(
+        tester.element(find.byType(SelectedSliceItemsList)),
+      );
+    }
+
+    testWidgets('an account drill-down shows "See categories in <Account>" '
+        'below the header', (tester) async {
+      await pumpAccount(tester);
+
+      expect(find.text('See categories in Cash'), findsOneWidget);
+      final label = _text(tester, 'See categories in Cash');
+      expect(label.style?.fontSize, 14);
+      expect(label.style?.fontWeight, FontWeight.w500);
+      expect(label.style?.letterSpacing, 0);
+      expect(label.style?.color, _colors.fg);
+      final chevron = find.descendant(
+        of: bridge(),
+        matching: find.byIcon(Icons.chevron_right),
+      );
+      expect(tester.getSize(chevron), const Size(16, 16));
+
+      final button = tester.getRect(bridge());
+      final card = tester.getRect(_card);
+      final title = tester.getRect(find.text('Cash').first);
+      // Padding 0 16 8: 16 in from the card's inner edge (1 px border),
+      // under the header row, 8 above the first row's divider.
+      expect(button.left, card.left + 1 + 16);
+      expect(button.height, 44);
+      expect(button.top, greaterThan(title.bottom));
+      final row = tester.getRect(find.byType(SliceTransactionRow));
+      expect(row.top - button.bottom, 8);
+      // Padding 0 12 0 14 inside the 1 px border, gap 6.
+      final text = tester.getRect(find.text('See categories in Cash'));
+      expect(text.left - button.left, 15);
+      expect(button.right - tester.getRect(chevron).right, 13);
+      expect(tester.getRect(chevron).left - text.right, 6);
+      expect(text.center.dy, button.center.dy);
+    });
+
+    testWidgets('outlined pill: radius 22, 1 px outline, transparent', (
+      tester,
+    ) async {
+      await pumpAccount(tester);
+
+      final material = tester.widget<Material>(bridge());
+      expect(material.color!.a, 0);
+      expect(
+        material.shape,
+        RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(22),
+          side: BorderSide(color: _colors.outline),
+        ),
+      );
+    });
+
+    testWidgets('tapping it filters by the account, switches to Category '
+        'and clears the slice', (tester) async {
+      final container = await pumpAccount(tester);
+
+      await tester.tap(bridge());
+      await tester.pump();
+
+      final selection = container.read(chartsSelectionControllerProvider);
+      expect(selection.accountFilterId, 1);
+      expect(selection.dimension, ChartDimension.category);
+      expect(selection.selectedSlice, isNull);
+    });
+
+    testWidgets('ripple clipped to the pill; keyboard focus and Enter '
+        '(D16)', (tester) async {
+      final container = await pumpAccount(tester);
+      final text = find.text('See categories in Cash');
+
+      await _expectRipple(
+        tester,
+        text,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(22),
+          side: BorderSide(color: _colors.outline),
+        ),
+      );
+      await _focusAndActivate(tester, text);
+
+      expect(
+        container.read(chartsSelectionControllerProvider).accountFilterId,
+        1,
+      );
+    });
+
+    testWidgets('reads as a button', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pumpAccount(tester);
+
+      expect(
+        tester.getSemantics(find.text('See categories in Cash')),
+        isSemantics(
+          label: 'See categories in Cash',
+          isButton: true,
+          hasTapAction: true,
+          isFocusable: true,
+        ),
+      );
+      handle.dispose();
+    });
+
+    testWidgets('2× text scale: the label doubles inside the 44 minimum and '
+        'ellipsizes', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(360, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await pumpAccount(tester, textScale: 2);
+
+      expect(tester.takeException(), isNull);
+      // The ambient 20 px line, doubled; the pill keeps its 44 minimum.
+      expect(tester.getSize(find.text('See categories in Cash')).height, 40);
+      final button = tester.getRect(bridge());
+      expect(button.height, greaterThanOrEqualTo(44));
+      expect(button.right, lessThanOrEqualTo(360 - 1 - 16));
+      expect(
+        _text(tester, 'See categories in Cash').overflow,
+        TextOverflow.ellipsis,
+      );
+    });
+
+    testWidgets('a category drill-down has no bridge', (tester) async {
+      final repo = _MockRepo();
+      _stubRows(repo, () => Stream.value([_tx(1)]));
+      await tester.pumpWidget(
+        _harness(
+          repo: repo,
+          slice: _slice(const SelectedSlice.category(1)),
+          activeSelection: const SelectedSlice.category(1),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(bridge(), findsNothing);
+      expect(find.textContaining('See categories in'), findsNothing);
+    });
   });
 
   group('rows', () {
