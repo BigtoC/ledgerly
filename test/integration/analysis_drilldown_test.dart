@@ -310,7 +310,7 @@ void main() {
 
   group('legend auto-scroll', () {
     late Finder scrollable;
-    late Finder legendCard;
+    late Finder legendRows;
     late Finder pie;
     Finder legendRow(String label) => find.descendant(
       of: find.byType(ChartLegend),
@@ -348,10 +348,8 @@ void main() {
         seedPreviousWeek: seedPreviousWeek,
       );
       scrollable = find.byType(SingleChildScrollView).first;
-      legendCard = find.descendant(
-        of: find.byType(ChartLegend),
-        matching: find.byType(Card),
-      );
+      // The ranked rows are what a selection lifts to the top.
+      legendRows = find.byType(ChartLegend);
       pie = find.byType(CategoryPieChart);
       return container;
     }
@@ -368,7 +366,7 @@ void main() {
 
     void expectCardAtTop(WidgetTester tester) {
       final viewport = tester.getRect(scrollable);
-      final card = tester.getRect(legendCard);
+      final card = tester.getRect(legendRows);
       expect(card.top, moreOrLessEquals(viewport.top, epsilon: 1));
       expect(card.bottom, lessThanOrEqualTo(viewport.bottom));
     }
@@ -418,14 +416,20 @@ void main() {
     testWidgets('keeps lifting the card when the drill-down rows load late', (
       tester,
     ) async {
-      await pumpPhone(tester, drilldownDelay: const Duration(seconds: 1));
+      // Tall enough that the trend chart and spinner alone cannot fill the
+      // space below the ranked rows, short enough that the loaded row can.
+      await pumpPhone(
+        tester,
+        drilldownDelay: const Duration(seconds: 1),
+        size: const Size(360, 590),
+      );
       await tapLegendRow(tester, 'Food');
       await pumpPastReveal(tester);
       // Only the loading spinner sits below the card so far, so the first
       // scroll stops short of the top.
       expect(find.byType(ListTile), findsNothing);
       expect(
-        tester.getRect(legendCard).top,
+        tester.getRect(legendRows).top,
         greaterThan(tester.getRect(scrollable).top + 1),
       );
 
@@ -522,7 +526,7 @@ void main() {
       await tapLegendRow(tester, 'Food');
       await tester.pumpAndSettle();
       expect(
-        tester.getRect(legendCard).top,
+        tester.getRect(legendRows).top,
         greaterThan(tester.getRect(scrollable).top + 1),
       );
       await tester.pump(const Duration(seconds: 5));
