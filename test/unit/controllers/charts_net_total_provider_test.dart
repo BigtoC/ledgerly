@@ -196,6 +196,43 @@ void main() {
     ).called(1);
   });
 
+  test('queries only the filtered account and re-queries when it changes '
+      '(AC 12)', () async {
+    final repo = _MockTxRepo();
+    final accountIds = <int?>[];
+    when(
+      () => repo.watchTotalsByTypeInRange(
+        start: any(named: 'start'),
+        end: any(named: 'end'),
+        accountId: any(named: 'accountId'),
+      ),
+    ).thenAnswer((invocation) {
+      final accountId = invocation.namedArguments[#accountId] as int?;
+      accountIds.add(accountId);
+      return Stream.value({
+        'USD': accountId == 7
+            ? (expense: 300, income: 100)
+            : (expense: 2000, income: 750),
+      });
+    });
+
+    final container = _container(repo: repo);
+    await _settle(container);
+    expect(accountIds, [null]);
+
+    container
+        .read(chartsSelectionControllerProvider.notifier)
+        .setAccountFilter(7);
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(accountIds, [null, 7]);
+    final totals = container.read(chartsNetTotalProvider)!;
+    expect(totals.expenseMinorUnits, 300);
+    expect(totals.incomeMinorUnits, 100);
+    expect(totals.netMinorUnits, -200);
+  });
+
   test('re-queries with the new range when the period type changes', () async {
     final repo = _MockTxRepo();
     final ranges = <({DateTime start, DateTime end})>[];

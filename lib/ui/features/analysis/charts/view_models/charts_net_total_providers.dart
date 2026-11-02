@@ -1,9 +1,10 @@
 // Analysis summary totals — expense, income and their net for the period
 // chosen in the chart's time picker, converted into the default currency.
 //
-// Watches only `(period, anchorDate)` from the selection, so toggling
-// Expense/Income, the dimension, or a pie slice does not re-query. The
-// totals cover both types regardless of the Expense/Income toggle.
+// Watches only `(period, anchorDate, accountFilterId)` from the selection,
+// so toggling Expense/Income, the dimension, or a pie slice does not
+// re-query. The totals cover both types regardless of the Expense/Income
+// toggle, and only the filtered account while the account filter is set.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart'
     show ProviderListenableSelect;
@@ -51,17 +52,19 @@ class ChartsNetTotal {
 }
 
 /// Per-currency expense and income for the selected period's
-/// `[start, end)` range.
+/// `[start, end)` range, limited to the filtered account when one is set.
 @Riverpod(dependencies: [transactionRepository, ChartsSelectionController])
 Stream<Map<String, ({int expense, int income})>> chartsNetByCurrency(Ref ref) {
-  final (PeriodType period, DateTime anchorDate) = ref.watch(
-    chartsSelectionControllerProvider.select((s) => (s.period, s.anchorDate)),
+  final (PeriodType period, DateTime anchorDate, int? accountId) = ref.watch(
+    chartsSelectionControllerProvider.select(
+      (s) => (s.period, s.anchorDate, s.accountFilterId),
+    ),
   );
   final start = normalizeAnchor(anchorDate, period);
   final end = shiftAnchor(start, period, 1);
   return ref
       .watch(transactionRepositoryProvider)
-      .watchTotalsByTypeInRange(start: start, end: end);
+      .watchTotalsByTypeInRange(start: start, end: end, accountId: accountId);
 }
 
 /// [chartsNetByCurrency] folded into the default currency. Null until the
