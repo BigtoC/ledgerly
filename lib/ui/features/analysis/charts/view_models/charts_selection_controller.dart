@@ -1,5 +1,6 @@
 // ChartsSelectionController — owns the live user selection (period,
-// type, dimension, anchorDate) for the analysis-tab chart slice.
+// type, dimension, anchorDate, account filter) for the analysis-tab
+// chart slice.
 //
 // Split out from `ChartsController` so the data-emitting notifier does
 // not have to expose public selection getters (which would trip
@@ -27,6 +28,9 @@ abstract class ChartsSelection with _$ChartsSelection {
     required ChartDimension dimension,
     required DateTime anchorDate,
     SelectedSlice? selectedSlice,
+
+    /// Account the whole page is limited to; null = all accounts.
+    int? accountFilterId,
   }) = _ChartsSelection;
 }
 
@@ -76,9 +80,31 @@ class ChartsSelectionController extends _$ChartsSelectionController {
     );
   }
 
+  /// Choosing the Account dimension clears the account filter: an account
+  /// slice and the filter never coexist.
   void setDimension(ChartDimension dimension) {
     if (state.dimension == dimension) return;
-    state = state.copyWith(dimension: dimension, selectedSlice: null);
+    state = state.copyWith(
+      dimension: dimension,
+      selectedSlice: null,
+      accountFilterId: dimension == ChartDimension.account
+          ? null
+          : state.accountFilterId,
+    );
+  }
+
+  /// Limit the page to account [id] (null = all accounts). Clears the
+  /// slice selection; picking an account while the dimension is Account
+  /// switches the dimension to Category.
+  void setAccountFilter(int? id) {
+    if (state.accountFilterId == id) return;
+    state = state.copyWith(
+      accountFilterId: id,
+      selectedSlice: null,
+      dimension: id != null && state.dimension == ChartDimension.account
+          ? ChartDimension.category
+          : state.dimension,
+    );
   }
 
   /// Tap-toggle semantics: same slice clears, different slice replaces.

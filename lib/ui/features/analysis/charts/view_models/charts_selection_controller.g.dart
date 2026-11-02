@@ -42,7 +42,7 @@ final class ChartsSelectionControllerProvider
 }
 
 String _$chartsSelectionControllerHash() =>
-    r'd7e10d1fa2ed216a13451091fb5a7a8848fa9c1f';
+    r'48a47817b0e64b662ad24a29c91c1f154d722982';
 
 abstract class _$ChartsSelectionController extends $Notifier<ChartsSelection> {
   ChartsSelection build();
