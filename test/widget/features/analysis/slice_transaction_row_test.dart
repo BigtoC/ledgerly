@@ -511,7 +511,7 @@ void main() {
         tester.renderObject<RenderBox>(text).size.width;
 
     for (final converted in [
-      r'-NT$312,500,000.00',
+      r'-NT$3,125,000,000.00',
       '-IDR 12,345,678,901,234.00',
     ]) {
       testWidgets(
