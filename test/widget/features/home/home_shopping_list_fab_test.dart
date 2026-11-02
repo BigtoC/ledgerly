@@ -124,8 +124,7 @@ void main() {
 
   late StreamController<List<Transaction>> dayCtrl;
   late StreamController<List<DateTime>> activityCtrl;
-  late StreamController<Map<String, ({int expense, int income})>>
-  todayTotalsCtrl;
+  late StreamController<DailyTotals> todayTotalsCtrl;
   late StreamController<Map<String, int>> monthNetCtrl;
 
   setUp(() {

@@ -12,9 +12,6 @@ import '../../../../domain/models/transaction.dart';
 
 part 'home_state.freezed.dart';
 
-/// Per-currency expense/income split used by the summary strip.
-typedef DailyTotals = Map<String, ({int expense, int income})>;
-
 @freezed
 sealed class HomeState with _$HomeState {
   /// Pre-first emission from the underlying streams.

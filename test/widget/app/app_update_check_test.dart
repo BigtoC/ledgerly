@@ -52,10 +52,7 @@ void main() {
       );
     });
 
-    final fxGate =
-        Completer<
-          List<({String from, String to, double rate, DateTime fetchedAt})>
-        >();
+    final fxGate = Completer<List<FetchedRate>>();
     final fx = _MockExchangeRateService();
     when(() => fx.fetchRates(any())).thenAnswer((_) => fxGate.future);
     final updates = _MockAppUpdateRepository();

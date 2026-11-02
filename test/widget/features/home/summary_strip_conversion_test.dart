@@ -12,12 +12,13 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ledgerly/app/providers/exchange_rates_provider.dart';
 import 'package:ledgerly/domain/models/currency.dart';
+import 'package:ledgerly/domain/models/transaction.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/features/home/views/summary_strip.dart';
 
 void main() {
   Widget buildStrip({
-    required Map<String, ({int expense, int income})> todayTotals,
+    required DailyTotals todayTotals,
     required Map<String, int> monthNet,
     required String defaultCurrency,
     Map<String, int>? rates,

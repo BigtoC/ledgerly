@@ -34,10 +34,10 @@ const _salaryNotes = {'Salary', '薪資', '薪资'};
 class _FakeCsvFileService implements CsvFileService {
   _FakeCsvFileService(this._pick);
 
-  final Future<({String name, Uint8List bytes})?> Function() _pick;
+  final Future<PickedFile?> Function() _pick;
 
   @override
-  Future<({String name, Uint8List bytes})?> pick() => _pick();
+  Future<PickedFile?> pick() => _pick();
 
   @override
   Future<bool> save(String fileName, Uint8List bytes) =>

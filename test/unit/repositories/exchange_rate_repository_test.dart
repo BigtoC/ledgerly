@@ -169,10 +169,7 @@ void main() {
 
     test('single-flight: concurrent refreshAll calls coalesce to one fetch', () async {
       await seedAccount('EUR');
-      final completer =
-          Completer<
-            List<({String from, String to, double rate, DateTime fetchedAt})>
-          >();
+      final completer = Completer<List<FetchedRate>>();
       when(() => mockService.fetchRates(any()))
           .thenAnswer((_) => completer.future);
 
@@ -217,10 +214,7 @@ void main() {
 
     test('stays pending while fetchRates runs, completes after', () async {
       await seedAccount('EUR');
-      final completer =
-          Completer<
-            List<({String from, String to, double rate, DateTime fetchedAt})>
-          >();
+      final completer = Completer<List<FetchedRate>>();
       when(() => mockService.fetchRates(any()))
           .thenAnswer((_) => completer.future);
       final isDone = trackStartupRefresh();

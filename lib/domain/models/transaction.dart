@@ -4,6 +4,10 @@ import 'currency.dart';
 
 part 'transaction.freezed.dart';
 
+/// One day's expense and income totals per currency code. Both values are
+/// unsigned sums in minor units.
+typedef DailyTotals = Map<String, ({int expense, int income})>;
+
 /// User transaction. Mirrors `transactions` row (PRD.md 275-291).
 ///
 /// `currency` stores the original transaction currency — Phase 2 price

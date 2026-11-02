@@ -1,5 +1,14 @@
 import 'package:dio/dio.dart';
 
+/// One rate parsed from the conversion API for the pair `from` → `to`.
+/// Codes are uppercase ISO 4217.
+typedef FetchedRate = ({
+  String from,
+  String to,
+  double rate,
+  DateTime fetchedAt,
+});
+
 /// HTTP client for the Ledgerly conversion API.
 ///
 /// Fetches exchange rates from the hosted Cloudflare Worker endpoint.
@@ -40,8 +49,9 @@ class ExchangeRateService {
   ///
   /// Throws [DioException] on network or HTTP errors — the caller
   /// (repository) catches and logs only the exception type.
-  Future<List<({String from, String to, double rate, DateTime fetchedAt})>>
-  fetchRates(List<({String from, String to})> pairs) async {
+  Future<List<FetchedRate>> fetchRates(
+    List<({String from, String to})> pairs,
+  ) async {
     final validPairs = pairs
         .where((p) => _iso4217.hasMatch(p.from) && _iso4217.hasMatch(p.to))
         .toList();
@@ -59,8 +69,7 @@ class ExchangeRateService {
     final data = response.data;
     if (data == null) return const [];
 
-    final results =
-        <({String from, String to, double rate, DateTime fetchedAt})>[];
+    final results = <FetchedRate>[];
     for (final entry in data) {
       if (entry is! Map<String, dynamic>) continue;
       final rate = entry['rate'];

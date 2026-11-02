@@ -36,9 +36,7 @@ AppUpdate _upd({String? hex}) => AppUpdate(
 Matcher _hasApkUrl(String url) =>
     isA<AppUpdate>().having((u) => u.apkUrl, 'apkUrl', Uri.parse(url));
 
-typedef _Release = ({String tagName, List<ReleaseAsset> assets});
-
-_Release _release({String tag = 'v0.7.2', List<ReleaseAsset>? assets}) => (
+LatestRelease _release({String tag = 'v0.7.2', List<ReleaseAsset>? assets}) => (
   tagName: tag,
   assets:
       assets ??
@@ -100,7 +98,7 @@ void main() {
     abi: abi,
   );
 
-  void stubRelease(_Release? release) {
+  void stubRelease(LatestRelease? release) {
     when(() => service.fetchLatestRelease()).thenAnswer((_) async => release);
   }
 

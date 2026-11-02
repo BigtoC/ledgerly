@@ -49,18 +49,14 @@ void main() {
     late _MockTransactionRepository repo;
     late StreamController<List<Transaction>> dayCtrl;
     late StreamController<List<DateTime>> activityCtrl;
-    late StreamController<Map<String, ({int expense, int income})>>
-    todayTotalsCtrl;
+    late StreamController<DailyTotals> todayTotalsCtrl;
     late StreamController<Map<String, int>> monthNetCtrl;
 
     setUp(() {
       repo = _MockTransactionRepository();
       dayCtrl = StreamController<List<Transaction>>.broadcast();
       activityCtrl = StreamController<List<DateTime>>.broadcast();
-      todayTotalsCtrl =
-          StreamController<
-            Map<String, ({int expense, int income})>
-          >.broadcast();
+      todayTotalsCtrl = StreamController<DailyTotals>.broadcast();
       monthNetCtrl = StreamController<Map<String, int>>.broadcast();
 
       when(() => repo.watchByDay(any())).thenAnswer((_) => dayCtrl.stream);
