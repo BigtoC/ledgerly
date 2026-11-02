@@ -150,59 +150,64 @@ class _ExpandedContent extends StatelessWidget {
           child: Icon(Icons.search, size: 20, color: colors.fg2),
         ),
         Expanded(
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: focusNode.requestFocus,
-            child: SizedBox(
-              height: double.infinity,
-              child: Stack(
-                alignment: AlignmentDirectional.centerStart,
-                children: [
-                  // The design's hint is a separate span hidden from
-                  // assistive tech; the input carries the semantics label.
-                  ValueListenableBuilder<TextEditingValue>(
-                    valueListenable: controller,
-                    builder: (context, value, _) => value.text.isEmpty
-                        ? Positioned.directional(
-                            textDirection: Directionality.of(context),
-                            start: 0,
-                            end: 0,
-                            child: ExcludeSemantics(
-                              child: Text(
-                                l10n.analysisSearchHint,
-                                maxLines: 1,
-                                softWrap: false,
-                                overflow: TextOverflow.ellipsis,
-                                style: analysisText(
-                                  size: 15,
-                                  lineHeight: 20,
-                                  color: colors.fg2,
-                                ),
-                              ),
+          child: Stack(
+            alignment: AlignmentDirectional.centerStart,
+            children: [
+              // The design's hint is a separate span hidden from assistive
+              // tech; the input carries the semantics label.
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: controller,
+                builder: (context, value, _) => value.text.isEmpty
+                    ? Positioned.directional(
+                        textDirection: Directionality.of(context),
+                        start: 0,
+                        end: 0,
+                        child: ExcludeSemantics(
+                          child: Text(
+                            l10n.analysisSearchHint,
+                            maxLines: 1,
+                            softWrap: false,
+                            overflow: TextOverflow.ellipsis,
+                            style: analysisText(
+                              size: 15,
+                              lineHeight: 20,
+                              color: colors.fg2,
                             ),
-                          )
-                        : const SizedBox.shrink(),
-                  ),
-                  Semantics(
-                    label: l10n.analysisSearchPrompt,
-                    child: TextField(
-                      controller: controller,
-                      focusNode: focusNode,
-                      autofocus: true,
-                      onChanged: onChanged,
-                      style: TextStyle(
-                        fontSize: 15,
-                        letterSpacing: 0,
-                        color: colors.fg,
-                      ),
-                      decoration: const InputDecoration.collapsed(
-                        hintText: null,
-                      ),
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+              // The input fills the row, as in the design, so a tap above or
+              // below the text line focuses it and re-shows the keyboard.
+              Positioned.fill(
+                // Its own node, so it does not merge into the title header.
+                child: Semantics(
+                  container: true,
+                  label: l10n.analysisSearchPrompt,
+                  child: TextField(
+                    controller: controller,
+                    focusNode: focusNode,
+                    autofocus: true,
+                    onChanged: onChanged,
+                    textAlignVertical: TextAlignVertical.top,
+                    style: TextStyle(
+                      fontSize: 15,
+                      letterSpacing: 0,
+                      color: colors.fg,
+                    ),
+                    // Not collapsed, the decorator centres the line within
+                    // its 48 dp minimum (kMinInteractiveDimension). The row
+                    // inside the 1 px border is 46, so a 2 px bottom padding
+                    // moves that centre onto the row's.
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.only(bottom: 2),
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
         IconButton(

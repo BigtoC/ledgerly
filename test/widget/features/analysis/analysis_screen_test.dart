@@ -458,6 +458,42 @@ void main() {
       verify(() => tx.watchByMemo('か')).called(1);
     });
 
+    // At 2× the test font's wide title leaves a phone-width field no input,
+    // so that case runs on the 800-wide default surface.
+    for (final (textScale, width) in [(1.0, 390.0), (2.0, 800.0)]) {
+      testWidgets('a tap anywhere in the input band brings the keyboard back '
+          '(text scale $textScale)', (tester) async {
+        await tester.binding.setSurfaceSize(Size(width, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(
+          _harness(tx: tx, cat: cat, acct: acct, textScale: textScale),
+        );
+        await tester.pump();
+        await _openSearch(tester);
+        await tester.showKeyboard(find.byType(TextField));
+        final focus = tester
+            .widget<EditableText>(find.byType(EditableText))
+            .focusNode;
+        expect(focus.hasFocus, isTrue);
+        expect(tester.takeException(), isNull);
+
+        final box = tester.getRect(find.byType(AnalysisSearchField));
+        final input = tester.getRect(find.byType(EditableText));
+        // The text line stays centred in the 48 box, as in the design.
+        expect(input.center.dy, box.center.dy);
+        // Android Back hides the keyboard but leaves the field focused.
+        for (final dy in [box.top + 4, box.bottom - 4]) {
+          tester.testTextInput.hide();
+          expect(tester.testTextInput.isVisible, isFalse);
+          await tester.tapAt(Offset(input.center.dx, dy));
+          // Past the double-tap window, so taps stay single taps.
+          await tester.pump(const Duration(milliseconds: 500));
+          expect(tester.testTextInput.isVisible, isTrue, reason: 'dy $dy');
+          expect(focus.hasFocus, isTrue);
+        }
+      });
+    }
+
     testWidgets('2× text scale: the 64 row clamps its text at 1.5×', (
       tester,
     ) async {
