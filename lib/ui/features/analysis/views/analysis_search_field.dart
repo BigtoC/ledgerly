@@ -38,11 +38,17 @@ class AnalysisSearchField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AnalysisColors.of(context);
-    return AnimatedContainer(
+    // Animate only the open/close progress and scale the live width by it,
+    // so a narrower window (rotation, resize) applies at once.
+    return TweenAnimationBuilder<double>(
+      tween: Tween(end: expanded ? 1 : 0),
       duration: AnalysisMotion.searchExpandDuration,
       curve: AnalysisMotion.emphasizedCurve,
-      width: expanded ? expandedWidth : 48,
-      height: 48,
+      builder: (context, progress, child) => SizedBox(
+        width: 48 + (expandedWidth - 48) * progress,
+        height: 48,
+        child: child,
+      ),
       child: AnimatedContainer(
         duration: AnalysisMotion.standardDuration,
         curve: AnalysisMotion.standardCurve,

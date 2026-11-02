@@ -477,6 +477,30 @@ void main() {
       expect(tester.getSize(find.text('Search memos')).height, 30);
       expect(tester.getTopRight(find.byType(AnalysisSearchField)).dx, 390 - 8);
     });
+
+    testWidgets('open field follows a narrower window at once, no overflow', (
+      tester,
+    ) async {
+      // Rotation or a window resize while search is open.
+      await tester.binding.setSurfaceSize(const Size(844, 390));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(_harness(tx: tx, cat: cat, acct: acct));
+      await tester.pump();
+      await _openSearch(tester);
+      final titleRight = tester.getTopRight(find.text('Analysis')).dx;
+      expect(
+        tester.getTopLeft(find.byType(AnalysisSearchField)).dx,
+        titleRight + 12,
+      );
+
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+      final box = find.byType(AnalysisSearchField);
+      expect(tester.getTopLeft(box).dx, titleRight + 12);
+      expect(tester.getTopRight(box).dx, 390 - 8);
+    });
   });
 
   testWidgets('shows no-results copy when query has no matches', (
