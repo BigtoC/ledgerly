@@ -1,6 +1,7 @@
 // `CalculatorKeypad` — Wave 2 §8.
 //
-// Fixed-height numeric keypad. Layout per PRD → Layout Primitives:
+// Numeric keypad pinned below the form. Layout per PRD → Layout
+// Primitives:
 //
 //   7 8 9 ÷
 //   4 5 6 ×
@@ -14,6 +15,9 @@
 //   - Operator keys (÷ × − +) emit `CalcOperator` values via `onOperator`.
 //   - Save lives in the AppBar, not the keypad — keep the surface
 //     numeric-only so the user can type quickly with one thumb.
+//   - Keys are 56dp tall. Given less height than that needs, they shrink
+//     to fill it (issue #100). A screen that reserves [minHeight] keeps
+//     them at the 48dp minimum tap target or above.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
@@ -47,63 +51,92 @@ class CalculatorKeypad extends StatelessWidget {
     return SafeArea(
       top: false,
       minimum: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _row([
-            _DigitKey(label: '7', onTap: () => onDigit(7)),
-            _DigitKey(label: '8', onTap: () => onDigit(8)),
-            _DigitKey(label: '9', onTap: () => onDigit(9)),
-            _OperatorKey(
-              label: '÷',
-              semanticsLabel: l10n.txKeypadDivide,
-              onTap: () => onOperator(CalcOperator.divide),
-            ),
-          ]),
-          _row([
-            _DigitKey(label: '4', onTap: () => onDigit(4)),
-            _DigitKey(label: '5', onTap: () => onDigit(5)),
-            _DigitKey(label: '6', onTap: () => onDigit(6)),
-            _OperatorKey(
-              label: '×',
-              semanticsLabel: l10n.txKeypadMultiply,
-              onTap: () => onOperator(CalcOperator.multiply),
-            ),
-          ]),
-          _row([
-            _DigitKey(label: '1', onTap: () => onDigit(1)),
-            _DigitKey(label: '2', onTap: () => onDigit(2)),
-            _DigitKey(label: '3', onTap: () => onDigit(3)),
-            _OperatorKey(
-              label: '−',
-              semanticsLabel: l10n.txKeypadSubtract,
-              onTap: () => onOperator(CalcOperator.subtract),
-            ),
-          ]),
-          _row([
-            _DigitKey(label: '.', onTap: decimalEnabled ? onDecimal : null),
-            _DigitKey(label: '0', onTap: () => onDigit(0)),
-            _IconKey(
-              icon: Icons.backspace_outlined,
-              tooltip: l10n.txKeypadBackspace,
-              onTap: onBackspace,
-              onLongPress: onClear,
-            ),
-            _OperatorKey(
-              label: '+',
-              semanticsLabel: l10n.txKeypadAdd,
-              onTap: () => onOperator(CalcOperator.add),
-            ),
-          ]),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Four rows, each with 4dp of padding above and below its keys.
+          // The screen reserves [minHeight] when it can; given less, the
+          // keys shrink further rather than clip the bottom row.
+          final keyHeight = (constraints.maxHeight / 4 - 8).clamp(
+            0.0,
+            _maxKeyHeight,
+          );
+          Widget row(List<Widget> keys) => _row(keys, keyHeight);
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              row([
+                _DigitKey(label: '7', onTap: () => onDigit(7)),
+                _DigitKey(label: '8', onTap: () => onDigit(8)),
+                _DigitKey(label: '9', onTap: () => onDigit(9)),
+                _OperatorKey(
+                  label: '÷',
+                  semanticsLabel: l10n.txKeypadDivide,
+                  onTap: () => onOperator(CalcOperator.divide),
+                ),
+              ]),
+              row([
+                _DigitKey(label: '4', onTap: () => onDigit(4)),
+                _DigitKey(label: '5', onTap: () => onDigit(5)),
+                _DigitKey(label: '6', onTap: () => onDigit(6)),
+                _OperatorKey(
+                  label: '×',
+                  semanticsLabel: l10n.txKeypadMultiply,
+                  onTap: () => onOperator(CalcOperator.multiply),
+                ),
+              ]),
+              row([
+                _DigitKey(label: '1', onTap: () => onDigit(1)),
+                _DigitKey(label: '2', onTap: () => onDigit(2)),
+                _DigitKey(label: '3', onTap: () => onDigit(3)),
+                _OperatorKey(
+                  label: '−',
+                  semanticsLabel: l10n.txKeypadSubtract,
+                  onTap: () => onOperator(CalcOperator.subtract),
+                ),
+              ]),
+              row([
+                _DigitKey(label: '.', onTap: decimalEnabled ? onDecimal : null),
+                _DigitKey(label: '0', onTap: () => onDigit(0)),
+                _IconKey(
+                  icon: Icons.backspace_outlined,
+                  tooltip: l10n.txKeypadBackspace,
+                  onTap: onBackspace,
+                  onLongPress: onClear,
+                ),
+                _OperatorKey(
+                  label: '+',
+                  semanticsLabel: l10n.txKeypadAdd,
+                  onTap: () => onOperator(CalcOperator.add),
+                ),
+              ]),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _row(List<Widget> children) {
+  /// The height the keypad needs with its smallest keys: four rows of a
+  /// key plus its 4dp padding above and below, and the 8dp minimum
+  /// padding above and below the keypad. A screen whose SafeArea has
+  /// already taken the bottom inset can count on it.
+  static const double minHeight = 4 * (_minKeyHeight + 8) + 16;
+
+  static const double _maxKeyHeight = 56;
+
+  /// The minimum tap target (PRD → Accessibility).
+  static const double _minKeyHeight = 48;
+
+  Widget _row(List<Widget> children, double keyHeight) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(children: [for (final c in children) Expanded(child: c)]),
+      child: SizedBox(
+        height: keyHeight,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [for (final c in children) Expanded(child: c)],
+        ),
+      ),
     );
   }
 }
@@ -128,27 +161,24 @@ class _DigitKey extends StatelessWidget {
     final disabled = onTap == null;
     final colors = Theme.of(context).colorScheme;
     final clamped = MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.5);
-    return SizedBox(
-      height: 56,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Material(
-          color: disabled
-              ? colors.surfaceContainerHighest.withValues(alpha: 0.4)
-              : colors.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(12),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: _withHaptic(onTap),
-            child: Center(
-              child: Text(
-                label,
-                textScaler: clamped,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: disabled
-                      ? colors.onSurface.withValues(alpha: 0.4)
-                      : null,
-                ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Material(
+        color: disabled
+            ? colors.surfaceContainerHighest.withValues(alpha: 0.4)
+            : colors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: _withHaptic(onTap),
+          child: Center(
+            child: Text(
+              label,
+              textScaler: clamped,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: disabled
+                    ? colors.onSurface.withValues(alpha: 0.4)
+                    : null,
               ),
             ),
           ),
@@ -172,27 +202,24 @@ class _OperatorKey extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final clamped = MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.5);
-    return SizedBox(
-      height: 56,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Material(
-          color: colors.primaryContainer,
-          borderRadius: BorderRadius.circular(12),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: _withHaptic(onTap),
-            child: Semantics(
-              label: semanticsLabel,
-              button: true,
-              child: ExcludeSemantics(
-                child: Center(
-                  child: Text(
-                    label,
-                    textScaler: clamped,
-                    style: Theme.of(context).textTheme.titleLarge
-                        ?.copyWith(color: colors.onPrimaryContainer),
-                  ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Material(
+        color: colors.primaryContainer,
+        borderRadius: BorderRadius.circular(12),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: _withHaptic(onTap),
+          child: Semantics(
+            label: semanticsLabel,
+            button: true,
+            child: ExcludeSemantics(
+              child: Center(
+                child: Text(
+                  label,
+                  textScaler: clamped,
+                  style: Theme.of(context).textTheme.titleLarge
+                      ?.copyWith(color: colors.onPrimaryContainer),
                 ),
               ),
             ),
@@ -220,26 +247,23 @@ class _IconKey extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
-    return SizedBox(
-      height: 56,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Tooltip(
-          message: tooltip,
-          child: Semantics(
-            onLongPressHint: l10n.txKeypadClear,
-            customSemanticsActions: {
-              CustomSemanticsAction(label: l10n.txKeypadClear): onLongPress,
-            },
-            child: Material(
-              color: colors.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(12),
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: _withHaptic(onTap),
-                onLongPress: onLongPress,
-                child: Center(child: Icon(icon)),
-              ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Tooltip(
+        message: tooltip,
+        child: Semantics(
+          onLongPressHint: l10n.txKeypadClear,
+          customSemanticsActions: {
+            CustomSemanticsAction(label: l10n.txKeypadClear): onLongPress,
+          },
+          child: Material(
+            color: colors.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(12),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: _withHaptic(onTap),
+              onLongPress: onLongPress,
+              child: Center(child: Icon(icon)),
             ),
           ),
         ),

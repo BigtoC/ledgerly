@@ -323,4 +323,74 @@ void main() {
 
     expect(haptics, isEmpty);
   });
+
+  group('key height follows the space given (issue #100)', () {
+    Widget keypad() => CalculatorKeypad(
+      decimals: 2,
+      onDigit: (_) {},
+      onDecimal: () {},
+      onBackspace: () {},
+      onClear: () {},
+      onOperator: (_) {},
+    );
+
+    /// Hosts the keypad at the bottom of [height] dp, as the form does.
+    Widget hostWithHeight(double height) => _wrap(
+      Align(
+        alignment: Alignment.bottomCenter,
+        child: SizedBox(height: height, child: keypad()),
+      ),
+    );
+
+    double keyHeight(WidgetTester tester) => tester
+        .getSize(
+          find
+              .ancestor(of: find.text('7'), matching: find.byType(Material))
+              .first,
+        )
+        .height;
+
+    testWidgets('WK17: keys are 56dp when there is room', (tester) async {
+      await tester.pumpWidget(hostWithHeight(400));
+
+      expect(keyHeight(tester), 56);
+    });
+
+    testWidgets('WK18: keys are 56dp under unbounded height', (tester) async {
+      // The recurring rule form puts the keypad in a plain Column.
+      await tester.pumpWidget(
+        _wrap(Column(mainAxisSize: MainAxisSize.min, children: [keypad()])),
+      );
+
+      expect(keyHeight(tester), 56);
+    });
+
+    testWidgets('WK19: keys shrink to fill a shorter space', (tester) async {
+      // 248 = 8 + 4 × (50 + 8) + 8: the SafeArea minimum, four rows of a
+      // 50dp key with its 4dp padding above and below, the SafeArea again.
+      await tester.pumpWidget(hostWithHeight(248));
+
+      expect(keyHeight(tester), 50);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('WK20: with less room than 48dp keys need, keys still fit', (
+      tester,
+    ) async {
+      // The screen reserves `minHeight` for 48dp keys when it can. With
+      // less room still (a landscape phone's dialog), shrinking further
+      // beats clipping the bottom row.
+      await tester.pumpWidget(hostWithHeight(200));
+
+      // 200 = 8 + 4 × (38 + 8) + 8.
+      expect(keyHeight(tester), 38);
+      expect(tester.takeException(), isNull);
+    });
+
+    test('WK21: minHeight is the height of 48dp keys', () {
+      // 8 + 4 × (48 + 8) + 8: the SafeArea minimum, four rows of a 48dp
+      // key with its 4dp padding above and below, the SafeArea again.
+      expect(CalculatorKeypad.minHeight, 240);
+    });
+  });
 }
