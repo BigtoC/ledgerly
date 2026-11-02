@@ -122,6 +122,7 @@ Repositories expose `Stream<T>` for list queries (backed by Drift's `.watch()`).
 
 ```text
 lib/
+  main.dart                  # a single `await bootstrap()`
   app/
     app.dart                 # MaterialApp, root ProviderScope
     router.dart              # go_router configuration
@@ -138,6 +139,7 @@ lib/
       splash_redirect_provider.dart
       app_update_provider.dart
   core/
+    constants.dart
     l10n/
     utils/
       money_formatter.dart
@@ -147,6 +149,10 @@ lib/
       decimal_rounding.dart          # Decimal string ↔ minor units (CSV import/export)
       fortune_city_csv_parser.dart   # Pure Fortune City CSV parser
       transactions_csv.dart          # Pure transactions CSV encoder (export)
+      box_shadow.dart
+      csv_import_keys.dart           # Matching keys shared by CSV import preview and commit
+      currency_converter.dart
+      system_browser.dart            # url_launcher wrapper
   data/
     database/
       app_database.dart      # Drift database, schemaVersion, migrations
@@ -253,6 +259,7 @@ lib/
           transaction_form_state.dart
           transactions_providers.dart
           keypad_state.dart
+          amount_formula.dart
         views/
           transaction_form_screen.dart
           calculator_keypad.dart
@@ -264,6 +271,7 @@ lib/
           date_field.dart
           memo_field.dart
           memo_suggestions.dart
+          memo_picker_sheet.dart
           amount_display.dart
           transaction_type_segmented_control.dart
       categories/
@@ -286,6 +294,7 @@ lib/
             charts_controller.dart
             charts_state.dart
             charts_providers.dart
+            charts_net_total_providers.dart
             charts_selection_controller.dart
             selected_slice.dart
             slice_drilldown_controller.dart
@@ -299,6 +308,7 @@ lib/
             type_toggle.dart
             dimension_toggle.dart
             selected_slice_items_list.dart
+            charts_net_total_card.dart
         search/
           view_models/
             analysis_controller.dart
@@ -314,11 +324,14 @@ lib/
         view_models/
           accounts_controller.dart
           accounts_state.dart
+          accounts_providers.dart
         views/
           account_form_screen.dart
           manage_accounts_body.dart
           account_tile.dart
           account_type_display.dart
+          currency_display.dart
+          amount_minor_units_field.dart
           account_type_picker_sheet.dart
           currency_picker_sheet.dart
       shopping_list/
