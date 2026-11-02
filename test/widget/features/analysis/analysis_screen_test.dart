@@ -501,6 +501,20 @@ void main() {
       expect(tester.getTopLeft(box).dx, titleRight + 12);
       expect(tester.getTopRight(box).dx, 390 - 8);
     });
+
+    testWidgets('the 1.5× clamp keeps AppBar\'s safe-area padding removed', (
+      tester,
+    ) async {
+      tester.view.padding = FakeViewPadding(
+        top: 24 * tester.view.devicePixelRatio,
+      );
+      addTearDown(tester.view.resetPadding);
+      await tester.pumpWidget(_harness(tx: tx, cat: cat, acct: acct));
+      await tester.pump();
+
+      final title = tester.element(find.text('Analysis'));
+      expect(MediaQuery.paddingOf(title).top, 0);
+    });
   });
 
   testWidgets('shows no-results copy when query has no matches', (

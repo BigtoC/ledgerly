@@ -125,6 +125,8 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
     );
 
     final colors = AnalysisColors.of(context);
+    final titleScaler = MediaQuery.textScalerOf(context)
+        .clamp(maxScaleFactor: 1.5);
     return Scaffold(
       backgroundColor: colors.bg,
       // Pinned (plan D1) so the search field stays reachable while its
@@ -138,47 +140,48 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
         titleSpacing: 0,
         // The row is fixed at 64, so its text clamps at 1.5× (plan D1). Read
         // from the screen's context: AppBar's own M3 title clamp is 1.34×.
-        title: MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-            textScaler: MediaQuery.textScalerOf(context)
-                .clamp(maxScaleFactor: 1.5),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 8, 0),
-            child: Row(
-              spacing: 12,
-              children: [
-                Text(
-                  l10n.analysisTitle,
-                  style: analysisText(
-                    size: 24,
-                    lineHeight: 32,
-                    weight: FontWeight.w500,
-                    color: colors.fg,
-                  ),
-                ),
-                Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) => Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      spacing: 4,
-                      children: [
-                        // The account filter button goes here, before the
-                        // search field, while !_searchExpanded.
-                        AnalysisSearchField(
-                          expanded: _searchExpanded,
-                          expandedWidth: constraints.maxWidth,
-                          controller: _searchController,
-                          focusNode: _searchFocus,
-                          onOpen: _openSearch,
-                          onClose: _closeSearch,
-                          onChanged: _onChanged,
-                        ),
-                      ],
+        // The Builder copies the title's own MediaQuery so AppBar's SafeArea
+        // padding removal is kept.
+        title: Builder(
+          builder: (context) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(textScaler: titleScaler),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 8, 0),
+              child: Row(
+                spacing: 12,
+                children: [
+                  Text(
+                    l10n.analysisTitle,
+                    style: analysisText(
+                      size: 24,
+                      lineHeight: 32,
+                      weight: FontWeight.w500,
+                      color: colors.fg,
                     ),
                   ),
-                ),
-              ],
+                  Expanded(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) => Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        spacing: 4,
+                        children: [
+                          // The account filter button goes here, before the
+                          // search field, while !_searchExpanded.
+                          AnalysisSearchField(
+                            expanded: _searchExpanded,
+                            expandedWidth: constraints.maxWidth,
+                            controller: _searchController,
+                            focusNode: _searchFocus,
+                            onOpen: _openSearch,
+                            onClose: _closeSearch,
+                            onChanged: _onChanged,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
