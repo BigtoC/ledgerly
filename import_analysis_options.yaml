@@ -7,10 +7,11 @@
 # Rule names mirror the PRD -> Layer Boundaries table. lib/ follows the
 # Flutter team's layout (PRD § folder layout): ui/ by feature, domain/
 # and data/ by type. The two ui/ rules key on folder plus file suffix and
-# split lib/ui/ between them with core_stays_pure, so every new ui/ file
-# is covered without editing this list. The test also fails when a
-# lib/{ui,domain,data}/ file matches no rule, a lib/ui/ file matches more
-# than one, or a rule matches no file at all.
+# split lib/ui/ between them with theme_stays_pure, so every new ui/ file
+# is covered without editing this list. The test also fails when a lib/
+# file matches no rule (main.dart, the service providers and generated
+# l10n aside), a lib/ui/ file matches more than one, or a rule matches no
+# file at all.
 #
 # Schema (regex-based; the key names come from the retired import_lint
 # 0.1.6, which never matched them):
@@ -43,18 +44,18 @@ rules:
   # Widgets may only import their own controller and UI primitives — no
   # repositories, services, DB, DAOs, Drift or platform packages, and not
   # the providers that build repositories or services. Deny-by-default:
-  # covers every lib/ui/ file except the theme (core_stays_pure) and the
-  # view-model *_controller.dart / *_providers.dart files
-  # (controllers_forbid_db_and_services). So views/, ui/core/widgets/,
-  # and the *_state.dart files and pure helpers in view_models/ all land
-  # here. Name a file *_controller.dart or *_providers.dart, in
-  # view_models/, if it needs repositories.
+  # covers every lib/ui/ file except the theme (theme_stays_pure) and the
+  # *_controller.dart / *_providers.dart files directly in a slice's or
+  # sub-slice's view_models/ (controllers_forbid_db_and_services). So
+  # views/, ui/core/widgets/, and the *_state.dart files and pure helpers
+  # in view_models/ all land here. Of data/ and domain/ they may import
+  # only domain models. Name a file *_controller.dart or *_providers.dart,
+  # in view_models/, if it needs repositories.
   widgets_forbid_data_internals:
-    search_file_path_reg_exp: "^lib/ui/(?!core/theme/)(?!features/.*/view_models/[^/]+_(controller|providers)\\.dart$).*\\.dart$"
+    search_file_path_reg_exp: "^lib/ui/(?!core/theme/)(?!features/(?:(?!views/|view_models/)[^/]+/){1,2}view_models/[^/]+_(controller|providers)\\.dart$).*\\.dart$"
     not_allow_import_reg_exps:
-      - "^package:ledgerly/data/database/"
-      - "^package:ledgerly/data/services/"
-      - "^package:ledgerly/data/repositories/"
+      - "^package:ledgerly/data/"
+      - "^package:ledgerly/domain/(?!models/)"
       - "^package:drift/"
       - "^package:drift_flutter/"
       - "^package:path_provider/"
@@ -75,10 +76,11 @@ rules:
   # rule checks a file's own directives only, so such an export would hand
   # them to every widget that imports the controller.
   controllers_forbid_db_and_services:
-    search_file_path_reg_exp: "^lib/ui/features/.*/view_models/[^/]+_(controller|providers)\\.dart$"
+    search_file_path_reg_exp: "^lib/ui/features/(?:(?!views/|view_models/)[^/]+/){1,2}view_models/[^/]+_(controller|providers)\\.dart$"
     not_allow_import_reg_exps:
       - "^package:ledgerly/data/database/"
       - "^package:ledgerly/data/services/"
+      - "^package:ledgerly/data/seed/"
       - "^package:drift/"
       - "^package:drift_flutter/"
       - "^package:path_provider/"
@@ -106,6 +108,12 @@ rules:
       - "^package:ledgerly/data/database/(?!app_database\\.dart$)"
       - "^package:drift/"
       - "^package:drift_flutter/"
+      - "^package:path_provider/"
+      - "^package:package_info_plus/"
+      - "^package:dio/"
+      - "^package:file_picker/"
+      - "^package:file_selector/"
+      - "^package:url_launcher/"
     ignore_import_reg_exps: []
 
   # Repositories may import services, AppDatabase, DAOs, domain models —
@@ -161,10 +169,22 @@ rules:
   # generated l10n. It may import Flutter / SDK packages and the plain
   # domain models in domain/models/ (e.g. `Currency.decimals` for money
   # formatting), but must not reach into data/, use cases, ui/ or app/.
-  # The theme in ui/core/theme/ follows the same rule and may import only
-  # itself from ui/.
+  # That includes the theme: data and domain import core freely, so core
+  # importing ui/core/theme/ would let them reach the UI layer.
   core_stays_pure:
-    search_file_path_reg_exp: "^lib/(core|ui/core/theme)/.*\\.dart$"
+    search_file_path_reg_exp: "^lib/core/.*\\.dart$"
+    not_allow_import_reg_exps:
+      - "^package:ledgerly/data/"
+      - "^package:ledgerly/ui/"
+      - "^package:ledgerly/domain/"
+      - "^package:ledgerly/app/"
+    ignore_import_reg_exps:
+      - "^package:ledgerly/domain/models/"
+
+  # The theme (ui/core/theme/) is as pure as core/: Flutter, core/ and
+  # domain models only, and nothing else from ui/.
+  theme_stays_pure:
+    search_file_path_reg_exp: "^lib/ui/core/theme/.*\\.dart$"
     not_allow_import_reg_exps:
       - "^package:ledgerly/data/"
       - "^package:ledgerly/ui/(?!core/theme/)"

@@ -277,6 +277,61 @@ import 'e.dart' if (dart.library.io) 'f.dart';
       );
     });
 
+    test('core may not import any ui/ file, not even the theme', () {
+      // The theme moved from core/ to ui/core/theme/, and data and domain
+      // import core freely, so core reaching the theme would let them
+      // reach the UI layer.
+      const coreFile = 'lib/core/utils/money_formatter.dart';
+      expect(
+        forbidden(coreFile, 'package:ledgerly/ui/core/theme/app_theme.dart'),
+        isTrue,
+      );
+      expect(
+        forbidden(coreFile, 'package:ledgerly/domain/models/currency.dart'),
+        isFalse,
+      );
+    });
+
+    test('ui files may not import use cases, the seed or any other data/ '
+        'file', () {
+      const seed = 'package:ledgerly/data/seed/first_run_seed.dart';
+      for (final path in widgetLikeFiles) {
+        for (final uri in [
+          'package:ledgerly/domain/use_cases/csv_import_use_case.dart',
+          seed,
+          'package:ledgerly/data/new_folder/x.dart',
+        ]) {
+          expect(forbidden(path, uri), isTrue, reason: '$path -> $uri');
+        }
+        expect(
+          forbidden(path, 'package:ledgerly/domain/models/account.dart'),
+          isFalse,
+          reason: path,
+        );
+      }
+      for (final path in controllerLikeFiles) {
+        expect(forbidden(path, seed), isTrue, reason: path);
+        expect(
+          forbidden(
+            path,
+            'package:ledgerly/domain/use_cases/csv_import_use_case.dart',
+          ),
+          isFalse,
+          reason: path,
+        );
+      }
+    });
+
+    test(
+      'only a slice\'s own view_models/ folder gets the controller rule',
+      () {
+        // A view_models/ folder nested under views/ is still a view.
+        const nested =
+            'lib/ui/features/home/views/view_models/foo_providers.dart';
+        expect(forbidden(nested, repositoryProviders), isTrue);
+      },
+    );
+
     test('the theme stays pure and may import domain models', () {
       for (final uri in [
         'package:ledgerly/data/repositories/account_repository.dart',
@@ -317,6 +372,13 @@ import 'e.dart' if (dart.library.io) 'f.dart';
           'package:ledgerly/ui/features/home/views/home_screen.dart',
           'package:ledgerly/app/providers/repository_providers.dart',
           'package:drift/drift.dart',
+          // External SDKs belong in services.
+          'package:dio/dio.dart',
+          'package:file_picker/file_picker.dart',
+          'package:file_selector/file_selector.dart',
+          'package:path_provider/path_provider.dart',
+          'package:package_info_plus/package_info_plus.dart',
+          'package:url_launcher/url_launcher.dart',
         ]) {
           expect(forbidden(path, uri), isTrue, reason: '$path -> $uri');
         }
@@ -391,12 +453,18 @@ import 'e.dart' if (dart.library.io) 'f.dart';
     expect(dead, isEmpty);
   });
 
-  test('every lib/ui, lib/domain and lib/data file matches a rule', () {
+  test('every lib file matches a rule', () {
+    // Left out on purpose: main.dart, the service providers (the one file
+    // allowed to build services from platform plugins) and the generated
+    // l10n classes. A new top-level folder under lib/ fails here until a
+    // rule covers it.
     final config = _Config.load(File(_rulesFile).readAsStringSync());
-    final layered = RegExp(r'^lib/(ui|domain|data)/');
+    final exempt = RegExp(
+      r'^lib/(main\.dart|app/providers/service_providers\.dart|l10n/.*)$',
+    );
     final unmatched = [
       for (final path in _libFiles())
-        if (layered.hasMatch(path) &&
+        if (!exempt.hasMatch(path) &&
             !config.rules.any((r) => r.appliesTo(path)))
           path,
     ];

@@ -118,7 +118,7 @@ test('every rule applies to at least one lib file', () {
 });
 ```
 
-- **Coverage** (above) and **exactly one rule per `lib/ui/` file** came with the transitional rules in the first commit. Coverage failed at once on `lib/data/seed/first_run_seed.dart`, which no rule had ever covered. The exactly-one test keeps the `ui/` rules (and `core_stays_pure`, which owns the theme) from overlapping.
+- **Coverage** (above) and **exactly one rule per `lib/ui/` file** came with the transitional rules in the first commit. Coverage failed at once on `lib/data/seed/first_run_seed.dart`, which no rule had ever covered. The exactly-one test keeps the `ui/` rules (and the theme's rule) from overlapping. Review later widened coverage to every `lib/` file except `main.dart`, the service providers and generated l10n, so a new top-level folder fails too.
 - **Dead-rule guard** (above) and **example paths exist** came only in the cleanup commit (`571597a`), and both failed there. They could not land earlier: during the move the old-tree rules and pins are meant to point at files that are going away.
   - The dead-rule guard catches a rule whose folder has moved.
   - The example-paths test requires every path the pin tests use to be a real file. The mover never rewrites those strings, and a pin on a deleted path passes forever.
