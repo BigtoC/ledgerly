@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ledgerly/app/providers/default_currency_provider.dart';
@@ -34,6 +36,7 @@ ProviderContainer _container(
   _MockRepo repo, {
   Map<int, Account> accounts = const {},
   Map<int, AccountType> accountTypes = const {},
+  Stream<Map<int, AccountType>>? accountTypesStream,
 }) {
   final fxService = _MockExchangeRateService();
   when(() => fxService.fetchRates(any())).thenAnswer((_) async => []);
@@ -82,7 +85,7 @@ ProviderContainer _container(
         (ref) => Stream.value(accounts),
       ),
       analysisAccountTypesByIdProvider.overrideWith(
-        (ref) => Stream.value(accountTypes),
+        (ref) => accountTypesStream ?? Stream.value(accountTypes),
       ),
     ],
   );
@@ -216,7 +219,10 @@ void main() {
     );
 
     @Dependencies([ChartsController, ChartsSelectionController])
-    Future<ChartSlice> accountSlice(Account account) async {
+    Future<ProviderContainer> accountContainer(
+      Account account, {
+      Stream<Map<int, AccountType>>? accountTypes,
+    }) async {
       final repo = _MockRepo();
       when(
         () => repo.watchByAccountInRange(
@@ -249,6 +255,7 @@ void main() {
         repo,
         accounts: {account.id: account},
         accountTypes: const {1: cash},
+        accountTypesStream: accountTypes,
       );
       addTearDown(container.dispose);
       container
@@ -256,11 +263,19 @@ void main() {
           .setDimension(ChartDimension.account);
       container.listen(chartsControllerProvider, (_, _) {});
       await Future<void>.delayed(const Duration(milliseconds: 50));
+      return container;
+    }
 
+    @Dependencies([ChartsController])
+    ChartSlice onlySlice(ProviderContainer container) {
       final data =
           container.read(chartsControllerProvider).value as ChartsDataState;
       return data.chartData.slices.single;
     }
+
+    @Dependencies([ChartsController, ChartsSelectionController])
+    Future<ChartSlice> accountSlice(Account account) async =>
+        onlySlice(await accountContainer(account));
 
     test("an account with no icon or colour uses its type's", () async {
       final slice = await accountSlice(
@@ -283,6 +298,31 @@ void main() {
       );
       expect(slice.iconKey, 'credit_card');
       expect(slice.colorIndex, 3);
+    });
+
+    test('editing the account type re-emits the slice', () async {
+      final types = StreamController<Map<int, AccountType>>();
+      addTearDown(types.close);
+      types.add(const {1: cash});
+      final container = await accountContainer(
+        const Account(id: 7, name: 'Cash', accountTypeId: 1, currency: _usd),
+        accountTypes: types.stream,
+      );
+      expect(onlySlice(container).iconKey, 'wallet');
+      expect(onlySlice(container).colorIndex, 10);
+
+      types.add(const {
+        1: AccountType(
+          id: 1,
+          l10nKey: 'accountType.cash',
+          icon: 'savings',
+          color: 4,
+        ),
+      });
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(onlySlice(container).iconKey, 'savings');
+      expect(onlySlice(container).colorIndex, 4);
     });
   });
 
