@@ -101,7 +101,10 @@ class SliceDrilldownController extends _$SliceDrilldownController {
 
     final start = normalizeAnchor(selection.anchorDate, selection.period);
     final end = shiftAnchor(start, selection.period, 1);
-    final (categoryId, accountId, currencyCode) = selectionFilters(selected);
+    final (categoryId, accountId, currencyCode) = selectionFilters(
+      selected,
+      accountFilterId: selection.accountFilterId,
+    );
     final repo = ref.read(transactionRepositoryProvider);
 
     _subscription = repo
