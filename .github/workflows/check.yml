@@ -157,10 +157,12 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
 
+      # Both builds target arm64 only, which skips compiling arm and x64.
+      # android-release.yml still builds every ABI on release tags.
       - name: Build signed release APK
         if: steps.check-secrets.outputs.available == 'true'
-        run: flutter build apk --release --dart-define=FOREX_API_URL=${{ vars.FOREX_API_URL }}
+        run: flutter build apk --release --target-platform android-arm64 --dart-define=FOREX_API_URL=${{ vars.FOREX_API_URL }}
 
       - name: Build debug APK
         if: steps.check-secrets.outputs.available != 'true'
-        run: flutter build apk --debug --dart-define=FOREX_API_URL=${{ vars.FOREX_API_URL }}
+        run: flutter build apk --debug --target-platform android-arm64 --dart-define=FOREX_API_URL=${{ vars.FOREX_API_URL }}
