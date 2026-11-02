@@ -179,19 +179,46 @@ Four Flutter skills from `flutter/agent-plugins` are installed with `npx skills`
 
 Take its folder tree, its layers and the order of work: models → services → repositories → optional use case → view model → view. Don't take its state management, dependency injection or error handling. Map its terms like this:
 
-- **Project structure** → the skill's `lib/{ui,domain,data}/` tree is Ledgerly's tree. Ledgerly differs from it on purpose:
-  - `lib/app/` holds bootstrap, the router, `MaterialApp` and the Riverpod providers in `providers/`.
-  - `lib/core/` holds non-widget helpers any layer may import: formatters, icon and colour registries, CSV codecs, date helpers and `constants.dart`. Never put a widget there.
-  - `lib/data/` has `database/`, `repositories/`, `seed/` and `services/`, but no `models/`.
-  - `lib/domain/` has `models/`, which holds the Freezed models, and `use_cases/` (see *Use cases* below).
-  - `lib/ui/core/` holds `theme/` and the shared `widgets/` (today only `adaptive_shell.dart`).
-  - `lib/ui/features/<feature>/` has a flat `view_models/` and a flat `views/`, with no `widgets/` subfolder. A sub-slice nests under its parent with its own pair of folders, as `ui/features/analysis/charts/` and `ui/features/settings/csv_import/` do.
+- **Project structure** → Ledgerly uses the skill's `lib/{ui,domain,data}/` tree, plus `app/` and `core/`:
+
+  ```text
+  lib/
+  ├── main.dart
+  ├── app/                  # bootstrap, router, MaterialApp; Riverpod providers in providers/
+  ├── core/                 # non-widget helpers any layer may import: formatters, icon and
+  │                         # colour registries, CSV codecs, date helpers, constants.dart
+  ├── data/
+  │   ├── database/         # Drift tables, DAOs, AppDatabase and the generated row classes
+  │   ├── models/           # not created yet: see "When lib/data/ needs models" below
+  │   ├── repositories/     # map Drift rows and service results to domain models
+  │   ├── seed/             # first-run seed
+  │   └── services/         # HTTP, platform channels, files; return records, primitives, SDK types
+  ├── domain/
+  │   ├── models/           # Freezed models, the only model types the UI sees
+  │   └── use_cases/        # only for work that coordinates several repositories
+  ├── ui/
+  │   ├── core/
+  │   │   ├── theme/
+  │   │   └── widgets/      # shared widgets; today only adaptive_shell.dart
+  │   └── features/
+  │       └── <feature>/
+  │           ├── view_models/  # flat: *_controller, *_state, *_providers, pure helpers
+  │           └── views/        # flat: *_screen and every other widget; no widgets/ subfolder
+  └── l10n/                 # generated
+  ```
+
+  - Never put a widget in `lib/core/`.
+  - A sub-slice nests under its parent with its own `view_models/` and `views/`, as `ui/features/analysis/charts/` and `ui/features/settings/csv_import/` do.
 - **ViewModel extending `ChangeNotifier`** → a `@riverpod` controller in `lib/ui/features/<feature>/view_models/*_controller.dart`. It holds immutable Freezed state, usually a sealed `*_state.dart`, and exposes commands as methods. Slice-local helper providers go in `view_models/*_providers.dart`; only these two kinds of UI file may import `app/providers/repository_providers.dart`. Pure helpers the controller uses, such as `amount_formula.dart`, also go in `view_models/`.
 - **View with `ListenableBuilder`** → the slice's `views/`: routed screens are `*_screen.dart`, and every other widget sits beside them. A widget that reads state is a `ConsumerWidget` or `ConsumerStatefulWidget` that `ref.watch`es the controller and calls commands through `ref.read(...Provider.notifier)`; other widgets take constructor arguments.
 - **Constructor injection, `provider` / `get_it` (Step 7)** → Riverpod providers in `lib/app/providers/`: `repository_providers.dart` builds repositories and use cases, and `service_providers.dart` builds services. Controllers `ref.watch` them and tests override them. Run `build_runner` after adding or editing a provider.
-- **Services return API models or `Result`** → services return plain Dart values (records, primitives, SDK types) and repositories map them to the Freezed models in `lib/domain/models/`. Repositories throw typed exceptions rather than return results, because Drift rolls back a `db.transaction` only when an exception escapes it. Controllers expose reads as `AsyncValue` and return a Freezed sealed outcome from each command that can fail ([`PRD.md` → *Error Handling Pattern*](PRD.md#error-handling-pattern)). Never add a generic `Result` wrapper.
+- **Services return API models or `Result`** → services return plain Dart values (records, primitives, SDK types) and repositories map them to the Freezed models in `lib/domain/models/` (see *When `lib/data/` needs models* below). Repositories throw typed exceptions rather than return results, because Drift rolls back a `db.transaction` only when an exception escapes it. Controllers expose reads as `AsyncValue` and return a Freezed sealed outcome from each command that can fail ([`PRD.md` → *Error Handling Pattern*](PRD.md#error-handling-pattern)). Never add a generic `Result` wrapper.
 - **Use cases (Step 4)** → only when the work coordinates several repositories, in `lib/domain/use_cases/` (see `PRD.md`). A use case may import `data/database/app_database.dart` and nothing else from `data/database/`, so it can take `AppDatabase` and run one `db.transaction` across repositories. It never touches a DAO, a table or Drift.
 - **Step 8 (tests)** → write the failing test first (TDD rule above), in the layer folders of `docs/architecture/testing.md`.
+
+#### When `lib/data/` needs models
+
+Not yet. Services return records, and Drift generates its own row classes. Add `lib/data/models/` only for an external payload that is nested or large, needs `fromJson`/`toJson`, or is shared by several services or repositories, such as the Ankr wallet-sync API. Only services and repositories may import it. Before adding it, update `PRD.md` and `import_analysis_options.yaml`, which currently bans `data/models/`.
 
 ### `flutter-build-responsive-layout`
 
