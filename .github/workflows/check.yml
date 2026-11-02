@@ -98,7 +98,9 @@ jobs:
         run: flutter test test/unit/architecture/
 
       - name: Run tests
-        run: flutter test --reporter expanded
+        # Without -j, package:test runs numberOfProcessors / 2 test
+        # processes, which leaves half of the runner's CPUs idle.
+        run: flutter test -j "$(nproc)" --reporter expanded
 
   android-build:
     name: Android APK builds
