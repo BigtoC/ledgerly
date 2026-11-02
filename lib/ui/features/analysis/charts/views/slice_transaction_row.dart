@@ -126,6 +126,8 @@ class SliceTransactionRow extends StatelessWidget {
               child: _LabelThenAmount(
                 gap: 12,
                 expandLabel: true,
+                // The booked amount in the subtitle needs room too.
+                amountShare: convertedAmount == null ? 1 : 0.5,
                 label: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -178,14 +180,15 @@ class SliceTransactionRow extends StatelessWidget {
 
 /// [label], an optional [gap], then [amount] on one line. The amount keeps
 /// its natural size and the label gives way (ellipsizes) first; the amount
-/// scales down only when it alone is wider than the line, so it is never
-/// cut off (plan D2).
+/// scales down only when it alone is wider than its [amountShare] of the
+/// line, so it is never cut off (plan D2).
 class _LabelThenAmount extends StatelessWidget {
   const _LabelThenAmount({
     required this.label,
     required this.amount,
     this.gap = 0,
     this.expandLabel = false,
+    this.amountShare = 1,
   });
 
   final Widget label;
@@ -194,6 +197,10 @@ class _LabelThenAmount extends StatelessWidget {
 
   /// Whether the label fills the line, pushing the amount to the end.
   final bool expandLabel;
+
+  /// The most of the line, after [gap], the amount may take before it
+  /// scales down; the label keeps the rest.
+  final double amountShare;
 
   @override
   Widget build(BuildContext context) {
@@ -204,7 +211,7 @@ class _LabelThenAmount extends StatelessWidget {
           if (gap > 0) SizedBox(width: gap),
           ConstrainedBox(
             constraints: BoxConstraints(
-              maxWidth: math.max(0, constraints.maxWidth - gap),
+              maxWidth: math.max(0, (constraints.maxWidth - gap) * amountShare),
             ),
             child: FittedBox(fit: BoxFit.scaleDown, child: amount),
           ),

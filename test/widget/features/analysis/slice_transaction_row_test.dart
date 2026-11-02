@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:flutter/services.dart';
@@ -466,5 +468,64 @@ void main() {
       await tester.pumpAndSettle();
       expect(deleted, 1);
     });
+  });
+
+  // The test font's glyphs are 1em wide, about twice Roboto's, so a scale
+  // measured with it says nothing about a phone. Measure with the font
+  // phones use. Fonts stay loaded for the rest of the file, so keep this
+  // group last.
+  group('readable amounts at 2x (D2, Roboto)', () {
+    setUpAll(() async {
+      final root = Platform.environment['FLUTTER_ROOT']!;
+      for (final face in ['Regular', 'Medium']) {
+        final bytes = File(
+          '$root/bin/cache/artifacts/material_fonts/Roboto-$face.ttf',
+        ).readAsBytesSync();
+        await (FontLoader(
+          'Roboto',
+        )..addFont(Future.value(ByteData.sublistView(bytes)))).load();
+      }
+    });
+
+    /// How much [text] is scaled down from its laid-out width.
+    double scaleOf(WidgetTester tester, Finder text) =>
+        tester.getRect(text).width /
+        tester.renderObject<RenderBox>(text).size.width;
+
+    testWidgets(
+      '360 phone at 2x: with both amounts long, the converted amount and the '
+      'booked amount in the subtitle both stay legible',
+      (tester) async {
+        _usePhoneWidth(tester);
+        await tester.pumpWidget(
+          _wrap(
+            _row(
+              transaction: _tx(
+                memo: 'Lunch',
+                currency: _eur,
+                amountMinorUnits: 123456789012,
+              ),
+              convertedAmount: r'-$1,234,567,890.12',
+            ),
+            textScale: 2,
+          ),
+        );
+
+        expect(tester.takeException(), isNull);
+        final row = tester.getRect(find.byType(SliceTransactionRow));
+        final convertedText = find.text(r'-$1,234,567,890.12');
+        final bookedText = find.textContaining('-€1,234,567,890.12');
+        final converted = tester.getRect(convertedText);
+        final booked = tester.getRect(bookedText);
+        expect(booked.left, greaterThanOrEqualTo(row.left + 16));
+        expect(booked.right, lessThanOrEqualTo(converted.left - 12 + 0.01));
+        expect(converted.right, lessThanOrEqualTo(row.right - 16 + 0.01));
+        // Neither amount is scaled to nothing to make room for the other.
+        expect(scaleOf(tester, convertedText), greaterThanOrEqualTo(0.5));
+        expect(scaleOf(tester, bookedText), greaterThanOrEqualTo(0.5));
+        expect(_paragraph(tester, convertedText).didExceedMaxLines, isFalse);
+        expect(_paragraph(tester, bookedText).didExceedMaxLines, isFalse);
+      },
+    );
   });
 }
