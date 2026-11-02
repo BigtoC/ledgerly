@@ -148,17 +148,23 @@ void main() {
       semantics.dispose();
     });
 
-    testWidgets('tapping the selected tile keeps the type', (tester) async {
-      final container = await _pump(tester, _totals());
+    testWidgets(
+      'tapping the selected tile keeps the type and clears the slice',
+      (tester) async {
+        final container = await _pump(tester, _totals());
+        container
+            .read(chartsSelectionControllerProvider.notifier)
+            .toggleSlice(const SelectedSlice.category(1));
+        await tester.pump();
 
-      await tester.tap(find.byKey(_expenseTile));
-      await tester.pump();
+        await tester.tap(find.byKey(_expenseTile));
+        await tester.pump();
 
-      expect(
-        container.read(chartsSelectionControllerProvider).type,
-        CategoryType.expense,
-      );
-    });
+        final state = container.read(chartsSelectionControllerProvider);
+        expect(state.type, CategoryType.expense);
+        expect(state.selectedSlice, isNull);
+      },
+    );
 
     testWidgets('selected and unselected tiles use the design styles', (
       tester,

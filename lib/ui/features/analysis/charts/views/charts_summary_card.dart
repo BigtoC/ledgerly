@@ -43,8 +43,13 @@ class ChartsSummaryCard extends ConsumerWidget {
 
     @Dependencies([ChartsSelectionController])
     void select(CategoryType tapped) {
-      if (tapped == type) return;
-      ref.read(chartsSelectionControllerProvider.notifier).toggleType();
+      final selection = ref.read(chartsSelectionControllerProvider.notifier);
+      // Design: any tile tap sets the type and clears the slice.
+      if (tapped == type) {
+        selection.clearSlice();
+      } else {
+        selection.toggleType();
+      }
     }
 
     final net = totals?.netMinorUnits;
