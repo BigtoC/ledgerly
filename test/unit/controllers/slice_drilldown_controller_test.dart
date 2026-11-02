@@ -451,4 +451,88 @@ void main() {
 
     expect(stateLog.last.rows.map((t) => t.id), [1, 2]);
   });
+
+  group('account filter', () {
+    void stubRows() {
+      when(
+        () => repo.watchTransactionsForSliceInRange(
+          start: any(named: 'start'),
+          end: any(named: 'end'),
+          type: any(named: 'type'),
+          categoryId: any(named: 'categoryId'),
+          accountId: any(named: 'accountId'),
+          currencyCode: any(named: 'currencyCode'),
+        ),
+      ).thenAnswer((_) => Stream.value([_tx(1)]));
+    }
+
+    /// `(categoryId, accountId, currencyCode)` of the latest rows query.
+    (Object?, Object?, Object?) lastFilters() {
+      final captured = verify(
+        () => repo.watchTransactionsForSliceInRange(
+          start: any(named: 'start'),
+          end: any(named: 'end'),
+          type: any(named: 'type'),
+          categoryId: captureAny(named: 'categoryId'),
+          accountId: captureAny(named: 'accountId'),
+          currencyCode: captureAny(named: 'currencyCode'),
+        ),
+      ).captured;
+      final n = captured.length;
+      return (captured[n - 3], captured[n - 2], captured[n - 1]);
+    }
+
+    test(
+      'a category slice without a filter queries by category only',
+      () async {
+        stubRows();
+
+        await readData();
+
+        expect(lastFilters(), (1, null, null));
+      },
+    );
+
+    test('a category slice under the filter queries by category AND '
+        'account', () async {
+      stubRows();
+      final selection = container.read(
+        chartsSelectionControllerProvider.notifier,
+      );
+      selection.setAccountFilter(3);
+      selection.toggleSlice(const SelectedSlice.category(1));
+
+      await readData();
+
+      expect(lastFilters(), (1, 3, null));
+    });
+
+    test('a currency slice under the filter queries by currency AND '
+        'account', () async {
+      stubRows();
+      final selection = container.read(
+        chartsSelectionControllerProvider.notifier,
+      );
+      selection.setDimension(ChartDimension.currency);
+      selection.setAccountFilter(3);
+      selection.toggleSlice(const SelectedSlice.currency('USD'));
+
+      await readData();
+
+      expect(lastFilters(), (null, 3, 'USD'));
+    });
+
+    test('an account slice queries by its own account', () async {
+      stubRows();
+      final selection = container.read(
+        chartsSelectionControllerProvider.notifier,
+      );
+      selection.setDimension(ChartDimension.account);
+      selection.toggleSlice(const SelectedSlice.account(4));
+
+      await readData();
+
+      expect(lastFilters(), (null, 4, null));
+    });
+  });
 }

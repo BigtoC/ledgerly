@@ -162,6 +162,7 @@ class ChartsController extends _$ChartsController {
 
     final (categoryId, accountId, currencyCode) = selectionFilters(
       _selection.selectedSlice,
+      accountFilterId: _selection.accountFilterId,
     );
 
     _bucketsSub = repo
@@ -194,6 +195,7 @@ class ChartsController extends _$ChartsController {
               start: range.start,
               end: range.end,
               type: _selection.type,
+              accountId: _selection.accountFilterId,
             )
             .listen(
               (slices) => _onSlices(myGen, slices),
@@ -228,6 +230,7 @@ class ChartsController extends _$ChartsController {
               start: range.start,
               end: range.end,
               type: _selection.type,
+              accountId: _selection.accountFilterId,
             )
             .listen(
               (slices) => _onSlices(myGen, slices),

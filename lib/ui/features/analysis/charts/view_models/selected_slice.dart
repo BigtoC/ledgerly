@@ -31,15 +31,26 @@ sealed class SelectedSlice with _$SelectedSlice {
 /// currencyCode)` repository filter args. Keeps [SelectedSlice] inside the
 /// analysis layer — this is the only place it crosses into data-access
 /// territory.
-(int?, int?, String?) selectionFilters(SelectedSlice? selection) {
+///
+/// [accountFilterId] is the page-wide account filter. It fills `accountId`
+/// unless the slice is an account slice, which brings its own (the two
+/// never coexist: choosing the Account dimension clears the filter).
+(int?, int?, String?) selectionFilters(
+  SelectedSlice? selection, {
+  int? accountFilterId,
+}) {
   return switch (selection) {
-    null => (null, null, null),
+    null => (null, accountFilterId, null),
     SelectedCategorySlice(:final categoryId, :final currencyCode) => (
       categoryId,
-      null,
+      accountFilterId,
       currencyCode,
     ),
     SelectedAccountSlice(:final accountId) => (null, accountId, null),
-    SelectedCurrencySlice(:final currencyCode) => (null, null, currencyCode),
+    SelectedCurrencySlice(:final currencyCode) => (
+      null,
+      accountFilterId,
+      currencyCode,
+    ),
   };
 }

@@ -303,24 +303,36 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
   /// Per `(category_id, currency)` subtotal in `[start, end)`, filtered by
   /// `categories.type`. Emits ONE row per pair so the repository can run
   /// currency conversion before regrouping into final chart slices.
+  /// A non-null [accountId] adds an `AND t.account_id = ?` predicate; null
+  /// keeps the all-accounts output.
   Stream<List<({int categoryId, String currency, int total})>>
   watchCategoryTotalsInRange({
     required DateTime start,
     required DateTime end,
     required String type,
+    int? accountId,
   }) {
-    final query = attachedDatabase.customSelect(
+    final buf = StringBuffer(
       'SELECT t.category_id AS cat_id, t.currency AS code, '
       'SUM(t.amount_minor_units) AS total '
       'FROM transactions t '
       'JOIN categories c ON c.id = t.category_id '
-      'WHERE t.date >= ? AND t.date < ? AND c.type = ? '
-      'GROUP BY t.category_id, t.currency',
-      variables: [
-        Variable<DateTime>(start),
-        Variable<DateTime>(end),
-        Variable<String>(type),
-      ],
+      'WHERE t.date >= ? AND t.date < ? AND c.type = ?',
+    );
+    final variables = <Variable<Object>>[
+      Variable<DateTime>(start),
+      Variable<DateTime>(end),
+      Variable<String>(type),
+    ];
+    if (accountId != null) {
+      buf.write(' AND t.account_id = ?');
+      variables.add(Variable<int>(accountId));
+    }
+    buf.write(' GROUP BY t.category_id, t.currency');
+
+    final query = attachedDatabase.customSelect(
+      buf.toString(),
+      variables: variables,
       readsFrom: {transactions, attachedDatabase.categories},
     );
     return query.watch().map(
@@ -372,22 +384,34 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// Per `currency` total in `[start, end)`, filtered by `categories.type`.
+  /// A non-null [accountId] adds an `AND t.account_id = ?` predicate; null
+  /// keeps the all-accounts output.
   Stream<List<({String currency, int total})>> watchCurrencyTotalsInRange({
     required DateTime start,
     required DateTime end,
     required String type,
+    int? accountId,
   }) {
-    final query = attachedDatabase.customSelect(
+    final buf = StringBuffer(
       'SELECT t.currency AS code, SUM(t.amount_minor_units) AS total '
       'FROM transactions t '
       'JOIN categories c ON c.id = t.category_id '
-      'WHERE t.date >= ? AND t.date < ? AND c.type = ? '
-      'GROUP BY t.currency',
-      variables: [
-        Variable<DateTime>(start),
-        Variable<DateTime>(end),
-        Variable<String>(type),
-      ],
+      'WHERE t.date >= ? AND t.date < ? AND c.type = ?',
+    );
+    final variables = <Variable<Object>>[
+      Variable<DateTime>(start),
+      Variable<DateTime>(end),
+      Variable<String>(type),
+    ];
+    if (accountId != null) {
+      buf.write(' AND t.account_id = ?');
+      variables.add(Variable<int>(accountId));
+    }
+    buf.write(' GROUP BY t.currency');
+
+    final query = attachedDatabase.customSelect(
+      buf.toString(),
+      variables: variables,
       readsFrom: {transactions, attachedDatabase.categories},
     );
     return query.watch().map(

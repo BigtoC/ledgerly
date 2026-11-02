@@ -136,10 +136,14 @@ abstract class TransactionRepository {
   /// transaction type. Emits one row per pair so chart controllers can
   /// run currency conversion before regrouping. See basic-charts spec
   /// § Data Layer / Query Examples.
+  ///
+  /// A non-null [accountId] limits the rows to that account (the Analysis
+  /// account filter); null keeps the all-accounts output.
   Stream<List<CategorySlice>> watchByCategoryInRange({
     required DateTime start,
     required DateTime end,
     required CategoryType type,
+    int? accountId,
   });
 
   /// Per-(account, currency) subtotal in `[start, end)` filtered by
@@ -151,10 +155,13 @@ abstract class TransactionRepository {
   });
 
   /// Per-currency total in `[start, end)` filtered by transaction type.
+  /// A non-null [accountId] limits the rows to that account; null keeps the
+  /// all-accounts output.
   Stream<List<CurrencySlice>> watchByCurrencyInRange({
     required DateTime start,
     required DateTime end,
     required CategoryType type,
+    int? accountId,
   });
 
   /// Per-(bucketStart, currency) subtotal in `[start, end)` filtered by
@@ -388,12 +395,14 @@ final class DriftTransactionRepository implements TransactionRepository {
     required DateTime start,
     required DateTime end,
     required CategoryType type,
+    int? accountId,
   }) {
     return _dao
         .watchCategoryTotalsInRange(
           start: start,
           end: end,
           type: _typeWire(type),
+          accountId: accountId,
         )
         .map(
           (rows) => rows
@@ -438,12 +447,14 @@ final class DriftTransactionRepository implements TransactionRepository {
     required DateTime start,
     required DateTime end,
     required CategoryType type,
+    int? accountId,
   }) {
     return _dao
         .watchCurrencyTotalsInRange(
           start: start,
           end: end,
           type: _typeWire(type),
+          accountId: accountId,
         )
         .map(
           (rows) => rows
