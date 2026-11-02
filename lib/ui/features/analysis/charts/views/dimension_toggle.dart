@@ -59,7 +59,7 @@ class _DimensionChip extends StatelessWidget {
         // 44-high hit target around a 32-high pill; both are minimums so
         // the chip grows at large text scales. The pill's InkWell takes taps,
         // focus and the ripple; presses on the margin are sent to it too.
-        child: _RedirectToCenter(
+        child: RedirectToCenter(
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 44),
             child: Align(
@@ -125,8 +125,8 @@ class _DimensionChip extends StatelessWidget {
 /// Sends a press that lands on the child's margin (inside this box but
 /// missing every hit target) to the box's centre, as Material buttons do
 /// with their padded tap target, so the centred pill's InkWell gets it.
-class _RedirectToCenter extends SingleChildRenderObjectWidget {
-  const _RedirectToCenter({required super.child});
+class RedirectToCenter extends SingleChildRenderObjectWidget {
+  const RedirectToCenter({super.key, required super.child});
 
   @override
   RenderObject createRenderObject(BuildContext context) =>

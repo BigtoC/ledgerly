@@ -14,6 +14,7 @@ import 'package:ledgerly/data/services/exchange_rate_service.dart';
 import 'package:ledgerly/ui/features/analysis/views/analysis_screen.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_providers.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_controller.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/account_filter_providers.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_net_total_providers.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/slice_drilldown_controller.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/slice_drilldown_data.dart';
@@ -122,6 +123,7 @@ class _SlowDrilldownController extends SliceDrilldownController {
   analysisAccountsById,
   chartsFxStatus,
   chartsNetTotal,
+  chartsAccountFilterOptions,
 ])
 Future<ProviderContainer> _pumpAnalysisScreen(
   WidgetTester tester, {
@@ -226,6 +228,7 @@ Future<ProviderContainer> _pumpAnalysisScreen(
   analysisAccountsById,
   chartsFxStatus,
   chartsNetTotal,
+  chartsAccountFilterOptions,
 ])
 void main() {
   setUpAll(() {
@@ -331,6 +334,7 @@ void main() {
       analysisAccountsById,
       chartsFxStatus,
       chartsNetTotal,
+      chartsAccountFilterOptions,
     ])
     Future<ProviderContainer> pumpPhone(
       WidgetTester tester, {
