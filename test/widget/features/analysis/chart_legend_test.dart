@@ -434,6 +434,11 @@ void main() {
         tester.getRect(find.text(amount)).right,
         lessThanOrEqualTo(amountSlotRight(tester)),
       );
+      // Same 15/20 metrics: the unscaled amount shares the label's line.
+      expect(
+        tester.getRect(find.text(amount)).top,
+        tester.getRect(find.text(longLabel)).top,
+      );
     });
 
     testWidgets('at 2x a too-long amount scales down, never ellipsizes', (
@@ -457,6 +462,9 @@ void main() {
       expect(paragraph(tester, longLabel).didExceedMaxLines, isTrue);
       // Shrunk below the 40 px line it would take at 2x.
       expect(amountRect.height, lessThan(40));
+      // The shrunk amount stays centred on the label's line instead of
+      // riding up to its top.
+      expect(amountRect.center.dy, closeTo(labelRect.center.dy, 0.5));
     });
   });
 

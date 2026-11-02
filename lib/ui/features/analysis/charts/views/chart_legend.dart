@@ -161,9 +161,11 @@ class _RankedRow extends StatelessWidget {
                 // ellipsizes; it scales down only when it cannot fit beside
                 // a minimal label.
                 LayoutBuilder(
+                  // Centre, not baseline: FittedBox reports its child's
+                  // unscaled baseline, so a scaled amount would ride up.
+                  // Both texts share 15/20 metrics, so at full size centre
+                  // lands on the same baseline.
                   builder: (context, constraints) => Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
                     children: [
                       Expanded(
                         child: Text(
