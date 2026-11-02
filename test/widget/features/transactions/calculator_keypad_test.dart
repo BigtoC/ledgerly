@@ -18,9 +18,9 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/features/transactions/view_models/keypad_state.dart';
 import 'package:ledgerly/ui/features/transactions/views/calculator_keypad.dart';
-import 'package:ledgerly/l10n/app_localizations.dart';
 
 Widget _wrap(Widget child, {double? textScale}) => MaterialApp(
   localizationsDelegates: AppLocalizations.localizationsDelegates,

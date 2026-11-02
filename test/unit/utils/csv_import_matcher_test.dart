@@ -7,18 +7,18 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ledgerly/core/utils/fortune_city_csv_parser.dart';
-import 'package:ledgerly/domain/models/account.dart';
-import 'package:ledgerly/domain/models/account_type.dart';
-import 'package:ledgerly/domain/models/category.dart';
-import 'package:ledgerly/domain/models/csv_import.dart';
-import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/account_type_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/seed/first_run_seed.dart';
-import 'package:ledgerly/ui/features/settings/csv_import/view_models/csv_import_matcher.dart';
+import 'package:ledgerly/domain/models/account.dart';
+import 'package:ledgerly/domain/models/account_type.dart';
+import 'package:ledgerly/domain/models/category.dart';
+import 'package:ledgerly/domain/models/csv_import.dart';
+import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
+import 'package:ledgerly/ui/features/settings/csv_import/view_models/csv_import_matcher.dart';
 
 import '../../support/test_app.dart';
 

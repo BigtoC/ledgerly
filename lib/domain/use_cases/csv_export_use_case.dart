@@ -9,11 +9,11 @@ import 'dart:isolate';
 
 import '../../core/utils/date_helpers.dart';
 import '../../core/utils/transactions_csv.dart';
-import '../models/category.dart';
 import '../../data/repositories/account_repository.dart';
 import '../../data/repositories/category_repository.dart';
 import '../../data/repositories/transaction_repository.dart';
 import '../../data/services/csv_file_service.dart';
+import '../models/category.dart';
 
 class CsvExportUseCase {
   CsvExportUseCase({

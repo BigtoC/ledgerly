@@ -6,8 +6,8 @@ import 'package:ledgerly/domain/models/account.dart';
 import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/domain/models/transaction.dart';
-import 'package:ledgerly/ui/features/analysis/search/views/transaction_search_row.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
+import 'package:ledgerly/ui/features/analysis/search/views/transaction_search_row.dart';
 
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 

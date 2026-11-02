@@ -4,10 +4,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ledgerly/domain/models/currency.dart';
+import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/features/transactions/view_models/amount_formula.dart';
 import 'package:ledgerly/ui/features/transactions/view_models/keypad_state.dart';
 import 'package:ledgerly/ui/features/transactions/views/amount_display.dart';
-import 'package:ledgerly/l10n/app_localizations.dart';
 
 Widget _wrap(Widget child, {double? textScale}) => MaterialApp(
   localizationsDelegates: AppLocalizations.localizationsDelegates,

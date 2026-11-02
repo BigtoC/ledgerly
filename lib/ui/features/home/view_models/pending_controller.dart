@@ -12,8 +12,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../app/providers/repository_providers.dart';
 import '../../../../core/constants.dart';
-import '../../../../domain/models/pending_transaction.dart';
 import '../../../../data/repositories/pending_transaction_repository.dart';
+import '../../../../domain/models/pending_transaction.dart';
 import 'pending_state.dart';
 
 part 'pending_controller.g.dart';

@@ -12,9 +12,9 @@ import 'package:ledgerly/app/providers/exchange_rates_provider.dart';
 import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/domain/models/transaction.dart';
+import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/features/home/view_models/home_providers.dart';
 import 'package:ledgerly/ui/features/home/views/transaction_tile.dart';
-import 'package:ledgerly/l10n/app_localizations.dart';
 
 void main() {
   const hkd = Currency(code: 'HKD', decimals: 2, symbol: r'HK$');

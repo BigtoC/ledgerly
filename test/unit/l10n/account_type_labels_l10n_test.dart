@@ -1,8 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/domain/models/account_type.dart';
-import 'package:ledgerly/ui/features/accounts/views/account_type_display.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
+import 'package:ledgerly/ui/features/accounts/views/account_type_display.dart';
 
 void main() {
   final en = lookupAppLocalizations(const Locale('en'));

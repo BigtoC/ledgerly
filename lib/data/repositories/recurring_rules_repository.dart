@@ -7,14 +7,14 @@
 
 import 'package:drift/drift.dart' show Value;
 
+import '../../domain/models/currency.dart';
+import '../../domain/models/recurring_rule.dart';
+import '../../domain/models/recurring_rule_draft.dart';
 import '../database/app_database.dart' as drift;
 import '../database/daos/account_dao.dart';
 import '../database/daos/category_dao.dart';
 import '../database/daos/currency_dao.dart';
 import '../database/daos/recurring_rule_dao.dart';
-import '../../domain/models/currency.dart';
-import '../../domain/models/recurring_rule.dart';
-import '../../domain/models/recurring_rule_draft.dart';
 
 class RecurringRulesRepositoryException implements Exception {
   const RecurringRulesRepositoryException(this.message);

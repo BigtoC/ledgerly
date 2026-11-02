@@ -5,10 +5,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/features/transactions/view_models/transactions_providers.dart';
 import 'package:ledgerly/ui/features/transactions/views/memo_field.dart';
 import 'package:ledgerly/ui/features/transactions/views/memo_suggestions.dart';
-import 'package:ledgerly/l10n/app_localizations.dart';
 
 /// Hosts a MemoField + MemoSuggestions pair the way the form screen does:
 /// both read and write one memo value.

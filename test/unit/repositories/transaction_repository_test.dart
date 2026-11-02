@@ -19,10 +19,10 @@ import 'package:drift/drift.dart'
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/data/database/app_database.dart' show AppDatabase;
-import 'package:ledgerly/domain/models/currency.dart';
-import 'package:ledgerly/domain/models/transaction.dart';
 import 'package:ledgerly/data/repositories/repository_exceptions.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
+import 'package:ledgerly/domain/models/currency.dart';
+import 'package:ledgerly/domain/models/transaction.dart';
 
 import '_harness/test_app_database.dart';
 

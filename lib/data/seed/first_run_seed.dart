@@ -26,10 +26,10 @@
 import 'package:flutter/material.dart' show ThemeMode;
 
 import '../../core/utils/color_palette.dart';
-import '../database/app_database.dart' show AppDatabase;
 import '../../domain/models/account.dart';
 import '../../domain/models/category.dart';
 import '../../domain/models/currency.dart';
+import '../database/app_database.dart' show AppDatabase;
 import '../repositories/account_repository.dart';
 import '../repositories/account_type_repository.dart';
 import '../repositories/category_repository.dart';

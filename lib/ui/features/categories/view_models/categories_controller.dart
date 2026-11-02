@@ -27,8 +27,8 @@ import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../app/providers/repository_providers.dart';
-import '../../../../domain/models/category.dart';
 import '../../../../data/repositories/category_repository.dart';
+import '../../../../domain/models/category.dart';
 import 'categories_state.dart';
 
 part 'categories_controller.g.dart';

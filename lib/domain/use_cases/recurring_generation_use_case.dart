@@ -8,9 +8,9 @@
 // failure isolation while amortizing the outer fsync cost.
 
 import '../../data/database/app_database.dart';
-import '../models/recurring_rule.dart';
 import '../../data/repositories/pending_transaction_repository.dart';
 import '../../data/repositories/recurring_rules_repository.dart';
+import '../models/recurring_rule.dart';
 
 class RecurringGenerationUseCase {
   RecurringGenerationUseCase({

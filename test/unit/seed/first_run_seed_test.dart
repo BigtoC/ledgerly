@@ -7,7 +7,6 @@
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/data/database/app_database.dart' show AppDatabase;
-import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/account_type_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
@@ -15,6 +14,7 @@ import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/data/seed/first_run_seed.dart';
 import 'package:ledgerly/data/services/locale_service.dart';
+import 'package:ledgerly/domain/models/category.dart';
 
 import '../repositories/_harness/test_app_database.dart';
 

@@ -3,9 +3,9 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_state.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/daily_bar_chart.dart';
-import 'package:ledgerly/l10n/app_localizations.dart';
 
 void main() {
   int? touchedIndex(WidgetTester tester) {

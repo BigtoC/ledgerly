@@ -7,8 +7,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../app/providers/repository_providers.dart';
-import '../../../../domain/models/app_update.dart';
 import '../../../../data/repositories/app_update_repository.dart';
+import '../../../../domain/models/app_update.dart';
 import 'app_update_state.dart';
 
 part 'app_update_controller.g.dart';

@@ -14,11 +14,11 @@
 import 'package:drift/drift.dart' show Variable;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/data/database/app_database.dart' show AppDatabase;
-import 'package:ledgerly/domain/models/account_type.dart';
-import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/data/repositories/account_type_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/repository_exceptions.dart';
+import 'package:ledgerly/domain/models/account_type.dart';
+import 'package:ledgerly/domain/models/currency.dart';
 
 import '_harness/test_app_database.dart';
 
