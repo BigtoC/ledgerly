@@ -730,6 +730,14 @@ void main() {
       expect(label.style!.fontSize, 14);
       expect(label.style!.fontWeight, FontWeight.w500);
       expect(label.style!.color, _colors.expText);
+      // No letter spacing leaks in from TextButton's labelLarge.
+      final rendered = tester.widget<RichText>(
+        find.descendant(
+          of: find.text('Show 1 more'),
+          matching: find.byType(RichText),
+        ),
+      );
+      expect(rendered.text.style!.letterSpacing, 0);
 
       final button = find.ancestor(
         of: find.text('Show 1 more'),
