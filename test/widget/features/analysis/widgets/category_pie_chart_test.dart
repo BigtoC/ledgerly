@@ -242,6 +242,9 @@ void main() {
     testWidgets('clamps at 1.5x and keeps the amount within 128', (
       tester,
     ) async {
+      // D2: on a phone width at 2x.
+      await tester.binding.setSurfaceSize(const Size(360, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await _pump(
         tester,
         textScale: 2,
@@ -254,6 +257,13 @@ void main() {
       expect(
         tester.getRect(find.text(r'$1,234,567,890.12')).width,
         lessThanOrEqualTo(128),
+      );
+      // Shrunk, never ellipsized.
+      expect(
+        tester
+            .renderObject<RenderParagraph>(find.text(r'$1,234,567,890.12'))
+            .didExceedMaxLines,
+        isFalse,
       );
     });
   });

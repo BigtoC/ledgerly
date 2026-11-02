@@ -352,6 +352,26 @@ void main() {
     }
   });
 
+  testWidgets('a pressed row highlights clipped to its 14 radius', (
+    tester,
+  ) async {
+    await _pump(tester, onSelectSlice: (_) {});
+    final row = tester.getRect(_row('Food'));
+    final gesture = await tester.startGesture(row.center);
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(
+      Material.of(tester.element(find.text('Food'))) as RenderObject,
+      paints..rrect(
+        rrect: RRect.fromRectAndRadius(
+          Offset.zero & row.size,
+          const Radius.circular(14),
+        ),
+      ),
+    );
+    await gesture.up();
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('rows take keyboard focus and activate with Enter', (
     tester,
   ) async {
