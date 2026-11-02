@@ -3,6 +3,7 @@
 // whose values come from docs/design/analysis-redesign/Main.dc.html.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/ui/core/theme/analysis_colors.dart';
 import 'package:ledgerly/ui/core/theme/app_theme.dart';
@@ -220,6 +221,41 @@ void main() {
       expect(style.fontFeatures, const <FontFeature>[
         FontFeature.tabularFigures(),
       ]);
+    });
+
+    test('sets letter spacing to 0', () {
+      final style = analysisText(
+        size: 13,
+        lineHeight: 18,
+        color: AnalysisColors.light.fg,
+      );
+      expect(style.letterSpacing, 0);
+    });
+
+    testWidgets('renders with letter spacing 0 under the Material theme', (
+      tester,
+    ) async {
+      // Scaffold's Material sets an ambient bodyMedium (letter spacing 0.25)
+      // that the Text would otherwise inherit.
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: lightTheme,
+          home: Scaffold(
+            body: Text(
+              'Total',
+              style: analysisText(
+                size: 13,
+                lineHeight: 18,
+                color: AnalysisColors.light.fg,
+              ),
+            ),
+          ),
+        ),
+      );
+      final paragraph = tester.renderObject<RenderParagraph>(
+        find.text('Total'),
+      );
+      expect(paragraph.text.style!.letterSpacing, 0);
     });
   });
 }

@@ -218,7 +218,11 @@ abstract final class AnalysisMotion {
 }
 
 /// A design text style: CSS `font-size` / `line-height` in logical pixels,
-/// with half-leading like CSS, and tabular figures for amounts.
+/// with half-leading like CSS, and tabular figures for amounts. Letter
+/// spacing is 0 because the design sets none; without it the text would
+/// inherit Material's ambient spacing (bodyMedium 0.25, labelLarge 0.1).
+/// A caller that needs spacing, such as the currency code (0.3), sets it
+/// explicitly.
 TextStyle analysisText({
   required double size,
   required double lineHeight,
@@ -231,6 +235,7 @@ TextStyle analysisText({
     height: lineHeight / size,
     leadingDistribution: TextLeadingDistribution.even,
     fontWeight: weight,
+    letterSpacing: 0,
     color: color,
     fontFeatures: tabular
         ? const <FontFeature>[FontFeature.tabularFigures()]
