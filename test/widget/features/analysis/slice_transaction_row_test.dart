@@ -400,6 +400,9 @@ void main() {
             isFocusable: true,
             hasEnabledState: true,
             isEnabled: true,
+            // ListTile reports an always-false selected state.
+            hasSelectedState: true,
+            isSelected: false,
           ),
         );
         handle.dispose();

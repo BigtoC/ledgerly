@@ -114,10 +114,12 @@ class SliceTransactionRow extends StatelessWidget {
             ),
           ],
         ),
-        // A bare InkWell adds only the tap action; the button role and
-        // enabled state keep the ListTile row's semantics (plan D16).
+        // A bare InkWell adds only the tap action; the button role, the
+        // enabled state and the always-false selected state keep the
+        // ListTile row's semantics (plan D16).
         child: Semantics(
           button: true,
+          selected: false,
           enabled: true,
           child: InkWell(
             onTap: onTap,
