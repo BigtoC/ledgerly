@@ -481,30 +481,31 @@ void main() {
     );
   });
 
-  testWidgets('RRS16: subtitle shows the period next to the next due date', (
-    tester,
-  ) async {
-    final container = _makeContainer(
-      RecurringRulesState.data(
-        rules: [
-          _rule(id: 1, name: 'Coffee', frequency: 'daily'),
-          _rule(id: 2, name: 'Gym', frequency: 'weekly'),
-          _rule(id: 3, name: 'Rent', frequency: 'monthly'),
-          _rule(id: 4, name: 'Domain', frequency: 'yearly'),
-        ],
-        pendingDelete: null,
-      ),
-    );
-    addTearDown(container.dispose);
+  testWidgets(
+    'RRS16: subtitle shows the period and the weekday of the next due date',
+    (tester) async {
+      final container = _makeContainer(
+        RecurringRulesState.data(
+          rules: [
+            _rule(id: 1, name: 'Coffee', frequency: 'daily'),
+            _rule(id: 2, name: 'Gym', frequency: 'weekly'),
+            _rule(id: 3, name: 'Rent', frequency: 'monthly'),
+            _rule(id: 4, name: 'Domain', frequency: 'yearly'),
+          ],
+          pendingDelete: null,
+        ),
+      );
+      addTearDown(container.dispose);
 
-    await tester.pumpWidget(_wrap(container));
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(_wrap(container));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Daily · Next: Jun 15, 2026'), findsOneWidget);
-    expect(find.text('Weekly · Next: Jun 15, 2026'), findsOneWidget);
-    expect(find.text('Monthly · Next: Jun 15, 2026'), findsOneWidget);
-    expect(find.text('Yearly · Next: Jun 15, 2026'), findsOneWidget);
-  });
+      expect(find.text('Daily · Next: Mon, Jun 15, 2026'), findsOneWidget);
+      expect(find.text('Weekly · Next: Mon, Jun 15, 2026'), findsOneWidget);
+      expect(find.text('Monthly · Next: Mon, Jun 15, 2026'), findsOneWidget);
+      expect(find.text('Yearly · Next: Mon, Jun 15, 2026'), findsOneWidget);
+    },
+  );
   testWidgets('RRS17: period subtitle scales to 2x without truncating', (
     tester,
   ) async {
@@ -516,7 +517,7 @@ void main() {
       RecurringRulesState.data(rules: [_rule(id: 1)], pendingDelete: null),
     );
     addTearDown(container.dispose);
-    final subtitle = find.text('Monthly · Next: Jun 15, 2026');
+    final subtitle = find.text('Monthly · Next: Mon, Jun 15, 2026');
 
     await tester.pumpWidget(_wrap(container));
     await tester.pumpAndSettle();

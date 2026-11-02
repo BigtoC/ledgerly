@@ -215,7 +215,7 @@ class _RuleTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final dueText = l10n.recurringTileNextDue(
-      DateFormat.yMMMd().format(rule.nextDueDate),
+      DateFormat.yMMMEd().format(rule.nextDueDate),
     );
     final period = switch (rule.frequency) {
       'daily' => l10n.recurringFrequencyDaily,
