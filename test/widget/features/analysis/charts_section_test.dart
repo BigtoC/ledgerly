@@ -166,6 +166,29 @@ void main() {
       expect(find.byType(CategoryPieChart), findsNothing);
     });
 
+    testWidgets('the loading spinner gets 24 above and below it', (
+      tester,
+    ) async {
+      // A slice query that never answers keeps the section loading.
+      await _pumpSection(
+        tester,
+        categoryStream: (_) => const Stream.empty(),
+        settle: false,
+      );
+
+      final spinner = inCard(find.byType(CircularProgressIndicator));
+      expect(spinner, findsOneWidget);
+      expect(
+        tester.getTopLeft(spinner).dy,
+        tester.getBottomLeft(inCard(find.byType(DimensionChips))).dy + 24,
+      );
+      // 24 below the spinner, then the card's 8 bottom padding and 1 border.
+      expect(
+        tester.getBottomLeft(spinner).dy,
+        tester.getBottomLeft(find.byType(ChartsBreakdownCard)).dy - 24 - 9,
+      );
+    });
+
     testWidgets('FX banners stay above the card', (tester) async {
       await _pumpSection(
         tester,
@@ -280,6 +303,8 @@ Future<_MockTxRepo> _pumpSection(
     CategorySlice(categoryId: 1, currencyCode: 'USD', totalMinorUnits: 5000),
   ],
   bool withBuckets = true,
+  Stream<List<CategorySlice>> Function(CategoryType type)? categoryStream,
+  bool settle = true,
 }) async {
   final repo = _MockTxRepo();
   // The first period queried has income +\$30.00; any other period has
@@ -307,7 +332,13 @@ Future<_MockTxRepo> _pumpSection(
       end: any(named: 'end'),
       type: any(named: 'type'),
     ),
-  ).thenAnswer((_) => Stream.value(slices));
+  ).thenAnswer(
+    (invocation) =>
+        categoryStream?.call(
+          invocation.namedArguments[#type] as CategoryType,
+        ) ??
+        Stream.value(slices),
+  );
   when(
     () => repo.watchByAccountInRange(
       start: any(named: 'start'),
@@ -391,6 +422,11 @@ Future<_MockTxRepo> _pumpSection(
       ),
     ),
   );
+  if (!settle) {
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    return repo;
+  }
   await tester.pumpAndSettle();
   if (period != null) {
     // Drive the period through the production selection controller.

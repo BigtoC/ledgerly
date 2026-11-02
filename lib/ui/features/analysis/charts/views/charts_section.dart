@@ -179,11 +179,7 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
           controller,
           selection,
           selectionNotifier,
-          body: _inCard(
-            selection,
-            selectionNotifier,
-            const Center(child: CircularProgressIndicator()),
-          ),
+          body: _inCard(selection, selectionNotifier, _loadingBody),
           l10n: l10n,
         ),
         error: (e, _) => _frame(
@@ -210,11 +206,7 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
             // DataState body, which forced fl_chart's pie/bar StatefulWidget
             // state to remount on every slice tap.
             body: previous == null
-                ? _inCard(
-                    selection,
-                    selectionNotifier,
-                    const Center(child: CircularProgressIndicator()),
-                  )
+                ? _inCard(selection, selectionNotifier, _loadingBody)
                 : _ChartBody(
                     data: previous,
                     locale: locale,
@@ -324,6 +316,12 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
       ],
     );
   }
+
+  // 24 above and below, like the blocked body.
+  static const _loadingBody = Padding(
+    padding: EdgeInsets.symmetric(vertical: 24),
+    child: Center(child: CircularProgressIndicator()),
+  );
 
   Widget _errorBody(Object error, ChartsController controller) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 16),
