@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
@@ -141,6 +142,53 @@ void main() {
       tester.getSize(_pill('Category')).width,
       tester.getSize(find.text('Category')).width + 30,
     );
+  });
+
+  testWidgets('chips keep the Material ink ripple on the pill', (tester) async {
+    await _pump(tester);
+    expect(
+      find.descendant(
+        of: find.byType(DimensionChips),
+        matching: find.byType(InkWell),
+      ),
+      findsNWidgets(3),
+    );
+    // The ink sits inside the pill, above its fill, clipped to its radius,
+    // with Material's default overlay colours.
+    final ink = find.descendant(
+      of: _pill('Account'),
+      matching: find.byType(InkWell),
+    );
+    expect(ink, findsOneWidget);
+    expect(tester.getSize(ink), tester.getSize(_pill('Account')));
+    final inkWell = tester.widget<InkWell>(ink);
+    expect(inkWell.borderRadius, BorderRadius.circular(16));
+    expect(inkWell.overlayColor, isNull);
+    expect(inkWell.splashColor, isNull);
+    expect(inkWell.highlightColor, isNull);
+  });
+
+  testWidgets('chips take keyboard focus and activate with Enter', (
+    tester,
+  ) async {
+    ChartDimension? picked;
+    await _pump(tester, onChanged: (d) => picked = d);
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    expect(picked, ChartDimension.account);
+  });
+
+  testWidgets('the 44-high target outside the pill still picks the chip', (
+    tester,
+  ) async {
+    ChartDimension? picked;
+    await _pump(tester, onChanged: (d) => picked = d);
+    final pill = tester.getRect(_pill('Currency'));
+    // 3 dp above the pill: inside the 44 target, outside the 32 pill.
+    await tester.tapAt(Offset(pill.center.dx, pill.top - 3));
+    expect(picked, ChartDimension.currency);
   });
 
   testWidgets('chips grow instead of clipping at 2x text scale', (

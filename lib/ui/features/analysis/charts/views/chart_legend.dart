@@ -112,14 +112,8 @@ class _RankedRow extends StatelessWidget {
     // time so the row shows the localized name.
     final label = categoryDisplayNameForKey(slice.label, l10n);
 
-    final row = AnimatedContainer(
-      duration: AnalysisMotion.standardDuration,
-      curve: AnalysisMotion.standardCurve,
+    final content = Padding(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-      decoration: BoxDecoration(
-        color: selected ? colors.sel : colors.sel.withValues(alpha: 0),
-        borderRadius: BorderRadius.circular(14),
-      ),
       child: Row(
         children: [
           AnimatedOpacity(
@@ -251,17 +245,28 @@ class _RankedRow extends StatelessWidget {
     );
 
     final tap = onTap;
+    final row = AnimatedContainer(
+      duration: AnalysisMotion.standardDuration,
+      curve: AnalysisMotion.standardCurve,
+      decoration: BoxDecoration(
+        color: selected ? colors.sel : colors.sel.withValues(alpha: 0),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      // The ink paints on this transparent Material, above the sel fill.
+      child: tap == null
+          ? content
+          : Material(
+              type: MaterialType.transparency,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: tap,
+                child: content,
+              ),
+            ),
+    );
     if (tap == null) return row;
     return MergeSemantics(
-      child: Semantics(
-        button: true,
-        selected: selected,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: tap,
-          child: row,
-        ),
-      ),
+      child: Semantics(button: true, selected: selected, child: row),
     );
   }
 }

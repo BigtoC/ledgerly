@@ -55,11 +55,13 @@ class _DimensionChip extends StatelessWidget {
       child: Semantics(
         button: true,
         selected: selected,
+        // 44-high hit target around a 32-high pill; both are minimums so
+        // the chip grows at large text scales. The pill's InkWell takes taps,
+        // focus and the ripple; this detector only catches the margin.
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
+          excludeFromSemantics: true,
           onTap: onTap,
-          // 44-high hit target around a 32-high pill; both are minimums so
-          // the chip grows at large text scales.
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 44),
             child: Align(
@@ -78,27 +80,38 @@ class _DimensionChip extends StatelessWidget {
                   duration: AnalysisMotion.standardDuration,
                   curve: AnalysisMotion.standardCurve,
                   constraints: const BoxConstraints(minHeight: 32),
-                  // 14 padding inside the 1 px border.
-                  padding: const EdgeInsets.fromLTRB(15, 1, 15, 1),
                   decoration: BoxDecoration(
                     color: selected
                         ? colors.onBg
                         : colors.onBg.withValues(alpha: 0),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Align(
-                    widthFactor: 1,
-                    heightFactor: 1,
-                    child: AnimatedDefaultTextStyle(
-                      duration: AnalysisMotion.standardDuration,
-                      curve: AnalysisMotion.standardCurve,
-                      style: analysisText(
-                        size: 14,
-                        lineHeight: 20,
-                        weight: FontWeight.w500,
-                        color: selected ? colors.onFg : colors.fg2,
+                  // The ink paints on this transparent Material, above the
+                  // fill.
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: onTap,
+                      child: Padding(
+                        // 14 padding inside the 1 px border.
+                        padding: const EdgeInsets.fromLTRB(15, 1, 15, 1),
+                        child: Align(
+                          widthFactor: 1,
+                          heightFactor: 1,
+                          child: AnimatedDefaultTextStyle(
+                            duration: AnalysisMotion.standardDuration,
+                            curve: AnalysisMotion.standardCurve,
+                            style: analysisText(
+                              size: 14,
+                              lineHeight: 20,
+                              weight: FontWeight.w500,
+                              color: selected ? colors.onFg : colors.fg2,
+                            ),
+                            child: Text(label),
+                          ),
+                        ),
                       ),
-                      child: Text(label),
                     ),
                   ),
                 ),

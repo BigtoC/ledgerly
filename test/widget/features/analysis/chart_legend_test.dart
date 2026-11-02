@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/core/utils/color_palette.dart';
@@ -146,9 +147,32 @@ void main() {
     await _pump(tester);
 
     final row = tester.widget<AnimatedContainer>(_row('Food'));
+    // Padding 10 8 inside the row.
+    final rowRect = tester.getRect(_row('Food'));
+    expect(tester.getTopLeft(find.text('Food')).dy, rowRect.top + 10);
     expect(
-      row.padding,
-      const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      tester
+          .getTopLeft(
+            find
+                .ancestor(
+                  of: find.byIcon(iconForKey('restaurant')),
+                  matching: find.byType(Container),
+                )
+                .first,
+          )
+          .dx,
+      rowRect.left + 8,
+    );
+    expect(
+      tester
+          .getTopRight(
+            find.descendant(
+              of: _row('Food'),
+              matching: find.byIcon(Icons.chevron_right),
+            ),
+          )
+          .dx,
+      rowRect.right - 8,
     );
     final deco = row.decoration! as BoxDecoration;
     expect(deco.borderRadius, BorderRadius.circular(14));
@@ -306,6 +330,38 @@ void main() {
     );
     expect(find.byType(AnimatedFractionallySizedBox), findsNothing);
     expect(find.textContaining('%'), findsNothing);
+  });
+
+  testWidgets('rows keep the Material ink ripple over the whole row', (
+    tester,
+  ) async {
+    await _pump(tester, selected: 1, onSelectSlice: (_) {});
+    for (final label in ['Food', 'Transport']) {
+      // Inside the row container, so the ripple paints above the sel fill.
+      final ink = find.descendant(
+        of: _row(label),
+        matching: find.byType(InkWell),
+      );
+      expect(ink, findsOneWidget, reason: label);
+      expect(tester.getSize(ink), tester.getSize(_row(label)));
+      final inkWell = tester.widget<InkWell>(ink);
+      expect(inkWell.borderRadius, BorderRadius.circular(14));
+      expect(inkWell.overlayColor, isNull);
+      expect(inkWell.splashColor, isNull);
+      expect(inkWell.highlightColor, isNull);
+    }
+  });
+
+  testWidgets('rows take keyboard focus and activate with Enter', (
+    tester,
+  ) async {
+    int? picked = -1;
+    await _pump(tester, onSelectSlice: (i) => picked = i);
+    // Food ranks first; its original slice index is 1.
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    expect(picked, 1);
   });
 
   testWidgets('rows grow at 2x text scale', (tester) async {
