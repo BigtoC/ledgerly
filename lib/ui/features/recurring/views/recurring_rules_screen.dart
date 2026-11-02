@@ -12,9 +12,13 @@ import 'package:intl/intl.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../../core/constants.dart';
+import '../../../../core/utils/color_palette.dart';
+import '../../../../core/utils/icon_registry.dart';
+import '../../../../domain/models/category.dart';
 import '../../../../domain/models/recurring_rule.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../view_models/recurring_rules_controller.dart';
+import '../view_models/recurring_rules_providers.dart';
 import '../view_models/recurring_rules_state.dart';
 
 @Dependencies([RecurringRulesController])
@@ -104,6 +108,8 @@ class _RuleList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final controller = ref.read(recurringRulesControllerProvider.notifier);
+    final categories =
+        ref.watch(recurringCategoriesByIdProvider).value ?? const {};
     return ListView.builder(
       itemCount: rules.length,
       itemBuilder: (ctx, i) {
@@ -111,6 +117,7 @@ class _RuleList extends ConsumerWidget {
         return _RuleTile(
           key: ValueKey('recurringRuleTile:${rule.id}'),
           rule: rule,
+          category: categories[rule.categoryId],
           onTap: () => context.push('/settings/recurring/${rule.id}'),
           onPause: () async {
             final outcome = await controller.pauseRule(rule.id);
@@ -186,6 +193,7 @@ class _RuleTile extends StatelessWidget {
   const _RuleTile({
     super.key,
     required this.rule,
+    required this.category,
     required this.onTap,
     required this.onPause,
     required this.onResume,
@@ -193,6 +201,10 @@ class _RuleTile extends StatelessWidget {
   });
 
   final RecurringRule rule;
+
+  /// Null while the lookup loads or when the category no longer exists;
+  /// the tile then shows a neutral icon, as Home's `TransactionTile` does.
+  final Category? category;
   final VoidCallback onTap;
   final VoidCallback onPause;
   final VoidCallback onResume;
@@ -203,14 +215,30 @@ class _RuleTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final dueText = l10n.recurringTileNextDue(
-      DateFormat.yMMMd().format(rule.nextDueDate),
+      DateFormat.yMMMEd().format(rule.nextDueDate),
     );
+    final period = switch (rule.frequency) {
+      'daily' => l10n.recurringFrequencyDaily,
+      'weekly' => l10n.recurringFrequencyWeekly,
+      'monthly' => l10n.recurringFrequencyMonthly,
+      'yearly' => l10n.recurringFrequencyYearly,
+      _ => rule.frequency,
+    };
+    final cat = category;
+    final color = cat != null ? colorForIndex(cat.color) : theme.disabledColor;
     final inactive = !rule.isActive;
     final tile = Opacity(
       opacity: inactive ? 0.6 : 1.0,
       child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: color.withValues(alpha: 0.15),
+          child: Icon(
+            cat != null ? iconForKey(cat.icon) : Icons.help_outline,
+            color: color,
+          ),
+        ),
         title: Text(rule.name),
-        subtitle: Text(dueText),
+        subtitle: Text('$period · $dueText'),
         trailing: inactive
             ? Chip(
                 label: Text(l10n.recurringTilePaused),
