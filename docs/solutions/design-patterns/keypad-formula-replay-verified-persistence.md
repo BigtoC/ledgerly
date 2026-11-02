@@ -43,7 +43,7 @@ The add/edit transaction keypad accepts expressions such as `3.5 + 10.5 + 11 + 3
 
 #51 then added a nullable `transactions.amount_formula` TEXT column (Drift v5 → v6) and replays the formula on Edit and Duplicate. Review rounds and fuzzing turned up several bugs before merge, and #53 removed a duplicated state that had already drifted apart. The rules below are what survived.
 
-Code: `lib/features/transactions/keypad_state.dart` (state machine and arithmetic), `amount_formula.dart` (codec and shared renderer), `widgets/amount_display.dart` (history line), `transaction_form_controller.dart` (`_keypadForStored`), `lib/data/repositories/transaction_repository.dart` (`_toCompanion`). The authoritative format spec is `PRD.md` → *transactions* notes on `amount_formula`.
+Code: `lib/ui/features/transactions/view_models/keypad_state.dart` (state machine and arithmetic), `amount_formula.dart` (codec and shared renderer), `lib/ui/features/transactions/views/amount_display.dart` (history line), `transaction_form_controller.dart` (`_keypadForStored`), `lib/data/repositories/transaction_repository.dart` (`_toCompanion`). The authoritative format spec is `PRD.md` → *transactions* notes on `amount_formula`.
 
 ## Guidance
 
@@ -144,7 +144,7 @@ Example-based tests didn't catch the clamp or cache bugs. Two throwaway harnesse
   - `fromFormula(...).amountMinorUnits == state.equals(decimals: d).amountMinorUnits`;
   - re-encoding gives `f`;
   - pressing `+ 1 =` after a reload gives the same result as pressing it after the live keys.
-- **Differential fuzz for behaviour-preserving refactors** (~975k steps). Before committing the refactor, copy the previous class next to the test (`git show <pre-refactor-commit>:lib/features/transactions/keypad_state.dart > test/unit/utils/zz_old_keypad_state.dart`). Rename it `OldKeypadState`, delete its `CalcOperator` enum, and switch its imports to `package:` imports (`amount_formula.dart`, plus `keypad_state.dart` `show CalcOperator`, so both classes share the enum). Run both on identical random keys and compare every observable field, before and after `equals`:
+- **Differential fuzz for behaviour-preserving refactors** (~975k steps). Before committing the refactor, copy the previous class next to the test (`git show <pre-refactor-commit>:lib/ui/features/transactions/view_models/keypad_state.dart > test/unit/utils/zz_old_keypad_state.dart`). Rename it `OldKeypadState`, delete its `CalcOperator` enum, and switch its imports to `package:` imports (`amount_formula.dart`, plus `keypad_state.dart` `show CalcOperator`, so both classes share the enum). Run both on identical random keys and compare every observable field, before and after `equals`:
 
   ```dart
   n = press(n, key, d);

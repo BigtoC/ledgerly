@@ -12,10 +12,10 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:ledgerly/data/database/app_database.dart'
     show AppDatabase, TransactionRow;
-import 'package:ledgerly/data/models/account.dart';
-import 'package:ledgerly/data/models/category.dart';
-import 'package:ledgerly/data/models/csv_import.dart';
-import 'package:ledgerly/data/models/transaction.dart';
+import 'package:ledgerly/domain/models/account.dart';
+import 'package:ledgerly/domain/models/category.dart';
+import 'package:ledgerly/domain/models/csv_import.dart';
+import 'package:ledgerly/domain/models/transaction.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/account_type_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
@@ -23,7 +23,7 @@ import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/seed/first_run_seed.dart';
 import 'package:ledgerly/data/services/csv_file_service.dart';
-import 'package:ledgerly/data/use_cases/csv_import_use_case.dart';
+import 'package:ledgerly/domain/use_cases/csv_import_use_case.dart';
 
 import '../../support/test_app.dart';
 

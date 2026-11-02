@@ -10,8 +10,8 @@ import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
 import 'package:ledgerly/app/providers/theme_provider.dart';
 import 'package:ledgerly/app/router.dart';
-import 'package:ledgerly/features/transactions/widgets/category_chip.dart';
-import 'package:ledgerly/features/transactions/widgets/memo_field.dart';
+import 'package:ledgerly/ui/features/transactions/views/category_chip.dart';
+import 'package:ledgerly/ui/features/transactions/views/memo_field.dart';
 
 import '../support/test_app.dart';
 

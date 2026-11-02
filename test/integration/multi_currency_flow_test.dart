@@ -20,11 +20,11 @@ import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
 import 'package:ledgerly/app/providers/theme_provider.dart';
 import 'package:ledgerly/app/router.dart';
-import 'package:ledgerly/features/home/home_controller.dart';
-import 'package:ledgerly/features/home/home_screen.dart';
-import 'package:ledgerly/features/home/pending_controller.dart';
-import 'package:ledgerly/features/home/widgets/summary_strip.dart';
-import 'package:ledgerly/features/shopping_list/shopping_list_providers.dart';
+import 'package:ledgerly/ui/features/home/view_models/home_controller.dart';
+import 'package:ledgerly/ui/features/home/views/home_screen.dart';
+import 'package:ledgerly/ui/features/home/view_models/pending_controller.dart';
+import 'package:ledgerly/ui/features/home/views/summary_strip.dart';
+import 'package:ledgerly/ui/features/shopping_list/view_models/shopping_list_providers.dart';
 
 import '../support/test_app.dart';
 

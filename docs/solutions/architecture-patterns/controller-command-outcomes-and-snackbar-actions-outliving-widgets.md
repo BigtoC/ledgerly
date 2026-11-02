@@ -108,7 +108,7 @@ sealed class ArchiveAccountOutcome with _$ArchiveAccountOutcome {
 }
 ```
 
-- **Why `*_state.dart`.** The layer rule `states_forbid_data_internals` stops state files from importing repositories. An outcome therefore cannot carry a repository exception type, and the controller translates.
+- **Why `*_state.dart`.** The layer rule `widgets_forbid_data_internals` stops state files from importing repositories. An outcome therefore cannot carry a repository exception type, and the controller translates.
 - **Naming.** The union is `<Verb><Noun>Outcome` and each subclass is `<Verb><Noun><Variant>`. Each variant's doc comment says what the widget does.
 - **Data rides in the success variant,** for example `SaveAccountOutcome.ok(int accountId)`.
 - **Add a variant only when the widget acts differently.** Delete variants that cannot be reached. The categories `typeLocked` variant and its string were removed because the type toggle is disabled in edit mode.
@@ -205,7 +205,7 @@ Follow Example 2:
 
 ## Examples
 
-### 1. Archive with Undo (`accounts/widgets/manage_accounts_body.dart`)
+### 1. Archive with Undo (`accounts/views/manage_accounts_body.dart`)
 
 Before. The widget branched on exception kinds, and Undo read the tile's `ref`, which threw once the tile had unmounted (`MAB08`):
 
@@ -254,7 +254,7 @@ switch (outcome) {
 
 `_undoArchive` is `static` and uses only what was captured. It calls `container.read(accountsControllerProvider.notifier).unarchive(id)` and shows the generic snackbar on `UnarchiveAccountFailed`.
 
-### 2. Transaction form hydration (`transactions/transaction_form_controller.dart`)
+### 2. Transaction form hydration (`transactions/view_models/transaction_form_controller.dart`)
 
 Before:
 
@@ -288,7 +288,7 @@ try {
 }
 ```
 
-### 3. Recurring rule save (`recurring/recurring_rule_form_controller.dart`)
+### 3. Recurring rule save (`recurring/view_models/recurring_rule_form_controller.dart`)
 
 Before, a throw from generation escaped `save()` after the insert had committed:
 

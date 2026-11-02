@@ -5,7 +5,7 @@ import 'package:dio/dio.dart';
 /// Fetches exchange rates from the hosted Cloudflare Worker endpoint.
 /// Returns raw parsed data as anonymous Dart records — the
 /// `services_forbid_upstream_and_siblings` import rule forbids this
-/// layer from importing `data/models/` or `data/repositories/`.
+/// layer from importing `domain/models/` or `data/repositories/`.
 ///
 /// The endpoint URL comes from the `FOREX_API_URL` compile-time define
 /// (`--dart-define`). Currency codes passed in [pairs] are validated

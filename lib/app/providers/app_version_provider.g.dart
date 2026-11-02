@@ -12,7 +12,7 @@ part of 'app_version_provider.dart';
 ///
 /// Features read this instead of the package-info service, which the
 /// layer rules in `import_analysis_options.yaml` keep out of
-/// `lib/features/`.
+/// `lib/ui/`.
 
 @ProviderFor(appVersion)
 final appVersionProvider = AppVersionProvider._();
@@ -21,7 +21,7 @@ final appVersionProvider = AppVersionProvider._();
 ///
 /// Features read this instead of the package-info service, which the
 /// layer rules in `import_analysis_options.yaml` keep out of
-/// `lib/features/`.
+/// `lib/ui/`.
 
 final class AppVersionProvider
     extends
@@ -37,7 +37,7 @@ final class AppVersionProvider
   ///
   /// Features read this instead of the package-info service, which the
   /// layer rules in `import_analysis_options.yaml` keep out of
-  /// `lib/features/`.
+  /// `lib/ui/`.
   AppVersionProvider._()
     : super(
         from: null,

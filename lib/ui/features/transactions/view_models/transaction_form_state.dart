@@ -1,0 +1,367 @@
+// Transaction-form sealed state — Wave 2 §5 / Task 5 shopping-list.
+//
+// Variants:
+//   - `loading`   — initial, before `hydrateFor*` resolves.
+//   - `empty`     — recoverable no-account or not-found state. The form
+//                   cannot proceed until the user fixes the missing
+//                   dependency (create account, or pop back to Home).
+//   - `data`      — the live form. Every keypad / picker / save command
+//                   maps to a `copyWith` on this variant.
+//   - `error`     — irrecoverable hydration failure. Command failures
+//                   (save, delete, draft save/convert) do NOT enter this
+//                   variant: the command keeps the form in `.data`, clears
+//                   its in-flight flag and returns a `failed` outcome (see
+//                   "Command outcomes" below) that the screen maps to a
+//                   snackbar such as `txSaveFailedSnackbar`.
+//
+// `canSave` / `canSaveDraft` / `canConvertDraft` are getters on the union
+// (Freezed `const _();` pattern); they return `false` on every variant
+// except `data` so widgets can read them uniformly.
+
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+import '../../../../domain/models/account.dart';
+import '../../../../domain/models/category.dart';
+import '../../../../domain/models/currency.dart';
+import '../../../../domain/models/transaction.dart';
+import 'keypad_state.dart';
+
+part 'transaction_form_state.freezed.dart';
+
+// ---------------------------------------------------------------------------
+// Typed form mode — Task 5 §1
+// ---------------------------------------------------------------------------
+
+/// Discriminates which entry point opened the form. The controller reads
+/// this to decide which hydration path and which commands to expose; the
+/// screen reads it to derive the AppBar title and CTA set.
+sealed class TransactionFormMode {
+  const TransactionFormMode();
+}
+
+/// Standard Add-transaction flow. [initialDate] (optional) seeds the date
+/// field from the Home day-nav selection.
+class AddTransactionMode extends TransactionFormMode {
+  const AddTransactionMode({this.initialDate});
+
+  final DateTime? initialDate;
+}
+
+/// Duplicate an existing transaction — prefills amount/category/memo and
+/// resets date to today.
+class DuplicateTransactionMode extends TransactionFormMode {
+  const DuplicateTransactionMode({required this.sourceTransactionId});
+
+  final int sourceTransactionId;
+}
+
+/// Edit an existing transaction in place.
+class EditTransactionMode extends TransactionFormMode {
+  const EditTransactionMode({required this.transactionId});
+
+  final int transactionId;
+}
+
+/// Edit a shopping-list draft. Hydrates from the draft row, exposes
+/// `saveDraft` and `convertDraft` commands rather than the normal `save`.
+class EditShoppingListDraftMode extends TransactionFormMode {
+  const EditShoppingListDraftMode({required this.shoppingListItemId});
+
+  final int shoppingListItemId;
+}
+
+// ---------------------------------------------------------------------------
+// ShoppingListEditResult — Task 5 §2
+// ---------------------------------------------------------------------------
+
+/// Result returned when the form is popped from `EditShoppingListDraftMode`.
+sealed class ShoppingListEditResult {
+  const ShoppingListEditResult();
+}
+
+/// The draft was saved (updated) without being converted.
+class ShoppingListEditResultSavedDraft extends ShoppingListEditResult {
+  const ShoppingListEditResultSavedDraft();
+}
+
+/// The draft was converted to a real transaction.
+class ShoppingListEditResultSavedTransaction extends ShoppingListEditResult {
+  const ShoppingListEditResultSavedTransaction();
+}
+
+/// The draft row was not found when the form opened (already deleted).
+class ShoppingListEditResultMissingDraft extends ShoppingListEditResult {
+  const ShoppingListEditResultMissingDraft();
+}
+
+/// A new draft was added to the shopping list from AddTransactionMode.
+class ShoppingListEditResultAddedToList extends ShoppingListEditResult {
+  const ShoppingListEditResultAddedToList();
+}
+
+// ---------------------------------------------------------------------------
+// Command outcomes
+// ---------------------------------------------------------------------------
+
+/// Result of [TransactionFormController.save].
+@freezed
+sealed class SaveTransactionOutcome with _$SaveTransactionOutcome {
+  /// Persisted. The screen pops with [transaction]; Home pins its day.
+  const factory SaveTransactionOutcome.saved(Transaction transaction) =
+      SaveTransactionSaved;
+
+  /// Nothing was saved because the form is not ready (`!canSave`). The
+  /// screen shows the inline validation hints.
+  const factory SaveTransactionOutcome.invalid() = SaveTransactionInvalid;
+
+  /// The repository write failed. The screen shows `txSaveFailedSnackbar`
+  /// and stays open.
+  const factory SaveTransactionOutcome.failed() = SaveTransactionFailed;
+}
+
+/// Result of [TransactionFormController.deleteExisting].
+@freezed
+sealed class DeleteTransactionOutcome with _$DeleteTransactionOutcome {
+  /// Removed. The screen pops.
+  const factory DeleteTransactionOutcome.deleted() = DeleteTransactionDeleted;
+
+  /// The row was already gone. The screen shows `txTransactionNotFound`
+  /// and pops.
+  const factory DeleteTransactionOutcome.notFound() = DeleteTransactionNotFound;
+
+  /// Not in Edit mode, or a save/delete is in flight. The screen does
+  /// nothing.
+  const factory DeleteTransactionOutcome.ignored() = DeleteTransactionIgnored;
+
+  /// The repository delete failed. The screen shows
+  /// `txDeleteFailedSnackbar` and stays open.
+  const factory DeleteTransactionOutcome.failed() = DeleteTransactionFailed;
+}
+
+/// Result of [TransactionFormController.saveDraft] and
+/// [TransactionFormController.convertDraft]. Shared because the screen
+/// handles both with one helper; each call site picks its own failure
+/// message.
+@freezed
+sealed class DraftSubmissionOutcome with _$DraftSubmissionOutcome {
+  /// Done. The screen closes the form, popping with [result] in
+  /// [EditShoppingListDraftMode].
+  const factory DraftSubmissionOutcome.ok(ShoppingListEditResult result) =
+      DraftSubmissionOk;
+
+  /// The form is not ready or a submission is already in flight. The
+  /// screen does nothing.
+  const factory DraftSubmissionOutcome.ignored() = DraftSubmissionIgnored;
+
+  /// The repository call failed. The screen shows the call site's failure
+  /// snackbar and stays open.
+  const factory DraftSubmissionOutcome.failed() = DraftSubmissionFailed;
+}
+
+/// Result of [TransactionFormController.resolveCategoryChipTap]: what
+/// tapping the category chip opens.
+@freezed
+sealed class CategoryChipTapOutcome with _$CategoryChipTapOutcome {
+  /// At least one expense or income category exists. The screen opens the
+  /// category picker.
+  const factory CategoryChipTapOutcome.openPicker() = CategoryChipTapOpenPicker;
+
+  /// No active category of either type exists. The screen routes to
+  /// `/settings/categories` so the user can create one.
+  const factory CategoryChipTapOutcome.manageCategories() =
+      CategoryChipTapManageCategories;
+
+  /// The category read failed. The screen shows `errorSnackbarGeneric`.
+  const factory CategoryChipTapOutcome.failed() = CategoryChipTapFailed;
+}
+
+// ---------------------------------------------------------------------------
+// Submission-action tracking — Task 5 §3
+// ---------------------------------------------------------------------------
+
+/// Tracks which async save command is currently in-flight. `none` means
+/// the form is idle; any other value disables all CTAs and shows a progress
+/// indicator on the active button.
+enum TransactionFormSubmissionAction { none, saveDraft, convertDraft }
+
+// ---------------------------------------------------------------------------
+// Why the form is in TransactionFormEmpty
+// ---------------------------------------------------------------------------
+
+/// Why the form is in [TransactionFormEmpty]. Drives the CTA text and
+/// follow-up navigation.
+enum TransactionFormEmptyReason {
+  /// No active accounts exist. Render the `Create account` CTA per
+  /// Wave 2 §6 / PRD → Add/Edit Interaction Rules.
+  noActiveAccount,
+
+  /// Edit/duplicate hydration target row was missing — usually deleted
+  /// on another screen while the user navigated. Render a recoverable
+  /// "transaction not found" message and pop back to Home.
+  notFound,
+
+  /// The shopping-list draft id supplied via [EditShoppingListDraftMode]
+  /// no longer exists (deleted on another screen). The screen pops with
+  /// [ShoppingListEditResultMissingDraft].
+  draftNotFound,
+}
+
+@freezed
+sealed class TransactionFormState with _$TransactionFormState {
+  const TransactionFormState._();
+
+  const factory TransactionFormState.loading({
+    @Default(AddTransactionMode()) TransactionFormMode formMode,
+  }) = TransactionFormLoading;
+
+  const factory TransactionFormState.empty({
+    required TransactionFormEmptyReason reason,
+    @Default(AddTransactionMode()) TransactionFormMode formMode,
+  }) = TransactionFormEmpty;
+
+  const factory TransactionFormState.data({
+    /// Discriminates which entry point opened the form so widgets can derive
+    /// titles, CTAs, and recovery behavior directly from state.
+    required TransactionFormMode formMode,
+
+    /// Keypad-accumulated integer in the active currency's minor units.
+    required int amountMinorUnits,
+
+    /// Full calculator snapshot used by the amount display and by widgets that
+    /// need to know whether a currency/account change would discard input.
+    required KeypadState keypad,
+
+    /// `null` only during `noActiveAccount` recovery flows; in normal
+    /// `.data` states an account is always selected.
+    required Account? selectedAccount,
+
+    /// The transaction's currency. Seeds from `selectedAccount.currency` on
+    /// hydration, but can be independently overridden by the user via the
+    /// currency picker. Once the user has made a manual selection,
+    /// `currencyTouched` is `true` and account changes no longer re-seed it.
+    required Currency? displayCurrency,
+
+    /// `true` once the user has manually selected a currency via the picker.
+    /// When `false`, account changes re-seed `displayCurrency` from the
+    /// new account's currency. When `true`, `displayCurrency` is user-owned
+    /// and account changes only update `selectedAccount`.
+    required bool currencyTouched,
+
+    required Category? selectedCategory,
+
+    required DateTime date,
+
+    /// Free-form note. Empty string is valid; nullability is collapsed
+    /// to "" so the controller never has to decide between `null` and
+    /// `''` on every keystroke.
+    required String memo,
+
+    /// Becomes true on the first user-driven mutation after hydration.
+    required bool isDirty,
+
+    /// `true` between `save()` await-start and resolution.
+    required bool isSaving,
+
+    /// `true` between `deleteExisting()` await-start and resolution.
+    required bool isDeleting,
+
+    /// Edit-mode target id. `null` in Add and Duplicate.
+    required int? editingId,
+
+    /// Source-id when opened via duplicate. `null` in Add and Edit.
+    required int? duplicateSourceId,
+
+    /// Edit-mode original `createdAt`, preserved on update so the
+    /// repository contract (`save` keeps stored `createdAt`) is honored
+    /// even if the controller round-trips through copyWith.
+    required DateTime? originalCreatedAt,
+
+    /// Incremented on every keypad mutation — including expression-only
+    /// transitions that leave `amountMinorUnits` unchanged — so Riverpod
+    /// rebuilds the form whenever the display state changes.
+    @Default(0) int keypadRevision,
+
+    /// Non-null only in [EditShoppingListDraftMode]; stores the id of the
+    /// draft being edited so `saveDraft` and `convertDraft` can reference it.
+    int? shoppingListItemId,
+
+    /// Tracks which async submission is currently in-flight. Used to
+    /// disable all CTAs and show a progress indicator on the active button.
+    @Default(TransactionFormSubmissionAction.none)
+    TransactionFormSubmissionAction submissionAction,
+
+    /// `true` when the selected account is archived. Only meaningful in
+    /// [EditShoppingListDraftMode]; blocks `canConvertDraft`.
+    @Default(false) bool selectedAccountIsArchived,
+
+    /// `true` when the selected category is archived. Only meaningful in
+    /// [EditShoppingListDraftMode]; blocks `canConvertDraft`.
+    @Default(false) bool selectedCategoryIsArchived,
+  }) = TransactionFormData;
+
+  const factory TransactionFormState.error(
+    Object error,
+    StackTrace stack, {
+    @Default(AddTransactionMode()) TransactionFormMode formMode,
+  }) = TransactionFormError;
+
+  /// Computed-on-demand validity flag. PRD: amount > 0 AND category AND
+  /// account AND displayCurrency, plus no in-flight save/delete.
+  bool get canSave => switch (this) {
+    TransactionFormData(
+      :final amountMinorUnits,
+      :final selectedAccount,
+      :final selectedCategory,
+      :final displayCurrency,
+      :final isSaving,
+      :final isDeleting,
+      :final submissionAction,
+    ) =>
+      submissionAction == TransactionFormSubmissionAction.none &&
+          !isSaving &&
+          !isDeleting &&
+          amountMinorUnits > 0 &&
+          selectedAccount != null &&
+          selectedCategory != null &&
+          displayCurrency != null,
+    _ => false,
+  };
+
+  /// True when account + expense category + date are all set.
+  /// Amount may be zero — zero-amount drafts are valid.
+  ///
+  /// Task 5 §8: archived refs do NOT block canSaveDraft.
+  ///
+  /// Note: `date` is always non-null (`required DateTime date`); the spec
+  /// invariant "canSaveDraft requires date != null" is trivially satisfied
+  /// because the field can never be null at runtime. No null check is added
+  /// here to avoid dead-code analyzer warnings.
+  bool get canSaveDraft => switch (this) {
+    TransactionFormData(
+      :final selectedAccount,
+      :final selectedCategory,
+      :final submissionAction,
+    ) =>
+      submissionAction == TransactionFormSubmissionAction.none &&
+          selectedAccount != null &&
+          selectedCategory != null &&
+          selectedCategory.type == CategoryType.expense,
+    _ => false,
+  };
+
+  /// True when canSaveDraft AND amount > 0 AND no archived account/category.
+  ///
+  /// Task 5 §8: archived refs block canConvertDraft.
+  bool get canConvertDraft => switch (this) {
+    TransactionFormData(
+      :final amountMinorUnits,
+      :final selectedAccountIsArchived,
+      :final selectedCategoryIsArchived,
+    ) =>
+      canSaveDraft &&
+          amountMinorUnits > 0 &&
+          !selectedAccountIsArchived &&
+          !selectedCategoryIsArchived,
+    _ => false,
+  };
+}

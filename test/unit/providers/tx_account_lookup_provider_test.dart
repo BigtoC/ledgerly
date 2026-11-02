@@ -8,10 +8,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
-import 'package:ledgerly/data/models/account.dart';
-import 'package:ledgerly/data/models/currency.dart';
+import 'package:ledgerly/domain/models/account.dart';
+import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
-import 'package:ledgerly/features/transactions/transactions_providers.dart';
+import 'package:ledgerly/ui/features/transactions/view_models/transactions_providers.dart';
 
 class _MockAccountRepository extends Mock implements AccountRepository {}
 

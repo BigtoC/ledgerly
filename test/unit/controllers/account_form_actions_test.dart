@@ -15,11 +15,11 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
-import 'package:ledgerly/data/models/account.dart';
-import 'package:ledgerly/data/models/currency.dart';
+import 'package:ledgerly/domain/models/account.dart';
+import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
-import 'package:ledgerly/features/accounts/accounts_providers.dart';
-import 'package:ledgerly/features/accounts/accounts_state.dart';
+import 'package:ledgerly/ui/features/accounts/view_models/accounts_providers.dart';
+import 'package:ledgerly/ui/features/accounts/view_models/accounts_state.dart';
 
 class _MockAccountRepository extends Mock implements AccountRepository {}
 

@@ -10,22 +10,22 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
-import 'package:ledgerly/data/models/account.dart';
-import 'package:ledgerly/data/models/category.dart';
-import 'package:ledgerly/data/models/currency.dart';
-import 'package:ledgerly/data/models/transaction.dart';
+import 'package:ledgerly/domain/models/account.dart';
+import 'package:ledgerly/domain/models/category.dart';
+import 'package:ledgerly/domain/models/currency.dart';
+import 'package:ledgerly/domain/models/transaction.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
-import 'package:ledgerly/features/analysis/analysis_screen.dart';
-import 'package:ledgerly/features/analysis/charts/charts_controller.dart';
-import 'package:ledgerly/features/analysis/charts/charts_net_total_providers.dart';
-import 'package:ledgerly/features/analysis/charts/charts_providers.dart';
-import 'package:ledgerly/features/analysis/charts/charts_selection_controller.dart';
-import 'package:ledgerly/features/analysis/charts/slice_drilldown_controller.dart';
-import 'package:ledgerly/features/analysis/search/analysis_controller.dart';
-import 'package:ledgerly/features/analysis/search/analysis_providers.dart';
-import 'package:ledgerly/features/analysis/search/widgets/category_search_tile.dart';
+import 'package:ledgerly/ui/features/analysis/views/analysis_screen.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_controller.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_net_total_providers.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_providers.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_selection_controller.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/slice_drilldown_controller.dart';
+import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_controller.dart';
+import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_providers.dart';
+import 'package:ledgerly/ui/features/analysis/search/views/category_search_tile.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockTransactionRepository extends Mock

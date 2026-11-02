@@ -17,8 +17,8 @@ import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
 import 'package:ledgerly/app/providers/theme_provider.dart';
 import 'package:ledgerly/app/router.dart';
-import 'package:ledgerly/features/splash/splash_controller.dart';
-import 'package:ledgerly/features/splash/splash_screen.dart';
+import 'package:ledgerly/ui/features/splash/view_models/splash_controller.dart';
+import 'package:ledgerly/ui/features/splash/views/splash_screen.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 import '../support/test_app.dart';

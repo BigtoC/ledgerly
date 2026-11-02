@@ -24,8 +24,8 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
-import 'package:ledgerly/features/settings/settings_controller.dart';
-import 'package:ledgerly/features/settings/settings_state.dart';
+import 'package:ledgerly/ui/features/settings/view_models/settings_controller.dart';
+import 'package:ledgerly/ui/features/settings/view_models/settings_state.dart';
 
 class _MockUserPreferencesRepository extends Mock
     implements UserPreferencesRepository {}

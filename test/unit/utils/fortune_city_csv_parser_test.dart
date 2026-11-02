@@ -4,7 +4,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/core/utils/fortune_city_csv_parser.dart';
-import 'package:ledgerly/data/models/csv_import.dart';
+import 'package:ledgerly/domain/models/csv_import.dart';
 
 const _header = 'Account,Category,Amount,Currency,Recorded At,note,Account ID';
 

@@ -1,7 +1,7 @@
 # Splash assets
 
 This directory hosts the sun-themed background art referenced by the
-splash slice (`lib/features/splash/widgets/splash_sun_background.dart`).
+splash slice (`lib/ui/features/splash/views/splash_sun_background.dart`).
 
 ## Current state
 

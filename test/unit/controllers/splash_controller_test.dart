@@ -26,8 +26,8 @@ import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
 import 'package:ledgerly/core/utils/date_helpers.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
-import 'package:ledgerly/features/splash/splash_controller.dart';
-import 'package:ledgerly/features/splash/splash_state.dart';
+import 'package:ledgerly/ui/features/splash/view_models/splash_controller.dart';
+import 'package:ledgerly/ui/features/splash/view_models/splash_state.dart';
 import 'package:flutter/widgets.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 

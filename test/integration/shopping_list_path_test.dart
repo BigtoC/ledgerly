@@ -36,14 +36,14 @@ import 'package:ledgerly/app/providers/theme_provider.dart';
 import 'package:ledgerly/app/router.dart';
 import 'package:ledgerly/data/repositories/shopping_list_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
-import 'package:ledgerly/features/home/home_controller.dart';
-import 'package:ledgerly/features/home/home_screen.dart';
-import 'package:ledgerly/features/home/pending_controller.dart';
-import 'package:ledgerly/features/home/widgets/transaction_tile.dart';
-import 'package:ledgerly/features/shopping_list/shopping_list_controller.dart';
-import 'package:ledgerly/features/shopping_list/shopping_list_providers.dart';
-import 'package:ledgerly/features/shopping_list/shopping_list_screen.dart';
-import 'package:ledgerly/features/transactions/widgets/category_chip.dart';
+import 'package:ledgerly/ui/features/home/view_models/home_controller.dart';
+import 'package:ledgerly/ui/features/home/views/home_screen.dart';
+import 'package:ledgerly/ui/features/home/view_models/pending_controller.dart';
+import 'package:ledgerly/ui/features/home/views/transaction_tile.dart';
+import 'package:ledgerly/ui/features/shopping_list/view_models/shopping_list_controller.dart';
+import 'package:ledgerly/ui/features/shopping_list/view_models/shopping_list_providers.dart';
+import 'package:ledgerly/ui/features/shopping_list/views/shopping_list_screen.dart';
+import 'package:ledgerly/ui/features/transactions/views/category_chip.dart';
 
 import '../support/test_app.dart';
 

@@ -7,9 +7,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
-import 'package:ledgerly/features/transactions/keypad_state.dart';
-import 'package:ledgerly/features/transactions/transaction_form_controller.dart';
-import 'package:ledgerly/features/transactions/transaction_form_state.dart';
+import 'package:ledgerly/ui/features/transactions/view_models/keypad_state.dart';
+import 'package:ledgerly/ui/features/transactions/view_models/transaction_form_controller.dart';
+import 'package:ledgerly/ui/features/transactions/view_models/transaction_form_state.dart';
 
 import '../support/test_app.dart';
 

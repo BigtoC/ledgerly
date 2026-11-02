@@ -1,5 +1,5 @@
-// Matching keys shared by the CSV import preview (features/) and its
-// commit (data/), so the preview's Salary count and the committed
+// Matching keys shared by the CSV import preview (ui/) and its
+// commit (domain/), so the preview's Salary count and the committed
 // routing cannot disagree.
 
 /// Matching normalization: trim, and fold Latin case. CJK compares

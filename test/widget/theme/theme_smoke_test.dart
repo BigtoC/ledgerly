@@ -9,8 +9,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ledgerly/core/theme/app_theme.dart';
-import 'package:ledgerly/core/theme/color_schemes.dart';
+import 'package:ledgerly/ui/core/theme/app_theme.dart';
+import 'package:ledgerly/ui/core/theme/color_schemes.dart';
 
 void main() {
   group('M2 theme smoke', () {

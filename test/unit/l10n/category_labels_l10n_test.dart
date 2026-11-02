@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ledgerly/features/categories/widgets/category_display.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
+import 'package:ledgerly/ui/features/categories/views/category_display.dart';
 
 Future<AppLocalizations> _resolve(Locale locale) =>
     AppLocalizations.delegate.load(locale);

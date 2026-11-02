@@ -19,7 +19,7 @@ Root route uses a `go_router` `redirect:` that reads `splash_enabled` from `user
 
 ## Splash display text
 
-The default template is `'On {date} start using Ledgerly'`. `lib/features/splash/splash_controller.dart` enforces the "date is always shown" rule by prepending `'{date} '` to any non-empty custom template that lacks it. `lib/core/utils/date_helpers.dart` returns `List<SplashTextSegment>` from `applySplashTemplateSegments()` so `lib/features/splash/splash_screen.dart` can render the `{date}` span with `SplashRainbowGradientText` **inline** instead of using a separate date widget.
+The default template is `'On {date} start using Ledgerly'`. `lib/ui/features/splash/view_models/splash_controller.dart` enforces the "date is always shown" rule by prepending `'{date} '` to any non-empty custom template that lacks it. `lib/core/utils/date_helpers.dart` returns `List<SplashTextSegment>` from `applySplashTemplateSegments()` so `lib/ui/features/splash/views/splash_screen.dart` can render the `{date}` span with `SplashRainbowGradientText` **inline** instead of using a separate date widget.
 
 ## Route table
 
@@ -27,4 +27,4 @@ Routes are wired in `lib/app/router.dart`:
 
 `/splash`, `/splash/preview`, `/home`, `/home/add`, `/home/edit/:id`, `/home/shopping-list`, `/home/shopping-list/:itemId`, `/analysis`, `/analysis/search/:categoryId`, `/settings`, `/settings/about`, `/settings/categories`, `/settings/recurring`, `/settings/recurring/new`, `/settings/recurring/:id`, `/settings/import`, `/settings/export`, `/settings/manage-accounts/new`, `/settings/manage-accounts/:id`.
 
-Tapping the version label at the bottom of `settings_screen.dart` opens `lib/features/settings/about_screen.dart` at `/settings/about`.
+Tapping the version label at the bottom of `settings_screen.dart` opens `lib/ui/features/settings/views/about_screen.dart` at `/settings/about`.

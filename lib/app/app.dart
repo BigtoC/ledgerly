@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../l10n/app_localizations.dart';
-import '../core/theme/app_theme.dart';
+import '../ui/core/theme/app_theme.dart';
 import 'providers/app_update_provider.dart';
 import 'providers/locale_provider.dart';
 import 'providers/repository_providers.dart';

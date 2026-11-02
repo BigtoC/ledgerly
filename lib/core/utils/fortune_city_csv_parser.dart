@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:csv/csv.dart';
 
-import '../../data/models/csv_import.dart';
+import '../../domain/models/csv_import.dart';
 
 /// Header names in a Fortune City (記帳城市) CSV export. Matched after
 /// trimming, exactly and case-sensitively; column order does not matter

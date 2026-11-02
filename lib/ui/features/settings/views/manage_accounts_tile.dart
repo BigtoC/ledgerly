@@ -1,0 +1,56 @@
+// Manage accounts tile — Settings list row.
+//
+// Replacement for DefaultAccountTile. Shows "Manage accounts" with a
+// count-aware subtitle using accountsControllerProvider for account rows
+// and settingsControllerProvider only for defaultAccountId.
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/experimental/scope.dart';
+
+import '../../../../app/providers/default_currency_provider.dart';
+import '../../../../app/providers/exchange_rates_provider.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../accounts/view_models/accounts_controller.dart';
+import '../../accounts/view_models/accounts_state.dart';
+import 'manage_accounts_sheet.dart';
+
+@Dependencies([
+  AccountsController,
+  exchangeRates,
+  initialDefaultCurrency,
+  defaultCurrency,
+])
+class ManageAccountsTile extends ConsumerWidget {
+  const ManageAccountsTile({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final accountsAsync = ref.watch(accountsControllerProvider);
+
+    final subtitle = accountsAsync.maybeWhen(
+      data: (data) {
+        if (data is! AccountsData) return '';
+        if (data.active.isEmpty) return l10n.manageAccountsTileSubtitleAddCta;
+        if (data.active.length == 1) return data.active.first.account.name;
+        final defaultMatches = data.active.where(
+          (r) => r.account.id == data.defaultAccountId,
+        );
+        final defaultName = defaultMatches.isNotEmpty
+            ? defaultMatches.first.account.name
+            : data.active.first.account.name;
+        return '$defaultName${l10n.manageAccountsTileSubtitleMore(data.active.length - 1)}';
+      },
+      orElse: () => '',
+    );
+
+    return ListTile(
+      key: const ValueKey('settingsManageAccountsTile'),
+      title: Text(l10n.manageAccountsTitle),
+      subtitle: Text(subtitle),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => showManageAccountsSheet(context),
+    );
+  }
+}

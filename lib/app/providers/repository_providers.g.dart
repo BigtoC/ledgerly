@@ -498,8 +498,8 @@ String _$recurringRulesRepositoryHash() =>
     r'f297f662435691a5d8d42b616551967de2993046';
 
 /// Use-case provider. Lives here so that controllers in
-/// `lib/features/.../*_controller.dart` can `ref.read` the use case
-/// without importing `data/database/...` (forbidden by
+/// `lib/ui/features/.../view_models/*_controller.dart` can `ref.read`
+/// the use case without importing `data/database/...` (forbidden by
 /// `controllers_forbid_db_and_services` in import_analysis_options.yaml).
 
 @ProviderFor(recurringGenerationUseCase)
@@ -507,8 +507,8 @@ final recurringGenerationUseCaseProvider =
     RecurringGenerationUseCaseProvider._();
 
 /// Use-case provider. Lives here so that controllers in
-/// `lib/features/.../*_controller.dart` can `ref.read` the use case
-/// without importing `data/database/...` (forbidden by
+/// `lib/ui/features/.../view_models/*_controller.dart` can `ref.read`
+/// the use case without importing `data/database/...` (forbidden by
 /// `controllers_forbid_db_and_services` in import_analysis_options.yaml).
 
 final class RecurringGenerationUseCaseProvider
@@ -520,8 +520,8 @@ final class RecurringGenerationUseCaseProvider
         >
     with $Provider<RecurringGenerationUseCase> {
   /// Use-case provider. Lives here so that controllers in
-  /// `lib/features/.../*_controller.dart` can `ref.read` the use case
-  /// without importing `data/database/...` (forbidden by
+  /// `lib/ui/features/.../view_models/*_controller.dart` can `ref.read`
+  /// the use case without importing `data/database/...` (forbidden by
   /// `controllers_forbid_db_and_services` in import_analysis_options.yaml).
   RecurringGenerationUseCaseProvider._()
     : super(

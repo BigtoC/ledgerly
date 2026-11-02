@@ -22,9 +22,9 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
-import 'package:ledgerly/features/settings/settings_controller.dart';
-import 'package:ledgerly/features/settings/settings_state.dart';
-import 'package:ledgerly/features/settings/widgets/splash_settings_section.dart';
+import 'package:ledgerly/ui/features/settings/view_models/settings_controller.dart';
+import 'package:ledgerly/ui/features/settings/view_models/settings_state.dart';
+import 'package:ledgerly/ui/features/settings/views/splash_settings_section.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockUserPreferencesRepository extends Mock

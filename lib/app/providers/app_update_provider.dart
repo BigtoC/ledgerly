@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../data/models/app_update.dart';
+import '../../domain/models/app_update.dart';
 import 'repository_providers.dart';
 
 part 'app_update_provider.g.dart';

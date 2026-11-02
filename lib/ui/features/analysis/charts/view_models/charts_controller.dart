@@ -1,0 +1,573 @@
+// ChartsController — Analysis-tab chart slice data pipeline.
+//
+// Pure projection: watches `ChartsSelectionController` for the live
+// user selection, then subscribes to repository streams and emits a
+// converted/grouped `ChartsState`. Selection mutations land on the
+// selection notifier; ref.watch() in `build()` re-runs the pipeline.
+//
+// A private `StreamController<ChartsState>` is opened in `build()` and
+// re-opened on every Riverpod rebuild; subscriptions use a generation
+// counter so stale emissions from a prior selection cannot leak into
+// the active state.
+
+import 'dart:async';
+
+import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import '../../../../../app/providers/repository_providers.dart';
+import '../../../../../core/utils/color_palette.dart';
+import '../../../../../core/utils/currency_converter.dart';
+import '../../../../../domain/models/account.dart';
+import '../../../../../domain/models/account_slice.dart';
+import '../../../../../domain/models/category.dart';
+import '../../../../../domain/models/category_slice.dart';
+import '../../../../../domain/models/currency.dart';
+import '../../../../../domain/models/currency_slice.dart';
+import '../../../../../domain/models/time_bucket_slice.dart';
+import '../../search/view_models/analysis_providers.dart';
+import 'charts_providers.dart';
+import 'charts_selection_controller.dart';
+import 'charts_state.dart';
+import 'selected_slice.dart';
+
+part 'charts_controller.g.dart';
+
+@Riverpod(
+  keepAlive: true,
+  dependencies: [
+    transactionRepository,
+    exchangeRateRepository,
+    chartsFxStatus,
+    chartsCurrenciesByCode,
+    analysisCategoriesById,
+    analysisAccountsById,
+    ChartsSelectionController,
+  ],
+)
+class ChartsController extends _$ChartsController {
+  late ChartsSelection _selection;
+
+  int _generation = 0;
+  StreamSubscription<List<Object>>? _sliceSub;
+  StreamSubscription<List<TimeBucketSlice>>? _bucketsSub;
+  StreamController<ChartsState>? _emitter;
+
+  List<Object>? _lastSlices; // CategorySlice | AccountSlice | CurrencySlice
+  List<TimeBucketSlice>? _lastBuckets;
+  ChartsData? _lastEmittedData;
+  bool _autoSwitchedToCurrency = false;
+
+  // Currencies already sent to `refreshAll` for `_refreshRequestedFor`.
+  // Each rate upsert re-emits FX status, so without this a currency the
+  // service never returns would re-trigger the fetch on every emission.
+  // Reset in build() so each selection change gets one fresh attempt (a
+  // failed fetch is otherwise never retried); FX re-emissions go through
+  // ref.listen, not build(), so this does not reopen the loop.
+  final Set<String> _refreshRequested = {};
+  String? _refreshRequestedFor;
+
+  // TODO(charts/warm-start): per the spec, week+expense+category may seed
+  // from a warmed snapshot when FX freshness < 1h, default currency
+  // unchanged, locale unchanged, and no transaction/category/account
+  // mutations occurred since warm-up. Deferred — the cold path is already
+  // sub-frame in practice. Revisit if cold-start jank surfaces.
+  @override
+  Stream<ChartsState> build() {
+    _selection = ref.watch(chartsSelectionControllerProvider);
+    _refreshRequested.clear();
+    if (_selection.dimension != ChartDimension.currency) {
+      _autoSwitchedToCurrency = false;
+    }
+    _emitter?.close();
+    _sliceSub?.cancel();
+    _bucketsSub?.cancel();
+
+    final controller = StreamController<ChartsState>();
+    _emitter = controller;
+
+    // Re-resolve the current chart when FX or label metadata changes.
+    void reemitIfReady(Object? _, Object? _) {
+      if (_lastSlices != null && _lastBuckets != null) {
+        _emitIfReady();
+      }
+    }
+
+    ref.listen(chartsFxStatusProvider, reemitIfReady);
+    ref.listen(chartsCurrenciesByCodeProvider, reemitIfReady);
+    ref.listen(analysisCategoriesByIdProvider, reemitIfReady);
+    ref.listen(analysisAccountsByIdProvider, reemitIfReady);
+
+    // _resubscribe() emits Loading(previous: _lastEmittedData), which renders
+    // the prior chart while new streams re-emit. A bare spinner on every
+    // rebuild would flash and (combined with the outer SingleChildScrollView)
+    // clamp scroll offset.
+    _resubscribe();
+
+    ref.onDispose(() {
+      _sliceSub?.cancel();
+      _bucketsSub?.cancel();
+      _sliceSub = null;
+      _bucketsSub = null;
+      controller.close();
+    });
+
+    return controller.stream;
+  }
+
+  // ---------- Commands ----------
+
+  void retry() {
+    _refreshRequested.clear();
+    _resubscribe();
+  }
+
+  /// Clears the auto-switch banner without changing dimension.
+  void dismissAutoSwitchBanner() {
+    if (!_autoSwitchedToCurrency) return;
+    _autoSwitchedToCurrency = false;
+    final last = _lastEmittedData;
+    if (last != null) {
+      final cleared = last.copyWith(autoSwitchedFromCategoryDimension: false);
+      _lastEmittedData = cleared;
+      _emitter?.add(ChartsState.data(chartData: cleared));
+    }
+  }
+
+  // ---------- Subscription wiring ----------
+
+  ({DateTime start, DateTime end}) _currentRange() {
+    final start = normalizeAnchor(_selection.anchorDate, _selection.period);
+    final end = shiftAnchor(start, _selection.period, 1);
+    return (start: start, end: end);
+  }
+
+  TimeBucketGranularity _granularity() => switch (_selection.period) {
+    PeriodType.day => TimeBucketGranularity.hour,
+    PeriodType.week => TimeBucketGranularity.day,
+    PeriodType.month => TimeBucketGranularity.day,
+    PeriodType.year => TimeBucketGranularity.month,
+  };
+
+  void _resubscribe() {
+    _sliceSub?.cancel();
+    _bucketsSub?.cancel();
+    _lastSlices = null;
+    _lastBuckets = null;
+    final myGen = ++_generation;
+    final range = _currentRange();
+    _emitter?.add(ChartsState.loading(previous: _lastEmittedData));
+
+    final repo = ref.read(transactionRepositoryProvider);
+
+    final (categoryId, accountId, currencyCode) = selectionFilters(
+      _selection.selectedSlice,
+    );
+
+    _bucketsSub = repo
+        .watchTimeBucketsInRange(
+          start: range.start,
+          end: range.end,
+          type: _selection.type,
+          granularity: _granularity(),
+          categoryId: categoryId,
+          accountId: accountId,
+          currencyCode: currencyCode,
+        )
+        .listen(
+          (buckets) {
+            if (myGen != _generation) return;
+            _lastBuckets = buckets;
+            _emitIfReady();
+          },
+          onError: (Object e, StackTrace st) {
+            debugPrint('[ChartsController] buckets error: ${e.runtimeType}');
+            if (myGen != _generation) return;
+            _emitter?.add(ChartsState.error(e, st));
+          },
+        );
+
+    switch (_selection.dimension) {
+      case ChartDimension.category:
+        _sliceSub = repo
+            .watchByCategoryInRange(
+              start: range.start,
+              end: range.end,
+              type: _selection.type,
+            )
+            .listen(
+              (slices) => _onSlices(myGen, slices),
+              onError: (Object e, StackTrace st) {
+                debugPrint(
+                  '[ChartsController] category slice error: ${e.runtimeType}',
+                );
+                if (myGen != _generation) return;
+                _emitter?.add(ChartsState.error(e, st));
+              },
+            );
+      case ChartDimension.account:
+        _sliceSub = repo
+            .watchByAccountInRange(
+              start: range.start,
+              end: range.end,
+              type: _selection.type,
+            )
+            .listen(
+              (slices) => _onSlices(myGen, slices),
+              onError: (Object e, StackTrace st) {
+                debugPrint(
+                  '[ChartsController] account slice error: ${e.runtimeType}',
+                );
+                if (myGen != _generation) return;
+                _emitter?.add(ChartsState.error(e, st));
+              },
+            );
+      case ChartDimension.currency:
+        _sliceSub = repo
+            .watchByCurrencyInRange(
+              start: range.start,
+              end: range.end,
+              type: _selection.type,
+            )
+            .listen(
+              (slices) => _onSlices(myGen, slices),
+              onError: (Object e, StackTrace st) {
+                debugPrint(
+                  '[ChartsController] currency slice error: ${e.runtimeType}',
+                );
+                if (myGen != _generation) return;
+                _emitter?.add(ChartsState.error(e, st));
+              },
+            );
+    }
+  }
+
+  void _onSlices(int myGen, List<Object> slices) {
+    if (myGen != _generation) return;
+    _lastSlices = slices;
+    _emitIfReady();
+  }
+
+  void _emitIfReady() {
+    final slices = _lastSlices;
+    final buckets = _lastBuckets;
+    if (slices == null || buckets == null) return;
+    if (slices.isEmpty && buckets.isEmpty) {
+      _lastEmittedData = null;
+      _emitter?.add(const ChartsState.empty());
+      return;
+    }
+
+    final fx = ref.read(chartsFxStatusProvider).value;
+    final currencies =
+        ref.read(chartsCurrenciesByCodeProvider).value ?? const {};
+    if (fx == null) {
+      _emitter?.add(ChartsState.loading(previous: _lastEmittedData));
+      return;
+    }
+
+    final cats = ref.read(analysisCategoriesByIdProvider).value ?? const {};
+    final accts = ref.read(analysisAccountsByIdProvider).value ?? const {};
+
+    final activeCurrencies = _activeCurrencies(slices, buckets);
+    final missingCurrencies = activeCurrencies
+        .where((code) => fx.scaledRate(code) == null)
+        .toSet();
+    final allMissing =
+        activeCurrencies.isNotEmpty &&
+        missingCurrencies.length == activeCurrencies.length;
+
+    if (fx.defaultCurrencyCode != _refreshRequestedFor) {
+      _refreshRequestedFor = fx.defaultCurrencyCode;
+      _refreshRequested.clear();
+    }
+    final toRequest = missingCurrencies.difference(_refreshRequested);
+    if (toRequest.isNotEmpty) {
+      _refreshRequested.addAll(toRequest);
+      final repo = ref.read(exchangeRateRepositoryProvider);
+      unawaited(repo.refreshAll(fx.defaultCurrencyCode));
+    }
+
+    if (_selection.dimension == ChartDimension.currency) {
+      _emitCurrencyDimension(
+        slices: slices.cast<CurrencySlice>(),
+        buckets: buckets,
+        fx: fx,
+        currencies: currencies,
+      );
+      return;
+    }
+
+    final shouldAutoSwitch =
+        !_autoSwitchedToCurrency &&
+        _selection.dimension == ChartDimension.category &&
+        _selection.period == PeriodType.week &&
+        allMissing &&
+        _lastEmittedData == null;
+    if (shouldAutoSwitch) {
+      _autoSwitchedToCurrency = true;
+      // Mutate selection out-of-band so build() re-runs cleanly via the
+      // selection notifier; mutating during stream emission is unsafe.
+      Future.microtask(() {
+        ref
+            .read(chartsSelectionControllerProvider.notifier)
+            .setDimension(ChartDimension.currency);
+      });
+      return;
+    }
+
+    if (allMissing) {
+      _emitter?.add(
+        ChartsState.blockedByMissingRates(previous: _lastEmittedData),
+      );
+      return;
+    }
+
+    _emitCategoryOrAccountDimension(
+      slices: slices,
+      buckets: buckets,
+      fx: fx,
+      currencies: currencies,
+      cats: cats,
+      accts: accts,
+      missingCurrencies: missingCurrencies,
+    );
+  }
+
+  Set<String> _activeCurrencies(
+    List<Object> slices,
+    List<TimeBucketSlice> buckets,
+  ) {
+    final set = <String>{};
+    for (final s in slices) {
+      set.add(switch (s) {
+        CategorySlice() => s.currencyCode,
+        AccountSlice() => s.currencyCode,
+        CurrencySlice() => s.currencyCode,
+        _ => '',
+      });
+    }
+    for (final b in buckets) {
+      set.add(b.currencyCode);
+    }
+    set.remove('');
+    return set;
+  }
+
+  void _emitCategoryOrAccountDimension({
+    required List<Object> slices,
+    required List<TimeBucketSlice> buckets,
+    required ChartsFxStatus fx,
+    required Map<String, Currency> currencies,
+    required Map<int, Category> cats,
+    required Map<int, Account> accts,
+    required Set<String> missingCurrencies,
+  }) {
+    final regrouped = <int, int>{}; // id → converted minor units
+    for (final s in slices) {
+      final (id, code, amount) = switch (s) {
+        CategorySlice() => (s.categoryId, s.currencyCode, s.totalMinorUnits),
+        AccountSlice() => (s.accountId, s.currencyCode, s.totalMinorUnits),
+        _ => (-1, '', 0),
+      };
+      if (id < 0) continue;
+      if (missingCurrencies.contains(code)) continue;
+      final fromDecimals = currencies[code]?.decimals ?? 2;
+      final toDecimals = currencies[fx.defaultCurrencyCode]?.decimals ?? 2;
+      final scaled = fx.scaledRate(code)!;
+      final converted = CurrencyConverter.convertMinorUnits(
+        amountMinorUnits: amount,
+        rateScaledE9: scaled,
+        fromDecimals: fromDecimals,
+        toDecimals: toDecimals,
+      );
+      regrouped[id] = (regrouped[id] ?? 0) + converted;
+    }
+
+    final grandTotal = regrouped.values.fold<int>(0, (a, b) => a + b);
+
+    final chartSlices = <ChartSlice>[];
+    regrouped.forEach((id, total) {
+      String label;
+      int colorIndex;
+      String iconKey;
+      if (_selection.dimension == ChartDimension.category) {
+        final c = cats[id];
+        label = _categoryLabel(id, cats);
+        colorIndex = c?.color ?? CategoryPaletteIndex.neutralVariant50;
+        iconKey = c?.icon ?? '';
+      } else {
+        label = _accountLabel(id, accts);
+        colorIndex = accts[id]?.color ?? CategoryPaletteIndex.neutralVariant50;
+        iconKey = accts[id]?.icon ?? '';
+      }
+      chartSlices.add(
+        ChartSlice(
+          label: label,
+          currencyCode: fx.defaultCurrencyCode,
+          totalMinorUnits: total,
+          colorIndex: colorIndex,
+          iconKey: iconKey,
+          fraction: grandTotal == 0 ? 0 : total / grandTotal,
+          selectionKey: _selection.dimension == ChartDimension.category
+              ? SelectedSlice.category(id)
+              : SelectedSlice.account(id),
+        ),
+      );
+    });
+    chartSlices.sort((a, b) => b.totalMinorUnits.compareTo(a.totalMinorUnits));
+
+    final convertedBuckets = <DateTime, int>{};
+    for (final b in buckets) {
+      if (missingCurrencies.contains(b.currencyCode)) continue;
+      final fromDecimals = currencies[b.currencyCode]?.decimals ?? 2;
+      final toDecimals = currencies[fx.defaultCurrencyCode]?.decimals ?? 2;
+      final scaled = fx.scaledRate(b.currencyCode)!;
+      final converted = CurrencyConverter.convertMinorUnits(
+        amountMinorUnits: b.totalMinorUnits,
+        rateScaledE9: scaled,
+        fromDecimals: fromDecimals,
+        toDecimals: toDecimals,
+      );
+      convertedBuckets[b.bucketStart] =
+          (convertedBuckets[b.bucketStart] ?? 0) + converted;
+    }
+    final bucketTotals = [
+      for (final e in convertedBuckets.entries)
+        ChartBucketTotal(bucketStart: e.key, totalMinorUnits: e.value),
+    ]..sort((a, b) => a.bucketStart.compareTo(b.bucketStart));
+
+    final data = ChartsData(
+      period: _selection.period,
+      anchorDate: normalizeAnchor(_selection.anchorDate, _selection.period),
+      type: _selection.type,
+      dimension: _selection.dimension,
+      slices: chartSlices,
+      bucketTotals: bucketTotals,
+      grandTotalMinorUnits: grandTotal,
+      displayCurrencyCode: fx.defaultCurrencyCode,
+      mixedCurrencies: false,
+      autoSwitchedFromCategoryDimension: false,
+      excludedCurrencyCodes: missingCurrencies.toList()..sort(),
+    );
+    _lastEmittedData = data;
+    _emitter?.add(ChartsState.data(chartData: data));
+  }
+
+  void _emitCurrencyDimension({
+    required List<CurrencySlice> slices,
+    required List<TimeBucketSlice> buckets,
+    required ChartsFxStatus fx,
+    required Map<String, Currency> currencies,
+  }) {
+    final missingRate = slices.any(
+      (s) => fx.scaledRate(s.currencyCode) == null,
+    );
+
+    final chartSlices = <ChartSlice>[];
+    int? grandTotal;
+    if (!missingRate) {
+      grandTotal = 0;
+      final converted = <CurrencySlice, int>{};
+      for (final s in slices) {
+        final fromDecimals = currencies[s.currencyCode]?.decimals ?? 2;
+        final toDecimals = currencies[fx.defaultCurrencyCode]?.decimals ?? 2;
+        final amount = CurrencyConverter.convertMinorUnits(
+          amountMinorUnits: s.totalMinorUnits,
+          rateScaledE9: fx.scaledRate(s.currencyCode)!,
+          fromDecimals: fromDecimals,
+          toDecimals: toDecimals,
+        );
+        converted[s] = amount;
+        grandTotal = grandTotal! + amount;
+      }
+      for (final s in slices) {
+        final amount = converted[s]!;
+        chartSlices.add(
+          ChartSlice(
+            label: s.currencyCode,
+            currencyCode: fx.defaultCurrencyCode,
+            totalMinorUnits: amount,
+            colorIndex: _currencyColorIndex(s.currencyCode),
+            iconKey: '',
+            fraction: grandTotal == 0 ? 0 : amount / grandTotal!,
+            selectionKey: SelectedSlice.currency(s.currencyCode),
+          ),
+        );
+      }
+    } else {
+      for (final s in slices) {
+        chartSlices.add(
+          ChartSlice(
+            label: s.currencyCode,
+            currencyCode: s.currencyCode,
+            totalMinorUnits: s.totalMinorUnits,
+            colorIndex: _currencyColorIndex(s.currencyCode),
+            iconKey: '',
+            fraction: null,
+            selectionKey: SelectedSlice.currency(s.currencyCode),
+          ),
+        );
+      }
+    }
+
+    // Bar chart: hidden until every bucket currency is convertible.
+    final bucketsMissing = buckets.any(
+      (b) => fx.scaledRate(b.currencyCode) == null,
+    );
+    final bucketTotals = <ChartBucketTotal>[];
+    if (!bucketsMissing) {
+      final regrouped = <DateTime, int>{};
+      for (final b in buckets) {
+        final fromDecimals = currencies[b.currencyCode]?.decimals ?? 2;
+        final toDecimals = currencies[fx.defaultCurrencyCode]?.decimals ?? 2;
+        final converted = CurrencyConverter.convertMinorUnits(
+          amountMinorUnits: b.totalMinorUnits,
+          rateScaledE9: fx.scaledRate(b.currencyCode)!,
+          fromDecimals: fromDecimals,
+          toDecimals: toDecimals,
+        );
+        regrouped[b.bucketStart] = (regrouped[b.bucketStart] ?? 0) + converted;
+      }
+      for (final e in regrouped.entries) {
+        bucketTotals.add(
+          ChartBucketTotal(bucketStart: e.key, totalMinorUnits: e.value),
+        );
+      }
+      bucketTotals.sort((a, b) => a.bucketStart.compareTo(b.bucketStart));
+    }
+
+    chartSlices.sort((a, b) => b.totalMinorUnits.compareTo(a.totalMinorUnits));
+
+    final data = ChartsData(
+      period: _selection.period,
+      anchorDate: normalizeAnchor(_selection.anchorDate, _selection.period),
+      type: _selection.type,
+      dimension: _selection.dimension,
+      slices: chartSlices,
+      bucketTotals: bucketTotals,
+      grandTotalMinorUnits: missingRate ? null : grandTotal,
+      displayCurrencyCode: missingRate ? null : fx.defaultCurrencyCode,
+      mixedCurrencies: missingRate,
+      autoSwitchedFromCategoryDimension: _autoSwitchedToCurrency,
+    );
+    _lastEmittedData = data;
+    _emitter?.add(ChartsState.data(chartData: data));
+  }
+
+  String _categoryLabel(int id, Map<int, Category> cats) {
+    final c = cats[id];
+    if (c == null) return '';
+    if (c.customName != null && c.customName!.trim().isNotEmpty) {
+      return c.customName!;
+    }
+    return c.l10nKey ?? '';
+  }
+
+  String _accountLabel(int id, Map<int, Account> accts) {
+    return accts[id]?.name ?? '';
+  }
+
+  int _currencyColorIndex(String code) =>
+      code.hashCode.abs() % kCategoryColorPalette.length;
+}

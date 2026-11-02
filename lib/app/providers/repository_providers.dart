@@ -16,9 +16,9 @@ import '../../data/repositories/transaction_repository.dart';
 import '../../data/repositories/user_preferences_repository.dart';
 import '../../data/services/apk_installer_service.dart';
 import '../../data/services/app_release_service.dart';
-import '../../data/use_cases/csv_export_use_case.dart';
-import '../../data/use_cases/csv_import_use_case.dart';
-import '../../data/use_cases/recurring_generation_use_case.dart';
+import '../../domain/use_cases/csv_export_use_case.dart';
+import '../../domain/use_cases/csv_import_use_case.dart';
+import '../../domain/use_cases/recurring_generation_use_case.dart';
 import 'app_database_provider.dart';
 import 'default_currency_provider.dart';
 import 'service_providers.dart';
@@ -78,8 +78,8 @@ RecurringRulesRepository recurringRulesRepository(Ref ref) =>
     DriftRecurringRulesRepository(ref.watch(appDatabaseProvider));
 
 /// Use-case provider. Lives here so that controllers in
-/// `lib/features/.../*_controller.dart` can `ref.read` the use case
-/// without importing `data/database/...` (forbidden by
+/// `lib/ui/features/.../view_models/*_controller.dart` can `ref.read`
+/// the use case without importing `data/database/...` (forbidden by
 /// `controllers_forbid_db_and_services` in import_analysis_options.yaml).
 @Riverpod(
   keepAlive: true,

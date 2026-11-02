@@ -1,6 +1,6 @@
 import 'package:intl/intl.dart';
 
-import '../../data/models/currency.dart';
+import '../../domain/models/currency.dart';
 
 /// Locale-aware formatter for integer minor-unit money amounts.
 ///

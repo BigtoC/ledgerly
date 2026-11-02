@@ -13,12 +13,12 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/core/constants.dart';
-import 'package:ledgerly/data/models/currency.dart';
-import 'package:ledgerly/data/models/pending_transaction.dart';
-import 'package:ledgerly/data/models/transaction.dart';
+import 'package:ledgerly/domain/models/currency.dart';
+import 'package:ledgerly/domain/models/pending_transaction.dart';
+import 'package:ledgerly/domain/models/transaction.dart';
 import 'package:ledgerly/data/repositories/pending_transaction_repository.dart';
-import 'package:ledgerly/features/home/pending_controller.dart';
-import 'package:ledgerly/features/home/pending_state.dart';
+import 'package:ledgerly/ui/features/home/view_models/pending_controller.dart';
+import 'package:ledgerly/ui/features/home/view_models/pending_state.dart';
 
 class _MockPendingTransactionRepository extends Mock
     implements PendingTransactionRepository {}

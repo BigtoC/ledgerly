@@ -7,13 +7,13 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
-import 'package:ledgerly/data/models/currency.dart';
 import 'package:ledgerly/data/repositories/exchange_rate_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
-import 'package:ledgerly/features/analysis/charts/charts_net_total_providers.dart';
-import 'package:ledgerly/features/analysis/charts/charts_providers.dart';
-import 'package:ledgerly/features/analysis/charts/charts_selection_controller.dart';
-import 'package:ledgerly/features/analysis/charts/charts_state.dart';
+import 'package:ledgerly/domain/models/currency.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_net_total_providers.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_providers.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_selection_controller.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_state.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 

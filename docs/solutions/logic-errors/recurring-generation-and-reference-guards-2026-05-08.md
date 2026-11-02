@@ -74,7 +74,7 @@ This keeps future-only edit semantics while ensuring future generations follow t
 
 2. Advance past the capped occurrence before persisting.
 
-`lib/data/use_cases/recurring_generation_use_case.dart`
+`lib/domain/use_cases/recurring_generation_use_case.dart`
 
 ```dart
 if (generated == catchUpCap && !_isAfter(currentDue, today)) {
@@ -163,7 +163,7 @@ Delete now returns typed in-use failures instead of SQLite FK errors, and archiv
 
 5. Keep recurring form reads inside slice-local providers.
 
-`lib/features/recurring/recurring_rules_providers.dart`
+`lib/ui/features/recurring/view_models/recurring_rules_providers.dart`
 
 ```dart
 final recurringActiveAccountsProvider =
@@ -173,7 +173,7 @@ final recurringActiveAccountsProvider =
 });
 ```
 
-`lib/features/recurring/recurring_rule_form_screen.dart`
+`lib/ui/features/recurring/views/recurring_rule_form_screen.dart`
 
 ```dart
 final asyncAccounts = ref.watch(recurringActiveAccountsProvider);

@@ -1,0 +1,152 @@
+import 'package:flutter/material.dart';
+
+import '../../../../../core/utils/color_palette.dart';
+import '../../../../../core/utils/icon_registry.dart';
+import '../../../../../core/utils/money_formatter.dart';
+import '../../../../../domain/models/currency.dart';
+import '../../../../../l10n/app_localizations.dart';
+import '../../../categories/views/category_display.dart';
+import '../view_models/charts_state.dart';
+
+class ChartLegend extends StatelessWidget {
+  const ChartLegend({
+    super.key,
+    required this.slices,
+    required this.currenciesByCode,
+    required this.locale,
+    this.selectedSliceIndex,
+    this.onSelectSlice,
+  });
+
+  final List<ChartSlice> slices;
+  final Map<String, Currency> currenciesByCode;
+  final String locale;
+
+  /// Index into [slices] of the chart's currently focused slice. Drives
+  /// the dim/elevate treatment on legend rows so the legend mirrors the
+  /// pie chart's selection.
+  final int? selectedSliceIndex;
+
+  /// Tap callback for legend rows. Receives the index into [slices] (the
+  /// original order, not the visually-sorted order). Null toggles off.
+  final ValueChanged<int?>? onSelectSlice;
+
+  @override
+  Widget build(BuildContext context) {
+    // Index-tagged sort so taps can map back to the original slice index
+    // (which is what the pie chart selection is keyed on).
+    final indexed =
+        [for (var i = 0; i < slices.length; i++) (index: i, slice: slices[i])]
+          ..sort(
+            (a, b) =>
+                b.slice.totalMinorUnits.compareTo(a.slice.totalMinorUnits),
+          );
+
+    // Every slice gets a row. The count is bounded by the user's
+    // categories / accounts / currencies, so a non-lazy Column is fine.
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final entry in indexed)
+              _row(context, entry.slice, originalIndex: entry.index),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _row(
+    BuildContext context,
+    ChartSlice s, {
+    required int originalIndex,
+  }) {
+    final l10n = AppLocalizations.of(context);
+    final currency =
+        currenciesByCode[s.currencyCode] ??
+        Currency(code: s.currencyCode, decimals: 2);
+    // The controller serializes seeded categories as their `category.*`
+    // l10n key (no BuildContext available there). Re-resolve at render
+    // time so the legend shows the localized name.
+    final displayLabel = categoryDisplayNameForKey(s.label, l10n);
+    final isSelected = originalIndex == selectedSliceIndex;
+    final hasAnySelection = selectedSliceIndex != null;
+    final dim = hasAnySelection && !isSelected;
+    final row = AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOut,
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? colorForIndex(s.colorIndex).withValues(alpha: 0.12)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: AnimatedDefaultTextStyle(
+        duration: const Duration(milliseconds: 220),
+        style: DefaultTextStyle.of(context).style.copyWith(
+          color: DefaultTextStyle.of(context).style.color
+              ?.withValues(alpha: dim ? 0.45 : 1.0),
+          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+        ),
+        child: Row(
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              width: isSelected ? 14 : 12,
+              height: isSelected ? 14 : 12,
+              decoration: BoxDecoration(
+                color: colorForIndex(s.colorIndex)
+                    .withValues(alpha: dim ? 0.45 : 1.0),
+                shape: BoxShape.circle,
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: colorForIndex(s.colorIndex)
+                              .withValues(alpha: 0.5),
+                          blurRadius: 4,
+                          spreadRadius: 1,
+                        ),
+                      ]
+                    : null,
+              ),
+            ),
+            const SizedBox(width: 8),
+            if (s.iconKey.isNotEmpty)
+              Padding(
+                padding: const EdgeInsetsDirectional.only(end: 6),
+                child: Icon(iconForKey(s.iconKey), size: 16),
+              ),
+            Expanded(
+              child: Text(displayLabel, overflow: TextOverflow.ellipsis),
+            ),
+            Text(
+              MoneyFormatter.format(
+                amountMinorUnits: s.totalMinorUnits,
+                currency: currency,
+                locale: locale,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (onSelectSlice == null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: row,
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () => onSelectSlice!(isSelected ? null : originalIndex),
+        child: row,
+      ),
+    );
+  }
+}

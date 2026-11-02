@@ -15,7 +15,7 @@ root_cause: logic_error
 resolution_type: code_fix
 severity: medium
 related_components:
-  - features/transactions/widgets/category_chip
+  - ui/features/transactions/views/category_chip
   - test/integration/transaction_mutation_flow_test
 tags: [text-scale, fittedbox, sliver-grid, main-axis-extent, category-picker, ahem-font, ensure-visible, warn-if-missed]
 ---
@@ -25,7 +25,7 @@ tags: [text-scale, fittedbox, sliver-grid, main-axis-extent, category-picker, ah
 ## Problem
 Issue #81 asked for the category picker to show five icons per row and to shrink long labels instead of wrapping them. The first version gave each grid tile a fixed height and put the label in a `FittedBox(fit: BoxFit.scaleDown)`. At 2× text scale the fixed height left too little room, so the `FittedBox` scaled every label back down to about 1×. Users who had asked for large text got small text, and no test noticed.
 
-The code is `_CategoryPickerSheet._gridSlivers` and `_CategoryPickerTile` in `lib/features/categories/widgets/category_picker.dart`.
+The code is `_CategoryPickerSheet._gridSlivers` and `_CategoryPickerTile` in `lib/ui/features/categories/views/category_picker.dart`.
 
 ## Symptoms
 - **Labels ignored the text scale.** A tile was 88px tall. 16px of vertical padding, the 48px icon and a 6px gap leave 18px for the label. At 2×, `bodySmall` needs 32px (a 16px line height × 2), so `FittedBox` shrank the label to fit 18px.
@@ -34,7 +34,7 @@ The code is `_CategoryPickerSheet._gridSlivers` and `_CategoryPickerTile` in `li
 
 ## What Didn't Work
 - **Using "Food" in the RED test.** After the height fix, the test still failed (22.56 against 32). flutter_test's default font (Ahem) draws every glyph as a square the size of the font. At 2×, `bodySmall` is 24px, so "Food" is about 98px wide against a 68.8px tile at the test's 400dp width. `FittedBox` was now shrinking it for width, not height. A two-letter label ("TV", 48px) fits the width, so only the tile height can shrink it. The square-glyph trait is also noted in [flutter-widget-test-and-device-verification-gotchas.md](../developer-experience/flutter-widget-test-and-device-verification-gotchas.md) section 2.
-- **Confirming RED with a bare `git stash`.** That stashes the new test as well, so the "failing" run tests nothing. Stash only the production file: `git stash push lib/features/categories/widgets/category_picker.dart`, run the test, then `git stash pop`.
+- **Confirming RED with a bare `git stash`.** That stashes the new test as well, so the "failing" run tests nothing. Stash only the production file: `git stash push lib/ui/features/categories/views/category_picker.dart`, run the test, then `git stash pop`.
 
 ## Solution
 Derive the tile height from the text scaler, hard-coding only the parts that don't scale (commit `a817d82`):

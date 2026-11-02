@@ -8,7 +8,7 @@ part 'app_version_provider.g.dart';
 ///
 /// Features read this instead of the package-info service, which the
 /// layer rules in `import_analysis_options.yaml` keep out of
-/// `lib/features/`.
+/// `lib/ui/`.
 @Riverpod(keepAlive: true)
 Future<({String version, String buildNumber})> appVersion(Ref ref) =>
     ref.watch(packageInfoServiceProvider).read();

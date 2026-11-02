@@ -6,7 +6,7 @@ Each doc captures the rules that are easy to get wrong by defaulting to a generi
 
 ## Index
 
-- [`layers.md`](./layers.md) — 3-layer architecture: SSOT on repositories, Drift inside repos, controller pattern, reactive defaults, typed error propagation.
+- [`layers.md`](./layers.md) — 3-layer architecture (`ui/`, `domain/`, `data/`) and the `lib/` folder layout: SSOT on repositories, Drift inside repos, controller pattern, reactive defaults, typed error propagation.
 - [`data-model.md`](./data-model.md) — Money in minor units, immutable category `type`, `l10n_key` identity, archive-instead-of-delete, indirect icons/colors, `pending_transactions` staging, pagination cap.
 - [`ui-and-layout.md`](./ui-and-layout.md) — Required layout primitives for Home, Add/Edit Transaction, and Category picker; the 600dp adaptive breakpoint; 2× text scale.
 - [`bootstrap.md`](./bootstrap.md) — First-run + bootstrap sequence, splash redirect, route table.

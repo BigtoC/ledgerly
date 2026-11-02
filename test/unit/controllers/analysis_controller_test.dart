@@ -11,13 +11,13 @@ import 'package:mocktail/mocktail.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
-import 'package:ledgerly/data/models/category.dart';
-import 'package:ledgerly/data/models/currency.dart';
-import 'package:ledgerly/data/models/transaction.dart';
+import 'package:ledgerly/domain/models/category.dart';
+import 'package:ledgerly/domain/models/currency.dart';
+import 'package:ledgerly/domain/models/transaction.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
-import 'package:ledgerly/features/analysis/search/analysis_controller.dart';
-import 'package:ledgerly/features/analysis/search/analysis_providers.dart';
-import 'package:ledgerly/features/analysis/search/analysis_state.dart';
+import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_controller.dart';
+import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_providers.dart';
+import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_state.dart';
 
 class _MockTransactionRepository extends Mock
     implements TransactionRepository {}

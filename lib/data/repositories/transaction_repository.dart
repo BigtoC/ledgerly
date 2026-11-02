@@ -22,16 +22,16 @@
 import 'package:drift/drift.dart' show Value, Variable;
 
 import '../../core/utils/date_helpers.dart';
+import '../../domain/models/account_slice.dart';
+import '../../domain/models/category.dart' show CategoryType;
+import '../../domain/models/category_slice.dart';
+import '../../domain/models/currency.dart';
+import '../../domain/models/currency_slice.dart';
+import '../../domain/models/time_bucket_slice.dart';
+import '../../domain/models/transaction.dart';
 import '../database/app_database.dart' as drift;
 import '../database/daos/currency_dao.dart';
 import '../database/daos/transaction_dao.dart';
-import '../models/account_slice.dart';
-import '../models/category.dart' show CategoryType;
-import '../models/category_slice.dart';
-import '../models/currency.dart';
-import '../models/currency_slice.dart';
-import '../models/time_bucket_slice.dart';
-import '../models/transaction.dart';
 import 'repository_exceptions.dart';
 
 /// Generic transaction-layer failure — used for "transaction not found"

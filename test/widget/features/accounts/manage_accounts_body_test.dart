@@ -29,17 +29,17 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/app/providers/exchange_rates_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
-import 'package:ledgerly/data/models/account.dart';
-import 'package:ledgerly/data/models/account_type.dart';
-import 'package:ledgerly/data/models/currency.dart';
+import 'package:ledgerly/domain/models/account.dart';
+import 'package:ledgerly/domain/models/account_type.dart';
+import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/account_type_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/repository_exceptions.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
-import 'package:ledgerly/features/accounts/accounts_controller.dart';
-import 'package:ledgerly/features/accounts/accounts_state.dart';
-import 'package:ledgerly/features/accounts/widgets/manage_accounts_body.dart';
+import 'package:ledgerly/ui/features/accounts/view_models/accounts_controller.dart';
+import 'package:ledgerly/ui/features/accounts/view_models/accounts_state.dart';
+import 'package:ledgerly/ui/features/accounts/views/manage_accounts_body.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockAccountRepository extends Mock implements AccountRepository {}

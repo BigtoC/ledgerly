@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ledgerly/data/models/currency.dart';
-import 'package:ledgerly/features/analysis/charts/charts_state.dart';
-import 'package:ledgerly/features/analysis/charts/selected_slice.dart';
-import 'package:ledgerly/features/analysis/charts/widgets/chart_legend.dart';
+import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_state.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/selected_slice.dart';
+import 'package:ledgerly/ui/features/analysis/charts/views/chart_legend.dart';
 
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 

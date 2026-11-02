@@ -62,7 +62,7 @@ The fix tightened the transaction-form workflow at the points where routing, asy
 
 1. Preserve the draft form route when category management is opened from an empty-category path.
 
-`lib/features/transactions/transaction_form_screen.dart`
+`lib/ui/features/transactions/views/transaction_form_screen.dart`
 
 ```dart
 if (categories.isEmpty) {
@@ -75,7 +75,7 @@ Using `push` instead of `go` keeps the in-progress form on the navigation stack 
 
 2. Clear duplicated amount when fallback-account currency differs from the source currency.
 
-`lib/features/transactions/transaction_form_controller.dart`
+`lib/ui/features/transactions/view_models/transaction_form_controller.dart`
 
 ```dart
 final preservesAmount = source.currency.code == account.currency.code;
@@ -93,7 +93,7 @@ That keeps duplicate hydration from silently reinterpreting minor units in the w
 
 3. Widen the date picker bounds so historical transactions stay editable.
 
-`lib/features/transactions/widgets/date_field.dart`
+`lib/ui/features/transactions/views/date_field.dart`
 
 ```dart
 final picked = await showDatePicker(
@@ -108,7 +108,7 @@ This removes the artificial cutoff that prevented older persisted transactions f
 
 4. Block route pop during save/delete, not just body interaction.
 
-`lib/features/transactions/transaction_form_screen.dart`
+`lib/ui/features/transactions/views/transaction_form_screen.dart`
 
 ```dart
 return PopScope(
@@ -140,7 +140,7 @@ This closes the gap where the screen could disappear while the controller was st
 
 5. Treat same-currency resubmissions as no-ops.
 
-`lib/features/transactions/transaction_form_controller.dart`
+`lib/ui/features/transactions/view_models/transaction_form_controller.dart`
 
 ```dart
 final currencyChanged = s.displayCurrency?.code != currency.code;

@@ -15,17 +15,17 @@ import 'package:mocktail/mocktail.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import 'package:ledgerly/app/providers/repository_providers.dart';
-import 'package:ledgerly/data/models/account.dart';
-import 'package:ledgerly/data/models/category.dart';
-import 'package:ledgerly/data/models/currency.dart';
-import 'package:ledgerly/data/models/transaction.dart';
+import 'package:ledgerly/domain/models/account.dart';
+import 'package:ledgerly/domain/models/category.dart';
+import 'package:ledgerly/domain/models/currency.dart';
+import 'package:ledgerly/domain/models/transaction.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
-import 'package:ledgerly/features/transactions/keypad_state.dart';
-import 'package:ledgerly/features/transactions/transaction_form_controller.dart';
-import 'package:ledgerly/features/transactions/transaction_form_state.dart';
+import 'package:ledgerly/ui/features/transactions/view_models/keypad_state.dart';
+import 'package:ledgerly/ui/features/transactions/view_models/transaction_form_controller.dart';
+import 'package:ledgerly/ui/features/transactions/view_models/transaction_form_state.dart';
 
 class _MockTransactionRepository extends Mock
     implements TransactionRepository {}

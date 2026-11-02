@@ -48,15 +48,15 @@ The Analysis search flow regressed once the controller and detail page started d
 
 ## What Didn't Work
 
-- Treating `ref.read(analysisCategoriesByIdProvider).value ?? const <int, Category>{}` as a safe fallback in `lib/features/analysis/search/analysis_controller.dart`. That erased the difference between metadata still loading, metadata failing, and metadata genuinely containing no matching categories.
-- Trying to reuse active analysis state through `analysisControllerProvider.stream` in `lib/features/analysis/search/category_search_detail_controller.dart`. That surface is not exposed by this generated provider, so the code compile-broke before the behavioral tests could even run.
+- Treating `ref.read(analysisCategoriesByIdProvider).value ?? const <int, Category>{}` as a safe fallback in `lib/ui/features/analysis/search/view_models/analysis_controller.dart`. That erased the difference between metadata still loading, metadata failing, and metadata genuinely containing no matching categories.
+- Trying to reuse active analysis state through `analysisControllerProvider.stream` in `lib/ui/features/analysis/search/view_models/category_search_detail_controller.dart`. That surface is not exposed by this generated provider, so the code compile-broke before the behavioral tests could even run.
 - Using `pumpAndSettle()` after tapping a stale loading tile. The tap was correctly ignored, so the test was waiting on the wrong signal and timing out noisily instead of checking that navigation never happened.
 
 ## Solution
 
 Make metadata readiness a first-class part of the Analysis controller state instead of defaulting it away.
 
-In `lib/features/analysis/search/analysis_controller.dart`:
+In `lib/ui/features/analysis/search/view_models/analysis_controller.dart`:
 
 ```dart
 final categoriesAsync = ref.read(analysisCategoriesByIdProvider);
@@ -81,7 +81,7 @@ _emitGroupedState(txs, categoriesById, query);
 
 The category-listener path now follows the same contract: if metadata errors, forward the error; if metadata is still loading and there are already matching transactions, keep the controller in `AnalysisLoading(previous: ...)`; only emit grouped results when both streams are ready.
 
-In `lib/features/analysis/search/category_search_detail_controller.dart`, pre-fill synchronously from active Analysis state only when it exists and holds `AnalysisResults` for the same query, then always open the detail page's own repository subscription:
+In `lib/ui/features/analysis/search/view_models/category_search_detail_controller.dart`, pre-fill synchronously from active Analysis state only when it exists and holds `AnalysisResults` for the same query, then always open the detail page's own repository subscription:
 
 ```dart
 if (ref.exists(analysisControllerProvider)) {
