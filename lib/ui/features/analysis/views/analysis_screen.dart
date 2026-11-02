@@ -7,6 +7,7 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../../app/providers/default_currency_provider.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../core/theme/analysis_colors.dart';
 import '../charts/view_models/charts_controller.dart';
 import '../charts/view_models/charts_net_total_providers.dart';
 import '../charts/view_models/charts_providers.dart';
@@ -17,10 +18,7 @@ import '../search/view_models/analysis_controller.dart';
 import '../search/view_models/analysis_providers.dart';
 import '../search/view_models/analysis_state.dart';
 import '../search/views/category_search_tile.dart';
-
-/// Material 3 SearchBar default height (56dp).
-const double _kSearchBarBaseHeight = 56;
-const double _kSearchBarVerticalPadding = 8;
+import 'analysis_search_field.dart';
 
 @Dependencies([
   AnalysisController,
@@ -52,11 +50,21 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
     super.dispose();
   }
 
-  void _onClear() {
+  /// Whether the app-bar search field is open. The account filter button
+  /// (spec § Account filter) sits left of the search field and hides while
+  /// this is true.
+  bool _searchExpanded = false;
+
+  void _openSearch() {
+    // The input autofocuses when it mounts.
+    setState(() => _searchExpanded = true);
+  }
+
+  void _closeSearch() {
     _searchController.clear();
     _searchFocus.unfocus();
     ref.read(analysisControllerProvider.notifier).updateQuery('');
-    setState(() {});
+    setState(() => _searchExpanded = false);
   }
 
   void _onChanged(String value) {
@@ -68,18 +76,6 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
     if (!_searchController.value.composing.isValid) {
       ref.read(analysisControllerProvider.notifier).updateQuery(value);
     }
-    setState(() {});
-  }
-
-  /// Search-bar row height clamped at 1.5× text-scale so accessibility text
-  /// sizes don't clip the input. Matches CLAUDE.md "fixed-height widgets
-  /// clamp at 1.5× or reflow".
-  double _searchBarRowHeight(BuildContext context) {
-    final scaler = MediaQuery.textScalerOf(context);
-    final scaled = scaler
-        .clamp(maxScaleFactor: 1.5)
-        .scale(_kSearchBarBaseHeight);
-    return scaled + _kSearchBarVerticalPadding * 2;
   }
 
   @override
@@ -128,31 +124,61 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
       },
     );
 
+    final colors = AnalysisColors.of(context);
     return Scaffold(
+      backgroundColor: colors.bg,
+      // Pinned (plan D1) so the search field stays reachable while its
+      // results replace the charts.
       appBar: AppBar(
-        title: Text(l10n.analysisTitle),
-        bottom: PreferredSize(
-          preferredSize: Size.fromHeight(_searchBarRowHeight(context)),
+        backgroundColor: colors.bg,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: const Color(0x00000000),
+        toolbarHeight: 64,
+        automaticallyImplyLeading: false,
+        titleSpacing: 0,
+        // The row is fixed at 64, so its text clamps at 1.5× (plan D1). Read
+        // from the screen's context: AppBar's own M3 title clamp is 1.34×.
+        title: MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: MediaQuery.textScalerOf(context)
+                .clamp(maxScaleFactor: 1.5),
+          ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: _kSearchBarVerticalPadding,
-            ),
-            child: SearchBar(
-              controller: _searchController,
-              focusNode: _searchFocus,
-              hintText: l10n.analysisSearchPrompt,
-              leading: const Icon(Icons.search),
-              trailing: [
-                if (_searchController.text.isNotEmpty)
-                  IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: _onClear,
-                    tooltip: MaterialLocalizations.of(context)
-                        .deleteButtonTooltip,
+            padding: const EdgeInsets.fromLTRB(20, 0, 8, 0),
+            child: Row(
+              spacing: 12,
+              children: [
+                Text(
+                  l10n.analysisTitle,
+                  style: analysisText(
+                    size: 24,
+                    lineHeight: 32,
+                    weight: FontWeight.w500,
+                    color: colors.fg,
                   ),
+                ),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) => Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      spacing: 4,
+                      children: [
+                        // The account filter button goes here, before the
+                        // search field, while !_searchExpanded.
+                        AnalysisSearchField(
+                          expanded: _searchExpanded,
+                          expandedWidth: constraints.maxWidth,
+                          controller: _searchController,
+                          focusNode: _searchFocus,
+                          onOpen: _openSearch,
+                          onClose: _closeSearch,
+                          onChanged: _onChanged,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
-              onChanged: _onChanged,
             ),
           ),
         ),

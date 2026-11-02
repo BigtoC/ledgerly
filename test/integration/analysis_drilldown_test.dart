@@ -335,7 +335,9 @@ void main() {
       WidgetTester tester, {
       Duration? drilldownDelay,
       bool seedPreviousWeek = false,
-      Size size = const Size(360, 560),
+      // A 432 dp viewport under the 64 dp app bar: short enough that the
+      // page scrolls the legend card to the top.
+      Size size = const Size(360, 496),
     }) async {
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1;
