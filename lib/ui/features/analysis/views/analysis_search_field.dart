@@ -190,7 +190,11 @@ class _ExpandedContent extends StatelessWidget {
                       focusNode: focusNode,
                       autofocus: true,
                       onChanged: onChanged,
-                      style: TextStyle(fontSize: 15, color: colors.fg),
+                      style: TextStyle(
+                        fontSize: 15,
+                        letterSpacing: 0,
+                        color: colors.fg,
+                      ),
                       decoration: const InputDecoration.collapsed(
                         hintText: null,
                       ),

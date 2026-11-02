@@ -341,6 +341,8 @@ void main() {
       expect(editable.focusNode.hasFocus, isTrue);
       expect(editable.style.fontSize, 15);
       expect(editable.style.color, AnalysisColors.light.fg);
+      // The design sets no letter spacing; Material's 0.5 must not leak in.
+      expect(editable.style.letterSpacing, 0);
 
       final expanded = _searchBoxDecoration(tester);
       expect(expanded.color, AnalysisColors.light.card);

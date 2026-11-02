@@ -138,6 +138,17 @@ void main() {
       final label = tester.widget<Text>(find.text('Week'));
       expect(label.style?.fontSize, 14);
       expect(label.style?.fontWeight, FontWeight.w500);
+      // The design sets no letter spacing; Material's 0.25 must not leak in.
+      final rendered = tester
+          .widget<RichText>(
+            find.descendant(
+              of: find.text('Week'),
+              matching: find.byType(RichText),
+            ),
+          )
+          .text
+          .style!;
+      expect(rendered.letterSpacing, 0);
     });
 
     testWidgets('track geometry: padding 8 16 0, inset 3, gap 2, height 44', (

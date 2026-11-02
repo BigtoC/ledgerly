@@ -179,6 +179,7 @@ class _PeriodSegment extends StatelessWidget {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
+              letterSpacing: 0,
               color: selected ? colors.fg : colors.fg2,
             ),
           ),
