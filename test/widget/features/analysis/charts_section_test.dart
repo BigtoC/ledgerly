@@ -8,6 +8,7 @@ import 'package:ledgerly/data/repositories/exchange_rate_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/services/exchange_rate_service.dart';
 import 'package:ledgerly/domain/models/account.dart';
+import 'package:ledgerly/domain/models/account_slice.dart';
 import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/domain/models/category_slice.dart';
 import 'package:ledgerly/domain/models/currency.dart';
@@ -21,9 +22,13 @@ import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_provider
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_selection_controller.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_state.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/slice_drilldown_controller.dart';
+import 'package:ledgerly/ui/features/analysis/charts/views/category_pie_chart.dart';
+import 'package:ledgerly/ui/features/analysis/charts/views/chart_legend.dart';
+import 'package:ledgerly/ui/features/analysis/charts/views/charts_breakdown_card.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/charts_section.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/charts_summary_card.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/daily_bar_chart.dart';
+import 'package:ledgerly/ui/features/analysis/charts/views/dimension_toggle.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/period_selector.dart';
 import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_providers.dart';
 import 'package:mocktail/mocktail.dart';
@@ -86,6 +91,191 @@ void main() {
     expect(trend.left - section.left, 16);
     expect(section.right - trend.right, 16);
     expect(section.bottom - trend.bottom, 24);
+  });
+
+  group('breakdown card', () {
+    Finder inCard(Finder f) =>
+        find.descendant(of: find.byType(ChartsBreakdownCard), matching: f);
+
+    testWidgets('hosts the title, chips, donut and ranked rows', (
+      tester,
+    ) async {
+      await _pumpSection(tester);
+
+      expect(find.byType(ChartsBreakdownCard), findsOneWidget);
+      expect(inCard(find.text('Expense breakdown')), findsOneWidget);
+      expect(inCard(find.byType(DimensionChips)), findsOneWidget);
+      expect(inCard(find.byType(CategoryPieChart)), findsOneWidget);
+      expect(inCard(find.byType(ChartLegend)), findsOneWidget);
+      expect(find.byType(SegmentedButton<ChartDimension>), findsNothing);
+      // The trend chart is not part of the breakdown card.
+      expect(inCard(find.byType(DailyBarChart)), findsNothing);
+    });
+
+    testWidgets('sits 12 below the block above it, inside the 16 margin', (
+      tester,
+    ) async {
+      await _pumpSection(tester);
+
+      final card = tester.getRect(find.byType(ChartsBreakdownCard));
+      // The section fills the scroll view's width.
+      final section = tester.getRect(find.byType(SingleChildScrollView));
+      expect(card.left, section.left + 16);
+      expect(card.right, section.right - 16);
+      expect(
+        card.top,
+        tester.getRect(find.byType(ChartsSummaryCard)).bottom + 12,
+      );
+    });
+
+    testWidgets('chips switch the dimension and report it as selected', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await _pumpSection(tester);
+
+      await tester.tap(inCard(find.text('Account')));
+      await tester.pumpAndSettle();
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(MaterialApp)),
+      );
+      expect(
+        container.read(chartsSelectionControllerProvider).dimension,
+        ChartDimension.account,
+      );
+      expect(
+        tester.getSemantics(inCard(find.text('Account'))),
+        isSemantics(isButton: true, hasSelectedState: true, isSelected: true),
+      );
+      handle.dispose();
+    });
+
+    testWidgets('an empty period shows the empty state inside the card', (
+      tester,
+    ) async {
+      await _pumpSection(tester, slices: const [], withBuckets: false);
+
+      expect(inCard(find.byType(BreakdownEmptyState)), findsOneWidget);
+      expect(inCard(find.text('No expense in this period')), findsOneWidget);
+      expect(
+        inCard(find.text('Switch to Income or pick another period.')),
+        findsOneWidget,
+      );
+      expect(find.text('No transactions yet'), findsNothing);
+      expect(find.byType(CategoryPieChart), findsNothing);
+    });
+
+    testWidgets('the loading spinner gets 24 above and below it', (
+      tester,
+    ) async {
+      // A slice query that never answers keeps the section loading.
+      await _pumpSection(
+        tester,
+        categoryStream: (_) => const Stream.empty(),
+        settle: false,
+      );
+
+      final spinner = inCard(find.byType(CircularProgressIndicator));
+      expect(spinner, findsOneWidget);
+      expect(
+        tester.getTopLeft(spinner).dy,
+        tester.getBottomLeft(inCard(find.byType(DimensionChips))).dy + 24,
+      );
+      // 24 below the spinner, then the card's 8 bottom padding and 1 border.
+      expect(
+        tester.getBottomLeft(spinner).dy,
+        tester.getBottomLeft(find.byType(ChartsBreakdownCard)).dy - 24 - 9,
+      );
+    });
+
+    group('while the previous chart is still shown', () {
+      const food = [
+        CategorySlice(
+          categoryId: 1,
+          currencyCode: 'USD',
+          totalMinorUnits: 5000,
+        ),
+      ];
+
+      testWidgets('the title follows the charted type, like the centre', (
+        tester,
+      ) async {
+        // Income never answers, so the expense chart stays on screen.
+        await _pumpSection(
+          tester,
+          categoryStream: (type) => type == CategoryType.income
+              ? const Stream.empty()
+              : Stream.value(food),
+        );
+        ProviderScope.containerOf(tester.element(find.byType(MaterialApp)))
+            .read(chartsSelectionControllerProvider.notifier)
+            .toggleType();
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+
+        expect(inCard(find.byType(CategoryPieChart)), findsOneWidget);
+        expect(inCard(find.text('Total expense')), findsOneWidget);
+        expect(inCard(find.text('Expense breakdown')), findsOneWidget);
+        expect(inCard(find.text('Income breakdown')), findsNothing);
+      });
+
+      testWidgets('the chips follow the charted dimension, like the centre', (
+        tester,
+      ) async {
+        final handle = tester.ensureSemantics();
+        // Accounts never answer, so the category chart stays on screen.
+        await _pumpSection(tester, accountStream: const Stream.empty());
+        await tester.tap(inCard(find.text('Account')));
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+
+        expect(inCard(find.byType(CategoryPieChart)), findsOneWidget);
+        expect(inCard(find.text('1 category')), findsOneWidget);
+        expect(
+          tester.getSemantics(inCard(find.text('Category'))),
+          isSemantics(isButton: true, hasSelectedState: true, isSelected: true),
+        );
+        expect(
+          tester.getSemantics(inCard(find.text('Account'))),
+          isSemantics(
+            isButton: true,
+            hasSelectedState: true,
+            isSelected: false,
+          ),
+        );
+        handle.dispose();
+      });
+    });
+
+    testWidgets('FX banners stay above the card', (tester) async {
+      await _pumpSection(
+        tester,
+        slices: const [
+          CategorySlice(
+            categoryId: 1,
+            currencyCode: 'USD',
+            totalMinorUnits: 5000,
+          ),
+          CategorySlice(
+            categoryId: 1,
+            currencyCode: 'EUR',
+            totalMinorUnits: 300,
+          ),
+        ],
+      );
+
+      final banner = find.byType(MaterialBanner);
+      expect(banner, findsOneWidget);
+      expect(
+        find.descendant(of: find.byType(ChartsBreakdownCard), matching: banner),
+        findsNothing,
+      );
+      expect(
+        tester.getRect(banner).bottom,
+        lessThanOrEqualTo(tester.getRect(find.byType(ChartsBreakdownCard)).top),
+      );
+    });
   });
 
   group('trend card visibility by period', () {
@@ -168,6 +358,13 @@ void main() {
 Future<_MockTxRepo> _pumpSection(
   WidgetTester tester, {
   PeriodType? period,
+  List<CategorySlice> slices = const [
+    CategorySlice(categoryId: 1, currencyCode: 'USD', totalMinorUnits: 5000),
+  ],
+  bool withBuckets = true,
+  Stream<List<CategorySlice>> Function(CategoryType type)? categoryStream,
+  Stream<List<AccountSlice>>? accountStream,
+  bool settle = true,
 }) async {
   final repo = _MockTxRepo();
   // The first period queried has income +\$30.00; any other period has
@@ -196,14 +393,19 @@ Future<_MockTxRepo> _pumpSection(
       type: any(named: 'type'),
     ),
   ).thenAnswer(
-    (_) => Stream.value(<CategorySlice>[
-      const CategorySlice(
-        categoryId: 1,
-        currencyCode: 'USD',
-        totalMinorUnits: 5000,
-      ),
-    ]),
+    (invocation) =>
+        categoryStream?.call(
+          invocation.namedArguments[#type] as CategoryType,
+        ) ??
+        Stream.value(slices),
   );
+  when(
+    () => repo.watchByAccountInRange(
+      start: any(named: 'start'),
+      end: any(named: 'end'),
+      type: any(named: 'type'),
+    ),
+  ).thenAnswer((_) => accountStream ?? Stream.value(const <AccountSlice>[]));
   when(
     () => repo.watchTimeBucketsInRange(
       start: any(named: 'start'),
@@ -213,11 +415,12 @@ Future<_MockTxRepo> _pumpSection(
     ),
   ).thenAnswer(
     (_) => Stream.value(<TimeBucketSlice>[
-      TimeBucketSlice(
-        bucketStart: DateTime(2026, 5, 18),
-        currencyCode: 'USD',
-        totalMinorUnits: 5000,
-      ),
+      if (withBuckets)
+        TimeBucketSlice(
+          bucketStart: DateTime(2026, 5, 18),
+          currencyCode: 'USD',
+          totalMinorUnits: 5000,
+        ),
     ]),
   );
 
@@ -279,6 +482,11 @@ Future<_MockTxRepo> _pumpSection(
       ),
     ),
   );
+  if (!settle) {
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    return repo;
+  }
   await tester.pumpAndSettle();
   if (period != null) {
     // Drive the period through the production selection controller.

@@ -865,9 +865,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chartsDimensionCurrency => 'Currency';
 
   @override
-  String get chartsNoData => 'No transactions yet';
-
-  @override
   String get chartsMixedCurrencies => 'Showing original currency amounts';
 
   @override

@@ -343,7 +343,6 @@ const Set<String> _expectedEnKeys = <String>{
   'chartsDimensionCategory',
   'chartsDimensionAccount',
   'chartsDimensionCurrency',
-  'chartsNoData',
   'chartsMixedCurrencies',
   'chartsRatesRequired',
   'chartsTotal',

@@ -20,6 +20,7 @@ import '../../../../../core/utils/color_palette.dart';
 import '../../../../../core/utils/currency_converter.dart';
 import '../../../../../domain/models/account.dart';
 import '../../../../../domain/models/account_slice.dart';
+import '../../../../../domain/models/account_type.dart';
 import '../../../../../domain/models/category.dart';
 import '../../../../../domain/models/category_slice.dart';
 import '../../../../../domain/models/currency.dart';
@@ -42,6 +43,7 @@ part 'charts_controller.g.dart';
     chartsCurrenciesByCode,
     analysisCategoriesById,
     analysisAccountsById,
+    analysisAccountTypesById,
     ChartsSelectionController,
   ],
 )
@@ -97,6 +99,7 @@ class ChartsController extends _$ChartsController {
     ref.listen(chartsCurrenciesByCodeProvider, reemitIfReady);
     ref.listen(analysisCategoriesByIdProvider, reemitIfReady);
     ref.listen(analysisAccountsByIdProvider, reemitIfReady);
+    ref.listen(analysisAccountTypesByIdProvider, reemitIfReady);
 
     // _resubscribe() emits Loading(previous: _lastEmittedData), which renders
     // the prior chart while new streams re-emit. A bare spinner on every
@@ -271,6 +274,8 @@ class ChartsController extends _$ChartsController {
 
     final cats = ref.read(analysisCategoriesByIdProvider).value ?? const {};
     final accts = ref.read(analysisAccountsByIdProvider).value ?? const {};
+    final accountTypes =
+        ref.read(analysisAccountTypesByIdProvider).value ?? const {};
 
     final activeCurrencies = _activeCurrencies(slices, buckets);
     final missingCurrencies = activeCurrencies
@@ -333,6 +338,7 @@ class ChartsController extends _$ChartsController {
       currencies: currencies,
       cats: cats,
       accts: accts,
+      accountTypes: accountTypes,
       missingCurrencies: missingCurrencies,
     );
   }
@@ -364,6 +370,7 @@ class ChartsController extends _$ChartsController {
     required Map<String, Currency> currencies,
     required Map<int, Category> cats,
     required Map<int, Account> accts,
+    required Map<int, AccountType> accountTypes,
     required Set<String> missingCurrencies,
   }) {
     final regrouped = <int, int>{}; // id → converted minor units
@@ -401,8 +408,12 @@ class ChartsController extends _$ChartsController {
         iconKey = c?.icon ?? '';
       } else {
         label = _accountLabel(id, accts);
-        colorIndex = accts[id]?.color ?? CategoryPaletteIndex.neutralVariant50;
-        iconKey = accts[id]?.icon ?? '';
+        // An account without its own icon or colour shows its type's.
+        final a = accts[id];
+        final t = a == null ? null : accountTypes[a.accountTypeId];
+        colorIndex =
+            a?.color ?? t?.color ?? CategoryPaletteIndex.neutralVariant50;
+        iconKey = a?.icon ?? t?.icon ?? '';
       }
       chartSlices.add(
         ChartSlice(

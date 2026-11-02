@@ -186,16 +186,17 @@ void main() {
             categoryRepositoryProvider.overrideWithValue(cat),
             accountRepositoryProvider.overrideWithValue(acct),
           ],
-          child: const MaterialApp(
-            locale: Locale('en'),
-            localizationsDelegates: [
+          child: MaterialApp(
+            theme: lightTheme,
+            locale: const Locale('en'),
+            localizationsDelegates: const [
               AppLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
             supportedLocales: AppLocalizations.supportedLocales,
-            home: CategorySearchDetailScreen(
+            home: const CategorySearchDetailScreen(
               categoryId: 1,
               query: 'coffee',
               currencyCode: 'USD',
@@ -269,16 +270,17 @@ void main() {
             categoryRepositoryProvider.overrideWithValue(cat),
             accountRepositoryProvider.overrideWithValue(acct),
           ],
-          child: const MaterialApp(
-            locale: Locale('en'),
-            localizationsDelegates: [
+          child: MaterialApp(
+            theme: lightTheme,
+            locale: const Locale('en'),
+            localizationsDelegates: const [
               AppLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
             supportedLocales: AppLocalizations.supportedLocales,
-            home: CategorySearchDetailScreen(
+            home: const CategorySearchDetailScreen(
               categoryId: 1,
               query: 'coffee',
               currencyCode: 'USD',
@@ -335,15 +337,16 @@ void main() {
             categoryRepositoryProvider.overrideWithValue(cat),
             accountRepositoryProvider.overrideWithValue(acct),
           ],
-          child: const MaterialApp(
-            localizationsDelegates: [
+          child: MaterialApp(
+            theme: lightTheme,
+            localizationsDelegates: const [
               AppLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
             supportedLocales: AppLocalizations.supportedLocales,
-            home: CategorySearchDetailScreen(
+            home: const CategorySearchDetailScreen(
               categoryId: 1,
               query: 'coffee',
               currencyCode: 'USD',
@@ -396,16 +399,17 @@ void main() {
             categoryRepositoryProvider.overrideWithValue(cat),
             accountRepositoryProvider.overrideWithValue(acct),
           ],
-          child: const MaterialApp(
-            locale: Locale('en'),
-            localizationsDelegates: [
+          child: MaterialApp(
+            theme: lightTheme,
+            locale: const Locale('en'),
+            localizationsDelegates: const [
               AppLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
             supportedLocales: AppLocalizations.supportedLocales,
-            home: CategorySearchDetailScreen(
+            home: const CategorySearchDetailScreen(
               categoryId: 1,
               query: 'coffee',
               currencyCode: 'USD',
@@ -552,16 +556,17 @@ void main() {
             categoryRepositoryProvider.overrideWithValue(cat),
             accountRepositoryProvider.overrideWithValue(acct),
           ],
-          child: const MaterialApp(
-            locale: Locale('en'),
-            localizationsDelegates: [
+          child: MaterialApp(
+            theme: lightTheme,
+            locale: const Locale('en'),
+            localizationsDelegates: const [
               AppLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
             supportedLocales: AppLocalizations.supportedLocales,
-            home: CategorySearchDetailScreen(
+            home: const CategorySearchDetailScreen(
               categoryId: 1,
               query: 'coffee',
               currencyCode: 'USD',
@@ -609,16 +614,17 @@ void main() {
             categoryRepositoryProvider.overrideWithValue(cat),
             accountRepositoryProvider.overrideWithValue(acct),
           ],
-          child: const MaterialApp(
-            locale: Locale('en'),
-            localizationsDelegates: [
+          child: MaterialApp(
+            theme: lightTheme,
+            locale: const Locale('en'),
+            localizationsDelegates: const [
               AppLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
             supportedLocales: AppLocalizations.supportedLocales,
-            home: CategorySearchDetailScreen(
+            home: const CategorySearchDetailScreen(
               categoryId: 1,
               query: 'coffee',
               currencyCode: 'USD',

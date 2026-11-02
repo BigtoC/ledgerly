@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/domain/models/account.dart';
 import 'package:ledgerly/domain/models/account_slice.dart';
+import 'package:ledgerly/domain/models/account_type.dart';
 import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/domain/models/category_slice.dart';
 import 'package:ledgerly/domain/models/currency.dart';
@@ -29,7 +32,12 @@ class _MockExchangeRateService extends Mock implements ExchangeRateService {}
 
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 
-ProviderContainer _container(_MockRepo repo) {
+ProviderContainer _container(
+  _MockRepo repo, {
+  Map<int, Account> accounts = const {},
+  Map<int, AccountType> accountTypes = const {},
+  Stream<Map<int, AccountType>>? accountTypesStream,
+}) {
   final fxService = _MockExchangeRateService();
   when(() => fxService.fetchRates(any())).thenAnswer((_) async => []);
   final fxDb = newTestAppDatabase();
@@ -74,7 +82,10 @@ ProviderContainer _container(_MockRepo repo) {
         }),
       ),
       analysisAccountsByIdProvider.overrideWith(
-        (ref) => Stream.value(const <int, Account>{}),
+        (ref) => Stream.value(accounts),
+      ),
+      analysisAccountTypesByIdProvider.overrideWith(
+        (ref) => accountTypesStream ?? Stream.value(accountTypes),
       ),
     ],
   );
@@ -197,6 +208,122 @@ void main() {
       data.chartData.slices.first.selectionKey,
       equals(const SelectedSlice.account(1)),
     );
+  });
+
+  group('account slices fall back to the account type (D4)', () {
+    const cash = AccountType(
+      id: 1,
+      l10nKey: 'accountType.cash',
+      icon: 'wallet',
+      color: 10,
+    );
+
+    @Dependencies([ChartsController, ChartsSelectionController])
+    Future<ProviderContainer> accountContainer(
+      Account account, {
+      Stream<Map<int, AccountType>>? accountTypes,
+    }) async {
+      final repo = _MockRepo();
+      when(
+        () => repo.watchByAccountInRange(
+          start: any(named: 'start'),
+          end: any(named: 'end'),
+          type: any(named: 'type'),
+        ),
+      ).thenAnswer(
+        (_) => Stream.value([
+          AccountSlice(
+            accountId: account.id,
+            currencyCode: 'USD',
+            totalMinorUnits: 1000,
+          ),
+        ]),
+      );
+      when(
+        () => repo.watchTimeBucketsInRange(
+          start: any(named: 'start'),
+          end: any(named: 'end'),
+          type: any(named: 'type'),
+          granularity: any(named: 'granularity'),
+          categoryId: any(named: 'categoryId'),
+          accountId: any(named: 'accountId'),
+          currencyCode: any(named: 'currencyCode'),
+        ),
+      ).thenAnswer((_) => Stream.value(const <TimeBucketSlice>[]));
+
+      final container = _container(
+        repo,
+        accounts: {account.id: account},
+        accountTypes: const {1: cash},
+        accountTypesStream: accountTypes,
+      );
+      addTearDown(container.dispose);
+      container
+          .read(chartsSelectionControllerProvider.notifier)
+          .setDimension(ChartDimension.account);
+      container.listen(chartsControllerProvider, (_, _) {});
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      return container;
+    }
+
+    @Dependencies([ChartsController])
+    ChartSlice onlySlice(ProviderContainer container) {
+      final data =
+          container.read(chartsControllerProvider).value as ChartsDataState;
+      return data.chartData.slices.single;
+    }
+
+    @Dependencies([ChartsController, ChartsSelectionController])
+    Future<ChartSlice> accountSlice(Account account) async =>
+        onlySlice(await accountContainer(account));
+
+    test("an account with no icon or colour uses its type's", () async {
+      final slice = await accountSlice(
+        const Account(id: 7, name: 'Cash', accountTypeId: 1, currency: _usd),
+      );
+      expect(slice.iconKey, 'wallet');
+      expect(slice.colorIndex, 10);
+    });
+
+    test("an account's own icon and colour win over its type's", () async {
+      final slice = await accountSlice(
+        const Account(
+          id: 7,
+          name: 'Visa',
+          accountTypeId: 1,
+          currency: _usd,
+          icon: 'credit_card',
+          color: 3,
+        ),
+      );
+      expect(slice.iconKey, 'credit_card');
+      expect(slice.colorIndex, 3);
+    });
+
+    test('editing the account type re-emits the slice', () async {
+      final types = StreamController<Map<int, AccountType>>();
+      addTearDown(types.close);
+      types.add(const {1: cash});
+      final container = await accountContainer(
+        const Account(id: 7, name: 'Cash', accountTypeId: 1, currency: _usd),
+        accountTypes: types.stream,
+      );
+      expect(onlySlice(container).iconKey, 'wallet');
+      expect(onlySlice(container).colorIndex, 10);
+
+      types.add(const {
+        1: AccountType(
+          id: 1,
+          l10nKey: 'accountType.cash',
+          icon: 'savings',
+          color: 4,
+        ),
+      });
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(onlySlice(container).iconKey, 'savings');
+      expect(onlySlice(container).colorIndex, 4);
+    });
   });
 
   test('currency slices receive SelectedCurrencySlice', () async {

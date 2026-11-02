@@ -136,3 +136,72 @@ final class AnalysisAccountsByIdProvider
 
 String _$analysisAccountsByIdHash() =>
     r'123c77bce83c6d1216e6637c7fd7eb2f7351d138';
+
+/// `id → AccountType` lookup (active + archived), so account slices can
+/// fall back to their type's icon and colour (`account.icon ??
+/// accountType.icon`, `account.color ?? accountType.color`).
+///
+/// `keepAlive` because the kept-alive `ChartsController` listens to it.
+
+@ProviderFor(analysisAccountTypesById)
+final analysisAccountTypesByIdProvider = AnalysisAccountTypesByIdProvider._();
+
+/// `id → AccountType` lookup (active + archived), so account slices can
+/// fall back to their type's icon and colour (`account.icon ??
+/// accountType.icon`, `account.color ?? accountType.color`).
+///
+/// `keepAlive` because the kept-alive `ChartsController` listens to it.
+
+final class AnalysisAccountTypesByIdProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Map<int, AccountType>>,
+          Map<int, AccountType>,
+          Stream<Map<int, AccountType>>
+        >
+    with
+        $FutureModifier<Map<int, AccountType>>,
+        $StreamProvider<Map<int, AccountType>> {
+  /// `id → AccountType` lookup (active + archived), so account slices can
+  /// fall back to their type's icon and colour (`account.icon ??
+  /// accountType.icon`, `account.color ?? accountType.color`).
+  ///
+  /// `keepAlive` because the kept-alive `ChartsController` listens to it.
+  AnalysisAccountTypesByIdProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'analysisAccountTypesByIdProvider',
+        isAutoDispose: false,
+        dependencies: <ProviderOrFamily>[accountTypeRepositoryProvider],
+        $allTransitiveDependencies: <ProviderOrFamily>[
+          AnalysisAccountTypesByIdProvider.$allTransitiveDependencies0,
+          AnalysisAccountTypesByIdProvider.$allTransitiveDependencies1,
+          AnalysisAccountTypesByIdProvider.$allTransitiveDependencies2,
+        ],
+      );
+
+  static final $allTransitiveDependencies0 = accountTypeRepositoryProvider;
+  static final $allTransitiveDependencies1 =
+      AccountTypeRepositoryProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies2 =
+      AccountTypeRepositoryProvider.$allTransitiveDependencies1;
+
+  @override
+  String debugGetCreateSourceHash() => _$analysisAccountTypesByIdHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<Map<int, AccountType>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<Map<int, AccountType>> create(Ref ref) {
+    return analysisAccountTypesById(ref);
+  }
+}
+
+String _$analysisAccountTypesByIdHash() =>
+    r'162be2eb864c9c59b4c263f3bc605f37c28ffaa2';

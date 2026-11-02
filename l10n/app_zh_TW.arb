@@ -308,7 +308,6 @@
   "chartsDimensionCategory": "類別",
   "chartsDimensionAccount": "帳戶",
   "chartsDimensionCurrency": "幣別",
-  "chartsNoData": "尚無交易",
   "chartsMixedCurrencies": "顯示原始幣別金額",
   "chartsRatesRequired": "等待匯率資料",
   "chartsTotal": "總計",
