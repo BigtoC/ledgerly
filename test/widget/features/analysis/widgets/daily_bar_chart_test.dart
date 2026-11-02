@@ -474,6 +474,28 @@ void main() {
     });
   });
 
+  testWidgets('semantics list non-zero buckets and skip empty future ones', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    // Viewed on Wednesday: Thursday to Sunday are empty future buckets.
+    await _pump(
+      tester,
+      period: PeriodType.week,
+      series: _week([1234, 0, 0, 0, 0, 0, 0], now: DateTime(2026, 10, 21)),
+    );
+
+    final label = tester
+        .getSemantics(find.bySemanticsLabel(RegExp('^Bar chart')))
+        .label;
+    expect(label, startsWith('Bar chart. '));
+    expect(label, contains('Mon: 1234'));
+    for (final day in ['Thu', 'Fri', 'Sat', 'Sun']) {
+      expect(label, isNot(contains(day)));
+    }
+    handle.dispose();
+  });
+
   testWidgets('hovering across the bars does not rebuild the chart', (
     tester,
   ) async {
