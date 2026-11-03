@@ -54,9 +54,9 @@ class AnalysisSearchField extends StatelessWidget {
         curve: AnalysisMotion.standardCurve,
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: expanded ? colors.card : const Color(0x00000000),
+          color: expanded ? colors.card : colors.card.withValues(alpha: 0),
           border: Border.all(
-            color: expanded ? colors.line : const Color(0x00000000),
+            color: expanded ? colors.line : colors.line.withValues(alpha: 0),
           ),
           borderRadius: BorderRadius.circular(24),
         ),

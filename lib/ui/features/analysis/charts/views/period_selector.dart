@@ -191,7 +191,7 @@ class _PeriodSegment extends StatelessWidget {
         curve: AnalysisMotion.standardCurve,
         constraints: const BoxConstraints(minHeight: 44),
         decoration: BoxDecoration(
-          color: selected ? colors.thumb : const Color(0x00000000),
+          color: selected ? colors.thumb : colors.thumb.withValues(alpha: 0),
           borderRadius: BorderRadius.circular(22),
           boxShadow: selected ? colors.thumbShadow : const <BoxShadow>[],
         ),

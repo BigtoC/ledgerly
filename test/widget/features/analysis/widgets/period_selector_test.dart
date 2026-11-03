@@ -217,7 +217,7 @@ void main() {
       expect(textColor(tester, find.text('Week')), c.fg);
 
       final off = segmentDecoration(tester, 'Day');
-      expect(off.color, const Color(0x00000000));
+      expect(off.color, c.thumb.withValues(alpha: 0));
       expect(off.boxShadow ?? const <BoxShadow>[], isEmpty);
       expect(textColor(tester, find.text('Day')), c.fg2);
 
@@ -235,6 +235,26 @@ void main() {
           .text
           .style!;
       expect(rendered.letterSpacing, 0);
+    });
+
+    testWidgets('a switching thumb fades in the thumb colour, never grey', (
+      tester,
+    ) async {
+      await pump(tester, selector());
+      await tester.pump(AnalysisMotion.standardDuration);
+      const c = AnalysisColors.light;
+
+      await pump(tester, selector(period: PeriodType.month));
+      await tester.pump(AnalysisMotion.standardDuration ~/ 2);
+
+      // Fading to transparent black would lerp the RGB towards grey.
+      for (final label in ['Week', 'Month']) {
+        final fill = segmentDecoration(tester, label).color!;
+        expect(fill.a, inExclusiveRange(0, 1), reason: label);
+        expect(fill.r, closeTo(c.thumb.r, 1e-6), reason: label);
+        expect(fill.g, closeTo(c.thumb.g, 1e-6), reason: label);
+        expect(fill.b, closeTo(c.thumb.b, 1e-6), reason: label);
+      }
     });
 
     testWidgets('track geometry: padding 8 16 0, inset 3, gap 2, height 44', (

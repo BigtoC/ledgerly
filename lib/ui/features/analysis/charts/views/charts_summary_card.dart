@@ -277,7 +277,7 @@ class _TypeTile extends StatelessWidget {
         duration: AnalysisMotion.standardDuration,
         curve: AnalysisMotion.standardCurve,
         decoration: BoxDecoration(
-          color: selected ? tint : Colors.transparent,
+          color: selected ? tint : tint.withValues(alpha: 0),
           border: Border.all(color: selected ? fill : colors.line, width: 1.5),
           borderRadius: BorderRadius.circular(14),
         ),

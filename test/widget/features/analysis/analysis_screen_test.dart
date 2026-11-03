@@ -323,8 +323,11 @@ void main() {
       expect(_iconColor(tester, Icons.search), AnalysisColors.light.fg);
 
       final collapsed = _searchBoxDecoration(tester);
-      expect(collapsed.color, const Color(0x00000000));
-      expect(collapsed.border, Border.all(color: const Color(0x00000000)));
+      expect(collapsed.color, AnalysisColors.light.card.withValues(alpha: 0));
+      expect(
+        collapsed.border,
+        Border.all(color: AnalysisColors.light.line.withValues(alpha: 0)),
+      );
       expect(collapsed.borderRadius, BorderRadius.circular(24));
       handle.dispose();
     });
@@ -397,6 +400,29 @@ void main() {
       await tester.pump();
       expect(find.text('Search memos'), findsNothing);
       handle.dispose();
+    });
+
+    testWidgets('opening search fades the fill and border, never grey', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_harness(tx: tx, cat: cat, acct: acct));
+      await tester.pump();
+      const c = AnalysisColors.light;
+
+      await tester.tap(find.byTooltip('Search memos'));
+      await tester.pump();
+      await tester.pump(AnalysisMotion.standardDuration ~/ 2);
+
+      // Fading from transparent black would lerp the RGB through grey.
+      final box = _searchBoxDecoration(tester);
+      final border = (box.border! as Border).top.color;
+      for (final (fill, token) in [(box.color!, c.card), (border, c.line)]) {
+        expect(fill.a, inExclusiveRange(0, 1));
+        expect(fill.r, closeTo(token.r, 1e-6));
+        expect(fill.g, closeTo(token.g, 1e-6));
+        expect(fill.b, closeTo(token.b, 1e-6));
+      }
+      await tester.pump(AnalysisMotion.searchExpandDuration);
     });
 
     testWidgets('close collapses the field, clears the query and unfocuses', (
