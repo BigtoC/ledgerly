@@ -81,6 +81,7 @@ Future<void> _settleDrift(WidgetTester tester) async {
   chartsNetTotal,
   chartsRange,
   chartsAccountFilterOptions,
+  chartsDateBounds,
 ])
 void main() {
   setUpAll(_loadRoboto);

@@ -128,6 +128,7 @@ class _SlowDrilldownController extends SliceDrilldownController {
   chartsNetTotal,
   chartsAccountFilterOptions,
   chartsRange,
+  chartsDateBounds,
 ])
 Future<ProviderContainer> _pumpAnalysisScreen(
   WidgetTester tester, {
@@ -234,6 +235,7 @@ Future<ProviderContainer> _pumpAnalysisScreen(
   chartsNetTotal,
   chartsAccountFilterOptions,
   chartsRange,
+  chartsDateBounds,
 ])
 void main() {
   setUpAll(() {
@@ -342,6 +344,7 @@ void main() {
       chartsNetTotal,
       chartsAccountFilterOptions,
       chartsRange,
+      chartsDateBounds,
     ])
     Future<ProviderContainer> pumpPhone(
       WidgetTester tester, {

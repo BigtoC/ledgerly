@@ -236,6 +236,7 @@ _MockTxRepo _repo() {
   chartsNetTotal,
   chartsAccountFilterOptions,
   chartsRange,
+  chartsDateBounds,
 ])
 Future<ProviderContainer> _pumpScreen(WidgetTester tester) async {
   final fxService = _MockExchangeRateService();
@@ -347,6 +348,7 @@ Finder _inside(Type card, Finder f) =>
   chartsNetTotal,
   chartsAccountFilterOptions,
   chartsRange,
+  chartsDateBounds,
 ])
 void main() {
   setUpAll(() {

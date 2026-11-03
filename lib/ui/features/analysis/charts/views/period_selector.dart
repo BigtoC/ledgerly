@@ -2,7 +2,9 @@
 // PeriodType) above a navigator (prev / label + caption / next). Visual values
 // from docs/design/analysis-redesign/Main.dc.html (lines 50-69, tabs style and
 // prev/nextStyle in renderVals()). On All the chevrons are hidden but keep
-// their slots, and the caption is the covered range.
+// their slots, and the caption is the covered range. On the other periods the
+// label is a button that opens the period picker (pkLabelBtnStyle and
+// pkCaretStyle in renderVals()).
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -72,6 +74,8 @@ class PeriodSelector extends StatelessWidget {
     required this.onPrevious,
     required this.onNext,
     required this.onPeriodChanged,
+    required this.onPick,
+    required this.pickerOpen,
     this.allTimeRange,
   });
 
@@ -85,6 +89,12 @@ class PeriodSelector extends StatelessWidget {
   final VoidCallback onPrevious;
   final VoidCallback onNext;
   final ValueChanged<PeriodType> onPeriodChanged;
+
+  /// Opens the period picker; ignored on All, which has none.
+  final VoidCallback onPick;
+
+  /// Whether the period picker is open, for the label's caret.
+  final bool pickerOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -112,6 +122,15 @@ class PeriodSelector extends StatelessWidget {
           showChevrons: !all,
           onPrevious: onPrevious,
           onNext: isAtCurrent ? null : onNext,
+          pickerTitle: switch (period) {
+            PeriodType.day => l10n.chartsPickDay,
+            PeriodType.week => l10n.chartsPickWeek,
+            PeriodType.month => l10n.chartsPickMonth,
+            PeriodType.year => l10n.chartsPickYear,
+            PeriodType.all => null,
+          },
+          onPick: all ? null : onPick,
+          open: pickerOpen,
         ),
       ],
     );
@@ -231,7 +250,9 @@ class _PeriodSegment extends StatelessWidget {
 /// Previous / next chevrons around the period label and its caption.
 /// A null [onNext] disables the next chevron (at the current period).
 /// Without [showChevrons] both are hidden but keep their 48 px slots, so
-/// the label stays centred.
+/// the label stays centred. With [onPick] the label and caption are one
+/// button with a caret that opens the period picker; [open] fills it and
+/// turns the caret up while the picker is open.
 class PeriodNavigator extends StatelessWidget {
   const PeriodNavigator({
     super.key,
@@ -240,6 +261,9 @@ class PeriodNavigator extends StatelessWidget {
     required this.onPrevious,
     required this.onNext,
     this.showChevrons = true,
+    this.pickerTitle,
+    this.onPick,
+    this.open = false,
   });
 
   final String label;
@@ -248,10 +272,35 @@ class PeriodNavigator extends StatelessWidget {
   final VoidCallback? onNext;
   final bool showChevrons;
 
+  /// The picker's title, which starts the button's screen-reader name.
+  final String? pickerTitle;
+
+  /// Null on All: a plain label with no caret.
+  final VoidCallback? onPick;
+  final bool open;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = AnalysisColors.of(context);
+    final labelText = Text(
+      label,
+      textAlign: TextAlign.center,
+      style: analysisText(
+        size: 18,
+        lineHeight: 24,
+        weight: FontWeight.w500,
+        color: colors.fg,
+      ),
+    );
+    final captionText = switch (caption) {
+      final caption? => Text(
+        caption,
+        textAlign: TextAlign.center,
+        style: analysisText(size: 12, lineHeight: 16, color: colors.fg3),
+      ),
+      null => null,
+    };
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
       child: Row(
@@ -266,32 +315,75 @@ class PeriodNavigator extends StatelessWidget {
           else
             const SizedBox.square(dimension: 48),
           Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 2,
-              children: [
-                Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: analysisText(
-                    size: 18,
-                    lineHeight: 24,
-                    weight: FontWeight.w500,
-                    color: colors.fg,
-                  ),
-                ),
-                if (caption case final caption?)
-                  Text(
-                    caption,
-                    textAlign: TextAlign.center,
-                    style: analysisText(
-                      size: 12,
-                      lineHeight: 16,
-                      color: colors.fg3,
+            child: switch (onPick) {
+              null => Column(
+                mainAxisSize: MainAxisSize.min,
+                spacing: 2,
+                children: [labelText, ?captionText],
+              ),
+              final onPick => Center(
+                child: Semantics(
+                  container: true,
+                  button: true,
+                  expanded: open,
+                  label: l10n.chartsPickerOpenLabel(pickerTitle ?? '', label),
+                  onTap: onPick,
+                  excludeSemantics: true,
+                  child: AnimatedContainer(
+                    duration: AnalysisMotion.standardDuration,
+                    curve: AnalysisMotion.standardCurve,
+                    decoration: BoxDecoration(
+                      color: open
+                          ? colors.sel
+                          : colors.sel.withValues(alpha: 0),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    // The ink paints above the open fill.
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: InkWell(
+                        onTap: onPick,
+                        borderRadius: BorderRadius.circular(16),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(minHeight: 48),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              spacing: 2,
+                              children: [
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  spacing: 4,
+                                  children: [
+                                    Flexible(child: labelText),
+                                    AnimatedRotation(
+                                      turns: open ? 0.5 : 0,
+                                      duration: AnalysisMotion.standardDuration,
+                                      curve: AnalysisMotion.standardCurve,
+                                      child: Icon(
+                                        Icons.expand_more,
+                                        size: 18,
+                                        color: colors.fg2,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                ?captionText,
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-              ],
-            ),
+                ),
+              ),
+            },
           ),
           if (showChevrons)
             _NavButton(

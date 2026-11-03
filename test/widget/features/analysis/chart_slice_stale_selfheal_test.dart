@@ -47,6 +47,7 @@ const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
   chartsFxStatus,
   chartsNetTotal,
   chartsRange,
+  chartsDateBounds,
 ])
 void main() {
   setUpAll(() {

@@ -37,6 +37,7 @@ import 'analysis_search_field.dart';
   chartsNetTotal,
   chartsAccountFilterOptions,
   chartsRange,
+  chartsDateBounds,
 ])
 class AnalysisScreen extends ConsumerStatefulWidget {
   const AnalysisScreen({super.key});

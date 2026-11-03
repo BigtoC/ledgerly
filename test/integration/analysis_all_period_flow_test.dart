@@ -95,6 +95,7 @@ Future<void> _insertTx(
   chartsNetTotal,
   chartsRange,
   chartsAccountFilterOptions,
+  chartsDateBounds,
 ])
 void main() {
   setUpAll(() {

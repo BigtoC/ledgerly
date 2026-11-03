@@ -88,7 +88,7 @@ Future<void> _open(
               onPressed: () => showModalBottomSheet<void>(
                 context: context,
                 isScrollControlled: true,
-                builder: (_) => const PeriodPickerSheet(),
+                builder: (_) => const PeriodPickerSheet(showHandle: true),
               ),
               child: const Text('OPEN'),
             ),
@@ -98,6 +98,42 @@ Future<void> _open(
     ),
   );
   // Let the date bounds load before the picker opens.
+  await tester.pump();
+  await tester.pump();
+  await tester.tap(find.text('OPEN'));
+  await tester.pumpAndSettle();
+}
+
+/// Opens the picker the way the app does, through [showPeriodPicker].
+@Dependencies([chartsDateBounds, ChartsSelectionController])
+Future<void> _openAdaptive(
+  WidgetTester tester,
+  ProviderContainer container,
+  Size size,
+) async {
+  await tester.binding.setSurfaceSize(size);
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+  await tester.pumpWidget(
+    UncontrolledProviderScope(
+      container: container,
+      child: MediaQuery(
+        data: MediaQueryData(size: size),
+        child: MaterialApp(
+          theme: lightTheme,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => TextButton(
+                onPressed: () => showPeriodPicker(context),
+                child: const Text('OPEN'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
   await tester.pump();
   await tester.pump();
   await tester.tap(find.text('OPEN'));
@@ -954,6 +990,121 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('6月'), findsOneWidget);
     expect(find.byTooltip('上一年'), findsOneWidget);
+  });
+
+  group('showPeriodPicker (AC 8)', () {
+    for (final width in [390.0, 599.0]) {
+      testWidgets('$width wide opens a bottom sheet with the design chrome', (
+        tester,
+      ) async {
+        final c = _container(
+          period: PeriodType.week,
+          anchor: DateTime(2025, 9, 16),
+        );
+        await _openAdaptive(tester, c, Size(width, 844));
+
+        expect(find.byType(BottomSheet), findsOneWidget);
+        expect(find.byType(Dialog), findsNothing);
+        final route = ModalRoute.of(tester.element(_sheet()))!;
+        expect(route, isA<ModalBottomSheetRoute<void>>());
+        route as ModalBottomSheetRoute<void>;
+        expect(route.isScrollControlled, isTrue);
+        expect(route.useSafeArea, isTrue);
+
+        // The sheet paints its own card surface to carry the design shadow.
+        final sheet = tester.widget<BottomSheet>(find.byType(BottomSheet));
+        expect(sheet.backgroundColor, const Color(0x00000000));
+        expect(sheet.elevation, 0);
+        final surface =
+            tester
+                    .widget<DecoratedBox>(
+                      find.byKey(const ValueKey('periodPickerSheetSurface')),
+                    )
+                    .decoration
+                as BoxDecoration;
+        expect(surface.color, light.card);
+        expect(
+          surface.borderRadius,
+          const BorderRadius.vertical(top: Radius.circular(28)),
+        );
+        expect(surface.boxShadow, const [
+          BoxShadow(
+            color: Color.fromRGBO(0, 0, 0, 0.12),
+            offset: Offset(0, -2),
+            blurRadius: 16,
+          ),
+        ]);
+        final barrier = tester
+            .widgetList<ModalBarrier>(find.byType(ModalBarrier))
+            .last;
+        expect(barrier.color, Colors.black.withValues(alpha: 0.32));
+
+        // Drag handle 32×4, radius 2, outline; padding 16 0 8.
+        final handle = find.byKey(const ValueKey('periodPickerHandle'));
+        expect(tester.getSize(handle), const Size(32, 4));
+        final box =
+            tester.widget<Container>(handle).decoration! as BoxDecoration;
+        expect(box.color, light.outline);
+        expect(box.borderRadius, BorderRadius.circular(2));
+        final top = tester.getTopLeft(find.byType(BottomSheet)).dy;
+        expect(tester.getTopLeft(handle).dy - top, 16);
+        // Handle padding 8, then the header's 8.
+        expect(
+          tester.getTopLeft(find.text('Choose a week')).dy -
+              tester.getBottomLeft(handle).dy,
+          16,
+        );
+        // 24 below the footnote.
+        expect(
+          tester.getBottomLeft(find.byType(BottomSheet)).dy -
+              tester.getBottomLeft(find.text('Records start Jan 6, 2025.')).dy,
+          24,
+        );
+      });
+    }
+
+    for (final width in [600.0, 1000.0]) {
+      testWidgets('$width wide opens a 480-max dialog with no handle', (
+        tester,
+      ) async {
+        final c = _container(
+          period: PeriodType.week,
+          anchor: DateTime(2025, 9, 16),
+        );
+        await _openAdaptive(tester, c, Size(width, 800));
+
+        expect(find.byType(BottomSheet), findsNothing);
+        final barrier = tester
+            .widgetList<ModalBarrier>(find.byType(ModalBarrier))
+            .last;
+        expect(barrier.color, Colors.black.withValues(alpha: 0.32));
+        final dialog = tester.widget<Dialog>(find.byType(Dialog));
+        expect(dialog.backgroundColor, light.card);
+        expect(
+          dialog.shape,
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        );
+        final surface = find
+            .descendant(
+              of: find.byType(Dialog),
+              matching: find.byType(Material),
+            )
+            .first;
+        expect(tester.getSize(surface).width, 480);
+        expect(find.byKey(const ValueKey('periodPickerHandle')), findsNothing);
+        // The dialog keeps the sheet's 16 top inset, then the header's 8.
+        expect(
+          tester.getTopLeft(find.text('Choose a week')).dy -
+              tester.getTopLeft(surface).dy,
+          24,
+        );
+
+        await tester.tap(_label('Week 37, Sep 8–Sep 14, 2025'));
+        await tester.pumpAndSettle();
+        expect(find.byType(Dialog), findsNothing);
+        expect(_selection(c).anchorDate, DateTime(2025, 9, 8));
+      });
+    }
   });
 
   // Keep last: Roboto stays loaded for the rest of the file.
