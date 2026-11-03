@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -217,7 +220,7 @@ void main() {
       expect(textColor(tester, find.text('Week')), c.fg);
 
       final off = segmentDecoration(tester, 'Day');
-      expect(off.color, const Color(0x00000000));
+      expect(off.color, c.thumb.withValues(alpha: 0));
       expect(off.boxShadow ?? const <BoxShadow>[], isEmpty);
       expect(textColor(tester, find.text('Day')), c.fg2);
 
@@ -235,6 +238,26 @@ void main() {
           .text
           .style!;
       expect(rendered.letterSpacing, 0);
+    });
+
+    testWidgets('a switching thumb fades in the thumb colour, never grey', (
+      tester,
+    ) async {
+      await pump(tester, selector());
+      await tester.pump(AnalysisMotion.standardDuration);
+      const c = AnalysisColors.light;
+
+      await pump(tester, selector(period: PeriodType.month));
+      await tester.pump(AnalysisMotion.standardDuration ~/ 2);
+
+      // Fading to transparent black would lerp the RGB towards grey.
+      for (final label in ['Week', 'Month']) {
+        final fill = segmentDecoration(tester, label).color!;
+        expect(fill.a, inExclusiveRange(0, 1), reason: label);
+        expect(fill.r, closeTo(c.thumb.r, 1e-6), reason: label);
+        expect(fill.g, closeTo(c.thumb.g, 1e-6), reason: label);
+        expect(fill.b, closeTo(c.thumb.b, 1e-6), reason: label);
+      }
     });
 
     testWidgets('track geometry: padding 8 16 0, inset 3, gap 2, height 44', (
@@ -306,6 +329,20 @@ void main() {
       await tester.tap(find.byTooltip('Next period'));
       await tester.pump();
       expect(next, 1);
+    });
+
+    testWidgets('chevron tooltips follow the locale (zh_TW)', (tester) async {
+      await pump(
+        tester,
+        selector(locale: 'zh-TW'),
+        locale: const Locale('zh', 'TW'),
+      );
+
+      // The tooltips are the icon buttons' only screen-reader names.
+      expect(find.byTooltip('上一個期間'), findsOneWidget);
+      expect(find.byTooltip('下一個期間'), findsOneWidget);
+      expect(find.byTooltip('Previous period'), findsNothing);
+      expect(find.byTooltip('Next period'), findsNothing);
     });
 
     testWidgets('chevrons are 48×48 with 24 icons in fg', (tester) async {
@@ -519,5 +556,101 @@ void main() {
     // The caption stays between the two kept 48 slots.
     expect(caption.left, greaterThanOrEqualTo(8 + 48 + 4));
     expect(caption.right, lessThanOrEqualTo(360 - 8 - 48 - 4));
+  });
+
+  // Keep last: the loaded Roboto stays registered for the rest of the file.
+  group('segment labels at phone width (Roboto)', () {
+    setUpAll(() async {
+      final root = Platform.environment['FLUTTER_ROOT']!;
+      final loader = FontLoader('Roboto');
+      for (final face in ['Regular', 'Medium']) {
+        final bytes = File(
+          '$root/bin/cache/artifacts/material_fonts/Roboto-$face.ttf',
+        ).readAsBytesSync();
+        loader.addFont(Future.value(ByteData.sublistView(bytes)));
+      }
+      await loader.load();
+    });
+
+    const labels = ['Day', 'Week', 'Month', 'Year', 'All'];
+
+    Rect segmentRect(WidgetTester tester, String label) => tester.getRect(
+      find.ancestor(of: find.text(label), matching: find.byType(InkWell)).first,
+    );
+
+    for (final width in [360.0, 390.0]) {
+      testWidgets('2× at $width wide: each label is one line that fits its '
+          'segment (plan D23)', (tester) async {
+        await tester.binding.setSurfaceSize(Size(width, 800));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await pump(tester, selector(isAtCurrent: true), textScale: 2);
+
+        expect(tester.takeException(), isNull);
+        // The labels too wide for their segment at 2× on both phones
+        // ('Week' only just, by under 0.1 px, at 390).
+        const shrunk = {'Week', 'Month'};
+        for (final label in labels) {
+          final paragraph = tester.renderObject<RenderParagraph>(
+            find.text(label),
+          );
+          // Laid out in full, not clipped: with no soft wrap the paragraph
+          // clamps its size to the segment even when the glyphs overflow.
+          expect(
+            paragraph.getMaxIntrinsicWidth(double.infinity),
+            lessThanOrEqualTo(paragraph.size.width + 0.01),
+            reason: '$label is clipped',
+          );
+          // Shrunk only when it would not fit; otherwise 1:1.
+          final drawnWidth = tester.getRect(find.text(label)).width;
+          if (shrunk.contains(label)) {
+            expect(
+              drawnWidth,
+              lessThan(paragraph.size.width),
+              reason: '$label is not scaled down',
+            );
+          } else {
+            expect(
+              drawnWidth,
+              closeTo(paragraph.size.width, 0.01),
+              reason: '$label is scaled',
+            );
+          }
+          final lineTops = paragraph
+              .getBoxesForSelection(
+                TextSelection(baseOffset: 0, extentOffset: label.length),
+              )
+              .map((b) => b.top)
+              .toSet();
+          expect(lineTops, hasLength(1), reason: label);
+          final text = tester.getRect(find.text(label));
+          final segment = segmentRect(tester, label);
+          expect(text.left, greaterThanOrEqualTo(segment.left), reason: label);
+          expect(text.right, lessThanOrEqualTo(segment.right), reason: label);
+        }
+      });
+    }
+
+    testWidgets('1× at 360 wide: labels render at full size', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(360, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await pump(tester, selector(isAtCurrent: true));
+
+      for (final label in labels) {
+        final paragraph = tester.renderObject<RenderParagraph>(
+          find.text(label),
+        );
+        expect(
+          tester.getRect(find.text(label)).width,
+          closeTo(paragraph.size.width, 0.01),
+          reason: label,
+        );
+        // 14 px Roboto Medium, one 20 px line, unscaled.
+        expect(
+          tester.getRect(find.text(label)).height,
+          closeTo(paragraph.size.height, 0.01),
+          reason: label,
+        );
+      }
+    });
   });
 }

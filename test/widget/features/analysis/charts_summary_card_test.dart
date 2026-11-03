@@ -210,7 +210,7 @@ void main() {
       expect(expense.color, _c.expTint);
       expect(expense.border, Border.all(color: _c.exp, width: 1.5));
       expect(expense.borderRadius, BorderRadius.circular(14));
-      expect(income.color, Colors.transparent);
+      expect(income.color, _c.incTint.withValues(alpha: 0));
       expect(income.border, Border.all(color: _c.line, width: 1.5));
       expect(_textColor(tester, find.text('Expense')), _c.expText);
       expect(_textColor(tester, find.text('Income')), _c.fg2);
@@ -223,10 +223,40 @@ void main() {
       income = _decorationOf(tester, _incomeTile);
       expect(income.color, _c.incTint);
       expect(income.border, Border.all(color: _c.inc, width: 1.5));
-      expect(expense.color, Colors.transparent);
+      expect(expense.color, _c.expTint.withValues(alpha: 0));
       expect(expense.border, Border.all(color: _c.line, width: 1.5));
       expect(_textColor(tester, find.text('Income')), _c.incText);
       expect(_textColor(tester, find.text('Expense')), _c.fg2);
+    });
+
+    testWidgets('switching tiles fades each tint, never through grey', (
+      tester,
+    ) async {
+      final container = await _pump(tester, _totals());
+      container.read(chartsSelectionControllerProvider.notifier).toggleType();
+      await tester.pump();
+      await tester.pump(AnalysisMotion.standardDuration ~/ 2);
+
+      // Fading to transparent black would lerp the RGB towards grey.
+      for (final (tile, tint) in [
+        (_expenseTile, _c.expTint),
+        (_incomeTile, _c.incTint),
+      ]) {
+        // The rendered box, not the AnimatedContainer's target decoration.
+        final box = tester.widget<DecoratedBox>(
+          find
+              .descendant(
+                of: find.byKey(tile),
+                matching: find.byType(DecoratedBox),
+              )
+              .first,
+        );
+        final fill = (box.decoration as BoxDecoration).color!;
+        expect(fill.a, inExclusiveRange(0, 1));
+        expect(fill.r, closeTo(tint.r, 1e-6));
+        expect(fill.g, closeTo(tint.g, 1e-6));
+        expect(fill.b, closeTo(tint.b, 1e-6));
+      }
     });
 
     testWidgets('dark theme uses the dark analysis colours', (tester) async {

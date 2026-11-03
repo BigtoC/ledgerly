@@ -1,10 +1,13 @@
-// Account sheet rows — every active account with its converted total and
-// share of the current chart type for the selected period. See
+// Account sheet rows — every active account, plus the archived account the
+// page is filtered by (plan D25), with its converted total and share of the
+// current chart type for the selected period. See
 // `docs/superpowers/specs/2026-11-02-analysis-redesign-design.md`
 // § Account filter → Account sheet.
 //
-// Watches only the period's range (`chartsRange`) and `type` from the
-// selection: the sheet lists every account whatever the account filter is.
+// The totals watch only the period's range (`chartsRange`) and `type` from
+// the selection: the sheet lists every account whatever the account filter
+// is. The filter only adds its own account when that one is archived
+// (plan D25).
 
 import 'package:flutter_riverpod/flutter_riverpod.dart'
     show ProviderListenableSelect;
@@ -67,8 +70,9 @@ class ChartsAccountFilterOptions {
   /// "All accounts" row.
   final int totalMinorUnits;
 
-  /// Active accounts, largest amount first; zero-amount accounts last in
-  /// repository order.
+  /// Active accounts, plus the filtered account when it is archived (plan
+  /// D25), largest amount first; zero-amount accounts last in repository
+  /// order.
   final List<ChartsAccountFilterOption> accounts;
 }
 
@@ -94,7 +98,8 @@ Stream<List<AccountSlice>> chartsAccountTotals(Ref ref) {
 }
 
 /// [chartsAccountTotals] converted into the default currency and joined
-/// with the active accounts. Currencies without a rate are left out, like
+/// with the active accounts and the archived account the page is filtered
+/// by, if any (plan D25). Currencies without a rate are left out, like
 /// the summary card. Loading until every input has loaded; an error when
 /// any input is in error, so the sheet never shows stale rows.
 @Riverpod(
@@ -104,6 +109,7 @@ Stream<List<AccountSlice>> chartsAccountTotals(Ref ref) {
     chartsCurrenciesByCode,
     analysisAccountsById,
     analysisAccountTypesById,
+    ChartsSelectionController,
   ],
 )
 AsyncValue<ChartsAccountFilterOptions> chartsAccountFilterOptions(Ref ref) {
@@ -112,6 +118,9 @@ AsyncValue<ChartsAccountFilterOptions> chartsAccountFilterOptions(Ref ref) {
   final currenciesAsync = ref.watch(chartsCurrenciesByCodeProvider);
   final accountsAsync = ref.watch(analysisAccountsByIdProvider);
   final typesAsync = ref.watch(analysisAccountTypesByIdProvider);
+  final filterId = ref.watch(
+    chartsSelectionControllerProvider.select((s) => s.accountFilterId),
+  );
   for (final input in [
     slicesAsync,
     fxAsync,
@@ -152,12 +161,12 @@ AsyncValue<ChartsAccountFilterOptions> chartsAccountFilterOptions(Ref ref) {
     total += converted;
   }
 
-  final active = [
+  final listed = [
     for (final a in accounts.values)
-      if (!a.isArchived) a,
+      if (!a.isArchived || a.id == filterId) a,
   ];
   final options = [
-    for (final a in active)
+    for (final a in listed)
       ChartsAccountFilterOption(
         accountId: a.id,
         name: a.name,
@@ -171,7 +180,7 @@ AsyncValue<ChartsAccountFilterOptions> chartsAccountFilterOptions(Ref ref) {
       ),
   ];
   // List.sort is not stable: break ties on repository order.
-  final order = {for (var i = 0; i < active.length; i++) active[i].id: i};
+  final order = {for (var i = 0; i < listed.length; i++) listed[i].id: i};
   options.sort((a, b) {
     final byAmount = b.totalMinorUnits.compareTo(a.totalMinorUnits);
     if (byAmount != 0) return byAmount;

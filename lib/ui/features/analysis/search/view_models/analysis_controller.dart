@@ -101,7 +101,9 @@ class AnalysisController extends _$AnalysisController {
     return controller.stream;
   }
 
-  /// Called by the SearchBar `onChanged`.
+  /// Called by `AnalysisScreen` when the app-bar search field changes
+  /// (skipped while an IME is composing), and with '' when the search is
+  /// closed.
   void updateQuery(String query) {
     final trimmed = query.trim();
     _debounceTimer?.cancel();

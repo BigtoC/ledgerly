@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/utils/color_palette.dart' show higherContrastInk;
 import '../../../../core/utils/system_browser.dart';
 import '../../../../domain/models/app_update.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -122,7 +123,7 @@ class NewVersionBadge extends ConsumerWidget {
         backgroundColor: fill,
         // onPrimary fails WCAG AA on pinkAccent in both themes, so pick
         // whichever of black or white contrasts more with the fill.
-        foregroundColor: _labelColorOn(fill),
+        foregroundColor: higherContrastInk(fill),
         shape: const StadiumBorder(),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         // Small pill, but still a padded 48dp tap target.
@@ -133,12 +134,5 @@ class NewVersionBadge extends ConsumerWidget {
       onPressed: () => _onTap(context, ref, state),
       child: Text(label),
     );
-  }
-
-  /// Black or white, whichever has the higher WCAG contrast ratio on [fill].
-  static Color _labelColorOn(Color fill) {
-    final l = fill.computeLuminance();
-    // (l + 0.05) / 0.05 for black vs 1.05 / (l + 0.05) for white.
-    return (l + 0.05) * (l + 0.05) > 1.05 * 0.05 ? Colors.black : Colors.white;
   }
 }

@@ -1,6 +1,7 @@
 ---
 title: Adding a derived Riverpod provider to the scoped Analysis screen
 date: 2026-10-30
+last_refreshed: 2026-11-03
 category: best-practices
 module: analysis
 problem_type: best_practice
@@ -45,6 +46,8 @@ The Analysis charts screen gained a small "Net" box above the pie chart: income 
 
 The feature itself was two new files — `lib/ui/features/analysis/charts/view_models/charts_net_total_providers.dart` (`chartsNetByCurrency` → `chartsNetTotal`) and `lib/ui/features/analysis/charts/views/charts_net_total_card.dart` — plus a repository method (`TransactionRepository.watchNetByCurrencyInRange`). Getting it to pass CI surfaced the issues below; all were caught by the analyzer, tests or review before merge. (When every currency in the period lacks an FX rate, the box shows `—` plus the "Excluded: …" caption rather than a converted `$0.00`.)
 
+> **Since the Analysis redesign (2026-11, PRs #122 and #127):** the Net box and `charts_net_total_card.dart` were replaced by `ChartsSummaryCard` (`charts_summary_card.dart`), which watches the same `chartsNetTotal`. `watchNetByCurrencyInRange` became `watchTotalsByTypeInRange(start:, end:, accountId:)`. `chartsNetByCurrency` no longer computes its own range: it reads the shared `chartsRangeProvider` plus `accountFilterId` (see §2). The guidance below still applies; the file and method names in it are the originals.
+
 ## Guidance
 
 ### 1. Expect the `@Dependencies` cascade and loop the analyzer
@@ -81,9 +84,18 @@ final (PeriodType period, DateTime anchorDate) = ref.watch(
 final start = normalizeAnchor(anchorDate, period); // needs the typed record
 ```
 
+Current form (after #127): the range comes from the shared `chartsRangeProvider`, so the provider selects only the account filter, and the import is still needed for that `select`:
+
+```dart
+final range = ref.watch(chartsRangeProvider);
+final accountId = ref.watch(
+  chartsSelectionControllerProvider.select((s) => s.accountFilterId),
+);
+```
+
 Without the import: "The method 'select' isn't defined for the type 'ChartsSelectionControllerProvider'" — it looks like stale codegen but is not. Without the types: "The argument type 'Object?' can't be assigned to the parameter type 'DateTime'".
 
-Selecting only `(period, anchorDate)` also means Expense/Income, dimension and pie-slice changes do not re-run the query (a test counts repository calls after `toggleType()` / `setDimension()`).
+Selecting only `(period, anchorDate)` (today: the range plus `accountFilterId`) also means Expense/Income, dimension and pie-slice changes do not re-run the query (a test counts repository calls after `toggleType()` / `setDimension()`).
 
 ### 3. Riverpod 3 `.value` keeps previous data on error — check `hasError`
 
@@ -121,7 +133,7 @@ final color = switch (minor) {
 
 ### 5. Stub new repository methods where the widget matters
 
-Existing analysis tests use `class _MockTxRepo extends Mock implements TransactionRepository {}`. An unstubbed `watchNetByCurrencyInRange` returns `null` → `TypeError` inside the provider → `AsyncError` → the card renders `SizedBox.shrink()`. Those suites stay green but never render the new widget, so any test meant to cover it must stub the method.
+Existing analysis tests use `class _MockTxRepo extends Mock implements TransactionRepository {}`. An unstubbed `watchNetByCurrencyInRange` (now `watchTotalsByTypeInRange`) returns `null` → `TypeError` inside the provider → `AsyncError` → the card renders `SizedBox.shrink()`. Those suites stay green but never render the new widget, so any test meant to cover it must stub the method.
 
 ### 6. Register new ARB keys in the audit test
 

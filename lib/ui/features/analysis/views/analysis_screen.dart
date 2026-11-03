@@ -48,11 +48,15 @@ class AnalysisScreen extends ConsumerStatefulWidget {
 class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocus = FocusNode();
+  final FocusNode _searchButtonFocus = FocusNode();
+  final FocusNode _closeButtonFocus = FocusNode();
 
   @override
   void dispose() {
     _searchController.dispose();
     _searchFocus.dispose();
+    _searchButtonFocus.dispose();
+    _closeButtonFocus.dispose();
     super.dispose();
   }
 
@@ -67,10 +71,21 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
   }
 
   void _closeSearch() {
+    // Close holds focus only when it was reached from the keyboard; a tap
+    // does not focus it.
+    final fromKeyboard = _closeButtonFocus.hasFocus;
     _searchController.clear();
     _searchFocus.unfocus();
     ref.read(analysisControllerProvider.notifier).updateQuery('');
     setState(() => _searchExpanded = false);
+    // Close unmounts the focused button; hand focus to the search button,
+    // which mounts on the next frame, so keyboard users keep their place.
+    // A tap leaves focus alone: a focused button would draw a focus ring
+    // and take the next hardware Enter.
+    if (!fromKeyboard) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _searchButtonFocus.requestFocus();
+    });
   }
 
   void _onChanged(String value) {
@@ -211,6 +226,8 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
                             expandedWidth: constraints.maxWidth,
                             controller: _searchController,
                             focusNode: _searchFocus,
+                            openButtonFocusNode: _searchButtonFocus,
+                            closeButtonFocusNode: _closeButtonFocus,
                             onOpen: _openSearch,
                             onClose: _closeSearch,
                             onChanged: _onChanged,

@@ -1367,6 +1367,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get chartsEmptyPickAnother => 'Pick another account or period.';
+
+  @override
+  String get chartsPreviousPeriod => 'Previous period';
+
+  @override
+  String get chartsNextPeriod => 'Next period';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -2676,6 +2682,12 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get chartsEmptyPickAnother => '请选择其他账户或期间。';
+
+  @override
+  String get chartsPreviousPeriod => '上一个期间';
+
+  @override
+  String get chartsNextPeriod => '下一个期间';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -3985,4 +3997,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get chartsEmptyPickAnother => '請選擇其他帳戶或期間。';
+
+  @override
+  String get chartsPreviousPeriod => '上一個期間';
+
+  @override
+  String get chartsNextPeriod => '下一個期間';
 }

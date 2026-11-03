@@ -1,5 +1,6 @@
 ---
 title: Flutter performance audit fixes — emit-path I/O loops, keepAlive family leaks, stale codegen hashes and unused asset packages
+last_refreshed: 2026-11-03
 date: 2026-10-23
 category: performance-issues
 module: analysis
@@ -155,7 +156,7 @@ Removing `material_symbols_icons` took `flutter_assets` from 34,652 KB to 896 KB
   - This caps the widget tree only. `SliceDrilldownController` still loads every row of the slice, and each tap grows the same non-lazy `Column`.
 - **Chart repaints isolated (`f0cde36`).**
   - `RepaintBoundary` wraps `CategoryPieChart` and `DailyBarChart`, because fl_chart adds no boundary of its own.
-  - `DailyBarChart.touchCallback` calls `setState` only when the touched bar changes.
+  - `DailyBarChart.touchCallback` calls `setState` only when the touched bar changes. (Since the Analysis redesign, `DailyBarChart` keeps no touched-bar state: `touchCallback` is set only when the All trend scrolls, and calls `setState` only when the tooltip's viewport offset changes. See `docs/solutions/ui-bugs/fl-chart-tooltip-and-edge-label-clipping-in-horizontal-scroll.md`.)
   - The repaint gain was not profiled.
 - **`NumberFormat` reuse (`0701c52`).** `MoneyFormatter` caches its formats by `(locale, symbol, decimals)`. Measured at 1.34 µs → 0.49 µs per call, which is about 40 µs per build for 50 rows. That is hygiene, not a hot-path fix.
 - **Duplicate splash images (`325c624`).** The light and dark splash entries pointed at the same PNG, and flutter_native_splash copies each entry separately. Dropping the dark entries removed three 704 KB copies.
@@ -193,7 +194,7 @@ Removing `material_symbols_icons` took `flutter_assets` from 34,652 KB to 896 KB
   - `selected_slice_items_list_test.dart`:
     - "caps rendered rows at 50 behind a Show more button"
     - "switching to another slice resets the cap to 50"
-  - `daily_bar_chart_test.dart`: "moving within the touched bar does not rebuild the chart".
+  - `daily_bar_chart_test.dart`: "hovering across the bars does not rebuild the chart" (it replaced "moving within the touched bar does not rebuild the chart" when the touched-bar state was removed).
   - `money_formatter_test.dart`: the "cached formats stay locale-specific" group.
 - **Open follow-up.** Because of `persist: true`, an Undo SnackBar stays visible after its delete has committed, and tapping it then does nothing. This predates the work above and affects both the search-detail and drill-down undo flows. Consider setting `persist: false` on undo SnackBars, or hiding them when the commit fires. Issue #86 kept the default and handled the consequences instead: a later snackbar calls `clearSnackBars()` first so it does not queue behind the persistent Undo, the action captures the provider container and messenger instead of the widget's `ref`, and a stale Undo is a no-op. See `docs/solutions/architecture-patterns/controller-command-outcomes-and-snackbar-actions-outliving-widgets.md`.
 

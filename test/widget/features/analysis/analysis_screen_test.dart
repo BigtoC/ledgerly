@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -323,8 +324,11 @@ void main() {
       expect(_iconColor(tester, Icons.search), AnalysisColors.light.fg);
 
       final collapsed = _searchBoxDecoration(tester);
-      expect(collapsed.color, const Color(0x00000000));
-      expect(collapsed.border, Border.all(color: const Color(0x00000000)));
+      expect(collapsed.color, AnalysisColors.light.card.withValues(alpha: 0));
+      expect(
+        collapsed.border,
+        Border.all(color: AnalysisColors.light.line.withValues(alpha: 0)),
+      );
       expect(collapsed.borderRadius, BorderRadius.circular(24));
       handle.dispose();
     });
@@ -399,6 +403,29 @@ void main() {
       handle.dispose();
     });
 
+    testWidgets('opening search fades the fill and border, never grey', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_harness(tx: tx, cat: cat, acct: acct));
+      await tester.pump();
+      const c = AnalysisColors.light;
+
+      await tester.tap(find.byTooltip('Search memos'));
+      await tester.pump();
+      await tester.pump(AnalysisMotion.standardDuration ~/ 2);
+
+      // Fading from transparent black would lerp the RGB through grey.
+      final box = _searchBoxDecoration(tester);
+      final border = (box.border! as Border).top.color;
+      for (final (fill, token) in [(box.color!, c.card), (border, c.line)]) {
+        expect(fill.a, inExclusiveRange(0, 1));
+        expect(fill.r, closeTo(token.r, 1e-6));
+        expect(fill.g, closeTo(token.g, 1e-6));
+        expect(fill.b, closeTo(token.b, 1e-6));
+      }
+      await tester.pump(AnalysisMotion.searchExpandDuration);
+    });
+
     testWidgets('close collapses the field, clears the query and unfocuses', (
       tester,
     ) async {
@@ -442,6 +469,85 @@ void main() {
         isEmpty,
       );
     });
+
+    testWidgets('closing from the keyboard returns focus to the search '
+        'button', (tester) async {
+      await tester.pumpWidget(_harness(tx: tx, cat: cat, acct: acct));
+      await tester.pump();
+      await _openSearch(tester);
+
+      // Tab from the input to Close, then activate it with Enter.
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      final closeButton = find.ancestor(
+        of: find.byIcon(Icons.close),
+        matching: find.byType(IconButton),
+      );
+      expect(
+        find.ancestor(
+          of: find.byWidget(
+            FocusManager.instance.primaryFocus!.context!.widget,
+          ),
+          matching: closeButton,
+        ),
+        findsOneWidget,
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      await tester.pump(AnalysisMotion.searchExpandDuration);
+
+      expect(find.byTooltip('Close search'), findsNothing);
+      final searchButton = find.ancestor(
+        of: find.byIcon(Icons.search),
+        matching: find.byType(IconButton),
+      );
+      expect(
+        find.ancestor(
+          of: find.byWidget(
+            FocusManager.instance.primaryFocus!.context!.widget,
+          ),
+          matching: searchButton,
+        ),
+        findsOneWidget,
+      );
+    });
+
+    for (final kind in [PointerDeviceKind.touch, PointerDeviceKind.mouse]) {
+      testWidgets('closing with a ${kind.name} tap leaves the search button '
+          'unfocused', (tester) async {
+        if (kind == PointerDeviceKind.mouse) {
+          // A pointer device shows focus highlights (desktop, iPad pointer).
+          FocusManager.instance.highlightStrategy =
+              FocusHighlightStrategy.alwaysTraditional;
+          addTearDown(
+            () => FocusManager.instance.highlightStrategy =
+                FocusHighlightStrategy.automatic,
+          );
+        }
+        await tester.pumpWidget(_harness(tx: tx, cat: cat, acct: acct));
+        await tester.pump();
+        await _openSearch(tester);
+
+        await tester.tap(find.byTooltip('Close search'), kind: kind);
+        await tester.pump();
+        await tester.pump(AnalysisMotion.searchExpandDuration);
+
+        final searchButton = find.ancestor(
+          of: find.byIcon(Icons.search),
+          matching: find.byType(IconButton),
+        );
+        final primary = FocusManager.instance.primaryFocus?.context?.widget;
+        expect(
+          primary == null
+              ? findsNothing
+              : find.ancestor(
+                  of: find.byWidget(primary),
+                  matching: searchButton,
+                ),
+          findsNothing,
+        );
+      });
+    }
 
     testWidgets('IME composition does not dispatch a search', (tester) async {
       when(() => tx.watchByMemo(any())).thenAnswer((_) => Stream.value([]));

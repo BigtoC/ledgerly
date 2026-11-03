@@ -89,8 +89,8 @@ void main() {
 
     expect(find.byType(AnalysisScreen), findsOneWidget);
 
-    // Default chart selectors mounted: 'Week' from the period segmented
-    // control, plus the seeded Food category label.
+    // Default chart selectors mounted: 'Week' from the period track, plus
+    // the seeded Food category label.
     expect(find.textContaining('Week'), findsWidgets);
   });
 }

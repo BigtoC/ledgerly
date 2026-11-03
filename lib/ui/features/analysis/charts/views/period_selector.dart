@@ -140,7 +140,7 @@ class PeriodTrack extends StatelessWidget {
           color: colors.track,
           borderRadius: BorderRadius.circular(25),
         ),
-        // Segments share the tallest one's height when a label wraps at
+        // Segments share the tallest one's height when a label grows at
         // large text scales, like the design's grid row.
         child: IntrinsicHeight(
           child: Row(
@@ -191,7 +191,7 @@ class _PeriodSegment extends StatelessWidget {
         curve: AnalysisMotion.standardCurve,
         constraints: const BoxConstraints(minHeight: 44),
         decoration: BoxDecoration(
-          color: selected ? colors.thumb : const Color(0x00000000),
+          color: selected ? colors.thumb : colors.thumb.withValues(alpha: 0),
           borderRadius: BorderRadius.circular(22),
           boxShadow: selected ? colors.thumbShadow : const <BoxShadow>[],
         ),
@@ -201,15 +201,21 @@ class _PeriodSegment extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(22),
+            // One line, shrunk only when it would not fit (plan D23).
             child: Center(
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0,
-                  color: selected ? colors.fg : colors.fg2,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  softWrap: false,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0,
+                    color: selected ? colors.fg : colors.fg2,
+                  ),
                 ),
               ),
             ),
@@ -242,6 +248,7 @@ class PeriodNavigator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = AnalysisColors.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
@@ -251,7 +258,7 @@ class PeriodNavigator extends StatelessWidget {
           if (showChevrons)
             _NavButton(
               icon: Icons.chevron_left,
-              tooltip: 'Previous period',
+              tooltip: l10n.chartsPreviousPeriod,
               onPressed: onPrevious,
             )
           else
@@ -287,7 +294,7 @@ class PeriodNavigator extends StatelessWidget {
           if (showChevrons)
             _NavButton(
               icon: Icons.chevron_right,
-              tooltip: 'Next period',
+              tooltip: l10n.chartsNextPeriod,
               onPressed: onNext,
             )
           else

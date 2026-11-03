@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -535,5 +537,73 @@ void main() {
     );
     expect(rect.left, greaterThanOrEqualTo(legend.right + 6 - 0.01));
     expect(rect.right, lessThanOrEqualTo(chip.left - 12 + 0.01));
+  });
+
+  // Loads Roboto for the rest of the file, so it stays last.
+  group('filter chip width cap at 2× on a phone (D17, Roboto)', () {
+    setUpAll(() async {
+      final root = Platform.environment['FLUTTER_ROOT']!;
+      final roboto = File(
+        '$root/bin/cache/artifacts/material_fonts/Roboto-Regular.ttf',
+      ).readAsBytesSync();
+      await (FontLoader(
+        'Roboto',
+      )..addFont(Future.value(ByteData.sublistView(roboto)))).load();
+    });
+
+    /// A user category's custom name, far longer than half the header.
+    const longSlice = ChartSlice(
+      label: 'Home renovation, garden upkeep and weekend repairs',
+      currencyCode: 'USD',
+      totalMinorUnits: 700,
+      fraction: 1,
+      colorIndex: 3,
+      iconKey: 'home',
+      selectionKey: SelectedSlice.category(9),
+    );
+
+    for (final width in [360.0, 390.0]) {
+      testWidgets('$width wide: the chip takes at most half the header '
+          'minus the 12 gap and its label ellipsizes', (tester) async {
+        await tester.binding.setSurfaceSize(Size(width, 800));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        final cardWidth = width - 32;
+        await _pump(
+          tester,
+          _data(),
+          selectedSlice: longSlice,
+          textScale: 2,
+          cardWidth: cardWidth,
+        );
+
+        expect(tester.takeException(), isNull);
+        // Inside the 1 px border and 16 padding.
+        final header = cardWidth - 2 * 17;
+        final target = find.bySemanticsLabel(
+          'Showing ${longSlice.label} only. Clear filter',
+        );
+        expect(
+          tester.getSize(target).width,
+          lessThanOrEqualTo((header - 12) / 2 + 0.01),
+        );
+        expect(
+          tester.getSize(find.byKey(const ValueKey('trendFilterPill'))).width,
+          lessThanOrEqualTo((header - 12) / 2 + 0.01),
+        );
+        final label = find.text(longSlice.label);
+        expect(tester.widget<Text>(label).overflow, TextOverflow.ellipsis);
+        expect(
+          tester.renderObject<RenderParagraph>(label).didExceedMaxLines,
+          isTrue,
+        );
+        // The title keeps the other half and is never squeezed away.
+        final title = tester.getRect(find.text('Daily spending'));
+        expect(title.width, greaterThan(0));
+        expect(
+          title.right,
+          lessThanOrEqualTo(tester.getRect(target).left - 12 + 0.01),
+        );
+      });
+    }
   });
 }

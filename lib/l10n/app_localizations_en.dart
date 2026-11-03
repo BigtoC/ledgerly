@@ -1367,4 +1367,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chartsEmptyPickAnother => 'Pick another account or period.';
+
+  @override
+  String get chartsPreviousPeriod => 'Previous period';
+
+  @override
+  String get chartsNextPeriod => 'Next period';
 }

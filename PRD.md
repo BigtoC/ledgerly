@@ -226,6 +226,7 @@ lib/
       theme/
         app_theme.dart
         color_schemes.dart
+        analysis_colors.dart
       widgets/
         adaptive_shell.dart  # 600dp nav switch (NavigationBar ↔ NavigationRail)
     features/
@@ -289,26 +290,34 @@ lib/
       analysis/
         views/
           analysis_screen.dart
+          analysis_search_field.dart
         charts/
           view_models/
             charts_controller.dart
             charts_state.dart
             charts_providers.dart
             charts_net_total_providers.dart
+            charts_range_providers.dart
             charts_selection_controller.dart
+            account_filter_providers.dart
             selected_slice.dart
             slice_drilldown_controller.dart
             slice_drilldown_data.dart
+            trend_series.dart
           views/
             charts_section.dart
-            category_pie_chart.dart
-            daily_bar_chart.dart
-            chart_legend.dart
             period_selector.dart
-            type_toggle.dart
+            charts_summary_card.dart
+            charts_breakdown_card.dart
             dimension_toggle.dart
+            category_pie_chart.dart
+            chart_legend.dart
+            charts_trend_card.dart
+            daily_bar_chart.dart
             selected_slice_items_list.dart
-            charts_net_total_card.dart
+            slice_transaction_row.dart
+            account_filter_button.dart
+            account_filter_sheet.dart
         search/
           view_models/
             analysis_controller.dart
@@ -973,7 +982,7 @@ ShellRoute (bottom nav)
 1. **Splash Screen** — Day counter with hnotes-style visual design, tap to enter Home
 2. **Home Screen** — Day-navigation row (prev ◀ date pill ▶ next, `Jump to today` on the right) above a summary card per currency group: `Day net` and `Month net` (signed, green when positive, red when negative), an income-vs-expense ratio bar, and `Income` / `Expense` tiles; auto-converted totals in `default_currency` when exchange rates are available. Below the card, the transaction list shows **one day at a time**, with prev/next day navigation to walk through days that have activity (empty gap days are skipped). Today is the default day on cold start. Empty-state CTA, FAB to add transaction, inline pending-approval section for recurring rules.
 3. **Add/Edit Transaction** — calculator-style keypad for amount, category picker (icon grid of expense then income categories; the picked category sets the transaction type), account selector with currency indicator, date picker, memo field for optional free-form detail (once a category is selected, up to 10 recently used distinct memos from that category appear as chips below it; tapping one fills the memo), save; delete only in edit mode. In add mode, an inline "Add to shopping list" action below the memo field captures the current form state as a draft and returns to the caller without creating a transaction.
-4. **Analysis Screen** — Memo-based transaction search with SearchBar. Below the search bar, the ChartsSection renders pie + daily bar charts with period/type/dimension toggles, coordinated selection via `SelectedSlice`, and a per-slice items list with tap-to-edit and swipe-to-delete.
+4. **Analysis Screen** — A pinned 64-high app bar holds the title, the account filter pill and a search button that grows into a memo search field; while a query is active its results replace the charts. Below it, `ChartsSection` stacks a period track (Day · Week · Month · Year · All) with a period navigator, then cards: a summary card whose Expense / Income tiles pick the chart type and show both totals, a ratio bar and the period's net; a breakdown card with Category / Account / Currency chips, a donut and ranked rows; a trend card (hidden on Day) with daily or monthly bars, an average line and a slice filter chip; and, when a slice is selected, a transactions card with tap-to-edit and swipe-to-delete with undo. All covers every month from the first transaction to now. The account filter (picked from a sheet, a dialog at 600dp and wider, listing accounts with their share of the period's total) narrows every card to one account. Selection is coordinated through `SelectedSlice`; the screen's exact colours, motion and text styles come from `AnalysisColors`.
 4a. **Manage Accounts** (Settings > Manage Accounts, adaptive sheet/dialog) — Active accounts list with tracked balances in native currency. Add account, manage account types, set default account, archive account. Opened via the ManageAccountsTile in Settings. New and edit routes are `/settings/manage-accounts/new` and `/settings/manage-accounts/:id`.
 4b. **Shopping List Screen** (`/home/shopping-list`) — Full draft list sorted newest first. Accessed from the Home shopping-cart FAB. Swipe-delete or icon-button delete with a 4-second undo snackbar. Tapping a row opens the draft in the reused transaction form. Empty-state CTA opens `/home/add`. Delete is the only mutation on this screen; draft creation happens in `/home/add` only.
 5. **Categories Screen** — List categories grouped by expense/income, add/edit/reorder/archive
@@ -1233,6 +1242,7 @@ Material Design 3 with `ColorScheme.fromSeed()` for both light and dark variants
 
 - `ui/core/theme/app_theme.dart` — defines `lightTheme` and `darkTheme` ThemeData
 - `ui/core/theme/color_schemes.dart` — custom ColorScheme definitions
+- `ui/core/theme/analysis_colors.dart` — the Analysis screen's light and dark tokens (`AnalysisColors`, a `ThemeExtension` registered on both themes), its motion constants (`AnalysisMotion`) and its text helper (`analysisText`)
 - Theme preference stored in `user_preferences` via `UserPreferencesRepository`
 - A Riverpod provider watches the preference and rebuilds MaterialApp on change
 - Splash screen respects current theme for native splash; day counter screen uses its own visual style (sun background, rainbow gradient) independent of theme

@@ -110,6 +110,13 @@ class _RankedRow extends StatelessWidget {
     final colors = AnalysisColors.of(context);
     final sliceColor = colorForIndex(slice.colorIndex);
     final ink = sliceColor.computeLuminance() > 0.35 ? _darkInk : _lightInk;
+    // The currency code is small text (4.5:1), so it takes whichever ink
+    // contrasts more with the fill rather than the icon threshold (D24).
+    final codeInk = higherContrastInk(
+      sliceColor,
+      dark: _darkInk,
+      light: _lightInk,
+    );
     final fadeOpacity = faded ? 0.35 : 1.0;
     final fraction = slice.fraction;
     // The controller serializes seeded categories as their `category.*`
@@ -145,7 +152,7 @@ class _RankedRow extends StatelessWidget {
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.3,
-                          color: ink,
+                          color: codeInk,
                         ),
                       ),
                     )
