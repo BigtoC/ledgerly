@@ -262,6 +262,50 @@ void main() {
     expect(code.letterSpacing, 0.3);
   });
 
+  testWidgets('currency code takes the higher-contrast ink; icons on the '
+      'same fill keep the luminance rule (plan D24)', (tester) async {
+    ChartSlice currency(String code, int colorIndex) => ChartSlice(
+      label: code,
+      currencyCode: 'USD',
+      totalMinorUnits: 100,
+      fraction: 0.5,
+      colorIndex: colorIndex,
+      iconKey: '',
+      selectionKey: SelectedSlice.currency(code),
+    );
+    await _pump(
+      tester,
+      slices: [
+        currency('AAA', CategoryPaletteIndex.red60),
+        currency('BBB', CategoryPaletteIndex.neutralVariant50),
+        const ChartSlice(
+          label: 'Transport',
+          currencyCode: 'USD',
+          totalMinorUnits: 100,
+          fraction: 0.5,
+          colorIndex: CategoryPaletteIndex.red60,
+          iconKey: 'car',
+          selectionKey: SelectedSlice.category(2),
+        ),
+      ],
+    );
+
+    Color? codeInk(String code) => tester
+        .renderObjectList<RenderParagraph>(find.text(code))
+        .map((p) => p.text.style!)
+        .firstWhere((s) => s.fontSize == 10)
+        .color;
+    // Red 60: #1B1B1B gives 5.43:1, white only 3.17:1.
+    expect(codeInk('AAA'), const Color(0xFF1B1B1B));
+    // Neutral Variant 50: white gives 4.55:1, #1B1B1B only 3.78:1.
+    expect(codeInk('BBB'), const Color(0xFFFFFFFF));
+    // Icons need only 3:1 and keep luminance > 0.35, so white on Red 60.
+    expect(
+      tester.widget<Icon>(find.byIcon(iconForKey('car'))).color,
+      const Color(0xFFFFFFFF),
+    );
+  });
+
   testWidgets('selected row gets the sel fill and a bold label', (
     tester,
   ) async {
