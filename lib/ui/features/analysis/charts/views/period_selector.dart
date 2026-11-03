@@ -14,7 +14,9 @@ import '../view_models/charts_state.dart';
 
 final Map<String, DateFormat> _dateFormats = {};
 
-DateFormat _dateFormat(String skeleton, String locale) => _dateFormats
+/// A [DateFormat] for [skeleton] (or pattern) and [locale], built once and
+/// cached: never build one per row or cell.
+DateFormat periodDateFormat(String skeleton, String locale) => _dateFormats
     .putIfAbsent('$skeleton|$locale', () => DateFormat(skeleton, locale));
 
 /// The navigator's period label, e.g. `May 18–May 24, 2026` for a week.
@@ -28,7 +30,7 @@ String formatPeriodLabel(
 ) {
   switch (period) {
     case PeriodType.day:
-      return _dateFormat(
+      return periodDateFormat(
         DateFormat.YEAR_ABBR_MONTH_DAY,
         locale,
       ).format(anchorDate);
@@ -38,14 +40,14 @@ String formatPeriodLabel(
         anchorDate.month,
         anchorDate.day + 6,
       );
-      final monthDay = _dateFormat(DateFormat.ABBR_MONTH_DAY, locale);
+      final monthDay = periodDateFormat(DateFormat.ABBR_MONTH_DAY, locale);
       final start = monthDay.format(anchorDate);
       final endStr = monthDay.format(end);
       return '$start–$endStr, ${anchorDate.year}';
     case PeriodType.month:
-      return _dateFormat(DateFormat.YEAR_MONTH, locale).format(anchorDate);
+      return periodDateFormat(DateFormat.YEAR_MONTH, locale).format(anchorDate);
     case PeriodType.year:
-      return _dateFormat(DateFormat.YEAR, locale).format(anchorDate);
+      return periodDateFormat(DateFormat.YEAR, locale).format(anchorDate);
     case PeriodType.all:
       throw ArgumentError.value(period, 'period', 'All has no date label');
   }
@@ -55,7 +57,7 @@ String formatPeriodLabel(
 /// Null for an empty range (no transactions).
 String? _allTimeCaption(ChartsRange range, String locale) {
   if (!range.start.isBefore(range.end)) return null;
-  final month = _dateFormat(DateFormat.YEAR_ABBR_MONTH, locale);
+  final month = periodDateFormat(DateFormat.YEAR_ABBR_MONTH, locale);
   final last = DateTime(range.end.year, range.end.month - 1);
   return '${month.format(range.start)} – ${month.format(last)}';
 }
