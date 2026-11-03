@@ -261,19 +261,8 @@ class _DailyBarChartState extends State<DailyBarChart> {
     final boldText = MediaQuery.boldTextOf(context);
     final textScaler = MediaQuery.textScalerOf(context);
     final direction = Directionality.of(context);
-    final key = (
-      series,
-      rodWidth,
-      gap,
-      base,
-      boldText,
-      textScaler,
-      direction,
-      locale,
-    );
-    if (key == _placedFor) return _placed;
-
-    final colors = AnalysisColors.of(context);
+    // The locale Text draws with, which can pick a different face.
+    final textLocale = Localizations.maybeLocaleOf(context);
     final current = series.currentIndex;
     final candidates = [
       ?current,
@@ -282,18 +271,40 @@ class _DailyBarChartState extends State<DailyBarChart> {
       for (final i in series.labelIndices.toList()..sort())
         if (i != current && !series.yearLabelIndices.contains(i)) i,
     ];
+    final texts = [for (final i in candidates) _labelText(i)];
+    // Keyed on what the labels are, not the TrendSeries instance: the card
+    // builds a new series on every rebuild.
+    final key = (
+      [
+        for (var k = 0; k < candidates.length; k++)
+          '${candidates[k]}:${texts[k]}',
+      ].join('|'),
+      current,
+      rodWidth,
+      gap,
+      base,
+      boldText,
+      textScaler,
+      direction,
+      textLocale,
+    );
+    if (key == _placedFor) return _placed;
+
+    final colors = AnalysisColors.of(context);
     final placed = <int, double>{};
     final spans = <(double, double)>[];
-    for (final i in candidates) {
+    for (var k = 0; k < candidates.length; k++) {
+      final i = candidates[k];
       // Resolved as Text resolves it, the bold text setting last.
       var style = base.merge(_labelStyle(colors, i));
       if (boldText) {
         style = style.merge(const TextStyle(fontWeight: FontWeight.bold));
       }
       final painter = TextPainter(
-        text: TextSpan(text: _labelText(i), style: style),
+        text: TextSpan(text: texts[k], style: style),
         textDirection: direction,
         textScaler: textScaler,
+        locale: textLocale,
         maxLines: 1,
       )..layout();
       final labelWidth = painter.width;
