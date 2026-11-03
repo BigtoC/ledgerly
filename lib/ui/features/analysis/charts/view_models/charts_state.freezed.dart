@@ -546,7 +546,10 @@ mixin _$ChartsData {
 /// all-rates-present case. When non-empty, `ChartsSection` renders
 /// a ribbon listing them above the chart body. Category/account
 /// dimension only — currency dimension shows source amounts inline.
- List<String> get excludedCurrencyCodes;
+ List<String> get excludedCurrencyCodes;/// The account filter these slices and buckets were queried with; null
+/// = all accounts. The donut centre and the trend subtitle read it from
+/// here, so they follow the chart on screen while a newer one loads.
+ int? get accountFilterId;
 /// Create a copy of ChartsData
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -558,20 +561,20 @@ $ChartsDataCopyWith<ChartsData> get copyWith => _$ChartsDataCopyWithImpl<ChartsD
 @override
 bool operator ==(Object other) {
   final _this = this as ChartsData;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartsData&&(identical(other.period, _this.period) || other.period == _this.period)&&(identical(other.anchorDate, _this.anchorDate) || other.anchorDate == _this.anchorDate)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.dimension, _this.dimension) || other.dimension == _this.dimension)&&const DeepCollectionEquality().equals(other.slices, _this.slices)&&const DeepCollectionEquality().equals(other.bucketTotals, _this.bucketTotals)&&(identical(other.grandTotalMinorUnits, _this.grandTotalMinorUnits) || other.grandTotalMinorUnits == _this.grandTotalMinorUnits)&&(identical(other.displayCurrencyCode, _this.displayCurrencyCode) || other.displayCurrencyCode == _this.displayCurrencyCode)&&(identical(other.mixedCurrencies, _this.mixedCurrencies) || other.mixedCurrencies == _this.mixedCurrencies)&&(identical(other.autoSwitchedFromCategoryDimension, _this.autoSwitchedFromCategoryDimension) || other.autoSwitchedFromCategoryDimension == _this.autoSwitchedFromCategoryDimension)&&const DeepCollectionEquality().equals(other.excludedCurrencyCodes, _this.excludedCurrencyCodes));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChartsData&&(identical(other.period, _this.period) || other.period == _this.period)&&(identical(other.anchorDate, _this.anchorDate) || other.anchorDate == _this.anchorDate)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.dimension, _this.dimension) || other.dimension == _this.dimension)&&const DeepCollectionEquality().equals(other.slices, _this.slices)&&const DeepCollectionEquality().equals(other.bucketTotals, _this.bucketTotals)&&(identical(other.grandTotalMinorUnits, _this.grandTotalMinorUnits) || other.grandTotalMinorUnits == _this.grandTotalMinorUnits)&&(identical(other.displayCurrencyCode, _this.displayCurrencyCode) || other.displayCurrencyCode == _this.displayCurrencyCode)&&(identical(other.mixedCurrencies, _this.mixedCurrencies) || other.mixedCurrencies == _this.mixedCurrencies)&&(identical(other.autoSwitchedFromCategoryDimension, _this.autoSwitchedFromCategoryDimension) || other.autoSwitchedFromCategoryDimension == _this.autoSwitchedFromCategoryDimension)&&const DeepCollectionEquality().equals(other.excludedCurrencyCodes, _this.excludedCurrencyCodes)&&(identical(other.accountFilterId, _this.accountFilterId) || other.accountFilterId == _this.accountFilterId));
 }
 
 
 @override
 int get hashCode {
   final _this = this as ChartsData;
-  return Object.hash(runtimeType,_this.period,_this.anchorDate,_this.type,_this.dimension,const DeepCollectionEquality().hash(_this.slices),const DeepCollectionEquality().hash(_this.bucketTotals),_this.grandTotalMinorUnits,_this.displayCurrencyCode,_this.mixedCurrencies,_this.autoSwitchedFromCategoryDimension,const DeepCollectionEquality().hash(_this.excludedCurrencyCodes));
+  return Object.hash(runtimeType,_this.period,_this.anchorDate,_this.type,_this.dimension,const DeepCollectionEquality().hash(_this.slices),const DeepCollectionEquality().hash(_this.bucketTotals),_this.grandTotalMinorUnits,_this.displayCurrencyCode,_this.mixedCurrencies,_this.autoSwitchedFromCategoryDimension,const DeepCollectionEquality().hash(_this.excludedCurrencyCodes),_this.accountFilterId);
 }
 
 @override
 String toString() {
   final _this = this as ChartsData;
-  return 'ChartsData(period: ${_this.period}, anchorDate: ${_this.anchorDate}, type: ${_this.type}, dimension: ${_this.dimension}, slices: ${_this.slices}, bucketTotals: ${_this.bucketTotals}, grandTotalMinorUnits: ${_this.grandTotalMinorUnits}, displayCurrencyCode: ${_this.displayCurrencyCode}, mixedCurrencies: ${_this.mixedCurrencies}, autoSwitchedFromCategoryDimension: ${_this.autoSwitchedFromCategoryDimension}, excludedCurrencyCodes: ${_this.excludedCurrencyCodes})';
+  return 'ChartsData(period: ${_this.period}, anchorDate: ${_this.anchorDate}, type: ${_this.type}, dimension: ${_this.dimension}, slices: ${_this.slices}, bucketTotals: ${_this.bucketTotals}, grandTotalMinorUnits: ${_this.grandTotalMinorUnits}, displayCurrencyCode: ${_this.displayCurrencyCode}, mixedCurrencies: ${_this.mixedCurrencies}, autoSwitchedFromCategoryDimension: ${_this.autoSwitchedFromCategoryDimension}, excludedCurrencyCodes: ${_this.excludedCurrencyCodes}, accountFilterId: ${_this.accountFilterId})';
 }
 
 
@@ -582,7 +585,7 @@ abstract mixin class $ChartsDataCopyWith<$Res>  {
   factory $ChartsDataCopyWith(ChartsData value, $Res Function(ChartsData) _then) = _$ChartsDataCopyWithImpl;
 @useResult
 $Res call({
- PeriodType period, DateTime anchorDate, CategoryType type, ChartDimension dimension, List<ChartSlice> slices, List<ChartBucketTotal> bucketTotals, int? grandTotalMinorUnits, String? displayCurrencyCode, bool mixedCurrencies, bool autoSwitchedFromCategoryDimension, List<String> excludedCurrencyCodes
+ PeriodType period, DateTime anchorDate, CategoryType type, ChartDimension dimension, List<ChartSlice> slices, List<ChartBucketTotal> bucketTotals, int? grandTotalMinorUnits, String? displayCurrencyCode, bool mixedCurrencies, bool autoSwitchedFromCategoryDimension, List<String> excludedCurrencyCodes, int? accountFilterId
 });
 
 
@@ -599,7 +602,7 @@ class _$ChartsDataCopyWithImpl<$Res>
 
 /// Create a copy of ChartsData
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? period = null,Object? anchorDate = null,Object? type = null,Object? dimension = null,Object? slices = null,Object? bucketTotals = null,Object? grandTotalMinorUnits = freezed,Object? displayCurrencyCode = freezed,Object? mixedCurrencies = null,Object? autoSwitchedFromCategoryDimension = null,Object? excludedCurrencyCodes = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? period = null,Object? anchorDate = null,Object? type = null,Object? dimension = null,Object? slices = null,Object? bucketTotals = null,Object? grandTotalMinorUnits = freezed,Object? displayCurrencyCode = freezed,Object? mixedCurrencies = null,Object? autoSwitchedFromCategoryDimension = null,Object? excludedCurrencyCodes = null,Object? accountFilterId = freezed,}) {
   return _then(ChartsData(
 period: null == period ? _self.period : period // ignore: cast_nullable_to_non_nullable
 as PeriodType,anchorDate: null == anchorDate ? _self.anchorDate : anchorDate // ignore: cast_nullable_to_non_nullable
@@ -612,7 +615,8 @@ as int?,displayCurrencyCode: freezed == displayCurrencyCode ? _self.displayCurre
 as String?,mixedCurrencies: null == mixedCurrencies ? _self.mixedCurrencies : mixedCurrencies // ignore: cast_nullable_to_non_nullable
 as bool,autoSwitchedFromCategoryDimension: null == autoSwitchedFromCategoryDimension ? _self.autoSwitchedFromCategoryDimension : autoSwitchedFromCategoryDimension // ignore: cast_nullable_to_non_nullable
 as bool,excludedCurrencyCodes: null == excludedCurrencyCodes ? _self.excludedCurrencyCodes : excludedCurrencyCodes // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<String>,accountFilterId: freezed == accountFilterId ? _self.accountFilterId : accountFilterId // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 
@@ -697,10 +701,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PeriodType period,  DateTime anchorDate,  CategoryType type,  ChartDimension dimension,  List<ChartSlice> slices,  List<ChartBucketTotal> bucketTotals,  int? grandTotalMinorUnits,  String? displayCurrencyCode,  bool mixedCurrencies,  bool autoSwitchedFromCategoryDimension,  List<String> excludedCurrencyCodes)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PeriodType period,  DateTime anchorDate,  CategoryType type,  ChartDimension dimension,  List<ChartSlice> slices,  List<ChartBucketTotal> bucketTotals,  int? grandTotalMinorUnits,  String? displayCurrencyCode,  bool mixedCurrencies,  bool autoSwitchedFromCategoryDimension,  List<String> excludedCurrencyCodes,  int? accountFilterId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ChartsData() when $default != null:
-return $default(_that.period,_that.anchorDate,_that.type,_that.dimension,_that.slices,_that.bucketTotals,_that.grandTotalMinorUnits,_that.displayCurrencyCode,_that.mixedCurrencies,_that.autoSwitchedFromCategoryDimension,_that.excludedCurrencyCodes);case _:
+return $default(_that.period,_that.anchorDate,_that.type,_that.dimension,_that.slices,_that.bucketTotals,_that.grandTotalMinorUnits,_that.displayCurrencyCode,_that.mixedCurrencies,_that.autoSwitchedFromCategoryDimension,_that.excludedCurrencyCodes,_that.accountFilterId);case _:
   return orElse();
 
 }
@@ -718,10 +722,10 @@ return $default(_that.period,_that.anchorDate,_that.type,_that.dimension,_that.s
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PeriodType period,  DateTime anchorDate,  CategoryType type,  ChartDimension dimension,  List<ChartSlice> slices,  List<ChartBucketTotal> bucketTotals,  int? grandTotalMinorUnits,  String? displayCurrencyCode,  bool mixedCurrencies,  bool autoSwitchedFromCategoryDimension,  List<String> excludedCurrencyCodes)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PeriodType period,  DateTime anchorDate,  CategoryType type,  ChartDimension dimension,  List<ChartSlice> slices,  List<ChartBucketTotal> bucketTotals,  int? grandTotalMinorUnits,  String? displayCurrencyCode,  bool mixedCurrencies,  bool autoSwitchedFromCategoryDimension,  List<String> excludedCurrencyCodes,  int? accountFilterId)  $default,) {final _that = this;
 switch (_that) {
 case _ChartsData():
-return $default(_that.period,_that.anchorDate,_that.type,_that.dimension,_that.slices,_that.bucketTotals,_that.grandTotalMinorUnits,_that.displayCurrencyCode,_that.mixedCurrencies,_that.autoSwitchedFromCategoryDimension,_that.excludedCurrencyCodes);case _:
+return $default(_that.period,_that.anchorDate,_that.type,_that.dimension,_that.slices,_that.bucketTotals,_that.grandTotalMinorUnits,_that.displayCurrencyCode,_that.mixedCurrencies,_that.autoSwitchedFromCategoryDimension,_that.excludedCurrencyCodes,_that.accountFilterId);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -738,10 +742,10 @@ return $default(_that.period,_that.anchorDate,_that.type,_that.dimension,_that.s
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PeriodType period,  DateTime anchorDate,  CategoryType type,  ChartDimension dimension,  List<ChartSlice> slices,  List<ChartBucketTotal> bucketTotals,  int? grandTotalMinorUnits,  String? displayCurrencyCode,  bool mixedCurrencies,  bool autoSwitchedFromCategoryDimension,  List<String> excludedCurrencyCodes)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PeriodType period,  DateTime anchorDate,  CategoryType type,  ChartDimension dimension,  List<ChartSlice> slices,  List<ChartBucketTotal> bucketTotals,  int? grandTotalMinorUnits,  String? displayCurrencyCode,  bool mixedCurrencies,  bool autoSwitchedFromCategoryDimension,  List<String> excludedCurrencyCodes,  int? accountFilterId)?  $default,) {final _that = this;
 switch (_that) {
 case _ChartsData() when $default != null:
-return $default(_that.period,_that.anchorDate,_that.type,_that.dimension,_that.slices,_that.bucketTotals,_that.grandTotalMinorUnits,_that.displayCurrencyCode,_that.mixedCurrencies,_that.autoSwitchedFromCategoryDimension,_that.excludedCurrencyCodes);case _:
+return $default(_that.period,_that.anchorDate,_that.type,_that.dimension,_that.slices,_that.bucketTotals,_that.grandTotalMinorUnits,_that.displayCurrencyCode,_that.mixedCurrencies,_that.autoSwitchedFromCategoryDimension,_that.excludedCurrencyCodes,_that.accountFilterId);case _:
   return null;
 
 }
@@ -753,7 +757,7 @@ return $default(_that.period,_that.anchorDate,_that.type,_that.dimension,_that.s
 
 
 class _ChartsData implements ChartsData {
-  const _ChartsData({required this.period, required this.anchorDate, required this.type, required this.dimension, required  List<ChartSlice> slices, required  List<ChartBucketTotal> bucketTotals, required this.grandTotalMinorUnits, required this.displayCurrencyCode, this.mixedCurrencies = false, this.autoSwitchedFromCategoryDimension = false,  List<String> excludedCurrencyCodes = const <String>[]}): _slices = slices,_bucketTotals = bucketTotals,_excludedCurrencyCodes = excludedCurrencyCodes;
+  const _ChartsData({required this.period, required this.anchorDate, required this.type, required this.dimension, required  List<ChartSlice> slices, required  List<ChartBucketTotal> bucketTotals, required this.grandTotalMinorUnits, required this.displayCurrencyCode, this.mixedCurrencies = false, this.autoSwitchedFromCategoryDimension = false,  List<String> excludedCurrencyCodes = const <String>[], this.accountFilterId}): _slices = slices,_bucketTotals = bucketTotals,_excludedCurrencyCodes = excludedCurrencyCodes;
   
 
 @override final  PeriodType period;
@@ -805,6 +809,10 @@ class _ChartsData implements ChartsData {
   return EqualUnmodifiableListView(_excludedCurrencyCodes);
 }
 
+/// The account filter these slices and buckets were queried with; null
+/// = all accounts. The donut centre and the trend subtitle read it from
+/// here, so they follow the chart on screen while a newer one loads.
+@override final  int? accountFilterId;
 
 /// Create a copy of ChartsData
 /// with the given fields replaced by the non-null parameter values.
@@ -816,18 +824,18 @@ _$ChartsDataCopyWith<_ChartsData> get copyWith => __$ChartsDataCopyWithImpl<_Cha
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChartsData&&(identical(other.period, period) || other.period == period)&&(identical(other.anchorDate, anchorDate) || other.anchorDate == anchorDate)&&(identical(other.type, type) || other.type == type)&&(identical(other.dimension, dimension) || other.dimension == dimension)&&const DeepCollectionEquality().equals(other.slices, _slices)&&const DeepCollectionEquality().equals(other.bucketTotals, _bucketTotals)&&(identical(other.grandTotalMinorUnits, grandTotalMinorUnits) || other.grandTotalMinorUnits == grandTotalMinorUnits)&&(identical(other.displayCurrencyCode, displayCurrencyCode) || other.displayCurrencyCode == displayCurrencyCode)&&(identical(other.mixedCurrencies, mixedCurrencies) || other.mixedCurrencies == mixedCurrencies)&&(identical(other.autoSwitchedFromCategoryDimension, autoSwitchedFromCategoryDimension) || other.autoSwitchedFromCategoryDimension == autoSwitchedFromCategoryDimension)&&const DeepCollectionEquality().equals(other.excludedCurrencyCodes, _excludedCurrencyCodes));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChartsData&&(identical(other.period, period) || other.period == period)&&(identical(other.anchorDate, anchorDate) || other.anchorDate == anchorDate)&&(identical(other.type, type) || other.type == type)&&(identical(other.dimension, dimension) || other.dimension == dimension)&&const DeepCollectionEquality().equals(other.slices, _slices)&&const DeepCollectionEquality().equals(other.bucketTotals, _bucketTotals)&&(identical(other.grandTotalMinorUnits, grandTotalMinorUnits) || other.grandTotalMinorUnits == grandTotalMinorUnits)&&(identical(other.displayCurrencyCode, displayCurrencyCode) || other.displayCurrencyCode == displayCurrencyCode)&&(identical(other.mixedCurrencies, mixedCurrencies) || other.mixedCurrencies == mixedCurrencies)&&(identical(other.autoSwitchedFromCategoryDimension, autoSwitchedFromCategoryDimension) || other.autoSwitchedFromCategoryDimension == autoSwitchedFromCategoryDimension)&&const DeepCollectionEquality().equals(other.excludedCurrencyCodes, _excludedCurrencyCodes)&&(identical(other.accountFilterId, accountFilterId) || other.accountFilterId == accountFilterId));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,period,anchorDate,type,dimension,const DeepCollectionEquality().hash(_slices),const DeepCollectionEquality().hash(_bucketTotals),grandTotalMinorUnits,displayCurrencyCode,mixedCurrencies,autoSwitchedFromCategoryDimension,const DeepCollectionEquality().hash(_excludedCurrencyCodes));
+    return Object.hash(runtimeType,period,anchorDate,type,dimension,const DeepCollectionEquality().hash(_slices),const DeepCollectionEquality().hash(_bucketTotals),grandTotalMinorUnits,displayCurrencyCode,mixedCurrencies,autoSwitchedFromCategoryDimension,const DeepCollectionEquality().hash(_excludedCurrencyCodes),accountFilterId);
 }
 
 @override
 String toString() {
-    return 'ChartsData(period: $period, anchorDate: $anchorDate, type: $type, dimension: $dimension, slices: $slices, bucketTotals: $bucketTotals, grandTotalMinorUnits: $grandTotalMinorUnits, displayCurrencyCode: $displayCurrencyCode, mixedCurrencies: $mixedCurrencies, autoSwitchedFromCategoryDimension: $autoSwitchedFromCategoryDimension, excludedCurrencyCodes: $excludedCurrencyCodes)';
+    return 'ChartsData(period: $period, anchorDate: $anchorDate, type: $type, dimension: $dimension, slices: $slices, bucketTotals: $bucketTotals, grandTotalMinorUnits: $grandTotalMinorUnits, displayCurrencyCode: $displayCurrencyCode, mixedCurrencies: $mixedCurrencies, autoSwitchedFromCategoryDimension: $autoSwitchedFromCategoryDimension, excludedCurrencyCodes: $excludedCurrencyCodes, accountFilterId: $accountFilterId)';
 }
 
 
@@ -838,7 +846,7 @@ abstract mixin class _$ChartsDataCopyWith<$Res> implements $ChartsDataCopyWith<$
   factory _$ChartsDataCopyWith(_ChartsData value, $Res Function(_ChartsData) _then) = __$ChartsDataCopyWithImpl;
 @override @useResult
 $Res call({
- PeriodType period, DateTime anchorDate, CategoryType type, ChartDimension dimension, List<ChartSlice> slices, List<ChartBucketTotal> bucketTotals, int? grandTotalMinorUnits, String? displayCurrencyCode, bool mixedCurrencies, bool autoSwitchedFromCategoryDimension, List<String> excludedCurrencyCodes
+ PeriodType period, DateTime anchorDate, CategoryType type, ChartDimension dimension, List<ChartSlice> slices, List<ChartBucketTotal> bucketTotals, int? grandTotalMinorUnits, String? displayCurrencyCode, bool mixedCurrencies, bool autoSwitchedFromCategoryDimension, List<String> excludedCurrencyCodes, int? accountFilterId
 });
 
 
@@ -855,7 +863,7 @@ class __$ChartsDataCopyWithImpl<$Res>
 
 /// Create a copy of ChartsData
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? period = null,Object? anchorDate = null,Object? type = null,Object? dimension = null,Object? slices = null,Object? bucketTotals = null,Object? grandTotalMinorUnits = freezed,Object? displayCurrencyCode = freezed,Object? mixedCurrencies = null,Object? autoSwitchedFromCategoryDimension = null,Object? excludedCurrencyCodes = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? period = null,Object? anchorDate = null,Object? type = null,Object? dimension = null,Object? slices = null,Object? bucketTotals = null,Object? grandTotalMinorUnits = freezed,Object? displayCurrencyCode = freezed,Object? mixedCurrencies = null,Object? autoSwitchedFromCategoryDimension = null,Object? excludedCurrencyCodes = null,Object? accountFilterId = freezed,}) {
   return _then(_ChartsData(
 period: null == period ? _self.period : period // ignore: cast_nullable_to_non_nullable
 as PeriodType,anchorDate: null == anchorDate ? _self.anchorDate : anchorDate // ignore: cast_nullable_to_non_nullable
@@ -868,7 +876,8 @@ as int?,displayCurrencyCode: freezed == displayCurrencyCode ? _self.displayCurre
 as String?,mixedCurrencies: null == mixedCurrencies ? _self.mixedCurrencies : mixedCurrencies // ignore: cast_nullable_to_non_nullable
 as bool,autoSwitchedFromCategoryDimension: null == autoSwitchedFromCategoryDimension ? _self.autoSwitchedFromCategoryDimension : autoSwitchedFromCategoryDimension // ignore: cast_nullable_to_non_nullable
 as bool,excludedCurrencyCodes: null == excludedCurrencyCodes ? _self._excludedCurrencyCodes : excludedCurrencyCodes // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<String>,accountFilterId: freezed == accountFilterId ? _self.accountFilterId : accountFilterId // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 

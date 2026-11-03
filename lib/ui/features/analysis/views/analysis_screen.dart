@@ -8,11 +8,14 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 import '../../../../app/providers/default_currency_provider.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../core/theme/analysis_colors.dart';
+import '../charts/view_models/account_filter_providers.dart';
 import '../charts/view_models/charts_controller.dart';
 import '../charts/view_models/charts_net_total_providers.dart';
 import '../charts/view_models/charts_providers.dart';
 import '../charts/view_models/charts_selection_controller.dart';
 import '../charts/view_models/slice_drilldown_controller.dart';
+import '../charts/views/account_filter_button.dart';
+import '../charts/views/account_filter_sheet.dart';
 import '../charts/views/charts_section.dart';
 import '../search/view_models/analysis_controller.dart';
 import '../search/view_models/analysis_providers.dart';
@@ -31,6 +34,7 @@ import 'analysis_search_field.dart';
   analysisAccountsById,
   chartsFxStatus,
   chartsNetTotal,
+  chartsAccountFilterOptions,
 ])
 class AnalysisScreen extends ConsumerStatefulWidget {
   const AnalysisScreen({super.key});
@@ -124,6 +128,26 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
       },
     );
 
+    final accountFilterId = ref.watch(
+      chartsSelectionControllerProvider.select((s) => s.accountFilterId),
+    );
+    final accountName = accountFilterId == null
+        ? null
+        : ref.watch(analysisAccountsByIdProvider).value?[accountFilterId]?.name;
+    // Stale-filter self-heal: the selection outlives the screen, so the
+    // filtered account can be deleted meanwhile. Clear the filter once the
+    // loaded accounts no longer hold it, rather than show a filtered page
+    // under an "All accounts" pill.
+    ref.listen(analysisAccountsByIdProvider, (_, next) {
+      if (next is! AsyncData) return;
+      final id = ref.read(chartsSelectionControllerProvider).accountFilterId;
+      if (id != null && !next.requireValue.containsKey(id)) {
+        ref
+            .read(chartsSelectionControllerProvider.notifier)
+            .setAccountFilter(null);
+      }
+    });
+
     final colors = AnalysisColors.of(context);
     final titleScaler = MediaQuery.textScalerOf(context)
         .clamp(maxScaleFactor: 1.5);
@@ -163,10 +187,23 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
                     child: LayoutBuilder(
                       builder: (context, constraints) => Row(
                         mainAxisAlignment: MainAxisAlignment.end,
-                        spacing: 4,
                         children: [
-                          // The account filter button goes here, before the
-                          // search field, while !_searchExpanded.
+                          // Hidden while search is expanded. Flexible, with
+                          // the 4 gap inside, so the row never overflows
+                          // while the field shrinks back.
+                          if (!_searchExpanded)
+                            Flexible(
+                              child: Padding(
+                                padding: const EdgeInsetsDirectional.only(
+                                  end: 4,
+                                ),
+                                child: AccountFilterButton(
+                                  accountName: accountName,
+                                  onPressed: () =>
+                                      showAccountFilterSheet(context),
+                                ),
+                              ),
+                            ),
                           AnalysisSearchField(
                             expanded: _searchExpanded,
                             expandedWidth: constraints.maxWidth,

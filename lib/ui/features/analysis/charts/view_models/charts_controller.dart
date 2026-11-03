@@ -463,6 +463,7 @@ class ChartsController extends _$ChartsController {
       mixedCurrencies: false,
       autoSwitchedFromCategoryDimension: false,
       excludedCurrencyCodes: missingCurrencies.toList()..sort(),
+      accountFilterId: _selection.accountFilterId,
     );
     _lastEmittedData = data;
     _emitter?.add(ChartsState.data(chartData: data));
@@ -564,6 +565,7 @@ class ChartsController extends _$ChartsController {
       displayCurrencyCode: missingRate ? null : fx.defaultCurrencyCode,
       mixedCurrencies: missingRate,
       autoSwitchedFromCategoryDimension: _autoSwitchedToCurrency,
+      accountFilterId: _selection.accountFilterId,
     );
     _lastEmittedData = data;
     _emitter?.add(ChartsState.data(chartData: data));

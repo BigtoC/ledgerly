@@ -271,4 +271,30 @@ void main() {
     expect(lastCategoryAccountId(), isNull);
     expect(lastBucketFilters(), (null, null, null));
   });
+
+  @Dependencies([ChartsController])
+  ChartsData? data() =>
+      switch (container.read(chartsControllerProvider).value) {
+        ChartsDataState(:final chartData) => chartData,
+        _ => null,
+      };
+
+  test('the charted data carries the filter it was queried with, so the '
+      'donut centre and trend follow the chart on screen', () async {
+    await settle();
+    expect(data()!.accountFilterId, isNull);
+
+    for (final dimension in [
+      ChartDimension.category,
+      ChartDimension.currency,
+    ]) {
+      selection().setDimension(dimension);
+      selection().setAccountFilter(3);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(data()!.accountFilterId, 3, reason: dimension.name);
+      selection().setAccountFilter(null);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(data()!.accountFilterId, isNull, reason: dimension.name);
+    }
+  });
 }

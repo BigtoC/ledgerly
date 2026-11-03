@@ -197,6 +197,17 @@ class _SelectedSliceItemsListState
                           .read(chartsSelectionControllerProvider.notifier)
                           .clearSlice,
                     ),
+                    // Account dimension only: filter the page by this
+                    // account and show its categories (AC 7).
+                    if (selection case SelectedAccountSlice(:final accountId))
+                      _BridgeButton(
+                        label: l10n.chartsSeeCategoriesIn(
+                          accountsById[accountId]?.name ?? widget.slice.label,
+                        ),
+                        onTap: () => ref
+                            .read(chartsSelectionControllerProvider.notifier)
+                            .setAccountFilter(accountId),
+                      ),
                     if (data.rows.isEmpty)
                       Container(
                         decoration: divider,
@@ -495,6 +506,70 @@ class _ListHeader extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// `See categories in <Account>`: an outlined 44-high pill under the
+/// header. Main.dc.html lines 205-211.
+class _BridgeButton extends StatelessWidget {
+  const _BridgeButton({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AnalysisColors.of(context);
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(22),
+      side: BorderSide(color: colors.outline),
+    );
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: Semantics(
+          button: true,
+          child: Material(
+            key: const ValueKey('sliceBridgeButton'),
+            color: colors.card.withValues(alpha: 0),
+            shape: shape,
+            child: InkWell(
+              customBorder: shape,
+              onTap: onTap,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 44),
+                child: Padding(
+                  // 14 / 12 padding inside the 1 px border.
+                  padding: const EdgeInsets.fromLTRB(15, 1, 13, 1),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          softWrap: false,
+                          overflow: TextOverflow.ellipsis,
+                          style: analysisText(
+                            size: 14,
+                            lineHeight: 20,
+                            weight: FontWeight.w500,
+                            color: colors.fg,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(Icons.chevron_right, size: 16, color: colors.fg),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

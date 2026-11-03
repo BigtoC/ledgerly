@@ -8,6 +8,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../ui/core/widgets/adaptive_shell.dart';
 import '../ui/features/accounts/view_models/accounts_controller.dart';
 import '../ui/features/accounts/views/account_form_screen.dart';
+import '../ui/features/analysis/charts/view_models/account_filter_providers.dart';
 import '../ui/features/analysis/charts/view_models/charts_controller.dart';
 import '../ui/features/analysis/charts/view_models/charts_net_total_providers.dart';
 import '../ui/features/analysis/charts/view_models/charts_providers.dart';
@@ -76,6 +77,7 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
     analysisAccountsById,
     chartsFxStatus,
     chartsNetTotal,
+    chartsAccountFilterOptions,
     CategorySearchDetailController,
     SettingsController,
     AccountsController,

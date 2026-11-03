@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:io';
+
+import 'package:flutter/services.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -18,11 +21,13 @@ import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/ui/core/theme/analysis_colors.dart';
+import 'package:ledgerly/ui/features/analysis/charts/views/account_filter_button.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/charts_section.dart';
 import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_state.dart';
 import 'package:ledgerly/ui/features/analysis/views/analysis_screen.dart';
 import 'package:ledgerly/ui/features/analysis/views/analysis_search_field.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_controller.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/account_filter_providers.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_net_total_providers.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_providers.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_selection_controller.dart';
@@ -78,6 +83,7 @@ Transaction _tx() => Transaction(
   SliceDrilldownController,
   chartsFxStatus,
   chartsNetTotal,
+  chartsAccountFilterOptions,
 ])
 Widget _harness({
   required TransactionRepository tx,
@@ -150,6 +156,7 @@ BoxDecoration _searchBoxDecoration(WidgetTester tester) =>
   analysisAccountsById,
   chartsFxStatus,
   chartsNetTotal,
+  chartsAccountFilterOptions,
 ])
 GoRouter _detailRouter(String initialLocation) {
   return GoRouter(
@@ -180,6 +187,7 @@ GoRouter _detailRouter(String initialLocation) {
   analysisAccountsById,
   chartsFxStatus,
   chartsNetTotal,
+  chartsAccountFilterOptions,
 ])
 Widget _routerHarness({
   required TransactionRepository tx,
@@ -218,6 +226,7 @@ Widget _routerHarness({
   analysisCategoriesById,
   analysisAccountsById,
   chartsNetTotal,
+  chartsAccountFilterOptions,
 ])
 void main() {
   setUpAll(() {
@@ -494,6 +503,143 @@ void main() {
       });
     }
 
+    testWidgets('the account filter button sits immediately left of the '
+        'search button', (tester) async {
+      await tester.pumpWidget(_harness(tx: tx, cat: cat, acct: acct));
+      await tester.pump();
+
+      final button = find.byType(AccountFilterButton);
+      expect(button, findsOneWidget);
+      expect(
+        find.descendant(of: button, matching: find.text('All accounts')),
+        findsOneWidget,
+      );
+      // Gap 4 before the search control; both centred in the 64 row.
+      expect(
+        tester.getTopRight(button).dx + 4,
+        tester.getTopLeft(find.byType(AnalysisSearchField)).dx,
+      );
+      expect(tester.getCenter(button).dy, 32);
+      expect(tester.getSize(button).height, 44);
+    });
+
+    testWidgets('the button shows the filtered account\'s name', (
+      tester,
+    ) async {
+      when(() => acct.watchAll(includeArchived: true)).thenAnswer(
+        (_) => Stream.value(const [
+          Account(id: 3, name: 'Travel card', accountTypeId: 1, currency: _usd),
+        ]),
+      );
+      await tester.pumpWidget(_harness(tx: tx, cat: cat, acct: acct));
+      await tester.pump();
+
+      ProviderScope.containerOf(tester.element(find.byType(AnalysisScreen)))
+          .read(chartsSelectionControllerProvider.notifier)
+          .setAccountFilter(3);
+      await tester.pump();
+
+      final button = find.byType(AccountFilterButton);
+      expect(
+        find.descendant(of: button, matching: find.text('Travel card')),
+        findsOneWidget,
+      );
+      expect(find.text('All accounts'), findsNothing);
+    });
+
+    testWidgets('a filter on an account that is deleted is cleared', (
+      tester,
+    ) async {
+      final accounts = StreamController<List<Account>>();
+      addTearDown(accounts.close);
+      when(() => acct.watchAll(includeArchived: true))
+          .thenAnswer((_) => accounts.stream);
+      await tester.pumpWidget(_harness(tx: tx, cat: cat, acct: acct));
+      accounts.add(const [
+        Account(id: 3, name: 'Travel card', accountTypeId: 1, currency: _usd),
+      ]);
+      await tester.pump();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(AnalysisScreen)),
+      );
+      container
+          .read(chartsSelectionControllerProvider.notifier)
+          .setAccountFilter(3);
+      await tester.pump();
+      final button = find.byType(AccountFilterButton);
+      expect(
+        find.descendant(of: button, matching: find.text('Travel card')),
+        findsOneWidget,
+      );
+
+      accounts.add(const []);
+      await tester.pump();
+      await tester.pump();
+
+      expect(
+        container.read(chartsSelectionControllerProvider).accountFilterId,
+        isNull,
+      );
+      expect(
+        find.descendant(of: button, matching: find.text('All accounts')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('a filter on an unknown account is cleared once the '
+        'accounts load', (tester) async {
+      final accounts = StreamController<List<Account>>();
+      addTearDown(accounts.close);
+      when(() => acct.watchAll(includeArchived: true))
+          .thenAnswer((_) => accounts.stream);
+      await tester.pumpWidget(_harness(tx: tx, cat: cat, acct: acct));
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(AnalysisScreen)),
+      );
+      container
+          .read(chartsSelectionControllerProvider.notifier)
+          .setAccountFilter(7);
+      await tester.pump();
+
+      accounts.add(const [
+        Account(id: 3, name: 'Travel card', accountTypeId: 1, currency: _usd),
+      ]);
+      await tester.pump();
+      await tester.pump();
+
+      expect(
+        container.read(chartsSelectionControllerProvider).accountFilterId,
+        isNull,
+      );
+    });
+
+    testWidgets('expanding search hides the account button; closing brings '
+        'it back (AC 11)', (tester) async {
+      await tester.pumpWidget(_harness(tx: tx, cat: cat, acct: acct));
+      await tester.pump();
+
+      await _openSearch(tester);
+      expect(find.byType(AccountFilterButton), findsNothing);
+      expect(find.text('All accounts'), findsNothing);
+
+      await tester.tap(find.byTooltip('Close search'));
+      await tester.pump();
+      // While the field shrinks back the row never overflows.
+      expect(tester.takeException(), isNull);
+      for (var i = 0; i < 7; i++) {
+        await tester.pump(const Duration(milliseconds: 40));
+        expect(tester.takeException(), isNull);
+      }
+      await tester.pump(AnalysisMotion.searchExpandDuration);
+
+      expect(find.byType(AccountFilterButton), findsOneWidget);
+      expect(find.text('All accounts'), findsOneWidget);
+      expect(
+        tester.getTopRight(find.byType(AccountFilterButton)).dx + 4,
+        tester.getTopLeft(find.byType(AnalysisSearchField)).dx,
+      );
+    });
+
     testWidgets('2× text scale: the 64 row clamps its text at 1.5×', (
       tester,
     ) async {
@@ -634,5 +780,67 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('detail'), findsOneWidget);
+  });
+
+  // Loads Roboto for the rest of the file, so it stays last.
+  group('account filter button at 2× on a phone (Roboto)', () {
+    setUpAll(() async {
+      final root = Platform.environment['FLUTTER_ROOT']!;
+      final roboto = File(
+        '$root/bin/cache/artifacts/material_fonts/Roboto-Regular.ttf',
+      ).readAsBytesSync();
+      await (FontLoader(
+        'Roboto',
+      )..addFont(Future.value(ByteData.sublistView(roboto)))).load();
+    });
+
+    for (final width in [360.0, 390.0]) {
+      testWidgets('$width wide: the pill clamps its text at 1.5× and the '
+          'name ellipsizes inside 150', (tester) async {
+        when(() => acct.watchAll(includeArchived: true)).thenAnswer(
+          (_) => Stream.value(const [
+            Account(
+              id: 3,
+              name: 'Everyday rewards credit card',
+              accountTypeId: 1,
+              currency: _usd,
+            ),
+          ]),
+        );
+        await tester.binding.setSurfaceSize(Size(width, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(
+          _harness(tx: tx, cat: cat, acct: acct, textScale: 2),
+        );
+        await tester.pump();
+
+        final button = find.byType(AccountFilterButton);
+        final pill = find.byKey(const ValueKey('accountFilterPill'));
+        expect(tester.takeException(), isNull);
+        expect(tester.getSize(button).height, 44);
+        expect(tester.getSize(pill).height, 32);
+        // 13/18 at 1.5× → one 27 line.
+        expect(tester.getSize(find.text('All accounts')).height, 27);
+        expect(
+          tester.getTopRight(button).dx + 4,
+          tester.getTopLeft(find.byType(AnalysisSearchField)).dx,
+        );
+
+        ProviderScope.containerOf(tester.element(find.byType(AnalysisScreen)))
+            .read(chartsSelectionControllerProvider.notifier)
+            .setAccountFilter(3);
+        await tester.pump();
+
+        expect(tester.takeException(), isNull);
+        final name = find.text('Everyday rewards credit card');
+        expect(tester.getSize(name).height, 27);
+        expect(tester.getSize(pill).width, lessThanOrEqualTo(150));
+        // The title is never squeezed.
+        expect(
+          tester.getTopRight(find.text('Analysis')).dx + 12,
+          lessThanOrEqualTo(tester.getTopLeft(button).dx),
+        );
+      });
+    }
   });
 }

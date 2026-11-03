@@ -68,6 +68,7 @@ Future<void> _pump(
   ChartDimension dimension = ChartDimension.category,
   double textScale = 1,
   ValueChanged<int?>? onSelectionChanged,
+  String? accountName,
 }) async {
   await tester.pumpWidget(
     _wrap(
@@ -81,6 +82,7 @@ Future<void> _pump(
         displayCurrencyCode: grandTotal == null ? null : 'USD',
         selectedIndex: selectedIndex,
         onSelectionChanged: onSelectionChanged,
+        accountName: accountName,
       ),
       textScale: textScale,
     ),
@@ -182,6 +184,49 @@ void main() {
       expect(find.text('2 accounts'), findsOneWidget);
       await _pump(tester, dimension: ChartDimension.currency);
       expect(find.text('2 currencies'), findsOneWidget);
+    });
+
+    testWidgets('account filter: "<Account> expense" in fg2 (AC 5c)', (
+      tester,
+    ) async {
+      await _pump(tester, accountName: 'Travel card');
+      expect(find.text('Travel card expense'), findsOneWidget);
+      expect(find.text('Total expense'), findsNothing);
+      expect(find.text(r'$100.00'), findsOneWidget);
+      final top = _style(tester, 'Travel card expense');
+      expect(top.color, _colors.fg2);
+      expect(top.fontWeight, FontWeight.w400);
+      expect(top.fontSize, 12);
+
+      await _pump(
+        tester,
+        accountName: 'Travel card',
+        type: CategoryType.income,
+      );
+      expect(find.text('Travel card income'), findsOneWidget);
+    });
+
+    testWidgets('account filter with a slice selected: the slice label wins', (
+      tester,
+    ) async {
+      await _pump(tester, accountName: 'Travel card', selectedIndex: 1);
+      expect(find.text('Transport'), findsOneWidget);
+      expect(find.text('Travel card expense'), findsNothing);
+    });
+
+    testWidgets('a long account name ellipsizes within 128', (tester) async {
+      await _pump(
+        tester,
+        accountName: 'A very long account name that cannot fit',
+      );
+      final line = find.text(
+        'A very long account name that cannot fit expense',
+      );
+      expect(tester.getSize(line).width, lessThanOrEqualTo(128));
+      expect(
+        tester.renderObject<RenderParagraph>(line).didExceedMaxLines,
+        isTrue,
+      );
     });
 
     testWidgets('selected slice: its label, total and share', (tester) async {

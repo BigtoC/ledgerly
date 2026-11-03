@@ -26,6 +26,7 @@ class CategoryPieChart extends StatefulWidget {
     this.displayCurrencyCode,
     this.selectedIndex,
     this.onSelectionChanged,
+    this.accountName,
   });
 
   final List<ChartSlice> slices;
@@ -48,6 +49,10 @@ class CategoryPieChart extends StatefulWidget {
   /// Fired when the user taps a slice. Null means "deselect". Receivers
   /// should treat this as an authoritative selection update.
   final ValueChanged<int?>? onSelectionChanged;
+
+  /// The filtered account's name; while no slice is selected the centre
+  /// then reads `<Account> expense`. Null = all accounts.
+  final String? accountName;
 
   @override
   State<CategoryPieChart> createState() => _CategoryPieChartState();
@@ -169,7 +174,12 @@ class _CategoryPieChartState extends State<CategoryPieChart> {
     final String amount;
     final String? sub;
     if (selection == null) {
-      top = isIncome ? l10n.chartsTotalIncome : l10n.chartsTotalExpense;
+      final account = widget.accountName;
+      top = account != null
+          ? (isIncome
+                ? l10n.chartsAccountIncome(account)
+                : l10n.chartsAccountExpense(account))
+          : (isIncome ? l10n.chartsTotalIncome : l10n.chartsTotalExpense);
       topColor = colors.fg2;
       topWeight = FontWeight.w400;
       final total = widget.grandTotalMinorUnits;

@@ -9,13 +9,13 @@ part of 'charts_net_total_providers.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// Per-currency expense and income for the selected period's
-/// `[start, end)` range.
+/// `[start, end)` range, limited to the filtered account when one is set.
 
 @ProviderFor(chartsNetByCurrency)
 final chartsNetByCurrencyProvider = ChartsNetByCurrencyProvider._();
 
 /// Per-currency expense and income for the selected period's
-/// `[start, end)` range.
+/// `[start, end)` range, limited to the filtered account when one is set.
 
 final class ChartsNetByCurrencyProvider
     extends
@@ -28,7 +28,7 @@ final class ChartsNetByCurrencyProvider
         $FutureModifier<Map<String, ({int expense, int income})>>,
         $StreamProvider<Map<String, ({int expense, int income})>> {
   /// Per-currency expense and income for the selected period's
-  /// `[start, end)` range.
+  /// `[start, end)` range, limited to the filtered account when one is set.
   ChartsNetByCurrencyProvider._()
     : super(
         from: null,
@@ -67,7 +67,7 @@ final class ChartsNetByCurrencyProvider
 }
 
 String _$chartsNetByCurrencyHash() =>
-    r'24da2e86ec5fe8bb180797170556d574093eb1d5';
+    r'08df9fb583317c9145e6299c629506b3f817aa42';
 
 /// [chartsNetByCurrency] folded into the default currency. Null until the
 /// totals, FX status and currency metadata have all loaded, and while the
