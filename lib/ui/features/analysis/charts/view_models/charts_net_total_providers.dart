@@ -1,10 +1,11 @@
 // Analysis summary totals — expense, income and their net for the period
 // chosen in the chart's time picker, converted into the default currency.
 //
-// Watches only `(period, anchorDate, accountFilterId)` from the selection,
-// so toggling Expense/Income, the dimension, or a pie slice does not
-// re-query. The totals cover both types regardless of the Expense/Income
-// toggle, and only the filtered account while the account filter is set.
+// Watches only the period's range (`chartsRange`) and `accountFilterId` from
+// the selection, so toggling Expense/Income, the dimension, or a pie slice
+// does not re-query. The totals cover both types regardless of the
+// Expense/Income toggle, and only the filtered account while the account
+// filter is set.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart'
     show ProviderListenableSelect;
@@ -14,8 +15,8 @@ import '../../../../../app/providers/repository_providers.dart';
 import '../../../../../core/utils/currency_converter.dart';
 import '../../../../../domain/models/currency.dart';
 import 'charts_providers.dart';
+import 'charts_range_providers.dart';
 import 'charts_selection_controller.dart';
-import 'charts_state.dart' show PeriodType;
 
 part 'charts_net_total_providers.g.dart';
 
@@ -53,18 +54,27 @@ class ChartsNetTotal {
 
 /// Per-currency expense and income for the selected period's
 /// `[start, end)` range, limited to the filtered account when one is set.
-@Riverpod(dependencies: [transactionRepository, ChartsSelectionController])
+@Riverpod(
+  dependencies: [transactionRepository, chartsRange, ChartsSelectionController],
+)
 Stream<Map<String, ({int expense, int income})>> chartsNetByCurrency(Ref ref) {
-  final (PeriodType period, DateTime anchorDate, int? accountId) = ref.watch(
-    chartsSelectionControllerProvider.select(
-      (s) => (s.period, s.anchorDate, s.accountFilterId),
-    ),
+  final range = ref.watch(chartsRangeProvider);
+  final accountId = ref.watch(
+    chartsSelectionControllerProvider.select((s) => s.accountFilterId),
   );
-  final start = normalizeAnchor(anchorDate, period);
-  final end = shiftAnchor(start, period, 1);
+  if (range case AsyncError(:final error, :final stackTrace)) {
+    return Stream.error(error, stackTrace);
+  }
+  // Loading: wait for the range without querying.
+  final value = range.value;
+  if (value == null) return const Stream.empty();
   return ref
       .watch(transactionRepositoryProvider)
-      .watchTotalsByTypeInRange(start: start, end: end, accountId: accountId);
+      .watchTotalsByTypeInRange(
+        start: value.start,
+        end: value.end,
+        accountId: accountId,
+      );
 }
 
 /// [chartsNetByCurrency] folded into the default currency. Null until the

@@ -21,6 +21,7 @@ import '../../../../../core/constants.dart';
 import 'selected_slice.dart';
 import '../../../../../domain/models/transaction.dart';
 import 'charts_providers.dart';
+import 'charts_range_providers.dart';
 import 'charts_selection_controller.dart';
 import 'slice_drilldown_data.dart';
 
@@ -43,6 +44,7 @@ final class SliceDrilldownDeleteFailedEffect extends SliceDrilldownEffect {
   dependencies: [
     transactionRepository,
     chartsFxStatus,
+    chartsRange,
     ChartsSelectionController,
   ],
 )
@@ -99,8 +101,14 @@ class SliceDrilldownController extends _$SliceDrilldownController {
       return controller.stream;
     }
 
-    final start = normalizeAnchor(selection.anchorDate, selection.period);
-    final end = shiftAnchor(start, selection.period, 1);
+    final range = ref.watch(chartsRangeProvider);
+    if (range case AsyncError(:final error, :final stackTrace)) {
+      controller.addError(error, stackTrace);
+      return controller.stream;
+    }
+    // Loading: the rebuild on the resolved range subscribes.
+    final value = range.value;
+    if (value == null) return controller.stream;
     final (categoryId, accountId, currencyCode) = selectionFilters(
       selected,
       accountFilterId: selection.accountFilterId,
@@ -109,8 +117,8 @@ class SliceDrilldownController extends _$SliceDrilldownController {
 
     _subscription = repo
         .watchTransactionsForSliceInRange(
-          start: start,
-          end: end,
+          start: value.start,
+          end: value.end,
           type: selection.type,
           categoryId: categoryId,
           accountId: accountId,
