@@ -180,7 +180,6 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
           context,
           controller,
           selection,
-          selectionNotifier,
           body: _inCard(selection, selectionNotifier, _loadingBody),
           l10n: l10n,
         ),
@@ -188,7 +187,6 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
           context,
           controller,
           selection,
-          selectionNotifier,
           body: _inCard(
             selection,
             selectionNotifier,
@@ -201,7 +199,6 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
             context,
             controller,
             selection,
-            selectionNotifier,
             // Render the prior chart directly (no Stack + dim overlay) so
             // the _ChartBody element stays put across Loading↔DataState.
             // The dim/spinner overlay was structurally different from the
@@ -222,7 +219,6 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
             context,
             controller,
             selection,
-            selectionNotifier,
             body: _inCard(
               selection,
               selectionNotifier,
@@ -242,7 +238,6 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
             context,
             controller,
             selection,
-            selectionNotifier,
             body: previous == null
                 ? _inCard(
                     selection,
@@ -282,7 +277,6 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
             context,
             controller,
             selection,
-            selectionNotifier,
             body: _ChartBody(
               data: chartData,
               locale: locale,
@@ -296,7 +290,6 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
             context,
             controller,
             selection,
-            selectionNotifier,
             body: _inCard(
               selection,
               selectionNotifier,
@@ -364,18 +357,15 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
   Widget _frame(
     BuildContext context,
     ChartsController controller,
-    ChartsSelection selection,
-    ChartsSelectionController selectionNotifier, {
+    ChartsSelection selection, {
     required Widget body,
     required AppLocalizations l10n,
     ChartsData? chartData,
     String? locale,
   }) {
-    // Toggles bind to the live selection, not `chartData`. During loading the
-    // `previous` data still has the *old* period; in the empty/blocked/error
-    // variants `chartData` is null. Either way, reading from the selection
-    // notifier keeps the segmented buttons in sync with whatever the user
-    // just tapped.
+    // The slide key reads the period and anchor from the live selection, not
+    // `chartData`. During loading the `previous` data still has the *old*
+    // period; in the empty/blocked/error variants `chartData` is null.
     final period = selection.period;
     final anchor = selection.anchorDate;
 
