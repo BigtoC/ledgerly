@@ -1,6 +1,8 @@
 // Every Analysis range consumer queries the range chartsRangeProvider
 // resolves, so the All period's range reaches each surface from one place.
 
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/app/providers/default_currency_provider.dart';
@@ -34,11 +36,19 @@ const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 /// A range no period would produce from the default anchor.
 final ChartsRange _range = (start: DateTime(2020, 2), end: DateTime(2020, 7));
 
-ProviderContainer _container(TransactionRepository repo) {
+ProviderContainer _container(
+  TransactionRepository repo, {
+  AsyncValue<ChartsRange>? range,
+  Stream<DateBounds?> Function()? dateBounds,
+}) {
   final container = ProviderContainer(
     overrides: [
       transactionRepositoryProvider.overrideWithValue(repo),
-      chartsRangeProvider.overrideWithValue(AsyncData(_range)),
+      // With [dateBounds], the real chartsRange resolves All from them.
+      if (dateBounds != null)
+        chartsDateBoundsProvider.overrideWith((ref) => dateBounds())
+      else
+        chartsRangeProvider.overrideWithValue(range ?? AsyncData(_range)),
       chartsCurrenciesByCodeProvider.overrideWith(
         (ref) => Stream.value({'USD': _usd}),
       ),
@@ -224,4 +234,142 @@ void main() {
       ).called(1);
     },
   );
+
+  group('loading and failed ranges', () {
+    void stubCharts() {
+      when(
+        () => repo.watchByCategoryInRange(
+          start: any(named: 'start'),
+          end: any(named: 'end'),
+          type: any(named: 'type'),
+          accountId: any(named: 'accountId'),
+        ),
+      ).thenAnswer((_) => Stream.value(const <CategorySlice>[]));
+      when(
+        () => repo.watchTimeBucketsInRange(
+          start: any(named: 'start'),
+          end: any(named: 'end'),
+          type: any(named: 'type'),
+          granularity: any(named: 'granularity'),
+          categoryId: any(named: 'categoryId'),
+          accountId: any(named: 'accountId'),
+          currencyCode: any(named: 'currencyCode'),
+        ),
+      ).thenAnswer((_) => Stream.value(const <TimeBucketSlice>[]));
+    }
+
+    test('ChartsController shows an error when All\'s date bounds fail, '
+        'and Retry re-reads them', () async {
+      stubCharts();
+      var reads = 0;
+      final container = _container(
+        repo,
+        dateBounds: () {
+          reads++;
+          return Stream.error(StateError('bounds'));
+        },
+      );
+      container
+          .read(chartsSelectionControllerProvider.notifier)
+          .setPeriod(PeriodType.all);
+      ChartsState? latest;
+      container.listen(
+        chartsControllerProvider,
+        (_, next) => latest = next.value,
+        fireImmediately: true,
+      );
+      await _flush();
+
+      expect(latest, isA<ChartsError>());
+      expect(reads, 1);
+
+      container.read(chartsControllerProvider.notifier).retry();
+      await _flush();
+
+      expect(reads, 2);
+    });
+
+    test('a bounds error after data still makes Retry re-read them', () async {
+      stubCharts();
+      var reads = 0;
+      final bounds = StreamController<DateBounds?>();
+      addTearDown(bounds.close);
+      final container = _container(
+        repo,
+        dateBounds: () {
+          reads++;
+          return reads == 1 ? bounds.stream : const Stream.empty();
+        },
+      );
+      container
+          .read(chartsSelectionControllerProvider.notifier)
+          .setPeriod(PeriodType.all);
+      ChartsState? latest;
+      container.listen(
+        chartsControllerProvider,
+        (_, next) => latest = next.value,
+        fireImmediately: true,
+      );
+      bounds.add((first: DateTime(2025, 3, 4), last: DateTime(2025, 6, 1)));
+      await _flush();
+      expect(latest, isNot(isA<ChartsError>()));
+
+      bounds.addError(StateError('bounds'));
+      await _flush();
+      expect(latest, isA<ChartsError>());
+
+      container.read(chartsControllerProvider.notifier).retry();
+      await _flush();
+
+      expect(reads, 2);
+    });
+
+    test('SliceDrilldownController waits while the range loads', () async {
+      final container = _container(repo, range: const AsyncLoading());
+      container
+          .read(chartsSelectionControllerProvider.notifier)
+          .toggleSlice(const SelectedSlice.category(1));
+      container.listen(sliceDrilldownControllerProvider, (_, _) {});
+      await _flush();
+
+      expect(container.read(sliceDrilldownControllerProvider).isLoading, true);
+      verifyNever(
+        () => repo.watchTransactionsForSliceInRange(
+          start: any(named: 'start'),
+          end: any(named: 'end'),
+          type: any(named: 'type'),
+          categoryId: any(named: 'categoryId'),
+          accountId: any(named: 'accountId'),
+          currencyCode: any(named: 'currencyCode'),
+        ),
+      );
+    });
+
+    test('SliceDrilldownController fails when the range does', () async {
+      final container = _container(
+        repo,
+        range: AsyncError(StateError('bounds'), StackTrace.empty),
+      );
+      container
+          .read(chartsSelectionControllerProvider.notifier)
+          .toggleSlice(const SelectedSlice.category(1));
+      container.listen(sliceDrilldownControllerProvider, (_, _) {});
+      await _flush();
+
+      expect(
+        container.read(sliceDrilldownControllerProvider).error,
+        isA<StateError>(),
+      );
+      verifyNever(
+        () => repo.watchTransactionsForSliceInRange(
+          start: any(named: 'start'),
+          end: any(named: 'end'),
+          type: any(named: 'type'),
+          categoryId: any(named: 'categoryId'),
+          accountId: any(named: 'accountId'),
+          currencyCode: any(named: 'currencyCode'),
+        ),
+      );
+    });
+  });
 }
