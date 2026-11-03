@@ -161,6 +161,7 @@ BoxDecoration _searchBoxDecoration(WidgetTester tester) =>
   chartsNetTotal,
   chartsAccountFilterOptions,
   chartsRange,
+  chartsDateBounds,
 ])
 GoRouter _detailRouter(String initialLocation) {
   return GoRouter(
@@ -193,6 +194,7 @@ GoRouter _detailRouter(String initialLocation) {
   chartsNetTotal,
   chartsAccountFilterOptions,
   chartsRange,
+  chartsDateBounds,
 ])
 Widget _routerHarness({
   required TransactionRepository tx,
@@ -233,6 +235,7 @@ Widget _routerHarness({
   chartsNetTotal,
   chartsAccountFilterOptions,
   chartsRange,
+  chartsDateBounds,
 ])
 void main() {
   setUpAll(() {

@@ -70,6 +70,7 @@ import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_range_pr
   chartsNetTotal,
   chartsAccountFilterOptions,
   chartsRange,
+  chartsDateBounds,
 ])
 void main() {
   group('router redirect', () {

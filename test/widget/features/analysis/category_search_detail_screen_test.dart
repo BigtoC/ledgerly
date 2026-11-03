@@ -96,6 +96,7 @@ Transaction _tx() => Transaction(
   chartsNetTotal,
   chartsAccountFilterOptions,
   chartsRange,
+  chartsDateBounds,
 ])
 void main() {
   setUpAll(() {

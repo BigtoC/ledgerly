@@ -48,6 +48,7 @@ const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
   chartsFxStatus,
   chartsNetTotal,
   chartsRange,
+  chartsDateBounds,
 ])
 Future<ProviderContainer> _pumpChartsSection(WidgetTester tester) async {
   final repo = _MockRepo();
@@ -169,6 +170,7 @@ Future<ProviderContainer> _pumpChartsSection(WidgetTester tester) async {
   chartsFxStatus,
   chartsNetTotal,
   chartsRange,
+  chartsDateBounds,
 ])
 void main() {
   setUpAll(() {

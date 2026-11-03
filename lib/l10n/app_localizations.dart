@@ -2403,6 +2403,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Next period'**
   String get chartsNextPeriod;
+
+  /// Period picker title on the Day period; also the start of the navigator label's screen-reader name.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a day'**
+  String get chartsPickDay;
+
+  /// Period picker title on the Week period; also the start of the navigator label's screen-reader name.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a week'**
+  String get chartsPickWeek;
+
+  /// Period picker title on the Month period; also the start of the navigator label's screen-reader name.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a month'**
+  String get chartsPickMonth;
+
+  /// Period picker title on the Year period; also the start of the navigator label's screen-reader name.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a year'**
+  String get chartsPickYear;
+
+  /// Period picker subtitle. {period} is the selected period's label, such as 'Oct 26–Nov 1, 2026'.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected: {period}'**
+  String chartsPickerSelected(String period);
+
+  /// Screen-reader name of the Analysis period label button that opens the period picker. {title} is the picker title, such as 'Choose a week'; {period} is the selected period's label.
+  ///
+  /// In en, this message translates to:
+  /// **'{title}. Selected: {period}'**
+  String chartsPickerOpenLabel(String title, String period);
+
+  /// Period picker Weeks view: short header of the week-number column.
+  ///
+  /// In en, this message translates to:
+  /// **'Wk'**
+  String get chartsPickerWeekColumn;
+
+  /// Period picker Weeks view: a row's ISO 8601 week number, such as 'W43'.
+  ///
+  /// In en, this message translates to:
+  /// **'W{week}'**
+  String chartsPickerWeekNumber(int week);
+
+  /// Screen-reader name of a period picker week row. {week} is the ISO 8601 week number; {range} is the week's label, such as 'Oct 19–Oct 25, 2026'.
+  ///
+  /// In en, this message translates to:
+  /// **'Week {week}, {range}'**
+  String chartsPickerWeekRow(int week, String range);
+
+  /// Screen-reader name of the period picker's browse title in the Days and Weeks views; tapping it shows the months. {month} is the browsed month, such as 'October 2026'.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose month, showing {month}'**
+  String chartsPickerChooseMonth(String month);
+
+  /// Screen-reader name of the period picker's browse title in the Months view; tapping it shows the years. {year} is the browsed year, such as '2026'.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose year, showing {year}'**
+  String chartsPickerChooseYear(String year);
+
+  /// Period picker browse bar: button that shows the previous month (Days and Weeks views).
+  ///
+  /// In en, this message translates to:
+  /// **'Previous month'**
+  String get chartsPickerPreviousMonth;
+
+  /// Period picker browse bar: button that shows the next month (Days and Weeks views).
+  ///
+  /// In en, this message translates to:
+  /// **'Next month'**
+  String get chartsPickerNextMonth;
+
+  /// Period picker browse bar: button that shows the previous year (Months view).
+  ///
+  /// In en, this message translates to:
+  /// **'Previous year'**
+  String get chartsPickerPreviousYear;
+
+  /// Period picker browse bar: button that shows the next year (Months view).
+  ///
+  /// In en, this message translates to:
+  /// **'Next year'**
+  String get chartsPickerNextYear;
+
+  /// Period picker footnote. {date} is the earliest transaction's date, such as 'Jan 6, 2025'.
+  ///
+  /// In en, this message translates to:
+  /// **'Records start {date}.'**
+  String chartsPickerRecordsStart(String date);
 }
 
 class _AppLocalizationsDelegate

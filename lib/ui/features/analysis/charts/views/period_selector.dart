@@ -2,7 +2,9 @@
 // PeriodType) above a navigator (prev / label + caption / next). Visual values
 // from docs/design/analysis-redesign/Main.dc.html (lines 50-69, tabs style and
 // prev/nextStyle in renderVals()). On All the chevrons are hidden but keep
-// their slots, and the caption is the covered range.
+// their slots, and the caption is the covered range. On the other periods the
+// label is a button that opens the period picker (pkLabelBtnStyle and
+// pkCaretStyle in renderVals()).
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -14,7 +16,9 @@ import '../view_models/charts_state.dart';
 
 final Map<String, DateFormat> _dateFormats = {};
 
-DateFormat _dateFormat(String skeleton, String locale) => _dateFormats
+/// A [DateFormat] for [skeleton] (or pattern) and [locale], built once and
+/// cached: never build one per row or cell.
+DateFormat periodDateFormat(String skeleton, String locale) => _dateFormats
     .putIfAbsent('$skeleton|$locale', () => DateFormat(skeleton, locale));
 
 /// The navigator's period label, e.g. `May 18–May 24, 2026` for a week.
@@ -28,7 +32,7 @@ String formatPeriodLabel(
 ) {
   switch (period) {
     case PeriodType.day:
-      return _dateFormat(
+      return periodDateFormat(
         DateFormat.YEAR_ABBR_MONTH_DAY,
         locale,
       ).format(anchorDate);
@@ -38,14 +42,14 @@ String formatPeriodLabel(
         anchorDate.month,
         anchorDate.day + 6,
       );
-      final monthDay = _dateFormat(DateFormat.ABBR_MONTH_DAY, locale);
+      final monthDay = periodDateFormat(DateFormat.ABBR_MONTH_DAY, locale);
       final start = monthDay.format(anchorDate);
       final endStr = monthDay.format(end);
       return '$start–$endStr, ${anchorDate.year}';
     case PeriodType.month:
-      return _dateFormat(DateFormat.YEAR_MONTH, locale).format(anchorDate);
+      return periodDateFormat(DateFormat.YEAR_MONTH, locale).format(anchorDate);
     case PeriodType.year:
-      return _dateFormat(DateFormat.YEAR, locale).format(anchorDate);
+      return periodDateFormat(DateFormat.YEAR, locale).format(anchorDate);
     case PeriodType.all:
       throw ArgumentError.value(period, 'period', 'All has no date label');
   }
@@ -55,7 +59,7 @@ String formatPeriodLabel(
 /// Null for an empty range (no transactions).
 String? _allTimeCaption(ChartsRange range, String locale) {
   if (!range.start.isBefore(range.end)) return null;
-  final month = _dateFormat(DateFormat.YEAR_ABBR_MONTH, locale);
+  final month = periodDateFormat(DateFormat.YEAR_ABBR_MONTH, locale);
   final last = DateTime(range.end.year, range.end.month - 1);
   return '${month.format(range.start)} – ${month.format(last)}';
 }
@@ -70,6 +74,8 @@ class PeriodSelector extends StatelessWidget {
     required this.onPrevious,
     required this.onNext,
     required this.onPeriodChanged,
+    required this.onPick,
+    required this.pickerOpen,
     this.allTimeRange,
   });
 
@@ -83,6 +89,12 @@ class PeriodSelector extends StatelessWidget {
   final VoidCallback onPrevious;
   final VoidCallback onNext;
   final ValueChanged<PeriodType> onPeriodChanged;
+
+  /// Opens the period picker; ignored on All, which has none.
+  final VoidCallback onPick;
+
+  /// Whether the period picker is open, for the label's caret.
+  final bool pickerOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -110,6 +122,15 @@ class PeriodSelector extends StatelessWidget {
           showChevrons: !all,
           onPrevious: onPrevious,
           onNext: isAtCurrent ? null : onNext,
+          pickerTitle: switch (period) {
+            PeriodType.day => l10n.chartsPickDay,
+            PeriodType.week => l10n.chartsPickWeek,
+            PeriodType.month => l10n.chartsPickMonth,
+            PeriodType.year => l10n.chartsPickYear,
+            PeriodType.all => null,
+          },
+          onPick: all ? null : onPick,
+          open: pickerOpen,
         ),
       ],
     );
@@ -229,7 +250,9 @@ class _PeriodSegment extends StatelessWidget {
 /// Previous / next chevrons around the period label and its caption.
 /// A null [onNext] disables the next chevron (at the current period).
 /// Without [showChevrons] both are hidden but keep their 48 px slots, so
-/// the label stays centred.
+/// the label stays centred. With [onPick] the label and caption are one
+/// button with a caret that opens the period picker; [open] fills it and
+/// turns the caret up while the picker is open.
 class PeriodNavigator extends StatelessWidget {
   const PeriodNavigator({
     super.key,
@@ -238,6 +261,9 @@ class PeriodNavigator extends StatelessWidget {
     required this.onPrevious,
     required this.onNext,
     this.showChevrons = true,
+    this.pickerTitle,
+    this.onPick,
+    this.open = false,
   });
 
   final String label;
@@ -246,10 +272,35 @@ class PeriodNavigator extends StatelessWidget {
   final VoidCallback? onNext;
   final bool showChevrons;
 
+  /// The picker's title, which starts the button's screen-reader name.
+  final String? pickerTitle;
+
+  /// Null on All: a plain label with no caret.
+  final VoidCallback? onPick;
+  final bool open;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = AnalysisColors.of(context);
+    final labelText = Text(
+      label,
+      textAlign: TextAlign.center,
+      style: analysisText(
+        size: 18,
+        lineHeight: 24,
+        weight: FontWeight.w500,
+        color: colors.fg,
+      ),
+    );
+    final captionText = switch (caption) {
+      final caption? => Text(
+        caption,
+        textAlign: TextAlign.center,
+        style: analysisText(size: 12, lineHeight: 16, color: colors.fg3),
+      ),
+      null => null,
+    };
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
       child: Row(
@@ -264,32 +315,75 @@ class PeriodNavigator extends StatelessWidget {
           else
             const SizedBox.square(dimension: 48),
           Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 2,
-              children: [
-                Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: analysisText(
-                    size: 18,
-                    lineHeight: 24,
-                    weight: FontWeight.w500,
-                    color: colors.fg,
-                  ),
-                ),
-                if (caption case final caption?)
-                  Text(
-                    caption,
-                    textAlign: TextAlign.center,
-                    style: analysisText(
-                      size: 12,
-                      lineHeight: 16,
-                      color: colors.fg3,
+            child: switch (onPick) {
+              null => Column(
+                mainAxisSize: MainAxisSize.min,
+                spacing: 2,
+                children: [labelText, ?captionText],
+              ),
+              final onPick => Center(
+                child: Semantics(
+                  container: true,
+                  button: true,
+                  expanded: open,
+                  label: l10n.chartsPickerOpenLabel(pickerTitle ?? '', label),
+                  onTap: onPick,
+                  excludeSemantics: true,
+                  child: AnimatedContainer(
+                    duration: AnalysisMotion.standardDuration,
+                    curve: AnalysisMotion.standardCurve,
+                    decoration: BoxDecoration(
+                      color: open
+                          ? colors.sel
+                          : colors.sel.withValues(alpha: 0),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    // The ink paints above the open fill.
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: InkWell(
+                        onTap: onPick,
+                        borderRadius: BorderRadius.circular(16),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(minHeight: 48),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              spacing: 2,
+                              children: [
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  spacing: 4,
+                                  children: [
+                                    Flexible(child: labelText),
+                                    AnimatedRotation(
+                                      turns: open ? 0.5 : 0,
+                                      duration: AnalysisMotion.standardDuration,
+                                      curve: AnalysisMotion.standardCurve,
+                                      child: Icon(
+                                        Icons.expand_more,
+                                        size: 18,
+                                        color: colors.fg2,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                ?captionText,
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-              ],
-            ),
+                ),
+              ),
+            },
           ),
           if (showChevrons)
             _NavButton(

@@ -185,4 +185,39 @@ void main() {
       );
     });
   });
+
+  // ISO 8601: weeks start on Monday and week 1 holds the year's first
+  // Thursday, so the first and last days of a year can belong to the
+  // neighbouring year's week.
+  group('DateHelpers.isoWeekNumber', () {
+    test('a late-December Monday can be week 1 of the next year', () {
+      expect(DateHelpers.isoWeekNumber(DateTime(2025, 12, 29)), 1);
+    });
+
+    test('a late-December Monday can be week 53', () {
+      expect(DateHelpers.isoWeekNumber(DateTime(2020, 12, 28)), 53);
+    });
+
+    test('early-January days can belong to the previous year\'s week', () {
+      expect(DateHelpers.isoWeekNumber(DateTime(2021, 1, 3)), 53);
+      expect(DateHelpers.isoWeekNumber(DateTime(2023, 1, 1)), 52);
+    });
+
+    test('week 1 starts on the Monday nearest Jan 4', () {
+      expect(DateHelpers.isoWeekNumber(DateTime(2021, 1, 4)), 1);
+      expect(DateHelpers.isoWeekNumber(DateTime(2026, 1, 1)), 1);
+    });
+
+    test('mid-year days and every day of a week share the number', () {
+      // Oct 19-25, 2026 is week 43.
+      for (var d = 19; d <= 25; d++) {
+        expect(DateHelpers.isoWeekNumber(DateTime(2026, 10, d)), 43);
+      }
+      expect(DateHelpers.isoWeekNumber(DateTime(2025, 9, 15)), 38);
+    });
+
+    test('ignores the time of day', () {
+      expect(DateHelpers.isoWeekNumber(DateTime(2025, 12, 28, 23, 59)), 52);
+    });
+  });
 }

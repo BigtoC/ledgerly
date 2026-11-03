@@ -23,6 +23,7 @@ import 'chart_legend.dart';
 import 'charts_breakdown_card.dart';
 import 'charts_summary_card.dart';
 import 'charts_trend_card.dart';
+import 'period_picker_sheet.dart';
 import 'period_selector.dart';
 import 'selected_slice_items_list.dart';
 
@@ -37,6 +38,7 @@ import 'selected_slice_items_list.dart';
   chartsFxStatus,
   chartsNetTotal,
   chartsRange,
+  chartsDateBounds,
 ])
 class ChartsSection extends ConsumerStatefulWidget {
   const ChartsSection({super.key});
@@ -58,6 +60,9 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
   late final AnimationController _switchController;
   late Animation<Offset> _incomingOffset;
   final Queue<int> _directionQueue = Queue<int>();
+
+  /// Whether the period picker is open, for the period label's caret.
+  bool _pickerOpen = false;
 
   @override
   void initState() {
@@ -111,6 +116,16 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
       _switchController.reset();
       await _switchController.forward();
     }
+  }
+
+  /// A pick jumps straight to its period: the body swaps without the slide,
+  /// which stays reserved for ‹ ›, swipes and their direction queue.
+  Future<void> _openPeriodPicker() async {
+    // Steps still queued would otherwise run after the pick and shift it.
+    _directionQueue.clear();
+    setState(() => _pickerOpen = true);
+    await showPeriodPicker(context);
+    if (mounted) setState(() => _pickerOpen = false);
   }
 
   void _onHorizontalFling(DragEndDetails details) {
@@ -317,6 +332,8 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
           onPrevious: () => _enqueuePeriodStep(-1),
           onNext: () => _enqueuePeriodStep(1),
           onPeriodChanged: selectionNotifier.setPeriod,
+          onPick: _openPeriodPicker,
+          pickerOpen: _pickerOpen,
         ),
         charts,
       ],

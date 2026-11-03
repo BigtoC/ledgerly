@@ -90,6 +90,7 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
     CsvExportController,
     categoriesByType,
     TransactionFormController,
+    chartsDateBounds,
   ],
 )
 GoRouter router(Ref ref) {

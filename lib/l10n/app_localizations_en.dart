@@ -1373,4 +1373,66 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chartsNextPeriod => 'Next period';
+
+  @override
+  String get chartsPickDay => 'Choose a day';
+
+  @override
+  String get chartsPickWeek => 'Choose a week';
+
+  @override
+  String get chartsPickMonth => 'Choose a month';
+
+  @override
+  String get chartsPickYear => 'Choose a year';
+
+  @override
+  String chartsPickerSelected(String period) {
+    return 'Selected: $period';
+  }
+
+  @override
+  String chartsPickerOpenLabel(String title, String period) {
+    return '$title. Selected: $period';
+  }
+
+  @override
+  String get chartsPickerWeekColumn => 'Wk';
+
+  @override
+  String chartsPickerWeekNumber(int week) {
+    return 'W$week';
+  }
+
+  @override
+  String chartsPickerWeekRow(int week, String range) {
+    return 'Week $week, $range';
+  }
+
+  @override
+  String chartsPickerChooseMonth(String month) {
+    return 'Choose month, showing $month';
+  }
+
+  @override
+  String chartsPickerChooseYear(String year) {
+    return 'Choose year, showing $year';
+  }
+
+  @override
+  String get chartsPickerPreviousMonth => 'Previous month';
+
+  @override
+  String get chartsPickerNextMonth => 'Next month';
+
+  @override
+  String get chartsPickerPreviousYear => 'Previous year';
+
+  @override
+  String get chartsPickerNextYear => 'Next year';
+
+  @override
+  String chartsPickerRecordsStart(String date) {
+    return 'Records start $date.';
+  }
 }

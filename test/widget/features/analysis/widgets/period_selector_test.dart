@@ -42,6 +42,8 @@ void main() {
     ValueChanged<PeriodType>? onPeriodChanged,
     ChartsRange? allTimeRange,
     String locale = 'en',
+    VoidCallback? onPick,
+    bool pickerOpen = false,
   }) => PeriodSelector(
     period: period,
     anchorDate: DateTime(2026, 5, 18),
@@ -51,7 +53,35 @@ void main() {
     onPrevious: onPrevious ?? () {},
     onNext: onNext ?? () {},
     onPeriodChanged: onPeriodChanged ?? (_) {},
+    onPick: onPick ?? () {},
+    pickerOpen: pickerOpen,
   );
+
+  Finder caret() => find.descendant(
+    of: find.byType(PeriodNavigator),
+    matching: find.byIcon(Icons.expand_more),
+  );
+
+  AnimatedRotation caretRotation(WidgetTester tester) =>
+      tester.widget<AnimatedRotation>(
+        find.ancestor(of: caret(), matching: find.byType(AnimatedRotation)),
+      );
+
+  Finder labelButton(Pattern semanticsLabel) =>
+      find.bySemanticsLabel(semanticsLabel);
+
+  BoxDecoration labelFill(WidgetTester tester, String semanticsLabel) =>
+      tester
+              .widget<AnimatedContainer>(
+                find
+                    .descendant(
+                      of: labelButton(semanticsLabel),
+                      matching: find.byType(AnimatedContainer),
+                    )
+                    .first,
+              )
+              .decoration!
+          as BoxDecoration;
 
   Color? textColor(WidgetTester tester, Finder finder) => tester
       .widget<RichText>(
@@ -500,6 +530,114 @@ void main() {
       });
     });
 
+    group('label button (AC 1)', () {
+      const weekButton = 'Choose a week. Selected: May 18–May 24, 2026';
+
+      testWidgets('Day, Week, Month and Year: a collapsed button that opens '
+          'the picker, caret pointing down', (tester) async {
+        for (final (period, label) in [
+          (PeriodType.day, 'Choose a day. Selected: May 18, 2026'),
+          (PeriodType.week, weekButton),
+          (PeriodType.month, 'Choose a month. Selected: May 2026'),
+          (PeriodType.year, 'Choose a year. Selected: 2026'),
+        ]) {
+          var picks = 0;
+          await pump(tester, selector(period: period, onPick: () => picks++));
+
+          expect(
+            tester.getSemantics(labelButton(label)),
+            isSemantics(
+              isButton: true,
+              hasExpandedState: true,
+              isExpanded: false,
+              hasTapAction: true,
+            ),
+            reason: period.name,
+          );
+          final icon = tester.widget<Icon>(caret());
+          expect(icon.size, 18);
+          expect(icon.color, AnalysisColors.light.fg2);
+          expect(caretRotation(tester).turns, 0);
+
+          await tester.tap(labelButton(label));
+          await tester.pump();
+          expect(picks, 1, reason: period.name);
+        }
+      });
+
+      testWidgets('while open: sel fill, expanded, caret turned 180° in '
+          '200 ms on the standard curve', (tester) async {
+        await pump(tester, selector());
+        expect(
+          labelFill(tester, weekButton).color,
+          AnalysisColors.light.sel.withValues(alpha: 0),
+        );
+
+        await pump(tester, selector(pickerOpen: true));
+        final rotation = caretRotation(tester);
+        expect(rotation.turns, 0.5);
+        expect(rotation.duration, AnalysisMotion.standardDuration);
+        expect(rotation.curve, AnalysisMotion.standardCurve);
+        expect(labelFill(tester, weekButton).color, AnalysisColors.light.sel);
+        expect(
+          tester.getSemantics(labelButton(weekButton)),
+          isSemantics(hasExpandedState: true, isExpanded: true),
+        );
+
+        await pump(tester, selector());
+        expect(caretRotation(tester).turns, 0);
+      });
+
+      testWidgets('geometry: min height 48, padding 4 12, radius 16, caret '
+          '4 after the label', (tester) async {
+        await pump(tester, selector());
+
+        final button = tester.getRect(labelButton(weekButton));
+        final label = tester.getRect(find.text('May 18–May 24, 2026'));
+        final icon = tester.getRect(caret());
+        expect(button.height, 48);
+        expect(label.left - button.left, 12);
+        expect(button.right - icon.right, 12);
+        expect(icon.left - label.right, 4);
+        expect(icon.size, const Size(18, 18));
+        expect(
+          labelFill(tester, weekButton).borderRadius,
+          BorderRadius.circular(16),
+        );
+
+        // With the caption: 4 + 24 + 2 + 16 + 4.
+        await pump(tester, selector(isAtCurrent: true));
+        expect(
+          tester.getRect(labelButton(RegExp('^Choose a week'))).height,
+          50,
+        );
+      });
+
+      testWidgets('All: a plain label with no caret that cannot be tapped', (
+        tester,
+      ) async {
+        var picks = 0;
+        await pump(
+          tester,
+          selector(period: PeriodType.all, onPick: () => picks++),
+        );
+
+        expect(caret(), findsNothing);
+        expect(labelButton(RegExp('^Choose ')), findsNothing);
+        await tester.tap(find.text('All time'));
+        await tester.pump();
+        expect(picks, 0);
+      });
+
+      testWidgets('dark theme: sel fill and fg2 caret use the dark tokens', (
+        tester,
+      ) async {
+        await pump(tester, selector(pickerOpen: true), theme: darkTheme);
+        expect(labelFill(tester, weekButton).color, AnalysisColors.dark.sel);
+        expect(tester.widget<Icon>(caret()).color, AnalysisColors.dark.fg2);
+      });
+    });
+
     testWidgets('caption sits 2 below the label', (tester) async {
       await pump(tester, selector(isAtCurrent: true));
       final label = tester.getRect(find.text('May 18–May 24, 2026'));
@@ -627,6 +765,49 @@ void main() {
           expect(text.left, greaterThanOrEqualTo(segment.left), reason: label);
           expect(text.right, lessThanOrEqualTo(segment.right), reason: label);
         }
+      });
+    }
+
+    for (final (name, theme, colors) in [
+      ('light', lightTheme, AnalysisColors.light),
+      ('dark', darkTheme, AnalysisColors.dark),
+    ]) {
+      testWidgets('2× at 390 in $name (AC 9): the open label button and its '
+          'caret fit between the chevrons', (tester) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await pump(
+          tester,
+          selector(isAtCurrent: true, pickerOpen: true),
+          textScale: 2,
+          theme: theme,
+        );
+
+        expect(tester.takeException(), isNull);
+        final button = tester.getRect(
+          labelButton('Choose a week. Selected: May 18–May 24, 2026'),
+        );
+        final icon = tester.getRect(caret());
+        expect(button.height, greaterThanOrEqualTo(48));
+        expect(button.left, greaterThanOrEqualTo(8 + 48 + 4));
+        expect(button.right, lessThanOrEqualTo(390 - 8 - 48 - 4));
+        expect(icon.right, lessThanOrEqualTo(button.right - 12));
+        expect(icon.size, const Size(18, 18));
+        // The label wraps between words, never inside one.
+        final paragraph = tester.renderObject<RenderParagraph>(
+          find.text('May 18–May 24, 2026'),
+        );
+        expect(
+          paragraph.size.width + 0.01,
+          greaterThanOrEqualTo(paragraph.getMinIntrinsicWidth(double.infinity)),
+        );
+        expect(
+          labelFill(
+            tester,
+            'Choose a week. Selected: May 18–May 24, 2026',
+          ).color,
+          colors.sel,
+        );
       });
     }
 

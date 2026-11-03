@@ -1373,6 +1373,68 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get chartsNextPeriod => 'Next period';
+
+  @override
+  String get chartsPickDay => 'Choose a day';
+
+  @override
+  String get chartsPickWeek => 'Choose a week';
+
+  @override
+  String get chartsPickMonth => 'Choose a month';
+
+  @override
+  String get chartsPickYear => 'Choose a year';
+
+  @override
+  String chartsPickerSelected(String period) {
+    return 'Selected: $period';
+  }
+
+  @override
+  String chartsPickerOpenLabel(String title, String period) {
+    return '$title. Selected: $period';
+  }
+
+  @override
+  String get chartsPickerWeekColumn => 'Wk';
+
+  @override
+  String chartsPickerWeekNumber(int week) {
+    return 'W$week';
+  }
+
+  @override
+  String chartsPickerWeekRow(int week, String range) {
+    return 'Week $week, $range';
+  }
+
+  @override
+  String chartsPickerChooseMonth(String month) {
+    return 'Choose month, showing $month';
+  }
+
+  @override
+  String chartsPickerChooseYear(String year) {
+    return 'Choose year, showing $year';
+  }
+
+  @override
+  String get chartsPickerPreviousMonth => 'Previous month';
+
+  @override
+  String get chartsPickerNextMonth => 'Next month';
+
+  @override
+  String get chartsPickerPreviousYear => 'Previous year';
+
+  @override
+  String get chartsPickerNextYear => 'Next year';
+
+  @override
+  String chartsPickerRecordsStart(String date) {
+    return 'Records start $date.';
+  }
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -2688,6 +2750,68 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get chartsNextPeriod => '下一个期间';
+
+  @override
+  String get chartsPickDay => '选择日期';
+
+  @override
+  String get chartsPickWeek => '选择周';
+
+  @override
+  String get chartsPickMonth => '选择月份';
+
+  @override
+  String get chartsPickYear => '选择年份';
+
+  @override
+  String chartsPickerSelected(String period) {
+    return '已选：$period';
+  }
+
+  @override
+  String chartsPickerOpenLabel(String title, String period) {
+    return '$title，已选：$period';
+  }
+
+  @override
+  String get chartsPickerWeekColumn => '周';
+
+  @override
+  String chartsPickerWeekNumber(int week) {
+    return '$week周';
+  }
+
+  @override
+  String chartsPickerWeekRow(int week, String range) {
+    return '第 $week 周，$range';
+  }
+
+  @override
+  String chartsPickerChooseMonth(String month) {
+    return '选择月份，当前为 $month';
+  }
+
+  @override
+  String chartsPickerChooseYear(String year) {
+    return '选择年份，当前为 $year';
+  }
+
+  @override
+  String get chartsPickerPreviousMonth => '上个月';
+
+  @override
+  String get chartsPickerNextMonth => '下个月';
+
+  @override
+  String get chartsPickerPreviousYear => '上一年';
+
+  @override
+  String get chartsPickerNextYear => '下一年';
+
+  @override
+  String chartsPickerRecordsStart(String date) {
+    return '记录始于 $date。';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -4003,4 +4127,66 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get chartsNextPeriod => '下一個期間';
+
+  @override
+  String get chartsPickDay => '選擇日期';
+
+  @override
+  String get chartsPickWeek => '選擇週';
+
+  @override
+  String get chartsPickMonth => '選擇月份';
+
+  @override
+  String get chartsPickYear => '選擇年份';
+
+  @override
+  String chartsPickerSelected(String period) {
+    return '已選：$period';
+  }
+
+  @override
+  String chartsPickerOpenLabel(String title, String period) {
+    return '$title，已選：$period';
+  }
+
+  @override
+  String get chartsPickerWeekColumn => '週';
+
+  @override
+  String chartsPickerWeekNumber(int week) {
+    return '$week週';
+  }
+
+  @override
+  String chartsPickerWeekRow(int week, String range) {
+    return '第 $week 週，$range';
+  }
+
+  @override
+  String chartsPickerChooseMonth(String month) {
+    return '選擇月份，目前為 $month';
+  }
+
+  @override
+  String chartsPickerChooseYear(String year) {
+    return '選擇年份，目前為 $year';
+  }
+
+  @override
+  String get chartsPickerPreviousMonth => '上個月';
+
+  @override
+  String get chartsPickerNextMonth => '下個月';
+
+  @override
+  String get chartsPickerPreviousYear => '上一年';
+
+  @override
+  String get chartsPickerNextYear => '下一年';
+
+  @override
+  String chartsPickerRecordsStart(String date) {
+    return '記錄始於 $date。';
+  }
 }

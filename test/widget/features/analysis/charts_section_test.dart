@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
+import 'package:ledgerly/core/utils/date_helpers.dart';
 import 'package:ledgerly/data/repositories/exchange_rate_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/services/exchange_rate_service.dart';
@@ -33,6 +34,7 @@ import 'package:ledgerly/ui/features/analysis/charts/views/charts_summary_card.d
 import 'package:ledgerly/ui/features/analysis/charts/views/charts_trend_card.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/daily_bar_chart.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/dimension_toggle.dart';
+import 'package:ledgerly/ui/features/analysis/charts/views/period_picker_sheet.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/period_selector.dart';
 import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_providers.dart';
 import 'package:mocktail/mocktail.dart';
@@ -62,6 +64,7 @@ const _usd = Currency(
   analysisAccountsById,
   chartsFxStatus,
   chartsRange,
+  chartsDateBounds,
 ])
 void main() {
   setUpAll(() {
@@ -515,6 +518,112 @@ void main() {
           accountId: any(named: 'accountId'),
         ),
       ).called(greaterThanOrEqualTo(1));
+    });
+  });
+
+  group('period picker (AC 1)', () {
+    Finder caret() => find.descendant(
+      of: find.byType(PeriodNavigator),
+      matching: find.byIcon(Icons.expand_more),
+    );
+    double turns(WidgetTester tester) => tester
+        .widget<AnimatedRotation>(
+          find.ancestor(of: caret(), matching: find.byType(AnimatedRotation)),
+        )
+        .turns;
+    Finder label() =>
+        find.bySemanticsLabel(RegExp(r'^Choose a week\. Selected: '));
+
+    testWidgets('the label opens the picker; the caret points up while it is '
+        'open and down again after a pick and after a dismiss', (tester) async {
+      final now = DateTime.now();
+      await _pumpSection(
+        tester,
+        bounds: (first: DateTime(2025, 1, 6), last: now),
+      );
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(MaterialApp)),
+      );
+      expect(turns(tester), 0);
+
+      await tester.tap(label());
+      await tester.pumpAndSettle();
+      expect(find.byType(PeriodPickerSheet), findsOneWidget);
+      expect(turns(tester), 0.5);
+
+      // Pick the first week shown a month back.
+      await tester.tap(find.byTooltip('Previous month'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.bySemanticsLabel(RegExp(r'^Week \d+, ')).first);
+      // The body swaps without the swipe's slide.
+      await tester.pump(const Duration(milliseconds: 100));
+      final body = find
+          .ancestor(
+            of: find.byType(ChartsBreakdownCard),
+            matching: find.byType(SlideTransition),
+          )
+          .first;
+      expect(tester.widget<SlideTransition>(body).position.value, Offset.zero);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(PeriodPickerSheet), findsNothing);
+      expect(turns(tester), 0);
+      final anchor = container
+          .read(chartsSelectionControllerProvider)
+          .anchorDate;
+      expect(anchor.isBefore(DateHelpers.startOfWeek(now)), isTrue);
+      expect(
+        find.descendant(
+          of: find.byType(PeriodNavigator),
+          matching: find.text(formatPeriodLabel(PeriodType.week, anchor, 'en')),
+        ),
+        findsOneWidget,
+      );
+
+      // Dismissing with the scrim changes nothing and turns the caret back.
+      final before = container.read(chartsSelectionControllerProvider);
+      await tester.tap(label());
+      await tester.pumpAndSettle();
+      expect(turns(tester), 0.5);
+      await tester.tapAt(const Offset(20, 20));
+      await tester.pumpAndSettle();
+      expect(find.byType(PeriodPickerSheet), findsNothing);
+      expect(turns(tester), 0);
+      expect(container.read(chartsSelectionControllerProvider), same(before));
+    });
+
+    testWidgets('‹ steps still queued when the picker opens do not run '
+        'after the pick', (tester) async {
+      final now = DateTime.now();
+      await _pumpSection(
+        tester,
+        bounds: (first: DateTime(2025, 1, 6), last: now),
+      );
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(MaterialApp)),
+      );
+      // One step runs at once; the rest queue behind its 360 ms slide.
+      for (var i = 0; i < 4; i++) {
+        await tester.tap(find.byTooltip('Previous period'));
+        await tester.pump(const Duration(milliseconds: 20));
+      }
+      // Pick while steps are still queued: the sheet is up after 350 ms.
+      await tester.tap(label());
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.tap(find.text('This week'));
+      await tester.pumpAndSettle();
+
+      expect(
+        container.read(chartsSelectionControllerProvider).anchorDate,
+        DateHelpers.startOfWeek(now),
+      );
+    });
+
+    testWidgets('All has no picker button', (tester) async {
+      await _pumpSection(tester, period: PeriodType.all);
+      expect(caret(), findsNothing);
+      expect(find.bySemanticsLabel(RegExp('^Choose ')), findsNothing);
     });
   });
 
