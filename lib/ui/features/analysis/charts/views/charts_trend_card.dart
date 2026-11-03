@@ -173,6 +173,8 @@ class ChartsTrendCard extends StatelessWidget {
               locale: locale,
               currenciesByCode: currenciesByCode,
               displayCurrencyCode: data.displayCurrencyCode,
+              // The card's padding, which a scrolling chart scrolls through.
+              edgeInset: 16,
             ),
           ),
         ],

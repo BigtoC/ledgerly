@@ -274,6 +274,17 @@ void main() {
     });
   });
 
+  testWidgets('a scrolling chart scrolls through the card padding (D14)', (
+    tester,
+  ) async {
+    await _pump(tester, _data());
+
+    expect(
+      tester.widget<DailyBarChart>(find.byType(DailyBarChart)).edgeInset,
+      16,
+    );
+  });
+
   group('bar colour', () {
     testWidgets('is exp for expense without a slice', (tester) async {
       await _pump(tester, _data());

@@ -20,13 +20,21 @@ const double _kLabelOverlap = 4;
 /// this many months' width and the chart scrolls (plan D14).
 const int _kAllFullWidthMonths = 24;
 
+const EdgeInsets _kTooltipPadding = EdgeInsets.symmetric(
+  horizontal: 10,
+  vertical: 6,
+);
+
+/// fl_chart's default; named so the tooltip can be measured the same way.
+const double _kTooltipMaxContentWidth = 120;
+
 final Map<String, DateFormat> _weekdayFormats = {};
 final Map<String, DateFormat> _monthFormats = {};
 final Map<String, DateFormat> _yearFormats = {};
 final Map<String, DateFormat> _yearMonthFormats = {};
 
 /// The trend card's bars, average line and x labels.
-class DailyBarChart extends StatelessWidget {
+class DailyBarChart extends StatefulWidget {
   const DailyBarChart({
     super.key,
     required this.period,
@@ -35,6 +43,7 @@ class DailyBarChart extends StatelessWidget {
     required this.locale,
     required this.currenciesByCode,
     this.displayCurrencyCode,
+    this.edgeInset = 0,
   });
 
   final PeriodType period;
@@ -45,6 +54,35 @@ class DailyBarChart extends StatelessWidget {
   final String locale;
   final Map<String, Currency> currenciesByCode;
   final String? displayCurrencyCode;
+
+  /// The parent's horizontal padding on each side. A scrolling chart
+  /// scrolls through it, so at either end its bars sit where an unscrolled
+  /// chart's would and its edge labels stay centred under their bars.
+  /// Touches in it do not reach the chart.
+  final double edgeInset;
+
+  @override
+  State<DailyBarChart> createState() => _DailyBarChartState();
+}
+
+class _DailyBarChartState extends State<DailyBarChart> {
+  final _scroll = ScrollController();
+
+  /// Shift of the touched bar's tooltip that keeps it inside a scrolling
+  /// chart's viewport; 0 when it fits centred, and always for a chart that
+  /// does not scroll (fl_chart keeps that one inside the plot).
+  double _tooltipOffset = 0;
+
+  PeriodType get period => widget.period;
+  TrendSeries get series => widget.series;
+  Color get barColor => widget.barColor;
+  String get locale => widget.locale;
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
 
   double get _gap => switch (period) {
     PeriodType.week => 10,
@@ -64,10 +102,10 @@ class DailyBarChart extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
     final buckets = series.buckets;
-    final currency = displayCurrencyCode == null
+    final code = widget.displayCurrencyCode;
+    final currency = code == null
         ? null
-        : (currenciesByCode[displayCurrencyCode!] ??
-              Currency(code: displayCurrencyCode!, decimals: 2));
+        : (widget.currenciesByCode[code] ?? Currency(code: code, decimals: 2));
     final maxBucket = buckets
         .map((b) => b.totalMinorUnits.abs())
         .fold<int>(0, (a, b) => a > b ? a : b);
@@ -84,6 +122,9 @@ class DailyBarChart extends StatelessWidget {
         final scrolls = period == PeriodType.all && n > _kAllFullWidthMonths;
         final columns = scrolls ? _kAllFullWidthMonths : n;
         final rodWidth = (width - (columns - 1) * gap) / columns;
+        final insets = scrolls
+            ? _scrollInsets(context, rodWidth)
+            : (left: 0.0, right: 0.0);
         // The labels overlap the plot's bottom; they ignore touches so the
         // plot's full height stays touchable.
         final chart = Stack(
@@ -107,42 +148,27 @@ class DailyBarChart extends StatelessWidget {
                       handleBuiltInTouches: true,
                       touchTooltipData: BarTouchTooltipData(
                         tooltipBorderRadius: BorderRadius.circular(8),
-                        tooltipPadding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
+                        tooltipPadding: _kTooltipPadding,
+                        maxContentWidth: _kTooltipMaxContentWidth,
                         tooltipMargin: 8,
                         fitInsideHorizontally: true,
                         fitInsideVertically: true,
+                        tooltipHorizontalOffset: scrolls ? _tooltipOffset : 0,
                         getTooltipColor: (_) =>
                             scheme.inverseSurface.withValues(alpha: 0.92),
-                        getTooltipItem: (group, _, rod, rodIdx) {
-                          final idx = group.x;
-                          if (idx < 0 || idx >= buckets.length) return null;
-                          final bucket = buckets[idx];
-                          if (bucket.isFuture && bucket.totalMinorUnits == 0) {
-                            return null;
-                          }
-                          return BarTooltipItem(
-                            '${_bucketLabel(bucket.bucketStart)}\n',
-                            TextStyle(
-                              color: scheme.onInverseSurface,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 11,
-                            ),
-                            children: [
-                              TextSpan(
-                                text: _amount(bucket.totalMinorUnits, currency),
-                                style: TextStyle(
-                                  color: scheme.onInverseSurface,
-                                  fontWeight: FontWeight.w400,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          );
-                        },
+                        getTooltipItem: (group, _, rod, rodIdx) =>
+                            _tooltipItem(group.x, scheme, currency),
                       ),
+                      touchCallback: scrolls
+                          ? (event, response) => _fitTooltip(
+                              response?.spot?.touchedBarGroupIndex,
+                              rodWidth,
+                              gap,
+                              insets,
+                              scheme,
+                              currency,
+                            )
+                          : null,
                     ),
                     gridData: const FlGridData(show: false),
                     borderData: FlBorderData(
@@ -184,24 +210,151 @@ class DailyBarChart extends StatelessWidget {
                 padding: const EdgeInsets.only(
                   top: _kPlotHeight + 1 - _kLabelOverlap,
                 ),
-                child: ExcludeSemantics(
-                  child: _labels(colors, gap, keepEndsInside: scrolls),
-                ),
+                child: ExcludeSemantics(child: _labels(colors, gap)),
               ),
             ),
           ],
         );
         if (!scrolls) return chart;
         // The plot, its average line and the labels scroll together; the y
-        // scale and the average still cover every month.
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          // Opens at the right end, on the current month.
-          reverse: true,
-          child: SizedBox(width: n * rodWidth + (n - 1) * gap, child: chart),
+        // scale and the average still cover every month. The viewport
+        // reaches into the parent's padding on both sides.
+        final viewport = width + 2 * widget.edgeInset;
+        return OverflowBox(
+          fit: OverflowBoxFit.deferToChild,
+          minWidth: viewport,
+          maxWidth: viewport,
+          child: SingleChildScrollView(
+            controller: _scroll,
+            scrollDirection: Axis.horizontal,
+            // Opens at the right end, on the current month.
+            reverse: true,
+            padding: EdgeInsets.only(left: insets.left, right: insets.right),
+            child: SizedBox(width: n * rodWidth + (n - 1) * gap, child: chart),
+          ),
         );
       },
     );
+  }
+
+  /// Padding at each end of a scrolling chart's content: the parent's
+  /// [DailyBarChart.edgeInset], or more where an end label overhangs its
+  /// bar by more than that (at large text scales), so the label is never
+  /// clipped.
+  ({double left, double right}) _scrollInsets(
+    BuildContext context,
+    double rodWidth,
+  ) {
+    final last = series.buckets.length - 1;
+    double inset(int i) {
+      if (!series.labelIndices.contains(i)) return widget.edgeInset;
+      final painter = TextPainter(
+        text: TextSpan(
+          text: _labelText(i),
+          style: DefaultTextStyle.of(context).style
+              .merge(_labelStyle(AnalysisColors.of(context), i)),
+        ),
+        textDirection: Directionality.of(context),
+        textScaler: MediaQuery.textScalerOf(context),
+        maxLines: 1,
+      )..layout();
+      final overhang = (painter.width - rodWidth) / 2;
+      painter.dispose();
+      return overhang > widget.edgeInset ? overhang : widget.edgeInset;
+    }
+
+    return (left: inset(0), right: inset(last));
+  }
+
+  BarTooltipItem? _tooltipItem(
+    int idx,
+    ColorScheme scheme,
+    Currency? currency,
+  ) {
+    final buckets = series.buckets;
+    if (idx < 0 || idx >= buckets.length) return null;
+    final bucket = buckets[idx];
+    if (bucket.isFuture && bucket.totalMinorUnits == 0) return null;
+    return BarTooltipItem(
+      '${_bucketLabel(bucket.bucketStart)}\n',
+      TextStyle(
+        color: scheme.onInverseSurface,
+        fontWeight: FontWeight.w600,
+        fontSize: 11,
+      ),
+      children: [
+        TextSpan(
+          text: _amount(bucket.totalMinorUnits, currency),
+          style: TextStyle(
+            color: scheme.onInverseSurface,
+            fontWeight: FontWeight.w400,
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// On a touch of bar [index] in a scrolling chart, shifts its tooltip by
+  /// the least amount that keeps it inside the viewport, which clips it;
+  /// fl_chart only keeps it inside the whole, wider plot.
+  void _fitTooltip(
+    int? index,
+    double rodWidth,
+    double gap,
+    ({double left, double right}) insets,
+    ColorScheme scheme,
+    Currency? currency,
+  ) {
+    if (index == null || !_scroll.hasClients) return;
+    final item = _tooltipItem(index, scheme, currency);
+    if (item == null) return;
+    final painter = TextPainter(
+      text: TextSpan(
+        style: _tooltipTextStyle(item.textStyle),
+        text: item.text,
+        children: item.children,
+      ),
+      textAlign: item.textAlign,
+      textDirection: item.textDirection,
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout(maxWidth: _kTooltipMaxContentWidth);
+    final tooltipWidth = painter.width + _kTooltipPadding.horizontal;
+    painter.dispose();
+
+    // The viewport in plot coordinates. Reversed, offset 0 is the right
+    // end.
+    final position = _scroll.position;
+    final plotWidth =
+        series.buckets.length * rodWidth + (series.buckets.length - 1) * gap;
+    final contentWidth = insets.left + plotWidth + insets.right;
+    final visibleLeft =
+        contentWidth -
+        position.viewportDimension -
+        position.pixels -
+        insets.left;
+    final visibleRight = visibleLeft + position.viewportDimension;
+
+    final centre = index * (rodWidth + gap) + rodWidth / 2;
+    final left = centre - tooltipWidth / 2;
+    final right = centre + tooltipWidth / 2;
+    final offset = left < visibleLeft
+        ? visibleLeft - left
+        : right > visibleRight
+        ? visibleRight - right
+        : 0.0;
+    if (offset != _tooltipOffset) setState(() => _tooltipOffset = offset);
+  }
+
+  /// The tooltip text style as fl_chart resolves it before measuring.
+  TextStyle _tooltipTextStyle(TextStyle? style) {
+    var resolved = style == null || style.inherit
+        ? DefaultTextStyle.of(context).style.merge(style)
+        : style;
+    if (MediaQuery.boldTextOf(context)) {
+      resolved = resolved.merge(const TextStyle(fontWeight: FontWeight.bold));
+    }
+    return resolved;
   }
 
   BarChartRodData _rod(
@@ -237,14 +390,7 @@ class DailyBarChart extends StatelessWidget {
     );
   }
 
-  /// With [keepEndsInside] (a scrolling chart, which clips at its edges),
-  /// the first and last labels align to their bar's outer edge rather than
-  /// its centre, so a label wider than its bar is not cut off.
-  Widget _labels(
-    AnalysisColors colors,
-    double gap, {
-    required bool keepEndsInside,
-  }) {
+  Widget _labels(AnalysisColors colors, double gap) {
     final buckets = series.buckets;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -256,31 +402,11 @@ class DailyBarChart extends StatelessWidget {
                 ? OverflowBox(
                     fit: OverflowBoxFit.deferToChild,
                     maxWidth: double.infinity,
-                    alignment: !keepEndsInside
-                        ? Alignment.center
-                        : i == buckets.length - 1
-                        ? Alignment.centerRight
-                        : i == 0
-                        ? Alignment.centerLeft
-                        : Alignment.center,
                     child: Text(
-                      series.yearLabelIndices.contains(i)
-                          ? _yearFormats
-                                .putIfAbsent(locale, () => DateFormat.y(locale))
-                                .format(buckets[i].bucketStart)
-                          : _axisLabel(buckets[i].bucketStart),
+                      _labelText(i),
                       maxLines: 1,
                       softWrap: false,
-                      style: analysisText(
-                        size: 11,
-                        lineHeight: 14,
-                        weight: i == series.currentIndex
-                            ? FontWeight.w700
-                            : FontWeight.w400,
-                        color: i == series.currentIndex
-                            ? colors.fg
-                            : colors.fg3,
-                      ),
+                      style: _labelStyle(colors, i),
                     ),
                   )
                 : const SizedBox.shrink(),
@@ -289,6 +415,22 @@ class DailyBarChart extends StatelessWidget {
       ],
     );
   }
+
+  String _labelText(int i) {
+    final start = series.buckets[i].bucketStart;
+    return series.yearLabelIndices.contains(i)
+        ? _yearFormats
+              .putIfAbsent(locale, () => DateFormat.y(locale))
+              .format(start)
+        : _axisLabel(start);
+  }
+
+  TextStyle _labelStyle(AnalysisColors colors, int i) => analysisText(
+    size: 11,
+    lineHeight: 14,
+    weight: i == series.currentIndex ? FontWeight.w700 : FontWeight.w400,
+    color: i == series.currentIndex ? colors.fg : colors.fg3,
+  );
 
   String _amount(int minorUnits, Currency? currency) => currency == null
       ? minorUnits.toString()
