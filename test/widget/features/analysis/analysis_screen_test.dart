@@ -547,6 +547,72 @@ void main() {
       expect(find.text('All accounts'), findsNothing);
     });
 
+    testWidgets('a filter on an account that is deleted is cleared', (
+      tester,
+    ) async {
+      final accounts = StreamController<List<Account>>();
+      addTearDown(accounts.close);
+      when(() => acct.watchAll(includeArchived: true))
+          .thenAnswer((_) => accounts.stream);
+      await tester.pumpWidget(_harness(tx: tx, cat: cat, acct: acct));
+      accounts.add(const [
+        Account(id: 3, name: 'Travel card', accountTypeId: 1, currency: _usd),
+      ]);
+      await tester.pump();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(AnalysisScreen)),
+      );
+      container
+          .read(chartsSelectionControllerProvider.notifier)
+          .setAccountFilter(3);
+      await tester.pump();
+      final button = find.byType(AccountFilterButton);
+      expect(
+        find.descendant(of: button, matching: find.text('Travel card')),
+        findsOneWidget,
+      );
+
+      accounts.add(const []);
+      await tester.pump();
+      await tester.pump();
+
+      expect(
+        container.read(chartsSelectionControllerProvider).accountFilterId,
+        isNull,
+      );
+      expect(
+        find.descendant(of: button, matching: find.text('All accounts')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('a filter on an unknown account is cleared once the '
+        'accounts load', (tester) async {
+      final accounts = StreamController<List<Account>>();
+      addTearDown(accounts.close);
+      when(() => acct.watchAll(includeArchived: true))
+          .thenAnswer((_) => accounts.stream);
+      await tester.pumpWidget(_harness(tx: tx, cat: cat, acct: acct));
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(AnalysisScreen)),
+      );
+      container
+          .read(chartsSelectionControllerProvider.notifier)
+          .setAccountFilter(7);
+      await tester.pump();
+
+      accounts.add(const [
+        Account(id: 3, name: 'Travel card', accountTypeId: 1, currency: _usd),
+      ]);
+      await tester.pump();
+      await tester.pump();
+
+      expect(
+        container.read(chartsSelectionControllerProvider).accountFilterId,
+        isNull,
+      );
+    });
+
     testWidgets('expanding search hides the account button; closing brings '
         'it back (AC 11)', (tester) async {
       await tester.pumpWidget(_harness(tx: tx, cat: cat, acct: acct));

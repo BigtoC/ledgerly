@@ -134,6 +134,19 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
     final accountName = accountFilterId == null
         ? null
         : ref.watch(analysisAccountsByIdProvider).value?[accountFilterId]?.name;
+    // Stale-filter self-heal: the selection outlives the screen, so the
+    // filtered account can be deleted meanwhile. Clear the filter once the
+    // loaded accounts no longer hold it, rather than show a filtered page
+    // under an "All accounts" pill.
+    ref.listen(analysisAccountsByIdProvider, (_, next) {
+      if (next is! AsyncData) return;
+      final id = ref.read(chartsSelectionControllerProvider).accountFilterId;
+      if (id != null && !next.requireValue.containsKey(id)) {
+        ref
+            .read(chartsSelectionControllerProvider.notifier)
+            .setAccountFilter(null);
+      }
+    });
 
     final colors = AnalysisColors.of(context);
     final titleScaler = MediaQuery.textScalerOf(context)
