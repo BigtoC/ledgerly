@@ -704,6 +704,9 @@ void main() {
       expect(label.style?.fontWeight, FontWeight.w500);
       expect(label.style?.letterSpacing, 0);
       expect(label.style?.color, _colors.fg);
+      // analysisText, at the 20 line height of the redesign's 14 labels.
+      expect(label.style?.height, 20 / 14);
+      expect(label.style?.leadingDistribution, TextLeadingDistribution.even);
       final chevron = find.descendant(
         of: bridge(),
         matching: find.byIcon(Icons.chevron_right),

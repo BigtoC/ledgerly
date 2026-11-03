@@ -553,10 +553,10 @@ class _BridgeButton extends StatelessWidget {
                           maxLines: 1,
                           softWrap: false,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0,
+                          style: analysisText(
+                            size: 14,
+                            lineHeight: 20,
+                            weight: FontWeight.w500,
                             color: colors.fg,
                           ),
                         ),
