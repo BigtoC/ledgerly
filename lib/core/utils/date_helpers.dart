@@ -35,6 +35,16 @@ class DateHelpers {
   /// Local-midnight of Jan 1 of the year containing [dt].
   static DateTime startOfYear(DateTime dt) => DateTime(dt.year, 1, 1);
 
+  /// ISO 8601 week number (1–53) of the week containing [dt]. Weeks start
+  /// on Monday, and week 1 is the one holding the year's first Thursday,
+  /// so Dec 29, 2025 is in week 1 and Jan 3, 2021 in week 53.
+  static int isoWeekNumber(DateTime dt) {
+    // The week's Thursday decides which year the week belongs to.
+    final thursday = DateTime(dt.year, dt.month, dt.day + 4 - dt.weekday);
+    final dayOfYear = daysBetween(DateTime(thursday.year), thursday);
+    return dayOfYear ~/ 7 + 1;
+  }
+
   /// Returns true if [a] and [b] land on the same calendar day in
   /// [a]'s time zone.
   static bool isSameDay(DateTime a, DateTime b) =>

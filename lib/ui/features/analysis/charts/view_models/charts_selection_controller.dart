@@ -75,6 +75,15 @@ class ChartsSelectionController extends _$ChartsSelectionController {
     );
   }
 
+  /// Jump to the period containing [date]. No-op on All or when it is already
+  /// the selected period.
+  void setAnchor(DateTime date) {
+    if (state.period == PeriodType.all) return;
+    final anchor = normalizeAnchor(date, state.period);
+    if (anchor == state.anchorDate) return;
+    state = state.copyWith(anchorDate: anchor, selectedSlice: null);
+  }
+
   void toggleType() {
     state = state.copyWith(
       type: state.type == CategoryType.expense
