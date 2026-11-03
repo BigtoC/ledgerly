@@ -328,6 +328,20 @@ void main() {
       expect(next, 1);
     });
 
+    testWidgets('chevron tooltips follow the locale (zh_TW)', (tester) async {
+      await pump(
+        tester,
+        selector(locale: 'zh-TW'),
+        locale: const Locale('zh', 'TW'),
+      );
+
+      // The tooltips are the icon buttons' only screen-reader names.
+      expect(find.byTooltip('上一個期間'), findsOneWidget);
+      expect(find.byTooltip('下一個期間'), findsOneWidget);
+      expect(find.byTooltip('Previous period'), findsNothing);
+      expect(find.byTooltip('Next period'), findsNothing);
+    });
+
     testWidgets('chevrons are 48×48 with 24 icons in fg', (tester) async {
       await pump(tester, selector());
       for (final icon in [Icons.chevron_left, Icons.chevron_right]) {

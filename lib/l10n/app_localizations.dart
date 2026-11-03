@@ -2391,6 +2391,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pick another account or period.'**
   String get chartsEmptyPickAnother;
+
+  /// Tooltip and screen-reader name of the Analysis period navigator's previous (left chevron) button.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous period'**
+  String get chartsPreviousPeriod;
+
+  /// Tooltip and screen-reader name of the Analysis period navigator's next (right chevron) button.
+  ///
+  /// In en, this message translates to:
+  /// **'Next period'**
+  String get chartsNextPeriod;
 }
 
 class _AppLocalizationsDelegate

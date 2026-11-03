@@ -462,5 +462,7 @@
   "@chartsEmptyTitleAccountIncome": {"placeholders": {"account": {"type": "String"}}},
   "chartsEmptySwitchType": "切換到{type}或選擇其他期間。",
   "@chartsEmptySwitchType": {"placeholders": {"type": {"type": "String"}}},
-  "chartsEmptyPickAnother": "請選擇其他帳戶或期間。"
+  "chartsEmptyPickAnother": "請選擇其他帳戶或期間。",
+  "chartsPreviousPeriod": "上一個期間",
+  "chartsNextPeriod": "下一個期間"
 }

@@ -1291,5 +1291,9 @@
   "chartsEmptySwitchType": "Switch to {type} or pick another period.",
   "@chartsEmptySwitchType": {"description": "Breakdown card empty-state body when no account filter is set. {type} is the other type's label ('Expense' or 'Income').", "placeholders": {"type": {"type": "String"}}},
   "chartsEmptyPickAnother": "Pick another account or period.",
-  "@chartsEmptyPickAnother": {"description": "Breakdown card empty-state body when an account filter is set."}
+  "@chartsEmptyPickAnother": {"description": "Breakdown card empty-state body when an account filter is set."},
+  "chartsPreviousPeriod": "Previous period",
+  "@chartsPreviousPeriod": {"description": "Tooltip and screen-reader name of the Analysis period navigator's previous (left chevron) button."},
+  "chartsNextPeriod": "Next period",
+  "@chartsNextPeriod": {"description": "Tooltip and screen-reader name of the Analysis period navigator's next (right chevron) button."}
 }

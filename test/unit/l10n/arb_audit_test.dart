@@ -486,6 +486,8 @@ const Set<String> _expectedEnKeys = <String>{
   'chartsEmptyTitleAccountIncome',
   'chartsEmptySwitchType',
   'chartsEmptyPickAnother',
+  'chartsPreviousPeriod',
+  'chartsNextPeriod',
 };
 
 Map<String, dynamic> _readArb(String fileName) {

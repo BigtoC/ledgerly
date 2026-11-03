@@ -242,6 +242,7 @@ class PeriodNavigator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = AnalysisColors.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
@@ -251,7 +252,7 @@ class PeriodNavigator extends StatelessWidget {
           if (showChevrons)
             _NavButton(
               icon: Icons.chevron_left,
-              tooltip: 'Previous period',
+              tooltip: l10n.chartsPreviousPeriod,
               onPressed: onPrevious,
             )
           else
@@ -287,7 +288,7 @@ class PeriodNavigator extends StatelessWidget {
           if (showChevrons)
             _NavButton(
               icon: Icons.chevron_right,
-              tooltip: 'Next period',
+              tooltip: l10n.chartsNextPeriod,
               onPressed: onNext,
             )
           else
