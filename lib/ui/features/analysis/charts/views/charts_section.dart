@@ -14,6 +14,7 @@ import '../../search/view_models/analysis_providers.dart';
 import '../view_models/charts_controller.dart';
 import '../view_models/charts_net_total_providers.dart';
 import '../view_models/charts_providers.dart';
+import '../view_models/charts_range_providers.dart';
 import '../view_models/charts_selection_controller.dart';
 import '../view_models/charts_state.dart';
 import '../view_models/slice_drilldown_controller.dart';
@@ -35,6 +36,7 @@ import 'selected_slice_items_list.dart';
   analysisAccountsById,
   chartsFxStatus,
   chartsNetTotal,
+  chartsRange,
 ])
 class ChartsSection extends ConsumerStatefulWidget {
   const ChartsSection({super.key});
@@ -315,6 +317,9 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
           period: selection.period,
           anchorDate: selection.anchorDate,
           isAtCurrent: selectionNotifier.isAtCurrentPeriod(),
+          allTimeRange: selection.period == PeriodType.all
+              ? ref.watch(chartsRangeProvider).value
+              : null,
           locale: locale,
           onPrevious: () => _enqueuePeriodStep(-1),
           onNext: () => _enqueuePeriodStep(1),
@@ -428,7 +433,10 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
           ),
         GestureDetector(
           behavior: HitTestBehavior.translucent,
-          onHorizontalDragEnd: _onHorizontalFling,
+          // All has no other period to swipe to.
+          onHorizontalDragEnd: period == PeriodType.all
+              ? null
+              : _onHorizontalFling,
           child: animatedBody,
         ),
         if (chartData != null)
@@ -634,6 +642,7 @@ class _ChartBodyState extends ConsumerState<_ChartBody> {
     final selectedIndex = hit == -1 ? null : hit;
     final showBar =
         data.period != PeriodType.day &&
+        data.period != PeriodType.all &&
         data.bucketTotals.isNotEmpty &&
         !(data.dimension == ChartDimension.currency && data.mixedCurrencies);
     @Dependencies([ChartsSelectionController])

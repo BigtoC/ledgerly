@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/data/repositories/exchange_rate_repository.dart';
@@ -19,6 +20,7 @@ import 'package:ledgerly/ui/core/theme/app_theme.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_controller.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_net_total_providers.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_providers.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_range_providers.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_selection_controller.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_state.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/slice_drilldown_controller.dart';
@@ -58,6 +60,7 @@ const _usd = Currency(
   analysisCategoriesById,
   analysisAccountsById,
   chartsFxStatus,
+  chartsRange,
 ])
 void main() {
   setUpAll(() {
@@ -298,6 +301,151 @@ void main() {
     }
   });
 
+  group('All period (AC 13)', () {
+    final now = DateTime.now();
+    final nextMonth = DateTime(now.year, now.month + 1);
+    // Built in the test: intl date data loads with the app.
+    String nowLabel() => DateFormat.yMMM('en').format(now);
+
+    Future<void> pickAll(WidgetTester tester) async {
+      await tester.tap(find.text('All'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('five period options; All shows "All time" with the '
+        'covered range and hides both chevrons', (tester) async {
+      await _pumpSection(
+        tester,
+        bounds: (first: DateTime(2025, 1, 20, 9), last: now),
+      );
+      for (final label in ['Day', 'Week', 'Month', 'Year', 'All']) {
+        expect(
+          find.descendant(
+            of: find.byType(PeriodTrack),
+            matching: find.text(label),
+          ),
+          findsOneWidget,
+        );
+      }
+
+      await pickAll(tester);
+
+      expect(find.text('All time'), findsOneWidget);
+      expect(find.text('Jan 2025 – ${nowLabel()}'), findsOneWidget);
+      expect(find.byTooltip('Previous period'), findsNothing);
+      expect(find.byTooltip('Next period'), findsNothing);
+      expect(find.text('Net all time'), findsOneWidget);
+    });
+
+    testWidgets('every card queries [first month, start of next month)', (
+      tester,
+    ) async {
+      final repo = await _pumpSection(
+        tester,
+        bounds: (first: DateTime(2025, 1, 20, 9), last: now),
+      );
+
+      await pickAll(tester);
+
+      final start = DateTime(2025);
+      verify(
+        () => repo.watchByCategoryInRange(
+          start: start,
+          end: nextMonth,
+          type: any(named: 'type'),
+          accountId: any(named: 'accountId'),
+        ),
+      ).called(greaterThanOrEqualTo(1));
+      verify(
+        () => repo.watchTimeBucketsInRange(
+          start: start,
+          end: nextMonth,
+          type: any(named: 'type'),
+          granularity: TimeBucketGranularity.month,
+          categoryId: any(named: 'categoryId'),
+          accountId: any(named: 'accountId'),
+          currencyCode: any(named: 'currencyCode'),
+        ),
+      ).called(greaterThanOrEqualTo(1));
+      verify(
+        () => repo.watchTotalsByTypeInRange(
+          start: start,
+          end: nextMonth,
+          accountId: any(named: 'accountId'),
+        ),
+      ).called(greaterThanOrEqualTo(1));
+    });
+
+    testWidgets('a horizontal swipe does nothing on All', (tester) async {
+      await _pumpSection(
+        tester,
+        bounds: (first: DateTime(2025, 1, 20, 9), last: now),
+      );
+      bool listensForSwipes() => tester
+          .widgetList<GestureDetector>(
+            find.ancestor(
+              of: find.byType(ChartsBreakdownCard),
+              matching: find.byType(GestureDetector),
+            ),
+          )
+          .any((g) => g.onHorizontalDragEnd != null);
+      expect(listensForSwipes(), isTrue);
+
+      await pickAll(tester);
+      // No swipe recognizer on All, so nothing competes with the trend
+      // chart's horizontal scroll (D14).
+      expect(listensForSwipes(), isFalse);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(MaterialApp)),
+      );
+      final before = container.read(chartsSelectionControllerProvider);
+      final body = find
+          .ancestor(
+            of: find.byType(ChartsBreakdownCard),
+            matching: find.byType(SlideTransition),
+          )
+          .first;
+
+      for (final dx in [400.0, -400.0]) {
+        await tester.fling(find.byType(CategoryPieChart), Offset(dx, 0), 1000);
+        await tester.pump(const Duration(milliseconds: 100));
+        // No slide starts: the body stays in place.
+        expect(
+          tester.widget<SlideTransition>(body).position.value,
+          Offset.zero,
+        );
+        await tester.pumpAndSettle();
+      }
+      expect(container.read(chartsSelectionControllerProvider), before);
+    });
+
+    testWidgets('no transactions: "All time" without a caption and the '
+        'empty state', (tester) async {
+      final repo = await _pumpSection(
+        tester,
+        bounds: null,
+        slices: const [],
+        withBuckets: false,
+      );
+
+      await pickAll(tester);
+
+      expect(find.text('All time'), findsOneWidget);
+      expect(find.textContaining(' – '), findsNothing);
+      expect(find.byType(BreakdownEmptyState), findsOneWidget);
+      expect(find.text('No expense in this period'), findsOneWidget);
+      // The empty range: start == end.
+      verify(
+        () => repo.watchByCategoryInRange(
+          start: nextMonth,
+          end: nextMonth,
+          type: any(named: 'type'),
+          accountId: any(named: 'accountId'),
+        ),
+      ).called(greaterThanOrEqualTo(1));
+    });
+  });
+
   group('summary card', () {
     testWidgets('replaces the type toggle and the net pill, 16 below the '
         'period selector', (tester) async {
@@ -355,6 +503,7 @@ void main() {
   ChartsController,
   SliceDrilldownController,
   chartsNetTotal,
+  chartsRange,
 ])
 Future<_MockTxRepo> _pumpSection(
   WidgetTester tester, {
@@ -366,8 +515,10 @@ Future<_MockTxRepo> _pumpSection(
   Stream<List<CategorySlice>> Function(CategoryType type)? categoryStream,
   Stream<List<AccountSlice>>? accountStream,
   bool settle = true,
+  DateBounds? bounds,
 }) async {
   final repo = _MockTxRepo();
+  when(() => repo.watchDateBounds()).thenAnswer((_) => Stream.value(bounds));
   // The first period queried has income +\$30.00; any other period has
   // expense \$7.00. Keyed on the first query rather than DateTime.now() so
   // a run that crosses a week boundary cannot flake.

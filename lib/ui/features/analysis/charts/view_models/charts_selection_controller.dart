@@ -47,6 +47,8 @@ class ChartsSelectionController extends _$ChartsSelectionController {
     );
   }
 
+  /// All ignores the anchor, so switching to it keeps the anchor for the
+  /// period the user returns to.
   void setPeriod(PeriodType period) {
     if (state.period == period) return;
     state = state.copyWith(
@@ -56,7 +58,9 @@ class ChartsSelectionController extends _$ChartsSelectionController {
     );
   }
 
+  /// No-op on All, which has nothing before it.
   void previousPeriod() {
+    if (state.period == PeriodType.all) return;
     state = state.copyWith(
       anchorDate: shiftAnchor(state.anchorDate, state.period, -1),
       selectedSlice: null,
@@ -121,7 +125,9 @@ class ChartsSelectionController extends _$ChartsSelectionController {
     state = state.copyWith(selectedSlice: null);
   }
 
+  /// Always true on All, which always ends at the current month.
   bool isAtCurrentPeriod() {
+    if (state.period == PeriodType.all) return true;
     final now = DateTime.now();
     final currentAnchor = normalizeAnchor(now, state.period);
     final myAnchor = normalizeAnchor(state.anchorDate, state.period);
@@ -130,6 +136,7 @@ class ChartsSelectionController extends _$ChartsSelectionController {
 }
 
 /// Snap `anchor` to the start-of-period boundary that matches `period`.
+/// All has no anchor, so it returns `anchor` unchanged.
 DateTime normalizeAnchor(DateTime anchor, PeriodType period) {
   switch (period) {
     case PeriodType.day:
@@ -140,11 +147,13 @@ DateTime normalizeAnchor(DateTime anchor, PeriodType period) {
       return DateHelpers.startOfMonth(anchor);
     case PeriodType.year:
       return DateHelpers.startOfYear(anchor);
+    case PeriodType.all:
+      return anchor;
   }
 }
 
 /// Step `anchor` forward (`delta > 0`) or backward (`delta < 0`) by one
-/// period bucket.
+/// period bucket. All does not step: it returns `anchor` unchanged.
 DateTime shiftAnchor(DateTime anchor, PeriodType period, int delta) {
   final base = normalizeAnchor(anchor, period);
   switch (period) {
@@ -156,5 +165,7 @@ DateTime shiftAnchor(DateTime anchor, PeriodType period, int delta) {
       return DateTime(base.year, base.month + delta, 1);
     case PeriodType.year:
       return DateTime(base.year + delta, 1, 1);
+    case PeriodType.all:
+      return base;
   }
 }

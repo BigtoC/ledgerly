@@ -39,6 +39,7 @@ final class SliceDrilldownControllerProvider
           SliceDrilldownControllerProvider.$allTransitiveDependencies7,
           SliceDrilldownControllerProvider.$allTransitiveDependencies8,
           SliceDrilldownControllerProvider.$allTransitiveDependencies9,
+          SliceDrilldownControllerProvider.$allTransitiveDependencies10,
         },
       );
 
@@ -59,6 +60,8 @@ final class SliceDrilldownControllerProvider
   static final $allTransitiveDependencies8 = chartsRangeProvider;
   static final $allTransitiveDependencies9 =
       ChartsRangeProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies10 =
+      ChartsRangeProvider.$allTransitiveDependencies3;
 
   @override
   String debugGetCreateSourceHash() => _$sliceDrilldownControllerHash();

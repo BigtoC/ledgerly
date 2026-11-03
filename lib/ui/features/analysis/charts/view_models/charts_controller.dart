@@ -45,6 +45,7 @@ part 'charts_controller.g.dart';
     analysisCategoriesById,
     analysisAccountsById,
     analysisAccountTypesById,
+    chartsDateBounds,
     chartsRange,
     ChartsSelectionController,
   ],
@@ -133,6 +134,11 @@ class ChartsController extends _$ChartsController {
 
   void retry() {
     _refreshRequested.clear();
+    if (_range == null) {
+      // The All range failed to load: reload the date bounds.
+      ref.invalidate(chartsDateBoundsProvider);
+      return;
+    }
     _resubscribe();
   }
 
@@ -154,7 +160,7 @@ class ChartsController extends _$ChartsController {
     PeriodType.day => TimeBucketGranularity.hour,
     PeriodType.week => TimeBucketGranularity.day,
     PeriodType.month => TimeBucketGranularity.day,
-    PeriodType.year => TimeBucketGranularity.month,
+    PeriodType.year || PeriodType.all => TimeBucketGranularity.month,
   };
 
   void _resubscribe() {

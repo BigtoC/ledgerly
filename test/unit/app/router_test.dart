@@ -38,6 +38,8 @@ import 'package:ledgerly/ui/features/splash/views/splash_screen.dart';
 
 import '../../support/test_app.dart';
 
+import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_range_providers.dart';
+
 @Dependencies([
   router,
   splashGateSnapshot,
@@ -67,6 +69,7 @@ import '../../support/test_app.dart';
   exchangeRateRepository,
   chartsNetTotal,
   chartsAccountFilterOptions,
+  chartsRange,
 ])
 void main() {
   group('router redirect', () {

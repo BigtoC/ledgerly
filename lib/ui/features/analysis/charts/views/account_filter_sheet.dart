@@ -15,6 +15,7 @@ import '../../../../../l10n/app_localizations.dart';
 import '../../../../core/theme/analysis_colors.dart';
 import '../view_models/account_filter_providers.dart';
 import '../view_models/charts_selection_controller.dart';
+import '../view_models/charts_state.dart' show PeriodType;
 import 'period_selector.dart' show formatPeriodLabel;
 
 /// Radio value of the "All accounts" row; account ids are positive.
@@ -137,11 +138,13 @@ class _AccountFilterSheet extends ConsumerWidget {
                 const SizedBox(height: 2),
                 Text(
                   l10n.chartsFilterSheetSubtitle(
-                    formatPeriodLabel(
-                      selection.period,
-                      selection.anchorDate,
-                      locale,
-                    ),
+                    selection.period == PeriodType.all
+                        ? l10n.chartsAllTime
+                        : formatPeriodLabel(
+                            selection.period,
+                            selection.anchorDate,
+                            locale,
+                          ),
                   ),
                   style: analysisText(
                     size: 14,

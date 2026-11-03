@@ -47,6 +47,7 @@ final class RouterProvider
           chartsFxStatusProvider,
           chartsNetTotalProvider,
           chartsAccountFilterOptionsProvider,
+          chartsRangeProvider,
           categorySearchDetailControllerProvider,
           settingsControllerProvider,
           accountsControllerProvider,
@@ -116,6 +117,7 @@ final class RouterProvider
           RouterProvider.$allTransitiveDependencies54,
           RouterProvider.$allTransitiveDependencies55,
           RouterProvider.$allTransitiveDependencies56,
+          RouterProvider.$allTransitiveDependencies57,
         },
       );
 
@@ -177,36 +179,38 @@ final class RouterProvider
       ChartsControllerProvider.$allTransitiveDependencies15;
   static final $allTransitiveDependencies36 =
       ChartsControllerProvider.$allTransitiveDependencies16;
-  static final $allTransitiveDependencies37 = sliceDrilldownControllerProvider;
-  static final $allTransitiveDependencies38 = chartsNetTotalProvider;
-  static final $allTransitiveDependencies39 =
-      ChartsNetTotalProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies37 =
+      ChartsControllerProvider.$allTransitiveDependencies17;
+  static final $allTransitiveDependencies38 = sliceDrilldownControllerProvider;
+  static final $allTransitiveDependencies39 = chartsNetTotalProvider;
   static final $allTransitiveDependencies40 =
-      chartsAccountFilterOptionsProvider;
+      ChartsNetTotalProvider.$allTransitiveDependencies0;
   static final $allTransitiveDependencies41 =
-      ChartsAccountFilterOptionsProvider.$allTransitiveDependencies0;
+      chartsAccountFilterOptionsProvider;
   static final $allTransitiveDependencies42 =
+      ChartsAccountFilterOptionsProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies43 =
       categorySearchDetailControllerProvider;
-  static final $allTransitiveDependencies43 = settingsControllerProvider;
-  static final $allTransitiveDependencies44 = accountsControllerProvider;
-  static final $allTransitiveDependencies45 = categoriesControllerProvider;
-  static final $allTransitiveDependencies46 = recurringRulesControllerProvider;
-  static final $allTransitiveDependencies47 =
-      RecurringRulesControllerProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies44 = settingsControllerProvider;
+  static final $allTransitiveDependencies45 = accountsControllerProvider;
+  static final $allTransitiveDependencies46 = categoriesControllerProvider;
+  static final $allTransitiveDependencies47 = recurringRulesControllerProvider;
   static final $allTransitiveDependencies48 =
-      recurringRuleFormControllerProvider;
+      RecurringRulesControllerProvider.$allTransitiveDependencies0;
   static final $allTransitiveDependencies49 =
+      recurringRuleFormControllerProvider;
+  static final $allTransitiveDependencies50 =
       RecurringRuleFormControllerProvider.$allTransitiveDependencies4;
-  static final $allTransitiveDependencies50 = csvImportControllerProvider;
-  static final $allTransitiveDependencies51 =
-      CsvImportControllerProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies51 = csvImportControllerProvider;
   static final $allTransitiveDependencies52 =
+      CsvImportControllerProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies53 =
       CsvImportControllerProvider.$allTransitiveDependencies2;
-  static final $allTransitiveDependencies53 = csvExportControllerProvider;
-  static final $allTransitiveDependencies54 =
+  static final $allTransitiveDependencies54 = csvExportControllerProvider;
+  static final $allTransitiveDependencies55 =
       CsvExportControllerProvider.$allTransitiveDependencies0;
-  static final $allTransitiveDependencies55 = categoriesByTypeProvider;
-  static final $allTransitiveDependencies56 = transactionFormControllerProvider;
+  static final $allTransitiveDependencies56 = categoriesByTypeProvider;
+  static final $allTransitiveDependencies57 = transactionFormControllerProvider;
 
   @override
   String debugGetCreateSourceHash() => _$routerHash();
@@ -230,4 +234,4 @@ final class RouterProvider
   }
 }
 
-String _$routerHash() => r'e88dfc92d1a02fd2472359b389f79f673250ddaa';
+String _$routerHash() => r'e10ec954bdf3c4732c70694dccb70d03adb48a41';

@@ -43,12 +43,13 @@ class DailyBarChart extends StatelessWidget {
   double get _gap => switch (period) {
     PeriodType.week => 10,
     PeriodType.year => 6,
+    PeriodType.all => 4,
     PeriodType.day || PeriodType.month => 3,
   };
 
   (double top, double bottom) get _radii => switch (period) {
     PeriodType.week || PeriodType.year => (6, 2),
-    PeriodType.day || PeriodType.month => (3, 1),
+    PeriodType.day || PeriodType.month || PeriodType.all => (3, 1),
   };
 
   @override
@@ -282,6 +283,7 @@ class DailyBarChart extends StatelessWidget {
       case PeriodType.month:
         return bucketStart.day.toString();
       case PeriodType.year:
+      case PeriodType.all:
         return _monthFormats
             .putIfAbsent(locale, () => DateFormat.MMM(locale))
             .format(bucketStart);

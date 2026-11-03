@@ -117,6 +117,7 @@ class ChartsSummaryCard extends ConsumerWidget {
                     PeriodType.week => l10n.chartsNetThisWeek,
                     PeriodType.month => l10n.chartsNetThisMonth,
                     PeriodType.year => l10n.chartsNetThisYear,
+                    PeriodType.all => l10n.chartsNetAllTime,
                   },
                   amount: totals == null || net == null
                       ? _dash

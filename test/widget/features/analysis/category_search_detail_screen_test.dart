@@ -33,6 +33,7 @@ import 'package:ledgerly/ui/features/analysis/search/views/transaction_search_ro
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/core/theme/analysis_colors.dart';
 import 'package:ledgerly/ui/core/theme/app_theme.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_range_providers.dart';
 
 class _MockTransactionRepository extends Mock
     implements TransactionRepository {}
@@ -94,6 +95,7 @@ Transaction _tx() => Transaction(
   chartsFxStatus,
   chartsNetTotal,
   chartsAccountFilterOptions,
+  chartsRange,
 ])
 void main() {
   setUpAll(() {

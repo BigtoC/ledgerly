@@ -103,6 +103,9 @@ List<DateTime> _bucketStarts(PeriodType period, DateTime anchor) {
       ];
     case PeriodType.year:
       return [for (var m = 1; m <= 12; m++) DateTime(anchor.year, m, 1)];
+    // The trend card is not shown on All yet.
+    case PeriodType.all:
+      return const [];
   }
 }
 
@@ -111,4 +114,5 @@ DateTime _periodEnd(PeriodType period, DateTime anchor) => switch (period) {
   PeriodType.week => DateTime(anchor.year, anchor.month, anchor.day + 7),
   PeriodType.month => DateTime(anchor.year, anchor.month + 1, 1),
   PeriodType.year => DateTime(anchor.year + 1, 1, 1),
+  PeriodType.all => anchor,
 };

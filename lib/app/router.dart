@@ -12,6 +12,7 @@ import '../ui/features/analysis/charts/view_models/account_filter_providers.dart
 import '../ui/features/analysis/charts/view_models/charts_controller.dart';
 import '../ui/features/analysis/charts/view_models/charts_net_total_providers.dart';
 import '../ui/features/analysis/charts/view_models/charts_providers.dart';
+import '../ui/features/analysis/charts/view_models/charts_range_providers.dart';
 import '../ui/features/analysis/charts/view_models/charts_selection_controller.dart';
 import '../ui/features/analysis/charts/view_models/slice_drilldown_controller.dart';
 import '../ui/features/analysis/search/view_models/analysis_controller.dart';
@@ -78,6 +79,7 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
     chartsFxStatus,
     chartsNetTotal,
     chartsAccountFilterOptions,
+    chartsRange,
     CategorySearchDetailController,
     SettingsController,
     AccountsController,

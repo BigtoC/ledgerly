@@ -12,6 +12,7 @@ import '../charts/view_models/account_filter_providers.dart';
 import '../charts/view_models/charts_controller.dart';
 import '../charts/view_models/charts_net_total_providers.dart';
 import '../charts/view_models/charts_providers.dart';
+import '../charts/view_models/charts_range_providers.dart';
 import '../charts/view_models/charts_selection_controller.dart';
 import '../charts/view_models/slice_drilldown_controller.dart';
 import '../charts/views/account_filter_button.dart';
@@ -35,6 +36,7 @@ import 'analysis_search_field.dart';
   chartsFxStatus,
   chartsNetTotal,
   chartsAccountFilterOptions,
+  chartsRange,
 ])
 class AnalysisScreen extends ConsumerStatefulWidget {
   const AnalysisScreen({super.key});

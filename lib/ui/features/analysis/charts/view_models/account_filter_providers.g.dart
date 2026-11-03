@@ -46,6 +46,7 @@ final class ChartsAccountTotalsProvider
           ChartsAccountTotalsProvider.$allTransitiveDependencies1,
           ChartsAccountTotalsProvider.$allTransitiveDependencies2,
           ChartsAccountTotalsProvider.$allTransitiveDependencies3,
+          ChartsAccountTotalsProvider.$allTransitiveDependencies4,
         },
       );
 
@@ -55,6 +56,8 @@ final class ChartsAccountTotalsProvider
   static final $allTransitiveDependencies2 = chartsRangeProvider;
   static final $allTransitiveDependencies3 =
       ChartsRangeProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies4 =
+      ChartsRangeProvider.$allTransitiveDependencies3;
 
   @override
   String debugGetCreateSourceHash() => _$chartsAccountTotalsHash();
@@ -132,6 +135,7 @@ final class ChartsAccountFilterOptionsProvider
           ChartsAccountFilterOptionsProvider.$allTransitiveDependencies14,
           ChartsAccountFilterOptionsProvider.$allTransitiveDependencies15,
           ChartsAccountFilterOptionsProvider.$allTransitiveDependencies16,
+          ChartsAccountFilterOptionsProvider.$allTransitiveDependencies17,
         },
       );
 
@@ -144,25 +148,27 @@ final class ChartsAccountFilterOptionsProvider
       ChartsAccountTotalsProvider.$allTransitiveDependencies2;
   static final $allTransitiveDependencies4 =
       ChartsAccountTotalsProvider.$allTransitiveDependencies3;
-  static final $allTransitiveDependencies5 = chartsFxStatusProvider;
-  static final $allTransitiveDependencies6 =
-      ChartsFxStatusProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies5 =
+      ChartsAccountTotalsProvider.$allTransitiveDependencies4;
+  static final $allTransitiveDependencies6 = chartsFxStatusProvider;
   static final $allTransitiveDependencies7 =
-      ChartsFxStatusProvider.$allTransitiveDependencies1;
+      ChartsFxStatusProvider.$allTransitiveDependencies0;
   static final $allTransitiveDependencies8 =
-      ChartsFxStatusProvider.$allTransitiveDependencies2;
+      ChartsFxStatusProvider.$allTransitiveDependencies1;
   static final $allTransitiveDependencies9 =
-      ChartsFxStatusProvider.$allTransitiveDependencies4;
+      ChartsFxStatusProvider.$allTransitiveDependencies2;
   static final $allTransitiveDependencies10 =
+      ChartsFxStatusProvider.$allTransitiveDependencies4;
+  static final $allTransitiveDependencies11 =
       ChartsFxStatusProvider.$allTransitiveDependencies5;
-  static final $allTransitiveDependencies11 = chartsCurrenciesByCodeProvider;
-  static final $allTransitiveDependencies12 =
+  static final $allTransitiveDependencies12 = chartsCurrenciesByCodeProvider;
+  static final $allTransitiveDependencies13 =
       ChartsCurrenciesByCodeProvider.$allTransitiveDependencies0;
-  static final $allTransitiveDependencies13 = analysisAccountsByIdProvider;
-  static final $allTransitiveDependencies14 =
+  static final $allTransitiveDependencies14 = analysisAccountsByIdProvider;
+  static final $allTransitiveDependencies15 =
       AnalysisAccountsByIdProvider.$allTransitiveDependencies0;
-  static final $allTransitiveDependencies15 = analysisAccountTypesByIdProvider;
-  static final $allTransitiveDependencies16 =
+  static final $allTransitiveDependencies16 = analysisAccountTypesByIdProvider;
+  static final $allTransitiveDependencies17 =
       AnalysisAccountTypesByIdProvider.$allTransitiveDependencies0;
 
   @override

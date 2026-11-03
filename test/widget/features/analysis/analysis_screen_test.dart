@@ -30,6 +30,7 @@ import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_controll
 import 'package:ledgerly/ui/features/analysis/charts/view_models/account_filter_providers.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_net_total_providers.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_providers.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_range_providers.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_selection_controller.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/slice_drilldown_controller.dart';
 import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_controller.dart';
@@ -84,6 +85,7 @@ Transaction _tx() => Transaction(
   chartsFxStatus,
   chartsNetTotal,
   chartsAccountFilterOptions,
+  chartsRange,
 ])
 Widget _harness({
   required TransactionRepository tx,
@@ -157,6 +159,7 @@ BoxDecoration _searchBoxDecoration(WidgetTester tester) =>
   chartsFxStatus,
   chartsNetTotal,
   chartsAccountFilterOptions,
+  chartsRange,
 ])
 GoRouter _detailRouter(String initialLocation) {
   return GoRouter(
@@ -188,6 +191,7 @@ GoRouter _detailRouter(String initialLocation) {
   chartsFxStatus,
   chartsNetTotal,
   chartsAccountFilterOptions,
+  chartsRange,
 ])
 Widget _routerHarness({
   required TransactionRepository tx,
@@ -227,6 +231,7 @@ Widget _routerHarness({
   analysisAccountsById,
   chartsNetTotal,
   chartsAccountFilterOptions,
+  chartsRange,
 ])
 void main() {
   setUpAll(() {

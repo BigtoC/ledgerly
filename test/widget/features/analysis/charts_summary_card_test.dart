@@ -557,6 +557,7 @@ void main() {
         (PeriodType.day, 'Net today'),
         (PeriodType.month, 'Net this month'),
         (PeriodType.year, 'Net this year'),
+        (PeriodType.all, 'Net all time'),
         (PeriodType.week, 'Net this week'),
       ]) {
         selection.setPeriod(period);

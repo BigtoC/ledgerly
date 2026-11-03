@@ -14,8 +14,9 @@ import 'selected_slice.dart';
 part 'charts_state.freezed.dart';
 
 /// Active chart period — drives both the period selector label and the
-/// repository range / bar-chart granularity.
-enum PeriodType { day, week, month, year }
+/// repository range / bar-chart granularity. [all] covers every
+/// transaction up to the end of the current month and has no anchor.
+enum PeriodType { day, week, month, year, all }
 
 /// Pie/bar grouping axis. Toggled via the dimension chips.
 enum ChartDimension { category, account, currency }

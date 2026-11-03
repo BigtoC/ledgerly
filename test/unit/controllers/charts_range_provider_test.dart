@@ -44,6 +44,7 @@ void main() {
   AsyncValue<ChartsRange> range() => container.read(chartsRangeProvider);
 
   final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
   final nextMonth = DateTime(now.year, now.month + 1);
 
   group('Day / Week / Month / Year snap the anchor', () {
@@ -101,6 +102,96 @@ void main() {
         range();
       }
       verifyNever(() => repo.watchDateBounds());
+    });
+  });
+
+  group('All', () {
+    test('loads until the date bounds arrive', () async {
+      selection().setPeriod(PeriodType.all);
+      expect(range().isLoading, isTrue);
+      expect(range().hasValue, isFalse);
+    });
+
+    test('[first day of the earliest month, start of next month)', () async {
+      selection().setPeriod(PeriodType.all);
+      range();
+      bounds.add((first: DateTime(2025, 3, 17, 21, 30), last: today));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(range().value, (start: DateTime(2025, 3), end: nextMonth));
+    });
+
+    test('ignores the anchor', () async {
+      selection()
+        ..setPeriod(PeriodType.year)
+        ..previousPeriod()
+        ..previousPeriod()
+        ..setPeriod(PeriodType.all);
+      range();
+      bounds.add((first: DateTime(2025, 3, 17), last: today));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(range().value, (start: DateTime(2025, 3), end: nextMonth));
+    });
+
+    test('no transactions: an empty range (start == end)', () async {
+      selection().setPeriod(PeriodType.all);
+      range();
+      bounds.add(null);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(range().value, (start: nextMonth, end: nextMonth));
+    });
+
+    test('only future months: an empty range, since All ends at the start '
+        'of next month (D8)', () async {
+      selection().setPeriod(PeriodType.all);
+      range();
+      bounds.add((
+        first: DateTime(now.year, now.month + 2, 3),
+        last: DateTime(now.year, now.month + 3),
+      ));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(range().value, (start: nextMonth, end: nextMonth));
+    });
+
+    test('follows the earliest transaction as it changes', () async {
+      selection().setPeriod(PeriodType.all);
+      range();
+      bounds.add((first: DateTime(2025, 3, 17), last: today));
+      await Future<void>.delayed(Duration.zero);
+
+      bounds.add((first: DateTime(2024, 11, 2), last: today));
+      await Future<void>.delayed(Duration.zero);
+      expect(range().value, (start: DateTime(2024, 11), end: nextMonth));
+
+      bounds.add(null);
+      await Future<void>.delayed(Duration.zero);
+      expect(range().value, (start: nextMonth, end: nextMonth));
+    });
+
+    test('a new latest date in the same first month does not notify', () async {
+      selection().setPeriod(PeriodType.all);
+      final emitted = <AsyncValue<ChartsRange>>[];
+      container.listen(chartsRangeProvider, (_, next) => emitted.add(next));
+      bounds.add((first: DateTime(2025, 3, 17), last: DateTime(2025, 4)));
+      await Future<void>.delayed(Duration.zero);
+      final count = emitted.length;
+
+      bounds.add((first: DateTime(2025, 3, 2), last: DateTime(2025, 5)));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(emitted.length, count);
+    });
+
+    test('a bounds error surfaces as an error', () async {
+      selection().setPeriod(PeriodType.all);
+      range();
+      bounds.addError(StateError('boom'));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(range().hasError, isTrue);
     });
   });
 }
