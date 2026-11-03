@@ -315,9 +315,9 @@ lib/
       home/           # day-at-a-time list with summary strip, search, pending section
       transactions/   # add/edit form with calculator keypad
       categories/     # category list + form sheet with icon/color pickers
-      analysis/       # charts (pie + bar with drill-down) + memo search
-        charts/       # ChartsSection, pie/bar/legend/period/dimension/toggle widgets
-        search/       # SearchBar-based transaction search + category detail
+      analysis/       # charts (summary, breakdown, trend, drill-down) + account filter + app-bar memo search
+        charts/       # ChartsSection, period track, summary/breakdown/trend/transactions cards, account filter
+        search/       # memo search results + category detail
       accounts/       # account list + form (currency/type pickers; opened from Settings)
       recurring/      # recurring-rule list/form; generates pending approvals on Home
       shopping_list/  # draft-capture list that converts items into transactions
