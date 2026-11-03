@@ -28,6 +28,8 @@ Future<void> showAccountFilterSheet(BuildContext context) {
   if (MediaQuery.sizeOf(context).width >= 600) {
     return showDialog<void>(
       context: context,
+      // The bottom sheet's 32% scrim (Main.dc.html:263), not black54.
+      barrierColor: Colors.black.withValues(alpha: 0.32),
       builder: (_) => Dialog(
         backgroundColor: colors.card,
         surfaceTintColor: const Color(0x00000000),

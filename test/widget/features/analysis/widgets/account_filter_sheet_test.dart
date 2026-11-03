@@ -528,6 +528,11 @@ void main() {
       const colors = AnalysisColors.light;
 
       expect(find.byType(BottomSheet), findsNothing);
+      // The same 32% scrim as the bottom-sheet form (Main.dc.html:263).
+      final barrier = tester
+          .widgetList<ModalBarrier>(find.byType(ModalBarrier))
+          .last;
+      expect(barrier.color, Colors.black.withValues(alpha: 0.32));
       final dialog = tester.widget<Dialog>(find.byType(Dialog));
       expect(dialog.backgroundColor, colors.card);
       expect(
