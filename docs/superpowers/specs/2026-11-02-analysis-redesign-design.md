@@ -136,7 +136,9 @@ Five options: **Day · Week · Month · Year · All** (All is new — see § All
 time). Padding 8 16 0. Track: `track` fill, radius 25, padding 3, 5 equal
 columns, gap 2. Segment: height 44, radius 22, label 14 w500. Selected: `thumb` fill +
 thumb shadow, `fg` text. Unselected: transparent, `fg2` text. Each segment is a
-button with selected semantics.
+button with selected semantics. The label stays on one line: 1:1 when it fits,
+scaled down only when it would not (large text scales on a phone).
+(2026-11-03, plan D23.)
 
 ### 4. Period navigator
 
@@ -233,7 +235,9 @@ Padding 16 0 8.
 - Leading: 36×36 circle filled with the slice colour; icon 18 inside. Icon
   colour: `#1B1B1B` when the fill's relative luminance > 0.35, else `#FFFFFF`.
   Currency slices (no icon key) show the currency code text, 10 w700,
-  letter-spacing 0.3.
+  letter-spacing 0.3, in whichever of `#1B1B1B` and `#FFFFFF` has the higher
+  WCAG contrast with the fill, computed rather than a fixed threshold (small
+  text needs 4.5:1; icons need only 3:1). (2026-11-03, plan D24.)
 - Middle column (gap 6):
   - Top line, space-between, baseline: label 15/20 (w500; w700 when selected),
     `fg`, ellipsis | amount 15/20 w500 `fg` tabular.
@@ -285,7 +289,11 @@ Padding 16, column gap 12.
 - **X labels** (row with the same gaps, margin-top −4): 11/14 `fg3`; the
   current bucket's label 700 `fg`. Week: Mon…Sun. Month: day numbers for days
   1, 8, 15, 22, 29 and today only. Year: Jan…Dec. Labels are centred under
-  their bar and may overflow it.
+  their bar and may overflow it, but never overlap a neighbour: they are
+  placed by priority (the current bucket, then All's year labels, then the
+  fixed labels left to right), and a label whose rect would come within 2 dp
+  of one already placed is skipped, measured at the current text scale.
+  (2026-11-03, plan D22.)
 - Keep touch tooltips and the chart semantics label.
 
 ### 8. Transactions card (restyles `SelectedSliceItemsList`)
@@ -384,7 +392,10 @@ sheets), `card` fill, top radius 28, bottom padding 24, scrim at 32% black.
     circle, `fg2`), then **every active account** (expense and income
     accounts alike), sorted by the current type's amount desc; accounts with
     0 in the period come last and stay selectable. Row amounts and shares
-    are for the current chart type.
+    are for the current chart type. When the page is filtered by an archived
+    account (through the bridge, or archived while filtered), that account is
+    listed too, sorted the same way, so the sheet shows the current filter
+    checked. (2026-11-03, plan D25.)
   - Row: min height 64, padding 8 12, radius 16, gap 16; selected row `sel`
     fill. 40×40 circle (account type colour + account type icon 20, ink by the
     same luminance rule). Column: name 16/22 (w700 when selected, else w400)

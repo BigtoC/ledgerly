@@ -99,7 +99,7 @@ Each step: tests first (AC = spec acceptance criterion), then code, then
 - Code: DAO/repo query, provider, `charts_summary_card.dart`; remove `TypeToggle`, `ChartsNetTotalCard`; strings `chartsNet*`.
 
 ### Step 4 — Breakdown card: chips, donut, ranked rows, empty state (AC 4 partial, AC 8 rows, AC 9)
-- Tests: chips switch dimension + selected semantics; donut 200×200, ring 26, no titles, unselected sections at alpha `0x4D`, selected does not grow; centre lines; rows: selected `sel` fill + w700, unselected rows keep full-opacity text while circle and bar fill fade to 0.35; mixed currencies hide bars + %; empty-state copy; icon ink by luminance > 0.35.
+- Tests: chips switch dimension + selected semantics; donut 200×200, ring 26, no titles, unselected sections at alpha `0x4D`, selected does not grow; centre lines; rows: selected `sel` fill + w700, unselected rows keep full-opacity text while circle and bar fill fade to 0.35; mixed currencies hide bars + %; empty-state copy; icon ink by luminance > 0.35; currency-code ink by higher contrast (D24).
 - Code: `charts_breakdown_card.dart`, `dimension_toggle.dart`, `category_pie_chart.dart`, `chart_legend.dart`, `charts_section.dart`; strings `chartsBreakdown*`, `chartsTotal{Expense,Income}`, `charts*Count`, `chartsShareOf*`, `chartsEmpty*`. Update the legend auto-scroll tests (they find the old `Card`).
 
 ### Step 5 — Trend card, then the All period (AC 8 chip, AC 13)
@@ -194,8 +194,8 @@ cannot be built as drawn must be raised before coding it.
   Cash account therefore shows `#AEA9B4` + the wallet icon.
 - **D5 Account sheet order.** Follow the spec: every active account, sorted by
   the current type's amount desc, zero-amount accounts last. Archived accounts
-  are not listed. The "All accounts" row subtitle is `<type total> · 100.0%`
-  (from the design).
+  are not listed, except the one the page is filtered by (D25). The "All
+  accounts" row subtitle is `<type total> · 100.0%` (from the design).
 - **D6 Donut gaps.** fl_chart draws a constant-width band, not the design's
   0.6 % wedge (2.79 → 3.77 px). Use `sectionsSpace: 3.28` (the wedge width at
   mid-ring), error ≤ 0.49 px; the gap is transparent, i.e. the card colour.
@@ -280,6 +280,34 @@ cannot be built as drawn must be raised before coding it.
   computed. Left open across a month boundary, it misses the new month until
   the period is changed. Fixing it needs a clock seam to test; Step 8's
   whole-page review can revisit it.
+- **D22 Trend x labels skip collisions** (2026-11-03). A label is never drawn
+  over a neighbour. Labels are placed by priority: the current bucket first,
+  then All's year labels, then the fixed Week / Month / Year labels left to
+  right. A label whose centred rect would come within 2 dp of one already
+  placed is skipped. Each label is measured with a `TextPainter` in the
+  style `Text` resolves (`DefaultTextStyle` merge, bold-text setting) and
+  `MediaQuery.textScalerOf`, once per layout rather than on every touch
+  rebuild. So Year thins out at 2× on a phone, All drops the year under
+  January when February is the current month, and Month drops a fixed day
+  next to today. D20's edge insets use the placed labels.
+- **D23 Period segment labels scale down to fit** (2026-11-03). Each label is
+  one line (`maxLines: 1`, no soft wrap) in `FittedBox(fit: BoxFit.scaleDown)`:
+  1:1 when it fits, shrunk only when it would not ('Month' and 'Week' at 2× on
+  a phone), instead of breaking mid-word. The 44 minimum height is unchanged.
+- **D24 Currency-code ink** (2026-11-03). The currency code in a ranked row's
+  circle takes whichever of `#FFFFFF` and `#1B1B1B` has the higher WCAG
+  contrast with the fill, computed, not a fixed threshold (an equivalent
+  cut-off is about 0.204; 0.18 would put Neutral Variant 50 at 3.78:1). Red 60
+  therefore gets `#1B1B1B` (5.43:1, not 3.17:1). Icon-only circles (ranked-row
+  icons, the account sheet) keep the luminance > 0.35 rule, since icons need
+  only 3:1.
+- **D25 Archived filtered account stays listed** (2026-11-03). The account
+  sheet lists the active accounts and also the archived account that is the
+  current `accountFilterId`, with its amount and share, sorted by the same
+  rule, so the sheet shows it checked. It covers both ways to get there: the
+  Account-dimension bridge (archived accounts with transactions still get
+  slices) and archiving an account from the Accounts screen while it is
+  filtered.
 
 (D11 was dropped: the account button left the breakdown header.)
 
