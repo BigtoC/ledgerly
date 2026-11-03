@@ -1,11 +1,13 @@
 // Icon picker — one header + grid per `IconGroup`, in `kIconGroups` order
-// (issue #103). Selection only; creation of new icon keys is out of scope
+// (issue #103), each icon tinted with its group's seeded category colour.
+// Selection only; creation of new icon keys is out of scope
 // (plan §12 risk #4).
 //
 // Opens as an in-screen modal sheet via `showCategoryIconPicker`.
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/utils/color_palette.dart';
 import '../../../../core/utils/icon_registry.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -57,7 +59,11 @@ class _CategoryIconPickerSheet extends StatelessWidget {
                   mainAxisSpacing: 8,
                 ),
                 itemCount: keys.length,
-                itemBuilder: (context, i) => _iconTile(context, keys[i]),
+                itemBuilder: (context, i) => _iconTile(
+                  context,
+                  keys[i],
+                  colorForIndex(kIconGroupColors[group]!),
+                ),
               ),
             ),
           ],
@@ -67,7 +73,7 @@ class _CategoryIconPickerSheet extends StatelessWidget {
     );
   }
 
-  Widget _iconTile(BuildContext context, String key) {
+  Widget _iconTile(BuildContext context, String key, Color color) {
     final isSelected = key == selected;
     return InkWell(
       onTap: () => Navigator.of(context).pop(key),
@@ -82,7 +88,16 @@ class _CategoryIconPickerSheet extends StatelessWidget {
               : null,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(iconForKey(key)),
+        alignment: Alignment.center,
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.15),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(iconForKey(key), color: color),
+        ),
       ),
     );
   }

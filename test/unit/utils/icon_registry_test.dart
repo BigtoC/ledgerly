@@ -10,6 +10,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ledgerly/core/utils/color_palette.dart';
 import 'package:ledgerly/core/utils/icon_registry.dart';
 
 void main() {
@@ -184,6 +185,24 @@ void main() {
       for (final MapEntry<String, IconData> entry in added.entries) {
         expect(iconForKey(entry.key), entry.value, reason: entry.key);
       }
+    });
+  });
+
+  group('icon group colours (issue #103)', () {
+    test('each group uses its seeded category colour', () {
+      // Mirrors the seeded categories in lib/data/seed/first_run_seed.dart.
+      expect(kIconGroupColors, <IconGroup, int>{
+        IconGroup.food: CategoryPaletteIndex.red60,
+        IconGroup.drinks: CategoryPaletteIndex.green40,
+        IconGroup.transport: CategoryPaletteIndex.cyan70,
+        IconGroup.shopping: CategoryPaletteIndex.purple30,
+        IconGroup.entertainment: CategoryPaletteIndex.orange70,
+        IconGroup.home: CategoryPaletteIndex.green80,
+        IconGroup.electronics: CategoryPaletteIndex.blue30,
+        IconGroup.medical: CategoryPaletteIndex.red50,
+        IconGroup.income: CategoryPaletteIndex.yellow80,
+        IconGroup.other: CategoryPaletteIndex.neutralVariant50,
+      });
     });
   });
 

@@ -1,6 +1,8 @@
 // lib/core/utils/icon_registry.dart
 import 'package:flutter/material.dart' show IconData, Icons;
 
+import 'color_palette.dart';
+
 /// -----------------------------------------------------------------------
 /// ICON REGISTRY — stable string keys → Material Icons `IconData`.
 /// -----------------------------------------------------------------------
@@ -209,6 +211,21 @@ const Map<IconGroup, List<String>> kIconGroups = <IconGroup, List<String>>{
     'more_horiz',
     'category',
   ],
+};
+
+/// Palette index each [IconGroup] is drawn in, matching the seeded
+/// category of the same name (`lib/data/seed/first_run_seed.dart`).
+const Map<IconGroup, int> kIconGroupColors = <IconGroup, int>{
+  IconGroup.food: CategoryPaletteIndex.red60,
+  IconGroup.drinks: CategoryPaletteIndex.green40,
+  IconGroup.transport: CategoryPaletteIndex.cyan70,
+  IconGroup.shopping: CategoryPaletteIndex.purple30,
+  IconGroup.entertainment: CategoryPaletteIndex.orange70,
+  IconGroup.home: CategoryPaletteIndex.green80,
+  IconGroup.electronics: CategoryPaletteIndex.blue30,
+  IconGroup.medical: CategoryPaletteIndex.red50,
+  IconGroup.income: CategoryPaletteIndex.yellow80,
+  IconGroup.other: CategoryPaletteIndex.neutralVariant50,
 };
 
 /// Resolves an icon string [key] to an [IconData].

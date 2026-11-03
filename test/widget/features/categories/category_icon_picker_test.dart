@@ -6,11 +6,14 @@
 //     with localized titles.
 //   - Tapping an icon resolves the `Future` with its registry key.
 //   - The selected key is outlined.
+//   - Each icon is drawn in its group's seeded category colour on a
+//     15%-alpha circle of the same colour.
 //   - Headers grow with 2× text scale without overflowing.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:ledgerly/core/utils/color_palette.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/features/categories/views/category_icon_picker.dart';
 
@@ -132,16 +135,38 @@ void main() {
     await _openPicker(tester, selected: 'wine_bar');
 
     BoxBorder? borderOf(IconData icon) {
-      final box = tester.widget<Container>(
-        find
-            .ancestor(of: find.byIcon(icon), matching: find.byType(Container))
-            .first,
+      final boxes = tester.widgetList<Container>(
+        find.ancestor(of: find.byIcon(icon), matching: find.byType(Container)),
       );
-      return (box.decoration as BoxDecoration?)?.border;
+      return boxes
+          .map((c) => (c.decoration as BoxDecoration?)?.border)
+          .nonNulls
+          .firstOrNull;
     }
 
     expect(borderOf(Icons.wine_bar), isNotNull);
     expect(borderOf(Icons.local_cafe), isNull);
+  });
+
+  testWidgets('I07: icons take their group colour', (tester) async {
+    await _openPicker(tester);
+
+    void expectTint(IconData icon, int paletteIndex) {
+      final color = colorForIndex(paletteIndex);
+      expect(tester.widget<Icon>(find.byIcon(icon)).color, color);
+      final circle = tester.widget<Container>(
+        find
+            .ancestor(of: find.byIcon(icon), matching: find.byType(Container))
+            .first,
+      );
+      final deco = circle.decoration! as BoxDecoration;
+      expect(deco.shape, BoxShape.circle);
+      expect(deco.color, color.withValues(alpha: 0.15));
+    }
+
+    expectTint(Icons.restaurant, CategoryPaletteIndex.red60);
+    expectTint(Icons.wine_bar, CategoryPaletteIndex.green40);
+    expectTint(Icons.directions_bus, CategoryPaletteIndex.cyan70);
   });
 
   testWidgets('I06: headers grow at 2× text scale without overflow', (
