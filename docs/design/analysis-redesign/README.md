@@ -1,7 +1,8 @@
 # Analysis redesign — design reference
 
-Visual source for [`docs/superpowers/specs/2026-11-02-analysis-redesign-design.md`](../../superpowers/specs/2026-11-02-analysis-redesign-design.md).
-The spec defines behaviour; this folder defines exact visual values.
+Visual source for [`docs/superpowers/specs/2026-11-02-analysis-redesign-design.md`](../../superpowers/specs/2026-11-02-analysis-redesign-design.md)
+and the period picker in [`docs/superpowers/specs/2026-11-03-analysis-period-picker-design.md`](../../superpowers/specs/2026-11-03-analysis-period-picker-design.md) (issue #73).
+The specs define behaviour; this folder defines exact visual values.
 
 ## Files
 
@@ -36,8 +37,15 @@ browser:
 | Account filter — Visa card by category | `period=month acc="Visa card"` | Breakdown scoped to one account |
 | Search expanded | `layout=phone search=true` | Search field expanded leftwards; account button hidden |
 | All time | `layout=full period=all` | All records; chevrons hidden; monthly trend across the whole range |
+| Day — pick a day | `period=day picker=true anchor=2026-10-21` | Period picker: month calendar, one day selected |
+| Week — pick a week | `period=week picker=true anchor=2025-09-16` | Period picker: one row per week, ISO week numbers |
+| Week — jump to a month | `period=week picker=true pickerView=months anchor=2025-09-16` | Browse title tapped: month grid for the year |
+| Month — pick a month | `period=month picker=true anchor=2026-06-01` | Period picker: 3×4 month grid |
+| Year — pick a year | `period=year picker=true anchor=2025-01-01` | Period picker: years from the first record to now |
+| Week picker — dark | `period=week picker=true dark=true` | Dark tokens |
 
 Design canvas: https://claude.ai/artifact/W29pRjtFLFugrTfbvANCpr (private to the owner).
+Period picker canvas (#73): https://claude.ai/artifact/RyeWJ3xPQk75jUaPwv5fvg (private to the owner).
 
 ## Translating to Flutter
 
