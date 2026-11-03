@@ -186,6 +186,36 @@ class AppLocalizationsZh extends AppLocalizations {
   String get categoriesFormIconLabel => 'Icon';
 
   @override
+  String get categoriesIconGroupFood => 'Food';
+
+  @override
+  String get categoriesIconGroupDrinks => 'Drinks';
+
+  @override
+  String get categoriesIconGroupTransport => 'Transport';
+
+  @override
+  String get categoriesIconGroupShopping => 'Shopping';
+
+  @override
+  String get categoriesIconGroupEntertainment => 'Entertainment';
+
+  @override
+  String get categoriesIconGroupHome => 'Home';
+
+  @override
+  String get categoriesIconGroupElectronics => 'Electronics';
+
+  @override
+  String get categoriesIconGroupMedical => 'Medical';
+
+  @override
+  String get categoriesIconGroupIncome => 'Income';
+
+  @override
+  String get categoriesIconGroupOther => 'Other';
+
+  @override
   String get categoriesFormColorLabel => 'Color';
 
   @override
@@ -1618,6 +1648,36 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get categoriesFormIconLabel => '图标';
 
   @override
+  String get categoriesIconGroupFood => '食物';
+
+  @override
+  String get categoriesIconGroupDrinks => '饮品';
+
+  @override
+  String get categoriesIconGroupTransport => '交通';
+
+  @override
+  String get categoriesIconGroupShopping => '消费';
+
+  @override
+  String get categoriesIconGroupEntertainment => '娱乐';
+
+  @override
+  String get categoriesIconGroupHome => '居家';
+
+  @override
+  String get categoriesIconGroupElectronics => '3C';
+
+  @override
+  String get categoriesIconGroupMedical => '医药';
+
+  @override
+  String get categoriesIconGroupIncome => '收入';
+
+  @override
+  String get categoriesIconGroupOther => '其他';
+
+  @override
   String get categoriesFormColorLabel => '颜色';
 
   @override
@@ -2993,6 +3053,36 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get categoriesFormIconLabel => '圖示';
+
+  @override
+  String get categoriesIconGroupFood => '食物';
+
+  @override
+  String get categoriesIconGroupDrinks => '飲品';
+
+  @override
+  String get categoriesIconGroupTransport => '交通';
+
+  @override
+  String get categoriesIconGroupShopping => '消費';
+
+  @override
+  String get categoriesIconGroupEntertainment => '娛樂';
+
+  @override
+  String get categoriesIconGroupHome => '居家';
+
+  @override
+  String get categoriesIconGroupElectronics => '3C';
+
+  @override
+  String get categoriesIconGroupMedical => '醫藥';
+
+  @override
+  String get categoriesIconGroupIncome => '收入';
+
+  @override
+  String get categoriesIconGroupOther => '其他';
 
   @override
   String get categoriesFormColorLabel => '顏色';

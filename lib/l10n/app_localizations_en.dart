@@ -186,6 +186,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoriesFormIconLabel => 'Icon';
 
   @override
+  String get categoriesIconGroupFood => 'Food';
+
+  @override
+  String get categoriesIconGroupDrinks => 'Drinks';
+
+  @override
+  String get categoriesIconGroupTransport => 'Transport';
+
+  @override
+  String get categoriesIconGroupShopping => 'Shopping';
+
+  @override
+  String get categoriesIconGroupEntertainment => 'Entertainment';
+
+  @override
+  String get categoriesIconGroupHome => 'Home';
+
+  @override
+  String get categoriesIconGroupElectronics => 'Electronics';
+
+  @override
+  String get categoriesIconGroupMedical => 'Medical';
+
+  @override
+  String get categoriesIconGroupIncome => 'Income';
+
+  @override
+  String get categoriesIconGroupOther => 'Other';
+
+  @override
   String get categoriesFormColorLabel => 'Color';
 
   @override

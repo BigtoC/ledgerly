@@ -248,6 +248,46 @@
   "@categoriesFormIconLabel": {
     "description": "PRD 732. Category form sheet — icon picker label."
   },
+  "categoriesIconGroupFood": "Food",
+  "@categoriesIconGroupFood": {
+    "description": "Category icon picker — section header for food icons (issue #103)."
+  },
+  "categoriesIconGroupDrinks": "Drinks",
+  "@categoriesIconGroupDrinks": {
+    "description": "Category icon picker — section header for drinks icons (issue #103)."
+  },
+  "categoriesIconGroupTransport": "Transport",
+  "@categoriesIconGroupTransport": {
+    "description": "Category icon picker — section header for transport icons (issue #103)."
+  },
+  "categoriesIconGroupShopping": "Shopping",
+  "@categoriesIconGroupShopping": {
+    "description": "Category icon picker — section header for shopping icons (issue #103)."
+  },
+  "categoriesIconGroupEntertainment": "Entertainment",
+  "@categoriesIconGroupEntertainment": {
+    "description": "Category icon picker — section header for entertainment icons (issue #103)."
+  },
+  "categoriesIconGroupHome": "Home",
+  "@categoriesIconGroupHome": {
+    "description": "Category icon picker — section header for home icons (issue #103)."
+  },
+  "categoriesIconGroupElectronics": "Electronics",
+  "@categoriesIconGroupElectronics": {
+    "description": "Category icon picker — section header for electronics icons (issue #103)."
+  },
+  "categoriesIconGroupMedical": "Medical",
+  "@categoriesIconGroupMedical": {
+    "description": "Category icon picker — section header for medical icons (issue #103)."
+  },
+  "categoriesIconGroupIncome": "Income",
+  "@categoriesIconGroupIncome": {
+    "description": "Category icon picker — section header for income icons (issue #103)."
+  },
+  "categoriesIconGroupOther": "Other",
+  "@categoriesIconGroupOther": {
+    "description": "Category icon picker — section header for other icons (issue #103)."
+  },
   "categoriesFormColorLabel": "Color",
   "@categoriesFormColorLabel": {
     "description": "PRD 732. Category form sheet — color picker label."
