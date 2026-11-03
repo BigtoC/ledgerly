@@ -342,17 +342,22 @@ class _AccountRow extends StatelessWidget {
                   const SizedBox(width: 14),
                   Padding(
                     padding: const EdgeInsetsDirectional.only(end: 2),
-                    // The row's InkWell is the tab stop; the radio only
-                    // shows and reports the checked state.
+                    // The row's InkWell is the tab stop and takes every
+                    // tap, so the selected row's radio closes the sheet
+                    // too; the radio only shows and reports the checked
+                    // state.
                     child: ExcludeFocus(
-                      child: Radio<int>(
-                        value: value,
-                        activeColor: colors.expText,
-                        visualDensity: const VisualDensity(
-                          horizontal: VisualDensity.minimumDensity,
-                          vertical: VisualDensity.minimumDensity,
+                      child: IgnorePointer(
+                        child: Radio<int>(
+                          value: value,
+                          activeColor: colors.expText,
+                          visualDensity: const VisualDensity(
+                            horizontal: VisualDensity.minimumDensity,
+                            vertical: VisualDensity.minimumDensity,
+                          ),
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
                         ),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                     ),
                   ),

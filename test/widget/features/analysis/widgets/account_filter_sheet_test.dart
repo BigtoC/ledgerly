@@ -403,6 +403,43 @@ void main() {
     expect(find.byType(BottomSheet), findsNothing);
   });
 
+  testWidgets('tapping the radio of the selected row still closes the sheet', (
+    tester,
+  ) async {
+    final container = _container();
+    container
+        .read(chartsSelectionControllerProvider.notifier)
+        .setAccountFilter(1);
+    await _open(tester, container);
+
+    await tester.tap(
+      find.descendant(of: _row('Cash'), matching: find.byType(Radio<int>)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      container.read(chartsSelectionControllerProvider).accountFilterId,
+      1,
+    );
+    expect(find.byType(BottomSheet), findsNothing);
+  });
+
+  testWidgets('tapping the radio of another row picks it', (tester) async {
+    final container = _container();
+    await _open(tester, container);
+
+    await tester.tap(
+      find.descendant(of: _row('Visa'), matching: find.byType(Radio<int>)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      container.read(chartsSelectionControllerProvider).accountFilterId,
+      2,
+    );
+    expect(find.byType(BottomSheet), findsNothing);
+  });
+
   testWidgets('All accounts clears the filter', (tester) async {
     final container = _container();
     container
