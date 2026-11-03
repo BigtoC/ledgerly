@@ -469,6 +469,48 @@ void main() {
       );
     });
 
+    testWidgets('closing from the keyboard returns focus to the search '
+        'button', (tester) async {
+      await tester.pumpWidget(_harness(tx: tx, cat: cat, acct: acct));
+      await tester.pump();
+      await _openSearch(tester);
+
+      // Tab from the input to Close, then activate it with Enter.
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      final closeButton = find.ancestor(
+        of: find.byIcon(Icons.close),
+        matching: find.byType(IconButton),
+      );
+      expect(
+        find.ancestor(
+          of: find.byWidget(
+            FocusManager.instance.primaryFocus!.context!.widget,
+          ),
+          matching: closeButton,
+        ),
+        findsOneWidget,
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      await tester.pump(AnalysisMotion.searchExpandDuration);
+
+      expect(find.byTooltip('Close search'), findsNothing);
+      final searchButton = find.ancestor(
+        of: find.byIcon(Icons.search),
+        matching: find.byType(IconButton),
+      );
+      expect(
+        find.ancestor(
+          of: find.byWidget(
+            FocusManager.instance.primaryFocus!.context!.widget,
+          ),
+          matching: searchButton,
+        ),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('IME composition does not dispatch a search', (tester) async {
       when(() => tx.watchByMemo(any())).thenAnswer((_) => Stream.value([]));
 

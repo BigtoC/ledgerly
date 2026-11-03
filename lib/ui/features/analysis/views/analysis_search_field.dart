@@ -22,6 +22,7 @@ class AnalysisSearchField extends StatelessWidget {
     required this.expandedWidth,
     required this.controller,
     required this.focusNode,
+    required this.openButtonFocusNode,
     required this.onOpen,
     required this.onClose,
     required this.onChanged,
@@ -31,6 +32,10 @@ class AnalysisSearchField extends StatelessWidget {
   final double expandedWidth;
   final TextEditingController controller;
   final FocusNode focusNode;
+
+  /// Focus node of the collapsed search button, so the parent can return
+  /// focus to it after Close.
+  final FocusNode openButtonFocusNode;
   final VoidCallback onOpen;
   final VoidCallback onClose;
   final ValueChanged<String> onChanged;
@@ -84,7 +89,10 @@ class AnalysisSearchField extends StatelessWidget {
               )
             : Align(
                 alignment: AlignmentDirectional.centerStart,
-                child: _OpenButton(onOpen: onOpen),
+                child: _OpenButton(
+                  focusNode: openButtonFocusNode,
+                  onOpen: onOpen,
+                ),
               ),
       ),
     );
@@ -92,8 +100,9 @@ class AnalysisSearchField extends StatelessWidget {
 }
 
 class _OpenButton extends StatelessWidget {
-  const _OpenButton({required this.onOpen});
+  const _OpenButton({required this.focusNode, required this.onOpen});
 
+  final FocusNode focusNode;
   final VoidCallback onOpen;
 
   @override
@@ -109,6 +118,7 @@ class _OpenButton extends StatelessWidget {
       excludeSemantics: true,
       child: IconButton(
         tooltip: l10n.analysisSearchOpen,
+        focusNode: focusNode,
         onPressed: onOpen,
         icon: const Icon(Icons.search),
         iconSize: 24,
