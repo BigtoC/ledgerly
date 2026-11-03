@@ -33,6 +33,8 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../unit/repositories/_harness/test_app_database.dart';
 
+import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_range_providers.dart';
+
 class _MockFxSvc extends Mock implements ExchangeRateService {}
 
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
@@ -124,6 +126,7 @@ class _SlowDrilldownController extends SliceDrilldownController {
   chartsFxStatus,
   chartsNetTotal,
   chartsAccountFilterOptions,
+  chartsRange,
 ])
 Future<ProviderContainer> _pumpAnalysisScreen(
   WidgetTester tester, {
@@ -229,6 +232,7 @@ Future<ProviderContainer> _pumpAnalysisScreen(
   chartsFxStatus,
   chartsNetTotal,
   chartsAccountFilterOptions,
+  chartsRange,
 ])
 void main() {
   setUpAll(() {
@@ -335,6 +339,7 @@ void main() {
       chartsFxStatus,
       chartsNetTotal,
       chartsAccountFilterOptions,
+      chartsRange,
     ])
     Future<ProviderContainer> pumpPhone(
       WidgetTester tester, {

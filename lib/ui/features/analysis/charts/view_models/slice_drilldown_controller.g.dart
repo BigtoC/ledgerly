@@ -25,6 +25,7 @@ final class SliceDrilldownControllerProvider
         dependencies: <ProviderOrFamily>[
           transactionRepositoryProvider,
           chartsFxStatusProvider,
+          chartsRangeProvider,
           chartsSelectionControllerProvider,
         ],
         $allTransitiveDependencies: <ProviderOrFamily>{
@@ -37,6 +38,8 @@ final class SliceDrilldownControllerProvider
           SliceDrilldownControllerProvider.$allTransitiveDependencies6,
           SliceDrilldownControllerProvider.$allTransitiveDependencies7,
           SliceDrilldownControllerProvider.$allTransitiveDependencies8,
+          SliceDrilldownControllerProvider.$allTransitiveDependencies9,
+          SliceDrilldownControllerProvider.$allTransitiveDependencies10,
         },
       );
 
@@ -54,7 +57,11 @@ final class SliceDrilldownControllerProvider
       ChartsFxStatusProvider.$allTransitiveDependencies4;
   static final $allTransitiveDependencies7 =
       ChartsFxStatusProvider.$allTransitiveDependencies5;
-  static final $allTransitiveDependencies8 = chartsSelectionControllerProvider;
+  static final $allTransitiveDependencies8 = chartsRangeProvider;
+  static final $allTransitiveDependencies9 =
+      ChartsRangeProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies10 =
+      ChartsRangeProvider.$allTransitiveDependencies3;
 
   @override
   String debugGetCreateSourceHash() => _$sliceDrilldownControllerHash();
@@ -65,7 +72,7 @@ final class SliceDrilldownControllerProvider
 }
 
 String _$sliceDrilldownControllerHash() =>
-    r'5b41554f611bedd5073aa9bac431e836de00f6cb';
+    r'b7159134bb5305b0c1a718832a7c22f0d1a7a885';
 
 abstract class _$SliceDrilldownController
     extends $StreamNotifier<SliceDrilldownData> {

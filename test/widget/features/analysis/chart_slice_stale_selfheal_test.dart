@@ -19,6 +19,7 @@ import 'package:ledgerly/ui/core/theme/app_theme.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_controller.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_net_total_providers.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_providers.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_range_providers.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_selection_controller.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/selected_slice.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/slice_drilldown_controller.dart';
@@ -45,6 +46,7 @@ const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
   analysisAccountsById,
   chartsFxStatus,
   chartsNetTotal,
+  chartsRange,
 ])
 void main() {
   setUpAll(() {

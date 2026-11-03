@@ -38,19 +38,26 @@ final class ChartsNetByCurrencyProvider
         isAutoDispose: true,
         dependencies: <ProviderOrFamily>[
           transactionRepositoryProvider,
+          chartsRangeProvider,
           chartsSelectionControllerProvider,
         ],
-        $allTransitiveDependencies: <ProviderOrFamily>[
+        $allTransitiveDependencies: <ProviderOrFamily>{
           ChartsNetByCurrencyProvider.$allTransitiveDependencies0,
           ChartsNetByCurrencyProvider.$allTransitiveDependencies1,
           ChartsNetByCurrencyProvider.$allTransitiveDependencies2,
-        ],
+          ChartsNetByCurrencyProvider.$allTransitiveDependencies3,
+          ChartsNetByCurrencyProvider.$allTransitiveDependencies4,
+        },
       );
 
   static final $allTransitiveDependencies0 = transactionRepositoryProvider;
   static final $allTransitiveDependencies1 =
       TransactionRepositoryProvider.$allTransitiveDependencies0;
-  static final $allTransitiveDependencies2 = chartsSelectionControllerProvider;
+  static final $allTransitiveDependencies2 = chartsRangeProvider;
+  static final $allTransitiveDependencies3 =
+      ChartsRangeProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies4 =
+      ChartsRangeProvider.$allTransitiveDependencies3;
 
   @override
   String debugGetCreateSourceHash() => _$chartsNetByCurrencyHash();
@@ -67,7 +74,7 @@ final class ChartsNetByCurrencyProvider
 }
 
 String _$chartsNetByCurrencyHash() =>
-    r'08df9fb583317c9145e6299c629506b3f817aa42';
+    r'60d51df65a8d39b1227eabe86249794aa0757b7b';
 
 /// [chartsNetByCurrency] folded into the default currency. Null until the
 /// totals, FX status and currency metadata have all loaded, and while the
@@ -112,6 +119,8 @@ final class ChartsNetTotalProvider
           ChartsNetTotalProvider.$allTransitiveDependencies9,
           ChartsNetTotalProvider.$allTransitiveDependencies10,
           ChartsNetTotalProvider.$allTransitiveDependencies11,
+          ChartsNetTotalProvider.$allTransitiveDependencies12,
+          ChartsNetTotalProvider.$allTransitiveDependencies13,
         },
       );
 
@@ -122,19 +131,23 @@ final class ChartsNetTotalProvider
       ChartsNetByCurrencyProvider.$allTransitiveDependencies1;
   static final $allTransitiveDependencies3 =
       ChartsNetByCurrencyProvider.$allTransitiveDependencies2;
-  static final $allTransitiveDependencies4 = chartsFxStatusProvider;
+  static final $allTransitiveDependencies4 =
+      ChartsNetByCurrencyProvider.$allTransitiveDependencies3;
   static final $allTransitiveDependencies5 =
-      ChartsFxStatusProvider.$allTransitiveDependencies0;
-  static final $allTransitiveDependencies6 =
-      ChartsFxStatusProvider.$allTransitiveDependencies1;
+      ChartsNetByCurrencyProvider.$allTransitiveDependencies4;
+  static final $allTransitiveDependencies6 = chartsFxStatusProvider;
   static final $allTransitiveDependencies7 =
-      ChartsFxStatusProvider.$allTransitiveDependencies2;
+      ChartsFxStatusProvider.$allTransitiveDependencies0;
   static final $allTransitiveDependencies8 =
-      ChartsFxStatusProvider.$allTransitiveDependencies4;
+      ChartsFxStatusProvider.$allTransitiveDependencies1;
   static final $allTransitiveDependencies9 =
-      ChartsFxStatusProvider.$allTransitiveDependencies5;
-  static final $allTransitiveDependencies10 = chartsCurrenciesByCodeProvider;
+      ChartsFxStatusProvider.$allTransitiveDependencies2;
+  static final $allTransitiveDependencies10 =
+      ChartsFxStatusProvider.$allTransitiveDependencies4;
   static final $allTransitiveDependencies11 =
+      ChartsFxStatusProvider.$allTransitiveDependencies5;
+  static final $allTransitiveDependencies12 = chartsCurrenciesByCodeProvider;
+  static final $allTransitiveDependencies13 =
       ChartsCurrenciesByCodeProvider.$allTransitiveDependencies0;
 
   @override

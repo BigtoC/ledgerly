@@ -1144,6 +1144,67 @@ void main() {
     });
   });
 
+  group('watchDateBounds', () {
+    test('WB-01: emits null when there are no transactions', () async {
+      expect(await txRepo.watchDateBounds().first, isNull);
+    });
+
+    test('WB-02: re-emits when the earliest row is inserted and deleted, '
+        'covering every type and account', () async {
+      final otherAccountId = await _insertAccountRaw(
+        db,
+        name: 'Other',
+        accountTypeId: fixtures.accountTypeId,
+        currencyCode: 'USD',
+      );
+      await txRepo.save(sampleTx(date: DateTime(2025, 6, 1, 9)));
+      await txRepo.save(sampleTx(date: DateTime(2026, 3, 4, 8)));
+      final emissions = <DateBounds?>[];
+      final sub = txRepo.watchDateBounds().listen(emissions.add);
+      addTearDown(sub.cancel);
+
+      await Future<void>.delayed(Duration.zero);
+      expect(emissions.last, (
+        first: DateTime(2025, 6, 1, 9),
+        last: DateTime(2026, 3, 4, 8),
+      ));
+
+      // An income row on another account becomes the earliest.
+      final earliest = await txRepo.save(
+        sampleTx(
+          date: DateTime(2024, 1, 2, 23, 30),
+          categoryId: fixtures.incomeCategoryId,
+          accountId: otherAccountId,
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(emissions.last, (
+        first: DateTime(2024, 1, 2, 23, 30),
+        last: DateTime(2026, 3, 4, 8),
+      ));
+
+      await txRepo.delete(earliest.id);
+      await Future<void>.delayed(Duration.zero);
+      expect(emissions.last, (
+        first: DateTime(2025, 6, 1, 9),
+        last: DateTime(2026, 3, 4, 8),
+      ));
+    });
+
+    test('WB-03: back to null once the last row is deleted', () async {
+      final only = await txRepo.save(sampleTx(date: DateTime(2025, 6, 1)));
+      final emissions = <DateBounds?>[];
+      final sub = txRepo.watchDateBounds().listen(emissions.add);
+      addTearDown(sub.cancel);
+      await Future<void>.delayed(Duration.zero);
+      expect(emissions.last, isNotNull);
+
+      await txRepo.delete(only.id);
+      await Future<void>.delayed(Duration.zero);
+      expect(emissions.last, isNull);
+    });
+  });
+
   group('getInDateRange', () {
     test('R-01: half-open [start, end), oldest first, ties by id', () async {
       final start = DateTime(2026, 3, 1);

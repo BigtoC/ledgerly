@@ -3,8 +3,8 @@
 // `docs/superpowers/specs/2026-11-02-analysis-redesign-design.md`
 // § Account filter → Account sheet.
 //
-// Watches only `(period, anchorDate, type)` from the selection: the sheet
-// lists every account whatever the account filter is.
+// Watches only the period's range (`chartsRange`) and `type` from the
+// selection: the sheet lists every account whatever the account filter is.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart'
     show ProviderListenableSelect;
@@ -14,12 +14,11 @@ import '../../../../../app/providers/repository_providers.dart';
 import '../../../../../core/utils/color_palette.dart';
 import '../../../../../core/utils/currency_converter.dart';
 import '../../../../../domain/models/account_slice.dart';
-import '../../../../../domain/models/category.dart' show CategoryType;
 import '../../../../../domain/models/currency.dart';
 import '../../search/view_models/analysis_providers.dart';
 import 'charts_providers.dart';
+import 'charts_range_providers.dart';
 import 'charts_selection_controller.dart';
-import 'charts_state.dart' show PeriodType;
 
 part 'account_filter_providers.g.dart';
 
@@ -75,18 +74,23 @@ class ChartsAccountFilterOptions {
 
 /// Per-account, per-currency totals of the selected type in the selected
 /// period's `[start, end)` range.
-@Riverpod(dependencies: [transactionRepository, ChartsSelectionController])
+@Riverpod(
+  dependencies: [transactionRepository, chartsRange, ChartsSelectionController],
+)
 Stream<List<AccountSlice>> chartsAccountTotals(Ref ref) {
-  final (PeriodType period, DateTime anchorDate, CategoryType type) = ref.watch(
-    chartsSelectionControllerProvider.select(
-      (s) => (s.period, s.anchorDate, s.type),
-    ),
+  final range = ref.watch(chartsRangeProvider);
+  final type = ref.watch(
+    chartsSelectionControllerProvider.select((s) => s.type),
   );
-  final start = normalizeAnchor(anchorDate, period);
-  final end = shiftAnchor(start, period, 1);
+  if (range case AsyncError(:final error, :final stackTrace)) {
+    return Stream.error(error, stackTrace);
+  }
+  // Loading: wait for the range without querying.
+  final value = range.value;
+  if (value == null) return const Stream.empty();
   return ref
       .watch(transactionRepositoryProvider)
-      .watchByAccountInRange(start: start, end: end, type: type);
+      .watchByAccountInRange(start: value.start, end: value.end, type: type);
 }
 
 /// [chartsAccountTotals] converted into the default currency and joined

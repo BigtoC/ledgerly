@@ -1,13 +1,15 @@
 // Period selector for the charts section: a period track (one segment per
 // PeriodType) above a navigator (prev / label + caption / next). Visual values
 // from docs/design/analysis-redesign/Main.dc.html (lines 50-69, tabs style and
-// prev/nextStyle in renderVals()).
+// prev/nextStyle in renderVals()). On All the chevrons are hidden but keep
+// their slots, and the caption is the covered range.
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../core/theme/analysis_colors.dart';
+import '../view_models/charts_range_providers.dart';
 import '../view_models/charts_state.dart';
 
 final Map<String, DateFormat> _dateFormats = {};
@@ -16,6 +18,9 @@ DateFormat _dateFormat(String skeleton, String locale) => _dateFormats
     .putIfAbsent('$skeleton|$locale', () => DateFormat(skeleton, locale));
 
 /// The navigator's period label, e.g. `May 18–May 24, 2026` for a week.
+///
+/// All has no date label: show `AppLocalizations.chartsAllTime` instead.
+/// Passing [PeriodType.all] throws an [ArgumentError].
 String formatPeriodLabel(
   PeriodType period,
   DateTime anchorDate,
@@ -41,7 +46,18 @@ String formatPeriodLabel(
       return _dateFormat(DateFormat.YEAR_MONTH, locale).format(anchorDate);
     case PeriodType.year:
       return _dateFormat(DateFormat.YEAR, locale).format(anchorDate);
+    case PeriodType.all:
+      throw ArgumentError.value(period, 'period', 'All has no date label');
   }
+}
+
+/// All's caption: the months the range covers, e.g. `Jan 2025 – Oct 2026`.
+/// Null for an empty range (no transactions).
+String? _allTimeCaption(ChartsRange range, String locale) {
+  if (!range.start.isBefore(range.end)) return null;
+  final month = _dateFormat(DateFormat.YEAR_ABBR_MONTH, locale);
+  final last = DateTime(range.end.year, range.end.month - 1);
+  return '${month.format(range.start)} – ${month.format(last)}';
 }
 
 class PeriodSelector extends StatelessWidget {
@@ -54,11 +70,15 @@ class PeriodSelector extends StatelessWidget {
     required this.onPrevious,
     required this.onNext,
     required this.onPeriodChanged,
+    this.allTimeRange,
   });
 
   final PeriodType period;
   final DateTime anchorDate;
   final bool isAtCurrent;
+
+  /// All's resolved range, for its caption; null while it loads.
+  final ChartsRange? allTimeRange;
   final String locale;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
@@ -67,22 +87,27 @@ class PeriodSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final caption = !isAtCurrent
-        ? null
-        : switch (period) {
-            PeriodType.day => l10n.chartsCaptionToday,
-            PeriodType.week => l10n.chartsCaptionThisWeek,
-            PeriodType.month => l10n.chartsCaptionThisMonth,
-            PeriodType.year => l10n.chartsCaptionThisYear,
-          };
+    final all = period == PeriodType.all;
+    final range = allTimeRange;
+    final caption = switch (period) {
+      PeriodType.all => range == null ? null : _allTimeCaption(range, locale),
+      _ when !isAtCurrent => null,
+      PeriodType.day => l10n.chartsCaptionToday,
+      PeriodType.week => l10n.chartsCaptionThisWeek,
+      PeriodType.month => l10n.chartsCaptionThisMonth,
+      PeriodType.year => l10n.chartsCaptionThisYear,
+    };
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         PeriodTrack(period: period, onPeriodChanged: onPeriodChanged),
         PeriodNavigator(
-          label: formatPeriodLabel(period, anchorDate, locale),
+          label: all
+              ? l10n.chartsAllTime
+              : formatPeriodLabel(period, anchorDate, locale),
           caption: caption,
+          showChevrons: !all,
           onPrevious: onPrevious,
           onNext: isAtCurrent ? null : onNext,
         ),
@@ -130,6 +155,7 @@ class PeriodTrack extends StatelessWidget {
                       PeriodType.week => l10n.chartsPeriodWeek,
                       PeriodType.month => l10n.chartsPeriodMonth,
                       PeriodType.year => l10n.chartsPeriodYear,
+                      PeriodType.all => l10n.chartsPeriodAll,
                     },
                     selected: p == period,
                     onTap: () => onPeriodChanged(p),
@@ -196,6 +222,8 @@ class _PeriodSegment extends StatelessWidget {
 
 /// Previous / next chevrons around the period label and its caption.
 /// A null [onNext] disables the next chevron (at the current period).
+/// Without [showChevrons] both are hidden but keep their 48 px slots, so
+/// the label stays centred.
 class PeriodNavigator extends StatelessWidget {
   const PeriodNavigator({
     super.key,
@@ -203,12 +231,14 @@ class PeriodNavigator extends StatelessWidget {
     required this.caption,
     required this.onPrevious,
     required this.onNext,
+    this.showChevrons = true,
   });
 
   final String label;
   final String? caption;
   final VoidCallback onPrevious;
   final VoidCallback? onNext;
+  final bool showChevrons;
 
   @override
   Widget build(BuildContext context) {
@@ -218,11 +248,14 @@ class PeriodNavigator extends StatelessWidget {
       child: Row(
         spacing: 4,
         children: [
-          _NavButton(
-            icon: Icons.chevron_left,
-            tooltip: 'Previous period',
-            onPressed: onPrevious,
-          ),
+          if (showChevrons)
+            _NavButton(
+              icon: Icons.chevron_left,
+              tooltip: 'Previous period',
+              onPressed: onPrevious,
+            )
+          else
+            const SizedBox.square(dimension: 48),
           Expanded(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -251,11 +284,14 @@ class PeriodNavigator extends StatelessWidget {
               ],
             ),
           ),
-          _NavButton(
-            icon: Icons.chevron_right,
-            tooltip: 'Next period',
-            onPressed: onNext,
-          ),
+          if (showChevrons)
+            _NavButton(
+              icon: Icons.chevron_right,
+              tooltip: 'Next period',
+              onPressed: onNext,
+            )
+          else
+            const SizedBox.square(dimension: 48),
         ],
       ),
     );

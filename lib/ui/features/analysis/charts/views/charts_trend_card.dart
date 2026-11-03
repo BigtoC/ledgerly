@@ -48,7 +48,8 @@ class ChartsTrendCard extends StatelessWidget {
       bucketTotals: data.bucketTotals,
       now: DateTime.now(),
     );
-    final monthly = data.period == PeriodType.year;
+    final monthly =
+        data.period == PeriodType.year || data.period == PeriodType.all;
     final expense = data.type == CategoryType.expense;
     final title = switch ((monthly, expense)) {
       (false, true) => l10n.chartsTrendDailySpending,
@@ -172,6 +173,8 @@ class ChartsTrendCard extends StatelessWidget {
               locale: locale,
               currenciesByCode: currenciesByCode,
               displayCurrencyCode: data.displayCurrencyCode,
+              // The card's padding, which a scrolling chart scrolls through.
+              edgeInset: 16,
             ),
           ),
         ],

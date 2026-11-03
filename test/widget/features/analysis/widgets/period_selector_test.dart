@@ -5,6 +5,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/core/theme/analysis_colors.dart';
 import 'package:ledgerly/ui/core/theme/app_theme.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_range_providers.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_state.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/period_selector.dart';
 
@@ -14,9 +15,11 @@ void main() {
     Widget child, {
     double textScale = 1,
     ThemeData? theme,
+    Locale? locale,
   }) => tester.pumpWidget(
     MaterialApp(
       theme: theme ?? lightTheme,
+      locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
@@ -34,11 +37,14 @@ void main() {
     VoidCallback? onPrevious,
     VoidCallback? onNext,
     ValueChanged<PeriodType>? onPeriodChanged,
+    ChartsRange? allTimeRange,
+    String locale = 'en',
   }) => PeriodSelector(
     period: period,
     anchorDate: DateTime(2026, 5, 18),
     isAtCurrent: isAtCurrent,
-    locale: 'en',
+    allTimeRange: allTimeRange,
+    locale: locale,
     onPrevious: onPrevious ?? () {},
     onNext: onNext ?? () {},
     onPeriodChanged: onPeriodChanged ?? (_) {},
@@ -90,7 +96,7 @@ void main() {
       final handle = tester.ensureSemantics();
       await pump(tester, selector());
 
-      for (final label in ['Day', 'Week', 'Month', 'Year']) {
+      for (final label in ['Day', 'Week', 'Month', 'Year', 'All']) {
         expect(
           tester.getSemantics(find.text(label)),
           isSemantics(
@@ -117,6 +123,10 @@ void main() {
       await tester.tap(find.text('Year'));
       await tester.pump();
       expect(picked, PeriodType.year);
+
+      await tester.tap(find.text('All'));
+      await tester.pump();
+      expect(picked, PeriodType.all);
     });
 
     testWidgets('pressing a segment ripples, clipped to its 22 radius', (
@@ -247,12 +257,9 @@ void main() {
             )
             .first,
       );
-      final year = tester.getRect(
+      final all = tester.getRect(
         find
-            .ancestor(
-              of: find.text('Year'),
-              matching: find.byType(DecoratedBox),
-            )
+            .ancestor(of: find.text('All'), matching: find.byType(DecoratedBox))
             .first,
       );
       final top = tester.getTopLeft(find.byType(PeriodSelector)).dy;
@@ -260,7 +267,8 @@ void main() {
       expect(day.height, 44);
       expect(day.left, 16 + 3);
       expect(day.top - top, 8 + 3);
-      expect(year.right, 390 - 16 - 3);
+      expect(all.right, 390 - 16 - 3);
+      expect(all.width, closeTo(day.width, 0.01));
       expect(week.left - day.right, 2);
       expect(week.width, closeTo(day.width, 0.01));
     });
@@ -354,6 +362,107 @@ void main() {
       }
     });
 
+    group('on All', () {
+      final range = (start: DateTime(2024, 3), end: DateTime(2026, 7));
+
+      testWidgets('label "All time"; caption is the covered range, '
+          '12/16 fg3', (tester) async {
+        await pump(
+          tester,
+          selector(
+            period: PeriodType.all,
+            isAtCurrent: true,
+            allTimeRange: range,
+          ),
+        );
+
+        expect(find.text('All time'), findsOneWidget);
+        // No "This …" caption: the range replaces it.
+        expect(find.textContaining('This'), findsNothing);
+        final caption = find.text('Mar 2024 – Jun 2026');
+        expect(caption, findsOneWidget);
+        final style = tester.widget<Text>(caption).style!;
+        expect(style.fontSize, 12);
+        expect(style.height! * style.fontSize!, closeTo(16, 0.001));
+        expect(style.color, AnalysisColors.light.fg3);
+      });
+
+      testWidgets('the caption follows the locale', (tester) async {
+        await pump(
+          tester,
+          selector(
+            period: PeriodType.all,
+            isAtCurrent: true,
+            allTimeRange: range,
+            locale: 'zh-TW',
+          ),
+          locale: const Locale('zh', 'TW'),
+        );
+
+        expect(find.text('全部時間'), findsOneWidget);
+        expect(find.text('2024年3月 – 2026年6月'), findsOneWidget);
+      });
+
+      testWidgets('no caption without transactions (an empty range) or '
+          'while the range loads', (tester) async {
+        final empty = (start: DateTime(2026, 11), end: DateTime(2026, 11));
+        for (final r in [empty, null]) {
+          await pump(
+            tester,
+            selector(
+              period: PeriodType.all,
+              isAtCurrent: true,
+              allTimeRange: r,
+            ),
+          );
+          expect(find.text('All time'), findsOneWidget);
+          final column = find.ancestor(
+            of: find.text('All time'),
+            matching: find.byType(Column),
+          );
+          expect(
+            find.descendant(of: column.first, matching: find.byType(Text)),
+            findsOneWidget,
+            reason: '$r',
+          );
+        }
+      });
+
+      testWidgets('both chevrons are hidden; their 48 slots keep the label '
+          'centred', (tester) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await pump(
+          tester,
+          selector(
+            period: PeriodType.all,
+            isAtCurrent: true,
+            allTimeRange: range,
+          ),
+        );
+
+        expect(find.byType(IconButton), findsNothing);
+        expect(find.byTooltip('Previous period'), findsNothing);
+        expect(find.byTooltip('Next period'), findsNothing);
+        final navigator = tester.getRect(find.byType(PeriodNavigator));
+        final label = tester.getRect(find.text('All time'));
+        expect(label.center.dx, closeTo(195, 0.01));
+        // Padding 8 8 0 around a 48-high row (the label column is 42).
+        expect(navigator.height, 8 + 48);
+        // The label column spans the space between the two kept slots.
+        final column = tester.getRect(
+          find
+              .ancestor(
+                of: find.text('All time'),
+                matching: find.byType(Column),
+              )
+              .first,
+        );
+        expect(column.left, 8 + 48 + 4);
+        expect(column.right, 390 - 8 - 48 - 4);
+      });
+    });
+
     testWidgets('caption sits 2 below the label', (tester) async {
       await pump(tester, selector(isAtCurrent: true));
       final label = tester.getRect(find.text('May 18–May 24, 2026'));
@@ -380,5 +489,35 @@ void main() {
       greaterThanOrEqualTo(48),
     );
     expect(tester.getSize(find.text('This week')).height, 32);
+  });
+
+  testWidgets('2× text scale on All at 360 wide: five segments, label and '
+      'range caption grow without overflow', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(360, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await pump(
+      tester,
+      selector(
+        period: PeriodType.all,
+        isAtCurrent: true,
+        allTimeRange: (start: DateTime(2024, 3), end: DateTime(2026, 7)),
+      ),
+      textScale: 2,
+    );
+
+    expect(tester.takeException(), isNull);
+    final all = find
+        .ancestor(of: find.text('All'), matching: find.byType(DecoratedBox))
+        .first;
+    expect(tester.getSize(all).height, greaterThanOrEqualTo(44));
+    expect(
+      tester.getSize(find.text('All time')).height,
+      greaterThanOrEqualTo(48),
+    );
+    final caption = tester.getRect(find.text('Mar 2024 – Jun 2026'));
+    expect(caption.height, greaterThanOrEqualTo(32));
+    // The caption stays between the two kept 48 slots.
+    expect(caption.left, greaterThanOrEqualTo(8 + 48 + 4));
+    expect(caption.right, lessThanOrEqualTo(360 - 8 - 48 - 4));
   });
 }

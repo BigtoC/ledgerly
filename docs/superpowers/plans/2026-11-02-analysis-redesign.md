@@ -263,6 +263,23 @@ cannot be built as drawn must be raised before coding it.
     stale-rate line has no tabular figures.
   - Trend card: the average is rounded to whole minor units before formatting;
     the empty future stub has radius 1.5 (CSS caps a 2 px radius on a 3 px box).
+  - Account sheet (7b): a short spinner while the sheet loads its rows (they
+    are watched only while it is open); its error state is the plain
+    `analysisErrorMessage` text; the filter clears itself when its account is
+    deleted; the button's semantics hint is "Filter by account"; the button
+    hides when its slot is narrower than 46 dp; the bridge label has line
+    height 20; the ≥600 Dialog has no handle and keeps a 16 top inset.
+- **D20 Scrolling All trend: edges** (2026-11-03). The chart scrolls through
+  the card's 16 px padding, so at either end its bars sit where an unscrolled
+  chart's would and the edge labels stay centred under their bars, as drawn.
+  An edge label wider than that (large text scales) moves the bars in rather
+  than being clipped. A tooltip near the viewport edge shifts by the least
+  amount that keeps it inside the viewport.
+- **D21 All's end is fixed when it is computed** (2026-11-03, known
+  limitation). All runs to the start of next month as of when its range is
+  computed. Left open across a month boundary, it misses the new month until
+  the period is changed. Fixing it needs a clock seam to test; Step 8's
+  whole-page review can revisit it.
 
 (D11 was dropped: the account button left the breakdown header.)
 

@@ -25,6 +25,8 @@ import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_provid
 
 import '../support/test_app.dart';
 
+import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_range_providers.dart';
+
 @Dependencies([
   AnalysisController,
   ChartsSelectionController,
@@ -41,6 +43,7 @@ import '../support/test_app.dart';
   exchangeRateRepository,
   chartsNetTotal,
   chartsAccountFilterOptions,
+  chartsRange,
 ])
 void main() {
   testWidgets('charts render on Analysis after an insert', (tester) async {

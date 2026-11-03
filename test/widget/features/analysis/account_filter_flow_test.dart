@@ -26,6 +26,7 @@ import 'package:ledgerly/ui/features/analysis/charts/view_models/account_filter_
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_controller.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_net_total_providers.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_providers.dart';
+import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_range_providers.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_selection_controller.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_state.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/slice_drilldown_controller.dart';
@@ -234,6 +235,7 @@ _MockTxRepo _repo() {
   chartsFxStatus,
   chartsNetTotal,
   chartsAccountFilterOptions,
+  chartsRange,
 ])
 Future<ProviderContainer> _pumpScreen(WidgetTester tester) async {
   final fxService = _MockExchangeRateService();
@@ -344,6 +346,7 @@ Finder _inside(Type card, Finder f) =>
   chartsFxStatus,
   chartsNetTotal,
   chartsAccountFilterOptions,
+  chartsRange,
 ])
 void main() {
   setUpAll(() {

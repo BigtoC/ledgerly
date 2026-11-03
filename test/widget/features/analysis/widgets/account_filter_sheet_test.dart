@@ -65,8 +65,12 @@ ProviderContainer _container({
     AccountSlice(accountId: 2, currencyCode: 'USD', totalMinorUnits: 2500),
   ],
   Stream<List<AccountSlice>>? slicesStream,
+  DateBounds? dateBounds,
+  void Function(_MockTxRepo repo)? onRepo,
 }) {
   final repo = _MockTxRepo();
+  onRepo?.call(repo);
+  when(repo.watchDateBounds).thenAnswer((_) => Stream.value(dateBounds));
   when(
     () => repo.watchByAccountInRange(
       start: any(named: 'start'),
@@ -455,6 +459,31 @@ void main() {
     expect(find.text('Something went wrong while searching'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(find.text('All accounts'), findsNothing);
+  });
+
+  testWidgets('under All: subtitle says All time and rows cover the whole '
+      'history', (tester) async {
+    _MockTxRepo? repo;
+    final container = _container(
+      dateBounds: (first: DateTime(2024, 3, 10), last: DateTime(2026, 1, 2)),
+      onRepo: (r) => repo = r,
+    );
+    container
+        .read(chartsSelectionControllerProvider.notifier)
+        .setPeriod(PeriodType.all);
+    await _open(tester, container);
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Filters the whole page · All time'), findsOneWidget);
+    expect(_row('Visa'), findsOneWidget);
+    final now = DateTime.now();
+    verify(
+      () => repo!.watchByAccountInRange(
+        start: DateTime(2024, 3),
+        end: DateTime(now.year, now.month + 1),
+        type: any(named: 'type'),
+      ),
+    ).called(greaterThanOrEqualTo(1));
   });
 
   testWidgets('All accounts clears the filter', (tester) async {

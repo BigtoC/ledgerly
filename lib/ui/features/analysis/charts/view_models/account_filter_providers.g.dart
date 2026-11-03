@@ -38,19 +38,26 @@ final class ChartsAccountTotalsProvider
         isAutoDispose: true,
         dependencies: <ProviderOrFamily>[
           transactionRepositoryProvider,
+          chartsRangeProvider,
           chartsSelectionControllerProvider,
         ],
-        $allTransitiveDependencies: <ProviderOrFamily>[
+        $allTransitiveDependencies: <ProviderOrFamily>{
           ChartsAccountTotalsProvider.$allTransitiveDependencies0,
           ChartsAccountTotalsProvider.$allTransitiveDependencies1,
           ChartsAccountTotalsProvider.$allTransitiveDependencies2,
-        ],
+          ChartsAccountTotalsProvider.$allTransitiveDependencies3,
+          ChartsAccountTotalsProvider.$allTransitiveDependencies4,
+        },
       );
 
   static final $allTransitiveDependencies0 = transactionRepositoryProvider;
   static final $allTransitiveDependencies1 =
       TransactionRepositoryProvider.$allTransitiveDependencies0;
-  static final $allTransitiveDependencies2 = chartsSelectionControllerProvider;
+  static final $allTransitiveDependencies2 = chartsRangeProvider;
+  static final $allTransitiveDependencies3 =
+      ChartsRangeProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies4 =
+      ChartsRangeProvider.$allTransitiveDependencies3;
 
   @override
   String debugGetCreateSourceHash() => _$chartsAccountTotalsHash();
@@ -68,7 +75,7 @@ final class ChartsAccountTotalsProvider
 }
 
 String _$chartsAccountTotalsHash() =>
-    r'129b06c291bf8c4d5cfa134ff26ff63cb202e51d';
+    r'df90a1723c9d33609a982457b5211c8bf00af175';
 
 /// [chartsAccountTotals] converted into the default currency and joined
 /// with the active accounts. Currencies without a rate are left out, like
@@ -127,6 +134,8 @@ final class ChartsAccountFilterOptionsProvider
           ChartsAccountFilterOptionsProvider.$allTransitiveDependencies13,
           ChartsAccountFilterOptionsProvider.$allTransitiveDependencies14,
           ChartsAccountFilterOptionsProvider.$allTransitiveDependencies15,
+          ChartsAccountFilterOptionsProvider.$allTransitiveDependencies16,
+          ChartsAccountFilterOptionsProvider.$allTransitiveDependencies17,
         },
       );
 
@@ -137,25 +146,29 @@ final class ChartsAccountFilterOptionsProvider
       ChartsAccountTotalsProvider.$allTransitiveDependencies1;
   static final $allTransitiveDependencies3 =
       ChartsAccountTotalsProvider.$allTransitiveDependencies2;
-  static final $allTransitiveDependencies4 = chartsFxStatusProvider;
+  static final $allTransitiveDependencies4 =
+      ChartsAccountTotalsProvider.$allTransitiveDependencies3;
   static final $allTransitiveDependencies5 =
-      ChartsFxStatusProvider.$allTransitiveDependencies0;
-  static final $allTransitiveDependencies6 =
-      ChartsFxStatusProvider.$allTransitiveDependencies1;
+      ChartsAccountTotalsProvider.$allTransitiveDependencies4;
+  static final $allTransitiveDependencies6 = chartsFxStatusProvider;
   static final $allTransitiveDependencies7 =
-      ChartsFxStatusProvider.$allTransitiveDependencies2;
+      ChartsFxStatusProvider.$allTransitiveDependencies0;
   static final $allTransitiveDependencies8 =
-      ChartsFxStatusProvider.$allTransitiveDependencies4;
+      ChartsFxStatusProvider.$allTransitiveDependencies1;
   static final $allTransitiveDependencies9 =
-      ChartsFxStatusProvider.$allTransitiveDependencies5;
-  static final $allTransitiveDependencies10 = chartsCurrenciesByCodeProvider;
+      ChartsFxStatusProvider.$allTransitiveDependencies2;
+  static final $allTransitiveDependencies10 =
+      ChartsFxStatusProvider.$allTransitiveDependencies4;
   static final $allTransitiveDependencies11 =
-      ChartsCurrenciesByCodeProvider.$allTransitiveDependencies0;
-  static final $allTransitiveDependencies12 = analysisAccountsByIdProvider;
+      ChartsFxStatusProvider.$allTransitiveDependencies5;
+  static final $allTransitiveDependencies12 = chartsCurrenciesByCodeProvider;
   static final $allTransitiveDependencies13 =
-      AnalysisAccountsByIdProvider.$allTransitiveDependencies0;
-  static final $allTransitiveDependencies14 = analysisAccountTypesByIdProvider;
+      ChartsCurrenciesByCodeProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies14 = analysisAccountsByIdProvider;
   static final $allTransitiveDependencies15 =
+      AnalysisAccountsByIdProvider.$allTransitiveDependencies0;
+  static final $allTransitiveDependencies16 = analysisAccountTypesByIdProvider;
+  static final $allTransitiveDependencies17 =
       AnalysisAccountTypesByIdProvider.$allTransitiveDependencies0;
 
   @override

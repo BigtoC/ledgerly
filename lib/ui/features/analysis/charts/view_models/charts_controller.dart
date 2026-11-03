@@ -28,6 +28,7 @@ import '../../../../../domain/models/currency_slice.dart';
 import '../../../../../domain/models/time_bucket_slice.dart';
 import '../../search/view_models/analysis_providers.dart';
 import 'charts_providers.dart';
+import 'charts_range_providers.dart';
 import 'charts_selection_controller.dart';
 import 'charts_state.dart';
 import 'selected_slice.dart';
@@ -44,11 +45,16 @@ part 'charts_controller.g.dart';
     analysisCategoriesById,
     analysisAccountsById,
     analysisAccountTypesById,
+    chartsDateBounds,
+    chartsRange,
     ChartsSelectionController,
   ],
 )
 class ChartsController extends _$ChartsController {
   late ChartsSelection _selection;
+
+  /// The selection's `[start, end)`; null while it is still resolving.
+  ChartsRange? _range;
 
   int _generation = 0;
   StreamSubscription<List<Object>>? _sliceSub;
@@ -77,6 +83,8 @@ class ChartsController extends _$ChartsController {
   @override
   Stream<ChartsState> build() {
     _selection = ref.watch(chartsSelectionControllerProvider);
+    final range = ref.watch(chartsRangeProvider);
+    _range = range.value;
     _refreshRequested.clear();
     if (_selection.dimension != ChartDimension.currency) {
       _autoSwitchedToCurrency = false;
@@ -105,7 +113,11 @@ class ChartsController extends _$ChartsController {
     // the prior chart while new streams re-emit. A bare spinner on every
     // rebuild would flash and (combined with the outer SingleChildScrollView)
     // clamp scroll offset.
-    _resubscribe();
+    if (range case AsyncError(:final error, :final stackTrace)) {
+      controller.add(ChartsState.error(error, stackTrace));
+    } else {
+      _resubscribe();
+    }
 
     ref.onDispose(() {
       _sliceSub?.cancel();
@@ -122,6 +134,11 @@ class ChartsController extends _$ChartsController {
 
   void retry() {
     _refreshRequested.clear();
+    if (_range == null) {
+      // The All range failed to load: reload the date bounds.
+      ref.invalidate(chartsDateBoundsProvider);
+      return;
+    }
     _resubscribe();
   }
 
@@ -139,17 +156,11 @@ class ChartsController extends _$ChartsController {
 
   // ---------- Subscription wiring ----------
 
-  ({DateTime start, DateTime end}) _currentRange() {
-    final start = normalizeAnchor(_selection.anchorDate, _selection.period);
-    final end = shiftAnchor(start, _selection.period, 1);
-    return (start: start, end: end);
-  }
-
   TimeBucketGranularity _granularity() => switch (_selection.period) {
     PeriodType.day => TimeBucketGranularity.hour,
     PeriodType.week => TimeBucketGranularity.day,
     PeriodType.month => TimeBucketGranularity.day,
-    PeriodType.year => TimeBucketGranularity.month,
+    PeriodType.year || PeriodType.all => TimeBucketGranularity.month,
   };
 
   void _resubscribe() {
@@ -158,8 +169,10 @@ class ChartsController extends _$ChartsController {
     _lastSlices = null;
     _lastBuckets = null;
     final myGen = ++_generation;
-    final range = _currentRange();
     _emitter?.add(ChartsState.loading(previous: _lastEmittedData));
+    // Still resolving: build() re-runs once the range arrives.
+    final range = _range;
+    if (range == null) return;
 
     final repo = ref.read(transactionRepositoryProvider);
 
@@ -453,7 +466,7 @@ class ChartsController extends _$ChartsController {
 
     final data = ChartsData(
       period: _selection.period,
-      anchorDate: normalizeAnchor(_selection.anchorDate, _selection.period),
+      anchorDate: _range!.start,
       type: _selection.type,
       dimension: _selection.dimension,
       slices: chartSlices,
@@ -556,7 +569,7 @@ class ChartsController extends _$ChartsController {
 
     final data = ChartsData(
       period: _selection.period,
-      anchorDate: normalizeAnchor(_selection.anchorDate, _selection.period),
+      anchorDate: _range!.start,
       type: _selection.type,
       dimension: _selection.dimension,
       slices: chartSlices,
