@@ -16,6 +16,9 @@ const double _kPlotHeight = 140;
 /// The x labels overlap the plot's bottom by this much (CSS margin-top −4).
 const double _kLabelOverlap = 4;
 
+/// Least space kept between two neighbouring x labels (plan D22).
+const double _kLabelMinGap = 2;
+
 /// On All, up to this many months fill the width; beyond it each bar keeps
 /// this many months' width and the chart scrolls (plan D14).
 const int _kAllFullWidthMonths = 24;
@@ -73,6 +76,12 @@ class _DailyBarChartState extends State<DailyBarChart> {
   /// does not scroll (fl_chart keeps that one inside the plot).
   double _tooltipOffset = 0;
 
+  /// The x labels that fit, with their widths (plan D22), and the inputs
+  /// they were placed for. Placed once per layout, not on every rebuild a
+  /// touch causes.
+  Object? _placedFor;
+  Map<int, double> _placed = const {};
+
   PeriodType get period => widget.period;
   TrendSeries get series => widget.series;
   Color get barColor => widget.barColor;
@@ -122,8 +131,9 @@ class _DailyBarChartState extends State<DailyBarChart> {
         final scrolls = period == PeriodType.all && n > _kAllFullWidthMonths;
         final columns = scrolls ? _kAllFullWidthMonths : n;
         final rodWidth = (width - (columns - 1) * gap) / columns;
+        final placed = _placeLabels(context, rodWidth, gap);
         final insets = scrolls
-            ? _scrollInsets(context, rodWidth)
+            ? _scrollInsets(placed, rodWidth)
             : (left: 0.0, right: 0.0);
         // The labels overlap the plot's bottom; they ignore touches so the
         // plot's full height stays touchable.
@@ -210,7 +220,7 @@ class _DailyBarChartState extends State<DailyBarChart> {
                 padding: const EdgeInsets.only(
                   top: _kPlotHeight + 1 - _kLabelOverlap,
                 ),
-                child: ExcludeSemantics(child: _labels(colors, gap)),
+                child: ExcludeSemantics(child: _labels(colors, gap, placed)),
               ),
             ),
           ],
@@ -237,29 +247,84 @@ class _DailyBarChartState extends State<DailyBarChart> {
     );
   }
 
+  /// The x labels to draw, keyed by bucket index, with their widths: each
+  /// candidate in priority order (the current bucket, then All's year
+  /// labels, then the fixed labels left to right), skipping any whose
+  /// centred rect would come within [_kLabelMinGap] of one already placed
+  /// (plan D22).
+  Map<int, double> _placeLabels(
+    BuildContext context,
+    double rodWidth,
+    double gap,
+  ) {
+    final base = DefaultTextStyle.of(context).style;
+    final boldText = MediaQuery.boldTextOf(context);
+    final textScaler = MediaQuery.textScalerOf(context);
+    final direction = Directionality.of(context);
+    final key = (
+      series,
+      rodWidth,
+      gap,
+      base,
+      boldText,
+      textScaler,
+      direction,
+      locale,
+    );
+    if (key == _placedFor) return _placed;
+
+    final colors = AnalysisColors.of(context);
+    final current = series.currentIndex;
+    final candidates = [
+      ?current,
+      for (final i in series.labelIndices.toList()..sort())
+        if (i != current && series.yearLabelIndices.contains(i)) i,
+      for (final i in series.labelIndices.toList()..sort())
+        if (i != current && !series.yearLabelIndices.contains(i)) i,
+    ];
+    final placed = <int, double>{};
+    final spans = <(double, double)>[];
+    for (final i in candidates) {
+      // Resolved as Text resolves it, the bold text setting last.
+      var style = base.merge(_labelStyle(colors, i));
+      if (boldText) {
+        style = style.merge(const TextStyle(fontWeight: FontWeight.bold));
+      }
+      final painter = TextPainter(
+        text: TextSpan(text: _labelText(i), style: style),
+        textDirection: direction,
+        textScaler: textScaler,
+        maxLines: 1,
+      )..layout();
+      final labelWidth = painter.width;
+      painter.dispose();
+      final centre = i * (rodWidth + gap) + rodWidth / 2;
+      final left = centre - labelWidth / 2;
+      final right = centre + labelWidth / 2;
+      final collides = spans.any(
+        (s) => left < s.$2 + _kLabelMinGap && s.$1 < right + _kLabelMinGap,
+      );
+      if (collides) continue;
+      spans.add((left, right));
+      placed[i] = labelWidth;
+    }
+    _placedFor = key;
+    return _placed = placed;
+  }
+
   /// Padding at each end of a scrolling chart's content: the parent's
   /// [DailyBarChart.edgeInset], or more where an end label overhangs its
   /// bar by more than that (at large text scales), so the label is never
   /// clipped.
   ({double left, double right}) _scrollInsets(
-    BuildContext context,
+    Map<int, double> placed,
     double rodWidth,
   ) {
     final last = series.buckets.length - 1;
     double inset(int i) {
-      if (!series.labelIndices.contains(i)) return widget.edgeInset;
-      final painter = TextPainter(
-        text: TextSpan(
-          text: _labelText(i),
-          style: DefaultTextStyle.of(context).style
-              .merge(_labelStyle(AnalysisColors.of(context), i)),
-        ),
-        textDirection: Directionality.of(context),
-        textScaler: MediaQuery.textScalerOf(context),
-        maxLines: 1,
-      )..layout();
-      final overhang = (painter.width - rodWidth) / 2;
-      painter.dispose();
+      final labelWidth = placed[i];
+      if (labelWidth == null) return widget.edgeInset;
+      final overhang = (labelWidth - rodWidth) / 2;
       return overhang > widget.edgeInset ? overhang : widget.edgeInset;
     }
 
@@ -390,7 +455,7 @@ class _DailyBarChartState extends State<DailyBarChart> {
     );
   }
 
-  Widget _labels(AnalysisColors colors, double gap) {
+  Widget _labels(AnalysisColors colors, double gap, Map<int, double> placed) {
     final buckets = series.buckets;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -398,7 +463,7 @@ class _DailyBarChartState extends State<DailyBarChart> {
         for (var i = 0; i < buckets.length; i++) ...[
           if (i > 0) SizedBox(width: gap),
           Expanded(
-            child: series.labelIndices.contains(i)
+            child: placed.containsKey(i)
                 ? OverflowBox(
                     fit: OverflowBoxFit.deferToChild,
                     maxWidth: double.infinity,

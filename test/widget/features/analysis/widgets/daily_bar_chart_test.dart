@@ -412,6 +412,8 @@ void main() {
     });
 
     testWidgets('year labels every month', (tester) async {
+      // Wide enough that the test font's 33 px month names keep the 2 px
+      // gap (D22).
       await _pump(
         tester,
         period: PeriodType.year,
@@ -421,6 +423,7 @@ void main() {
           bucketTotals: const [],
           now: DateTime(2026, 11, 2),
         ),
+        width: 480,
       );
 
       expect(find.text('Jan'), findsOneWidget);
@@ -831,7 +834,8 @@ void main() {
         width: phone,
       );
       final plotBefore = tester.getRect(find.byType(BarChart));
-      final labelBefore = tester.getRect(find.text('2026'));
+      // "2026" gives way to the current "Feb" beside it (D22).
+      final labelBefore = tester.getRect(find.text('2025'));
 
       await tester.drag(find.byType(BarChart), const Offset(100, 0));
       await tester.pump();
@@ -839,7 +843,7 @@ void main() {
       final dx = tester.getRect(find.byType(BarChart)).left - plotBefore.left;
       expect(dx, greaterThan(50));
       expect(
-        tester.getRect(find.text('2026')).left - labelBefore.left,
+        tester.getRect(find.text('2025')).left - labelBefore.left,
         closeTo(dx, 0.01),
       );
     });
@@ -893,7 +897,9 @@ void main() {
       );
 
       expect(tester.takeException(), isNull);
-      expect(tester.getSize(find.text('2026')).height, 28);
+      // "2026" gives way to the current "Feb" beside it (D22).
+      expect(find.text('2026'), findsNothing);
+      expect(tester.getSize(find.text('2025')).height, 28);
       expect(tester.getSize(find.text('Feb')).height, 28);
       // The last label stays inside the viewport.
       final viewport = tester.getRect(horizontalScrollable());
@@ -998,6 +1004,133 @@ void main() {
       final year = tester.getRect(find.text('2024'));
       expect(year.center.dx, closeTo(plot.left + rod24 / 2, 0.01));
       expect(year.left, greaterThanOrEqualTo(viewport.left));
+    });
+  });
+
+  // Also loads Roboto (with its bold face for the current label), so it
+  // stays last with the group above.
+  group('x label collisions in Roboto (D22)', () {
+    setUpAll(() async {
+      final root = Platform.environment['FLUTTER_ROOT']!;
+      final loader = FontLoader('Roboto');
+      for (final face in ['Regular', 'Bold']) {
+        final bytes = File(
+          '$root/bin/cache/artifacts/material_fonts/Roboto-$face.ttf',
+        ).readAsBytesSync();
+        loader.addFont(Future.value(ByteData.sublistView(bytes)));
+      }
+      await loader.load();
+    });
+
+    // The trend card's plot width in a 390 phone.
+    const phone = 324.0;
+
+    /// The visible x labels' texts, left to right, after checking that
+    /// neighbours keep at least a 2 px gap.
+    List<String> visibleLabels(WidgetTester tester) {
+      final labels = [
+        for (final e
+            in find
+                .descendant(
+                  of: find.byType(DailyBarChart),
+                  matching: find.byType(Text),
+                )
+                .evaluate())
+          (
+            text: (e.widget as Text).data!,
+            rect: tester.getRect(find.byWidget(e.widget)),
+          ),
+      ]..sort((a, b) => a.rect.left.compareTo(b.rect.left));
+      for (var i = 1; i < labels.length; i++) {
+        expect(
+          labels[i].rect.left - labels[i - 1].rect.right,
+          greaterThanOrEqualTo(2 - 0.01),
+          reason: '${labels[i - 1].text} / ${labels[i].text}',
+        );
+      }
+      return [for (final l in labels) l.text];
+    }
+
+    testWidgets('Year at 2×: no two labels collide and the current month '
+        'is shown', (tester) async {
+      await _pump(
+        tester,
+        period: PeriodType.year,
+        series: trendSeries(
+          period: PeriodType.year,
+          anchorDate: DateTime(2026, 1, 1),
+          bucketTotals: const [],
+          now: DateTime(2026, 5, 18),
+        ),
+        width: phone,
+        edgeInset: 16,
+        textScale: 2,
+      );
+
+      expect(tester.takeException(), isNull);
+      final labels = visibleLabels(tester);
+      expect(labels, contains('May'));
+      expect(labels.length, lessThan(12));
+      expect(
+        tester.widget<Text>(find.text('May')).style!.fontWeight,
+        FontWeight.w700,
+      );
+    });
+
+    testWidgets('All with a February current month at 1×: the year label '
+        'under January gives way to the current month', (tester) async {
+      // Oct 2024 … Feb 2026: 17 months, so January 2026 is the bar before
+      // the current one.
+      await _pump(
+        tester,
+        period: PeriodType.all,
+        series: trendSeries(
+          period: PeriodType.all,
+          anchorDate: DateTime(2024, 10),
+          bucketTotals: const [],
+          now: DateTime(2026, 2, 14),
+        ),
+        width: phone,
+        edgeInset: 16,
+      );
+
+      expect(visibleLabels(tester), ['2025', 'Feb']);
+    });
+
+    testWidgets('Month with today next to a fixed label at 1×: today wins', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        period: PeriodType.month,
+        series: trendSeries(
+          period: PeriodType.month,
+          anchorDate: DateTime(2026, 10, 1),
+          bucketTotals: const [],
+          now: DateTime(2026, 10, 16, 9),
+        ),
+        width: phone,
+        edgeInset: 16,
+      );
+
+      expect(visibleLabels(tester), ['1', '8', '16', '22', '29']);
+    });
+
+    testWidgets('Year at 1×: every month fits and is shown', (tester) async {
+      await _pump(
+        tester,
+        period: PeriodType.year,
+        series: trendSeries(
+          period: PeriodType.year,
+          anchorDate: DateTime(2026, 1, 1),
+          bucketTotals: const [],
+          now: DateTime(2026, 5, 18),
+        ),
+        width: phone,
+        edgeInset: 16,
+      );
+
+      expect(visibleLabels(tester), hasLength(12));
     });
   });
 }
