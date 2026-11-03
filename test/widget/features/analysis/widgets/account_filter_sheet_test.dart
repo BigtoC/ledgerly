@@ -395,6 +395,31 @@ void main() {
     expect(visa.color!.a, 0);
   });
 
+  testWidgets('an archived account the page is filtered by is listed and '
+      'checked (plan D25)', (tester) async {
+    final container = _container(
+      slices: const [
+        AccountSlice(accountId: 1, currencyCode: 'USD', totalMinorUnits: 1000),
+        AccountSlice(accountId: 4, currencyCode: 'USD', totalMinorUnits: 3000),
+      ],
+    );
+    container
+        .read(chartsSelectionControllerProvider.notifier)
+        .setAccountFilter(4);
+    await _open(tester, container);
+    const colors = AnalysisColors.light;
+
+    expect(find.text('Old card'), findsOneWidget);
+    expect(tester.widget<Material>(_row('Old card')).color, colors.sel);
+    expect(
+      tester.widget<Text>(find.text('Old card')).style?.fontWeight,
+      FontWeight.w700,
+    );
+    final group = tester.widget<RadioGroup<int>>(find.byType(RadioGroup<int>));
+    expect(group.groupValue, 4);
+    expect(find.text(r'$30.00 · 75.0%'), findsOneWidget);
+  });
+
   testWidgets('tapping an account applies the filter and closes the sheet', (
     tester,
   ) async {

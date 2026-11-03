@@ -78,7 +78,8 @@ String _$chartsAccountTotalsHash() =>
     r'df90a1723c9d33609a982457b5211c8bf00af175';
 
 /// [chartsAccountTotals] converted into the default currency and joined
-/// with the active accounts. Currencies without a rate are left out, like
+/// with the active accounts and the archived account the page is filtered
+/// by, if any (plan D25). Currencies without a rate are left out, like
 /// the summary card. Loading until every input has loaded; an error when
 /// any input is in error, so the sheet never shows stale rows.
 
@@ -87,7 +88,8 @@ final chartsAccountFilterOptionsProvider =
     ChartsAccountFilterOptionsProvider._();
 
 /// [chartsAccountTotals] converted into the default currency and joined
-/// with the active accounts. Currencies without a rate are left out, like
+/// with the active accounts and the archived account the page is filtered
+/// by, if any (plan D25). Currencies without a rate are left out, like
 /// the summary card. Loading until every input has loaded; an error when
 /// any input is in error, so the sheet never shows stale rows.
 
@@ -100,7 +102,8 @@ final class ChartsAccountFilterOptionsProvider
         >
     with $Provider<AsyncValue<ChartsAccountFilterOptions>> {
   /// [chartsAccountTotals] converted into the default currency and joined
-  /// with the active accounts. Currencies without a rate are left out, like
+  /// with the active accounts and the archived account the page is filtered
+  /// by, if any (plan D25). Currencies without a rate are left out, like
   /// the summary card. Loading until every input has loaded; an error when
   /// any input is in error, so the sheet never shows stale rows.
   ChartsAccountFilterOptionsProvider._()
@@ -116,6 +119,7 @@ final class ChartsAccountFilterOptionsProvider
           chartsCurrenciesByCodeProvider,
           analysisAccountsByIdProvider,
           analysisAccountTypesByIdProvider,
+          chartsSelectionControllerProvider,
         ],
         $allTransitiveDependencies: <ProviderOrFamily>{
           ChartsAccountFilterOptionsProvider.$allTransitiveDependencies0,
@@ -196,4 +200,4 @@ final class ChartsAccountFilterOptionsProvider
 }
 
 String _$chartsAccountFilterOptionsHash() =>
-    r'1407905615540bbfb4eff2f08fd3edb80340f32a';
+    r'd369bb010862656217cb6609bc3d8aa9eea09541';

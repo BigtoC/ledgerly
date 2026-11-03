@@ -288,6 +288,39 @@ void main() {
     ).called(1);
   });
 
+  test('also lists the archived account the page is filtered by, with its '
+      'amount and share, sorted like the rest (plan D25)', () async {
+    final repo = _MockTxRepo();
+    _stubSlices(repo, const [
+      AccountSlice(accountId: 1, currencyCode: 'USD', totalMinorUnits: 100),
+      AccountSlice(accountId: 2, currencyCode: 'USD', totalMinorUnits: 300),
+      AccountSlice(accountId: 3, currencyCode: 'USD', totalMinorUnits: 50),
+    ]);
+    final container = _container(
+      repo: repo,
+      accounts: [
+        _account(1, 'Cash'),
+        _account(2, 'Old card', archived: true),
+        _account(3, 'Old wallet', archived: true),
+      ],
+    );
+    final before = await _settle(container);
+    expect([for (final o in before.accounts) o.accountId], [1]);
+
+    container
+        .read(chartsSelectionControllerProvider.notifier)
+        .setAccountFilter(2);
+    await Future<void>.delayed(Duration.zero);
+
+    final options = container.read(chartsAccountFilterOptionsProvider).value!;
+    // The other archived account stays out.
+    expect([for (final o in options.accounts) o.accountId], [2, 1]);
+    expect(options.accounts[0].name, 'Old card');
+    expect(options.accounts[0].totalMinorUnits, 300);
+    expect(options.accounts[0].share, closeTo(300 / 450, 1e-9));
+    expect(options.totalMinorUnits, 450);
+  });
+
   test(
     'is an error, not endless loading, when the totals query fails',
     () async {
