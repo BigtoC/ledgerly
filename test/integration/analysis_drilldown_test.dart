@@ -21,6 +21,7 @@ import 'package:ledgerly/ui/features/analysis/charts/view_models/slice_drilldown
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_state.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/category_pie_chart.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/chart_legend.dart';
+import 'package:ledgerly/ui/features/analysis/charts/views/charts_trend_card.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_selection_controller.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/selected_slice.dart';
 import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_controller.dart';
@@ -97,7 +98,7 @@ Future<void> _seed(
   }
 }
 
-/// Holds back the drill-down rows so they land after the legend's reveal
+/// Holds back the drill-down rows so they land after the selection's reveal
 /// animation has finished.
 class _SlowDrilldownController extends SliceDrilldownController {
   _SlowDrilldownController(this.delay);
@@ -316,9 +317,10 @@ void main() {
     );
   });
 
-  group('legend auto-scroll', () {
+  group('selection auto-scroll', () {
     late Finder scrollable;
     late Finder legendRows;
+    late Finder trendCard;
     late Finder pie;
     Finder legendRow(String label) => find.descendant(
       of: find.byType(ChartLegend),
@@ -346,7 +348,7 @@ void main() {
       Duration? drilldownDelay,
       bool seedPreviousWeek = false,
       // A 432 dp viewport under the 64 dp app bar: short enough that the
-      // page scrolls the legend card to the top.
+      // page scrolls the trend card to the top.
       Size size = const Size(360, 496),
     }) async {
       tester.view.physicalSize = size;
@@ -358,8 +360,9 @@ void main() {
         seedPreviousWeek: seedPreviousWeek,
       );
       scrollable = find.byType(SingleChildScrollView).first;
-      // The ranked rows are what a selection lifts to the top.
       legendRows = find.byType(ChartLegend);
+      // The bar chart is what a selection lifts to the top.
+      trendCard = find.byType(ChartsTrendCard);
       pie = find.byType(CategoryPieChart);
       return container;
     }
@@ -374,12 +377,14 @@ void main() {
       await tester.tap(legendRow(label));
     }
 
-    void expectCardAtTop(WidgetTester tester) {
+    void expectAtTop(WidgetTester tester, Finder target) {
       final viewport = tester.getRect(scrollable);
-      final card = tester.getRect(legendRows);
+      final card = tester.getRect(target);
       expect(card.top, moreOrLessEquals(viewport.top, epsilon: 1));
       expect(card.bottom, lessThanOrEqualTo(viewport.bottom));
     }
+
+    void expectCardAtTop(WidgetTester tester) => expectAtTop(tester, trendCard);
 
     void expectWholePieVisible(WidgetTester tester) {
       final viewport = tester.getRect(scrollable);
@@ -397,8 +402,8 @@ void main() {
     }
 
     testWidgets(
-      'selecting a category lifts the card to the top; clearing it shows '
-      'the pie again',
+      'selecting a category lifts the trend card to the top; clearing it '
+      'shows the pie again',
       (tester) async {
         final container = await pumpPhone(tester);
         await tapLegendRow(tester, 'Food');
@@ -409,11 +414,15 @@ void main() {
         );
         expectCardAtTop(tester);
         expect(
-          tester.getRect(pie).bottom,
+          tester.getRect(legendRows).bottom,
           lessThanOrEqualTo(tester.getRect(scrollable).top),
         );
 
-        await tester.tap(legendRow('Food'));
+        // The ranked rows are above the page now; clear from the trend
+        // card's filter chip.
+        await tester.tap(
+          find.descendant(of: trendCard, matching: find.byIcon(Icons.close)),
+        );
         await tester.pumpAndSettle();
         expect(
           container.read(chartsSelectionControllerProvider).selectedSlice,
@@ -426,21 +435,21 @@ void main() {
     testWidgets('keeps lifting the card when the drill-down rows load late', (
       tester,
     ) async {
-      // Tall enough that the trend card and the transactions card's loading
-      // state alone cannot fill the space below the ranked rows, short
-      // enough that the loaded row can.
+      // Tall enough that the transactions card's loading state alone cannot
+      // fill the space below the trend card, short enough that the loaded
+      // row can.
       await pumpPhone(
         tester,
         drilldownDelay: const Duration(seconds: 1),
-        size: const Size(360, 620),
+        size: const Size(360, 510),
       );
       await tapLegendRow(tester, 'Food');
       await pumpPastReveal(tester);
-      // Only the trend card and the loading state sit below the card so
-      // far, so the first scroll stops short of the top.
+      // Only the loading state sits below the trend card so far, so the
+      // first scroll stops short of the top.
       expect(find.byType(SliceTransactionRow), findsNothing);
       expect(
-        tester.getRect(legendRows).top,
+        tester.getRect(trendCard).top,
         greaterThan(tester.getRect(scrollable).top + 1),
       );
 
@@ -537,7 +546,7 @@ void main() {
       await tapLegendRow(tester, 'Food');
       await tester.pumpAndSettle();
       expect(
-        tester.getRect(legendRows).top,
+        tester.getRect(trendCard).top,
         greaterThan(tester.getRect(scrollable).top + 1),
       );
       await tester.pump(const Duration(seconds: 5));
@@ -546,6 +555,31 @@ void main() {
       tester.view.physicalSize = const Size(360, 600);
       await tester.pumpAndSettle();
       expect(position(tester).pixels, pixels);
+    });
+
+    testWidgets('on Day, which has no trend card, lifts the ranked rows', (
+      tester,
+    ) async {
+      // Without the trend card there is less below the rows, so the page
+      // must be shorter for them to reach the top.
+      final container = await pumpPhone(tester, size: const Size(360, 360));
+      // Day keeps the week's anchor; step on to today, where the rows are.
+      final selection = container.read(
+        chartsSelectionControllerProvider.notifier,
+      )..setPeriod(PeriodType.day);
+      while (!selection.isAtCurrentPeriod()) {
+        selection.nextPeriod();
+      }
+      await tester.pumpAndSettle();
+      expect(trendCard, findsNothing);
+
+      await tapLegendRow(tester, 'Food');
+      await tester.pumpAndSettle();
+      expect(
+        container.read(chartsSelectionControllerProvider).selectedSlice,
+        const SelectedSlice.category(1),
+      );
+      expectAtTop(tester, legendRows);
     });
   });
 }

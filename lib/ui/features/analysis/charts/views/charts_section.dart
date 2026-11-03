@@ -474,15 +474,16 @@ class _ChartBodyState extends ConsumerState<_ChartBody> {
 
   final _pieKey = GlobalKey();
   final _legendKey = GlobalKey();
+  final _trendKey = GlobalKey();
 
-  /// True from the moment a slice is selected until the legend card reaches
-  /// the top of the page, the user scrolls, or [_kFollowWindow] runs out.
-  /// The drill-down list below the card loads asynchronously and grows in
-  /// through an AnimatedSize, so the first scroll can stop short at the old
-  /// scroll extent; while this is set, every extent change scrolls the card
-  /// further up. The window stops a card that can never reach the top from
-  /// chasing later resizes, such as the keyboard opening.
-  bool _followLegend = false;
+  /// True from the moment a slice is selected until the revealed card
+  /// reaches the top of the page, the user scrolls, or [_kFollowWindow] runs
+  /// out. The drill-down list below the card loads asynchronously and grows
+  /// in through an AnimatedSize, so the first scroll can stop short at the
+  /// old scroll extent; while this is set, every extent change scrolls the
+  /// card further up. The window stops a card that can never reach the top
+  /// from chasing later resizes, such as the keyboard opening.
+  bool _followReveal = false;
   Timer? _followTimer;
   ScrollNotificationObserverState? _scrollObserver;
 
@@ -502,9 +503,11 @@ class _ChartBodyState extends ConsumerState<_ChartBody> {
     super.dispose();
   }
 
-  /// Selecting a slice (or switching to another one) brings the legend card
-  /// to the top of the page so the card, the filtered bar chart and the
-  /// drill-down list are in view. Runs after the frame so the drill-down
+  /// Selecting a slice (or switching to another one) brings the trend card
+  /// to the top of the page so the filtered bar chart and the drill-down
+  /// list below it are in view. When no trend card is shown (Day, or the
+  /// currency breakdown with mixed currencies), the legend card comes up
+  /// instead. Runs after the frame so the drill-down
   /// list is mounted first.
   ///
   /// Clearing the selection scrolls back up until the whole pie chart shows.
@@ -513,12 +516,12 @@ class _ChartBodyState extends ConsumerState<_ChartBody> {
   /// which outlives this State, and the pie is measured after the frame:
   /// the new period's banners above it can differ.
   void _onSelectionChanged({required bool selected}) {
-    _followLegend = selected;
+    _followReveal = selected;
     _followTimer?.cancel();
     if (selected) {
-      _followTimer = Timer(_kFollowWindow, () => _followLegend = false);
+      _followTimer = Timer(_kFollowWindow, () => _followReveal = false);
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) unawaited(_revealLegend(animate: true));
+        if (mounted) unawaited(_revealCard(animate: true));
       });
       return;
     }
@@ -543,25 +546,30 @@ class _ChartBodyState extends ConsumerState<_ChartBody> {
     });
   }
 
-  Future<void> _revealLegend({required bool animate}) async {
-    final legend = _legendKey.currentContext;
-    final legendBox = legend?.findRenderObject();
-    if (legend == null || legendBox == null) return;
+  /// The card a selection brings to the top: the trend card when one is
+  /// shown, else the legend card.
+  BuildContext? get _revealContext =>
+      _trendKey.currentContext ?? _legendKey.currentContext;
+
+  Future<void> _revealCard({required bool animate}) async {
+    final card = _revealContext;
+    final cardBox = card?.findRenderObject();
+    if (card == null || cardBox == null) return;
     final position = Scrollable.of(context).position;
-    final target = _revealOffset(legendBox)
+    final target = _revealOffset(cardBox)
         .clamp(position.minScrollExtent, position.maxScrollExtent);
     await Scrollable.ensureVisible(
-      legend,
+      card,
       duration: animate ? _kScrollDuration : Duration.zero,
       curve: _kScrollCurve,
     );
-    if (!mounted || !_followLegend) return;
-    if (_legendAtTop(position) || (position.pixels - target).abs() > 0.5) {
+    if (!mounted || !_followReveal) return;
+    if (_cardAtTop(position) || (position.pixels - target).abs() > 0.5) {
       // At the top, or a touch interrupted the animation: stop following.
-      _followLegend = false;
+      _followReveal = false;
     } else if (animate) {
       // The extent may have grown while the animation ran.
-      await _revealLegend(animate: false);
+      await _revealCard(animate: false);
     }
   }
 
@@ -586,25 +594,25 @@ class _ChartBodyState extends ConsumerState<_ChartBody> {
   double _revealOffset(RenderObject box) =>
       RenderAbstractViewport.of(box).getOffsetToReveal(box, 0).offset;
 
-  bool _legendAtTop(ScrollPosition position) {
-    final legend = _legendKey.currentContext?.findRenderObject();
-    if (legend == null || !legend.attached) return true;
-    return _revealOffset(legend) <= position.pixels + 0.5;
+  bool _cardAtTop(ScrollPosition position) {
+    final card = _revealContext?.findRenderObject();
+    if (card == null || !card.attached) return true;
+    return _revealOffset(card) <= position.pixels + 0.5;
   }
 
   void _onScrollNotification(ScrollNotification notification) {
-    if (!_followLegend || notification.depth != 0) return;
+    if (!_followReveal || notification.depth != 0) return;
     if (notification is UserScrollNotification ||
         (notification is ScrollStartNotification &&
             notification.dragDetails != null)) {
-      _followLegend = false;
+      _followReveal = false;
       return;
     }
     // A content-size change reaches observers as an update with no delta.
     if (notification is ScrollUpdateNotification &&
         notification.scrollDelta == null &&
         !Scrollable.of(context).position.isScrollingNotifier.value) {
-      unawaited(_revealLegend(animate: false));
+      unawaited(_revealCard(animate: false));
     }
   }
 
@@ -689,6 +697,7 @@ class _ChartBodyState extends ConsumerState<_ChartBody> {
         if (showBar) ...[
           const SizedBox(height: 12),
           ChartsTrendCard(
+            key: _trendKey,
             data: data,
             selectedSlice: selectedIndex == null
                 ? null
