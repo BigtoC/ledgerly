@@ -4,6 +4,7 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ledgerly/app/bootstrap.dart' show noProviderRetry;
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/core/utils/color_palette.dart';
 import 'package:ledgerly/data/repositories/exchange_rate_repository.dart';
@@ -53,6 +54,7 @@ ProviderContainer _container({
   Map<String, int> ratesToUsd = const {},
 }) {
   final container = ProviderContainer(
+    retry: noProviderRetry,
     overrides: [
       transactionRepositoryProvider.overrideWithValue(repo),
       chartsCurrenciesByCodeProvider.overrideWith(
@@ -99,7 +101,7 @@ void _stubSlices(_MockTxRepo repo, List<AccountSlice> slices) {
 Future<ChartsAccountFilterOptions> _settle(ProviderContainer container) async {
   container.listen(chartsAccountFilterOptionsProvider, (_, _) {});
   for (var i = 0; i < 20; i++) {
-    final value = container.read(chartsAccountFilterOptionsProvider);
+    final value = container.read(chartsAccountFilterOptionsProvider).value;
     if (value != null) return value;
     await Future<void>.delayed(Duration.zero);
   }
@@ -252,7 +254,7 @@ void main() {
     expect(queries.last.type, CategoryType.income);
     expect(queries.last.start, month.start);
     expect(
-      container.read(chartsAccountFilterOptionsProvider)?.totalMinorUnits,
+      container.read(chartsAccountFilterOptionsProvider).value?.totalMinorUnits,
       70,
     );
   });
@@ -274,7 +276,7 @@ void main() {
         .setAccountFilter(1);
     await Future<void>.delayed(Duration.zero);
 
-    final options = container.read(chartsAccountFilterOptionsProvider)!;
+    final options = container.read(chartsAccountFilterOptionsProvider).value!;
     expect(options.totalMinorUnits, 400);
     expect(options.accounts, hasLength(2));
     verify(
@@ -284,5 +286,38 @@ void main() {
         type: any(named: 'type'),
       ),
     ).called(1);
+  });
+
+  test(
+    'is an error, not endless loading, when the totals query fails',
+    () async {
+      final repo = _MockTxRepo();
+      when(
+        () => repo.watchByAccountInRange(
+          start: any(named: 'start'),
+          end: any(named: 'end'),
+          type: any(named: 'type'),
+        ),
+      ).thenAnswer((_) => Stream.error(StateError('boom')));
+      final container = _container(repo: repo, accounts: [_account(1, 'Cash')]);
+      container.listen(chartsAccountFilterOptionsProvider, (_, _) {});
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+
+      final options = container.read(chartsAccountFilterOptionsProvider);
+      expect(options.hasError, isTrue);
+      expect(options.error, isA<StateError>());
+    },
+  );
+
+  test('is loading until every input has loaded', () {
+    final repo = _MockTxRepo();
+    _stubSlices(repo, const []);
+    final container = _container(repo: repo, accounts: [_account(1, 'Cash')]);
+
+    expect(
+      container.read(chartsAccountFilterOptionsProvider),
+      isA<AsyncLoading<ChartsAccountFilterOptions>>(),
+    );
   });
 }

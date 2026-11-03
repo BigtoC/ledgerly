@@ -72,8 +72,8 @@ String _$chartsAccountTotalsHash() =>
 
 /// [chartsAccountTotals] converted into the default currency and joined
 /// with the active accounts. Currencies without a rate are left out, like
-/// the summary card. Null until every input has loaded, and while the
-/// totals query is in error.
+/// the summary card. Loading until every input has loaded; an error when
+/// any input is in error, so the sheet never shows stale rows.
 
 @ProviderFor(chartsAccountFilterOptions)
 final chartsAccountFilterOptionsProvider =
@@ -81,21 +81,21 @@ final chartsAccountFilterOptionsProvider =
 
 /// [chartsAccountTotals] converted into the default currency and joined
 /// with the active accounts. Currencies without a rate are left out, like
-/// the summary card. Null until every input has loaded, and while the
-/// totals query is in error.
+/// the summary card. Loading until every input has loaded; an error when
+/// any input is in error, so the sheet never shows stale rows.
 
 final class ChartsAccountFilterOptionsProvider
     extends
         $FunctionalProvider<
-          ChartsAccountFilterOptions?,
-          ChartsAccountFilterOptions?,
-          ChartsAccountFilterOptions?
+          AsyncValue<ChartsAccountFilterOptions>,
+          AsyncValue<ChartsAccountFilterOptions>,
+          AsyncValue<ChartsAccountFilterOptions>
         >
-    with $Provider<ChartsAccountFilterOptions?> {
+    with $Provider<AsyncValue<ChartsAccountFilterOptions>> {
   /// [chartsAccountTotals] converted into the default currency and joined
   /// with the active accounts. Currencies without a rate are left out, like
-  /// the summary card. Null until every input has loaded, and while the
-  /// totals query is in error.
+  /// the summary card. Loading until every input has loaded; an error when
+  /// any input is in error, so the sheet never shows stale rows.
   ChartsAccountFilterOptionsProvider._()
     : super(
         from: null,
@@ -163,23 +163,24 @@ final class ChartsAccountFilterOptionsProvider
 
   @$internal
   @override
-  $ProviderElement<ChartsAccountFilterOptions?> $createElement(
+  $ProviderElement<AsyncValue<ChartsAccountFilterOptions>> $createElement(
     $ProviderPointer pointer,
   ) => $ProviderElement(pointer);
 
   @override
-  ChartsAccountFilterOptions? create(Ref ref) {
+  AsyncValue<ChartsAccountFilterOptions> create(Ref ref) {
     return chartsAccountFilterOptions(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(ChartsAccountFilterOptions? value) {
+  Override overrideWithValue(AsyncValue<ChartsAccountFilterOptions> value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<ChartsAccountFilterOptions?>(value),
+      providerOverride:
+          $SyncValueProvider<AsyncValue<ChartsAccountFilterOptions>>(value),
     );
   }
 }
 
 String _$chartsAccountFilterOptionsHash() =>
-    r'fceccf4609a07425e45a99662349d3356eb8e172';
+    r'1407905615540bbfb4eff2f08fd3edb80340f32a';

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ledgerly/app/bootstrap.dart' show noProviderRetry;
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/core/utils/color_palette.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
@@ -63,6 +64,7 @@ ProviderContainer _container({
     AccountSlice(accountId: 1, currencyCode: 'USD', totalMinorUnits: 1000),
     AccountSlice(accountId: 2, currencyCode: 'USD', totalMinorUnits: 2500),
   ],
+  Stream<List<AccountSlice>>? slicesStream,
 }) {
   final repo = _MockTxRepo();
   when(
@@ -71,8 +73,10 @@ ProviderContainer _container({
       end: any(named: 'end'),
       type: any(named: 'type'),
     ),
-  ).thenAnswer((_) => Stream.value(slices));
+  ).thenAnswer((_) => slicesStream ?? Stream.value(slices));
   final container = ProviderContainer(
+    // Production does not retry failed providers either.
+    retry: noProviderRetry,
     overrides: [
       transactionRepositoryProvider.overrideWithValue(repo),
       chartsCurrenciesByCodeProvider.overrideWith(
@@ -438,6 +442,19 @@ void main() {
       2,
     );
     expect(find.byType(BottomSheet), findsNothing);
+  });
+
+  testWidgets('a totals error shows the error text, not a spinner', (
+    tester,
+  ) async {
+    final container = _container(
+      slicesStream: Stream.error(StateError('boom')),
+    );
+    await _open(tester, container);
+
+    expect(find.text('Something went wrong while searching'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.text('All accounts'), findsNothing);
   });
 
   testWidgets('All accounts clears the filter', (tester) async {

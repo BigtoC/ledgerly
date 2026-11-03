@@ -83,7 +83,8 @@ class _AccountFilterSheet extends ConsumerWidget {
     final colors = AnalysisColors.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
     final selection = ref.watch(chartsSelectionControllerProvider);
-    final options = ref.watch(chartsAccountFilterOptionsProvider);
+    final optionsAsync = ref.watch(chartsAccountFilterOptionsProvider);
+    final options = optionsAsync.value;
 
     @Dependencies([ChartsSelectionController])
     void pick(int? value) {
@@ -151,7 +152,12 @@ class _AccountFilterSheet extends ConsumerWidget {
               ],
             ),
           ),
-          if (options == null)
+          if (optionsAsync.hasError)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: Text(l10n.analysisErrorMessage)),
+            )
+          else if (options == null)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24),
               child: Center(child: CircularProgressIndicator()),

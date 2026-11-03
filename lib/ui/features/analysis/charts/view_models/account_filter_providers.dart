@@ -91,8 +91,8 @@ Stream<List<AccountSlice>> chartsAccountTotals(Ref ref) {
 
 /// [chartsAccountTotals] converted into the default currency and joined
 /// with the active accounts. Currencies without a rate are left out, like
-/// the summary card. Null until every input has loaded, and while the
-/// totals query is in error.
+/// the summary card. Loading until every input has loaded; an error when
+/// any input is in error, so the sheet never shows stale rows.
 @Riverpod(
   dependencies: [
     chartsAccountTotals,
@@ -102,20 +102,32 @@ Stream<List<AccountSlice>> chartsAccountTotals(Ref ref) {
     analysisAccountTypesById,
   ],
 )
-ChartsAccountFilterOptions? chartsAccountFilterOptions(Ref ref) {
+AsyncValue<ChartsAccountFilterOptions> chartsAccountFilterOptions(Ref ref) {
   final slicesAsync = ref.watch(chartsAccountTotalsProvider);
-  if (slicesAsync.hasError) return null;
+  final fxAsync = ref.watch(chartsFxStatusProvider);
+  final currenciesAsync = ref.watch(chartsCurrenciesByCodeProvider);
+  final accountsAsync = ref.watch(analysisAccountsByIdProvider);
+  final typesAsync = ref.watch(analysisAccountTypesByIdProvider);
+  for (final input in [
+    slicesAsync,
+    fxAsync,
+    currenciesAsync,
+    accountsAsync,
+    typesAsync,
+  ]) {
+    if (input.hasError) return AsyncError(input.error!, input.stackTrace!);
+  }
   final slices = slicesAsync.value;
-  final fx = ref.watch(chartsFxStatusProvider).value;
-  final currencies = ref.watch(chartsCurrenciesByCodeProvider).value;
-  final accounts = ref.watch(analysisAccountsByIdProvider).value;
-  final types = ref.watch(analysisAccountTypesByIdProvider).value;
+  final fx = fxAsync.value;
+  final currencies = currenciesAsync.value;
+  final accounts = accountsAsync.value;
+  final types = typesAsync.value;
   if (slices == null ||
       fx == null ||
       currencies == null ||
       accounts == null ||
       types == null) {
-    return null;
+    return const AsyncLoading();
   }
 
   final toCode = fx.defaultCurrencyCode;
@@ -161,9 +173,11 @@ ChartsAccountFilterOptions? chartsAccountFilterOptions(Ref ref) {
     if (byAmount != 0) return byAmount;
     return order[a.accountId]!.compareTo(order[b.accountId]!);
   });
-  return ChartsAccountFilterOptions(
-    currency: to,
-    totalMinorUnits: total,
-    accounts: options,
+  return AsyncData(
+    ChartsAccountFilterOptions(
+      currency: to,
+      totalMinorUnits: total,
+      accounts: options,
+    ),
   );
 }
