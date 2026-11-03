@@ -1,5 +1,6 @@
-// Account sheet rows — every active account with its converted total and
-// share of the current chart type for the selected period. See
+// Account sheet rows — every active account, plus the archived account the
+// page is filtered by (plan D25), with its converted total and share of the
+// current chart type for the selected period. See
 // `docs/superpowers/specs/2026-11-02-analysis-redesign-design.md`
 // § Account filter → Account sheet.
 //
@@ -160,12 +161,12 @@ AsyncValue<ChartsAccountFilterOptions> chartsAccountFilterOptions(Ref ref) {
     total += converted;
   }
 
-  final active = [
+  final listed = [
     for (final a in accounts.values)
       if (!a.isArchived || a.id == filterId) a,
   ];
   final options = [
-    for (final a in active)
+    for (final a in listed)
       ChartsAccountFilterOption(
         accountId: a.id,
         name: a.name,
@@ -179,7 +180,7 @@ AsyncValue<ChartsAccountFilterOptions> chartsAccountFilterOptions(Ref ref) {
       ),
   ];
   // List.sort is not stable: break ties on repository order.
-  final order = {for (var i = 0; i < active.length; i++) active[i].id: i};
+  final order = {for (var i = 0; i < listed.length; i++) listed[i].id: i};
   options.sort((a, b) {
     final byAmount = b.totalMinorUnits.compareTo(a.totalMinorUnits);
     if (byAmount != 0) return byAmount;
