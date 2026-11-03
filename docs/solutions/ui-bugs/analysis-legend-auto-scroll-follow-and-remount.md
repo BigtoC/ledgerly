@@ -22,6 +22,8 @@ tags: [flutter-scroll, ensure-visible, scroll-notification-observer, keyed-subtr
 ## Problem
 On the Analysis page, tapping a category should scroll the legend card to the top of the page. Clearing the selection should scroll back up until the whole pie shows.
 
+> **Update (2026-11-03):** a selection now lifts the trend card (the bar chart, `ChartsTrendCard`) to the top instead of the legend card, so the filtered bars show without scrolling past a long category list. `_revealContext` picks `_trendKey` and falls back to `_legendKey` when no trend card is shown (Day, or the currency breakdown with mixed currencies). The follow, stop conditions and remount handling below are unchanged; the identifiers were renamed from `_followLegend`, `_revealLegend` and `_legendAtTop`.
+
 A single `Scrollable.ensureVisible` call managed neither reliably. The drill-down list below the card loads after the tap, and a period change remounts the whole chart body under a new key.
 
 The code is `_ChartBodyState` in `lib/ui/features/analysis/charts/views/charts_section.dart`.
@@ -51,18 +53,18 @@ The code is `_ChartBodyState` in `lib/ui/features/analysis/charts/views/charts_s
 
 ```dart
 void _onScrollNotification(ScrollNotification notification) {
-  if (!_followLegend || notification.depth != 0) return;
+  if (!_followReveal || notification.depth != 0) return;
   if (notification is UserScrollNotification ||
       (notification is ScrollStartNotification &&
           notification.dragDetails != null)) {
-    _followLegend = false;
+    _followReveal = false;
     return;
   }
   // A content-size change reaches observers as an update with no delta.
   if (notification is ScrollUpdateNotification &&
       notification.scrollDelta == null &&
       !Scrollable.of(context).position.isScrollingNotifier.value) {
-    unawaited(_revealLegend(animate: false));
+    unawaited(_revealCard(animate: false));
   }
 }
 ```
@@ -76,15 +78,15 @@ void _onScrollNotification(ScrollNotification notification) {
 ```dart
 static const _kFollowWindow = Duration(seconds: 2);
 // on select:
-_followTimer = Timer(_kFollowWindow, () => _followLegend = false);
+_followTimer = Timer(_kFollowWindow, () => _followReveal = false);
 
-// after ensureVisible in _revealLegend:
-if (_legendAtTop(position) || (position.pixels - target).abs() > 0.5) {
+// after ensureVisible in _revealCard:
+if (_cardAtTop(position) || (position.pixels - target).abs() > 0.5) {
   // At the top, or a touch interrupted the animation: stop following.
-  _followLegend = false;
+  _followReveal = false;
 } else if (animate) {
   // The extent may have grown while the animation ran.
-  await _revealLegend(animate: false);
+  await _revealCard(animate: false);
 }
 ```
 
@@ -147,17 +149,18 @@ ref.listen(
   }
   ```
 - **Simulate a late load by overriding the controller's `build()`.** `_SlowDrilldownController` does this to hold back the rows: `Stream<void>.fromFuture(Future.delayed(delay)).asyncExpand((_) => rows)`.
-- **Regression tests.** The `legend auto-scroll` group in `test/integration/analysis_drilldown_test.dart` covers:
+- **Regression tests.** The `selection auto-scroll` group in `test/integration/analysis_drilldown_test.dart` covers:
 
   | Test | What it pins down |
   | --- | --- |
-  | Select, then clear | Card at the top, then the whole pie |
+  | Select, then clear | Trend card at the top, then the whole pie |
   | Late rows | The follow |
   | User drag | Stops the follow |
   | A→B switch | Scrolls to the card |
   | Period change | Shows the whole pie |
   | Step to a period without the banner | Pie top not hidden; seeds last week with USD-only rows |
   | Resize 5s after selecting at 360x700 | The follow window |
+  | Select on Day | No trend card, so the legend card comes up |
 
   The tests fail if the follow, the notification path or the drag-cancel is removed. The banner test (66px) and the resize test (100px) both failed before the fix.
 - **Annotate test helpers for `riverpod_lint`.** Test helpers that pump scoped providers, including local functions such as `pumpPhone`, need the full `@Dependencies([...])` list. See `docs/architecture/testing.md`.
