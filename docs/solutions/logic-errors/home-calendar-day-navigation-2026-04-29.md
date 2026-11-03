@@ -1,6 +1,7 @@
 ---
 title: Home calendar-day navigation, queued transitions, and selected-day summary priority
 date: 2026-04-29
+last_refreshed: 2026-11-03
 category: logic-errors
 module: home
 problem_type: logic_error
@@ -9,7 +10,7 @@ symptoms:
   - Jump-to-today could bypass the animated transition path used by prev/next navigation.
   - Rapid prev/next taps were silently dropped after five queued inputs.
   - Queued day transitions could appear to be skipped because stream resubscriptions depended on stale provider reads.
-  - The summary strip could hide the selected day's active currency when month-only currencies sorted earlier.
+  - "The summary strip could hide the selected day's active currency when month-only currencies sorted earlier (superseded: the strip now shows one converted total)"
 root_cause: logic_error
 resolution_type: code_fix
 severity: high
@@ -70,7 +71,6 @@ void _enqueueDayStep(int delta) {
 Future<void> _runQueuedTransitions() async {
   while (_directionQueue.isNotEmpty) {
     final direction = _directionQueue.removeFirst();
-    final beforeDay = _currentSelectedDay();
 
     if (direction > 0) {
       await ref.read(homeControllerProvider.notifier).selectNextDay();
@@ -78,20 +78,14 @@ Future<void> _runQueuedTransitions() async {
       await ref.read(homeControllerProvider.notifier).selectPrevDay();
     }
 
-    final afterDay = _currentSelectedDay();
-    final changed =
-        beforeDay == null ||
-        afterDay == null ||
-        !DateHelpers.isSameDay(beforeDay, afterDay);
-
-    if (changed) {
-      _incomingOffset = _buildOffsetAnimation(direction);
-      _daySwitchController.reset();
-      await _daySwitchController.forward();
-    }
+    _incomingOffset = _buildOffsetAnimation(direction);
+    _daySwitchController.reset();
+    await _daySwitchController.forward();
   }
 }
 ```
+
+The original fix still compared the selected day before and after each step (`beforeDay` / `afterDay`) and animated only on a change. The current code dropped that read and animates every requested step, which takes the "derive the transition from the action" rule below one step further.
 
 Route jump-to-today through the same transition path instead of mutating controller state directly:
 
@@ -132,31 +126,14 @@ void _subscribeSummaryStreams(DateTime today) {
 }
 ```
 
-Finally, prioritize selected-day currencies in the summary strip cap.
-
-In `lib/ui/features/home/views/summary_strip.dart`:
-
-```dart
-final todayCodes = todayTotalsByCurrency.keys.toSet();
-final allCodes = <String>{
-  ...todayCodes,
-  ...monthNetByCurrency.keys,
-}.toList()
-  ..sort((a, b) {
-    final aToday = todayCodes.contains(a);
-    final bToday = todayCodes.contains(b);
-    if (aToday && !bToday) return -1;
-    if (!aToday && bToday) return 1;
-    return a.compareTo(b);
-  });
-```
+Finally, the original fix put the selected day's currencies first in the summary strip's capped list. **Superseded:** multi-currency conversion (`docs/superpowers/specs/2026-05-14-multi-currency-conversion-design.md`) replaced the per-currency groups and their cap. `lib/ui/features/home/views/summary_strip.dart` now sums every currency into one total in the default currency and lists only currencies without a rate, alphabetically and uncapped. No currency can be hidden, so the priority sort is gone.
 
 ## Why This Works
 
 - Transition logic now matches user intent: the queue drains in order, but the UI animates based on the requested step, not on whether a later provider read happened to return the new day synchronously.
 - Removing the hard cap prevents silent input loss while still allowing the animation controller to process queued moves sequentially.
 - The controller no longer tears down and recreates day/summary subscriptions when the subscribed day has not changed, which makes rapid navigation more predictable.
-- The summary strip now shows the currencies that are actually active on the selected day before it shows month-only currencies.
+- (Historical) The summary strip showed the selected day's active currencies before month-only ones. Its converted total no longer caps currencies at all.
 
 ## Prevention
 
@@ -176,3 +153,4 @@ final allCodes = <String>{
 - `docs/solutions/logic-errors/home-delete-undo-stream-coordination-2026-04-26.md` — another Home stream-timing coordination fix.
 - `docs/solutions/logic-errors/transaction-form-workflow-integrity-2026-04-25.md` — related async-mutation and UI contract patterns.
 - `docs/solutions/best-practices/reactive-feature-flow-ownership-2026-04-25.md` — broader guidance on controller/state ownership of reactive feature flows.
+- `docs/solutions/ui-bugs/period-picker-flexible-header-split-and-queued-steps-under-modal.md` — Analysis uses the same `_directionQueue` pattern. There, steps still queued when the period picker opened ran after the pick, and the fix clears the queue on the absolute jump. Home's `_onPickDay` and `onJumpToToday` call `pinDay` without clearing `_directionQueue`.
