@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -553,5 +556,76 @@ void main() {
     // The caption stays between the two kept 48 slots.
     expect(caption.left, greaterThanOrEqualTo(8 + 48 + 4));
     expect(caption.right, lessThanOrEqualTo(360 - 8 - 48 - 4));
+  });
+
+  // Keep last: the loaded Roboto stays registered for the rest of the file.
+  group('segment labels at phone width (Roboto)', () {
+    setUpAll(() async {
+      final root = Platform.environment['FLUTTER_ROOT']!;
+      final loader = FontLoader('Roboto');
+      for (final face in ['Regular', 'Medium']) {
+        final bytes = File(
+          '$root/bin/cache/artifacts/material_fonts/Roboto-$face.ttf',
+        ).readAsBytesSync();
+        loader.addFont(Future.value(ByteData.sublistView(bytes)));
+      }
+      await loader.load();
+    });
+
+    const labels = ['Day', 'Week', 'Month', 'Year', 'All'];
+
+    Rect segmentRect(WidgetTester tester, String label) => tester.getRect(
+      find.ancestor(of: find.text(label), matching: find.byType(InkWell)).first,
+    );
+
+    for (final width in [360.0, 390.0]) {
+      testWidgets('2× at $width wide: each label is one line that fits its '
+          'segment (plan D23)', (tester) async {
+        await tester.binding.setSurfaceSize(Size(width, 800));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await pump(tester, selector(isAtCurrent: true), textScale: 2);
+
+        expect(tester.takeException(), isNull);
+        for (final label in labels) {
+          final paragraph = tester.renderObject<RenderParagraph>(
+            find.text(label),
+          );
+          final lineTops = paragraph
+              .getBoxesForSelection(
+                TextSelection(baseOffset: 0, extentOffset: label.length),
+              )
+              .map((b) => b.top)
+              .toSet();
+          expect(lineTops, hasLength(1), reason: label);
+          final text = tester.getRect(find.text(label));
+          final segment = segmentRect(tester, label);
+          expect(text.left, greaterThanOrEqualTo(segment.left), reason: label);
+          expect(text.right, lessThanOrEqualTo(segment.right), reason: label);
+        }
+      });
+    }
+
+    testWidgets('1× at 360 wide: labels render at full size', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(360, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await pump(tester, selector(isAtCurrent: true));
+
+      for (final label in labels) {
+        final paragraph = tester.renderObject<RenderParagraph>(
+          find.text(label),
+        );
+        expect(
+          tester.getRect(find.text(label)).width,
+          closeTo(paragraph.size.width, 0.01),
+          reason: label,
+        );
+        // 14 px Roboto Medium, one 20 px line, unscaled.
+        expect(
+          tester.getRect(find.text(label)).height,
+          closeTo(paragraph.size.height, 0.01),
+          reason: label,
+        );
+      }
+    });
   });
 }

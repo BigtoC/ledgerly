@@ -140,7 +140,7 @@ class PeriodTrack extends StatelessWidget {
           color: colors.track,
           borderRadius: BorderRadius.circular(25),
         ),
-        // Segments share the tallest one's height when a label wraps at
+        // Segments share the tallest one's height when a label grows at
         // large text scales, like the design's grid row.
         child: IntrinsicHeight(
           child: Row(
@@ -201,15 +201,21 @@ class _PeriodSegment extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(22),
+            // One line, shrunk only when it would not fit (plan D23).
             child: Center(
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0,
-                  color: selected ? colors.fg : colors.fg2,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  softWrap: false,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0,
+                    color: selected ? colors.fg : colors.fg2,
+                  ),
                 ),
               ),
             ),
