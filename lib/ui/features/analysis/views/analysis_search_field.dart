@@ -23,6 +23,7 @@ class AnalysisSearchField extends StatelessWidget {
     required this.controller,
     required this.focusNode,
     required this.openButtonFocusNode,
+    required this.closeButtonFocusNode,
     required this.onOpen,
     required this.onClose,
     required this.onChanged,
@@ -36,6 +37,10 @@ class AnalysisSearchField extends StatelessWidget {
   /// Focus node of the collapsed search button, so the parent can return
   /// focus to it after Close.
   final FocusNode openButtonFocusNode;
+
+  /// Focus node of the Close button, so the parent can tell a keyboard
+  /// close (Close held focus) from a tap.
+  final FocusNode closeButtonFocusNode;
   final VoidCallback onOpen;
   final VoidCallback onClose;
   final ValueChanged<String> onChanged;
@@ -81,6 +86,7 @@ class AnalysisSearchField extends StatelessWidget {
                     child: _ExpandedContent(
                       controller: controller,
                       focusNode: focusNode,
+                      closeButtonFocusNode: closeButtonFocusNode,
                       onClose: onClose,
                       onChanged: onChanged,
                     ),
@@ -139,12 +145,14 @@ class _ExpandedContent extends StatelessWidget {
   const _ExpandedContent({
     required this.controller,
     required this.focusNode,
+    required this.closeButtonFocusNode,
     required this.onClose,
     required this.onChanged,
   });
 
   final TextEditingController controller;
   final FocusNode focusNode;
+  final FocusNode closeButtonFocusNode;
   final VoidCallback onClose;
   final ValueChanged<String> onChanged;
 
@@ -222,6 +230,7 @@ class _ExpandedContent extends StatelessWidget {
         ),
         IconButton(
           tooltip: l10n.analysisSearchClose,
+          focusNode: closeButtonFocusNode,
           onPressed: onClose,
           icon: const Icon(Icons.close),
           iconSize: 20,

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -510,6 +511,43 @@ void main() {
         findsOneWidget,
       );
     });
+
+    for (final kind in [PointerDeviceKind.touch, PointerDeviceKind.mouse]) {
+      testWidgets('closing with a ${kind.name} tap leaves the search button '
+          'unfocused', (tester) async {
+        if (kind == PointerDeviceKind.mouse) {
+          // A pointer device shows focus highlights (desktop, iPad pointer).
+          FocusManager.instance.highlightStrategy =
+              FocusHighlightStrategy.alwaysTraditional;
+          addTearDown(
+            () => FocusManager.instance.highlightStrategy =
+                FocusHighlightStrategy.automatic,
+          );
+        }
+        await tester.pumpWidget(_harness(tx: tx, cat: cat, acct: acct));
+        await tester.pump();
+        await _openSearch(tester);
+
+        await tester.tap(find.byTooltip('Close search'), kind: kind);
+        await tester.pump();
+        await tester.pump(AnalysisMotion.searchExpandDuration);
+
+        final searchButton = find.ancestor(
+          of: find.byIcon(Icons.search),
+          matching: find.byType(IconButton),
+        );
+        final primary = FocusManager.instance.primaryFocus?.context?.widget;
+        expect(
+          primary == null
+              ? findsNothing
+              : find.ancestor(
+                  of: find.byWidget(primary),
+                  matching: searchButton,
+                ),
+          findsNothing,
+        );
+      });
+    }
 
     testWidgets('IME composition does not dispatch a search', (tester) async {
       when(() => tx.watchByMemo(any())).thenAnswer((_) => Stream.value([]));
