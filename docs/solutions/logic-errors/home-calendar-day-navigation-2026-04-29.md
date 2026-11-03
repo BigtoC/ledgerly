@@ -85,6 +85,30 @@ Future<void> _runQueuedTransitions() async {
 }
 ```
 
+### Absolute jumps and the queue (2026-11-03)
+
+Jump-to-today and the date picker call `pinDay` and then `reset()` the shared `_daySwitchController`. That cancels the queue's in-flight slide, and a cancelled `TickerFuture` never completes, so two things went wrong:
+- the loop hung with steps left in the queue, and the next ‹ › started a fresh loop that drained them all, moving several days at once;
+- `_enqueueDayStep` started a loop only when nothing was animating, so a swipe made during the jump's own slide sat in the queue until the next tap.
+
+Both jumps now clear the queue first (`_dropQueuedSteps`). The drain loop tracks its own `_draining` flag and awaits `forward().orCancel`, treating `TickerCanceled` as done:
+
+```dart
+void _enqueueDayStep(int delta) {
+  _directionQueue.add(delta > 0 ? 1 : -1);
+  if (!_draining) unawaited(_runQueuedTransitions());
+}
+
+// In _runQueuedTransitions, inside `while (mounted && ...)`:
+try {
+  await _daySwitchController.forward().orCancel;
+} on TickerCanceled {
+  // Superseded by a jump, or the screen was disposed.
+}
+```
+
+Tests WH22–WH24 in `test/widget/features/home/home_screen_test.dart` cover this. They queue steps with quick hand-built flings (`startGesture` + timed `moveBy`), because `fling` / `flingFrom` pump frames until the running slide ends, so nothing would queue.
+
 The original fix still compared the selected day before and after each step (`beforeDay` / `afterDay`) and animated only on a change. The current code dropped that read and animates every requested step, which takes the "derive the transition from the action" rule below one step further.
 
 Route jump-to-today through the same transition path instead of mutating controller state directly:
@@ -139,6 +163,7 @@ Finally, the original fix put the selected day's currencies first in the summary
 
 - When a screen transition depends on a requested action, derive the transition from the action itself rather than from a post-hoc provider read.
 - If a navigation system allows queued inputs, either honor all inputs or coalesce them deliberately—do not silently drop them.
+- An absolute jump (date pick, jump-to-today) clears queued relative steps. A loop that awaits an animation another path can reset should await `orCancel` and track its own running flag, not `isAnimating`.
 - Avoid resubscribing to streams on every command when the subscription target has not changed, especially under broadcast-stream test helpers.
 - When a UI cap hides data, prioritize the most relevant subset for the current context instead of using a purely static sort order.
 
@@ -153,4 +178,4 @@ Finally, the original fix put the selected day's currencies first in the summary
 - `docs/solutions/logic-errors/home-delete-undo-stream-coordination-2026-04-26.md` — another Home stream-timing coordination fix.
 - `docs/solutions/logic-errors/transaction-form-workflow-integrity-2026-04-25.md` — related async-mutation and UI contract patterns.
 - `docs/solutions/best-practices/reactive-feature-flow-ownership-2026-04-25.md` — broader guidance on controller/state ownership of reactive feature flows.
-- `docs/solutions/ui-bugs/period-picker-flexible-header-split-and-queued-steps-under-modal.md` — Analysis uses the same `_directionQueue` pattern. There, steps still queued when the period picker opened ran after the pick, and the fix clears the queue on the absolute jump. Home's `_onPickDay` and `onJumpToToday` call `pinDay` without clearing `_directionQueue`.
+- `docs/solutions/ui-bugs/period-picker-flexible-header-split-and-queued-steps-under-modal.md` — Analysis uses the same `_directionQueue` pattern. There, steps still queued when the period picker opened ran after the pick, and the fix clears the queue on the absolute jump. Home had the same race, fixed the same way (see *Absolute jumps and the queue* above).

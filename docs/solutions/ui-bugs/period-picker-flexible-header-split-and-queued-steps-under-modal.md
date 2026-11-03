@@ -166,7 +166,7 @@ Future<void> _openPeriodPicker() async {
 ## Related Issues
 
 - Issue #73 and PR #131 (the period picker).
-- [`../logic-errors/home-calendar-day-navigation-2026-04-29.md`](../logic-errors/home-calendar-day-navigation-2026-04-29.md) documents the same `_directionQueue` / `_runQueuedTransitions` pattern on Home. Home's date pick and jump-to-today don't clear the queue either, so they may have this race (code reading only, not reproduced).
+- [`../logic-errors/home-calendar-day-navigation-2026-04-29.md`](../logic-errors/home-calendar-day-navigation-2026-04-29.md) documents the same `_directionQueue` / `_runQueuedTransitions` pattern on Home. Home had the same race on its date pick and jump-to-today, plus a loop that hung when a jump cancelled its slide; that doc covers the Home fix.
 - [`category-picker-fixed-extent-fittedbox-cancels-text-scale.md`](category-picker-fixed-extent-fittedbox-cancels-text-scale.md) is an earlier fixed-size region whose 2× test stayed green. It fixes the problem by scaling the height with the text. The 1.5× clamp here is the other route AGENTS.md allows.
 - [`../developer-experience/flutter-widget-test-and-device-verification-gotchas.md`](../developer-experience/flutter-widget-test-and-device-verification-gotchas.md) covers the Ahem font and 2× test gotchas.
 - [`analysis-legend-auto-scroll-follow-and-remount.md`](analysis-legend-auto-scroll-follow-and-remount.md) describes another `pumpAndSettle` false pass in `charts_section.dart`, there through a spinner delay.
