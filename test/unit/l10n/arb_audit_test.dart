@@ -488,6 +488,25 @@ const Set<String> _expectedEnKeys = <String>{
   'chartsEmptyPickAnother',
   'chartsPreviousPeriod',
   'chartsNextPeriod',
+
+  // Analysis period picker (issue #73)
+  // (docs/superpowers/specs/2026-11-03-analysis-period-picker-design.md).
+  'chartsPickDay',
+  'chartsPickWeek',
+  'chartsPickMonth',
+  'chartsPickYear',
+  'chartsPickerSelected',
+  'chartsPickerOpenLabel',
+  'chartsPickerWeekColumn',
+  'chartsPickerWeekNumber',
+  'chartsPickerWeekRow',
+  'chartsPickerChooseMonth',
+  'chartsPickerChooseYear',
+  'chartsPickerPreviousMonth',
+  'chartsPickerNextMonth',
+  'chartsPickerPreviousYear',
+  'chartsPickerNextYear',
+  'chartsPickerRecordsStart',
 };
 
 Map<String, dynamic> _readArb(String fileName) {
