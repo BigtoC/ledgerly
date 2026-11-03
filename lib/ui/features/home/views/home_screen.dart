@@ -68,6 +68,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   late Animation<Offset> _incomingOffset;
   final Queue<int> _directionQueue = Queue<int>();
 
+  /// True while [_runQueuedTransitions] drains the queue. A jump's own
+  /// slide is not a drain, so a step queued during it still starts one.
+  bool _draining = false;
+
   @override
   void initState() {
     super.initState();
@@ -98,26 +102,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   void _enqueueDayStep(int delta) {
     _directionQueue.add(delta > 0 ? 1 : -1);
-    if (!_daySwitchController.isAnimating) {
-      unawaited(_runQueuedTransitions());
-    }
+    if (!_draining) unawaited(_runQueuedTransitions());
   }
 
   Future<void> _runQueuedTransitions() async {
-    while (_directionQueue.isNotEmpty) {
-      final direction = _directionQueue.removeFirst();
+    _draining = true;
+    try {
+      while (mounted && _directionQueue.isNotEmpty) {
+        final direction = _directionQueue.removeFirst();
 
-      if (direction > 0) {
-        await ref.read(homeControllerProvider.notifier).selectNextDay();
-      } else {
-        await ref.read(homeControllerProvider.notifier).selectPrevDay();
+        if (direction > 0) {
+          await ref.read(homeControllerProvider.notifier).selectNextDay();
+        } else {
+          await ref.read(homeControllerProvider.notifier).selectPrevDay();
+        }
+
+        _incomingOffset = _buildOffsetAnimation(direction);
+        _daySwitchController.reset();
+        // A jump resets the controller mid-slide. A cancelled slide never
+        // completes its plain future, so wait on orCancel and move on.
+        try {
+          await _daySwitchController.forward().orCancel;
+        } on TickerCanceled {
+          // Superseded by a jump, or the screen was disposed.
+        }
       }
-
-      _incomingOffset = _buildOffsetAnimation(direction);
-      _daySwitchController.reset();
-      await _daySwitchController.forward();
+    } finally {
+      _draining = false;
     }
   }
+
+  /// Picking a day or jumping to today is an absolute move: steps still
+  /// queued would otherwise run after it and shift the day again.
+  void _dropQueuedSteps() => _directionQueue.clear();
 
   DateTime? _currentSelectedDay() {
     final s = ref.read(homeControllerProvider);
@@ -187,6 +204,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             onNext: () => _enqueueDayStep(1),
             onPickDay: () => _onPickDay(data),
             onJumpToToday: () async {
+              _dropQueuedSteps();
               final current = _currentSelectedDay();
               if (current != null &&
                   DateHelpers.isSameDay(data.today, current)) {
@@ -240,6 +258,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   Future<void> _onPickDay(HomeData data) async {
+    _dropQueuedSteps();
     // Cap the date picker to [DateTime(1900), today] — consistent with
     // _minSelectableDay in HomeController and the prev/next boundaries.
     // No future dates: users cannot pre-enter future transactions via

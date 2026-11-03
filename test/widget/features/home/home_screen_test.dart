@@ -893,6 +893,170 @@ void main() {
     },
   );
 
+  // Drift re-emits at once for each new selected day; the mocks need a feed.
+  void feed() {
+    dayCtrl.add(const []);
+    todayTotalsCtrl.add(const {});
+    monthNetCtrl.add(const {});
+  }
+
+  Future<void> drain(WidgetTester tester) async {
+    for (var i = 0; i < 8; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+      feed();
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+    await tester.pumpAndSettle();
+  }
+
+  // Settles on yesterday, then queues back steps with three quick right
+  // flings over the body: the swipe detector sits outside the slide, so they
+  // queue mid-slide. Ends about 250 ms into the running slide, when the
+  // sliding header is back in reach of a tap.
+  @Dependencies([initialDefaultCurrency, defaultCurrency, exchangeRates])
+  Future<DateTime> queueBackSteps(WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(makeApp());
+    await seedAll(tester);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    activityCtrl.add([today]);
+    feed();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.chevron_left));
+    await tester.pump(const Duration(milliseconds: 50));
+    feed();
+    await tester.pumpAndSettle();
+
+    for (var i = 0; i < 3; i++) {
+      // A fast fling from a fixed point: the body is sliding off-centre, and
+      // flingFrom would pump frames until the running slide ends.
+      final g = await tester.startGesture(const Offset(150, 500));
+      for (var m = 1; m <= 5; m++) {
+        await g.moveBy(
+          const Offset(40, 0),
+          timeStamp: Duration(milliseconds: 10 * m),
+        );
+      }
+      await g.up(timeStamp: const Duration(milliseconds: 60));
+      await tester.pump(const Duration(milliseconds: 20));
+      feed();
+    }
+    await tester.pump(const Duration(milliseconds: 190));
+    return today;
+  }
+
+  testWidgets('WH22: back steps still queued when jumping to today never run '
+      'later', (tester) async {
+    final today = await queueBackSteps(tester);
+
+    await tester.tap(find.text('Jump to today'));
+    await drain(tester);
+    expect(find.text(DateHelpers.formatDayHeader(today, 'en')), findsOneWidget);
+
+    // The next ‹ steps back exactly one day: no leftover steps run.
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.chevron_left));
+    await drain(tester);
+    expect(
+      find.text(
+        DateHelpers.formatDayHeader(
+          DateTime(today.year, today.month, today.day - 1),
+          'en',
+        ),
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'WH23: back steps still queued when picking a date never run later',
+    (tester) async {
+      await queueBackSteps(tester);
+
+      await tester.tap(find.byKey(const ValueKey('homeDayHeader.pickDay')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      // Pick the 1st of the shown month, then confirm.
+      final shown = tester
+          .widget<DatePickerDialog>(find.byType(DatePickerDialog))
+          .initialDate!;
+      final picked = DateTime(shown.year, shown.month, 1);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(DatePickerDialog),
+          matching: find.text('1'),
+        ),
+      );
+      await tester.pump();
+      await tester.tap(find.text('OK'));
+      await drain(tester);
+      expect(
+        find.text(DateHelpers.formatDayHeader(picked, 'en')),
+        findsOneWidget,
+      );
+
+      // The next ‹ steps back exactly one day: no leftover steps run.
+      await tester.tap(find.widgetWithIcon(IconButton, Icons.chevron_left));
+      await drain(tester);
+      expect(
+        find.text(
+          DateHelpers.formatDayHeader(
+            DateTime(picked.year, picked.month, picked.day - 1),
+            'en',
+          ),
+        ),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('WH24: a swipe during the jump-to-today slide steps back on its '
+      'own', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(makeApp());
+    await seedAll(tester);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    activityCtrl.add([today]);
+    feed();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.chevron_left));
+    await tester.pump(const Duration(milliseconds: 50));
+    feed();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Jump to today'));
+    await tester.pump(const Duration(milliseconds: 50));
+    feed();
+    // Swipe right (back) while the jump's slide is still running.
+    final g = await tester.startGesture(const Offset(150, 500));
+    for (var m = 1; m <= 5; m++) {
+      await g.moveBy(
+        const Offset(40, 0),
+        timeStamp: Duration(milliseconds: 10 * m),
+      );
+    }
+    await g.up(timeStamp: const Duration(milliseconds: 60));
+    await drain(tester);
+
+    expect(
+      find.text(
+        DateHelpers.formatDayHeader(
+          DateTime(today.year, today.month, today.day - 1),
+          'en',
+        ),
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('WH21: transaction rows have no overflow menu or swipe pane', (
     tester,
   ) async {
