@@ -56,14 +56,24 @@
 </div>
 
 <div style="display: flex; align-items: center; gap: 4px; padding: 8px 8px 0">
-<button type="button" aria-label="Previous period" style="{{prevStyle}}">
+<button type="button" aria-label="Previous period" onClick="{{navPrev}}" style="{{prevStyle}}">
 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
 </button>
-<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center">
+<div style="flex: 1; min-width: 0; display: flex; justify-content: center">
+<sc-if value="{{pkCanPick}}" hint-placeholder-val="{{ true }}">
+<button type="button" aria-haspopup="dialog" aria-expanded="{{pkOpen}}" aria-label="{{pkAria}}" onClick="{{pkOpenPicker}}" style="{{pkLabelBtnStyle}}">
+<span style="display: flex; align-items: center; gap: 4px; font-size: 18px; line-height: 24px; font-weight: 500; color: var(--fg)">{{periodLabel}}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="{{pkCaretStyle}}"><path d="m6 9 6 6 6-6"></path></svg></span>
+<span style="font-size: 12px; line-height: 16px; color: var(--fg3)">{{periodCaption}}</span>
+</button>
+</sc-if>
+<sc-if value="{{pkIsAll}}" hint-placeholder-val="{{ false }}">
+<div style="min-height: 48px; padding: 4px 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; box-sizing: border-box; text-align: center">
 <div style="font-size: 18px; line-height: 24px; font-weight: 500; color: var(--fg)">{{periodLabel}}</div>
 <div style="font-size: 12px; line-height: 16px; color: var(--fg3)">{{periodCaption}}</div>
 </div>
-<button type="button" aria-label="Next period" disabled="{{ true }}" style="{{nextStyle}}">
+</sc-if>
+</div>
+<button type="button" aria-label="Next period" disabled="{{pkAtCurrent}}" onClick="{{navNext}}" style="{{nextStyle}}">
 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
 </button>
 </div>
@@ -288,14 +298,86 @@
 </div>
 </div>
 </sc-if>
+
+<sc-if value="{{pkShow}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; justify-content: flex-end">
+<button type="button" aria-label="Close picker" onClick="{{pkClose}}" style="position: absolute; inset: 0; border: 0; padding: 0; background: rgba(0,0,0,0.32); cursor: pointer"></button>
+<div role="dialog" aria-modal="true" aria-label="{{pkTitle}}" style="position: relative; background: var(--card); border-radius: 28px 28px 0 0; padding: 0 0 24px; box-shadow: 0 -2px 16px rgba(0,0,0,0.12)">
+<div aria-hidden="true" style="display: flex; justify-content: center; padding: 16px 0 8px"><span style="width: 32px; height: 4px; border-radius: 2px; background: var(--outline)"></span></div>
+<div style="padding: 8px 16px 8px 24px; display: flex; align-items: flex-start; gap: 8px">
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<h2 style="margin: 0; font-size: 20px; line-height: 28px; font-weight: 500; color: var(--fg)">{{pkTitle}}</h2>
+<span style="font-size: 14px; line-height: 20px; color: var(--fg2); font-variant-numeric: tabular-nums">{{pkSub}}</span>
+</div>
+<button type="button" onClick="{{pkJumpNow}}" style="height: 40px; flex: none; padding: 0 12px; border: 0; border-radius: 20px; background: transparent; color: var(--accent-text); font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer">{{pkNowLabel}}</button>
+</div>
+<div style="padding: 4px 8px 4px 12px; display: flex; align-items: center; gap: 4px">
+<sc-if value="{{pkBrowseIsBtn}}" hint-placeholder-val="{{ true }}">
+<button type="button" aria-label="{{pkBrowseAria}}" onClick="{{pkBrowseUp}}" style="height: 40px; padding: 0 8px 0 12px; border: 0; border-radius: 20px; background: transparent; display: flex; align-items: center; gap: 4px; font-family: inherit; font-size: 16px; line-height: 22px; font-weight: 500; color: var(--fg); cursor: pointer">{{pkBrowseTitle}}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--fg2)"><path d="m6 9 6 6 6-6"></path></svg></button>
+</sc-if>
+<sc-if value="{{pkBrowseIsText}}" hint-placeholder-val="{{ false }}">
+<span style="height: 40px; padding: 0 12px; display: flex; align-items: center; font-size: 16px; line-height: 22px; font-weight: 500; color: var(--fg)">{{pkBrowseTitle}}</span>
+</sc-if>
+<span style="flex: 1"></span>
+<sc-if value="{{pkShowBrowseNav}}" hint-placeholder-val="{{ true }}">
+<button type="button" aria-label="{{pkPrevAria}}" disabled="{{pkPrevOff}}" onClick="{{pkPrev}}" style="{{pkPrevStyle}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button>
+<button type="button" aria-label="{{pkNextAria}}" disabled="{{pkNextOff}}" onClick="{{pkNext}}" style="{{pkNextStyle}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
+</sc-if>
+</div>
+<sc-if value="{{pkShowDays}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 0 16px">
+<div aria-hidden="true" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); height: 32px; align-items: center; text-align: center; font-size: 12px; line-height: 16px; font-weight: 500; color: var(--fg3)">
+<sc-for list="{{pkWeekdays}}" as="w" hint-placeholder-count="7"><span>{{w}}</span></sc-for>
+</div>
+<div role="grid" aria-label="{{pkBrowseTitle}}" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); row-gap: 2px">
+<sc-for list="{{pkDayCells}}" as="c" hint-placeholder-count="30">
+<button type="button" aria-label="{{c.aria}}" aria-pressed="{{c.pressed}}" aria-hidden="{{c.blank}}" disabled="{{c.disabled}}" onClick="{{c.pick}}" style="{{c.style}}"><span style="{{c.inner}}">{{c.label}}</span></button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{pkShowWeeks}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 0 16px">
+<div aria-hidden="true" style="display: grid; grid-template-columns: 40px repeat(7, minmax(0, 1fr)); height: 32px; align-items: center; text-align: center; font-size: 12px; line-height: 16px; font-weight: 500; color: var(--fg3)">
+<span>Wk</span>
+<sc-for list="{{pkWeekdays}}" as="w" hint-placeholder-count="7"><span>{{w}}</span></sc-for>
+</div>
+<div role="listbox" aria-label="{{pkBrowseTitle}}" style="display: flex; flex-direction: column; gap: 4px">
+<sc-for list="{{pkWeekRows}}" as="r" hint-placeholder-count="5">
+<button type="button" role="option" aria-label="{{r.aria}}" aria-selected="{{r.pressed}}" disabled="{{r.disabled}}" onClick="{{r.pick}}" style="{{r.style}}">
+<span style="{{r.wkStyle}}">{{r.wk}}</span>
+<sc-for list="{{r.days}}" as="d" hint-placeholder-count="7"><span style="{{d.style}}">{{d.label}}</span></sc-for>
+</button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{pkShowMonths}}" hint-placeholder-val="{{ false }}">
+<div role="grid" aria-label="{{pkBrowseTitle}}" style="padding: 8px 16px 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{pkMonthCells}}" as="c" hint-placeholder-count="12">
+<button type="button" aria-label="{{c.aria}}" aria-pressed="{{c.pressed}}" disabled="{{c.disabled}}" onClick="{{c.pick}}" style="{{c.style}}">{{c.label}}</button>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{pkShowYears}}" hint-placeholder-val="{{ false }}">
+<div role="grid" aria-label="Years" style="padding: 8px 16px 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{pkYearCells}}" as="c" hint-placeholder-count="2">
+<button type="button" aria-label="{{c.aria}}" aria-pressed="{{c.pressed}}" onClick="{{c.pick}}" style="{{c.style}}">{{c.label}}</button>
+</sc-for>
+</div>
+</sc-if>
+<p style="margin: 12px 24px 0; font-size: 12px; line-height: 16px; color: var(--fg3)">{{pkFootnote}}</p>
+</div>
+</div>
+</sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"period":{"editor":"enum","options":["day","week","month","year"],"default":"month"},"layout":{"editor":"enum","options":["phone","full"],"default":"phone"},"type":{"editor":null,"default":"expense"},"dim":{"editor":null,"default":"category"},"sel":{"editor":null,"default":-1},"acc":{"editor":null,"default":""},"sheet":{"editor":null,"default":false},"search":{"editor":null,"default":false},"$preview":{"width":390,"height":844}}'>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"period":{"editor":"enum","options":["day","week","month","year"],"default":"month"},"layout":{"editor":"enum","options":["phone","full"],"default":"phone"},"type":{"editor":null,"default":"expense"},"dim":{"editor":null,"default":"category"},"sel":{"editor":null,"default":-1},"acc":{"editor":null,"default":""},"sheet":{"editor":null,"default":false},"search":{"editor":null,"default":false},"picker":{"editor":null,"default":false},"pickerView":{"editor":null,"default":"auto"},"anchor":{"editor":null,"default":""},"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
   componentDidUpdate(prev) {
     const p = this.props || {};
-    if (prev.period !== p.period || prev.type !== p.type || prev.dim !== p.dim || prev.sel !== p.sel || prev.acc !== p.acc || prev.sheet !== p.sheet || prev.search !== p.search) {
-      this.setState({ period: undefined, type: undefined, dim: undefined, sel: undefined, acc: undefined, sheet: undefined, search: undefined });
+    if (prev.period !== p.period || prev.type !== p.type || prev.dim !== p.dim || prev.sel !== p.sel || prev.acc !== p.acc || prev.sheet !== p.sheet || prev.search !== p.search || prev.picker !== p.picker || prev.pickerView !== p.pickerView || prev.anchor !== p.anchor) {
+      this.setState({ period: undefined, type: undefined, dim: undefined, sel: undefined, acc: undefined, sheet: undefined, search: undefined, picker: undefined, pview: undefined, anchor: undefined, cy: undefined, cm: undefined });
     }
   }
 
@@ -602,13 +684,195 @@ class Component extends DCLogic {
     const barsStyle = { position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-end', gap: barGap };
     const labelsStyle = { display: 'flex', gap: barGap, marginTop: '-4px' };
 
-    const PL = {
-      day: ['Sat, Oct 31, 2026', 'Today'],
-      week: ['Oct 26 – Nov 1, 2026', 'This week'],
-      month: ['October 2026', 'This month'],
-      year: ['2026', 'This year'],
-      all: ['All time', 'Jan 2025 – Oct 2026'],
-    }[period];
+    // Period navigator + period picker (issue #73). Picking a period only
+    // changes the labels here: the sample data stays the same mock.
+    const PK = (() => {
+      const TODAY = new Date(2026, 9, 31);
+      const FIRST = new Date(2025, 0, 6); // earliest transaction (mock)
+      const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const MONTH = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const day0 = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+      const sow = (d) => { const b = day0(d); return addDays(b, -((b.getDay() + 6) % 7)); };
+      const norm = (d, p) => p === 'week' ? sow(d) : p === 'month' ? new Date(d.getFullYear(), d.getMonth(), 1) : p === 'year' ? new Date(d.getFullYear(), 0, 1) : day0(d);
+      const shift = (d, p, n) => {
+        const b = norm(d, p);
+        if (p === 'day') return addDays(b, n);
+        if (p === 'week') return addDays(b, 7 * n);
+        if (p === 'month') return new Date(b.getFullYear(), b.getMonth() + n, 1);
+        if (p === 'year') return new Date(b.getFullYear() + n, 0, 1);
+        return b;
+      };
+      const same = (a, b) => a.getTime() === b.getTime();
+      const md = (d) => MON[d.getMonth()] + ' ' + d.getDate();
+      const isoWeek = (d) => {
+        const t = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 3 - ((d.getDay() + 6) % 7));
+        const y1 = new Date(t.getFullYear(), 0, 4);
+        return 1 + Math.round(((t - y1) / 86400000 - 3 + ((y1.getDay() + 6) % 7)) / 7);
+      };
+      const parsed = (() => {
+        const m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(String(P.anchor || '').trim());
+        return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+      })();
+
+      const isAll = period === 'all';
+      const anchor = norm(S.anchor != null ? new Date(S.anchor) : (parsed || TODAY), period);
+      const open = !isAll && (S.picker !== undefined ? S.picker : (P.picker === true || P.picker === 'true'));
+      const defView = period === 'month' ? 'months' : period === 'year' ? 'years' : 'grid';
+      const view = S.pview ?? (P.pickerView && P.pickerView !== 'auto' ? P.pickerView : defView);
+      const cy = S.cy ?? anchor.getFullYear();
+      const cm = S.cm ?? anchor.getMonth();
+      const atCurrent = isAll || !(anchor < norm(TODAY, period));
+      const labelFor = (p, a) => p === 'day' ? WD[a.getDay()] + ', ' + md(a) + ', ' + a.getFullYear()
+        : p === 'week' ? md(a) + ' – ' + md(addDays(a, 6)) + ', ' + a.getFullYear()
+        : p === 'month' ? MONTH[a.getMonth()] + ' ' + a.getFullYear()
+        : String(a.getFullYear());
+      const NOW = { day: 'Today', week: 'This week', month: 'This month', year: 'This year' };
+      const TITLES = { day: 'Choose a day', week: 'Choose a week', month: 'Choose a month', year: 'Choose a year' };
+      const PLv = isAll
+        ? ['All time', MON[FIRST.getMonth()] + ' ' + FIRST.getFullYear() + ' – ' + MON[TODAY.getMonth()] + ' ' + TODAY.getFullYear()]
+        : [labelFor(period, anchor), atCurrent ? NOW[period] : ''];
+      const apply = (d) => set({ anchor: norm(d, period).getTime(), picker: false, pview: undefined, cy: undefined, cm: undefined, sel: -1 });
+
+      // Bounds: today, and the earlier of the first record's month and the
+      // selected period's month (so the picker never opens all disabled).
+      const lastMonth = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1);
+      const recMonth = new Date(FIRST.getFullYear(), FIRST.getMonth(), 1);
+      const anchorMonth = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
+      const lowMonth = anchorMonth < recMonth ? anchorMonth : recMonth;
+      const cursorMonth = new Date(cy, cm, 1);
+
+      const circle = (on, ring, off) => ({
+        width: '40px', height: '40px', borderRadius: '20px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: '14px', lineHeight: '20px', fontWeight: on ? 500 : 400, fontVariantNumeric: 'tabular-nums',
+        background: on ? 'var(--on-bg)' : 'transparent', color: on ? 'var(--on-fg)' : off ? 'var(--off)' : 'var(--fg)',
+        border: '1px solid ' + (ring && !on ? 'var(--fg)' : 'transparent'), transition: `background 200ms ${ease}`,
+      });
+      const dayCells = [];
+      const lead = (cursorMonth.getDay() + 6) % 7;
+      for (let i = 0; i < lead; i++) {
+        dayCells.push({ blank: true, label: '', aria: '', pressed: false, disabled: true, pick: null,
+          style: { height: '44px', border: 0, padding: 0, background: 'transparent', visibility: 'hidden' }, inner: {} });
+      }
+      const nDays = new Date(cy, cm + 1, 0).getDate();
+      for (let d = 1; d <= nDays; d++) {
+        const dt = new Date(cy, cm, d);
+        const off = dt > TODAY || dt < lowMonth;
+        const on = period === 'day' && same(dt, anchor);
+        dayCells.push({
+          blank: false, label: String(d), aria: MONTH[cm] + ' ' + d + ', ' + cy, pressed: on, disabled: off, pick: () => apply(dt),
+          style: { height: '44px', border: 0, padding: 0, background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: off ? 'default' : 'pointer', fontFamily: 'inherit' },
+          inner: circle(on, same(dt, TODAY), off),
+        });
+      }
+
+      const weekRows = [];
+      const monthEnd = new Date(cy, cm + 1, 0);
+      for (let s = sow(cursorMonth); s <= monthEnd; s = addDays(s, 7)) {
+        const start = s;
+        const end = addDays(start, 6);
+        const off = start > TODAY || end < lowMonth;
+        const on = period === 'week' && same(start, anchor);
+        const cur = same(start, sow(TODAY));
+        const days = [];
+        for (let i = 0; i < 7; i++) {
+          const dt = addDays(start, i);
+          days.push({
+            label: String(dt.getDate()),
+            style: {
+              fontSize: '14px', lineHeight: '20px', fontVariantNumeric: 'tabular-nums', fontWeight: on ? 500 : 400, textAlign: 'center',
+              color: on ? 'var(--on-fg)' : (off || dt > TODAY) ? 'var(--off)' : dt.getMonth() !== cm ? 'var(--fg3)' : 'var(--fg)',
+            },
+          });
+        }
+        weekRows.push({
+          wk: 'W' + isoWeek(start), days, pressed: on, disabled: off, pick: () => apply(start),
+          aria: 'Week ' + isoWeek(start) + ', ' + labelFor('week', start),
+          style: {
+            width: '100%', height: '44px', padding: 0, boxSizing: 'border-box', display: 'grid', gridTemplateColumns: '40px repeat(7, minmax(0, 1fr))', alignItems: 'center',
+            borderRadius: '22px', border: '1px solid ' + (cur && !on ? 'var(--fg)' : 'transparent'), background: on ? 'var(--on-bg)' : 'transparent',
+            cursor: off ? 'default' : 'pointer', fontFamily: 'inherit', transition: `background 200ms ${ease}`,
+          },
+          wkStyle: { fontSize: '11px', lineHeight: '16px', fontWeight: 500, textAlign: 'center', color: on ? 'var(--on-fg)' : off ? 'var(--off)' : 'var(--fg3)' },
+        });
+      }
+
+      const pill = (on, ring, off) => ({
+        height: '52px', borderRadius: '26px', boxSizing: 'border-box', fontFamily: 'inherit', fontSize: '15px', lineHeight: '20px', fontWeight: on ? 500 : 400,
+        fontVariantNumeric: 'tabular-nums', cursor: off ? 'default' : 'pointer',
+        background: on ? 'var(--on-bg)' : 'transparent', color: on ? 'var(--on-fg)' : off ? 'var(--off)' : 'var(--fg)',
+        border: '1px solid ' + (on ? 'var(--on-bg)' : ring ? 'var(--fg)' : 'var(--line)'), transition: `background 200ms ${ease}`,
+      });
+      const monthCells = MON.map((label, m) => {
+        const dt = new Date(cy, m, 1);
+        const off = dt > lastMonth || dt < lowMonth;
+        const on = anchor.getFullYear() === cy && anchor.getMonth() === m;
+        return {
+          label, aria: MONTH[m] + ' ' + cy, pressed: on, disabled: off,
+          pick: () => period === 'month' ? apply(dt) : set({ cm: m, pview: 'grid' }),
+          style: pill(on, same(dt, lastMonth), off),
+        };
+      });
+      const yearCells = [];
+      for (let y = lowMonth.getFullYear(); y <= TODAY.getFullYear(); y++) {
+        const on = anchor.getFullYear() === y;
+        yearCells.push({
+          label: String(y), aria: String(y), pressed: on,
+          pick: () => period === 'year' ? apply(new Date(y, 0, 1)) : set({ cy: y, pview: 'months' }),
+          style: pill(on, y === TODAY.getFullYear(), false),
+        });
+      }
+
+      const navBtn = (off) => ({
+        width: '48px', height: '48px', flex: 'none', border: 0, borderRadius: '24px', background: 'transparent', padding: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', color: off ? 'var(--off)' : 'var(--fg)', cursor: off ? 'default' : 'pointer',
+      });
+      const inGrid = view === 'grid';
+      const prevOff = inGrid ? !(cursorMonth > lowMonth) : cy <= lowMonth.getFullYear();
+      const nextOff = inGrid ? !(cursorMonth < lastMonth) : cy >= TODAY.getFullYear();
+      const stepMonth = (n) => { const d = new Date(cy, cm + n, 1); set({ cy: d.getFullYear(), cm: d.getMonth() }); };
+      const browseTitle = inGrid ? MONTH[cm] + ' ' + cy : view === 'months' ? String(cy) : lowMonth.getFullYear() + ' – ' + TODAY.getFullYear();
+
+      return {
+        PL: PLv,
+        vals: {
+          navPrev: () => { if (!isAll) set({ anchor: shift(anchor, period, -1).getTime(), sel: -1 }); },
+          navNext: () => { if (!atCurrent) set({ anchor: shift(anchor, period, 1).getTime(), sel: -1 }); },
+          prevStyle: Object.assign(navBtn(false), { visibility: isAll ? 'hidden' : 'visible' }),
+          nextStyle: Object.assign(navBtn(atCurrent), { visibility: isAll ? 'hidden' : 'visible' }),
+          pkAtCurrent: atCurrent, pkCanPick: !isAll, pkIsAll: isAll, pkOpen: open,
+          pkAria: (TITLES[period] || '') + '. Selected: ' + PLv[0],
+          pkLabelBtnStyle: {
+            minHeight: '48px', maxWidth: '100%', padding: '4px 12px', border: 0, borderRadius: '16px', boxSizing: 'border-box',
+            background: open ? 'var(--sel)' : 'transparent', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            gap: '2px', cursor: 'pointer', fontFamily: 'inherit', transition: `background 200ms ${ease}`,
+          },
+          pkCaretStyle: { flex: 'none', color: 'var(--fg2)', transform: open ? 'rotate(180deg)' : 'none', transition: `transform 200ms ${ease}` },
+          pkOpenPicker: () => set({ picker: true, pview: defView, cy: anchor.getFullYear(), cm: anchor.getMonth() }),
+          pkClose: () => set({ picker: false }),
+          pkShow: open && !full,
+          pkTitle: TITLES[period] || '', pkSub: 'Selected: ' + PLv[0],
+          pkNowLabel: NOW[period] || '', pkJumpNow: () => apply(TODAY),
+          pkBrowseTitle: browseTitle, pkBrowseIsBtn: view !== 'years', pkBrowseIsText: view === 'years',
+          pkBrowseAria: inGrid ? 'Choose month, showing ' + browseTitle : 'Choose year, showing ' + browseTitle,
+          pkBrowseUp: () => set({ pview: inGrid ? 'months' : 'years' }),
+          pkShowBrowseNav: view !== 'years',
+          pkPrevAria: inGrid ? 'Previous month' : 'Previous year', pkNextAria: inGrid ? 'Next month' : 'Next year',
+          pkPrevOff: prevOff, pkNextOff: nextOff,
+          pkPrev: () => { if (!prevOff) { if (inGrid) stepMonth(-1); else set({ cy: cy - 1 }); } },
+          pkNext: () => { if (!nextOff) { if (inGrid) stepMonth(1); else set({ cy: cy + 1 }); } },
+          pkPrevStyle: navBtn(prevOff), pkNextStyle: navBtn(nextOff),
+          pkWeekdays: ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
+          pkShowDays: inGrid && period === 'day', pkDayCells: dayCells,
+          pkShowWeeks: inGrid && period === 'week', pkWeekRows: weekRows,
+          pkShowMonths: view === 'months', pkMonthCells: monthCells,
+          pkShowYears: view === 'years', pkYearCells: yearCells,
+          pkFootnote: 'Records start ' + md(FIRST) + ', ' + FIRST.getFullYear() + '.',
+        },
+      };
+    })();
+    const PL = PK.PL;
     const chartAria = `Bar chart: ${trendTitle.toLowerCase()}, ${PL[0]}. Average ${money(avg)} per ${unit}.`;
 
     // Drill-down transactions (memo, day in Oct, account, currency, key, amount, type, original).
@@ -726,18 +990,11 @@ class Component extends DCLogic {
     return {
       rootStyle, scrollStyle, showNav: !full,
       q, showHint: q === '', onQ: (e) => set({ q: e.target.value }),
-      prevStyle: {
-        width: '48px', height: '48px', flex: 'none', border: 0, borderRadius: '24px', background: 'transparent', color: 'var(--fg)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', visibility: period === 'all' ? 'hidden' : 'visible',
-      },
-      nextStyle: {
-        width: '48px', height: '48px', flex: 'none', border: 0, borderRadius: '24px', background: 'transparent', color: 'var(--off)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', visibility: period === 'all' ? 'hidden' : 'visible',
-      },
+      ...PK.vals,
       tabs: ['day', 'week', 'month', 'year', 'all'].map((k) => {
         const on = k === period;
         return {
-          label: k[0].toUpperCase() + k.slice(1), pressed: on, pick: () => set({ period: k, sel: -1 }),
+          label: k[0].toUpperCase() + k.slice(1), pressed: on, pick: () => set({ period: k, sel: -1, picker: false }),
           style: {
             height: '44px', border: 0, borderRadius: '22px', cursor: 'pointer', fontFamily: 'inherit', fontSize: '14px', fontWeight: 500,
             background: on ? 'var(--thumb)' : 'transparent', boxShadow: on ? 'var(--thumb-shadow)' : 'none',
