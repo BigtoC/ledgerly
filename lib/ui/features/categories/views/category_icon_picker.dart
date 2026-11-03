@@ -1,12 +1,13 @@
-// Icon picker — scrollable grid over `iconRegistry.entries` (plan §3.1,
-// §6). Selection only; creation of new icon keys is out of scope (plan
-// §12 risk #4).
+// Icon picker — one header + grid per `IconGroup`, in `kIconGroups` order
+// (issue #103). Selection only; creation of new icon keys is out of scope
+// (plan §12 risk #4).
 //
 // Opens as an in-screen modal sheet via `showCategoryIconPicker`.
 
 import 'package:flutter/material.dart';
 
 import '../../../../core/utils/icon_registry.dart';
+import '../../../../l10n/app_localizations.dart';
 
 Future<String?> showCategoryIconPicker(
   BuildContext context, {
@@ -17,7 +18,7 @@ Future<String?> showCategoryIconPicker(
     isScrollControlled: true,
     useSafeArea: true,
     builder: (ctx) => FractionallySizedBox(
-      heightFactor: 0.7,
+      heightFactor: 0.9,
       child: _CategoryIconPickerSheet(selected: selected),
     ),
   );
@@ -30,38 +31,72 @@ class _CategoryIconPickerSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final keys = kIconRegistry.keys.toList(growable: false);
+    final l10n = AppLocalizations.of(context);
     return SafeArea(
       top: false,
-      child: GridView.builder(
-        padding: const EdgeInsets.all(12),
-        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 64,
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 8,
-        ),
-        itemCount: keys.length,
-        itemBuilder: (context, i) {
-          final key = keys[i];
-          final isSelected = key == selected;
-          return InkWell(
-            onTap: () => Navigator.of(context).pop(key),
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              decoration: BoxDecoration(
-                border: isSelected
-                    ? Border.all(
-                        color: Theme.of(context).colorScheme.primary,
-                        width: 2,
-                      )
-                    : null,
-                borderRadius: BorderRadius.circular(12),
+      child: CustomScrollView(
+        slivers: [
+          for (final MapEntry(key: group, value: keys)
+              in kIconGroups.entries) ...[
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: Text(
+                  _groupLabel(l10n, group),
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
               ),
-              child: Icon(iconForKey(key)),
             ),
-          );
-        },
+            const SliverToBoxAdapter(child: Divider(indent: 16, endIndent: 16)),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              sliver: SliverGrid.builder(
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 64,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                ),
+                itemCount: keys.length,
+                itemBuilder: (context, i) => _iconTile(context, keys[i]),
+              ),
+            ),
+          ],
+          const SliverToBoxAdapter(child: SizedBox(height: 16)),
+        ],
+      ),
+    );
+  }
+
+  Widget _iconTile(BuildContext context, String key) {
+    final isSelected = key == selected;
+    return InkWell(
+      onTap: () => Navigator.of(context).pop(key),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        decoration: BoxDecoration(
+          border: isSelected
+              ? Border.all(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 2,
+                )
+              : null,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(iconForKey(key)),
       ),
     );
   }
 }
+
+String _groupLabel(AppLocalizations l10n, IconGroup group) => switch (group) {
+  IconGroup.food => l10n.categoriesIconGroupFood,
+  IconGroup.drinks => l10n.categoriesIconGroupDrinks,
+  IconGroup.transport => l10n.categoriesIconGroupTransport,
+  IconGroup.shopping => l10n.categoriesIconGroupShopping,
+  IconGroup.entertainment => l10n.categoriesIconGroupEntertainment,
+  IconGroup.home => l10n.categoriesIconGroupHome,
+  IconGroup.electronics => l10n.categoriesIconGroupElectronics,
+  IconGroup.medical => l10n.categoriesIconGroupMedical,
+  IconGroup.income => l10n.categoriesIconGroupIncome,
+  IconGroup.other => l10n.categoriesIconGroupOther,
+};
