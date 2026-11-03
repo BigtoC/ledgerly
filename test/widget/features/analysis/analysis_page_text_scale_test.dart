@@ -206,12 +206,18 @@ void main() {
             greaterThanOrEqualTo(44),
             reason: label,
           );
+          final text = find.descendant(
+            of: find.byType(PeriodSelector),
+            matching: find.text(label),
+          );
+          expect(text, findsOneWidget);
+          // Laid out in full, so a too-wide label is scaled down, not
+          // clipped (D23).
+          final paragraph = tester.renderObject<RenderBox>(text);
           expect(
-            find.descendant(
-              of: find.byType(PeriodSelector),
-              matching: find.text(label),
-            ),
-            findsOneWidget,
+            paragraph.getMaxIntrinsicWidth(double.infinity),
+            lessThanOrEqualTo(paragraph.size.width + 0.01),
+            reason: '$label is clipped',
           );
         }
 

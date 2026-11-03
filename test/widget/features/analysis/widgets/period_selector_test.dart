@@ -586,10 +586,35 @@ void main() {
         await pump(tester, selector(isAtCurrent: true), textScale: 2);
 
         expect(tester.takeException(), isNull);
+        // The labels too wide for their segment at 2× on both phones
+        // ('Week' only just, by under 0.1 px, at 390).
+        const shrunk = {'Week', 'Month'};
         for (final label in labels) {
           final paragraph = tester.renderObject<RenderParagraph>(
             find.text(label),
           );
+          // Laid out in full, not clipped: with no soft wrap the paragraph
+          // clamps its size to the segment even when the glyphs overflow.
+          expect(
+            paragraph.getMaxIntrinsicWidth(double.infinity),
+            lessThanOrEqualTo(paragraph.size.width + 0.01),
+            reason: '$label is clipped',
+          );
+          // Shrunk only when it would not fit; otherwise 1:1.
+          final drawnWidth = tester.getRect(find.text(label)).width;
+          if (shrunk.contains(label)) {
+            expect(
+              drawnWidth,
+              lessThan(paragraph.size.width),
+              reason: '$label is not scaled down',
+            );
+          } else {
+            expect(
+              drawnWidth,
+              closeTo(paragraph.size.width, 0.01),
+              reason: '$label is scaled',
+            );
+          }
           final lineTops = paragraph
               .getBoxesForSelection(
                 TextSelection(baseOffset: 0, extentOffset: label.length),
