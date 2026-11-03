@@ -529,6 +529,49 @@ void main() {
       expect(horizontalScrollable(), findsNothing);
     });
 
+    testWidgets('exactly 24 months still fill the width, without scrolling', (
+      tester,
+    ) async {
+      // Jun 2024 … May 2026.
+      await _pump(
+        tester,
+        period: PeriodType.all,
+        series: all(DateTime(2024, 6), now: DateTime(2026, 5, 31)),
+        width: phone,
+      );
+
+      final rods = _rods(tester);
+      expect(rods, hasLength(24));
+      for (final rod in rods) {
+        expect(rod.width, closeTo(rod24, 1e-9));
+      }
+      expect(tester.getSize(find.byType(BarChart)).width, phone);
+      expect(horizontalScrollable(), findsNothing);
+    });
+
+    testWidgets('25 months keep the 24-month bar width and scroll', (
+      tester,
+    ) async {
+      // May 2024 … May 2026.
+      await _pump(
+        tester,
+        period: PeriodType.all,
+        series: all(DateTime(2024, 5), now: DateTime(2026, 5, 31)),
+        width: phone,
+      );
+
+      final rods = _rods(tester);
+      expect(rods, hasLength(25));
+      for (final rod in rods) {
+        expect(rod.width, closeTo(rod24, 1e-9));
+      }
+      expect(
+        tester.getSize(find.byType(BarChart)).width,
+        closeTo(25 * rod24 + 24 * 4, 1e-6),
+      );
+      expect(horizontalScrollable(), findsOneWidget);
+    });
+
     testWidgets('labels: the year under each January and the current month '
         'in 700 fg under the last bar; nothing else', (tester) async {
       await _pump(
