@@ -188,14 +188,14 @@ void main() {
     testWidgets('with an account filter the copy names the account', (
       tester,
     ) async {
-      await pumpEmpty(tester, CategoryType.expense, accountName: 'Visa card');
+      await pumpEmpty(tester, CategoryType.expense, accountName: 'Travel card');
       expect(
-        find.text('No expense on Visa card in this period'),
+        find.text('No expense on Travel card in this period'),
         findsOneWidget,
       );
       expect(find.text('Pick another account or period.'), findsOneWidget);
       expect(find.textContaining('Switch to'), findsNothing);
-      final title = _style(tester, 'No expense on Visa card in this period');
+      final title = _style(tester, 'No expense on Travel card in this period');
       expect(title.fontSize, 15);
       expect(title.fontWeight, FontWeight.w500);
       expect(title.color, _colors.fg);
@@ -203,9 +203,9 @@ void main() {
       expect(sub.fontSize, 13);
       expect(sub.color, _colors.fg2);
 
-      await pumpEmpty(tester, CategoryType.income, accountName: 'Visa card');
+      await pumpEmpty(tester, CategoryType.income, accountName: 'Travel card');
       expect(
-        find.text('No income on Visa card in this period'),
+        find.text('No income on Travel card in this period'),
         findsOneWidget,
       );
       expect(find.text('Pick another account or period.'), findsOneWidget);

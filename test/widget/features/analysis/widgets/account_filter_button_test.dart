@@ -98,10 +98,10 @@ void main() {
       (lightTheme, AnalysisColors.light),
       (darkTheme, AnalysisColors.dark),
     ]) {
-      await _pump(tester, accountName: 'Visa card', theme: theme);
+      await _pump(tester, accountName: 'Travel card', theme: theme);
       await tester.pump(const Duration(milliseconds: 300));
 
-      final label = tester.widget<Text>(find.text('Visa card'));
+      final label = tester.widget<Text>(find.text('Travel card'));
       expect(label.style?.color, colors.fg);
       expect(_fill(tester), colors.sel);
       expect(_border(tester).border, Border.all(color: colors.fg2));
@@ -155,21 +155,21 @@ void main() {
   ) async {
     final handle = tester.ensureSemantics();
     var taps = 0;
-    await _pump(tester, accountName: 'Visa card', onPressed: () => taps++);
+    await _pump(tester, accountName: 'Travel card', onPressed: () => taps++);
 
     final node = tester.getSemantics(
-      find.bySemanticsLabel('Account filter: Visa card'),
+      find.bySemanticsLabel('Account filter: Travel card'),
     );
     expect(
       node,
       isSemantics(
-        label: 'Account filter: Visa card',
+        label: 'Account filter: Travel card',
         isButton: true,
         hasTapAction: true,
         onTapHint: 'Filter by account',
       ),
     );
-    tester.semantics.tap(find.semantics.byLabel('Account filter: Visa card'));
+    tester.semantics.tap(find.semantics.byLabel('Account filter: Travel card'));
     expect(taps, 1);
     handle.dispose();
   });

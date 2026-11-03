@@ -168,9 +168,9 @@ void main() {
     testWidgets('the subtitle is prefixed "<Account> · " with the filter', (
       tester,
     ) async {
-      await _pump(tester, _data(), accountName: 'Visa card');
+      await _pump(tester, _data(), accountName: 'Travel card');
 
-      final prefix = find.text('Visa card · ');
+      final prefix = find.text('Travel card · ');
       expect(prefix, findsOneWidget);
       final style = tester.widget<Text>(prefix).style!;
       expect(style.fontSize, 13);

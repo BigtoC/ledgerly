@@ -528,7 +528,7 @@ void main() {
     ) async {
       when(() => acct.watchAll(includeArchived: true)).thenAnswer(
         (_) => Stream.value(const [
-          Account(id: 3, name: 'Visa card', accountTypeId: 1, currency: _usd),
+          Account(id: 3, name: 'Travel card', accountTypeId: 1, currency: _usd),
         ]),
       );
       await tester.pumpWidget(_harness(tx: tx, cat: cat, acct: acct));
@@ -541,7 +541,7 @@ void main() {
 
       final button = find.byType(AccountFilterButton);
       expect(
-        find.descendant(of: button, matching: find.text('Visa card')),
+        find.descendant(of: button, matching: find.text('Travel card')),
         findsOneWidget,
       );
       expect(find.text('All accounts'), findsNothing);

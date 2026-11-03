@@ -189,25 +189,29 @@ void main() {
     testWidgets('account filter: "<Account> expense" in fg2 (AC 5c)', (
       tester,
     ) async {
-      await _pump(tester, accountName: 'Visa card');
-      expect(find.text('Visa card expense'), findsOneWidget);
+      await _pump(tester, accountName: 'Travel card');
+      expect(find.text('Travel card expense'), findsOneWidget);
       expect(find.text('Total expense'), findsNothing);
       expect(find.text(r'$100.00'), findsOneWidget);
-      final top = _style(tester, 'Visa card expense');
+      final top = _style(tester, 'Travel card expense');
       expect(top.color, _colors.fg2);
       expect(top.fontWeight, FontWeight.w400);
       expect(top.fontSize, 12);
 
-      await _pump(tester, accountName: 'Visa card', type: CategoryType.income);
-      expect(find.text('Visa card income'), findsOneWidget);
+      await _pump(
+        tester,
+        accountName: 'Travel card',
+        type: CategoryType.income,
+      );
+      expect(find.text('Travel card income'), findsOneWidget);
     });
 
     testWidgets('account filter with a slice selected: the slice label wins', (
       tester,
     ) async {
-      await _pump(tester, accountName: 'Visa card', selectedIndex: 1);
+      await _pump(tester, accountName: 'Travel card', selectedIndex: 1);
       expect(find.text('Transport'), findsOneWidget);
-      expect(find.text('Visa card expense'), findsNothing);
+      expect(find.text('Travel card expense'), findsNothing);
     });
 
     testWidgets('a long account name ellipsizes within 128', (tester) async {

@@ -52,7 +52,7 @@ const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 const _cash = Account(id: 1, name: 'Cash', accountTypeId: 1, currency: _usd);
 const _visa = Account(
   id: 2,
-  name: 'Visa card',
+  name: 'Travel card',
   accountTypeId: 2,
   currency: _usd,
 );
@@ -65,9 +65,9 @@ const _savings = Account(
   currency: _usd,
 );
 
-/// Per-account fixture. Expense: Cash has Food $30 + Transport $10, Visa
-/// has Food $12. Income: Cash $22, Visa $8, with no income categories or
-/// buckets, so the Income chart is empty.
+/// Per-account fixture. Expense: Cash has Food $30 + Transport $10, Travel
+/// card has Food $12. Income: Cash $22, Travel card $8, with no income
+/// categories or buckets, so the Income chart is empty.
 _MockTxRepo _repo() {
   final repo = _MockTxRepo();
   when(
@@ -368,7 +368,7 @@ void main() {
     expect(_inside(ChartsSummaryCard, find.text(r'$52.00')), findsOneWidget);
     expect(_inside(ChartsSummaryCard, find.text(r'$30.00')), findsOneWidget);
 
-    await _pick(tester, 'Visa card');
+    await _pick(tester, 'Travel card');
 
     expect(
       container.read(chartsSelectionControllerProvider).accountFilterId,
@@ -376,7 +376,7 @@ void main() {
     );
     // (a) The button names the account.
     expect(
-      _inside(AccountFilterButton, find.text('Visa card')),
+      _inside(AccountFilterButton, find.text('Travel card')),
       findsOneWidget,
     );
     // (b) Only that account's categories.
@@ -384,22 +384,25 @@ void main() {
     expect(_inside(ChartLegend, find.text('Transport')), findsNothing);
     // (c) The donut centre names the account, (d) with its total.
     expect(
-      _inside(CategoryPieChart, find.text('Visa card expense')),
+      _inside(CategoryPieChart, find.text('Travel card expense')),
       findsOneWidget,
     );
     expect(_inside(CategoryPieChart, find.text(r'$12.00')), findsOneWidget);
-    // AC 12: the tiles and net show only Visa card's expense and income.
+    // AC 12: the tiles and net show only Travel card's expense and income.
     expect(_inside(ChartsSummaryCard, find.text(r'$12.00')), findsOneWidget);
     expect(_inside(ChartsSummaryCard, find.text(r'$8.00')), findsOneWidget);
     expect(_inside(ChartsSummaryCard, find.text(r'-$4.00')), findsOneWidget);
     expect(_inside(ChartsSummaryCard, find.text(r'$52.00')), findsNothing);
     // The trend subtitle is prefixed with the account.
-    expect(_inside(ChartsTrendCard, find.text('Visa card · ')), findsOneWidget);
+    expect(
+      _inside(ChartsTrendCard, find.text('Travel card · ')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('"All accounts" clears the filter', (tester) async {
     final container = await _pumpScreen(tester);
-    await _pick(tester, 'Visa card');
+    await _pick(tester, 'Travel card');
 
     await _pick(tester, 'All accounts');
 
@@ -414,13 +417,13 @@ void main() {
     expect(_inside(CategoryPieChart, find.text('Total expense')), findsOne);
     expect(_inside(ChartLegend, find.text('Transport')), findsOneWidget);
     expect(_inside(ChartsSummaryCard, find.text(r'$52.00')), findsOneWidget);
-    expect(find.text('Visa card · '), findsNothing);
+    expect(find.text('Travel card · '), findsNothing);
   });
 
   testWidgets('the filter survives a type change; the empty state then '
       'names the account', (tester) async {
     final container = await _pumpScreen(tester);
-    await _pick(tester, 'Visa card');
+    await _pick(tester, 'Travel card');
 
     container.read(chartsSelectionControllerProvider.notifier).toggleType();
     await _settle(tester);
@@ -434,7 +437,7 @@ void main() {
     expect(
       _inside(
         ChartsBreakdownCard,
-        find.text('No income on Visa card in this period'),
+        find.text('No income on Travel card in this period'),
       ),
       findsOneWidget,
     );
@@ -486,8 +489,8 @@ void main() {
         )
         .dy;
     expect(top('All accounts'), lessThan(top('Cash')));
-    expect(top('Cash'), lessThan(top('Visa card')));
-    expect(top('Visa card'), lessThan(top('Savings')));
+    expect(top('Cash'), lessThan(top('Travel card')));
+    expect(top('Travel card'), lessThan(top('Savings')));
     expect(find.text(r'$52.00 · 100.0%'), findsOneWidget);
     expect(find.text(r'$40.00 · 76.9%'), findsOneWidget);
     expect(find.text(r'$12.00 · 23.1%'), findsOneWidget);
@@ -504,14 +507,14 @@ void main() {
       ChartDimension.account,
     );
 
-    await _pick(tester, 'Visa card');
+    await _pick(tester, 'Travel card');
 
     final selection = container.read(chartsSelectionControllerProvider);
     expect(selection.accountFilterId, 2);
     expect(selection.dimension, ChartDimension.category);
     expect(_inside(ChartLegend, find.text('Food')), findsOneWidget);
     expect(
-      _inside(CategoryPieChart, find.text('Visa card expense')),
+      _inside(CategoryPieChart, find.text('Travel card expense')),
       findsOneWidget,
     );
   });
@@ -521,19 +524,19 @@ void main() {
     final container = await _pumpScreen(tester);
     await tester.tap(_inside(ChartsBreakdownCard, find.text('Account')));
     await _settle(tester);
-    await tester.tap(_inside(ChartLegend, find.text('Visa card')));
+    await tester.tap(_inside(ChartLegend, find.text('Travel card')));
     await _settle(tester);
 
-    await tester.tap(find.text('See categories in Visa card'));
+    await tester.tap(find.text('See categories in Travel card'));
     await _settle(tester);
 
     final selection = container.read(chartsSelectionControllerProvider);
     expect(selection.accountFilterId, 2);
     expect(selection.dimension, ChartDimension.category);
     expect(selection.selectedSlice, isNull);
-    expect(find.text('See categories in Visa card'), findsNothing);
+    expect(find.text('See categories in Travel card'), findsNothing);
     expect(
-      _inside(AccountFilterButton, find.text('Visa card')),
+      _inside(AccountFilterButton, find.text('Travel card')),
       findsOneWidget,
     );
     expect(_inside(ChartLegend, find.text('Food')), findsOneWidget);
@@ -544,7 +547,7 @@ void main() {
     tester,
   ) async {
     final container = await _pumpScreen(tester);
-    await _pick(tester, 'Visa card');
+    await _pick(tester, 'Travel card');
 
     await tester.tap(_inside(ChartsBreakdownCard, find.text('Account')));
     await _settle(tester);
@@ -562,7 +565,7 @@ void main() {
 
   testWidgets('the active pill uses the sel fill', (tester) async {
     await _pumpScreen(tester);
-    await _pick(tester, 'Visa card');
+    await _pick(tester, 'Travel card');
 
     final pill = tester.widget<AnimatedContainer>(
       find.byKey(const ValueKey('accountFilterPill')),
