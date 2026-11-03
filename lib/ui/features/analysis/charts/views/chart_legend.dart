@@ -93,13 +93,6 @@ class _RankedRow extends StatelessWidget {
   static const _darkInk = Color(0xFF1B1B1B);
   static const _lightInk = Color(0xFFFFFFFF);
 
-  /// WCAG contrast ratio between two opaque colours.
-  static double _contrast(Color a, Color b) {
-    final la = a.computeLuminance();
-    final lb = b.computeLuminance();
-    return (math.max(la, lb) + 0.05) / (math.min(la, lb) + 0.05);
-  }
-
   /// Width the label keeps before a long amount starts to scale down.
   static const double _minLabelWidth = 40;
 
@@ -119,10 +112,11 @@ class _RankedRow extends StatelessWidget {
     final ink = sliceColor.computeLuminance() > 0.35 ? _darkInk : _lightInk;
     // The currency code is small text (4.5:1), so it takes whichever ink
     // contrasts more with the fill rather than the icon threshold (D24).
-    final codeInk =
-        _contrast(_darkInk, sliceColor) > _contrast(_lightInk, sliceColor)
-        ? _darkInk
-        : _lightInk;
+    final codeInk = higherContrastInk(
+      sliceColor,
+      dark: _darkInk,
+      light: _lightInk,
+    );
     final fadeOpacity = faded ? 0.35 : 1.0;
     final fraction = slice.fraction;
     // The controller serializes seeded categories as their `category.*`

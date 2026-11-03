@@ -74,3 +74,19 @@ Color colorForIndex(int index) {
   }
   return kCategoryColorPalette[index];
 }
+
+/// Whichever of [dark] and [light] has the higher WCAG contrast ratio on
+/// the opaque [fill].
+Color higherContrastInk(
+  Color fill, {
+  Color dark = const Color(0xFF000000),
+  Color light = const Color(0xFFFFFFFF),
+}) {
+  double contrast(Color a, Color b) {
+    final la = a.computeLuminance();
+    final lb = b.computeLuminance();
+    return la > lb ? (la + 0.05) / (lb + 0.05) : (lb + 0.05) / (la + 0.05);
+  }
+
+  return contrast(dark, fill) > contrast(light, fill) ? dark : light;
+}
