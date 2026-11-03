@@ -72,23 +72,36 @@ Future<void> showAccountFilterSheet(BuildContext context) {
 }
 
 @Dependencies([chartsAccountFilterOptions, ChartsSelectionController])
-class _AccountFilterSheet extends ConsumerWidget {
+class _AccountFilterSheet extends ConsumerStatefulWidget {
   const _AccountFilterSheet({required this.showHandle});
 
   /// The drag handle belongs to the bottom-sheet form only.
   final bool showHandle;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_AccountFilterSheet> createState() =>
+      _AccountFilterSheetState();
+}
+
+class _AccountFilterSheetState extends ConsumerState<_AccountFilterSheet> {
+  /// The rows on screen when a row was picked. The sheet keeps building
+  /// while it animates closed, and the new filter can drop the archived
+  /// account it was filtered by (D25); freezing the rows keeps that row
+  /// in place so the list and the sheet do not jump mid-exit.
+  ChartsAccountFilterOptions? _closingOptions;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = AnalysisColors.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
     final selection = ref.watch(chartsSelectionControllerProvider);
     final optionsAsync = ref.watch(chartsAccountFilterOptionsProvider);
-    final options = optionsAsync.value;
+    final options = _closingOptions ?? optionsAsync.value;
 
     @Dependencies([ChartsSelectionController])
     void pick(int? value) {
+      _closingOptions = options;
       ref
           .read(chartsSelectionControllerProvider.notifier)
           .setAccountFilter(
@@ -103,7 +116,7 @@ class _AccountFilterSheet extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (showHandle)
+          if (widget.showHandle)
             Padding(
               padding: const EdgeInsets.fromLTRB(0, 16, 0, 8),
               child: Center(
@@ -155,7 +168,7 @@ class _AccountFilterSheet extends ConsumerWidget {
               ],
             ),
           ),
-          if (optionsAsync.hasError)
+          if (_closingOptions == null && optionsAsync.hasError)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Center(child: Text(l10n.analysisErrorMessage)),

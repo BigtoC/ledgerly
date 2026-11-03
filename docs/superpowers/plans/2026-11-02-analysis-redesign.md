@@ -307,7 +307,9 @@ cannot be built as drawn must be raised before coding it.
   rule, so the sheet shows it checked. It covers both ways to get there: the
   Account-dimension bridge (archived accounts with transactions still get
   slices) and archiving an account from the Accounts screen while it is
-  filtered.
+  filtered. Once a row is picked, the sheet keeps the rows it showed until it
+  has closed, so the archived row does not vanish and make the sheet jump
+  during the exit animation.
 
 (D11 was dropped: the account button left the breakdown header.)
 

@@ -420,6 +420,52 @@ void main() {
     expect(find.text(r'$30.00 · 75.0%'), findsOneWidget);
   });
 
+  for (final (width, surface) in [
+    (390.0, find.byType(BottomSheet)),
+    (1000.0, find.byType(Dialog)),
+  ]) {
+    testWidgets('$width wide: picking another row keeps the archived row '
+        'while the sheet closes, so it does not jump (plan D25)', (
+      tester,
+    ) async {
+      final container = _container(
+        slices: const [
+          AccountSlice(
+            accountId: 1,
+            currencyCode: 'USD',
+            totalMinorUnits: 1000,
+          ),
+          AccountSlice(
+            accountId: 4,
+            currencyCode: 'USD',
+            totalMinorUnits: 3000,
+          ),
+        ],
+      );
+      container
+          .read(chartsSelectionControllerProvider.notifier)
+          .setAccountFilter(4);
+      await _open(tester, container, size: Size(width, 844));
+      final openHeight = tester.getSize(surface).height;
+
+      await tester.tap(find.text('All accounts'));
+      await tester.pump();
+      // Part way through the exit animation.
+      await tester.pump(const Duration(milliseconds: 50));
+
+      expect(
+        container.read(chartsSelectionControllerProvider).accountFilterId,
+        isNull,
+      );
+      expect(surface, findsOneWidget);
+      expect(find.text('Old card'), findsOneWidget);
+      expect(tester.getSize(surface).height, openHeight);
+
+      await tester.pumpAndSettle();
+      expect(surface, findsNothing);
+    });
+  }
+
   testWidgets('tapping an account applies the filter and closes the sheet', (
     tester,
   ) async {
