@@ -41,8 +41,8 @@ class _FakeCsvImportController extends CsvImportController {
       calls.add((csvValue, resolution));
 
   @override
-  void setNewCategoryType(String csvValue, CategoryType type) =>
-      calls.add((csvValue, type));
+  void setNewCategoryType(CsvCategoryKey key, CategoryType type) =>
+      calls.add((key, type));
 
   @override
   Future<void> commit() async => calls.add('commit');
@@ -571,7 +571,47 @@ void main() {
         find.descendant(of: toggle, matching: find.text('Income')),
       );
       await tester.pump();
-      expect(calls, [('還款', CategoryType.income)]);
+      expect(calls, [((value: '還款', type: null), CategoryType.income)]);
+    });
+
+    testWidgets('CI13b: one Ledgerly value in both types gets a toggle per '
+        'type', (tester) async {
+      const expenseKey = (value: 'Bonus', type: CategoryType.expense);
+      final calls = await _pump(
+        tester,
+        _preview(
+          categories: const [
+            CsvCategoryEntry(
+              csvValue: 'Bonus',
+              csvType: CategoryType.expense,
+              rowCount: 1,
+              resolution: CategoryResolution.create(
+                name: 'Bonus',
+                type: CategoryType.expense,
+              ),
+            ),
+            CsvCategoryEntry(
+              csvValue: 'Bonus',
+              csvType: CategoryType.income,
+              rowCount: 2,
+              resolution: CategoryResolution.create(
+                name: 'Bonus',
+                type: CategoryType.income,
+              ),
+            ),
+          ],
+        ),
+      );
+
+      final toggle = find.byKey(
+        const ValueKey('csvImportCategoryType:Bonus:expense'),
+      );
+      await _scrollTo(tester, toggle);
+      await tester.tap(
+        find.descendant(of: toggle, matching: find.text('Income')),
+      );
+      await tester.pump();
+      expect(calls, [(expenseKey, CategoryType.income)]);
     });
 
     testWidgets('CI14: invalid rows show line and reason, no field values', (

@@ -38,6 +38,7 @@ CsvImportRow _row({
   String category = '食物',
   Currency currency = _hkd,
   String? memo,
+  CategoryType? type,
 }) => CsvImportRow(
   line: ++_line,
   account: account,
@@ -46,6 +47,7 @@ CsvImportRow _row({
   currency: currency,
   recordedAt: DateTime(2026, 10, 30, 10, 39),
   memo: memo,
+  type: type,
 );
 
 Category _cat(
@@ -129,8 +131,13 @@ CsvImportMatch _match(
 CsvAccountMatch _accountEntry(CsvImportMatch match, String value) =>
     match.accounts.singleWhere((e) => e.csvValue == value);
 
-CsvCategoryMatch _categoryEntry(CsvImportMatch match, String value) =>
-    match.categories.singleWhere((e) => e.csvValue == value);
+CsvCategoryMatch _categoryEntry(
+  CsvImportMatch match,
+  String value, [
+  CategoryType? type,
+]) => match.categories.singleWhere(
+  (e) => e.csvValue == value && e.csvType == type,
+);
 
 void main() {
   group('sample export on a fresh en_US install', () {
@@ -455,6 +462,76 @@ void main() {
         _categoryEntry(match, 'Kids').resolution,
         const CategoryResolution.existing(52),
       );
+    });
+  });
+
+  group('categories of Ledgerly rows (with a type)', () {
+    final expenseInvestment = _cat(17, l10nKey: 'category.investment');
+    final incomeInvestment = _cat(
+      14,
+      l10nKey: 'category.income.investment',
+      type: CategoryType.income,
+    );
+
+    test('one entry per value and type, each matched within its type', () {
+      final match = _match(
+        [
+          _row(category: 'Investment', type: CategoryType.expense),
+          _row(category: 'Investment', type: CategoryType.income),
+          _row(category: 'Investment', type: CategoryType.income),
+        ],
+        categories: [expenseInvestment, incomeInvestment],
+      );
+
+      expect(match.categories, hasLength(2));
+      final expense = _categoryEntry(match, 'Investment', CategoryType.expense);
+      expect(
+        expense.resolution,
+        CategoryResolution.existing(expenseInvestment.id),
+      );
+      expect(expense.rowCount, 1);
+      final income = _categoryEntry(match, 'Investment', CategoryType.income);
+      expect(
+        income.resolution,
+        CategoryResolution.existing(incomeInvestment.id),
+      );
+      expect(income.rowCount, 2);
+    });
+
+    test('nothing of the same type matches: a category of that type is '
+        'created', () {
+      final match = _match(
+        [
+          _row(category: 'Bonus', type: CategoryType.income),
+          _row(category: '理財', type: CategoryType.income),
+        ],
+        categories: [expenseInvestment],
+      );
+      expect(
+        _categoryEntry(match, 'Bonus', CategoryType.income).resolution,
+        const CategoryResolution.create(
+          name: 'Bonus',
+          type: CategoryType.income,
+        ),
+      );
+      // 理財 labels only the expense category.investment.
+      expect(
+        _categoryEntry(match, '理財', CategoryType.income).resolution,
+        const CategoryResolution.create(name: '理財', type: CategoryType.income),
+      );
+    });
+
+    test('an income marker with a type is a plain category, not split by '
+        'note', () {
+      final match = _match([
+        _row(category: '收入', memo: '薪資', type: CategoryType.income),
+      ]);
+      final entry = _categoryEntry(match, '收入', CategoryType.income);
+      expect(
+        entry.resolution,
+        const CategoryResolution.create(name: '收入', type: CategoryType.income),
+      );
+      expect(entry.salaryRowCount, 0);
     });
   });
 

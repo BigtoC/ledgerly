@@ -880,7 +880,7 @@ mixin _$CsvImportRow {
 
 /// 1-based physical line where the row starts.
  int get line;/// Trimmed CSV Account value; keys [CsvImportPlan.accounts].
- String get account;/// Trimmed CSV Category value; keys [CsvImportPlan.categories].
+ String get account;/// Trimmed CSV Category value; see [categoryKey].
  String get category;/// Rounded half-up (Fortune City to at most 2 decimals, Ledgerly to
 /// the currency's), always > 0.
  int get amountMinorUnits; Currency get currency;/// Recorded At (Ledgerly: `created_at`) as device-local time.
@@ -1100,15 +1100,15 @@ return $default(_that.line,_that.account,_that.category,_that.amountMinorUnits,_
 /// @nodoc
 
 
-class _CsvImportRow implements CsvImportRow {
-  const _CsvImportRow({required this.line, required this.account, required this.category, required this.amountMinorUnits, required this.currency, required this.recordedAt, this.memo, this.type, this.date});
+class _CsvImportRow extends CsvImportRow {
+  const _CsvImportRow({required this.line, required this.account, required this.category, required this.amountMinorUnits, required this.currency, required this.recordedAt, this.memo, this.type, this.date}): super._();
   
 
 /// 1-based physical line where the row starts.
 @override final  int line;
 /// Trimmed CSV Account value; keys [CsvImportPlan.accounts].
 @override final  String account;
-/// Trimmed CSV Category value; keys [CsvImportPlan.categories].
+/// Trimmed CSV Category value; see [categoryKey].
 @override final  String category;
 /// Rounded half-up (Fortune City to at most 2 decimals, Ledgerly to
 /// the currency's), always > 0.
@@ -2260,7 +2260,7 @@ mixin _$CsvImportPlan {
 
 /// [CsvLoadResult.validRows], duplicates included: the commit recounts
 /// them against the database.
- List<CsvImportRow> get rows; Map<String, AccountResolution> get accounts; Map<String, CategoryResolution> get categories;/// The Salary category's label in every locale. Compared with each
+ List<CsvImportRow> get rows; Map<String, AccountResolution> get accounts; Map<CsvCategoryKey, CategoryResolution> get categories;/// The Salary category's label in every locale. Compared with each
 /// income row's note after trimming and lower-casing both.
  Set<String> get salaryNotes;
 /// Create a copy of CsvImportPlan
@@ -2298,7 +2298,7 @@ abstract mixin class $CsvImportPlanCopyWith<$Res>  {
   factory $CsvImportPlanCopyWith(CsvImportPlan value, $Res Function(CsvImportPlan) _then) = _$CsvImportPlanCopyWithImpl;
 @useResult
 $Res call({
- List<CsvImportRow> rows, Map<String, AccountResolution> accounts, Map<String, CategoryResolution> categories, Set<String> salaryNotes
+ List<CsvImportRow> rows, Map<String, AccountResolution> accounts, Map<CsvCategoryKey, CategoryResolution> categories, Set<String> salaryNotes
 });
 
 
@@ -2320,7 +2320,7 @@ class _$CsvImportPlanCopyWithImpl<$Res>
 rows: null == rows ? _self.rows : rows // ignore: cast_nullable_to_non_nullable
 as List<CsvImportRow>,accounts: null == accounts ? _self.accounts : accounts // ignore: cast_nullable_to_non_nullable
 as Map<String, AccountResolution>,categories: null == categories ? _self.categories : categories // ignore: cast_nullable_to_non_nullable
-as Map<String, CategoryResolution>,salaryNotes: null == salaryNotes ? _self.salaryNotes : salaryNotes // ignore: cast_nullable_to_non_nullable
+as Map<CsvCategoryKey, CategoryResolution>,salaryNotes: null == salaryNotes ? _self.salaryNotes : salaryNotes // ignore: cast_nullable_to_non_nullable
 as Set<String>,
   ));
 }
@@ -2406,7 +2406,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<CsvImportRow> rows,  Map<String, AccountResolution> accounts,  Map<String, CategoryResolution> categories,  Set<String> salaryNotes)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<CsvImportRow> rows,  Map<String, AccountResolution> accounts,  Map<CsvCategoryKey, CategoryResolution> categories,  Set<String> salaryNotes)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CsvImportPlan() when $default != null:
 return $default(_that.rows,_that.accounts,_that.categories,_that.salaryNotes);case _:
@@ -2427,7 +2427,7 @@ return $default(_that.rows,_that.accounts,_that.categories,_that.salaryNotes);ca
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<CsvImportRow> rows,  Map<String, AccountResolution> accounts,  Map<String, CategoryResolution> categories,  Set<String> salaryNotes)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<CsvImportRow> rows,  Map<String, AccountResolution> accounts,  Map<CsvCategoryKey, CategoryResolution> categories,  Set<String> salaryNotes)  $default,) {final _that = this;
 switch (_that) {
 case _CsvImportPlan():
 return $default(_that.rows,_that.accounts,_that.categories,_that.salaryNotes);case _:
@@ -2447,7 +2447,7 @@ return $default(_that.rows,_that.accounts,_that.categories,_that.salaryNotes);ca
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<CsvImportRow> rows,  Map<String, AccountResolution> accounts,  Map<String, CategoryResolution> categories,  Set<String> salaryNotes)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<CsvImportRow> rows,  Map<String, AccountResolution> accounts,  Map<CsvCategoryKey, CategoryResolution> categories,  Set<String> salaryNotes)?  $default,) {final _that = this;
 switch (_that) {
 case _CsvImportPlan() when $default != null:
 return $default(_that.rows,_that.accounts,_that.categories,_that.salaryNotes);case _:
@@ -2462,7 +2462,7 @@ return $default(_that.rows,_that.accounts,_that.categories,_that.salaryNotes);ca
 
 
 class _CsvImportPlan implements CsvImportPlan {
-  const _CsvImportPlan({required  List<CsvImportRow> rows, required  Map<String, AccountResolution> accounts, required  Map<String, CategoryResolution> categories, required  Set<String> salaryNotes}): _rows = rows,_accounts = accounts,_categories = categories,_salaryNotes = salaryNotes;
+  const _CsvImportPlan({required  List<CsvImportRow> rows, required  Map<String, AccountResolution> accounts, required  Map<CsvCategoryKey, CategoryResolution> categories, required  Set<String> salaryNotes}): _rows = rows,_accounts = accounts,_categories = categories,_salaryNotes = salaryNotes;
   
 
 /// [CsvLoadResult.validRows], duplicates included: the commit recounts
@@ -2483,8 +2483,8 @@ class _CsvImportPlan implements CsvImportPlan {
   return EqualUnmodifiableMapView(_accounts);
 }
 
- final  Map<String, CategoryResolution> _categories;
-@override Map<String, CategoryResolution> get categories {
+ final  Map<CsvCategoryKey, CategoryResolution> _categories;
+@override Map<CsvCategoryKey, CategoryResolution> get categories {
   if (_categories is EqualUnmodifiableMapView) return _categories;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableMapView(_categories);
@@ -2534,7 +2534,7 @@ abstract mixin class _$CsvImportPlanCopyWith<$Res> implements $CsvImportPlanCopy
   factory _$CsvImportPlanCopyWith(_CsvImportPlan value, $Res Function(_CsvImportPlan) _then) = __$CsvImportPlanCopyWithImpl;
 @override @useResult
 $Res call({
- List<CsvImportRow> rows, Map<String, AccountResolution> accounts, Map<String, CategoryResolution> categories, Set<String> salaryNotes
+ List<CsvImportRow> rows, Map<String, AccountResolution> accounts, Map<CsvCategoryKey, CategoryResolution> categories, Set<String> salaryNotes
 });
 
 
@@ -2556,7 +2556,7 @@ class __$CsvImportPlanCopyWithImpl<$Res>
 rows: null == rows ? _self._rows : rows // ignore: cast_nullable_to_non_nullable
 as List<CsvImportRow>,accounts: null == accounts ? _self._accounts : accounts // ignore: cast_nullable_to_non_nullable
 as Map<String, AccountResolution>,categories: null == categories ? _self._categories : categories // ignore: cast_nullable_to_non_nullable
-as Map<String, CategoryResolution>,salaryNotes: null == salaryNotes ? _self._salaryNotes : salaryNotes // ignore: cast_nullable_to_non_nullable
+as Map<CsvCategoryKey, CategoryResolution>,salaryNotes: null == salaryNotes ? _self._salaryNotes : salaryNotes // ignore: cast_nullable_to_non_nullable
 as Set<String>,
   ));
 }

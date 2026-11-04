@@ -126,9 +126,16 @@ abstract class CsvParseResult with _$CsvParseResult {
   }) = _CsvParseResult;
 }
 
+/// A CSV Category value plus, for Ledgerly rows, the type the file gives
+/// it. Keys [CsvImportPlan.categories]: one Ledgerly value can name both
+/// an expense and an income category (English "Investment").
+typedef CsvCategoryKey = ({String value, CategoryType? type});
+
 /// A valid row ready to import: currency resolved and amount rounded.
 @freezed
 abstract class CsvImportRow with _$CsvImportRow {
+  const CsvImportRow._();
+
   const factory CsvImportRow({
     /// 1-based physical line where the row starts.
     required int line,
@@ -136,7 +143,7 @@ abstract class CsvImportRow with _$CsvImportRow {
     /// Trimmed CSV Account value; keys [CsvImportPlan.accounts].
     required String account,
 
-    /// Trimmed CSV Category value; keys [CsvImportPlan.categories].
+    /// Trimmed CSV Category value; see [categoryKey].
     required String category,
 
     /// Rounded half-up (Fortune City to at most 2 decimals, Ledgerly to
@@ -155,6 +162,8 @@ abstract class CsvImportRow with _$CsvImportRow {
     /// See [ParsedCsvRow.date]; null for Fortune City.
     DateTime? date,
   }) = _CsvImportRow;
+
+  CsvCategoryKey get categoryKey => (value: category, type: type);
 }
 
 /// Output of loading a file.
@@ -220,8 +229,8 @@ sealed class CategoryResolution with _$CategoryResolution {
 }
 
 /// Everything the commit needs. [accounts] and [categories] are keyed by
-/// [CsvImportRow.account] and [CsvImportRow.category] and must cover every
-/// row the commit's duplicate recount leaves.
+/// [CsvImportRow.account] and [CsvImportRow.categoryKey] and must cover
+/// every row the commit's duplicate recount leaves.
 @freezed
 abstract class CsvImportPlan with _$CsvImportPlan {
   const factory CsvImportPlan({
@@ -229,7 +238,7 @@ abstract class CsvImportPlan with _$CsvImportPlan {
     /// them against the database.
     required List<CsvImportRow> rows,
     required Map<String, AccountResolution> accounts,
-    required Map<String, CategoryResolution> categories,
+    required Map<CsvCategoryKey, CategoryResolution> categories,
 
     /// The Salary category's label in every locale. Compared with each
     /// income row's note after trimming and lower-casing both.

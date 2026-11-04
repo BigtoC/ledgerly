@@ -249,14 +249,14 @@ class CsvImportUseCase {
         };
       }
 
-      final categoryIds = <String, int>{};
-      final incomeByNote = <String, IncomeByNoteCategoryResolution>{};
-      for (final value in rows.map((r) => r.category).toSet()) {
-        switch (plan.categories[value]!) {
+      final categoryIds = <CsvCategoryKey, int>{};
+      final incomeByNote = <CsvCategoryKey, IncomeByNoteCategoryResolution>{};
+      for (final key in rows.map((r) => r.categoryKey).toSet()) {
+        switch (plan.categories[key]!) {
           case ExistingCategoryResolution(:final categoryId):
-            categoryIds[value] = categoryId;
+            categoryIds[key] = categoryId;
           case CreateCategoryResolution(:final name, :final type):
-            categoryIds[value] =
+            categoryIds[key] =
                 createdCategories[(
                   normalizeImportKey(name),
                   type,
@@ -271,14 +271,14 @@ class CsvImportUseCase {
                   ),
                 )).id;
           case final IncomeByNoteCategoryResolution resolution:
-            incomeByNote[value] = resolution;
+            incomeByNote[key] = resolution;
         }
       }
 
       final salaryNotes = plan.salaryNotes.map(normalizeImportKey).toSet();
       int categoryIdFor(CsvImportRow row) {
-        final income = incomeByNote[row.category];
-        if (income == null) return categoryIds[row.category]!;
+        final income = incomeByNote[row.categoryKey];
+        if (income == null) return categoryIds[row.categoryKey]!;
         return isSalaryNote(row.memo, salaryNotes)
             ? income.salaryCategoryId
             : income.otherCategoryId;

@@ -100,6 +100,9 @@ abstract class CsvAccountMatch with _$CsvAccountMatch {
 abstract class CsvCategoryMatch with _$CsvCategoryMatch {
   const factory CsvCategoryMatch({
     required String csvValue,
+
+    /// The type a Ledgerly file gives these rows; null for Fortune City.
+    CategoryType? csvType,
     required int rowCount,
     required CategoryResolution resolution,
 
@@ -135,10 +138,10 @@ abstract final class CsvImportMatcher {
     required String defaultCurrencyCode,
   }) {
     final rowsByAccount = <String, List<CsvImportRow>>{};
-    final rowsByCategory = <String, List<CsvImportRow>>{};
+    final rowsByCategory = <CsvCategoryKey, List<CsvImportRow>>{};
     for (final row in rows) {
       (rowsByAccount[row.account] ??= []).add(row);
-      (rowsByCategory[row.category] ??= []).add(row);
+      (rowsByCategory[row.categoryKey] ??= []).add(row);
     }
 
     // 薪资 is the Simplified form of 薪資; the zh_CN label is 工资.
@@ -249,7 +252,7 @@ abstract final class CsvImportMatcher {
   }
 
   static List<CsvCategoryMatch> _matchCategories(
-    Map<String, List<CsvImportRow>> rowsByCategory,
+    Map<CsvCategoryKey, List<CsvImportRow>> rowsByCategory,
     List<Category> categories,
     List<AppLocalizations> labelSets,
     Set<String> normalizedSalaryNotes,
@@ -268,8 +271,10 @@ abstract final class CsvImportMatcher {
     };
 
     return [
-      for (final MapEntry(key: value, value: rows) in rowsByCategory.entries)
-        if (incomeMarkers.contains(normalizeImportKey(value)))
+      for (final MapEntry(key: (:value, :type), value: rows)
+          in rowsByCategory.entries)
+        // Only Fortune City rows (no type) use the income marker.
+        if (type == null && incomeMarkers.contains(normalizeImportKey(value)))
           CsvCategoryMatch(
             csvValue: value,
             rowCount: rows.length,
@@ -284,22 +289,31 @@ abstract final class CsvImportMatcher {
         else
           CsvCategoryMatch(
             csvValue: value,
+            csvType: type,
             rowCount: rows.length,
-            resolution: _resolveCategory(value, byLabel),
+            resolution: _resolveCategory(value, type, byLabel),
           ),
     ];
   }
 
+  /// A [type] (Ledgerly rows) limits the match to categories of that type
+  /// and is the type of a created category.
   static CategoryResolution _resolveCategory(
     String value,
+    CategoryType? type,
     Map<String, Set<Category>> byLabel,
   ) {
-    final candidates = byLabel[normalizeImportKey(value)];
-    if (candidates == null) {
-      return CategoryResolution.create(name: value, type: CategoryType.expense);
+    final candidates = (byLabel[normalizeImportKey(value)] ?? {}).where(
+      (c) => type == null || c.type == type,
+    );
+    if (candidates.isEmpty) {
+      return CategoryResolution.create(
+        name: value,
+        type: type ?? CategoryType.expense,
+      );
     }
-    // Candidates in both types prefer expense: English "Investment" labels
-    // both `category.investment` and `category.income.investment`.
+    // Untyped candidates in both types prefer expense: English "Investment"
+    // labels both `category.investment` and `category.income.investment`.
     final expense = candidates.where((c) => c.type == CategoryType.expense);
     final ranked = (expense.isNotEmpty ? expense : candidates).toList()
       ..sort(

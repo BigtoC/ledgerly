@@ -90,6 +90,7 @@ CsvImportRow _row(
   Currency currency = _hkd,
   DateTime? recordedAt,
   String? memo,
+  CategoryType? type,
 }) => CsvImportRow(
   line: line,
   account: account,
@@ -98,6 +99,7 @@ CsvImportRow _row(
   currency: currency,
   recordedAt: recordedAt ?? DateTime(2026, 10, 30, 10, 39),
   memo: memo,
+  type: type,
 );
 
 /// A small file shaped like the sample: Cash (tier 1), Investment (tier
@@ -347,7 +349,7 @@ void main() {
           'Investment',
           const AccountResolution.existing(1),
         )
-        ..setNewCategoryType('還款', CategoryType.income);
+        ..setNewCategoryType((value: '還款', type: null), CategoryType.income);
 
       final after = container.read(csvImportControllerProvider);
       after as CsvImportPreview;
@@ -370,9 +372,10 @@ void main() {
       final container = makeContainer();
       final before = await loadPreview(container);
 
-      container
-          .read(csvImportControllerProvider.notifier)
-          .setNewCategoryType('食物', CategoryType.income);
+      container.read(csvImportControllerProvider.notifier).setNewCategoryType((
+        value: '食物',
+        type: null,
+      ), CategoryType.income);
 
       expect(container.read(csvImportControllerProvider), before);
     });
@@ -389,7 +392,7 @@ void main() {
             currencyCode: 'HKD',
           ),
         )
-        ..setNewCategoryType('還款', CategoryType.income);
+        ..setNewCategoryType((value: '還款', type: null), CategoryType.income);
 
       await controller.commit();
 
@@ -421,17 +424,60 @@ void main() {
         ),
       });
       expect(plan.categories, {
-        '食物': const CategoryResolution.existing(1),
-        '還款': const CategoryResolution.create(
+        (value: '食物', type: null): const CategoryResolution.existing(1),
+        (value: '還款', type: null): const CategoryResolution.create(
           name: '還款',
           type: CategoryType.income,
         ),
-        '收入': const CategoryResolution.incomeByNote(
+        (value: '收入', type: null): const CategoryResolution.incomeByNote(
           salaryCategoryId: 2,
           otherCategoryId: 3,
         ),
       });
       expect(plan.salaryNotes, containsAll(['Salary', '薪資']));
+    });
+
+    test('Ledgerly rows of one value in both types are two entries, each '
+        'set and committed under its own type', () async {
+      const expenseKey = (value: 'Bonus', type: CategoryType.expense);
+      const incomeKey = (value: 'Bonus', type: CategoryType.income);
+      final rows = [
+        _row(2, category: 'Bonus', type: CategoryType.expense),
+        _row(3, category: 'Bonus', type: CategoryType.income),
+      ];
+      when(() => useCase.pickAndLoad()).thenAnswer(
+        (_) async => CsvLoadResult(
+          fileName: 'ledgerly.csv',
+          validRows: rows,
+          rowsToImport: rows,
+          errors: const [],
+        ),
+      );
+      final container = makeContainer();
+      final preview = await loadPreview(container);
+      expect(preview.categories.map((c) => (c.key, c.type)), [
+        (expenseKey, CategoryType.expense),
+        (incomeKey, CategoryType.income),
+      ]);
+
+      final controller = container.read(csvImportControllerProvider.notifier)
+        ..setNewCategoryType(expenseKey, CategoryType.income)
+        ..setNewCategoryType(incomeKey, CategoryType.expense);
+      await controller.commit();
+
+      final plan =
+          verify(() => useCase.commit(captureAny())).captured.single
+              as CsvImportPlan;
+      expect(plan.categories, {
+        expenseKey: const CategoryResolution.create(
+          name: 'Bonus',
+          type: CategoryType.income,
+        ),
+        incomeKey: const CategoryResolution.create(
+          name: 'Bonus',
+          type: CategoryType.expense,
+        ),
+      });
     });
 
     test('commit is ignored while a decision is pending', () async {

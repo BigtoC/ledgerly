@@ -152,44 +152,49 @@ void main() {
         'Credit Card': creditCard,
       },
       categories: {
-        '食物': CategoryResolution.existing(await categoryIdFor('category.food')),
-        '交通': CategoryResolution.existing(
+        (value: '食物', type: null): CategoryResolution.existing(
+          await categoryIdFor('category.food'),
+        ),
+        (value: '交通', type: null): CategoryResolution.existing(
           await categoryIdFor('category.transportation'),
         ),
-        '飲品': CategoryResolution.existing(
+        (value: '飲品', type: null): CategoryResolution.existing(
           await categoryIdFor('category.drinks'),
         ),
-        '收入': CategoryResolution.incomeByNote(
+        (value: '收入', type: null): CategoryResolution.incomeByNote(
           salaryCategoryId: await categoryIdFor('category.income.salary'),
           otherCategoryId: await categoryIdFor('category.income.other'),
         ),
-        '理財': CategoryResolution.existing(
+        (value: '理財', type: null): CategoryResolution.existing(
           await categoryIdFor('category.investment'),
         ),
-        '娛樂': CategoryResolution.existing(
+        (value: '娛樂', type: null): CategoryResolution.existing(
           await categoryIdFor('category.entertainment'),
         ),
-        '醫藥': CategoryResolution.existing(
+        (value: '醫藥', type: null): CategoryResolution.existing(
           await categoryIdFor('category.medical'),
         ),
-        '3C': CategoryResolution.existing(
+        (value: '3C', type: null): CategoryResolution.existing(
           await categoryIdFor('category.threeC'),
         ),
-        '居家': CategoryResolution.existing(
+        (value: '居家', type: null): CategoryResolution.existing(
           await categoryIdFor('category.housing'),
         ),
-        '消費': CategoryResolution.existing(
+        (value: '消費', type: null): CategoryResolution.existing(
           await categoryIdFor('category.shopping'),
         ),
-        '其他': CategoryResolution.existing(
+        (value: '其他', type: null): CategoryResolution.existing(
           await categoryIdFor('category.other'),
         ),
-        '還款': CategoryResolution.create(name: '還款', type: repaymentType),
-        '個人護理': const CategoryResolution.create(
+        (value: '還款', type: null): CategoryResolution.create(
+          name: '還款',
+          type: repaymentType,
+        ),
+        (value: '個人護理', type: null): const CategoryResolution.create(
           name: '個人護理',
           type: CategoryType.expense,
         ),
-        '休閒': const CategoryResolution.create(
+        (value: '休閒', type: null): const CategoryResolution.create(
           name: '休閒',
           type: CategoryType.expense,
         ),
@@ -328,7 +333,9 @@ void main() {
         CsvImportPlan(
           rows: load.validRows,
           accounts: {'Cash': AccountResolution.existing(cash.id)},
-          categories: {'食物': CategoryResolution.existing(food)},
+          categories: {
+            (value: '食物', type: null): CategoryResolution.existing(food),
+          },
           salaryNotes: _salaryNotes,
         ),
       );
@@ -346,7 +353,9 @@ void main() {
       final plan = CsvImportPlan(
         rows: (await useCase.pickAndLoad())!.validRows,
         accounts: {'Cash': AccountResolution.existing(cash.id)},
-        categories: {'食物': CategoryResolution.existing(food)},
+        categories: {
+          (value: '食物', type: null): CategoryResolution.existing(food),
+        },
         salaryNotes: _salaryNotes,
       );
       await useCase.commit(plan);
@@ -619,11 +628,11 @@ void main() {
             ),
           },
           categories: const {
-            'Fun': CategoryResolution.create(
+            (value: 'Fun', type: null): CategoryResolution.create(
               name: 'Fun',
               type: CategoryType.expense,
             ),
-            'fun': CategoryResolution.create(
+            (value: 'fun', type: null): CategoryResolution.create(
               name: 'fun',
               type: CategoryType.expense,
             ),
@@ -666,11 +675,11 @@ void main() {
             ),
           },
           categories: const {
-            'Fun': CategoryResolution.create(
+            (value: 'Fun', type: null): CategoryResolution.create(
               name: 'Fun',
               type: CategoryType.expense,
             ),
-            'fun': CategoryResolution.create(
+            (value: 'fun', type: null): CategoryResolution.create(
               name: 'fun',
               type: CategoryType.income,
             ),
@@ -710,7 +719,7 @@ void main() {
             rows: load.validRows,
             accounts: {'Cash': AccountResolution.existing(cash.id)},
             categories: {
-              '收入': CategoryResolution.incomeByNote(
+              (value: '收入', type: null): CategoryResolution.incomeByNote(
                 salaryCategoryId: salary,
                 otherCategoryId: other,
               ),
@@ -775,7 +784,7 @@ void main() {
               ),
             },
             categories: {
-              '食物': CategoryResolution.existing(
+              (value: '食物', type: null): CategoryResolution.existing(
                 await categoryIdFor('category.food'),
               ),
             },
@@ -838,7 +847,7 @@ void main() {
                 ),
               },
               categories: const {
-                'Fun': CategoryResolution.create(
+                (value: 'Fun', type: null): CategoryResolution.create(
                   name: 'Fun',
                   type: CategoryType.expense,
                 ),
@@ -913,7 +922,10 @@ void main() {
         CsvImportPlan(
           rows: load.validRows,
           accounts: {'Cash': AccountResolution.existing(cash.id)},
-          categories: {'Food': CategoryResolution.existing(food)},
+          categories: {
+            (value: 'Food', type: CategoryType.expense):
+                CategoryResolution.existing(food),
+          },
           salaryNotes: _salaryNotes,
         ),
       );
@@ -923,6 +935,43 @@ void main() {
       expect(stored.createdAt, DateTime.utc(2026, 10, 30, 6, 31, 5).toLocal());
       expect(stored.amountMinorUnits, 1234);
       expect((await useCase.pickAndLoad())!.rowsToImport, isEmpty);
+    });
+
+    test('one value in both types lands in one category per type', () async {
+      final useCase = useCaseWith(
+        _serviceFor(
+          ledgerlyCsv([
+            '1,2026-10-29T00:00:00+08:00,expense,5,HKD,Investment,Cash,,'
+                '2026-10-29T10:00:00+08:00,2026-10-29T10:00:00+08:00',
+            '2,2026-10-30T00:00:00+08:00,income,7,HKD,Investment,Cash,,'
+                '2026-10-30T10:00:00+08:00,2026-10-30T10:00:00+08:00',
+          ]),
+        ),
+      );
+      final load = (await useCase.pickAndLoad())!;
+      final cash = (await accounts.watchAll().first).single;
+      final expense = await categoryIdFor('category.investment');
+      final income = await categoryIdFor('category.income.investment');
+
+      await useCase.commit(
+        CsvImportPlan(
+          rows: load.validRows,
+          accounts: {'Cash': AccountResolution.existing(cash.id)},
+          categories: {
+            (value: 'Investment', type: CategoryType.expense):
+                CategoryResolution.existing(expense),
+            (value: 'Investment', type: CategoryType.income):
+                CategoryResolution.existing(income),
+          },
+          salaryNotes: _salaryNotes,
+        ),
+      );
+
+      final stored = await allTransactionRows();
+      expect(
+        {for (final r in stored) r.amountMinorUnits: r.categoryId},
+        {500: expense, 700: income},
+      );
     });
   });
 }

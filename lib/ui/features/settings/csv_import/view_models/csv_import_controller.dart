@@ -147,16 +147,16 @@ class CsvImportController extends _$CsvImportController {
     );
   }
 
-  /// Sets the type of the category that will be created for [csvValue].
+  /// Sets the type of the category that will be created for [key].
   /// Ignored for values that match an existing category.
-  void setNewCategoryType(String csvValue, CategoryType type) {
+  void setNewCategoryType(CsvCategoryKey key, CategoryType type) {
     final s = state;
     if (s is! CsvImportPreview) return;
     state = s.copyWith(
       categories: [
         for (final c in s.categories)
           if (c.resolution case final CreateCategoryResolution r
-              when c.csvValue == csvValue)
+              when c.key == key)
             c.copyWith(resolution: r.copyWith(type: type))
           else
             c,
@@ -181,7 +181,7 @@ class CsvImportController extends _$CsvImportController {
         CsvImportPlan(
           rows: load.validRows,
           accounts: {for (final a in s.accounts) a.csvValue: a.resolution!},
-          categories: {for (final c in s.categories) c.csvValue: c.resolution},
+          categories: {for (final c in s.categories) c.key: c.resolution},
           salaryNotes: _salaryNotes,
         ),
       );
@@ -224,6 +224,7 @@ CsvCategoryEntry _categoryEntry(
 ) {
   final entry = CsvCategoryEntry(
     csvValue: match.csvValue,
+    csvType: match.csvType,
     rowCount: match.rowCount,
     resolution: match.resolution,
     salaryRowCount: match.salaryRowCount,

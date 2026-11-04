@@ -293,9 +293,11 @@ class CsvImportPreview implements CsvImportState {
   return EqualUnmodifiableListView(_accounts);
 }
 
-/// One entry per distinct CSV Category value among the rows to import.
+/// One entry per distinct CSV Category value (and, for Ledgerly
+/// rows, type) among the rows to import.
  final  List<CsvCategoryEntry> _categories;
-/// One entry per distinct CSV Category value among the rows to import.
+/// One entry per distinct CSV Category value (and, for Ledgerly
+/// rows, type) among the rows to import.
  List<CsvCategoryEntry> get categories {
   if (_categories is EqualUnmodifiableListView) return _categories;
   // ignore: implicit_dynamic_type
@@ -563,7 +565,8 @@ as List<String>,
 /// @nodoc
 mixin _$CsvCategoryEntry {
 
- String get csvValue; int get rowCount; CategoryResolution get resolution;/// The target of an `existing` resolution; null otherwise.
+ String get csvValue;/// See [CsvCategoryMatch.csvType].
+ CategoryType? get csvType; int get rowCount; CategoryResolution get resolution;/// The target of an `existing` resolution; null otherwise.
  Category? get category;/// The income marker's targets: [salaryRowCount] rows go to
 /// [salaryCategory], the rest to [otherIncomeCategory]. Null otherwise.
  Category? get salaryCategory; Category? get otherIncomeCategory; int get salaryRowCount;
@@ -578,20 +581,20 @@ $CsvCategoryEntryCopyWith<CsvCategoryEntry> get copyWith => _$CsvCategoryEntryCo
 @override
 bool operator ==(Object other) {
   final _this = this as CsvCategoryEntry;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CsvCategoryEntry&&(identical(other.csvValue, _this.csvValue) || other.csvValue == _this.csvValue)&&(identical(other.rowCount, _this.rowCount) || other.rowCount == _this.rowCount)&&(identical(other.resolution, _this.resolution) || other.resolution == _this.resolution)&&(identical(other.category, _this.category) || other.category == _this.category)&&(identical(other.salaryCategory, _this.salaryCategory) || other.salaryCategory == _this.salaryCategory)&&(identical(other.otherIncomeCategory, _this.otherIncomeCategory) || other.otherIncomeCategory == _this.otherIncomeCategory)&&(identical(other.salaryRowCount, _this.salaryRowCount) || other.salaryRowCount == _this.salaryRowCount));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CsvCategoryEntry&&(identical(other.csvValue, _this.csvValue) || other.csvValue == _this.csvValue)&&(identical(other.csvType, _this.csvType) || other.csvType == _this.csvType)&&(identical(other.rowCount, _this.rowCount) || other.rowCount == _this.rowCount)&&(identical(other.resolution, _this.resolution) || other.resolution == _this.resolution)&&(identical(other.category, _this.category) || other.category == _this.category)&&(identical(other.salaryCategory, _this.salaryCategory) || other.salaryCategory == _this.salaryCategory)&&(identical(other.otherIncomeCategory, _this.otherIncomeCategory) || other.otherIncomeCategory == _this.otherIncomeCategory)&&(identical(other.salaryRowCount, _this.salaryRowCount) || other.salaryRowCount == _this.salaryRowCount));
 }
 
 
 @override
 int get hashCode {
   final _this = this as CsvCategoryEntry;
-  return Object.hash(runtimeType,_this.csvValue,_this.rowCount,_this.resolution,_this.category,_this.salaryCategory,_this.otherIncomeCategory,_this.salaryRowCount);
+  return Object.hash(runtimeType,_this.csvValue,_this.csvType,_this.rowCount,_this.resolution,_this.category,_this.salaryCategory,_this.otherIncomeCategory,_this.salaryRowCount);
 }
 
 @override
 String toString() {
   final _this = this as CsvCategoryEntry;
-  return 'CsvCategoryEntry(csvValue: ${_this.csvValue}, rowCount: ${_this.rowCount}, resolution: ${_this.resolution}, category: ${_this.category}, salaryCategory: ${_this.salaryCategory}, otherIncomeCategory: ${_this.otherIncomeCategory}, salaryRowCount: ${_this.salaryRowCount})';
+  return 'CsvCategoryEntry(csvValue: ${_this.csvValue}, csvType: ${_this.csvType}, rowCount: ${_this.rowCount}, resolution: ${_this.resolution}, category: ${_this.category}, salaryCategory: ${_this.salaryCategory}, otherIncomeCategory: ${_this.otherIncomeCategory}, salaryRowCount: ${_this.salaryRowCount})';
 }
 
 
@@ -602,7 +605,7 @@ abstract mixin class $CsvCategoryEntryCopyWith<$Res>  {
   factory $CsvCategoryEntryCopyWith(CsvCategoryEntry value, $Res Function(CsvCategoryEntry) _then) = _$CsvCategoryEntryCopyWithImpl;
 @useResult
 $Res call({
- String csvValue, int rowCount, CategoryResolution resolution, Category? category, Category? salaryCategory, Category? otherIncomeCategory, int salaryRowCount
+ String csvValue, CategoryType? csvType, int rowCount, CategoryResolution resolution, Category? category, Category? salaryCategory, Category? otherIncomeCategory, int salaryRowCount
 });
 
 
@@ -619,10 +622,11 @@ class _$CsvCategoryEntryCopyWithImpl<$Res>
 
 /// Create a copy of CsvCategoryEntry
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? csvValue = null,Object? rowCount = null,Object? resolution = null,Object? category = freezed,Object? salaryCategory = freezed,Object? otherIncomeCategory = freezed,Object? salaryRowCount = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? csvValue = null,Object? csvType = freezed,Object? rowCount = null,Object? resolution = null,Object? category = freezed,Object? salaryCategory = freezed,Object? otherIncomeCategory = freezed,Object? salaryRowCount = null,}) {
   return _then(CsvCategoryEntry(
 csvValue: null == csvValue ? _self.csvValue : csvValue // ignore: cast_nullable_to_non_nullable
-as String,rowCount: null == rowCount ? _self.rowCount : rowCount // ignore: cast_nullable_to_non_nullable
+as String,csvType: freezed == csvType ? _self.csvType : csvType // ignore: cast_nullable_to_non_nullable
+as CategoryType?,rowCount: null == rowCount ? _self.rowCount : rowCount // ignore: cast_nullable_to_non_nullable
 as int,resolution: null == resolution ? _self.resolution : resolution // ignore: cast_nullable_to_non_nullable
 as CategoryResolution,category: freezed == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
 as Category?,salaryCategory: freezed == salaryCategory ? _self.salaryCategory : salaryCategory // ignore: cast_nullable_to_non_nullable
@@ -758,10 +762,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String csvValue,  int rowCount,  CategoryResolution resolution,  Category? category,  Category? salaryCategory,  Category? otherIncomeCategory,  int salaryRowCount)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String csvValue,  CategoryType? csvType,  int rowCount,  CategoryResolution resolution,  Category? category,  Category? salaryCategory,  Category? otherIncomeCategory,  int salaryRowCount)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CsvCategoryEntry() when $default != null:
-return $default(_that.csvValue,_that.rowCount,_that.resolution,_that.category,_that.salaryCategory,_that.otherIncomeCategory,_that.salaryRowCount);case _:
+return $default(_that.csvValue,_that.csvType,_that.rowCount,_that.resolution,_that.category,_that.salaryCategory,_that.otherIncomeCategory,_that.salaryRowCount);case _:
   return orElse();
 
 }
@@ -779,10 +783,10 @@ return $default(_that.csvValue,_that.rowCount,_that.resolution,_that.category,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String csvValue,  int rowCount,  CategoryResolution resolution,  Category? category,  Category? salaryCategory,  Category? otherIncomeCategory,  int salaryRowCount)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String csvValue,  CategoryType? csvType,  int rowCount,  CategoryResolution resolution,  Category? category,  Category? salaryCategory,  Category? otherIncomeCategory,  int salaryRowCount)  $default,) {final _that = this;
 switch (_that) {
 case _CsvCategoryEntry():
-return $default(_that.csvValue,_that.rowCount,_that.resolution,_that.category,_that.salaryCategory,_that.otherIncomeCategory,_that.salaryRowCount);case _:
+return $default(_that.csvValue,_that.csvType,_that.rowCount,_that.resolution,_that.category,_that.salaryCategory,_that.otherIncomeCategory,_that.salaryRowCount);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -799,10 +803,10 @@ return $default(_that.csvValue,_that.rowCount,_that.resolution,_that.category,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String csvValue,  int rowCount,  CategoryResolution resolution,  Category? category,  Category? salaryCategory,  Category? otherIncomeCategory,  int salaryRowCount)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String csvValue,  CategoryType? csvType,  int rowCount,  CategoryResolution resolution,  Category? category,  Category? salaryCategory,  Category? otherIncomeCategory,  int salaryRowCount)?  $default,) {final _that = this;
 switch (_that) {
 case _CsvCategoryEntry() when $default != null:
-return $default(_that.csvValue,_that.rowCount,_that.resolution,_that.category,_that.salaryCategory,_that.otherIncomeCategory,_that.salaryRowCount);case _:
+return $default(_that.csvValue,_that.csvType,_that.rowCount,_that.resolution,_that.category,_that.salaryCategory,_that.otherIncomeCategory,_that.salaryRowCount);case _:
   return null;
 
 }
@@ -814,10 +818,12 @@ return $default(_that.csvValue,_that.rowCount,_that.resolution,_that.category,_t
 
 
 class _CsvCategoryEntry extends CsvCategoryEntry {
-  const _CsvCategoryEntry({required this.csvValue, required this.rowCount, required this.resolution, this.category, this.salaryCategory, this.otherIncomeCategory, this.salaryRowCount = 0}): super._();
+  const _CsvCategoryEntry({required this.csvValue, this.csvType, required this.rowCount, required this.resolution, this.category, this.salaryCategory, this.otherIncomeCategory, this.salaryRowCount = 0}): super._();
   
 
 @override final  String csvValue;
+/// See [CsvCategoryMatch.csvType].
+@override final  CategoryType? csvType;
 @override final  int rowCount;
 @override final  CategoryResolution resolution;
 /// The target of an `existing` resolution; null otherwise.
@@ -838,18 +844,18 @@ _$CsvCategoryEntryCopyWith<_CsvCategoryEntry> get copyWith => __$CsvCategoryEntr
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _CsvCategoryEntry&&(identical(other.csvValue, csvValue) || other.csvValue == csvValue)&&(identical(other.rowCount, rowCount) || other.rowCount == rowCount)&&(identical(other.resolution, resolution) || other.resolution == resolution)&&(identical(other.category, category) || other.category == category)&&(identical(other.salaryCategory, salaryCategory) || other.salaryCategory == salaryCategory)&&(identical(other.otherIncomeCategory, otherIncomeCategory) || other.otherIncomeCategory == otherIncomeCategory)&&(identical(other.salaryRowCount, salaryRowCount) || other.salaryRowCount == salaryRowCount));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _CsvCategoryEntry&&(identical(other.csvValue, csvValue) || other.csvValue == csvValue)&&(identical(other.csvType, csvType) || other.csvType == csvType)&&(identical(other.rowCount, rowCount) || other.rowCount == rowCount)&&(identical(other.resolution, resolution) || other.resolution == resolution)&&(identical(other.category, category) || other.category == category)&&(identical(other.salaryCategory, salaryCategory) || other.salaryCategory == salaryCategory)&&(identical(other.otherIncomeCategory, otherIncomeCategory) || other.otherIncomeCategory == otherIncomeCategory)&&(identical(other.salaryRowCount, salaryRowCount) || other.salaryRowCount == salaryRowCount));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,csvValue,rowCount,resolution,category,salaryCategory,otherIncomeCategory,salaryRowCount);
+    return Object.hash(runtimeType,csvValue,csvType,rowCount,resolution,category,salaryCategory,otherIncomeCategory,salaryRowCount);
 }
 
 @override
 String toString() {
-    return 'CsvCategoryEntry(csvValue: $csvValue, rowCount: $rowCount, resolution: $resolution, category: $category, salaryCategory: $salaryCategory, otherIncomeCategory: $otherIncomeCategory, salaryRowCount: $salaryRowCount)';
+    return 'CsvCategoryEntry(csvValue: $csvValue, csvType: $csvType, rowCount: $rowCount, resolution: $resolution, category: $category, salaryCategory: $salaryCategory, otherIncomeCategory: $otherIncomeCategory, salaryRowCount: $salaryRowCount)';
 }
 
 
@@ -860,7 +866,7 @@ abstract mixin class _$CsvCategoryEntryCopyWith<$Res> implements $CsvCategoryEnt
   factory _$CsvCategoryEntryCopyWith(_CsvCategoryEntry value, $Res Function(_CsvCategoryEntry) _then) = __$CsvCategoryEntryCopyWithImpl;
 @override @useResult
 $Res call({
- String csvValue, int rowCount, CategoryResolution resolution, Category? category, Category? salaryCategory, Category? otherIncomeCategory, int salaryRowCount
+ String csvValue, CategoryType? csvType, int rowCount, CategoryResolution resolution, Category? category, Category? salaryCategory, Category? otherIncomeCategory, int salaryRowCount
 });
 
 
@@ -877,10 +883,11 @@ class __$CsvCategoryEntryCopyWithImpl<$Res>
 
 /// Create a copy of CsvCategoryEntry
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? csvValue = null,Object? rowCount = null,Object? resolution = null,Object? category = freezed,Object? salaryCategory = freezed,Object? otherIncomeCategory = freezed,Object? salaryRowCount = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? csvValue = null,Object? csvType = freezed,Object? rowCount = null,Object? resolution = null,Object? category = freezed,Object? salaryCategory = freezed,Object? otherIncomeCategory = freezed,Object? salaryRowCount = null,}) {
   return _then(_CsvCategoryEntry(
 csvValue: null == csvValue ? _self.csvValue : csvValue // ignore: cast_nullable_to_non_nullable
-as String,rowCount: null == rowCount ? _self.rowCount : rowCount // ignore: cast_nullable_to_non_nullable
+as String,csvType: freezed == csvType ? _self.csvType : csvType // ignore: cast_nullable_to_non_nullable
+as CategoryType?,rowCount: null == rowCount ? _self.rowCount : rowCount // ignore: cast_nullable_to_non_nullable
 as int,resolution: null == resolution ? _self.resolution : resolution // ignore: cast_nullable_to_non_nullable
 as CategoryResolution,category: freezed == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
 as Category?,salaryCategory: freezed == salaryCategory ? _self.salaryCategory : salaryCategory // ignore: cast_nullable_to_non_nullable
