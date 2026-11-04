@@ -460,6 +460,30 @@ void main() {
       );
     });
 
+    testWidgets('an archived existing account is labelled in its tile', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        _preview(
+          accounts: [
+            _cardMatch.copyWith(
+              resolution: const AccountResolution.existing(3),
+            ),
+          ],
+        ),
+      );
+
+      final card = find.byKey(const ValueKey('csvImportAccount:Credit Card'));
+      expect(
+        find.descendant(
+          of: card,
+          matching: find.text('Credit Card (archived)'),
+        ),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('CI09: Import is disabled while a decision is pending', (
       tester,
     ) async {

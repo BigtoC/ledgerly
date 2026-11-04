@@ -122,7 +122,7 @@ class CsvAccountResolutionSheet extends StatelessWidget {
                     final account = match.options[i];
                     return _OptionTile(
                       key: ValueKey('csvImportSheetAccount:${account.id}'),
-                      label: _accountLabel(account, l10n),
+                      label: csvAccountLabel(account, l10n),
                       icon: Icons.account_balance_wallet_outlined,
                       option: AccountResolution.existing(account.id),
                       current: match.resolution,
@@ -138,7 +138,8 @@ class CsvAccountResolutionSheet extends StatelessWidget {
   }
 }
 
-String _accountLabel(Account account, AppLocalizations l10n) =>
+/// [account]'s name, marked as archived when it is.
+String csvAccountLabel(Account account, AppLocalizations l10n) =>
     account.isArchived
     ? l10n.csvImportAccountArchived(account.name)
     : account.name;
