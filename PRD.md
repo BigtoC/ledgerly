@@ -378,7 +378,6 @@ lib/
           theme_mode_selector.dart
           language_selector.dart
           default_currency_tile.dart
-          default_currency_picker_sheet.dart
           manage_categories_tile.dart
           new_version_badge.dart
         csv_export/

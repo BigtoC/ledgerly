@@ -9,9 +9,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../../l10n/app_localizations.dart';
+import '../../accounts/views/currency_picker_sheet.dart';
 import '../view_models/settings_controller.dart';
 import '../view_models/settings_state.dart';
-import 'default_currency_picker_sheet.dart';
 
 @Dependencies([SettingsController])
 class DefaultCurrencyTile extends ConsumerWidget {
@@ -28,7 +28,10 @@ class DefaultCurrencyTile extends ConsumerWidget {
       subtitle: Text(defaultCurrency),
       trailing: const Icon(Icons.chevron_right),
       onTap: () async {
-        final picked = await showDefaultCurrencyPickerSheet(context);
+        final picked = (await showCurrencyPickerSheet(
+          context,
+          title: l10n.settingsDefaultCurrencyPickerTitle,
+        ))?.code;
         if (picked == null) return;
         if (!context.mounted) return;
         final messenger = ScaffoldMessenger.of(context);

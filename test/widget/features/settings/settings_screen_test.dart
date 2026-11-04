@@ -785,7 +785,7 @@ void main() {
       );
       await tester.tap(find.byKey(tile));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('defaultCurrencyOption:JPY')));
+      await tester.tap(find.byKey(const ValueKey('currencyPicker:JPY')));
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
