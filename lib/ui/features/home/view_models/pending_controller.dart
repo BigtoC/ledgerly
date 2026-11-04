@@ -187,9 +187,6 @@ class _Composer {
     _emitScheduled = true;
     scheduleMicrotask(() {
       _emitScheduled = false;
-      // dispose() may have closed the controller between schedule and
-      // microtask fire; adding to a closed StreamController throws.
-      if (_out.isClosed) return;
       _emitIfReady();
     });
   }
