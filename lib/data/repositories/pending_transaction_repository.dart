@@ -5,8 +5,6 @@
 // 2026-05-08) extends this to a full UI-facing surface: `watchAll`, `approve`,
 // `reject`. Drift data classes never leave this file.
 
-import 'dart:developer' as developer;
-
 import 'package:drift/drift.dart' show Value;
 
 import '../../domain/models/currency.dart';
@@ -195,33 +193,12 @@ final class DriftPendingTransactionRepository
     final out = <PendingTransaction>[];
     for (final row in rows) {
       final currency = byCode[row.currency];
-      if (currency == null) {
-        developer.log(
-          'PendingTransactionRepository: dropping row ${row.id} — '
-          'currency "${row.currency}" not registered',
-          name: 'pending_transaction_repository',
-        );
-        continue;
-      }
+      if (currency == null) continue;
       final account = accountById[row.accountId];
-      if (account == null || account.isArchived) {
-        developer.log(
-          'PendingTransactionRepository: hiding row ${row.id} — '
-          'account ${row.accountId} is archived or missing',
-          name: 'pending_transaction_repository',
-        );
-        continue;
-      }
+      if (account == null || account.isArchived) continue;
       if (row.categoryId != null) {
         final category = categoryById[row.categoryId!];
-        if (category == null || category.isArchived) {
-          developer.log(
-            'PendingTransactionRepository: hiding row ${row.id} — '
-            'category ${row.categoryId} is archived or missing',
-            name: 'pending_transaction_repository',
-          );
-          continue;
-        }
+        if (category == null || category.isArchived) continue;
       }
       out.add(
         PendingTransaction(
