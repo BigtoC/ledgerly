@@ -218,7 +218,7 @@ class CsvImportUseCase {
 
       final accountIds = <String, int>{};
       for (final value in rows.map((r) => r.account).toSet()) {
-        accountIds[value] = switch (_accountResolution(plan, value)) {
+        accountIds[value] = switch (plan.accounts[value]!) {
           ExistingAccountResolution(:final accountId) => accountId,
           CreateAccountResolution(
             :final name,
@@ -247,7 +247,7 @@ class CsvImportUseCase {
       final categoryIds = <String, int>{};
       final incomeByNote = <String, IncomeByNoteCategoryResolution>{};
       for (final value in rows.map((r) => r.category).toSet()) {
-        switch (_categoryResolution(plan, value)) {
+        switch (plan.categories[value]!) {
           case ExistingCategoryResolution(:final categoryId):
             categoryIds[value] = categoryId;
           case CreateCategoryResolution(:final name, :final type):
@@ -361,18 +361,4 @@ class CsvImportUseCase {
     }
     return (rows: kept, duplicateCount: rows.length - kept.length);
   }
-
-  static AccountResolution _accountResolution(
-    CsvImportPlan plan,
-    String value,
-  ) =>
-      plan.accounts[value] ??
-      (throw ArgumentError('plan.accounts does not cover every row'));
-
-  static CategoryResolution _categoryResolution(
-    CsvImportPlan plan,
-    String value,
-  ) =>
-      plan.categories[value] ??
-      (throw ArgumentError('plan.categories does not cover every row'));
 }
