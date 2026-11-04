@@ -88,7 +88,7 @@ final class CsvImportControllerProvider
 }
 
 String _$csvImportControllerHash() =>
-    r'dee6ad7ef680fe4f2dc677e6f86bb8b25b3fdb9f';
+    r'39f235520b54addb8004c4409cb24a0faa0b9474';
 
 abstract class _$CsvImportController extends $Notifier<CsvImportState> {
   CsvImportState build();

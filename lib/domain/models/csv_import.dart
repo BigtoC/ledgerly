@@ -153,9 +153,6 @@ abstract class CsvLoadResult with _$CsvLoadResult {
     /// preview use these.
     required List<CsvImportRow> rowsToImport,
 
-    /// `validRows.length - rowsToImport.length`.
-    required int duplicateCount,
-
     /// Skipped rows, sorted by line.
     required List<CsvRowError> errors,
   }) = _CsvLoadResult;

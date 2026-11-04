@@ -128,7 +128,7 @@ class CsvImportController extends _$CsvImportController {
       categories: [
         for (final m in match.categories) _categoryEntry(m, categoriesById),
       ],
-      duplicateCount: load.duplicateCount,
+      duplicateCount: load.validRows.length - importCount,
       canCommit: _canCommit(importCount, match.accounts),
     );
   }

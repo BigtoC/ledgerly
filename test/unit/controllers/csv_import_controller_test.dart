@@ -118,7 +118,6 @@ final _load = CsvLoadResult(
   fileName: 'export.csv',
   validRows: [..._rows, _duplicate],
   rowsToImport: _rows,
-  duplicateCount: 1,
   errors: const [
     CsvRowError(lineNumber: 10, reason: CsvRowErrorReason.invalidDate),
   ],
@@ -324,7 +323,6 @@ void main() {
           fileName: 'export.csv',
           validRows: _rows,
           rowsToImport: const [],
-          duplicateCount: _rows.length,
           errors: const [],
         ),
       );

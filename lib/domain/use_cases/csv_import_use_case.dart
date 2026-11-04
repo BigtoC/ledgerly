@@ -159,7 +159,6 @@ class CsvImportUseCase {
       fileName: picked.name,
       validRows: valid,
       rowsToImport: deduped.rows,
-      duplicateCount: deduped.duplicateCount,
       errors: errors,
     );
   }

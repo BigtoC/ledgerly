@@ -216,7 +216,6 @@ void main() {
       expect(load.fileName, 'import_fortune_city_data.csv');
       expect(load.validRows, hasLength(105));
       expect(load.rowsToImport, load.validRows);
-      expect(load.duplicateCount, 0);
       expect(load.errors, isEmpty);
       expect(load.validRows.map((r) => r.currency.code).toSet(), {'HKD'});
       final line26 = load.validRows.singleWhere((r) => r.line == 26);
@@ -323,7 +322,6 @@ void main() {
       final load = (await useCase.pickAndLoad())!;
       expect(load.validRows, hasLength(2));
       expect(load.rowsToImport, hasLength(1));
-      expect(load.duplicateCount, 1);
 
       final result = await useCase.commit(
         CsvImportPlan(
@@ -354,7 +352,7 @@ void main() {
 
       final again = (await useCase.pickAndLoad())!;
       expect(again.rowsToImport, isEmpty);
-      expect(again.duplicateCount, 1);
+      expect(again.validRows, hasLength(1));
     });
   });
 
@@ -547,7 +545,7 @@ void main() {
       final again = (await useCase.pickAndLoad())!;
 
       expect(again.rowsToImport, isEmpty);
-      expect(again.duplicateCount, 105);
+      expect(again.validRows, hasLength(105));
       expect(again.errors, isEmpty);
     });
 
@@ -863,7 +861,7 @@ void main() {
         final again = (await useCase.pickAndLoad())!;
 
         expect(again.rowsToImport, isEmpty);
-        expect(again.duplicateCount, 2500);
+        expect(again.validRows, hasLength(2500));
       });
     });
   });
