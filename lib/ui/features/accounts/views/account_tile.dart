@@ -205,7 +205,6 @@ class AccountTile extends ConsumerWidget {
           onSetDefault: onSetDefault,
           onArchive: onArchive,
           onDelete: onDelete,
-          onArchiveBlocked: onArchiveBlocked,
         ),
       ),
     );
@@ -327,7 +326,6 @@ class _TrailingActions extends StatelessWidget {
     required this.onSetDefault,
     required this.onArchive,
     required this.onDelete,
-    required this.onArchiveBlocked,
   });
 
   final AccountWithBalance view;
@@ -335,7 +333,6 @@ class _TrailingActions extends StatelessWidget {
   final VoidCallback onSetDefault;
   final VoidCallback onArchive;
   final VoidCallback onDelete;
-  final VoidCallback onArchiveBlocked;
 
   @override
   Widget build(BuildContext context) {
@@ -350,11 +347,7 @@ class _TrailingActions extends StatelessWidget {
           case _RowAction.setDefault:
             onSetDefault();
           case _RowAction.archive:
-            if (view.affordance == AccountRowAffordance.archiveBlocked) {
-              onArchiveBlocked();
-            } else {
-              onArchive();
-            }
+            onArchive();
           case _RowAction.delete:
             onDelete();
         }
