@@ -152,13 +152,9 @@ final class DriftShoppingListRepository implements ShoppingListRepository {
     String? draftCurrencyCode,
     required DateTime draftDate,
   }) async {
-    final normalizedDraft = _normalizeAmountCurrencyPair(
+    final normalizedDraft = _normalizedDraftPair(
       draftAmountMinorUnits,
       draftCurrencyCode,
-    );
-    _validateAmountCurrencyPair(
-      normalizedDraft.amountMinorUnits,
-      normalizedDraft.currencyCode,
     );
     await _validateExpenseCategory(categoryId);
 
@@ -183,13 +179,9 @@ final class DriftShoppingListRepository implements ShoppingListRepository {
 
   @override
   Future<ShoppingListItem> update(ShoppingListItem item) async {
-    final normalizedDraft = _normalizeAmountCurrencyPair(
+    final normalizedDraft = _normalizedDraftPair(
       item.draftAmountMinorUnits,
       item.draftCurrencyCode,
-    );
-    _validateAmountCurrencyPair(
-      normalizedDraft.amountMinorUnits,
-      normalizedDraft.currencyCode,
     );
     await _validateExpenseCategory(item.categoryId);
 
@@ -259,18 +251,12 @@ final class DriftShoppingListRepository implements ShoppingListRepository {
         );
       }
 
-      // Step 3: Verify category exists and is not archived.
-      final categoryRow = await _categoryDao.findById(categoryId);
-      if (categoryRow == null || categoryRow.isArchived) {
+      // Step 3: Verify category exists, is an expense category and is not
+      // archived.
+      final categoryRow = await _validateExpenseCategory(categoryId);
+      if (categoryRow.isArchived) {
         throw ShoppingListRepositoryException(
-          'Category $categoryId is missing or archived',
-        );
-      }
-
-      if (categoryRow.type == 'income') {
-        throw ShoppingListRepositoryException(
-          'Category $categoryId is an income category; only expense categories '
-          'are allowed for shopping-list drafts',
+          'Category $categoryId is archived',
         );
       }
 
@@ -314,35 +300,28 @@ final class DriftShoppingListRepository implements ShoppingListRepository {
 
   // ---------- Validation helpers ----------
 
-  void _validateAmountCurrencyPair(
-    int? draftAmountMinorUnits,
-    String? draftCurrencyCode,
-  ) {
-    final hasAmount = draftAmountMinorUnits != null;
-    final hasCurrency = draftCurrencyCode != null;
-    if (hasAmount != hasCurrency) {
-      throw const ShoppingListRepositoryException(
-        'draftAmountMinorUnits and draftCurrencyCode must be both null or '
-        'both non-null',
-      );
-    }
-  }
-
-  ({int? amountMinorUnits, String? currencyCode}) _normalizeAmountCurrencyPair(
+  /// Normalizes a non-positive amount to an empty (null, null) draft, then
+  /// requires amount and currency to be both null or both non-null.
+  ({int? amountMinorUnits, String? currencyCode}) _normalizedDraftPair(
     int? draftAmountMinorUnits,
     String? draftCurrencyCode,
   ) {
     if (draftAmountMinorUnits != null && draftAmountMinorUnits <= 0) {
       return (amountMinorUnits: null, currencyCode: null);
     }
-
+    if ((draftAmountMinorUnits != null) != (draftCurrencyCode != null)) {
+      throw const ShoppingListRepositoryException(
+        'draftAmountMinorUnits and draftCurrencyCode must be both null or '
+        'both non-null',
+      );
+    }
     return (
       amountMinorUnits: draftAmountMinorUnits,
       currencyCode: draftCurrencyCode,
     );
   }
 
-  Future<void> _validateExpenseCategory(int categoryId) async {
+  Future<drift.CategoryRow> _validateExpenseCategory(int categoryId) async {
     final categoryRow = await _categoryDao.findById(categoryId);
     if (categoryRow == null) {
       throw ShoppingListRepositoryException('Category $categoryId not found');
@@ -353,6 +332,7 @@ final class DriftShoppingListRepository implements ShoppingListRepository {
         'are allowed for shopping-list drafts',
       );
     }
+    return categoryRow;
   }
 
   // ---------- Private mapping ----------

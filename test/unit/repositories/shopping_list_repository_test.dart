@@ -210,6 +210,19 @@ void main() {
       expect(item.draftCurrencyCode, isNull);
     });
 
+    test('insert accepts zero amount with no currency as null amount/null currency', () async {
+      final item = await repo.insert(
+        categoryId: expenseCategoryId,
+        accountId: accountId,
+        draftAmountMinorUnits: 0,
+        draftCurrencyCode: null,
+        draftDate: DateTime.utc(2026, 6, 1),
+      );
+
+      expect(item.draftAmountMinorUnits, isNull);
+      expect(item.draftCurrencyCode, isNull);
+    });
+
     test('insert with amount but no currency throws ShoppingListRepositoryException', () async {
       await expectLater(
         repo.insert(
