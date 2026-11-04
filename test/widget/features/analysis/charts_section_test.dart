@@ -59,7 +59,6 @@ const _usd = Currency(
   SliceDrilldownController,
   chartsNetTotal,
   chartsCurrenciesByCode,
-  initialDefaultCurrency,
   analysisCategoriesById,
   analysisAccountsById,
   chartsFxStatus,

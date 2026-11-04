@@ -40,7 +40,6 @@ const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
   ChartsSelectionController,
   ChartsController,
   chartsCurrenciesByCode,
-  initialDefaultCurrency,
   SliceDrilldownController,
   analysisCategoriesById,
   analysisAccountsById,

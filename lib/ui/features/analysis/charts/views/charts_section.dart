@@ -7,7 +7,6 @@ import 'package:flutter/rendering.dart' show RenderAbstractViewport;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../../../../app/providers/default_currency_provider.dart';
 import '../../../../../domain/models/currency.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../search/view_models/analysis_providers.dart';
@@ -31,7 +30,6 @@ import 'selected_slice_items_list.dart';
   ChartsSelectionController,
   ChartsController,
   chartsCurrenciesByCode,
-  initialDefaultCurrency,
   SliceDrilldownController,
   analysisCategoriesById,
   analysisAccountsById,
@@ -151,9 +149,6 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
     );
     final currenciesAsync = ref.watch(chartsCurrenciesByCodeProvider);
     final locale = Localizations.localeOf(context).toLanguageTag();
-    // Touch the provider to keep it warm in tests + production.
-    // ignore: unused_local_variable
-    final defaultCurrency = ref.watch(initialDefaultCurrencyProvider);
 
     // Stale-selection self-heal: clear the drill-down selection when the
     // selected slice is no longer present in the latest emission, or when
