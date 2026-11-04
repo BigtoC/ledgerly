@@ -58,42 +58,6 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
-  /// Watch every transaction for a given account, reverse-chronological,
-  /// bounded by `limit`. Backs
-  /// `TransactionRepository.watchForAccount` — see
-  /// `docs/plans/m3-repositories-seed/stream-a-transaction-category.md` §4.
-  Stream<List<TransactionRow>> watchByAccount(
-    int accountId, {
-    int limit = 200,
-  }) {
-    return (select(transactions)
-          ..where((t) => t.accountId.equals(accountId))
-          ..orderBy([
-            (t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc),
-            (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
-          ])
-          ..limit(limit))
-        .watch();
-  }
-
-  /// Watch every transaction for a given category, reverse-chronological,
-  /// bounded by `limit`. Backs
-  /// `TransactionRepository.watchForCategory` — see
-  /// `docs/plans/m3-repositories-seed/stream-a-transaction-category.md` §4.
-  Stream<List<TransactionRow>> watchByCategory(
-    int categoryId, {
-    int limit = 200,
-  }) {
-    return (select(transactions)
-          ..where((t) => t.categoryId.equals(categoryId))
-          ..orderBy([
-            (t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc),
-            (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
-          ])
-          ..limit(limit))
-        .watch();
-  }
-
   /// Watch transactions whose memo contains [query] (case-insensitive
   /// substring), ordered `date DESC, id DESC`. Memos that are NULL are
   /// excluded (LIKE on NULL never matches).

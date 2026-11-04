@@ -425,52 +425,6 @@ void main() {
     );
   });
 
-  group('watchForAccount / watchForCategory', () {
-    test(
-      'T-stream-02: watchForAccount only emits target account rows',
-      () async {
-        final otherAccountId = await _insertAccountRaw(
-          db,
-          name: 'Second',
-          accountTypeId: fixtures.accountTypeId,
-          currencyCode: 'USD',
-        );
-        final inA = await txRepo.save(sampleTx(amount: 100));
-        final inB = await txRepo.save(
-          sampleTx(amount: 200, accountId: otherAccountId),
-        );
-
-        final forA = await txRepo.watchForAccount(fixtures.accountId).first;
-        expect(forA.map((t) => t.id), [inA.id]);
-
-        final forB = await txRepo.watchForAccount(otherAccountId).first;
-        expect(forB.map((t) => t.id), [inB.id]);
-      },
-    );
-
-    test(
-      'T-stream-03: watchForCategory only emits target category rows',
-      () async {
-        final expenseTx = await txRepo.save(
-          sampleTx(amount: 100, categoryId: fixtures.expenseCategoryId),
-        );
-        final incomeTx = await txRepo.save(
-          sampleTx(amount: 999, categoryId: fixtures.incomeCategoryId),
-        );
-
-        final forExpense = await txRepo
-            .watchForCategory(fixtures.expenseCategoryId)
-            .first;
-        expect(forExpense.map((t) => t.id), [expenseTx.id]);
-
-        final forIncome = await txRepo
-            .watchForCategory(fixtures.incomeCategoryId)
-            .first;
-        expect(forIncome.map((t) => t.id), [incomeTx.id]);
-      },
-    );
-  });
-
   group('save → currency FK', () {
     test(
       'T-currency-fk-01: unknown currency throws, no row inserted',

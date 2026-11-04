@@ -425,18 +425,11 @@ void main() {
         expect(c.isArchived, isFalse);
       }
 
-      expect(
-        await transactions
-            .watchForCategory(await categoryIdFor('category.income.salary'))
-            .first,
-        hasLength(1),
-      );
-      expect(
-        await transactions
-            .watchForCategory(await categoryIdFor('category.income.other'))
-            .first,
-        hasLength(9),
-      );
+      final salaryId = await categoryIdFor('category.income.salary');
+      final otherIncomeId = await categoryIdFor('category.income.other');
+      final txRows = await allTransactionRows();
+      expect(txRows.where((r) => r.categoryId == salaryId), hasLength(1));
+      expect(txRows.where((r) => r.categoryId == otherIncomeId), hasLength(9));
       // 2026/10/30: 理財 4000 (expense) and 收入 61700 (income).
       expect(
         await transactions.watchDailyTotalsByType(DateTime(2026, 10, 30)).first,
