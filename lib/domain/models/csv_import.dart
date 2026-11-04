@@ -58,8 +58,12 @@ enum CsvRowErrorReason {
   /// Currency is not in `currencies`; see [CsvRowError.currencyCode].
   unknownCurrency,
 
-  /// Recorded At is not `yyyy/M/d H:mm[:ss]` or names no real time.
+  /// Recorded At is not `yyyy/M/d H:mm[:ss]`, or a Ledgerly `date` or
+  /// `created_at` is not ISO 8601, or the value names no real time.
   invalidDate,
+
+  /// A Ledgerly `type` is neither `expense` nor `income`.
+  invalidType,
 }
 
 /// A skipped row. Holds the line number and reason only, never field
@@ -77,8 +81,8 @@ abstract class CsvRowError with _$CsvRowError {
   }) = _CsvRowError;
 }
 
-/// One syntactically valid Fortune City row, before currency lookup and
-/// rounding (both need the database).
+/// One syntactically valid Fortune City or Ledgerly row, before currency
+/// lookup and rounding (both need the database).
 @freezed
 abstract class ParsedCsvRow with _$ParsedCsvRow {
   const factory ParsedCsvRow({
@@ -97,11 +101,18 @@ abstract class ParsedCsvRow with _$ParsedCsvRow {
     /// Trimmed and upper-cased, unvalidated currency code.
     required String currencyCode,
 
-    /// Recorded At as device-local time.
+    /// Recorded At (Ledgerly: `created_at`) as device-local time.
     required DateTime recordedAt,
 
     /// The note verbatim, or null when it is missing or blank.
     String? memo,
+
+    /// Ledgerly only: the category type. Null for Fortune City.
+    CategoryType? type,
+
+    /// Ledgerly only: the `date` column's calendar day, at local midnight.
+    /// Null for Fortune City, whose date is Recorded At's day.
+    DateTime? date,
   }) = _ParsedCsvRow;
 }
 

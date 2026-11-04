@@ -285,6 +285,7 @@ String _reason(CsvRowError error, AppLocalizations l10n) =>
         error.currencyCode ?? '',
       ),
       CsvRowErrorReason.invalidDate => l10n.csvImportReasonInvalidDate,
+      CsvRowErrorReason.invalidType => l10n.csvImportReasonInvalidType,
     };
 
 /// The value, followed by a New badge when a row will be created. A

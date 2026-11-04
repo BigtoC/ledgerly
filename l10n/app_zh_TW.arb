@@ -376,6 +376,7 @@
   "csvImportReasonUnknownCurrency": "不支援的貨幣 {code}",
   "@csvImportReasonUnknownCurrency": {"placeholders": {"code": {"type": "String"}}},
   "csvImportReasonInvalidDate": "日期無效",
+  "csvImportReasonInvalidType": "類型無效",
   "csvImportConfirm": "{count, plural, other{匯入 {count} 筆交易}}",
   "@csvImportConfirm": {"placeholders": {"count": {"type": "int"}}},
   "csvImportImporting": "正在匯入…",

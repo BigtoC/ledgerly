@@ -1990,11 +1990,17 @@ abstract class AppLocalizations {
   /// **'unknown currency {code}'**
   String csvImportReasonUnknownCurrency(String code);
 
-  /// CSV row error reason: Recorded At is not a valid date and time.
+  /// CSV row error reason: Recorded At (Fortune City) or date / created_at (Ledgerly export) is not a valid date and time.
   ///
   /// In en, this message translates to:
   /// **'invalid date'**
   String get csvImportReasonInvalidDate;
+
+  /// CSV row error reason: the type column of a Ledgerly export is neither expense nor income.
+  ///
+  /// In en, this message translates to:
+  /// **'invalid type'**
+  String get csvImportReasonInvalidType;
 
   /// CSV import preview: confirm button that writes the import.
   ///

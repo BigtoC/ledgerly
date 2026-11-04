@@ -1090,6 +1090,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get csvImportReasonInvalidDate => 'invalid date';
 
   @override
+  String get csvImportReasonInvalidType => 'invalid type';
+
+  @override
   String csvImportConfirm(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -2467,6 +2470,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get csvImportReasonInvalidDate => '日期无效';
 
   @override
+  String get csvImportReasonInvalidType => '类型无效';
+
+  @override
   String csvImportConfirm(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -3833,6 +3839,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get csvImportReasonInvalidDate => '日期無效';
+
+  @override
+  String get csvImportReasonInvalidType => '類型無效';
 
   @override
   String csvImportConfirm(int count) {

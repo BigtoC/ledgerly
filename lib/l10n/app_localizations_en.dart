@@ -1090,6 +1090,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get csvImportReasonInvalidDate => 'invalid date';
 
   @override
+  String get csvImportReasonInvalidType => 'invalid type';
+
+  @override
   String csvImportConfirm(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

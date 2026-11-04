@@ -577,17 +577,31 @@ void main() {
     testWidgets('CI14: invalid rows show line and reason, no field values', (
       tester,
     ) async {
-      await _pump(tester, _preview());
+      await _pump(
+        tester,
+        _preview(
+          errors: const [
+            CsvRowError(lineNumber: 7, reason: CsvRowErrorReason.invalidAmount),
+            CsvRowError(
+              lineNumber: 9,
+              reason: CsvRowErrorReason.unknownCurrency,
+              currencyCode: 'XYZ',
+            ),
+            CsvRowError(lineNumber: 11, reason: CsvRowErrorReason.invalidType),
+          ],
+        ),
+      );
 
-      final header = find.text('2 invalid rows will be skipped');
+      final header = find.text('3 invalid rows will be skipped');
       await _scrollTo(tester, header);
       expect(find.text('Line 7: invalid amount'), findsNothing);
       await tester.tap(header);
       await tester.pumpAndSettle();
 
-      await _scrollTo(tester, find.text('Line 9: unknown currency XYZ'));
+      await _scrollTo(tester, find.text('Line 11: invalid type'));
       expect(find.text('Line 7: invalid amount'), findsOneWidget);
       expect(find.text('Line 9: unknown currency XYZ'), findsOneWidget);
+      expect(find.text('Line 11: invalid type'), findsOneWidget);
     });
   });
 

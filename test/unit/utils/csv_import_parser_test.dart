@@ -4,7 +4,11 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/core/utils/csv_import_parser.dart';
+import 'package:ledgerly/core/utils/transactions_csv.dart';
+import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/domain/models/csv_import.dart';
+import 'package:ledgerly/domain/models/currency.dart';
+import 'package:ledgerly/domain/models/transaction.dart';
 
 const _header = 'Account,Category,Amount,Currency,Recorded At,note,Account ID';
 
@@ -329,6 +333,140 @@ void main() {
       expect(result.errors, isEmpty);
       expect(result.rows.single.amountText, 'abc');
       expect(result.rows.single.currencyCode, 'ZZZ');
+    });
+  });
+
+  group('Ledgerly export', () {
+    const ledgerlyHeader =
+        'id,date,type,amount,currency,category,account,memo,'
+        'created_at,updated_at';
+
+    CsvRowErrorReason? reasonFor(String line) {
+      final result = _parse('$ledgerlyHeader\n$line\n');
+      return result.errors.isEmpty ? null : result.errors.single.reason;
+    }
+
+    test('round-trips the encoder output, formula escapes removed', () {
+      const eth = Currency(code: 'ETH', decimals: 18);
+      final bytes = encodeTransactionsCsv(
+        [
+          Transaction(
+            id: 7,
+            amountMinorUnits: 1234,
+            currency: const Currency(code: 'HKD', decimals: 2),
+            categoryId: 1,
+            accountId: 1,
+            memo: '=SUM(A1), "lunch"\nwith team',
+            date: DateTime(2026, 10, 29),
+            createdAt: DateTime(2026, 10, 30, 14, 31, 5),
+            updatedAt: DateTime(2026, 10, 31, 9),
+          ),
+          Transaction(
+            id: 8,
+            amountMinorUnits: 1500000000000000001,
+            currency: eth,
+            categoryId: 2,
+            accountId: 2,
+            date: DateTime(2026, 11, 1),
+            createdAt: DateTime(2026, 11, 1, 8),
+            updatedAt: DateTime(2026, 11, 1, 8),
+          ),
+        ],
+        categories: const {
+          1: (name: '-Fees', type: CategoryType.expense),
+          2: (name: 'Salary', type: CategoryType.income),
+        },
+        accountNames: const {1: '@Wallet', 2: 'Bank, HK'},
+      );
+
+      final result = parseImportCsv(bytes);
+
+      expect(result.errors, isEmpty);
+      expect(result.rows, [
+        ParsedCsvRow(
+          line: 2,
+          account: '@Wallet',
+          category: '-Fees',
+          amountText: '12.34',
+          currencyCode: 'HKD',
+          recordedAt: DateTime(2026, 10, 30, 14, 31, 5),
+          memo: '=SUM(A1), "lunch"\nwith team',
+          type: CategoryType.expense,
+          date: DateTime(2026, 10, 29),
+        ),
+        ParsedCsvRow(
+          line: 4,
+          account: 'Bank, HK',
+          category: 'Salary',
+          amountText: '1.500000000000000001',
+          currencyCode: 'ETH',
+          recordedAt: DateTime(2026, 11, 1, 8),
+          type: CategoryType.income,
+          date: DateTime(2026, 11, 1),
+        ),
+      ]);
+    });
+
+    test('date keeps its written day; created_at keeps its instant', () {
+      final row = _parse(
+        '$ledgerlyHeader\n'
+        '1,2026-10-30T00:00:00+14:00,expense,1,HKD,Food,Cash,,'
+        '2026-10-30T09:15:00-03:30,2026-10-30T09:15:00-03:30\n',
+      ).rows.single;
+      expect(row.date, DateTime(2026, 10, 30));
+      expect(row.recordedAt, DateTime.utc(2026, 10, 30, 12, 45).toLocal());
+      expect(row.recordedAt.isUtc, isFalse);
+    });
+
+    test('id, memo and updated_at are optional; empty memo is null', () {
+      final row = _parse(
+        'date,type,amount,currency,category,account,created_at\n'
+        '2026-10-30T00:00:00+08:00,income,5,HKD,Gift,Cash,'
+        '2026-10-30T10:00:00+08:00\n',
+      ).rows.single;
+      expect(row.memo, isNull);
+      expect(row.type, CategoryType.income);
+    });
+
+    test('invalid type, dates, account and category', () {
+      const date = '2026-10-30T00:00:00+08:00';
+      expect(reasonFor('1,$date,expense,1,HKD,Food,Cash,,$date,$date'), isNull);
+      expect(
+        reasonFor('1,$date,transfer,1,HKD,Food,Cash,,$date,$date'),
+        CsvRowErrorReason.invalidType,
+      );
+      expect(
+        reasonFor('1,2026-02-30,expense,1,HKD,Food,Cash,,$date,$date'),
+        CsvRowErrorReason.invalidDate,
+      );
+      expect(
+        reasonFor('1,$date,expense,1,HKD,Food,Cash,,yesterday,$date'),
+        CsvRowErrorReason.invalidDate,
+      );
+      expect(
+        reasonFor('1,$date,expense,1,HKD,Food, ,,$date,$date'),
+        CsvRowErrorReason.emptyAccount,
+      );
+      expect(
+        reasonFor('1,$date,expense,1,HKD,,Cash,,$date,$date'),
+        CsvRowErrorReason.emptyCategory,
+      );
+    });
+
+    test('a damaged Ledgerly header names its own missing columns', () {
+      expect(
+        () => _parse(
+          'id,date,type,amount,currency,category,account,memo\n'
+          '1,2026-10-30,expense,1,HKD,Food,Cash,\n',
+        ),
+        throwsA(
+          isA<CsvFileException>().having(
+            (e) => e.missingColumns,
+            'missingColumns',
+            ['created_at'],
+          ),
+        ),
+      );
     });
   });
 }

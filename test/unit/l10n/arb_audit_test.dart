@@ -415,6 +415,7 @@ const Set<String> _expectedEnKeys = <String>{
   'csvImportReasonZeroAmount',
   'csvImportReasonUnknownCurrency',
   'csvImportReasonInvalidDate',
+  'csvImportReasonInvalidType',
   'csvImportConfirm',
   'csvImportImporting',
   'csvImportDoneTitle',

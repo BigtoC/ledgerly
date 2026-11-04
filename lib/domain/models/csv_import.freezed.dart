@@ -296,9 +296,12 @@ mixin _$ParsedCsvRow {
  String get account;/// Trimmed, non-empty.
  String get category;/// Trimmed, unvalidated amount text.
  String get amountText;/// Trimmed and upper-cased, unvalidated currency code.
- String get currencyCode;/// Recorded At as device-local time.
+ String get currencyCode;/// Recorded At (Ledgerly: `created_at`) as device-local time.
  DateTime get recordedAt;/// The note verbatim, or null when it is missing or blank.
- String? get memo;
+ String? get memo;/// Ledgerly only: the category type. Null for Fortune City.
+ CategoryType? get type;/// Ledgerly only: the `date` column's calendar day, at local midnight.
+/// Null for Fortune City, whose date is Recorded At's day.
+ DateTime? get date;
 /// Create a copy of ParsedCsvRow
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -310,20 +313,20 @@ $ParsedCsvRowCopyWith<ParsedCsvRow> get copyWith => _$ParsedCsvRowCopyWithImpl<P
 @override
 bool operator ==(Object other) {
   final _this = this as ParsedCsvRow;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ParsedCsvRow&&(identical(other.line, _this.line) || other.line == _this.line)&&(identical(other.account, _this.account) || other.account == _this.account)&&(identical(other.category, _this.category) || other.category == _this.category)&&(identical(other.amountText, _this.amountText) || other.amountText == _this.amountText)&&(identical(other.currencyCode, _this.currencyCode) || other.currencyCode == _this.currencyCode)&&(identical(other.recordedAt, _this.recordedAt) || other.recordedAt == _this.recordedAt)&&(identical(other.memo, _this.memo) || other.memo == _this.memo));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ParsedCsvRow&&(identical(other.line, _this.line) || other.line == _this.line)&&(identical(other.account, _this.account) || other.account == _this.account)&&(identical(other.category, _this.category) || other.category == _this.category)&&(identical(other.amountText, _this.amountText) || other.amountText == _this.amountText)&&(identical(other.currencyCode, _this.currencyCode) || other.currencyCode == _this.currencyCode)&&(identical(other.recordedAt, _this.recordedAt) || other.recordedAt == _this.recordedAt)&&(identical(other.memo, _this.memo) || other.memo == _this.memo)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.date, _this.date) || other.date == _this.date));
 }
 
 
 @override
 int get hashCode {
   final _this = this as ParsedCsvRow;
-  return Object.hash(runtimeType,_this.line,_this.account,_this.category,_this.amountText,_this.currencyCode,_this.recordedAt,_this.memo);
+  return Object.hash(runtimeType,_this.line,_this.account,_this.category,_this.amountText,_this.currencyCode,_this.recordedAt,_this.memo,_this.type,_this.date);
 }
 
 @override
 String toString() {
   final _this = this as ParsedCsvRow;
-  return 'ParsedCsvRow(line: ${_this.line}, account: ${_this.account}, category: ${_this.category}, amountText: ${_this.amountText}, currencyCode: ${_this.currencyCode}, recordedAt: ${_this.recordedAt}, memo: ${_this.memo})';
+  return 'ParsedCsvRow(line: ${_this.line}, account: ${_this.account}, category: ${_this.category}, amountText: ${_this.amountText}, currencyCode: ${_this.currencyCode}, recordedAt: ${_this.recordedAt}, memo: ${_this.memo}, type: ${_this.type}, date: ${_this.date})';
 }
 
 
@@ -334,7 +337,7 @@ abstract mixin class $ParsedCsvRowCopyWith<$Res>  {
   factory $ParsedCsvRowCopyWith(ParsedCsvRow value, $Res Function(ParsedCsvRow) _then) = _$ParsedCsvRowCopyWithImpl;
 @useResult
 $Res call({
- int line, String account, String category, String amountText, String currencyCode, DateTime recordedAt, String? memo
+ int line, String account, String category, String amountText, String currencyCode, DateTime recordedAt, String? memo, CategoryType? type, DateTime? date
 });
 
 
@@ -351,7 +354,7 @@ class _$ParsedCsvRowCopyWithImpl<$Res>
 
 /// Create a copy of ParsedCsvRow
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? line = null,Object? account = null,Object? category = null,Object? amountText = null,Object? currencyCode = null,Object? recordedAt = null,Object? memo = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? line = null,Object? account = null,Object? category = null,Object? amountText = null,Object? currencyCode = null,Object? recordedAt = null,Object? memo = freezed,Object? type = freezed,Object? date = freezed,}) {
   return _then(ParsedCsvRow(
 line: null == line ? _self.line : line // ignore: cast_nullable_to_non_nullable
 as int,account: null == account ? _self.account : account // ignore: cast_nullable_to_non_nullable
@@ -360,7 +363,9 @@ as String,amountText: null == amountText ? _self.amountText : amountText // igno
 as String,currencyCode: null == currencyCode ? _self.currencyCode : currencyCode // ignore: cast_nullable_to_non_nullable
 as String,recordedAt: null == recordedAt ? _self.recordedAt : recordedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,memo: freezed == memo ? _self.memo : memo // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,type: freezed == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
+as CategoryType?,date: freezed == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 
@@ -445,10 +450,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int line,  String account,  String category,  String amountText,  String currencyCode,  DateTime recordedAt,  String? memo)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int line,  String account,  String category,  String amountText,  String currencyCode,  DateTime recordedAt,  String? memo,  CategoryType? type,  DateTime? date)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ParsedCsvRow() when $default != null:
-return $default(_that.line,_that.account,_that.category,_that.amountText,_that.currencyCode,_that.recordedAt,_that.memo);case _:
+return $default(_that.line,_that.account,_that.category,_that.amountText,_that.currencyCode,_that.recordedAt,_that.memo,_that.type,_that.date);case _:
   return orElse();
 
 }
@@ -466,10 +471,10 @@ return $default(_that.line,_that.account,_that.category,_that.amountText,_that.c
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int line,  String account,  String category,  String amountText,  String currencyCode,  DateTime recordedAt,  String? memo)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int line,  String account,  String category,  String amountText,  String currencyCode,  DateTime recordedAt,  String? memo,  CategoryType? type,  DateTime? date)  $default,) {final _that = this;
 switch (_that) {
 case _ParsedCsvRow():
-return $default(_that.line,_that.account,_that.category,_that.amountText,_that.currencyCode,_that.recordedAt,_that.memo);case _:
+return $default(_that.line,_that.account,_that.category,_that.amountText,_that.currencyCode,_that.recordedAt,_that.memo,_that.type,_that.date);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -486,10 +491,10 @@ return $default(_that.line,_that.account,_that.category,_that.amountText,_that.c
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int line,  String account,  String category,  String amountText,  String currencyCode,  DateTime recordedAt,  String? memo)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int line,  String account,  String category,  String amountText,  String currencyCode,  DateTime recordedAt,  String? memo,  CategoryType? type,  DateTime? date)?  $default,) {final _that = this;
 switch (_that) {
 case _ParsedCsvRow() when $default != null:
-return $default(_that.line,_that.account,_that.category,_that.amountText,_that.currencyCode,_that.recordedAt,_that.memo);case _:
+return $default(_that.line,_that.account,_that.category,_that.amountText,_that.currencyCode,_that.recordedAt,_that.memo,_that.type,_that.date);case _:
   return null;
 
 }
@@ -501,7 +506,7 @@ return $default(_that.line,_that.account,_that.category,_that.amountText,_that.c
 
 
 class _ParsedCsvRow implements ParsedCsvRow {
-  const _ParsedCsvRow({required this.line, required this.account, required this.category, required this.amountText, required this.currencyCode, required this.recordedAt, this.memo});
+  const _ParsedCsvRow({required this.line, required this.account, required this.category, required this.amountText, required this.currencyCode, required this.recordedAt, this.memo, this.type, this.date});
   
 
 /// 1-based physical line where the row starts.
@@ -514,10 +519,15 @@ class _ParsedCsvRow implements ParsedCsvRow {
 @override final  String amountText;
 /// Trimmed and upper-cased, unvalidated currency code.
 @override final  String currencyCode;
-/// Recorded At as device-local time.
+/// Recorded At (Ledgerly: `created_at`) as device-local time.
 @override final  DateTime recordedAt;
 /// The note verbatim, or null when it is missing or blank.
 @override final  String? memo;
+/// Ledgerly only: the category type. Null for Fortune City.
+@override final  CategoryType? type;
+/// Ledgerly only: the `date` column's calendar day, at local midnight.
+/// Null for Fortune City, whose date is Recorded At's day.
+@override final  DateTime? date;
 
 /// Create a copy of ParsedCsvRow
 /// with the given fields replaced by the non-null parameter values.
@@ -529,18 +539,18 @@ _$ParsedCsvRowCopyWith<_ParsedCsvRow> get copyWith => __$ParsedCsvRowCopyWithImp
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ParsedCsvRow&&(identical(other.line, line) || other.line == line)&&(identical(other.account, account) || other.account == account)&&(identical(other.category, category) || other.category == category)&&(identical(other.amountText, amountText) || other.amountText == amountText)&&(identical(other.currencyCode, currencyCode) || other.currencyCode == currencyCode)&&(identical(other.recordedAt, recordedAt) || other.recordedAt == recordedAt)&&(identical(other.memo, memo) || other.memo == memo));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ParsedCsvRow&&(identical(other.line, line) || other.line == line)&&(identical(other.account, account) || other.account == account)&&(identical(other.category, category) || other.category == category)&&(identical(other.amountText, amountText) || other.amountText == amountText)&&(identical(other.currencyCode, currencyCode) || other.currencyCode == currencyCode)&&(identical(other.recordedAt, recordedAt) || other.recordedAt == recordedAt)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.type, type) || other.type == type)&&(identical(other.date, date) || other.date == date));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,line,account,category,amountText,currencyCode,recordedAt,memo);
+    return Object.hash(runtimeType,line,account,category,amountText,currencyCode,recordedAt,memo,type,date);
 }
 
 @override
 String toString() {
-    return 'ParsedCsvRow(line: $line, account: $account, category: $category, amountText: $amountText, currencyCode: $currencyCode, recordedAt: $recordedAt, memo: $memo)';
+    return 'ParsedCsvRow(line: $line, account: $account, category: $category, amountText: $amountText, currencyCode: $currencyCode, recordedAt: $recordedAt, memo: $memo, type: $type, date: $date)';
 }
 
 
@@ -551,7 +561,7 @@ abstract mixin class _$ParsedCsvRowCopyWith<$Res> implements $ParsedCsvRowCopyWi
   factory _$ParsedCsvRowCopyWith(_ParsedCsvRow value, $Res Function(_ParsedCsvRow) _then) = __$ParsedCsvRowCopyWithImpl;
 @override @useResult
 $Res call({
- int line, String account, String category, String amountText, String currencyCode, DateTime recordedAt, String? memo
+ int line, String account, String category, String amountText, String currencyCode, DateTime recordedAt, String? memo, CategoryType? type, DateTime? date
 });
 
 
@@ -568,7 +578,7 @@ class __$ParsedCsvRowCopyWithImpl<$Res>
 
 /// Create a copy of ParsedCsvRow
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? line = null,Object? account = null,Object? category = null,Object? amountText = null,Object? currencyCode = null,Object? recordedAt = null,Object? memo = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? line = null,Object? account = null,Object? category = null,Object? amountText = null,Object? currencyCode = null,Object? recordedAt = null,Object? memo = freezed,Object? type = freezed,Object? date = freezed,}) {
   return _then(_ParsedCsvRow(
 line: null == line ? _self.line : line // ignore: cast_nullable_to_non_nullable
 as int,account: null == account ? _self.account : account // ignore: cast_nullable_to_non_nullable
@@ -577,7 +587,9 @@ as String,amountText: null == amountText ? _self.amountText : amountText // igno
 as String,currencyCode: null == currencyCode ? _self.currencyCode : currencyCode // ignore: cast_nullable_to_non_nullable
 as String,recordedAt: null == recordedAt ? _self.recordedAt : recordedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,memo: freezed == memo ? _self.memo : memo // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,type: freezed == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
+as CategoryType?,date: freezed == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 
