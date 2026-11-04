@@ -13,20 +13,9 @@ import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/data/seed/first_run_seed.dart';
-import 'package:ledgerly/data/services/locale_service.dart';
 import 'package:ledgerly/domain/models/category.dart';
 
 import '../repositories/_harness/test_app_database.dart';
-
-/// Stable-stub [LocaleService] — returns a fixed string regardless of the
-/// host locale. Prevents CI flakes across macOS / Linux / Windows.
-class _FakeLocaleService implements LocaleService {
-  const _FakeLocaleService(this._locale);
-  final String _locale;
-
-  @override
-  String get deviceLocale => _locale;
-}
 
 /// Bundles real `Drift*Repository` instances against an in-memory DB.
 class _SeedHarness {
@@ -70,7 +59,7 @@ class _SeedHarness {
     accountTypes: accountTypes,
     accounts: accounts,
     preferences: preferences,
-    localeService: _FakeLocaleService(locale),
+    localeService: FixedLocaleService(locale),
   );
 
   Future<void> close() => db.close();
@@ -417,7 +406,7 @@ void main() {
           accountTypes: accountTypes,
           accounts: accounts,
           preferences: preferences,
-          localeService: const _FakeLocaleService('en_US'),
+          localeService: const FixedLocaleService('en_US'),
         );
         fail('expected the seed to rethrow the injected failure');
       } on _InjectedSeedFailure {

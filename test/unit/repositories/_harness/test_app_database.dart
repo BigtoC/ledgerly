@@ -6,7 +6,8 @@
 //
 // Besides `newTestAppDatabase()`, this file holds the raw-SQL fixtures that
 // several repository tests share, so they seed rows without depending on
-// other repositories' internals, and a no-op `ExchangeRateRepository`.
+// other repositories' internals, a no-op `ExchangeRateRepository` and a
+// fixed-locale `LocaleService`.
 
 import 'package:drift/drift.dart' show Variable;
 import 'package:drift/native.dart';
@@ -15,6 +16,7 @@ import 'package:ledgerly/data/database/app_database.dart' show AppDatabase;
 import 'package:ledgerly/data/repositories/exchange_rate_repository.dart';
 import 'package:ledgerly/data/repositories/recurring_rules_repository.dart';
 import 'package:ledgerly/data/services/exchange_rate_service.dart';
+import 'package:ledgerly/data/services/locale_service.dart';
 import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/domain/models/recurring_rule_draft.dart';
 import 'package:mocktail/mocktail.dart';
@@ -29,6 +31,15 @@ import 'package:mocktail/mocktail.dart';
 /// `AppDatabase.migration.beforeOpen` — repository FK pre-check tests rely
 /// on this being active.
 AppDatabase newTestAppDatabase() => AppDatabase(NativeDatabase.memory());
+
+/// Deterministic [LocaleService] stub — returns a fixed locale string so
+/// tests are not affected by the host machine's OS locale.
+class FixedLocaleService implements LocaleService {
+  const FixedLocaleService(this.deviceLocale);
+
+  @override
+  final String deviceLocale;
+}
 
 class _NoRatesService extends Mock implements ExchangeRateService {}
 

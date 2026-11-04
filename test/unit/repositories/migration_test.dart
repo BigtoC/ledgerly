@@ -29,7 +29,6 @@ import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/data/seed/first_run_seed.dart';
-import 'package:ledgerly/data/services/locale_service.dart';
 
 import '_harness/generated/schema.dart';
 import '_harness/generated/schema_v1.dart' as v1;
@@ -38,16 +37,7 @@ import '_harness/generated/schema_v3.dart' as v3;
 import '_harness/generated/schema_v4.dart' as v4;
 import '_harness/generated/schema_v5.dart' as v5;
 import '_harness/generated/schema_v6.dart' as v6;
-
-/// Fixed-locale stub for the migration test. The locale-dependent unit
-/// tests live in `test/unit/seed/first_run_seed_test.dart`; here we only
-/// need a deterministic currency (`USD`) so the assertions that mention
-/// `accounts.currency == 'USD'` remain stable across CI hosts.
-class _FakeLocaleService implements LocaleService {
-  const _FakeLocaleService();
-  @override
-  String get deviceLocale => 'en_US';
-}
+import '_harness/test_app_database.dart' show FixedLocaleService;
 
 void main() {
   group('migrations', () {
@@ -146,7 +136,7 @@ void main() {
           accountTypes: accountTypes,
           accounts: accounts,
           preferences: preferences,
-          localeService: const _FakeLocaleService(),
+          localeService: const FixedLocaleService('en_US'),
         );
 
         // Sanity row counts — if any FK / CHECK / default drifted from the

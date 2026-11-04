@@ -24,16 +24,10 @@ import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/app/providers/theme_provider.dart';
 import 'package:ledgerly/app/router.dart';
 import 'package:ledgerly/data/database/app_database.dart';
-import 'package:ledgerly/data/services/locale_service.dart';
 import 'package:ledgerly/domain/use_cases/recurring_generation_use_case.dart';
 
-/// Fixed-locale stub — keeps the seed from reading the OS locale.
-class _StubLocaleService implements LocaleService {
-  const _StubLocaleService();
-
-  @override
-  String get deviceLocale => 'en_US';
-}
+import '../repositories/_harness/test_app_database.dart'
+    show FixedLocaleService;
 
 @Dependencies([
   initialDefaultCurrency,
@@ -57,7 +51,7 @@ void main() {
 
       await bootstrapFor(
         openDatabase: () async => AppDatabase(NativeDatabase.memory()),
-        localeService: const _StubLocaleService(),
+        localeService: const FixedLocaleService('en_US'),
         runAppFn: (w) => launched = w,
       );
 
@@ -69,7 +63,7 @@ void main() {
 
       await bootstrapFor(
         openDatabase: () async => AppDatabase(NativeDatabase.memory()),
-        localeService: const _StubLocaleService(),
+        localeService: const FixedLocaleService('en_US'),
         runAppFn: (w) => launched = w,
       );
 
@@ -90,7 +84,7 @@ void main() {
             log.add('openDatabase');
             return db;
           },
-          localeService: const _StubLocaleService(),
+          localeService: const FixedLocaleService('en_US'),
           initializeDateFormattingFn: (locale) async {
             log.add('initializeDateFormatting:$locale');
           },
@@ -142,7 +136,7 @@ void main() {
 
         await bootstrapFor(
           openDatabase: () async => db,
-          localeService: const _StubLocaleService(),
+          localeService: const FixedLocaleService('en_US'),
           runFirstRunSeedFn:
               ({
                 required db,
@@ -177,7 +171,7 @@ void main() {
       await tester.runAsync(() async {
         await bootstrapFor(
           openDatabase: () async => db,
-          localeService: const _StubLocaleService(),
+          localeService: const FixedLocaleService('en_US'),
           runRecurringGenerationFn: (_) async {
             log.add('runRecurringGeneration');
             return const RecurringGenerationResult(outcomes: []);

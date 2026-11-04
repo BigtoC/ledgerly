@@ -26,16 +26,9 @@ import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/pending_transaction_repository.dart';
 import 'package:ledgerly/data/repositories/recurring_rules_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
-import 'package:ledgerly/data/services/locale_service.dart';
 import 'package:ledgerly/domain/use_cases/recurring_generation_use_case.dart';
 
 import '../support/test_app.dart';
-
-class _FixedLocaleService implements LocaleService {
-  const _FixedLocaleService(this.deviceLocale);
-  @override
-  final String deviceLocale;
-}
 
 Future<({int accountId, int categoryId, Currency currency})> _seedBasics(
   AppDatabase db,
@@ -450,7 +443,7 @@ void main() {
       await tester.runAsync(() async {
         await bootstrapFor(
           openDatabase: () async => db,
-          localeService: const _FixedLocaleService('en_US'),
+          localeService: const FixedLocaleService('en_US'),
           runAppFn: (widget) => launched = widget,
         );
       });

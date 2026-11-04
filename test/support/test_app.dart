@@ -42,23 +42,23 @@ import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/data/seed/first_run_seed.dart';
-import 'package:ledgerly/data/services/locale_service.dart';
 
+import '../unit/repositories/_harness/test_app_database.dart'
+    show FixedLocaleService;
 export '../unit/repositories/_harness/test_app_database.dart'
-    show newTestAppDatabase;
+    show FixedLocaleService, newTestAppDatabase;
 
 /// Runs the first-run seed against [db] using a fixed `en_US` locale stub.
 Future<void> runTestSeed(AppDatabase db) {
   final currencies = DriftCurrencyRepository(db);
-  final currenciesRepo = currencies;
   return runFirstRunSeed(
     db: db,
     currencies: currencies,
     categories: DriftCategoryRepository(db),
-    accountTypes: DriftAccountTypeRepository(db, currenciesRepo),
-    accounts: DriftAccountRepository(db, currenciesRepo),
+    accountTypes: DriftAccountTypeRepository(db, currencies),
+    accounts: DriftAccountRepository(db, currencies),
     preferences: DriftUserPreferencesRepository(db),
-    localeService: const _FixedLocaleService('en_US'),
+    localeService: const FixedLocaleService('en_US'),
   );
 }
 
@@ -103,7 +103,7 @@ Future<Widget> buildBootstrappedTestApp({required AppDatabase db}) async {
   final overrides = <Override>[];
   await bootstrapFor(
     openDatabase: () async => db,
-    localeService: const _FixedLocaleService('en_US'),
+    localeService: const FixedLocaleService('en_US'),
     runAppFn: (widget) {
       launched = widget;
       if (widget is ProviderScope) {
@@ -231,14 +231,4 @@ Future<Account> getDefaultAccount(AppDatabase db) async {
     throw StateError('Default account $defaultId vanished after seed');
   }
   return account;
-}
-
-/// Deterministic [LocaleService] stub — returns a fixed locale string so
-/// tests are not affected by the host machine's OS locale.
-class _FixedLocaleService implements LocaleService {
-  const _FixedLocaleService(this._locale);
-  final String _locale;
-
-  @override
-  String get deviceLocale => _locale;
 }
