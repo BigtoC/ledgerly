@@ -678,7 +678,7 @@ class _ShoppingListDraftActions extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Archived-ref warnings.
-        if (state.selectedAccountIsArchived)
+        if (state.selectedAccount.isArchived)
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(
@@ -690,7 +690,7 @@ class _ShoppingListDraftActions extends StatelessWidget {
               ),
             ),
           ),
-        if (state.selectedCategoryIsArchived)
+        if (state.selectedCategory?.isArchived ?? false)
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(

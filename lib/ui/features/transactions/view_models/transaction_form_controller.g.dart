@@ -82,7 +82,7 @@ final class TransactionFormControllerProvider
 }
 
 String _$transactionFormControllerHash() =>
-    r'2e58522c7792c80c4073e2a71beae31b0b6211d7';
+    r'2531846e1df4d8e852c405d651e99287d38e33e6';
 
 abstract class _$TransactionFormController
     extends $Notifier<TransactionFormState> {

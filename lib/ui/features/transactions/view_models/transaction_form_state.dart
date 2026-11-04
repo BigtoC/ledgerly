@@ -282,14 +282,6 @@ sealed class TransactionFormState with _$TransactionFormState {
     /// disable all CTAs and show a progress indicator on the active button.
     @Default(TransactionFormSubmissionAction.none)
     TransactionFormSubmissionAction submissionAction,
-
-    /// `true` when the selected account is archived. Only meaningful in
-    /// [EditShoppingListDraftMode]; blocks `canConvertDraft`.
-    @Default(false) bool selectedAccountIsArchived,
-
-    /// `true` when the selected category is archived. Only meaningful in
-    /// [EditShoppingListDraftMode]; blocks `canConvertDraft`.
-    @Default(false) bool selectedCategoryIsArchived,
   }) = TransactionFormData;
 
   const factory TransactionFormState.error(
@@ -339,13 +331,13 @@ sealed class TransactionFormState with _$TransactionFormState {
   bool get canConvertDraft => switch (this) {
     TransactionFormData(
       :final amountMinorUnits,
-      :final selectedAccountIsArchived,
-      :final selectedCategoryIsArchived,
+      :final selectedAccount,
+      :final selectedCategory,
     ) =>
       canSaveDraft &&
           amountMinorUnits > 0 &&
-          !selectedAccountIsArchived &&
-          !selectedCategoryIsArchived,
+          !selectedAccount.isArchived &&
+          !(selectedCategory?.isArchived ?? false),
     _ => false,
   };
 }

@@ -739,7 +739,7 @@ void main() {
 
       final s =
           c.read(transactionFormControllerProvider) as TransactionFormData;
-      expect(s.selectedAccountIsArchived, isTrue);
+      expect(s.selectedAccount.isArchived, isTrue);
       expect(s.canConvertDraft, isFalse);
       // But canSaveDraft should still be true.
       expect(s.canSaveDraft, isTrue);

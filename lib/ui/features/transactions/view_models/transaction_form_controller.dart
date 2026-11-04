@@ -322,8 +322,6 @@ class TransactionFormController extends _$TransactionFormController {
         duplicateSourceId: null,
         originalCreatedAt: null,
         shoppingListItemId: shoppingListItemId,
-        selectedAccountIsArchived: account.isArchived,
-        selectedCategoryIsArchived: category?.isArchived ?? false,
       );
     } catch (e, st) {
       if (ref.mounted) {
@@ -424,11 +422,7 @@ class TransactionFormController extends _$TransactionFormController {
     final s = state;
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
     if (s.submissionAction != TransactionFormSubmissionAction.none) return;
-    state = s.copyWith(
-      selectedCategory: category,
-      isDirty: true,
-      selectedCategoryIsArchived: category.isArchived,
-    );
+    state = s.copyWith(selectedCategory: category, isDirty: true);
   }
 
   /// Picks an account. When `currencyTouched` is false, the account's
@@ -451,11 +445,7 @@ class TransactionFormController extends _$TransactionFormController {
     // If the user has manually selected a currency, account changes do not
     // re-seed displayCurrency — only selectedAccount changes.
     if (s.currencyTouched) {
-      state = s.copyWith(
-        selectedAccount: account,
-        isDirty: true,
-        selectedAccountIsArchived: account.isArchived,
-      );
+      state = s.copyWith(selectedAccount: account, isDirty: true);
       return;
     }
 
@@ -473,18 +463,13 @@ class TransactionFormController extends _$TransactionFormController {
     if (currencyChanged) {
       _keypad = const KeypadState.initial();
       state = _copyWithKeypad(
-        s.copyWith(
-          selectedAccount: account,
-          displayCurrency: newCurrency,
-          selectedAccountIsArchived: account.isArchived,
-        ),
+        s.copyWith(selectedAccount: account, displayCurrency: newCurrency),
       );
     } else {
       state = s.copyWith(
         selectedAccount: account,
         displayCurrency: newCurrency,
         isDirty: true,
-        selectedAccountIsArchived: account.isArchived,
       );
     }
   }
