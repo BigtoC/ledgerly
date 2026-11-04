@@ -76,13 +76,26 @@ class TransactionFormController extends _$TransactionFormController {
 
   @override
   TransactionFormState build() {
-    // Hydration is explicit (Wave 2 §10): the screen calls one of the
-    // three `hydrateFor*` entry points after reading route extras / path
-    // params. `build` only sets up the loading placeholder.
+    // Hydration is explicit (Wave 2 §10): the screen calls `hydrate` with
+    // the mode the router built. `build` only sets up the loading
+    // placeholder.
     return TransactionFormState.loading(formMode: _formMode);
   }
 
   // ---------- Hydration ----------
+
+  /// Runs the hydration entry point for [mode].
+  Future<void> hydrate(TransactionFormMode mode) => switch (mode) {
+    AddTransactionMode(:final initialDate) => hydrateForAdd(
+      initialDate: initialDate,
+    ),
+    DuplicateTransactionMode(:final sourceTransactionId) => hydrateForDuplicate(
+      sourceTransactionId,
+    ),
+    EditTransactionMode(:final transactionId) => hydrateForEdit(transactionId),
+    EditShoppingListDraftMode(:final shoppingListItemId) =>
+      hydrateForShoppingListDraft(shoppingListItemId),
+  };
 
   /// Hydrate for the Add flow. When [initialDate] is supplied (e.g.,
   /// from Home's FAB carrying the currently selected day) the form's
@@ -805,19 +818,7 @@ class TransactionFormController extends _$TransactionFormController {
 
   /// Re-runs the last requested hydration mode after the user returns from
   /// dependency-recovery flows like `/settings/manage-accounts/new`.
-  Future<void> retryHydration() async {
-    final mode = _formMode;
-    switch (mode) {
-      case AddTransactionMode():
-        await hydrateForAdd(initialDate: mode.initialDate);
-      case DuplicateTransactionMode():
-        await hydrateForDuplicate(mode.sourceTransactionId);
-      case EditTransactionMode():
-        await hydrateForEdit(mode.transactionId);
-      case EditShoppingListDraftMode():
-        await hydrateForShoppingListDraft(mode.shoppingListItemId);
-    }
-  }
+  Future<void> retryHydration() => hydrate(_formMode);
 
   // ---------- Internals ----------
 

@@ -20,8 +20,8 @@
 // the AppBar (numeric-only keypad). Adaptive 600dp behavior is supplied
 // by the router (`fullscreenDialog: true` + parentNavigatorKey).
 //
-// Task 5 additions:
-//   - `mode` constructor parameter drives AppBar title and CTA set.
+// The router builds the typed `mode` (see `_addModeFromExtra` in
+// `router.dart`); it drives hydration, the AppBar title and the CTA set.
 //   - AddTransactionMode: inline "Add to shopping list" action below
 //     MemoField.
 //   - EditShoppingListDraftMode: no AppBar save/delete; inline action row
@@ -54,15 +54,10 @@ import 'memo_suggestions.dart';
 
 @Dependencies([TransactionFormController, categoriesByType])
 class TransactionFormScreen extends ConsumerStatefulWidget {
-  const TransactionFormScreen({super.key, this.transactionId, this.mode});
+  const TransactionFormScreen({super.key, required this.mode});
 
-  /// Edit-mode target id, parsed from `/home/edit/:id`.
-  /// Retained for backward compat; prefer passing [mode] directly.
-  final int? transactionId;
-
-  /// Typed form mode. When null, the screen falls back to the legacy
-  /// transactionId-based hydration (backward compat with Wave 2 routes).
-  final TransactionFormMode? mode;
+  /// Which entry point opened the form.
+  final TransactionFormMode mode;
 
   @override
   ConsumerState<TransactionFormScreen> createState() =>
@@ -77,56 +72,15 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   @override
   void initState() {
     super.initState();
-    // Hydrate after the first frame so `ref.read` sees a built notifier
-    // and `GoRouterState.of(context)` is reachable.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _hydrate());
-  }
-
-  void _hydrate() {
-    if (!mounted) return;
-    final controller = ref.read(transactionFormControllerProvider.notifier);
-
-    // Task 5: if a typed mode was passed directly, use it.
-    final typedMode = widget.mode;
-    if (typedMode != null) {
-      switch (typedMode) {
-        case AddTransactionMode(:final initialDate):
-          unawaited(controller.hydrateForAdd(initialDate: initialDate));
-        case DuplicateTransactionMode(:final sourceTransactionId):
-          unawaited(controller.hydrateForDuplicate(sourceTransactionId));
-        case EditTransactionMode(:final transactionId):
-          unawaited(controller.hydrateForEdit(transactionId));
-        case EditShoppingListDraftMode(:final shoppingListItemId):
-          unawaited(controller.hydrateForShoppingListDraft(shoppingListItemId));
-      }
-      return;
-    }
-
-    // Legacy Wave 2 hydration via route extras / transactionId.
-    final extra = GoRouterState.of(context).extra;
-    // Wave 2 §10 contract: `{'duplicateSourceId': <int>}` from Home's
-    // overflow→Duplicate path.
-    int? duplicateSourceId;
-    DateTime? initialDate;
-    if (extra is Map) {
-      if (extra['duplicateSourceId'] is int) {
-        duplicateSourceId = extra['duplicateSourceId'] as int;
-      }
-      // Home's FAB / day-nav carries the currently selected day so the
-      // form lands on that day instead of today (Wave 3 follow-up).
-      // Ignored for Edit and Duplicate flows by design.
-      if (extra['initialDate'] is DateTime) {
-        initialDate = extra['initialDate'] as DateTime;
-      }
-    }
-    final transactionId = widget.transactionId;
-    if (transactionId != null) {
-      unawaited(controller.hydrateForEdit(transactionId));
-    } else if (duplicateSourceId != null) {
-      unawaited(controller.hydrateForDuplicate(duplicateSourceId));
-    } else {
-      unawaited(controller.hydrateForAdd(initialDate: initialDate));
-    }
+    // Hydrate after the first frame so `ref.read` sees a built notifier.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(
+        ref
+            .read(transactionFormControllerProvider.notifier)
+            .hydrate(widget.mode),
+      );
+    });
   }
 
   @override
@@ -134,7 +88,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(transactionFormControllerProvider);
     final controller = ref.read(transactionFormControllerProvider.notifier);
-    final activeMode = widget.mode ?? state.formMode;
+    final activeMode = widget.mode;
 
     final appBarTitle = switch (activeMode) {
       EditShoppingListDraftMode() => l10n.shoppingListEditDraftTitle,

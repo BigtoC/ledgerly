@@ -27,6 +27,7 @@ import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_selectio
 import 'package:ledgerly/ui/features/analysis/charts/view_models/slice_drilldown_controller.dart';
 import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_controller.dart';
 import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_providers.dart';
+import 'package:ledgerly/ui/features/categories/view_models/categories_controller.dart';
 import 'package:ledgerly/ui/features/home/view_models/home_controller.dart';
 import 'package:ledgerly/ui/features/home/views/home_screen.dart';
 import 'package:ledgerly/ui/features/home/view_models/pending_controller.dart';
@@ -35,6 +36,9 @@ import 'package:ledgerly/ui/features/shopping_list/view_models/shopping_list_pro
 import 'package:ledgerly/ui/features/shopping_list/views/shopping_list_screen.dart';
 import 'package:ledgerly/ui/features/splash/view_models/splash_controller.dart';
 import 'package:ledgerly/ui/features/splash/views/splash_screen.dart';
+import 'package:ledgerly/ui/features/transactions/view_models/transaction_form_controller.dart';
+import 'package:ledgerly/ui/features/transactions/view_models/transaction_form_state.dart';
+import 'package:ledgerly/ui/features/transactions/views/transaction_form_screen.dart';
 
 import '../../support/test_app.dart';
 
@@ -71,6 +75,8 @@ import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_range_pr
   chartsAccountFilterOptions,
   chartsRange,
   chartsDateBounds,
+  TransactionFormController,
+  categoriesByType,
 ])
 void main() {
   group('router redirect', () {
@@ -216,6 +222,109 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(Dialog), findsNothing);
+    });
+
+    for (final (label, extra, matcher) in [
+      (
+        'no extra → Add',
+        null,
+        isA<AddTransactionMode>().having(
+          (m) => m.initialDate,
+          'initialDate',
+          isNull,
+        ),
+      ),
+      (
+        'initialDate extra → Add on that day',
+        <String, Object>{'initialDate': DateTime(2026, 3, 4)},
+        isA<AddTransactionMode>().having(
+          (m) => m.initialDate,
+          'initialDate',
+          DateTime(2026, 3, 4),
+        ),
+      ),
+      (
+        'duplicateSourceId extra → Duplicate',
+        <String, Object>{
+          'duplicateSourceId': 99,
+          'initialDate': DateTime(2026, 3, 4),
+        },
+        isA<DuplicateTransactionMode>().having(
+          (m) => m.sourceTransactionId,
+          'sourceTransactionId',
+          99,
+        ),
+      ),
+      (
+        'wrongly typed extras are ignored',
+        <String, Object>{'duplicateSourceId': '99', 'initialDate': 'today'},
+        isA<AddTransactionMode>().having(
+          (m) => m.initialDate,
+          'initialDate',
+          isNull,
+        ),
+      ),
+    ]) {
+      testWidgets('/home/add maps route extras to a form mode: $label', (
+        tester,
+      ) async {
+        final db = newTestAppDatabase();
+        addTearDown(db.close);
+        final container = makeTestContainer(
+          db: db,
+          extraOverrides: [
+            splashGateSnapshotProvider.overrideWithValue(
+              SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        final router = container.read(routerProvider);
+        addTearDown(router.dispose);
+        router.go('/home/add', extra: extra);
+
+        await tester.pumpWidget(buildTestApp(container: container));
+        await tester.pumpAndSettle();
+
+        final screen = tester.widget<TransactionFormScreen>(
+          find.byType(TransactionFormScreen),
+        );
+        expect(screen.mode, matcher);
+      });
+    }
+
+    testWidgets('/home/edit/:id opens the form in Edit mode', (tester) async {
+      final db = newTestAppDatabase();
+      addTearDown(db.close);
+      final container = makeTestContainer(
+        db: db,
+        extraOverrides: [
+          splashGateSnapshotProvider.overrideWithValue(
+            SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(routerProvider);
+      addTearDown(router.dispose);
+      router.go('/home/edit/7');
+
+      await tester.pumpWidget(buildTestApp(container: container));
+      await tester.pumpAndSettle();
+
+      final screen = tester.widget<TransactionFormScreen>(
+        find.byType(TransactionFormScreen),
+      );
+      expect(
+        screen.mode,
+        isA<EditTransactionMode>().having(
+          (m) => m.transactionId,
+          'transactionId',
+          7,
+        ),
+      );
     });
 
     testWidgets(

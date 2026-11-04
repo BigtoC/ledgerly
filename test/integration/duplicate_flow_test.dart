@@ -1,8 +1,10 @@
 // M6 Unit 4 — Integration test for the duplicate flow.
 //
-// The duplicate flow's form-modal handoff (Wave 0 §2.3 — `'duplicateSourceId'`
-// in `GoRouterState.extra`, prefill via `hydrateForDuplicate`, save → pop)
-// is covered by `test/widget/features/transactions/transaction_form_screen_test.dart`.
+// The duplicate flow's form-modal handoff (Wave 0 §2.3 — the router maps
+// `'duplicateSourceId'` in `/home/add`'s extra to `DuplicateTransactionMode`,
+// covered by `test/unit/app/router_test.dart`; prefill via
+// `hydrateForDuplicate` and save → pop are covered by
+// `test/widget/features/transactions/transaction_form_screen_test.dart`).
 // Driving the same flow through this integration harness hits the same
 // modal-disposal Drift timer leak as the first-launch flow, so this test
 // instead verifies the integration claim that matters most at the data
