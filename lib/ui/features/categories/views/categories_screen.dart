@@ -24,6 +24,7 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../../domain/models/category.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../core/widgets/undo_snack_bar.dart';
 import '../view_models/categories_controller.dart';
 import '../view_models/categories_state.dart';
 import 'category_form_sheet.dart';
@@ -172,31 +173,25 @@ class _Section extends ConsumerWidget {
         .archiveCategory(cat.id);
     switch (outcome) {
       case ArchiveCategoryOk():
-        messenger
-          ..clearSnackBars()
-          ..showSnackBar(
-            SnackBar(
-              content: Text(l10n.categoriesArchiveUndoSnackbar),
-              action: SnackBarAction(
-                label: l10n.commonUndo,
-                onPressed: () async {
-                  final undone = await container
-                      .read(categoriesControllerProvider.notifier)
-                      .undoArchive(cat.id);
-                  switch (undone) {
-                    case UndoArchiveCategoryOk():
-                      break;
-                    case UndoArchiveCategoryFailed():
-                      messenger
-                        ..clearSnackBars()
-                        ..showSnackBar(
-                          SnackBar(content: Text(l10n.errorSnackbarGeneric)),
-                        );
-                  }
-                },
-              ),
-            ),
-          );
+        messenger.showUndoSnackBar(
+          message: l10n.categoriesArchiveUndoSnackbar,
+          undoLabel: l10n.commonUndo,
+          onUndo: () async {
+            final undone = await container
+                .read(categoriesControllerProvider.notifier)
+                .undoArchive(cat.id);
+            switch (undone) {
+              case UndoArchiveCategoryOk():
+                break;
+              case UndoArchiveCategoryFailed():
+                messenger
+                  ..clearSnackBars()
+                  ..showSnackBar(
+                    SnackBar(content: Text(l10n.errorSnackbarGeneric)),
+                  );
+            }
+          },
+        );
       case ArchiveCategoryHasActiveRecurringRule():
         messenger
           ..clearSnackBars()

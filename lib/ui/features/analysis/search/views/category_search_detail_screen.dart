@@ -5,11 +5,11 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../../../../core/constants.dart';
 import '../../../../../core/utils/money_formatter.dart';
 import '../../../../../domain/models/category.dart';
 import '../../../../../domain/models/transaction.dart';
 import '../../../../../l10n/app_localizations.dart';
+import '../../../../core/widgets/undo_snack_bar.dart';
 import '../../../categories/views/category_display.dart';
 import '../view_models/analysis_providers.dart';
 import '../view_models/category_search_detail_controller.dart';
@@ -216,20 +216,13 @@ class _CategorySearchDetailScreenState
     if (_lastShownPending?.id == pending.id) return;
     _lastShownPending = pending;
     final messenger = ScaffoldMessenger.maybeOf(context);
-    messenger
-      ?..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(l10n.homeDeleteUndoSnackbar),
-          duration: kUndoWindow,
-          action: SnackBarAction(
-            label: l10n.commonUndo,
-            onPressed: () {
-              _controller.undoDelete();
-            },
-          ),
-        ),
-      );
+    messenger?.showUndoSnackBar(
+      message: l10n.homeDeleteUndoSnackbar,
+      undoLabel: l10n.commonUndo,
+      onUndo: () {
+        _controller.undoDelete();
+      },
+    );
   }
 
   void _onEffect(CategorySearchDetailEffect effect) {

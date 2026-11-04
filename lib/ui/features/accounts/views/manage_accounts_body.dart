@@ -13,6 +13,7 @@ import '../../../../app/providers/exchange_rates_provider.dart';
 import '../../../../core/constants.dart';
 import '../../../../core/utils/box_shadow.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../core/widgets/undo_snack_bar.dart';
 import '../view_models/accounts_controller.dart';
 import '../view_models/accounts_providers.dart';
 import '../view_models/accounts_state.dart';
@@ -170,18 +171,11 @@ class _AccountTileWithLookups extends ConsumerWidget {
         .archive(id);
     switch (outcome) {
       case ArchiveAccountOk():
-        messenger
-          ..clearSnackBars()
-          ..showSnackBar(
-            SnackBar(
-              content: Text(l10n.accountsArchiveUndoSnackbar),
-              action: SnackBarAction(
-                label: l10n.commonUndo,
-                onPressed: () =>
-                    unawaited(_undoArchive(container, messenger, l10n, id)),
-              ),
-            ),
-          );
+        messenger.showUndoSnackBar(
+          message: l10n.accountsArchiveUndoSnackbar,
+          undoLabel: l10n.commonUndo,
+          onUndo: () => unawaited(_undoArchive(container, messenger, l10n, id)),
+        );
       case ArchiveAccountIsDefault():
         if (!context.mounted) return;
         await _showDefaultBlockedDialog(context, l10n);

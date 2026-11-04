@@ -229,6 +229,7 @@ lib/
         analysis_colors.dart
       widgets/
         adaptive_shell.dart  # 600dp nav switch (NavigationBar ↔ NavigationRail)
+        undo_snack_bar.dart  # clear-then-show Undo snackbar for the kUndoWindow
     features/
       splash/
         view_models/

@@ -199,7 +199,7 @@ Take its folder tree, its layers and the order of work: models → services → 
   ├── ui/
   │   ├── core/
   │   │   ├── theme/
-  │   │   └── widgets/      # shared widgets; today only adaptive_shell.dart
+  │   │   └── widgets/      # shared widgets: adaptive_shell.dart, undo_snack_bar.dart
   │   └── features/
   │       └── <feature>/
   │           ├── view_models/  # flat: *_controller, *_state, *_providers, pure helpers

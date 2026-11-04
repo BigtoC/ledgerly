@@ -28,6 +28,7 @@ import '../../../../core/constants.dart';
 import '../../../../core/utils/box_shadow.dart';
 import '../../../../domain/models/shopping_list_item.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../core/widgets/undo_snack_bar.dart';
 import '../../transactions/view_models/transaction_form_state.dart';
 import '../view_models/shopping_list_controller.dart';
 import '../view_models/shopping_list_providers.dart';
@@ -91,24 +92,17 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
     _lastShownPendingId = pendingId;
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.maybeOf(context);
-    messenger
-      ?..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(l10n.shoppingListDeleteUndoSnackbar),
-          duration: kUndoWindow,
-          action: SnackBarAction(
-            label: l10n.commonUndo,
-            onPressed: () {
-              // The snackbar outlives this screen. Once the screen is gone,
-              // the auto-dispose controller has dropped the pending delete,
-              // so there is nothing to undo and `ref` is unusable.
-              if (!mounted) return;
-              ref.read(shoppingListControllerProvider.notifier).undoDelete();
-            },
-          ),
-        ),
-      );
+    messenger?.showUndoSnackBar(
+      message: l10n.shoppingListDeleteUndoSnackbar,
+      undoLabel: l10n.commonUndo,
+      onUndo: () {
+        // The snackbar outlives this screen. Once the screen is gone,
+        // the auto-dispose controller has dropped the pending delete,
+        // so there is nothing to undo and `ref` is unusable.
+        if (!mounted) return;
+        ref.read(shoppingListControllerProvider.notifier).undoDelete();
+      },
+    );
   }
 
   Future<void> _onTapItem(BuildContext context, int id) async {

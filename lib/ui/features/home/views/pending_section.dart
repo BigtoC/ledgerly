@@ -24,6 +24,7 @@ import '../../../../domain/models/account.dart';
 import '../../../../domain/models/category.dart';
 import '../../../../domain/models/pending_transaction.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../core/widgets/undo_snack_bar.dart';
 import '../../categories/views/category_display.dart';
 import '../view_models/home_controller.dart';
 import '../view_models/home_providers.dart';
@@ -78,21 +79,17 @@ class _PendingSectionState extends ConsumerState<PendingSection> {
         // PendingController is keepAlive, so it outlives the section.
         final controller = ref.read(pendingControllerProvider.notifier);
         messenger
-          ..clearSnackBars()
-          ..showSnackBar(
-            SnackBar(
-              content: Text(l10n.homePendingSkippedSnack),
-              duration: kUndoWindow,
-              action: SnackBarAction(
-                label: l10n.commonUndo,
-                onPressed: () => unawaited(controller.undoSkip()),
-              ),
-            ),
-          ).closed.then((_) {
-            if (mounted) {
-              _skipUndoVisible = false;
-            }
-          });
+            .showUndoSnackBar(
+              message: l10n.homePendingSkippedSnack,
+              undoLabel: l10n.commonUndo,
+              onUndo: () => unawaited(controller.undoSkip()),
+            )
+            .closed
+            .then((_) {
+              if (mounted) {
+                _skipUndoVisible = false;
+              }
+            });
       case PendingApproveSucceededEffect(:final ruleName):
         if (_skipUndoVisible) {
           return;
