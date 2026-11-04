@@ -19,7 +19,6 @@
 // Do NOT add seed logic here — callers that need a seeded DB call
 // `runTestSeed(db)` explicitly so the "no data" state is also testable.
 
-import 'package:drift/native.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -45,9 +44,8 @@ import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/data/seed/first_run_seed.dart';
 import 'package:ledgerly/data/services/locale_service.dart';
 
-/// Returns a fresh in-memory `AppDatabase` with no data.
-/// Caller MUST `await db.close()` in an `addTearDown` block.
-AppDatabase newTestAppDatabase() => AppDatabase(NativeDatabase.memory());
+export '../unit/repositories/_harness/test_app_database.dart'
+    show newTestAppDatabase;
 
 /// Runs the first-run seed against [db] using a fixed `en_US` locale stub.
 Future<void> runTestSeed(AppDatabase db) {

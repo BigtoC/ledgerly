@@ -7,15 +7,6 @@ import 'package:ledgerly/domain/models/pending_transaction.dart';
 
 import '_harness/test_app_database.dart';
 
-Future<void> _seedCurrencyUsd(AppDatabase db) async {
-  await db.customStatement(
-    'INSERT OR IGNORE INTO currencies '
-    '(code, decimals, symbol, name_l10n_key, is_token, sort_order) '
-    'VALUES (?, ?, ?, ?, 0, ?)',
-    <Object?>['USD', 2, r'$', 'currency.usd', 1],
-  );
-}
-
 Future<int> _insertCategoryRaw(AppDatabase db) async {
   await db.customStatement(
     'INSERT INTO categories (l10n_key, icon, color, type, sort_order, '
@@ -24,29 +15,6 @@ Future<int> _insertCategoryRaw(AppDatabase db) async {
   );
   final rows = await db
       .customSelect('SELECT id FROM categories ORDER BY id DESC LIMIT 1')
-      .get();
-  return rows.first.read<int>('id');
-}
-
-Future<int> _insertAccountRaw(AppDatabase db) async {
-  await db.customStatement(
-    'INSERT OR IGNORE INTO account_types '
-    '(l10n_key, icon, color, sort_order, is_archived) '
-    'VALUES (?, ?, ?, ?, ?)',
-    <Object?>['at.test', 'wallet', 0, 1, 0],
-  );
-  final typeRows = await db
-      .customSelect('SELECT id FROM account_types ORDER BY id ASC LIMIT 1')
-      .get();
-  final typeId = typeRows.first.read<int>('id');
-  await db.customStatement(
-    'INSERT INTO accounts (name, account_type_id, currency, '
-    'opening_balance_minor_units, is_archived) '
-    'VALUES (?, ?, ?, 0, 0)',
-    <Object?>['Cash', typeId, 'USD'],
-  );
-  final rows = await db
-      .customSelect('SELECT id FROM accounts ORDER BY id DESC LIMIT 1')
       .get();
   return rows.first.read<int>('id');
 }
@@ -79,9 +47,9 @@ void main() {
 
     setUp(() async {
       db = newTestAppDatabase();
-      await _seedCurrencyUsd(db);
+      await seedUsdCurrencyRaw(db);
       categoryId = await _insertCategoryRaw(db);
-      accountId = await _insertAccountRaw(db);
+      accountId = await insertCashAccountRaw(db);
       ruleId = await _insertRuleRaw(
         db,
         categoryId: categoryId,

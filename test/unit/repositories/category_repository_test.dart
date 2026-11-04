@@ -3,53 +3,20 @@
 // Uses the shared in-memory harness at `_harness/test_app_database.dart`.
 // Every case has a direct row in the §6.4 Test Plan table (C-*).
 //
-// Because the Phase 1 harness does not yet ship
-// `TestRepoBundle.seedMinimalRepositoryFixtures()`, this file seeds the
-// required fixture rows (currencies, account_type, account) directly via
-// `customStatement` calls so Stream A can merge ahead of Stream C's
-// harness completion.
+// Fixture rows (currencies, categories, account_type, account) come from
+// the harness's raw-SQL `seedRepositoryFixtures`.
 
 import 'package:drift/drift.dart' show Variable;
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/data/database/app_database.dart' show AppDatabase;
 import 'package:ledgerly/data/repositories/category_repository.dart';
-import 'package:ledgerly/data/repositories/recurring_rules_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/domain/models/currency.dart';
-import 'package:ledgerly/domain/models/recurring_rule_draft.dart';
 import 'package:ledgerly/domain/models/transaction.dart';
 
 import '_harness/test_app_database.dart';
-
-// Inserts a minimal shopping-list item referencing the given category.
-// Drift stores DateTimes as Unix seconds; use integer timestamps.
-Future<void> _insertShoppingListItemRaw(
-  AppDatabase db, {
-  required int categoryId,
-  required int accountId,
-}) async {
-  final nowUnix = DateTime(2026, 1, 1).millisecondsSinceEpoch ~/ 1000;
-  final dateUnix = DateTime(2026, 5, 1).millisecondsSinceEpoch ~/ 1000;
-  await db.customInsert(
-    'INSERT INTO shopping_list_items '
-    '(category_id, account_id, draft_date, created_at, updated_at) '
-    'VALUES (?, ?, ?, ?, ?)',
-    variables: [
-      Variable<int>(categoryId),
-      Variable<int>(accountId),
-      Variable<int>(dateUnix),
-      Variable<int>(nowUnix),
-      Variable<int>(nowUnix),
-    ],
-    updates: {db.shoppingListItems},
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Shared fixtures (mirrors transaction_repository_test.dart)
-// ---------------------------------------------------------------------------
 
 const Currency _usd = Currency(
   code: 'USD',
@@ -58,127 +25,6 @@ const Currency _usd = Currency(
   nameL10nKey: 'currency.usd',
   sortOrder: 1,
 );
-
-Future<_Fixtures> _seedFixtures(AppDatabase db) async {
-  await db.customStatement(
-    'INSERT INTO currencies (code, decimals, symbol, name_l10n_key, is_token, '
-    'sort_order) VALUES (?, ?, ?, ?, 0, ?), (?, ?, ?, ?, 0, ?), '
-    '(?, ?, ?, ?, 0, ?)',
-    <Object?>[
-      'USD',
-      2,
-      r'$',
-      'currency.usd',
-      1,
-      'JPY',
-      0,
-      '¥',
-      'currency.jpy',
-      2,
-      'TWD',
-      2,
-      r'NT$',
-      'currency.twd',
-      3,
-    ],
-  );
-
-  final expenseId = await _insertCategoryRaw(
-    db,
-    l10nKey: 'category.food',
-    icon: 'restaurant',
-    color: 0,
-    type: 'expense',
-    sortOrder: 1,
-  );
-  final incomeId = await _insertCategoryRaw(
-    db,
-    l10nKey: 'category.salary',
-    icon: 'work',
-    color: 1,
-    type: 'income',
-    sortOrder: 2,
-  );
-
-  await db.customStatement(
-    'INSERT INTO account_types (l10n_key, icon, color, sort_order, '
-    'is_archived) VALUES (?, ?, 0, 1, 0)',
-    <Object?>['accountType.cash', 'wallet'],
-  );
-  final accountTypeRows = await db
-      .customSelect('SELECT id FROM account_types')
-      .get();
-  final accountTypeId = accountTypeRows.first.read<int>('id');
-
-  await db.customStatement(
-    'INSERT INTO accounts (name, account_type_id, currency, '
-    'opening_balance_minor_units, is_archived) VALUES (?, ?, ?, 0, 0)',
-    <Object?>['Cash', accountTypeId, 'USD'],
-  );
-  final accountRows = await db.customSelect('SELECT id FROM accounts').get();
-  final accountId = accountRows.first.read<int>('id');
-
-  return _Fixtures(
-    expenseCategoryId: expenseId,
-    incomeCategoryId: incomeId,
-    accountId: accountId,
-  );
-}
-
-Future<int> _insertCategoryRaw(
-  AppDatabase db, {
-  required String l10nKey,
-  required String icon,
-  required int color,
-  required String type,
-  required int sortOrder,
-}) async {
-  await db.customStatement(
-    'INSERT INTO categories (l10n_key, icon, color, type, sort_order, '
-    'is_archived) VALUES (?, ?, ?, ?, ?, 0)',
-    <Object?>[l10nKey, icon, color, type, sortOrder],
-  );
-  final rows = await db
-      .customSelect(
-        'SELECT id FROM categories WHERE l10n_key = ?',
-        variables: <Variable<Object>>[Variable.withString(l10nKey)],
-      )
-      .get();
-  return rows.first.read<int>('id');
-}
-
-class _Fixtures {
-  const _Fixtures({
-    required this.expenseCategoryId,
-    required this.incomeCategoryId,
-    required this.accountId,
-  });
-
-  final int expenseCategoryId;
-  final int incomeCategoryId;
-  final int accountId;
-}
-
-Future<int> _insertRecurringRuleRaw(
-  AppDatabase db, {
-  required int categoryId,
-  required int accountId,
-}) {
-  return DriftRecurringRulesRepository(
-    db,
-    clock: () => DateTime(2026, 5, 7),
-  ).insert(
-    const RecurringRuleDraft(
-      name: 'Rule',
-      amountMinorUnits: 100,
-      currency: _usd,
-      categoryId: 0,
-      accountId: 0,
-      frequency: 'daily',
-    ).copyWith(categoryId: categoryId, accountId: accountId),
-    today: DateTime(2026, 5, 7),
-  );
-}
 
 // ---------------------------------------------------------------------------
 
@@ -192,7 +38,7 @@ void main() {
   });
 
   late AppDatabase db;
-  late _Fixtures fixtures;
+  late RepositoryFixtures fixtures;
   late CategoryRepository catRepo;
   late TransactionRepository txRepo;
   late DateTime frozenNow;
@@ -200,7 +46,7 @@ void main() {
   setUp(() async {
     frozenNow = DateTime(2026, 4, 22, 12, 0);
     db = newTestAppDatabase();
-    fixtures = await _seedFixtures(db);
+    fixtures = await seedRepositoryFixtures(db);
     catRepo = DriftCategoryRepository(db);
     txRepo = DriftTransactionRepository(db, clock: () => frozenNow);
   });
@@ -415,7 +261,7 @@ void main() {
     test(
       'C-archive-03: archive blocked when recurring rule references category',
       () async {
-        await _insertRecurringRuleRaw(
+        await insertRecurringRuleRaw(
           db,
           categoryId: fixtures.expenseCategoryId,
           accountId: fixtures.accountId,
@@ -482,7 +328,7 @@ void main() {
         type: CategoryType.expense,
       );
       final inserted = await catRepo.save(custom);
-      await _insertRecurringRuleRaw(
+      await insertRecurringRuleRaw(
         db,
         categoryId: inserted.id,
         accountId: fixtures.accountId,
@@ -637,7 +483,7 @@ void main() {
     });
 
     test('C-isref-03: recurring rule reference → true', () async {
-      await _insertRecurringRuleRaw(
+      await insertRecurringRuleRaw(
         db,
         categoryId: fixtures.expenseCategoryId,
         accountId: fixtures.accountId,
@@ -662,7 +508,7 @@ void main() {
       );
       final inserted = await catRepo.save(custom);
 
-      await _insertShoppingListItemRaw(
+      await insertShoppingListItemRaw(
         db,
         categoryId: inserted.id,
         accountId: fixtures.accountId,
@@ -685,7 +531,7 @@ void main() {
       final cat = await catRepo.getById(fixtures.expenseCategoryId);
       expect(cat, isNotNull);
 
-      await _insertShoppingListItemRaw(
+      await insertShoppingListItemRaw(
         db,
         categoryId: fixtures.expenseCategoryId,
         accountId: fixtures.accountId,
@@ -710,7 +556,7 @@ void main() {
     test(
       'isReferenced returns false for category with only shopping-list drafts',
       () async {
-        await _insertShoppingListItemRaw(
+        await insertShoppingListItemRaw(
           db,
           categoryId: fixtures.expenseCategoryId,
           accountId: fixtures.accountId,

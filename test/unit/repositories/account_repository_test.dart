@@ -3,11 +3,10 @@
 // Uses the shared in-memory harness at `_harness/test_app_database.dart`.
 // Every case maps to a row in the §6.3 Test Plan table (AC01..AC16).
 //
-// Because the Phase 1 harness does not yet ship
-// `TestRepoBundle.seedMinimalRepositoryFixtures()`, this file seeds the
-// required currency + account-type fixtures through their sibling
-// repositories (which Stream B owns and has already validated), then
-// exercises `AccountRepository` against that minimal shared state.
+// This file seeds the required currency + account-type fixtures through
+// their sibling repositories (which Stream B owns and has already
+// validated), then exercises `AccountRepository` against that minimal
+// shared state.
 // Referencing-transaction rows for AC09/AC10 are inserted via
 // `customStatement` so the test does not depend on
 // `TransactionRepository` internals.
@@ -18,37 +17,11 @@ import 'package:ledgerly/data/database/app_database.dart' show AppDatabase;
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/account_type_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
-import 'package:ledgerly/data/repositories/recurring_rules_repository.dart';
 import 'package:ledgerly/data/repositories/repository_exceptions.dart';
 import 'package:ledgerly/domain/models/account.dart';
 import 'package:ledgerly/domain/models/currency.dart';
-import 'package:ledgerly/domain/models/recurring_rule_draft.dart';
 
 import '_harness/test_app_database.dart';
-
-// Inserts a minimal shopping-list item referencing the given account.
-// Drift stores DateTimes as Unix seconds; use integer timestamps.
-Future<void> _insertShoppingListItemRaw(
-  AppDatabase db, {
-  required int categoryId,
-  required int accountId,
-}) async {
-  final nowUnix = DateTime(2026, 1, 1).millisecondsSinceEpoch ~/ 1000;
-  final dateUnix = DateTime(2026, 5, 1).millisecondsSinceEpoch ~/ 1000;
-  await db.customInsert(
-    'INSERT INTO shopping_list_items '
-    '(category_id, account_id, draft_date, created_at, updated_at) '
-    'VALUES (?, ?, ?, ?, ?)',
-    variables: [
-      Variable<int>(categoryId),
-      Variable<int>(accountId),
-      Variable<int>(dateUnix),
-      Variable<int>(nowUnix),
-      Variable<int>(nowUnix),
-    ],
-    updates: {db.shoppingListItems},
-  );
-}
 
 const Currency _usd = Currency(
   code: 'USD',
@@ -123,27 +96,6 @@ Future<int> _insertCategoryRaw(
       .customSelect('SELECT id FROM categories ORDER BY id DESC LIMIT 1')
       .get();
   return rows.first.read<int>('id');
-}
-
-Future<int> _insertRecurringRuleRaw(
-  AppDatabase db, {
-  required int categoryId,
-  required int accountId,
-}) {
-  return DriftRecurringRulesRepository(
-    db,
-    clock: () => DateTime(2026, 5, 7),
-  ).insert(
-    RecurringRuleDraft(
-      name: 'Rule',
-      amountMinorUnits: 100,
-      currency: _usd,
-      categoryId: categoryId,
-      accountId: accountId,
-      frequency: 'daily',
-    ),
-    today: DateTime(2026, 5, 7),
-  );
 }
 
 void main() {
@@ -328,11 +280,7 @@ void main() {
       () async {
         final id = await repo.save(buildCashAccount());
         final categoryId = await _insertCategoryRaw(db);
-        await _insertRecurringRuleRaw(
-          db,
-          categoryId: categoryId,
-          accountId: id,
-        );
+        await insertRecurringRuleRaw(db, categoryId: categoryId, accountId: id);
 
         await expectLater(
           repo.delete(id),
@@ -360,7 +308,7 @@ void main() {
       final categoryId = await _insertCategoryRaw(db);
 
       expect(await repo.isReferenced(id), isFalse);
-      await _insertRecurringRuleRaw(db, categoryId: categoryId, accountId: id);
+      await insertRecurringRuleRaw(db, categoryId: categoryId, accountId: id);
       expect(await repo.isReferenced(id), isTrue);
     });
 
@@ -375,11 +323,7 @@ void main() {
         await Future<void>.delayed(Duration.zero);
         expect(snapshots.last, isFalse);
 
-        await _insertRecurringRuleRaw(
-          db,
-          categoryId: categoryId,
-          accountId: id,
-        );
+        await insertRecurringRuleRaw(db, categoryId: categoryId, accountId: id);
         await Future<void>.delayed(Duration.zero);
         expect(snapshots.last, isTrue);
 
@@ -392,11 +336,7 @@ void main() {
       () async {
         final id = await repo.save(buildCashAccount());
         final categoryId = await _insertCategoryRaw(db);
-        await _insertRecurringRuleRaw(
-          db,
-          categoryId: categoryId,
-          accountId: id,
-        );
+        await insertRecurringRuleRaw(db, categoryId: categoryId, accountId: id);
 
         await expectLater(
           repo.archive(id),
@@ -839,7 +779,7 @@ void main() {
           'drafts but no transactions', () async {
         final id = await repo.save(buildCashAccount());
         final categoryId = await _insertCategoryRaw(db);
-        await _insertShoppingListItemRaw(
+        await insertShoppingListItemRaw(
           db,
           categoryId: categoryId,
           accountId: id,
@@ -857,7 +797,7 @@ void main() {
       test('isReferenced returns false for account with only shopping-list drafts', () async {
         final id = await repo.save(buildCashAccount());
         final categoryId = await _insertCategoryRaw(db);
-        await _insertShoppingListItemRaw(
+        await insertShoppingListItemRaw(
           db,
           categoryId: categoryId,
           accountId: id,
