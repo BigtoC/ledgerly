@@ -83,39 +83,31 @@ void main() {
   });
 
   group('ExchangeRateRepository', () {
-    test('getRate returns 1e9 (identity) for same currency', () {
-      expect(repo.getRate('USD', 'USD'), 1000000000);
+    test('watchRates is empty before any fetch', () async {
+      expect(await repo.watchRates().first, isEmpty);
     });
 
-    test('getRate returns null for unknown pair', () {
-      expect(repo.getRate('USD', 'EUR'), isNull);
+    test('refreshAll fetches and upserts rates (forward only)', () async {
+      await seedAccount('EUR');
+
+      when(() => mockService.fetchRates(any())).thenAnswer(
+        (_) async => [
+          (
+            from: 'EUR',
+            to: 'USD',
+            rate: 1.08,
+            fetchedAt: DateTime(2026, 5, 14),
+          ),
+        ],
+      );
+
+      await repo.refreshAll('USD');
+
+      final rates = await repo.watchRates().first;
+      expect(rates['EUR→USD'], (1.08 * 1000000000).round());
+      // Inverse not stored — UI never looks it up.
+      expect(rates.containsKey('USD→EUR'), isFalse);
     });
-
-    test(
-      'refreshAll fetches, upserts, and builds snapshot (forward only)',
-      () async {
-        await seedAccount('EUR');
-
-        when(() => mockService.fetchRates(any())).thenAnswer(
-          (_) async => [
-            (
-              from: 'EUR',
-              to: 'USD',
-              rate: 1.08,
-              fetchedAt: DateTime(2026, 5, 14),
-            ),
-          ],
-        );
-
-        await repo.refreshAll('USD');
-        // Allow the DAO watch() to emit so the snapshot updates.
-        await Future<void>.delayed(Duration.zero);
-
-        expect(repo.getRate('EUR', 'USD'), (1.08 * 1000000000).round());
-        // Inverse not stored — UI never looks it up.
-        expect(repo.getRate('USD', 'EUR'), isNull);
-      },
-    );
 
     test('refreshAll rejects rate <= 0', () async {
       await seedAccount('EUR');
@@ -130,8 +122,7 @@ void main() {
         ],
       );
       await repo.refreshAll('USD');
-      await Future<void>.delayed(Duration.zero);
-      expect(repo.getRate('EUR', 'USD'), isNull);
+      expect(await repo.watchRates().first, isNot(contains('EUR→USD')));
     });
 
     test('refreshAll rejects rate outside plausible range', () async {
@@ -148,8 +139,7 @@ void main() {
         ],
       );
       await repo.refreshAll('USD');
-      await Future<void>.delayed(Duration.zero);
-      expect(repo.getRate('EUR', 'USD'), isNull);
+      expect(await repo.watchRates().first, isNot(contains('EUR→USD')));
 
       // Below the 1e-6 floor.
       when(() => mockService.fetchRates(any())).thenAnswer(
@@ -163,8 +153,7 @@ void main() {
         ],
       );
       await repo.refreshAll('USD');
-      await Future<void>.delayed(Duration.zero);
-      expect(repo.getRate('EUR', 'USD'), isNull);
+      expect(await repo.watchRates().first, isNot(contains('EUR→USD')));
     });
 
     test('single-flight: concurrent refreshAll calls coalesce to one fetch', () async {
@@ -194,7 +183,7 @@ void main() {
       when(() => mockService.fetchRates(any()))
           .thenThrow(Exception('network error'));
       await repo.fetchRate('EUR', 'USD'); // must not throw
-      expect(repo.getRate('EUR', 'USD'), isNull);
+      expect(await repo.watchRates().first, isNot(contains('EUR→USD')));
     });
   });
 
