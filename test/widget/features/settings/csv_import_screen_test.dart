@@ -272,7 +272,9 @@ void main() {
 
       expect(find.text('Import from CSV'), findsOneWidget);
       expect(
-        find.text('Import transactions exported from Fortune City.'),
+        find.text(
+          'Import transactions exported from Fortune City or Ledgerly.',
+        ),
         findsOneWidget,
       );
       expect(

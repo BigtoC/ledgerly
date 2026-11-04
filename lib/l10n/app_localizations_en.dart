@@ -944,7 +944,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get csvImportIntro =>
-      'Import transactions exported from Fortune City.';
+      'Import transactions exported from Fortune City or Ledgerly.';
 
   @override
   String get csvImportPrivacyNote =>

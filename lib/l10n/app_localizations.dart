@@ -1780,10 +1780,10 @@ abstract class AppLocalizations {
   /// **'Import from CSV'**
   String get csvImportTitle;
 
-  /// CSV import intro text on the idle screen. Fortune City (記帳城市) is the app whose export format is supported.
+  /// CSV import intro text on the idle screen. Fortune City (記帳城市) and Ledgerly's own CSV export are the supported formats.
   ///
   /// In en, this message translates to:
-  /// **'Import transactions exported from Fortune City.'**
+  /// **'Import transactions exported from Fortune City or Ledgerly.'**
   String get csvImportIntro;
 
   /// Privacy note under the CSV import intro.

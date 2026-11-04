@@ -331,7 +331,7 @@
 
   "settingsImportCsvTile": "從 CSV 匯入",
   "csvImportTitle": "從 CSV 匯入",
-  "csvImportIntro": "匯入從記帳城市匯出的交易。",
+  "csvImportIntro": "匯入從記帳城市或 Ledgerly 匯出的交易。",
   "csvImportPrivacyNote": "檔案只會在此裝置上讀取，不會上傳。",
   "csvImportChooseFile": "選擇 CSV 檔案",
   "csvImportReading": "正在讀取檔案…",
