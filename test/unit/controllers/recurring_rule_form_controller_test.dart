@@ -275,11 +275,7 @@ void main() {
 
       expect(outcome, const SaveRecurringRuleOutcome.rejected());
       final state = c.read(provider).value!;
-      expect(state.formError, isA<ArchivedRefErr>());
-      expect(
-        (state.formError as ArchivedRefErr).detail,
-        'Category 10 is archived or missing',
-      );
+      expect(state.formError, 'Category 10 is archived or missing');
     });
 
     test('save clears isLoading after async generation completes', () async {

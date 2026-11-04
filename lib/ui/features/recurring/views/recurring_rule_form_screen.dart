@@ -138,7 +138,7 @@ class _FormBody extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 children: [
                   if (state.formError != null)
-                    _FormErrorBanner(error: state.formError!),
+                    _FormErrorBanner(message: state.formError!),
                   if (state.isEdit && (state.pendingItemCount ?? 0) > 0) ...[
                     Card(
                       color: Theme.of(context).colorScheme.secondaryContainer,
@@ -332,14 +332,10 @@ class _FormBody extends StatelessWidget {
 }
 
 class _FormErrorBanner extends StatelessWidget {
-  const _FormErrorBanner({required this.error});
-  final RecurringFormError error;
+  const _FormErrorBanner({required this.message});
+  final String message;
   @override
   Widget build(BuildContext context) {
-    final detail = switch (error) {
-      ArchivedRefErr(:final detail) => detail,
-      UnknownErr(:final detail) => detail,
-    };
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Material(
@@ -348,7 +344,7 @@ class _FormErrorBanner extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Text(
-            detail,
+            message,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onErrorContainer,
             ),

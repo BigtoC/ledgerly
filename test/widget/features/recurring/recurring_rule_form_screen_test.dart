@@ -308,7 +308,7 @@ void main() {
     final container = _makeContainer(
       initial: const RecurringRuleFormState(
         currency: _usd,
-        formError: RecurringFormError.archivedRef('Category 1 is archived'),
+        formError: 'Category 1 is archived',
       ),
     );
     addTearDown(container.dispose);

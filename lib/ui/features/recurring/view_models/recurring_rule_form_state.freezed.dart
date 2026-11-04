@@ -19,7 +19,7 @@ mixin _$RecurringRuleFormState {
 /// and copied verbatim into `recurring_rules.name` on save (the form
 /// no longer surfaces a separate Name field).
  String get memo; int get amountMinorUnits; Currency get currency; int? get categoryId; int? get accountId; String get frequency; int? get dayOfWeek; int? get dayOfMonth; int? get monthOfYear; bool get isEdit; bool get isLoading; int? get pendingItemCount;/// Full calculator snapshot used by `AmountDisplay`.
- KeypadState get keypad; RecurringFormErrorKey? get nameError; RecurringFormErrorKey? get categoryError; RecurringFormErrorKey? get accountError; RecurringFormErrorKey? get frequencyFieldError; RecurringFormError? get formError;
+ KeypadState get keypad; RecurringFormErrorKey? get nameError; RecurringFormErrorKey? get categoryError; RecurringFormErrorKey? get accountError; RecurringFormErrorKey? get frequencyFieldError; String? get formError;
 /// Create a copy of RecurringRuleFormState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -55,7 +55,7 @@ abstract mixin class $RecurringRuleFormStateCopyWith<$Res>  {
   factory $RecurringRuleFormStateCopyWith(RecurringRuleFormState value, $Res Function(RecurringRuleFormState) _then) = _$RecurringRuleFormStateCopyWithImpl;
 @useResult
 $Res call({
- String memo, int amountMinorUnits, Currency currency, int? categoryId, int? accountId, String frequency, int? dayOfWeek, int? dayOfMonth, int? monthOfYear, bool isEdit, bool isLoading, int? pendingItemCount, KeypadState keypad, RecurringFormErrorKey? nameError, RecurringFormErrorKey? categoryError, RecurringFormErrorKey? accountError, RecurringFormErrorKey? frequencyFieldError, RecurringFormError? formError
+ String memo, int amountMinorUnits, Currency currency, int? categoryId, int? accountId, String frequency, int? dayOfWeek, int? dayOfMonth, int? monthOfYear, bool isEdit, bool isLoading, int? pendingItemCount, KeypadState keypad, RecurringFormErrorKey? nameError, RecurringFormErrorKey? categoryError, RecurringFormErrorKey? accountError, RecurringFormErrorKey? frequencyFieldError, String? formError
 });
 
 
@@ -92,7 +92,7 @@ as RecurringFormErrorKey?,categoryError: freezed == categoryError ? _self.catego
 as RecurringFormErrorKey?,accountError: freezed == accountError ? _self.accountError : accountError // ignore: cast_nullable_to_non_nullable
 as RecurringFormErrorKey?,frequencyFieldError: freezed == frequencyFieldError ? _self.frequencyFieldError : frequencyFieldError // ignore: cast_nullable_to_non_nullable
 as RecurringFormErrorKey?,formError: freezed == formError ? _self.formError : formError // ignore: cast_nullable_to_non_nullable
-as RecurringFormError?,
+as String?,
   ));
 }
 /// Create a copy of RecurringRuleFormState
@@ -186,7 +186,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String memo,  int amountMinorUnits,  Currency currency,  int? categoryId,  int? accountId,  String frequency,  int? dayOfWeek,  int? dayOfMonth,  int? monthOfYear,  bool isEdit,  bool isLoading,  int? pendingItemCount,  KeypadState keypad,  RecurringFormErrorKey? nameError,  RecurringFormErrorKey? categoryError,  RecurringFormErrorKey? accountError,  RecurringFormErrorKey? frequencyFieldError,  RecurringFormError? formError)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String memo,  int amountMinorUnits,  Currency currency,  int? categoryId,  int? accountId,  String frequency,  int? dayOfWeek,  int? dayOfMonth,  int? monthOfYear,  bool isEdit,  bool isLoading,  int? pendingItemCount,  KeypadState keypad,  RecurringFormErrorKey? nameError,  RecurringFormErrorKey? categoryError,  RecurringFormErrorKey? accountError,  RecurringFormErrorKey? frequencyFieldError,  String? formError)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _RecurringRuleFormState() when $default != null:
 return $default(_that.memo,_that.amountMinorUnits,_that.currency,_that.categoryId,_that.accountId,_that.frequency,_that.dayOfWeek,_that.dayOfMonth,_that.monthOfYear,_that.isEdit,_that.isLoading,_that.pendingItemCount,_that.keypad,_that.nameError,_that.categoryError,_that.accountError,_that.frequencyFieldError,_that.formError);case _:
@@ -207,7 +207,7 @@ return $default(_that.memo,_that.amountMinorUnits,_that.currency,_that.categoryI
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String memo,  int amountMinorUnits,  Currency currency,  int? categoryId,  int? accountId,  String frequency,  int? dayOfWeek,  int? dayOfMonth,  int? monthOfYear,  bool isEdit,  bool isLoading,  int? pendingItemCount,  KeypadState keypad,  RecurringFormErrorKey? nameError,  RecurringFormErrorKey? categoryError,  RecurringFormErrorKey? accountError,  RecurringFormErrorKey? frequencyFieldError,  RecurringFormError? formError)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String memo,  int amountMinorUnits,  Currency currency,  int? categoryId,  int? accountId,  String frequency,  int? dayOfWeek,  int? dayOfMonth,  int? monthOfYear,  bool isEdit,  bool isLoading,  int? pendingItemCount,  KeypadState keypad,  RecurringFormErrorKey? nameError,  RecurringFormErrorKey? categoryError,  RecurringFormErrorKey? accountError,  RecurringFormErrorKey? frequencyFieldError,  String? formError)  $default,) {final _that = this;
 switch (_that) {
 case _RecurringRuleFormState():
 return $default(_that.memo,_that.amountMinorUnits,_that.currency,_that.categoryId,_that.accountId,_that.frequency,_that.dayOfWeek,_that.dayOfMonth,_that.monthOfYear,_that.isEdit,_that.isLoading,_that.pendingItemCount,_that.keypad,_that.nameError,_that.categoryError,_that.accountError,_that.frequencyFieldError,_that.formError);case _:
@@ -227,7 +227,7 @@ return $default(_that.memo,_that.amountMinorUnits,_that.currency,_that.categoryI
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String memo,  int amountMinorUnits,  Currency currency,  int? categoryId,  int? accountId,  String frequency,  int? dayOfWeek,  int? dayOfMonth,  int? monthOfYear,  bool isEdit,  bool isLoading,  int? pendingItemCount,  KeypadState keypad,  RecurringFormErrorKey? nameError,  RecurringFormErrorKey? categoryError,  RecurringFormErrorKey? accountError,  RecurringFormErrorKey? frequencyFieldError,  RecurringFormError? formError)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String memo,  int amountMinorUnits,  Currency currency,  int? categoryId,  int? accountId,  String frequency,  int? dayOfWeek,  int? dayOfMonth,  int? monthOfYear,  bool isEdit,  bool isLoading,  int? pendingItemCount,  KeypadState keypad,  RecurringFormErrorKey? nameError,  RecurringFormErrorKey? categoryError,  RecurringFormErrorKey? accountError,  RecurringFormErrorKey? frequencyFieldError,  String? formError)?  $default,) {final _that = this;
 switch (_that) {
 case _RecurringRuleFormState() when $default != null:
 return $default(_that.memo,_that.amountMinorUnits,_that.currency,_that.categoryId,_that.accountId,_that.frequency,_that.dayOfWeek,_that.dayOfMonth,_that.monthOfYear,_that.isEdit,_that.isLoading,_that.pendingItemCount,_that.keypad,_that.nameError,_that.categoryError,_that.accountError,_that.frequencyFieldError,_that.formError);case _:
@@ -266,7 +266,7 @@ class _RecurringRuleFormState extends RecurringRuleFormState {
 @override final  RecurringFormErrorKey? categoryError;
 @override final  RecurringFormErrorKey? accountError;
 @override final  RecurringFormErrorKey? frequencyFieldError;
-@override final  RecurringFormError? formError;
+@override final  String? formError;
 
 /// Create a copy of RecurringRuleFormState
 /// with the given fields replaced by the non-null parameter values.
@@ -300,7 +300,7 @@ abstract mixin class _$RecurringRuleFormStateCopyWith<$Res> implements $Recurrin
   factory _$RecurringRuleFormStateCopyWith(_RecurringRuleFormState value, $Res Function(_RecurringRuleFormState) _then) = __$RecurringRuleFormStateCopyWithImpl;
 @override @useResult
 $Res call({
- String memo, int amountMinorUnits, Currency currency, int? categoryId, int? accountId, String frequency, int? dayOfWeek, int? dayOfMonth, int? monthOfYear, bool isEdit, bool isLoading, int? pendingItemCount, KeypadState keypad, RecurringFormErrorKey? nameError, RecurringFormErrorKey? categoryError, RecurringFormErrorKey? accountError, RecurringFormErrorKey? frequencyFieldError, RecurringFormError? formError
+ String memo, int amountMinorUnits, Currency currency, int? categoryId, int? accountId, String frequency, int? dayOfWeek, int? dayOfMonth, int? monthOfYear, bool isEdit, bool isLoading, int? pendingItemCount, KeypadState keypad, RecurringFormErrorKey? nameError, RecurringFormErrorKey? categoryError, RecurringFormErrorKey? accountError, RecurringFormErrorKey? frequencyFieldError, String? formError
 });
 
 
@@ -337,7 +337,7 @@ as RecurringFormErrorKey?,categoryError: freezed == categoryError ? _self.catego
 as RecurringFormErrorKey?,accountError: freezed == accountError ? _self.accountError : accountError // ignore: cast_nullable_to_non_nullable
 as RecurringFormErrorKey?,frequencyFieldError: freezed == frequencyFieldError ? _self.frequencyFieldError : frequencyFieldError // ignore: cast_nullable_to_non_nullable
 as RecurringFormErrorKey?,formError: freezed == formError ? _self.formError : formError // ignore: cast_nullable_to_non_nullable
-as RecurringFormError?,
+as String?,
   ));
 }
 

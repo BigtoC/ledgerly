@@ -241,20 +241,8 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
         generationFailed = true;
       }
       return SaveRecurringRuleOutcome.saved(savedId, generationFailed);
-    } on ArchivedReferenceException catch (e) {
-      if (ref.mounted) {
-        _update(
-          (s) =>
-              s.copyWith(formError: RecurringFormError.archivedRef(e.message)),
-        );
-      }
-      return const SaveRecurringRuleOutcome.rejected();
     } on RecurringRulesRepositoryException catch (e) {
-      if (ref.mounted) {
-        _update(
-          (s) => s.copyWith(formError: RecurringFormError.unknown(e.message)),
-        );
-      }
+      if (ref.mounted) _update((s) => s.copyWith(formError: e.message));
       return const SaveRecurringRuleOutcome.rejected();
     } catch (e) {
       debugPrint('[RecurringRuleFormController] save failed: ${e.runtimeType}');
