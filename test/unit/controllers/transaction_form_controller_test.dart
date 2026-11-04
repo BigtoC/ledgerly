@@ -302,7 +302,14 @@ void main() {
             c.read(transactionFormControllerProvider) as TransactionFormData;
         expect(s.amountMinorUnits, source.amountMinorUnits);
         expect(s.memo, 'lunch');
-        expect(s.duplicateSourceId, 99);
+        expect(
+          s.formMode,
+          isA<DuplicateTransactionMode>().having(
+            (m) => m.sourceTransactionId,
+            'sourceTransactionId',
+            99,
+          ),
+        );
         expect(s.editingId, isNull);
         // Date defaults to today (Wave 2 risk #7).
         final today = DateTime.now();
@@ -353,7 +360,14 @@ void main() {
         expect(s.displayCurrency.code, 'JPY');
         expect(s.amountMinorUnits, 0);
         expect(s.memo, 'lunch');
-        expect(s.duplicateSourceId, 99);
+        expect(
+          s.formMode,
+          isA<DuplicateTransactionMode>().having(
+            (m) => m.sourceTransactionId,
+            'sourceTransactionId',
+            99,
+          ),
+        );
       },
     );
 
@@ -390,7 +404,14 @@ void main() {
         s = c.read<TransactionFormState>(transactionFormControllerProvider);
         expect(s, isA<TransactionFormData>());
         final data = s as TransactionFormData;
-        expect(data.duplicateSourceId, 99);
+        expect(
+          data.formMode,
+          isA<DuplicateTransactionMode>().having(
+            (m) => m.sourceTransactionId,
+            'sourceTransactionId',
+            99,
+          ),
+        );
         expect(data.memo, 'retry me');
         expect(data.amountMinorUnits, 700);
       },

@@ -255,24 +255,21 @@ sealed class TransactionFormState with _$TransactionFormState {
     required String memo,
 
     /// Becomes true on the first user-driven mutation after hydration.
-    required bool isDirty,
+    @Default(false) bool isDirty,
 
     /// `true` between `save()` await-start and resolution.
-    required bool isSaving,
+    @Default(false) bool isSaving,
 
     /// `true` between `deleteExisting()` await-start and resolution.
-    required bool isDeleting,
+    @Default(false) bool isDeleting,
 
     /// Edit-mode target id. `null` in Add and Duplicate.
-    required int? editingId,
-
-    /// Source-id when opened via duplicate. `null` in Add and Edit.
-    required int? duplicateSourceId,
+    int? editingId,
 
     /// Edit-mode original `createdAt`, preserved on update so the
     /// repository contract (`save` keeps stored `createdAt`) is honored
     /// even if the controller round-trips through copyWith.
-    required DateTime? originalCreatedAt,
+    DateTime? originalCreatedAt,
 
     /// Non-null only in [EditShoppingListDraftMode]; stores the id of the
     /// draft being edited so `saveDraft` and `convertDraft` can reference it.

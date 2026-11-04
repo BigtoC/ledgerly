@@ -127,12 +127,6 @@ class TransactionFormController extends _$TransactionFormController {
             ? _today()
             : DateTime(initialDate.year, initialDate.month, initialDate.day),
         memo: '',
-        isDirty: false,
-        isSaving: false,
-        isDeleting: false,
-        editingId: null,
-        duplicateSourceId: null,
-        originalCreatedAt: null,
       );
     } catch (e, st) {
       if (ref.mounted) {
@@ -177,7 +171,6 @@ class TransactionFormController extends _$TransactionFormController {
         source: source,
         account: account,
         categoryRepo: categoryRepo,
-        duplicateSourceId: sourceId,
       );
     } catch (e, st) {
       if (ref.mounted) {
@@ -228,11 +221,7 @@ class TransactionFormController extends _$TransactionFormController {
         selectedCategory: category,
         date: existing.date,
         memo: existing.memo ?? '',
-        isDirty: false,
-        isSaving: false,
-        isDeleting: false,
         editingId: id,
-        duplicateSourceId: null,
         originalCreatedAt: existing.createdAt,
       );
     } catch (e, st) {
@@ -315,12 +304,6 @@ class TransactionFormController extends _$TransactionFormController {
         selectedCategory: category,
         date: draft.draftDate,
         memo: draft.memo ?? '',
-        isDirty: false,
-        isSaving: false,
-        isDeleting: false,
-        editingId: null,
-        duplicateSourceId: null,
-        originalCreatedAt: null,
         shoppingListItemId: shoppingListItemId,
       );
     } catch (e, st) {
@@ -822,7 +805,6 @@ class TransactionFormController extends _$TransactionFormController {
     required Transaction source,
     required Account account,
     required CategoryRepository categoryRepo,
-    required int duplicateSourceId,
   }) async {
     // Resolve category against the live row so an archived source
     // category still renders historically (risk #8).
@@ -852,12 +834,6 @@ class TransactionFormController extends _$TransactionFormController {
       selectedCategory: category,
       date: _today(),
       memo: source.memo ?? '',
-      isDirty: false,
-      isSaving: false,
-      isDeleting: false,
-      editingId: null,
-      duplicateSourceId: duplicateSourceId,
-      originalCreatedAt: null,
     );
   }
 

@@ -129,12 +129,6 @@ TransactionFormState _editableDraftState() => TransactionFormState.data(
   selectedCategory: _expenseCategory,
   date: DateTime(2026, 5, 1),
   memo: 'Milk',
-  isDirty: false,
-  isSaving: false,
-  isDeleting: false,
-  editingId: null,
-  duplicateSourceId: null,
-  originalCreatedAt: null,
   shoppingListItemId: 77,
 );
 
