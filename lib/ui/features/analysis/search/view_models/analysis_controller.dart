@@ -123,7 +123,7 @@ class AnalysisController extends _$AnalysisController {
             _lastTransactions = txs;
             if (txs.isEmpty) {
               _lastResults = null;
-              _emitter?.add(AnalysisState.empty(query: query));
+              _emitter?.add(const AnalysisState.empty());
               return;
             }
 
@@ -170,7 +170,7 @@ class AnalysisController extends _$AnalysisController {
     final results = _group(txs, categoriesById);
     if (results.isEmpty) {
       _lastResults = null;
-      _emitter?.add(AnalysisState.empty(query: _activeQuery));
+      _emitter?.add(const AnalysisState.empty());
       return;
     }
 

@@ -40,7 +40,7 @@ sealed class AnalysisState with _$AnalysisState {
   }) = AnalysisResults;
 
   /// Query typed but no matching transactions.
-  const factory AnalysisState.empty({required String query}) = AnalysisEmpty;
+  const factory AnalysisState.empty() = AnalysisEmpty;
 }
 
 @freezed
