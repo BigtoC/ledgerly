@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../data/repositories/user_preferences_repository.dart';
 import 'repository_providers.dart';
 
 part 'splash_redirect_provider.g.dart';
@@ -11,14 +12,11 @@ part 'splash_redirect_provider.g.dart';
 /// `redirect:`. Updated from long-lived stream subscriptions; notifies
 /// listeners only when a field value actually changes (duplicate-value no-op).
 class SplashGateSnapshot extends ChangeNotifier {
-  SplashGateSnapshot._({bool enabled = true, DateTime? startDate})
-    : splashEnabled = enabled,
-      splashStartDate = startDate;
-
-  factory SplashGateSnapshot.withInitial({
+  SplashGateSnapshot.withInitial({
     required bool enabled,
     required DateTime? startDate,
-  }) => SplashGateSnapshot._(enabled: enabled, startDate: startDate);
+  }) : splashEnabled = enabled,
+       splashStartDate = startDate;
 
   bool splashEnabled;
   DateTime? splashStartDate;
@@ -34,6 +32,19 @@ class SplashGateSnapshot extends ChangeNotifier {
     splashStartDate = v;
     notifyListeners();
   }
+
+  /// Subscribes to [repo]'s splash streams and registers `ref.onDispose` to
+  /// cancel both subscriptions and dispose this notifier. Returns `this`.
+  SplashGateSnapshot bindTo(Ref ref, UserPreferencesRepository repo) {
+    final sub1 = repo.watchSplashEnabled().listen(updateEnabled);
+    final sub2 = repo.watchSplashStartDate().listen(updateStartDate);
+    ref.onDispose(() {
+      sub1.cancel();
+      sub2.cancel();
+      dispose();
+    });
+    return this;
+  }
 }
 
 // Scope-overridable. Declares `userPreferencesRepository` so the static
@@ -42,21 +53,11 @@ class SplashGateSnapshot extends ChangeNotifier {
 // directly (no `ref.watch`), so the override path is not bound by this
 // declaration in production.
 @Riverpod(keepAlive: true, dependencies: [userPreferencesRepository])
-Raw<SplashGateSnapshot> splashGateSnapshot(Ref ref) {
-  final notifier = SplashGateSnapshot._();
-  final repo = ref.watch(userPreferencesRepositoryProvider);
-
-  final sub1 = repo.watchSplashEnabled().listen(notifier.updateEnabled);
-  final sub2 = repo.watchSplashStartDate().listen(notifier.updateStartDate);
-
-  ref.onDispose(() {
-    sub1.cancel();
-    sub2.cancel();
-    notifier.dispose();
-  });
-
-  return notifier;
-}
+Raw<SplashGateSnapshot> splashGateSnapshot(Ref ref) =>
+    SplashGateSnapshot.withInitial(
+      enabled: true,
+      startDate: null,
+    ).bindTo(ref, ref.watch(userPreferencesRepositoryProvider));
 
 /// Stream of `splash_start_date` for reactive UI (e.g. `SplashScreen`).
 @Riverpod(keepAlive: true, dependencies: [userPreferencesRepository])
