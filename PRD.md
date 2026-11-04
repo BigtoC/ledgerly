@@ -1157,7 +1157,7 @@ All scrollable regions must survive a 2× text scale (`MediaQuery.textScalerOf`)
 
 Categories store `icon` as a string key and `color` as a palette index. The actual `IconData` and `Color` values are resolved at render time from compile-time registries in `core/utils/`:
 
-- `core/utils/icon_registry.dart` — `Map<String, IconData>` mapping string keys to `Icons.*` from Flutter's built-in `material` library. Unknown keys fall back to `Icons.category`.
+- `core/utils/icon_registry.dart` — `Map<String, IconData>` mapping string keys to `Icons.*` from Flutter's built-in `material` library. Unknown keys fall back to `Icons.category`. `kIconGroups` places every key in exactly one `IconGroup` (Food, Drinks, Transport, Shopping, Entertainment, Home, Electronics, Medical, Income, Other); the category icon picker shows one titled section per group, in that order.
 - `core/utils/color_palette.dart` — ordered `List<Color>` of MD3-compatible category colors. `categories.color` is the index into this list. Palette additions append; existing indices never change.
 
 This avoids storing raw `IconData` symbols or ARGB ints in the DB (both fragile across Flutter / Material updates) while keeping categories portable across future backup/restore.
