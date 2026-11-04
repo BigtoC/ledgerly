@@ -9,6 +9,7 @@ import '../../../../../l10n/app_localizations.dart';
 import '../../../../core/theme/analysis_colors.dart';
 import '../view_models/charts_state.dart';
 import '../view_models/trend_series.dart';
+import 'period_selector.dart' show periodDateFormat;
 
 /// Plot height of the trend chart, above its 1 px baseline.
 const double _kPlotHeight = 140;
@@ -30,11 +31,6 @@ const EdgeInsets _kTooltipPadding = EdgeInsets.symmetric(
 
 /// fl_chart's default; named so the tooltip can be measured the same way.
 const double _kTooltipMaxContentWidth = 120;
-
-final Map<String, DateFormat> _weekdayFormats = {};
-final Map<String, DateFormat> _monthFormats = {};
-final Map<String, DateFormat> _yearFormats = {};
-final Map<String, DateFormat> _yearMonthFormats = {};
 
 /// The trend card's bars, average line and x labels.
 class DailyBarChart extends StatefulWidget {
@@ -495,9 +491,7 @@ class _DailyBarChartState extends State<DailyBarChart> {
   String _labelText(int i) {
     final start = series.buckets[i].bucketStart;
     return series.yearLabelIndices.contains(i)
-        ? _yearFormats
-              .putIfAbsent(locale, () => DateFormat.y(locale))
-              .format(start)
+        ? periodDateFormat(DateFormat.YEAR, locale).format(start)
         : _axisLabel(start);
   }
 
@@ -531,26 +525,26 @@ class _DailyBarChartState extends State<DailyBarChart> {
   /// The tooltip and semantics name of a bucket: All spans years, so its
   /// months carry the year.
   String _bucketLabel(DateTime bucketStart) => period == PeriodType.all
-      ? _yearMonthFormats
-            .putIfAbsent(locale, () => DateFormat.yMMM(locale))
-            .format(bucketStart)
+      ? periodDateFormat(DateFormat.YEAR_ABBR_MONTH, locale).format(bucketStart)
       : _axisLabel(bucketStart);
 
   String _axisLabel(DateTime bucketStart) {
     switch (period) {
       case PeriodType.week:
-        return _weekdayFormats
-            .putIfAbsent(locale, () => DateFormat.E(locale))
-            .format(bucketStart);
+        return periodDateFormat(
+          DateFormat.ABBR_WEEKDAY,
+          locale,
+        ).format(bucketStart);
       // The trend card never shows on Day.
       case PeriodType.day:
       case PeriodType.month:
         return bucketStart.day.toString();
       case PeriodType.year:
       case PeriodType.all:
-        return _monthFormats
-            .putIfAbsent(locale, () => DateFormat.MMM(locale))
-            .format(bucketStart);
+        return periodDateFormat(
+          DateFormat.ABBR_MONTH,
+          locale,
+        ).format(bucketStart);
     }
   }
 }
