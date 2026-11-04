@@ -161,22 +161,25 @@ if (recurringCount > 0) {
 
 Delete now returns typed in-use failures instead of SQLite FK errors, and archive is blocked when it would leave an active recurring rule pointing at an archived dependency.
 
-5. Keep recurring form reads inside slice-local providers.
+5. Keep recurring form reads inside feature-scoped providers.
 
-`lib/ui/features/recurring/view_models/recurring_rules_providers.dart`
+The form reuses the Transactions slice's account provider (the same one its shared account picker watches) rather than declaring its own copy.
+
+`lib/ui/features/transactions/view_models/transactions_providers.dart`
 
 ```dart
-final recurringActiveAccountsProvider =
-    StreamProvider.autoDispose<List<Account>>((ref) {
+final txActiveAccountsProvider = StreamProvider.autoDispose<List<Account>>((
+  ref,
+) {
   final repo = ref.watch(accountRepositoryProvider);
   return repo.watchAll();
-});
+}, dependencies: [accountRepositoryProvider]);
 ```
 
 `lib/ui/features/recurring/views/recurring_rule_form_screen.dart`
 
 ```dart
-final asyncAccounts = ref.watch(recurringActiveAccountsProvider);
+final asyncAccounts = ref.watch(txActiveAccountsProvider);
 ```
 
 That preserves the repo rule that widgets consume feature-local provider surfaces instead of repository implementations directly.

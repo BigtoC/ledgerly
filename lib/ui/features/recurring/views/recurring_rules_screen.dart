@@ -17,8 +17,8 @@ import '../../../../core/utils/icon_registry.dart';
 import '../../../../domain/models/category.dart';
 import '../../../../domain/models/recurring_rule.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../home/view_models/home_providers.dart';
 import '../view_models/recurring_rules_controller.dart';
-import '../view_models/recurring_rules_providers.dart';
 import '../view_models/recurring_rules_state.dart';
 
 @Dependencies([RecurringRulesController])
@@ -108,8 +108,7 @@ class _RuleList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final controller = ref.read(recurringRulesControllerProvider.notifier);
-    final categories =
-        ref.watch(recurringCategoriesByIdProvider).value ?? const {};
+    final categories = ref.watch(homeCategoriesByIdProvider).value ?? const {};
     return ListView.builder(
       itemCount: rules.length,
       itemBuilder: (ctx, i) {

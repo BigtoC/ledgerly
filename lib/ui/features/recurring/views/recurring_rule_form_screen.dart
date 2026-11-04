@@ -16,6 +16,7 @@ import '../../../../domain/models/category.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../categories/view_models/categories_controller.dart';
 import '../../categories/views/category_picker.dart';
+import '../../transactions/view_models/transactions_providers.dart';
 import '../../transactions/views/account_picker_sheet.dart';
 import '../../transactions/views/account_selector_tile.dart';
 import '../../transactions/views/amount_display.dart';
@@ -23,7 +24,6 @@ import '../../transactions/views/calculator_keypad.dart';
 import '../../transactions/views/category_chip.dart';
 import '../view_models/recurring_rule_form_controller.dart';
 import '../view_models/recurring_rule_form_state.dart';
-import '../view_models/recurring_rules_providers.dart';
 
 @Dependencies([RecurringRuleFormController, categoriesByType])
 class RecurringRuleFormScreen extends ConsumerStatefulWidget {
@@ -533,7 +533,7 @@ class _AccountPickerTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncAccounts = ref.watch(recurringActiveAccountsProvider);
+    final asyncAccounts = ref.watch(txActiveAccountsProvider);
     final selected = asyncAccounts.maybeWhen(
       data: (list) {
         final id = state.accountId;

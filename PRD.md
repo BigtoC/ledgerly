@@ -356,7 +356,6 @@ lib/
         view_models/
           recurring_rules_controller.dart
           recurring_rules_state.dart
-          recurring_rules_providers.dart
           recurring_rule_form_controller.dart
           recurring_rule_form_state.dart
         views/
