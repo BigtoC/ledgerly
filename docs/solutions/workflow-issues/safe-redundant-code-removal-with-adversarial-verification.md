@@ -64,7 +64,7 @@ Every finding had to clear the same bar: shorter and at least as clear, with ide
 ### 2. What looked redundant but had to stay (26 rejected, plus implementer skips)
 
 - **PRD-documented seams with no caller in `lib/`.** Search `PRD.md` and `docs/` for the symbol or feature before calling it dead.
-  - The Duplicate transaction flow has no UI entry point, but PRD.md lists "Quick repeat / duplicate existing transaction" and documents the `duplicateSourceId` extra. Deleting it removes a feature, which is a product decision and is now tracked in #134.
+  - The Duplicate transaction flow has no UI entry point, but PRD.md lists "Quick repeat / duplicate existing transaction" and documents the `duplicateSourceId` extra. Deleting it removes a feature, which is a product decision. It went to #134, and the owner then removed it in a separate PR.
   - `CurrencyRepository.updateCustomName` and the AccountType archive/delete/rename methods back PRD rules for features not built yet.
   - `RecurringGenerationOutcome` backs the PRD's 12-period generation cap.
   - `json_serializable` is kept on purpose.
@@ -106,7 +106,7 @@ Every finding had to clear the same bar: shorter and at least as clear, with ide
 - Drift generated accessors (`db.categoryDao`, table getters, `readsFrom:` sets, companion fields).
 - `l10n_key` strings stored in seed data and the DB (`category.investment`): a key can be unused in Dart and still be live data.
 - Icon and colour registry keys persisted in DB rows.
-- Route path strings and `extra` payload keys (`duplicateSourceId`).
+- Route path strings and `extra` payload keys (`initialDate`).
 - ARB keys: generated getters, all locale files, and `arb_audit_test`.
 - PRD, docs and spec references: a symbol named there is a seam.
 
@@ -253,7 +253,7 @@ if (column.defaultValue != null && !_updatedFields.containsKey(column.$name)) {
 
 ## Related
 
-- PR #135 (this cleanup). Issue #134: removing the Duplicate transaction flow, deferred as a product decision.
+- PR #135 (this cleanup). Issue #134: the Duplicate transaction flow, deferred as a product decision and later removed once the owner decided against it.
 - [flutter-lib-relayout-with-transitional-layer-boundary-rules](../architecture-patterns/flutter-lib-relayout-with-transitional-layer-boundary-rules.md): an earlier no-behaviour-change refactor with the same per-commit gate.
 - [flutter-performance-audit-riverpod-lifecycle-and-emit-path-fixes](../performance-issues/flutter-performance-audit-riverpod-lifecycle-and-emit-path-fixes.md): the same audit-then-fix shape, and the source of the `keepAlive` rule.
 - [controller-command-outcomes-and-snackbar-actions-outliving-widgets](../architecture-patterns/controller-command-outcomes-and-snackbar-actions-outliving-widgets.md): the clear-before-show snackbar rule that `showUndoSnackBar` now holds, and the exhaustive-switch rule.

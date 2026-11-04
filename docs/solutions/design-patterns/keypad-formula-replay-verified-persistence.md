@@ -229,6 +229,6 @@ int? get rightOperand => showingResult && formulaOperators.isNotEmpty
 
 - PRs: #48 (chained operators, `=`, left-to-right evaluation), #51 (formula storage, schema v6), #53 (single source of truth).
 - `PRD.md` → *Database Schema → transactions* (`amount_formula` notes): the authoritative format spec.
-- [`../logic-errors/transaction-form-workflow-integrity-2026-04-25.md`](../logic-errors/transaction-form-workflow-integrity-2026-04-25.md): Duplicate never reuses minor units across a currency change; `_keypadForStored` sits behind that same guard.
+- [`../logic-errors/transaction-form-workflow-integrity-2026-04-25.md`](../logic-errors/transaction-form-workflow-integrity-2026-04-25.md): the Duplicate flow's currency guard (removed under #134) never reused minor units across a currency change, and `_keypadForStored` sat behind that same guard.
 - [`../database-issues/drift-schema-v1-snapshot-drift-2026-04-23.md`](../database-issues/drift-schema-v1-snapshot-drift-2026-04-23.md): the version-bump, snapshot and `addColumn` pattern the v6 migration follows.
 - [`../logic-errors/account-transaction-currency-invariant-2026-04-25.md`](../logic-errors/account-transaction-currency-invariant-2026-04-25.md): money invariants owned by the repository; derived or display data never overrides `amount_minor_units`.

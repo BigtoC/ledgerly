@@ -33,7 +33,6 @@ Inline `# Phase 2` annotations throughout the rest of the document mark code pat
 - Multiple manual accounts with user-extensible account types (Cash, Investment seeded; users can add more)
 - Base multi-currency support with configurable default currency
 - Transaction memos
-- Quick repeat / duplicate existing transaction
 - **Shopping list drafts** — capture future expenses as drafts from the Add Transaction form; review, edit, and convert drafts to real transactions from the Home shopping-cart button
 - Light/dark theme
 - English, Traditional Chinese, Simplified Chinese UI
@@ -102,7 +101,7 @@ Only repositories write to the database or to external stores. Controllers and u
 Every controller exposes two surfaces:
 
 - **State** — an immutable Freezed sealed union (e.g., `HomeState.loading | .empty | .data(...) | .error`)
-- **Commands** — typed methods for user actions (`saveTransaction(...)`, `deleteTransaction(id)`, `duplicateTransaction(id)`). A command that can fail in a way the user must see returns a Freezed sealed **outcome** instead of throwing (e.g., `ArchiveCategoryOutcome.ok | .hasActiveRecurringRule | .failed`); see [Error Handling Pattern](#error-handling-pattern).
+- **Commands** — typed methods for user actions (`saveTransaction(...)`, `deleteTransaction(id)`). A command that can fail in a way the user must see returns a Freezed sealed **outcome** instead of throwing (e.g., `ArchiveCategoryOutcome.ok | .hasActiveRecurringRule | .failed`); see [Error Handling Pattern](#error-handling-pattern).
 
 Widgets read state and invoke commands. Widgets never mutate state directly and never perform data-layer work (grouping, formatting, aggregation) in `build()`.
 
@@ -996,7 +995,7 @@ ShellRoute (bottom nav)
 - There is no expense/income toggle: the transaction type comes from the picked category, and the category field shows it next to the name (for example "Investment · Income")
 - Category picker takes 90% of the screen height and shows all visible expense categories, then all visible income categories below them, in an icon grid of five per row; a label too long for its tile shrinks to fit on one line instead of wrapping
 - Default account uses the user's configured default account, otherwise the last used active account
-- Transaction currency is an explicit field in add, edit, and duplicate flows; seeded from the selected account's default but independently overridable by the user. Changing currency with a non-zero amount requires confirmation and clears the entered amount
+- Transaction currency is an explicit field in the add and edit flows; seeded from the selected account's default but independently overridable by the user. Changing currency with a non-zero amount requires confirmation and clears the entered amount
 - Date defaults to today
 - Save stays disabled until amount is greater than zero and both category and account are selected
 - Leaving with unsaved changes shows a confirm-discard dialog
@@ -1042,17 +1041,6 @@ Home → tap shopping-cart FAB → Shopping List Screen
 Shopping List Screen → swipe or tap delete icon → row hidden immediately
   → undo snackbar for 4 seconds → tap Undo → row restored, no repository write
   → timer expires → repository delete commits
-```
-
-### Quick Repeat Flow
-
-Home no longer exposes a Duplicate action (removed with the row overflow menu, issue #72), so this flow has no UI entry point today. The transaction form still supports it when opened with a `duplicateSourceId` route extra:
-
-```text
-/home/add with extra {duplicateSourceId}
-  → Add Transaction screen opens with copied type/category/account/memo/amount
-  → user adjusts amount or date if needed
-  → tap Save → returns to Home with the day pinned to the duplicate's date and the duplicate visible at the top of that day's list
 ```
 
 ### Wallet Sync Flow (Phase 2)
@@ -1186,7 +1174,7 @@ No `try/catch` in widgets. No unhandled `Future` anywhere: a widget either await
 
 - WCAG AA contrast for all text, including rainbow-gradient splash text and category tiles
 - Minimum 48×48dp tap targets for FAB, swipe actions, category tiles, keypad keys
-- `Semantics` labels on icon-only buttons (FAB, duplicate, delete, undo snackbar action)
+- `Semantics` labels on icon-only buttons (FAB, delete, undo snackbar action)
 - Dynamic text scaling respected up to 2×; splash day counter uses `AutoSizeText` or clamps at 1.5× to preserve layout
 - `MediaQuery.boldText` respected in list rendering
 - Screen reader order verified on Home and Add Transaction screens
@@ -1312,7 +1300,7 @@ Tests are organized by **architectural layer**, not by feature. This mirrors the
 - Override controller provider with a test double; assert rendering per state variant
 - Splash screen: rendering per state through controller overrides (no golden tests)
 - Home: first-run empty state, grouped-by-currency summary strip, horizontal swipe switches the day
-- Add Transaction: keypad input, picking an income or expense category, validation, duplicate flow
+- Add Transaction: keypad input, picking an income or expense category, validation
 - Category/Account: create, archive, reorder, empty-state CTAs
 - Settings: theme, locale, default-currency updates, splash settings
 - Phase 2: pending badge, pending list approve/reject actions, wallet add/edit/delete
@@ -1323,7 +1311,6 @@ Tests are organized by **architectural layer**, not by feature. This mirrors the
 - First launch → seed defaults → splash date picker → splash → Home → add transaction → verify DB row
 - Subsequent launch with splash enabled: splash → Home
 - Subsequent launch with splash disabled: straight to Home
-- Duplicate flow: duplicate existing transaction → edit amount/date → save → verify second row in DB
 - Multi-currency flow: create second account with different currency → add transactions → verify Home groups totals by currency
 - Archive flow: archive used category/account → hidden from pickers but visible in management screens
 - Phase 2: add wallet → sync → pending appears → approve → visible in Home

@@ -180,6 +180,8 @@ The pop-lock fix makes route navigation follow the same mutation contract.
 - `TC22`: duplicate fallback to different-currency account clears amount
 - `TC23`: retry hydration preserves duplicate mode after recovery
 
+(The Duplicate flow was removed under #134, together with `TC22` and the duplicate-fallback guard in §2. `TC23` now covers the same `retryHydration` path in Add mode.)
+
 ## Why This Works
 
 - Draft preservation depends on stack semantics, not just controller state. If the route is replaced, the form is gone no matter how correct the controller is.
@@ -210,4 +212,4 @@ Verification that passed for this fix:
 - `docs/solutions/best-practices/reactive-feature-flow-ownership-2026-04-25.md` — broader guidance on router-owned modal behavior and feature-flow ownership.
 - `docs/solutions/logic-errors/account-transaction-currency-invariant-2026-04-25.md` — related currency-integrity background for transaction/account interactions.
 - `docs/solutions/logic-errors/m4-app-shell-first-frame-hydration-2026-04-23.md` — adjacent hydration/recovery pattern, but not the same transaction-form workflow problem.
-- `docs/solutions/design-patterns/keypad-formula-replay-verified-persistence.md` — how `_keypadForStored` replays a stored `amount_formula` on Edit/Duplicate and falls back to the plain amount.
+- `docs/solutions/design-patterns/keypad-formula-replay-verified-persistence.md` — how `_keypadForStored` replays a stored `amount_formula` on Edit and falls back to the plain amount.
