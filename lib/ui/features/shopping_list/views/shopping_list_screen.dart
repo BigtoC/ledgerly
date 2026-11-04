@@ -49,7 +49,7 @@ class ShoppingListScreen extends ConsumerStatefulWidget {
 
 class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
   ShoppingListController? _controller;
-  ShoppingListPendingDelete? _lastShownPending;
+  int? _lastShownPendingId;
 
   @override
   void initState() {
@@ -81,17 +81,14 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
     }
   }
 
-  void _maybeShowUndoSnackbar(
-    BuildContext context,
-    ShoppingListPendingDelete? pending,
-  ) {
-    if (pending == null) {
-      _lastShownPending = null;
+  void _maybeShowUndoSnackbar(BuildContext context, int? pendingId) {
+    if (pendingId == null) {
+      _lastShownPendingId = null;
       return;
     }
-    if (_lastShownPending?.itemId == pending.itemId) return;
+    if (_lastShownPendingId == pendingId) return;
 
-    _lastShownPending = pending;
+    _lastShownPendingId = pendingId;
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.maybeOf(context);
     messenger
@@ -149,8 +146,8 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
     ref.listen(shoppingListControllerProvider, (_, next) {
       if (next case AsyncData<ShoppingListState>(value: final value)) {
         switch (value) {
-          case ShoppingListData(:final pendingDelete):
-            _maybeShowUndoSnackbar(context, pendingDelete);
+          case ShoppingListData(:final pendingDeleteId):
+            _maybeShowUndoSnackbar(context, pendingDeleteId);
           case ShoppingListLoading() ||
               ShoppingListEmpty() ||
               ShoppingListError():
@@ -262,7 +259,7 @@ class _DataBody extends StatelessWidget {
                 final item = items[index];
                 return _ShoppingListRow(
                   item: item,
-                  canTap: data.pendingDelete == null,
+                  canTap: data.pendingDeleteId == null,
                   onDelete: () => onDeleteItem(item.id),
                   onTap: () => onTapItem(item.id),
                 );

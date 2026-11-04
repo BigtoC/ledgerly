@@ -126,12 +126,12 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function()?  empty,TResult Function( List<ShoppingListItem> items,  ShoppingListPendingDelete? pendingDelete)?  data,TResult Function( Object error,  StackTrace stack)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function()?  empty,TResult Function( List<ShoppingListItem> items,  int? pendingDeleteId)?  data,TResult Function( Object error,  StackTrace stack)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case ShoppingListLoading() when loading != null:
 return loading();case ShoppingListEmpty() when empty != null:
 return empty();case ShoppingListData() when data != null:
-return data(_that.items,_that.pendingDelete);case ShoppingListError() when error != null:
+return data(_that.items,_that.pendingDeleteId);case ShoppingListError() when error != null:
 return error(_that.error,_that.stack);case _:
   return orElse();
 
@@ -150,12 +150,12 @@ return error(_that.error,_that.stack);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function()  empty,required TResult Function( List<ShoppingListItem> items,  ShoppingListPendingDelete? pendingDelete)  data,required TResult Function( Object error,  StackTrace stack)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function()  empty,required TResult Function( List<ShoppingListItem> items,  int? pendingDeleteId)  data,required TResult Function( Object error,  StackTrace stack)  error,}) {final _that = this;
 switch (_that) {
 case ShoppingListLoading():
 return loading();case ShoppingListEmpty():
 return empty();case ShoppingListData():
-return data(_that.items,_that.pendingDelete);case ShoppingListError():
+return data(_that.items,_that.pendingDeleteId);case ShoppingListError():
 return error(_that.error,_that.stack);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -170,12 +170,12 @@ return error(_that.error,_that.stack);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function()?  empty,TResult? Function( List<ShoppingListItem> items,  ShoppingListPendingDelete? pendingDelete)?  data,TResult? Function( Object error,  StackTrace stack)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function()?  empty,TResult? Function( List<ShoppingListItem> items,  int? pendingDeleteId)?  data,TResult? Function( Object error,  StackTrace stack)?  error,}) {final _that = this;
 switch (_that) {
 case ShoppingListLoading() when loading != null:
 return loading();case ShoppingListEmpty() when empty != null:
 return empty();case ShoppingListData() when data != null:
-return data(_that.items,_that.pendingDelete);case ShoppingListError() when error != null:
+return data(_that.items,_that.pendingDeleteId);case ShoppingListError() when error != null:
 return error(_that.error,_that.stack);case _:
   return null;
 
@@ -252,7 +252,7 @@ String toString() {
 
 
 class ShoppingListData implements ShoppingListState {
-  const ShoppingListData({required  List<ShoppingListItem> items, required this.pendingDelete}): _items = items;
+  const ShoppingListData({required  List<ShoppingListItem> items, required this.pendingDeleteId}): _items = items;
   
 
  final  List<ShoppingListItem> _items;
@@ -262,7 +262,7 @@ class ShoppingListData implements ShoppingListState {
   return EqualUnmodifiableListView(_items);
 }
 
- final  ShoppingListPendingDelete? pendingDelete;
+ final  int? pendingDeleteId;
 
 /// Create a copy of ShoppingListState
 /// with the given fields replaced by the non-null parameter values.
@@ -274,18 +274,18 @@ $ShoppingListDataCopyWith<ShoppingListData> get copyWith => _$ShoppingListDataCo
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is ShoppingListData&&const DeepCollectionEquality().equals(other.items, _items)&&(identical(other.pendingDelete, pendingDelete) || other.pendingDelete == pendingDelete));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ShoppingListData&&const DeepCollectionEquality().equals(other.items, _items)&&(identical(other.pendingDeleteId, pendingDeleteId) || other.pendingDeleteId == pendingDeleteId));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_items),pendingDelete);
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_items),pendingDeleteId);
 }
 
 @override
 String toString() {
-    return 'ShoppingListState.data(items: $items, pendingDelete: $pendingDelete)';
+    return 'ShoppingListState.data(items: $items, pendingDeleteId: $pendingDeleteId)';
 }
 
 
@@ -296,7 +296,7 @@ abstract mixin class $ShoppingListDataCopyWith<$Res> implements $ShoppingListSta
   factory $ShoppingListDataCopyWith(ShoppingListData value, $Res Function(ShoppingListData) _then) = _$ShoppingListDataCopyWithImpl;
 @useResult
 $Res call({
- List<ShoppingListItem> items, ShoppingListPendingDelete? pendingDelete
+ List<ShoppingListItem> items, int? pendingDeleteId
 });
 
 
@@ -313,11 +313,11 @@ class _$ShoppingListDataCopyWithImpl<$Res>
 
 /// Create a copy of ShoppingListState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? items = null,Object? pendingDelete = freezed,}) {
+@pragma('vm:prefer-inline') $Res call({Object? items = null,Object? pendingDeleteId = freezed,}) {
   return _then(ShoppingListData(
 items: null == items ? _self._items : items // ignore: cast_nullable_to_non_nullable
-as List<ShoppingListItem>,pendingDelete: freezed == pendingDelete ? _self.pendingDelete : pendingDelete // ignore: cast_nullable_to_non_nullable
-as ShoppingListPendingDelete?,
+as List<ShoppingListItem>,pendingDeleteId: freezed == pendingDeleteId ? _self.pendingDeleteId : pendingDeleteId // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 

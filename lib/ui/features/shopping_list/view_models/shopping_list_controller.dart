@@ -9,7 +9,7 @@
 // switches because autoDispose only triggers when there are no listeners.
 //
 // Delete/undo pattern:
-//   - `deleteItem(id)` hides the row immediately (pendingDelete) and starts a
+//   - `deleteItem(id)` hides the row immediately (pendingDeleteId) and starts a
 //     4-second timer.
 //   - `undoDelete()` cancels the timer without touching the repository.
 //   - Timer fires → `_commitDelete(id)` → `repo.delete(id)`.
@@ -40,7 +40,7 @@ final class ShoppingListDeleteFailedEffect extends ShoppingListEffect {
 
 @Riverpod(dependencies: [shoppingListRepository])
 class ShoppingListController extends _$ShoppingListController {
-  ShoppingListPendingDelete? _pendingDelete;
+  int? _pendingDeleteId;
   Timer? _undoTimer;
   _Composer? _composer;
   ShoppingListEffectListener? _effectListener;
@@ -50,13 +50,13 @@ class ShoppingListController extends _$ShoppingListController {
     final repo = ref.watch(shoppingListRepositoryProvider);
     final composer = _Composer(
       repo: repo,
-      pendingDeleteGetter: () => _pendingDelete,
+      pendingDeleteGetter: () => _pendingDeleteId,
     );
     _composer = composer;
     ref.onDispose(() {
       _undoTimer?.cancel();
       _undoTimer = null;
-      _pendingDelete = null;
+      _pendingDeleteId = null;
       composer.dispose();
     });
     return composer.stream;
@@ -68,21 +68,20 @@ class ShoppingListController extends _$ShoppingListController {
   /// If another delete is pending, commit it first, then start a fresh
   /// window for the new id.
   Future<void> deleteItem(int id) async {
-    if (_pendingDelete != null) {
+    if (_pendingDeleteId != null) {
       _undoTimer?.cancel();
       _undoTimer = null;
-      final prior = _pendingDelete!;
-      final committed = await _commitDelete(prior.itemId);
+      final committed = await _commitDelete(_pendingDeleteId!);
       if (!committed) return;
     }
 
-    _pendingDelete = ShoppingListPendingDelete(itemId: id);
+    _pendingDeleteId = id;
     _composer?.notifyPendingDeleteChanged();
 
     _undoTimer = Timer(kUndoWindow, () async {
-      final pending = _pendingDelete;
-      if (pending == null) return;
-      await _commitDelete(pending.itemId);
+      final pendingId = _pendingDeleteId;
+      if (pendingId == null) return;
+      await _commitDelete(pendingId);
     });
   }
 
@@ -91,7 +90,7 @@ class ShoppingListController extends _$ShoppingListController {
   void undoDelete() {
     _undoTimer?.cancel();
     _undoTimer = null;
-    _pendingDelete = null;
+    _pendingDeleteId = null;
     _composer?.notifyPendingDeleteChanged();
   }
 
@@ -102,14 +101,14 @@ class ShoppingListController extends _$ShoppingListController {
   Future<bool> _commitDelete(int id) async {
     try {
       await ref.read(shoppingListRepositoryProvider).delete(id);
-      if (_pendingDelete?.itemId == id) {
-        _pendingDelete = null;
+      if (_pendingDeleteId == id) {
+        _pendingDeleteId = null;
         _composer?.notifyPendingDeleteChanged();
       }
       return true;
     } catch (_) {
-      if (_pendingDelete?.itemId == id) {
-        _pendingDelete = null;
+      if (_pendingDeleteId == id) {
+        _pendingDeleteId = null;
       }
       // Re-emit even when a second delete is already pending so the failed
       // item's restored row becomes visible.
@@ -133,7 +132,7 @@ class _Composer {
   }
 
   final ShoppingListRepository _repo;
-  final ShoppingListPendingDelete? Function() _pendingDeleteGetter;
+  final int? Function() _pendingDeleteGetter;
   late final StreamController<ShoppingListState> _out;
 
   StreamSubscription<List<ShoppingListItem>>? _itemsSub;
@@ -183,19 +182,19 @@ class _Composer {
     final items = _items;
     if (items == null) return;
 
-    final pending = _pendingDeleteGetter();
+    final pendingId = _pendingDeleteGetter();
 
     // Filter out the pending-delete item visually.
-    final visible = pending == null
+    final visible = pendingId == null
         ? items
-        : items
-              .where((item) => item.id != pending.itemId)
-              .toList(growable: false);
+        : items.where((item) => item.id != pendingId).toList(growable: false);
 
-    if (visible.isEmpty && pending == null) {
+    if (visible.isEmpty && pendingId == null) {
       _out.add(const ShoppingListState.empty());
     } else {
-      _out.add(ShoppingListState.data(items: visible, pendingDelete: pending));
+      _out.add(
+        ShoppingListState.data(items: visible, pendingDeleteId: pendingId),
+      );
     }
   }
 }
