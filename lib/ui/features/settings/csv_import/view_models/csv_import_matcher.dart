@@ -1,5 +1,6 @@
-// Matches the Account and Category values of a Fortune City CSV import
-// against existing rows and every locale's l10n labels.
+// Matches the Account and Category values of a Fortune City or Ledgerly
+// CSV import against existing rows and every locale's l10n labels.
+// Ledgerly rows carry a category type and match only within it.
 //
 // Pure: the controller passes in the rows to import, the domain lists
 // (archived rows included) and one `AppLocalizations` per supported
