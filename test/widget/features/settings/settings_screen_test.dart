@@ -182,11 +182,10 @@ final _update = AppUpdate(
 
 const _badgeKey = ValueKey('settingsNewVersionBadge');
 
-SettingsData _data({int? defaultAccountId}) => SettingsData(
+SettingsData _data() => const SettingsData(
   themeMode: ThemeMode.light,
   locale: null,
   defaultCurrency: 'USD',
-  defaultAccountId: defaultAccountId,
   splashEnabled: true,
   splashStartDate: null,
   splashDisplayText: null,
@@ -241,7 +240,7 @@ void main() {
         prefs: prefs,
         accountRepo: accountRepo,
         currencyRepo: currencyRepo,
-        fixed: _data(defaultAccountId: null),
+        fixed: _data(),
         accountsFixed: const AccountsState.data(
           active: [],
           archived: [],
@@ -276,7 +275,7 @@ void main() {
         prefs: prefs,
         accountRepo: accountRepo,
         currencyRepo: currencyRepo,
-        fixed: _data(defaultAccountId: 7),
+        fixed: _data(),
         accountsFixed: AccountsState.data(
           active: [
             AccountWithBalance(
@@ -318,7 +317,7 @@ void main() {
         prefs: prefs,
         accountRepo: accountRepo,
         currencyRepo: currencyRepo,
-        fixed: _data(defaultAccountId: 1),
+        fixed: _data(),
         accountsFixed: AccountsState.data(
           active: [
             AccountWithBalance(
@@ -363,7 +362,7 @@ void main() {
         prefs: prefs,
         accountRepo: accountRepo,
         currencyRepo: currencyRepo,
-        fixed: _data(defaultAccountId: 99),
+        fixed: _data(),
         accountsFixed: AccountsState.data(
           active: [
             AccountWithBalance(

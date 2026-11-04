@@ -43,7 +43,6 @@ void main() {
     late StreamController<ThemeMode> themeCtrl;
     late StreamController<Locale?> localeCtrl;
     late StreamController<String> defaultCurrencyCtrl;
-    late StreamController<int?> defaultAccountCtrl;
     late StreamController<bool> splashEnabledCtrl;
     late StreamController<DateTime?> splashStartDateCtrl;
     late StreamController<String> splashDisplayTextCtrl;
@@ -54,7 +53,6 @@ void main() {
       themeCtrl = StreamController<ThemeMode>.broadcast();
       localeCtrl = StreamController<Locale?>.broadcast();
       defaultCurrencyCtrl = StreamController<String>.broadcast();
-      defaultAccountCtrl = StreamController<int?>.broadcast();
       splashEnabledCtrl = StreamController<bool>.broadcast();
       splashStartDateCtrl = StreamController<DateTime?>.broadcast();
       splashDisplayTextCtrl = StreamController<String>.broadcast();
@@ -64,8 +62,6 @@ void main() {
       when(() => repo.watchLocale()).thenAnswer((_) => localeCtrl.stream);
       when(() => repo.watchDefaultCurrency())
           .thenAnswer((_) => defaultCurrencyCtrl.stream);
-      when(() => repo.watchDefaultAccountId())
-          .thenAnswer((_) => defaultAccountCtrl.stream);
       when(() => repo.watchSplashEnabled())
           .thenAnswer((_) => splashEnabledCtrl.stream);
       when(() => repo.watchSplashStartDate())
@@ -80,7 +76,6 @@ void main() {
       await themeCtrl.close();
       await localeCtrl.close();
       await defaultCurrencyCtrl.close();
-      await defaultAccountCtrl.close();
       await splashEnabledCtrl.close();
       await splashStartDateCtrl.close();
       await splashDisplayTextCtrl.close();
@@ -97,7 +92,6 @@ void main() {
       themeCtrl.add(ThemeMode.light);
       localeCtrl.add(null);
       defaultCurrencyCtrl.add('USD');
-      defaultAccountCtrl.add(null);
       splashEnabledCtrl.add(true);
       splashStartDateCtrl.add(null);
       splashDisplayTextCtrl.add(kDefaultSplashDisplayText);
@@ -134,7 +128,6 @@ void main() {
         expect(state.themeMode, ThemeMode.light);
         expect(state.locale, isNull);
         expect(state.defaultCurrency, 'USD');
-        expect(state.defaultAccountId, isNull);
         expect(state.splashEnabled, isTrue);
         expect(state.splashStartDate, isNull);
         expect(state.splashDisplayText, isNull); // default normalized away
@@ -376,12 +369,6 @@ void main() {
       final second =
           container.read(settingsControllerProvider).value! as SettingsData;
       expect(second.themeMode, ThemeMode.dark);
-
-      defaultAccountCtrl.add(7);
-      await Future<void>.delayed(Duration.zero);
-      final third =
-          container.read(settingsControllerProvider).value! as SettingsData;
-      expect(third.defaultAccountId, 7);
     });
 
     test('SC13: upstream error surfaces as SettingsState.error', () async {

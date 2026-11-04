@@ -1,6 +1,6 @@
 // Settings slice controller (plan §3.1, §3.3).
 //
-// The controller composes eight preference streams from
+// The controller composes seven preference streams from
 // `UserPreferencesRepository` into a single [SettingsState] and exposes
 // typed command methods for every preference mutation. Widgets never call
 // the repository directly (PRD → Controller Contract); each command
@@ -96,7 +96,7 @@ class SettingsController extends _$SettingsController {
 
 // ---------- Internal stream composition ----------
 
-/// Wires the eight upstream preference streams into a single
+/// Wires the seven upstream preference streams into a single
 /// `SettingsState` stream. Emits `SettingsState.data` once every upstream
 /// has produced at least one value; subsequent emissions re-emit the
 /// projected state.
@@ -117,7 +117,6 @@ class _SettingsComposer {
   StreamSubscription<ThemeMode>? _themeSub;
   StreamSubscription<Locale?>? _localeSub;
   StreamSubscription<String>? _defaultCurrencySub;
-  StreamSubscription<int?>? _defaultAccountSub;
   StreamSubscription<bool>? _splashEnabledSub;
   StreamSubscription<DateTime?>? _splashStartDateSub;
   StreamSubscription<String>? _splashDisplayTextSub;
@@ -126,7 +125,6 @@ class _SettingsComposer {
   ThemeMode _themeMode = ThemeMode.light;
   Locale? _locale;
   String _defaultCurrency = 'USD';
-  int? _defaultAccountId;
   bool _splashEnabled = true;
   DateTime? _splashStartDate;
   String _splashDisplayText = kDefaultSplashDisplayText;
@@ -135,7 +133,6 @@ class _SettingsComposer {
   bool _seenTheme = false;
   bool _seenLocale = false;
   bool _seenDefaultCurrency = false;
-  bool _seenDefaultAccount = false;
   bool _seenSplashEnabled = false;
   bool _seenSplashStartDate = false;
   bool _seenSplashDisplayText = false;
@@ -157,11 +154,6 @@ class _SettingsComposer {
     _defaultCurrencySub = _repo.watchDefaultCurrency().listen((v) {
       _defaultCurrency = v;
       _seenDefaultCurrency = true;
-      _emitIfReady();
-    }, onError: _onError);
-    _defaultAccountSub = _repo.watchDefaultAccountId().listen((v) {
-      _defaultAccountId = v;
-      _seenDefaultAccount = true;
       _emitIfReady();
     }, onError: _onError);
     _splashEnabledSub = _repo.watchSplashEnabled().listen((v) {
@@ -193,8 +185,6 @@ class _SettingsComposer {
     _localeSub = null;
     await _defaultCurrencySub?.cancel();
     _defaultCurrencySub = null;
-    await _defaultAccountSub?.cancel();
-    _defaultAccountSub = null;
     await _splashEnabledSub?.cancel();
     _splashEnabledSub = null;
     await _splashStartDateSub?.cancel();
@@ -220,7 +210,6 @@ class _SettingsComposer {
     if (!_seenTheme ||
         !_seenLocale ||
         !_seenDefaultCurrency ||
-        !_seenDefaultAccount ||
         !_seenSplashEnabled ||
         !_seenSplashStartDate ||
         !_seenSplashDisplayText ||
@@ -232,7 +221,6 @@ class _SettingsComposer {
         themeMode: _themeMode,
         locale: _locale,
         defaultCurrency: _defaultCurrency,
-        defaultAccountId: _defaultAccountId,
         splashEnabled: _splashEnabled,
         splashStartDate: _splashStartDate,
         splashDisplayText: _splashDisplayText == kDefaultSplashDisplayText
