@@ -172,13 +172,11 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
           AsyncData<ShoppingListState>(value: final ShoppingListData data) =>
             _DataBody(
               data: data,
-              canOpenItem: data.pendingDelete == null,
               onDeleteItem: _onDeleteItem,
               onTapItem: (id) => _onTapItem(context, id),
             ),
           AsyncData<ShoppingListState>(value: ShoppingListError()) ||
           AsyncError() => _ErrorSurface(
-            message: l10n.errorSnackbarGeneric,
             onRetry: () => ref.invalidate(shoppingListControllerProvider),
           ),
           _ => const Center(child: CircularProgressIndicator()),
@@ -229,13 +227,11 @@ class _EmptyState extends StatelessWidget {
 class _DataBody extends StatelessWidget {
   const _DataBody({
     required this.data,
-    required this.canOpenItem,
     required this.onDeleteItem,
     required this.onTapItem,
   });
 
   final ShoppingListData data;
-  final bool canOpenItem;
   final void Function(int id) onDeleteItem;
   final void Function(int id) onTapItem;
 
@@ -268,7 +264,7 @@ class _DataBody extends StatelessWidget {
                 final item = items[index];
                 return _ShoppingListRow(
                   item: item,
-                  canTap: canOpenItem,
+                  canTap: data.pendingDelete == null,
                   onDelete: () => onDeleteItem(item.id),
                   onTap: () => onTapItem(item.id),
                 );
@@ -367,9 +363,8 @@ class _ShoppingListRow extends ConsumerWidget {
 }
 
 class _ErrorSurface extends StatelessWidget {
-  const _ErrorSurface({required this.message, required this.onRetry});
+  const _ErrorSurface({required this.onRetry});
 
-  final String message;
   final VoidCallback onRetry;
 
   @override
@@ -382,7 +377,7 @@ class _ErrorSurface extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              message,
+              l10n.errorSnackbarGeneric,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
