@@ -59,7 +59,7 @@ class AmountDisplay extends StatelessWidget {
   /// snapshot keeps the widget free of controller-instance coupling.
   final KeypadState keypad;
 
-  final Currency? currency;
+  final Currency currency;
 
   /// When true and `amountMinorUnits == 0` and no calculator state is
   /// active, renders `txAmountPlaceholderInCurrency(code)` instead of "0"
@@ -78,11 +78,10 @@ class AmountDisplay extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    final code = currency?.code ?? '';
+    final code = currency.code;
     final showPlaceholder =
         currencyTouched &&
         keypad.amountMinorUnits == 0 &&
-        code.isNotEmpty &&
         !keypad.hasVisibleInput;
     final expressionText = _buildExpressionText(locale: l10n.localeName);
     final text = showPlaceholder
@@ -194,22 +193,14 @@ class AmountDisplay extends StatelessWidget {
   }
 
   String _renderAmountText({required String locale}) {
-    final c = currency;
-    if (c != null && keypad.showingResult) {
+    if (keypad.showingResult) {
       return MoneyFormatter.formatBare(
         amountMinorUnits: keypad.amountMinorUnits,
-        currency: c,
+        currency: currency,
         locale: locale,
       );
     }
-    // currency == null means the form hasn't loaded a currency yet.
-    // In that case we fall through to the live-entry preview below
-    // (decimals defaults to 2), which is acceptable since showingResult
-    // cannot be true before the user has entered an amount and pressed
-    // an operator — both of which require a loaded currency.
-    //
-    // Existing live-entry preview behavior:
-    final decimals = c?.decimals ?? 2;
+    final decimals = currency.decimals;
     final amount = keypad.amountMinorUnits;
     if (decimals == 0) return amount.toString();
     final unit = pow10(decimals);
@@ -223,16 +214,13 @@ class AmountDisplay extends StatelessWidget {
   }
 
   String? _buildExpressionText({required String locale}) {
-    final c = currency;
-    if (c == null) return null;
-
     // Evaluating, the formula ends with its pending operator; on a result
     // it is complete. A result without a formula has no history line.
     if (keypad.formulaOperators.isEmpty) return null;
     final text = _formulaText(
       keypad.formulaOperands,
       keypad.formulaOperators,
-      decimals: c.decimals,
+      decimals: currency.decimals,
       locale: locale,
     );
     return keypad.showingResult ? '$text =' : text;

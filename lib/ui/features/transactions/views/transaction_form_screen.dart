@@ -193,8 +193,6 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     final showAmountError = _showValidationHints && state.amountMinorUnits == 0;
     final showCategoryError =
         _showValidationHints && state.selectedCategory == null;
-    final showAccountError =
-        _showValidationHints && state.selectedAccount == null;
     final controlsLocked = _blocksPopDuringMutation(state);
 
     final isShoppingListDraftMode = activeMode is EditShoppingListDraftMode;
@@ -251,7 +249,6 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                         Expanded(
                           child: AccountSelectorTile(
                             account: state.selectedAccount,
-                            hasError: showAccountError,
                             onTap: () => _onTapAccountTile(
                               context,
                               l10n,
@@ -328,7 +325,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
               child: Align(
                 alignment: Alignment.bottomCenter,
                 child: CalculatorKeypad(
-                  decimals: state.displayCurrency?.decimals ?? 2,
+                  decimals: state.displayCurrency.decimals,
                   onDigit: controller.appendDigit,
                   onDecimal: controller.appendDecimal,
                   onBackspace: controller.backspace,
@@ -533,9 +530,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       return;
     }
 
-    final currentCode = state.displayCurrency?.code;
-    final newCode = picked.currency.code;
-    final currencyChanges = currentCode != null && currentCode != newCode;
+    final currencyChanges = state.displayCurrency.code != picked.currency.code;
     final hasDestructiveInput =
         state.amountMinorUnits > 0 || state.keypad.hasVisibleInput;
 
@@ -561,8 +556,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   ) async {
     final picked = await showTxCurrencyPickerSheet(context);
     if (picked == null || !context.mounted) return;
-    final currentCode = state.displayCurrency?.code;
-    final currencyChanges = currentCode != null && currentCode != picked.code;
+    final currencyChanges = state.displayCurrency.code != picked.code;
     final hasDestructiveInput =
         state.amountMinorUnits > 0 || state.keypad.hasVisibleInput;
 

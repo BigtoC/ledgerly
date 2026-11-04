@@ -196,8 +196,8 @@ void main() {
       await c.read(transactionFormControllerProvider.notifier).hydrateForAdd();
       final s = c.read(transactionFormControllerProvider);
       expect(s, isA<TransactionFormData>());
-      expect((s as TransactionFormData).selectedAccount?.id, 1);
-      expect(s.displayCurrency?.code, 'USD');
+      expect((s as TransactionFormData).selectedAccount.id, 1);
+      expect(s.displayCurrency.code, 'USD');
     });
 
     test(
@@ -218,7 +218,7 @@ void main() {
             .read(transactionFormControllerProvider.notifier)
             .hydrateForAdd();
         final s = c.read(transactionFormControllerProvider);
-        expect((s as TransactionFormData).selectedAccount?.id, 7);
+        expect((s as TransactionFormData).selectedAccount.id, 7);
       },
     );
 
@@ -231,7 +231,7 @@ void main() {
             .read(transactionFormControllerProvider.notifier)
             .hydrateForAdd();
         final s = c.read(transactionFormControllerProvider);
-        expect((s as TransactionFormData).selectedAccount?.id, 1);
+        expect((s as TransactionFormData).selectedAccount.id, 1);
       },
     );
 
@@ -266,7 +266,7 @@ void main() {
       expect(data.amountMinorUnits, 500);
       expect(data.memo, 'lunch');
       expect(data.selectedCategory?.id, _expenseCategory.id);
-      expect(data.selectedAccount?.id, _account.id);
+      expect(data.selectedAccount.id, _account.id);
       expect(data.originalCreatedAt, tx.createdAt);
       expect(data.isDirty, isFalse);
     });
@@ -349,8 +349,8 @@ void main() {
 
         final s =
             c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(s.selectedAccount?.id, _accountJpy.id);
-        expect(s.displayCurrency?.code, 'JPY');
+        expect(s.selectedAccount.id, _accountJpy.id);
+        expect(s.displayCurrency.code, 'JPY');
         expect(s.amountMinorUnits, 0);
         expect(s.memo, 'lunch');
         expect(s.duplicateSourceId, 99);
@@ -565,7 +565,7 @@ void main() {
       final s =
           c.read(transactionFormControllerProvider) as TransactionFormData;
       expect(s.amountMinorUnits, 1234);
-      expect(s.displayCurrency?.code, 'JPY');
+      expect(s.displayCurrency.code, 'JPY');
     });
 
     test('TC32: backspace and clear walk back amount', () async {
@@ -640,7 +640,7 @@ void main() {
         // screen-level confirm dialog stays the gating step.
         final s =
             c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(s.selectedAccount?.id, _account.id);
+        expect(s.selectedAccount.id, _account.id);
         expect(s.amountMinorUnits, 500);
       },
     );
@@ -659,8 +659,8 @@ void main() {
         );
         final s =
             c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(s.selectedAccount?.id, _accountJpy.id);
-        expect(s.displayCurrency?.code, 'JPY');
+        expect(s.selectedAccount.id, _accountJpy.id);
+        expect(s.displayCurrency.code, 'JPY');
         expect(s.amountMinorUnits, 0);
       },
     );
@@ -681,7 +681,7 @@ void main() {
       controller.selectAccount(otherUsd);
       final s =
           c.read(transactionFormControllerProvider) as TransactionFormData;
-      expect(s.selectedAccount?.id, 3);
+      expect(s.selectedAccount.id, 3);
       expect(s.amountMinorUnits, 500);
     });
   });
@@ -1150,7 +1150,7 @@ void main() {
       controller.selectAccount(_accountJpy);
       final s =
           c.read(transactionFormControllerProvider) as TransactionFormData;
-      expect(s.displayCurrency?.code, 'JPY');
+      expect(s.displayCurrency.code, 'JPY');
       expect(s.currencyTouched, isFalse);
     });
 
@@ -1168,13 +1168,13 @@ void main() {
       // User manually picks EUR — sets currencyTouched=true
       controller.selectCurrency(eur);
       var s = c.read(transactionFormControllerProvider) as TransactionFormData;
-      expect(s.displayCurrency?.code, 'EUR');
+      expect(s.displayCurrency.code, 'EUR');
       expect(s.currencyTouched, isTrue);
       // Switching account should NOT re-seed currency
       controller.selectAccount(_accountJpy);
       s = c.read(transactionFormControllerProvider) as TransactionFormData;
-      expect(s.displayCurrency?.code, 'EUR');
-      expect(s.selectedAccount?.id, _accountJpy.id);
+      expect(s.displayCurrency.code, 'EUR');
+      expect(s.selectedAccount.id, _accountJpy.id);
     });
 
     test('TC84: selectCurrency with non-zero amount refuses without clearAmountOnChange', () async {
@@ -1193,7 +1193,7 @@ void main() {
       final s =
           c.read(transactionFormControllerProvider) as TransactionFormData;
       // Currency change should be refused
-      expect(s.displayCurrency?.code, 'USD');
+      expect(s.displayCurrency.code, 'USD');
       expect(s.amountMinorUnits, 500);
       expect(s.currencyTouched, isFalse);
     });
@@ -1213,7 +1213,7 @@ void main() {
       controller.selectCurrency(eur, clearAmountOnChange: true);
       final s =
           c.read(transactionFormControllerProvider) as TransactionFormData;
-      expect(s.displayCurrency?.code, 'EUR');
+      expect(s.displayCurrency.code, 'EUR');
       expect(s.amountMinorUnits, 0);
       expect(s.currencyTouched, isTrue);
     });
@@ -1225,18 +1225,18 @@ void main() {
       await controller.hydrateForAdd();
 
       var s = c.read(transactionFormControllerProvider) as TransactionFormData;
-      expect(s.displayCurrency?.code, 'USD');
+      expect(s.displayCurrency.code, 'USD');
       expect(s.currencyTouched, isFalse);
 
       controller.selectCurrency(_usd);
       s = c.read(transactionFormControllerProvider) as TransactionFormData;
-      expect(s.displayCurrency?.code, 'USD');
+      expect(s.displayCurrency.code, 'USD');
       expect(s.currencyTouched, isFalse);
 
       controller.selectAccount(_accountJpy);
       s = c.read(transactionFormControllerProvider) as TransactionFormData;
-      expect(s.selectedAccount?.id, _accountJpy.id);
-      expect(s.displayCurrency?.code, 'JPY');
+      expect(s.selectedAccount.id, _accountJpy.id);
+      expect(s.displayCurrency.code, 'JPY');
     });
 
     test('TC87: save persists displayCurrency rather than selectedAccount.currency', () async {
@@ -1310,7 +1310,7 @@ void main() {
 
       final data =
           c.read(transactionFormControllerProvider) as TransactionFormData;
-      expect(data.displayCurrency?.code, 'USD');
+      expect(data.displayCurrency.code, 'USD');
       expect(data.keypad.leftOperand(decimals: 2), 100);
       expect(data.keypad.operator, CalcOperator.add);
     });
@@ -1336,7 +1336,7 @@ void main() {
 
         final data =
             c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(data.displayCurrency?.code, 'EUR');
+        expect(data.displayCurrency.code, 'EUR');
         expect(data.amountMinorUnits, 0);
         expect(data.keypad.hasExpression, isFalse);
       },
@@ -1354,7 +1354,7 @@ void main() {
 
       final data =
           c.read(transactionFormControllerProvider) as TransactionFormData;
-      expect(data.displayCurrency?.code, 'USD');
+      expect(data.displayCurrency.code, 'USD');
       expect(data.keypad.leftOperand(decimals: 2), 100);
       expect(data.keypad.operator, CalcOperator.add);
     });
@@ -1371,7 +1371,7 @@ void main() {
 
       final data =
           c.read(transactionFormControllerProvider) as TransactionFormData;
-      expect(data.displayCurrency?.code, 'JPY');
+      expect(data.displayCurrency.code, 'JPY');
       expect(data.amountMinorUnits, 0);
       expect(data.keypad.hasExpression, isFalse);
     });
@@ -1389,8 +1389,8 @@ void main() {
 
       final data =
           c.read(transactionFormControllerProvider) as TransactionFormData;
-      expect(data.displayCurrency?.code, 'USD');
-      expect(data.selectedAccount?.id, _accountUsd2.id);
+      expect(data.displayCurrency.code, 'USD');
+      expect(data.selectedAccount.id, _accountUsd2.id);
       // Expression preserved because currency did not change
       expect(data.keypad.leftOperand(decimals: 2), 100);
       expect(data.keypad.operator, CalcOperator.add);

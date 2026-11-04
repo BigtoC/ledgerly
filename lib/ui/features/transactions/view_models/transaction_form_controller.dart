@@ -337,7 +337,7 @@ class TransactionFormController extends _$TransactionFormController {
   void appendDigit(int digit) {
     final s = state;
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
-    final decimals = s.displayCurrency?.decimals ?? 2;
+    final decimals = s.displayCurrency.decimals;
     _keypad = _keypad.push(digit, decimals: decimals);
     state = _copyWithKeypad(s);
   }
@@ -345,7 +345,7 @@ class TransactionFormController extends _$TransactionFormController {
   void appendDecimal() {
     final s = state;
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
-    final decimals = s.displayCurrency?.decimals ?? 2;
+    final decimals = s.displayCurrency.decimals;
     _keypad = _keypad.pushDecimal(decimals: decimals);
     // amountMinorUnits doesn't change on the decimal press itself, but
     // the visible display string does — bump isDirty so the discard
@@ -356,7 +356,7 @@ class TransactionFormController extends _$TransactionFormController {
   void backspace() {
     final s = state;
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
-    final decimals = s.displayCurrency?.decimals ?? 2;
+    final decimals = s.displayCurrency.decimals;
     final next = _keypad.pop(decimals: decimals);
     if (next == _keypad) return;
     _keypad = next;
@@ -375,7 +375,7 @@ class TransactionFormController extends _$TransactionFormController {
   void applyOperator(CalcOperator op) {
     final s = state;
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
-    final decimals = s.displayCurrency?.decimals ?? 2;
+    final decimals = s.displayCurrency.decimals;
     final next = _keypad.pushOperator(op, decimals: decimals);
     if (next == _keypad) return;
     _keypad = next;
@@ -393,7 +393,7 @@ class TransactionFormController extends _$TransactionFormController {
   /// about to be persisted. Returns [s] unchanged when no expression is
   /// pending.
   TransactionFormData _finishPendingExpression(TransactionFormData s) {
-    final decimals = s.displayCurrency?.decimals ?? 2;
+    final decimals = s.displayCurrency.decimals;
     final next = _keypad.equals(decimals: decimals);
     if (next == _keypad) return s;
     _keypad = next;
@@ -410,7 +410,7 @@ class TransactionFormController extends _$TransactionFormController {
   /// operand being typed: mid-expression (`1 + 2`) the form already holds
   /// 3, so validation and every submit path see the finished result.
   TransactionFormData _copyWithKeypad(TransactionFormData s) {
-    final decimals = s.displayCurrency?.decimals ?? 2;
+    final decimals = s.displayCurrency.decimals;
     return s.copyWith(
       amountMinorUnits: _keypad.equals(decimals: decimals).amountMinorUnits,
       keypad: _keypad,
@@ -460,7 +460,7 @@ class TransactionFormController extends _$TransactionFormController {
     }
 
     final newCurrency = account.currency;
-    final currencyChanged = s.displayCurrency?.code != newCurrency.code;
+    final currencyChanged = s.displayCurrency.code != newCurrency.code;
     final hasDestructiveInput =
         s.amountMinorUnits > 0 || _keypad.hasVisibleInput;
     if (currencyChanged &&
@@ -498,7 +498,7 @@ class TransactionFormController extends _$TransactionFormController {
   void selectCurrency(Currency currency, {bool clearAmountOnChange = false}) {
     final s = state;
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
-    if (s.displayCurrency?.code == currency.code) return;
+    if (s.displayCurrency.code == currency.code) return;
     final hasDestructiveInput =
         s.amountMinorUnits > 0 || _keypad.hasVisibleInput;
     if (hasDestructiveInput && !clearAmountOnChange) {
@@ -563,11 +563,11 @@ class TransactionFormController extends _$TransactionFormController {
       final tx = Transaction(
         id: s.editingId ?? 0,
         amountMinorUnits: s.amountMinorUnits,
-        currency: s.displayCurrency!,
+        currency: s.displayCurrency,
         categoryId: s.selectedCategory!.id,
-        accountId: s.selectedAccount!.id,
+        accountId: s.selectedAccount.id,
         memo: s.memo.isEmpty ? null : s.memo,
-        amountFormula: _keypad.formula(decimals: s.displayCurrency!.decimals),
+        amountFormula: _keypad.formula(decimals: s.displayCurrency.decimals),
         date: s.date,
         createdAt: s.originalCreatedAt ?? s.date,
         updatedAt: s.date,
@@ -668,7 +668,7 @@ class TransactionFormController extends _$TransactionFormController {
       );
       final draftAmount = s.amountMinorUnits > 0 ? s.amountMinorUnits : null;
       final draftCurrency = s.amountMinorUnits > 0
-          ? s.displayCurrency?.code
+          ? s.displayCurrency.code
           : null;
 
       final ShoppingListEditResult result;
@@ -677,7 +677,7 @@ class TransactionFormController extends _$TransactionFormController {
         final updatedItem = ShoppingListItem(
           id: s.shoppingListItemId!,
           categoryId: s.selectedCategory!.id,
-          accountId: s.selectedAccount!.id,
+          accountId: s.selectedAccount.id,
           memo: s.memo.isEmpty ? null : s.memo,
           draftAmountMinorUnits: draftAmount,
           draftCurrencyCode: draftCurrency,
@@ -692,7 +692,7 @@ class TransactionFormController extends _$TransactionFormController {
         // Add mode: insert a new draft row.
         await slRepo.insert(
           categoryId: s.selectedCategory!.id,
-          accountId: s.selectedAccount!.id,
+          accountId: s.selectedAccount.id,
           memo: s.memo.isEmpty ? null : s.memo,
           draftAmountMinorUnits: draftAmount,
           draftCurrencyCode: draftCurrency,
@@ -748,12 +748,12 @@ class TransactionFormController extends _$TransactionFormController {
       await slRepo.convertToTransaction(
         shoppingListItemId: itemId,
         categoryId: s.selectedCategory!.id,
-        accountId: s.selectedAccount!.id,
-        currencyCode: s.displayCurrency!.code,
+        accountId: s.selectedAccount.id,
+        currencyCode: s.displayCurrency.code,
         amountMinorUnits: s.amountMinorUnits,
         date: s.date,
         memo: s.memo.isEmpty ? null : s.memo,
-        amountFormula: _keypad.formula(decimals: s.displayCurrency!.decimals),
+        amountFormula: _keypad.formula(decimals: s.displayCurrency.decimals),
       );
       if (ref.mounted) {
         state = s.copyWith(

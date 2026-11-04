@@ -231,15 +231,13 @@ sealed class TransactionFormState with _$TransactionFormState {
     /// need to know whether a currency/account change would discard input.
     required KeypadState keypad,
 
-    /// `null` only during `noActiveAccount` recovery flows; in normal
-    /// `.data` states an account is always selected.
-    required Account? selectedAccount,
+    required Account selectedAccount,
 
     /// The transaction's currency. Seeds from `selectedAccount.currency` on
     /// hydration, but can be independently overridden by the user via the
     /// currency picker. Once the user has made a manual selection,
     /// `currencyTouched` is `true` and account changes no longer re-seed it.
-    required Currency? displayCurrency,
+    required Currency displayCurrency,
 
     /// `true` once the user has manually selected a currency via the picker.
     /// When `false`, account changes re-seed `displayCurrency` from the
@@ -300,14 +298,12 @@ sealed class TransactionFormState with _$TransactionFormState {
     @Default(AddTransactionMode()) TransactionFormMode formMode,
   }) = TransactionFormError;
 
-  /// Computed-on-demand validity flag. PRD: amount > 0 AND category AND
-  /// account AND displayCurrency, plus no in-flight save/delete.
+  /// Computed-on-demand validity flag. PRD: amount > 0 AND category, plus
+  /// no in-flight save/delete. Account and currency are always set.
   bool get canSave => switch (this) {
     TransactionFormData(
       :final amountMinorUnits,
-      :final selectedAccount,
       :final selectedCategory,
-      :final displayCurrency,
       :final isSaving,
       :final isDeleting,
       :final submissionAction,
@@ -316,13 +312,11 @@ sealed class TransactionFormState with _$TransactionFormState {
           !isSaving &&
           !isDeleting &&
           amountMinorUnits > 0 &&
-          selectedAccount != null &&
-          selectedCategory != null &&
-          displayCurrency != null,
+          selectedCategory != null,
     _ => false,
   };
 
-  /// True when account + expense category + date are all set.
+  /// True when an expense category is set (account and date always are).
   /// Amount may be zero — zero-amount drafts are valid.
   ///
   /// Task 5 §8: archived refs do NOT block canSaveDraft.
@@ -332,13 +326,8 @@ sealed class TransactionFormState with _$TransactionFormState {
   /// because the field can never be null at runtime. No null check is added
   /// here to avoid dead-code analyzer warnings.
   bool get canSaveDraft => switch (this) {
-    TransactionFormData(
-      :final selectedAccount,
-      :final selectedCategory,
-      :final submissionAction,
-    ) =>
+    TransactionFormData(:final selectedCategory, :final submissionAction) =>
       submissionAction == TransactionFormSubmissionAction.none &&
-          selectedAccount != null &&
           selectedCategory != null &&
           selectedCategory.type == CategoryType.expense,
     _ => false,

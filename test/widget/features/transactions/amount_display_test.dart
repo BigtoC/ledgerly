@@ -37,7 +37,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      _wrap(const AmountDisplay(keypad: KeypadState.initial(), currency: null)),
+      _wrap(const AmountDisplay(keypad: KeypadState.initial(), currency: _usd)),
     );
 
     expect(find.textContaining('='), findsNothing);

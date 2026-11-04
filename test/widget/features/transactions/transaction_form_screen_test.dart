@@ -816,7 +816,7 @@ void main() {
     final tile = tester.widget<CurrencySelectorTile>(
       find.byType(CurrencySelectorTile),
     );
-    expect(tile.currency?.code, 'USD');
+    expect(tile.currency.code, 'USD');
   });
 
   testWidgets(
@@ -844,7 +844,7 @@ void main() {
       final currencyTile = tester.widget<CurrencySelectorTile>(
         find.byType(CurrencySelectorTile),
       );
-      expect(currencyTile.currency?.code, 'EUR');
+      expect(currencyTile.currency.code, 'EUR');
 
       // Now switch account — the destructive dialog should NOT appear
       // because currencyTouched=true means account changes leave
@@ -974,7 +974,7 @@ void main() {
       final tile = tester.widget<CurrencySelectorTile>(
         find.byType(CurrencySelectorTile),
       );
-      expect(tile.currency?.code, 'JPY');
+      expect(tile.currency.code, 'JPY');
       expect(pendingExpression, findsNothing);
     },
   );
