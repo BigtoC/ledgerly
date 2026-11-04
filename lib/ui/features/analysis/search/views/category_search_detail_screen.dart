@@ -189,7 +189,8 @@ class _CategorySearchDetailScreenState
                                       category: categoriesById[tx.categoryId],
                                       account: accountsById[tx.accountId],
                                       locale: locale,
-                                      onTap: () => _onEditRow(tx.id),
+                                      onTap: () =>
+                                          context.push('/home/edit/${tx.id}'),
                                       onDelete: () =>
                                           _controller.deleteTransaction(tx.id),
                                     ),
@@ -204,15 +205,6 @@ class _CategorySearchDetailScreenState
         ),
       ),
     );
-  }
-
-  Future<void> _onEditRow(int id) async {
-    // Reuse the global edit-transaction modal route; it's pushed onto the
-    // root navigator so it overlays the analysis branch correctly.
-    await context.push<Transaction>('/home/edit/$id');
-    // No follow-up action — the underlying memo stream re-emits if the
-    // transaction was edited (or not, if the memo no longer matches the
-    // active query, in which case the row drops out naturally).
   }
 
   void _maybeShowUndoSnackbar(BuildContext context, Transaction? pending) {
