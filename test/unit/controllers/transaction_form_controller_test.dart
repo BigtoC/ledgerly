@@ -597,7 +597,6 @@ void main() {
             c.read(transactionFormControllerProvider) as TransactionFormData;
         expect(s.amountMinorUnits, 0);
         expect(s.isDirty, isFalse);
-        expect(s.keypadRevision, 0);
         expect(s.keypad, const KeypadState.initial());
       }
 
@@ -1487,28 +1486,28 @@ void main() {
       expect(data.keypad.amountMinorUnits, 0);
     });
 
-    test('TC35b: decimal-start while evaluating still increments the watched keypad revision', () async {
-      final c = makeContainer();
-      addTearDown(c.dispose);
-      final controller = c.read(transactionFormControllerProvider.notifier);
+    test(
+      'TC35b: decimal-start while evaluating emits a new watched state',
+      () async {
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
 
-      await controller.hydrateForAdd();
-      controller.appendDigit(1);
-      controller.applyOperator(CalcOperator.add);
-      final before = (c.read(
-        transactionFormControllerProvider,
-      ) as TransactionFormData).keypadRevision;
+        await controller.hydrateForAdd();
+        controller.appendDigit(1);
+        controller.applyOperator(CalcOperator.add);
+        final before =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
 
-      controller.appendDecimal();
+        controller.appendDecimal();
 
-      final after = (c.read(
-        transactionFormControllerProvider,
-      ) as TransactionFormData).keypadRevision;
-      final data =
-          c.read(transactionFormControllerProvider) as TransactionFormData;
-      expect(after, greaterThan(before));
-      expect(data.keypad.hasCurrentInput, isTrue);
-    });
+        final data =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(data, isNot(before));
+        expect(data.amountMinorUnits, before.amountMinorUnits);
+        expect(data.keypad.hasCurrentInput, isTrue);
+      },
+    );
 
     test('TC35c: chaining with a different operator starts the next expression from the evaluated result', () async {
       final c = makeContainer();

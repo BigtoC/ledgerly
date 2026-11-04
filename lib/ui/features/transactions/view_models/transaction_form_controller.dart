@@ -69,7 +69,6 @@ class TransactionFormController extends _$TransactionFormController {
   /// is mirrored into `TransactionFormState.data.keypad` so widgets never read
   /// public properties from the notifier itself.
   KeypadState _keypad = const KeypadState.initial();
-  int _keypadRevision = 0;
 
   /// The current form mode, mirrored into `state.formMode` on every emit.
   TransactionFormMode _formMode = const AddTransactionMode();
@@ -116,7 +115,6 @@ class TransactionFormController extends _$TransactionFormController {
         return;
       }
       _keypad = const KeypadState.initial();
-      _keypadRevision = 0;
       state = TransactionFormState.data(
         formMode: _formMode,
         amountMinorUnits: 0,
@@ -220,7 +218,6 @@ class TransactionFormController extends _$TransactionFormController {
         existing.amountFormula,
         decimals: existing.currency.decimals,
       );
-      _keypadRevision = 0;
       state = TransactionFormState.data(
         formMode: _formMode,
         amountMinorUnits: existing.amountMinorUnits,
@@ -307,7 +304,6 @@ class TransactionFormController extends _$TransactionFormController {
               decimals: displayCurrency.decimals,
             )
           : const KeypadState.initial();
-      _keypadRevision = 0;
 
       state = TransactionFormState.data(
         formMode: _formMode,
@@ -352,8 +348,8 @@ class TransactionFormController extends _$TransactionFormController {
     final decimals = s.displayCurrency?.decimals ?? 2;
     _keypad = _keypad.pushDecimal(decimals: decimals);
     // amountMinorUnits doesn't change on the decimal press itself, but
-    // the visible display string does — bump isDirty and keypadRevision so
-    // Riverpod rebuilds and the discard dialog fires if the user abandons.
+    // the visible display string does — bump isDirty so the discard
+    // dialog fires if the user abandons.
     state = _copyWithKeypad(s);
   }
 
@@ -405,21 +401,20 @@ class TransactionFormController extends _$TransactionFormController {
   }
 
   /// Creates a `copyWith` snapshot that mirrors the current keypad
-  /// state into `TransactionFormData`, always incrementing
-  /// `keypadRevision` so Riverpod rebuilds even when `amountMinorUnits`
-  /// did not change (e.g., operator tap, decimal-start while evaluating).
+  /// state into `TransactionFormData`. `KeypadState` has value equality,
+  /// so expression-only transitions (operator tap, decimal-start while
+  /// evaluating) still emit a new state even when `amountMinorUnits` did
+  /// not change.
   ///
   /// `amountMinorUnits` mirrors the value `=` would produce, not the
   /// operand being typed: mid-expression (`1 + 2`) the form already holds
   /// 3, so validation and every submit path see the finished result.
   TransactionFormData _copyWithKeypad(TransactionFormData s) {
-    _keypadRevision += 1;
     final decimals = s.displayCurrency?.decimals ?? 2;
     return s.copyWith(
       amountMinorUnits: _keypad.equals(decimals: decimals).amountMinorUnits,
       keypad: _keypad,
       isDirty: true,
-      keypadRevision: _keypadRevision,
     );
   }
 
@@ -857,7 +852,6 @@ class TransactionFormController extends _$TransactionFormController {
             decimals: account.currency.decimals,
           )
         : const KeypadState.initial();
-    _keypadRevision = 0;
     // Wave 2 risk #7 — duplicate prefill must default `date` to today,
     // not carry the source's date.
     // currencyTouched starts false (same as Add): currency seeds from

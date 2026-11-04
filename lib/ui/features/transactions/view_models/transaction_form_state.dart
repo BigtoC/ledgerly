@@ -276,11 +276,6 @@ sealed class TransactionFormState with _$TransactionFormState {
     /// even if the controller round-trips through copyWith.
     required DateTime? originalCreatedAt,
 
-    /// Incremented on every keypad mutation — including expression-only
-    /// transitions that leave `amountMinorUnits` unchanged — so Riverpod
-    /// rebuilds the form whenever the display state changes.
-    @Default(0) int keypadRevision,
-
     /// Non-null only in [EditShoppingListDraftMode]; stores the id of the
     /// draft being edited so `saveDraft` and `convertDraft` can reference it.
     int? shoppingListItemId,
