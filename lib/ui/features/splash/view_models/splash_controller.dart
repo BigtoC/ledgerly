@@ -6,7 +6,7 @@
 // display text. Template substitution (`{date}` / `{days}`) happens here,
 // **not** in `build()` of the widget, per PRD → Controller Contract.
 //
-// Day-count math delegates to `DateHelpers.daysSince` — the controller
+// Day-count math delegates to `DateHelpers.daysBetween` — the controller
 // simply carries that helper's value through, including negative values for
 // future start dates (no clamp).
 //
@@ -70,7 +70,7 @@ class SplashController extends _$SplashController {
         return const SplashState.loading();
       }
       final now = clock();
-      final dayCount = DateHelpers.daysSince(startDate: startDate, now: now);
+      final dayCount = DateHelpers.daysBetween(startDate, now);
       final template = _resolveTemplate(rawText);
       final segments = DateHelpers.applySplashTemplateSegments(
         template: template,

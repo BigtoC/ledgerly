@@ -161,9 +161,9 @@ void main() {
     });
 
     test('G14: large {days} uses locale grouping', () {
-      final days = DateHelpers.daysSince(
-        startDate: DateTime(2000, 4, 21),
-        now: DateTime(2026, 4, 21),
+      final days = DateHelpers.daysBetween(
+        DateTime(2000, 4, 21),
+        DateTime(2026, 4, 21),
       );
       // Sanity: at least 9,000 days (26 years).
       expect(days > 9000, isTrue);

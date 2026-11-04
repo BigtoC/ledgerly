@@ -114,7 +114,7 @@ final class SplashControllerProvider
   SplashController create() => SplashController();
 }
 
-String _$splashControllerHash() => r'50477fb507f67176845836912b356674039c1e17';
+String _$splashControllerHash() => r'907153956b31c124fbb1677b52c32d758beb80b8';
 
 abstract class _$SplashController extends $StreamNotifier<SplashState> {
   Stream<SplashState> build();
