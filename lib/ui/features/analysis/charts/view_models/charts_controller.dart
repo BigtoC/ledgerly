@@ -181,6 +181,12 @@ class ChartsController extends _$ChartsController {
       accountFilterId: _selection.accountFilterId,
     );
 
+    void onError(String what, Object e, StackTrace st) {
+      debugPrint('[ChartsController] $what error: ${e.runtimeType}');
+      if (myGen != _generation) return;
+      _emitter?.add(ChartsState.error(e, st));
+    }
+
     _bucketsSub = repo
         .watchTimeBucketsInRange(
           start: range.start,
@@ -191,74 +197,37 @@ class ChartsController extends _$ChartsController {
           accountId: accountId,
           currencyCode: currencyCode,
         )
-        .listen(
-          (buckets) {
-            if (myGen != _generation) return;
-            _lastBuckets = buckets;
-            _emitIfReady();
-          },
-          onError: (Object e, StackTrace st) {
-            debugPrint('[ChartsController] buckets error: ${e.runtimeType}');
-            if (myGen != _generation) return;
-            _emitter?.add(ChartsState.error(e, st));
-          },
-        );
+        .listen((buckets) {
+          if (myGen != _generation) return;
+          _lastBuckets = buckets;
+          _emitIfReady();
+        }, onError: (Object e, StackTrace st) => onError('buckets', e, st));
 
-    switch (_selection.dimension) {
-      case ChartDimension.category:
-        _sliceSub = repo
-            .watchByCategoryInRange(
-              start: range.start,
-              end: range.end,
-              type: _selection.type,
-              accountId: _selection.accountFilterId,
-            )
-            .listen(
-              (slices) => _onSlices(myGen, slices),
-              onError: (Object e, StackTrace st) {
-                debugPrint(
-                  '[ChartsController] category slice error: ${e.runtimeType}',
-                );
-                if (myGen != _generation) return;
-                _emitter?.add(ChartsState.error(e, st));
-              },
-            );
-      case ChartDimension.account:
-        _sliceSub = repo
-            .watchByAccountInRange(
-              start: range.start,
-              end: range.end,
-              type: _selection.type,
-            )
-            .listen(
-              (slices) => _onSlices(myGen, slices),
-              onError: (Object e, StackTrace st) {
-                debugPrint(
-                  '[ChartsController] account slice error: ${e.runtimeType}',
-                );
-                if (myGen != _generation) return;
-                _emitter?.add(ChartsState.error(e, st));
-              },
-            );
-      case ChartDimension.currency:
-        _sliceSub = repo
-            .watchByCurrencyInRange(
-              start: range.start,
-              end: range.end,
-              type: _selection.type,
-              accountId: _selection.accountFilterId,
-            )
-            .listen(
-              (slices) => _onSlices(myGen, slices),
-              onError: (Object e, StackTrace st) {
-                debugPrint(
-                  '[ChartsController] currency slice error: ${e.runtimeType}',
-                );
-                if (myGen != _generation) return;
-                _emitter?.add(ChartsState.error(e, st));
-              },
-            );
-    }
+    final dim = _selection.dimension;
+    final Stream<List<Object>> slices = switch (dim) {
+      ChartDimension.category => repo.watchByCategoryInRange(
+        start: range.start,
+        end: range.end,
+        type: _selection.type,
+        accountId: _selection.accountFilterId,
+      ),
+      ChartDimension.account => repo.watchByAccountInRange(
+        start: range.start,
+        end: range.end,
+        type: _selection.type,
+      ),
+      ChartDimension.currency => repo.watchByCurrencyInRange(
+        start: range.start,
+        end: range.end,
+        type: _selection.type,
+        accountId: _selection.accountFilterId,
+      ),
+    };
+    final label = '${dim.name} slice';
+    _sliceSub = slices.listen(
+      (s) => _onSlices(myGen, s),
+      onError: (Object e, StackTrace st) => onError(label, e, st),
+    );
   }
 
   void _onSlices(int myGen, List<Object> slices) {
