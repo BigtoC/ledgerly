@@ -37,18 +37,6 @@ import '../repositories/currency_repository.dart';
 import '../repositories/user_preferences_repository.dart';
 import '../services/locale_service.dart';
 
-/// Generic seed-phase failure. Non-domain-specific — sibling repository
-/// exceptions (currency, category, …) still surface as their concrete
-/// typed exceptions. This is only used for "seed invariant violated"
-/// conditions that are not themselves a repository error.
-class FirstRunSeedException implements Exception {
-  const FirstRunSeedException(this.message);
-  final String message;
-
-  @override
-  String toString() => 'FirstRunSeedException: $message';
-}
-
 // ---------- Seed row data ----------
 //
 // Categories and account types take their `sort_order` from their list
@@ -291,8 +279,7 @@ const String kSeededCashAccountName = 'Cash';
 /// "partially seeded, flagged complete" state.
 ///
 /// Throws whatever the sibling repositories throw on a failing step
-/// (`CurrencyNotFoundException`, `CurrencyDecimalsMismatchException`, …)
-/// plus [FirstRunSeedException] for seed-invariant violations.
+/// (`CurrencyNotFoundException`, `CurrencyDecimalsMismatchException`, …).
 Future<void> runFirstRunSeed({
   required AppDatabase db,
   required CurrencyRepository currencies,
@@ -319,13 +306,8 @@ Future<void> runFirstRunSeed({
     await _seedCurrencies(currencies);
 
     // Step 2 — resolve the locale currency into a Currency domain model.
-    final localeCurrency = await currencies.getByCode(localeCurrencyCode);
-    if (localeCurrency == null) {
-      // Would only fire if Step 1 silently dropped a row — defensive.
-      throw FirstRunSeedException(
-        'Seed expected currency $localeCurrencyCode to exist after Step 1',
-      );
-    }
+    // Step 1 seeded every code defaultCurrencyForLocale can return.
+    final localeCurrency = (await currencies.getByCode(localeCurrencyCode))!;
 
     // Step 3 — categories.
     await _seedCategories(categories);
@@ -401,29 +383,12 @@ Future<int> _seedAccountTypes(
   return cashId!;
 }
 
-/// Seeds the single Cash account on an empty DB. On a re-run of the seed
-/// (idempotency path — currently unreachable because Step 0 short-circuits,
-/// but defensive) the account is deduplicated by `(accountTypeId, name)`:
-/// if such a row exists, no insert happens.
-///
-/// Returns the Cash account's row id.
+/// Seeds the single Cash account. Returns its row id.
 Future<int> _seedCashAccount(
   AccountRepository accounts,
   int cashAccountTypeId,
   Currency defaultCurrency,
-) async {
-  // Idempotency defense. The Step 0 gate makes this branch unreachable on
-  // a "clean" re-run after `markFirstRunComplete` fired; it's here so a
-  // partial-failure retry (Step 7 rolled back) still finds its Cash row
-  // and does not duplicate.
-  final existing = await accounts.watchAll(includeArchived: true).first;
-  for (final a in existing) {
-    if (a.accountTypeId == cashAccountTypeId &&
-        a.name == kSeededCashAccountName) {
-      return a.id;
-    }
-  }
-
+) {
   return accounts.save(
     Account(
       id: 0,
