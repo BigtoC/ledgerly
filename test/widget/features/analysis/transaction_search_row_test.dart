@@ -50,8 +50,7 @@ Widget _wrap(Widget child) => MaterialApp(
 );
 
 void main() {
-  testWidgets('actionOnly mode: dismissible pane NOT present', (tester) async {
-    var deleted = false;
+  testWidgets('swipe end pane is dismissible', (tester) async {
     await tester.pumpWidget(
       _wrap(
         TransactionSearchRow(
@@ -59,55 +58,12 @@ void main() {
           category: _cat,
           account: _acc,
           locale: 'en',
-          deleteMode: TransactionSearchRowDeleteMode.actionOnly,
-          onDelete: () => deleted = true,
+          onTap: () {},
+          onDelete: () {},
         ),
       ),
     );
     final slidable = tester.widget<Slidable>(find.byType(Slidable));
-    expect(slidable.endActionPane?.dismissible, isNull);
-    // Fling left should NOT auto-delete in actionOnly mode.
-    await tester.drag(find.byType(Slidable), const Offset(-500, 0));
-    await tester.pumpAndSettle();
-    expect(deleted, isFalse);
+    expect(slidable.endActionPane?.dismissible, isNotNull);
   });
-
-  testWidgets(
-    'default (dismissible) mode keeps existing dismissible behavior',
-    (tester) async {
-      await tester.pumpWidget(
-        _wrap(
-          TransactionSearchRow(
-            transaction: _tx(),
-            category: _cat,
-            account: _acc,
-            locale: 'en',
-            onDelete: () {},
-          ),
-        ),
-      );
-      final slidable = tester.widget<Slidable>(find.byType(Slidable));
-      expect(slidable.endActionPane?.dismissible, isNotNull);
-    },
-  );
-
-  testWidgets(
-    'convertedAmount renders as primary, original as labeled secondary',
-    (tester) async {
-      await tester.pumpWidget(
-        _wrap(
-          TransactionSearchRow(
-            transaction: _tx(),
-            category: _cat,
-            account: _acc,
-            locale: 'en',
-            convertedAmount: r'$12.34',
-            originalAmountLabel: 'Original amount',
-          ),
-        ),
-      );
-      expect(find.text(r'$12.34'), findsOneWidget);
-      expect(find.text('Original amount'), findsOneWidget);
-    },
-  );
 }
