@@ -53,14 +53,7 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
       ..limit(limit);
     return query.watch().map(
       (rows) => rows
-          .map((r) => r.read(dayExpr)!)
-          .map(
-            (d) => DateTime(
-              int.parse(d.substring(0, 4)),
-              int.parse(d.substring(5, 7)),
-              int.parse(d.substring(8, 10)),
-            ),
-          )
+          .map((r) => DateTime.parse(r.read(dayExpr)!))
           .toList(growable: false),
     );
   }
