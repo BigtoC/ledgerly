@@ -9,8 +9,9 @@
 //   - Drift's generated `Currency` data class lives in `app_database.dart`;
 //     it collides by name with the Freezed `Currency` model. We import
 //     the Drift module with a `drift` prefix so call sites stay readable.
-//   - Drift types never leave this file. `_toDomain` maps the Drift row to
-//     the Freezed model; `_toCompanion` is used only on the write path.
+//   - Drift types never leave the repository layer. `currencyFromRow` maps
+//     the Drift row to the Freezed model and is shared by the other
+//     repositories; `_toCompanion` is used only on the write path.
 //
 // Phase 2: `upsert` is deliberately generic enough to register tokens
 // (ETH, USDC, …). `watchAll({includeTokens: true})` is the Phase-2 switch.
@@ -60,6 +61,17 @@ abstract class CurrencyRepository {
   Future<void> updateCustomName(String code, String? customName);
 }
 
+/// Maps a Drift `currencies` row to the Freezed [Currency] model.
+Currency currencyFromRow(drift.Currency row) => Currency(
+  code: row.code,
+  decimals: row.decimals,
+  symbol: row.symbol,
+  nameL10nKey: row.nameL10nKey,
+  customName: row.customName,
+  isToken: row.isToken,
+  sortOrder: row.sortOrder,
+);
+
 /// Concrete Drift-backed implementation of [CurrencyRepository].
 final class DriftCurrencyRepository implements CurrencyRepository {
   DriftCurrencyRepository(this._db);
@@ -68,32 +80,20 @@ final class DriftCurrencyRepository implements CurrencyRepository {
 
   CurrencyDao get _dao => _db.currencyDao;
 
-  // ---------- Mapping ----------
-
-  Currency _toDomain(drift.Currency row) => Currency(
-    code: row.code,
-    decimals: row.decimals,
-    symbol: row.symbol,
-    nameL10nKey: row.nameL10nKey,
-    customName: row.customName,
-    isToken: row.isToken,
-    sortOrder: row.sortOrder,
-  );
-
   // ---------- Reads ----------
 
   @override
   Stream<List<Currency>> watchAll({bool includeTokens = false}) {
     return _dao.watchAll().map((rows) {
       final filtered = includeTokens ? rows : rows.where((r) => !r.isToken);
-      return filtered.map(_toDomain).toList(growable: false);
+      return filtered.map(currencyFromRow).toList(growable: false);
     });
   }
 
   @override
   Future<Currency?> getByCode(String code) async {
     final row = await _dao.findByCode(code);
-    return row == null ? null : _toDomain(row);
+    return row == null ? null : currencyFromRow(row);
   }
 
   // ---------- Writes ----------

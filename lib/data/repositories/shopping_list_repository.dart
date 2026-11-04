@@ -18,7 +18,6 @@
 
 import 'package:drift/drift.dart' show Value;
 
-import '../../domain/models/currency.dart';
 import '../../domain/models/shopping_list_item.dart';
 import '../../domain/models/transaction.dart';
 import '../database/app_database.dart' as drift;
@@ -26,6 +25,7 @@ import '../database/daos/account_dao.dart';
 import '../database/daos/category_dao.dart';
 import '../database/daos/currency_dao.dart';
 import '../database/daos/shopping_list_dao.dart';
+import 'currency_repository.dart';
 import 'transaction_repository.dart';
 
 /// Typed exception for shopping-list repository failures.
@@ -301,7 +301,7 @@ final class DriftShoppingListRepository implements ShoppingListRepository {
           'Currency $currencyCode not registered',
         );
       }
-      final currency = _currencyFromRow(currencyRow);
+      final currency = currencyFromRow(currencyRow);
 
       // Step 5: Build the Transaction domain model and save via
       // TransactionRepository (keeps write invariants centralized).
@@ -387,15 +387,5 @@ final class DriftShoppingListRepository implements ShoppingListRepository {
     draftDate: row.draftDate,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
-  );
-
-  Currency _currencyFromRow(drift.Currency row) => Currency(
-    code: row.code,
-    decimals: row.decimals,
-    symbol: row.symbol,
-    nameL10nKey: row.nameL10nKey,
-    customName: row.customName,
-    isToken: row.isToken,
-    sortOrder: row.sortOrder,
   );
 }

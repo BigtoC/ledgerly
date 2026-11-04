@@ -32,6 +32,7 @@ import '../../domain/models/transaction.dart';
 import '../database/app_database.dart' as drift;
 import '../database/daos/currency_dao.dart';
 import '../database/daos/transaction_dao.dart';
+import 'currency_repository.dart';
 import 'repository_exceptions.dart';
 
 /// Generic transaction-layer failure — used for "transaction not found"
@@ -690,7 +691,7 @@ final class DriftTransactionRepository implements TransactionRepository {
       //   (b) `AppDatabase.beforeOpen` sets `PRAGMA foreign_keys = ON`.
       // See Q4 resolution in Stream A plan §12.
       final currencyRow = (await _currencyDao.findByCode(code))!;
-      currenciesByCode[code] = _currencyFromRow(currencyRow);
+      currenciesByCode[code] = currencyFromRow(currencyRow);
     }
 
     return rows
@@ -713,16 +714,6 @@ final class DriftTransactionRepository implements TransactionRepository {
 
   Future<Transaction> _toDomain(drift.TransactionRow row) async =>
       (await _rowsToDomain([row])).single;
-
-  Currency _currencyFromRow(drift.Currency row) => Currency(
-    code: row.code,
-    decimals: row.decimals,
-    symbol: row.symbol,
-    nameL10nKey: row.nameL10nKey,
-    customName: row.customName,
-    isToken: row.isToken,
-    sortOrder: row.sortOrder,
-  );
 
   drift.TransactionsCompanion _toCompanion(
     Transaction tx, {

@@ -14,6 +14,7 @@ import '../../domain/models/pending_transaction.dart';
 import '../../domain/models/transaction.dart';
 import '../database/app_database.dart' as drift;
 import '../database/daos/pending_transaction_dao.dart';
+import 'currency_repository.dart';
 import 'transaction_repository.dart';
 
 class PendingTransactionRepositoryException implements Exception {
@@ -261,17 +262,6 @@ final class DriftPendingTransactionRepository
   Future<Map<String, Currency>> _resolveCurrencies(Set<String> codes) async {
     if (codes.isEmpty) return const {};
     final rows = await _db.currencyDao.findByCodes(codes.toList());
-    return {
-      for (final row in rows)
-        row.code: Currency(
-          code: row.code,
-          decimals: row.decimals,
-          symbol: row.symbol,
-          nameL10nKey: row.nameL10nKey,
-          customName: row.customName,
-          isToken: row.isToken,
-          sortOrder: row.sortOrder,
-        ),
-    };
+    return {for (final row in rows) row.code: currencyFromRow(row)};
   }
 }

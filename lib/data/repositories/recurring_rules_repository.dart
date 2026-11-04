@@ -15,6 +15,7 @@ import '../database/daos/account_dao.dart';
 import '../database/daos/category_dao.dart';
 import '../database/daos/currency_dao.dart';
 import '../database/daos/recurring_rule_dao.dart';
+import 'currency_repository.dart';
 
 class RecurringRulesRepositoryException implements Exception {
   const RecurringRulesRepositoryException(this.message);
@@ -409,7 +410,7 @@ final class DriftRecurringRulesRepository implements RecurringRulesRepository {
     final currenciesByCode = <String, Currency>{};
     for (final code in codes) {
       final row = (await _currencyDao.findByCode(code))!;
-      currenciesByCode[code] = _currencyFromRow(row);
+      currenciesByCode[code] = currencyFromRow(row);
     }
     return rows
         .map(
@@ -445,7 +446,7 @@ final class DriftRecurringRulesRepository implements RecurringRulesRepository {
     return RecurringRuleDraft(
       name: row.name,
       amountMinorUnits: row.amountMinorUnits,
-      currency: _currencyFromRow(currencyRow),
+      currency: currencyFromRow(currencyRow),
       categoryId: row.categoryId,
       accountId: row.accountId,
       memo: row.memo,
@@ -455,14 +456,4 @@ final class DriftRecurringRulesRepository implements RecurringRulesRepository {
       monthOfYear: row.monthOfYear,
     );
   }
-
-  Currency _currencyFromRow(drift.Currency row) => Currency(
-    code: row.code,
-    decimals: row.decimals,
-    symbol: row.symbol,
-    nameL10nKey: row.nameL10nKey,
-    customName: row.customName,
-    isToken: row.isToken,
-    sortOrder: row.sortOrder,
-  );
 }
