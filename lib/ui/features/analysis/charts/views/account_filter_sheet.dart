@@ -16,6 +16,7 @@ import '../../../../core/theme/analysis_colors.dart';
 import '../view_models/account_filter_providers.dart';
 import '../view_models/charts_selection_controller.dart';
 import '../view_models/charts_state.dart' show PeriodType;
+import 'analysis_sheet.dart';
 import 'period_selector.dart' show formatPeriodLabel;
 
 /// Radio value of the "All accounts" row; account ids are positive.
@@ -25,49 +26,10 @@ const int _kAllAccounts = -1;
 /// closes it.
 @Dependencies([chartsAccountFilterOptions, ChartsSelectionController])
 Future<void> showAccountFilterSheet(BuildContext context) {
-  final colors = AnalysisColors.of(context);
-  if (MediaQuery.sizeOf(context).width >= 600) {
-    return showDialog<void>(
-      context: context,
-      // The bottom sheet's 32% scrim (Main.dc.html:263), not black54.
-      barrierColor: Colors.black.withValues(alpha: 0.32),
-      builder: (_) => Dialog(
-        backgroundColor: colors.card,
-        surfaceTintColor: const Color(0x00000000),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        clipBehavior: Clip.antiAlias,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
-          child: const _AccountFilterSheet(showHandle: false),
-        ),
-      ),
-    );
-  }
-  return showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    // The sheet paints its own card surface so it can carry the design's
-    // shadow; Material elevation cannot draw a CSS box-shadow.
-    backgroundColor: const Color(0x00000000),
-    elevation: 0,
-    barrierColor: Colors.black.withValues(alpha: 0.32),
-    builder: (_) => DecoratedBox(
-      key: const ValueKey('accountFilterSheetSurface'),
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        // 0 -2px 16px rgba(0,0,0,.12)
-        boxShadow: const [
-          BoxShadow(
-            color: Color.fromRGBO(0, 0, 0, 0.12),
-            offset: Offset(0, -2),
-            blurRadius: 16,
-          ),
-        ],
-      ),
-      child: const _AccountFilterSheet(showHandle: true),
-    ),
+  return showAnalysisSheet(
+    context,
+    surfaceKey: const ValueKey('accountFilterSheetSurface'),
+    builder: (showHandle) => _AccountFilterSheet(showHandle: showHandle),
   );
 }
 
@@ -116,24 +78,10 @@ class _AccountFilterSheetState extends ConsumerState<_AccountFilterSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (widget.showHandle)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(0, 16, 0, 8),
-              child: Center(
-                child: Container(
-                  key: const ValueKey('accountFilterHandle'),
-                  width: 32,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: colors.outline,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-            )
-          else
-            // The dialog has no handle; keep its 16 top inset.
-            const SizedBox(height: 16),
+          AnalysisSheetHandle(
+            showHandle: widget.showHandle,
+            handleKey: const ValueKey('accountFilterHandle'),
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
             child: Column(
