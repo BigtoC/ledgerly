@@ -538,12 +538,12 @@ class _DailyBarChartState extends State<DailyBarChart> {
 
   String _axisLabel(DateTime bucketStart) {
     switch (period) {
-      case PeriodType.day:
-        return bucketStart.hour.toString().padLeft(2, '0');
       case PeriodType.week:
         return _weekdayFormats
             .putIfAbsent(locale, () => DateFormat.E(locale))
             .format(bucketStart);
+      // The trend card never shows on Day.
+      case PeriodType.day:
       case PeriodType.month:
         return bucketStart.day.toString();
       case PeriodType.year:

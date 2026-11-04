@@ -3,10 +3,9 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'time_bucket_slice.freezed.dart';
 
 /// Local-time bucket granularity selected by the chart period:
-/// - `hour` — Day view (24 buckets)
-/// - `day`  — Week and Month views
+/// - `day`  — Day, Week and Month views
 /// - `month` — Year view (12 buckets)
-enum TimeBucketGranularity { hour, day, month }
+enum TimeBucketGranularity { day, month }
 
 /// Per-(bucketStart, currency) subtotal emitted by
 /// `TransactionRepository.watchTimeBucketsInRange`. Conversion happens

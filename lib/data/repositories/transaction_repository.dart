@@ -153,9 +153,9 @@ abstract class TransactionRepository {
   });
 
   /// Per-(bucketStart, currency) subtotal in `[start, end)` filtered by
-  /// transaction type, with [granularity] selecting hour/day/month
-  /// buckets. Local bucket math uses `DateHelpers` so midnight + DST
-  /// behaviour matches the rest of the app.
+  /// transaction type, with [granularity] selecting day/month buckets.
+  /// Local bucket math uses `DateHelpers` so midnight + DST behaviour
+  /// matches the rest of the app.
   ///
   /// Optional plain filters scope the buckets for drill-down refiltering.
   /// All-null behaves identically to today (regression-protected).
@@ -441,12 +441,6 @@ final class DriftTransactionRepository implements TransactionRepository {
           final acc = <(DateTime, String), int>{};
           for (final r in rows) {
             final bucketStart = switch (granularity) {
-              TimeBucketGranularity.hour => DateTime(
-                r.date.year,
-                r.date.month,
-                r.date.day,
-                r.date.hour,
-              ),
               TimeBucketGranularity.day => DateHelpers.startOfDay(r.date),
               TimeBucketGranularity.month => DateHelpers.startOfMonth(r.date),
             };

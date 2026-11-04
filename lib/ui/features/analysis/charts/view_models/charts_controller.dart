@@ -156,8 +156,8 @@ class ChartsController extends _$ChartsController {
   // ---------- Subscription wiring ----------
 
   TimeBucketGranularity _granularity() => switch (_selection.period) {
-    PeriodType.day => TimeBucketGranularity.hour,
-    PeriodType.week => TimeBucketGranularity.day,
+    PeriodType.day ||
+    PeriodType.week ||
     PeriodType.month => TimeBucketGranularity.day,
     PeriodType.year || PeriodType.all => TimeBucketGranularity.month,
   };

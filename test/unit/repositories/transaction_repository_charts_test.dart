@@ -272,51 +272,6 @@ void main() {
   });
 
   group('watchTimeBucketsInRange', () {
-    test('hour granularity buckets by local hour', () async {
-      await _insertTx(
-        db,
-        id: 1,
-        date: DateTime(2026, 5, 18, 10, 5),
-        amountMinorUnits: 500,
-        currency: 'USD',
-        categoryId: 1,
-      );
-      await _insertTx(
-        db,
-        id: 2,
-        date: DateTime(2026, 5, 18, 10, 45),
-        amountMinorUnits: 200,
-        currency: 'USD',
-        categoryId: 1,
-      );
-      await _insertTx(
-        db,
-        id: 3,
-        date: DateTime(2026, 5, 18, 14, 30),
-        amountMinorUnits: 100,
-        currency: 'USD',
-        categoryId: 1,
-      );
-
-      final buckets = await repo
-          .watchTimeBucketsInRange(
-            start: DateTime(2026, 5, 18),
-            end: DateTime(2026, 5, 19),
-            type: CategoryType.expense,
-            granularity: TimeBucketGranularity.hour,
-          )
-          .first;
-
-      final tenAm = buckets.firstWhere(
-        (b) => b.bucketStart == DateTime(2026, 5, 18, 10),
-      );
-      expect(tenAm.totalMinorUnits, 700);
-      final twoPm = buckets.firstWhere(
-        (b) => b.bucketStart == DateTime(2026, 5, 18, 14),
-      );
-      expect(twoPm.totalMinorUnits, 100);
-    });
-
     test('day granularity buckets by startOfDay; preserves currency', () async {
       await _insertTx(
         db,
