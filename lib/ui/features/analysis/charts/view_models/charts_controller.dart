@@ -385,13 +385,13 @@ class ChartsController extends _$ChartsController {
       String iconKey;
       if (_selection.dimension == ChartDimension.category) {
         final c = cats[id];
-        label = _categoryLabel(id, cats);
+        label = _categoryLabel(c);
         colorIndex = c?.color ?? CategoryPaletteIndex.neutralVariant50;
         iconKey = c?.icon ?? '';
       } else {
-        label = _accountLabel(id, accts);
-        // An account without its own icon or colour shows its type's.
         final a = accts[id];
+        label = a?.name ?? '';
+        // An account without its own icon or colour shows its type's.
         final t = a == null ? null : accountTypes[a.accountTypeId];
         colorIndex =
             a?.color ?? t?.color ?? CategoryPaletteIndex.neutralVariant50;
@@ -553,17 +553,12 @@ class ChartsController extends _$ChartsController {
     _emitter?.add(ChartsState.data(chartData: data));
   }
 
-  String _categoryLabel(int id, Map<int, Category> cats) {
-    final c = cats[id];
+  String _categoryLabel(Category? c) {
     if (c == null) return '';
     if (c.customName != null && c.customName!.trim().isNotEmpty) {
       return c.customName!;
     }
     return c.l10nKey ?? '';
-  }
-
-  String _accountLabel(int id, Map<int, Account> accts) {
-    return accts[id]?.name ?? '';
   }
 
   int _currencyColorIndex(String code) =>
