@@ -103,15 +103,16 @@ class _CategoryIconPickerSheet extends StatelessWidget {
   }
 }
 
+// Headers reuse the seeded categories' labels.
 String _groupLabel(AppLocalizations l10n, IconGroup group) => switch (group) {
-  IconGroup.food => l10n.categoriesIconGroupFood,
-  IconGroup.drinks => l10n.categoriesIconGroupDrinks,
-  IconGroup.transport => l10n.categoriesIconGroupTransport,
-  IconGroup.shopping => l10n.categoriesIconGroupShopping,
-  IconGroup.entertainment => l10n.categoriesIconGroupEntertainment,
-  IconGroup.home => l10n.categoriesIconGroupHome,
-  IconGroup.electronics => l10n.categoriesIconGroupElectronics,
-  IconGroup.medical => l10n.categoriesIconGroupMedical,
-  IconGroup.income => l10n.categoriesIconGroupIncome,
-  IconGroup.other => l10n.categoriesIconGroupOther,
+  IconGroup.food => l10n.categoryFood,
+  IconGroup.drinks => l10n.categoryDrinks,
+  IconGroup.transport => l10n.categoryTransportation,
+  IconGroup.shopping => l10n.categoryShopping,
+  IconGroup.entertainment => l10n.categoryEntertainment,
+  IconGroup.home => l10n.categoryHousing,
+  IconGroup.electronics => l10n.categoryThreeC,
+  IconGroup.medical => l10n.categoryMedical,
+  IconGroup.income => l10n.categoriesSectionIncome,
+  IconGroup.other => l10n.categoryOther,
 };

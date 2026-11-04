@@ -110,17 +110,6 @@ const Set<String> _expectedEnKeys = <String>{
   // command outcomes (were raw repository exception strings).
   'categoriesDeleteInUseError',
   'categoriesArchiveRecurringRuleError',
-  // Icon picker group headers (issue #103).
-  'categoriesIconGroupFood',
-  'categoriesIconGroupDrinks',
-  'categoriesIconGroupTransport',
-  'categoriesIconGroupShopping',
-  'categoriesIconGroupEntertainment',
-  'categoriesIconGroupHome',
-  'categoriesIconGroupElectronics',
-  'categoriesIconGroupMedical',
-  'categoriesIconGroupIncome',
-  'categoriesIconGroupOther',
 
   // M5 Wave 1 — Accounts slice UI keys
   // (docs/plans/m5-ui-feature-slices/wave-1/accounts-plan.md §3.2).

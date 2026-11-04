@@ -448,66 +448,6 @@ abstract class AppLocalizations {
   /// **'Icon'**
   String get categoriesFormIconLabel;
 
-  /// Category icon picker — section header for food icons (issue #103).
-  ///
-  /// In en, this message translates to:
-  /// **'Food'**
-  String get categoriesIconGroupFood;
-
-  /// Category icon picker — section header for drinks icons (issue #103).
-  ///
-  /// In en, this message translates to:
-  /// **'Drinks'**
-  String get categoriesIconGroupDrinks;
-
-  /// Category icon picker — section header for transport icons (issue #103).
-  ///
-  /// In en, this message translates to:
-  /// **'Transport'**
-  String get categoriesIconGroupTransport;
-
-  /// Category icon picker — section header for shopping icons (issue #103).
-  ///
-  /// In en, this message translates to:
-  /// **'Shopping'**
-  String get categoriesIconGroupShopping;
-
-  /// Category icon picker — section header for entertainment icons (issue #103).
-  ///
-  /// In en, this message translates to:
-  /// **'Entertainment'**
-  String get categoriesIconGroupEntertainment;
-
-  /// Category icon picker — section header for home icons (issue #103).
-  ///
-  /// In en, this message translates to:
-  /// **'Home'**
-  String get categoriesIconGroupHome;
-
-  /// Category icon picker — section header for electronics icons (issue #103).
-  ///
-  /// In en, this message translates to:
-  /// **'Electronics'**
-  String get categoriesIconGroupElectronics;
-
-  /// Category icon picker — section header for medical icons (issue #103).
-  ///
-  /// In en, this message translates to:
-  /// **'Medical'**
-  String get categoriesIconGroupMedical;
-
-  /// Category icon picker — section header for income icons (issue #103).
-  ///
-  /// In en, this message translates to:
-  /// **'Income'**
-  String get categoriesIconGroupIncome;
-
-  /// Category icon picker — section header for other icons (issue #103).
-  ///
-  /// In en, this message translates to:
-  /// **'Other'**
-  String get categoriesIconGroupOther;
-
   /// PRD 732. Category form sheet — color picker label.
   ///
   /// In en, this message translates to:
