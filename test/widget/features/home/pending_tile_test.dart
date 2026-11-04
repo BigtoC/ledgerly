@@ -239,7 +239,7 @@ void main() {
 
   testWidgets('PT05: swipe-left reveals Skip action', (tester) async {
     final container = _makeFixedContainer(
-      PendingState.data(items: [_pending(id: 1)], skipScheduled: null),
+      PendingState.data(items: [_pending(id: 1)], skippingId: null),
     );
     addTearDown(container.dispose);
 
@@ -256,7 +256,7 @@ void main() {
     tester,
   ) async {
     final container = _makeFixedContainer(
-      PendingState.data(items: [_pending(id: 1)], skipScheduled: null),
+      PendingState.data(items: [_pending(id: 1)], skippingId: null),
     );
     addTearDown(container.dispose);
 
@@ -273,7 +273,7 @@ void main() {
     tester,
   ) async {
     final container = _makeFixedContainer(
-      PendingState.data(items: [_pending(id: 1)], skipScheduled: null),
+      PendingState.data(items: [_pending(id: 1)], skippingId: null),
     );
     addTearDown(container.dispose);
 

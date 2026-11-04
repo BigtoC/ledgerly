@@ -146,7 +146,7 @@ void main() {
       _pending(id: 2, memo: 'Rent', amount: 200000),
     ];
     final container = _makeContainer(
-      PendingState.data(items: items, skipScheduled: null),
+      PendingState.data(items: items, skippingId: null),
     );
     addTearDown(container.dispose);
 
@@ -160,7 +160,7 @@ void main() {
 
   testWidgets('PS04: tap on row body does nothing', (tester) async {
     final container = _makeContainer(
-      PendingState.data(items: [_pending(id: 1)], skipScheduled: null),
+      PendingState.data(items: [_pending(id: 1)], skippingId: null),
     );
     addTearDown(container.dispose);
 

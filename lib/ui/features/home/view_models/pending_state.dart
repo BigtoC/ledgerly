@@ -2,9 +2,8 @@
 //
 // Freezed sealed union consumed by PendingSection on HomeScreen.
 // PendingController composes the repository stream into one of these
-// variants. PendingSkipScheduled is an in-memory sentinel for the
-// 4-second undo window — the row only leaves the DB when the timer
-// expires.
+// variants. `skippingId` marks the row inside the 4-second undo window —
+// the row only leaves the DB when the timer expires.
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -12,13 +11,6 @@ import '../../../../core/utils/date_helpers.dart';
 import '../../../../domain/models/pending_transaction.dart';
 
 part 'pending_state.freezed.dart';
-
-/// A pending row currently inside the 4-second skip-undo window.
-/// Held in-memory by the controller, NOT in the DB.
-class PendingSkipScheduled {
-  const PendingSkipScheduled({required this.pendingId});
-  final int pendingId;
-}
 
 @freezed
 sealed class PendingState with _$PendingState {
@@ -30,7 +22,10 @@ sealed class PendingState with _$PendingState {
 
   const factory PendingState.data({
     required List<PendingTransaction> items,
-    required PendingSkipScheduled? skipScheduled,
+
+    /// Id of the row inside the 4-second skip-undo window. Held in memory
+    /// by the controller, NOT in the DB.
+    required int? skippingId,
   }) = PendingData;
 
   const factory PendingState.error(Object error, StackTrace stack) =
@@ -47,7 +42,7 @@ extension PendingDataVisibility on PendingData {
   /// "Pin PendingSection to selectedDay"). A null [day] skips the date check.
   List<PendingTransaction> visibleOn(DateTime? day) => [
     for (final item in items)
-      if (item.id != skipScheduled?.pendingId &&
+      if (item.id != skippingId &&
           (day == null || DateHelpers.isSameDay(item.date, day)))
         item,
   ];

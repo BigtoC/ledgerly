@@ -114,7 +114,7 @@ void main() {
       final state = await waitFor(container, (s) => s is PendingData);
       final data = state as PendingData;
       expect(data.items, hasLength(1));
-      expect(data.skipScheduled, isNull);
+      expect(data.skippingId, isNull);
     });
 
     test('PC02: loading → empty when stream emits empty list', () async {
@@ -203,10 +203,9 @@ void main() {
 
       final state = await waitFor(
         container,
-        (s) =>
-            s is PendingData && s.skipScheduled != null && s.items.length == 2,
+        (s) => s is PendingData && s.skippingId != null && s.items.length == 2,
       );
-      expect((state as PendingData).skipScheduled?.pendingId, 1);
+      expect((state as PendingData).skippingId, 1);
       verifyNever(() => repo.reject(any()));
     });
 
@@ -221,17 +220,14 @@ void main() {
       final notifier = container.read(pendingControllerProvider.notifier);
       // ignore: unawaited_futures
       notifier.skip(1);
-      await waitFor(
-        container,
-        (s) => s is PendingData && s.skipScheduled != null,
-      );
+      await waitFor(container, (s) => s is PendingData && s.skippingId != null);
 
       await notifier.undoSkip();
       await pump();
 
       final restored = await waitFor(
         container,
-        (s) => s is PendingData && s.skipScheduled == null,
+        (s) => s is PendingData && s.skippingId == null,
       );
       expect((restored as PendingData).items, hasLength(1));
       verifyNever(() => repo.reject(any()));
@@ -278,7 +274,7 @@ void main() {
 
         var state = container.read(pendingControllerProvider).value;
         expect(state, isA<PendingData>());
-        expect((state as PendingData).skipScheduled?.pendingId, 1);
+        expect((state as PendingData).skippingId, 1);
 
         async.elapse(kUndoWindow + const Duration(seconds: 1));
         async.flushMicrotasks();
@@ -288,7 +284,7 @@ void main() {
 
         state = container.read(pendingControllerProvider).value;
         expect(state, isA<PendingData>());
-        expect((state as PendingData).skipScheduled, isNull);
+        expect((state as PendingData).skippingId, isNull);
         expect(state.items.any((p) => p.id == 1), isTrue);
       });
     });
@@ -304,10 +300,7 @@ void main() {
       final notifier = container.read(pendingControllerProvider.notifier);
       // ignore: unawaited_futures
       notifier.skip(1);
-      await waitFor(
-        container,
-        (s) => s is PendingData && s.skipScheduled?.pendingId == 1,
-      );
+      await waitFor(container, (s) => s is PendingData && s.skippingId == 1);
 
       // ignore: unawaited_futures
       notifier.skip(2);
@@ -316,7 +309,7 @@ void main() {
       verify(() => repo.reject(1)).called(1);
       final state = await waitFor(
         container,
-        (s) => s is PendingData && s.skipScheduled?.pendingId == 2,
+        (s) => s is PendingData && s.skippingId == 2,
       );
       expect(state, isA<PendingData>());
     });
