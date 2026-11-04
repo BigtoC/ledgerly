@@ -9,16 +9,12 @@ import 'package:ledgerly/ui/features/transactions/view_models/amount_formula.dar
 import 'package:ledgerly/ui/features/transactions/view_models/keypad_state.dart';
 import 'package:ledgerly/ui/features/transactions/views/amount_display.dart';
 
+import '../../../support/text_scale.dart';
+
 Widget _wrap(Widget child, {double? textScale}) => MaterialApp(
   localizationsDelegates: AppLocalizations.localizationsDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
-  builder: textScale == null
-      ? null
-      : (context, inner) => MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(textScaler: TextScaler.linear(textScale)),
-          child: inner!,
-        ),
+  builder: textScale == null ? null : textScaleBuilder(textScale),
   home: Scaffold(body: child),
 );
 

@@ -17,6 +17,8 @@ import 'package:ledgerly/ui/features/settings/csv_export/views/csv_export_screen
 import 'package:ledgerly/ui/features/settings/csv_export/view_models/csv_export_state.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
+import '../../../support/text_scale.dart';
+
 const _food = Category(
   id: 1,
   icon: 'restaurant',
@@ -92,11 +94,7 @@ Future<List<Object>> _pump(
       child: MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(textScaler: TextScaler.linear(textScale)),
-          child: child!,
-        ),
+        builder: textScaleBuilder(textScale),
         home: const CsvExportScreen(),
       ),
     ),

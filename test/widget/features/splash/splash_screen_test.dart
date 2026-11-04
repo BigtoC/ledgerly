@@ -25,6 +25,8 @@ import 'package:ledgerly/ui/features/splash/views/splash_enter_button.dart';
 import 'package:ledgerly/ui/features/splash/views/splash_rainbow_gradient_text.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
+import '../../../support/text_scale.dart';
+
 class _MockUserPreferencesRepository extends Mock
     implements UserPreferencesRepository {}
 
@@ -325,11 +327,7 @@ void main() {
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(context)
-                .copyWith(textScaler: const TextScaler.linear(2.0)),
-            child: child!,
-          ),
+          builder: textScaleBuilder(2.0),
           home: const SplashScreen(),
         ),
       ),

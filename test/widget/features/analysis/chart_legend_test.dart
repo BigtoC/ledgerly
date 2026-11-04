@@ -12,6 +12,8 @@ import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_state.da
 import 'package:ledgerly/ui/features/analysis/charts/view_models/selected_slice.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/chart_legend.dart';
 
+import '../../../support/text_scale.dart';
+
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 const _colors = AnalysisColors.light;
 
@@ -53,11 +55,7 @@ Widget _wrap(Widget child, {double textScale = 1}) => MaterialApp(
   theme: lightTheme,
   localizationsDelegates: AppLocalizations.localizationsDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
-  builder: (context, app) => MediaQuery(
-    data: MediaQuery.of(context)
-        .copyWith(textScaler: TextScaler.linear(textScale)),
-    child: app!,
-  ),
+  builder: textScaleBuilder(textScale),
   home: Scaffold(body: SingleChildScrollView(child: child)),
 );
 

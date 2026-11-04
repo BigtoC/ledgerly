@@ -56,6 +56,8 @@ import 'package:ledgerly/ui/features/transactions/views/date_field.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/l10n/app_localizations_en.dart';
 
+import '../../../support/text_scale.dart';
+
 class _MockTransactionRepository extends Mock
     implements TransactionRepository {}
 
@@ -217,13 +219,7 @@ void main() {
         routerConfig: router,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        builder: textScale == null
-            ? null
-            : (context, child) => MediaQuery(
-                data: MediaQuery.of(context)
-                    .copyWith(textScaler: TextScaler.linear(textScale)),
-                child: child!,
-              ),
+        builder: textScale == null ? null : textScaleBuilder(textScale),
       ),
     );
   }
@@ -261,13 +257,7 @@ void main() {
         routerConfig: router,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        builder: textScale == null
-            ? null
-            : (context, child) => MediaQuery(
-                data: MediaQuery.of(context)
-                    .copyWith(textScaler: TextScaler.linear(textScale)),
-                child: child!,
-              ),
+        builder: textScale == null ? null : textScaleBuilder(textScale),
       ),
     );
   }

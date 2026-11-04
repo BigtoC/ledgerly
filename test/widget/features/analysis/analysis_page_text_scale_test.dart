@@ -38,6 +38,7 @@ import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_provid
 import 'package:ledgerly/ui/features/analysis/views/analysis_screen.dart';
 
 import '../../../support/test_app.dart';
+import '../../../support/text_scale.dart';
 
 class _MockFxService extends Mock implements ExchangeRateService {}
 
@@ -153,11 +154,7 @@ void main() {
               theme: theme,
               localizationsDelegates: AppLocalizations.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
-              builder: (context, child) => MediaQuery(
-                data: MediaQuery.of(context)
-                    .copyWith(textScaler: const TextScaler.linear(2)),
-                child: child!,
-              ),
+              builder: textScaleBuilder(2),
               home: const AnalysisScreen(),
             ),
           ),

@@ -8,6 +8,8 @@ import 'package:ledgerly/ui/core/theme/app_theme.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_state.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/dimension_toggle.dart';
 
+import '../../../../support/text_scale.dart';
+
 Future<void> _pump(
   WidgetTester tester, {
   ChartDimension dimension = ChartDimension.category,
@@ -19,11 +21,7 @@ Future<void> _pump(
       theme: lightTheme,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
-        child: child!,
-      ),
+      builder: textScaleBuilder(textScale),
       home: Scaffold(
         body: DimensionChips(
           dimension: dimension,

@@ -12,6 +12,8 @@ import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_state.da
 import 'package:ledgerly/ui/features/analysis/charts/view_models/trend_series.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/daily_bar_chart.dart';
 
+import '../../../../support/text_scale.dart';
+
 const _barColor = Color(0xFF123456);
 const _colors = AnalysisColors.light;
 
@@ -44,11 +46,7 @@ Future<void> _pump(
       theme: lightTheme,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
-        child: child!,
-      ),
+      builder: textScaleBuilder(textScale),
       home: Scaffold(
         body: Align(
           alignment: Alignment.topLeft,

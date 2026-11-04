@@ -50,6 +50,8 @@ import 'package:ledgerly/ui/features/settings/views/settings_section.dart';
 import 'package:ledgerly/ui/features/settings/view_models/settings_state.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
+import '../../../support/text_scale.dart';
+
 class _MockUserPreferencesRepository extends Mock
     implements UserPreferencesRepository {}
 
@@ -130,11 +132,7 @@ Widget _wrap({
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
-        child: child!,
-      ),
+      builder: textScaleBuilder(textScale),
       routerConfig: _StubRouter.build(const SettingsScreen()),
     ),
   );

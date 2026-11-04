@@ -12,6 +12,8 @@ import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_range_pr
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_state.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/period_selector.dart';
 
+import '../../../../support/text_scale.dart';
+
 void main() {
   Future<void> pump(
     WidgetTester tester,
@@ -25,11 +27,7 @@ void main() {
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
-        child: child!,
-      ),
+      builder: textScaleBuilder(textScale),
       home: Scaffold(body: SingleChildScrollView(child: child)),
     ),
   );

@@ -27,6 +27,8 @@ import 'package:ledgerly/ui/features/recurring/views/recurring_rules_screen.dart
 import 'package:ledgerly/ui/features/recurring/view_models/recurring_rules_state.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
+import '../../../support/text_scale.dart';
+
 class _MockRecurringRulesRepository extends Mock
     implements RecurringRulesRepository {}
 
@@ -111,11 +113,7 @@ Widget _wrap(ProviderContainer container, {double textScale = 1}) {
     child: MaterialApp.router(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
-        child: child!,
-      ),
+      builder: textScaleBuilder(textScale),
       routerConfig: _StubRouter.build(const RecurringRulesScreen()),
     ),
   );

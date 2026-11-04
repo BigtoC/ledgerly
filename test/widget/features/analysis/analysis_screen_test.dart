@@ -39,6 +39,8 @@ import 'package:ledgerly/ui/features/analysis/search/views/category_search_tile.
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/core/theme/app_theme.dart';
 
+import '../../../support/text_scale.dart';
+
 class _MockTransactionRepository extends Mock
     implements TransactionRepository {}
 
@@ -104,11 +106,7 @@ Widget _harness({
       theme: theme ?? lightTheme,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
-        child: child!,
-      ),
+      builder: textScaleBuilder(textScale),
       home: const AnalysisScreen(),
     ),
   );

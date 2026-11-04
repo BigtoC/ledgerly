@@ -22,6 +22,8 @@ import 'package:ledgerly/ui/features/settings/csv_import/views/csv_import_screen
 import 'package:ledgerly/ui/features/settings/csv_import/view_models/csv_import_state.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
+import '../../../support/text_scale.dart';
+
 class _FakeCsvImportController extends CsvImportController {
   _FakeCsvImportController(this._initial, this.calls);
 
@@ -205,11 +207,7 @@ Future<List<Object>> _pump(
       child: MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(textScaler: TextScaler.linear(textScale)),
-          child: child!,
-        ),
+        builder: textScaleBuilder(textScale),
         // A root page under the screen, so pop behaviour is observable.
         home: Builder(
           builder: (context) => Scaffold(

@@ -16,6 +16,8 @@ import 'package:ledgerly/ui/features/analysis/charts/view_models/selected_slice.
 import 'package:ledgerly/ui/features/analysis/charts/views/charts_trend_card.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/daily_bar_chart.dart';
 
+import '../../../support/text_scale.dart';
+
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 const _colors = AnalysisColors.light;
 
@@ -69,11 +71,7 @@ Future<void> _pump(
       theme: lightTheme,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
-        child: child!,
-      ),
+      builder: textScaleBuilder(textScale),
       home: Scaffold(
         body: SingleChildScrollView(
           child: SizedBox(

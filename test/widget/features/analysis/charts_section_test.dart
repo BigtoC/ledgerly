@@ -40,6 +40,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../unit/repositories/_harness/test_app_database.dart';
+import '../../../support/text_scale.dart';
 
 class _MockTxRepo extends Mock implements TransactionRepository {}
 
@@ -803,11 +804,7 @@ Future<_MockTxRepo> _pumpSection(
         theme: lightTheme,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(textScaler: TextScaler.linear(textScale)),
-          child: child!,
-        ),
+        builder: textScaleBuilder(textScale),
         home: const Scaffold(
           body: SingleChildScrollView(child: ChartsSection()),
         ),

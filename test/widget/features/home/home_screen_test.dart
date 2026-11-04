@@ -42,6 +42,8 @@ import 'package:ledgerly/ui/features/home/views/summary_strip.dart';
 import 'package:ledgerly/ui/features/home/views/transaction_tile.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
+import '../../../support/text_scale.dart';
+
 class _MockTxRepo extends Mock implements TransactionRepository {}
 
 class _MockCategoryRepo extends Mock implements CategoryRepository {}
@@ -181,13 +183,7 @@ void main() {
       child: MaterialApp.router(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        builder: textScale == null
-            ? null
-            : (context, child) => MediaQuery(
-                data: MediaQuery.of(context)
-                    .copyWith(textScaler: TextScaler.linear(textScale)),
-                child: child!,
-              ),
+        builder: textScale == null ? null : textScaleBuilder(textScale),
         routerConfig: GoRouter(
           initialLocation: '/home',
           routes: [

@@ -30,6 +30,8 @@ import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_provid
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
+import '../../../support/text_scale.dart';
+
 class _MockRepo extends Mock implements TransactionRepository {}
 
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
@@ -147,11 +149,7 @@ Widget _harness({
             ),
     ),
   );
-  Widget scaled(BuildContext context, Widget? child) => MediaQuery(
-    data: MediaQuery.of(context)
-        .copyWith(textScaler: TextScaler.linear(textScale)),
-    child: child!,
-  );
+  final scaled = textScaleBuilder(textScale);
   return UncontrolledProviderScope(
     container: container,
     child: withEditRoute
