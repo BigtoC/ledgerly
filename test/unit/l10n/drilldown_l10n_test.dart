@@ -1,5 +1,4 @@
 import 'package:flutter/widgets.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
@@ -32,8 +31,4 @@ void main() {
     final l10n = await _resolve(const Locale('zh'));
     expect(l10n.appTitle, isNotEmpty);
   });
-
-  // Suppress unused-import lints.
-  Localizations.localeOf;
-  GlobalMaterialLocalizations.delegate;
 }
