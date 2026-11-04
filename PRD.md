@@ -229,6 +229,7 @@ lib/
         analysis_colors.dart
       widgets/
         adaptive_shell.dart  # 600dp nav switch (NavigationBar ↔ NavigationRail)
+        adaptive_sheet.dart  # 600dp picker switch (bottom sheet ↔ constrained Dialog)
         confirm_dialog.dart  # Cancel / confirm AlertDialog resolving to bool
         undo_snack_bar.dart  # clear-then-show Undo snackbar for the kUndoWindow
     features/

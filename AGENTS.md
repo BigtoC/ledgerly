@@ -199,7 +199,7 @@ Take its folder tree, its layers and the order of work: models → services → 
   ├── ui/
   │   ├── core/
   │   │   ├── theme/
-  │   │   └── widgets/      # shared widgets: adaptive shell, confirm dialog, Undo snackbar
+  │   │   └── widgets/      # shared widgets: adaptive shell and sheet, confirm dialog, Undo snackbar
   │   └── features/
   │       └── <feature>/
   │           ├── view_models/  # flat: *_controller, *_state, *_providers, pure helpers
@@ -226,7 +226,7 @@ Take its advice on measuring space (`MediaQuery.sizeOf`, `LayoutBuilder` on the 
 
 - **Breakpoint** → Ledgerly has one: a width of 600dp or more is wide (`>= 600`; the skill's `>` would put exactly 600 on the narrow side). Reuse the existing switches instead of writing a new one:
   - A modal form route goes inside `_AdaptiveFormRoute` in `lib/app/router.dart`, which shows it as a dialog at most 560dp wide on wide windows.
-  - A picker or sheet checks `MediaQuery.sizeOf(context).width >= 600` and opens a constrained `Dialog` or a modal bottom sheet, as `category_picker.dart` and `account_picker_sheet.dart` do.
+  - A picker or sheet opens through `showAdaptiveSheet` in `lib/ui/core/widgets/adaptive_sheet.dart`, which checks `MediaQuery.sizeOf(context).width >= 600` and shows a constrained `Dialog` or a modal bottom sheet, as `category_picker.dart` and `account_picker_sheet.dart` do.
 - **New layouts** → beyond those patterns, don't add a breakpoint, an in-screen layout switch or a list-to-grid conversion without changing `PRD.md` first. PRD's *Adaptive Layouts* table also lists a Home two-pane, marked pending: Home is single-pane at every width. Ask before building it.
 - **Large screens** → skip the skill's *Optimizing for Large Screens* workflow and its `Center`/`ConstrainedBox` width caps. Form routes and pickers already get their width limit from their dialog, and screen bodies stay full width.
 - **Widget trees** → follow the required trees in `docs/architecture/ui-and-layout.md`, such as Home's slivers and the transaction form's bottom-pinned keypad, whose keys shrink toward 48dp (`CalculatorKeypad.minHeight`) before the form above them scrolls.

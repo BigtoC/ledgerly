@@ -15,30 +15,14 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../domain/models/account.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../core/widgets/adaptive_sheet.dart';
 import '../view_models/transactions_providers.dart';
 
 Future<Account?> showAccountPickerSheet(BuildContext context) {
-  final width = MediaQuery.sizeOf(context).width;
-  if (width >= 600) {
-    return showDialog<Account>(
-      context: context,
-      builder: (ctx) => Dialog(
-        clipBehavior: Clip.antiAlias,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480, maxHeight: 560),
-          child: const _AccountPickerSheet(),
-        ),
-      ),
-    );
-  }
-  return showModalBottomSheet<Account>(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    builder: (ctx) => const FractionallySizedBox(
-      heightFactor: 0.6,
-      child: _AccountPickerSheet(),
-    ),
+  return showAdaptiveSheet<Account>(
+    context,
+    heightFactor: 0.6,
+    child: const _AccountPickerSheet(),
   );
 }
 
