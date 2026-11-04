@@ -53,23 +53,12 @@ class TransactionSearchRow extends StatelessWidget {
     final icon = cat != null ? iconForKey(cat.icon) : Icons.help_outline;
     final isIncome = cat?.type == CategoryType.income;
 
-    final bookedAmountText = switch (cat?.type) {
-      CategoryType.income => MoneyFormatter.formatSigned(
-        amountMinorUnits: transaction.amountMinorUnits,
-        currency: transaction.currency,
-        locale: locale,
-      ),
-      CategoryType.expense => MoneyFormatter.formatSigned(
-        amountMinorUnits: -transaction.amountMinorUnits,
-        currency: transaction.currency,
-        locale: locale,
-      ),
-      null => MoneyFormatter.format(
-        amountMinorUnits: transaction.amountMinorUnits,
-        currency: transaction.currency,
-        locale: locale,
-      ),
-    };
+    final bookedAmountText = MoneyFormatter.formatForCategoryType(
+      amountMinorUnits: transaction.amountMinorUnits,
+      currency: transaction.currency,
+      locale: locale,
+      categoryType: cat?.type,
+    );
 
     final memo = transaction.memo;
     final tile = ListTile(

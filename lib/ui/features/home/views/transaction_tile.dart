@@ -67,23 +67,12 @@ class TransactionTile extends ConsumerWidget {
     final icon = cat != null ? iconForKey(cat.icon) : Icons.help_outline;
 
     final isIncome = cat?.type == CategoryType.income;
-    final amountText = switch (cat?.type) {
-      CategoryType.income => MoneyFormatter.formatSigned(
-        amountMinorUnits: transaction.amountMinorUnits,
-        currency: transaction.currency,
-        locale: locale,
-      ),
-      CategoryType.expense => MoneyFormatter.formatSigned(
-        amountMinorUnits: -transaction.amountMinorUnits,
-        currency: transaction.currency,
-        locale: locale,
-      ),
-      null => MoneyFormatter.format(
-        amountMinorUnits: transaction.amountMinorUnits,
-        currency: transaction.currency,
-        locale: locale,
-      ),
-    };
+    final amountText = MoneyFormatter.formatForCategoryType(
+      amountMinorUnits: transaction.amountMinorUnits,
+      currency: transaction.currency,
+      locale: locale,
+      categoryType: cat?.type,
+    );
 
     // Convert to default currency when the transaction is in a foreign
     // currency and a rate is available. Otherwise render only the

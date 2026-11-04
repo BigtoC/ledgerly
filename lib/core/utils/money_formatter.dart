@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:intl/intl.dart';
 
+import '../../domain/models/category.dart';
 import '../../domain/models/currency.dart';
 
 /// Locale-aware formatter for integer minor-unit money amounts.
@@ -68,6 +69,32 @@ class MoneyFormatter {
     if (amountMinorUnits > 0) return '+$base';
     return base; // negatives already carry '-', zero stays bare.
   }
+
+  /// Formats a booked transaction amount (stored positive) for a row:
+  /// signed `+` for income, signed `-` for expense, and unsigned when the
+  /// category is unknown ([categoryType] null).
+  static String formatForCategoryType({
+    required int amountMinorUnits,
+    required Currency currency,
+    required String locale,
+    required CategoryType? categoryType,
+  }) => switch (categoryType) {
+    CategoryType.income => formatSigned(
+      amountMinorUnits: amountMinorUnits,
+      currency: currency,
+      locale: locale,
+    ),
+    CategoryType.expense => formatSigned(
+      amountMinorUnits: -amountMinorUnits,
+      currency: currency,
+      locale: locale,
+    ),
+    null => format(
+      amountMinorUnits: amountMinorUnits,
+      currency: currency,
+      locale: locale,
+    ),
+  };
 
   /// Bare-number variant (no symbol, no code) for inputs and summary
   /// strips where the currency symbol is rendered separately. Uses
