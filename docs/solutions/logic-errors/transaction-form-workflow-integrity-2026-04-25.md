@@ -1,7 +1,7 @@
 ---
 title: Transaction form workflow integrity across recovery, mutation, and adaptive routing
 date: 2026-04-25
-last_updated: 2026-10-23
+last_updated: 2026-11-04
 category: logic-errors
 module: transactions
 problem_type: logic_error
@@ -65,11 +65,17 @@ The fix tightened the transaction-form workflow at the points where routing, asy
 `lib/ui/features/transactions/views/transaction_form_screen.dart`
 
 ```dart
-if (categories.isEmpty) {
-  await context.push('/settings/categories');
-  return;
+final outcome = await controller.resolveCategoryChipTap();
+if (!context.mounted) return;
+switch (outcome) {
+  // ...
+  case CategoryChipTapManageCategories():
+    await context.push('/settings/categories');
+  // ...
 }
 ```
+
+The controller's `resolveCategoryChipTap()` returns `manageCategories` when every category type is empty.
 
 Using `push` instead of `go` keeps the in-progress form on the navigation stack so returning from category management restores the draft.
 
@@ -116,7 +122,12 @@ return PopScope(
   onPopInvokedWithResult: (didPop, _) async {
     if (didPop) return;
     if (_blocksPopDuringMutation(state)) return;
-    final shouldDiscard = await _confirmDiscard(context, l10n);
+    final shouldDiscard = await showConfirmDialog(
+      context,
+      title: l10n.txDiscardConfirmTitle,
+      body: l10n.txDiscardConfirmBody,
+      confirmLabel: l10n.txDiscardAction,
+    );
     if (shouldDiscard && context.mounted) {
       context.pop();
     }
@@ -127,7 +138,10 @@ return PopScope(
 
 ```dart
 bool _blocksPopDuringMutation(TransactionFormState state) {
-  return state is TransactionFormData && (state.isSaving || state.isDeleting);
+  return state is TransactionFormData &&
+      (state.isSaving ||
+          state.isDeleting ||
+          state.submissionAction != TransactionFormSubmissionAction.none);
 }
 
 bool _canPop(TransactionFormState state) {
@@ -143,8 +157,7 @@ This closes the gap where the screen could disappear while the controller was st
 `lib/ui/features/transactions/view_models/transaction_form_controller.dart`
 
 ```dart
-final currencyChanged = s.displayCurrency?.code != currency.code;
-if (!currencyChanged) return;
+if (s.displayCurrency.code == currency.code) return;
 ```
 
 If the user re-selects the current transaction currency, the controller should do nothing instead of setting `currencyTouched`.
@@ -177,7 +190,7 @@ The pop-lock fix makes route navigation follow the same mutation contract.
 
 ## Prevention
 
-- When a form must survive a detour flow (`/settings/categories`, `/accounts/new`, etc.), prefer `push` unless replacing the form is explicitly intended.
+- When a form must survive a detour flow (`/settings/categories`, `/settings/manage-accounts/new`, etc.), prefer `push` unless replacing the form is explicitly intended.
 - Treat `isSaving` and `isDeleting` as navigation locks as well as input locks.
 - If fallback hydration crosses a currency boundary, never reuse stored minor units unless the currencies are identical.
 - Use intentionally broad date bounds for financial history unless the product has a real business limit.

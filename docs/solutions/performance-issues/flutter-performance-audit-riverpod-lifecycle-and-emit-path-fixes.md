@@ -103,7 +103,7 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
 
   Future<void> deleteTransaction(int id) async {
     // ...
-    _pendingDelete = CategorySearchPendingDelete(transaction: tx);
+    _pendingDelete = tx; // a plain `Transaction?` since #135 (was CategorySearchPendingDelete)
     _undoLink ??= ref.keepAlive(); // held only while the undo is pending
     // ...
   }
@@ -196,7 +196,7 @@ Removing `material_symbols_icons` took `flutter_assets` from 34,652 KB to 896 KB
     - "switching to another slice resets the cap to 50"
   - `daily_bar_chart_test.dart`: "hovering across the bars does not rebuild the chart" (it replaced "moving within the touched bar does not rebuild the chart" when the touched-bar state was removed).
   - `money_formatter_test.dart`: the "cached formats stay locale-specific" group.
-- **Open follow-up.** Because of `persist: true`, an Undo SnackBar stays visible after its delete has committed, and tapping it then does nothing. This predates the work above and affects both the search-detail and drill-down undo flows. Consider setting `persist: false` on undo SnackBars, or hiding them when the commit fires. Issue #86 kept the default and handled the consequences instead: a later snackbar calls `clearSnackBars()` first so it does not queue behind the persistent Undo, the action captures the provider container and messenger instead of the widget's `ref`, and a stale Undo is a no-op. See `docs/solutions/architecture-patterns/controller-command-outcomes-and-snackbar-actions-outliving-widgets.md`.
+- **Open follow-up.** Because of `persist: true`, an Undo SnackBar stays visible after its delete has committed, and tapping it then does nothing. This predates the work above and affects both the search-detail and drill-down undo flows. Consider setting `persist: false` on undo SnackBars, or hiding them when the commit fires. Issue #86 kept the default and handled the consequences instead: a later snackbar calls `clearSnackBars()` first so it does not queue behind the persistent Undo (since #135 every Undo snackbar goes through `showUndoSnackBar` in `lib/ui/core/widgets/undo_snack_bar.dart`, which clears first and still keeps the default `persist`), the action captures the provider container and messenger instead of the widget's `ref`, and a stale Undo is a no-op. See `docs/solutions/architecture-patterns/controller-command-outcomes-and-snackbar-actions-outliving-widgets.md`.
 
 ## Related Issues
 

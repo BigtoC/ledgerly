@@ -1,6 +1,7 @@
 ---
 title: Home pending recurring approval visibility, undo lifecycle, and feedback coordination
 date: 2026-05-09
+last_updated: 2026-11-04
 category: logic-errors
 module: home
 problem_type: logic_error
@@ -63,18 +64,18 @@ class PendingController extends _$PendingController {
   ...
 
   Future<void> _commitSkip(int pendingId) async {
-    _skipScheduled = null;
+    _skippingId = null;
     _composer?.notifySkipChanged();
     try {
       await ref.read(pendingTransactionRepositoryProvider).reject(pendingId);
-    } catch (error, stackTrace) {
-      _effectListener?.call(PendingSkipFailedEffect(error, stackTrace));
+    } catch (_) {
+      _effectListener?.call(const PendingSkipFailedEffect());
     }
   }
 }
 ```
 
-`keepAlive` keeps the undo timer and hidden-row bookkeeping alive while the screen is rebuilt or temporarily disposed. Clearing `_skipScheduled` before the repository call makes the row visible again immediately; if `reject()` succeeds, the repository stream removes it for real, and if `reject()` fails the row stays visible instead of getting stuck hidden.
+`keepAlive` keeps the undo timer and hidden-row bookkeeping alive while the screen is rebuilt or temporarily disposed. Clearing `_skippingId` before the repository call makes the row visible again immediately; if `reject()` succeeds, the repository stream removes it for real, and if `reject()` fails the row stays visible instead of getting stuck hidden.
 
 2. Let Home's empty-state branch render pending approvals when there is no transaction history.
 
@@ -82,20 +83,19 @@ class PendingController extends _$PendingController {
 
 ```dart
 final pendingState = ref.watch(pendingControllerProvider);
-final hasVisiblePending = switch (pendingState) {
-  AsyncData<PendingState>(value: final PendingData data) => data.items.any(
-    (item) => item.id != data.skipScheduled?.pendingId,
-  ),
+bool hasVisiblePendingOn(DateTime day) => switch (pendingState) {
+  AsyncData<PendingState>(value: final PendingData data) =>
+    data.visibleOn(day).isNotEmpty,
   _ => false,
 };
 
 AsyncData<HomeState>(value: final HomeEmpty empty) =>
-    hasVisiblePending
+    hasVisiblePendingOn(empty.selectedDay)
         ? _PendingOnlyBody(selectedDay: empty.selectedDay)
         : _EmptyState(onAdd: () => _onAddPressed(context)),
 ```
 
-This keeps pending approvals reachable even when `HomeController` has no day activity and would otherwise choose the empty state.
+This keeps pending approvals reachable even when `HomeController` has no day activity and would otherwise choose the empty state. `visibleOn(day)` (in `pending_state.dart`) is the single visibility rule that both `HomeScreen` and `PendingSection` use. It drops the row in the skip-undo window and rows dated on other days.
 
 3. Separate skip-undo feedback from approve-success feedback, and make the joined pending query explicitly reactive to archive changes.
 
@@ -105,12 +105,13 @@ This keeps pending approvals reachable even when `HomeController` has no day act
 case PendingSkipStartedEffect():
   _skipUndoVisible = true;
   messenger
-    ..clearSnackBars()
-    ..showSnackBar(...).closed.then((_) {
-      if (mounted) {
-        _skipUndoVisible = false;
-      }
-    });
+      .showUndoSnackBar(...) // clears existing snackbars first
+      .closed
+      .then((_) {
+        if (mounted) {
+          _skipUndoVisible = false;
+        }
+      });
 case PendingApproveSucceededEffect(:final ruleName):
   if (_skipUndoVisible) {
     return;
@@ -165,7 +166,7 @@ That final red test was a harness problem, not a production defect. `customState
 
 - Home now decides between `_EmptyState` and `_PendingOnlyBody` from combined UI truth: transaction history plus visible pending rows.
 - `PendingController` owns a timer-backed workflow, so `keepAlive` matches provider lifetime to the workflow rather than to the screen widget lifecycle.
-- Clearing `_skipScheduled` before `reject()` gives skip-once optimistic hiding a correct rollback path on failure.
+- Clearing `_skippingId` before `reject()` gives skip-once optimistic hiding a correct rollback path on failure.
 - Drift invalidation only works when custom queries and custom updates declare their table dependencies. `readsFrom` fixes the production query, and `updates: {db.accounts}` fixes the test to exercise the real reactivity contract.
 
 ## Prevention

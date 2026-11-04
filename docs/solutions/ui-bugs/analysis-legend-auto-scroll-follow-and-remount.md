@@ -93,7 +93,7 @@ if (_cardAtTop(position) || (position.pixels - target).abs() > 0.5) {
 `dispose` cancels `_followTimer` and removes the observer listener.
 
 **3. Re-find the pie after a period-change remount.**
-- `_frame` wraps the body in a `KeyedSubtree` keyed on the period name and anchor date. By the time the post-frame callback runs, the old State is unmounted.
+- The local `frame` helper in `_ChartsSectionState.build` wraps the body in a `KeyedSubtree` (inside a `SlideTransition`) keyed on the period name and anchor date. Before #135 this was the `_frame` method. By the time the post-frame callback runs, the old State is unmounted.
 - Capture the page's `ScrollableState`, which outlives the State.
 - After the frame, find the pie of whichever `_ChartBody` is mounted now:
 
@@ -134,9 +134,9 @@ ref.listen(
 ## Prevention
 - **Assume the extent will change after a reveal** when you reveal content next to something that loads asynchronously or animates its size. Either follow the extent for a bounded time, or start the reveal after the load.
 - **Don't let post-frame work use an old State after a remount.** If a subtree is keyed on period or anchor, post-frame work started by the old State must not use that State's keys or context. Go through an ancestor that survives the remount and re-find the new element.
-- **Size test viewports so the target can actually reach the top.** Here that is 360x560 at DPR 1:
+- **Size test viewports so the target can actually reach the top.** At the time of the fix that was 360x560 at DPR 1. Since the memo search moved into the app bar (4fc9aa5), `pumpPhone` defaults to 360x496 and the late-rows test uses 360x510:
   ```dart
-  tester.view.physicalSize = const Size(360, 560);
+  tester.view.physicalSize = const Size(360, 496);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   ```

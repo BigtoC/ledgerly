@@ -69,21 +69,23 @@ import '../../../core/utils/date_helpers.dart';
 import '../home_state.dart';
 ```
 
-Filter inside `_buildData`:
+(Paths at the time. Since the slice moved to `lib/ui/features/home/`, `pending_section.dart` imports `../view_models/home_state.dart`, and `date_helpers.dart` is imported by `view_models/pending_state.dart`, where the filter now lives.)
+
+Filter applied to the rows `_buildData` renders. It was first written inline in `_buildData`. It now lives in the `PendingDataVisibility.visibleOn` extension in `lib/ui/features/home/view_models/pending_state.dart`. `HomeScreen` calls the same extension, so both agree on whether Home has pending rows to show:
 
 ```dart
-final selectedDay = _selectedDay(ref);
-final skipId = data.skipScheduled?.pendingId;
-final visible = data.items
-    .where((item) {
-      if (item.id == skipId) return false;
-      if (selectedDay != null &&
-          !DateHelpers.isSameDay(item.date, selectedDay)) {
-        return false;
-      }
-      return true;
-    })
-    .toList(growable: false);
+// pending_section.dart, _buildData
+final visible = data.visibleOn(_selectedDay(ref));
+
+// pending_state.dart
+extension PendingDataVisibility on PendingData {
+  List<PendingTransaction> visibleOn(DateTime? day) => [
+    for (final item in items)
+      if (item.id != skippingId &&
+          (day == null || DateHelpers.isSameDay(item.date, day)))
+        item,
+  ];
+}
 ```
 
 Selector helper added to the same widget state:
@@ -116,7 +118,7 @@ DateTime? _selectedDay(WidgetRef ref) {
 
 ## Why This Works
 
-The data layer was always correct — `PendingTransactionRepository.approve` (`lib/data/repositories/pending_transaction_repository.dart:125-178`) preserved `pending.date` end-to-end through `Transaction(id: 0, ..., date: pending.date, ...)` and `TransactionRepository.save`'s `_toCompanion` (`lib/data/repositories/transaction_repository.dart:377-393`) wrote `date: Value(tx.date)` verbatim. The defect was an **information-display mismatch**: `PendingSection` was a global sliver inside a day-scoped scroll, so a today-dated pending tile rendered identically on a May-7 Home view and a May-9 Home view. The user, viewing May 7, reasonably interpreted the tile as "May 7's pending row," approved it, and got a May-9-dated transaction (the truthful pending date) which appeared on May 9's view, not May 7's.
+The data layer was always correct — `PendingTransactionRepository.approve` (`lib/data/repositories/pending_transaction_repository.dart:114-168`) preserved `pending.date` end-to-end through `Transaction(id: 0, ..., date: pending.date, ...)` and `TransactionRepository.save`'s `_toCompanion` (`lib/data/repositories/transaction_repository.dart:632-651`) wrote `date: Value(tx.date)` verbatim. The defect was an **information-display mismatch**: `PendingSection` was a global sliver inside a day-scoped scroll, so a today-dated pending tile rendered identically on a May-7 Home view and a May-9 Home view. The user, viewing May 7, reasonably interpreted the tile as "May 7's pending row," approved it, and got a May-9-dated transaction (the truthful pending date) which appeared on May 9's view, not May 7's.
 
 Filtering `data.items` by `DateHelpers.isSameDay(item.date, selectedDay)` aligns the visible tiles with the day context the user is reading them in. The date the user sees on the tile and the date that gets written to `transactions` always match the day they're standing on. The previously-shipped `pinDay(item.date)` call after approve becomes a defensive no-op (since `item.date == selectedDay` always holds when approve is reachable through the day-scoped section) and is kept for robustness against future code paths that might surface pending tiles outside the day-scoped view (e.g., a future "All pending" sheet).
 
