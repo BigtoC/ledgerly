@@ -51,8 +51,8 @@ class FirstRunSeedException implements Exception {
 
 // ---------- Seed row data ----------
 //
-// Kept as top-level constants so tests can probe them directly. The list
-// order doubles as the `sort_order` assignment — index 0 → `sortOrder 0`.
+// Categories and account types take their `sort_order` from their list
+// position (index 0 → `sortOrder 0`); currencies set it explicitly.
 
 /// 11 seeded currencies (Stream C plan §2.3 Step 1, §12 Q6).
 const List<Currency> _kSeededCurrencies = <Currency>[
@@ -135,23 +135,6 @@ const List<Currency> _kSeededCurrencies = <Currency>[
   ),
 ];
 
-/// Seeded category row template. Kept internal — callers only see the
-/// repo-side effect.
-class _SeededCategory {
-  const _SeededCategory({
-    required this.l10nKey,
-    required this.icon,
-    required this.color,
-    required this.type,
-    required this.sortOrder,
-  });
-  final String l10nKey;
-  final String icon;
-  final int color;
-  final CategoryType type;
-  final int sortOrder;
-}
-
 /// 18 seeded categories (13 expense + 5 income). Icon keys reconcile
 /// against the canonical Stream B registry (`directions_car` for
 /// transportation, `savings` for income.other — Stream C plan §2.3 Step 3
@@ -159,166 +142,131 @@ class _SeededCategory {
 /// after launch, so it sits last and the schema v7 migration appends the
 /// same row to existing installs. `category.personal` was retired in the
 /// same release; v7 deletes or archives it on existing installs.
-const List<_SeededCategory> _kSeededCategories = <_SeededCategory>[
+const _kSeededCategories = [
   // Expense categories (PRD 464–476).
-  _SeededCategory(
+  (
     l10nKey: 'category.food',
     icon: 'restaurant',
     color: CategoryPaletteIndex.red60,
     type: CategoryType.expense,
-    sortOrder: 0,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.drinks',
     icon: 'local_cafe',
     color: CategoryPaletteIndex.green40,
     type: CategoryType.expense,
-    sortOrder: 1,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.transportation',
     icon: 'directions_car',
     color: CategoryPaletteIndex.cyan70,
     type: CategoryType.expense,
-    sortOrder: 2,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.shopping',
     icon: 'shopping_bag',
     color: CategoryPaletteIndex.purple30,
     type: CategoryType.expense,
-    sortOrder: 3,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.housing',
     icon: 'home',
     color: CategoryPaletteIndex.green80,
     type: CategoryType.expense,
-    sortOrder: 4,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.entertainment',
     icon: 'movie',
     color: CategoryPaletteIndex.orange70,
     type: CategoryType.expense,
-    sortOrder: 5,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.medical',
     icon: 'medical_services',
     color: CategoryPaletteIndex.red50,
     type: CategoryType.expense,
-    sortOrder: 6,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.education',
     icon: 'school',
     color: CategoryPaletteIndex.purple30,
     type: CategoryType.expense,
-    sortOrder: 7,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.travel',
     icon: 'flight',
     color: CategoryPaletteIndex.cyan70,
     type: CategoryType.expense,
-    sortOrder: 8,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.threeC',
     icon: 'devices',
     color: CategoryPaletteIndex.blue30,
     type: CategoryType.expense,
-    sortOrder: 9,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.miscellaneous',
     icon: 'category',
     color: CategoryPaletteIndex.neutralVariant50,
     type: CategoryType.expense,
-    sortOrder: 10,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.other',
     icon: 'more_horiz',
     color: CategoryPaletteIndex.neutralVariant50,
     type: CategoryType.expense,
-    sortOrder: 11,
   ),
   // Income categories (PRD 486–490).
-  _SeededCategory(
+  (
     l10nKey: 'category.income.salary',
     icon: 'payments',
     color: CategoryPaletteIndex.yellow80,
     type: CategoryType.income,
-    sortOrder: 12,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.income.freelance',
     icon: 'work',
     color: CategoryPaletteIndex.yellow80,
     type: CategoryType.income,
-    sortOrder: 13,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.income.investment',
     icon: 'trending_up',
     color: CategoryPaletteIndex.yellow80,
     type: CategoryType.income,
-    sortOrder: 14,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.income.gift',
     icon: 'redeem',
     color: CategoryPaletteIndex.yellow80,
     type: CategoryType.income,
-    sortOrder: 15,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.income.other',
     icon: 'savings',
     color: CategoryPaletteIndex.yellow80,
     type: CategoryType.income,
-    sortOrder: 16,
   ),
   // Expense category added after launch (schema v7 backfill).
-  _SeededCategory(
+  (
     l10nKey: 'category.investment',
     icon: 'trending_up',
     color: CategoryPaletteIndex.yellow80,
     type: CategoryType.expense,
-    sortOrder: 17,
   ),
 ];
 
-/// Seeded account-type row template. Defaults the sort_order to the
-/// appearance order.
-class _SeededAccountType {
-  const _SeededAccountType({
-    required this.l10nKey,
-    required this.icon,
-    required this.color,
-    required this.sortOrder,
-  });
-  final String l10nKey;
-  final String icon;
-  final int color;
-  final int sortOrder;
-}
-
 /// 2 seeded account types (PRD 500–501).
-const List<_SeededAccountType> _kSeededAccountTypes = <_SeededAccountType>[
-  _SeededAccountType(
+const _kSeededAccountTypes = [
+  (
     l10nKey: 'accountType.cash',
     icon: 'wallet',
     color: CategoryPaletteIndex.neutralVariant70,
-    sortOrder: 0,
   ),
-  _SeededAccountType(
+  (
     l10nKey: 'accountType.investment',
     icon: 'trending_up',
     color: CategoryPaletteIndex.neutralVariant70,
-    sortOrder: 1,
   ),
 ];
 
@@ -419,13 +367,13 @@ Future<void> _seedCurrencies(CurrencyRepository currencies) async {
 }
 
 Future<void> _seedCategories(CategoryRepository categories) async {
-  for (final c in _kSeededCategories) {
+  for (final (i, c) in _kSeededCategories.indexed) {
     await categories.upsertSeeded(
       l10nKey: c.l10nKey,
       icon: c.icon,
       color: c.color,
       type: c.type,
-      sortOrder: c.sortOrder,
+      sortOrder: i,
     );
   }
 }
@@ -438,13 +386,13 @@ Future<int> _seedAccountTypes(
   Currency defaultCurrency,
 ) async {
   int? cashId;
-  for (final t in _kSeededAccountTypes) {
+  for (final (i, t) in _kSeededAccountTypes.indexed) {
     final id = await accountTypes.upsertSeeded(
       l10nKey: t.l10nKey,
       icon: t.icon,
       color: t.color,
       defaultCurrency: defaultCurrency,
-      sortOrder: t.sortOrder,
+      sortOrder: i,
     );
     if (t.l10nKey == kSeededCashAccountTypeL10nKey) {
       cashId = id;
