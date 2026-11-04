@@ -71,22 +71,7 @@ class AnalysisController extends _$AnalysisController {
     ) {
       final txs = _lastTransactions;
       if (txs == null || _activeQuery.isEmpty) return;
-      if (next.hasError) {
-        _emitter?.addError(next.error!, next.stackTrace ?? StackTrace.current);
-        return;
-      }
-
-      final cats = next.value;
-      if (cats == null) {
-        if (txs.isNotEmpty) {
-          _emitter?.add(
-            AnalysisState.loading(query: _activeQuery, previous: _lastResults),
-          );
-        }
-        return;
-      }
-
-      _emitGroupedState(txs, cats, _activeQuery);
+      _emitForCategories(txs, next);
     });
 
     ref.onDispose(() {
@@ -142,24 +127,7 @@ class AnalysisController extends _$AnalysisController {
               return;
             }
 
-            final categoriesAsync = ref.read(analysisCategoriesByIdProvider);
-            if (categoriesAsync.hasError) {
-              _emitter?.addError(
-                categoriesAsync.error!,
-                categoriesAsync.stackTrace ?? StackTrace.current,
-              );
-              return;
-            }
-
-            final categoriesById = categoriesAsync.value;
-            if (categoriesById == null) {
-              _emitter?.add(
-                AnalysisState.loading(query: query, previous: _lastResults),
-              );
-              return;
-            }
-
-            _emitGroupedState(txs, categoriesById, query);
+            _emitForCategories(txs, ref.read(analysisCategoriesByIdProvider));
           },
           onError: (Object e, StackTrace st) {
             if (gen != _generation) return;
@@ -168,15 +136,41 @@ class AnalysisController extends _$AnalysisController {
         );
   }
 
+  /// Groups [txs] once the category map has loaded; surfaces a category
+  /// error, or keeps the loading state while the map is still loading.
+  void _emitForCategories(
+    List<Transaction> txs,
+    AsyncValue<Map<int, Category>> categoriesAsync,
+  ) {
+    if (categoriesAsync.hasError) {
+      _emitter?.addError(
+        categoriesAsync.error!,
+        categoriesAsync.stackTrace ?? StackTrace.current,
+      );
+      return;
+    }
+
+    final categoriesById = categoriesAsync.value;
+    if (categoriesById == null) {
+      if (txs.isNotEmpty) {
+        _emitter?.add(
+          AnalysisState.loading(query: _activeQuery, previous: _lastResults),
+        );
+      }
+      return;
+    }
+
+    _emitGroupedState(txs, categoriesById);
+  }
+
   void _emitGroupedState(
     List<Transaction> txs,
     Map<int, Category> categoriesById,
-    String query,
   ) {
     final results = _group(txs, categoriesById);
     if (results.isEmpty) {
       _lastResults = null;
-      _emitter?.add(AnalysisState.empty(query: query));
+      _emitter?.add(AnalysisState.empty(query: _activeQuery));
       return;
     }
 
@@ -185,7 +179,7 @@ class AnalysisController extends _$AnalysisController {
       AnalysisState.results(
         categories: results,
         transactions: txs,
-        query: query,
+        query: _activeQuery,
       ),
     );
   }
