@@ -229,6 +229,9 @@ lib/
         analysis_colors.dart
       widgets/
         adaptive_shell.dart  # 600dp nav switch (NavigationBar ↔ NavigationRail)
+        adaptive_sheet.dart  # 600dp picker switch (bottom sheet ↔ constrained Dialog)
+        confirm_dialog.dart  # Cancel / confirm AlertDialog resolving to bool
+        undo_snack_bar.dart  # clear-then-show Undo snackbar for the kUndoWindow
     features/
       splash/
         view_models/
@@ -356,7 +359,6 @@ lib/
         view_models/
           recurring_rules_controller.dart
           recurring_rules_state.dart
-          recurring_rules_providers.dart
           recurring_rule_form_controller.dart
           recurring_rule_form_state.dart
         views/
@@ -378,8 +380,6 @@ lib/
           theme_mode_selector.dart
           language_selector.dart
           default_currency_tile.dart
-          default_currency_picker_sheet.dart
-          manage_categories_tile.dart
           new_version_badge.dart
         csv_export/
           view_models/

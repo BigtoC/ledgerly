@@ -34,43 +34,35 @@ class CategoryChip extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final cat = category;
-    final tileColor = hasError ? theme.colorScheme.errorContainer : null;
-
+    final Widget leading;
+    final Widget subtitle;
     if (cat == null) {
-      return ListTile(
-        leading: Icon(
-          Icons.category_outlined,
-          color: hasError ? theme.colorScheme.error : null,
-        ),
-        title: Text(l10n.txCategoryLabel),
-        subtitle: Text(
-          l10n.txCategoryEmpty,
-          style: TextStyle(color: hasError ? theme.colorScheme.error : null),
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-        horizontalTitleGap: 12,
-        visualDensity: VisualDensity.compact,
-        onTap: onTap,
-        tileColor: tileColor,
+      final errorColor = hasError ? theme.colorScheme.error : null;
+      leading = Icon(Icons.category_outlined, color: errorColor);
+      subtitle = Text(
+        l10n.txCategoryEmpty,
+        style: TextStyle(color: errorColor),
       );
-    }
-    final color = colorForIndex(cat.color);
-    final icon = iconForKey(cat.icon);
-    final typeLabel = cat.type == CategoryType.expense
-        ? l10n.transactionTypeExpense
-        : l10n.transactionTypeIncome;
-    return ListTile(
-      leading: CircleAvatar(
+    } else {
+      final color = colorForIndex(cat.color);
+      final typeLabel = cat.type == CategoryType.expense
+          ? l10n.transactionTypeExpense
+          : l10n.transactionTypeIncome;
+      leading = CircleAvatar(
         backgroundColor: color.withValues(alpha: 0.15),
-        child: Icon(icon, color: color),
-      ),
+        child: Icon(iconForKey(cat.icon), color: color),
+      );
+      subtitle = Text('${categoryDisplayName(cat, l10n)} · $typeLabel');
+    }
+    return ListTile(
+      leading: leading,
       title: Text(l10n.txCategoryLabel),
-      subtitle: Text('${categoryDisplayName(cat, l10n)} · $typeLabel'),
+      subtitle: subtitle,
       contentPadding: const EdgeInsets.symmetric(horizontal: 8),
       horizontalTitleGap: 12,
       visualDensity: VisualDensity.compact,
       onTap: onTap,
-      tileColor: tileColor,
+      tileColor: hasError ? theme.colorScheme.errorContainer : null,
     );
   }
 }

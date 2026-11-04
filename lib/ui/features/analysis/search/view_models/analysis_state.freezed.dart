@@ -126,13 +126,13 @@ return empty(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  idle,TResult Function( String query,  List<CategorySearchResult>? previous)?  loading,TResult Function( List<CategorySearchResult> categories,  List<Transaction> transactions,  String query)?  results,TResult Function( String query)?  empty,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  idle,TResult Function( String query,  List<CategorySearchResult>? previous)?  loading,TResult Function( List<CategorySearchResult> categories,  List<Transaction> transactions,  String query)?  results,TResult Function()?  empty,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case AnalysisIdle() when idle != null:
 return idle();case AnalysisLoading() when loading != null:
 return loading(_that.query,_that.previous);case AnalysisResults() when results != null:
 return results(_that.categories,_that.transactions,_that.query);case AnalysisEmpty() when empty != null:
-return empty(_that.query);case _:
+return empty();case _:
   return orElse();
 
 }
@@ -150,13 +150,13 @@ return empty(_that.query);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  idle,required TResult Function( String query,  List<CategorySearchResult>? previous)  loading,required TResult Function( List<CategorySearchResult> categories,  List<Transaction> transactions,  String query)  results,required TResult Function( String query)  empty,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  idle,required TResult Function( String query,  List<CategorySearchResult>? previous)  loading,required TResult Function( List<CategorySearchResult> categories,  List<Transaction> transactions,  String query)  results,required TResult Function()  empty,}) {final _that = this;
 switch (_that) {
 case AnalysisIdle():
 return idle();case AnalysisLoading():
 return loading(_that.query,_that.previous);case AnalysisResults():
 return results(_that.categories,_that.transactions,_that.query);case AnalysisEmpty():
-return empty(_that.query);}
+return empty();}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -170,13 +170,13 @@ return empty(_that.query);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  idle,TResult? Function( String query,  List<CategorySearchResult>? previous)?  loading,TResult? Function( List<CategorySearchResult> categories,  List<Transaction> transactions,  String query)?  results,TResult? Function( String query)?  empty,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  idle,TResult? Function( String query,  List<CategorySearchResult>? previous)?  loading,TResult? Function( List<CategorySearchResult> categories,  List<Transaction> transactions,  String query)?  results,TResult? Function()?  empty,}) {final _that = this;
 switch (_that) {
 case AnalysisIdle() when idle != null:
 return idle();case AnalysisLoading() when loading != null:
 return loading(_that.query,_that.previous);case AnalysisResults() when results != null:
 return results(_that.categories,_that.transactions,_that.query);case AnalysisEmpty() when empty != null:
-return empty(_that.query);case _:
+return empty();case _:
   return null;
 
 }
@@ -382,69 +382,33 @@ as String,
 
 
 class AnalysisEmpty implements AnalysisState {
-  const AnalysisEmpty({required this.query});
+  const AnalysisEmpty();
   
 
- final  String query;
 
-/// Create a copy of AnalysisState
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$AnalysisEmptyCopyWith<AnalysisEmpty> get copyWith => _$AnalysisEmptyCopyWithImpl<AnalysisEmpty>(this, _$identity);
+
 
 
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is AnalysisEmpty&&(identical(other.query, query) || other.query == query));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is AnalysisEmpty);
 }
 
 
 @override
-int get hashCode {
-    return Object.hash(runtimeType,query);
-}
+int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-    return 'AnalysisState.empty(query: $query)';
+    return 'AnalysisState.empty()';
 }
 
 
 }
 
-/// @nodoc
-abstract mixin class $AnalysisEmptyCopyWith<$Res> implements $AnalysisStateCopyWith<$Res> {
-  factory $AnalysisEmptyCopyWith(AnalysisEmpty value, $Res Function(AnalysisEmpty) _then) = _$AnalysisEmptyCopyWithImpl;
-@useResult
-$Res call({
- String query
-});
 
 
-
-
-}
-/// @nodoc
-class _$AnalysisEmptyCopyWithImpl<$Res>
-    implements $AnalysisEmptyCopyWith<$Res> {
-  _$AnalysisEmptyCopyWithImpl(this._self, this._then);
-
-  final AnalysisEmpty _self;
-  final $Res Function(AnalysisEmpty) _then;
-
-/// Create a copy of AnalysisState
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? query = null,}) {
-  return _then(AnalysisEmpty(
-query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
-as String,
-  ));
-}
-
-
-}
 
 /// @nodoc
 mixin _$CategorySearchResult {

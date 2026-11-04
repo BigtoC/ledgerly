@@ -9,7 +9,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -39,6 +38,7 @@ import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_provid
 import 'package:ledgerly/ui/features/analysis/views/analysis_screen.dart';
 
 import '../../../support/test_app.dart';
+import '../../../support/text_scale.dart';
 
 class _MockFxService extends Mock implements ExchangeRateService {}
 
@@ -152,18 +152,9 @@ void main() {
             container: container,
             child: MaterialApp(
               theme: theme,
-              localizationsDelegates: const [
-                AppLocalizations.delegate,
-                GlobalMaterialLocalizations.delegate,
-                GlobalWidgetsLocalizations.delegate,
-                GlobalCupertinoLocalizations.delegate,
-              ],
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
-              builder: (context, child) => MediaQuery(
-                data: MediaQuery.of(context)
-                    .copyWith(textScaler: const TextScaler.linear(2)),
-                child: child!,
-              ),
+              builder: textScaleBuilder(2),
               home: const AnalysisScreen(),
             ),
           ),

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/core/theme/analysis_colors.dart';
 import 'package:ledgerly/ui/core/theme/app_theme.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_state.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/dimension_toggle.dart';
+
+import '../../../../support/text_scale.dart';
 
 Future<void> _pump(
   WidgetTester tester, {
@@ -18,18 +19,9 @@ Future<void> _pump(
   await tester.pumpWidget(
     MaterialApp(
       theme: lightTheme,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
-        child: child!,
-      ),
+      builder: textScaleBuilder(textScale),
       home: Scaffold(
         body: DimensionChips(
           dimension: dimension,

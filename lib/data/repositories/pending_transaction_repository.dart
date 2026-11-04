@@ -5,8 +5,6 @@
 // 2026-05-08) extends this to a full UI-facing surface: `watchAll`, `approve`,
 // `reject`. Drift data classes never leave this file.
 
-import 'dart:developer' as developer;
-
 import 'package:drift/drift.dart' show Value;
 
 import '../../domain/models/currency.dart';
@@ -14,13 +12,12 @@ import '../../domain/models/pending_transaction.dart';
 import '../../domain/models/transaction.dart';
 import '../database/app_database.dart' as drift;
 import '../database/daos/pending_transaction_dao.dart';
+import 'currency_repository.dart';
+import 'repository_exceptions.dart';
 import 'transaction_repository.dart';
 
-class PendingTransactionRepositoryException implements Exception {
-  const PendingTransactionRepositoryException(this.message);
-  final String message;
-  @override
-  String toString() => 'PendingTransactionRepositoryException: $message';
+class PendingTransactionRepositoryException extends RepositoryException {
+  const PendingTransactionRepositoryException(super.message);
 }
 
 abstract class PendingTransactionRepository {
@@ -196,33 +193,12 @@ final class DriftPendingTransactionRepository
     final out = <PendingTransaction>[];
     for (final row in rows) {
       final currency = byCode[row.currency];
-      if (currency == null) {
-        developer.log(
-          'PendingTransactionRepository: dropping row ${row.id} — '
-          'currency "${row.currency}" not registered',
-          name: 'pending_transaction_repository',
-        );
-        continue;
-      }
+      if (currency == null) continue;
       final account = accountById[row.accountId];
-      if (account == null || account.isArchived) {
-        developer.log(
-          'PendingTransactionRepository: hiding row ${row.id} — '
-          'account ${row.accountId} is archived or missing',
-          name: 'pending_transaction_repository',
-        );
-        continue;
-      }
+      if (account == null || account.isArchived) continue;
       if (row.categoryId != null) {
         final category = categoryById[row.categoryId!];
-        if (category == null || category.isArchived) {
-          developer.log(
-            'PendingTransactionRepository: hiding row ${row.id} — '
-            'category ${row.categoryId} is archived or missing',
-            name: 'pending_transaction_repository',
-          );
-          continue;
-        }
+        if (category == null || category.isArchived) continue;
       }
       out.add(
         PendingTransaction(
@@ -261,17 +237,6 @@ final class DriftPendingTransactionRepository
   Future<Map<String, Currency>> _resolveCurrencies(Set<String> codes) async {
     if (codes.isEmpty) return const {};
     final rows = await _db.currencyDao.findByCodes(codes.toList());
-    return {
-      for (final row in rows)
-        row.code: Currency(
-          code: row.code,
-          decimals: row.decimals,
-          symbol: row.symbol,
-          nameL10nKey: row.nameL10nKey,
-          customName: row.customName,
-          isToken: row.isToken,
-          sortOrder: row.sortOrder,
-        ),
-    };
+    return {for (final row in rows) row.code: currencyFromRow(row)};
   }
 }

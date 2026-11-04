@@ -14,23 +14,6 @@ enum RecurringFormErrorKey {
   frequencyFieldRequired,
 }
 
-/// Save-time error surfaced on the form's banner.
-sealed class RecurringFormError {
-  const RecurringFormError();
-  const factory RecurringFormError.archivedRef(String detail) = ArchivedRefErr;
-  const factory RecurringFormError.unknown(String detail) = UnknownErr;
-}
-
-class ArchivedRefErr extends RecurringFormError {
-  const ArchivedRefErr(this.detail);
-  final String detail;
-}
-
-class UnknownErr extends RecurringFormError {
-  const UnknownErr(this.detail);
-  final String detail;
-}
-
 @freezed
 abstract class RecurringRuleFormState with _$RecurringRuleFormState {
   const factory RecurringRuleFormState({
@@ -50,20 +33,13 @@ abstract class RecurringRuleFormState with _$RecurringRuleFormState {
     @Default(false) bool isLoading,
     int? pendingItemCount,
 
-    /// Full calculator snapshot used by `AmountDisplay`. Mirrors the
-    /// controller's private `_keypad` accumulator so widgets read keypad
-    /// data through `state`, not from a notifier getter.
+    /// Full calculator snapshot used by `AmountDisplay`.
     @Default(KeypadState.initial()) KeypadState keypad,
-
-    /// Bumped on every keypad mutation (digit, decimal, backspace,
-    /// operator) so the screen rebuilds even when `amountMinorUnits`
-    /// itself didn't change (decimal-start, operator press).
-    @Default(0) int keypadRevision,
     RecurringFormErrorKey? nameError,
     RecurringFormErrorKey? categoryError,
     RecurringFormErrorKey? accountError,
     RecurringFormErrorKey? frequencyFieldError,
-    RecurringFormError? formError,
+    String? formError,
   }) = _RecurringRuleFormState;
 
   const RecurringRuleFormState._();

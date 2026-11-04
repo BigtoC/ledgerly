@@ -52,7 +52,9 @@ class DateHelpers {
 
   /// Whole calendar days from [from] to [to] using each argument's
   /// local midnight. Zero when [from] and [to] share a day.
-  /// Positive when [to] is later. Negative when [to] is earlier.
+  /// Positive when [to] is later. Negative when [to] is earlier, never
+  /// clamped: the splash counter (PRD.md 510-552) shows a future start date
+  /// as `-N`.
   /// **DST-safe:** operates on `startOfDay` differences via UTC
   /// milliseconds with rounding, so clocks that jump forward / backward
   /// do not shift the count.
@@ -67,17 +69,6 @@ class DateHelpers {
     return (diffMs / msPerDay).round();
   }
 
-  /// Splash day counter (PRD.md 510-552). Whole days elapsed since
-  /// [startDate] up to [now]. Returns 0 when `startDate` is today.
-  /// Returns a **negative** integer when `startDate` is in the future
-  /// (the UI is expected to display it as `-N`; the counter does not
-  /// clamp to zero).
-  ///
-  /// Always normalizes to local-midnight of each argument before
-  /// subtracting (delegates to [daysBetween]).
-  static int daysSince({required DateTime startDate, required DateTime now}) =>
-      daysBetween(startDate, now);
-
   /// Locale-aware "long-ish" date for splash and settings display
   /// (e.g. `Apr 21, 2026` / `2026年4月21日`). Matches PRD.md 525 / 549
   /// "rainbow-gradient text below showing the start date".
@@ -91,7 +82,7 @@ class DateHelpers {
       DateFormat.MMMEd(locale).format(date);
 
   /// Substitutes `{date}` (→ `formatDisplayDate(startDate, locale)`) and
-  /// `{days}` (→ `daysSince(...)` with locale-aware grouping via
+  /// `{days}` (→ `daysBetween(startDate, now)` with locale-aware grouping via
   /// `NumberFormat.decimalPattern(locale)`) in the splash display template;
   /// unknown `{placeholder}` tokens pass through unchanged. Returns the
   /// resolved text split into segments so the widget can style `{date}`
@@ -105,7 +96,7 @@ class DateHelpers {
     required String locale,
   }) {
     if (template.isEmpty) return const <SplashTextSegment>[];
-    final days = daysSince(startDate: startDate, now: now);
+    final days = daysBetween(startDate, now);
     final daysStr = NumberFormat.decimalPattern(locale).format(days);
     final dateStr = formatDisplayDate(startDate, locale);
 

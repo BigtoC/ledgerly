@@ -241,11 +241,6 @@ void main() {
         final got = _categoryEntry(match, entry.key);
         expect(got.rowCount, entry.value.$1, reason: entry.key);
         expect(got.resolution, entry.value.$2, reason: entry.key);
-        expect(
-          got.isNew,
-          entry.value.$2 is CreateCategoryResolution,
-          reason: entry.key,
-        );
       }
     });
 
@@ -338,7 +333,6 @@ void main() {
       );
       expect(zh.rowCount, 6);
       expect(zh.salaryRowCount, 3);
-      expect(zh.isNew, isFalse);
 
       final en = _categoryEntry(match, 'Income');
       expect(en.resolution, zh.resolution);

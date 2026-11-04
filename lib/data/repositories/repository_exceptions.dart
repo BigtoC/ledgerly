@@ -13,8 +13,8 @@
 //   - `AccountInUseException`             — Account (G6 archive-instead)
 //
 // All exceptions are `const`-constructible so callers can materialize them
-// at compile time. `toString()` is `'<runtimeType>: <message>'`, matching
-// the `sealed class RepositoryException` template in Stream B plan §1.4.
+// at compile time. `toString()` is `'<runtimeType>: <message>'`, inherited
+// from `RepositoryException`, which every repository exception extends.
 
 /// Base for every typed repository exception. Never thrown directly —
 /// subclasses carry the specific failure.

@@ -5,11 +5,11 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../../../../core/constants.dart';
 import '../../../../../core/utils/money_formatter.dart';
 import '../../../../../domain/models/category.dart';
 import '../../../../../domain/models/transaction.dart';
 import '../../../../../l10n/app_localizations.dart';
+import '../../../../core/widgets/undo_snack_bar.dart';
 import '../../../categories/views/category_display.dart';
 import '../view_models/analysis_providers.dart';
 import '../view_models/category_search_detail_controller.dart';
@@ -40,7 +40,7 @@ class CategorySearchDetailScreen extends ConsumerStatefulWidget {
 
 class _CategorySearchDetailScreenState
     extends ConsumerState<CategorySearchDetailScreen> {
-  CategorySearchPendingDelete? _lastShownPending;
+  Transaction? _lastShownPending;
   late final CategorySearchDetailController _controller;
 
   CategorySearchDetailControllerProvider get _provider =>
@@ -101,7 +101,6 @@ class _CategorySearchDetailScreenState
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => Center(child: Text(l10n.analysisErrorMessage)),
           data: (s) => switch (s) {
-            DetailLoading() => const Center(child: CircularProgressIndicator()),
             DetailEmpty() => Center(child: Text(l10n.analysisNoResults)),
             DetailData(:final days) when days.isEmpty => Center(
               child: Text(l10n.analysisNoResults),
@@ -190,7 +189,8 @@ class _CategorySearchDetailScreenState
                                       category: categoriesById[tx.categoryId],
                                       account: accountsById[tx.accountId],
                                       locale: locale,
-                                      onTap: () => _onEditRow(tx.id),
+                                      onTap: () =>
+                                          context.push('/home/edit/${tx.id}'),
                                       onDelete: () =>
                                           _controller.deleteTransaction(tx.id),
                                     ),
@@ -207,41 +207,22 @@ class _CategorySearchDetailScreenState
     );
   }
 
-  Future<void> _onEditRow(int id) async {
-    // Reuse the global edit-transaction modal route; it's pushed onto the
-    // root navigator so it overlays the analysis branch correctly.
-    await context.push<Transaction>('/home/edit/$id');
-    // No follow-up action — the underlying memo stream re-emits if the
-    // transaction was edited (or not, if the memo no longer matches the
-    // active query, in which case the row drops out naturally).
-  }
-
-  void _maybeShowUndoSnackbar(
-    BuildContext context,
-    CategorySearchPendingDelete? pending,
-  ) {
+  void _maybeShowUndoSnackbar(BuildContext context, Transaction? pending) {
     final l10n = AppLocalizations.of(context);
     if (pending == null) {
       _lastShownPending = null;
       return;
     }
-    if (_lastShownPending?.transaction.id == pending.transaction.id) return;
+    if (_lastShownPending?.id == pending.id) return;
     _lastShownPending = pending;
     final messenger = ScaffoldMessenger.maybeOf(context);
-    messenger
-      ?..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(l10n.homeDeleteUndoSnackbar),
-          duration: kUndoWindow,
-          action: SnackBarAction(
-            label: l10n.commonUndo,
-            onPressed: () {
-              _controller.undoDelete();
-            },
-          ),
-        ),
-      );
+    messenger?.showUndoSnackBar(
+      message: l10n.homeDeleteUndoSnackbar,
+      undoLabel: l10n.commonUndo,
+      onUndo: () {
+        _controller.undoDelete();
+      },
+    );
   }
 
   void _onEffect(CategorySearchDetailEffect effect) {

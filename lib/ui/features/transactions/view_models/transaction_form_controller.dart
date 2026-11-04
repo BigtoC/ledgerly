@@ -36,6 +36,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../app/providers/default_currency_provider.dart';
 import '../../../../app/providers/repository_providers.dart';
+import '../../../../core/utils/date_helpers.dart';
 import '../../../../data/repositories/category_repository.dart';
 import '../../../../domain/models/account.dart';
 import '../../../../domain/models/category.dart';
@@ -69,22 +70,32 @@ class TransactionFormController extends _$TransactionFormController {
   /// is mirrored into `TransactionFormState.data.keypad` so widgets never read
   /// public properties from the notifier itself.
   KeypadState _keypad = const KeypadState.initial();
-  int _keypadRevision = 0;
-  TransactionFormMode? _lastRequestedMode;
 
-  /// The current form mode — exposed read-only to the screen so it can
-  /// derive its title and CTA set without parsing route extras itself.
+  /// The current form mode, mirrored into `state.formMode` on every emit.
   TransactionFormMode _formMode = const AddTransactionMode();
 
   @override
   TransactionFormState build() {
-    // Hydration is explicit (Wave 2 §10): the screen calls one of the
-    // three `hydrateFor*` entry points after reading route extras / path
-    // params. `build` only sets up the loading placeholder.
+    // Hydration is explicit (Wave 2 §10): the screen calls `hydrate` with
+    // the mode the router built. `build` only sets up the loading
+    // placeholder.
     return TransactionFormState.loading(formMode: _formMode);
   }
 
   // ---------- Hydration ----------
+
+  /// Runs the hydration entry point for [mode].
+  Future<void> hydrate(TransactionFormMode mode) => switch (mode) {
+    AddTransactionMode(:final initialDate) => hydrateForAdd(
+      initialDate: initialDate,
+    ),
+    DuplicateTransactionMode(:final sourceTransactionId) => hydrateForDuplicate(
+      sourceTransactionId,
+    ),
+    EditTransactionMode(:final transactionId) => hydrateForEdit(transactionId),
+    EditShoppingListDraftMode(:final shoppingListItemId) =>
+      hydrateForShoppingListDraft(shoppingListItemId),
+  };
 
   /// Hydrate for the Add flow. When [initialDate] is supplied (e.g.,
   /// from Home's FAB carrying the currently selected day) the form's
@@ -93,7 +104,6 @@ class TransactionFormController extends _$TransactionFormController {
   /// Omitting [initialDate] preserves the prior default of today.
   Future<void> hydrateForAdd({DateTime? initialDate}) async {
     _formMode = AddTransactionMode(initialDate: initialDate);
-    _lastRequestedMode = AddTransactionMode(initialDate: initialDate);
     try {
       state = TransactionFormState.loading(formMode: _formMode);
       final account = await _resolveDefaultAccount();
@@ -106,7 +116,6 @@ class TransactionFormController extends _$TransactionFormController {
         return;
       }
       _keypad = const KeypadState.initial();
-      _keypadRevision = 0;
       state = TransactionFormState.data(
         formMode: _formMode,
         amountMinorUnits: 0,
@@ -115,16 +124,8 @@ class TransactionFormController extends _$TransactionFormController {
         displayCurrency: account.currency,
         currencyTouched: false,
         selectedCategory: null,
-        date: initialDate == null
-            ? _today()
-            : DateTime(initialDate.year, initialDate.month, initialDate.day),
+        date: DateHelpers.startOfDay(initialDate ?? DateTime.now()),
         memo: '',
-        isDirty: false,
-        isSaving: false,
-        isDeleting: false,
-        editingId: null,
-        duplicateSourceId: null,
-        originalCreatedAt: null,
       );
     } catch (e, st) {
       if (ref.mounted) {
@@ -135,9 +136,6 @@ class TransactionFormController extends _$TransactionFormController {
 
   Future<void> hydrateForDuplicate(int sourceId) async {
     _formMode = DuplicateTransactionMode(sourceTransactionId: sourceId);
-    _lastRequestedMode = DuplicateTransactionMode(
-      sourceTransactionId: sourceId,
-    );
     try {
       state = TransactionFormState.loading(formMode: _formMode);
       final txRepo = ref.read(transactionRepositoryProvider);
@@ -172,7 +170,6 @@ class TransactionFormController extends _$TransactionFormController {
         source: source,
         account: account,
         categoryRepo: categoryRepo,
-        duplicateSourceId: sourceId,
       );
     } catch (e, st) {
       if (ref.mounted) {
@@ -183,7 +180,6 @@ class TransactionFormController extends _$TransactionFormController {
 
   Future<void> hydrateForEdit(int id) async {
     _formMode = EditTransactionMode(transactionId: id);
-    _lastRequestedMode = EditTransactionMode(transactionId: id);
     try {
       state = TransactionFormState.loading(formMode: _formMode);
       final txRepo = ref.read(transactionRepositoryProvider);
@@ -214,7 +210,6 @@ class TransactionFormController extends _$TransactionFormController {
         existing.amountFormula,
         decimals: existing.currency.decimals,
       );
-      _keypadRevision = 0;
       state = TransactionFormState.data(
         formMode: _formMode,
         amountMinorUnits: existing.amountMinorUnits,
@@ -225,11 +220,7 @@ class TransactionFormController extends _$TransactionFormController {
         selectedCategory: category,
         date: existing.date,
         memo: existing.memo ?? '',
-        isDirty: false,
-        isSaving: false,
-        isDeleting: false,
         editingId: id,
-        duplicateSourceId: null,
         originalCreatedAt: existing.createdAt,
       );
     } catch (e, st) {
@@ -249,9 +240,6 @@ class TransactionFormController extends _$TransactionFormController {
   ///     seeds `displayCurrency` from the selected account.
   Future<void> hydrateForShoppingListDraft(int shoppingListItemId) async {
     _formMode = EditShoppingListDraftMode(
-      shoppingListItemId: shoppingListItemId,
-    );
-    _lastRequestedMode = EditShoppingListDraftMode(
       shoppingListItemId: shoppingListItemId,
     );
     try {
@@ -304,7 +292,6 @@ class TransactionFormController extends _$TransactionFormController {
               decimals: displayCurrency.decimals,
             )
           : const KeypadState.initial();
-      _keypadRevision = 0;
 
       state = TransactionFormState.data(
         formMode: _formMode,
@@ -316,15 +303,7 @@ class TransactionFormController extends _$TransactionFormController {
         selectedCategory: category,
         date: draft.draftDate,
         memo: draft.memo ?? '',
-        isDirty: false,
-        isSaving: false,
-        isDeleting: false,
-        editingId: null,
-        duplicateSourceId: null,
-        originalCreatedAt: null,
         shoppingListItemId: shoppingListItemId,
-        selectedAccountIsArchived: account.isArchived,
-        selectedCategoryIsArchived: category?.isArchived ?? false,
       );
     } catch (e, st) {
       if (ref.mounted) {
@@ -338,7 +317,7 @@ class TransactionFormController extends _$TransactionFormController {
   void appendDigit(int digit) {
     final s = state;
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
-    final decimals = s.displayCurrency?.decimals ?? 2;
+    final decimals = s.displayCurrency.decimals;
     _keypad = _keypad.push(digit, decimals: decimals);
     state = _copyWithKeypad(s);
   }
@@ -346,18 +325,18 @@ class TransactionFormController extends _$TransactionFormController {
   void appendDecimal() {
     final s = state;
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
-    final decimals = s.displayCurrency?.decimals ?? 2;
+    final decimals = s.displayCurrency.decimals;
     _keypad = _keypad.pushDecimal(decimals: decimals);
     // amountMinorUnits doesn't change on the decimal press itself, but
-    // the visible display string does — bump isDirty and keypadRevision so
-    // Riverpod rebuilds and the discard dialog fires if the user abandons.
+    // the visible display string does — bump isDirty so the discard
+    // dialog fires if the user abandons.
     state = _copyWithKeypad(s);
   }
 
   void backspace() {
     final s = state;
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
-    final decimals = s.displayCurrency?.decimals ?? 2;
+    final decimals = s.displayCurrency.decimals;
     final next = _keypad.pop(decimals: decimals);
     if (next == _keypad) return;
     _keypad = next;
@@ -376,7 +355,7 @@ class TransactionFormController extends _$TransactionFormController {
   void applyOperator(CalcOperator op) {
     final s = state;
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
-    final decimals = s.displayCurrency?.decimals ?? 2;
+    final decimals = s.displayCurrency.decimals;
     final next = _keypad.pushOperator(op, decimals: decimals);
     if (next == _keypad) return;
     _keypad = next;
@@ -394,7 +373,7 @@ class TransactionFormController extends _$TransactionFormController {
   /// about to be persisted. Returns [s] unchanged when no expression is
   /// pending.
   TransactionFormData _finishPendingExpression(TransactionFormData s) {
-    final decimals = s.displayCurrency?.decimals ?? 2;
+    final decimals = s.displayCurrency.decimals;
     final next = _keypad.equals(decimals: decimals);
     if (next == _keypad) return s;
     _keypad = next;
@@ -402,21 +381,20 @@ class TransactionFormController extends _$TransactionFormController {
   }
 
   /// Creates a `copyWith` snapshot that mirrors the current keypad
-  /// state into `TransactionFormData`, always incrementing
-  /// `keypadRevision` so Riverpod rebuilds even when `amountMinorUnits`
-  /// did not change (e.g., operator tap, decimal-start while evaluating).
+  /// state into `TransactionFormData`. `KeypadState` has value equality,
+  /// so expression-only transitions (operator tap, decimal-start while
+  /// evaluating) still emit a new state even when `amountMinorUnits` did
+  /// not change.
   ///
   /// `amountMinorUnits` mirrors the value `=` would produce, not the
   /// operand being typed: mid-expression (`1 + 2`) the form already holds
   /// 3, so validation and every submit path see the finished result.
   TransactionFormData _copyWithKeypad(TransactionFormData s) {
-    _keypadRevision += 1;
-    final decimals = s.displayCurrency?.decimals ?? 2;
+    final decimals = s.displayCurrency.decimals;
     return s.copyWith(
       amountMinorUnits: _keypad.equals(decimals: decimals).amountMinorUnits,
       keypad: _keypad,
       isDirty: true,
-      keypadRevision: _keypadRevision,
     );
   }
 
@@ -426,11 +404,7 @@ class TransactionFormController extends _$TransactionFormController {
     final s = state;
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
     if (s.submissionAction != TransactionFormSubmissionAction.none) return;
-    state = s.copyWith(
-      selectedCategory: category,
-      isDirty: true,
-      selectedCategoryIsArchived: category.isArchived,
-    );
+    state = s.copyWith(selectedCategory: category, isDirty: true);
   }
 
   /// Picks an account. When `currencyTouched` is false, the account's
@@ -453,16 +427,12 @@ class TransactionFormController extends _$TransactionFormController {
     // If the user has manually selected a currency, account changes do not
     // re-seed displayCurrency — only selectedAccount changes.
     if (s.currencyTouched) {
-      state = s.copyWith(
-        selectedAccount: account,
-        isDirty: true,
-        selectedAccountIsArchived: account.isArchived,
-      );
+      state = s.copyWith(selectedAccount: account, isDirty: true);
       return;
     }
 
     final newCurrency = account.currency;
-    final currencyChanged = s.displayCurrency?.code != newCurrency.code;
+    final currencyChanged = s.displayCurrency.code != newCurrency.code;
     final hasDestructiveInput =
         s.amountMinorUnits > 0 || _keypad.hasVisibleInput;
     if (currencyChanged &&
@@ -475,18 +445,13 @@ class TransactionFormController extends _$TransactionFormController {
     if (currencyChanged) {
       _keypad = const KeypadState.initial();
       state = _copyWithKeypad(
-        s.copyWith(
-          selectedAccount: account,
-          displayCurrency: newCurrency,
-          selectedAccountIsArchived: account.isArchived,
-        ),
+        s.copyWith(selectedAccount: account, displayCurrency: newCurrency),
       );
     } else {
       state = s.copyWith(
         selectedAccount: account,
         displayCurrency: newCurrency,
         isDirty: true,
-        selectedAccountIsArchived: account.isArchived,
       );
     }
   }
@@ -500,7 +465,7 @@ class TransactionFormController extends _$TransactionFormController {
   void selectCurrency(Currency currency, {bool clearAmountOnChange = false}) {
     final s = state;
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
-    if (s.displayCurrency?.code == currency.code) return;
+    if (s.displayCurrency.code == currency.code) return;
     final hasDestructiveInput =
         s.amountMinorUnits > 0 || _keypad.hasVisibleInput;
     if (hasDestructiveInput && !clearAmountOnChange) {
@@ -526,7 +491,7 @@ class TransactionFormController extends _$TransactionFormController {
   void setDate(DateTime date) {
     final s = state;
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
-    final normalized = DateTime(date.year, date.month, date.day);
+    final normalized = DateHelpers.startOfDay(date);
     if (normalized.isAtSameMomentAs(s.date)) return;
     state = s.copyWith(date: normalized, isDirty: true);
   }
@@ -565,11 +530,11 @@ class TransactionFormController extends _$TransactionFormController {
       final tx = Transaction(
         id: s.editingId ?? 0,
         amountMinorUnits: s.amountMinorUnits,
-        currency: s.displayCurrency!,
+        currency: s.displayCurrency,
         categoryId: s.selectedCategory!.id,
-        accountId: s.selectedAccount!.id,
+        accountId: s.selectedAccount.id,
         memo: s.memo.isEmpty ? null : s.memo,
-        amountFormula: _keypad.formula(decimals: s.displayCurrency!.decimals),
+        amountFormula: _keypad.formula(decimals: s.displayCurrency.decimals),
         date: s.date,
         createdAt: s.originalCreatedAt ?? s.date,
         updatedAt: s.date,
@@ -670,7 +635,7 @@ class TransactionFormController extends _$TransactionFormController {
       );
       final draftAmount = s.amountMinorUnits > 0 ? s.amountMinorUnits : null;
       final draftCurrency = s.amountMinorUnits > 0
-          ? s.displayCurrency?.code
+          ? s.displayCurrency.code
           : null;
 
       final ShoppingListEditResult result;
@@ -679,7 +644,7 @@ class TransactionFormController extends _$TransactionFormController {
         final updatedItem = ShoppingListItem(
           id: s.shoppingListItemId!,
           categoryId: s.selectedCategory!.id,
-          accountId: s.selectedAccount!.id,
+          accountId: s.selectedAccount.id,
           memo: s.memo.isEmpty ? null : s.memo,
           draftAmountMinorUnits: draftAmount,
           draftCurrencyCode: draftCurrency,
@@ -694,7 +659,7 @@ class TransactionFormController extends _$TransactionFormController {
         // Add mode: insert a new draft row.
         await slRepo.insert(
           categoryId: s.selectedCategory!.id,
-          accountId: s.selectedAccount!.id,
+          accountId: s.selectedAccount.id,
           memo: s.memo.isEmpty ? null : s.memo,
           draftAmountMinorUnits: draftAmount,
           draftCurrencyCode: draftCurrency,
@@ -750,12 +715,12 @@ class TransactionFormController extends _$TransactionFormController {
       await slRepo.convertToTransaction(
         shoppingListItemId: itemId,
         categoryId: s.selectedCategory!.id,
-        accountId: s.selectedAccount!.id,
-        currencyCode: s.displayCurrency!.code,
+        accountId: s.selectedAccount.id,
+        currencyCode: s.displayCurrency.code,
         amountMinorUnits: s.amountMinorUnits,
         date: s.date,
         memo: s.memo.isEmpty ? null : s.memo,
-        amountFormula: _keypad.formula(decimals: s.displayCurrency!.decimals),
+        amountFormula: _keypad.formula(decimals: s.displayCurrency.decimals),
       );
       if (ref.mounted) {
         state = s.copyWith(
@@ -815,20 +780,7 @@ class TransactionFormController extends _$TransactionFormController {
 
   /// Re-runs the last requested hydration mode after the user returns from
   /// dependency-recovery flows like `/settings/manage-accounts/new`.
-  Future<void> retryHydration() async {
-    final mode = _lastRequestedMode;
-    if (mode == null) return;
-    switch (mode) {
-      case AddTransactionMode():
-        await hydrateForAdd(initialDate: mode.initialDate);
-      case DuplicateTransactionMode():
-        await hydrateForDuplicate(mode.sourceTransactionId);
-      case EditTransactionMode():
-        await hydrateForEdit(mode.transactionId);
-      case EditShoppingListDraftMode():
-        await hydrateForShoppingListDraft(mode.shoppingListItemId);
-    }
-  }
+  Future<void> retryHydration() => hydrate(_formMode);
 
   // ---------- Internals ----------
 
@@ -852,7 +804,6 @@ class TransactionFormController extends _$TransactionFormController {
     required Transaction source,
     required Account account,
     required CategoryRepository categoryRepo,
-    required int duplicateSourceId,
   }) async {
     // Resolve category against the live row so an archived source
     // category still renders historically (risk #8).
@@ -867,7 +818,6 @@ class TransactionFormController extends _$TransactionFormController {
             decimals: account.currency.decimals,
           )
         : const KeypadState.initial();
-    _keypadRevision = 0;
     // Wave 2 risk #7 — duplicate prefill must default `date` to today,
     // not carry the source's date.
     // currencyTouched starts false (same as Add): currency seeds from
@@ -881,14 +831,8 @@ class TransactionFormController extends _$TransactionFormController {
       displayCurrency: account.currency,
       currencyTouched: false,
       selectedCategory: category,
-      date: _today(),
+      date: DateHelpers.startOfDay(DateTime.now()),
       memo: source.memo ?? '',
-      isDirty: false,
-      isSaving: false,
-      isDeleting: false,
-      editingId: null,
-      duplicateSourceId: duplicateSourceId,
-      originalCreatedAt: null,
     );
   }
 
@@ -909,10 +853,5 @@ class TransactionFormController extends _$TransactionFormController {
       if (keypad.amountMinorUnits == amountMinorUnits) return keypad;
     }
     return KeypadState.fromAmount(amountMinorUnits, decimals: decimals);
-  }
-
-  static DateTime _today() {
-    final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day);
   }
 }

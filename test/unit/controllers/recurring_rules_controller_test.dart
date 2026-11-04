@@ -108,7 +108,6 @@ void main() {
       final state = await waitFor(container, (s) => s is RecurringRulesData);
       final data = state as RecurringRulesData;
       expect(data.rules, hasLength(1));
-      expect(data.pendingDelete, isNull);
     });
 
     test('RRC02: loading → empty when stream emits empty list', () async {
@@ -251,15 +250,13 @@ void main() {
             .deleteRule(1);
         expect(outcome, const DeleteRecurringRuleOutcome.pending());
 
-        final state = await waitFor(
+        await waitFor(
           container,
           (s) =>
               s is RecurringRulesData &&
-              s.pendingDelete != null &&
               s.rules.length == 1 &&
               s.rules.first.id == 2,
         );
-        expect((state as RecurringRulesData).pendingDelete?.ruleId, 1);
         verifyNever(() => repo.archive(any()));
       },
     );
@@ -283,7 +280,7 @@ void main() {
         notifier.deleteRule(1);
         await waitFor(
           container,
-          (s) => s is RecurringRulesData && s.pendingDelete != null,
+          (s) => s is RecurringRulesData && s.rules.length == 1,
         );
 
         notifier.undoDelete(1);
@@ -292,10 +289,7 @@ void main() {
         // The hidden row reappears; repo.archive must not have run.
         final restored = await waitFor(
           container,
-          (s) =>
-              s is RecurringRulesData &&
-              s.pendingDelete == null &&
-              s.rules.length == 2,
+          (s) => s is RecurringRulesData && s.rules.length == 2,
         );
         expect(restored, isA<RecurringRulesData>());
         verifyNever(() => repo.archive(any()));
@@ -329,7 +323,6 @@ void main() {
           final state =
               container.read(recurringRulesControllerProvider).value!
                   as RecurringRulesData;
-          expect(state.pendingDelete?.ruleId, 1);
           expect(state.rules.map((r) => r.id), [2]);
 
           async.elapse(kUndoWindow + const Duration(seconds: 1));
@@ -384,7 +377,7 @@ void main() {
       await notifier.deleteRule(1);
       await waitFor(
         container,
-        (s) => s is RecurringRulesData && s.pendingDelete?.ruleId == 1,
+        (s) => s is RecurringRulesData && !s.rules.any((r) => r.id == 1),
       );
 
       final outcome = await notifier.deleteRule(2);
@@ -399,7 +392,6 @@ void main() {
         (s) => s is RecurringRulesData && s.rules.any((r) => r.id == 1),
       ) as RecurringRulesData;
       expect(after.rules.map((r) => r.id), [1, 2]);
-      expect(after.pendingDelete, isNull);
     });
 
     test('RRC09b: a delete still committing the prior rule when the screen '
@@ -473,7 +465,6 @@ void main() {
               container.read(recurringRulesControllerProvider).value!
                   as RecurringRulesData;
           expect(state.rules.map((r) => r.id), [1]);
-          expect(state.pendingDelete, isNull);
         });
       },
     );

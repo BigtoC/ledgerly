@@ -17,15 +17,6 @@ import '_harness/test_app_database.dart';
 // Raw-SQL fixture helpers
 // ---------------------------------------------------------------------------
 
-Future<void> _seedCurrencyUsd(AppDatabase db) async {
-  await db.customStatement(
-    'INSERT OR IGNORE INTO currencies '
-    '(code, decimals, symbol, name_l10n_key, is_token, sort_order) '
-    'VALUES (?, ?, ?, ?, 0, ?)',
-    <Object?>['USD', 2, r'$', 'currency.usd', 1],
-  );
-}
-
 Future<int> _insertCategoryRaw(
   AppDatabase db, {
   String l10nKey = 'category.food',
@@ -134,7 +125,7 @@ void main() {
     txRepo = DriftTransactionRepository(db);
     repo = DriftShoppingListRepository(db, txRepo);
 
-    await _seedCurrencyUsd(db);
+    await seedUsdCurrencyRaw(db);
     expenseCategoryId = await _insertCategoryRaw(
       db,
       l10nKey: 'category.food',
@@ -203,6 +194,19 @@ void main() {
         accountId: accountId,
         draftAmountMinorUnits: 0,
         draftCurrencyCode: 'USD',
+        draftDate: DateTime.utc(2026, 6, 1),
+      );
+
+      expect(item.draftAmountMinorUnits, isNull);
+      expect(item.draftCurrencyCode, isNull);
+    });
+
+    test('insert accepts zero amount with no currency as null amount/null currency', () async {
+      final item = await repo.insert(
+        categoryId: expenseCategoryId,
+        accountId: accountId,
+        draftAmountMinorUnits: 0,
+        draftCurrencyCode: null,
         draftDate: DateTime.utc(2026, 6, 1),
       );
 

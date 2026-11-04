@@ -11,14 +11,14 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../../../core/constants.dart';
 import '../../../../core/utils/color_palette.dart';
 import '../../../../core/utils/icon_registry.dart';
 import '../../../../domain/models/category.dart';
 import '../../../../domain/models/recurring_rule.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../core/widgets/undo_snack_bar.dart';
+import '../../home/view_models/home_providers.dart';
 import '../view_models/recurring_rules_controller.dart';
-import '../view_models/recurring_rules_providers.dart';
 import '../view_models/recurring_rules_state.dart';
 
 @Dependencies([RecurringRulesController])
@@ -108,8 +108,7 @@ class _RuleList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final controller = ref.read(recurringRulesControllerProvider.notifier);
-    final categories =
-        ref.watch(recurringCategoriesByIdProvider).value ?? const {};
+    final categories = ref.watch(homeCategoriesByIdProvider).value ?? const {};
     return ListView.builder(
       itemCount: rules.length,
       itemBuilder: (ctx, i) {
@@ -161,20 +160,11 @@ class _RuleList extends ConsumerWidget {
             if (!ctx.mounted) return;
             switch (outcome) {
               case DeleteRecurringRulePending():
-                // Clear first so an older Undo snackbar cannot outlive the
-                // delete it belongs to.
-                ScaffoldMessenger.of(ctx)
-                  ..clearSnackBars()
-                  ..showSnackBar(
-                    SnackBar(
-                      content: Text(l10n.recurringDeletedSnack),
-                      action: SnackBarAction(
-                        label: l10n.commonUndo,
-                        onPressed: () => controller.undoDelete(rule.id),
-                      ),
-                      duration: kUndoWindow,
-                    ),
-                  );
+                ScaffoldMessenger.of(ctx).showUndoSnackBar(
+                  message: l10n.recurringDeletedSnack,
+                  undoLabel: l10n.commonUndo,
+                  onUndo: () => controller.undoDelete(rule.id),
+                );
               case DeleteRecurringRuleNotStarted():
                 ScaffoldMessenger.of(ctx)
                   ..clearSnackBars()

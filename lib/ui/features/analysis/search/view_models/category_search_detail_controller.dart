@@ -49,7 +49,7 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
   StreamController<CategorySearchDetailState>? _emitter;
   StreamSubscription<List<Transaction>>? _subscription;
   Timer? _undoTimer;
-  CategorySearchPendingDelete? _pendingDelete;
+  Transaction? _pendingDelete;
   KeepAliveLink? _undoLink;
   final Set<int> _committedDeleteIds = <int>{};
   List<Transaction>? _lastTransactions;
@@ -102,20 +102,14 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
     }
 
     // Synchronous pre-fill from the parent's cache so the detail page
-    // renders the row instantly without a frame of `DetailLoading` while
+    // renders the row instantly without a loading frame while
     // Drift fetches the same data we already have in memory. Drift's
     // first emission on the live subscription below replaces it.
     if (ref.exists(analysisControllerProvider)) {
       final settled = ref.read(analysisControllerProvider).value;
       if (settled is AnalysisResults && settled.query == trimmedQuery) {
         _lastTransactions = settled.transactions;
-        controller.add(
-          _buildState(
-            all: settled.transactions,
-            categoryId: categoryId,
-            currencyCode: trimmedCurrencyCode,
-          ),
-        );
+        _emitFromCache();
       }
     }
 
@@ -130,13 +124,7 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
         .listen(
           (txs) {
             _lastTransactions = txs;
-            _emitter?.add(
-              _buildState(
-                all: txs,
-                categoryId: categoryId,
-                currencyCode: trimmedCurrencyCode,
-              ),
-            );
+            _emitFromCache();
           },
           onError: (Object e, StackTrace st) {
             _emitter?.addError(e, st);
@@ -157,21 +145,21 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
       _undoTimer?.cancel();
       _undoTimer = null;
       final prior = _pendingDelete!;
-      final committed = await _commitDelete(prior.transaction.id);
+      final committed = await _commitDelete(prior.id);
       if (!committed) return;
     }
 
     final tx = _findTransaction(id);
     if (tx == null) return;
 
-    _pendingDelete = CategorySearchPendingDelete(transaction: tx);
+    _pendingDelete = tx;
     _undoLink ??= ref.keepAlive();
     _emitFromCache();
 
     _undoTimer = Timer(kUndoWindow, () async {
       final pending = _pendingDelete;
       if (pending == null) return;
-      await _commitDelete(pending.transaction.id);
+      await _commitDelete(pending.id);
     });
   }
 
@@ -207,14 +195,7 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
 
   void _emitFromCache() {
     final txs = _lastTransactions;
-    if (txs == null) return;
-    _emitter?.add(
-      _buildState(
-        all: txs,
-        categoryId: categoryId,
-        currencyCode: currencyCode.trim(),
-      ),
-    );
+    if (txs != null) _emitter?.add(_buildState(txs));
   }
 
   Future<bool> _commitDelete(int id) async {
@@ -222,7 +203,7 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
     _emitFromCache();
     try {
       await ref.read(transactionRepositoryProvider).delete(id);
-      if (_pendingDelete?.transaction.id == id) {
+      if (_pendingDelete?.id == id) {
         _pendingDelete = null;
         _releaseUndoLink();
         _emitFromCache();
@@ -230,7 +211,7 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
       return true;
     } catch (_) {
       _committedDeleteIds.remove(id);
-      if (_pendingDelete?.transaction.id == id) {
+      if (_pendingDelete?.id == id) {
         _pendingDelete = null;
         _releaseUndoLink();
       }
@@ -240,17 +221,14 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
     }
   }
 
-  CategorySearchDetailState _buildState({
-    required List<Transaction> all,
-    required int categoryId,
-    required String currencyCode,
-  }) {
-    final pendingId = _pendingDelete?.transaction.id;
+  CategorySearchDetailState _buildState(List<Transaction> all) {
+    final trimmedCurrencyCode = currencyCode.trim();
+    final pendingId = _pendingDelete?.id;
     final filtered = all
         .where(
           (t) =>
               t.categoryId == categoryId &&
-              t.currency.code == currencyCode &&
+              t.currency.code == trimmedCurrencyCode &&
               !_committedDeleteIds.contains(t.id) &&
               t.id != pendingId,
         )
@@ -266,7 +244,7 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
         return CategorySearchDetailState.data(
           days: const [],
           overallSumMinorUnits: 0,
-          currency: _pendingDelete!.transaction.currency,
+          currency: _pendingDelete!.currency,
           pendingDelete: _pendingDelete,
         );
       }

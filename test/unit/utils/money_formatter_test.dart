@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:ledgerly/core/utils/money_formatter.dart';
+import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/domain/models/currency.dart';
 
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
@@ -195,6 +196,30 @@ void main() {
         ),
         r'$0.00',
       );
+    });
+  });
+
+  group('MoneyFormatter.formatForCategoryType — booked amount', () {
+    String fmt(int amount, CategoryType? type) =>
+        MoneyFormatter.formatForCategoryType(
+          amountMinorUnits: amount,
+          currency: _usd,
+          locale: 'en_US',
+          categoryType: type,
+        );
+
+    test('income → +\$123.45', () {
+      expect(fmt(12345, CategoryType.income), r'+$123.45');
+    });
+    test('expense (stored positive) → -\$123.45', () {
+      expect(fmt(12345, CategoryType.expense), r'-$123.45');
+    });
+    test('no category → unsigned \$123.45', () {
+      expect(fmt(12345, null), r'$123.45');
+    });
+    test('zero income and expense → \$0.00 (no sign)', () {
+      expect(fmt(0, CategoryType.income), r'$0.00');
+      expect(fmt(0, CategoryType.expense), r'$0.00');
     });
   });
 

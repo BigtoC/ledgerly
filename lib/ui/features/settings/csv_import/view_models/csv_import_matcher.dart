@@ -98,8 +98,6 @@ abstract class CsvAccountMatch with _$CsvAccountMatch {
 /// The match for one distinct CSV Category value.
 @freezed
 abstract class CsvCategoryMatch with _$CsvCategoryMatch {
-  const CsvCategoryMatch._();
-
   const factory CsvCategoryMatch({
     required String csvValue,
     required int rowCount,
@@ -109,8 +107,6 @@ abstract class CsvCategoryMatch with _$CsvCategoryMatch {
     /// other `rowCount - salaryRowCount` go to Other income. 0 otherwise.
     @Default(0) int salaryRowCount,
   }) = _CsvCategoryMatch;
-
-  bool get isNew => resolution is CreateCategoryResolution;
 }
 
 /// Matcher output, in first-appearance order of the CSV values.

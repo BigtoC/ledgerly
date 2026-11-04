@@ -42,40 +42,32 @@ void main() {
   });
 
   group('Currency conversion flow', () {
-    test(
-      'repository snapshot updates after API fetch (forward only)',
-      () async {
-        await seedDbWithEurAccount();
-        final repo = ExchangeRateRepository(
-          db,
-          mockService,
-          defaultCurrencyController.stream,
-        );
-        when(() => mockService.fetchRates(any())).thenAnswer(
-          (_) async => [
-            (
-              from: 'EUR',
-              to: 'USD',
-              rate: 1.08,
-              fetchedAt: DateTime(2026, 5, 14),
-            ),
-          ],
-        );
-        await repo.refreshAll('USD');
-        // Drift's watch() emits asynchronously after the upsert commits;
-        // wait until the snapshot picks it up.
-        for (var i = 0; i < 20; i++) {
-          await Future<void>.delayed(const Duration(milliseconds: 20));
-          if (repo.getRate('EUR', 'USD') != null) break;
-        }
+    test('repository rates update after API fetch (forward only)', () async {
+      await seedDbWithEurAccount();
+      final repo = ExchangeRateRepository(
+        db,
+        mockService,
+        defaultCurrencyController.stream,
+      );
+      when(() => mockService.fetchRates(any())).thenAnswer(
+        (_) async => [
+          (
+            from: 'EUR',
+            to: 'USD',
+            rate: 1.08,
+            fetchedAt: DateTime(2026, 5, 14),
+          ),
+        ],
+      );
+      await repo.refreshAll('USD');
 
-        expect(repo.getRate('EUR', 'USD'), (1.08 * 1000000000).round());
-        // Inverse is NOT stored — UI never looks it up.
-        expect(repo.getRate('USD', 'EUR'), isNull);
+      final rates = await repo.watchRates().first;
+      expect(rates['EUR→USD'], (1.08 * 1000000000).round());
+      // Inverse is NOT stored — UI never looks it up.
+      expect(rates.containsKey('USD→EUR'), isFalse);
 
-        repo.dispose();
-      },
-    );
+      repo.dispose();
+    });
 
     test('default currency change triggers re-fetch', () async {
       await seedDbWithEurAccount();
@@ -121,31 +113,24 @@ void main() {
         ],
       );
       await repo1.refreshAll('USD');
-      // Wait until the upsert is visible to repo1 (DB committed + DAO
-      // watch emitted into the snapshot).
-      for (var i = 0; i < 20; i++) {
-        await Future<void>.delayed(const Duration(milliseconds: 20));
-        if (repo1.getRate('EUR', 'USD') != null) break;
-      }
       expect(
-        repo1.getRate('EUR', 'USD'),
+        (await repo1.watchRates().first)['EUR→USD'],
         (1.08 * 1000000000).round(),
         reason: 'repo1 should have the freshly-upserted rate',
       );
       repo1.dispose();
 
-      // New instance reads the same DAO; first emission populates snapshot.
+      // New instance reads the same DAO.
       final repo2 = ExchangeRateRepository(
         db,
         mockService,
         defaultCurrencyController.stream,
       );
-      for (var i = 0; i < 20; i++) {
-        await Future<void>.delayed(const Duration(milliseconds: 20));
-        if (repo2.getRate('EUR', 'USD') != null) break;
-      }
 
-      expect(repo2.getRate('EUR', 'USD'), (1.08 * 1000000000).round());
+      expect(
+        (await repo2.watchRates().first)['EUR→USD'],
+        (1.08 * 1000000000).round(),
+      );
       repo2.dispose();
     });
   });

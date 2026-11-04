@@ -13,20 +13,9 @@ import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/data/seed/first_run_seed.dart';
-import 'package:ledgerly/data/services/locale_service.dart';
 import 'package:ledgerly/domain/models/category.dart';
 
 import '../repositories/_harness/test_app_database.dart';
-
-/// Stable-stub [LocaleService] — returns a fixed string regardless of the
-/// host locale. Prevents CI flakes across macOS / Linux / Windows.
-class _FakeLocaleService implements LocaleService {
-  const _FakeLocaleService(this._locale);
-  final String _locale;
-
-  @override
-  String get deviceLocale => _locale;
-}
 
 /// Bundles real `Drift*Repository` instances against an in-memory DB.
 class _SeedHarness {
@@ -70,7 +59,7 @@ class _SeedHarness {
     accountTypes: accountTypes,
     accounts: accounts,
     preferences: preferences,
-    localeService: _FakeLocaleService(locale),
+    localeService: FixedLocaleService(locale),
   );
 
   Future<void> close() => db.close();
@@ -279,7 +268,9 @@ void main() {
         'is integer 0 (G4)', () async {
       await h.seed('en_US');
 
-      final cashType = await h.accountTypes.getByL10nKey('accountType.cash');
+      final cashType = await h.db.accountTypeDao.findByL10nKey(
+        'accountType.cash',
+      );
       expect(cashType, isNotNull);
 
       final accounts = await h.accounts.watchAll().first;
@@ -415,7 +406,7 @@ void main() {
           accountTypes: accountTypes,
           accounts: accounts,
           preferences: preferences,
-          localeService: const _FakeLocaleService('en_US'),
+          localeService: const FixedLocaleService('en_US'),
         );
         fail('expected the seed to rethrow the injected failure');
       } on _InjectedSeedFailure {
@@ -492,10 +483,6 @@ class _ThrowingCategoryRepository implements CategoryRepository {
 
   @override
   Future<Category?> getById(int id) => _inner.getById(id);
-
-  @override
-  Future<Category?> getByL10nKey(String l10nKey) =>
-      _inner.getByL10nKey(l10nKey);
 
   @override
   Future<Category> save(Category category) => _inner.save(category);

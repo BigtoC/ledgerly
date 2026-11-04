@@ -1,8 +1,8 @@
 // Manage accounts tile — Settings list row.
 //
 // Replacement for DefaultAccountTile. Shows "Manage accounts" with a
-// count-aware subtitle using accountsControllerProvider for account rows
-// and settingsControllerProvider only for defaultAccountId.
+// count-aware subtitle read from accountsControllerProvider, which
+// carries both the account rows and defaultAccountId.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

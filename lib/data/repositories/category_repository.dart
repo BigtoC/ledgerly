@@ -21,64 +21,45 @@ import '../database/daos/category_dao.dart';
 import '../database/daos/recurring_rule_dao.dart';
 import '../database/daos/shopping_list_dao.dart';
 import '../database/daos/transaction_dao.dart';
+import 'repository_exceptions.dart';
 
 /// Generic category-layer failure. Stream-A-local per §1.3.
-///
-/// Does **not** extend the sealed `RepositoryException` base — the
-/// Phase 1 base class is closed to outside subclasses. Implements
-/// `Exception` directly and carries an identical `toString()` shape.
-class CategoryRepositoryException implements Exception {
-  const CategoryRepositoryException(this.message);
-
-  /// Human-readable description.
-  final String message;
-
-  @override
-  String toString() => 'CategoryRepositoryException: $message';
+class CategoryRepositoryException extends RepositoryException {
+  const CategoryRepositoryException(super.message);
 }
 
 /// Raised by [CategoryRepository.save] when the caller attempts to
 /// change `Category.type` on a row that already has a referencing
 /// transaction. G5 — PRD.md 293-294, 315, 735-737.
-class CategoryTypeLockedException implements Exception {
-  const CategoryTypeLockedException(this.id);
+class CategoryTypeLockedException extends RepositoryException {
+  const CategoryTypeLockedException(this.id)
+    : super(
+        'Category type is locked after first transaction; '
+        'create a new category instead (id: $id).',
+      );
 
   /// The category id whose type mutation is blocked.
   final int id;
-
-  String get message =>
-      'Category type is locked after first transaction; '
-      'create a new category instead (id: $id).';
-
-  @override
-  String toString() => 'CategoryTypeLockedException: $message';
 }
 
 /// Raised by [CategoryRepository.delete] when the caller tries to
 /// hard-delete a category that has at least one referencing
 /// transaction. Caller should archive instead. G6 — PRD.md 315-316.
-class CategoryInUseException implements Exception {
-  const CategoryInUseException(this.id);
+class CategoryInUseException extends RepositoryException {
+  const CategoryInUseException(this.id)
+    : super('Category $id is in use and cannot be deleted.');
 
   /// The category id whose deletion is blocked.
   final int id;
-
-  String get message => 'Category $id is in use and cannot be deleted.';
-
-  @override
-  String toString() => 'CategoryInUseException: $message';
 }
 
-class CategoryHasRecurringRuleException implements Exception {
-  const CategoryHasRecurringRuleException(this.id);
+class CategoryHasRecurringRuleException extends RepositoryException {
+  const CategoryHasRecurringRuleException(this.id)
+    : super(
+        'Category $id is referenced by an active recurring rule and cannot be archived.',
+      );
 
   final int id;
-
-  String get message =>
-      'Category $id is referenced by an active recurring rule and cannot be archived.';
-
-  @override
-  String toString() => 'CategoryHasRecurringRuleException: $message';
 }
 
 /// SSOT for `categories`. Owns every write path to the Drift
@@ -93,9 +74,6 @@ abstract class CategoryRepository {
 
   /// One-shot read by id.
   Future<Category?> getById(int id);
-
-  /// One-shot read by `l10nKey`.
-  Future<Category?> getByL10nKey(String l10nKey);
 
   /// Seed-only insert-or-update keyed by `l10nKey`. Used by Stream C's
   /// first-run seed to make seeded category writes idempotent without
@@ -178,30 +156,16 @@ final class DriftCategoryRepository implements CategoryRepository {
     CategoryType? type,
     bool includeArchived = false,
   }) {
-    final Stream<List<CategoryRow>> source;
-    if (type == null) {
-      source = _dao.watchAll(includeArchived: includeArchived);
-    } else if (!includeArchived) {
-      source = _dao.watchByType(_wireFromType(type));
-    } else {
-      // includeArchived + type: no DAO helper; filter in Dart.
-      final wire = _wireFromType(type);
-      source = _dao
-          .watchAll(includeArchived: true)
-          .map((rows) => rows.where((r) => r.type == wire).toList());
-    }
+    final source = _dao.watchAll(
+      includeArchived: includeArchived,
+      type: type == null ? null : _wireFromType(type),
+    );
     return source.map((rows) => rows.map(_toDomain).toList(growable: false));
   }
 
   @override
   Future<Category?> getById(int id) async {
     final row = await _dao.findById(id);
-    return row == null ? null : _toDomain(row);
-  }
-
-  @override
-  Future<Category?> getByL10nKey(String l10nKey) async {
-    final row = await _dao.findByL10nKey(l10nKey);
     return row == null ? null : _toDomain(row);
   }
 
@@ -230,13 +194,7 @@ final class DriftCategoryRepository implements CategoryRepository {
           isArchived: const Value(false),
         ),
       );
-      final inserted = await _dao.findById(id);
-      if (inserted == null) {
-        throw const CategoryRepositoryException(
-          'Seed insert disappeared before read-back',
-        );
-      }
-      return _toDomain(inserted);
+      return _toDomain((await _dao.findById(id))!);
     }
 
     // Update path — enforce the same type-lock guard as `save`.
@@ -264,13 +222,7 @@ final class DriftCategoryRepository implements CategoryRepository {
         isArchived: const Value(false),
       ),
     );
-    final updated = await _dao.findById(existing.id);
-    if (updated == null) {
-      throw const CategoryRepositoryException(
-        'Seed update disappeared before read-back',
-      );
-    }
-    return _toDomain(updated);
+    return _toDomain((await _dao.findById(existing.id))!);
   }
 
   @override
@@ -278,13 +230,7 @@ final class DriftCategoryRepository implements CategoryRepository {
     if (category.id == 0) {
       // Insert path.
       final id = await _dao.insert(_toCompanion(category));
-      final inserted = await _dao.findById(id);
-      if (inserted == null) {
-        throw const CategoryRepositoryException(
-          'Insert disappeared before read-back',
-        );
-      }
-      return _toDomain(inserted);
+      return _toDomain((await _dao.findById(id))!);
     }
 
     // Update path — enforce type-lock and l10nKey-lock.
@@ -308,13 +254,7 @@ final class DriftCategoryRepository implements CategoryRepository {
     }
 
     await _dao.updateRow(_toCompanion(category));
-    final updated = await _dao.findById(category.id);
-    if (updated == null) {
-      throw CategoryRepositoryException(
-        'Category ${category.id} disappeared after update',
-      );
-    }
-    return _toDomain(updated);
+    return _toDomain((await _dao.findById(category.id))!);
   }
 
   @override
@@ -332,13 +272,7 @@ final class DriftCategoryRepository implements CategoryRepository {
     await _dao.updateRow(
       existing.toCompanion(true).copyWith(customName: Value(normalized)),
     );
-    final updated = await _dao.findById(id);
-    if (updated == null) {
-      throw CategoryRepositoryException(
-        'Category $id disappeared after rename',
-      );
-    }
-    return _toDomain(updated);
+    return _toDomain((await _dao.findById(id))!);
   }
 
   @override
@@ -356,13 +290,7 @@ final class DriftCategoryRepository implements CategoryRepository {
       throw CategoryHasRecurringRuleException(id);
     }
     await _dao.archiveById(id);
-    final updated = await _dao.findById(id);
-    if (updated == null) {
-      throw CategoryRepositoryException(
-        'Category $id disappeared after archive',
-      );
-    }
-    return _toDomain(updated);
+    return _toDomain((await _dao.findById(id))!);
   }
 
   @override
@@ -372,17 +300,7 @@ final class DriftCategoryRepository implements CategoryRepository {
       return false;
     }
 
-    final slCount = await _slDao.countByCategory(id);
-    if (slCount > 0) {
-      throw CategoryInUseException(id);
-    }
-
-    final refCount = await _txDao.countByCategory(id);
-    if (refCount > 0) {
-      throw CategoryInUseException(id);
-    }
-    final recurringCount = await _recurringDao.countActiveByCategory(id);
-    if (recurringCount > 0) {
+    if (await _slDao.countByCategory(id) > 0 || await isReferenced(id)) {
       throw CategoryInUseException(id);
     }
     if (existing.l10nKey != null) {

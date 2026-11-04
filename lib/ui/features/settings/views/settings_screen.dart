@@ -29,7 +29,6 @@ import '../view_models/settings_state.dart';
 import 'manage_accounts_tile.dart';
 import 'default_currency_tile.dart';
 import 'language_selector.dart';
-import 'manage_categories_tile.dart';
 import 'new_version_badge.dart';
 import 'settings_section.dart';
 import 'splash_settings_section.dart';
@@ -105,7 +104,12 @@ class _SettingsBody extends ConsumerWidget {
               children: [
                 const ManageAccountsTile(),
                 DefaultCurrencyTile(defaultCurrency: data.defaultCurrency),
-                const ManageCategoriesTile(),
+                ListTile(
+                  key: const ValueKey('settingsManageCategoriesTile'),
+                  title: Text(l10n.settingsManageCategories),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.go('/settings/categories'),
+                ),
                 ListTile(
                   key: const ValueKey('settingsRecurringTile'),
                   title: Text(l10n.settingsRecurringTile),

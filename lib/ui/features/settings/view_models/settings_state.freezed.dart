@@ -56,11 +56,10 @@ extension SettingsStatePatterns on SettingsState {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( SettingsLoading value)?  loading,TResult Function( SettingsData value)?  data,TResult Function( SettingsError value)?  error,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( SettingsData value)?  data,TResult Function( SettingsError value)?  error,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
-case SettingsLoading() when loading != null:
-return loading(_that);case SettingsData() when data != null:
+case SettingsData() when data != null:
 return data(_that);case SettingsError() when error != null:
 return error(_that);case _:
   return orElse();
@@ -80,11 +79,10 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( SettingsLoading value)  loading,required TResult Function( SettingsData value)  data,required TResult Function( SettingsError value)  error,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( SettingsData value)  data,required TResult Function( SettingsError value)  error,}){
 final _that = this;
 switch (_that) {
-case SettingsLoading():
-return loading(_that);case SettingsData():
+case SettingsData():
 return data(_that);case SettingsError():
 return error(_that);}
 }
@@ -100,11 +98,10 @@ return error(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( SettingsLoading value)?  loading,TResult? Function( SettingsData value)?  data,TResult? Function( SettingsError value)?  error,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( SettingsData value)?  data,TResult? Function( SettingsError value)?  error,}){
 final _that = this;
 switch (_that) {
-case SettingsLoading() when loading != null:
-return loading(_that);case SettingsData() when data != null:
+case SettingsData() when data != null:
 return data(_that);case SettingsError() when error != null:
 return error(_that);case _:
   return null;
@@ -123,11 +120,10 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( ThemeMode themeMode,  Locale? locale,  String defaultCurrency,  int? defaultAccountId,  bool splashEnabled,  DateTime? splashStartDate,  String? splashDisplayText,  String? splashButtonLabel)?  data,TResult Function( Object error,  StackTrace stack)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( ThemeMode themeMode,  Locale? locale,  String defaultCurrency,  bool splashEnabled,  DateTime? splashStartDate,  String? splashDisplayText,  String? splashButtonLabel)?  data,TResult Function( Object error,  StackTrace stack)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
-case SettingsLoading() when loading != null:
-return loading();case SettingsData() when data != null:
-return data(_that.themeMode,_that.locale,_that.defaultCurrency,_that.defaultAccountId,_that.splashEnabled,_that.splashStartDate,_that.splashDisplayText,_that.splashButtonLabel);case SettingsError() when error != null:
+case SettingsData() when data != null:
+return data(_that.themeMode,_that.locale,_that.defaultCurrency,_that.splashEnabled,_that.splashStartDate,_that.splashDisplayText,_that.splashButtonLabel);case SettingsError() when error != null:
 return error(_that.error,_that.stack);case _:
   return orElse();
 
@@ -146,11 +142,10 @@ return error(_that.error,_that.stack);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( ThemeMode themeMode,  Locale? locale,  String defaultCurrency,  int? defaultAccountId,  bool splashEnabled,  DateTime? splashStartDate,  String? splashDisplayText,  String? splashButtonLabel)  data,required TResult Function( Object error,  StackTrace stack)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( ThemeMode themeMode,  Locale? locale,  String defaultCurrency,  bool splashEnabled,  DateTime? splashStartDate,  String? splashDisplayText,  String? splashButtonLabel)  data,required TResult Function( Object error,  StackTrace stack)  error,}) {final _that = this;
 switch (_that) {
-case SettingsLoading():
-return loading();case SettingsData():
-return data(_that.themeMode,_that.locale,_that.defaultCurrency,_that.defaultAccountId,_that.splashEnabled,_that.splashStartDate,_that.splashDisplayText,_that.splashButtonLabel);case SettingsError():
+case SettingsData():
+return data(_that.themeMode,_that.locale,_that.defaultCurrency,_that.splashEnabled,_that.splashStartDate,_that.splashDisplayText,_that.splashButtonLabel);case SettingsError():
 return error(_that.error,_that.stack);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -165,11 +160,10 @@ return error(_that.error,_that.stack);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( ThemeMode themeMode,  Locale? locale,  String defaultCurrency,  int? defaultAccountId,  bool splashEnabled,  DateTime? splashStartDate,  String? splashDisplayText,  String? splashButtonLabel)?  data,TResult? Function( Object error,  StackTrace stack)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( ThemeMode themeMode,  Locale? locale,  String defaultCurrency,  bool splashEnabled,  DateTime? splashStartDate,  String? splashDisplayText,  String? splashButtonLabel)?  data,TResult? Function( Object error,  StackTrace stack)?  error,}) {final _that = this;
 switch (_that) {
-case SettingsLoading() when loading != null:
-return loading();case SettingsData() when data != null:
-return data(_that.themeMode,_that.locale,_that.defaultCurrency,_that.defaultAccountId,_that.splashEnabled,_that.splashStartDate,_that.splashDisplayText,_that.splashButtonLabel);case SettingsError() when error != null:
+case SettingsData() when data != null:
+return data(_that.themeMode,_that.locale,_that.defaultCurrency,_that.splashEnabled,_that.splashStartDate,_that.splashDisplayText,_that.splashButtonLabel);case SettingsError() when error != null:
 return error(_that.error,_that.stack);case _:
   return null;
 
@@ -181,46 +175,13 @@ return error(_that.error,_that.stack);case _:
 /// @nodoc
 
 
-class SettingsLoading implements SettingsState {
-  const SettingsLoading();
-  
-
-
-
-
-
-
-@override
-bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is SettingsLoading);
-}
-
-
-@override
-int get hashCode => runtimeType.hashCode;
-
-@override
-String toString() {
-    return 'SettingsState.loading()';
-}
-
-
-}
-
-
-
-
-/// @nodoc
-
-
 class SettingsData implements SettingsState {
-  const SettingsData({required this.themeMode, required this.locale, required this.defaultCurrency, required this.defaultAccountId, required this.splashEnabled, required this.splashStartDate, required this.splashDisplayText, required this.splashButtonLabel});
+  const SettingsData({required this.themeMode, required this.locale, required this.defaultCurrency, required this.splashEnabled, required this.splashStartDate, required this.splashDisplayText, required this.splashButtonLabel});
   
 
  final  ThemeMode themeMode;
  final  Locale? locale;
  final  String defaultCurrency;
- final  int? defaultAccountId;
  final  bool splashEnabled;
  final  DateTime? splashStartDate;
  final  String? splashDisplayText;
@@ -236,18 +197,18 @@ $SettingsDataCopyWith<SettingsData> get copyWith => _$SettingsDataCopyWithImpl<S
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is SettingsData&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.locale, locale) || other.locale == locale)&&(identical(other.defaultCurrency, defaultCurrency) || other.defaultCurrency == defaultCurrency)&&(identical(other.defaultAccountId, defaultAccountId) || other.defaultAccountId == defaultAccountId)&&(identical(other.splashEnabled, splashEnabled) || other.splashEnabled == splashEnabled)&&(identical(other.splashStartDate, splashStartDate) || other.splashStartDate == splashStartDate)&&(identical(other.splashDisplayText, splashDisplayText) || other.splashDisplayText == splashDisplayText)&&(identical(other.splashButtonLabel, splashButtonLabel) || other.splashButtonLabel == splashButtonLabel));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SettingsData&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.locale, locale) || other.locale == locale)&&(identical(other.defaultCurrency, defaultCurrency) || other.defaultCurrency == defaultCurrency)&&(identical(other.splashEnabled, splashEnabled) || other.splashEnabled == splashEnabled)&&(identical(other.splashStartDate, splashStartDate) || other.splashStartDate == splashStartDate)&&(identical(other.splashDisplayText, splashDisplayText) || other.splashDisplayText == splashDisplayText)&&(identical(other.splashButtonLabel, splashButtonLabel) || other.splashButtonLabel == splashButtonLabel));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,themeMode,locale,defaultCurrency,defaultAccountId,splashEnabled,splashStartDate,splashDisplayText,splashButtonLabel);
+    return Object.hash(runtimeType,themeMode,locale,defaultCurrency,splashEnabled,splashStartDate,splashDisplayText,splashButtonLabel);
 }
 
 @override
 String toString() {
-    return 'SettingsState.data(themeMode: $themeMode, locale: $locale, defaultCurrency: $defaultCurrency, defaultAccountId: $defaultAccountId, splashEnabled: $splashEnabled, splashStartDate: $splashStartDate, splashDisplayText: $splashDisplayText, splashButtonLabel: $splashButtonLabel)';
+    return 'SettingsState.data(themeMode: $themeMode, locale: $locale, defaultCurrency: $defaultCurrency, splashEnabled: $splashEnabled, splashStartDate: $splashStartDate, splashDisplayText: $splashDisplayText, splashButtonLabel: $splashButtonLabel)';
 }
 
 
@@ -258,7 +219,7 @@ abstract mixin class $SettingsDataCopyWith<$Res> implements $SettingsStateCopyWi
   factory $SettingsDataCopyWith(SettingsData value, $Res Function(SettingsData) _then) = _$SettingsDataCopyWithImpl;
 @useResult
 $Res call({
- ThemeMode themeMode, Locale? locale, String defaultCurrency, int? defaultAccountId, bool splashEnabled, DateTime? splashStartDate, String? splashDisplayText, String? splashButtonLabel
+ ThemeMode themeMode, Locale? locale, String defaultCurrency, bool splashEnabled, DateTime? splashStartDate, String? splashDisplayText, String? splashButtonLabel
 });
 
 
@@ -275,13 +236,12 @@ class _$SettingsDataCopyWithImpl<$Res>
 
 /// Create a copy of SettingsState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? themeMode = null,Object? locale = freezed,Object? defaultCurrency = null,Object? defaultAccountId = freezed,Object? splashEnabled = null,Object? splashStartDate = freezed,Object? splashDisplayText = freezed,Object? splashButtonLabel = freezed,}) {
+@pragma('vm:prefer-inline') $Res call({Object? themeMode = null,Object? locale = freezed,Object? defaultCurrency = null,Object? splashEnabled = null,Object? splashStartDate = freezed,Object? splashDisplayText = freezed,Object? splashButtonLabel = freezed,}) {
   return _then(SettingsData(
 themeMode: null == themeMode ? _self.themeMode : themeMode // ignore: cast_nullable_to_non_nullable
 as ThemeMode,locale: freezed == locale ? _self.locale : locale // ignore: cast_nullable_to_non_nullable
 as Locale?,defaultCurrency: null == defaultCurrency ? _self.defaultCurrency : defaultCurrency // ignore: cast_nullable_to_non_nullable
-as String,defaultAccountId: freezed == defaultAccountId ? _self.defaultAccountId : defaultAccountId // ignore: cast_nullable_to_non_nullable
-as int?,splashEnabled: null == splashEnabled ? _self.splashEnabled : splashEnabled // ignore: cast_nullable_to_non_nullable
+as String,splashEnabled: null == splashEnabled ? _self.splashEnabled : splashEnabled // ignore: cast_nullable_to_non_nullable
 as bool,splashStartDate: freezed == splashStartDate ? _self.splashStartDate : splashStartDate // ignore: cast_nullable_to_non_nullable
 as DateTime?,splashDisplayText: freezed == splashDisplayText ? _self.splashDisplayText : splashDisplayText // ignore: cast_nullable_to_non_nullable
 as String?,splashButtonLabel: freezed == splashButtonLabel ? _self.splashButtonLabel : splashButtonLabel // ignore: cast_nullable_to_non_nullable

@@ -22,20 +22,16 @@ class TrendBucket {
 class TrendSeries {
   const TrendSeries({
     required this.buckets,
-    required this.elapsedCount,
     required this.averageMinorUnits,
     required this.currentIndex,
     required this.labelIndices,
-    this.yearLabelIndices = const {},
+    required this.yearLabelIndices,
   });
 
   final List<TrendBucket> buckets;
 
-  /// Buckets that are not future.
-  final int elapsedCount;
-
-  /// Sum of the elapsed buckets ÷ [elapsedCount]; future buckets are left
-  /// out even when they hold an amount. 0 when nothing has elapsed.
+  /// Sum of the elapsed buckets ÷ their count; future buckets are left out
+  /// even when they hold an amount. 0 when nothing has elapsed.
   final double averageMinorUnits;
 
   /// The bucket holding now, only when the period is the current one.
@@ -92,7 +88,6 @@ TrendSeries trendSeries({
   };
   return TrendSeries(
     buckets: buckets,
-    elapsedCount: elapsed.length,
     averageMinorUnits: elapsed.isEmpty ? 0 : sum / elapsed.length,
     currentIndex: currentIndex,
     labelIndices: labelIndices,

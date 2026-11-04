@@ -40,9 +40,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get txDiscardAction => 'Discard';
 
   @override
-  String get txKeypadDone => 'Done';
-
-  @override
   String get transactionTypeExpense => 'Expense';
 
   @override
@@ -461,9 +458,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeJumpToToday => 'Jump to today';
 
   @override
-  String get homeDaySkeletonLabel => 'Loading day';
-
-  @override
   String get homeDeleteUndoSnackbar => 'Transaction deleted';
 
   @override
@@ -669,9 +663,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String analysisDrilldownShowMore(int count) {
     return 'Show $count more';
   }
-
-  @override
-  String get analysisOriginalAmount => 'Original amount';
 
   @override
   String get analysisRatesStale => 'Using last known exchange rates';
@@ -1472,9 +1463,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get txDiscardAction => '放弃';
 
   @override
-  String get txKeypadDone => '完成';
-
-  @override
   String get transactionTypeExpense => '支出';
 
   @override
@@ -1881,9 +1869,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get homeJumpToToday => '跳至今天';
 
   @override
-  String get homeDaySkeletonLabel => '加载中的日期';
-
-  @override
   String get homeDeleteUndoSnackbar => '交易已删除';
 
   @override
@@ -2072,9 +2057,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String analysisDrilldownShowMore(int count) {
     return '再显示 $count 项';
   }
-
-  @override
-  String get analysisOriginalAmount => '原始金额';
 
   @override
   String get analysisRatesStale => '使用上次获取的汇率';
@@ -2849,9 +2831,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get txDiscardAction => '捨棄';
 
   @override
-  String get txKeypadDone => '完成';
-
-  @override
   String get transactionTypeExpense => '支出';
 
   @override
@@ -3258,9 +3237,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get homeJumpToToday => '跳至今天';
 
   @override
-  String get homeDaySkeletonLabel => '載入中的日期';
-
-  @override
   String get homeDeleteUndoSnackbar => '交易已刪除';
 
   @override
@@ -3449,9 +3425,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String analysisDrilldownShowMore(int count) {
     return '再顯示 $count 項';
   }
-
-  @override
-  String get analysisOriginalAmount => '原始金額';
 
   @override
   String get analysisRatesStale => '使用上次取得的匯率';

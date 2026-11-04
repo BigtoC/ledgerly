@@ -68,7 +68,6 @@ void main() {
         false,
         true,
       ]);
-      expect(s.elapsedCount, 6);
     });
 
     test('a past period has no future buckets', () {
@@ -80,7 +79,6 @@ void main() {
       );
 
       expect(s.buckets.any((b) => b.isFuture), isFalse);
-      expect(s.elapsedCount, 12);
     });
   });
 
@@ -97,7 +95,6 @@ void main() {
         now: DateTime(2026, 10, 28, 9),
       );
 
-      expect(s.elapsedCount, 3);
       expect(s.averageMinorUnits, 300);
     });
 
@@ -125,7 +122,6 @@ void main() {
         now: DateTime(2026, 10, 31),
       );
 
-      expect(s.elapsedCount, 0);
       expect(s.averageMinorUnits, 0);
     });
   });
@@ -252,7 +248,6 @@ void main() {
       expect(s.buckets.first.totalMinorUnits, 100);
       expect(s.buckets.last.totalMinorUnits, 300);
       expect(s.buckets.where((b) => b.isFuture), isEmpty);
-      expect(s.elapsedCount, 22);
       expect(s.currentIndex, 21);
     });
 
@@ -267,7 +262,6 @@ void main() {
         now: DateTime(2026, 10, 2),
       );
 
-      expect(s.elapsedCount, 4);
       expect(s.averageMinorUnits, 300);
     });
 

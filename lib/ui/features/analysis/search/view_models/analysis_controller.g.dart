@@ -49,7 +49,7 @@ final class AnalysisControllerProvider
 }
 
 String _$analysisControllerHash() =>
-    r'62e1080a53812f0e2f8e268205cc2456c7fbff6d';
+    r'ad6444ca21b46d632dfeffd0af154facb7fcde91';
 
 abstract class _$AnalysisController extends $StreamNotifier<AnalysisState> {
   Stream<AnalysisState> build();

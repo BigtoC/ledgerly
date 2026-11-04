@@ -29,6 +29,8 @@ import 'package:ledgerly/ui/features/analysis/charts/view_models/selected_slice.
 import 'package:ledgerly/ui/features/analysis/charts/views/period_picker_sheet.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
+import '../../../../support/text_scale.dart';
+
 final _firstRecord = DateTime(2025, 1, 6);
 
 /// [firstRecord] null = no transactions; [boundsLoading] keeps the date
@@ -77,11 +79,7 @@ Future<void> _open(
         locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(textScaler: TextScaler.linear(textScale)),
-          child: child!,
-        ),
+        builder: textScaleBuilder(textScale),
         home: Scaffold(
           body: Builder(
             builder: (context) => TextButton(

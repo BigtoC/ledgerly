@@ -190,9 +190,8 @@ const Set<String> _expectedEnKeys = <String>{
   'txCurrencyChangeConfirmBody',
   'txKeypadClear',
   'txKeypadBackspace',
-  // Wave 4 §3.2 renames: were commonDiscard / commonDone — only transactions used them.
+  // Wave 4 §3.2 rename: was commonDiscard — only transactions used it.
   'txDiscardAction',
-  'txKeypadDone',
   // Task 4 — operator key semantics labels.
   'txKeypadAdd',
   'txKeypadSubtract',
@@ -202,7 +201,6 @@ const Set<String> _expectedEnKeys = <String>{
 
   // M5 Wave 3 — Home slice UI keys
   // (docs/plans/m5-ui-feature-slices/wave-3-home-plan.md §4.2).
-  'homeDaySkeletonLabel',
   'homeDeleteUndoSnackbar',
   'homeDayLabelToday',
   'homeDayNavPrevLabel',
@@ -355,7 +353,6 @@ const Set<String> _expectedEnKeys = <String>{
   // (docs/superpowers/plans/2026-05-22-chart-slice-drilldown.md §9).
   'analysisDrilldownEmpty',
   'analysisDrilldownShowMore',
-  'analysisOriginalAmount',
   'analysisRatesStale',
 
   // App update check (2026-10)

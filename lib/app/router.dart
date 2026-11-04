@@ -132,7 +132,6 @@ GoRouter router(Ref ref) {
         // matches the production splash. Tapping the splash Enter
         // button pops back to settings (see `SplashEnterButton`).
         path: '/splash/preview',
-        parentNavigatorKey: _rootNavigatorKey,
         pageBuilder: (ctx, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const SplashScreen(previewMode: true),
@@ -162,7 +161,9 @@ GoRouter router(Ref ref) {
                     parentNavigatorKey: _rootNavigatorKey,
                     pageBuilder: (ctx, state) => _modalPage(
                       state,
-                      const _AdaptiveTransactionFormRoute(),
+                      _AdaptiveTransactionFormRoute(
+                        mode: _addModeFromExtra(state.extra),
+                      ),
                     ),
                   ),
                   GoRoute(
@@ -175,7 +176,9 @@ GoRouter router(Ref ref) {
                     pageBuilder: (ctx, state) => _modalPage(
                       state,
                       _AdaptiveTransactionFormRoute(
-                        transactionId: int.parse(state.pathParameters['id']!),
+                        mode: EditTransactionMode(
+                          transactionId: int.parse(state.pathParameters['id']!),
+                        ),
                       ),
                     ),
                   ),
@@ -197,8 +200,10 @@ GoRouter router(Ref ref) {
                         pageBuilder: (ctx, state) => _modalPage(
                           state,
                           _AdaptiveTransactionFormRoute(
-                            shoppingListItemId: int.parse(
-                              state.pathParameters['itemId']!,
+                            mode: EditShoppingListDraftMode(
+                              shoppingListItemId: int.parse(
+                                state.pathParameters['itemId']!,
+                              ),
                             ),
                           ),
                         ),
@@ -237,8 +242,7 @@ GoRouter router(Ref ref) {
                       final categoryId = int.parse(
                         state.pathParameters['categoryId']!,
                       );
-                      final query =
-                          state.uri.queryParameters['q']?.trim() ?? '';
+                      final query = state.uri.queryParameters['q']!.trim();
                       final currencyCode = state.uri.queryParameters['c']!
                           .trim();
                       return _materialPage(
@@ -352,23 +356,31 @@ GoRouter router(Ref ref) {
 
 @Dependencies([TransactionFormController, categoriesByType])
 class _AdaptiveTransactionFormRoute extends StatelessWidget {
-  const _AdaptiveTransactionFormRoute({
-    this.transactionId,
-    this.shoppingListItemId,
-  });
+  const _AdaptiveTransactionFormRoute({required this.mode});
 
-  final int? transactionId;
-  final int? shoppingListItemId;
+  final TransactionFormMode mode;
 
   @override
   Widget build(BuildContext context) {
-    final TransactionFormMode? mode = shoppingListItemId != null
-        ? EditShoppingListDraftMode(shoppingListItemId: shoppingListItemId!)
-        : null;
-    return _AdaptiveFormRoute(
-      child: TransactionFormScreen(transactionId: transactionId, mode: mode),
-    );
+    return _AdaptiveFormRoute(child: TransactionFormScreen(mode: mode));
   }
+}
+
+/// `/home/add` extras: `{'duplicateSourceId': <int>}` opens the Duplicate
+/// flow; otherwise Home's `{'initialDate': <DateTime>}` seeds the Add date.
+/// Values of any other type are ignored.
+TransactionFormMode _addModeFromExtra(Object? extra) {
+  if (extra is Map) {
+    final sourceId = extra['duplicateSourceId'];
+    if (sourceId is int) {
+      return DuplicateTransactionMode(sourceTransactionId: sourceId);
+    }
+    final initialDate = extra['initialDate'];
+    if (initialDate is DateTime) {
+      return AddTransactionMode(initialDate: initialDate);
+    }
+  }
+  return const AddTransactionMode();
 }
 
 /// Adaptive layout for full-screen form routes (transactions, recurring

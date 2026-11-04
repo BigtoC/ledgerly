@@ -350,11 +350,10 @@ extension AccountsStatePatterns on AccountsState {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( AccountsLoading value)?  loading,TResult Function( AccountsData value)?  data,TResult Function( AccountsError value)?  error,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( AccountsData value)?  data,TResult Function( AccountsError value)?  error,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
-case AccountsLoading() when loading != null:
-return loading(_that);case AccountsData() when data != null:
+case AccountsData() when data != null:
 return data(_that);case AccountsError() when error != null:
 return error(_that);case _:
   return orElse();
@@ -374,11 +373,10 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( AccountsLoading value)  loading,required TResult Function( AccountsData value)  data,required TResult Function( AccountsError value)  error,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( AccountsData value)  data,required TResult Function( AccountsError value)  error,}){
 final _that = this;
 switch (_that) {
-case AccountsLoading():
-return loading(_that);case AccountsData():
+case AccountsData():
 return data(_that);case AccountsError():
 return error(_that);}
 }
@@ -394,11 +392,10 @@ return error(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( AccountsLoading value)?  loading,TResult? Function( AccountsData value)?  data,TResult? Function( AccountsError value)?  error,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( AccountsData value)?  data,TResult? Function( AccountsError value)?  error,}){
 final _that = this;
 switch (_that) {
-case AccountsLoading() when loading != null:
-return loading(_that);case AccountsData() when data != null:
+case AccountsData() when data != null:
 return data(_that);case AccountsError() when error != null:
 return error(_that);case _:
   return null;
@@ -417,10 +414,9 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( List<AccountWithBalance> active,  List<AccountWithBalance> archived,  int? defaultAccountId)?  data,TResult Function( Object error,  StackTrace stack)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( List<AccountWithBalance> active,  List<AccountWithBalance> archived,  int? defaultAccountId)?  data,TResult Function( Object error,  StackTrace stack)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
-case AccountsLoading() when loading != null:
-return loading();case AccountsData() when data != null:
+case AccountsData() when data != null:
 return data(_that.active,_that.archived,_that.defaultAccountId);case AccountsError() when error != null:
 return error(_that.error,_that.stack);case _:
   return orElse();
@@ -440,10 +436,9 @@ return error(_that.error,_that.stack);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( List<AccountWithBalance> active,  List<AccountWithBalance> archived,  int? defaultAccountId)  data,required TResult Function( Object error,  StackTrace stack)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( List<AccountWithBalance> active,  List<AccountWithBalance> archived,  int? defaultAccountId)  data,required TResult Function( Object error,  StackTrace stack)  error,}) {final _that = this;
 switch (_that) {
-case AccountsLoading():
-return loading();case AccountsData():
+case AccountsData():
 return data(_that.active,_that.archived,_that.defaultAccountId);case AccountsError():
 return error(_that.error,_that.stack);}
 }
@@ -459,10 +454,9 @@ return error(_that.error,_that.stack);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( List<AccountWithBalance> active,  List<AccountWithBalance> archived,  int? defaultAccountId)?  data,TResult? Function( Object error,  StackTrace stack)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( List<AccountWithBalance> active,  List<AccountWithBalance> archived,  int? defaultAccountId)?  data,TResult? Function( Object error,  StackTrace stack)?  error,}) {final _that = this;
 switch (_that) {
-case AccountsLoading() when loading != null:
-return loading();case AccountsData() when data != null:
+case AccountsData() when data != null:
 return data(_that.active,_that.archived,_that.defaultAccountId);case AccountsError() when error != null:
 return error(_that.error,_that.stack);case _:
   return null;
@@ -471,38 +465,6 @@ return error(_that.error,_that.stack);case _:
 }
 
 }
-
-/// @nodoc
-
-
-class AccountsLoading implements AccountsState {
-  const AccountsLoading();
-  
-
-
-
-
-
-
-@override
-bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is AccountsLoading);
-}
-
-
-@override
-int get hashCode => runtimeType.hashCode;
-
-@override
-String toString() {
-    return 'AccountsState.loading()';
-}
-
-
-}
-
-
-
 
 /// @nodoc
 

@@ -63,9 +63,10 @@ class SummaryStrip extends ConsumerWidget {
     final ratesMap =
         ref.watch(exchangeRatesProvider).value ?? const <String, int>{};
 
-    final toCurrency =
-        currenciesByCode[defaultCurrency] ??
-        Currency(code: defaultCurrency, decimals: 2, symbol: defaultCurrency);
+    Currency currencyFor(String code) =>
+        currenciesByCode[code] ??
+        Currency(code: code, decimals: 2, symbol: code);
+    final toCurrency = currencyFor(defaultCurrency);
 
     int convertedExpense = 0;
     int convertedIncome = 0;
@@ -76,13 +77,10 @@ class SummaryStrip extends ConsumerWidget {
       if (fromCode == defaultCurrency) return amount;
       final rateScaledE9 = ratesMap['$fromCode→$defaultCurrency'];
       if (rateScaledE9 == null) return null;
-      final fromCurrency =
-          currenciesByCode[fromCode] ??
-          Currency(code: fromCode, decimals: 2, symbol: fromCode);
       return CurrencyConverter.convertMinorUnits(
         amountMinorUnits: amount,
         rateScaledE9: rateScaledE9,
-        fromDecimals: fromCurrency.decimals,
+        fromDecimals: currencyFor(fromCode).decimals,
         toDecimals: toCurrency.decimals,
       );
     }
@@ -139,7 +137,6 @@ class SummaryStrip extends ConsumerWidget {
                 monthNet: convertedMonthNet,
                 locale: locale,
                 isApproximate: hasAnyNonDefaultConvertible,
-                approximatelyPrefixLabel: l10n.approximatelyPrefix,
               ),
             if (canShowUnified && missingRatesSorted.isNotEmpty) ...[
               const SizedBox(height: 12),
@@ -174,15 +171,12 @@ class SummaryStrip extends ConsumerWidget {
             for (final code in missingRatesSorted) ...[
               const SizedBox(height: 8),
               _CurrencyGroup(
-                currency:
-                    currenciesByCode[code] ??
-                    Currency(code: code, decimals: 2, symbol: code),
+                currency: currencyFor(code),
                 expense: todayTotalsByCurrency[code]?.expense ?? 0,
                 income: todayTotalsByCurrency[code]?.income ?? 0,
                 monthNet: monthNetByCurrency[code] ?? 0,
                 locale: locale,
                 isApproximate: false,
-                approximatelyPrefixLabel: l10n.approximatelyPrefix,
               ),
             ],
           ],
@@ -205,7 +199,6 @@ class _CurrencyGroup extends StatelessWidget {
     required this.monthNet,
     required this.locale,
     required this.isApproximate,
-    required this.approximatelyPrefixLabel,
   });
 
   final Currency currency;
@@ -214,7 +207,6 @@ class _CurrencyGroup extends StatelessWidget {
   final int monthNet;
   final String locale;
   final bool isApproximate;
-  final String approximatelyPrefixLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -230,7 +222,9 @@ class _CurrencyGroup extends StatelessWidget {
       final shown = '$prefix$text';
       return _Figure(
         text: shown,
-        semanticValue: isApproximate ? '$approximatelyPrefixLabel $text' : null,
+        semanticValue: isApproximate
+            ? '${AppLocalizations.of(context).approximatelyPrefix} $text'
+            : null,
         color: isNet ? _netColor(theme, amount) : null,
         parts: isNet
             ? _AmountParts.split(

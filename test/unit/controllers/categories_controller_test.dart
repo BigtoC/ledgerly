@@ -165,28 +165,6 @@ void main() {
       expect(state.expense.single.affordance, CategoryRowAffordance.archive);
     });
 
-    test('C05: archived rows are excluded', () async {
-      final container = makeContainer();
-      addTearDown(container.dispose);
-      container.listen(categoriesControllerProvider, (_, _) {});
-      await Future<void>.delayed(Duration.zero);
-
-      // Even though `watchAll(includeArchived: false)` should filter at
-      // the repo layer, the controller defensively skips `isArchived`
-      // rows too so stale emissions don't leak past archive flows.
-      rowsCtrl.add([
-        _c(
-          id: 1,
-          type: CategoryType.expense,
-          customName: 'A',
-          isArchived: true,
-        ),
-        _c(id: 2, type: CategoryType.expense, customName: 'B'),
-      ]);
-      final state = await waitForData(container) as CategoriesData;
-      expect(state.expense.map((v) => v.category.id), [2]);
-    });
-
     test(
       'C06: expense/income rows are grouped into the matching section',
       () async {

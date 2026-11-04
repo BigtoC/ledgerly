@@ -48,33 +48,23 @@ class RecurringRuleDao extends DatabaseAccessor<AppDatabase>
     )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
-  Future<int> countActiveByAccount(int accountId) async {
-    final countExp = recurringRules.id.count();
-    final row =
-        await (selectOnly(recurringRules)
-              ..addColumns([countExp])
-              ..where(
-                recurringRules.accountId.equals(accountId) &
-                    recurringRules.isActive.equals(true) &
-                    recurringRules.isArchived.equals(false),
-              ))
-            .getSingle();
-    return row.read(countExp) ?? 0;
-  }
+  Future<int> countActiveByAccount(int accountId) => recurringRules
+      .count(
+        where: (t) =>
+            t.accountId.equals(accountId) &
+            t.isActive.equals(true) &
+            t.isArchived.equals(false),
+      )
+      .getSingle();
 
-  Future<int> countActiveByCategory(int categoryId) async {
-    final countExp = recurringRules.id.count();
-    final row =
-        await (selectOnly(recurringRules)
-              ..addColumns([countExp])
-              ..where(
-                recurringRules.categoryId.equals(categoryId) &
-                    recurringRules.isActive.equals(true) &
-                    recurringRules.isArchived.equals(false),
-              ))
-            .getSingle();
-    return row.read(countExp) ?? 0;
-  }
+  Future<int> countActiveByCategory(int categoryId) => recurringRules
+      .count(
+        where: (t) =>
+            t.categoryId.equals(categoryId) &
+            t.isActive.equals(true) &
+            t.isArchived.equals(false),
+      )
+      .getSingle();
 
   /// Insert a new row. Returns the new id.
   Future<int> insert(RecurringRulesCompanion row) {

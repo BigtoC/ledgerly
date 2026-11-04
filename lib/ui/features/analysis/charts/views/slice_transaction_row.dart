@@ -20,6 +20,7 @@ import '../../../../../domain/models/transaction.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../core/theme/analysis_colors.dart';
 import '../../../categories/views/category_display.dart';
+import 'period_selector.dart' show periodDateFormat;
 
 class SliceTransactionRow extends StatelessWidget {
   const SliceTransactionRow({
@@ -45,9 +46,6 @@ class SliceTransactionRow extends StatelessWidget {
   /// amount moves to the subtitle.
   final String? convertedAmount;
 
-  // Building a DateFormat parses the locale pattern; rows build often.
-  static final Map<String, DateFormat> _monthDayFormats = {};
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -56,31 +54,21 @@ class SliceTransactionRow extends StatelessWidget {
     final cat = category;
     final isIncome = cat?.type == CategoryType.income;
 
-    final bookedAmount = switch (cat?.type) {
-      CategoryType.income => MoneyFormatter.formatSigned(
-        amountMinorUnits: transaction.amountMinorUnits,
-        currency: transaction.currency,
-        locale: locale,
-      ),
-      CategoryType.expense => MoneyFormatter.formatSigned(
-        amountMinorUnits: -transaction.amountMinorUnits,
-        currency: transaction.currency,
-        locale: locale,
-      ),
-      null => MoneyFormatter.format(
-        amountMinorUnits: transaction.amountMinorUnits,
-        currency: transaction.currency,
-        locale: locale,
-      ),
-    };
+    final bookedAmount = MoneyFormatter.formatForCategoryType(
+      amountMinorUnits: transaction.amountMinorUnits,
+      currency: transaction.currency,
+      locale: locale,
+      categoryType: cat?.type,
+    );
 
     final memo = transaction.memo;
     final title = memo != null && memo.isNotEmpty
         ? memo
         : (cat == null ? '' : categoryDisplayName(cat, l10n));
-    final date = _monthDayFormats
-        .putIfAbsent(locale, () => DateFormat.MMMd(locale))
-        .format(transaction.date);
+    final date = periodDateFormat(
+      DateFormat.ABBR_MONTH_DAY,
+      locale,
+    ).format(transaction.date);
     final meta = [date, ?account?.name].join(' · ');
     final subtitleStyle = analysisText(
       size: 13,

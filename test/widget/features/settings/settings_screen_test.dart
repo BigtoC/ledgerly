@@ -50,6 +50,8 @@ import 'package:ledgerly/ui/features/settings/views/settings_section.dart';
 import 'package:ledgerly/ui/features/settings/view_models/settings_state.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
+import '../../../support/text_scale.dart';
+
 class _MockUserPreferencesRepository extends Mock
     implements UserPreferencesRepository {}
 
@@ -130,11 +132,7 @@ Widget _wrap({
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
-        child: child!,
-      ),
+      builder: textScaleBuilder(textScale),
       routerConfig: _StubRouter.build(const SettingsScreen()),
     ),
   );
@@ -182,11 +180,10 @@ final _update = AppUpdate(
 
 const _badgeKey = ValueKey('settingsNewVersionBadge');
 
-SettingsData _data({int? defaultAccountId}) => SettingsData(
+SettingsData _data() => const SettingsData(
   themeMode: ThemeMode.light,
   locale: null,
   defaultCurrency: 'USD',
-  defaultAccountId: defaultAccountId,
   splashEnabled: true,
   splashStartDate: null,
   splashDisplayText: null,
@@ -241,7 +238,7 @@ void main() {
         prefs: prefs,
         accountRepo: accountRepo,
         currencyRepo: currencyRepo,
-        fixed: _data(defaultAccountId: null),
+        fixed: _data(),
         accountsFixed: const AccountsState.data(
           active: [],
           archived: [],
@@ -276,7 +273,7 @@ void main() {
         prefs: prefs,
         accountRepo: accountRepo,
         currencyRepo: currencyRepo,
-        fixed: _data(defaultAccountId: 7),
+        fixed: _data(),
         accountsFixed: AccountsState.data(
           active: [
             AccountWithBalance(
@@ -318,7 +315,7 @@ void main() {
         prefs: prefs,
         accountRepo: accountRepo,
         currencyRepo: currencyRepo,
-        fixed: _data(defaultAccountId: 1),
+        fixed: _data(),
         accountsFixed: AccountsState.data(
           active: [
             AccountWithBalance(
@@ -363,7 +360,7 @@ void main() {
         prefs: prefs,
         accountRepo: accountRepo,
         currencyRepo: currencyRepo,
-        fixed: _data(defaultAccountId: 99),
+        fixed: _data(),
         accountsFixed: AccountsState.data(
           active: [
             AccountWithBalance(
@@ -785,7 +782,7 @@ void main() {
       );
       await tester.tap(find.byKey(tile));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('defaultCurrencyOption:JPY')));
+      await tester.tap(find.byKey(const ValueKey('currencyPicker:JPY')));
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);

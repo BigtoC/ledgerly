@@ -106,6 +106,16 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
     final locale = Localizations.localeOf(context).toLanguageTag();
     final state = ref.watch(analysisControllerProvider);
 
+    Widget resultList(List<CategorySearchResult> results, String query) =>
+        ListView.builder(
+          itemCount: results.length,
+          itemBuilder: (_, i) => CategorySearchTile(
+            result: results[i],
+            query: query,
+            locale: locale,
+          ),
+        );
+
     final body = state.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text(l10n.analysisErrorMessage)),
@@ -121,26 +131,13 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
               ? const Center(child: CircularProgressIndicator())
               : Stack(
                   children: [
-                    IgnorePointer(
-                      child: ListView.builder(
-                        itemCount: previous.length,
-                        itemBuilder: (_, i) => CategorySearchTile(
-                          result: previous[i],
-                          query: query,
-                          locale: locale,
-                        ),
-                      ),
-                    ),
+                    IgnorePointer(child: resultList(previous, query)),
                     const Center(child: CircularProgressIndicator()),
                   ],
                 ),
-        AnalysisResults(:final categories, :final query) => ListView.builder(
-          itemCount: categories.length,
-          itemBuilder: (_, i) => CategorySearchTile(
-            result: categories[i],
-            query: query,
-            locale: locale,
-          ),
+        AnalysisResults(:final categories, :final query) => resultList(
+          categories,
+          query,
         ),
         AnalysisEmpty() => Center(child: Text(l10n.analysisNoResults)),
       },

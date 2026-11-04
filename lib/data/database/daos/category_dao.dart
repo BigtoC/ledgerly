@@ -15,12 +15,19 @@ class CategoryDao extends DatabaseAccessor<AppDatabase>
     with _$CategoryDaoMixin {
   CategoryDao(super.db);
 
-  /// Watch all categories, optionally excluding archived rows.
-  /// Ordered by `sort_order` (NULLs last), then `id` ascending.
-  Stream<List<CategoryRow>> watchAll({bool includeArchived = false}) {
+  /// Watch all categories, optionally excluding archived rows and
+  /// optionally filtered by [type] (the raw string `'expense'` or
+  /// `'income'`). Ordered by `sort_order` (NULLs last), then `id` ascending.
+  Stream<List<CategoryRow>> watchAll({
+    bool includeArchived = false,
+    String? type,
+  }) {
     final query = select(categories);
     if (!includeArchived) {
       query.where((c) => c.isArchived.equals(false));
+    }
+    if (type != null) {
+      query.where((c) => c.type.equals(type));
     }
     query.orderBy([
       (c) => OrderingTerm(
@@ -31,22 +38,6 @@ class CategoryDao extends DatabaseAccessor<AppDatabase>
       (c) => OrderingTerm(expression: c.id),
     ]);
     return query.watch();
-  }
-
-  /// Watch non-archived categories filtered by `type`. Caller passes
-  /// the raw string `'expense'` or `'income'`.
-  Stream<List<CategoryRow>> watchByType(String type) {
-    return (select(categories)
-          ..where((c) => c.type.equals(type) & c.isArchived.equals(false))
-          ..orderBy([
-            (c) => OrderingTerm(
-              expression: c.sortOrder,
-              mode: OrderingMode.asc,
-              nulls: NullsOrder.last,
-            ),
-            (c) => OrderingTerm(expression: c.id),
-          ]))
-        .watch();
   }
 
   Future<CategoryRow?> findById(int id) {

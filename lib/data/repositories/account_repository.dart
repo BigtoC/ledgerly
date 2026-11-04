@@ -37,13 +37,8 @@ import 'repository_exceptions.dart';
 
 /// Generic account-layer failure for stale/missing-row writes that do not map
 /// to one of the shared cross-stream repository exceptions.
-class AccountRepositoryException implements Exception {
-  const AccountRepositoryException(this.message);
-
-  final String message;
-
-  @override
-  String toString() => 'AccountRepositoryException: $message';
+class AccountRepositoryException extends RepositoryException {
+  const AccountRepositoryException(super.message);
 }
 
 /// [AccountRepository.save] refused to change the currency of an account
@@ -194,10 +189,7 @@ final class DriftAccountRepository implements AccountRepository {
       throw AccountCurrencyLockedException(account.id);
     }
 
-    final updated = await _dao.updateRow(_toCompanion(account));
-    if (!updated) {
-      throw AccountRepositoryException('Account ${account.id} not found');
-    }
+    await _dao.updateRow(_toCompanion(account));
     return account.id;
   }
 
@@ -212,12 +204,9 @@ final class DriftAccountRepository implements AccountRepository {
 
   @override
   Future<void> delete(int id) async {
-    final slCount = await _slDao.countByAccount(id);
-    if (slCount > 0) throw AccountInUseException(id);
-    final count = await _txDao.countByAccount(id);
-    if (count > 0) throw AccountInUseException(id);
-    final recurringCount = await _recurringDao.countActiveByAccount(id);
-    if (recurringCount > 0) throw AccountInUseException(id);
+    if (await _slDao.countByAccount(id) > 0 || await isReferenced(id)) {
+      throw AccountInUseException(id);
+    }
     await _dao.deleteById(id);
   }
 

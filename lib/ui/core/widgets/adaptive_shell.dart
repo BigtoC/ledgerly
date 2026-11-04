@@ -24,6 +24,11 @@ class AdaptiveShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final items = [
+      (icon: const Icon(Icons.home), label: l10n.navHome),
+      (icon: const Icon(Icons.analytics_outlined), label: l10n.navAnalysis),
+      (icon: const _SettingsNavIcon(), label: l10n.navSettings),
+    ];
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth >= 600) {
@@ -35,18 +40,11 @@ class AdaptiveShell extends StatelessWidget {
                   onDestinationSelected: onDestinationSelected,
                   labelType: NavigationRailLabelType.all,
                   destinations: [
-                    NavigationRailDestination(
-                      icon: const Icon(Icons.home),
-                      label: Text(l10n.navHome),
-                    ),
-                    NavigationRailDestination(
-                      icon: const Icon(Icons.analytics_outlined),
-                      label: Text(l10n.navAnalysis),
-                    ),
-                    NavigationRailDestination(
-                      icon: const _SettingsNavIcon(),
-                      label: Text(l10n.navSettings),
-                    ),
+                    for (final i in items)
+                      NavigationRailDestination(
+                        icon: i.icon,
+                        label: Text(i.label),
+                      ),
                   ],
                 ),
                 const VerticalDivider(thickness: 1, width: 1),
@@ -61,18 +59,8 @@ class AdaptiveShell extends StatelessWidget {
             selectedIndex: currentIndex,
             onDestinationSelected: onDestinationSelected,
             destinations: [
-              NavigationDestination(
-                icon: const Icon(Icons.home),
-                label: l10n.navHome,
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.analytics_outlined),
-                label: l10n.navAnalysis,
-              ),
-              NavigationDestination(
-                icon: const _SettingsNavIcon(),
-                label: l10n.navSettings,
-              ),
+              for (final i in items)
+                NavigationDestination(icon: i.icon, label: i.label),
             ],
           ),
         );

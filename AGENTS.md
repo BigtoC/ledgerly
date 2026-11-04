@@ -199,7 +199,7 @@ Take its folder tree, its layers and the order of work: models → services → 
   ├── ui/
   │   ├── core/
   │   │   ├── theme/
-  │   │   └── widgets/      # shared widgets; today only adaptive_shell.dart
+  │   │   └── widgets/      # shared widgets: adaptive shell and sheet, confirm dialog, Undo snackbar
   │   └── features/
   │       └── <feature>/
   │           ├── view_models/  # flat: *_controller, *_state, *_providers, pure helpers
@@ -226,7 +226,7 @@ Take its advice on measuring space (`MediaQuery.sizeOf`, `LayoutBuilder` on the 
 
 - **Breakpoint** → Ledgerly has one: a width of 600dp or more is wide (`>= 600`; the skill's `>` would put exactly 600 on the narrow side). Reuse the existing switches instead of writing a new one:
   - A modal form route goes inside `_AdaptiveFormRoute` in `lib/app/router.dart`, which shows it as a dialog at most 560dp wide on wide windows.
-  - A picker or sheet checks `MediaQuery.sizeOf(context).width >= 600` and opens a constrained `Dialog` or a modal bottom sheet, as `category_picker.dart` and `account_picker_sheet.dart` do.
+  - A picker or sheet opens through `showAdaptiveSheet` in `lib/ui/core/widgets/adaptive_sheet.dart`, which checks `MediaQuery.sizeOf(context).width >= 600` and shows a constrained `Dialog` or a modal bottom sheet, as `category_picker.dart` and `account_picker_sheet.dart` do.
 - **New layouts** → beyond those patterns, don't add a breakpoint, an in-screen layout switch or a list-to-grid conversion without changing `PRD.md` first. PRD's *Adaptive Layouts* table also lists a Home two-pane, marked pending: Home is single-pane at every width. Ask before building it.
 - **Large screens** → skip the skill's *Optimizing for Large Screens* workflow and its `Center`/`ConstrainedBox` width caps. Form routes and pickers already get their width limit from their dialog, and screen bodies stay full width.
 - **Widget trees** → follow the required trees in `docs/architecture/ui-and-layout.md`, such as Home's slivers and the transaction form's bottom-pinned keypad, whose keys shrink toward 48dp (`CalculatorKeypad.minHeight`) before the form above them scrolls.
@@ -244,7 +244,7 @@ Take its `WidgetTester`, `Finder` and pump workflow, and skip its setup step: `f
 - **`@Dependencies`** → `main()` and every helper or test-only widget that pumps a widget annotated with `@Dependencies`, or reads a scoped provider, needs `@Dependencies([...])`. That covers most feature screens, because every repository provider is scoped. Copy the names from the lint's "Missing dependencies" message (`docs/architecture/testing.md`).
 - **Drift** → most widget tests mock repositories. A test that uses a database runs every Drift query inside `tester.runAsync(...)`: the seed, inserts and lookups, and reads after the flow. Creating the database and the container can stay outside.
 - **`pumpAndSettle`** → don't use it while a loading spinner is on screen, whatever the skill says about async updates. It times out if the spinner stays, and if the spinner ends after a delay it silently advances fake time past it, which can hide timing bugs. Step time explicitly: `await tester.pump(); await tester.pump(const Duration(seconds: 1));`.
-- **Text scale** → for text in a scrollable or fixed-size region, add a 2× case through `MaterialApp.builder` (`MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(2))`). Check the rendered size, not only that nothing threw.
+- **Text scale** → for text in a scrollable or fixed-size region, add a 2× case through `MaterialApp.builder: textScaleBuilder(2)` (`test/support/text_scale.dart`). Check the rendered size, not only that nothing threw.
 - **Test font** → the default test font draws every glyph 1em wide, about twice as wide as Roboto, so text wraps in tests where it fits on a phone. A test that checks whether text fits a width, or whether a layout fits a phone's height, first loads Roboto from `$FLUTTER_ROOT/bin/cache/artifacts/material_fonts/` with a `FontLoader` in `setUpAll`. The font stays loaded for the rest of the file, so keep that group last (see the issue #100 group in `transaction_form_screen_test.dart`).
 - **Goldens** → none run today; the splash golden test was deleted in 3947f73. Ask before adding `matchesGoldenFile`.
 - **Verify** → after `flutter test <file>`, run `dart format` on it and `dart analyze --fatal-infos`. Only `dart analyze` reliably reports riverpod_lint's missing-`@Dependencies` warnings, and CI fails on them.

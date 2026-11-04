@@ -72,7 +72,7 @@ final class SliceDrilldownControllerProvider
 }
 
 String _$sliceDrilldownControllerHash() =>
-    r'b7159134bb5305b0c1a718832a7c22f0d1a7a885';
+    r'a1b09a89fed93016de1b67d0320a0eabe616b9cc';
 
 abstract class _$SliceDrilldownController
     extends $StreamNotifier<SliceDrilldownData> {

@@ -143,24 +143,12 @@ Future<void> bootstrapFor({
         initialDefaultCurrencyProvider.overrideWithValue(
           initialDefaultCurrency,
         ),
-        splashGateSnapshotProvider.overrideWith((ref) {
-          final notifier = SplashGateSnapshot.withInitial(
+        splashGateSnapshotProvider.overrideWith(
+          (ref) => SplashGateSnapshot.withInitial(
             enabled: splashEnabled,
             startDate: splashStartDate,
-          );
-          final sub1 = preferencesRepo.watchSplashEnabled().listen(
-            notifier.updateEnabled,
-          );
-          final sub2 = preferencesRepo.watchSplashStartDate().listen(
-            notifier.updateStartDate,
-          );
-          ref.onDispose(() {
-            sub1.cancel();
-            sub2.cancel();
-            notifier.dispose();
-          });
-          return notifier;
-        }),
+          ).bindTo(ref, preferencesRepo),
+        ),
       ],
       child: App(
         onFirstFrame: () {

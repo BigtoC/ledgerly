@@ -8,14 +8,6 @@ import '../../../../domain/models/shopping_list_item.dart';
 
 part 'shopping_list_state.freezed.dart';
 
-/// Pending-delete record set during the 4-second undo window.
-/// Plain class (not Freezed) — controller swaps it out by reference.
-class ShoppingListPendingDelete {
-  const ShoppingListPendingDelete({required this.itemId});
-
-  final int itemId;
-}
-
 @freezed
 sealed class ShoppingListState with _$ShoppingListState {
   /// Pre-first emission from the underlying stream.
@@ -24,10 +16,11 @@ sealed class ShoppingListState with _$ShoppingListState {
   /// Empty state — no items in the shopping list.
   const factory ShoppingListState.empty() = ShoppingListEmpty;
 
-  /// Populated state. [items] already excludes the pending-delete row.
+  /// Populated state. [items] already excludes the row whose id is
+  /// [pendingDeleteId], set during the 4-second undo window.
   const factory ShoppingListState.data({
     required List<ShoppingListItem> items,
-    required ShoppingListPendingDelete? pendingDelete,
+    required int? pendingDeleteId,
   }) = ShoppingListData;
 
   /// Upstream stream failure.

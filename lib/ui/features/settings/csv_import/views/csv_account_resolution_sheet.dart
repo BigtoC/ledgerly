@@ -1,6 +1,6 @@
 // CSV import account decision sheet.
 //
-// Adaptive like `manage_accounts_sheet.dart`: bottom sheet (<600dp) or
+// Adaptive through `showAdaptiveSheet`: bottom sheet (<600dp) or
 // dialog (>=600dp). Lists the three choices of the spec's decision sheet
 // and pops with the one the user taps; dismissing it returns null. Pure:
 // everything it shows comes from the matcher's `CsvAccountMatch`.
@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import '../../../../../domain/models/account.dart';
 import '../../../../../domain/models/csv_import.dart';
 import '../../../../../l10n/app_localizations.dart';
+import '../../../../core/widgets/adaptive_sheet.dart';
 import '../../../accounts/views/account_type_display.dart';
 import '../view_models/csv_import_matcher.dart';
 
@@ -19,27 +20,10 @@ Future<AccountResolution?> showCsvAccountResolutionSheet(
   BuildContext context,
   CsvAccountMatch match,
 ) {
-  final width = MediaQuery.sizeOf(context).width;
-  if (width >= 600) {
-    return showDialog<AccountResolution>(
-      context: context,
-      builder: (ctx) => Dialog(
-        clipBehavior: Clip.antiAlias,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480, maxHeight: 560),
-          child: CsvAccountResolutionSheet(match: match),
-        ),
-      ),
-    );
-  }
-  return showModalBottomSheet<AccountResolution>(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    builder: (ctx) => FractionallySizedBox(
-      heightFactor: 0.75,
-      child: CsvAccountResolutionSheet(match: match),
-    ),
+  return showAdaptiveSheet<AccountResolution>(
+    context,
+    heightFactor: 0.75,
+    child: CsvAccountResolutionSheet(match: match),
   );
 }
 
@@ -122,7 +106,7 @@ class CsvAccountResolutionSheet extends StatelessWidget {
                     final account = match.options[i];
                     return _OptionTile(
                       key: ValueKey('csvImportSheetAccount:${account.id}'),
-                      label: _accountLabel(account, l10n),
+                      label: csvAccountLabel(account, l10n),
                       icon: Icons.account_balance_wallet_outlined,
                       option: AccountResolution.existing(account.id),
                       current: match.resolution,
@@ -138,7 +122,8 @@ class CsvAccountResolutionSheet extends StatelessWidget {
   }
 }
 
-String _accountLabel(Account account, AppLocalizations l10n) =>
+/// [account]'s name, marked as archived when it is.
+String csvAccountLabel(Account account, AppLocalizations l10n) =>
     account.isArchived
     ? l10n.csvImportAccountArchived(account.name)
     : account.name;

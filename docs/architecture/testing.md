@@ -24,7 +24,7 @@ test/
 
 ## Canonical harness
 
-`test/support/test_app.dart` is the canonical app-shell harness: `newTestAppDatabase()`, `runTestSeed(db)`, `makeTestContainer(...)`, `buildTestApp(...)`, `buildBootstrappedTestApp(...)` cover the standard in-memory DB + ProviderScope setup patterns.
+`test/support/test_app.dart` is the canonical app-shell harness: `newTestAppDatabase()`, `runTestSeed(db)`, `makeTestContainer(...)`, `buildTestApp(...)`, `buildBootstrappedTestApp(...)` and `pumpUntilFound(...)` cover the standard in-memory DB + ProviderScope setup patterns.
 
 ## Where slice coverage lives
 

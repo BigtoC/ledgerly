@@ -3,11 +3,8 @@
 // Uses the shared in-memory harness at `_harness/test_app_database.dart`.
 // Every case has a direct row in the §6.3 Test Plan table (T-*).
 //
-// Because the Phase 1 harness does not yet ship
-// `TestRepoBundle.seedMinimalRepositoryFixtures()`, this file seeds the
-// required fixture rows (currencies, categories, account_type, account)
-// directly via `customStatement` calls so Stream A can merge ahead of
-// Stream C's harness completion.
+// Fixture rows (currencies, categories, account_type, account) come from
+// the harness's raw-SQL `seedRepositoryFixtures`.
 
 import 'package:drift/drift.dart'
     show
@@ -38,102 +35,6 @@ const Currency _usd = Currency(
   sortOrder: 1,
 );
 
-/// Seeds the minimal fixture surface Stream A needs:
-///   - currencies: USD(2), JPY(0), TWD(2)
-///   - categories: one seeded expense + one seeded income
-///   - account_types: one `cash` row
-///   - accounts: one USD Cash account (id = 1)
-Future<_Fixtures> _seedFixtures(AppDatabase db) async {
-  await db.customStatement(
-    'INSERT INTO currencies (code, decimals, symbol, name_l10n_key, is_token, '
-    'sort_order) VALUES (?, ?, ?, ?, 0, ?), (?, ?, ?, ?, 0, ?), '
-    '(?, ?, ?, ?, 0, ?)',
-    <Object?>[
-      'USD',
-      2,
-      r'$',
-      'currency.usd',
-      1,
-      'JPY',
-      0,
-      '¥',
-      'currency.jpy',
-      2,
-      'TWD',
-      2,
-      r'NT$',
-      'currency.twd',
-      3,
-    ],
-  );
-
-  final expenseId = await _insertCategoryRaw(
-    db,
-    l10nKey: 'category.food',
-    icon: 'restaurant',
-    color: 0,
-    type: 'expense',
-    sortOrder: 1,
-  );
-  final incomeId = await _insertCategoryRaw(
-    db,
-    l10nKey: 'category.salary',
-    icon: 'work',
-    color: 1,
-    type: 'income',
-    sortOrder: 2,
-  );
-
-  // account_types row.
-  await db.customStatement(
-    'INSERT INTO account_types (l10n_key, icon, color, sort_order, '
-    'is_archived) VALUES (?, ?, 0, 1, 0)',
-    <Object?>['accountType.cash', 'wallet'],
-  );
-  final accountTypeRows = await db
-      .customSelect('SELECT id FROM account_types')
-      .get();
-  final accountTypeId = accountTypeRows.first.read<int>('id');
-
-  // One USD Cash account.
-  await db.customStatement(
-    'INSERT INTO accounts (name, account_type_id, currency, '
-    'opening_balance_minor_units, is_archived) VALUES (?, ?, ?, 0, 0)',
-    <Object?>['Cash', accountTypeId, 'USD'],
-  );
-  final accountRows = await db.customSelect('SELECT id FROM accounts').get();
-  final accountId = accountRows.first.read<int>('id');
-
-  return _Fixtures(
-    expenseCategoryId: expenseId,
-    incomeCategoryId: incomeId,
-    accountTypeId: accountTypeId,
-    accountId: accountId,
-  );
-}
-
-Future<int> _insertCategoryRaw(
-  AppDatabase db, {
-  required String l10nKey,
-  required String icon,
-  required int color,
-  required String type,
-  required int sortOrder,
-}) async {
-  await db.customStatement(
-    'INSERT INTO categories (l10n_key, icon, color, type, sort_order, '
-    'is_archived) VALUES (?, ?, ?, ?, ?, 0)',
-    <Object?>[l10nKey, icon, color, type, sortOrder],
-  );
-  final rows = await db
-      .customSelect(
-        'SELECT id FROM categories WHERE l10n_key = ?',
-        variables: <Variable<Object>>[Variable.withString(l10nKey)],
-      )
-      .get();
-  return rows.first.read<int>('id');
-}
-
 Future<int> _insertAccountRaw(
   AppDatabase db, {
   required String name,
@@ -152,20 +53,6 @@ Future<int> _insertAccountRaw(
       )
       .get();
   return rows.last.read<int>('id');
-}
-
-class _Fixtures {
-  const _Fixtures({
-    required this.expenseCategoryId,
-    required this.incomeCategoryId,
-    required this.accountTypeId,
-    required this.accountId,
-  });
-
-  final int expenseCategoryId;
-  final int incomeCategoryId;
-  final int accountTypeId;
-  final int accountId;
 }
 
 class _SelectCountingInterceptor extends QueryInterceptor {
@@ -194,7 +81,7 @@ void main() {
   });
 
   late AppDatabase db;
-  late _Fixtures fixtures;
+  late RepositoryFixtures fixtures;
   late TransactionRepository txRepo;
   // Pinned inside setUp because DateTime is not const.
   late DateTime frozenNow;
@@ -202,7 +89,7 @@ void main() {
   setUp(() async {
     frozenNow = DateTime(2026, 4, 22, 12, 0);
     db = newTestAppDatabase();
-    fixtures = await _seedFixtures(db);
+    fixtures = await seedRepositoryFixtures(db);
     txRepo = DriftTransactionRepository(db, clock: () => frozenNow);
   });
 
@@ -425,52 +312,6 @@ void main() {
     );
   });
 
-  group('watchForAccount / watchForCategory', () {
-    test(
-      'T-stream-02: watchForAccount only emits target account rows',
-      () async {
-        final otherAccountId = await _insertAccountRaw(
-          db,
-          name: 'Second',
-          accountTypeId: fixtures.accountTypeId,
-          currencyCode: 'USD',
-        );
-        final inA = await txRepo.save(sampleTx(amount: 100));
-        final inB = await txRepo.save(
-          sampleTx(amount: 200, accountId: otherAccountId),
-        );
-
-        final forA = await txRepo.watchForAccount(fixtures.accountId).first;
-        expect(forA.map((t) => t.id), [inA.id]);
-
-        final forB = await txRepo.watchForAccount(otherAccountId).first;
-        expect(forB.map((t) => t.id), [inB.id]);
-      },
-    );
-
-    test(
-      'T-stream-03: watchForCategory only emits target category rows',
-      () async {
-        final expenseTx = await txRepo.save(
-          sampleTx(amount: 100, categoryId: fixtures.expenseCategoryId),
-        );
-        final incomeTx = await txRepo.save(
-          sampleTx(amount: 999, categoryId: fixtures.incomeCategoryId),
-        );
-
-        final forExpense = await txRepo
-            .watchForCategory(fixtures.expenseCategoryId)
-            .first;
-        expect(forExpense.map((t) => t.id), [expenseTx.id]);
-
-        final forIncome = await txRepo
-            .watchForCategory(fixtures.incomeCategoryId)
-            .first;
-        expect(forIncome.map((t) => t.id), [incomeTx.id]);
-      },
-    );
-  });
-
   group('save → currency FK', () {
     test(
       'T-currency-fk-01: unknown currency throws, no row inserted',
@@ -631,7 +472,7 @@ void main() {
       final countedDb = AppDatabase(executor.interceptWith(interceptor));
       addTearDown(() async => countedDb.close());
 
-      final countedFixtures = await _seedFixtures(countedDb);
+      final countedFixtures = await seedRepositoryFixtures(countedDb);
       final countedRepo = DriftTransactionRepository(
         countedDb,
         clock: () => DateTime(2026, 4, 22, 12, 0),
@@ -1048,7 +889,7 @@ void main() {
         NativeDatabase.memory().interceptWith(interceptor),
       );
       addTearDown(() async => countedDb.close());
-      await _seedFixtures(countedDb);
+      await seedRepositoryFixtures(countedDb);
       final repo = DriftTransactionRepository(countedDb);
       interceptor.statements.clear();
 

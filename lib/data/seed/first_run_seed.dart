@@ -37,22 +37,10 @@ import '../repositories/currency_repository.dart';
 import '../repositories/user_preferences_repository.dart';
 import '../services/locale_service.dart';
 
-/// Generic seed-phase failure. Non-domain-specific — sibling repository
-/// exceptions (currency, category, …) still surface as their concrete
-/// typed exceptions. This is only used for "seed invariant violated"
-/// conditions that are not themselves a repository error.
-class FirstRunSeedException implements Exception {
-  const FirstRunSeedException(this.message);
-  final String message;
-
-  @override
-  String toString() => 'FirstRunSeedException: $message';
-}
-
 // ---------- Seed row data ----------
 //
-// Kept as top-level constants so tests can probe them directly. The list
-// order doubles as the `sort_order` assignment — index 0 → `sortOrder 0`.
+// Categories and account types take their `sort_order` from their list
+// position (index 0 → `sortOrder 0`); currencies set it explicitly.
 
 /// 11 seeded currencies (Stream C plan §2.3 Step 1, §12 Q6).
 const List<Currency> _kSeededCurrencies = <Currency>[
@@ -135,23 +123,6 @@ const List<Currency> _kSeededCurrencies = <Currency>[
   ),
 ];
 
-/// Seeded category row template. Kept internal — callers only see the
-/// repo-side effect.
-class _SeededCategory {
-  const _SeededCategory({
-    required this.l10nKey,
-    required this.icon,
-    required this.color,
-    required this.type,
-    required this.sortOrder,
-  });
-  final String l10nKey;
-  final String icon;
-  final int color;
-  final CategoryType type;
-  final int sortOrder;
-}
-
 /// 18 seeded categories (13 expense + 5 income). Icon keys reconcile
 /// against the canonical Stream B registry (`directions_car` for
 /// transportation, `savings` for income.other — Stream C plan §2.3 Step 3
@@ -159,166 +130,131 @@ class _SeededCategory {
 /// after launch, so it sits last and the schema v7 migration appends the
 /// same row to existing installs. `category.personal` was retired in the
 /// same release; v7 deletes or archives it on existing installs.
-const List<_SeededCategory> _kSeededCategories = <_SeededCategory>[
+const _kSeededCategories = [
   // Expense categories (PRD 464–476).
-  _SeededCategory(
+  (
     l10nKey: 'category.food',
     icon: 'restaurant',
     color: CategoryPaletteIndex.red60,
     type: CategoryType.expense,
-    sortOrder: 0,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.drinks',
     icon: 'local_cafe',
     color: CategoryPaletteIndex.green40,
     type: CategoryType.expense,
-    sortOrder: 1,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.transportation',
     icon: 'directions_car',
     color: CategoryPaletteIndex.cyan70,
     type: CategoryType.expense,
-    sortOrder: 2,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.shopping',
     icon: 'shopping_bag',
     color: CategoryPaletteIndex.purple30,
     type: CategoryType.expense,
-    sortOrder: 3,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.housing',
     icon: 'home',
     color: CategoryPaletteIndex.green80,
     type: CategoryType.expense,
-    sortOrder: 4,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.entertainment',
     icon: 'movie',
     color: CategoryPaletteIndex.orange70,
     type: CategoryType.expense,
-    sortOrder: 5,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.medical',
     icon: 'medical_services',
     color: CategoryPaletteIndex.red50,
     type: CategoryType.expense,
-    sortOrder: 6,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.education',
     icon: 'school',
     color: CategoryPaletteIndex.purple30,
     type: CategoryType.expense,
-    sortOrder: 7,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.travel',
     icon: 'flight',
     color: CategoryPaletteIndex.cyan70,
     type: CategoryType.expense,
-    sortOrder: 8,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.threeC',
     icon: 'devices',
     color: CategoryPaletteIndex.blue30,
     type: CategoryType.expense,
-    sortOrder: 9,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.miscellaneous',
     icon: 'category',
     color: CategoryPaletteIndex.neutralVariant50,
     type: CategoryType.expense,
-    sortOrder: 10,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.other',
     icon: 'more_horiz',
     color: CategoryPaletteIndex.neutralVariant50,
     type: CategoryType.expense,
-    sortOrder: 11,
   ),
   // Income categories (PRD 486–490).
-  _SeededCategory(
+  (
     l10nKey: 'category.income.salary',
     icon: 'payments',
     color: CategoryPaletteIndex.yellow80,
     type: CategoryType.income,
-    sortOrder: 12,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.income.freelance',
     icon: 'work',
     color: CategoryPaletteIndex.yellow80,
     type: CategoryType.income,
-    sortOrder: 13,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.income.investment',
     icon: 'trending_up',
     color: CategoryPaletteIndex.yellow80,
     type: CategoryType.income,
-    sortOrder: 14,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.income.gift',
     icon: 'redeem',
     color: CategoryPaletteIndex.yellow80,
     type: CategoryType.income,
-    sortOrder: 15,
   ),
-  _SeededCategory(
+  (
     l10nKey: 'category.income.other',
     icon: 'savings',
     color: CategoryPaletteIndex.yellow80,
     type: CategoryType.income,
-    sortOrder: 16,
   ),
   // Expense category added after launch (schema v7 backfill).
-  _SeededCategory(
+  (
     l10nKey: 'category.investment',
     icon: 'trending_up',
     color: CategoryPaletteIndex.yellow80,
     type: CategoryType.expense,
-    sortOrder: 17,
   ),
 ];
 
-/// Seeded account-type row template. Defaults the sort_order to the
-/// appearance order.
-class _SeededAccountType {
-  const _SeededAccountType({
-    required this.l10nKey,
-    required this.icon,
-    required this.color,
-    required this.sortOrder,
-  });
-  final String l10nKey;
-  final String icon;
-  final int color;
-  final int sortOrder;
-}
-
 /// 2 seeded account types (PRD 500–501).
-const List<_SeededAccountType> _kSeededAccountTypes = <_SeededAccountType>[
-  _SeededAccountType(
+const _kSeededAccountTypes = [
+  (
     l10nKey: 'accountType.cash',
     icon: 'wallet',
     color: CategoryPaletteIndex.neutralVariant70,
-    sortOrder: 0,
   ),
-  _SeededAccountType(
+  (
     l10nKey: 'accountType.investment',
     icon: 'trending_up',
     color: CategoryPaletteIndex.neutralVariant70,
-    sortOrder: 1,
   ),
 ];
 
@@ -343,8 +279,7 @@ const String kSeededCashAccountName = 'Cash';
 /// "partially seeded, flagged complete" state.
 ///
 /// Throws whatever the sibling repositories throw on a failing step
-/// (`CurrencyNotFoundException`, `CurrencyDecimalsMismatchException`, …)
-/// plus [FirstRunSeedException] for seed-invariant violations.
+/// (`CurrencyNotFoundException`, `CurrencyDecimalsMismatchException`, …).
 Future<void> runFirstRunSeed({
   required AppDatabase db,
   required CurrencyRepository currencies,
@@ -371,13 +306,8 @@ Future<void> runFirstRunSeed({
     await _seedCurrencies(currencies);
 
     // Step 2 — resolve the locale currency into a Currency domain model.
-    final localeCurrency = await currencies.getByCode(localeCurrencyCode);
-    if (localeCurrency == null) {
-      // Would only fire if Step 1 silently dropped a row — defensive.
-      throw FirstRunSeedException(
-        'Seed expected currency $localeCurrencyCode to exist after Step 1',
-      );
-    }
+    // Step 1 seeded every code defaultCurrencyForLocale can return.
+    final localeCurrency = (await currencies.getByCode(localeCurrencyCode))!;
 
     // Step 3 — categories.
     await _seedCategories(categories);
@@ -419,13 +349,13 @@ Future<void> _seedCurrencies(CurrencyRepository currencies) async {
 }
 
 Future<void> _seedCategories(CategoryRepository categories) async {
-  for (final c in _kSeededCategories) {
+  for (final (i, c) in _kSeededCategories.indexed) {
     await categories.upsertSeeded(
       l10nKey: c.l10nKey,
       icon: c.icon,
       color: c.color,
       type: c.type,
-      sortOrder: c.sortOrder,
+      sortOrder: i,
     );
   }
 }
@@ -438,13 +368,13 @@ Future<int> _seedAccountTypes(
   Currency defaultCurrency,
 ) async {
   int? cashId;
-  for (final t in _kSeededAccountTypes) {
+  for (final (i, t) in _kSeededAccountTypes.indexed) {
     final id = await accountTypes.upsertSeeded(
       l10nKey: t.l10nKey,
       icon: t.icon,
       color: t.color,
       defaultCurrency: defaultCurrency,
-      sortOrder: t.sortOrder,
+      sortOrder: i,
     );
     if (t.l10nKey == kSeededCashAccountTypeL10nKey) {
       cashId = id;
@@ -453,29 +383,12 @@ Future<int> _seedAccountTypes(
   return cashId!;
 }
 
-/// Seeds the single Cash account on an empty DB. On a re-run of the seed
-/// (idempotency path — currently unreachable because Step 0 short-circuits,
-/// but defensive) the account is deduplicated by `(accountTypeId, name)`:
-/// if such a row exists, no insert happens.
-///
-/// Returns the Cash account's row id.
+/// Seeds the single Cash account. Returns its row id.
 Future<int> _seedCashAccount(
   AccountRepository accounts,
   int cashAccountTypeId,
   Currency defaultCurrency,
-) async {
-  // Idempotency defense. The Step 0 gate makes this branch unreachable on
-  // a "clean" re-run after `markFirstRunComplete` fired; it's here so a
-  // partial-failure retry (Step 7 rolled back) still finds its Cash row
-  // and does not duplicate.
-  final existing = await accounts.watchAll(includeArchived: true).first;
-  for (final a in existing) {
-    if (a.accountTypeId == cashAccountTypeId &&
-        a.name == kSeededCashAccountName) {
-      return a.id;
-    }
-  }
-
+) {
   return accounts.save(
     Account(
       id: 0,
@@ -510,24 +423,16 @@ Future<void> _seedPreferences(
 // top-level helper rather than extending `LocaleService` (Stream C plan
 // §2.3 Step 2 decision + §5 Task C3).
 
-/// Resolves the device locale to a seeded ISO 4217 code. Region-specific
-/// mappings win over language-only fallbacks; language-only fallbacks
-/// exist only for `en`, `zh`, `ja` (the three languages whose regional
-/// mappings all collapse to the same default). Every other locale falls
-/// through to the documented `USD` global fallback — language-prefix
-/// fallbacks for `de_*`/`fr_*`/`es_*`/`it_*` → EUR were removed 2026-04-22
-/// per the "language should not affect fiat" policy (§12 Q6).
+/// Resolves the device locale to a seeded ISO 4217 code. Only `en_GB`,
+/// `zh_TW` and `zh_HK`/`zh_MO` need an exact match; any other `zh_*` or
+/// `ja_*` locale falls back on its language (CNY, JPY). Every other locale,
+/// `en_CA`/`en_AU`/`en_NZ` included, gets the global `USD` fallback:
+/// language should not affect fiat, so `de_*`/`fr_*`/`es_*`/`it_*`
+/// deliberately map to USD rather than EUR (§12 Q6).
 String defaultCurrencyForLocale(String rawLocale) {
   // BCP-47 accepts both `-` and `_`; normalise to `_`.
   final normalized = rawLocale.replaceAll('-', '_');
-
-  // Exact-match fast path.
   switch (normalized) {
-    case 'en_US':
-    case 'en_CA':
-    case 'en_AU':
-    case 'en_NZ':
-      return 'USD';
     case 'en_GB':
       return 'GBP';
     case 'zh_TW':
@@ -535,28 +440,10 @@ String defaultCurrencyForLocale(String rawLocale) {
     case 'zh_HK':
     case 'zh_MO':
       return 'HKD';
-    case 'zh_CN':
-    case 'zh_SG':
-    case 'zh':
-      return 'CNY';
-    case 'ja_JP':
-    case 'ja':
-      return 'JPY';
   }
-
-  // Language-only prefix fallback. Retained only for `en` / `zh` / `ja`
-  // because their explicit regional mappings above all collapse to the
-  // same default. `de` / `fr` / `es` / `it` are intentionally absent.
-  final lang = normalized.split('_').first;
-  switch (lang) {
-    case 'en':
-      return 'USD';
-    case 'zh':
-      return 'CNY';
-    case 'ja':
-      return 'JPY';
-  }
-
-  // Documented global fallback.
-  return 'USD';
+  return switch (normalized.split('_').first) {
+    'zh' => 'CNY',
+    'ja' => 'JPY',
+    _ => 'USD',
+  };
 }

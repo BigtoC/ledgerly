@@ -28,6 +28,7 @@ import '../../../../core/constants.dart';
 import '../../../../core/utils/box_shadow.dart';
 import '../../../../domain/models/shopping_list_item.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../core/widgets/undo_snack_bar.dart';
 import '../../transactions/view_models/transaction_form_state.dart';
 import '../view_models/shopping_list_controller.dart';
 import '../view_models/shopping_list_providers.dart';
@@ -49,7 +50,7 @@ class ShoppingListScreen extends ConsumerStatefulWidget {
 
 class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
   ShoppingListController? _controller;
-  ShoppingListPendingDelete? _lastShownPending;
+  int? _lastShownPendingId;
 
   @override
   void initState() {
@@ -81,39 +82,27 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
     }
   }
 
-  void _maybeShowUndoSnackbar(
-    BuildContext context,
-    ShoppingListPendingDelete? pending,
-  ) {
-    if (pending == null) {
-      _lastShownPending = null;
+  void _maybeShowUndoSnackbar(BuildContext context, int? pendingId) {
+    if (pendingId == null) {
+      _lastShownPendingId = null;
       return;
     }
-    if (_lastShownPending?.itemId == pending.itemId) return;
+    if (_lastShownPendingId == pendingId) return;
 
-    _lastShownPending = pending;
+    _lastShownPendingId = pendingId;
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.maybeOf(context);
-    messenger
-      ?..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(l10n.shoppingListDeleteUndoSnackbar),
-          duration: kUndoWindow,
-          action: SnackBarAction(
-            label: l10n.commonUndo,
-            onPressed: () {
-              // The snackbar outlives this screen. Once the screen is gone,
-              // the auto-dispose controller has dropped the pending delete,
-              // so there is nothing to undo and `ref` is unusable.
-              if (!mounted) return;
-              unawaited(
-                ref.read(shoppingListControllerProvider.notifier).undoDelete(),
-              );
-            },
-          ),
-        ),
-      );
+    messenger?.showUndoSnackBar(
+      message: l10n.shoppingListDeleteUndoSnackbar,
+      undoLabel: l10n.commonUndo,
+      onUndo: () {
+        // The snackbar outlives this screen. Once the screen is gone,
+        // the auto-dispose controller has dropped the pending delete,
+        // so there is nothing to undo and `ref` is unusable.
+        if (!mounted) return;
+        ref.read(shoppingListControllerProvider.notifier).undoDelete();
+      },
+    );
   }
 
   Future<void> _onTapItem(BuildContext context, int id) async {
@@ -123,30 +112,19 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
       '/home/shopping-list/$id',
     );
     if (!mounted) return;
-    switch (result) {
-      case ShoppingListEditResultMissingDraft():
-        messenger
-          ..clearSnackBars()
-          ..showSnackBar(
-            SnackBar(content: Text(l10n.shoppingListDraftNotFoundSnackbar)),
-          );
-      case ShoppingListEditResultSavedDraft():
-        messenger
-          ..clearSnackBars()
-          ..showSnackBar(
-            SnackBar(content: Text(l10n.shoppingListSavedDraftSnackbar)),
-          );
-      case ShoppingListEditResultSavedTransaction():
-        messenger
-          ..clearSnackBars()
-          ..showSnackBar(
-            SnackBar(content: Text(l10n.shoppingListConvertedSnackbar)),
-          );
+    final message = switch (result) {
+      ShoppingListEditResultMissingDraft() =>
+        l10n.shoppingListDraftNotFoundSnackbar,
+      ShoppingListEditResultSavedDraft() => l10n.shoppingListSavedDraftSnackbar,
+      ShoppingListEditResultSavedTransaction() =>
+        l10n.shoppingListConvertedSnackbar,
       // unreachable from this route; only emitted by AddTransactionMode
-      case ShoppingListEditResultAddedToList():
-      case null:
-        break;
-    }
+      ShoppingListEditResultAddedToList() || null => null,
+    };
+    if (message == null) return;
+    messenger
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _onDeleteItem(int id) {
@@ -162,8 +140,8 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
     ref.listen(shoppingListControllerProvider, (_, next) {
       if (next case AsyncData<ShoppingListState>(value: final value)) {
         switch (value) {
-          case ShoppingListData(:final pendingDelete):
-            _maybeShowUndoSnackbar(context, pendingDelete);
+          case ShoppingListData(:final pendingDeleteId):
+            _maybeShowUndoSnackbar(context, pendingDeleteId);
           case ShoppingListLoading() ||
               ShoppingListEmpty() ||
               ShoppingListError():
@@ -183,13 +161,11 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
           AsyncData<ShoppingListState>(value: final ShoppingListData data) =>
             _DataBody(
               data: data,
-              canOpenItem: data.pendingDelete == null,
               onDeleteItem: _onDeleteItem,
               onTapItem: (id) => _onTapItem(context, id),
             ),
           AsyncData<ShoppingListState>(value: ShoppingListError()) ||
           AsyncError() => _ErrorSurface(
-            message: l10n.errorSnackbarGeneric,
             onRetry: () => ref.invalidate(shoppingListControllerProvider),
           ),
           _ => const Center(child: CircularProgressIndicator()),
@@ -240,13 +216,11 @@ class _EmptyState extends StatelessWidget {
 class _DataBody extends StatelessWidget {
   const _DataBody({
     required this.data,
-    required this.canOpenItem,
     required this.onDeleteItem,
     required this.onTapItem,
   });
 
   final ShoppingListData data;
-  final bool canOpenItem;
   final void Function(int id) onDeleteItem;
   final void Function(int id) onTapItem;
 
@@ -279,7 +253,7 @@ class _DataBody extends StatelessWidget {
                 final item = items[index];
                 return _ShoppingListRow(
                   item: item,
-                  canTap: canOpenItem,
+                  canTap: data.pendingDeleteId == null,
                   onDelete: () => onDeleteItem(item.id),
                   onTap: () => onTapItem(item.id),
                 );
@@ -378,9 +352,8 @@ class _ShoppingListRow extends ConsumerWidget {
 }
 
 class _ErrorSurface extends StatelessWidget {
-  const _ErrorSurface({required this.message, required this.onRetry});
+  const _ErrorSurface({required this.onRetry});
 
-  final String message;
   final VoidCallback onRetry;
 
   @override
@@ -393,7 +366,7 @@ class _ErrorSurface extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              message,
+              l10n.errorSnackbarGeneric,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium,
             ),

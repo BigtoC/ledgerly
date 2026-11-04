@@ -17,7 +17,7 @@
 //     error.
 //
 // Repositories mocked via mocktail; the screen is mounted under a
-// minimal GoRouter so `GoRouterState.extra` works for duplicate.
+// minimal GoRouter so the form's `context.pop` calls work.
 
 import 'dart:async';
 import 'dart:io';
@@ -45,6 +45,7 @@ import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/ui/features/categories/view_models/categories_controller.dart';
 import 'package:ledgerly/ui/features/transactions/view_models/transaction_form_controller.dart';
+import 'package:ledgerly/ui/features/transactions/view_models/transaction_form_state.dart';
 import 'package:ledgerly/ui/features/transactions/views/transaction_form_screen.dart';
 import 'package:ledgerly/ui/features/transactions/views/account_selector_tile.dart';
 import 'package:ledgerly/ui/features/transactions/views/amount_display.dart';
@@ -54,6 +55,8 @@ import 'package:ledgerly/ui/features/transactions/views/currency_selector_tile.d
 import 'package:ledgerly/ui/features/transactions/views/date_field.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/l10n/app_localizations_en.dart';
+
+import '../../../support/text_scale.dart';
 
 class _MockTransactionRepository extends Mock
     implements TransactionRepository {}
@@ -167,14 +170,13 @@ void main() {
 
   @Dependencies([TransactionFormController, categoriesByType])
   Widget mountAdd({
-    Object? extra,
+    TransactionFormMode mode = const AddTransactionMode(),
     List<Override> extraOverrides = const [],
     double? textScale,
     Duration? Function(int retryCount, Object error)? retry,
   }) {
     final router = GoRouter(
       initialLocation: '/home/add',
-      initialExtra: extra,
       routes: [
         GoRoute(
           path: '/home',
@@ -182,12 +184,14 @@ void main() {
           routes: [
             GoRoute(
               path: 'add',
-              builder: (_, _) => const TransactionFormScreen(),
+              builder: (_, _) => TransactionFormScreen(mode: mode),
             ),
             GoRoute(
               path: 'edit/:id',
               builder: (_, state) => TransactionFormScreen(
-                transactionId: int.parse(state.pathParameters['id']!),
+                mode: EditTransactionMode(
+                  transactionId: int.parse(state.pathParameters['id']!),
+                ),
               ),
             ),
           ],
@@ -215,13 +219,7 @@ void main() {
         routerConfig: router,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        builder: textScale == null
-            ? null
-            : (context, child) => MediaQuery(
-                data: MediaQuery.of(context)
-                    .copyWith(textScaler: TextScaler.linear(textScale)),
-                child: child!,
-              ),
+        builder: textScale == null ? null : textScaleBuilder(textScale),
       ),
     );
   }
@@ -238,7 +236,9 @@ void main() {
             GoRoute(
               path: 'edit/:id',
               builder: (_, state) => TransactionFormScreen(
-                transactionId: int.parse(state.pathParameters['id']!),
+                mode: EditTransactionMode(
+                  transactionId: int.parse(state.pathParameters['id']!),
+                ),
               ),
             ),
           ],
@@ -257,13 +257,7 @@ void main() {
         routerConfig: router,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        builder: textScale == null
-            ? null
-            : (context, child) => MediaQuery(
-                data: MediaQuery.of(context)
-                    .copyWith(textScaler: TextScaler.linear(textScale)),
-                child: child!,
-              ),
+        builder: textScale == null ? null : textScaleBuilder(textScale),
       ),
     );
   }
@@ -348,7 +342,9 @@ void main() {
         date: DateTime(2025, 1, 15),
       );
       when(() => txRepo.getById(99)).thenAnswer((_) async => source);
-      await tester.pumpWidget(mountAdd(extra: const {'duplicateSourceId': 99}));
+      await tester.pumpWidget(
+        mountAdd(mode: const DuplicateTransactionMode(sourceTransactionId: 99)),
+      );
       await tester.pumpAndSettle();
       // Title is still "Add transaction" — duplicate routes through /home/add.
       expect(find.text('Add transaction'), findsOneWidget);
@@ -810,7 +806,7 @@ void main() {
     final tile = tester.widget<CurrencySelectorTile>(
       find.byType(CurrencySelectorTile),
     );
-    expect(tile.currency?.code, 'USD');
+    expect(tile.currency.code, 'USD');
   });
 
   testWidgets(
@@ -838,7 +834,7 @@ void main() {
       final currencyTile = tester.widget<CurrencySelectorTile>(
         find.byType(CurrencySelectorTile),
       );
-      expect(currencyTile.currency?.code, 'EUR');
+      expect(currencyTile.currency.code, 'EUR');
 
       // Now switch account — the destructive dialog should NOT appear
       // because currencyTouched=true means account changes leave
@@ -968,7 +964,7 @@ void main() {
       final tile = tester.widget<CurrencySelectorTile>(
         find.byType(CurrencySelectorTile),
       );
-      expect(tile.currency?.code, 'JPY');
+      expect(tile.currency.code, 'JPY');
       expect(pendingExpression, findsNothing);
     },
   );

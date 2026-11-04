@@ -36,6 +36,8 @@ import 'package:ledgerly/ui/features/categories/views/categories_screen.dart';
 import 'package:ledgerly/ui/features/categories/view_models/categories_state.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
+import '../../../support/text_scale.dart';
+
 class _MockCategoryRepository extends Mock implements CategoryRepository {}
 
 Category _c({
@@ -77,11 +79,7 @@ Widget _wrap({
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
-        child: child!,
-      ),
+      builder: textScaleBuilder(textScale),
       home: const CategoriesScreen(),
     ),
   );

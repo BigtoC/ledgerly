@@ -29,19 +29,12 @@ enum CategoryRowAffordance { archive, delete }
 
 @freezed
 sealed class CategoriesState with _$CategoriesState {
-  /// Pre-first-emission from the underlying category stream.
-  const factory CategoriesState.loading() = CategoriesLoading;
-
   /// Fully-resolved category lists, grouped by type with per-row
   /// affordance hints pre-computed.
   const factory CategoriesState.data({
     required List<CategoryRowView> expense,
     required List<CategoryRowView> income,
   }) = CategoriesData;
-
-  /// Upstream stream failure.
-  const factory CategoriesState.error(Object error, StackTrace stack) =
-      CategoriesError;
 }
 
 /// One row's view-model. Pairs the domain [Category] with the

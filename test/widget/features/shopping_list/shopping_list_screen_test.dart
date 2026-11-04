@@ -192,7 +192,7 @@ void main() {
   testWidgets('SLS03: shows list of rows in data state', (tester) async {
     final items = [_item(id: 1, memo: 'Apples'), _item(id: 2, memo: 'Bread')];
     final container = _makeContainer(
-      fixed: ShoppingListState.data(items: items, pendingDelete: null),
+      fixed: ShoppingListState.data(items: items, pendingDeleteId: null),
     );
     addTearDown(container.dispose);
 
@@ -218,7 +218,7 @@ void main() {
         ),
       ];
       final container = _makeContainer(
-        fixed: ShoppingListState.data(items: items, pendingDelete: null),
+        fixed: ShoppingListState.data(items: items, pendingDeleteId: null),
         category: _seededFoodCategory,
       );
       addTearDown(container.dispose);
@@ -236,7 +236,7 @@ void main() {
   ) async {
     final items = [_item(id: 42, memo: 'Milk')];
     final container = _makeContainer(
-      fixed: ShoppingListState.data(items: items, pendingDelete: null),
+      fixed: ShoppingListState.data(items: items, pendingDeleteId: null),
     );
     addTearDown(container.dispose);
 
@@ -253,11 +253,12 @@ void main() {
     tester,
   ) async {
     final items = [_item(id: 10, memo: 'Coffee')];
-    const pending = ShoppingListPendingDelete(
-      itemId: 99, // a different item is pending — taps on id:10 still disabled
-    );
     final container = _makeContainer(
-      fixed: ShoppingListState.data(items: items, pendingDelete: pending),
+      fixed: ShoppingListState.data(
+        items: items,
+        // A different item is pending; taps on id:10 are still disabled.
+        pendingDeleteId: 99,
+      ),
     );
     addTearDown(container.dispose);
 
@@ -482,7 +483,7 @@ void main() {
     (tester) async {
       final items = [_item(id: 3, memo: 'Cheese')];
       final container = _makeContainer(
-        fixed: ShoppingListState.data(items: items, pendingDelete: null),
+        fixed: ShoppingListState.data(items: items, pendingDeleteId: null),
       );
       addTearDown(container.dispose);
 

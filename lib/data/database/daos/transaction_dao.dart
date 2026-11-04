@@ -53,52 +53,9 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
       ..limit(limit);
     return query.watch().map(
       (rows) => rows
-          .map((r) => r.read(dayExpr)!)
-          .map(
-            (d) => DateTime(
-              int.parse(d.substring(0, 4)),
-              int.parse(d.substring(5, 7)),
-              int.parse(d.substring(8, 10)),
-            ),
-          )
+          .map((r) => DateTime.parse(r.read(dayExpr)!))
           .toList(growable: false),
     );
-  }
-
-  /// Watch every transaction for a given account, reverse-chronological,
-  /// bounded by `limit`. Backs
-  /// `TransactionRepository.watchForAccount` — see
-  /// `docs/plans/m3-repositories-seed/stream-a-transaction-category.md` §4.
-  Stream<List<TransactionRow>> watchByAccount(
-    int accountId, {
-    int limit = 200,
-  }) {
-    return (select(transactions)
-          ..where((t) => t.accountId.equals(accountId))
-          ..orderBy([
-            (t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc),
-            (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
-          ])
-          ..limit(limit))
-        .watch();
-  }
-
-  /// Watch every transaction for a given category, reverse-chronological,
-  /// bounded by `limit`. Backs
-  /// `TransactionRepository.watchForCategory` — see
-  /// `docs/plans/m3-repositories-seed/stream-a-transaction-category.md` §4.
-  Stream<List<TransactionRow>> watchByCategory(
-    int categoryId, {
-    int limit = 200,
-  }) {
-    return (select(transactions)
-          ..where((t) => t.categoryId.equals(categoryId))
-          ..orderBy([
-            (t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc),
-            (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
-          ])
-          ..limit(limit))
-        .watch();
   }
 
   /// Watch transactions whose memo contains [query] (case-insensitive
@@ -141,7 +98,7 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
     int categoryId, {
     int? limit,
   }) {
-    final query = attachedDatabase.customSelect(
+    final query = customSelect(
       'SELECT m FROM ('
       'SELECT m, updated_at, id, ROW_NUMBER() OVER ('
       'PARTITION BY m ORDER BY updated_at DESC, id DESC) AS rn '
@@ -166,27 +123,19 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
 
   /// Earliest and latest `date` across all rows, or null when the table
   /// is empty. Backs `TransactionRepository.getDateBounds`.
-  Future<({DateTime first, DateTime last})?> getDateBounds() async {
-    final first = transactions.date.min();
-    final last = transactions.date.max();
-    final row = await (selectOnly(
-      transactions,
-    )..addColumns([first, last])).getSingle();
-    final firstDate = row.read(first);
-    final lastDate = row.read(last);
-    if (firstDate == null || lastDate == null) return null;
-    return (first: firstDate, last: lastDate);
-  }
+  Future<({DateTime first, DateTime last})?> getDateBounds() =>
+      _dateBounds().getSingle();
 
   /// [getDateBounds] as a stream: re-emits whenever `transactions` changes,
   /// so adding or deleting the earliest row is seen. Backs
   /// `TransactionRepository.watchDateBounds`.
-  Stream<({DateTime first, DateTime last})?> watchDateBounds() {
+  Stream<({DateTime first, DateTime last})?> watchDateBounds() =>
+      _dateBounds().watchSingle();
+
+  Selectable<({DateTime first, DateTime last})?> _dateBounds() {
     final first = transactions.date.min();
     final last = transactions.date.max();
-    return (selectOnly(
-      transactions,
-    )..addColumns([first, last])).watchSingle().map((row) {
+    return (selectOnly(transactions)..addColumns([first, last])).map((row) {
       final firstDate = row.read(first);
       final lastDate = row.read(last);
       if (firstDate == null || lastDate == null) return null;
@@ -294,27 +243,15 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
 
   /// Count transactions referencing the given category. Fuels the M3
   /// category type-lock check.
-  Future<int> countByCategory(int categoryId) async {
-    final countExp = transactions.id.count();
-    final row =
-        await (selectOnly(transactions)
-              ..addColumns([countExp])
-              ..where(transactions.categoryId.equals(categoryId)))
-            .getSingle();
-    return row.read(countExp) ?? 0;
-  }
+  Future<int> countByCategory(int categoryId) => transactions
+      .count(where: (t) => t.categoryId.equals(categoryId))
+      .getSingle();
 
   /// Count transactions referencing the given account. Fuels the M3
   /// account archive-vs-delete check.
-  Future<int> countByAccount(int accountId) async {
-    final countExp = transactions.id.count();
-    final row =
-        await (selectOnly(transactions)
-              ..addColumns([countExp])
-              ..where(transactions.accountId.equals(accountId)))
-            .getSingle();
-    return row.read(countExp) ?? 0;
-  }
+  Future<int> countByAccount(int accountId) => transactions
+      .count(where: (t) => t.accountId.equals(accountId))
+      .getSingle();
 
   /// Per `(category_id, currency)` subtotal in `[start, end)`, filtered by
   /// `categories.type`. Emits ONE row per pair so the repository can run
@@ -328,30 +265,15 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
     required String type,
     int? accountId,
   }) {
-    final buf = StringBuffer(
-      'SELECT t.category_id AS cat_id, t.currency AS code, '
-      'SUM(t.amount_minor_units) AS total '
-      'FROM transactions t '
-      'JOIN categories c ON c.id = t.category_id '
-      'WHERE t.date >= ? AND t.date < ? AND c.type = ?',
-    );
-    final variables = <Variable<Object>>[
-      Variable<DateTime>(start),
-      Variable<DateTime>(end),
-      Variable<String>(type),
-    ];
-    if (accountId != null) {
-      buf.write(' AND t.account_id = ?');
-      variables.add(Variable<int>(accountId));
-    }
-    buf.write(' GROUP BY t.category_id, t.currency');
-
-    final query = attachedDatabase.customSelect(
-      buf.toString(),
-      variables: variables,
-      readsFrom: {transactions, attachedDatabase.categories},
-    );
-    return query.watch().map(
+    return _watchInRangeByType(
+      't.category_id AS cat_id, t.currency AS code, '
+          'SUM(t.amount_minor_units) AS total',
+      'GROUP BY t.category_id, t.currency',
+      start: start,
+      end: end,
+      type: type,
+      accountId: accountId,
+    ).map(
       (rows) => rows
           .map(
             (r) => (
@@ -372,21 +294,14 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
     required DateTime end,
     required String type,
   }) {
-    final query = attachedDatabase.customSelect(
-      'SELECT t.account_id AS acct_id, t.currency AS code, '
-      'SUM(t.amount_minor_units) AS total '
-      'FROM transactions t '
-      'JOIN categories c ON c.id = t.category_id '
-      'WHERE t.date >= ? AND t.date < ? AND c.type = ? '
+    return _watchInRangeByType(
+      't.account_id AS acct_id, t.currency AS code, '
+          'SUM(t.amount_minor_units) AS total',
       'GROUP BY t.account_id, t.currency',
-      variables: [
-        Variable<DateTime>(start),
-        Variable<DateTime>(end),
-        Variable<String>(type),
-      ],
-      readsFrom: {transactions, attachedDatabase.categories},
-    );
-    return query.watch().map(
+      start: start,
+      end: end,
+      type: type,
+    ).map(
       (rows) => rows
           .map(
             (r) => (
@@ -408,29 +323,14 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
     required String type,
     int? accountId,
   }) {
-    final buf = StringBuffer(
-      'SELECT t.currency AS code, SUM(t.amount_minor_units) AS total '
-      'FROM transactions t '
-      'JOIN categories c ON c.id = t.category_id '
-      'WHERE t.date >= ? AND t.date < ? AND c.type = ?',
-    );
-    final variables = <Variable<Object>>[
-      Variable<DateTime>(start),
-      Variable<DateTime>(end),
-      Variable<String>(type),
-    ];
-    if (accountId != null) {
-      buf.write(' AND t.account_id = ?');
-      variables.add(Variable<int>(accountId));
-    }
-    buf.write(' GROUP BY t.currency');
-
-    final query = attachedDatabase.customSelect(
-      buf.toString(),
-      variables: variables,
-      readsFrom: {transactions, attachedDatabase.categories},
-    );
-    return query.watch().map(
+    return _watchInRangeByType(
+      't.currency AS code, SUM(t.amount_minor_units) AS total',
+      'GROUP BY t.currency',
+      start: start,
+      end: end,
+      type: type,
+      accountId: accountId,
+    ).map(
       (rows) => rows
           .map(
             (r) =>
@@ -455,38 +355,16 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
     int? accountId,
     String? currencyCode,
   }) {
-    final buf = StringBuffer(
-      'SELECT t.date AS d, t.currency AS code, '
-      't.amount_minor_units AS amt '
-      'FROM transactions t '
-      'JOIN categories c ON c.id = t.category_id '
-      'WHERE t.date >= ? AND t.date < ? AND c.type = ?',
-    );
-    final variables = <Variable<Object>>[
-      Variable<DateTime>(start),
-      Variable<DateTime>(end),
-      Variable<String>(type),
-    ];
-    if (categoryId != null) {
-      buf.write(' AND t.category_id = ?');
-      variables.add(Variable<int>(categoryId));
-    }
-    if (accountId != null) {
-      buf.write(' AND t.account_id = ?');
-      variables.add(Variable<int>(accountId));
-    }
-    if (currencyCode != null) {
-      buf.write(' AND t.currency = ?');
-      variables.add(Variable<String>(currencyCode));
-    }
-    buf.write(' ORDER BY t.date ASC');
-
-    final query = attachedDatabase.customSelect(
-      buf.toString(),
-      variables: variables,
-      readsFrom: {transactions, attachedDatabase.categories},
-    );
-    return query.watch().map(
+    return _watchInRangeByType(
+      't.date AS d, t.currency AS code, t.amount_minor_units AS amt',
+      'ORDER BY t.date ASC',
+      start: start,
+      end: end,
+      type: type,
+      categoryId: categoryId,
+      accountId: accountId,
+      currencyCode: currencyCode,
+    ).map(
       (rows) => rows
           .map(
             (r) => (
@@ -497,6 +375,50 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
           )
           .toList(growable: false),
     );
+  }
+
+  /// Watches `SELECT [columns]` over transactions joined to their category,
+  /// in `[start, end)` with `c.type = [type]`, plus one `AND` predicate per
+  /// non-null filter, followed by [tail] (the GROUP BY / ORDER BY clause).
+  Stream<List<QueryRow>> _watchInRangeByType(
+    String columns,
+    String tail, {
+    required DateTime start,
+    required DateTime end,
+    required String type,
+    int? categoryId,
+    int? accountId,
+    String? currencyCode,
+  }) {
+    final sql = StringBuffer(
+      'SELECT $columns '
+      'FROM transactions t '
+      'JOIN categories c ON c.id = t.category_id '
+      'WHERE t.date >= ? AND t.date < ? AND c.type = ?',
+    );
+    final variables = <Variable<Object>>[
+      Variable<DateTime>(start),
+      Variable<DateTime>(end),
+      Variable<String>(type),
+    ];
+    if (categoryId != null) {
+      sql.write(' AND t.category_id = ?');
+      variables.add(Variable<int>(categoryId));
+    }
+    if (accountId != null) {
+      sql.write(' AND t.account_id = ?');
+      variables.add(Variable<int>(accountId));
+    }
+    if (currencyCode != null) {
+      sql.write(' AND t.currency = ?');
+      variables.add(Variable<String>(currencyCode));
+    }
+    sql.write(' $tail');
+    return customSelect(
+      sql.toString(),
+      variables: variables,
+      readsFrom: {transactions, categories},
+    ).watch();
   }
 
   /// Full `TransactionRow` objects in `[start, end)` filtered by
@@ -516,13 +438,13 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
     final stmt =
         select(transactions).join([
           innerJoin(
-            attachedDatabase.categories,
-            attachedDatabase.categories.id.equalsExp(transactions.categoryId),
+            categories,
+            categories.id.equalsExp(transactions.categoryId),
           ),
         ])..where(
           transactions.date.isBiggerOrEqualValue(start) &
               transactions.date.isSmallerThanValue(end) &
-              attachedDatabase.categories.type.equals(type),
+              categories.type.equals(type),
         );
     if (categoryId != null) {
       stmt.where(transactions.categoryId.equals(categoryId));

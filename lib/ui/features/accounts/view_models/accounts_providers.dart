@@ -34,12 +34,8 @@ final accountTypesProvider = StreamProvider.autoDispose<List<AccountType>>((
 
 @Dependencies([currencyRepository])
 final selectableCurrenciesProvider = StreamProvider.autoDispose<List<Currency>>(
-  (ref) {
-    final repo = ref.watch(currencyRepositoryProvider);
-    return repo.watchAll().map(
-      (rows) => rows.where((c) => !c.isToken).toList(growable: false),
-    );
-  },
+  // watchAll excludes tokens by default.
+  (ref) => ref.watch(currencyRepositoryProvider).watchAll(),
   dependencies: [currencyRepositoryProvider],
 );
 

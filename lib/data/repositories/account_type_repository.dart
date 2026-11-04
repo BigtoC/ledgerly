@@ -35,10 +35,6 @@ abstract class AccountTypeRepository {
   /// One-shot read by PK. Returns null when the id is absent.
   Future<AccountType?> getById(int id);
 
-  /// One-shot read by seeded-row identity `l10nKey`. Returns null
-  /// when no row carries that key.
-  Future<AccountType?> getByL10nKey(String l10nKey);
-
   /// Insert when `accountType.id == 0`, otherwise update.
   /// Returns the row id.
   ///
@@ -113,7 +109,7 @@ final class DriftAccountTypeRepository implements AccountTypeRepository {
   Stream<List<AccountType>> watchAll({bool includeArchived = false}) {
     // §12 Q6: branch at the DAO boundary — skip archived-row currency
     // lookups when the caller does not want them.
-    final rowsStream = includeArchived ? _dao.watchAll() : _dao.watchActive();
+    final rowsStream = _dao.watchAll(includeArchived: includeArchived);
     return rowsStream.asyncMap((rows) async {
       final codes = rows
           .map((r) => r.defaultCurrency)
@@ -133,13 +129,6 @@ final class DriftAccountTypeRepository implements AccountTypeRepository {
   @override
   Future<AccountType?> getById(int id) async {
     final row = await _dao.findById(id);
-    if (row == null) return null;
-    return _toDomain(row);
-  }
-
-  @override
-  Future<AccountType?> getByL10nKey(String l10nKey) async {
-    final row = await _dao.findByL10nKey(l10nKey);
     if (row == null) return null;
     return _toDomain(row);
   }

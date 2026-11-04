@@ -69,36 +69,6 @@ void main() {
     });
   });
 
-  group('DateHelpers.daysSince — splash counter (PRD 510-552)', () {
-    test('D08: startDate == today → 0', () {
-      expect(
-        DateHelpers.daysSince(
-          startDate: DateTime(2026, 4, 21),
-          now: DateTime(2026, 4, 21, 23, 59),
-        ),
-        0,
-      );
-    });
-    test('D09: start 10 days ago → 10', () {
-      expect(
-        DateHelpers.daysSince(
-          startDate: DateTime(2026, 4, 11),
-          now: DateTime(2026, 4, 21),
-        ),
-        10,
-      );
-    });
-    test('D10: start 9 days in the future → -9 (no clamp)', () {
-      expect(
-        DateHelpers.daysSince(
-          startDate: DateTime(2026, 4, 30),
-          now: DateTime(2026, 4, 21),
-        ),
-        -9,
-      );
-    });
-  });
-
   group('DateHelpers.formatDisplayDate — splash date (PRD 525, 549)', () {
     final d = DateTime(2026, 4, 21);
     test('D11: en_US → "Apr 21, 2026"', () {

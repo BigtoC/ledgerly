@@ -1182,8 +1182,7 @@ mixin _$CsvLoadResult {
 /// [CsvImportPlan.rows], so the commit can recount duplicates.
  List<CsvImportRow> get validRows;/// The valid rows not already in the database. Matching and the
 /// preview use these.
- List<CsvImportRow> get rowsToImport;/// `validRows.length - rowsToImport.length`.
- int get duplicateCount;/// Skipped rows, sorted by line.
+ List<CsvImportRow> get rowsToImport;/// Skipped rows, sorted by line.
  List<CsvRowError> get errors;
 /// Create a copy of CsvLoadResult
 /// with the given fields replaced by the non-null parameter values.
@@ -1196,20 +1195,20 @@ $CsvLoadResultCopyWith<CsvLoadResult> get copyWith => _$CsvLoadResultCopyWithImp
 @override
 bool operator ==(Object other) {
   final _this = this as CsvLoadResult;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CsvLoadResult&&(identical(other.fileName, _this.fileName) || other.fileName == _this.fileName)&&const DeepCollectionEquality().equals(other.validRows, _this.validRows)&&const DeepCollectionEquality().equals(other.rowsToImport, _this.rowsToImport)&&(identical(other.duplicateCount, _this.duplicateCount) || other.duplicateCount == _this.duplicateCount)&&const DeepCollectionEquality().equals(other.errors, _this.errors));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CsvLoadResult&&(identical(other.fileName, _this.fileName) || other.fileName == _this.fileName)&&const DeepCollectionEquality().equals(other.validRows, _this.validRows)&&const DeepCollectionEquality().equals(other.rowsToImport, _this.rowsToImport)&&const DeepCollectionEquality().equals(other.errors, _this.errors));
 }
 
 
 @override
 int get hashCode {
   final _this = this as CsvLoadResult;
-  return Object.hash(runtimeType,_this.fileName,const DeepCollectionEquality().hash(_this.validRows),const DeepCollectionEquality().hash(_this.rowsToImport),_this.duplicateCount,const DeepCollectionEquality().hash(_this.errors));
+  return Object.hash(runtimeType,_this.fileName,const DeepCollectionEquality().hash(_this.validRows),const DeepCollectionEquality().hash(_this.rowsToImport),const DeepCollectionEquality().hash(_this.errors));
 }
 
 @override
 String toString() {
   final _this = this as CsvLoadResult;
-  return 'CsvLoadResult(fileName: ${_this.fileName}, validRows: ${_this.validRows}, rowsToImport: ${_this.rowsToImport}, duplicateCount: ${_this.duplicateCount}, errors: ${_this.errors})';
+  return 'CsvLoadResult(fileName: ${_this.fileName}, validRows: ${_this.validRows}, rowsToImport: ${_this.rowsToImport}, errors: ${_this.errors})';
 }
 
 
@@ -1220,7 +1219,7 @@ abstract mixin class $CsvLoadResultCopyWith<$Res>  {
   factory $CsvLoadResultCopyWith(CsvLoadResult value, $Res Function(CsvLoadResult) _then) = _$CsvLoadResultCopyWithImpl;
 @useResult
 $Res call({
- String fileName, List<CsvImportRow> validRows, List<CsvImportRow> rowsToImport, int duplicateCount, List<CsvRowError> errors
+ String fileName, List<CsvImportRow> validRows, List<CsvImportRow> rowsToImport, List<CsvRowError> errors
 });
 
 
@@ -1237,13 +1236,12 @@ class _$CsvLoadResultCopyWithImpl<$Res>
 
 /// Create a copy of CsvLoadResult
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? fileName = null,Object? validRows = null,Object? rowsToImport = null,Object? duplicateCount = null,Object? errors = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? fileName = null,Object? validRows = null,Object? rowsToImport = null,Object? errors = null,}) {
   return _then(CsvLoadResult(
 fileName: null == fileName ? _self.fileName : fileName // ignore: cast_nullable_to_non_nullable
 as String,validRows: null == validRows ? _self.validRows : validRows // ignore: cast_nullable_to_non_nullable
 as List<CsvImportRow>,rowsToImport: null == rowsToImport ? _self.rowsToImport : rowsToImport // ignore: cast_nullable_to_non_nullable
-as List<CsvImportRow>,duplicateCount: null == duplicateCount ? _self.duplicateCount : duplicateCount // ignore: cast_nullable_to_non_nullable
-as int,errors: null == errors ? _self.errors : errors // ignore: cast_nullable_to_non_nullable
+as List<CsvImportRow>,errors: null == errors ? _self.errors : errors // ignore: cast_nullable_to_non_nullable
 as List<CsvRowError>,
   ));
 }
@@ -1329,10 +1327,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String fileName,  List<CsvImportRow> validRows,  List<CsvImportRow> rowsToImport,  int duplicateCount,  List<CsvRowError> errors)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String fileName,  List<CsvImportRow> validRows,  List<CsvImportRow> rowsToImport,  List<CsvRowError> errors)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CsvLoadResult() when $default != null:
-return $default(_that.fileName,_that.validRows,_that.rowsToImport,_that.duplicateCount,_that.errors);case _:
+return $default(_that.fileName,_that.validRows,_that.rowsToImport,_that.errors);case _:
   return orElse();
 
 }
@@ -1350,10 +1348,10 @@ return $default(_that.fileName,_that.validRows,_that.rowsToImport,_that.duplicat
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String fileName,  List<CsvImportRow> validRows,  List<CsvImportRow> rowsToImport,  int duplicateCount,  List<CsvRowError> errors)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String fileName,  List<CsvImportRow> validRows,  List<CsvImportRow> rowsToImport,  List<CsvRowError> errors)  $default,) {final _that = this;
 switch (_that) {
 case _CsvLoadResult():
-return $default(_that.fileName,_that.validRows,_that.rowsToImport,_that.duplicateCount,_that.errors);case _:
+return $default(_that.fileName,_that.validRows,_that.rowsToImport,_that.errors);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1370,10 +1368,10 @@ return $default(_that.fileName,_that.validRows,_that.rowsToImport,_that.duplicat
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String fileName,  List<CsvImportRow> validRows,  List<CsvImportRow> rowsToImport,  int duplicateCount,  List<CsvRowError> errors)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String fileName,  List<CsvImportRow> validRows,  List<CsvImportRow> rowsToImport,  List<CsvRowError> errors)?  $default,) {final _that = this;
 switch (_that) {
 case _CsvLoadResult() when $default != null:
-return $default(_that.fileName,_that.validRows,_that.rowsToImport,_that.duplicateCount,_that.errors);case _:
+return $default(_that.fileName,_that.validRows,_that.rowsToImport,_that.errors);case _:
   return null;
 
 }
@@ -1385,7 +1383,7 @@ return $default(_that.fileName,_that.validRows,_that.rowsToImport,_that.duplicat
 
 
 class _CsvLoadResult implements CsvLoadResult {
-  const _CsvLoadResult({required this.fileName, required  List<CsvImportRow> validRows, required  List<CsvImportRow> rowsToImport, required this.duplicateCount, required  List<CsvRowError> errors}): _validRows = validRows,_rowsToImport = rowsToImport,_errors = errors;
+  const _CsvLoadResult({required this.fileName, required  List<CsvImportRow> validRows, required  List<CsvImportRow> rowsToImport, required  List<CsvRowError> errors}): _validRows = validRows,_rowsToImport = rowsToImport,_errors = errors;
   
 
 @override final  String fileName;
@@ -1411,8 +1409,6 @@ class _CsvLoadResult implements CsvLoadResult {
   return EqualUnmodifiableListView(_rowsToImport);
 }
 
-/// `validRows.length - rowsToImport.length`.
-@override final  int duplicateCount;
 /// Skipped rows, sorted by line.
  final  List<CsvRowError> _errors;
 /// Skipped rows, sorted by line.
@@ -1433,18 +1429,18 @@ _$CsvLoadResultCopyWith<_CsvLoadResult> get copyWith => __$CsvLoadResultCopyWith
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _CsvLoadResult&&(identical(other.fileName, fileName) || other.fileName == fileName)&&const DeepCollectionEquality().equals(other.validRows, _validRows)&&const DeepCollectionEquality().equals(other.rowsToImport, _rowsToImport)&&(identical(other.duplicateCount, duplicateCount) || other.duplicateCount == duplicateCount)&&const DeepCollectionEquality().equals(other.errors, _errors));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _CsvLoadResult&&(identical(other.fileName, fileName) || other.fileName == fileName)&&const DeepCollectionEquality().equals(other.validRows, _validRows)&&const DeepCollectionEquality().equals(other.rowsToImport, _rowsToImport)&&const DeepCollectionEquality().equals(other.errors, _errors));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,fileName,const DeepCollectionEquality().hash(_validRows),const DeepCollectionEquality().hash(_rowsToImport),duplicateCount,const DeepCollectionEquality().hash(_errors));
+    return Object.hash(runtimeType,fileName,const DeepCollectionEquality().hash(_validRows),const DeepCollectionEquality().hash(_rowsToImport),const DeepCollectionEquality().hash(_errors));
 }
 
 @override
 String toString() {
-    return 'CsvLoadResult(fileName: $fileName, validRows: $validRows, rowsToImport: $rowsToImport, duplicateCount: $duplicateCount, errors: $errors)';
+    return 'CsvLoadResult(fileName: $fileName, validRows: $validRows, rowsToImport: $rowsToImport, errors: $errors)';
 }
 
 
@@ -1455,7 +1451,7 @@ abstract mixin class _$CsvLoadResultCopyWith<$Res> implements $CsvLoadResultCopy
   factory _$CsvLoadResultCopyWith(_CsvLoadResult value, $Res Function(_CsvLoadResult) _then) = __$CsvLoadResultCopyWithImpl;
 @override @useResult
 $Res call({
- String fileName, List<CsvImportRow> validRows, List<CsvImportRow> rowsToImport, int duplicateCount, List<CsvRowError> errors
+ String fileName, List<CsvImportRow> validRows, List<CsvImportRow> rowsToImport, List<CsvRowError> errors
 });
 
 
@@ -1472,13 +1468,12 @@ class __$CsvLoadResultCopyWithImpl<$Res>
 
 /// Create a copy of CsvLoadResult
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? fileName = null,Object? validRows = null,Object? rowsToImport = null,Object? duplicateCount = null,Object? errors = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? fileName = null,Object? validRows = null,Object? rowsToImport = null,Object? errors = null,}) {
   return _then(_CsvLoadResult(
 fileName: null == fileName ? _self.fileName : fileName // ignore: cast_nullable_to_non_nullable
 as String,validRows: null == validRows ? _self._validRows : validRows // ignore: cast_nullable_to_non_nullable
 as List<CsvImportRow>,rowsToImport: null == rowsToImport ? _self._rowsToImport : rowsToImport // ignore: cast_nullable_to_non_nullable
-as List<CsvImportRow>,duplicateCount: null == duplicateCount ? _self.duplicateCount : duplicateCount // ignore: cast_nullable_to_non_nullable
-as int,errors: null == errors ? _self._errors : errors // ignore: cast_nullable_to_non_nullable
+as List<CsvImportRow>,errors: null == errors ? _self._errors : errors // ignore: cast_nullable_to_non_nullable
 as List<CsvRowError>,
   ));
 }

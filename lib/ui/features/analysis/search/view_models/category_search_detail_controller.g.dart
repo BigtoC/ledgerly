@@ -67,7 +67,7 @@ final class CategorySearchDetailControllerProvider
 }
 
 String _$categorySearchDetailControllerHash() =>
-    r'7423c08d6f2325aa72558a50c4c34e5ed22a0be6';
+    r'7c8803965dfa5ee59bf732dfddb22441b816e59d';
 
 final class CategorySearchDetailControllerFamily extends $Family
     with

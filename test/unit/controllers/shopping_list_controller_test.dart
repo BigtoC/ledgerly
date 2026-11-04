@@ -99,7 +99,7 @@ void main() {
       final data = state as ShoppingListData;
       expect(data.items, hasLength(1));
       expect(data.items.first.id, 1);
-      expect(data.pendingDelete, isNull);
+      expect(data.pendingDeleteId, isNull);
     });
 
     test('SLC02: loading → empty when stream emits empty list', () async {
@@ -155,7 +155,7 @@ void main() {
           final data =
               container.read(shoppingListControllerProvider).requireValue
                   as ShoppingListData;
-          expect(data.pendingDelete!.itemId, 42);
+          expect(data.pendingDeleteId, 42);
           expect(data.items, isEmpty); // hidden visually
           verifyNever(() => repo.delete(any()));
 
@@ -191,9 +191,9 @@ void main() {
       verifyNever(() => repo.delete(any()));
       final after = await waitFor(
         container,
-        (s) => s is ShoppingListData && s.pendingDelete == null,
+        (s) => s is ShoppingListData && s.pendingDeleteId == null,
       );
-      expect((after as ShoppingListData).pendingDelete, isNull);
+      expect((after as ShoppingListData).pendingDeleteId, isNull);
       expect(after.items, [item]);
     });
 
@@ -222,7 +222,7 @@ void main() {
         final hiding =
             container.read(shoppingListControllerProvider).requireValue
                 as ShoppingListData;
-        expect(hiding.pendingDelete?.itemId, 55);
+        expect(hiding.pendingDeleteId, 55);
         expect(hiding.items, isEmpty);
 
         // Advance past the undo window so the timer fires and calls
@@ -238,7 +238,7 @@ void main() {
         container,
         (s) =>
             s is ShoppingListData &&
-            s.pendingDelete == null &&
+            s.pendingDeleteId == null &&
             s.items.length == 1,
       );
 

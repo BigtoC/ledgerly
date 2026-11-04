@@ -24,6 +24,8 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../../domain/models/category.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../core/widgets/confirm_dialog.dart';
+import '../../../core/widgets/undo_snack_bar.dart';
 import '../view_models/categories_controller.dart';
 import '../view_models/categories_state.dart';
 import 'category_form_sheet.dart';
@@ -49,7 +51,6 @@ class CategoriesScreen extends ConsumerWidget {
         child: switch (state) {
           AsyncData<CategoriesState>(value: final CategoriesData data) =>
             _CategoriesBody(data: data),
-          AsyncData<CategoriesState>(value: CategoriesError()) ||
           AsyncError() => const _ErrorSurface(),
           _ => const Center(child: CircularProgressIndicator()),
         },
@@ -173,31 +174,25 @@ class _Section extends ConsumerWidget {
         .archiveCategory(cat.id);
     switch (outcome) {
       case ArchiveCategoryOk():
-        messenger
-          ..clearSnackBars()
-          ..showSnackBar(
-            SnackBar(
-              content: Text(l10n.categoriesArchiveUndoSnackbar),
-              action: SnackBarAction(
-                label: l10n.commonUndo,
-                onPressed: () async {
-                  final undone = await container
-                      .read(categoriesControllerProvider.notifier)
-                      .undoArchive(cat.id);
-                  switch (undone) {
-                    case UndoArchiveCategoryOk():
-                      break;
-                    case UndoArchiveCategoryFailed():
-                      messenger
-                        ..clearSnackBars()
-                        ..showSnackBar(
-                          SnackBar(content: Text(l10n.errorSnackbarGeneric)),
-                        );
-                  }
-                },
-              ),
-            ),
-          );
+        messenger.showUndoSnackBar(
+          message: l10n.categoriesArchiveUndoSnackbar,
+          undoLabel: l10n.commonUndo,
+          onUndo: () async {
+            final undone = await container
+                .read(categoriesControllerProvider.notifier)
+                .undoArchive(cat.id);
+            switch (undone) {
+              case UndoArchiveCategoryOk():
+                break;
+              case UndoArchiveCategoryFailed():
+                messenger
+                  ..clearSnackBars()
+                  ..showSnackBar(
+                    SnackBar(content: Text(l10n.errorSnackbarGeneric)),
+                  );
+            }
+          },
+        );
       case ArchiveCategoryHasActiveRecurringRule():
         messenger
           ..clearSnackBars()
@@ -217,24 +212,14 @@ class _Section extends ConsumerWidget {
     Category cat,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.categoriesDeleteConfirmTitle),
-        content: Text(l10n.categoriesDeleteConfirmBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton.tonal(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.commonDelete),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: l10n.categoriesDeleteConfirmTitle,
+      body: l10n.categoriesDeleteConfirmBody,
+      confirmLabel: l10n.commonDelete,
+      tonal: true,
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
     if (!context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     final outcome = await ref

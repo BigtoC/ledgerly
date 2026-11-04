@@ -19,7 +19,6 @@
 // Do NOT add seed logic here — callers that need a seeded DB call
 // `runTestSeed(db)` explicitly so the "no data" state is also testable.
 
-import 'package:drift/native.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -43,24 +42,38 @@ import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/data/seed/first_run_seed.dart';
-import 'package:ledgerly/data/services/locale_service.dart';
 
-/// Returns a fresh in-memory `AppDatabase` with no data.
-/// Caller MUST `await db.close()` in an `addTearDown` block.
-AppDatabase newTestAppDatabase() => AppDatabase(NativeDatabase.memory());
+import '../unit/repositories/_harness/test_app_database.dart'
+    show FixedLocaleService;
+export '../unit/repositories/_harness/test_app_database.dart'
+    show FixedLocaleService, newTestAppDatabase;
+
+/// Pumps with real delays (inside `tester.runAsync`) until [finder] shows
+/// up, then settles and expects exactly one match. For flows whose Drift
+/// queries or isolates need real async time, or whose spinners never
+/// settle under fake time.
+Future<void> pumpUntilFound(WidgetTester tester, Finder finder) async {
+  for (var i = 0; i < 200 && finder.evaluate().isEmpty; i++) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 10)),
+    );
+    await tester.pump();
+  }
+  await tester.pumpAndSettle();
+  expect(finder, findsOneWidget);
+}
 
 /// Runs the first-run seed against [db] using a fixed `en_US` locale stub.
 Future<void> runTestSeed(AppDatabase db) {
   final currencies = DriftCurrencyRepository(db);
-  final currenciesRepo = currencies;
   return runFirstRunSeed(
     db: db,
     currencies: currencies,
     categories: DriftCategoryRepository(db),
-    accountTypes: DriftAccountTypeRepository(db, currenciesRepo),
-    accounts: DriftAccountRepository(db, currenciesRepo),
+    accountTypes: DriftAccountTypeRepository(db, currencies),
+    accounts: DriftAccountRepository(db, currencies),
     preferences: DriftUserPreferencesRepository(db),
-    localeService: const _FixedLocaleService('en_US'),
+    localeService: const FixedLocaleService('en_US'),
   );
 }
 
@@ -105,7 +118,7 @@ Future<Widget> buildBootstrappedTestApp({required AppDatabase db}) async {
   final overrides = <Override>[];
   await bootstrapFor(
     openDatabase: () async => db,
-    localeService: const _FixedLocaleService('en_US'),
+    localeService: const FixedLocaleService('en_US'),
     runAppFn: (widget) {
       launched = widget;
       if (widget is ProviderScope) {
@@ -199,9 +212,7 @@ Future<Account> createTestAccount(
 ///
 /// Seeded keys: `'accountType.cash'`, `'accountType.investment'`.
 Future<int> getAccountTypeId(AppDatabase db, String l10nKey) async {
-  final currencies = DriftCurrencyRepository(db);
-  final types = DriftAccountTypeRepository(db, currencies);
-  final type = await types.getByL10nKey(l10nKey);
+  final type = await db.accountTypeDao.findByL10nKey(l10nKey);
   if (type == null) throw StateError('AccountType $l10nKey not seeded');
   return type.id;
 }
@@ -211,7 +222,7 @@ Future<int> getAccountTypeId(AppDatabase db, String l10nKey) async {
 ///
 /// Example seeded keys: `'category.food'`, `'category.income.salary'`.
 Future<int> getSeededCategoryId(AppDatabase db, String l10nKey) async {
-  final cat = await DriftCategoryRepository(db).getByL10nKey(l10nKey);
+  final cat = await db.categoryDao.findByL10nKey(l10nKey);
   if (cat == null) throw StateError('Category $l10nKey not seeded');
   return cat.id;
 }
@@ -235,14 +246,4 @@ Future<Account> getDefaultAccount(AppDatabase db) async {
     throw StateError('Default account $defaultId vanished after seed');
   }
   return account;
-}
-
-/// Deterministic [LocaleService] stub — returns a fixed locale string so
-/// tests are not affected by the host machine's OS locale.
-class _FixedLocaleService implements LocaleService {
-  const _FixedLocaleService(this._locale);
-  final String _locale;
-
-  @override
-  String get deviceLocale => _locale;
 }

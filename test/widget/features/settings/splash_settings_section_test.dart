@@ -78,7 +78,6 @@ ProviderContainer _makeContainer(UserPreferencesRepository prefs) {
             themeMode: ThemeMode.light,
             locale: null,
             defaultCurrency: 'USD',
-            defaultAccountId: null,
             splashEnabled: true,
             splashStartDate: null,
             splashDisplayText: null,

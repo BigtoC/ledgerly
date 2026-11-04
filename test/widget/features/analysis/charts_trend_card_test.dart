@@ -4,7 +4,6 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/core/utils/color_palette.dart';
 import 'package:ledgerly/domain/models/category.dart';
@@ -16,6 +15,8 @@ import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_state.da
 import 'package:ledgerly/ui/features/analysis/charts/view_models/selected_slice.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/charts_trend_card.dart';
 import 'package:ledgerly/ui/features/analysis/charts/views/daily_bar_chart.dart';
+
+import '../../../support/text_scale.dart';
 
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 const _colors = AnalysisColors.light;
@@ -68,18 +69,9 @@ Future<void> _pump(
   await tester.pumpWidget(
     MaterialApp(
       theme: lightTheme,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
-        child: child!,
-      ),
+      builder: textScaleBuilder(textScale),
       home: Scaffold(
         body: SingleChildScrollView(
           child: SizedBox(

@@ -18,14 +18,9 @@ part 'settings_state.freezed.dart';
 
 @freezed
 sealed class SettingsState with _$SettingsState {
-  /// Pre-first-emission from the underlying preference streams.
-  const factory SettingsState.loading() = SettingsLoading;
-
   /// Fully-resolved current preference values.
   ///
   /// `locale == null` means "follow system locale" (PRD 887).
-  /// `defaultAccountId == null` means no default has been picked yet
-  /// (first run until the user picks one).
   /// `splashDisplayText == null` / `splashButtonLabel == null` means
   /// "fall back to the default" — the widget layer resolves to
   /// `kDefaultSplashDisplayText` / `splashEnter` at render time.
@@ -33,7 +28,6 @@ sealed class SettingsState with _$SettingsState {
     required ThemeMode themeMode,
     required Locale? locale,
     required String defaultCurrency,
-    required int? defaultAccountId,
     required bool splashEnabled,
     required DateTime? splashStartDate,
     required String? splashDisplayText,

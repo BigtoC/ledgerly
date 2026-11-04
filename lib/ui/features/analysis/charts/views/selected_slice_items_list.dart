@@ -13,15 +13,14 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
-import '../../../../../core/constants.dart';
 import '../../../../../core/utils/color_palette.dart';
 import '../../../../../core/utils/currency_converter.dart';
 import '../../../../../core/utils/money_formatter.dart';
-import '../../../../../domain/models/account.dart';
 import '../../../../../domain/models/category.dart';
 import '../../../../../domain/models/currency.dart';
 import '../../../../../domain/models/transaction.dart';
 import '../../../../../l10n/app_localizations.dart';
+import '../../../../core/widgets/undo_snack_bar.dart';
 import '../../../../core/theme/analysis_colors.dart';
 import '../../../categories/views/category_display.dart';
 import '../../search/view_models/analysis_providers.dart';
@@ -127,18 +126,11 @@ class _SelectedSliceItemsListState
       }
       if (_lastShownPendingDeleteId == pendingId) return;
       _lastShownPendingDeleteId = pendingId;
-      _messenger
-        ?..clearSnackBars()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(l10n.homeDeleteUndoSnackbar),
-            duration: kUndoWindow,
-            action: SnackBarAction(
-              label: l10n.commonUndo,
-              onPressed: _controller.undoDelete,
-            ),
-          ),
-        );
+      _messenger?.showUndoSnackBar(
+        message: l10n.homeDeleteUndoSnackbar,
+        undoLabel: l10n.commonUndo,
+        onUndo: _controller.undoDelete,
+      );
     });
 
     final colors = AnalysisColors.of(context);
@@ -174,12 +166,9 @@ class _SelectedSliceItemsListState
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _ListHeader(
-                      label: _labelFor(
-                        selection: selection,
-                        slice: widget.slice,
-                        categoriesById: categoriesById,
-                        accountsById: accountsById,
-                        l10n: l10n,
+                      label: categoryDisplayNameForKey(
+                        widget.slice.label,
+                        l10n,
                       ),
                       color: colorForIndex(widget.slice.colorIndex),
                       count: data.rows.length,
@@ -201,9 +190,7 @@ class _SelectedSliceItemsListState
                     // account and show its categories (AC 7).
                     if (selection case SelectedAccountSlice(:final accountId))
                       _BridgeButton(
-                        label: l10n.chartsSeeCategoriesIn(
-                          accountsById[accountId]?.name ?? widget.slice.label,
-                        ),
+                        label: l10n.chartsSeeCategoriesIn(widget.slice.label),
                         onTap: () => ref
                             .read(chartsSelectionControllerProvider.notifier)
                             .setAccountFilter(accountId),
@@ -304,16 +291,6 @@ class _SelectedSliceItemsListState
     }
   }
 
-  bool _shouldShowOriginalAmount({
-    required Transaction tx,
-    required ChartSlice slice,
-    required ChartsFxStatus? fxStatus,
-  }) {
-    if (fxStatus == null) return false;
-    return tx.currency.code != slice.currencyCode &&
-        slice.currencyCode == fxStatus.defaultCurrencyCode;
-  }
-
   String? _convertedAmount({
     required Transaction tx,
     required Category? category,
@@ -321,10 +298,12 @@ class _SelectedSliceItemsListState
     required Map<String, Currency> currenciesByCode,
     required ChartsFxStatus? fxStatus,
   }) {
-    if (!_shouldShowOriginalAmount(tx: tx, slice: slice, fxStatus: fxStatus)) {
+    if (fxStatus == null ||
+        tx.currency.code == slice.currencyCode ||
+        slice.currencyCode != fxStatus.defaultCurrencyCode) {
       return null;
     }
-    final rate = fxStatus!.scaledRate(tx.currency.code);
+    final rate = fxStatus.scaledRate(tx.currency.code);
     if (rate == null) return null;
     final fromCurrency = currenciesByCode[tx.currency.code] ?? tx.currency;
     final toCurrency =
@@ -351,40 +330,17 @@ class _SelectedSliceItemsListState
     required List<Transaction> rows,
     required ChartSlice slice,
   }) {
-    if (fxStatus == null || rows.isEmpty) return false;
-    final fetchedAts = <DateTime>[];
-    for (final tx in rows) {
-      if (tx.currency.code == slice.currencyCode) continue;
-      final metadata = fxStatus.metadataForPair(
-        tx.currency.code,
-        slice.currencyCode,
-      );
-      if (metadata != null) {
-        fetchedAts.add(metadata.fetchedAt);
-      }
-    }
-    if (fetchedAts.isEmpty) return false;
-
-    final oldest = fetchedAts.reduce((a, b) => b.isBefore(a) ? b : a);
-    return DateTime.now().difference(oldest) > const Duration(hours: 1);
-  }
-
-  String _labelFor({
-    required SelectedSlice selection,
-    required ChartSlice slice,
-    required Map<int, Category> categoriesById,
-    required Map<int, Account> accountsById,
-    required AppLocalizations l10n,
-  }) {
-    return switch (selection) {
-      SelectedCategorySlice(:final categoryId) =>
-        categoriesById[categoryId] == null
-            ? slice.label
-            : categoryDisplayName(categoriesById[categoryId]!, l10n),
-      SelectedAccountSlice(:final accountId) =>
-        accountsById[accountId]?.name ?? slice.label,
-      SelectedCurrencySlice(:final currencyCode) => currencyCode,
-    };
+    if (fxStatus == null) return false;
+    final cutoff = DateTime.now().subtract(const Duration(hours: 1));
+    // metadataForPair is null for a row already in the slice's currency.
+    return rows.any(
+      (tx) =>
+          fxStatus
+              .metadataForPair(tx.currency.code, slice.currencyCode)
+              ?.fetchedAt
+              .isBefore(cutoff) ??
+          false,
+    );
   }
 }
 

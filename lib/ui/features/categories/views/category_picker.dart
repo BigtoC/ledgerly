@@ -23,6 +23,7 @@ import '../../../../core/utils/color_palette.dart';
 import '../../../../core/utils/icon_registry.dart';
 import '../../../../domain/models/category.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../core/widgets/adaptive_sheet.dart';
 import '../view_models/categories_controller.dart';
 import 'category_display.dart';
 
@@ -46,27 +47,12 @@ Future<Category?> showCategoryPicker(
   BuildContext context, {
   CategoryType? type,
 }) {
-  final width = MediaQuery.sizeOf(context).width;
-  if (width >= 600) {
-    return showDialog<Category>(
-      context: context,
-      builder: (ctx) => Dialog(
-        clipBehavior: Clip.antiAlias,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 560, maxHeight: 600),
-          child: _CategoryPickerSheet(type: type),
-        ),
-      ),
-    );
-  }
-  return showModalBottomSheet<Category>(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    builder: (ctx) => FractionallySizedBox(
-      heightFactor: 0.9,
-      child: _CategoryPickerSheet(type: type),
-    ),
+  return showAdaptiveSheet<Category>(
+    context,
+    heightFactor: 0.9,
+    maxWidth: 560,
+    maxHeight: 600,
+    child: _CategoryPickerSheet(type: type),
   );
 }
 

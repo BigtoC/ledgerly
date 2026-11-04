@@ -32,23 +32,14 @@ import '../../domain/models/transaction.dart';
 import '../database/app_database.dart' as drift;
 import '../database/daos/currency_dao.dart';
 import '../database/daos/transaction_dao.dart';
+import 'currency_repository.dart';
 import 'repository_exceptions.dart';
 
 /// Generic transaction-layer failure — used for "transaction not found"
-/// / "disappeared mid-write" paths that do not deserve a dedicated
-/// typed subclass. Kept Stream-A-local per §1.3.
-///
-/// Does **not** extend the sealed [RepositoryException] — the Phase 1
-/// base class is closed to outside subclasses. This leaf `implements
-/// Exception` directly and carries an identical `toString()` shape.
-class TransactionRepositoryException implements Exception {
-  const TransactionRepositoryException(this.message);
-
-  /// Human-readable description.
-  final String message;
-
-  @override
-  String toString() => 'TransactionRepositoryException: $message';
+/// paths that do not deserve a dedicated typed subclass. Kept
+/// Stream-A-local per §1.3.
+class TransactionRepositoryException extends RepositoryException {
+  const TransactionRepositoryException(super.message);
 }
 
 /// Fields CSV import compares to find rows that already exist. See
@@ -107,19 +98,13 @@ abstract class TransactionRepository {
 
   /// Expense and income totals per currency for transactions in
   /// `[start, end)`, both unsigned (non-negative). [accountId] limits the
-  /// totals to one account; null covers every account. Used by the
-  /// Analysis summary card, which derives the net as income − expense.
+  /// totals to one account; null covers every account. Backs the
+  /// Analysis summary card and Home's daily and month totals.
   Stream<Map<String, ({int expense, int income})>> watchTotalsByTypeInRange({
     required DateTime start,
     required DateTime end,
     int? accountId,
   });
-
-  /// Transactions for a single account, reverse-chronological.
-  Stream<List<Transaction>> watchForAccount(int accountId, {int limit = 200});
-
-  /// Transactions for a single category, reverse-chronological.
-  Stream<List<Transaction>> watchForCategory(int categoryId, {int limit = 200});
 
   /// Transactions whose memo contains [query] (case-insensitive
   /// substring). Returns domain models ordered `date DESC, id DESC`.
@@ -168,9 +153,9 @@ abstract class TransactionRepository {
   });
 
   /// Per-(bucketStart, currency) subtotal in `[start, end)` filtered by
-  /// transaction type, with [granularity] selecting hour/day/month
-  /// buckets. Local bucket math uses `DateHelpers` so midnight + DST
-  /// behaviour matches the rest of the app.
+  /// transaction type, with [granularity] selecting day/month buckets.
+  /// Local bucket math uses `DateHelpers` so midnight + DST behaviour
+  /// matches the rest of the app.
   ///
   /// Optional plain filters scope the buckets for drill-down refiltering.
   /// All-null behaves identically to today (regression-protected).
@@ -272,9 +257,7 @@ final class DriftTransactionRepository implements TransactionRepository {
   @override
   Stream<List<Transaction>> watchByDay(DateTime day) {
     final start = DateHelpers.startOfDay(day);
-    final end = DateHelpers.startOfDay(
-      DateTime(day.year, day.month, day.day + 1),
-    );
+    final end = DateTime(day.year, day.month, day.day + 1);
     return _dao
         .watchInDateRange(start: start, end: end)
         .asyncMap(_rowsToDomain);
@@ -288,78 +271,22 @@ final class DriftTransactionRepository implements TransactionRepository {
   }
 
   @override
-  Stream<DailyTotals> watchDailyTotalsByType(DateTime day) {
-    final start = DateHelpers.startOfDay(day);
-    final end = DateHelpers.startOfDay(
-      DateTime(day.year, day.month, day.day + 1),
-    );
-    // Both totals are unsigned (non-negative); the screen splits them
-    // for the summary strip.
-    final query = _db.customSelect(
-      'SELECT t.currency AS code, '
-      "COALESCE(SUM(CASE WHEN c.type = 'expense' "
-      'THEN t.amount_minor_units ELSE 0 END), 0) AS expense, '
-      "COALESCE(SUM(CASE WHEN c.type = 'income' "
-      'THEN t.amount_minor_units ELSE 0 END), 0) AS income '
-      'FROM transactions t '
-      'JOIN categories c ON c.id = t.category_id '
-      'WHERE t.date >= ? AND t.date < ? '
-      'GROUP BY t.currency',
-      variables: <Variable<Object>>[
-        Variable<DateTime>(start),
-        Variable<DateTime>(end),
-      ],
-      readsFrom: {_db.transactions, _db.categories},
-    );
-    return query.watch().map((rows) {
-      final DailyTotals out = {};
-      for (final row in rows) {
-        out[row.read<String>('code')] = (
-          expense: row.read<int>('expense'),
-          income: row.read<int>('income'),
-        );
-      }
-      return out;
-    });
-  }
+  Stream<DailyTotals> watchDailyTotalsByType(DateTime day) =>
+      watchTotalsByTypeInRange(
+        start: DateHelpers.startOfDay(day),
+        end: DateTime(day.year, day.month, day.day + 1),
+      );
 
   @override
-  Stream<Map<String, int>> watchMonthNetByCurrency(DateTime month) {
-    final start = DateHelpers.startOfDay(DateTime(month.year, month.month, 1));
-    final end = DateHelpers.startOfDay(
-      DateTime(month.year, month.month + 1, 1),
-    );
-    return _watchNetByCurrency(start: start, end: end);
-  }
-
-  Stream<Map<String, int>> _watchNetByCurrency({
-    required DateTime start,
-    required DateTime end,
-  }) {
-    final query = _db.customSelect(
-      'SELECT t.currency AS code, '
-      'SUM(CASE c.type '
-      "WHEN 'income' THEN t.amount_minor_units "
-      "WHEN 'expense' THEN -t.amount_minor_units "
-      'END) AS net '
-      'FROM transactions t '
-      'JOIN categories c ON c.id = t.category_id '
-      'WHERE t.date >= ? AND t.date < ? '
-      'GROUP BY t.currency',
-      variables: <Variable<Object>>[
-        Variable<DateTime>(start),
-        Variable<DateTime>(end),
-      ],
-      readsFrom: {_db.transactions, _db.categories},
-    );
-    return query.watch().map((rows) {
-      final out = <String, int>{};
-      for (final row in rows) {
-        out[row.read<String>('code')] = row.read<int>('net');
-      }
-      return out;
-    });
-  }
+  Stream<Map<String, int>> watchMonthNetByCurrency(DateTime month) =>
+      watchTotalsByTypeInRange(
+        start: DateTime(month.year, month.month, 1),
+        end: DateTime(month.year, month.month + 1, 1),
+      ).map(
+        (m) => {
+          for (final e in m.entries) e.key: e.value.income - e.value.expense,
+        },
+      );
 
   @override
   Stream<Map<String, ({int expense, int income})>> watchTotalsByTypeInRange({
@@ -394,21 +321,6 @@ final class DriftTransactionRepository implements TransactionRepository {
           ),
       },
     );
-  }
-
-  @override
-  Stream<List<Transaction>> watchForAccount(int accountId, {int limit = 200}) {
-    return _dao.watchByAccount(accountId, limit: limit).asyncMap(_rowsToDomain);
-  }
-
-  @override
-  Stream<List<Transaction>> watchForCategory(
-    int categoryId, {
-    int limit = 200,
-  }) {
-    return _dao
-        .watchByCategory(categoryId, limit: limit)
-        .asyncMap(_rowsToDomain);
   }
 
   @override
@@ -529,12 +441,6 @@ final class DriftTransactionRepository implements TransactionRepository {
           final acc = <(DateTime, String), int>{};
           for (final r in rows) {
             final bucketStart = switch (granularity) {
-              TimeBucketGranularity.hour => DateTime(
-                r.date.year,
-                r.date.month,
-                r.date.day,
-                r.date.hour,
-              ),
               TimeBucketGranularity.day => DateHelpers.startOfDay(r.date),
               TimeBucketGranularity.month => DateHelpers.startOfMonth(r.date),
             };
@@ -608,13 +514,7 @@ final class DriftTransactionRepository implements TransactionRepository {
       // Insert path.
       final companion = _toCompanion(tx, createdAt: now, updatedAt: now);
       final newId = await _dao.insert(companion);
-      final inserted = await _dao.findById(newId);
-      if (inserted == null) {
-        throw const TransactionRepositoryException(
-          'Inserted transaction disappeared before read-back',
-        );
-      }
-      return _toDomain(inserted);
+      return _toDomain((await _dao.findById(newId))!);
     }
 
     // Update path. Preserve stored `createdAt`.
@@ -628,13 +528,7 @@ final class DriftTransactionRepository implements TransactionRepository {
       updatedAt: now,
     );
     await _dao.updateRow(companion);
-    final updated = await _dao.findById(tx.id);
-    if (updated == null) {
-      throw TransactionRepositoryException(
-        'Transaction ${tx.id} disappeared after update',
-      );
-    }
-    return _toDomain(updated);
+    return _toDomain((await _dao.findById(tx.id))!);
   }
 
   @override
@@ -711,7 +605,7 @@ final class DriftTransactionRepository implements TransactionRepository {
       //   (b) `AppDatabase.beforeOpen` sets `PRAGMA foreign_keys = ON`.
       // See Q4 resolution in Stream A plan §12.
       final currencyRow = (await _currencyDao.findByCode(code))!;
-      currenciesByCode[code] = _currencyFromRow(currencyRow);
+      currenciesByCode[code] = currencyFromRow(currencyRow);
     }
 
     return rows
@@ -734,16 +628,6 @@ final class DriftTransactionRepository implements TransactionRepository {
 
   Future<Transaction> _toDomain(drift.TransactionRow row) async =>
       (await _rowsToDomain([row])).single;
-
-  Currency _currencyFromRow(drift.Currency row) => Currency(
-    code: row.code,
-    decimals: row.decimals,
-    symbol: row.symbol,
-    nameL10nKey: row.nameL10nKey,
-    customName: row.customName,
-    isToken: row.isToken,
-    sortOrder: row.sortOrder,
-  );
 
   drift.TransactionsCompanion _toCompanion(
     Transaction tx, {

@@ -231,15 +231,13 @@ sealed class TransactionFormState with _$TransactionFormState {
     /// need to know whether a currency/account change would discard input.
     required KeypadState keypad,
 
-    /// `null` only during `noActiveAccount` recovery flows; in normal
-    /// `.data` states an account is always selected.
-    required Account? selectedAccount,
+    required Account selectedAccount,
 
     /// The transaction's currency. Seeds from `selectedAccount.currency` on
     /// hydration, but can be independently overridden by the user via the
     /// currency picker. Once the user has made a manual selection,
     /// `currencyTouched` is `true` and account changes no longer re-seed it.
-    required Currency? displayCurrency,
+    required Currency displayCurrency,
 
     /// `true` once the user has manually selected a currency via the picker.
     /// When `false`, account changes re-seed `displayCurrency` from the
@@ -257,29 +255,21 @@ sealed class TransactionFormState with _$TransactionFormState {
     required String memo,
 
     /// Becomes true on the first user-driven mutation after hydration.
-    required bool isDirty,
+    @Default(false) bool isDirty,
 
     /// `true` between `save()` await-start and resolution.
-    required bool isSaving,
+    @Default(false) bool isSaving,
 
     /// `true` between `deleteExisting()` await-start and resolution.
-    required bool isDeleting,
+    @Default(false) bool isDeleting,
 
     /// Edit-mode target id. `null` in Add and Duplicate.
-    required int? editingId,
-
-    /// Source-id when opened via duplicate. `null` in Add and Edit.
-    required int? duplicateSourceId,
+    int? editingId,
 
     /// Edit-mode original `createdAt`, preserved on update so the
     /// repository contract (`save` keeps stored `createdAt`) is honored
     /// even if the controller round-trips through copyWith.
-    required DateTime? originalCreatedAt,
-
-    /// Incremented on every keypad mutation — including expression-only
-    /// transitions that leave `amountMinorUnits` unchanged — so Riverpod
-    /// rebuilds the form whenever the display state changes.
-    @Default(0) int keypadRevision,
+    DateTime? originalCreatedAt,
 
     /// Non-null only in [EditShoppingListDraftMode]; stores the id of the
     /// draft being edited so `saveDraft` and `convertDraft` can reference it.
@@ -289,14 +279,6 @@ sealed class TransactionFormState with _$TransactionFormState {
     /// disable all CTAs and show a progress indicator on the active button.
     @Default(TransactionFormSubmissionAction.none)
     TransactionFormSubmissionAction submissionAction,
-
-    /// `true` when the selected account is archived. Only meaningful in
-    /// [EditShoppingListDraftMode]; blocks `canConvertDraft`.
-    @Default(false) bool selectedAccountIsArchived,
-
-    /// `true` when the selected category is archived. Only meaningful in
-    /// [EditShoppingListDraftMode]; blocks `canConvertDraft`.
-    @Default(false) bool selectedCategoryIsArchived,
   }) = TransactionFormData;
 
   const factory TransactionFormState.error(
@@ -305,14 +287,12 @@ sealed class TransactionFormState with _$TransactionFormState {
     @Default(AddTransactionMode()) TransactionFormMode formMode,
   }) = TransactionFormError;
 
-  /// Computed-on-demand validity flag. PRD: amount > 0 AND category AND
-  /// account AND displayCurrency, plus no in-flight save/delete.
+  /// Computed-on-demand validity flag. PRD: amount > 0 AND category, plus
+  /// no in-flight save/delete. Account and currency are always set.
   bool get canSave => switch (this) {
     TransactionFormData(
       :final amountMinorUnits,
-      :final selectedAccount,
       :final selectedCategory,
-      :final displayCurrency,
       :final isSaving,
       :final isDeleting,
       :final submissionAction,
@@ -321,13 +301,11 @@ sealed class TransactionFormState with _$TransactionFormState {
           !isSaving &&
           !isDeleting &&
           amountMinorUnits > 0 &&
-          selectedAccount != null &&
-          selectedCategory != null &&
-          displayCurrency != null,
+          selectedCategory != null,
     _ => false,
   };
 
-  /// True when account + expense category + date are all set.
+  /// True when an expense category is set (account and date always are).
   /// Amount may be zero — zero-amount drafts are valid.
   ///
   /// Task 5 §8: archived refs do NOT block canSaveDraft.
@@ -337,13 +315,8 @@ sealed class TransactionFormState with _$TransactionFormState {
   /// because the field can never be null at runtime. No null check is added
   /// here to avoid dead-code analyzer warnings.
   bool get canSaveDraft => switch (this) {
-    TransactionFormData(
-      :final selectedAccount,
-      :final selectedCategory,
-      :final submissionAction,
-    ) =>
+    TransactionFormData(:final selectedCategory, :final submissionAction) =>
       submissionAction == TransactionFormSubmissionAction.none &&
-          selectedAccount != null &&
           selectedCategory != null &&
           selectedCategory.type == CategoryType.expense,
     _ => false,
@@ -355,13 +328,13 @@ sealed class TransactionFormState with _$TransactionFormState {
   bool get canConvertDraft => switch (this) {
     TransactionFormData(
       :final amountMinorUnits,
-      :final selectedAccountIsArchived,
-      :final selectedCategoryIsArchived,
+      :final selectedAccount,
+      :final selectedCategory,
     ) =>
       canSaveDraft &&
           amountMinorUnits > 0 &&
-          !selectedAccountIsArchived &&
-          !selectedCategoryIsArchived,
+          !selectedAccount.isArchived &&
+          !(selectedCategory?.isArchived ?? false),
     _ => false,
   };
 }

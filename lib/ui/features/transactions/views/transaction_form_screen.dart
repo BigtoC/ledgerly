@@ -20,8 +20,8 @@
 // the AppBar (numeric-only keypad). Adaptive 600dp behavior is supplied
 // by the router (`fullscreenDialog: true` + parentNavigatorKey).
 //
-// Task 5 additions:
-//   - `mode` constructor parameter drives AppBar title and CTA set.
+// The router builds the typed `mode` (see `_addModeFromExtra` in
+// `router.dart`); it drives hydration, the AppBar title and the CTA set.
 //   - AddTransactionMode: inline "Add to shopping list" action below
 //     MemoField.
 //   - EditShoppingListDraftMode: no AppBar save/delete; inline action row
@@ -37,6 +37,7 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../../l10n/app_localizations.dart';
+import '../../../core/widgets/confirm_dialog.dart';
 import '../../categories/view_models/categories_controller.dart';
 import '../../categories/views/category_picker.dart';
 import '../view_models/transaction_form_controller.dart';
@@ -54,15 +55,10 @@ import 'memo_suggestions.dart';
 
 @Dependencies([TransactionFormController, categoriesByType])
 class TransactionFormScreen extends ConsumerStatefulWidget {
-  const TransactionFormScreen({super.key, this.transactionId, this.mode});
+  const TransactionFormScreen({super.key, required this.mode});
 
-  /// Edit-mode target id, parsed from `/home/edit/:id`.
-  /// Retained for backward compat; prefer passing [mode] directly.
-  final int? transactionId;
-
-  /// Typed form mode. When null, the screen falls back to the legacy
-  /// transactionId-based hydration (backward compat with Wave 2 routes).
-  final TransactionFormMode? mode;
+  /// Which entry point opened the form.
+  final TransactionFormMode mode;
 
   @override
   ConsumerState<TransactionFormScreen> createState() =>
@@ -77,56 +73,15 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   @override
   void initState() {
     super.initState();
-    // Hydrate after the first frame so `ref.read` sees a built notifier
-    // and `GoRouterState.of(context)` is reachable.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _hydrate());
-  }
-
-  void _hydrate() {
-    if (!mounted) return;
-    final controller = ref.read(transactionFormControllerProvider.notifier);
-
-    // Task 5: if a typed mode was passed directly, use it.
-    final typedMode = widget.mode;
-    if (typedMode != null) {
-      switch (typedMode) {
-        case AddTransactionMode(:final initialDate):
-          unawaited(controller.hydrateForAdd(initialDate: initialDate));
-        case DuplicateTransactionMode(:final sourceTransactionId):
-          unawaited(controller.hydrateForDuplicate(sourceTransactionId));
-        case EditTransactionMode(:final transactionId):
-          unawaited(controller.hydrateForEdit(transactionId));
-        case EditShoppingListDraftMode(:final shoppingListItemId):
-          unawaited(controller.hydrateForShoppingListDraft(shoppingListItemId));
-      }
-      return;
-    }
-
-    // Legacy Wave 2 hydration via route extras / transactionId.
-    final extra = GoRouterState.of(context).extra;
-    // Wave 2 §10 contract: `{'duplicateSourceId': <int>}` from Home's
-    // overflow→Duplicate path.
-    int? duplicateSourceId;
-    DateTime? initialDate;
-    if (extra is Map) {
-      if (extra['duplicateSourceId'] is int) {
-        duplicateSourceId = extra['duplicateSourceId'] as int;
-      }
-      // Home's FAB / day-nav carries the currently selected day so the
-      // form lands on that day instead of today (Wave 3 follow-up).
-      // Ignored for Edit and Duplicate flows by design.
-      if (extra['initialDate'] is DateTime) {
-        initialDate = extra['initialDate'] as DateTime;
-      }
-    }
-    final transactionId = widget.transactionId;
-    if (transactionId != null) {
-      unawaited(controller.hydrateForEdit(transactionId));
-    } else if (duplicateSourceId != null) {
-      unawaited(controller.hydrateForDuplicate(duplicateSourceId));
-    } else {
-      unawaited(controller.hydrateForAdd(initialDate: initialDate));
-    }
+    // Hydrate after the first frame so `ref.read` sees a built notifier.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(
+        ref
+            .read(transactionFormControllerProvider.notifier)
+            .hydrate(widget.mode),
+      );
+    });
   }
 
   @override
@@ -134,7 +89,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(transactionFormControllerProvider);
     final controller = ref.read(transactionFormControllerProvider.notifier);
-    final activeMode = widget.mode ?? state.formMode;
+    final activeMode = widget.mode;
 
     final appBarTitle = switch (activeMode) {
       EditShoppingListDraftMode() => l10n.shoppingListEditDraftTitle,
@@ -161,7 +116,12 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
         if (_blocksPopDuringMutation(state)) return;
-        final shouldDiscard = await _confirmDiscard(context, l10n);
+        final shouldDiscard = await showConfirmDialog(
+          context,
+          title: l10n.txDiscardConfirmTitle,
+          body: l10n.txDiscardConfirmBody,
+          confirmLabel: l10n.txDiscardAction,
+        );
         if (shouldDiscard && context.mounted) {
           context.pop();
         }
@@ -239,8 +199,6 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     final showAmountError = _showValidationHints && state.amountMinorUnits == 0;
     final showCategoryError =
         _showValidationHints && state.selectedCategory == null;
-    final showAccountError =
-        _showValidationHints && state.selectedAccount == null;
     final controlsLocked = _blocksPopDuringMutation(state);
 
     final isShoppingListDraftMode = activeMode is EditShoppingListDraftMode;
@@ -297,7 +255,6 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                         Expanded(
                           child: AccountSelectorTile(
                             account: state.selectedAccount,
-                            hasError: showAccountError,
                             onTap: () => _onTapAccountTile(
                               context,
                               l10n,
@@ -374,7 +331,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
               child: Align(
                 alignment: Alignment.bottomCenter,
                 child: CalculatorKeypad(
-                  decimals: state.displayCurrency?.decimals ?? 2,
+                  decimals: state.displayCurrency.decimals,
                   onDigit: controller.appendDigit,
                   onDecimal: controller.appendDecimal,
                   onBackspace: controller.backspace,
@@ -448,30 +405,6 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   bool _canPop(TransactionFormState state) {
     if (_blocksPopDuringMutation(state)) return false;
     return !_isDirty(state);
-  }
-
-  Future<bool> _confirmDiscard(
-    BuildContext context,
-    AppLocalizations l10n,
-  ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.txDiscardConfirmTitle),
-        content: Text(l10n.txDiscardConfirmBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.txDiscardAction),
-          ),
-        ],
-      ),
-    );
-    return confirmed ?? false;
   }
 
   Future<void> _save(
@@ -579,17 +512,16 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       return;
     }
 
-    final currentCode = state.displayCurrency?.code;
-    final newCode = picked.currency.code;
-    final currencyChanges = currentCode != null && currentCode != newCode;
+    final currencyChanges = state.displayCurrency.code != picked.currency.code;
     final hasDestructiveInput =
         state.amountMinorUnits > 0 || state.keypad.hasVisibleInput;
 
     if (currencyChanges && hasDestructiveInput) {
-      final confirmed = await _confirmCurrencyChange(
+      final confirmed = await showConfirmDialog(
         context,
-        l10n,
-        l10n.txCurrencyChangeConfirmBody,
+        title: l10n.txCurrencyChangeConfirmTitle,
+        body: l10n.txCurrencyChangeConfirmBody,
+        confirmLabel: l10n.txCurrencyChangeConfirmAction,
       );
       if (!context.mounted) return;
       if (!confirmed) return;
@@ -607,16 +539,16 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   ) async {
     final picked = await showTxCurrencyPickerSheet(context);
     if (picked == null || !context.mounted) return;
-    final currentCode = state.displayCurrency?.code;
-    final currencyChanges = currentCode != null && currentCode != picked.code;
+    final currencyChanges = state.displayCurrency.code != picked.code;
     final hasDestructiveInput =
         state.amountMinorUnits > 0 || state.keypad.hasVisibleInput;
 
     if (currencyChanges && hasDestructiveInput) {
-      final confirmed = await _confirmCurrencyChange(
+      final confirmed = await showConfirmDialog(
         context,
-        l10n,
-        l10n.txCurrencyPickerChangeConfirmBody,
+        title: l10n.txCurrencyChangeConfirmTitle,
+        body: l10n.txCurrencyPickerChangeConfirmBody,
+        confirmLabel: l10n.txCurrencyChangeConfirmAction,
       );
       if (!context.mounted) return;
       if (!confirmed) return;
@@ -624,31 +556,6 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       return;
     }
     controller.selectCurrency(picked);
-  }
-
-  Future<bool> _confirmCurrencyChange(
-    BuildContext context,
-    AppLocalizations l10n,
-    String body,
-  ) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.txCurrencyChangeConfirmTitle),
-        content: Text(body),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.txCurrencyChangeConfirmAction),
-          ),
-        ],
-      ),
-    );
-    return ok ?? false;
   }
 
   void _onCreateAccount(
@@ -730,7 +637,7 @@ class _ShoppingListDraftActions extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Archived-ref warnings.
-        if (state.selectedAccountIsArchived)
+        if (state.selectedAccount.isArchived)
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(
@@ -742,7 +649,7 @@ class _ShoppingListDraftActions extends StatelessWidget {
               ),
             ),
           ),
-        if (state.selectedCategoryIsArchived)
+        if (state.selectedCategory?.isArchived ?? false)
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(

@@ -121,7 +121,7 @@ void main() {
       );
 
   Future<int> categoryIdFor(String l10nKey) async =>
-      (await categories.getByL10nKey(l10nKey))!.id;
+      (await db.categoryDao.findByL10nKey(l10nKey))!.id;
 
   /// The plan the matcher would build for the sample on a fresh en_US
   /// install, with Credit Card sent to [creditCard].
@@ -136,7 +136,7 @@ void main() {
     final cash = (await accounts.watchAll().first).singleWhere(
       (a) => a.name == kSeededCashAccountName,
     );
-    final investmentType = (await accountTypes.getByL10nKey(
+    final investmentType = (await db.accountTypeDao.findByL10nKey(
       'accountType.investment',
     ))!;
     return CsvImportPlan(
@@ -216,7 +216,6 @@ void main() {
       expect(load.fileName, 'import_fortune_city_data.csv');
       expect(load.validRows, hasLength(105));
       expect(load.rowsToImport, load.validRows);
-      expect(load.duplicateCount, 0);
       expect(load.errors, isEmpty);
       expect(load.validRows.map((r) => r.currency.code).toSet(), {'HKD'});
       final line26 = load.validRows.singleWhere((r) => r.line == 26);
@@ -323,7 +322,6 @@ void main() {
       final load = (await useCase.pickAndLoad())!;
       expect(load.validRows, hasLength(2));
       expect(load.rowsToImport, hasLength(1));
-      expect(load.duplicateCount, 1);
 
       final result = await useCase.commit(
         CsvImportPlan(
@@ -354,7 +352,7 @@ void main() {
 
       final again = (await useCase.pickAndLoad())!;
       expect(again.rowsToImport, isEmpty);
-      expect(again.duplicateCount, 1);
+      expect(again.validRows, hasLength(1));
     });
   });
 
@@ -407,7 +405,7 @@ void main() {
       final investment = allAccounts.singleWhere((a) => a.name == 'Investment');
       expect(
         investment.accountTypeId,
-        (await accountTypes.getByL10nKey('accountType.investment'))!.id,
+        (await db.accountTypeDao.findByL10nKey('accountType.investment'))!.id,
       );
       expect(
         {creditCard.sortOrder, investment.sortOrder},
@@ -425,18 +423,11 @@ void main() {
         expect(c.isArchived, isFalse);
       }
 
-      expect(
-        await transactions
-            .watchForCategory(await categoryIdFor('category.income.salary'))
-            .first,
-        hasLength(1),
-      );
-      expect(
-        await transactions
-            .watchForCategory(await categoryIdFor('category.income.other'))
-            .first,
-        hasLength(9),
-      );
+      final salaryId = await categoryIdFor('category.income.salary');
+      final otherIncomeId = await categoryIdFor('category.income.other');
+      final txRows = await allTransactionRows();
+      expect(txRows.where((r) => r.categoryId == salaryId), hasLength(1));
+      expect(txRows.where((r) => r.categoryId == otherIncomeId), hasLength(9));
       // 2026/10/30: 理財 4000 (expense) and 收入 61700 (income).
       expect(
         await transactions.watchDailyTotalsByType(DateTime(2026, 10, 30)).first,
@@ -532,8 +523,9 @@ void main() {
 
     test('re-importing after a commit finds 105 duplicates even when the '
         'chosen account was archived since', () async {
-      final cardTypeId = (await accountTypes.getByL10nKey('accountType.cash'))!
-          .id;
+      final cardTypeId = (await db.accountTypeDao.findByL10nKey(
+        'accountType.cash',
+      ))!.id;
       final hkd = (await currencies.getByCode('HKD'))!;
       final cardId = await accounts.save(
         Account(
@@ -553,7 +545,7 @@ void main() {
       final again = (await useCase.pickAndLoad())!;
 
       expect(again.rowsToImport, isEmpty);
-      expect(again.duplicateCount, 105);
+      expect(again.validRows, hasLength(105));
       expect(again.errors, isEmpty);
     });
 
@@ -869,7 +861,7 @@ void main() {
         final again = (await useCase.pickAndLoad())!;
 
         expect(again.rowsToImport, isEmpty);
-        expect(again.duplicateCount, 2500);
+        expect(again.validRows, hasLength(2500));
       });
     });
   });

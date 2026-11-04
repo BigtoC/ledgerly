@@ -6,7 +6,7 @@
 // display text. Template substitution (`{date}` / `{days}`) happens here,
 // **not** in `build()` of the widget, per PRD → Controller Contract.
 //
-// Day-count math delegates to `DateHelpers.daysSince` — the controller
+// Day-count math delegates to `DateHelpers.daysBetween` — the controller
 // simply carries that helper's value through, including negative values for
 // future start dates (no clamp).
 //
@@ -49,7 +49,7 @@ class SplashController extends _$SplashController {
     final repo = ref.watch(userPreferencesRepositoryProvider);
     final clock = ref.watch(splashClockProvider);
     final locale = ref.watch(userLocalePreferenceProvider);
-    final localeTag = _localeTag(locale?.toLanguageTag());
+    final localeTag = locale?.toString() ?? 'en_US';
     // First-frame hydrated start date so the launch transition does not
     // flicker loading → data while the repo stream warms up. Mirrors the
     // widget's own `stream.value ?? snapshot.splashStartDate` read.
@@ -70,7 +70,7 @@ class SplashController extends _$SplashController {
         return const SplashState.loading();
       }
       final now = clock();
-      final dayCount = DateHelpers.daysSince(startDate: startDate, now: now);
+      final dayCount = DateHelpers.daysBetween(startDate, now);
       final template = _resolveTemplate(rawText);
       final segments = DateHelpers.applySplashTemplateSegments(
         template: template,
@@ -116,14 +116,6 @@ class SplashController extends _$SplashController {
     if (raw.trim().isEmpty) return kDefaultSplashDisplayText;
     if (raw.contains('{date}')) return raw;
     return '{date} $raw';
-  }
-
-  /// Normalizes locale tags for `intl`. `intl` wants underscored tags
-  /// (`zh_TW`) whereas Flutter emits BCP-47 (`zh-TW`). Falls back to
-  /// `en_US` when the preferred locale is unset.
-  static String _localeTag(String? tag) {
-    if (tag == null || tag.isEmpty) return 'en_US';
-    return tag.replaceAll('-', '_');
   }
 }
 

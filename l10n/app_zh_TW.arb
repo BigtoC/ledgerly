@@ -13,7 +13,6 @@
   "categoriesArchiveAction": "封存",
   "commonUndo": "復原",
   "txDiscardAction": "捨棄",
-  "txKeypadDone": "完成",
 
   "transactionTypeExpense": "支出",
   "transactionTypeIncome": "收入",
@@ -162,7 +161,6 @@
 
   "homeEmptyDayMessage": "無交易",
   "homeJumpToToday": "跳至今天",
-  "homeDaySkeletonLabel": "載入中的日期",
   "homeDeleteUndoSnackbar": "交易已刪除",
   "homeDayLabelToday": "今天",
   "homeDayNavPrevLabel": "前一天",
@@ -241,7 +239,6 @@
   "analysisDrilldownEmpty": "此期間沒有交易",
   "analysisDrilldownShowMore": "再顯示 {count} 項",
   "@analysisDrilldownShowMore": { "placeholders": { "count": { "type": "int" } } },
-  "analysisOriginalAmount": "原始金額",
   "analysisRatesStale": "使用上次取得的匯率",
 
   "settingsRecurringTile": "週期性交易",

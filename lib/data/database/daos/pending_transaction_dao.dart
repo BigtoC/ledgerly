@@ -18,17 +18,15 @@ class PendingTransactionDao extends DatabaseAccessor<AppDatabase>
   /// Check if a pending row already exists for the given recurring rule
   /// + date. Used by the generation engine's fast-path idempotency skip.
   Future<bool> existsForRuleAndDate(int ruleId, DateTime date) async {
-    final countExp = pendingTransactions.id.count();
-    final row =
-        await (selectOnly(pendingTransactions)
-              ..addColumns([countExp])
-              ..where(
-                pendingTransactions.recurringRuleId.equals(ruleId) &
-                    pendingTransactions.date.equals(date) &
-                    pendingTransactions.source.equals('recurring'),
-              ))
-            .getSingle();
-    return (row.read(countExp) ?? 0) > 0;
+    final count = await pendingTransactions
+        .count(
+          where: (t) =>
+              t.recurringRuleId.equals(ruleId) &
+              t.date.equals(date) &
+              t.source.equals('recurring'),
+        )
+        .getSingle();
+    return count > 0;
   }
 
   /// Insert a new pending row. Returns the new id.
@@ -38,18 +36,12 @@ class PendingTransactionDao extends DatabaseAccessor<AppDatabase>
 
   /// Count pending rows for a specific recurring rule.
   /// Used by the form screen's inline notice.
-  Future<int> countByRecurringRule(int ruleId) async {
-    final countExp = pendingTransactions.id.count();
-    final row =
-        await (selectOnly(pendingTransactions)
-              ..addColumns([countExp])
-              ..where(
-                pendingTransactions.recurringRuleId.equals(ruleId) &
-                    pendingTransactions.source.equals('recurring'),
-              ))
-            .getSingle();
-    return row.read(countExp) ?? 0;
-  }
+  Future<int> countByRecurringRule(int ruleId) => pendingTransactions
+      .count(
+        where: (t) =>
+            t.recurringRuleId.equals(ruleId) & t.source.equals('recurring'),
+      )
+      .getSingle();
 
   /// Stream pending rows produced by recurring rules, ordered by date DESC,
   /// id DESC.

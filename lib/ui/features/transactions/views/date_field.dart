@@ -38,6 +38,6 @@ class DateField extends StatelessWidget {
       lastDate: DateTime(9999, 12, 31),
     );
     if (picked == null) return;
-    onChanged(DateTime(picked.year, picked.month, picked.day));
+    onChanged(picked);
   }
 }

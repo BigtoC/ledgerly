@@ -40,9 +40,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txDiscardAction => 'Discard';
 
   @override
-  String get txKeypadDone => 'Done';
-
-  @override
   String get transactionTypeExpense => 'Expense';
 
   @override
@@ -461,9 +458,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeJumpToToday => 'Jump to today';
 
   @override
-  String get homeDaySkeletonLabel => 'Loading day';
-
-  @override
   String get homeDeleteUndoSnackbar => 'Transaction deleted';
 
   @override
@@ -669,9 +663,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String analysisDrilldownShowMore(int count) {
     return 'Show $count more';
   }
-
-  @override
-  String get analysisOriginalAmount => 'Original amount';
 
   @override
   String get analysisRatesStale => 'Using last known exchange rates';

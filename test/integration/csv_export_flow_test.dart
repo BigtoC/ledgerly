@@ -37,19 +37,6 @@ class _SavingCsvFileService implements CsvFileService {
   }
 }
 
-/// Loading and exporting run Drift queries and an isolate that need real
-/// async time, so pump with real delays until [finder] shows up.
-Future<void> _pumpUntil(WidgetTester tester, Finder finder) async {
-  for (var i = 0; i < 200 && finder.evaluate().isEmpty; i++) {
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 10)),
-    );
-    await tester.pump();
-  }
-  await tester.pumpAndSettle();
-  expect(finder, findsOneWidget);
-}
-
 @Dependencies([
   router,
   themeMode,
@@ -123,10 +110,10 @@ void main() {
     expect(find.byType(CsvExportScreen), findsOneWidget);
 
     // The full range is the default.
-    await _pumpUntil(tester, find.text('Jan 2, 2025 – Mar 4, 2026'));
+    await pumpUntilFound(tester, find.text('Jan 2, 2025 – Mar 4, 2026'));
 
     await tester.tap(find.byKey(const ValueKey('csvExportButton')));
-    await _pumpUntil(tester, find.text('Exported 2 transactions'));
+    await pumpUntilFound(tester, find.text('Exported 2 transactions'));
 
     final saved = files.saves.single;
     expect(saved.fileName, 'ledgerly_transactions_2025-01-02_2026-03-04.csv');

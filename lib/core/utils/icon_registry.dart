@@ -28,9 +28,6 @@ import 'color_palette.dart';
 ///      MaterialIcons font bundled with Flutter and are always available.
 /// -----------------------------------------------------------------------
 
-/// Fallback icon returned by [iconForKey] on an unknown, null, or empty key.
-const IconData kFallbackIcon = Icons.category;
-
 /// Stable-key → [IconData] map. See header for the add/remove policy.
 ///
 /// Every seeded `categories.icon` and `account_types.icon` value in the
@@ -230,7 +227,6 @@ const Map<IconGroup, int> kIconGroupColors = <IconGroup, int>{
 
 /// Resolves an icon string [key] to an [IconData].
 ///
-/// Unknown / `null` / empty keys fall back to [kFallbackIcon]
-/// (`Icons.category`). Never throws — a corrupted row in the DB should
-/// still render *something*.
-IconData iconForKey(String? key) => kIconRegistry[key] ?? kFallbackIcon;
+/// Unknown / `null` / empty keys fall back to `Icons.category`. Never
+/// throws — a corrupted row in the DB should still render *something*.
+IconData iconForKey(String? key) => kIconRegistry[key] ?? Icons.category;

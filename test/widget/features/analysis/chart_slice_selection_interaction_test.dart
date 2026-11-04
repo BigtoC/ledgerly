@@ -1,13 +1,10 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
-import 'package:ledgerly/data/repositories/exchange_rate_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
-import 'package:ledgerly/data/services/exchange_rate_service.dart';
 import 'package:ledgerly/domain/models/account.dart';
 import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/domain/models/category_slice.dart';
@@ -31,8 +28,6 @@ import '../../../unit/repositories/_harness/test_app_database.dart';
 
 class _MockRepo extends Mock implements TransactionRepository {}
 
-class _MockFxSvc extends Mock implements ExchangeRateService {}
-
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 
 /// Pumps [ChartsSection] with one USD expense slice (Food) and returns
@@ -41,7 +36,6 @@ const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
   ChartsSelectionController,
   ChartsController,
   chartsCurrenciesByCode,
-  initialDefaultCurrency,
   SliceDrilldownController,
   analysisCategoriesById,
   analysisAccountsById,
@@ -93,18 +87,7 @@ Future<ProviderContainer> _pumpChartsSection(WidgetTester tester) async {
     ),
   ).thenAnswer((_) => Stream.value(const []));
 
-  final fxSvc = _MockFxSvc();
-  when(() => fxSvc.fetchRates(any())).thenAnswer((_) async => []);
-  final fxDb = newTestAppDatabase();
-  final fxRepo = ExchangeRateRepository(
-    fxDb,
-    fxSvc,
-    const Stream<String>.empty(),
-  );
-  addTearDown(() async {
-    fxRepo.dispose();
-    await fxDb.close();
-  });
+  final fxRepo = newNoRatesExchangeRateRepository();
 
   final container = ProviderContainer(
     overrides: [
@@ -142,12 +125,7 @@ Future<ProviderContainer> _pumpChartsSection(WidgetTester tester) async {
       container: container,
       child: MaterialApp(
         theme: lightTheme,
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: const Scaffold(
           body: SingleChildScrollView(child: ChartsSection()),
@@ -163,7 +141,6 @@ Future<ProviderContainer> _pumpChartsSection(WidgetTester tester) async {
   ChartsSelectionController,
   ChartsController,
   chartsCurrenciesByCode,
-  initialDefaultCurrency,
   SliceDrilldownController,
   analysisCategoriesById,
   analysisAccountsById,

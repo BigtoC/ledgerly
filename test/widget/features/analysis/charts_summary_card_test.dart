@@ -19,6 +19,8 @@ import 'package:ledgerly/ui/features/analysis/charts/view_models/selected_slice.
 import 'package:ledgerly/ui/features/analysis/charts/views/charts_summary_card.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
+import '../../../support/text_scale.dart';
+
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 const _c = AnalysisColors.light;
 
@@ -77,11 +79,7 @@ Future<ProviderContainer> _pump(
         locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(textScaler: TextScaler.linear(textScale)),
-          child: child!,
-        ),
+        builder: textScaleBuilder(textScale),
         home: Scaffold(
           body: SingleChildScrollView(
             child: Align(

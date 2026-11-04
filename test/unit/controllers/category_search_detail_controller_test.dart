@@ -268,7 +268,7 @@ void main() {
         async.flushMicrotasks();
 
         final hiding = container.read(provider).requireValue as DetailData;
-        expect(hiding.pendingDelete?.transaction.id, 1);
+        expect(hiding.pendingDelete?.id, 1);
         expect(hiding.days.first.transactions.map((t) => t.id), [2]);
         // Sum excludes the pending row so the header stays consistent.
         expect(hiding.overallSumMinorUnits, 200);
@@ -370,7 +370,7 @@ void main() {
         async.flushMicrotasks();
 
         final hiding = container.read(provider).requireValue as DetailData;
-        expect(hiding.pendingDelete?.transaction.id, 9);
+        expect(hiding.pendingDelete?.id, 9);
         expect(hiding.days.first.transactions.map((t) => t.id), [10]);
 
         // Past the undo window → repo.delete fires, throws, effect fires.

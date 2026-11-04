@@ -30,11 +30,7 @@ class ShoppingListDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// Reactive total row count across all shopping-list items.
-  Stream<int> watchCount() {
-    final countExp = shoppingListItems.id.count();
-    final query = selectOnly(shoppingListItems)..addColumns([countExp]);
-    return query.watchSingle().map((row) => row.read(countExp) ?? 0);
-  }
+  Stream<int> watchCount() => shoppingListItems.count().watchSingle();
 
   /// One-shot read by id.
   Future<ShoppingListItemRow?> findById(int id) {
@@ -60,25 +56,13 @@ class ShoppingListDao extends DatabaseAccessor<AppDatabase>
 
   /// Count shopping-list items referencing the given account.
   /// Used for delete guard checks in the repository layer.
-  Future<int> countByAccount(int accountId) async {
-    final countExp = shoppingListItems.id.count();
-    final row =
-        await (selectOnly(shoppingListItems)
-              ..addColumns([countExp])
-              ..where(shoppingListItems.accountId.equals(accountId)))
-            .getSingle();
-    return row.read(countExp) ?? 0;
-  }
+  Future<int> countByAccount(int accountId) => shoppingListItems
+      .count(where: (t) => t.accountId.equals(accountId))
+      .getSingle();
 
   /// Count shopping-list items referencing the given category.
   /// Used for delete guard checks in the repository layer.
-  Future<int> countByCategory(int categoryId) async {
-    final countExp = shoppingListItems.id.count();
-    final row =
-        await (selectOnly(shoppingListItems)
-              ..addColumns([countExp])
-              ..where(shoppingListItems.categoryId.equals(categoryId)))
-            .getSingle();
-    return row.read(countExp) ?? 0;
-  }
+  Future<int> countByCategory(int categoryId) => shoppingListItems
+      .count(where: (t) => t.categoryId.equals(categoryId))
+      .getSingle();
 }

@@ -16,7 +16,9 @@ import '../../../../core/theme/analysis_colors.dart';
 import '../view_models/charts_range_providers.dart';
 import '../view_models/charts_selection_controller.dart';
 import '../view_models/charts_state.dart' show PeriodType;
-import 'period_selector.dart' show formatPeriodLabel, periodDateFormat;
+import 'analysis_sheet.dart';
+import 'period_selector.dart'
+    show PeriodNavButton, formatPeriodLabel, periodDateFormat;
 
 enum _View { days, weeks, months, years }
 
@@ -24,49 +26,10 @@ enum _View { days, weeks, months, years }
 /// and closes it; dismissing it changes nothing.
 @Dependencies([chartsDateBounds, ChartsSelectionController])
 Future<void> showPeriodPicker(BuildContext context) {
-  final colors = AnalysisColors.of(context);
-  if (MediaQuery.sizeOf(context).width >= 600) {
-    return showDialog<void>(
-      context: context,
-      // The bottom sheet's 32% scrim, not black54.
-      barrierColor: Colors.black.withValues(alpha: 0.32),
-      builder: (_) => Dialog(
-        backgroundColor: colors.card,
-        surfaceTintColor: const Color(0x00000000),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        clipBehavior: Clip.antiAlias,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
-          child: const PeriodPickerSheet(showHandle: false),
-        ),
-      ),
-    );
-  }
-  return showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    // The sheet paints its own card surface so it can carry the design's
-    // shadow; Material elevation cannot draw a CSS box-shadow.
-    backgroundColor: const Color(0x00000000),
-    elevation: 0,
-    barrierColor: Colors.black.withValues(alpha: 0.32),
-    builder: (_) => DecoratedBox(
-      key: const ValueKey('periodPickerSheetSurface'),
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        // 0 -2px 16px rgba(0,0,0,.12)
-        boxShadow: const [
-          BoxShadow(
-            color: Color.fromRGBO(0, 0, 0, 0.12),
-            offset: Offset(0, -2),
-            blurRadius: 16,
-          ),
-        ],
-      ),
-      child: const PeriodPickerSheet(showHandle: true),
-    ),
+  return showAnalysisSheet(
+    context,
+    surfaceKey: const ValueKey('periodPickerSheetSurface'),
+    builder: (showHandle) => PeriodPickerSheet(showHandle: showHandle),
   );
 }
 
@@ -273,14 +236,14 @@ class _PeriodPickerSheetState extends ConsumerState<PeriodPickerSheet> {
             ),
           ),
           if (_view != _View.years) ...[
-            _BrowseNavButton(
+            PeriodNavButton(
               icon: Icons.chevron_left,
               tooltip: inMonth
                   ? l10n.chartsPickerPreviousMonth
                   : l10n.chartsPickerPreviousYear,
               onPressed: previousOff ? null : () => _step(inMonth, -1),
             ),
-            _BrowseNavButton(
+            PeriodNavButton(
               icon: Icons.chevron_right,
               tooltip: inMonth
                   ? l10n.chartsPickerNextMonth
@@ -305,24 +268,10 @@ class _PeriodPickerSheetState extends ConsumerState<PeriodPickerSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (widget.showHandle)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(0, 16, 0, 8),
-              child: Center(
-                child: Container(
-                  key: const ValueKey('periodPickerHandle'),
-                  width: 32,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: colors.outline,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-            )
-          else
-            // The dialog has no handle; keep its 16 top inset.
-            const SizedBox(height: 16),
+          AnalysisSheetHandle(
+            showHandle: widget.showHandle,
+            handleKey: const ValueKey('periodPickerHandle'),
+          ),
           // Everything below scrolls when large text makes it taller than
           // the sheet.
           Flexible(
@@ -947,39 +896,6 @@ class _BrowseTitleButton extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// A 48×48 browse-bar chevron, `fg`, `off` when disabled.
-class _BrowseNavButton extends StatelessWidget {
-  const _BrowseNavButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-  });
-
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AnalysisColors.of(context);
-    return IconButton(
-      tooltip: tooltip,
-      onPressed: onPressed,
-      icon: Icon(icon),
-      iconSize: 24,
-      style: IconButton.styleFrom(
-        fixedSize: const Size.square(48),
-        minimumSize: const Size.square(48),
-        padding: EdgeInsets.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        visualDensity: VisualDensity.standard,
-        foregroundColor: colors.fg,
-        disabledForegroundColor: colors.off,
       ),
     );
   }

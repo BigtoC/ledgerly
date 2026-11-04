@@ -48,7 +48,7 @@ final class PendingSkipFailedEffect extends PendingEffect {
 
 @Riverpod(keepAlive: true, dependencies: [pendingTransactionRepository])
 class PendingController extends _$PendingController {
-  PendingSkipScheduled? _skipScheduled;
+  int? _skippingId;
   Timer? _undoTimer;
   _Composer? _composer;
   PendingEffectListener? _effectListener;
@@ -56,15 +56,12 @@ class PendingController extends _$PendingController {
   @override
   Stream<PendingState> build() {
     final repo = ref.watch(pendingTransactionRepositoryProvider);
-    final composer = _Composer(
-      repo: repo,
-      skipScheduledGetter: () => _skipScheduled,
-    );
+    final composer = _Composer(repo: repo, skippingIdGetter: () => _skippingId);
     _composer = composer;
     ref.onDispose(() {
       _undoTimer?.cancel();
       _undoTimer = null;
-      _skipScheduled = null;
+      _skippingId = null;
       composer.dispose();
     });
     return composer.stream;
@@ -90,21 +87,22 @@ class PendingController extends _$PendingController {
   }
 
   Future<void> skip(int pendingId) async {
-    if (_skipScheduled != null) {
+    final prior = _skippingId;
+    if (prior != null) {
       _undoTimer?.cancel();
       _undoTimer = null;
-      await _commitSkip(_skipScheduled!.pendingId);
+      await _commitSkip(prior);
     }
 
-    _skipScheduled = PendingSkipScheduled(pendingId: pendingId);
+    _skippingId = pendingId;
     _composer?.notifySkipChanged();
 
     _effectListener?.call(const PendingSkipStartedEffect());
 
     _undoTimer = Timer(kUndoWindow, () async {
-      final pending = _skipScheduled;
+      final pending = _skippingId;
       if (pending == null) return;
-      await _commitSkip(pending.pendingId);
+      await _commitSkip(pending);
     });
   }
 
@@ -121,7 +119,7 @@ class PendingController extends _$PendingController {
   Future<void> undoSkip() async {
     _undoTimer?.cancel();
     _undoTimer = null;
-    _skipScheduled = null;
+    _skippingId = null;
     _composer?.notifySkipChanged();
   }
 
@@ -130,7 +128,7 @@ class PendingController extends _$PendingController {
   }
 
   Future<void> _commitSkip(int pendingId) async {
-    _skipScheduled = null;
+    _skippingId = null;
     _composer?.notifySkipChanged();
     try {
       await ref.read(pendingTransactionRepositoryProvider).reject(pendingId);
@@ -143,7 +141,7 @@ class PendingController extends _$PendingController {
 // ---------- Internal stream composition ----------
 
 class _Composer {
-  _Composer({required this._repo, required this._skipScheduledGetter}) {
+  _Composer({required this._repo, required this._skippingIdGetter}) {
     _out = StreamController<PendingState>.broadcast(
       onListen: _start,
       onCancel: _stop,
@@ -151,7 +149,7 @@ class _Composer {
   }
 
   final PendingTransactionRepository _repo;
-  final PendingSkipScheduled? Function() _skipScheduledGetter;
+  final int? Function() _skippingIdGetter;
   late final StreamController<PendingState> _out;
   StreamSubscription<List<PendingTransaction>>? _sub;
   List<PendingTransaction>? _items;
@@ -189,9 +187,6 @@ class _Composer {
     _emitScheduled = true;
     scheduleMicrotask(() {
       _emitScheduled = false;
-      // dispose() may have closed the controller between schedule and
-      // microtask fire; adding to a closed StreamController throws.
-      if (_out.isClosed) return;
       _emitIfReady();
     });
   }
@@ -201,12 +196,12 @@ class _Composer {
     final items = _items;
     if (items == null) return;
 
-    final skip = _skipScheduledGetter();
+    final skippingId = _skippingIdGetter();
 
-    if (items.isEmpty && skip == null) {
+    if (items.isEmpty && skippingId == null) {
       _out.add(const PendingState.empty());
     } else {
-      _out.add(PendingState.data(items: items, skipScheduled: skip));
+      _out.add(PendingState.data(items: items, skippingId: skippingId));
     }
   }
 }

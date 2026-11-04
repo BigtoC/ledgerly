@@ -31,7 +31,7 @@ sealed class AnalysisState with _$AnalysisState {
   /// `transactions` carries the raw matching rows that produced
   /// `categories`. `CategorySearchDetailController` reads it for the
   /// synchronous detail-screen pre-fill so we avoid a frame of
-  /// `DetailLoading` on navigation when Drift would re-fetch the same
+  /// loading on navigation when Drift would re-fetch the same
   /// rows the parent already has in memory.
   const factory AnalysisState.results({
     required List<CategorySearchResult> categories,
@@ -40,7 +40,7 @@ sealed class AnalysisState with _$AnalysisState {
   }) = AnalysisResults;
 
   /// Query typed but no matching transactions.
-  const factory AnalysisState.empty({required String query}) = AnalysisEmpty;
+  const factory AnalysisState.empty() = AnalysisEmpty;
 }
 
 @freezed

@@ -23,8 +23,6 @@ class App extends ConsumerStatefulWidget {
 }
 
 class _AppState extends ConsumerState<App> {
-  bool _ranFirstFrameCallback = false;
-
   @override
   void initState() {
     super.initState();
@@ -34,8 +32,7 @@ class _AppState extends ConsumerState<App> {
   }
 
   void _runFirstFrameCallback() {
-    if (_ranFirstFrameCallback || !mounted) return;
-    _ranFirstFrameCallback = true;
+    if (!mounted) return;
     widget.onFirstFrame?.call();
     // Update check: after the first frame and the startup FX refresh, once
     // per launch.

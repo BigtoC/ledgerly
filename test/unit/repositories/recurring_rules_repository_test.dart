@@ -6,15 +6,6 @@ import 'package:ledgerly/domain/models/recurring_rule_draft.dart';
 
 import '_harness/test_app_database.dart';
 
-Future<void> _seedCurrencyUsd(AppDatabase db) async {
-  await db.customStatement(
-    'INSERT OR IGNORE INTO currencies '
-    '(code, decimals, symbol, name_l10n_key, is_token, sort_order) '
-    'VALUES (?, ?, ?, ?, 0, ?)',
-    <Object?>['USD', 2, r'$', 'currency.usd', 1],
-  );
-}
-
 int _categoryCounter = 0;
 
 Future<int> _insertCategoryRaw(AppDatabase db, {bool archived = false}) async {
@@ -37,29 +28,6 @@ Future<int> _insertCategoryRaw(AppDatabase db, {bool archived = false}) async {
   return rows.first.read<int>('id');
 }
 
-Future<int> _insertAccountRaw(AppDatabase db) async {
-  await db.customStatement(
-    'INSERT OR IGNORE INTO account_types '
-    '(l10n_key, icon, color, sort_order, is_archived) '
-    'VALUES (?, ?, ?, ?, ?)',
-    <Object?>['at.test', 'wallet', 0, 1, 0],
-  );
-  final typeRows = await db
-      .customSelect('SELECT id FROM account_types ORDER BY id ASC LIMIT 1')
-      .get();
-  final typeId = typeRows.first.read<int>('id');
-  await db.customStatement(
-    'INSERT INTO accounts (name, account_type_id, currency, '
-    'opening_balance_minor_units, is_archived) '
-    "VALUES ('Cash', ?, ?, 0, ?)",
-    <Object?>[typeId, 'USD', 0],
-  );
-  final rows = await db
-      .customSelect('SELECT id FROM accounts ORDER BY id DESC LIMIT 1')
-      .get();
-  return rows.first.read<int>('id');
-}
-
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 
 void main() {
@@ -71,9 +39,9 @@ void main() {
 
     setUp(() async {
       db = newTestAppDatabase();
-      await _seedCurrencyUsd(db);
+      await seedUsdCurrencyRaw(db);
       categoryId = await _insertCategoryRaw(db);
-      accountId = await _insertAccountRaw(db);
+      accountId = await insertCashAccountRaw(db);
       repo = DriftRecurringRulesRepository(
         db,
         clock: () => DateTime(2026, 5, 7),
@@ -148,6 +116,17 @@ void main() {
         );
         final rule = await repo.getById(id);
         expect(rule!.nextDueDate, DateTime(2026, 6, 15));
+      });
+
+      test('monthly when day already passed in December rolls into '
+          'January of the next year', () async {
+        final today = DateTime(2026, 12, 20);
+        final id = await repo.insert(
+          draft(frequency: 'monthly', dayOfMonth: 15),
+          today: today,
+        );
+        final rule = await repo.getById(id);
+        expect(rule!.nextDueDate, DateTime(2027, 1, 15));
       });
 
       test('yearly with leap-year clamping', () async {
@@ -259,6 +238,18 @@ void main() {
         expect(next, DateTime(2026, 4, 30)); // Clamped.
         final next2 = repo.advanceDateByFrequency(rule, next);
         expect(next2, DateTime(2026, 5, 31));
+      });
+
+      test('advanceDateByFrequency monthly from December', () async {
+        final id = await repo.insert(
+          draft(frequency: 'monthly', dayOfMonth: 31),
+          today: DateTime(2026, 12, 31),
+        );
+        final rule = (await repo.getById(id))!;
+        expect(
+          repo.advanceDateByFrequency(rule, DateTime(2026, 12, 31)),
+          DateTime(2027, 1, 31),
+        );
       });
 
       test('fastForwardToRecent advances past today', () async {

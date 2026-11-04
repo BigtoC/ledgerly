@@ -1,11 +1,10 @@
 // Currency picker sheet (plan §5, §8).
 //
-// Owned by the Accounts slice for MVP. Lists non-token currencies from
-// `currencyRepository.watchAll()`; selection resolves back to the
-// caller via `Navigator.pop(currency)`. No side-effect on user
-// preferences — the Accounts form uses this sheet to choose the
-// currency for the account being edited, not the app-wide default
-// (plan §8 closing note).
+// Owned by the Accounts slice. Lists `selectableCurrenciesProvider`;
+// selection resolves back to the caller via `Navigator.pop(currency)`.
+// No side-effect on user preferences. The Accounts form uses it for the
+// account's currency, and Settings for the app-wide default, passing its
+// own [title].
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,21 +15,27 @@ import '../view_models/accounts_providers.dart';
 import 'currency_display.dart';
 
 /// Opens the currency picker sheet and resolves with the user's
-/// selection, or null if the sheet is dismissed.
-Future<Currency?> showCurrencyPickerSheet(BuildContext context) {
+/// selection, or null if the sheet is dismissed. [title] defaults to
+/// `accountsCurrencyPickerTitle`.
+Future<Currency?> showCurrencyPickerSheet(
+  BuildContext context, {
+  String? title,
+}) {
   return showModalBottomSheet<Currency>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    builder: (ctx) => const FractionallySizedBox(
+    builder: (ctx) => FractionallySizedBox(
       heightFactor: 0.75,
-      child: _CurrencyPickerSheet(),
+      child: _CurrencyPickerSheet(title: title),
     ),
   );
 }
 
 class _CurrencyPickerSheet extends ConsumerWidget {
-  const _CurrencyPickerSheet();
+  const _CurrencyPickerSheet({this.title});
+
+  final String? title;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -45,7 +50,7 @@ class _CurrencyPickerSheet extends ConsumerWidget {
             child: Row(
               children: [
                 Text(
-                  l10n.accountsCurrencyPickerTitle,
+                  title ?? l10n.accountsCurrencyPickerTitle,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ],

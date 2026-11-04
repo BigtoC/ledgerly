@@ -15,12 +15,11 @@ import '../database/daos/account_dao.dart';
 import '../database/daos/category_dao.dart';
 import '../database/daos/currency_dao.dart';
 import '../database/daos/recurring_rule_dao.dart';
+import 'currency_repository.dart';
+import 'repository_exceptions.dart';
 
-class RecurringRulesRepositoryException implements Exception {
-  const RecurringRulesRepositoryException(this.message);
-  final String message;
-  @override
-  String toString() => 'RecurringRulesRepositoryException: $message';
+class RecurringRulesRepositoryException extends RepositoryException {
+  const RecurringRulesRepositoryException(super.message);
 }
 
 class ArchivedReferenceException extends RecurringRulesRepositoryException {
@@ -251,9 +250,7 @@ final class DriftRecurringRulesRepository implements RecurringRulesRepository {
       case 'weekly':
         return DateTime(current.year, current.month, current.day + 7);
       case 'monthly':
-        final nextMonth = current.month == 12 ? 1 : current.month + 1;
-        final nextYear = current.month == 12 ? current.year + 1 : current.year;
-        return _clampDay(nextYear, nextMonth, rule.dayOfMonth!);
+        return _clampDay(current.year, current.month + 1, rule.dayOfMonth!);
       case 'yearly':
         final nextYear = current.year + 1;
         return _clampDay(nextYear, rule.monthOfYear!, rule.dayOfMonth!);
@@ -376,9 +373,7 @@ final class DriftRecurringRulesRepository implements RecurringRulesRepository {
     if (!from.isAfter(clampedThisMonth)) {
       return clampedThisMonth;
     }
-    final nextMonth = from.month == 12 ? 1 : from.month + 1;
-    final nextYear = from.month == 12 ? from.year + 1 : from.year;
-    return _clampDay(nextYear, nextMonth, dayOfMonth);
+    return _clampDay(from.year, from.month + 1, dayOfMonth);
   }
 
   /// Find the next date on or after [from] whose (month, day) match,
@@ -392,7 +387,8 @@ final class DriftRecurringRulesRepository implements RecurringRulesRepository {
   }
 
   /// Clamp [day] to the last day of [year]-[month] and return as a
-  /// midnight DateTime.
+  /// midnight DateTime. [month] may be 13: DateTime rolls it into
+  /// January of the next year.
   DateTime _clampDay(int year, int month, int day) {
     final lastDay = DateTime(year, month + 1, 0).day;
     final clamped = day > lastDay ? lastDay : day;
@@ -409,7 +405,7 @@ final class DriftRecurringRulesRepository implements RecurringRulesRepository {
     final currenciesByCode = <String, Currency>{};
     for (final code in codes) {
       final row = (await _currencyDao.findByCode(code))!;
-      currenciesByCode[code] = _currencyFromRow(row);
+      currenciesByCode[code] = currencyFromRow(row);
     }
     return rows
         .map(
@@ -445,7 +441,7 @@ final class DriftRecurringRulesRepository implements RecurringRulesRepository {
     return RecurringRuleDraft(
       name: row.name,
       amountMinorUnits: row.amountMinorUnits,
-      currency: _currencyFromRow(currencyRow),
+      currency: currencyFromRow(currencyRow),
       categoryId: row.categoryId,
       accountId: row.accountId,
       memo: row.memo,
@@ -455,14 +451,4 @@ final class DriftRecurringRulesRepository implements RecurringRulesRepository {
       monthOfYear: row.monthOfYear,
     );
   }
-
-  Currency _currencyFromRow(drift.Currency row) => Currency(
-    code: row.code,
-    decimals: row.decimals,
-    symbol: row.symbol,
-    nameL10nKey: row.nameL10nKey,
-    customName: row.customName,
-    isToken: row.isToken,
-    sortOrder: row.sortOrder,
-  );
 }

@@ -27,8 +27,6 @@ class ExchangeRateMetadata {
 /// needed, extract an interface at that point at near-zero cost.
 ///
 /// Responsibilities:
-/// - Subscribes to `dao.watchAll()` and maintains an in-memory snapshot
-///   for synchronous UI lookups.
 /// - Subscribes to a `defaultCurrency$` stream and re-fetches rates for
 ///   every in-use currency when the default changes, with a single-flight
 ///   guard so concurrent triggers coalesce into one network request.
@@ -48,15 +46,6 @@ final class ExchangeRateRepository {
     this._service,
     Stream<String> defaultCurrency$,
   ) {
-    _daoSub = _db.exchangeRateDao.watchAll().listen(
-      _rebuildSnapshot,
-      onError: (Object e, StackTrace s) {
-        debugPrint(
-          'ExchangeRateRepository: DAO stream error '
-          '(${e.runtimeType})',
-        );
-      },
-    );
     _currencySub = defaultCurrency$.listen((code) {
       unawaited(
         refreshAll(code).whenComplete(() {
@@ -71,10 +60,7 @@ final class ExchangeRateRepository {
 
   ExchangeRateDao get _dao => _db.exchangeRateDao;
 
-  late final StreamSubscription<List<drift.ExchangeRateRow>> _daoSub;
   late final StreamSubscription<String> _currencySub;
-
-  Map<String, int> _snapshot = const {};
 
   /// Single-flight guard: when a refresh for [defaultCurrency] is in
   /// flight, additional calls await the existing future instead of
@@ -97,35 +83,12 @@ final class ExchangeRateRepository {
   static const double _minRate = 1e-6;
   static const double _maxRate = 1e6;
 
-  // ---------- Snapshot management ----------
+  // ---------- Reads ----------
 
   static Map<String, int> _toRateMap(List<drift.ExchangeRateRow> rows) => {
     for (final row in rows)
       '${row.baseCurrency}→${row.quoteCurrency}': row.rateScaledE9,
   };
-
-  void _rebuildSnapshot(List<drift.ExchangeRateRow> rows) {
-    _snapshot = _toRateMap(rows);
-  }
-
-  // ---------- Reads ----------
-
-  /// Synchronous lookup against the in-memory snapshot. Returns the
-  /// scaled-e9 integer for forward (`from → to`) lookups, or `1e9`
-  /// (i.e. 1.0 × 10⁹) for same-currency pairs. Returns null when no
-  /// rate is known.
-  ///
-  /// **Snapshot timing note:** Drift's `watch()` delivers its first
-  /// emission one microtask after subscription. A UI widget that builds
-  /// in the same synchronous frame as repository construction may read
-  /// an empty snapshot even when the DB has cached rates. Tiles
-  /// gracefully degrade to no-conversion display when `getRate` returns
-  /// null.
-  int? getRate(String from, String to) {
-    if (from == to) return 1000000000;
-    final key = '${from.toUpperCase()}→${to.toUpperCase()}';
-    return _snapshot[key];
-  }
 
   /// Stream of the snapshot map (scaled-e9 ints keyed by `from→to`).
   /// Consumed by `exchangeRatesProvider` and surfaced to UI tiles.
@@ -153,7 +116,7 @@ final class ExchangeRateRepository {
 
   /// Fetches rates for every in-use currency (excluding [defaultCurrency])
   /// and upserts results. Caught exceptions are logged by runtime type
-  /// only; on failure the cached DAO snapshot continues to back [getRate].
+  /// only; on failure the cached rates stay in place.
   ///
   /// **Single-flight:** if a refresh is already in flight for the same
   /// [defaultCurrency], the current call awaits that future. If a
@@ -251,7 +214,6 @@ final class ExchangeRateRepository {
   // ---------- Lifecycle ----------
 
   void dispose() {
-    _daoSub.cancel();
     _currencySub.cancel();
   }
 }

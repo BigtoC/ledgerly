@@ -13,6 +13,8 @@ import '../../../../app/providers/exchange_rates_provider.dart';
 import '../../../../core/constants.dart';
 import '../../../../core/utils/box_shadow.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../core/widgets/confirm_dialog.dart';
+import '../../../core/widgets/undo_snack_bar.dart';
 import '../view_models/accounts_controller.dart';
 import '../view_models/accounts_providers.dart';
 import '../view_models/accounts_state.dart';
@@ -170,18 +172,11 @@ class _AccountTileWithLookups extends ConsumerWidget {
         .archive(id);
     switch (outcome) {
       case ArchiveAccountOk():
-        messenger
-          ..clearSnackBars()
-          ..showSnackBar(
-            SnackBar(
-              content: Text(l10n.accountsArchiveUndoSnackbar),
-              action: SnackBarAction(
-                label: l10n.commonUndo,
-                onPressed: () =>
-                    unawaited(_undoArchive(container, messenger, l10n, id)),
-              ),
-            ),
-          );
+        messenger.showUndoSnackBar(
+          message: l10n.accountsArchiveUndoSnackbar,
+          undoLabel: l10n.commonUndo,
+          onUndo: () => unawaited(_undoArchive(container, messenger, l10n, id)),
+        );
       case ArchiveAccountIsDefault():
         if (!context.mounted) return;
         await _showDefaultBlockedDialog(context, l10n);
@@ -227,24 +222,14 @@ class _AccountTileWithLookups extends ConsumerWidget {
 
   Future<void> _onDelete(BuildContext context, WidgetRef ref, int id) async {
     final l10n = AppLocalizations.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.accountsDeleteConfirmTitle),
-        content: Text(l10n.accountsDeleteConfirmBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton.tonal(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.commonDelete),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: l10n.accountsDeleteConfirmTitle,
+      body: l10n.accountsDeleteConfirmBody,
+      confirmLabel: l10n.commonDelete,
+      tonal: true,
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
     if (!context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     final outcome = await ref

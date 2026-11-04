@@ -27,6 +27,8 @@ import 'package:ledgerly/ui/features/recurring/views/recurring_rules_screen.dart
 import 'package:ledgerly/ui/features/recurring/view_models/recurring_rules_state.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
+import '../../../support/text_scale.dart';
+
 class _MockRecurringRulesRepository extends Mock
     implements RecurringRulesRepository {}
 
@@ -111,11 +113,7 @@ Widget _wrap(ProviderContainer container, {double textScale = 1}) {
     child: MaterialApp.router(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
-        child: child!,
-      ),
+      builder: textScaleBuilder(textScale),
       routerConfig: _StubRouter.build(const RecurringRulesScreen()),
     ),
   );
@@ -182,7 +180,6 @@ void main() {
           _rule(id: 1),
           _rule(id: 2, name: 'Rent'),
         ],
-        pendingDelete: null,
       ),
     );
     addTearDown(container.dispose);
@@ -196,10 +193,7 @@ void main() {
 
   testWidgets('RRS04: paused rule renders the Paused chip', (tester) async {
     final container = _makeContainer(
-      RecurringRulesState.data(
-        rules: [_rule(id: 1, isActive: false)],
-        pendingDelete: null,
-      ),
+      RecurringRulesState.data(rules: [_rule(id: 1, isActive: false)]),
     );
     addTearDown(container.dispose);
 
@@ -213,7 +207,7 @@ void main() {
     tester,
   ) async {
     final container = _makeContainer(
-      RecurringRulesState.data(rules: [_rule(id: 7)], pendingDelete: null),
+      RecurringRulesState.data(rules: [_rule(id: 7)]),
     );
     addTearDown(container.dispose);
 
@@ -259,7 +253,7 @@ void main() {
   ) async {
     final repo = _MockRecurringRulesRepository();
     final container = _makeContainer(
-      RecurringRulesState.data(rules: [_rule(id: 1)], pendingDelete: null),
+      RecurringRulesState.data(rules: [_rule(id: 1)]),
       repo: repo,
     );
     addTearDown(container.dispose);
@@ -284,10 +278,7 @@ void main() {
   ) async {
     final repo = _MockRecurringRulesRepository();
     final container = _makeContainer(
-      RecurringRulesState.data(
-        rules: [_rule(id: 1, isActive: false)],
-        pendingDelete: null,
-      ),
+      RecurringRulesState.data(rules: [_rule(id: 1, isActive: false)]),
       repo: repo,
     );
     addTearDown(container.dispose);
@@ -312,7 +303,7 @@ void main() {
   ) async {
     final repo = _MockRecurringRulesRepository();
     final container = _makeContainer(
-      RecurringRulesState.data(rules: [_rule(id: 1)], pendingDelete: null),
+      RecurringRulesState.data(rules: [_rule(id: 1)]),
       repo: repo,
     );
     addTearDown(container.dispose);
@@ -343,7 +334,6 @@ void main() {
             _rule(id: 1),
             _rule(id: 2, name: 'Rent'),
           ],
-          pendingDelete: null,
         ),
         repo: repo,
       );
@@ -387,7 +377,6 @@ void main() {
           _rule(id: 1),
           _rule(id: 2, name: 'Rent'),
         ],
-        pendingDelete: null,
       ),
       repo: repo,
     );
@@ -422,10 +411,7 @@ void main() {
     tester,
   ) async {
     final container = _makeContainer(
-      RecurringRulesState.data(
-        rules: [_rule(id: 1, categoryId: _food.id)],
-        pendingDelete: null,
-      ),
+      RecurringRulesState.data(rules: [_rule(id: 1, categoryId: _food.id)]),
     );
     addTearDown(container.dispose);
 
@@ -445,7 +431,6 @@ void main() {
     final container = _makeContainer(
       RecurringRulesState.data(
         rules: [_rule(id: 1, categoryId: _archivedHousing.id)],
-        pendingDelete: null,
       ),
     );
     addTearDown(container.dispose);
@@ -464,10 +449,7 @@ void main() {
     tester,
   ) async {
     final container = _makeContainer(
-      RecurringRulesState.data(
-        rules: [_rule(id: 1, categoryId: 99)],
-        pendingDelete: null,
-      ),
+      RecurringRulesState.data(rules: [_rule(id: 1, categoryId: 99)]),
     );
     addTearDown(container.dispose);
 
@@ -492,7 +474,6 @@ void main() {
             _rule(id: 3, name: 'Rent', frequency: 'monthly'),
             _rule(id: 4, name: 'Domain', frequency: 'yearly'),
           ],
-          pendingDelete: null,
         ),
       );
       addTearDown(container.dispose);
@@ -514,7 +495,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
 
     final container = _makeContainer(
-      RecurringRulesState.data(rules: [_rule(id: 1)], pendingDelete: null),
+      RecurringRulesState.data(rules: [_rule(id: 1)]),
     );
     addTearDown(container.dispose);
     final subtitle = find.text('Monthly · Next: Mon, Jun 15, 2026');

@@ -14,8 +14,10 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 import '../../../../domain/models/account.dart';
 import '../../../../domain/models/category.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../core/widgets/confirm_dialog.dart';
 import '../../categories/view_models/categories_controller.dart';
 import '../../categories/views/category_picker.dart';
+import '../../transactions/view_models/transactions_providers.dart';
 import '../../transactions/views/account_picker_sheet.dart';
 import '../../transactions/views/account_selector_tile.dart';
 import '../../transactions/views/amount_display.dart';
@@ -23,7 +25,6 @@ import '../../transactions/views/calculator_keypad.dart';
 import '../../transactions/views/category_chip.dart';
 import '../view_models/recurring_rule_form_controller.dart';
 import '../view_models/recurring_rule_form_state.dart';
-import '../view_models/recurring_rules_providers.dart';
 
 @Dependencies([RecurringRuleFormController, categoriesByType])
 class RecurringRuleFormScreen extends ConsumerStatefulWidget {
@@ -138,7 +139,7 @@ class _FormBody extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 children: [
                   if (state.formError != null)
-                    _FormErrorBanner(error: state.formError!),
+                    _FormErrorBanner(message: state.formError!),
                   if (state.isEdit && (state.pendingItemCount ?? 0) > 0) ...[
                     Card(
                       color: Theme.of(context).colorScheme.secondaryContainer,
@@ -213,18 +214,8 @@ class _FormBody extends StatelessWidget {
                     ],
                     onChanged: (v) {
                       if (v == null) return;
-                      controller.updateFrequency(v);
-                      // The controller's `updateFrequency` may default
-                      // dayOfMonth to today.day (clamped to 28) when switching
-                      // into monthly/yearly. Sync the visible TextEditingController.
-                      if (v == 'monthly' || v == 'yearly') {
-                        final today = DateTime.now();
-                        final defaulted = today.day > 28 ? 28 : today.day;
-                        final next = state.dayOfMonth ?? defaulted;
-                        dayOfMonthCtl.text = next.toString();
-                      } else {
-                        dayOfMonthCtl.clear();
-                      }
+                      dayOfMonthCtl.text =
+                          controller.updateFrequency(v)?.toString() ?? '';
                     },
                   ),
                   const SizedBox(height: 12),
@@ -297,23 +288,12 @@ class _FormBody extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final navigator = GoRouter.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        content: Text(l10n.recurringDeleteConfirm),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.recurringDeleteRule),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      body: l10n.recurringDeleteConfirm,
+      confirmLabel: l10n.recurringDeleteRule,
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
     if (!context.mounted) return;
     final outcome = await controller.deleteRule();
     if (!context.mounted) return;
@@ -332,14 +312,10 @@ class _FormBody extends StatelessWidget {
 }
 
 class _FormErrorBanner extends StatelessWidget {
-  const _FormErrorBanner({required this.error});
-  final RecurringFormError error;
+  const _FormErrorBanner({required this.message});
+  final String message;
   @override
   Widget build(BuildContext context) {
-    final detail = switch (error) {
-      ArchivedRefErr(:final detail) => detail,
-      UnknownErr(:final detail) => detail,
-    };
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Material(
@@ -348,7 +324,7 @@ class _FormErrorBanner extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Text(
-            detail,
+            message,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onErrorContainer,
             ),
@@ -547,7 +523,7 @@ class _AccountPickerTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncAccounts = ref.watch(recurringActiveAccountsProvider);
+    final asyncAccounts = ref.watch(txActiveAccountsProvider);
     final selected = asyncAccounts.maybeWhen(
       data: (list) {
         final id = state.accountId;

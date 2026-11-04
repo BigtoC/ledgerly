@@ -11,6 +11,8 @@
 // and zero-padding the fractional part to `fractionalDigitsEntered`
 // characters.
 
+import 'dart:math' as math;
+
 import 'amount_formula.dart';
 
 /// The four arithmetic operators supported by the calculator keypad.
@@ -544,11 +546,7 @@ class KeypadState {
 /// and minor units.
 int pow10(int exponent) {
   assert(exponent >= 0);
-  var result = 1;
-  for (var i = 0; i < exponent; i++) {
-    result *= 10;
-  }
-  return result;
+  return math.pow(10, exponent).toInt();
 }
 
 List<T> _withoutLast<T>(List<T> list) =>

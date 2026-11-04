@@ -126,12 +126,12 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function()?  empty,TResult Function( List<PendingTransaction> items,  PendingSkipScheduled? skipScheduled)?  data,TResult Function( Object error,  StackTrace stack)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function()?  empty,TResult Function( List<PendingTransaction> items,  int? skippingId)?  data,TResult Function( Object error,  StackTrace stack)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case PendingLoading() when loading != null:
 return loading();case PendingEmpty() when empty != null:
 return empty();case PendingData() when data != null:
-return data(_that.items,_that.skipScheduled);case PendingError() when error != null:
+return data(_that.items,_that.skippingId);case PendingError() when error != null:
 return error(_that.error,_that.stack);case _:
   return orElse();
 
@@ -150,12 +150,12 @@ return error(_that.error,_that.stack);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function()  empty,required TResult Function( List<PendingTransaction> items,  PendingSkipScheduled? skipScheduled)  data,required TResult Function( Object error,  StackTrace stack)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function()  empty,required TResult Function( List<PendingTransaction> items,  int? skippingId)  data,required TResult Function( Object error,  StackTrace stack)  error,}) {final _that = this;
 switch (_that) {
 case PendingLoading():
 return loading();case PendingEmpty():
 return empty();case PendingData():
-return data(_that.items,_that.skipScheduled);case PendingError():
+return data(_that.items,_that.skippingId);case PendingError():
 return error(_that.error,_that.stack);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -170,12 +170,12 @@ return error(_that.error,_that.stack);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function()?  empty,TResult? Function( List<PendingTransaction> items,  PendingSkipScheduled? skipScheduled)?  data,TResult? Function( Object error,  StackTrace stack)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function()?  empty,TResult? Function( List<PendingTransaction> items,  int? skippingId)?  data,TResult? Function( Object error,  StackTrace stack)?  error,}) {final _that = this;
 switch (_that) {
 case PendingLoading() when loading != null:
 return loading();case PendingEmpty() when empty != null:
 return empty();case PendingData() when data != null:
-return data(_that.items,_that.skipScheduled);case PendingError() when error != null:
+return data(_that.items,_that.skippingId);case PendingError() when error != null:
 return error(_that.error,_that.stack);case _:
   return null;
 
@@ -252,7 +252,7 @@ String toString() {
 
 
 class PendingData implements PendingState {
-  const PendingData({required  List<PendingTransaction> items, required this.skipScheduled}): _items = items;
+  const PendingData({required  List<PendingTransaction> items, required this.skippingId}): _items = items;
   
 
  final  List<PendingTransaction> _items;
@@ -262,7 +262,9 @@ class PendingData implements PendingState {
   return EqualUnmodifiableListView(_items);
 }
 
- final  PendingSkipScheduled? skipScheduled;
+/// Id of the row inside the 4-second skip-undo window. Held in memory
+/// by the controller, NOT in the DB.
+ final  int? skippingId;
 
 /// Create a copy of PendingState
 /// with the given fields replaced by the non-null parameter values.
@@ -274,18 +276,18 @@ $PendingDataCopyWith<PendingData> get copyWith => _$PendingDataCopyWithImpl<Pend
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is PendingData&&const DeepCollectionEquality().equals(other.items, _items)&&(identical(other.skipScheduled, skipScheduled) || other.skipScheduled == skipScheduled));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is PendingData&&const DeepCollectionEquality().equals(other.items, _items)&&(identical(other.skippingId, skippingId) || other.skippingId == skippingId));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_items),skipScheduled);
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_items),skippingId);
 }
 
 @override
 String toString() {
-    return 'PendingState.data(items: $items, skipScheduled: $skipScheduled)';
+    return 'PendingState.data(items: $items, skippingId: $skippingId)';
 }
 
 
@@ -296,7 +298,7 @@ abstract mixin class $PendingDataCopyWith<$Res> implements $PendingStateCopyWith
   factory $PendingDataCopyWith(PendingData value, $Res Function(PendingData) _then) = _$PendingDataCopyWithImpl;
 @useResult
 $Res call({
- List<PendingTransaction> items, PendingSkipScheduled? skipScheduled
+ List<PendingTransaction> items, int? skippingId
 });
 
 
@@ -313,11 +315,11 @@ class _$PendingDataCopyWithImpl<$Res>
 
 /// Create a copy of PendingState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? items = null,Object? skipScheduled = freezed,}) {
+@pragma('vm:prefer-inline') $Res call({Object? items = null,Object? skippingId = freezed,}) {
   return _then(PendingData(
 items: null == items ? _self._items : items // ignore: cast_nullable_to_non_nullable
-as List<PendingTransaction>,skipScheduled: freezed == skipScheduled ? _self.skipScheduled : skipScheduled // ignore: cast_nullable_to_non_nullable
-as PendingSkipScheduled?,
+as List<PendingTransaction>,skippingId: freezed == skippingId ? _self.skippingId : skippingId // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 

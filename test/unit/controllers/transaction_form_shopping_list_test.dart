@@ -227,11 +227,11 @@ void main() {
         expect(s, isA<TransactionFormData>());
         final data = s as TransactionFormData;
 
-        expect(data.selectedAccount?.id, _account.id);
+        expect(data.selectedAccount.id, _account.id);
         expect(data.selectedCategory?.id, _expenseCategory.id);
         expect(data.memo, 'groceries');
         expect(data.amountMinorUnits, 1500);
-        expect(data.displayCurrency?.code, 'USD');
+        expect(data.displayCurrency.code, 'USD');
         expect(data.date, draftDate);
         expect(data.shoppingListItemId, 42);
         expect(data.isDirty, isFalse);
@@ -261,7 +261,7 @@ void main() {
         final data =
             c.read(transactionFormControllerProvider) as TransactionFormData;
         expect(data.amountMinorUnits, 0);
-        expect(data.displayCurrency?.code, 'USD');
+        expect(data.displayCurrency.code, 'USD');
         // currencyTouched is false when seeded from account.
         expect(data.currencyTouched, isFalse);
       });
@@ -739,7 +739,7 @@ void main() {
 
       final s =
           c.read(transactionFormControllerProvider) as TransactionFormData;
-      expect(s.selectedAccountIsArchived, isTrue);
+      expect(s.selectedAccount.isArchived, isTrue);
       expect(s.canConvertDraft, isFalse);
       // But canSaveDraft should still be true.
       expect(s.canSaveDraft, isTrue);

@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -39,6 +38,8 @@ import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_provid
 import 'package:ledgerly/ui/features/analysis/search/views/category_search_tile.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/core/theme/app_theme.dart';
+
+import '../../../support/text_scale.dart';
 
 class _MockTransactionRepository extends Mock
     implements TransactionRepository {}
@@ -103,18 +104,9 @@ Widget _harness({
     ],
     child: MaterialApp(
       theme: theme ?? lightTheme,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
-        child: child!,
-      ),
+      builder: textScaleBuilder(textScale),
       home: const AnalysisScreen(),
     ),
   );
@@ -210,12 +202,7 @@ Widget _routerHarness({
     ],
     child: MaterialApp.router(
       theme: lightTheme,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: _detailRouter(initialLocation),
     ),

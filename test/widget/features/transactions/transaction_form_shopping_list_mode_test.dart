@@ -1,8 +1,13 @@
-// TransactionFormScreen shopping-list mode widget tests — Task 5.
+// TransactionFormScreen shopping-list mode and button widget tests — Task 5.
 //
-// Tests IDs: TFSLM01–TFSLM09
+// Tests IDs: TFSLW02–TFSLW05, TFSLM01, TFSLM04–TFSLM09
 //
 // Covers:
+//   - "Add to shopping list" is disabled when canSaveDraft is false
+//   - EditShoppingListDraftMode shows "Save to transaction" and "Save draft"
+//     in inline row; no app-bar Save button
+//   - Archived account/category warning text appears in
+//     EditShoppingListDraftMode when refs are archived
 //   - EditShoppingListDraftMode title matches shoppingListEditDraftTitle l10n key
 //   - An ignored draft save / conversion does not pop the form
 //   - A failed draft save, draft conversion or "Add to shopping list" shows
@@ -34,6 +39,7 @@ import 'package:ledgerly/ui/features/transactions/view_models/keypad_state.dart'
 import 'package:ledgerly/ui/features/transactions/view_models/transaction_form_controller.dart';
 import 'package:ledgerly/ui/features/transactions/views/transaction_form_screen.dart';
 import 'package:ledgerly/ui/features/transactions/view_models/transaction_form_state.dart';
+import 'package:ledgerly/ui/features/transactions/views/account_selector_tile.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/l10n/app_localizations_en.dart';
 
@@ -58,6 +64,14 @@ class _MockShoppingListRepository extends Mock
 
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 const _account = Account(id: 1, name: 'Cash', accountTypeId: 1, currency: _usd);
+const _archivedAccount = Account(
+  id: 5,
+  name: 'Old Cash',
+  accountTypeId: 1,
+  currency: _usd,
+  isArchived: true,
+);
+
 const _expenseCategory = Category(
   id: 10,
   icon: 'restaurant',
@@ -66,14 +80,25 @@ const _expenseCategory = Category(
   l10nKey: 'category.food',
 );
 
+const _archivedCategory = Category(
+  id: 11,
+  icon: 'shopping_cart',
+  color: 1,
+  type: CategoryType.expense,
+  l10nKey: 'category.shopping',
+  isArchived: true,
+);
+
 ShoppingListItem _draft({
   int id = 1,
+  int categoryId = 10,
+  int accountId = 1,
   int? draftAmountMinorUnits,
   String? draftCurrencyCode,
 }) => ShoppingListItem(
   id: id,
-  categoryId: _expenseCategory.id,
-  accountId: _account.id,
+  categoryId: categoryId,
+  accountId: accountId,
   draftAmountMinorUnits: draftAmountMinorUnits,
   draftCurrencyCode: draftCurrencyCode,
   draftDate: DateTime(2026, 5, 1),
@@ -129,12 +154,6 @@ TransactionFormState _editableDraftState() => TransactionFormState.data(
   selectedCategory: _expenseCategory,
   date: DateTime(2026, 5, 1),
   memo: 'Milk',
-  isDirty: false,
-  isSaving: false,
-  isDeleting: false,
-  editingId: null,
-  duplicateSourceId: null,
-  originalCreatedAt: null,
   shoppingListItemId: 77,
 );
 
@@ -163,10 +182,14 @@ void main() {
     when(() => accountRepo.getLastUsedActiveAccount())
         .thenAnswer((_) async => null);
     when(() => accountRepo.getById(1)).thenAnswer((_) async => _account);
+    when(() => accountRepo.getById(5))
+        .thenAnswer((_) async => _archivedAccount);
     when(() => accountRepo.watchAll(includeArchived: false))
         .thenAnswer((_) => Stream.value(const [_account]));
     when(() => categoryRepo.getById(10))
         .thenAnswer((_) async => _expenseCategory);
+    when(() => categoryRepo.getById(11))
+        .thenAnswer((_) async => _archivedCategory);
     when(() => currencyRepo.watchAll(includeTokens: false))
         .thenAnswer((_) => Stream.value(const [_usd]));
     when(() => currencyRepo.getByCode('USD')).thenAnswer((_) async => _usd);
@@ -206,6 +229,17 @@ void main() {
           builder: (_, _) =>
               Scaffold(appBar: AppBar(title: const Text('categories-stub'))),
         ),
+        GoRoute(
+          path: '/settings/manage-accounts/new',
+          builder: (context, _) => Scaffold(
+            body: Center(
+              child: FilledButton(
+                onPressed: () => GoRouter.of(context).pop(99),
+                child: const Text('finish-create-account'),
+              ),
+            ),
+          ),
+        ),
       ],
     );
     return mountWithRouter(router);
@@ -230,6 +264,136 @@ void main() {
     );
     return router;
   }
+
+  testWidgets(
+    'TFSLW02: "Add to shopping list" is disabled when canSaveDraft is false',
+    (tester) async {
+      await tester.pumpWidget(mountWithMode(const AddTransactionMode()));
+      await tester.pumpAndSettle();
+
+      // No category selected yet → canSaveDraft is false → button is disabled.
+      final btn = tester.widget<OutlinedButton>(
+        find.byKey(const Key('addToShoppingListButton')),
+      );
+      expect(btn.onPressed, isNull);
+    },
+  );
+
+  testWidgets(
+    'TFSLW03: EditShoppingListDraftMode shows "Save to transaction" and "Save draft"; no app-bar Save',
+    (tester) async {
+      final draft = _draft(
+        id: 77,
+        categoryId: _expenseCategory.id,
+        accountId: _account.id,
+        draftAmountMinorUnits: 1000,
+        draftCurrencyCode: 'USD',
+      );
+      when(() => slRepo.getById(77)).thenAnswer((_) async => draft);
+
+      await tester.pumpWidget(
+        mountWithMode(const EditShoppingListDraftMode(shoppingListItemId: 77)),
+      );
+      await tester.pumpAndSettle();
+
+      // Inline action buttons should be visible.
+      expect(find.byKey(const Key('saveToTransactionButton')), findsOneWidget);
+      expect(find.byKey(const Key('saveDraftButton')), findsOneWidget);
+
+      // No app-bar "Save" text button (common to Add/Edit modes).
+      // The app bar actions list is empty for shopping-list draft mode.
+      final appBar = tester.widget<AppBar>(find.byType(AppBar));
+      expect(appBar.actions, isEmpty);
+    },
+  );
+
+  testWidgets(
+    'TFSLW04: archived account warning appears in EditShoppingListDraftMode',
+    (tester) async {
+      // Draft references an archived account.
+      final draft = _draft(
+        id: 88,
+        categoryId: _expenseCategory.id,
+        accountId: _archivedAccount.id,
+        draftAmountMinorUnits: 500,
+        draftCurrencyCode: 'USD',
+      );
+      when(() => slRepo.getById(88)).thenAnswer((_) async => draft);
+
+      await tester.pumpWidget(
+        mountWithMode(const EditShoppingListDraftMode(shoppingListItemId: 88)),
+      );
+      await tester.pumpAndSettle();
+
+      // Archived account warning text should be visible.
+      expect(find.byKey(const Key('archivedAccountWarning')), findsOneWidget);
+
+      // canConvertDraft should be false — "Save to transaction" button disabled.
+      final saveToTxBtn = tester.widget<FilledButton>(
+        find.byKey(const Key('saveToTransactionButton')),
+      );
+      expect(saveToTxBtn.onPressed, isNull);
+    },
+  );
+
+  testWidgets(
+    'TFSLW05: archived draft with no active replacements can create account without losing edits',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(400, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final draft = _draft(
+        id: 89,
+        categoryId: _expenseCategory.id,
+        accountId: _archivedAccount.id,
+        draftAmountMinorUnits: 500,
+        draftCurrencyCode: 'USD',
+      );
+      when(() => slRepo.getById(89)).thenAnswer((_) async => draft);
+      when(() => accountRepo.watchAll(includeArchived: false))
+          .thenAnswer((_) => Stream.value(const <Account>[]));
+      when(() => accountRepo.getById(99)).thenAnswer(
+        (_) async => const Account(
+          id: 99,
+          name: 'Fresh Cash',
+          accountTypeId: 1,
+          currency: _usd,
+        ),
+      );
+
+      await tester.pumpWidget(
+        mountWithMode(const EditShoppingListDraftMode(shoppingListItemId: 89)),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField).first, 'keep this memo');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(AccountSelectorTile));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Pick account'), findsOneWidget);
+      expect(
+        find.text('No active accounts — create one first'),
+        findsOneWidget,
+      );
+      expect(find.text('Create account'), findsOneWidget);
+
+      await tester.tap(find.text('Create account'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('finish-create-account'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TransactionFormScreen), findsOneWidget);
+      expect(find.text('Fresh Cash'), findsOneWidget);
+      expect(find.text('keep this memo'), findsOneWidget);
+
+      final saveToTxBtn = tester.widget<FilledButton>(
+        find.byKey(const Key('saveToTransactionButton')),
+      );
+      expect(saveToTxBtn.onPressed, isNotNull);
+    },
+  );
 
   testWidgets(
     'TFSLM01: EditShoppingListDraftMode title matches shoppingListEditDraftTitle l10n key',

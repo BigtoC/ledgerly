@@ -1,5 +1,8 @@
+import 'dart:math' as math;
+
 import 'package:intl/intl.dart';
 
+import '../../domain/models/category.dart';
 import '../../domain/models/currency.dart';
 
 /// Locale-aware formatter for integer minor-unit money amounts.
@@ -39,7 +42,7 @@ class MoneyFormatter {
           decimalDigits: currency.decimals,
         ),
       );
-      return fmt.format(amountMinorUnits / _scale(currency.decimals));
+      return fmt.format(amountMinorUnits / math.pow(10, currency.decimals));
     }
     return _formatHighPrecision(
       amountMinorUnits: amountMinorUnits,
@@ -67,6 +70,32 @@ class MoneyFormatter {
     return base; // negatives already carry '-', zero stays bare.
   }
 
+  /// Formats a booked transaction amount (stored positive) for a row:
+  /// signed `+` for income, signed `-` for expense, and unsigned when the
+  /// category is unknown ([categoryType] null).
+  static String formatForCategoryType({
+    required int amountMinorUnits,
+    required Currency currency,
+    required String locale,
+    required CategoryType? categoryType,
+  }) => switch (categoryType) {
+    CategoryType.income => formatSigned(
+      amountMinorUnits: amountMinorUnits,
+      currency: currency,
+      locale: locale,
+    ),
+    CategoryType.expense => formatSigned(
+      amountMinorUnits: -amountMinorUnits,
+      currency: currency,
+      locale: locale,
+    ),
+    null => format(
+      amountMinorUnits: amountMinorUnits,
+      currency: currency,
+      locale: locale,
+    ),
+  };
+
   /// Bare-number variant (no symbol, no code) for inputs and summary
   /// strips where the currency symbol is rendered separately. Uses
   /// locale-aware grouping and the decimal character from [locale].
@@ -83,7 +112,7 @@ class MoneyFormatter {
           decimalDigits: currency.decimals,
         ),
       );
-      return fmt.format(amountMinorUnits / _scale(currency.decimals));
+      return fmt.format(amountMinorUnits / math.pow(10, currency.decimals));
     }
     // High-precision: reuse the BigInt path but without any symbol.
     return _formatHighPrecision(
@@ -141,16 +170,6 @@ class MoneyFormatter {
   }
 
   // --- Internals ---------------------------------------------------------
-
-  /// Returns 10^[decimals] as a `double`. Documented `double` escape hatch
-  /// (G4 exemption) — callers sandwich this between `int` in / `String` out.
-  static double _scale(int decimals) {
-    var s = 1.0;
-    for (var i = 0; i < decimals; i++) {
-      s *= 10.0;
-    }
-    return s;
-  }
 
   static bool _digitsOnly(String s) {
     for (var i = 0; i < s.length; i++) {

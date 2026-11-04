@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -30,6 +29,8 @@ import 'package:ledgerly/ui/features/analysis/charts/views/slice_transaction_row
 import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_providers.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
+
+import '../../../support/text_scale.dart';
 
 class _MockRepo extends Mock implements TransactionRepository {}
 
@@ -148,23 +149,13 @@ Widget _harness({
             ),
     ),
   );
-  const delegates = [
-    AppLocalizations.delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-  ];
-  Widget scaled(BuildContext context, Widget? child) => MediaQuery(
-    data: MediaQuery.of(context)
-        .copyWith(textScaler: TextScaler.linear(textScale)),
-    child: child!,
-  );
+  final scaled = textScaleBuilder(textScale);
   return UncontrolledProviderScope(
     container: container,
     child: withEditRoute
         ? MaterialApp.router(
             theme: lightTheme,
-            localizationsDelegates: delegates,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             builder: scaled,
             routerConfig: GoRouter(
@@ -180,7 +171,7 @@ Widget _harness({
           )
         : MaterialApp(
             theme: lightTheme,
-            localizationsDelegates: delegates,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             builder: scaled,
             home: body,

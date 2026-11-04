@@ -244,12 +244,6 @@ class SliceDrilldownController extends _$SliceDrilldownController {
     }
 
     final selection = ref.read(chartsSelectionControllerProvider).selectedSlice;
-    if (selection case SelectedCategorySlice(:final currencyCode?)) {
-      rows = rows
-          .where((tx) => tx.currency.code == currencyCode)
-          .toList(growable: false);
-    }
-
     if (selection is! SelectedCurrencySlice) {
       final fxStatus = ref.read(chartsFxStatusProvider).value;
       if (fxStatus != null) {

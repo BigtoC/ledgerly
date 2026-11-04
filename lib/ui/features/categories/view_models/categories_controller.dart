@@ -51,7 +51,6 @@ class CategoriesController extends _$CategoriesController {
       final expense = <Category>[];
       final income = <Category>[];
       for (final c in rows) {
-        if (c.isArchived) continue;
         if (c.type == CategoryType.expense) {
           expense.add(c);
         } else {

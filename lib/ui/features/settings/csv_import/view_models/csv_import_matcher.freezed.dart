@@ -577,8 +577,8 @@ return $default(_that.csvValue,_that.rowCount,_that.resolution,_that.salaryRowCo
 /// @nodoc
 
 
-class _CsvCategoryMatch extends CsvCategoryMatch {
-  const _CsvCategoryMatch({required this.csvValue, required this.rowCount, required this.resolution, this.salaryRowCount = 0}): super._();
+class _CsvCategoryMatch implements CsvCategoryMatch {
+  const _CsvCategoryMatch({required this.csvValue, required this.rowCount, required this.resolution, this.salaryRowCount = 0});
   
 
 @override final  String csvValue;

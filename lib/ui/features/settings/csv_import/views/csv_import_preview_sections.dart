@@ -16,6 +16,7 @@ import '../../../categories/views/category_display.dart';
 import '../../../transactions/views/transaction_type_segmented_control.dart';
 import '../view_models/csv_import_matcher.dart';
 import '../view_models/csv_import_state.dart';
+import 'csv_account_resolution_sheet.dart';
 
 /// File name, rows to import, their date range and the balance note.
 class CsvImportSummary extends StatelessWidget {
@@ -182,13 +183,8 @@ String _existingAccountLabel(
   int accountId,
   AppLocalizations l10n,
 ) {
-  for (final account in match.options) {
-    if (account.id != accountId) continue;
-    return account.isArchived
-        ? l10n.csvImportAccountArchived(account.name)
-        : account.name;
-  }
-  return '';
+  final account = match.options.where((a) => a.id == accountId).firstOrNull;
+  return account == null ? '' : csvAccountLabel(account, l10n);
 }
 
 /// A CSV Category value that resolves to existing categories: one target,

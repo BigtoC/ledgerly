@@ -62,7 +62,7 @@ final class SplashGateSnapshotProvider
 }
 
 String _$splashGateSnapshotHash() =>
-    r'355664651509c3555b9c3228fe20d62c9116f16a';
+    r'51439cf702a886658d9a3742a587e854136d48e6';
 
 /// Stream of `splash_start_date` for reactive UI (e.g. `SplashScreen`).
 
