@@ -7,6 +7,7 @@
 // generation in a SAVEPOINT (Drift's nested `db.transaction(...)`) for
 // failure isolation while amortizing the outer fsync cost.
 
+import '../../core/utils/date_helpers.dart';
 import '../../data/database/app_database.dart';
 import '../../data/repositories/pending_transaction_repository.dart';
 import '../../data/repositories/recurring_rules_repository.dart';
@@ -37,8 +38,7 @@ class RecurringGenerationUseCase {
   Future<RecurringGenerationResult> execute({
     DateTime Function()? clock,
   }) async {
-    final now = clock?.call() ?? DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final today = DateHelpers.startOfDay(clock?.call() ?? DateTime.now());
 
     final dueRules = await recurringRepo.findDue(today);
     if (dueRules.isEmpty) {
@@ -61,8 +61,7 @@ class RecurringGenerationUseCase {
     int ruleId, {
     DateTime Function()? clock,
   }) async {
-    final now = clock?.call() ?? DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final today = DateHelpers.startOfDay(clock?.call() ?? DateTime.now());
     final rule = await recurringRepo.getById(ruleId);
     if (rule == null || !rule.isActive || rule.isArchived) {
       return RecurringGenerationOutcome.skipped(ruleId);
