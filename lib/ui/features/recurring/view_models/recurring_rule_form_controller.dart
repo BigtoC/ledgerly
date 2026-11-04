@@ -117,7 +117,8 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
   void updateAccount(int accountId) =>
       _update((s) => s.copyWith(accountId: accountId, accountError: null));
 
-  void updateFrequency(String frequency) {
+  /// Returns the resulting `dayOfMonth`, so the screen can sync its field.
+  int? updateFrequency(String frequency) {
     _update((s) {
       var dayOfMonth = s.dayOfMonth;
       if ((frequency == 'monthly' || frequency == 'yearly') &&
@@ -139,6 +140,7 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
             : null,
       );
     });
+    return state.value?.dayOfMonth;
   }
 
   void updateDayOfWeek(int day) =>

@@ -213,18 +213,8 @@ class _FormBody extends StatelessWidget {
                     ],
                     onChanged: (v) {
                       if (v == null) return;
-                      controller.updateFrequency(v);
-                      // The controller's `updateFrequency` may default
-                      // dayOfMonth to today.day (clamped to 28) when switching
-                      // into monthly/yearly. Sync the visible TextEditingController.
-                      if (v == 'monthly' || v == 'yearly') {
-                        final today = DateTime.now();
-                        final defaulted = today.day > 28 ? 28 : today.day;
-                        final next = state.dayOfMonth ?? defaulted;
-                        dayOfMonthCtl.text = next.toString();
-                      } else {
-                        dayOfMonthCtl.clear();
-                      }
+                      dayOfMonthCtl.text =
+                          controller.updateFrequency(v)?.toString() ?? '';
                     },
                   ),
                   const SizedBox(height: 12),

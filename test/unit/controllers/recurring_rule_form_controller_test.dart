@@ -410,6 +410,20 @@ void main() {
       ).called(1);
     });
 
+    test('updateFrequency returns the resulting dayOfMonth', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      await buildState(c);
+      final controller = c.read(recurringRuleFormControllerProvider().notifier);
+      final today = DateTime.now().day;
+
+      expect(controller.updateFrequency('daily'), isNull);
+      expect(controller.updateFrequency('monthly'), today > 28 ? 28 : today);
+      controller.updateDayOfMonth(5);
+      expect(controller.updateFrequency('yearly'), 5);
+      expect(controller.updateFrequency('weekly'), isNull);
+    });
+
     test('deleteRule archives the rule → ok', () async {
       when(() => recurringRepo.getById(7))
           .thenAnswer((_) async => _rule(id: 7));
