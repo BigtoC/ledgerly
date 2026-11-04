@@ -132,7 +132,6 @@ GoRouter router(Ref ref) {
         // matches the production splash. Tapping the splash Enter
         // button pops back to settings (see `SplashEnterButton`).
         path: '/splash/preview',
-        parentNavigatorKey: _rootNavigatorKey,
         pageBuilder: (ctx, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const SplashScreen(previewMode: true),
@@ -237,8 +236,7 @@ GoRouter router(Ref ref) {
                       final categoryId = int.parse(
                         state.pathParameters['categoryId']!,
                       );
-                      final query =
-                          state.uri.queryParameters['q']?.trim() ?? '';
+                      final query = state.uri.queryParameters['q']!.trim();
                       final currencyCode = state.uri.queryParameters['c']!
                           .trim();
                       return _materialPage(
