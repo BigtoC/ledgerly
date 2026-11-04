@@ -294,27 +294,15 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
 
   /// Count transactions referencing the given category. Fuels the M3
   /// category type-lock check.
-  Future<int> countByCategory(int categoryId) async {
-    final countExp = transactions.id.count();
-    final row =
-        await (selectOnly(transactions)
-              ..addColumns([countExp])
-              ..where(transactions.categoryId.equals(categoryId)))
-            .getSingle();
-    return row.read(countExp) ?? 0;
-  }
+  Future<int> countByCategory(int categoryId) => transactions
+      .count(where: (t) => t.categoryId.equals(categoryId))
+      .getSingle();
 
   /// Count transactions referencing the given account. Fuels the M3
   /// account archive-vs-delete check.
-  Future<int> countByAccount(int accountId) async {
-    final countExp = transactions.id.count();
-    final row =
-        await (selectOnly(transactions)
-              ..addColumns([countExp])
-              ..where(transactions.accountId.equals(accountId)))
-            .getSingle();
-    return row.read(countExp) ?? 0;
-  }
+  Future<int> countByAccount(int accountId) => transactions
+      .count(where: (t) => t.accountId.equals(accountId))
+      .getSingle();
 
   /// Per `(category_id, currency)` subtotal in `[start, end)`, filtered by
   /// `categories.type`. Emits ONE row per pair so the repository can run
