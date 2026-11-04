@@ -16,12 +16,10 @@ import '../database/daos/category_dao.dart';
 import '../database/daos/currency_dao.dart';
 import '../database/daos/recurring_rule_dao.dart';
 import 'currency_repository.dart';
+import 'repository_exceptions.dart';
 
-class RecurringRulesRepositoryException implements Exception {
-  const RecurringRulesRepositoryException(this.message);
-  final String message;
-  @override
-  String toString() => 'RecurringRulesRepositoryException: $message';
+class RecurringRulesRepositoryException extends RepositoryException {
+  const RecurringRulesRepositoryException(super.message);
 }
 
 class ArchivedReferenceException extends RecurringRulesRepositoryException {

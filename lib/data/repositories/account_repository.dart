@@ -37,13 +37,8 @@ import 'repository_exceptions.dart';
 
 /// Generic account-layer failure for stale/missing-row writes that do not map
 /// to one of the shared cross-stream repository exceptions.
-class AccountRepositoryException implements Exception {
-  const AccountRepositoryException(this.message);
-
-  final String message;
-
-  @override
-  String toString() => 'AccountRepositoryException: $message';
+class AccountRepositoryException extends RepositoryException {
+  const AccountRepositoryException(super.message);
 }
 
 /// [AccountRepository.save] refused to change the currency of an account

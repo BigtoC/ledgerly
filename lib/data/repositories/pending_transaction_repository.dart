@@ -15,13 +15,11 @@ import '../../domain/models/transaction.dart';
 import '../database/app_database.dart' as drift;
 import '../database/daos/pending_transaction_dao.dart';
 import 'currency_repository.dart';
+import 'repository_exceptions.dart';
 import 'transaction_repository.dart';
 
-class PendingTransactionRepositoryException implements Exception {
-  const PendingTransactionRepositoryException(this.message);
-  final String message;
-  @override
-  String toString() => 'PendingTransactionRepositoryException: $message';
+class PendingTransactionRepositoryException extends RepositoryException {
+  const PendingTransactionRepositoryException(super.message);
 }
 
 abstract class PendingTransactionRepository {

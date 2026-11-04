@@ -38,18 +38,8 @@ import 'repository_exceptions.dart';
 /// Generic transaction-layer failure — used for "transaction not found"
 /// / "disappeared mid-write" paths that do not deserve a dedicated
 /// typed subclass. Kept Stream-A-local per §1.3.
-///
-/// Does **not** extend the sealed [RepositoryException] — the Phase 1
-/// base class is closed to outside subclasses. This leaf `implements
-/// Exception` directly and carries an identical `toString()` shape.
-class TransactionRepositoryException implements Exception {
-  const TransactionRepositoryException(this.message);
-
-  /// Human-readable description.
-  final String message;
-
-  @override
-  String toString() => 'TransactionRepositoryException: $message';
+class TransactionRepositoryException extends RepositoryException {
+  const TransactionRepositoryException(super.message);
 }
 
 /// Fields CSV import compares to find rows that already exist. See

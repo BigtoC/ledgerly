@@ -21,64 +21,45 @@ import '../database/daos/category_dao.dart';
 import '../database/daos/recurring_rule_dao.dart';
 import '../database/daos/shopping_list_dao.dart';
 import '../database/daos/transaction_dao.dart';
+import 'repository_exceptions.dart';
 
 /// Generic category-layer failure. Stream-A-local per §1.3.
-///
-/// Does **not** extend the sealed `RepositoryException` base — the
-/// Phase 1 base class is closed to outside subclasses. Implements
-/// `Exception` directly and carries an identical `toString()` shape.
-class CategoryRepositoryException implements Exception {
-  const CategoryRepositoryException(this.message);
-
-  /// Human-readable description.
-  final String message;
-
-  @override
-  String toString() => 'CategoryRepositoryException: $message';
+class CategoryRepositoryException extends RepositoryException {
+  const CategoryRepositoryException(super.message);
 }
 
 /// Raised by [CategoryRepository.save] when the caller attempts to
 /// change `Category.type` on a row that already has a referencing
 /// transaction. G5 — PRD.md 293-294, 315, 735-737.
-class CategoryTypeLockedException implements Exception {
-  const CategoryTypeLockedException(this.id);
+class CategoryTypeLockedException extends RepositoryException {
+  const CategoryTypeLockedException(this.id)
+    : super(
+        'Category type is locked after first transaction; '
+        'create a new category instead (id: $id).',
+      );
 
   /// The category id whose type mutation is blocked.
   final int id;
-
-  String get message =>
-      'Category type is locked after first transaction; '
-      'create a new category instead (id: $id).';
-
-  @override
-  String toString() => 'CategoryTypeLockedException: $message';
 }
 
 /// Raised by [CategoryRepository.delete] when the caller tries to
 /// hard-delete a category that has at least one referencing
 /// transaction. Caller should archive instead. G6 — PRD.md 315-316.
-class CategoryInUseException implements Exception {
-  const CategoryInUseException(this.id);
+class CategoryInUseException extends RepositoryException {
+  const CategoryInUseException(this.id)
+    : super('Category $id is in use and cannot be deleted.');
 
   /// The category id whose deletion is blocked.
   final int id;
-
-  String get message => 'Category $id is in use and cannot be deleted.';
-
-  @override
-  String toString() => 'CategoryInUseException: $message';
 }
 
-class CategoryHasRecurringRuleException implements Exception {
-  const CategoryHasRecurringRuleException(this.id);
+class CategoryHasRecurringRuleException extends RepositoryException {
+  const CategoryHasRecurringRuleException(this.id)
+    : super(
+        'Category $id is referenced by an active recurring rule and cannot be archived.',
+      );
 
   final int id;
-
-  String get message =>
-      'Category $id is referenced by an active recurring rule and cannot be archived.';
-
-  @override
-  String toString() => 'CategoryHasRecurringRuleException: $message';
 }
 
 /// SSOT for `categories`. Owns every write path to the Drift

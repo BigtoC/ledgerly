@@ -26,20 +26,12 @@ import '../database/daos/category_dao.dart';
 import '../database/daos/currency_dao.dart';
 import '../database/daos/shopping_list_dao.dart';
 import 'currency_repository.dart';
+import 'repository_exceptions.dart';
 import 'transaction_repository.dart';
 
 /// Typed exception for shopping-list repository failures.
-///
-/// Follows the same `implements Exception` pattern as
-/// `CategoryRepositoryException` / `TransactionRepositoryException`.
-class ShoppingListRepositoryException implements Exception {
-  const ShoppingListRepositoryException(this.message);
-
-  /// Human-readable description.
-  final String message;
-
-  @override
-  String toString() => 'ShoppingListRepositoryException: $message';
+class ShoppingListRepositoryException extends RepositoryException {
+  const ShoppingListRepositoryException(super.message);
 }
 
 /// SSOT for `shopping_list_items`.
