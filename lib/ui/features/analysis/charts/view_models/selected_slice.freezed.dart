@@ -123,10 +123,10 @@ return currency(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( int categoryId,  String? currencyCode)?  category,TResult Function( int accountId)?  account,TResult Function( String currencyCode)?  currency,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( int categoryId)?  category,TResult Function( int accountId)?  account,TResult Function( String currencyCode)?  currency,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case SelectedCategorySlice() when category != null:
-return category(_that.categoryId,_that.currencyCode);case SelectedAccountSlice() when account != null:
+return category(_that.categoryId);case SelectedAccountSlice() when account != null:
 return account(_that.accountId);case SelectedCurrencySlice() when currency != null:
 return currency(_that.currencyCode);case _:
   return orElse();
@@ -146,10 +146,10 @@ return currency(_that.currencyCode);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( int categoryId,  String? currencyCode)  category,required TResult Function( int accountId)  account,required TResult Function( String currencyCode)  currency,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( int categoryId)  category,required TResult Function( int accountId)  account,required TResult Function( String currencyCode)  currency,}) {final _that = this;
 switch (_that) {
 case SelectedCategorySlice():
-return category(_that.categoryId,_that.currencyCode);case SelectedAccountSlice():
+return category(_that.categoryId);case SelectedAccountSlice():
 return account(_that.accountId);case SelectedCurrencySlice():
 return currency(_that.currencyCode);}
 }
@@ -165,10 +165,10 @@ return currency(_that.currencyCode);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( int categoryId,  String? currencyCode)?  category,TResult? Function( int accountId)?  account,TResult? Function( String currencyCode)?  currency,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( int categoryId)?  category,TResult? Function( int accountId)?  account,TResult? Function( String currencyCode)?  currency,}) {final _that = this;
 switch (_that) {
 case SelectedCategorySlice() when category != null:
-return category(_that.categoryId,_that.currencyCode);case SelectedAccountSlice() when account != null:
+return category(_that.categoryId);case SelectedAccountSlice() when account != null:
 return account(_that.accountId);case SelectedCurrencySlice() when currency != null:
 return currency(_that.currencyCode);case _:
   return null;
@@ -182,11 +182,10 @@ return currency(_that.currencyCode);case _:
 
 
 class SelectedCategorySlice implements SelectedSlice {
-  const SelectedCategorySlice(this.categoryId, {this.currencyCode});
+  const SelectedCategorySlice(this.categoryId);
   
 
  final  int categoryId;
- final  String? currencyCode;
 
 /// Create a copy of SelectedSlice
 /// with the given fields replaced by the non-null parameter values.
@@ -198,18 +197,18 @@ $SelectedCategorySliceCopyWith<SelectedCategorySlice> get copyWith => _$Selected
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is SelectedCategorySlice&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.currencyCode, currencyCode) || other.currencyCode == currencyCode));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SelectedCategorySlice&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,categoryId,currencyCode);
+    return Object.hash(runtimeType,categoryId);
 }
 
 @override
 String toString() {
-    return 'SelectedSlice.category(categoryId: $categoryId, currencyCode: $currencyCode)';
+    return 'SelectedSlice.category(categoryId: $categoryId)';
 }
 
 
@@ -220,7 +219,7 @@ abstract mixin class $SelectedCategorySliceCopyWith<$Res> implements $SelectedSl
   factory $SelectedCategorySliceCopyWith(SelectedCategorySlice value, $Res Function(SelectedCategorySlice) _then) = _$SelectedCategorySliceCopyWithImpl;
 @useResult
 $Res call({
- int categoryId, String? currencyCode
+ int categoryId
 });
 
 
@@ -237,11 +236,10 @@ class _$SelectedCategorySliceCopyWithImpl<$Res>
 
 /// Create a copy of SelectedSlice
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? categoryId = null,Object? currencyCode = freezed,}) {
+@pragma('vm:prefer-inline') $Res call({Object? categoryId = null,}) {
   return _then(SelectedCategorySlice(
 null == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
-as int,currencyCode: freezed == currencyCode ? _self.currencyCode : currencyCode // ignore: cast_nullable_to_non_nullable
-as String?,
+as int,
   ));
 }
 

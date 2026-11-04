@@ -10,12 +10,8 @@ part 'selected_slice.freezed.dart';
 /// translates it into plain filter args before data access.
 @freezed
 sealed class SelectedSlice with _$SelectedSlice {
-  /// Drill-down into a category. `currencyCode` is reserved for a future
-  /// lower-layer filter path when a later UI may emit per-(category,
-  /// currency) slices. In this MVP's chart UI, category selection stays
-  /// currency-less and aggregates all currencies for that category.
-  const factory SelectedSlice.category(int categoryId, {String? currencyCode}) =
-      SelectedCategorySlice;
+  /// Drill-down into a category, aggregating all of its currencies.
+  const factory SelectedSlice.category(int categoryId) = SelectedCategorySlice;
 
   /// Drill-down into an account. In this MVP the selection identity is the
   /// account id only; account-level currency splitting can be added later
@@ -41,10 +37,10 @@ sealed class SelectedSlice with _$SelectedSlice {
 }) {
   return switch (selection) {
     null => (null, accountFilterId, null),
-    SelectedCategorySlice(:final categoryId, :final currencyCode) => (
+    SelectedCategorySlice(:final categoryId) => (
       categoryId,
       accountFilterId,
-      currencyCode,
+      null,
     ),
     SelectedAccountSlice(:final accountId) => (null, accountId, null),
     SelectedCurrencySlice(:final currencyCode) => (
