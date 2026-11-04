@@ -16,19 +16,14 @@ class UserPreferencesDao extends DatabaseAccessor<AppDatabase>
   UserPreferencesDao(super.db);
 
   /// Watch a single key's value. Emits `null` when the key is missing.
-  Stream<String?> watch(String key) {
-    return (select(userPreferences)..where((p) => p.key.equals(key)))
-        .watchSingleOrNull()
-        .map((row) => row?.value);
-  }
+  Stream<String?> watch(String key) => _valueOf(key).watchSingleOrNull();
 
   /// One-shot read. Returns `null` when the key is missing.
-  Future<String?> read(String key) async {
-    final row = await (select(
-      userPreferences,
-    )..where((p) => p.key.equals(key))).getSingleOrNull();
-    return row?.value;
-  }
+  Future<String?> read(String key) => _valueOf(key).getSingleOrNull();
+
+  Selectable<String> _valueOf(String key) => (select(
+    userPreferences,
+  )..where((p) => p.key.equals(key))).map((row) => row.value);
 
   /// Upsert on the primary key (`key`).
   Future<void> write(String key, String value) async {

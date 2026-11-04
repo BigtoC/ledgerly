@@ -166,27 +166,19 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
 
   /// Earliest and latest `date` across all rows, or null when the table
   /// is empty. Backs `TransactionRepository.getDateBounds`.
-  Future<({DateTime first, DateTime last})?> getDateBounds() async {
-    final first = transactions.date.min();
-    final last = transactions.date.max();
-    final row = await (selectOnly(
-      transactions,
-    )..addColumns([first, last])).getSingle();
-    final firstDate = row.read(first);
-    final lastDate = row.read(last);
-    if (firstDate == null || lastDate == null) return null;
-    return (first: firstDate, last: lastDate);
-  }
+  Future<({DateTime first, DateTime last})?> getDateBounds() =>
+      _dateBounds().getSingle();
 
   /// [getDateBounds] as a stream: re-emits whenever `transactions` changes,
   /// so adding or deleting the earliest row is seen. Backs
   /// `TransactionRepository.watchDateBounds`.
-  Stream<({DateTime first, DateTime last})?> watchDateBounds() {
+  Stream<({DateTime first, DateTime last})?> watchDateBounds() =>
+      _dateBounds().watchSingle();
+
+  Selectable<({DateTime first, DateTime last})?> _dateBounds() {
     final first = transactions.date.min();
     final last = transactions.date.max();
-    return (selectOnly(
-      transactions,
-    )..addColumns([first, last])).watchSingle().map((row) {
+    return (selectOnly(transactions)..addColumns([first, last])).map((row) {
       final firstDate = row.read(first);
       final lastDate = row.read(last);
       if (firstDate == null || lastDate == null) return null;
