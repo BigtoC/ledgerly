@@ -50,20 +50,6 @@ class _FakeCsvFileService implements CsvFileService {
 
 class _NoopExchangeRateService extends Mock implements ExchangeRateService {}
 
-/// Load and commit run Drift queries that need real async time, and the
-/// loading and committing spinners never settle, so pump with real
-/// delays until [finder] shows up.
-Future<void> _pumpUntil(WidgetTester tester, Finder finder) async {
-  for (var i = 0; i < 200 && finder.evaluate().isEmpty; i++) {
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 10)),
-    );
-    await tester.pump();
-  }
-  await tester.pumpAndSettle();
-  expect(finder, findsOneWidget);
-}
-
 @Dependencies([
   router,
   themeMode,
@@ -123,7 +109,7 @@ void main() {
 
     // Choose the file: the preview asks only about Credit Card.
     await tester.tap(find.text('Choose CSV file'));
-    await _pumpUntil(tester, find.text('import_fortune_city_data.csv'));
+    await pumpUntilFound(tester, find.text('import_fortune_city_data.csv'));
     final confirm = find.byKey(const ValueKey('csvImportConfirmButton'));
     expect(tester.widget<FilledButton>(confirm).onPressed, isNull);
     expect(find.text('Choose where these go'), findsOneWidget);
@@ -143,7 +129,7 @@ void main() {
 
     // Import → Done.
     await tester.tap(confirm);
-    await _pumpUntil(tester, find.text('Import complete'));
+    await pumpUntilFound(tester, find.text('Import complete'));
     expect(find.text('Imported 105 transactions'), findsOneWidget);
     expect(find.text('Created 2 accounts and 3 categories'), findsOneWidget);
     await tester.tap(find.text('Done'));

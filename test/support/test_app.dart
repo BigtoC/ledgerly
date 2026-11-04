@@ -48,6 +48,21 @@ import '../unit/repositories/_harness/test_app_database.dart'
 export '../unit/repositories/_harness/test_app_database.dart'
     show FixedLocaleService, newTestAppDatabase;
 
+/// Pumps with real delays (inside `tester.runAsync`) until [finder] shows
+/// up, then settles and expects exactly one match. For flows whose Drift
+/// queries or isolates need real async time, or whose spinners never
+/// settle under fake time.
+Future<void> pumpUntilFound(WidgetTester tester, Finder finder) async {
+  for (var i = 0; i < 200 && finder.evaluate().isEmpty; i++) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 10)),
+    );
+    await tester.pump();
+  }
+  await tester.pumpAndSettle();
+  expect(finder, findsOneWidget);
+}
+
 /// Runs the first-run seed against [db] using a fixed `en_US` locale stub.
 Future<void> runTestSeed(AppDatabase db) {
   final currencies = DriftCurrencyRepository(db);
