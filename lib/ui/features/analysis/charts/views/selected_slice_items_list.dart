@@ -298,16 +298,6 @@ class _SelectedSliceItemsListState
     }
   }
 
-  bool _shouldShowOriginalAmount({
-    required Transaction tx,
-    required ChartSlice slice,
-    required ChartsFxStatus? fxStatus,
-  }) {
-    if (fxStatus == null) return false;
-    return tx.currency.code != slice.currencyCode &&
-        slice.currencyCode == fxStatus.defaultCurrencyCode;
-  }
-
   String? _convertedAmount({
     required Transaction tx,
     required Category? category,
@@ -315,10 +305,12 @@ class _SelectedSliceItemsListState
     required Map<String, Currency> currenciesByCode,
     required ChartsFxStatus? fxStatus,
   }) {
-    if (!_shouldShowOriginalAmount(tx: tx, slice: slice, fxStatus: fxStatus)) {
+    if (fxStatus == null ||
+        tx.currency.code == slice.currencyCode ||
+        slice.currencyCode != fxStatus.defaultCurrencyCode) {
       return null;
     }
-    final rate = fxStatus!.scaledRate(tx.currency.code);
+    final rate = fxStatus.scaledRate(tx.currency.code);
     if (rate == null) return null;
     final fromCurrency = currenciesByCode[tx.currency.code] ?? tx.currency;
     final toCurrency =
@@ -345,22 +337,17 @@ class _SelectedSliceItemsListState
     required List<Transaction> rows,
     required ChartSlice slice,
   }) {
-    if (fxStatus == null || rows.isEmpty) return false;
-    final fetchedAts = <DateTime>[];
-    for (final tx in rows) {
-      if (tx.currency.code == slice.currencyCode) continue;
-      final metadata = fxStatus.metadataForPair(
-        tx.currency.code,
-        slice.currencyCode,
-      );
-      if (metadata != null) {
-        fetchedAts.add(metadata.fetchedAt);
-      }
-    }
-    if (fetchedAts.isEmpty) return false;
-
-    final oldest = fetchedAts.reduce((a, b) => b.isBefore(a) ? b : a);
-    return DateTime.now().difference(oldest) > const Duration(hours: 1);
+    if (fxStatus == null) return false;
+    final cutoff = DateTime.now().subtract(const Duration(hours: 1));
+    // metadataForPair is null for a row already in the slice's currency.
+    return rows.any(
+      (tx) =>
+          fxStatus
+              .metadataForPair(tx.currency.code, slice.currencyCode)
+              ?.fetchedAt
+              .isBefore(cutoff) ??
+          false,
+    );
   }
 }
 
