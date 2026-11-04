@@ -1,6 +1,6 @@
 // Splash state machine (plan §4).
 //
-// Freezed sealed union with `loading | data | error` variants. No
+// Freezed sealed union with `loading | data` variants. No
 // `needsStartDate` variant — per plan §4 the launch-time prompt is a
 // specialized widget render path driven by `splashStartDateProvider`, not
 // a separate state machine branch.
@@ -29,10 +29,6 @@ sealed class SplashState with _$SplashState {
     required List<SplashTextSegment> displayTextSegments,
     required String buttonLabel,
   }) = SplashData;
-
-  /// Upstream stream failure — e.g. `PreferenceDecodeException` from a
-  /// corrupted `user_preferences` cell.
-  const factory SplashState.error(Object error, StackTrace stack) = SplashError;
 }
 
 /// Result of [SplashController.setStartDate].

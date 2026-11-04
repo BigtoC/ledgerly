@@ -46,13 +46,14 @@ class _MockUserPreferencesRepository extends Mock
 
 class _MockCurrencyRepository extends Mock implements CurrencyRepository {}
 
+/// Yields [_fixed], or never emits when it is null (stays loading).
 class _FakeAccountsController extends AccountsController {
   _FakeAccountsController(this._fixed);
-  final AccountsState _fixed;
+  final AccountsState? _fixed;
 
   @override
   Stream<AccountsState> build() async* {
-    yield _fixed;
+    if (_fixed case final fixed?) yield fixed;
   }
 }
 
@@ -76,7 +77,7 @@ const _cashType = AccountType(
   defaultCurrency: _usd,
 );
 
-ProviderContainer _makeContainer({required AccountsState accountsFixed}) {
+ProviderContainer _makeContainer({AccountsState? accountsFixed}) {
   final accountRepo = _MockAccountRepository();
   final typeRepo = _MockAccountTypeRepository();
   final prefs = _MockUserPreferencesRepository();
@@ -187,9 +188,7 @@ void main() {
   testWidgets('MAS01: loading state renders CircularProgressIndicator', (
     tester,
   ) async {
-    final container = _makeContainer(
-      accountsFixed: const AccountsState.loading(),
-    );
+    final container = _makeContainer();
     addTearDown(container.dispose);
 
     await tester.pumpWidget(_wrapWithOpener(container: container));

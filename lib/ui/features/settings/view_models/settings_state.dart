@@ -18,9 +18,6 @@ part 'settings_state.freezed.dart';
 
 @freezed
 sealed class SettingsState with _$SettingsState {
-  /// Pre-first-emission from the underlying preference streams.
-  const factory SettingsState.loading() = SettingsLoading;
-
   /// Fully-resolved current preference values.
   ///
   /// `locale == null` means "follow system locale" (PRD 887).

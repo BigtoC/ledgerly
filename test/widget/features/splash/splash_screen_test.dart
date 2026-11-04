@@ -12,6 +12,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
+import 'package:ledgerly/app/bootstrap.dart' show noProviderRetry;
 import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/app/providers/splash_redirect_provider.dart';
 import 'package:ledgerly/core/utils/date_helpers.dart';
@@ -350,10 +351,10 @@ void main() {
 
   testWidgets('W05: error state renders an error surface', (tester) async {
     final repo = _MockUserPreferencesRepository();
-    final stack = StackTrace.current;
     final startDate = DateTime(2026, 1, 1);
 
     final container = ProviderContainer(
+      retry: noProviderRetry,
       overrides: [
         userPreferencesRepositoryProvider.overrideWithValue(repo),
         splashGateSnapshotProvider.overrideWithValue(
@@ -361,9 +362,7 @@ void main() {
         ),
         splashStartDateProvider.overrideWith((ref) => Stream.value(startDate)),
         splashControllerProvider.overrideWith(
-          () => _FakeSplashController(
-            SplashState.error(Exception('boom'), stack),
-          ),
+          () => _FakeSplashController(null),
         ),
       ],
     );
@@ -377,13 +376,14 @@ void main() {
   });
 }
 
-/// Test double that skips the stream-combine path and yields a fixed state.
+/// Test double that skips the stream-combine path and yields a fixed state,
+/// or fails when [_fixed] is null.
 class _FakeSplashController extends SplashController {
   _FakeSplashController(this._fixed);
-  final SplashState _fixed;
+  final SplashState? _fixed;
 
   @override
   Stream<SplashState> build() async* {
-    yield _fixed;
+    yield _fixed ?? (throw Exception('boom'));
   }
 }

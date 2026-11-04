@@ -48,9 +48,6 @@ abstract class AccountWithBalance with _$AccountWithBalance {
 
 @freezed
 sealed class AccountsState with _$AccountsState {
-  /// Pre-first-emission from the underlying account stream.
-  const factory AccountsState.loading() = AccountsLoading;
-
   /// Fully-resolved account list (active + archived) plus the currently
   /// configured default account id.
   const factory AccountsState.data({

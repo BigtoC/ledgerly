@@ -17,8 +17,6 @@ class CategorySearchPendingDelete {
 
 @freezed
 sealed class CategorySearchDetailState with _$CategorySearchDetailState {
-  const factory CategorySearchDetailState.loading() = DetailLoading;
-
   /// `query` and `categoryId` are NOT echoed here — they're already
   /// available as family-key parameters on the controller and as
   /// constructor args on `CategorySearchDetailScreen`.

@@ -75,7 +75,6 @@ class SplashScreen extends ConsumerWidget {
                 data: data,
                 previewMode: previewMode,
               ),
-              AsyncData(value: SplashError()) => const _SplashErrorSurface(),
               AsyncError() => const _SplashErrorSurface(),
               _ => const Center(
                 child: CircularProgressIndicator(color: Colors.white),

@@ -56,13 +56,12 @@ extension SplashStatePatterns on SplashState {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( SplashLoading value)?  loading,TResult Function( SplashData value)?  data,TResult Function( SplashError value)?  error,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( SplashLoading value)?  loading,TResult Function( SplashData value)?  data,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case SplashLoading() when loading != null:
 return loading(_that);case SplashData() when data != null:
-return data(_that);case SplashError() when error != null:
-return error(_that);case _:
+return data(_that);case _:
   return orElse();
 
 }
@@ -80,13 +79,12 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( SplashLoading value)  loading,required TResult Function( SplashData value)  data,required TResult Function( SplashError value)  error,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( SplashLoading value)  loading,required TResult Function( SplashData value)  data,}){
 final _that = this;
 switch (_that) {
 case SplashLoading():
 return loading(_that);case SplashData():
-return data(_that);case SplashError():
-return error(_that);}
+return data(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -100,13 +98,12 @@ return error(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( SplashLoading value)?  loading,TResult? Function( SplashData value)?  data,TResult? Function( SplashError value)?  error,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( SplashLoading value)?  loading,TResult? Function( SplashData value)?  data,}){
 final _that = this;
 switch (_that) {
 case SplashLoading() when loading != null:
 return loading(_that);case SplashData() when data != null:
-return data(_that);case SplashError() when error != null:
-return error(_that);case _:
+return data(_that);case _:
   return null;
 
 }
@@ -123,12 +120,11 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( DateTime startDate,  int dayCount,  List<SplashTextSegment> displayTextSegments,  String buttonLabel)?  data,TResult Function( Object error,  StackTrace stack)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( DateTime startDate,  int dayCount,  List<SplashTextSegment> displayTextSegments,  String buttonLabel)?  data,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case SplashLoading() when loading != null:
 return loading();case SplashData() when data != null:
-return data(_that.startDate,_that.dayCount,_that.displayTextSegments,_that.buttonLabel);case SplashError() when error != null:
-return error(_that.error,_that.stack);case _:
+return data(_that.startDate,_that.dayCount,_that.displayTextSegments,_that.buttonLabel);case _:
   return orElse();
 
 }
@@ -146,12 +142,11 @@ return error(_that.error,_that.stack);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( DateTime startDate,  int dayCount,  List<SplashTextSegment> displayTextSegments,  String buttonLabel)  data,required TResult Function( Object error,  StackTrace stack)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( DateTime startDate,  int dayCount,  List<SplashTextSegment> displayTextSegments,  String buttonLabel)  data,}) {final _that = this;
 switch (_that) {
 case SplashLoading():
 return loading();case SplashData():
-return data(_that.startDate,_that.dayCount,_that.displayTextSegments,_that.buttonLabel);case SplashError():
-return error(_that.error,_that.stack);}
+return data(_that.startDate,_that.dayCount,_that.displayTextSegments,_that.buttonLabel);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -165,12 +160,11 @@ return error(_that.error,_that.stack);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( DateTime startDate,  int dayCount,  List<SplashTextSegment> displayTextSegments,  String buttonLabel)?  data,TResult? Function( Object error,  StackTrace stack)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( DateTime startDate,  int dayCount,  List<SplashTextSegment> displayTextSegments,  String buttonLabel)?  data,}) {final _that = this;
 switch (_that) {
 case SplashLoading() when loading != null:
 return loading();case SplashData() when data != null:
-return data(_that.startDate,_that.dayCount,_that.displayTextSegments,_that.buttonLabel);case SplashError() when error != null:
-return error(_that.error,_that.stack);case _:
+return data(_that.startDate,_that.dayCount,_that.displayTextSegments,_that.buttonLabel);case _:
   return null;
 
 }
@@ -284,75 +278,6 @@ as DateTime,dayCount: null == dayCount ? _self.dayCount : dayCount // ignore: ca
 as int,displayTextSegments: null == displayTextSegments ? _self._displayTextSegments : displayTextSegments // ignore: cast_nullable_to_non_nullable
 as List<SplashTextSegment>,buttonLabel: null == buttonLabel ? _self.buttonLabel : buttonLabel // ignore: cast_nullable_to_non_nullable
 as String,
-  ));
-}
-
-
-}
-
-/// @nodoc
-
-
-class SplashError implements SplashState {
-  const SplashError(this.error, this.stack);
-  
-
- final  Object error;
- final  StackTrace stack;
-
-/// Create a copy of SplashState
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$SplashErrorCopyWith<SplashError> get copyWith => _$SplashErrorCopyWithImpl<SplashError>(this, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is SplashError&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.stack, stack) || other.stack == stack));
-}
-
-
-@override
-int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(error),stack);
-}
-
-@override
-String toString() {
-    return 'SplashState.error(error: $error, stack: $stack)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $SplashErrorCopyWith<$Res> implements $SplashStateCopyWith<$Res> {
-  factory $SplashErrorCopyWith(SplashError value, $Res Function(SplashError) _then) = _$SplashErrorCopyWithImpl;
-@useResult
-$Res call({
- Object error, StackTrace stack
-});
-
-
-
-
-}
-/// @nodoc
-class _$SplashErrorCopyWithImpl<$Res>
-    implements $SplashErrorCopyWith<$Res> {
-  _$SplashErrorCopyWithImpl(this._self, this._then);
-
-  final SplashError _self;
-  final $Res Function(SplashError) _then;
-
-/// Create a copy of SplashState
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? error = null,Object? stack = null,}) {
-  return _then(SplashError(
-null == error ? _self.error : error ,null == stack ? _self.stack : stack // ignore: cast_nullable_to_non_nullable
-as StackTrace,
   ));
 }
 

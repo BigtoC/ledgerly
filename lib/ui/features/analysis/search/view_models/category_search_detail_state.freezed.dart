@@ -56,11 +56,10 @@ extension CategorySearchDetailStatePatterns on CategorySearchDetailState {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( DetailLoading value)?  loading,TResult Function( DetailData value)?  data,TResult Function( DetailEmpty value)?  empty,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( DetailData value)?  data,TResult Function( DetailEmpty value)?  empty,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
-case DetailLoading() when loading != null:
-return loading(_that);case DetailData() when data != null:
+case DetailData() when data != null:
 return data(_that);case DetailEmpty() when empty != null:
 return empty(_that);case _:
   return orElse();
@@ -80,11 +79,10 @@ return empty(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( DetailLoading value)  loading,required TResult Function( DetailData value)  data,required TResult Function( DetailEmpty value)  empty,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( DetailData value)  data,required TResult Function( DetailEmpty value)  empty,}){
 final _that = this;
 switch (_that) {
-case DetailLoading():
-return loading(_that);case DetailData():
+case DetailData():
 return data(_that);case DetailEmpty():
 return empty(_that);}
 }
@@ -100,11 +98,10 @@ return empty(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( DetailLoading value)?  loading,TResult? Function( DetailData value)?  data,TResult? Function( DetailEmpty value)?  empty,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( DetailData value)?  data,TResult? Function( DetailEmpty value)?  empty,}){
 final _that = this;
 switch (_that) {
-case DetailLoading() when loading != null:
-return loading(_that);case DetailData() when data != null:
+case DetailData() when data != null:
 return data(_that);case DetailEmpty() when empty != null:
 return empty(_that);case _:
   return null;
@@ -123,10 +120,9 @@ return empty(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( List<DatedTransactionGroup> days,  int overallSumMinorUnits,  Currency currency,  CategorySearchPendingDelete? pendingDelete)?  data,TResult Function()?  empty,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( List<DatedTransactionGroup> days,  int overallSumMinorUnits,  Currency currency,  CategorySearchPendingDelete? pendingDelete)?  data,TResult Function()?  empty,required TResult orElse(),}) {final _that = this;
 switch (_that) {
-case DetailLoading() when loading != null:
-return loading();case DetailData() when data != null:
+case DetailData() when data != null:
 return data(_that.days,_that.overallSumMinorUnits,_that.currency,_that.pendingDelete);case DetailEmpty() when empty != null:
 return empty();case _:
   return orElse();
@@ -146,10 +142,9 @@ return empty();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( List<DatedTransactionGroup> days,  int overallSumMinorUnits,  Currency currency,  CategorySearchPendingDelete? pendingDelete)  data,required TResult Function()  empty,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( List<DatedTransactionGroup> days,  int overallSumMinorUnits,  Currency currency,  CategorySearchPendingDelete? pendingDelete)  data,required TResult Function()  empty,}) {final _that = this;
 switch (_that) {
-case DetailLoading():
-return loading();case DetailData():
+case DetailData():
 return data(_that.days,_that.overallSumMinorUnits,_that.currency,_that.pendingDelete);case DetailEmpty():
 return empty();}
 }
@@ -165,10 +160,9 @@ return empty();}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( List<DatedTransactionGroup> days,  int overallSumMinorUnits,  Currency currency,  CategorySearchPendingDelete? pendingDelete)?  data,TResult? Function()?  empty,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( List<DatedTransactionGroup> days,  int overallSumMinorUnits,  Currency currency,  CategorySearchPendingDelete? pendingDelete)?  data,TResult? Function()?  empty,}) {final _that = this;
 switch (_that) {
-case DetailLoading() when loading != null:
-return loading();case DetailData() when data != null:
+case DetailData() when data != null:
 return data(_that.days,_that.overallSumMinorUnits,_that.currency,_that.pendingDelete);case DetailEmpty() when empty != null:
 return empty();case _:
   return null;
@@ -177,38 +171,6 @@ return empty();case _:
 }
 
 }
-
-/// @nodoc
-
-
-class DetailLoading implements CategorySearchDetailState {
-  const DetailLoading();
-  
-
-
-
-
-
-
-@override
-bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is DetailLoading);
-}
-
-
-@override
-int get hashCode => runtimeType.hashCode;
-
-@override
-String toString() {
-    return 'CategorySearchDetailState.loading()';
-}
-
-
-}
-
-
-
 
 /// @nodoc
 

@@ -102,7 +102,7 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
     }
 
     // Synchronous pre-fill from the parent's cache so the detail page
-    // renders the row instantly without a frame of `DetailLoading` while
+    // renders the row instantly without a loading frame while
     // Drift fetches the same data we already have in memory. Drift's
     // first emission on the live subscription below replaces it.
     if (ref.exists(analysisControllerProvider)) {

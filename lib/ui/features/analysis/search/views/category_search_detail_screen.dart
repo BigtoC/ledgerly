@@ -101,7 +101,6 @@ class _CategorySearchDetailScreenState
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => Center(child: Text(l10n.analysisErrorMessage)),
           data: (s) => switch (s) {
-            DetailLoading() => const Center(child: CircularProgressIndicator()),
             DetailEmpty() => Center(child: Text(l10n.analysisNoResults)),
             DetailData(:final days) when days.isEmpty => Center(
               child: Text(l10n.analysisNoResults),

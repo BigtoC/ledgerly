@@ -49,7 +49,6 @@ class CategoriesScreen extends ConsumerWidget {
         child: switch (state) {
           AsyncData<CategoriesState>(value: final CategoriesData data) =>
             _CategoriesBody(data: data),
-          AsyncData<CategoriesState>(value: CategoriesError()) ||
           AsyncError() => const _ErrorSurface(),
           _ => const Center(child: CircularProgressIndicator()),
         },

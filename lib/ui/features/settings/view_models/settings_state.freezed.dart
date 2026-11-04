@@ -56,11 +56,10 @@ extension SettingsStatePatterns on SettingsState {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( SettingsLoading value)?  loading,TResult Function( SettingsData value)?  data,TResult Function( SettingsError value)?  error,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( SettingsData value)?  data,TResult Function( SettingsError value)?  error,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
-case SettingsLoading() when loading != null:
-return loading(_that);case SettingsData() when data != null:
+case SettingsData() when data != null:
 return data(_that);case SettingsError() when error != null:
 return error(_that);case _:
   return orElse();
@@ -80,11 +79,10 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( SettingsLoading value)  loading,required TResult Function( SettingsData value)  data,required TResult Function( SettingsError value)  error,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( SettingsData value)  data,required TResult Function( SettingsError value)  error,}){
 final _that = this;
 switch (_that) {
-case SettingsLoading():
-return loading(_that);case SettingsData():
+case SettingsData():
 return data(_that);case SettingsError():
 return error(_that);}
 }
@@ -100,11 +98,10 @@ return error(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( SettingsLoading value)?  loading,TResult? Function( SettingsData value)?  data,TResult? Function( SettingsError value)?  error,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( SettingsData value)?  data,TResult? Function( SettingsError value)?  error,}){
 final _that = this;
 switch (_that) {
-case SettingsLoading() when loading != null:
-return loading(_that);case SettingsData() when data != null:
+case SettingsData() when data != null:
 return data(_that);case SettingsError() when error != null:
 return error(_that);case _:
   return null;
@@ -123,10 +120,9 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( ThemeMode themeMode,  Locale? locale,  String defaultCurrency,  int? defaultAccountId,  bool splashEnabled,  DateTime? splashStartDate,  String? splashDisplayText,  String? splashButtonLabel)?  data,TResult Function( Object error,  StackTrace stack)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( ThemeMode themeMode,  Locale? locale,  String defaultCurrency,  int? defaultAccountId,  bool splashEnabled,  DateTime? splashStartDate,  String? splashDisplayText,  String? splashButtonLabel)?  data,TResult Function( Object error,  StackTrace stack)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
-case SettingsLoading() when loading != null:
-return loading();case SettingsData() when data != null:
+case SettingsData() when data != null:
 return data(_that.themeMode,_that.locale,_that.defaultCurrency,_that.defaultAccountId,_that.splashEnabled,_that.splashStartDate,_that.splashDisplayText,_that.splashButtonLabel);case SettingsError() when error != null:
 return error(_that.error,_that.stack);case _:
   return orElse();
@@ -146,10 +142,9 @@ return error(_that.error,_that.stack);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( ThemeMode themeMode,  Locale? locale,  String defaultCurrency,  int? defaultAccountId,  bool splashEnabled,  DateTime? splashStartDate,  String? splashDisplayText,  String? splashButtonLabel)  data,required TResult Function( Object error,  StackTrace stack)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( ThemeMode themeMode,  Locale? locale,  String defaultCurrency,  int? defaultAccountId,  bool splashEnabled,  DateTime? splashStartDate,  String? splashDisplayText,  String? splashButtonLabel)  data,required TResult Function( Object error,  StackTrace stack)  error,}) {final _that = this;
 switch (_that) {
-case SettingsLoading():
-return loading();case SettingsData():
+case SettingsData():
 return data(_that.themeMode,_that.locale,_that.defaultCurrency,_that.defaultAccountId,_that.splashEnabled,_that.splashStartDate,_that.splashDisplayText,_that.splashButtonLabel);case SettingsError():
 return error(_that.error,_that.stack);}
 }
@@ -165,10 +160,9 @@ return error(_that.error,_that.stack);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( ThemeMode themeMode,  Locale? locale,  String defaultCurrency,  int? defaultAccountId,  bool splashEnabled,  DateTime? splashStartDate,  String? splashDisplayText,  String? splashButtonLabel)?  data,TResult? Function( Object error,  StackTrace stack)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( ThemeMode themeMode,  Locale? locale,  String defaultCurrency,  int? defaultAccountId,  bool splashEnabled,  DateTime? splashStartDate,  String? splashDisplayText,  String? splashButtonLabel)?  data,TResult? Function( Object error,  StackTrace stack)?  error,}) {final _that = this;
 switch (_that) {
-case SettingsLoading() when loading != null:
-return loading();case SettingsData() when data != null:
+case SettingsData() when data != null:
 return data(_that.themeMode,_that.locale,_that.defaultCurrency,_that.defaultAccountId,_that.splashEnabled,_that.splashStartDate,_that.splashDisplayText,_that.splashButtonLabel);case SettingsError() when error != null:
 return error(_that.error,_that.stack);case _:
   return null;
@@ -177,38 +171,6 @@ return error(_that.error,_that.stack);case _:
 }
 
 }
-
-/// @nodoc
-
-
-class SettingsLoading implements SettingsState {
-  const SettingsLoading();
-  
-
-
-
-
-
-
-@override
-bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is SettingsLoading);
-}
-
-
-@override
-int get hashCode => runtimeType.hashCode;
-
-@override
-String toString() {
-    return 'SettingsState.loading()';
-}
-
-
-}
-
-
-
 
 /// @nodoc
 

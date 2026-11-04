@@ -15,30 +15,67 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$CategoriesState {
 
-
+ List<CategoryRowView> get expense; List<CategoryRowView> get income;
+/// Create a copy of CategoriesState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$CategoriesStateCopyWith<CategoriesState> get copyWith => _$CategoriesStateCopyWithImpl<CategoriesState>(this as CategoriesState, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoriesState);
+  final _this = this as CategoriesState;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoriesState&&const DeepCollectionEquality().equals(other.expense, _this.expense)&&const DeepCollectionEquality().equals(other.income, _this.income));
 }
 
 
 @override
-int get hashCode => runtimeType.hashCode;
+int get hashCode {
+  final _this = this as CategoriesState;
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.expense),const DeepCollectionEquality().hash(_this.income));
+}
 
 @override
 String toString() {
-    return 'CategoriesState()';
+  final _this = this as CategoriesState;
+  return 'CategoriesState(expense: ${_this.expense}, income: ${_this.income})';
 }
 
 
 }
 
 /// @nodoc
-class $CategoriesStateCopyWith<$Res>  {
-$CategoriesStateCopyWith(CategoriesState _, $Res Function(CategoriesState) __);
+abstract mixin class $CategoriesStateCopyWith<$Res>  {
+  factory $CategoriesStateCopyWith(CategoriesState value, $Res Function(CategoriesState) _then) = _$CategoriesStateCopyWithImpl;
+@useResult
+$Res call({
+ List<CategoryRowView> expense, List<CategoryRowView> income
+});
+
+
+
+
+}
+/// @nodoc
+class _$CategoriesStateCopyWithImpl<$Res>
+    implements $CategoriesStateCopyWith<$Res> {
+  _$CategoriesStateCopyWithImpl(this._self, this._then);
+
+  final CategoriesState _self;
+  final $Res Function(CategoriesState) _then;
+
+/// Create a copy of CategoriesState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? expense = null,Object? income = null,}) {
+  return _then(CategoriesState.data(
+expense: null == expense ? _self.expense : expense // ignore: cast_nullable_to_non_nullable
+as List<CategoryRowView>,income: null == income ? _self.income : income // ignore: cast_nullable_to_non_nullable
+as List<CategoryRowView>,
+  ));
+}
+
 }
 
 
@@ -56,13 +93,11 @@ extension CategoriesStatePatterns on CategoriesState {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( CategoriesLoading value)?  loading,TResult Function( CategoriesData value)?  data,TResult Function( CategoriesError value)?  error,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( CategoriesData value)?  data,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
-case CategoriesLoading() when loading != null:
-return loading(_that);case CategoriesData() when data != null:
-return data(_that);case CategoriesError() when error != null:
-return error(_that);case _:
+case CategoriesData() when data != null:
+return data(_that);case _:
   return orElse();
 
 }
@@ -80,13 +115,11 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( CategoriesLoading value)  loading,required TResult Function( CategoriesData value)  data,required TResult Function( CategoriesError value)  error,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( CategoriesData value)  data,}){
 final _that = this;
 switch (_that) {
-case CategoriesLoading():
-return loading(_that);case CategoriesData():
-return data(_that);case CategoriesError():
-return error(_that);}
+case CategoriesData():
+return data(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -100,13 +133,11 @@ return error(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( CategoriesLoading value)?  loading,TResult? Function( CategoriesData value)?  data,TResult? Function( CategoriesError value)?  error,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( CategoriesData value)?  data,}){
 final _that = this;
 switch (_that) {
-case CategoriesLoading() when loading != null:
-return loading(_that);case CategoriesData() when data != null:
-return data(_that);case CategoriesError() when error != null:
-return error(_that);case _:
+case CategoriesData() when data != null:
+return data(_that);case _:
   return null;
 
 }
@@ -123,12 +154,10 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( List<CategoryRowView> expense,  List<CategoryRowView> income)?  data,TResult Function( Object error,  StackTrace stack)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( List<CategoryRowView> expense,  List<CategoryRowView> income)?  data,required TResult orElse(),}) {final _that = this;
 switch (_that) {
-case CategoriesLoading() when loading != null:
-return loading();case CategoriesData() when data != null:
-return data(_that.expense,_that.income);case CategoriesError() when error != null:
-return error(_that.error,_that.stack);case _:
+case CategoriesData() when data != null:
+return data(_that.expense,_that.income);case _:
   return orElse();
 
 }
@@ -146,12 +175,10 @@ return error(_that.error,_that.stack);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( List<CategoryRowView> expense,  List<CategoryRowView> income)  data,required TResult Function( Object error,  StackTrace stack)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( List<CategoryRowView> expense,  List<CategoryRowView> income)  data,}) {final _that = this;
 switch (_that) {
-case CategoriesLoading():
-return loading();case CategoriesData():
-return data(_that.expense,_that.income);case CategoriesError():
-return error(_that.error,_that.stack);}
+case CategoriesData():
+return data(_that.expense,_that.income);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -165,12 +192,10 @@ return error(_that.error,_that.stack);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( List<CategoryRowView> expense,  List<CategoryRowView> income)?  data,TResult? Function( Object error,  StackTrace stack)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( List<CategoryRowView> expense,  List<CategoryRowView> income)?  data,}) {final _that = this;
 switch (_that) {
-case CategoriesLoading() when loading != null:
-return loading();case CategoriesData() when data != null:
-return data(_that.expense,_that.income);case CategoriesError() when error != null:
-return error(_that.error,_that.stack);case _:
+case CategoriesData() when data != null:
+return data(_that.expense,_that.income);case _:
   return null;
 
 }
@@ -181,51 +206,19 @@ return error(_that.error,_that.stack);case _:
 /// @nodoc
 
 
-class CategoriesLoading implements CategoriesState {
-  const CategoriesLoading();
-  
-
-
-
-
-
-
-@override
-bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoriesLoading);
-}
-
-
-@override
-int get hashCode => runtimeType.hashCode;
-
-@override
-String toString() {
-    return 'CategoriesState.loading()';
-}
-
-
-}
-
-
-
-
-/// @nodoc
-
-
 class CategoriesData implements CategoriesState {
   const CategoriesData({required  List<CategoryRowView> expense, required  List<CategoryRowView> income}): _expense = expense,_income = income;
   
 
  final  List<CategoryRowView> _expense;
- List<CategoryRowView> get expense {
+@override List<CategoryRowView> get expense {
   if (_expense is EqualUnmodifiableListView) return _expense;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_expense);
 }
 
  final  List<CategoryRowView> _income;
- List<CategoryRowView> get income {
+@override List<CategoryRowView> get income {
   if (_income is EqualUnmodifiableListView) return _income;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_income);
@@ -234,7 +227,7 @@ class CategoriesData implements CategoriesState {
 
 /// Create a copy of CategoriesState
 /// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
+@override @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
 $CategoriesDataCopyWith<CategoriesData> get copyWith => _$CategoriesDataCopyWithImpl<CategoriesData>(this, _$identity);
 
@@ -262,7 +255,7 @@ String toString() {
 /// @nodoc
 abstract mixin class $CategoriesDataCopyWith<$Res> implements $CategoriesStateCopyWith<$Res> {
   factory $CategoriesDataCopyWith(CategoriesData value, $Res Function(CategoriesData) _then) = _$CategoriesDataCopyWithImpl;
-@useResult
+@override @useResult
 $Res call({
  List<CategoryRowView> expense, List<CategoryRowView> income
 });
@@ -281,80 +274,11 @@ class _$CategoriesDataCopyWithImpl<$Res>
 
 /// Create a copy of CategoriesState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? expense = null,Object? income = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? expense = null,Object? income = null,}) {
   return _then(CategoriesData(
 expense: null == expense ? _self._expense : expense // ignore: cast_nullable_to_non_nullable
 as List<CategoryRowView>,income: null == income ? _self._income : income // ignore: cast_nullable_to_non_nullable
 as List<CategoryRowView>,
-  ));
-}
-
-
-}
-
-/// @nodoc
-
-
-class CategoriesError implements CategoriesState {
-  const CategoriesError(this.error, this.stack);
-  
-
- final  Object error;
- final  StackTrace stack;
-
-/// Create a copy of CategoriesState
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$CategoriesErrorCopyWith<CategoriesError> get copyWith => _$CategoriesErrorCopyWithImpl<CategoriesError>(this, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoriesError&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.stack, stack) || other.stack == stack));
-}
-
-
-@override
-int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(error),stack);
-}
-
-@override
-String toString() {
-    return 'CategoriesState.error(error: $error, stack: $stack)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $CategoriesErrorCopyWith<$Res> implements $CategoriesStateCopyWith<$Res> {
-  factory $CategoriesErrorCopyWith(CategoriesError value, $Res Function(CategoriesError) _then) = _$CategoriesErrorCopyWithImpl;
-@useResult
-$Res call({
- Object error, StackTrace stack
-});
-
-
-
-
-}
-/// @nodoc
-class _$CategoriesErrorCopyWithImpl<$Res>
-    implements $CategoriesErrorCopyWith<$Res> {
-  _$CategoriesErrorCopyWithImpl(this._self, this._then);
-
-  final CategoriesError _self;
-  final $Res Function(CategoriesError) _then;
-
-/// Create a copy of CategoriesState
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? error = null,Object? stack = null,}) {
-  return _then(CategoriesError(
-null == error ? _self.error : error ,null == stack ? _self.stack : stack // ignore: cast_nullable_to_non_nullable
-as StackTrace,
   ));
 }
 
