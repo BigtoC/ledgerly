@@ -70,10 +70,8 @@ class TransactionFormController extends _$TransactionFormController {
   /// public properties from the notifier itself.
   KeypadState _keypad = const KeypadState.initial();
   int _keypadRevision = 0;
-  TransactionFormMode? _lastRequestedMode;
 
-  /// The current form mode — exposed read-only to the screen so it can
-  /// derive its title and CTA set without parsing route extras itself.
+  /// The current form mode, mirrored into `state.formMode` on every emit.
   TransactionFormMode _formMode = const AddTransactionMode();
 
   @override
@@ -93,7 +91,6 @@ class TransactionFormController extends _$TransactionFormController {
   /// Omitting [initialDate] preserves the prior default of today.
   Future<void> hydrateForAdd({DateTime? initialDate}) async {
     _formMode = AddTransactionMode(initialDate: initialDate);
-    _lastRequestedMode = AddTransactionMode(initialDate: initialDate);
     try {
       state = TransactionFormState.loading(formMode: _formMode);
       final account = await _resolveDefaultAccount();
@@ -135,9 +132,6 @@ class TransactionFormController extends _$TransactionFormController {
 
   Future<void> hydrateForDuplicate(int sourceId) async {
     _formMode = DuplicateTransactionMode(sourceTransactionId: sourceId);
-    _lastRequestedMode = DuplicateTransactionMode(
-      sourceTransactionId: sourceId,
-    );
     try {
       state = TransactionFormState.loading(formMode: _formMode);
       final txRepo = ref.read(transactionRepositoryProvider);
@@ -183,7 +177,6 @@ class TransactionFormController extends _$TransactionFormController {
 
   Future<void> hydrateForEdit(int id) async {
     _formMode = EditTransactionMode(transactionId: id);
-    _lastRequestedMode = EditTransactionMode(transactionId: id);
     try {
       state = TransactionFormState.loading(formMode: _formMode);
       final txRepo = ref.read(transactionRepositoryProvider);
@@ -249,9 +242,6 @@ class TransactionFormController extends _$TransactionFormController {
   ///     seeds `displayCurrency` from the selected account.
   Future<void> hydrateForShoppingListDraft(int shoppingListItemId) async {
     _formMode = EditShoppingListDraftMode(
-      shoppingListItemId: shoppingListItemId,
-    );
-    _lastRequestedMode = EditShoppingListDraftMode(
       shoppingListItemId: shoppingListItemId,
     );
     try {
@@ -816,8 +806,7 @@ class TransactionFormController extends _$TransactionFormController {
   /// Re-runs the last requested hydration mode after the user returns from
   /// dependency-recovery flows like `/settings/manage-accounts/new`.
   Future<void> retryHydration() async {
-    final mode = _lastRequestedMode;
-    if (mode == null) return;
+    final mode = _formMode;
     switch (mode) {
       case AddTransactionMode():
         await hydrateForAdd(initialDate: mode.initialDate);
