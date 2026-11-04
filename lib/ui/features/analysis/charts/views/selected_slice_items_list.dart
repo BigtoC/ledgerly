@@ -17,7 +17,6 @@ import '../../../../../core/constants.dart';
 import '../../../../../core/utils/color_palette.dart';
 import '../../../../../core/utils/currency_converter.dart';
 import '../../../../../core/utils/money_formatter.dart';
-import '../../../../../domain/models/account.dart';
 import '../../../../../domain/models/category.dart';
 import '../../../../../domain/models/currency.dart';
 import '../../../../../domain/models/transaction.dart';
@@ -174,12 +173,9 @@ class _SelectedSliceItemsListState
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _ListHeader(
-                      label: _labelFor(
-                        selection: selection,
-                        slice: widget.slice,
-                        categoriesById: categoriesById,
-                        accountsById: accountsById,
-                        l10n: l10n,
+                      label: categoryDisplayNameForKey(
+                        widget.slice.label,
+                        l10n,
                       ),
                       color: colorForIndex(widget.slice.colorIndex),
                       count: data.rows.length,
@@ -201,9 +197,7 @@ class _SelectedSliceItemsListState
                     // account and show its categories (AC 7).
                     if (selection case SelectedAccountSlice(:final accountId))
                       _BridgeButton(
-                        label: l10n.chartsSeeCategoriesIn(
-                          accountsById[accountId]?.name ?? widget.slice.label,
-                        ),
+                        label: l10n.chartsSeeCategoriesIn(widget.slice.label),
                         onTap: () => ref
                             .read(chartsSelectionControllerProvider.notifier)
                             .setAccountFilter(accountId),
@@ -367,24 +361,6 @@ class _SelectedSliceItemsListState
 
     final oldest = fetchedAts.reduce((a, b) => b.isBefore(a) ? b : a);
     return DateTime.now().difference(oldest) > const Duration(hours: 1);
-  }
-
-  String _labelFor({
-    required SelectedSlice selection,
-    required ChartSlice slice,
-    required Map<int, Category> categoriesById,
-    required Map<int, Account> accountsById,
-    required AppLocalizations l10n,
-  }) {
-    return switch (selection) {
-      SelectedCategorySlice(:final categoryId) =>
-        categoriesById[categoryId] == null
-            ? slice.label
-            : categoryDisplayName(categoriesById[categoryId]!, l10n),
-      SelectedAccountSlice(:final accountId) =>
-        accountsById[accountId]?.name ?? slice.label,
-      SelectedCurrencySlice(:final currencyCode) => currencyCode,
-    };
   }
 }
 
