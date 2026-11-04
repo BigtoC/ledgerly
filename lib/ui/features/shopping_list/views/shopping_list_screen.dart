@@ -107,9 +107,7 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
               // the auto-dispose controller has dropped the pending delete,
               // so there is nothing to undo and `ref` is unusable.
               if (!mounted) return;
-              unawaited(
-                ref.read(shoppingListControllerProvider.notifier).undoDelete(),
-              );
+              ref.read(shoppingListControllerProvider.notifier).undoDelete();
             },
           ),
         ),

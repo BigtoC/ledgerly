@@ -44,7 +44,7 @@ final class ShoppingListControllerProvider
 }
 
 String _$shoppingListControllerHash() =>
-    r'098f822a64fff44adba994c0696056b0707e850b';
+    r'418db770bbd1ea7513631adad87b6c8d5e6fb103';
 
 abstract class _$ShoppingListController
     extends $StreamNotifier<ShoppingListState> {

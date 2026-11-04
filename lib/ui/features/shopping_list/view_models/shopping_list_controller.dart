@@ -88,7 +88,7 @@ class ShoppingListController extends _$ShoppingListController {
 
   /// Cancel the undo window; the original row reappears on the next emission.
   /// Repository is never touched.
-  Future<void> undoDelete() async {
+  void undoDelete() {
     _undoTimer?.cancel();
     _undoTimer = null;
     _pendingDelete = null;
@@ -100,7 +100,6 @@ class ShoppingListController extends _$ShoppingListController {
   }
 
   Future<bool> _commitDelete(int id) async {
-    _composer?.notifyPendingDeleteChanged();
     try {
       await ref.read(shoppingListRepositoryProvider).delete(id);
       if (_pendingDelete?.itemId == id) {
