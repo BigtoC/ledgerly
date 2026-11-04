@@ -126,12 +126,12 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function()?  empty,TResult Function( List<RecurringRule> rules,  RecurringRulesPendingDelete? pendingDelete)?  data,TResult Function( Object error,  StackTrace stack)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function()?  empty,TResult Function( List<RecurringRule> rules)?  data,TResult Function( Object error,  StackTrace stack)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case RecurringRulesLoading() when loading != null:
 return loading();case RecurringRulesEmpty() when empty != null:
 return empty();case RecurringRulesData() when data != null:
-return data(_that.rules,_that.pendingDelete);case RecurringRulesError() when error != null:
+return data(_that.rules);case RecurringRulesError() when error != null:
 return error(_that.error,_that.stack);case _:
   return orElse();
 
@@ -150,12 +150,12 @@ return error(_that.error,_that.stack);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function()  empty,required TResult Function( List<RecurringRule> rules,  RecurringRulesPendingDelete? pendingDelete)  data,required TResult Function( Object error,  StackTrace stack)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function()  empty,required TResult Function( List<RecurringRule> rules)  data,required TResult Function( Object error,  StackTrace stack)  error,}) {final _that = this;
 switch (_that) {
 case RecurringRulesLoading():
 return loading();case RecurringRulesEmpty():
 return empty();case RecurringRulesData():
-return data(_that.rules,_that.pendingDelete);case RecurringRulesError():
+return data(_that.rules);case RecurringRulesError():
 return error(_that.error,_that.stack);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -170,12 +170,12 @@ return error(_that.error,_that.stack);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function()?  empty,TResult? Function( List<RecurringRule> rules,  RecurringRulesPendingDelete? pendingDelete)?  data,TResult? Function( Object error,  StackTrace stack)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function()?  empty,TResult? Function( List<RecurringRule> rules)?  data,TResult? Function( Object error,  StackTrace stack)?  error,}) {final _that = this;
 switch (_that) {
 case RecurringRulesLoading() when loading != null:
 return loading();case RecurringRulesEmpty() when empty != null:
 return empty();case RecurringRulesData() when data != null:
-return data(_that.rules,_that.pendingDelete);case RecurringRulesError() when error != null:
+return data(_that.rules);case RecurringRulesError() when error != null:
 return error(_that.error,_that.stack);case _:
   return null;
 
@@ -252,7 +252,7 @@ String toString() {
 
 
 class RecurringRulesData implements RecurringRulesState {
-  const RecurringRulesData({required  List<RecurringRule> rules, required this.pendingDelete}): _rules = rules;
+  const RecurringRulesData({required  List<RecurringRule> rules}): _rules = rules;
   
 
  final  List<RecurringRule> _rules;
@@ -262,7 +262,6 @@ class RecurringRulesData implements RecurringRulesState {
   return EqualUnmodifiableListView(_rules);
 }
 
- final  RecurringRulesPendingDelete? pendingDelete;
 
 /// Create a copy of RecurringRulesState
 /// with the given fields replaced by the non-null parameter values.
@@ -274,18 +273,18 @@ $RecurringRulesDataCopyWith<RecurringRulesData> get copyWith => _$RecurringRules
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringRulesData&&const DeepCollectionEquality().equals(other.rules, _rules)&&(identical(other.pendingDelete, pendingDelete) || other.pendingDelete == pendingDelete));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringRulesData&&const DeepCollectionEquality().equals(other.rules, _rules));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_rules),pendingDelete);
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_rules));
 }
 
 @override
 String toString() {
-    return 'RecurringRulesState.data(rules: $rules, pendingDelete: $pendingDelete)';
+    return 'RecurringRulesState.data(rules: $rules)';
 }
 
 
@@ -296,7 +295,7 @@ abstract mixin class $RecurringRulesDataCopyWith<$Res> implements $RecurringRule
   factory $RecurringRulesDataCopyWith(RecurringRulesData value, $Res Function(RecurringRulesData) _then) = _$RecurringRulesDataCopyWithImpl;
 @useResult
 $Res call({
- List<RecurringRule> rules, RecurringRulesPendingDelete? pendingDelete
+ List<RecurringRule> rules
 });
 
 
@@ -313,11 +312,10 @@ class _$RecurringRulesDataCopyWithImpl<$Res>
 
 /// Create a copy of RecurringRulesState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? rules = null,Object? pendingDelete = freezed,}) {
+@pragma('vm:prefer-inline') $Res call({Object? rules = null,}) {
   return _then(RecurringRulesData(
 rules: null == rules ? _self._rules : rules // ignore: cast_nullable_to_non_nullable
-as List<RecurringRule>,pendingDelete: freezed == pendingDelete ? _self.pendingDelete : pendingDelete // ignore: cast_nullable_to_non_nullable
-as RecurringRulesPendingDelete?,
+as List<RecurringRule>,
   ));
 }
 

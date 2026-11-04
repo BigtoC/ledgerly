@@ -41,7 +41,7 @@ final class RecurringRulesDeleteFailedEffect extends RecurringRulesEffect {
 
 @Riverpod(dependencies: [recurringRulesRepository])
 class RecurringRulesController extends _$RecurringRulesController {
-  RecurringRulesPendingDelete? _pendingDelete;
+  int? _pendingDeleteId;
   Timer? _undoTimer;
   _Composer? _composer;
   RecurringRulesEffectListener? _effectListener;
@@ -51,13 +51,13 @@ class RecurringRulesController extends _$RecurringRulesController {
     final repo = ref.watch(recurringRulesRepositoryProvider);
     final composer = _Composer(
       repo: repo,
-      pendingDeleteGetter: () => _pendingDelete,
+      pendingDeleteGetter: () => _pendingDeleteId,
     );
     _composer = composer;
     ref.onDispose(() {
       _undoTimer?.cancel();
       _undoTimer = null;
-      _pendingDelete = null;
+      _pendingDeleteId = null;
       composer.dispose();
     });
     return composer.stream;
@@ -110,11 +110,11 @@ class RecurringRulesController extends _$RecurringRulesController {
   /// Needs no catch-all: nothing here throws, because `_commitDelete`
   /// catches its own failures and reports them as `false`.
   Future<DeleteRecurringRuleOutcome> deleteRule(int id) async {
-    if (_pendingDelete != null) {
+    final prior = _pendingDeleteId;
+    if (prior != null) {
       _undoTimer?.cancel();
       _undoTimer = null;
-      final prior = _pendingDelete!;
-      final committed = await _commitDelete(prior.ruleId);
+      final committed = await _commitDelete(prior);
       // A screen that closed during the commit has disposed this
       // controller, and a timer started now would never be cancelled.
       if (!committed || !ref.mounted) {
@@ -122,13 +122,13 @@ class RecurringRulesController extends _$RecurringRulesController {
       }
     }
 
-    _pendingDelete = RecurringRulesPendingDelete(ruleId: id);
+    _pendingDeleteId = id;
     _composer?.notifyPendingDeleteChanged();
 
     _undoTimer = Timer(kUndoWindow, () async {
-      final pending = _pendingDelete;
+      final pending = _pendingDeleteId;
       if (pending == null) return;
-      final committed = await _commitDelete(pending.ruleId);
+      final committed = await _commitDelete(pending);
       if (!committed) {
         _effectListener?.call(const RecurringRulesDeleteFailedEffect());
       }
@@ -140,10 +140,10 @@ class RecurringRulesController extends _$RecurringRulesController {
   /// delete is for another rule, so a stale Undo snackbar cannot cancel a
   /// newer delete.
   void undoDelete(int id) {
-    if (_pendingDelete?.ruleId != id) return;
+    if (_pendingDeleteId != id) return;
     _undoTimer?.cancel();
     _undoTimer = null;
-    _pendingDelete = null;
+    _pendingDeleteId = null;
     _composer?.notifyPendingDeleteChanged();
   }
 
@@ -155,14 +155,14 @@ class RecurringRulesController extends _$RecurringRulesController {
     _composer?.notifyPendingDeleteChanged();
     try {
       await ref.read(recurringRulesRepositoryProvider).archive(id);
-      if (_pendingDelete?.ruleId == id) {
-        _pendingDelete = null;
+      if (_pendingDeleteId == id) {
+        _pendingDeleteId = null;
         _composer?.notifyPendingDeleteChanged();
       }
       return true;
     } catch (_) {
-      if (_pendingDelete?.ruleId == id) {
-        _pendingDelete = null;
+      if (_pendingDeleteId == id) {
+        _pendingDeleteId = null;
       }
       _composer?.notifyPendingDeleteChanged();
       return false;
@@ -181,7 +181,7 @@ class _Composer {
   }
 
   final RecurringRulesRepository _repo;
-  final RecurringRulesPendingDelete? Function() _pendingDeleteGetter;
+  final int? Function() _pendingDeleteGetter;
   late final StreamController<RecurringRulesState> _out;
   StreamSubscription<List<RecurringRule>>? _sub;
   List<RecurringRule>? _rules;
@@ -231,14 +231,12 @@ class _Composer {
     final pending = _pendingDeleteGetter();
     final visible = pending == null
         ? rules
-        : rules.where((r) => r.id != pending.ruleId).toList(growable: false);
+        : rules.where((r) => r.id != pending).toList(growable: false);
 
     if (visible.isEmpty && pending == null) {
       _out.add(const RecurringRulesState.empty());
     } else {
-      _out.add(
-        RecurringRulesState.data(rules: visible, pendingDelete: pending),
-      );
+      _out.add(RecurringRulesState.data(rules: visible));
     }
   }
 }
