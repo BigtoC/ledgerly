@@ -8,9 +8,68 @@ General behaviour rules come first, then Ledgerly-specific rules. They favour ca
 - If a simpler approach exists, say so, and push back when it's warranted.
 - Always use the `superpowers:test-driven-development` skill when writing code: write a failing test, watch it fail, then write the minimal code that makes it pass.
 
-## 2. Simplicity first
+## 2. Less code for the same features
 
 Write the minimum code that solves the problem. Add no features, single-use abstractions, configurability or error handling for impossible cases unless someone asked for them. If 200 lines could be 50, rewrite it.
+
+PR #135 removed 2,831 lines (1,614 hand-written `lib/` lines) without changing behaviour. The habits below are what created that code. The full write-up is in [`docs/solutions/workflow-issues/safe-redundant-code-removal-with-adversarial-verification.md`](docs/solutions/workflow-issues/safe-redundant-code-removal-with-adversarial-verification.md).
+
+**Don't write:**
+
+- **A second copy.** Before writing a helper, mapper, query, dialog, sheet or snackbar, search for an existing one. Look in:
+  - `lib/core/utils/` (`MoneyFormatter`, `DateHelpers`)
+  - `lib/ui/core/widgets/` (`showAdaptiveSheet`, `showConfirmDialog`, `showUndoSnackBar`)
+  - the repositories (`currencyFromRow`, `RepositoryException`)
+  - `test/support/` (`test_app.dart`, `textScaleBuilder`)
+
+  If one almost fits, extend it rather than copy it, but only when the extended helper plus your call is shorter than a local copy (count after `dart format`). Don't add a flag that only one caller sets just to merge an existing copy.
+- **What Dart, Flutter or Drift already does.** Use:
+  - `table.count(where:)`, not hand-rolled COUNT queries
+  - `math.pow`, not loops
+  - `DateTime(y, m + 1)` to roll month 13 into January, with no December special case. It rolls an overflowing day too, so clamp the day first, as `_clampDay` in `recurring_rules_repository.dart` does.
+  - `DateTime.parse`, not substring parsing
+  - `Locale.toString()`
+  - Freezed `==` instead of revision counters
+  - `AppLocalizations.localizationsDelegates` instead of listing the delegates by hand
+
+  Don't pass `ThemeData` arguments that equal the defaults.
+- **Code only tests call.** No public method, parameter or mode in `lib/` should exist only so a test can reach it. Test through the production path.
+- **Variants, states or branches nothing produces.** Don't add `loading`/`error` variants that the outer `AsyncValue` already covers. PRD's `HomeState` shape is the exception.
+- **Guards for the impossible.** Examples:
+  - a read-back check that the row "disappeared" right after a write
+  - a re-entry flag on a callback that fires once
+  - a null check the types already rule out (delete it; don't add `!`)
+  - a dedupe of rows the code itself just created
+
+  Where the type is nullable but the logic guarantees a value, such as reading back a row you just wrote, use `!` instead of a throw. Guards against things that can happen stay: the already-requested set and the post-dispose no-ops in *Performance rules*, and `mounted` checks after `await`.
+- **State you can derive.** Don't store a count, a flag, a mirror or a "last requested" copy that other state already determines. Compute it.
+- **A wrapper around one value.** A class or sealed type that holds one id or one message should just be an `int?` or a `String`. Inline helpers that have one caller.
+- **Parameters that never vary.** Drop a parameter when every caller passes the same value or when it repeats the widget's own field. Give Freezed fields defaults instead of repeating `false`/`null` at every call site.
+- **Parallel query pairs.** Write one DAO method with a parameter (`watchAll(type:)`, `watchAll(includeArchived:)`) rather than a filtered twin, and have `get…` and `watch…` share one `Selectable`.
+
+**Don't "simplify" these away.** Each one was a rejected cleanup finding:
+
+- **What PRD or the docs name.** This covers:
+  - a seam with no caller yet (the Duplicate flow, whose removal is open as #134; `CurrencyRepository.updateCustomName`)
+  - a named state shape
+  - a documented guard or decision (exhaustive `switch` over sealed outcomes, explicit enum wire mappers)
+
+  Search `PRD.md`, `docs/` and `docs/solutions/` before you delete.
+- **Code that only looks equivalent.** Read the pinned library source and look for a counterexample:
+  - Drift `Value.absent()` keeps the stored value under `replace`, but `Value(null)` writes NULL.
+  - A `keepAlive` provider has a different lifetime.
+  - Riverpod's dispose can run `_stop` twice, overlapping itself.
+- **A merge that doesn't shrink the code.** Run `dart format` and count the lines, generated ones included. A shared widget or flag that serves one call site doesn't pay. When a new shared helper does pay, list it in PRD and `docs/architecture/` in the same change.
+- **Copies that differ on purpose:**
+  - the mockup typography
+  - the dedicated search-result row (not Home's `TransactionTile`)
+  - the non-dismissible Manage-accounts sheet
+- **References grep can't see.** Before calling something dead, check:
+  - generated provider names and `@Dependencies` lists
+  - Drift accessors
+  - `l10n_key` strings and registry keys stored in the DB
+  - route `extra` keys
+  - ARB keys in every locale file
 
 ## 3. Surgical changes
 
