@@ -177,6 +177,209 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
       }
     });
 
+    // A body without chart data (loading, empty, blocked, error) inside the
+    // breakdown card, so the title and dimension chips stay in place.
+    Widget inCard(Widget child) => ChartsBreakdownCard(
+      type: selection.type,
+      dimension: selection.dimension,
+      onDimensionChanged: selectionNotifier.setDimension,
+      child: child,
+    );
+
+    @Dependencies([
+      chartsNetTotal,
+      ChartsSelectionController,
+      SliceDrilldownController,
+      analysisCategoriesById,
+      analysisAccountsById,
+      chartsCurrenciesByCode,
+      chartsFxStatus,
+    ])
+    Widget frame(Widget body, {ChartsData? chartData}) {
+      // The slide key reads the period and anchor from the live selection,
+      // not `chartData`. During loading the `previous` data still has the
+      // *old* period; in the empty/blocked/error variants `chartData` is
+      // null.
+      final period = selection.period;
+      final anchor = selection.anchorDate;
+
+      // Wrap the chart body in a SlideTransition keyed on (period, anchor)
+      // so the body slides in from the swipe direction every time those
+      // values change. Mirrors `home_screen.dart`'s day-switch animation.
+      final animatedBody = SlideTransition(
+        position: _incomingOffset,
+        child: KeyedSubtree(
+          key: ValueKey<String>('${period.name}|${anchor.toIso8601String()}'),
+          child: body,
+        ),
+      );
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 16),
+          const ChartsSummaryCard(),
+          const SizedBox(height: 12),
+          if (chartData?.autoSwitchedFromCategoryDimension ?? false)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: MaterialBanner(
+                content: Text(l10n.chartsAutoSwitchedToCurrency),
+                actions: [
+                  TextButton(
+                    onPressed: controller.dismissAutoSwitchBanner,
+                    child: Text(
+                      MaterialLocalizations.of(context).closeButtonLabel,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if ((chartData?.excludedCurrencyCodes ?? const <String>[]).isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: MaterialBanner(
+                content: Text(
+                  l10n.chartsExcludedCurrencies(
+                    chartData!.excludedCurrencyCodes.join(', '),
+                  ),
+                ),
+                actions: const [SizedBox.shrink()],
+              ),
+            ),
+          if (chartData?.mixedCurrencies ?? false)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                l10n.chartsMixedCurrencies,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+          GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            // All has no other period to swipe to.
+            onHorizontalDragEnd: period == PeriodType.all
+                ? null
+                : _onHorizontalFling,
+            child: animatedBody,
+          ),
+          if (chartData != null)
+            Builder(
+              builder: (ctx) {
+                final sel = selection.selectedSlice;
+                if (sel == null) return const SizedBox.shrink();
+                final idx = chartData.slices.indexWhere(
+                  (s) => s.selectionKey == sel,
+                );
+                if (idx == -1) return const SizedBox.shrink();
+                return SelectedSliceItemsList(
+                  slice: chartData.slices[idx],
+                  locale: locale,
+                );
+              },
+            ),
+        ],
+      );
+    }
+
+    @Dependencies([
+      chartsNetTotal,
+      ChartsSelectionController,
+      SliceDrilldownController,
+      analysisCategoriesById,
+      analysisAccountsById,
+      chartsCurrenciesByCode,
+      chartsFxStatus,
+    ])
+    Widget forState(ChartsState state) => switch (state) {
+      ChartsLoading(:final previous) => frame(
+        // Render the prior chart directly (no Stack + dim overlay) so
+        // the _ChartBody element stays put across Loading↔DataState.
+        // The dim/spinner overlay was structurally different from the
+        // DataState body, which forced fl_chart's pie/bar StatefulWidget
+        // state to remount on every slice tap.
+        previous == null
+            ? inCard(_loadingBody)
+            : _ChartBody(
+                data: previous,
+                locale: locale,
+                currencies: currenciesAsync.value ?? const {},
+              ),
+        chartData: previous,
+      ),
+      ChartsEmpty() => frame(
+        inCard(
+          BreakdownEmptyState(
+            type: selection.type,
+            accountName: selection.accountFilterId == null
+                ? null
+                : ref
+                      .watch(analysisAccountsByIdProvider)
+                      .value?[selection.accountFilterId]
+                      ?.name,
+          ),
+        ),
+      ),
+      ChartsBlockedByMissingRates(:final previous) => frame(
+        previous == null
+            ? inCard(
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 24,
+                    horizontal: 16,
+                  ),
+                  child: Center(child: Text(l10n.chartsRatesRequired)),
+                ),
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  MaterialBanner(
+                    content: Text(l10n.chartsRatesRequired),
+                    actions: [
+                      TextButton(
+                        onPressed: controller.retry,
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                  _ChartBody(
+                    data: previous,
+                    locale: locale,
+                    currencies: currenciesAsync.value ?? const {},
+                  ),
+                ],
+              ),
+        chartData: previous,
+      ),
+      ChartsDataState(:final chartData) => frame(
+        _ChartBody(
+          data: chartData,
+          locale: locale,
+          currencies: currenciesAsync.value ?? const {},
+        ),
+        chartData: chartData,
+      ),
+      ChartsError(:final error) => frame(
+        inCard(
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('$error'),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: controller.retry,
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    };
+
     final charts = Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       child: stateAsync.when(
@@ -186,128 +389,9 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
         // collapses the outer SingleChildScrollView and clamps its offset.
         skipLoadingOnReload: true,
         skipLoadingOnRefresh: true,
-        loading: () => _frame(
-          context,
-          controller,
-          selection,
-          body: _inCard(selection, selectionNotifier, _loadingBody),
-          l10n: l10n,
-        ),
-        error: (e, _) => _frame(
-          context,
-          controller,
-          selection,
-          body: _inCard(
-            selection,
-            selectionNotifier,
-            _errorBody(e, controller),
-          ),
-          l10n: l10n,
-        ),
-        data: (state) => switch (state) {
-          ChartsLoading(:final previous) => _frame(
-            context,
-            controller,
-            selection,
-            // Render the prior chart directly (no Stack + dim overlay) so
-            // the _ChartBody element stays put across Loading↔DataState.
-            // The dim/spinner overlay was structurally different from the
-            // DataState body, which forced fl_chart's pie/bar StatefulWidget
-            // state to remount on every slice tap.
-            body: previous == null
-                ? _inCard(selection, selectionNotifier, _loadingBody)
-                : _ChartBody(
-                    data: previous,
-                    locale: locale,
-                    currencies: currenciesAsync.value ?? const {},
-                  ),
-            l10n: l10n,
-            chartData: previous,
-            locale: locale,
-          ),
-          ChartsEmpty() => _frame(
-            context,
-            controller,
-            selection,
-            body: _inCard(
-              selection,
-              selectionNotifier,
-              BreakdownEmptyState(
-                type: selection.type,
-                accountName: selection.accountFilterId == null
-                    ? null
-                    : ref
-                          .watch(analysisAccountsByIdProvider)
-                          .value?[selection.accountFilterId]
-                          ?.name,
-              ),
-            ),
-            l10n: l10n,
-          ),
-          ChartsBlockedByMissingRates(:final previous) => _frame(
-            context,
-            controller,
-            selection,
-            body: previous == null
-                ? _inCard(
-                    selection,
-                    selectionNotifier,
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 24,
-                        horizontal: 16,
-                      ),
-                      child: Center(child: Text(l10n.chartsRatesRequired)),
-                    ),
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      MaterialBanner(
-                        content: Text(l10n.chartsRatesRequired),
-                        actions: [
-                          TextButton(
-                            onPressed: controller.retry,
-                            child: const Text('Retry'),
-                          ),
-                        ],
-                      ),
-                      _ChartBody(
-                        data: previous,
-                        locale: locale,
-                        currencies: currenciesAsync.value ?? const {},
-                      ),
-                    ],
-                  ),
-            l10n: l10n,
-            chartData: previous,
-            locale: locale,
-          ),
-          ChartsDataState(:final chartData) => _frame(
-            context,
-            controller,
-            selection,
-            body: _ChartBody(
-              data: chartData,
-              locale: locale,
-              currencies: currenciesAsync.value ?? const {},
-            ),
-            l10n: l10n,
-            chartData: chartData,
-            locale: locale,
-          ),
-          ChartsError(:final error) => _frame(
-            context,
-            controller,
-            selection,
-            body: _inCard(
-              selection,
-              selectionNotifier,
-              _errorBody(error, controller),
-            ),
-            l10n: l10n,
-          ),
-        },
+        loading: () => forState(const ChartsState.loading()),
+        error: (e, st) => forState(ChartsState.error(e, st)),
+        data: forState,
       ),
     );
 
@@ -340,125 +424,6 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
     padding: EdgeInsets.symmetric(vertical: 24),
     child: Center(child: CircularProgressIndicator()),
   );
-
-  Widget _errorBody(Object error, ChartsController controller) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text('$error'),
-        const SizedBox(height: 8),
-        TextButton(onPressed: controller.retry, child: const Text('Retry')),
-      ],
-    ),
-  );
-
-  /// A body without chart data (loading, empty, blocked, error) inside the
-  /// breakdown card, so the title and dimension chips stay in place.
-  Widget _inCard(
-    ChartsSelection selection,
-    ChartsSelectionController selectionNotifier,
-    Widget child,
-  ) => ChartsBreakdownCard(
-    type: selection.type,
-    dimension: selection.dimension,
-    onDimensionChanged: selectionNotifier.setDimension,
-    child: child,
-  );
-
-  Widget _frame(
-    BuildContext context,
-    ChartsController controller,
-    ChartsSelection selection, {
-    required Widget body,
-    required AppLocalizations l10n,
-    ChartsData? chartData,
-    String? locale,
-  }) {
-    // The slide key reads the period and anchor from the live selection, not
-    // `chartData`. During loading the `previous` data still has the *old*
-    // period; in the empty/blocked/error variants `chartData` is null.
-    final period = selection.period;
-    final anchor = selection.anchorDate;
-
-    // Wrap the chart body in a SlideTransition keyed on (period, anchor)
-    // so the body slides in from the swipe direction every time those
-    // values change. Mirrors `home_screen.dart`'s day-switch animation.
-    final animatedBody = SlideTransition(
-      position: _incomingOffset,
-      child: KeyedSubtree(
-        key: ValueKey<String>('${period.name}|${anchor.toIso8601String()}'),
-        child: body,
-      ),
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const SizedBox(height: 16),
-        const ChartsSummaryCard(),
-        const SizedBox(height: 12),
-        if (chartData?.autoSwitchedFromCategoryDimension ?? false)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: MaterialBanner(
-              content: Text(l10n.chartsAutoSwitchedToCurrency),
-              actions: [
-                TextButton(
-                  onPressed: controller.dismissAutoSwitchBanner,
-                  child: Text(
-                    MaterialLocalizations.of(context).closeButtonLabel,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        if ((chartData?.excludedCurrencyCodes ?? const <String>[]).isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: MaterialBanner(
-              content: Text(
-                l10n.chartsExcludedCurrencies(
-                  chartData!.excludedCurrencyCodes.join(', '),
-                ),
-              ),
-              actions: const [SizedBox.shrink()],
-            ),
-          ),
-        if (chartData?.mixedCurrencies ?? false)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Text(
-              l10n.chartsMixedCurrencies,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ),
-        GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          // All has no other period to swipe to.
-          onHorizontalDragEnd: period == PeriodType.all
-              ? null
-              : _onHorizontalFling,
-          child: animatedBody,
-        ),
-        if (chartData != null)
-          Builder(
-            builder: (ctx) {
-              final sel = selection.selectedSlice;
-              if (sel == null) return const SizedBox.shrink();
-              final idx = chartData.slices.indexWhere(
-                (s) => s.selectionKey == sel,
-              );
-              if (idx == -1) return const SizedBox.shrink();
-              return SelectedSliceItemsList(
-                slice: chartData.slices[idx],
-                locale: locale ?? 'en',
-              );
-            },
-          ),
-      ],
-    );
-  }
 }
 
 @Dependencies([ChartsSelectionController, analysisAccountsById])
