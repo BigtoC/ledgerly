@@ -50,15 +50,8 @@ abstract class RecurringRuleFormState with _$RecurringRuleFormState {
     @Default(false) bool isLoading,
     int? pendingItemCount,
 
-    /// Full calculator snapshot used by `AmountDisplay`. Mirrors the
-    /// controller's private `_keypad` accumulator so widgets read keypad
-    /// data through `state`, not from a notifier getter.
+    /// Full calculator snapshot used by `AmountDisplay`.
     @Default(KeypadState.initial()) KeypadState keypad,
-
-    /// Bumped on every keypad mutation (digit, decimal, backspace,
-    /// operator) so the screen rebuilds even when `amountMinorUnits`
-    /// itself didn't change (decimal-start, operator press).
-    @Default(0) int keypadRevision,
     RecurringFormErrorKey? nameError,
     RecurringFormErrorKey? categoryError,
     RecurringFormErrorKey? accountError,

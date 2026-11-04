@@ -68,7 +68,7 @@ final class RecurringRuleFormControllerProvider
 }
 
 String _$recurringRuleFormControllerHash() =>
-    r'd39e30acf68a482439911ff1a9d2dd47e75b4a77';
+    r'eb79459fbe16961f550fcdf4e6631bceab39eb84';
 
 final class RecurringRuleFormControllerFamily extends $Family
     with
