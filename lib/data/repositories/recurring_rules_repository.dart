@@ -250,9 +250,7 @@ final class DriftRecurringRulesRepository implements RecurringRulesRepository {
       case 'weekly':
         return DateTime(current.year, current.month, current.day + 7);
       case 'monthly':
-        final nextMonth = current.month == 12 ? 1 : current.month + 1;
-        final nextYear = current.month == 12 ? current.year + 1 : current.year;
-        return _clampDay(nextYear, nextMonth, rule.dayOfMonth!);
+        return _clampDay(current.year, current.month + 1, rule.dayOfMonth!);
       case 'yearly':
         final nextYear = current.year + 1;
         return _clampDay(nextYear, rule.monthOfYear!, rule.dayOfMonth!);
@@ -375,9 +373,7 @@ final class DriftRecurringRulesRepository implements RecurringRulesRepository {
     if (!from.isAfter(clampedThisMonth)) {
       return clampedThisMonth;
     }
-    final nextMonth = from.month == 12 ? 1 : from.month + 1;
-    final nextYear = from.month == 12 ? from.year + 1 : from.year;
-    return _clampDay(nextYear, nextMonth, dayOfMonth);
+    return _clampDay(from.year, from.month + 1, dayOfMonth);
   }
 
   /// Find the next date on or after [from] whose (month, day) match,
@@ -391,7 +387,8 @@ final class DriftRecurringRulesRepository implements RecurringRulesRepository {
   }
 
   /// Clamp [day] to the last day of [year]-[month] and return as a
-  /// midnight DateTime.
+  /// midnight DateTime. [month] may be 13: DateTime rolls it into
+  /// January of the next year.
   DateTime _clampDay(int year, int month, int day) {
     final lastDay = DateTime(year, month + 1, 0).day;
     final clamped = day > lastDay ? lastDay : day;

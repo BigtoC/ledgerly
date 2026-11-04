@@ -150,6 +150,17 @@ void main() {
         expect(rule!.nextDueDate, DateTime(2026, 6, 15));
       });
 
+      test('monthly when day already passed in December rolls into '
+          'January of the next year', () async {
+        final today = DateTime(2026, 12, 20);
+        final id = await repo.insert(
+          draft(frequency: 'monthly', dayOfMonth: 15),
+          today: today,
+        );
+        final rule = await repo.getById(id);
+        expect(rule!.nextDueDate, DateTime(2027, 1, 15));
+      });
+
       test('yearly with leap-year clamping', () async {
         final today = DateTime(2026, 1, 1);
         final id = await repo.insert(
@@ -259,6 +270,18 @@ void main() {
         expect(next, DateTime(2026, 4, 30)); // Clamped.
         final next2 = repo.advanceDateByFrequency(rule, next);
         expect(next2, DateTime(2026, 5, 31));
+      });
+
+      test('advanceDateByFrequency monthly from December', () async {
+        final id = await repo.insert(
+          draft(frequency: 'monthly', dayOfMonth: 31),
+          today: DateTime(2026, 12, 31),
+        );
+        final rule = (await repo.getById(id))!;
+        expect(
+          repo.advanceDateByFrequency(rule, DateTime(2026, 12, 31)),
+          DateTime(2027, 1, 31),
+        );
       });
 
       test('fastForwardToRecent advances past today', () async {
