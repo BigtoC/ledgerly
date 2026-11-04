@@ -1,5 +1,5 @@
-// `CsvImportUseCase` — loads a Fortune City CSV export and commits it in
-// one Drift transaction.
+// `CsvImportUseCase` — loads a Fortune City or Ledgerly CSV export and
+// commits it in one Drift transaction.
 //
 // A use case because the commit coordinates four
 // repositories inside one `db.transaction`, the role
@@ -77,9 +77,13 @@ _loadInBackground(Uint8List bytes, Map<String, Currency> currencies) =>
     }
     final int amount;
     try {
+      // Fortune City writes floats (`23.6000003814697`), so its amounts
+      // round to cents; Ledgerly writes exact amounts (rows with a type).
       amount = decimalStringToMinorUnits(
         row.amountText,
-        scale: math.min(2, currency.decimals),
+        scale: row.type == null
+            ? math.min(2, currency.decimals)
+            : currency.decimals,
         decimals: currency.decimals,
       );
     } on FormatException {
@@ -106,6 +110,8 @@ _loadInBackground(Uint8List bytes, Map<String, Currency> currencies) =>
         currency: currency,
         recordedAt: row.recordedAt,
         memo: row.memo,
+        type: row.type,
+        date: row.date,
       ),
     );
   }
@@ -296,7 +302,7 @@ class CsvImportUseCase {
               currency: row.currency,
               categoryId: categoryIdFor(row),
               accountId: accountIds[row.account]!,
-              date: DateHelpers.startOfDay(row.recordedAt),
+              date: row.date ?? DateHelpers.startOfDay(row.recordedAt),
               memo: row.memo,
               createdAt: row.recordedAt,
               // Replaced by the repository's clock.

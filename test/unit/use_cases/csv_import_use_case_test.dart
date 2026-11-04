@@ -15,6 +15,7 @@ import 'package:ledgerly/data/database/app_database.dart'
 import 'package:ledgerly/domain/models/account.dart';
 import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/domain/models/csv_import.dart';
+import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/domain/models/transaction.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/account_type_repository.dart';
@@ -863,6 +864,65 @@ void main() {
         expect(again.rowsToImport, isEmpty);
         expect(again.validRows, hasLength(2500));
       });
+    });
+  });
+
+  group('Ledgerly export', () {
+    Uint8List ledgerlyCsv(List<String> rows) => Uint8List.fromList(
+      utf8.encode(
+        [
+          'id,date,type,amount,currency,category,account,memo,'
+              'created_at,updated_at',
+          ...rows,
+        ].join('\n'),
+      ),
+    );
+
+    test('amounts keep every decimal of the currency', () async {
+      await currencies.upsert(const Currency(code: 'BHD', decimals: 3));
+      final load = (await useCaseWith(
+        _serviceFor(
+          ledgerlyCsv([
+            '1,2026-10-29T00:00:00+08:00,expense,1.235,BHD,Food,Cash,,'
+                '2026-10-30T14:31:05+08:00,2026-10-30T14:31:05+08:00',
+          ]),
+        ),
+      ).pickAndLoad())!;
+
+      final row = load.validRows.single;
+      expect(row.amountMinorUnits, 1235);
+      expect(row.type, CategoryType.expense);
+      expect(row.date, DateTime(2026, 10, 29));
+    });
+
+    test('commit writes date from the date column and createdAt from '
+        'created_at, and a re-import finds the row again', () async {
+      final useCase = useCaseWith(
+        _serviceFor(
+          ledgerlyCsv([
+            '1,2026-10-29T00:00:00+08:00,expense,12.34,HKD,Food,Cash,lunch,'
+                '2026-10-30T14:31:05+08:00,2026-10-31T09:00:00+08:00',
+          ]),
+        ),
+      );
+      final load = (await useCase.pickAndLoad())!;
+      final cash = (await accounts.watchAll().first).single;
+      final food = await categoryIdFor('category.food');
+
+      await useCase.commit(
+        CsvImportPlan(
+          rows: load.validRows,
+          accounts: {'Cash': AccountResolution.existing(cash.id)},
+          categories: {'Food': CategoryResolution.existing(food)},
+          salaryNotes: _salaryNotes,
+        ),
+      );
+
+      final stored = (await allTransactionRows()).single;
+      expect(stored.date, DateTime(2026, 10, 29));
+      expect(stored.createdAt, DateTime.utc(2026, 10, 30, 6, 31, 5).toLocal());
+      expect(stored.amountMinorUnits, 1234);
+      expect((await useCase.pickAndLoad())!.rowsToImport, isEmpty);
     });
   });
 }

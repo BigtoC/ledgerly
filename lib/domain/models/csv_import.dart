@@ -139,14 +139,21 @@ abstract class CsvImportRow with _$CsvImportRow {
     /// Trimmed CSV Category value; keys [CsvImportPlan.categories].
     required String category,
 
-    /// Rounded half-up, always > 0.
+    /// Rounded half-up (Fortune City to at most 2 decimals, Ledgerly to
+    /// the currency's), always > 0.
     required int amountMinorUnits,
     required Currency currency,
 
-    /// Recorded At as device-local time. Becomes `createdAt`; its day
-    /// becomes `date`.
+    /// Recorded At (Ledgerly: `created_at`) as device-local time.
+    /// Becomes `createdAt`, and its day becomes `date` unless [date] is set.
     required DateTime recordedAt,
     String? memo,
+
+    /// See [ParsedCsvRow.type]; null for Fortune City.
+    CategoryType? type,
+
+    /// See [ParsedCsvRow.date]; null for Fortune City.
+    DateTime? date,
   }) = _CsvImportRow;
 }
 
