@@ -24,6 +24,7 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../../domain/models/category.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/undo_snack_bar.dart';
 import '../view_models/categories_controller.dart';
 import '../view_models/categories_state.dart';
@@ -211,24 +212,14 @@ class _Section extends ConsumerWidget {
     Category cat,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.categoriesDeleteConfirmTitle),
-        content: Text(l10n.categoriesDeleteConfirmBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton.tonal(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.commonDelete),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: l10n.categoriesDeleteConfirmTitle,
+      body: l10n.categoriesDeleteConfirmBody,
+      confirmLabel: l10n.commonDelete,
+      tonal: true,
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
     if (!context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     final outcome = await ref

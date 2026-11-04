@@ -14,6 +14,7 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 import '../../../../domain/models/account.dart';
 import '../../../../domain/models/category.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../core/widgets/confirm_dialog.dart';
 import '../../categories/view_models/categories_controller.dart';
 import '../../categories/views/category_picker.dart';
 import '../../transactions/view_models/transactions_providers.dart';
@@ -287,23 +288,12 @@ class _FormBody extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final navigator = GoRouter.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        content: Text(l10n.recurringDeleteConfirm),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.recurringDeleteRule),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      body: l10n.recurringDeleteConfirm,
+      confirmLabel: l10n.recurringDeleteRule,
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
     if (!context.mounted) return;
     final outcome = await controller.deleteRule();
     if (!context.mounted) return;

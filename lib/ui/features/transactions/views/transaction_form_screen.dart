@@ -37,6 +37,7 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../../l10n/app_localizations.dart';
+import '../../../core/widgets/confirm_dialog.dart';
 import '../../categories/view_models/categories_controller.dart';
 import '../../categories/views/category_picker.dart';
 import '../view_models/transaction_form_controller.dart';
@@ -115,7 +116,12 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
         if (_blocksPopDuringMutation(state)) return;
-        final shouldDiscard = await _confirmDiscard(context, l10n);
+        final shouldDiscard = await showConfirmDialog(
+          context,
+          title: l10n.txDiscardConfirmTitle,
+          body: l10n.txDiscardConfirmBody,
+          confirmLabel: l10n.txDiscardAction,
+        );
         if (shouldDiscard && context.mounted) {
           context.pop();
         }
@@ -401,30 +407,6 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     return !_isDirty(state);
   }
 
-  Future<bool> _confirmDiscard(
-    BuildContext context,
-    AppLocalizations l10n,
-  ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.txDiscardConfirmTitle),
-        content: Text(l10n.txDiscardConfirmBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.txDiscardAction),
-          ),
-        ],
-      ),
-    );
-    return confirmed ?? false;
-  }
-
   Future<void> _save(
     BuildContext context,
     AppLocalizations l10n,
@@ -535,10 +517,11 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
         state.amountMinorUnits > 0 || state.keypad.hasVisibleInput;
 
     if (currencyChanges && hasDestructiveInput) {
-      final confirmed = await _confirmCurrencyChange(
+      final confirmed = await showConfirmDialog(
         context,
-        l10n,
-        l10n.txCurrencyChangeConfirmBody,
+        title: l10n.txCurrencyChangeConfirmTitle,
+        body: l10n.txCurrencyChangeConfirmBody,
+        confirmLabel: l10n.txCurrencyChangeConfirmAction,
       );
       if (!context.mounted) return;
       if (!confirmed) return;
@@ -561,10 +544,11 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
         state.amountMinorUnits > 0 || state.keypad.hasVisibleInput;
 
     if (currencyChanges && hasDestructiveInput) {
-      final confirmed = await _confirmCurrencyChange(
+      final confirmed = await showConfirmDialog(
         context,
-        l10n,
-        l10n.txCurrencyPickerChangeConfirmBody,
+        title: l10n.txCurrencyChangeConfirmTitle,
+        body: l10n.txCurrencyPickerChangeConfirmBody,
+        confirmLabel: l10n.txCurrencyChangeConfirmAction,
       );
       if (!context.mounted) return;
       if (!confirmed) return;
@@ -572,31 +556,6 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       return;
     }
     controller.selectCurrency(picked);
-  }
-
-  Future<bool> _confirmCurrencyChange(
-    BuildContext context,
-    AppLocalizations l10n,
-    String body,
-  ) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.txCurrencyChangeConfirmTitle),
-        content: Text(body),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.txCurrencyChangeConfirmAction),
-          ),
-        ],
-      ),
-    );
-    return ok ?? false;
   }
 
   void _onCreateAccount(
