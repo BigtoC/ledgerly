@@ -113,7 +113,7 @@ final class DriftAccountTypeRepository implements AccountTypeRepository {
   Stream<List<AccountType>> watchAll({bool includeArchived = false}) {
     // §12 Q6: branch at the DAO boundary — skip archived-row currency
     // lookups when the caller does not want them.
-    final rowsStream = includeArchived ? _dao.watchAll() : _dao.watchActive();
+    final rowsStream = _dao.watchAll(includeArchived: includeArchived);
     return rowsStream.asyncMap((rows) async {
       final codes = rows
           .map((r) => r.defaultCurrency)

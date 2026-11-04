@@ -15,34 +15,22 @@ class AccountTypeDao extends DatabaseAccessor<AppDatabase>
     with _$AccountTypeDaoMixin {
   AccountTypeDao(super.db);
 
-  /// Watch every account type, **including archived rows**. Backs the
-  /// settings / admin view.
-  Stream<List<AccountTypeRow>> watchAll() {
-    return (select(accountTypes)..orderBy([
-          (t) => OrderingTerm(
-            expression: t.sortOrder,
-            mode: OrderingMode.asc,
-            nulls: NullsOrder.last,
-          ),
-          (t) => OrderingTerm(expression: t.id),
-        ]))
-        .watch();
-  }
-
-  /// Watch non-archived account types — feeds the account-type picker
-  /// in the Add/Edit Account form.
-  Stream<List<AccountTypeRow>> watchActive() {
-    return (select(accountTypes)
-          ..where((t) => t.isArchived.equals(false))
-          ..orderBy([
-            (t) => OrderingTerm(
-              expression: t.sortOrder,
-              mode: OrderingMode.asc,
-              nulls: NullsOrder.last,
-            ),
-            (t) => OrderingTerm(expression: t.id),
-          ]))
-        .watch();
+  /// Watch every account type, optionally excluding archived rows.
+  /// Ordered by `sort_order` (NULLs last), then `id` ascending.
+  Stream<List<AccountTypeRow>> watchAll({bool includeArchived = false}) {
+    final query = select(accountTypes);
+    if (!includeArchived) {
+      query.where((t) => t.isArchived.equals(false));
+    }
+    query.orderBy([
+      (t) => OrderingTerm(
+        expression: t.sortOrder,
+        mode: OrderingMode.asc,
+        nulls: NullsOrder.last,
+      ),
+      (t) => OrderingTerm(expression: t.id),
+    ]);
+    return query.watch();
   }
 
   Future<AccountTypeRow?> findById(int id) {
