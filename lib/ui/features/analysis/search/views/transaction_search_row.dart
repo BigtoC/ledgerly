@@ -67,7 +67,7 @@ class TransactionSearchRow extends StatelessWidget {
   final String? convertedAmount;
 
   /// Label shown above the secondary booked amount when [convertedAmount]
-  /// is non-null. Typically `l10n.analysisOriginalAmount`.
+  /// is non-null.
   final String? originalAmountLabel;
 
   @override

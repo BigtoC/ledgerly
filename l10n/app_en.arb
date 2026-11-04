@@ -43,10 +43,6 @@
   "@txDiscardAction": {
     "description": "PRD 689. Confirm-discard dialog positive action when abandoning unsaved transaction-form edits. Wave 4 §3.2 rename: was commonDiscard — only used by transactions slice."
   },
-  "txKeypadDone": "Done",
-  "@txKeypadDone": {
-    "description": "Calculator keypad close affordance on the transaction form. Wave 4 §3.2 rename: was commonDone — only used by transactions slice (keypad sheet)."
-  },
 
   "transactionTypeExpense": "Expense",
   "@transactionTypeExpense": {
@@ -604,10 +600,6 @@
   "@homeJumpToToday": {
     "description": "Button shown in SummaryStrip when selectedDay is not today."
   },
-  "homeDaySkeletonLabel": "Loading day",
-  "@homeDaySkeletonLabel": {
-    "description": "Wave 3 §4.2. Accessibility label for a transient Home day-loading placeholder. Reserved for loading affordances."
-  },
   "homeDeleteUndoSnackbar": "Transaction deleted",
   "@homeDeleteUndoSnackbar": {
     "description": "Wave 3 §8. SnackBar text shown after a swipe / overflow delete; the action button is `commonUndo`."
@@ -850,11 +842,6 @@
   "@analysisDrilldownShowMore": {
     "description": "TextButton label below the slice drill-down rows that renders the next page of rows. {count} is how many rows the tap reveals: the page size, or fewer on the last page.",
     "placeholders": { "count": { "type": "int" } }
-  },
-
-  "analysisOriginalAmount": "Original amount",
-  "@analysisOriginalAmount": {
-    "description": "Label for the booked transaction amount shown as the secondary amount on FX-converted drill-down rows"
   },
 
   "analysisRatesStale": "Using last known exchange rates",

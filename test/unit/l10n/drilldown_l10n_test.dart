@@ -10,24 +10,21 @@ Future<AppLocalizations> _resolve(Locale locale) async {
 }
 
 void main() {
-  test('English: drilldown empty / original amount / stale rates', () async {
+  test('English: drilldown empty / stale rates', () async {
     final l10n = await _resolve(const Locale('en'));
     expect(l10n.analysisDrilldownEmpty, isNotEmpty);
-    expect(l10n.analysisOriginalAmount, isNotEmpty);
     expect(l10n.analysisRatesStale, isNotEmpty);
   });
 
   test('zh-CN keys resolve to non-empty strings', () async {
     final l10n = await _resolve(const Locale('zh', 'CN'));
     expect(l10n.analysisDrilldownEmpty, isNotEmpty);
-    expect(l10n.analysisOriginalAmount, isNotEmpty);
     expect(l10n.analysisRatesStale, isNotEmpty);
   });
 
   test('zh-TW keys resolve to non-empty strings', () async {
     final l10n = await _resolve(const Locale('zh', 'TW'));
     expect(l10n.analysisDrilldownEmpty, isNotEmpty);
-    expect(l10n.analysisOriginalAmount, isNotEmpty);
     expect(l10n.analysisRatesStale, isNotEmpty);
   });
 

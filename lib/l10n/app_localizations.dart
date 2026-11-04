@@ -160,12 +160,6 @@ abstract class AppLocalizations {
   /// **'Discard'**
   String get txDiscardAction;
 
-  /// Calculator keypad close affordance on the transaction form. Wave 4 §3.2 rename: was commonDone — only used by transactions slice (keypad sheet).
-  ///
-  /// In en, this message translates to:
-  /// **'Done'**
-  String get txKeypadDone;
-
   /// PRD 683. Expense/income segmented control — expense option.
   ///
   /// In en, this message translates to:
@@ -970,12 +964,6 @@ abstract class AppLocalizations {
   /// **'Jump to today'**
   String get homeJumpToToday;
 
-  /// Wave 3 §4.2. Accessibility label for a transient Home day-loading placeholder. Reserved for loading affordances.
-  ///
-  /// In en, this message translates to:
-  /// **'Loading day'**
-  String get homeDaySkeletonLabel;
-
   /// Wave 3 §8. SnackBar text shown after a swipe / overflow delete; the action button is `commonUndo`.
   ///
   /// In en, this message translates to:
@@ -1311,12 +1299,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Show {count} more'**
   String analysisDrilldownShowMore(int count);
-
-  /// Label for the booked transaction amount shown as the secondary amount on FX-converted drill-down rows
-  ///
-  /// In en, this message translates to:
-  /// **'Original amount'**
-  String get analysisOriginalAmount;
 
   /// Inline label shown when drill-down converted amounts are derived from stale cached FX rates
   ///

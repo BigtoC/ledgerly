@@ -65,7 +65,6 @@ void main() {
         // Slice-owned action labels promoted out of `common*`.
         expect(l10n.categoriesArchiveAction, isNotEmpty);
         expect(l10n.txDiscardAction, isNotEmpty);
-        expect(l10n.txKeypadDone, isNotEmpty);
 
         // Transaction type toggles.
         expect(l10n.transactionTypeExpense, isNotEmpty);
