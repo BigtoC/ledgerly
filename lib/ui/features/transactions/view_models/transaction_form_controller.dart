@@ -36,6 +36,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../app/providers/default_currency_provider.dart';
 import '../../../../app/providers/repository_providers.dart';
+import '../../../../core/utils/date_helpers.dart';
 import '../../../../data/repositories/category_repository.dart';
 import '../../../../domain/models/account.dart';
 import '../../../../domain/models/category.dart';
@@ -123,9 +124,7 @@ class TransactionFormController extends _$TransactionFormController {
         displayCurrency: account.currency,
         currencyTouched: false,
         selectedCategory: null,
-        date: initialDate == null
-            ? _today()
-            : DateTime(initialDate.year, initialDate.month, initialDate.day),
+        date: DateHelpers.startOfDay(initialDate ?? DateTime.now()),
         memo: '',
       );
     } catch (e, st) {
@@ -492,7 +491,7 @@ class TransactionFormController extends _$TransactionFormController {
   void setDate(DateTime date) {
     final s = state;
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
-    final normalized = DateTime(date.year, date.month, date.day);
+    final normalized = DateHelpers.startOfDay(date);
     if (normalized.isAtSameMomentAs(s.date)) return;
     state = s.copyWith(date: normalized, isDirty: true);
   }
@@ -832,7 +831,7 @@ class TransactionFormController extends _$TransactionFormController {
       displayCurrency: account.currency,
       currencyTouched: false,
       selectedCategory: category,
-      date: _today(),
+      date: DateHelpers.startOfDay(DateTime.now()),
       memo: source.memo ?? '',
     );
   }
@@ -854,10 +853,5 @@ class TransactionFormController extends _$TransactionFormController {
       if (keypad.amountMinorUnits == amountMinorUnits) return keypad;
     }
     return KeypadState.fromAmount(amountMinorUnits, decimals: decimals);
-  }
-
-  static DateTime _today() {
-    final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day);
   }
 }
