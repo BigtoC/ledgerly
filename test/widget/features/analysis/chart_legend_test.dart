@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/core/utils/color_palette.dart';
 import 'package:ledgerly/core/utils/icon_registry.dart';
@@ -52,12 +51,7 @@ const _slices = [
 
 Widget _wrap(Widget child, {double textScale = 1}) => MaterialApp(
   theme: lightTheme,
-  localizationsDelegates: const [
-    AppLocalizations.delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-  ],
+  localizationsDelegates: AppLocalizations.localizationsDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
   builder: (context, app) => MediaQuery(
     data: MediaQuery.of(context)

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
@@ -14,12 +13,7 @@ const _colors = AnalysisColors.light;
 
 Widget _wrap(Widget child, {double textScale = 1}) => MaterialApp(
   theme: lightTheme,
-  localizationsDelegates: const [
-    AppLocalizations.delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-  ],
+  localizationsDelegates: AppLocalizations.localizationsDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
   builder: (context, app) => MediaQuery(
     data: MediaQuery.of(context)

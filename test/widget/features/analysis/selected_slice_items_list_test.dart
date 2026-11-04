@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -148,12 +147,6 @@ Widget _harness({
             ),
     ),
   );
-  const delegates = [
-    AppLocalizations.delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-  ];
   Widget scaled(BuildContext context, Widget? child) => MediaQuery(
     data: MediaQuery.of(context)
         .copyWith(textScaler: TextScaler.linear(textScale)),
@@ -164,7 +157,7 @@ Widget _harness({
     child: withEditRoute
         ? MaterialApp.router(
             theme: lightTheme,
-            localizationsDelegates: delegates,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             builder: scaled,
             routerConfig: GoRouter(
@@ -180,7 +173,7 @@ Widget _harness({
           )
         : MaterialApp(
             theme: lightTheme,
-            localizationsDelegates: delegates,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             builder: scaled,
             home: body,
