@@ -121,7 +121,7 @@ void main() {
       );
 
   Future<int> categoryIdFor(String l10nKey) async =>
-      (await categories.getByL10nKey(l10nKey))!.id;
+      (await db.categoryDao.findByL10nKey(l10nKey))!.id;
 
   /// The plan the matcher would build for the sample on a fresh en_US
   /// install, with Credit Card sent to [creditCard].
@@ -136,7 +136,7 @@ void main() {
     final cash = (await accounts.watchAll().first).singleWhere(
       (a) => a.name == kSeededCashAccountName,
     );
-    final investmentType = (await accountTypes.getByL10nKey(
+    final investmentType = (await db.accountTypeDao.findByL10nKey(
       'accountType.investment',
     ))!;
     return CsvImportPlan(
@@ -407,7 +407,7 @@ void main() {
       final investment = allAccounts.singleWhere((a) => a.name == 'Investment');
       expect(
         investment.accountTypeId,
-        (await accountTypes.getByL10nKey('accountType.investment'))!.id,
+        (await db.accountTypeDao.findByL10nKey('accountType.investment'))!.id,
       );
       expect(
         {creditCard.sortOrder, investment.sortOrder},
@@ -532,8 +532,9 @@ void main() {
 
     test('re-importing after a commit finds 105 duplicates even when the '
         'chosen account was archived since', () async {
-      final cardTypeId = (await accountTypes.getByL10nKey('accountType.cash'))!
-          .id;
+      final cardTypeId = (await db.accountTypeDao.findByL10nKey(
+        'accountType.cash',
+      ))!.id;
       final hkd = (await currencies.getByCode('HKD'))!;
       final cardId = await accounts.save(
         Account(

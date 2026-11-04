@@ -199,9 +199,7 @@ Future<Account> createTestAccount(
 ///
 /// Seeded keys: `'accountType.cash'`, `'accountType.investment'`.
 Future<int> getAccountTypeId(AppDatabase db, String l10nKey) async {
-  final currencies = DriftCurrencyRepository(db);
-  final types = DriftAccountTypeRepository(db, currencies);
-  final type = await types.getByL10nKey(l10nKey);
+  final type = await db.accountTypeDao.findByL10nKey(l10nKey);
   if (type == null) throw StateError('AccountType $l10nKey not seeded');
   return type.id;
 }
@@ -211,7 +209,7 @@ Future<int> getAccountTypeId(AppDatabase db, String l10nKey) async {
 ///
 /// Example seeded keys: `'category.food'`, `'category.income.salary'`.
 Future<int> getSeededCategoryId(AppDatabase db, String l10nKey) async {
-  final cat = await DriftCategoryRepository(db).getByL10nKey(l10nKey);
+  final cat = await db.categoryDao.findByL10nKey(l10nKey);
   if (cat == null) throw StateError('Category $l10nKey not seeded');
   return cat.id;
 }

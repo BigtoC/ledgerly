@@ -94,9 +94,6 @@ abstract class CategoryRepository {
   /// One-shot read by id.
   Future<Category?> getById(int id);
 
-  /// One-shot read by `l10nKey`.
-  Future<Category?> getByL10nKey(String l10nKey);
-
   /// Seed-only insert-or-update keyed by `l10nKey`. Used by Stream C's
   /// first-run seed to make seeded category writes idempotent without
   /// routing through the user-facing `save(Category)` path.
@@ -188,12 +185,6 @@ final class DriftCategoryRepository implements CategoryRepository {
   @override
   Future<Category?> getById(int id) async {
     final row = await _dao.findById(id);
-    return row == null ? null : _toDomain(row);
-  }
-
-  @override
-  Future<Category?> getByL10nKey(String l10nKey) async {
-    final row = await _dao.findByL10nKey(l10nKey);
     return row == null ? null : _toDomain(row);
   }
 

@@ -243,18 +243,6 @@ void main() {
     });
   });
 
-  group('getByL10nKey', () {
-    test('C-happy-02: seeded lookup returns row; unknown key → null', () async {
-      final found = await catRepo.getByL10nKey('category.food');
-      expect(found, isNotNull);
-      expect(found!.l10nKey, 'category.food');
-      expect(found.type, CategoryType.expense);
-
-      final miss = await catRepo.getByL10nKey('not.a.key');
-      expect(miss, isNull);
-    });
-  });
-
   group('upsertSeeded', () {
     test('C-seed-01: seeds category.food into an empty DB', () async {
       // Fresh DB without the pre-seeded categories.

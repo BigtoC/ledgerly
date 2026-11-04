@@ -279,7 +279,9 @@ void main() {
         'is integer 0 (G4)', () async {
       await h.seed('en_US');
 
-      final cashType = await h.accountTypes.getByL10nKey('accountType.cash');
+      final cashType = await h.db.accountTypeDao.findByL10nKey(
+        'accountType.cash',
+      );
       expect(cashType, isNotNull);
 
       final accounts = await h.accounts.watchAll().first;
@@ -492,10 +494,6 @@ class _ThrowingCategoryRepository implements CategoryRepository {
 
   @override
   Future<Category?> getById(int id) => _inner.getById(id);
-
-  @override
-  Future<Category?> getByL10nKey(String l10nKey) =>
-      _inner.getByL10nKey(l10nKey);
 
   @override
   Future<Category> save(Category category) => _inner.save(category);

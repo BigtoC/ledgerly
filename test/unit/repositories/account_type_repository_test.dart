@@ -170,7 +170,7 @@ void main() {
 
       await repo.updateCustomName(id, 'Wallet');
 
-      final found = await repo.getByL10nKey('accountType.cash');
+      final found = await repo.getById(id);
       expect(found, isNotNull);
       expect(found!.id, id);
       expect(found.customName, 'Wallet');
@@ -191,7 +191,7 @@ void main() {
       await repo.updateCustomName(id, 'Wallet');
       await repo.updateCustomName(id, 'My Cash');
 
-      final found = await repo.getByL10nKey('accountType.cash');
+      final found = await repo.getById(id);
       expect(found!.customName, 'My Cash');
       expect(found.l10nKey, 'accountType.cash');
     });
@@ -430,7 +430,7 @@ void main() {
       );
       expect(id, isNonZero);
 
-      final fetched = await repo.getByL10nKey('accountType.cash');
+      final fetched = await repo.getById(id);
       expect(fetched, isNotNull);
       expect(fetched!.id, id);
       expect(fetched.icon, 'wallet');
@@ -465,7 +465,7 @@ void main() {
 
         expect(secondId, firstId);
 
-        final fetched = await repo.getByL10nKey('accountType.cash');
+        final fetched = await repo.getById(firstId);
         expect(fetched, isNotNull);
         expect(fetched!.id, firstId);
         expect(fetched.icon, 'money');
@@ -508,9 +508,6 @@ void main() {
       expect(fetched!.l10nKey, 'accountType.cash');
       // Other mutable fields updated.
       expect(fetched.color, 11);
-      // Key-based lookup unchanged.
-      expect(await repo.getByL10nKey('accountType.cash'), isNotNull);
-      expect(await repo.getByL10nKey('accountType.wallet'), isNull);
     });
 
     test('AT22: upsertSeeded with unregistered defaultCurrency → '
@@ -533,7 +530,6 @@ void main() {
       );
 
       // Guardrail: row was not written.
-      expect(await repo.getByL10nKey('accountType.future'), isNull);
       expect(await repo.watchAll(includeArchived: true).first, isEmpty);
     });
   });
