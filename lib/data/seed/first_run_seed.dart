@@ -510,24 +510,16 @@ Future<void> _seedPreferences(
 // top-level helper rather than extending `LocaleService` (Stream C plan
 // §2.3 Step 2 decision + §5 Task C3).
 
-/// Resolves the device locale to a seeded ISO 4217 code. Region-specific
-/// mappings win over language-only fallbacks; language-only fallbacks
-/// exist only for `en`, `zh`, `ja` (the three languages whose regional
-/// mappings all collapse to the same default). Every other locale falls
-/// through to the documented `USD` global fallback — language-prefix
-/// fallbacks for `de_*`/`fr_*`/`es_*`/`it_*` → EUR were removed 2026-04-22
-/// per the "language should not affect fiat" policy (§12 Q6).
+/// Resolves the device locale to a seeded ISO 4217 code. Only `en_GB`,
+/// `zh_TW` and `zh_HK`/`zh_MO` need an exact match; any other `zh_*` or
+/// `ja_*` locale falls back on its language (CNY, JPY). Every other locale,
+/// `en_CA`/`en_AU`/`en_NZ` included, gets the global `USD` fallback:
+/// language should not affect fiat, so `de_*`/`fr_*`/`es_*`/`it_*`
+/// deliberately map to USD rather than EUR (§12 Q6).
 String defaultCurrencyForLocale(String rawLocale) {
   // BCP-47 accepts both `-` and `_`; normalise to `_`.
   final normalized = rawLocale.replaceAll('-', '_');
-
-  // Exact-match fast path.
   switch (normalized) {
-    case 'en_US':
-    case 'en_CA':
-    case 'en_AU':
-    case 'en_NZ':
-      return 'USD';
     case 'en_GB':
       return 'GBP';
     case 'zh_TW':
@@ -535,28 +527,10 @@ String defaultCurrencyForLocale(String rawLocale) {
     case 'zh_HK':
     case 'zh_MO':
       return 'HKD';
-    case 'zh_CN':
-    case 'zh_SG':
-    case 'zh':
-      return 'CNY';
-    case 'ja_JP':
-    case 'ja':
-      return 'JPY';
   }
-
-  // Language-only prefix fallback. Retained only for `en` / `zh` / `ja`
-  // because their explicit regional mappings above all collapse to the
-  // same default. `de` / `fr` / `es` / `it` are intentionally absent.
-  final lang = normalized.split('_').first;
-  switch (lang) {
-    case 'en':
-      return 'USD';
-    case 'zh':
-      return 'CNY';
-    case 'ja':
-      return 'JPY';
-  }
-
-  // Documented global fallback.
-  return 'USD';
+  return switch (normalized.split('_').first) {
+    'zh' => 'CNY',
+    'ja' => 'JPY',
+    _ => 'USD',
+  };
 }
