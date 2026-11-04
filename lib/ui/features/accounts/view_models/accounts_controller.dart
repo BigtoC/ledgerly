@@ -191,20 +191,12 @@ class _AccountsComposer {
     _accountsSub = null;
     await _defaultSub?.cancel();
     _defaultSub = null;
-    final subs = List<StreamSubscription<Map<String, int>>>.from(
-      _balanceSubs.values,
-    );
-    final referenceSubs = List<StreamSubscription<bool>>.from(
-      _referenceSubs.values,
-    );
+    final subs = [..._balanceSubs.values, ..._referenceSubs.values];
     _balanceSubs.clear();
     _referenceSubs.clear();
     _balances.clear();
     _references.clear();
     for (final sub in subs) {
-      await sub.cancel();
-    }
-    for (final sub in referenceSubs) {
       await sub.cancel();
     }
   }
