@@ -46,8 +46,6 @@ class SplashScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-
     // The launch-time start-date prompt is selected upstream of the
     // controller's sealed state because it is driven by a raw pref, not
     // by the computed day-counter state (plan §4). We consult both the
@@ -59,7 +57,7 @@ class SplashScreen extends ConsumerWidget {
         ref.watch(splashStartDateProvider).value ?? initialStartDate;
 
     if (startDate == null) {
-      return _LaunchTimeStartDatePrompt(label: l10n.splashSetStartDate);
+      return const _LaunchTimeStartDatePrompt();
     }
 
     final state = ref.watch(splashControllerProvider);
@@ -186,9 +184,7 @@ class _SplashErrorSurface extends StatelessWidget {
 
 @Dependencies([splashClock, SplashController])
 class _LaunchTimeStartDatePrompt extends ConsumerWidget {
-  const _LaunchTimeStartDatePrompt({required this.label});
-
-  final String label;
+  const _LaunchTimeStartDatePrompt();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -234,7 +230,7 @@ class _LaunchTimeStartDatePrompt extends ConsumerWidget {
                       );
                   }
                 },
-                child: Text(label),
+                child: Text(AppLocalizations.of(context).splashSetStartDate),
               ),
             ),
           ),
