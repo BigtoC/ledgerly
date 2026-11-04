@@ -12,7 +12,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart'
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../../app/providers/repository_providers.dart';
-import '../../../../../core/utils/currency_converter.dart';
 import '../../../../../domain/models/currency.dart';
 import 'charts_providers.dart';
 import 'charts_range_providers.dart';
@@ -105,21 +104,14 @@ ChartsNetTotal? chartsNetTotal(Ref ref) {
   for (final MapEntry(key: code, value: totals) in byCurrency.entries) {
     hasExpense |= totals.expense != 0;
     hasIncome |= totals.income != 0;
-    final rate = fx.scaledRate(code);
-    if (rate == null) {
+    if (fx.scaledRate(code) == null) {
       excluded.add(code);
       continue;
     }
     hasExpenseRate |= totals.expense != 0;
     hasIncomeRate |= totals.income != 0;
-    int convert(int amount) => CurrencyConverter.convertMinorUnits(
-      amountMinorUnits: amount,
-      rateScaledE9: rate,
-      fromDecimals: currencies[code]?.decimals ?? 2,
-      toDecimals: to.decimals,
-    );
-    expense += convert(totals.expense);
-    income += convert(totals.income);
+    expense += fx.convert(totals.expense, code, currencies)!;
+    income += fx.convert(totals.income, code, currencies)!;
   }
   final allExcluded =
       byCurrency.isNotEmpty && excluded.length == byCurrency.length;

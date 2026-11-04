@@ -11,6 +11,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../../app/providers/default_currency_provider.dart';
 import '../../../../../app/providers/repository_providers.dart';
+import '../../../../../core/utils/currency_converter.dart';
 import '../../../../../data/repositories/exchange_rate_repository.dart';
 import '../../../../../domain/models/currency.dart';
 
@@ -33,6 +34,24 @@ class ChartsFxStatus {
   int? scaledRate(String from) {
     if (from == defaultCurrencyCode) return 1000000000;
     return rates['$from→$defaultCurrencyCode']?.rateScaledE9;
+  }
+
+  /// [amountMinorUnits] of [from] converted into the default currency, with
+  /// decimals from [currencies] (2 when unknown). Null when [from] has no
+  /// rate.
+  int? convert(
+    int amountMinorUnits,
+    String from,
+    Map<String, Currency> currencies,
+  ) {
+    final rate = scaledRate(from);
+    if (rate == null) return null;
+    return CurrencyConverter.convertMinorUnits(
+      amountMinorUnits: amountMinorUnits,
+      rateScaledE9: rate,
+      fromDecimals: currencies[from]?.decimals ?? 2,
+      toDecimals: currencies[defaultCurrencyCode]?.decimals ?? 2,
+    );
   }
 
   /// Metadata lookup for an exact FX pair.

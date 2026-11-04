@@ -17,7 +17,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../../app/providers/repository_providers.dart';
 import '../../../../../core/utils/color_palette.dart';
-import '../../../../../core/utils/currency_converter.dart';
 import '../../../../../domain/models/account.dart';
 import '../../../../../domain/models/account_slice.dart';
 import '../../../../../domain/models/account_type.dart';
@@ -363,16 +362,8 @@ class ChartsController extends _$ChartsController {
         _ => (-1, '', 0),
       };
       if (id < 0) continue;
-      if (missingCurrencies.contains(code)) continue;
-      final fromDecimals = currencies[code]?.decimals ?? 2;
-      final toDecimals = currencies[fx.defaultCurrencyCode]?.decimals ?? 2;
-      final scaled = fx.scaledRate(code)!;
-      final converted = CurrencyConverter.convertMinorUnits(
-        amountMinorUnits: amount,
-        rateScaledE9: scaled,
-        fromDecimals: fromDecimals,
-        toDecimals: toDecimals,
-      );
+      final converted = fx.convert(amount, code, currencies);
+      if (converted == null) continue;
       regrouped[id] = (regrouped[id] ?? 0) + converted;
     }
 
@@ -413,33 +404,13 @@ class ChartsController extends _$ChartsController {
     });
     chartSlices.sort((a, b) => b.totalMinorUnits.compareTo(a.totalMinorUnits));
 
-    final convertedBuckets = <DateTime, int>{};
-    for (final b in buckets) {
-      if (missingCurrencies.contains(b.currencyCode)) continue;
-      final fromDecimals = currencies[b.currencyCode]?.decimals ?? 2;
-      final toDecimals = currencies[fx.defaultCurrencyCode]?.decimals ?? 2;
-      final scaled = fx.scaledRate(b.currencyCode)!;
-      final converted = CurrencyConverter.convertMinorUnits(
-        amountMinorUnits: b.totalMinorUnits,
-        rateScaledE9: scaled,
-        fromDecimals: fromDecimals,
-        toDecimals: toDecimals,
-      );
-      convertedBuckets[b.bucketStart] =
-          (convertedBuckets[b.bucketStart] ?? 0) + converted;
-    }
-    final bucketTotals = [
-      for (final e in convertedBuckets.entries)
-        ChartBucketTotal(bucketStart: e.key, totalMinorUnits: e.value),
-    ]..sort((a, b) => a.bucketStart.compareTo(b.bucketStart));
-
     final data = ChartsData(
       period: _selection.period,
       anchorDate: _range!.start,
       type: _selection.type,
       dimension: _selection.dimension,
       slices: chartSlices,
-      bucketTotals: bucketTotals,
+      bucketTotals: _bucketTotals(buckets, fx, currencies),
       grandTotalMinorUnits: grandTotal,
       displayCurrencyCode: fx.defaultCurrencyCode,
       mixedCurrencies: false,
@@ -464,22 +435,13 @@ class ChartsController extends _$ChartsController {
     final chartSlices = <ChartSlice>[];
     int? grandTotal;
     if (!missingRate) {
-      grandTotal = 0;
-      final converted = <CurrencySlice, int>{};
-      for (final s in slices) {
-        final fromDecimals = currencies[s.currencyCode]?.decimals ?? 2;
-        final toDecimals = currencies[fx.defaultCurrencyCode]?.decimals ?? 2;
-        final amount = CurrencyConverter.convertMinorUnits(
-          amountMinorUnits: s.totalMinorUnits,
-          rateScaledE9: fx.scaledRate(s.currencyCode)!,
-          fromDecimals: fromDecimals,
-          toDecimals: toDecimals,
-        );
-        converted[s] = amount;
-        grandTotal = grandTotal! + amount;
-      }
-      for (final s in slices) {
-        final amount = converted[s]!;
+      final amounts = [
+        for (final s in slices)
+          fx.convert(s.totalMinorUnits, s.currencyCode, currencies)!,
+      ];
+      grandTotal = amounts.fold<int>(0, (a, b) => a + b);
+      for (final (i, s) in slices.indexed) {
+        final amount = amounts[i];
         chartSlices.add(
           ChartSlice(
             label: s.currencyCode,
@@ -487,7 +449,7 @@ class ChartsController extends _$ChartsController {
             totalMinorUnits: amount,
             colorIndex: _currencyColorIndex(s.currencyCode),
             iconKey: '',
-            fraction: grandTotal == 0 ? 0 : amount / grandTotal!,
+            fraction: grandTotal == 0 ? 0 : amount / grandTotal,
             selectionKey: SelectedSlice.currency(s.currencyCode),
           ),
         );
@@ -512,27 +474,6 @@ class ChartsController extends _$ChartsController {
     final bucketsMissing = buckets.any(
       (b) => fx.scaledRate(b.currencyCode) == null,
     );
-    final bucketTotals = <ChartBucketTotal>[];
-    if (!bucketsMissing) {
-      final regrouped = <DateTime, int>{};
-      for (final b in buckets) {
-        final fromDecimals = currencies[b.currencyCode]?.decimals ?? 2;
-        final toDecimals = currencies[fx.defaultCurrencyCode]?.decimals ?? 2;
-        final converted = CurrencyConverter.convertMinorUnits(
-          amountMinorUnits: b.totalMinorUnits,
-          rateScaledE9: fx.scaledRate(b.currencyCode)!,
-          fromDecimals: fromDecimals,
-          toDecimals: toDecimals,
-        );
-        regrouped[b.bucketStart] = (regrouped[b.bucketStart] ?? 0) + converted;
-      }
-      for (final e in regrouped.entries) {
-        bucketTotals.add(
-          ChartBucketTotal(bucketStart: e.key, totalMinorUnits: e.value),
-        );
-      }
-      bucketTotals.sort((a, b) => a.bucketStart.compareTo(b.bucketStart));
-    }
 
     chartSlices.sort((a, b) => b.totalMinorUnits.compareTo(a.totalMinorUnits));
 
@@ -542,8 +483,10 @@ class ChartsController extends _$ChartsController {
       type: _selection.type,
       dimension: _selection.dimension,
       slices: chartSlices,
-      bucketTotals: bucketTotals,
-      grandTotalMinorUnits: missingRate ? null : grandTotal,
+      bucketTotals: bucketsMissing
+          ? const <ChartBucketTotal>[]
+          : _bucketTotals(buckets, fx, currencies),
+      grandTotalMinorUnits: grandTotal,
       displayCurrencyCode: missingRate ? null : fx.defaultCurrencyCode,
       mixedCurrencies: missingRate,
       autoSwitchedFromCategoryDimension: _autoSwitchedToCurrency,
@@ -551,6 +494,29 @@ class ChartsController extends _$ChartsController {
     );
     _lastEmittedData = data;
     _emitter?.add(ChartsState.data(chartData: data));
+  }
+
+  /// [buckets] converted into the default currency and summed per bucket
+  /// start, oldest first; currencies without a rate are left out.
+  List<ChartBucketTotal> _bucketTotals(
+    List<TimeBucketSlice> buckets,
+    ChartsFxStatus fx,
+    Map<String, Currency> currencies,
+  ) {
+    final byStart = <DateTime, int>{};
+    for (final b in buckets) {
+      final converted = fx.convert(
+        b.totalMinorUnits,
+        b.currencyCode,
+        currencies,
+      );
+      if (converted == null) continue;
+      byStart[b.bucketStart] = (byStart[b.bucketStart] ?? 0) + converted;
+    }
+    return [
+      for (final e in byStart.entries)
+        ChartBucketTotal(bucketStart: e.key, totalMinorUnits: e.value),
+    ]..sort((a, b) => a.bucketStart.compareTo(b.bucketStart));
   }
 
   String _categoryLabel(Category? c) {

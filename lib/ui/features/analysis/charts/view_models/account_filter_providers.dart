@@ -15,7 +15,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../../app/providers/repository_providers.dart';
 import '../../../../../core/utils/color_palette.dart';
-import '../../../../../core/utils/currency_converter.dart';
 import '../../../../../domain/models/account_slice.dart';
 import '../../../../../domain/models/currency.dart';
 import '../../search/view_models/analysis_providers.dart';
@@ -149,14 +148,8 @@ AsyncValue<ChartsAccountFilterOptions> chartsAccountFilterOptions(Ref ref) {
   final byAccount = <int, int>{};
   var total = 0;
   for (final s in slices) {
-    final rate = fx.scaledRate(s.currencyCode);
-    if (rate == null) continue;
-    final converted = CurrencyConverter.convertMinorUnits(
-      amountMinorUnits: s.totalMinorUnits,
-      rateScaledE9: rate,
-      fromDecimals: currencies[s.currencyCode]?.decimals ?? 2,
-      toDecimals: to.decimals,
-    );
+    final converted = fx.convert(s.totalMinorUnits, s.currencyCode, currencies);
+    if (converted == null) continue;
     byAccount[s.accountId] = (byAccount[s.accountId] ?? 0) + converted;
     total += converted;
   }

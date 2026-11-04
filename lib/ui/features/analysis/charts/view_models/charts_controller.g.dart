@@ -94,7 +94,7 @@ final class ChartsControllerProvider
   ChartsController create() => ChartsController();
 }
 
-String _$chartsControllerHash() => r'5bffe53ab0775442c069ed5659315e583806e896';
+String _$chartsControllerHash() => r'17076fca0de7aeef439948e50c45efda4b314bbd';
 
 abstract class _$ChartsController extends $StreamNotifier<ChartsState> {
   Stream<ChartsState> build();
