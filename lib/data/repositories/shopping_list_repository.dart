@@ -178,13 +178,7 @@ final class DriftShoppingListRepository implements ShoppingListRepository {
       ),
     );
 
-    final inserted = await _shoppingListDao.findById(id);
-    if (inserted == null) {
-      throw const ShoppingListRepositoryException(
-        'Inserted shopping-list item disappeared before read-back',
-      );
-    }
-    return _toDomain(inserted);
+    return _toDomain((await _shoppingListDao.findById(id))!);
   }
 
   @override
@@ -222,13 +216,7 @@ final class DriftShoppingListRepository implements ShoppingListRepository {
       ),
     );
 
-    final updated = await _shoppingListDao.findById(item.id);
-    if (updated == null) {
-      throw ShoppingListRepositoryException(
-        'Shopping-list item ${item.id} disappeared after update',
-      );
-    }
-    return _toDomain(updated);
+    return _toDomain((await _shoppingListDao.findById(item.id))!);
   }
 
   @override

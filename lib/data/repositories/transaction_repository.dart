@@ -36,8 +36,8 @@ import 'currency_repository.dart';
 import 'repository_exceptions.dart';
 
 /// Generic transaction-layer failure — used for "transaction not found"
-/// / "disappeared mid-write" paths that do not deserve a dedicated
-/// typed subclass. Kept Stream-A-local per §1.3.
+/// paths that do not deserve a dedicated typed subclass. Kept
+/// Stream-A-local per §1.3.
 class TransactionRepositoryException extends RepositoryException {
   const TransactionRepositoryException(super.message);
 }
@@ -520,13 +520,7 @@ final class DriftTransactionRepository implements TransactionRepository {
       // Insert path.
       final companion = _toCompanion(tx, createdAt: now, updatedAt: now);
       final newId = await _dao.insert(companion);
-      final inserted = await _dao.findById(newId);
-      if (inserted == null) {
-        throw const TransactionRepositoryException(
-          'Inserted transaction disappeared before read-back',
-        );
-      }
-      return _toDomain(inserted);
+      return _toDomain((await _dao.findById(newId))!);
     }
 
     // Update path. Preserve stored `createdAt`.
@@ -540,13 +534,7 @@ final class DriftTransactionRepository implements TransactionRepository {
       updatedAt: now,
     );
     await _dao.updateRow(companion);
-    final updated = await _dao.findById(tx.id);
-    if (updated == null) {
-      throw TransactionRepositoryException(
-        'Transaction ${tx.id} disappeared after update',
-      );
-    }
-    return _toDomain(updated);
+    return _toDomain((await _dao.findById(tx.id))!);
   }
 
   @override

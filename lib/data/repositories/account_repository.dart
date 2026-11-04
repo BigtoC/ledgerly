@@ -189,10 +189,7 @@ final class DriftAccountRepository implements AccountRepository {
       throw AccountCurrencyLockedException(account.id);
     }
 
-    final updated = await _dao.updateRow(_toCompanion(account));
-    if (!updated) {
-      throw AccountRepositoryException('Account ${account.id} not found');
-    }
+    await _dao.updateRow(_toCompanion(account));
     return account.id;
   }
 

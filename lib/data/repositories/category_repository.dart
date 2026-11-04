@@ -194,13 +194,7 @@ final class DriftCategoryRepository implements CategoryRepository {
           isArchived: const Value(false),
         ),
       );
-      final inserted = await _dao.findById(id);
-      if (inserted == null) {
-        throw const CategoryRepositoryException(
-          'Seed insert disappeared before read-back',
-        );
-      }
-      return _toDomain(inserted);
+      return _toDomain((await _dao.findById(id))!);
     }
 
     // Update path — enforce the same type-lock guard as `save`.
@@ -228,13 +222,7 @@ final class DriftCategoryRepository implements CategoryRepository {
         isArchived: const Value(false),
       ),
     );
-    final updated = await _dao.findById(existing.id);
-    if (updated == null) {
-      throw const CategoryRepositoryException(
-        'Seed update disappeared before read-back',
-      );
-    }
-    return _toDomain(updated);
+    return _toDomain((await _dao.findById(existing.id))!);
   }
 
   @override
@@ -242,13 +230,7 @@ final class DriftCategoryRepository implements CategoryRepository {
     if (category.id == 0) {
       // Insert path.
       final id = await _dao.insert(_toCompanion(category));
-      final inserted = await _dao.findById(id);
-      if (inserted == null) {
-        throw const CategoryRepositoryException(
-          'Insert disappeared before read-back',
-        );
-      }
-      return _toDomain(inserted);
+      return _toDomain((await _dao.findById(id))!);
     }
 
     // Update path — enforce type-lock and l10nKey-lock.
@@ -272,13 +254,7 @@ final class DriftCategoryRepository implements CategoryRepository {
     }
 
     await _dao.updateRow(_toCompanion(category));
-    final updated = await _dao.findById(category.id);
-    if (updated == null) {
-      throw CategoryRepositoryException(
-        'Category ${category.id} disappeared after update',
-      );
-    }
-    return _toDomain(updated);
+    return _toDomain((await _dao.findById(category.id))!);
   }
 
   @override
@@ -296,13 +272,7 @@ final class DriftCategoryRepository implements CategoryRepository {
     await _dao.updateRow(
       existing.toCompanion(true).copyWith(customName: Value(normalized)),
     );
-    final updated = await _dao.findById(id);
-    if (updated == null) {
-      throw CategoryRepositoryException(
-        'Category $id disappeared after rename',
-      );
-    }
-    return _toDomain(updated);
+    return _toDomain((await _dao.findById(id))!);
   }
 
   @override
@@ -320,13 +290,7 @@ final class DriftCategoryRepository implements CategoryRepository {
       throw CategoryHasRecurringRuleException(id);
     }
     await _dao.archiveById(id);
-    final updated = await _dao.findById(id);
-    if (updated == null) {
-      throw CategoryRepositoryException(
-        'Category $id disappeared after archive',
-      );
-    }
-    return _toDomain(updated);
+    return _toDomain((await _dao.findById(id))!);
   }
 
   @override
