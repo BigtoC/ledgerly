@@ -60,22 +60,7 @@ ProviderContainer _container({
   Map<String, Currency> currencies = const {'USD': _usd},
   ChartsFxStatus? fxStatus,
 }) {
-  // Real `ExchangeRateRepository` against an in-memory DB with a mock
-  // service. `refreshAll` becomes a silent no-op because `fetchRates`
-  // returns an empty list — the test only cares that the controller can
-  // fire-and-forget the call without exploding.
-  final fxService = _MockExchangeRateService();
-  when(() => fxService.fetchRates(any())).thenAnswer((_) async => []);
-  final fxDb = newTestAppDatabase();
-  final fxRepo = ExchangeRateRepository(
-    fxDb,
-    fxService,
-    const Stream<String>.empty(),
-  );
-  addTearDown(() async {
-    fxRepo.dispose();
-    await fxDb.close();
-  });
+  final fxRepo = newNoRatesExchangeRateRepository();
   return ProviderContainer(
     overrides: [
       transactionRepositoryProvider.overrideWithValue(repo),

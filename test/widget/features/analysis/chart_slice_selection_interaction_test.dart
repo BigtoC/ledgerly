@@ -4,9 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/app/providers/repository_providers.dart';
-import 'package:ledgerly/data/repositories/exchange_rate_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
-import 'package:ledgerly/data/services/exchange_rate_service.dart';
 import 'package:ledgerly/domain/models/account.dart';
 import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/domain/models/category_slice.dart';
@@ -29,8 +27,6 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 import '../../../unit/repositories/_harness/test_app_database.dart';
 
 class _MockRepo extends Mock implements TransactionRepository {}
-
-class _MockFxSvc extends Mock implements ExchangeRateService {}
 
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 
@@ -91,18 +87,7 @@ Future<ProviderContainer> _pumpChartsSection(WidgetTester tester) async {
     ),
   ).thenAnswer((_) => Stream.value(const []));
 
-  final fxSvc = _MockFxSvc();
-  when(() => fxSvc.fetchRates(any())).thenAnswer((_) async => []);
-  final fxDb = newTestAppDatabase();
-  final fxRepo = ExchangeRateRepository(
-    fxDb,
-    fxSvc,
-    const Stream<String>.empty(),
-  );
-  addTearDown(() async {
-    fxRepo.dispose();
-    await fxDb.close();
-  });
+  final fxRepo = newNoRatesExchangeRateRepository();
 
   final container = ProviderContainer(
     overrides: [

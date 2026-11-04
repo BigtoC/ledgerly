@@ -13,9 +13,7 @@ import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/domain/models/currency_slice.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/selected_slice.dart';
 import 'package:ledgerly/domain/models/time_bucket_slice.dart';
-import 'package:ledgerly/data/repositories/exchange_rate_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
-import 'package:ledgerly/data/services/exchange_rate_service.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_controller.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_providers.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_selection_controller.dart';
@@ -28,8 +26,6 @@ import '../repositories/_harness/test_app_database.dart';
 
 class _MockRepo extends Mock implements TransactionRepository {}
 
-class _MockExchangeRateService extends Mock implements ExchangeRateService {}
-
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 
 ProviderContainer _container(
@@ -38,18 +34,7 @@ ProviderContainer _container(
   Map<int, AccountType> accountTypes = const {},
   Stream<Map<int, AccountType>>? accountTypesStream,
 }) {
-  final fxService = _MockExchangeRateService();
-  when(() => fxService.fetchRates(any())).thenAnswer((_) async => []);
-  final fxDb = newTestAppDatabase();
-  final fxRepo = ExchangeRateRepository(
-    fxDb,
-    fxService,
-    const Stream<String>.empty(),
-  );
-  addTearDown(() async {
-    fxRepo.dispose();
-    await fxDb.close();
-  });
+  final fxRepo = newNoRatesExchangeRateRepository();
   return ProviderContainer(
     overrides: [
       transactionRepositoryProvider.overrideWithValue(repo),

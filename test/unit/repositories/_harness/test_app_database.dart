@@ -11,7 +11,11 @@
 // merge in later phases — see Stream C §4.2 / §5 Task C2.
 
 import 'package:drift/native.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/data/database/app_database.dart';
+import 'package:ledgerly/data/repositories/exchange_rate_repository.dart';
+import 'package:ledgerly/data/services/exchange_rate_service.dart';
+import 'package:mocktail/mocktail.dart';
 
 /// Returns a fresh in-memory `AppDatabase` for tests.
 ///
@@ -23,3 +27,24 @@ import 'package:ledgerly/data/database/app_database.dart';
 /// `AppDatabase.migration.beforeOpen` — repository FK pre-check tests rely
 /// on this being active.
 AppDatabase newTestAppDatabase() => AppDatabase(NativeDatabase.memory());
+
+class _NoRatesService extends Mock implements ExchangeRateService {}
+
+/// Returns a real `ExchangeRateRepository` on its own in-memory DB whose
+/// service fetches no rates, so `refreshAll` is a silent no-op. The repo
+/// is disposed and its DB closed at teardown.
+ExchangeRateRepository newNoRatesExchangeRateRepository() {
+  final service = _NoRatesService();
+  when(() => service.fetchRates(any())).thenAnswer((_) async => []);
+  final db = newTestAppDatabase();
+  final repo = ExchangeRateRepository(
+    db,
+    service,
+    const Stream<String>.empty(),
+  );
+  addTearDown(() async {
+    repo.dispose();
+    await db.close();
+  });
+  return repo;
+}
