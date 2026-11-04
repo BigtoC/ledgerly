@@ -16,10 +16,8 @@ import 'color_schemes.dart';
 
 ThemeData _base(ColorScheme scheme, AnalysisColors analysisColors) {
   return ThemeData(
-    useMaterial3: true,
     colorScheme: scheme,
     typography: Typography.material2021(platform: defaultTargetPlatform),
-    visualDensity: VisualDensity.adaptivePlatformDensity,
     iconTheme: IconThemeData(color: scheme.onSurface, size: 24),
     extensions: <ThemeExtension<dynamic>>[analysisColors],
   );
