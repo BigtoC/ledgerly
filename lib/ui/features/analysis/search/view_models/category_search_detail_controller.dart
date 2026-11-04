@@ -109,13 +109,7 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
       final settled = ref.read(analysisControllerProvider).value;
       if (settled is AnalysisResults && settled.query == trimmedQuery) {
         _lastTransactions = settled.transactions;
-        controller.add(
-          _buildState(
-            all: settled.transactions,
-            categoryId: categoryId,
-            currencyCode: trimmedCurrencyCode,
-          ),
-        );
+        _emitFromCache();
       }
     }
 
@@ -130,13 +124,7 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
         .listen(
           (txs) {
             _lastTransactions = txs;
-            _emitter?.add(
-              _buildState(
-                all: txs,
-                categoryId: categoryId,
-                currencyCode: trimmedCurrencyCode,
-              ),
-            );
+            _emitFromCache();
           },
           onError: (Object e, StackTrace st) {
             _emitter?.addError(e, st);
@@ -207,14 +195,7 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
 
   void _emitFromCache() {
     final txs = _lastTransactions;
-    if (txs == null) return;
-    _emitter?.add(
-      _buildState(
-        all: txs,
-        categoryId: categoryId,
-        currencyCode: currencyCode.trim(),
-      ),
-    );
+    if (txs != null) _emitter?.add(_buildState(txs));
   }
 
   Future<bool> _commitDelete(int id) async {
@@ -240,17 +221,14 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
     }
   }
 
-  CategorySearchDetailState _buildState({
-    required List<Transaction> all,
-    required int categoryId,
-    required String currencyCode,
-  }) {
+  CategorySearchDetailState _buildState(List<Transaction> all) {
+    final trimmedCurrencyCode = currencyCode.trim();
     final pendingId = _pendingDelete?.transaction.id;
     final filtered = all
         .where(
           (t) =>
               t.categoryId == categoryId &&
-              t.currency.code == currencyCode &&
+              t.currency.code == trimmedCurrencyCode &&
               !_committedDeleteIds.contains(t.id) &&
               t.id != pendingId,
         )
