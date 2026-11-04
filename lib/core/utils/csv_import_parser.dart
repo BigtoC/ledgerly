@@ -36,7 +36,7 @@ final _recordedAtPattern = RegExp(
 ///
 /// Throws [CsvFileException] when the whole file is unusable. Pure and
 /// synchronous; never logs.
-FortuneCityCsvParseResult parseFortuneCityCsv(Uint8List bytes) {
+CsvParseResult parseImportCsv(Uint8List bytes) {
   final String decoded;
   try {
     decoded = utf8.decode(bytes);
@@ -143,7 +143,7 @@ FortuneCityCsvParseResult parseFortuneCityCsv(Uint8List bytes) {
   if (dataRows == 0) {
     throw const CsvFileException(CsvFileErrorKind.empty);
   }
-  return FortuneCityCsvParseResult(rows: rows, errors: errors);
+  return CsvParseResult(rows: rows, errors: errors);
 }
 
 /// Whether every quoted field in [text] is closed, and its closing quote is

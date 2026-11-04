@@ -6,7 +6,7 @@ import 'dart:io';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ledgerly/core/utils/fortune_city_csv_parser.dart';
+import 'package:ledgerly/core/utils/csv_import_parser.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/account_type_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
@@ -157,7 +157,7 @@ void main() {
         currencies,
       ).watchAll(includeArchived: true).first;
 
-      final parsed = parseFortuneCityCsv(
+      final parsed = parseImportCsv(
         File('test/data/import_fortune_city_data.csv').readAsBytesSync(),
       );
       rows = [

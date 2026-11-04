@@ -15,7 +15,7 @@ import '../../core/utils/color_palette.dart';
 import '../../core/utils/csv_import_keys.dart';
 import '../../core/utils/date_helpers.dart';
 import '../../core/utils/decimal_rounding.dart';
-import '../../core/utils/fortune_city_csv_parser.dart';
+import '../../core/utils/csv_import_parser.dart';
 import '../../data/database/app_database.dart' show AppDatabase;
 import '../../data/repositories/account_repository.dart';
 import '../../data/repositories/account_type_repository.dart';
@@ -60,7 +60,7 @@ _loadInBackground(Uint8List bytes, Map<String, Currency> currencies) =>
   Uint8List bytes,
   Map<String, Currency> currencies,
 ) {
-  final parsed = parseFortuneCityCsv(bytes);
+  final parsed = parseImportCsv(bytes);
   final errors = [...parsed.errors];
   final valid = <CsvImportRow>[];
   for (final row in parsed.rows) {

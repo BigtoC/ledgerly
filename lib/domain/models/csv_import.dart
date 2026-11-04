@@ -105,14 +105,14 @@ abstract class ParsedCsvRow with _$ParsedCsvRow {
   }) = _ParsedCsvRow;
 }
 
-/// Output of `parseFortuneCityCsv`: the valid rows in file order plus one
+/// Output of `parseImportCsv`: the valid rows in file order plus one
 /// error per skipped row.
 @freezed
-abstract class FortuneCityCsvParseResult with _$FortuneCityCsvParseResult {
-  const factory FortuneCityCsvParseResult({
+abstract class CsvParseResult with _$CsvParseResult {
+  const factory CsvParseResult({
     required List<ParsedCsvRow> rows,
     required List<CsvRowError> errors,
-  }) = _FortuneCityCsvParseResult;
+  }) = _CsvParseResult;
 }
 
 /// A valid row ready to import: currency resolved and amount rounded.

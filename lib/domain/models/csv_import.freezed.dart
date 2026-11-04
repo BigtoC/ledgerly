@@ -585,42 +585,42 @@ as String?,
 }
 
 /// @nodoc
-mixin _$FortuneCityCsvParseResult {
+mixin _$CsvParseResult {
 
  List<ParsedCsvRow> get rows; List<CsvRowError> get errors;
-/// Create a copy of FortuneCityCsvParseResult
+/// Create a copy of CsvParseResult
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-$FortuneCityCsvParseResultCopyWith<FortuneCityCsvParseResult> get copyWith => _$FortuneCityCsvParseResultCopyWithImpl<FortuneCityCsvParseResult>(this as FortuneCityCsvParseResult, _$identity);
+$CsvParseResultCopyWith<CsvParseResult> get copyWith => _$CsvParseResultCopyWithImpl<CsvParseResult>(this as CsvParseResult, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  final _this = this as FortuneCityCsvParseResult;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FortuneCityCsvParseResult&&const DeepCollectionEquality().equals(other.rows, _this.rows)&&const DeepCollectionEquality().equals(other.errors, _this.errors));
+  final _this = this as CsvParseResult;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CsvParseResult&&const DeepCollectionEquality().equals(other.rows, _this.rows)&&const DeepCollectionEquality().equals(other.errors, _this.errors));
 }
 
 
 @override
 int get hashCode {
-  final _this = this as FortuneCityCsvParseResult;
+  final _this = this as CsvParseResult;
   return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.rows),const DeepCollectionEquality().hash(_this.errors));
 }
 
 @override
 String toString() {
-  final _this = this as FortuneCityCsvParseResult;
-  return 'FortuneCityCsvParseResult(rows: ${_this.rows}, errors: ${_this.errors})';
+  final _this = this as CsvParseResult;
+  return 'CsvParseResult(rows: ${_this.rows}, errors: ${_this.errors})';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class $FortuneCityCsvParseResultCopyWith<$Res>  {
-  factory $FortuneCityCsvParseResultCopyWith(FortuneCityCsvParseResult value, $Res Function(FortuneCityCsvParseResult) _then) = _$FortuneCityCsvParseResultCopyWithImpl;
+abstract mixin class $CsvParseResultCopyWith<$Res>  {
+  factory $CsvParseResultCopyWith(CsvParseResult value, $Res Function(CsvParseResult) _then) = _$CsvParseResultCopyWithImpl;
 @useResult
 $Res call({
  List<ParsedCsvRow> rows, List<CsvRowError> errors
@@ -631,17 +631,17 @@ $Res call({
 
 }
 /// @nodoc
-class _$FortuneCityCsvParseResultCopyWithImpl<$Res>
-    implements $FortuneCityCsvParseResultCopyWith<$Res> {
-  _$FortuneCityCsvParseResultCopyWithImpl(this._self, this._then);
+class _$CsvParseResultCopyWithImpl<$Res>
+    implements $CsvParseResultCopyWith<$Res> {
+  _$CsvParseResultCopyWithImpl(this._self, this._then);
 
-  final FortuneCityCsvParseResult _self;
-  final $Res Function(FortuneCityCsvParseResult) _then;
+  final CsvParseResult _self;
+  final $Res Function(CsvParseResult) _then;
 
-/// Create a copy of FortuneCityCsvParseResult
+/// Create a copy of CsvParseResult
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? rows = null,Object? errors = null,}) {
-  return _then(FortuneCityCsvParseResult(
+  return _then(CsvParseResult(
 rows: null == rows ? _self.rows : rows // ignore: cast_nullable_to_non_nullable
 as List<ParsedCsvRow>,errors: null == errors ? _self.errors : errors // ignore: cast_nullable_to_non_nullable
 as List<CsvRowError>,
@@ -651,8 +651,8 @@ as List<CsvRowError>,
 }
 
 
-/// Adds pattern-matching-related methods to [FortuneCityCsvParseResult].
-extension FortuneCityCsvParseResultPatterns on FortuneCityCsvParseResult {
+/// Adds pattern-matching-related methods to [CsvParseResult].
+extension CsvParseResultPatterns on CsvParseResult {
 /// A variant of `map` that fallback to returning `orElse`.
 ///
 /// It is equivalent to doing:
@@ -665,10 +665,10 @@ extension FortuneCityCsvParseResultPatterns on FortuneCityCsvParseResult {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _FortuneCityCsvParseResult value)?  $default,{required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _CsvParseResult value)?  $default,{required TResult orElse(),}){
 final _that = this;
 switch (_that) {
-case _FortuneCityCsvParseResult() when $default != null:
+case _CsvParseResult() when $default != null:
 return $default(_that);case _:
   return orElse();
 
@@ -687,10 +687,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _FortuneCityCsvParseResult value)  $default,){
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _CsvParseResult value)  $default,){
 final _that = this;
 switch (_that) {
-case _FortuneCityCsvParseResult():
+case _CsvParseResult():
 return $default(_that);case _:
   throw StateError('Unexpected subclass');
 
@@ -708,10 +708,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _FortuneCityCsvParseResult value)?  $default,){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _CsvParseResult value)?  $default,){
 final _that = this;
 switch (_that) {
-case _FortuneCityCsvParseResult() when $default != null:
+case _CsvParseResult() when $default != null:
 return $default(_that);case _:
   return null;
 
@@ -731,7 +731,7 @@ return $default(_that);case _:
 
 @optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<ParsedCsvRow> rows,  List<CsvRowError> errors)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
-case _FortuneCityCsvParseResult() when $default != null:
+case _CsvParseResult() when $default != null:
 return $default(_that.rows,_that.errors);case _:
   return orElse();
 
@@ -752,7 +752,7 @@ return $default(_that.rows,_that.errors);case _:
 
 @optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<ParsedCsvRow> rows,  List<CsvRowError> errors)  $default,) {final _that = this;
 switch (_that) {
-case _FortuneCityCsvParseResult():
+case _CsvParseResult():
 return $default(_that.rows,_that.errors);case _:
   throw StateError('Unexpected subclass');
 
@@ -772,7 +772,7 @@ return $default(_that.rows,_that.errors);case _:
 
 @optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<ParsedCsvRow> rows,  List<CsvRowError> errors)?  $default,) {final _that = this;
 switch (_that) {
-case _FortuneCityCsvParseResult() when $default != null:
+case _CsvParseResult() when $default != null:
 return $default(_that.rows,_that.errors);case _:
   return null;
 
@@ -784,8 +784,8 @@ return $default(_that.rows,_that.errors);case _:
 /// @nodoc
 
 
-class _FortuneCityCsvParseResult implements FortuneCityCsvParseResult {
-  const _FortuneCityCsvParseResult({required  List<ParsedCsvRow> rows, required  List<CsvRowError> errors}): _rows = rows,_errors = errors;
+class _CsvParseResult implements CsvParseResult {
+  const _CsvParseResult({required  List<ParsedCsvRow> rows, required  List<CsvRowError> errors}): _rows = rows,_errors = errors;
   
 
  final  List<ParsedCsvRow> _rows;
@@ -803,17 +803,17 @@ class _FortuneCityCsvParseResult implements FortuneCityCsvParseResult {
 }
 
 
-/// Create a copy of FortuneCityCsvParseResult
+/// Create a copy of CsvParseResult
 /// with the given fields replaced by the non-null parameter values.
 @override @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-_$FortuneCityCsvParseResultCopyWith<_FortuneCityCsvParseResult> get copyWith => __$FortuneCityCsvParseResultCopyWithImpl<_FortuneCityCsvParseResult>(this, _$identity);
+_$CsvParseResultCopyWith<_CsvParseResult> get copyWith => __$CsvParseResultCopyWithImpl<_CsvParseResult>(this, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _FortuneCityCsvParseResult&&const DeepCollectionEquality().equals(other.rows, _rows)&&const DeepCollectionEquality().equals(other.errors, _errors));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _CsvParseResult&&const DeepCollectionEquality().equals(other.rows, _rows)&&const DeepCollectionEquality().equals(other.errors, _errors));
 }
 
 
@@ -824,15 +824,15 @@ int get hashCode {
 
 @override
 String toString() {
-    return 'FortuneCityCsvParseResult(rows: $rows, errors: $errors)';
+    return 'CsvParseResult(rows: $rows, errors: $errors)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class _$FortuneCityCsvParseResultCopyWith<$Res> implements $FortuneCityCsvParseResultCopyWith<$Res> {
-  factory _$FortuneCityCsvParseResultCopyWith(_FortuneCityCsvParseResult value, $Res Function(_FortuneCityCsvParseResult) _then) = __$FortuneCityCsvParseResultCopyWithImpl;
+abstract mixin class _$CsvParseResultCopyWith<$Res> implements $CsvParseResultCopyWith<$Res> {
+  factory _$CsvParseResultCopyWith(_CsvParseResult value, $Res Function(_CsvParseResult) _then) = __$CsvParseResultCopyWithImpl;
 @override @useResult
 $Res call({
  List<ParsedCsvRow> rows, List<CsvRowError> errors
@@ -843,17 +843,17 @@ $Res call({
 
 }
 /// @nodoc
-class __$FortuneCityCsvParseResultCopyWithImpl<$Res>
-    implements _$FortuneCityCsvParseResultCopyWith<$Res> {
-  __$FortuneCityCsvParseResultCopyWithImpl(this._self, this._then);
+class __$CsvParseResultCopyWithImpl<$Res>
+    implements _$CsvParseResultCopyWith<$Res> {
+  __$CsvParseResultCopyWithImpl(this._self, this._then);
 
-  final _FortuneCityCsvParseResult _self;
-  final $Res Function(_FortuneCityCsvParseResult) _then;
+  final _CsvParseResult _self;
+  final $Res Function(_CsvParseResult) _then;
 
-/// Create a copy of FortuneCityCsvParseResult
+/// Create a copy of CsvParseResult
 /// with the given fields replaced by the non-null parameter values.
 @override @pragma('vm:prefer-inline') $Res call({Object? rows = null,Object? errors = null,}) {
-  return _then(_FortuneCityCsvParseResult(
+  return _then(_CsvParseResult(
 rows: null == rows ? _self._rows : rows // ignore: cast_nullable_to_non_nullable
 as List<ParsedCsvRow>,errors: null == errors ? _self._errors : errors // ignore: cast_nullable_to_non_nullable
 as List<CsvRowError>,

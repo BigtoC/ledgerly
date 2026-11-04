@@ -146,7 +146,7 @@ lib/
       color_palette.dart
       date_helpers.dart
       decimal_rounding.dart          # Decimal string ↔ minor units (CSV import/export)
-      fortune_city_csv_parser.dart   # Pure Fortune City CSV parser
+      csv_import_parser.dart         # Pure Fortune City CSV parser
       transactions_csv.dart          # Pure transactions CSV encoder (export)
       box_shadow.dart
       csv_import_keys.dart           # Matching keys shared by CSV import preview and commit

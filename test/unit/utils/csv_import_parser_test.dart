@@ -3,26 +3,26 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ledgerly/core/utils/fortune_city_csv_parser.dart';
+import 'package:ledgerly/core/utils/csv_import_parser.dart';
 import 'package:ledgerly/domain/models/csv_import.dart';
 
 const _header = 'Account,Category,Amount,Currency,Recorded At,note,Account ID';
 
-FortuneCityCsvParseResult _parse(String text) =>
-    parseFortuneCityCsv(Uint8List.fromList(utf8.encode(text)));
+CsvParseResult _parse(String text) =>
+    parseImportCsv(Uint8List.fromList(utf8.encode(text)));
 
 Matcher _fileError(CsvFileErrorKind kind) =>
     throwsA(isA<CsvFileException>().having((e) => e.kind, 'kind', kind));
 
 void main() {
   group('sample export (test/data/import_fortune_city_data.csv)', () {
-    late FortuneCityCsvParseResult result;
+    late CsvParseResult result;
     late List<String> fixtureLines;
 
     setUpAll(() {
       final file = File('test/data/import_fortune_city_data.csv');
       fixtureLines = file.readAsLinesSync();
-      result = parseFortuneCityCsv(file.readAsBytesSync());
+      result = parseImportCsv(file.readAsBytesSync());
     });
 
     test('parses 105 rows with no errors', () {
@@ -98,7 +98,7 @@ void main() {
 
     test('invalid UTF-8 is a file error', () {
       expect(
-        () => parseFortuneCityCsv(Uint8List.fromList([0x41, 0xFF, 0xFE, 0x0A])),
+        () => parseImportCsv(Uint8List.fromList([0x41, 0xFF, 0xFE, 0x0A])),
         _fileError(CsvFileErrorKind.notUtf8),
       );
     });
@@ -135,10 +135,7 @@ void main() {
     test('an unterminated quote in a memo is a parse error', () {
       final bytes = File('test/data/import_fortune_city_unterminated_quote.csv')
           .readAsBytesSync();
-      expect(
-        () => parseFortuneCityCsv(bytes),
-        _fileError(CsvFileErrorKind.parse),
-      );
+      expect(() => parseImportCsv(bytes), _fileError(CsvFileErrorKind.parse));
     });
 
     test('a space after a closing quote is a parse error', () {
