@@ -193,10 +193,7 @@ class AccountTile extends ConsumerWidget {
         ),
         subtitle: _buildSubtitle(
           context,
-          accountTypeLabel,
-          view.balancesByCurrency,
           currenciesByCode,
-          l10n,
           convertedTotalFormatted: convertedTotalFormatted,
         ),
         trailing: _TrailingActions(
@@ -219,15 +216,14 @@ class AccountTile extends ConsumerWidget {
   /// deterministic display.
   Widget _buildSubtitle(
     BuildContext context,
-    String accountTypeLabel,
-    Map<String, int> balancesByCurrency,
-    Map<String, Currency> currenciesByCode,
-    AppLocalizations l10n, {
+    Map<String, Currency> currenciesByCode, {
     String? convertedTotalFormatted,
   }) {
+    final balancesByCurrency = view.balancesByCurrency;
     if (balancesByCurrency.isEmpty) {
       return Text(accountTypeLabel);
     }
+    final l10n = AppLocalizations.of(context);
 
     // Sort: native currency first, then alphabetical by code.
     final nativeCode = view.account.currency.code.toUpperCase();
