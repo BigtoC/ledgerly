@@ -1,273 +1,177 @@
 # AGENTS.md
 
-Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
+General behaviour rules come first, then Ledgerly-specific rules. They favour caution over speed; on trivial tasks, use judgment.
 
-**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+## 1. Think before coding
 
-## 1. Think Before Coding
-
-**Don't assume. Don't hide confusion. Surface tradeoffs.**
-
-Before implementing:
-- State your assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them - don't pick silently.
-- If a simpler approach exists, say so. Push back when warranted.
-- If something is unclear, stop. Name what's confusing. Ask.
+- State your assumptions. If the request is unclear or can be read more than one way, name the readings and ask. Don't pick one silently.
+- If a simpler approach exists, say so, and push back when it's warranted.
 - Always use the `superpowers:test-driven-development` skill when writing code: write a failing test, watch it fail, then write the minimal code that makes it pass.
 
-## 2. Simplicity First
+## 2. Simplicity first
 
-**Minimum code that solves the problem. Nothing speculative.**
+Write the minimum code that solves the problem. Add no features, single-use abstractions, configurability or error handling for impossible cases unless someone asked for them. If 200 lines could be 50, rewrite it.
 
-- No features beyond what was asked.
-- No abstractions for single-use code.
-- No "flexibility" or "configurability" that wasn't requested.
-- No error handling for impossible scenarios.
-- If you write 200 lines and it could be 50, rewrite it.
+## 3. Surgical changes
 
-Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+- Every changed line traces to the request. Don't reformat, re-comment or refactor adjacent code that works, and match the existing style.
+- Remove the imports, variables and functions that your own change left unused. Mention pre-existing dead code, and delete it only when asked: a cleanup is its own task, as #135 was.
 
-## 3. Surgical Changes
+## 4. Goal-driven execution
 
-**Touch only what you must. Clean up only your own mess.**
-
-When editing existing code:
-- Don't "improve" adjacent code, comments, or formatting.
-- Don't refactor things that aren't broken.
-- Match existing style, even if you'd do it differently.
-- If you notice unrelated dead code, mention it - don't delete it.
-
-When your changes create orphans:
-- Remove imports/variables/functions that YOUR changes made unused.
-- Don't remove pre-existing dead code unless asked.
-
-The test: Every changed line should trace directly to the user's request.
-
-## 4. Goal-Driven Execution
-
-**Define success criteria. Loop until verified.**
-
-Transform tasks into verifiable goals:
-- "Add validation" → "Write tests for invalid inputs, then make them pass"
-- "Fix the bug" → "Write a test that reproduces it, then make it pass"
-- "Refactor X" → "Ensure tests pass before and after"
-
-For multi-step tasks, state a brief plan:
-```
-1. [Step] → verify: [check]
-2. [Step] → verify: [check]
-3. [Step] → verify: [check]
-```
-
-Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
-
----
-
-**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+- Turn the task into a check you can loop on: a test that reproduces the bug, tests for invalid input, or tests that pass before and after a refactor.
+- For a multi-step task, state a short plan with a check for each step: `1. [step] → verify: [check]`.
 
 ## Source precedence
 
-- Read [`PRD.md`](PRD.md) first. It is the authoritative source for architecture, schema, routing, layout primitives, bootstrap order, and dependency choices.
-- [`docs/architecture/`](docs/architecture/README.md) is the agent-facing summary of `PRD.md`, broken down by topic.
-- `AGENTS.md` (this file) is the quick reference that links into the above. [`CLAUDE.md`](CLAUDE.md) only imports this file — edit guidance here, not there.
-- [`README.md`](README.md) is useful for day-to-day commands and CI expectations, but some status/setup notes lag the committed scaffold; trust the checked-in tree when they differ.
-- `docs/superpowers/specs/` (including `2026-04-14-ledgerly-design.md`) is historical design context only. If it conflicts with `PRD.md`, follow `PRD.md`.
-- Wave planning for the M5 slice set lives in [`docs/plans/m5-ui-feature-slices/`](docs/plans/m5-ui-feature-slices/); newer Phase 2 plans live in [`docs/superpowers/plans/`](docs/superpowers/plans/).
+- Read [`PRD.md`](PRD.md) first. It is authoritative for architecture, schema, routing, layout, bootstrap order and dependencies. [`docs/architecture/`](docs/architecture/README.md) summarises it by topic. When they conflict, follow `PRD.md`.
+- `AGENTS.md` is the quick reference. [`CLAUDE.md`](CLAUDE.md) only imports it, so edit guidance here.
+- [`README.md`](README.md) and PRD's *Project Status* block can lag the tree. Trust the checked-in code when they differ.
+- `docs/superpowers/specs/`, `docs/superpowers/plans/` and `docs/plans/` are historical design context. If they conflict with `PRD.md`, follow `PRD.md`.
 
 ## Project status
 
-- **MVP is complete.** The Phase 2 slices shipped on `main` are: recurring transactions + Home pending approval, transaction search, multi-currency conversion (with `exchange_rates` cache + FX-converted display), basic charts (pie + daily bar) with slice drill-down, the splash display-text rework, Fortune City CSV import (`lib/ui/features/settings/csv_import/`, `/settings/import`), and date-range CSV export (`lib/ui/features/settings/csv_export/`, `/settings/export`); both live in Settings' Data Management section.
-- **Drift schema is at v7** (v7 is data-only: it backfills the seeded `category.investment` expense row and retires `category.personal`, deleting it when unused and archiving it otherwise; v6 adds the nullable `transactions.amount_formula` column; `exchange_rates` was introduced in v5 after `recurring_rules` + `pending_transactions` in v4); snapshots are committed in `drift_schemas/drift_schema_v1.json`–`v7.json`.
-- **Live feature slices:** `lib/ui/features/splash/`, `lib/ui/features/categories/`, `lib/ui/features/accounts/`, `lib/ui/features/analysis/`, `lib/ui/features/settings/`, `lib/ui/features/transactions/`, `lib/ui/features/shopping_list/`, `lib/ui/features/home/`, `lib/ui/features/recurring/`.
-- **Runtime entry:** `lib/main.dart` awaits `bootstrap()` in `lib/app/bootstrap.dart`; `lib/app/app.dart` renders `MaterialApp.router`; `lib/app/router.dart` wires the route table; `lib/ui/core/widgets/adaptive_shell.dart` owns the 600dp nav switch. Full bootstrap flow: see [`docs/architecture/bootstrap.md`](docs/architecture/bootstrap.md).
-- Remaining Phase 2 work: wallet sync (Ankr integration), credit-card / transfer flows.
-- Top-level layout: `pubspec.yaml`, `analysis_options.yaml`, `import_analysis_options.yaml`, `l10n/` (`app_en.arb`, `app_zh.arb`, `app_zh_CN.arb`, `app_zh_TW.arb`), `lib/`, `test/`, `drift_schemas/`, `docs/`, `.github/workflows/`. Inside `lib/`: `app/`, `core/`, `data/`, `domain/`, `ui/` (see *Project structure* under `flutter-apply-architecture-best-practices` below). Match the folder layout and package list in `PRD.md` when extending the scaffold — do not default to a generic `flutter create` shape.
+- The MVP is complete and Phase 2 is in progress. The shipped slices are listed under *Project Status* in `PRD.md`, and the code is under `lib/ui/features/`. Still to do: wallet sync (Ankr) and credit-card / transfer flows.
+- The Drift schema is at v7 (`schemaVersion` in `lib/data/database/app_database.dart`). Version history and migration rules are in [`data-model.md`](docs/architecture/data-model.md).
+- Extend the scaffold with the folder layout and package list in `PRD.md` (see *Project structure* below), not a generic `flutter create` shape.
 
 ## Commits and Pull Requests
 
-Commits and PR titles follow **different** conventions on purpose: a commit subject names the change, a PR title names the problem that motivated it. Never use one form where the other belongs.
+A commit subject names the change. A PR title names the problem that motivated it. Never swap the two forms.
 
-- **Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/):** `<type>[(scope)][!]: <description>`, then a blank line, the body, a blank line, and any footers.
-  - **Types used here:** `feat`, `fix`, `docs`, `refactor`, `chore`, `test`, `build`, `perf`, `style`, `ci`.
-  - **Scope** is a feature directory under `lib/ui/features/` (`accounts`, `analysis`, `categories`, `home`, `recurring`, `settings`, `shopping-list`, `splash`, `transactions`) or a layer or area (`app`, `core`, `data`, `domain`, `ui`, `l10n`, `deps`, `test`). Separate scopes with a comma when a change really spans two, as in `refactor(home,data):`.
-  - **Breaking changes** take `!` before the colon, a `BREAKING CHANGE:` footer, or both. That token is the one part of the format that must be uppercase.
-  - **Footers are git trailers** (`Token: value`, with hyphens rather than spaces). The `Co-Authored-By:` trailer belongs there, after a blank line, never attached to the body.
-- **PR titles start with `Problem`.** Write `Problem: <the problem>`, or `Problem(scope): <the problem>` when scoped. State what is wrong, not what you did. For example, `Problem: Forex rate is not fetched right after transaction saved`, not "fetch rate on save". The reviewer then reads the diff as an answer to a question rather than a claim to audit, and the merge commit records why the work happened. GitHub appends `(#NN)` itself, so do not add it.
-- **Each commit should analyze and test on its own**, so a regression can be bisected. Split by concern, not by file count. If two files cannot compile apart, keep them in one commit and say so in the body rather than shipping a commit that does not build.
+- **Commits follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/):** `<type>[(scope)][!]: <description>`, then a blank line, the body, a blank line and the footers.
+  - **Types:** `feat`, `fix`, `docs`, `refactor`, `chore`, `test`, `build`, `perf`, `style`, `ci`.
+  - **Scope:** a directory under `lib/ui/features/` (`shopping_list/` is written `shopping-list`), or a layer or area (`app`, `core`, `data`, `domain`, `ui`, `l10n`, `deps`, `test`). A change that really spans two scopes separates them with a comma: `refactor(home,data):`.
+  - **Breaking changes** take `!` before the colon, a `BREAKING CHANGE:` footer, or both. `BREAKING CHANGE` is the one token that must be uppercase.
+  - **Footers are git trailers** (`Token: value`, with hyphens rather than spaces), placed after a blank line and never attached to the body.
+- **PR titles are `Problem: <the problem>`** or `Problem(scope): <the problem>`. State what is wrong, not what you did: `Problem: Forex rate is not fetched right after transaction saved`, not "fetch rate on save". GitHub appends `(#NN)`, so don't add it.
+- **Each commit must analyse and test on its own**, so a regression can be bisected. Split by concern, not by file count. If two files can't compile apart, keep them in one commit and say so in the body.
 
 ## Architecture
 
-Detailed agent-facing rules live under [`docs/architecture/`](docs/architecture/README.md):
+The detailed rules live in [`docs/architecture/`](docs/architecture/README.md):
 
-- [`layers.md`](docs/architecture/layers.md) — 3-layer rules: SSOT on repositories, Drift inside repos, controller pattern, reactive defaults, typed errors. Includes the chart drill-down as a worked example of how UI selection state is kept out of the data layer.
-- [`data-model.md`](docs/architecture/data-model.md) — Money in minor units, immutable category `type`, `l10n_key` identity, archive-instead-of-delete, indirect icons/colors, `pending_transactions` staging, pagination cap.
-- [`ui-and-layout.md`](docs/architecture/ui-and-layout.md) — Required layout primitives, 600dp adaptive breakpoint, 2× text scale, reference live screens.
-- [`bootstrap.md`](docs/architecture/bootstrap.md) — First-run + bootstrap order, splash redirect, route table.
-- [`testing.md`](docs/architecture/testing.md) — Test organization by layer; repository/controller/migration patterns; per-slice coverage map.
-- [`dependencies.md`](docs/architecture/dependencies.md) — layer-boundary check (replaced `import_lint`), base `app_zh.arb` requirement, Android and iOS build toolchains.
+- [`layers.md`](docs/architecture/layers.md): repositories as the single source of truth, Drift only inside repositories, controllers, reactive defaults and typed errors. The chart drill-down is the worked example.
+- [`data-model.md`](docs/architecture/data-model.md): money in minor units, immutable category `type`, `l10n_key` identity, archive instead of delete, `pending_transactions` and the pagination cap.
+- [`ui-and-layout.md`](docs/architecture/ui-and-layout.md): required layout primitives, the 600dp breakpoint, 2× text scale and the reference screens.
+- [`bootstrap.md`](docs/architecture/bootstrap.md): bootstrap order, the splash redirect and the route table.
+- [`testing.md`](docs/architecture/testing.md): test layout by layer, the harness and the per-slice coverage map.
+- [`dependencies.md`](docs/architecture/dependencies.md): the layer-boundary check, the `app_zh.arb` shim, the committed `pubspec.lock`, and the Android and iOS toolchains.
 
-Code generation is required whenever a `@freezed`, `@riverpod`, or Drift `@DriftDatabase`/`@DataClassName` annotation changes — the build fails loudly if generated files are stale.
+**Regenerate after any edit to a file with a generated part** (`@freezed`, `@riverpod`, Drift), not only after an annotation changes. `riverpod_generator` hashes the provider's source (comments excluded), so any code edit leaves the committed `.g.dart` stale. Run `dart run build_runner build --delete-conflicting-outputs` and commit the result in the same commit.
 
-## Performance rules
-
-These rules come from a performance audit covering rendering, memory, startup and package size. Measure before restructuring anything for speed: run `flutter run --profile` and use DevTools. Never break an architecture rule for a gain you have not measured.
-
-- **Render user-data lists lazily.** A list whose length depends on the user's data uses `ListView.builder` / `SliverList.builder`, or caps rendered rows behind a "Show N more" control (`PendingSection`, and `SelectedSliceItemsList` with `_kDrilldownPageSize`). Never map unbounded rows into a `Column` inside a `SingleChildScrollView`. Home's single-day `Column` is a deliberate exception: its row count is bounded. Don't set `itemExtent` on rows that contain text, because it breaks the 2× text-scale requirement. The same goes for a fixed grid `mainAxisExtent`: derive the text's share from `MediaQuery.textScalerOf(context)` (see `category_picker.dart`). A `FittedBox` label hides the problem by shrinking the text instead of overflowing, so assert rendered size at 2×, not just no exception.
-- **Keep `build()` and controller emit paths free of side effects.** No I/O, no controller or stream creation, no logging, and no new `NumberFormat`/`DateFormat` built per row. Format money with `MoneyFormatter.format`/`formatBare`, which cache their formats. Older per-call formatters remain in `date_helpers.dart` and `PendingSection`. A recompute path such as `ChartsController._emitIfReady` must not start a network call or DB write on every emission. Track what has already been requested, because a write can make the same stream emit again and loop.
-- **Don't add trace logs to shipped code.** `debugPrint` runs in release builds. Never log amounts, totals, balances, currency sets or memos. Error logs carry `${e.runtimeType}` only.
-- **Never put `keepAlive: true` on a Riverpod family.** Every argument set would keep its state and Drift subscription for the rest of the session. If a provider must outlive its screen during an undo window:
-  - take a `ref.keepAlive()` link only while the undo is pending, and close it on commit or undo;
-  - make calls after dispose no-ops, for example by nulling the emitter in `onDispose`.
-
-  `CategorySearchDetailController` is the reference implementation.
-- **Regenerate whenever you edit a file that has a generated part.** `riverpod_generator` embeds a hash of the provider's source (comments excluded), so any code edit inside a provider leaves the committed `.g.dart` stale, even when no annotation changed. Run `build_runner` and commit the regenerated file in the same commit.
-- **Call `setState` only when something changed.** In high-frequency callbacks (fl_chart `touchCallback`, gesture and scroll handlers), compare the new value with the current one before calling `setState`. After an `await` or a platform callback (WebView, timers), check `mounted` first.
-- **Give each animated chart its own `RepaintBoundary`.** fl_chart adds none, so `_ChartBody` wraps each one. Don't add boundaries elsewhere unless a DevTools repaint trace shows the need.
-- **Before `runApp`, `bootstrap()` does only what the first frame needs:** opening the database, the first-run seed, and reading theme, locale, the splash gate, the default currency (read after the seed) and intl date data. Run everything else after the first frame, the way recurring generation does. Don't reorder the documented bootstrap steps to save milliseconds.
-- **Ship only what the app uses.**
-  - Any dependency that ships fonts or assets must be referenced from `lib/`, because Flutter bundles those files whether or not you use them. The unused `material_symbols_icons` added about 34 MB of fonts, about 15.6 MB once compressed.
-  - Dependencies with nothing to ship, such as `path_provider` (pulled in by `drift_flutter`) and `json_annotation`, cost nothing and can stay.
-  - List assets by file, not by directory.
-  - Don't give light and dark native-splash entries the same image, because each entry gets its own copy.
-  - After adding a package or asset, check the size with `flutter build apk --analyze-size` or `unzip -l` on the APK.
-- **These are already decided, so don't "optimise" them:**
-  - R8 and resource shrinking are Flutter's release defaults, so don't add Gradle flags.
-  - Drift runs on a background isolate through `driftDatabase()`.
-  - The existing Drift indexes cover the hot queries.
-  - Home's `_Composer` batches its stream emissions in microtasks.
-  - The charts use `skipLoadingOnReload`.
-  - The box-shadow colour is randomised on each build.
-  - There are no deferred components, because APKs ship through GitHub Releases rather than Play.
+l10n: the ARBs are in `l10n/` and the config is in `l10n.yaml`. `flutter pub get` generates them into `lib/l10n/`. Never delete the `app_zh.arb` shim, because codegen needs it ([`dependencies.md`](docs/architecture/dependencies.md#chinese-arbs-require-a-base-app_zharb)).
 
 ### CI workflows
 
-- `.github/workflows/check.yml` — three parallel jobs on pushes/PRs to `main`, each resolving packages from the committed lockfile (`--enforce-lockfile`). **Analyse:** codegen, failing if the committed generated files are stale → format check → `dart analyze --fatal-infos` (enforces `riverpod_lint`). **Test:** layer-boundary check (`flutter test test/unit/architecture/`) → `flutter test`. **Android APK builds:** signed release if signing secrets are present, otherwise debug, passing `FOREX_API_URL` via `--dart-define`. Test and Android use the committed generated files without rerunning codegen.
-- `.github/workflows/android-release.yml` — builds split signed release APKs on version tags, generates SHA-256 checksums, uploads APK assets to the GitHub Release.
-- `.github/workflows/github-pages.yml` — builds and deploys the Astro site from `site/`. `.github/workflows/site-check.yml` runs Yarn install/audit/test/check/build whenever site-related files change.
-- `.github/workflows/ios-nightly.yml` — iOS debug build (`flutter build ios --no-codesign --debug`) that also checks the build did not create `ios/Podfile` (plugins come in through Swift Package Manager; no CocoaPods) and that `sqlite3.framework` is embedded. Runs on PRs to `main` that touch `pubspec.yaml`, `pubspec.lock` or `ios/`, and via `workflow_dispatch`; not a scheduled nightly.
+- **`check.yml`** runs on PRs and pushes to `main`, except changes only under `docs/**`, `**/*.md`, `site/**` or the two site workflows. It runs three parallel jobs, all on `flutter pub get --enforce-lockfile`:
+  - **Analyse:** `build_runner`, failing if the committed generated files change → `dart format --set-exit-if-changed .` → `dart analyze --fatal-infos`, which also fails if the riverpod_lint plugin doesn't load.
+  - **Test:** `flutter test test/unit/architecture/` → `flutter test`.
+  - **Android:** an arm64 APK, signed release if the signing secrets exist and debug otherwise, built with `--dart-define=FOREX_API_URL`.
+- **`android-release.yml`** runs on a `vX.Y.Z` tag. It fails unless the tag matches `version:` in `pubspec.yaml`, so bump that first. It then builds split signed APKs with SHA-256 checksums and uploads them to the GitHub Release.
+- **`ios-nightly.yml`** is not scheduled. It runs on PRs that touch `pubspec.yaml`, `pubspec.lock` or `ios/`, and on `workflow_dispatch`. It runs `flutter build ios --no-codesign --debug` and fails if the build creates `ios/Podfile` (plugins are Swift Package Manager only) or doesn't embed `sqlite3.framework`.
+- **`site-check.yml` and `github-pages.yml`** check and deploy the Astro site in `site/`. If you touch `site/`, run `corepack enable`, then `yarn --cwd site install --immutable`, `yarn --cwd site test`, `yarn --cwd site check` and `yarn --cwd site build`.
 
-If you touch `site/`, use `corepack enable` plus `yarn --cwd site install --immutable`, `yarn --cwd site test`, `yarn --cwd site check`, `yarn --cwd site build`.
+## Performance rules
 
-l10n codegen is configured in `l10n.yaml`; generated output lands in `lib/l10n/`. Bare `zh` resolves to English at runtime — see [`docs/architecture/dependencies.md`](docs/architecture/dependencies.md) for why the `app_zh.arb` fallback shim must stay.
+Measure before restructuring anything for speed (`flutter run --profile` with DevTools), and never break an architecture rule for a gain you haven't measured. The audit behind these rules, including the ideas it rejected, is in [`docs/solutions/performance-issues/flutter-performance-audit-riverpod-lifecycle-and-emit-path-fixes.md`](docs/solutions/performance-issues/flutter-performance-audit-riverpod-lifecycle-and-emit-path-fixes.md).
+
+- **Render user-data lists lazily.** Use `ListView.builder` / `SliverList.builder`, or cap the rows behind a "Show N more" control (`PendingSection`, and `SelectedSliceItemsList` with `_kDrilldownPageSize`). Never map unbounded rows into a `Column` inside a `SingleChildScrollView`. Home's single-day `Column` is the exception, because its row count is bounded.
+  - Don't set `itemExtent` on rows that contain text, and don't give a grid a fixed `mainAxisExtent`. Derive the text's share from `MediaQuery.textScalerOf(context)` (see `category_picker.dart`).
+  - A `FittedBox` hides overflow by shrinking the text, so assert the rendered size at 2×.
+- **Keep `build()` and controller emit paths free of side effects:** no I/O, no controller or stream creation, no logging, and no `NumberFormat`/`DateFormat` built per row. `MoneyFormatter.format`/`formatBare` cache their formats. `DateHelpers` and `PendingSection`'s date label still build a `DateFormat` on every call, so don't call them per row in a long list. A recompute path such as `ChartsController._emitIfReady` must track what it has already requested, because its own network call or DB write can make the stream emit again and loop.
+- **No trace logs in shipped code:** `debugPrint` runs in release builds. What logs may contain is under *Security*.
+- **Never put `keepAlive: true` on a Riverpod family**, because every argument set would keep its state and Drift subscription for the rest of the session. If a provider must outlive its screen during an undo window:
+  - hold a `ref.keepAlive()` link only while the undo is pending, and close it on commit or undo;
+  - make calls after dispose no-ops by nulling the emitter in `onDispose`.
+
+  `CategorySearchDetailController` is the reference implementation.
+- **Call `setState` only when something changed.** In high-frequency callbacks (fl_chart `touchCallback`, gesture and scroll handlers), compare the new value with the current one first. Check `mounted` after an `await`, a timer or a WebView callback.
+- **Give each animated chart its own `RepaintBoundary`**, because fl_chart adds none. `CategoryPieChart` gets one in `_ChartBody` and `DailyBarChart` gets one in `ChartsTrendCard`. Add none elsewhere without a DevTools repaint trace.
+- **Before `runApp`, `bootstrap()` does only what the first frame needs:** opening the DB, the first-run seed, reading theme, locale and the splash gate, reading the default currency after the seed, and loading intl date data. Everything else runs after the first frame, the way recurring generation does. Don't reorder the documented steps ([`bootstrap.md`](docs/architecture/bootstrap.md)).
+- **Ship only what the app uses.** Flutter bundles a dependency's fonts and assets even if `lib/` never uses them; the unused `material_symbols_icons` cost about 34 MB.
+  - List assets by file, not by directory.
+  - Don't give the light and dark native-splash entries the same image, because each entry gets its own copy.
+  - Packages that ship nothing, such as `json_annotation`, cost no size and can stay.
+  - After adding a package or asset, run `flutter build apk --analyze-size --target-platform android-arm64` (size analysis needs a single ABI), or `unzip -l` the built APK.
+- **Already decided, so don't "optimise" these:**
+  - Gradle R8 and resource-shrink flags (Flutter's release defaults)
+  - Drift's background isolate (`driftDatabase()`)
+  - extra Drift indexes
+  - the microtask batching in Home's `_Composer`
+  - `skipLoadingOnReload` on the charts
+  - the box-shadow colour randomised on each build
+  - deferred components (APKs ship through GitHub Releases)
 
 ## Testing
 
-See [`docs/architecture/testing.md`](docs/architecture/testing.md) for the layer layout, canonical harness (`test/support/test_app.dart`), and per-slice coverage map. 
+See [`docs/architecture/testing.md`](docs/architecture/testing.md) for the test layout by layer, the canonical harness (`test/support/test_app.dart`) and the per-slice coverage map. The Drift `tester.runAsync` rule is under *`flutter-add-widget-test`* below.
 
-The non-obvious rule when writing new tests: any Drift-backed setup or direct repository write that happens **before the first `pump`** must run inside `tester.runAsync(...)` — see `test/widget/smoke_test.dart` and `test/integration/bootstrap_to_home_test.dart`.
+## Security
 
-## Security and agent hints
+The rules live in [`PRD.md` → *Security & Privacy*](PRD.md#security--privacy). For this repo:
 
-See [`PRD.md` → *Security & Privacy*](PRD.md#security--privacy). Operational specifics for this repo:
-
-- MVP is fully local-first and currently has no secrets.
-- In Phase 2, the Ankr API key must flow only through `data/services/secure_storage_service.dart` → `data/repositories/api_key_repository.dart`. Nothing else may read or write it.
-- Currency-price requests send only currency pairs and conversion metadata — never memos, categories, or any other transaction text.
-- Exchange-rate fetching uses `String.fromEnvironment('FOREX_API_URL')` in `lib/data/services/exchange_rate_service.dart`; pass it via `--dart-define` in app/build workflows instead of hardcoding URLs.
-- Keep failure logs sanitized (exception type only, no transaction data or request payloads). **Do not log financial data** (transactions, memos, balances, wallet data).
+- **Never log financial data:** transactions, amounts, totals, balances, currency sets, memos, wallet data or request payloads. Error logs carry `${e.runtimeType}` only.
+- The Ankr API key (Phase 2 wallet sync, not built yet) must flow only through `lib/data/services/secure_storage_service.dart` → `lib/data/repositories/api_key_repository.dart`. Nothing else may read or write it.
+- Exchange-rate requests send only currency pairs and conversion metadata, never memos, categories or other transaction text. The URL comes from `String.fromEnvironment('FOREX_API_URL')` in `lib/data/services/exchange_rate_service.dart`, set with `--dart-define`. Never hardcode it.
 
 ## Skills Available
 
-Four Flutter skills from `flutter/agent-plugins` are installed with `npx skills` at `.agents/skills/`, symlinked into `.claude/skills/` and pinned in `skills-lock.json`. They are written for a generic Flutter app, so read each one with its notes below. Where a skill disagrees with `PRD.md` or `docs/architecture/`, those win.
+Four Flutter skills from `flutter/agent-plugins` live in `.agents/skills/`, symlinked into `.claude/skills/` and pinned in `skills-lock.json`. They target a generic Flutter app, so read each one with its notes below. Where a skill disagrees with `PRD.md` or `docs/architecture/`, those win.
 
-- `flutter-apply-architecture-best-practices` — layered architecture (UI, optional domain, data). Invoke it when structuring a new feature.
-- `flutter-build-responsive-layout` — layouts that adapt to the window size. Invoke it when building or refining UI.
-- `flutter-add-widget-test` — `WidgetTester` tests of one widget's rendering and interactions. Invoke it when writing a widget test.
-- `flutter-add-integration-test` — end-to-end flow tests. Invoke it when writing a flow test; only its test-authoring advice applies.
+### `flutter-apply-architecture-best-practices` (structuring a feature)
 
-### `flutter-apply-architecture-best-practices`
+Take its layers and its order of work: models → services → repositories → optional use case → view model → view → tests (TDD, in the layer folders of `docs/architecture/testing.md`). Don't take its state management, dependency injection or error handling. Map its terms like this:
 
-Take its folder tree, its layers and the order of work: models → services → repositories → optional use case → view model → view. Don't take its state management, dependency injection or error handling. Map its terms like this:
+- **Project structure** → its `lib/{ui,domain,data}/` tree plus `app/` and `core/`, as in [`layers.md` → *Folder layout*](docs/architecture/layers.md#folder-layout). Each slice has flat `view_models/` and `views/` folders with no `widgets/` subfolder. Sub-slices nest under their parent. No widgets go in `lib/core/`.
+- **ViewModel extending `ChangeNotifier`** → a `@riverpod` controller in `view_models/*_controller.dart`. It holds immutable Freezed state, usually a sealed `*_state.dart`, and exposes commands as methods. Slice-local helper providers go in `view_models/*_providers.dart`, with pure helpers beside them.
+- **View with `ListenableBuilder`** → `views/`, where routed screens are `*_screen.dart`. A widget that reads state is a `ConsumerWidget` or `ConsumerStatefulWidget` that `ref.watch`es the controller and calls commands through `ref.read(...Provider.notifier)`. Other widgets take constructor arguments.
+- **Constructor injection, `provider` / `get_it`** → Riverpod providers in `lib/app/providers/` (`repository_providers.dart`, `service_providers.dart`). Controllers `ref.watch` them and tests override them. Which UI files may import them is in [`layers.md` → *Where things live*](docs/architecture/layers.md#where-things-live).
+- **API models / `Result`** → never add a generic `Result` wrapper.
+  - Services return records, primitives or SDK types.
+  - Repositories map those to `lib/domain/models/` and throw typed exceptions, because Drift rolls back a `db.transaction` only when an exception escapes it.
+  - Controllers expose reads as `AsyncValue` and return a sealed outcome from each command that can fail ([`PRD.md` → *Error Handling Pattern*](PRD.md#error-handling-pattern)).
+- **Use cases** → only for work that coordinates several repositories. Their import limits are in [`layers.md` → *Where things live*](docs/architecture/layers.md#where-things-live).
+- **`lib/data/models/`** → don't create it unless an external payload is nested or large and needs `fromJson`/`toJson`, or several services or repositories share it (e.g. Ankr wallet sync). Only services and repositories may import it. Update `PRD.md` and the ban in `import_analysis_options.yaml` first.
 
-- **Project structure** → Ledgerly uses the skill's `lib/{ui,domain,data}/` tree, plus `app/` and `core/`:
+### `flutter-build-responsive-layout` (building UI)
 
-  ```text
-  lib/
-  ├── main.dart
-  ├── app/                  # bootstrap, router, MaterialApp; Riverpod providers in providers/
-  ├── core/                 # non-widget helpers any layer may import: formatters, icon and
-  │                         # colour registries, CSV codecs, date helpers, constants.dart
-  ├── data/
-  │   ├── database/         # Drift tables, DAOs, AppDatabase and the generated row classes
-  │   ├── models/           # not created yet: see "When lib/data/ needs models" below
-  │   ├── repositories/     # map Drift rows and service results to domain models
-  │   ├── seed/             # first-run seed
-  │   └── services/         # HTTP, platform channels, files; return records, primitives, SDK types
-  ├── domain/
-  │   ├── models/           # Freezed models, the only model types the UI sees
-  │   └── use_cases/        # only for work that coordinates several repositories
-  ├── ui/
-  │   ├── core/
-  │   │   ├── theme/
-  │   │   └── widgets/      # shared widgets: adaptive shell and sheet, confirm dialog, Undo snackbar
-  │   └── features/
-  │       └── <feature>/
-  │           ├── view_models/  # flat: *_controller, *_state, *_providers, pure helpers
-  │           └── views/        # flat: *_screen and every other widget; no widgets/ subfolder
-  └── l10n/                 # generated
-  ```
+Take its advice on measuring space (`MediaQuery.sizeOf`, `LayoutBuilder`), on `Expanded`/`Flexible`, on lazy builders and on not locking orientation. Then:
 
-  - Never put a widget in `lib/core/`.
-  - A sub-slice nests under its parent with its own `view_models/` and `views/`, as `ui/features/analysis/charts/` and `ui/features/settings/csv_import/` do.
-- **ViewModel extending `ChangeNotifier`** → a `@riverpod` controller in `lib/ui/features/<feature>/view_models/*_controller.dart`. It holds immutable Freezed state, usually a sealed `*_state.dart`, and exposes commands as methods. Slice-local helper providers go in `view_models/*_providers.dart`; only these two kinds of UI file may import `app/providers/repository_providers.dart`. Pure helpers the controller uses, such as `amount_formula.dart`, also go in `view_models/`.
-- **View with `ListenableBuilder`** → the slice's `views/`: routed screens are `*_screen.dart`, and every other widget sits beside them. A widget that reads state is a `ConsumerWidget` or `ConsumerStatefulWidget` that `ref.watch`es the controller and calls commands through `ref.read(...Provider.notifier)`; other widgets take constructor arguments.
-- **Constructor injection, `provider` / `get_it` (Step 7)** → Riverpod providers in `lib/app/providers/`: `repository_providers.dart` builds repositories and use cases, and `service_providers.dart` builds services. Controllers `ref.watch` them and tests override them. Run `build_runner` after adding or editing a provider.
-- **Services return API models or `Result`** → services return plain Dart values (records, primitives, SDK types) and repositories map them to the Freezed models in `lib/domain/models/` (see *When `lib/data/` needs models* below). Repositories throw typed exceptions rather than return results, because Drift rolls back a `db.transaction` only when an exception escapes it. Controllers expose reads as `AsyncValue` and return a Freezed sealed outcome from each command that can fail ([`PRD.md` → *Error Handling Pattern*](PRD.md#error-handling-pattern)). Never add a generic `Result` wrapper.
-- **Use cases (Step 4)** → only when the work coordinates several repositories, in `lib/domain/use_cases/` (see `PRD.md`). A use case may import `data/database/app_database.dart` and nothing else from `data/database/`, so it can take `AppDatabase` and run one `db.transaction` across repositories. It never touches a DAO, a table or Drift.
-- **Step 8 (tests)** → write the failing test first (TDD rule above), in the layer folders of `docs/architecture/testing.md`.
+- **Breakpoint** → there is one: a width `>= 600` is wide (the skill's `>` puts 600 on the narrow side). Reuse the switches in [`ui-and-layout.md` → *Adaptive Breakpoint*](docs/architecture/ui-and-layout.md#adaptive-breakpoint):
+  - `_AdaptiveFormRoute` in `lib/app/router.dart` for modal form routes
+  - `showAdaptiveSheet` (`lib/ui/core/widgets/adaptive_sheet.dart`) for pickers and sheets
+- **New layouts** → don't add a breakpoint, an in-screen layout switch or a list-to-grid conversion without changing `PRD.md` first. Home stays single-pane; ask before building the pending two-pane layout PRD lists.
+- **Large screens** → skip its *Optimizing for Large Screens* workflow and its `Center`/`ConstrainedBox` width caps. Dialogs already cap their width, and screen bodies stay full width.
+- **Widget trees and text scale** → follow [`ui-and-layout.md`](docs/architecture/ui-and-layout.md): Home's slivers, the bottom-pinned keypad, 2× text scale for scrollable regions, and the 1.5× clamp for fixed-height widgets (`textScaler.clamp(maxScaleFactor: 1.5)`). Also follow the `itemExtent`/`mainAxisExtent` rules under *Performance rules*.
+- **Verifying** → write a widget test on each side of 600 (for example 390 and 1000 wide). Routes use `tester.binding.setSurfaceSize` (`test/unit/app/router_test.dart`). Sheets use a `MediaQuery(data: MediaQueryData(size: ...))` host (`test/widget/app/adaptive_sheet_test.dart`).
 
-#### When `lib/data/` needs models
-
-Not yet. Services return records, and Drift generates its own row classes. Add `lib/data/models/` only for an external payload that is nested or large, needs `fromJson`/`toJson`, or is shared by several services or repositories, such as the Ankr wallet-sync API. Only services and repositories may import it. Before adding it, update `PRD.md` and `import_analysis_options.yaml`, which currently bans `data/models/`.
-
-### `flutter-build-responsive-layout`
-
-Take its advice on measuring space (`MediaQuery.sizeOf`, `LayoutBuilder` on the parent's constraints), on `Expanded` and `Flexible`, on lazy builders and on not locking orientation. Then:
-
-- **Breakpoint** → Ledgerly has one: a width of 600dp or more is wide (`>= 600`; the skill's `>` would put exactly 600 on the narrow side). Reuse the existing switches instead of writing a new one:
-  - A modal form route goes inside `_AdaptiveFormRoute` in `lib/app/router.dart`, which shows it as a dialog at most 560dp wide on wide windows.
-  - A picker or sheet opens through `showAdaptiveSheet` in `lib/ui/core/widgets/adaptive_sheet.dart`, which checks `MediaQuery.sizeOf(context).width >= 600` and shows a constrained `Dialog` or a modal bottom sheet, as `category_picker.dart` and `account_picker_sheet.dart` do.
-- **New layouts** → beyond those patterns, don't add a breakpoint, an in-screen layout switch or a list-to-grid conversion without changing `PRD.md` first. PRD's *Adaptive Layouts* table also lists a Home two-pane, marked pending: Home is single-pane at every width. Ask before building it.
-- **Large screens** → skip the skill's *Optimizing for Large Screens* workflow and its `Center`/`ConstrainedBox` width caps. Form routes and pickers already get their width limit from their dialog, and screen bodies stay full width.
-- **Widget trees** → follow the required trees in `docs/architecture/ui-and-layout.md`, such as Home's slivers and the transaction form's bottom-pinned keypad, whose keys shrink toward 48dp (`CalculatorKeypad.minHeight`) before the form above them scrolls.
-- **Text scale** → the skill doesn't cover it. Every scrollable region must survive 2× text scale. Fixed-height widgets, such as the keypad keys, clamp at 1.5× (`textScaler.clamp(maxScaleFactor: 1.5)`) or reflow. See also the `itemExtent` and grid `mainAxisExtent` rules under *Performance rules*.
-- **Verifying** → instead of resizing a window, write a widget test on each side of 600 (for example 390 and 1000 wide). Routes use `tester.binding.setSurfaceSize` (`test/unit/app/router_test.dart`). Picker and sheet helpers use a `MediaQuery(data: MediaQueryData(size: ...))` host.
-
-### `flutter-add-widget-test`
+### `flutter-add-widget-test` (writing a widget test)
 
 Take its `WidgetTester`, `Finder` and pump workflow, and skip its setup step: `flutter_test` and `mocktail` are already dev dependencies. Then:
 
-- **Location** → `test/widget/features/<feature>/`, or `test/widget/app/` for `lib/app/` and `lib/ui/core/widgets/` widgets; never the root of `test/`.
-- **Building the widget** → wrap it in a `MaterialApp` with `localizationsDelegates: AppLocalizations.localizationsDelegates` and `supportedLocales: AppLocalizations.supportedLocales`. Without `supportedLocales`, a `zh_TW` test silently renders English. A test of the whole app shell uses `test/support/test_app.dart` instead.
-- **Navigation** → if the widget calls `context.go`, `push` or `pop`, use `MaterialApp.router` with a local `GoRouter` whose other routes are stubs, as `test/widget/features/home/home_screen_test.dart` does.
-- **Providers** → prefer an `UncontrolledProviderScope` whose container you dispose with `addTearDown(container.dispose)`, so Drift's stream timers don't fail the test at teardown. Override repositories with `mocktail` mocks or the controller with a fake. Pass `retry: noProviderRetry` when a provider is meant to fail, as production does.
-- **`@Dependencies`** → `main()` and every helper or test-only widget that pumps a widget annotated with `@Dependencies`, or reads a scoped provider, needs `@Dependencies([...])`. That covers most feature screens, because every repository provider is scoped. Copy the names from the lint's "Missing dependencies" message (`docs/architecture/testing.md`).
-- **Drift** → most widget tests mock repositories. A test that uses a database runs every Drift query inside `tester.runAsync(...)`: the seed, inserts and lookups, and reads after the flow. Creating the database and the container can stay outside.
-- **`pumpAndSettle`** → don't use it while a loading spinner is on screen, whatever the skill says about async updates. It times out if the spinner stays, and if the spinner ends after a delay it silently advances fake time past it, which can hide timing bugs. Step time explicitly: `await tester.pump(); await tester.pump(const Duration(seconds: 1));`.
-- **Text scale** → for text in a scrollable or fixed-size region, add a 2× case through `MaterialApp.builder: textScaleBuilder(2)` (`test/support/text_scale.dart`). Check the rendered size, not only that nothing threw.
-- **Test font** → the default test font draws every glyph 1em wide, about twice as wide as Roboto, so text wraps in tests where it fits on a phone. A test that checks whether text fits a width, or whether a layout fits a phone's height, first loads Roboto from `$FLUTTER_ROOT/bin/cache/artifacts/material_fonts/` with a `FontLoader` in `setUpAll`. The font stays loaded for the rest of the file, so keep that group last (see the issue #100 group in `transaction_form_screen_test.dart`).
-- **Goldens** → none run today; the splash golden test was deleted in 3947f73. Ask before adding `matchesGoldenFile`.
-- **Verify** → after `flutter test <file>`, run `dart format` on it and `dart analyze --fatal-infos`. Only `dart analyze` reliably reports riverpod_lint's missing-`@Dependencies` warnings, and CI fails on them.
+- **Location** → `test/widget/features/<feature>/`, or `test/widget/app/` for `lib/app/` and `lib/ui/core/widgets/`. Never the root of `test/`.
+- **Host** → a `MaterialApp` with `localizationsDelegates` and `supportedLocales` from `AppLocalizations`. Without `supportedLocales`, a `zh_TW` test silently renders English. If the widget navigates, use `MaterialApp.router` with a local `GoRouter` whose other routes are stubs (`home_screen_test.dart`). For the whole shell, use `test/support/test_app.dart`.
+- **Providers** → an `UncontrolledProviderScope` with `addTearDown(container.dispose)`; otherwise Drift's stream timers fail the teardown. Mock repositories with `mocktail` or fake the controller. Pass `retry: noProviderRetry` when a provider is meant to fail.
+- **`@Dependencies`** → required on `main()` and on any helper or test-only widget that pumps a scoped widget or reads a scoped provider, which covers most feature screens. Copy the names from the lint's "Missing dependencies" message ([`testing.md` → *Patterns*](docs/architecture/testing.md#patterns)). CI fails without them.
+- **Drift** → run every Drift query inside `tester.runAsync(...)`: the seed, inserts, lookups and reads after the flow. Creating the database and the container can stay outside.
+- **`pumpAndSettle`** → never use it while a spinner is on screen. It times out, or it silently advances fake time past a delay and hides timing bugs. Step time explicitly: `await tester.pump(); await tester.pump(const Duration(seconds: 1));`.
+- **Text scale** → for text in a scrollable or fixed-size region, add a 2× case with `MaterialApp.builder: textScaleBuilder(2)` (`test/support/text_scale.dart`). Assert the rendered size, not just that nothing threw.
+- **Test font** → the default test font is about twice as wide as Roboto, so text wraps in tests where it fits on a phone. A test of fit to a width or a phone's height loads Roboto from `$FLUTTER_ROOT/bin/cache/artifacts/material_fonts/` with a `FontLoader` in `setUpAll`. The font then stays loaded, so put that group last in the file (see `compact form (issue #100)` in `transaction_form_screen_test.dart`).
+- **Goldens** → none run today (removed in 3947f73). Ask before adding `matchesGoldenFile`.
+- **Verify** → run `flutter test <file>`, then `dart format` and `dart analyze --fatal-infos`. Only `dart analyze` reliably reports missing `@Dependencies`.
 
-### `flutter-add-integration-test`
+### `flutter-add-integration-test` (writing a flow test)
 
-Ledgerly's integration tests are host-side flow tests in `test/integration/`. They run under `flutter test` against an in-memory Drift database, and CI runs them with the rest of the suite. Most pump the app through `test/support/test_app.dart`. A flow that needs no UI drives a `ProviderContainer` in a plain `test()`, as `amount_formula_flow_test.dart` does. Run one with `flutter test test/integration/<name>_test.dart`. The widget-test notes above apply here too. From the skill:
+Flow tests are host-side `flutter test` files in `test/integration/` that run against an in-memory Drift database, and CI runs them with the rest of the suite. Only the skill's test-authoring advice applies, and the widget-test notes above apply too.
 
-- **Setup** → skip it. There is no `integration_test` package, `integration_test/` or `test_driver/` folder, Flutter Driver or `flutter drive` step. Skip `IntegrationTestWidgetsFlutterBinding.ensureInitialized()` too. Instead of `pumpWidget(MyApp())`, pump `buildTestApp(container: makeTestContainer(db: db))`, or `buildBootstrappedTestApp(db: db)` when the flow covers bootstrap.
-- **MCP exploration** (`launch_app`, `get_widget_tree`) → skip it; no Dart MCP server is configured. Find widgets from the screen source and the existing tests instead.
-- **Execution targets** → ignore its Chrome, web-server and Firebase Test Lab targets and its `traceAction` perf driver. For performance, follow *Performance rules*.
-- **On-device tests** → ask before adding them. They need new dev dependencies and a CI job with a device or emulator. On a device, HTTP isn't mocked and `bootstrap()` opens the real database, so such tests must still override `appDatabaseProvider` and the exchange-rate service.
-- **Driver extension** → never call `enableFlutterDriverExtension()` from a file under `lib/`, including the skill's `lib/main_test.dart`. There, the `flutter_driver` import fails CI's `dart analyze --fatal-infos` (`depend_on_referenced_packages`), and in `lib/main.dart` it would also ship in release builds.
+- **Setup** → skip it. There is no `integration_test` package or folder, no `test_driver/`, no Flutter Driver, no `flutter drive` and no `IntegrationTestWidgetsFlutterBinding`. Pump `buildTestApp(container: makeTestContainer(db: db))`, or `buildBootstrappedTestApp(db: db)` when the flow covers bootstrap. A flow with no UI drives a `ProviderContainer` in a plain `test()` (`amount_formula_flow_test.dart`).
+- **MCP exploration, Chrome/web/Firebase targets and `traceAction`** → skip them; no Dart MCP server is configured. Find widgets from the screen source and the existing tests. For performance, follow *Performance rules*.
+- **On-device tests** → ask first. They need new dev dependencies and a CI job with a device, and they must still override `appDatabaseProvider` and the exchange-rate service.
+- **Driver extension** → never call `enableFlutterDriverExtension()` from a file under `lib/`, including the skill's `lib/main_test.dart`. The `flutter_driver` import fails `dart analyze --fatal-infos` (`depend_on_referenced_packages`), and from `main.dart` it would ship in release builds.
 
 ## Knowledge Consolidation
 
-After resolving a non-trivial problem, run `/ce:compound` to persist the solution for future reference.
+`docs/solutions/` holds documented fixes and lessons from past work, in one subfolder per category, each with YAML frontmatter (`module`, `tags`, `problem_type`). It is relevant when you implement, debug or clean up code in an area it covers.
 
-- `docs/solutions/` is a searchable prior-solutions store organized by category (`architecture-patterns/`, `best-practices/`, `database-issues/`, `design-patterns/`, `logic-errors/`, `performance-issues/`, `runtime-errors/`, `test-failures/`, `ui-bugs/`); solution docs use YAML frontmatter like `module`, `tags`, and `problem_type`.
-- `/ce:plan` auto-searches `docs/solutions/` at planning time to surface relevant prior solutions before implementation begins.
-- Each solution document includes: problem description, root cause, fix applied, and tags for search.
-
-When to invoke `/ce:compound`:
-- After a tricky bug is fixed (especially build/CI failures, async issues, borrow-checker patterns)
-- After establishing a new architectural pattern or workflow convention
-- After integrating a new dependency or provider that required non-obvious configuration
+After a tricky fix (build or CI failures, async or stream timing), a new architectural or workflow convention, or a dependency that needed non-obvious configuration, run `/ce-compound` to add a doc.
