@@ -244,20 +244,17 @@ void main() {
         ),
       ),
       (
-        'duplicateSourceId extra → Duplicate',
-        <String, Object>{
-          'duplicateSourceId': 99,
-          'initialDate': DateTime(2026, 3, 4),
-        },
-        isA<DuplicateTransactionMode>().having(
-          (m) => m.sourceTransactionId,
-          'sourceTransactionId',
-          99,
+        'unknown extra keys are ignored',
+        <String, Object>{'unknownKey': 99, 'initialDate': DateTime(2026, 3, 4)},
+        isA<AddTransactionMode>().having(
+          (m) => m.initialDate,
+          'initialDate',
+          DateTime(2026, 3, 4),
         ),
       ),
       (
         'wrongly typed extras are ignored',
-        <String, Object>{'duplicateSourceId': '99', 'initialDate': 'today'},
+        <String, Object>{'initialDate': 'today'},
         isA<AddTransactionMode>().having(
           (m) => m.initialDate,
           'initialDate',

@@ -94,7 +94,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     final appBarTitle = switch (activeMode) {
       EditShoppingListDraftMode() => l10n.shoppingListEditDraftTitle,
       EditTransactionMode() => l10n.txEditTitle,
-      AddTransactionMode() || DuplicateTransactionMode() => l10n.txAddTitle,
+      AddTransactionMode() => l10n.txAddTitle,
     };
 
     // F1/F2: Auto-pop with ShoppingListEditResultMissingDraft when the draft
@@ -150,7 +150,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                 child: Text(l10n.commonSave),
               ),
             ],
-            AddTransactionMode() || DuplicateTransactionMode() => <Widget>[
+            AddTransactionMode() => <Widget>[
               TextButton(
                 onPressed: state.canSave
                     ? () => _save(context, l10n, controller)
@@ -562,8 +562,8 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     BuildContext context,
     TransactionFormController controller,
   ) {
-    // After /settings/manage-accounts/new pops, re-run the current hydration mode so add
-    // and duplicate flows both recover correctly.
+    // After /settings/manage-accounts/new pops, re-run the current hydration
+    // mode so the form recovers with the new account.
     context.push('/settings/manage-accounts/new').then((_) {
       if (!mounted) return;
       unawaited(controller.retryHydration());

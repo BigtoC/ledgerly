@@ -529,7 +529,7 @@
   },
   "txTransactionNotFound": "Transaction not found",
   "@txTransactionNotFound": {
-    "description": "Wave 2 §10. Recoverable not-found state shown when hydrateForEdit/hydrateForDuplicate cannot resolve the row."
+    "description": "Wave 2 §10. Recoverable not-found state shown when hydrateForEdit cannot resolve the row."
   },
   "txSaveFailedSnackbar": "Couldn’t save transaction. Please try again.",
   "@txSaveFailedSnackbar": {

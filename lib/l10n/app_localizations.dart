@@ -856,7 +856,7 @@ abstract class AppLocalizations {
   /// **'Create account'**
   String get txCreateAccountCta;
 
-  /// Wave 2 §10. Recoverable not-found state shown when hydrateForEdit/hydrateForDuplicate cannot resolve the row.
+  /// Wave 2 §10. Recoverable not-found state shown when hydrateForEdit cannot resolve the row.
   ///
   /// In en, this message translates to:
   /// **'Transaction not found'**

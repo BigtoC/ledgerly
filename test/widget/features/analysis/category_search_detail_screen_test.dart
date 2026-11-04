@@ -305,47 +305,46 @@ void main() {
     },
   );
 
-  testWidgets(
-    'renders TransactionSearchRow without a PopupMenu (no duplicate affordance)',
-    (tester) async {
-      final tx = _MockTransactionRepository();
-      final cat = _MockCategoryRepository();
-      final acct = _MockAccountRepository();
+  testWidgets('renders TransactionSearchRow without a PopupMenu', (
+    tester,
+  ) async {
+    final tx = _MockTransactionRepository();
+    final cat = _MockCategoryRepository();
+    final acct = _MockAccountRepository();
 
-      when(() => tx.watchByMemo('coffee'))
-          .thenAnswer((_) => Stream.value([_tx()]));
-      when(() => cat.watchAll(includeArchived: true))
-          .thenAnswer((_) => Stream.value([_cat()]));
-      when(() => acct.watchAll(includeArchived: true))
-          .thenAnswer((_) => Stream.value([_acct()]));
+    when(() => tx.watchByMemo('coffee'))
+        .thenAnswer((_) => Stream.value([_tx()]));
+    when(() => cat.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([_cat()]));
+    when(() => acct.watchAll(includeArchived: true))
+        .thenAnswer((_) => Stream.value([_acct()]));
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            transactionRepositoryProvider.overrideWithValue(tx),
-            categoryRepositoryProvider.overrideWithValue(cat),
-            accountRepositoryProvider.overrideWithValue(acct),
-          ],
-          child: MaterialApp(
-            theme: lightTheme,
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: const CategorySearchDetailScreen(
-              categoryId: 1,
-              query: 'coffee',
-              currencyCode: 'USD',
-            ),
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          transactionRepositoryProvider.overrideWithValue(tx),
+          categoryRepositoryProvider.overrideWithValue(cat),
+          accountRepositoryProvider.overrideWithValue(acct),
+        ],
+        child: MaterialApp(
+          theme: lightTheme,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const CategorySearchDetailScreen(
+            categoryId: 1,
+            query: 'coffee',
+            currencyCode: 'USD',
           ),
         ),
-      );
+      ),
+    );
 
-      await tester.pump();
-      await tester.pump();
+    await tester.pump();
+    await tester.pump();
 
-      expect(find.byType(TransactionSearchRow), findsOneWidget);
-      expect(find.byType(PopupMenuButton<dynamic>), findsNothing);
-    },
-  );
+    expect(find.byType(TransactionSearchRow), findsOneWidget);
+    expect(find.byType(PopupMenuButton<dynamic>), findsNothing);
+  });
 
   testWidgets(
     'income totals wait for category metadata before rendering sign',

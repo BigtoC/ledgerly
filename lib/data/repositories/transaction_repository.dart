@@ -66,13 +66,6 @@ typedef DateBounds = ({DateTime first, DateTime last});
 /// - `createdAt` / `updatedAt` populated by the repository, never by
 ///   SQL defaults (PRD.md 291-293). [insertImported] is the one exception:
 ///   it keeps the caller's `createdAt`.
-///
-/// **No `duplicate(id)` convenience method exists by design.** PRD's
-/// quick-repeat flow ("user adjusts amount or date if needed → tap
-/// Save") requires the user to edit the prefill *before* it persists,
-/// so the UI drives the flow as `getById` → prefill in form state →
-/// user edits → `save`. A repository-level duplicate-and-save would
-/// bypass the edit step. Do not re-add it.
 abstract class TransactionRepository {
   /// Transactions for one calendar day, in the device's local timezone.
   /// Day window: `[localMidnight(day), localMidnight(day) + 24h)`.

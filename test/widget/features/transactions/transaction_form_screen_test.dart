@@ -7,7 +7,6 @@
 //   - Save button enables once amount + account + category are all set
 //     (account is auto-resolved by hydrateForAdd → fallback chain).
 //   - Edit mode hydrates from `getById` and renders memo + amount.
-//   - Duplicate mode prefills amount + memo and resets date to today.
 //   - Discard confirm dialog fires on back-nav when state is dirty;
 //     does not fire on clean back.
 //   - A failed save or delete shows its snackbar and keeps the form open;
@@ -170,7 +169,6 @@ void main() {
 
   @Dependencies([TransactionFormController, categoriesByType])
   Widget mountAdd({
-    TransactionFormMode mode = const AddTransactionMode(),
     List<Override> extraOverrides = const [],
     double? textScale,
     Duration? Function(int retryCount, Object error)? retry,
@@ -184,7 +182,8 @@ void main() {
           routes: [
             GoRoute(
               path: 'add',
-              builder: (_, _) => TransactionFormScreen(mode: mode),
+              builder: (_, _) =>
+                  const TransactionFormScreen(mode: AddTransactionMode()),
             ),
             GoRoute(
               path: 'edit/:id',
@@ -331,28 +330,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Transaction not found'), findsOneWidget);
   });
-
-  testWidgets(
-    'WS05: Duplicate mode prefills amount + memo and resets date to today',
-    (tester) async {
-      // Source from a year ago.
-      final source = _persistedTx(
-        memo: 'monthly bill',
-        amountMinorUnits: 1500,
-        date: DateTime(2025, 1, 15),
-      );
-      when(() => txRepo.getById(99)).thenAnswer((_) async => source);
-      await tester.pumpWidget(
-        mountAdd(mode: const DuplicateTransactionMode(sourceTransactionId: 99)),
-      );
-      await tester.pumpAndSettle();
-      // Title is still "Add transaction" — duplicate routes through /home/add.
-      expect(find.text('Add transaction'), findsOneWidget);
-      expect(find.text('monthly bill'), findsOneWidget);
-      // Date row should NOT show 2025 (source's year).
-      expect(find.textContaining('2025'), findsNothing);
-    },
-  );
 
   testWidgets(
     'WS06: dirty state surfaces discard dialog on back-nav; clean state pops',

@@ -76,9 +76,9 @@ class KeypadState {
       formulaOperators = const [];
 
   /// Reconstructs a keypad from a stored amount so backspace on a
-  /// hydrated edit/duplicate value walks back through the visible digits
+  /// hydrated edit value walks back through the visible digits
   /// rather than dropping the whole amount in one press. Sets
-  /// `hasCurrentInput: true` for non-zero amounts so edit/duplicate flows
+  /// `hasCurrentInput: true` for non-zero amounts so edit flows
   /// can immediately start operator expressions from the existing value.
   factory KeypadState.fromAmount(
     int amountMinorUnits, {

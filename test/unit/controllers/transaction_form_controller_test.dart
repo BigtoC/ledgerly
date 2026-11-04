@@ -1,7 +1,7 @@
 // TransactionFormController unit tests — Wave 2 §4.3.
 //
 // Covers:
-//   - Hydration paths (Add / Edit / Duplicate) including the
+//   - Hydration paths (Add / Edit) including the
 //     default-account fallback chain and not-found recoveries. A
 //     hydration that finishes after the form closed completes normally
 //     and stops reading; one called after the form closed completes
@@ -110,17 +110,15 @@ Transaction _persistedTx({
   int id = 99,
   int amountMinorUnits = 500,
   Currency currency = _usd,
-  int accountId = 1,
   String? memo,
-  DateTime? date,
 }) {
-  final d = date ?? DateTime(2026, 4, 25);
+  final d = DateTime(2026, 4, 25);
   return Transaction(
     id: id,
     amountMinorUnits: amountMinorUnits,
     currency: currency,
     categoryId: 10,
-    accountId: accountId,
+    accountId: 1,
     memo: memo,
     date: d,
     createdAt: d,
@@ -287,135 +285,42 @@ void main() {
     });
   });
 
-  group('hydrateForDuplicate', () {
-    test(
-      'TC20: prefills amount/category/memo and resets date to today',
-      () async {
-        final source = _persistedTx(memo: 'lunch', date: DateTime(2025, 1, 1));
-        when(() => txRepo.getById(99)).thenAnswer((_) async => source);
-        final c = makeContainer();
-        addTearDown(c.dispose);
-        await c
-            .read(transactionFormControllerProvider.notifier)
-            .hydrateForDuplicate(99);
-        final s =
-            c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(s.amountMinorUnits, source.amountMinorUnits);
-        expect(s.memo, 'lunch');
-        expect(
-          s.formMode,
-          isA<DuplicateTransactionMode>().having(
-            (m) => m.sourceTransactionId,
-            'sourceTransactionId',
-            99,
-          ),
-        );
-        expect(s.editingId, isNull);
-        // Date defaults to today (Wave 2 risk #7).
-        final today = DateTime.now();
-        expect(s.date.year, today.year);
-        expect(s.date.month, today.month);
-        expect(s.date.day, today.day);
-      },
-    );
+  group('retryHydration', () {
+    test('TC23: retryHydration re-runs Add with its initialDate after account creation', () async {
+      when(() => accountRepo.watchAll(includeArchived: false))
+          .thenAnswer((_) => Stream.value(const <Account>[]));
 
-    test('TC21: missing source → empty(notFound)', () async {
-      when(() => txRepo.getById(123)).thenAnswer((_) async => null);
       final c = makeContainer();
       addTearDown(c.dispose);
-      await c
-          .read(transactionFormControllerProvider.notifier)
-          .hydrateForDuplicate(123);
-      final s = c.read(transactionFormControllerProvider);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+
+      await controller.hydrateForAdd(initialDate: DateTime(2026, 3, 4));
+      TransactionFormState s = c.read(transactionFormControllerProvider);
       expect(s, isA<TransactionFormEmpty>());
       expect(
         (s as TransactionFormEmpty).reason,
-        TransactionFormEmptyReason.notFound,
+        TransactionFormEmptyReason.noActiveAccount,
       );
+
+      when(() => prefs.getDefaultAccountId()).thenAnswer((_) async => 1);
+      when(() => accountRepo.watchAll(includeArchived: false))
+          .thenAnswer((_) => Stream.value(const [_account]));
+
+      await controller.retryHydration();
+      s = c.read<TransactionFormState>(transactionFormControllerProvider);
+      expect(s, isA<TransactionFormData>());
+      final data = s as TransactionFormData;
+      expect(
+        data.formMode,
+        isA<AddTransactionMode>().having(
+          (m) => m.initialDate,
+          'initialDate',
+          DateTime(2026, 3, 4),
+        ),
+      );
+      expect(data.selectedAccount.id, _account.id);
+      expect(data.date, DateTime(2026, 3, 4));
     });
-
-    test(
-      'TC22: fallback to different-currency account clears duplicated amount',
-      () async {
-        final source = _persistedTx(
-          amountMinorUnits: 500,
-          currency: _usd,
-          accountId: 99,
-          memo: 'lunch',
-        );
-        when(() => txRepo.getById(99)).thenAnswer((_) async => source);
-        when(() => prefs.getDefaultAccountId()).thenAnswer((_) async => 2);
-        when(() => accountRepo.getById(99)).thenAnswer((_) async => null);
-        when(() => accountRepo.getById(2)).thenAnswer((_) async => _accountJpy);
-
-        final c = makeContainer();
-        addTearDown(c.dispose);
-        await c
-            .read(transactionFormControllerProvider.notifier)
-            .hydrateForDuplicate(99);
-
-        final s =
-            c.read(transactionFormControllerProvider) as TransactionFormData;
-        expect(s.selectedAccount.id, _accountJpy.id);
-        expect(s.displayCurrency.code, 'JPY');
-        expect(s.amountMinorUnits, 0);
-        expect(s.memo, 'lunch');
-        expect(
-          s.formMode,
-          isA<DuplicateTransactionMode>().having(
-            (m) => m.sourceTransactionId,
-            'sourceTransactionId',
-            99,
-          ),
-        );
-      },
-    );
-
-    test(
-      'TC23: retryHydration preserves duplicate mode after account creation',
-      () async {
-        final source = _persistedTx(
-          amountMinorUnits: 700,
-          accountId: 99,
-          memo: 'retry me',
-        );
-        when(() => txRepo.getById(99)).thenAnswer((_) async => source);
-        when(() => accountRepo.getById(99)).thenAnswer((_) async => null);
-        when(() => accountRepo.watchAll(includeArchived: false))
-            .thenAnswer((_) => Stream.value(const <Account>[]));
-
-        final c = makeContainer();
-        addTearDown(c.dispose);
-        final controller = c.read(transactionFormControllerProvider.notifier);
-
-        await controller.hydrateForDuplicate(99);
-        TransactionFormState s = c.read(transactionFormControllerProvider);
-        expect(s, isA<TransactionFormEmpty>());
-        expect(
-          (s as TransactionFormEmpty).reason,
-          TransactionFormEmptyReason.noActiveAccount,
-        );
-
-        when(() => prefs.getDefaultAccountId()).thenAnswer((_) async => 1);
-        when(() => accountRepo.watchAll(includeArchived: false))
-            .thenAnswer((_) => Stream.value(const [_account]));
-
-        await controller.retryHydration();
-        s = c.read<TransactionFormState>(transactionFormControllerProvider);
-        expect(s, isA<TransactionFormData>());
-        final data = s as TransactionFormData;
-        expect(
-          data.formMode,
-          isA<DuplicateTransactionMode>().having(
-            (m) => m.sourceTransactionId,
-            'sourceTransactionId',
-            99,
-          ),
-        );
-        expect(data.memo, 'retry me');
-        expect(data.amountMinorUnits, 700);
-      },
-    );
   });
 
   group('hydration after the form closed', () {
@@ -473,35 +378,21 @@ void main() {
           readFails: readFails,
         );
       });
-
-      test('TC24: hydrateForDuplicate completes normally when its read $how '
-          'after the form closed', () async {
-        final gate = Completer<Transaction?>();
-        when(() => txRepo.getById(99)).thenAnswer((_) => gate.future);
-        await closeMidHydration(
-          gate,
-          (controller) => controller.hydrateForDuplicate(99),
-          value: _persistedTx(),
-          readFails: readFails,
-        );
-      });
     }
 
-    /// Lets hydration get past its first read, closes the form while the
-    /// account read is pending, then releases it.
-    @Dependencies([TransactionFormController])
-    Future<void> closeAtAccountRead(
-      Future<void> Function(TransactionFormController) hydrate,
-    ) async {
+    test('TC13: hydrateForEdit stops reading once the form closed', () async {
+      // Let hydration get past its first read, close the form while the
+      // account read is pending, then release it.
+      when(() => txRepo.getById(99)).thenAnswer((_) async => _persistedTx());
       final gate = Completer<Account?>();
       when(() => accountRepo.getById(_account.id))
           .thenAnswer((_) => gate.future);
       final c = makeContainer();
       addTearDown(c.dispose);
       final sub = c.listen(transactionFormControllerProvider, (_, _) {});
-      final hydration = hydrate(
-        c.read(transactionFormControllerProvider.notifier),
-      );
+      final hydration = c
+          .read(transactionFormControllerProvider.notifier)
+          .hydrateForEdit(99);
       await pumpEventQueue();
       verify(() => accountRepo.getById(_account.id)).called(1);
 
@@ -510,31 +401,13 @@ void main() {
       gate.complete(_account);
 
       await expectLater(hydration, completes);
-    }
-
-    test('TC13: hydrateForEdit stops reading once the form closed', () async {
-      when(() => txRepo.getById(99)).thenAnswer((_) async => _persistedTx());
-      await closeAtAccountRead((controller) => controller.hydrateForEdit(99));
       verifyNever(() => categoryRepo.getById(any()));
     });
-
-    test(
-      'TC25: hydrateForDuplicate stops reading once the form closed',
-      () async {
-        when(() => txRepo.getById(99)).thenAnswer((_) async => _persistedTx());
-        await closeAtAccountRead(
-          (controller) => controller.hydrateForDuplicate(99),
-        );
-        verifyNever(() => categoryRepo.getById(any()));
-      },
-    );
 
     final calledAfterClose =
         <String, Future<void> Function(TransactionFormController)>{
           'hydrateForAdd': (controller) => controller.hydrateForAdd(),
           'hydrateForEdit': (controller) => controller.hydrateForEdit(99),
-          'hydrateForDuplicate': (controller) =>
-              controller.hydrateForDuplicate(99),
           'hydrateForShoppingListDraft': (controller) =>
               controller.hydrateForShoppingListDraft(5),
         };
