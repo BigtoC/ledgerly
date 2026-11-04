@@ -123,30 +123,19 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
       '/home/shopping-list/$id',
     );
     if (!mounted) return;
-    switch (result) {
-      case ShoppingListEditResultMissingDraft():
-        messenger
-          ..clearSnackBars()
-          ..showSnackBar(
-            SnackBar(content: Text(l10n.shoppingListDraftNotFoundSnackbar)),
-          );
-      case ShoppingListEditResultSavedDraft():
-        messenger
-          ..clearSnackBars()
-          ..showSnackBar(
-            SnackBar(content: Text(l10n.shoppingListSavedDraftSnackbar)),
-          );
-      case ShoppingListEditResultSavedTransaction():
-        messenger
-          ..clearSnackBars()
-          ..showSnackBar(
-            SnackBar(content: Text(l10n.shoppingListConvertedSnackbar)),
-          );
+    final message = switch (result) {
+      ShoppingListEditResultMissingDraft() =>
+        l10n.shoppingListDraftNotFoundSnackbar,
+      ShoppingListEditResultSavedDraft() => l10n.shoppingListSavedDraftSnackbar,
+      ShoppingListEditResultSavedTransaction() =>
+        l10n.shoppingListConvertedSnackbar,
       // unreachable from this route; only emitted by AddTransactionMode
-      case ShoppingListEditResultAddedToList():
-      case null:
-        break;
-    }
+      ShoppingListEditResultAddedToList() || null => null,
+    };
+    if (message == null) return;
+    messenger
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _onDeleteItem(int id) {
