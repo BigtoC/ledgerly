@@ -307,7 +307,7 @@ class PeriodNavigator extends StatelessWidget {
         spacing: 4,
         children: [
           if (showChevrons)
-            _NavButton(
+            PeriodNavButton(
               icon: Icons.chevron_left,
               tooltip: l10n.chartsPreviousPeriod,
               onPressed: onPrevious,
@@ -386,7 +386,7 @@ class PeriodNavigator extends StatelessWidget {
             },
           ),
           if (showChevrons)
-            _NavButton(
+            PeriodNavButton(
               icon: Icons.chevron_right,
               tooltip: l10n.chartsNextPeriod,
               onPressed: onNext,
@@ -399,8 +399,10 @@ class PeriodNavigator extends StatelessWidget {
   }
 }
 
-class _NavButton extends StatelessWidget {
-  const _NavButton({
+/// A 48×48 period chevron, `fg`, `off` when disabled.
+class PeriodNavButton extends StatelessWidget {
+  const PeriodNavButton({
+    super.key,
     required this.icon,
     required this.tooltip,
     required this.onPressed,

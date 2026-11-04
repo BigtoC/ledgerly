@@ -16,7 +16,8 @@ import '../../../../core/theme/analysis_colors.dart';
 import '../view_models/charts_range_providers.dart';
 import '../view_models/charts_selection_controller.dart';
 import '../view_models/charts_state.dart' show PeriodType;
-import 'period_selector.dart' show formatPeriodLabel, periodDateFormat;
+import 'period_selector.dart'
+    show PeriodNavButton, formatPeriodLabel, periodDateFormat;
 
 enum _View { days, weeks, months, years }
 
@@ -273,14 +274,14 @@ class _PeriodPickerSheetState extends ConsumerState<PeriodPickerSheet> {
             ),
           ),
           if (_view != _View.years) ...[
-            _BrowseNavButton(
+            PeriodNavButton(
               icon: Icons.chevron_left,
               tooltip: inMonth
                   ? l10n.chartsPickerPreviousMonth
                   : l10n.chartsPickerPreviousYear,
               onPressed: previousOff ? null : () => _step(inMonth, -1),
             ),
-            _BrowseNavButton(
+            PeriodNavButton(
               icon: Icons.chevron_right,
               tooltip: inMonth
                   ? l10n.chartsPickerNextMonth
@@ -947,39 +948,6 @@ class _BrowseTitleButton extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// A 48×48 browse-bar chevron, `fg`, `off` when disabled.
-class _BrowseNavButton extends StatelessWidget {
-  const _BrowseNavButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-  });
-
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AnalysisColors.of(context);
-    return IconButton(
-      tooltip: tooltip,
-      onPressed: onPressed,
-      icon: Icon(icon),
-      iconSize: 24,
-      style: IconButton.styleFrom(
-        fixedSize: const Size.square(48),
-        minimumSize: const Size.square(48),
-        padding: EdgeInsets.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        visualDensity: VisualDensity.standard,
-        foregroundColor: colors.fg,
-        disabledForegroundColor: colors.off,
       ),
     );
   }
