@@ -81,7 +81,7 @@ Future<void> _pump(
         currenciesByCode: const {'USD': _usd},
         locale: 'en',
         selectedSliceIndex: selected,
-        onSelectSlice: onSelectSlice,
+        onSelectSlice: onSelectSlice ?? (_) {},
       ),
       textScale: textScale,
     ),

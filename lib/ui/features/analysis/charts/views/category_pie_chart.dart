@@ -71,10 +71,6 @@ class _CategoryPieChartState extends State<CategoryPieChart> {
   /// (1.08°) so each gap sits where the design ends its slice.
   static const double _kStartDegreeOffset = -90 - 1.08;
 
-  void _select(int? index) {
-    widget.onSelectionChanged?.call(index);
-  }
-
   @override
   Widget build(BuildContext context) {
     if (widget.slices.isEmpty) {
@@ -118,10 +114,12 @@ class _CategoryPieChartState extends State<CategoryPieChart> {
                             response.touchedSection!.touchedSectionIndex;
                         if (idx < 0 || idx >= widget.slices.length) {
                           // Tap landed in the centre hole — clear selection.
-                          _select(null);
+                          widget.onSelectionChanged?.call(null);
                           return;
                         }
-                        _select(selection == idx ? null : idx);
+                        widget.onSelectionChanged?.call(
+                          selection == idx ? null : idx,
+                        );
                       },
                     ),
                     sections: [

@@ -22,7 +22,7 @@ class ChartLegend extends StatelessWidget {
     required this.currenciesByCode,
     required this.locale,
     this.selectedSliceIndex,
-    this.onSelectSlice,
+    required this.onSelectSlice,
   });
 
   final List<ChartSlice> slices;
@@ -35,7 +35,7 @@ class ChartLegend extends StatelessWidget {
 
   /// Tap callback for rows. Receives the index into [slices] (the
   /// original order, not the visually-sorted order). Null toggles off.
-  final ValueChanged<int?>? onSelectSlice;
+  final ValueChanged<int?> onSelectSlice;
 
   @override
   Widget build(BuildContext context) {
@@ -69,11 +69,9 @@ class ChartLegend extends StatelessWidget {
               faded:
                   selectedSliceIndex != null &&
                   entry.index != selectedSliceIndex,
-              onTap: onSelectSlice == null
-                  ? null
-                  : () => onSelectSlice!(
-                      entry.index == selectedSliceIndex ? null : entry.index,
-                    ),
+              onTap: () => onSelectSlice(
+                entry.index == selectedSliceIndex ? null : entry.index,
+              ),
             ),
         ],
       ),
@@ -102,7 +100,7 @@ class _RankedRow extends StatelessWidget {
 
   /// Another row is selected: fade the circle and the bar fill only.
   final bool faded;
-  final VoidCallback? onTap;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -276,7 +274,6 @@ class _RankedRow extends StatelessWidget {
       ),
     );
 
-    final tap = onTap;
     final row = AnimatedContainer(
       duration: AnalysisMotion.standardDuration,
       curve: AnalysisMotion.standardCurve,
@@ -285,18 +282,15 @@ class _RankedRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
       ),
       // The ink paints on this transparent Material, above the sel fill.
-      child: tap == null
-          ? content
-          : Material(
-              type: MaterialType.transparency,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(14),
-                onTap: tap,
-                child: content,
-              ),
-            ),
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: content,
+        ),
+      ),
     );
-    if (tap == null) return row;
     return MergeSemantics(
       child: Semantics(button: true, selected: selected, child: row),
     );
