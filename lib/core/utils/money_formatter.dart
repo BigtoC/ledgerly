@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:intl/intl.dart';
 
 import '../../domain/models/currency.dart';
@@ -39,7 +41,7 @@ class MoneyFormatter {
           decimalDigits: currency.decimals,
         ),
       );
-      return fmt.format(amountMinorUnits / _scale(currency.decimals));
+      return fmt.format(amountMinorUnits / math.pow(10, currency.decimals));
     }
     return _formatHighPrecision(
       amountMinorUnits: amountMinorUnits,
@@ -83,7 +85,7 @@ class MoneyFormatter {
           decimalDigits: currency.decimals,
         ),
       );
-      return fmt.format(amountMinorUnits / _scale(currency.decimals));
+      return fmt.format(amountMinorUnits / math.pow(10, currency.decimals));
     }
     // High-precision: reuse the BigInt path but without any symbol.
     return _formatHighPrecision(
@@ -141,16 +143,6 @@ class MoneyFormatter {
   }
 
   // --- Internals ---------------------------------------------------------
-
-  /// Returns 10^[decimals] as a `double`. Documented `double` escape hatch
-  /// (G4 exemption) — callers sandwich this between `int` in / `String` out.
-  static double _scale(int decimals) {
-    var s = 1.0;
-    for (var i = 0; i < decimals; i++) {
-      s *= 10.0;
-    }
-    return s;
-  }
 
   static bool _digitsOnly(String s) {
     for (var i = 0; i < s.length; i++) {
