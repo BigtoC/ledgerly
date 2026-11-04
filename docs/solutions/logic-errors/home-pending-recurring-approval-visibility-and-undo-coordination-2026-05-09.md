@@ -158,8 +158,7 @@ That final red test was a harness problem, not a production defect. `customState
 
 - `test/unit/controllers/pending_controller_test.dart` now proves failed skip commits make the row visible again.
 - `test/widget/features/home/home_screen_test.dart` covers the no-history Home path with pending rows still visible.
-- `test/widget/features/home/pending_section_test.dart` keeps the section's loading, empty, data, tap-noop, and error rendering contracts covered.
-- `test/widget/features/home/pending_tile_test.dart` strengthens row metadata coverage.
+- `test/widget/features/home/pending_section_test.dart` keeps the section's loading, empty, data, tap-noop, and error rendering contracts covered, and its PT* tile tests strengthen row metadata coverage.
 - `test/integration/pending_approval_flow_test.dart` now exercises the no-history approval path by seeding the first test's pending row inside `tester.runAsync(...)` with no historical transaction seed, while a second test keeps coverage for multi-row approval behavior on a non-empty Home screen.
 
 ## Why This Works
@@ -184,7 +183,6 @@ Verification that passed for this fix:
 - `flutter test test/unit/controllers/pending_controller_test.dart`
 - `flutter test test/unit/repositories/pending_transaction_repository_test.dart`
 - `flutter test test/widget/features/home/pending_section_test.dart`
-- `flutter test test/widget/features/home/pending_tile_test.dart`
 - `flutter test test/widget/features/home/home_screen_test.dart`
 - `flutter test test/integration/pending_approval_flow_test.dart`
 

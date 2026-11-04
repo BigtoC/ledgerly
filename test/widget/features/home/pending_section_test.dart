@@ -1,7 +1,11 @@
-// PendingSection widget tests.
+// PendingSection, PendingTile and _ApproveCircleButton widget tests.
 //
-// Covers loading / empty / data / error rendering using the _FakeController
+// PS*: loading / empty / data / error rendering using the _FakeController
 // pattern from recurring_rules_screen_test.dart.
+// PT*: tile approve animation, debounce, swipe-skip, localized subtitle
+// and 2x text scale.
+
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,6 +19,7 @@ import 'package:ledgerly/domain/models/account.dart';
 import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/domain/models/pending_transaction.dart';
+import 'package:ledgerly/domain/models/transaction.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/pending_transaction_repository.dart';
@@ -80,14 +85,7 @@ Widget _wrap(ProviderContainer container) {
   );
 }
 
-ProviderContainer _makeContainer(PendingState fixed) {
-  final repo = _MockPendingRepo();
-  final catRepo = _MockCategoryRepo();
-  final accRepo = _MockAccountRepo();
-  when(() => repo.watchAll()).thenAnswer((_) => const Stream.empty());
-  when(() => repo.approve(any()))
-      .thenAnswer((_) async => throw UnimplementedError());
-  when(() => repo.reject(any())).thenAnswer((_) async {});
+void _stubLookups(_MockCategoryRepo catRepo, _MockAccountRepo accRepo) {
   when(() => catRepo.watchAll(includeArchived: any(named: 'includeArchived')))
       .thenAnswer(
         (_) => Stream.value(<Category>[
@@ -106,6 +104,17 @@ ProviderContainer _makeContainer(PendingState fixed) {
           const Account(id: 1, name: 'Cash', accountTypeId: 1, currency: _usd),
         ]),
       );
+}
+
+ProviderContainer _makeContainer(PendingState fixed) {
+  final repo = _MockPendingRepo();
+  final catRepo = _MockCategoryRepo();
+  final accRepo = _MockAccountRepo();
+  when(() => repo.watchAll()).thenAnswer((_) => const Stream.empty());
+  when(() => repo.approve(any()))
+      .thenAnswer((_) async => throw UnimplementedError());
+  when(() => repo.reject(any())).thenAnswer((_) async {});
+  _stubLookups(catRepo, accRepo);
   return ProviderContainer(
     overrides: [
       pendingTransactionRepositoryProvider.overrideWithValue(repo),
@@ -184,5 +193,184 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text("Couldn't load pending items."), findsOneWidget);
+  });
+
+  testWidgets('PT02: tapping circle calls controller.approve once', (
+    tester,
+  ) async {
+    final repo = _MockPendingRepo();
+    final catRepo = _MockCategoryRepo();
+    final accRepo = _MockAccountRepo();
+    when(() => repo.watchAll())
+        .thenAnswer((_) => Stream.value([_pending(id: 1)]));
+    when(() => repo.approve(1)).thenAnswer(
+      (_) async => Transaction(
+        id: 99,
+        amountMinorUnits: 1599,
+        currency: _usd,
+        categoryId: 1,
+        accountId: 1,
+        date: DateTime(2026, 5, 8),
+        memo: 'Netflix',
+        createdAt: DateTime(2026, 5, 8, 12),
+        updatedAt: DateTime(2026, 5, 8, 12),
+      ),
+    );
+    when(() => repo.reject(any())).thenAnswer((_) async {});
+    _stubLookups(catRepo, accRepo);
+
+    final container = ProviderContainer(
+      overrides: [
+        pendingTransactionRepositoryProvider.overrideWithValue(repo),
+        categoryRepositoryProvider.overrideWithValue(catRepo),
+        accountRepositoryProvider.overrideWithValue(accRepo),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.check));
+    await tester.pumpAndSettle();
+
+    verify(() => repo.approve(1)).called(1);
+  });
+
+  testWidgets(
+    'PT03: rapid double-tap on circle still calls approve only once',
+    (tester) async {
+      final repo = _MockPendingRepo();
+      final catRepo = _MockCategoryRepo();
+      final accRepo = _MockAccountRepo();
+      when(() => repo.watchAll())
+          .thenAnswer((_) => Stream.value([_pending(id: 1)]));
+      final approveCompleter = Completer<Transaction>();
+      when(() => repo.approve(1)).thenAnswer((_) => approveCompleter.future);
+      when(() => repo.reject(any())).thenAnswer((_) async {});
+      _stubLookups(catRepo, accRepo);
+
+      final container = ProviderContainer(
+        overrides: [
+          pendingTransactionRepositoryProvider.overrideWithValue(repo),
+          categoryRepositoryProvider.overrideWithValue(catRepo),
+          accountRepositoryProvider.overrideWithValue(accRepo),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.check));
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.tap(find.byIcon(Icons.check));
+      // Pump past the 200ms forward animation so approve() actually fires.
+      // The `_approving` debounce flag has already absorbed the second tap
+      // synchronously by this point.
+      await tester.pump(const Duration(milliseconds: 250));
+
+      verify(() => repo.approve(1)).called(1);
+
+      approveCompleter.complete(
+        Transaction(
+          id: 99,
+          amountMinorUnits: 1599,
+          currency: _usd,
+          categoryId: 1,
+          accountId: 1,
+          date: DateTime(2026, 5, 8),
+          memo: 'Netflix',
+          createdAt: DateTime(2026, 5, 8, 12),
+          updatedAt: DateTime(2026, 5, 8, 12),
+        ),
+      );
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets('PT04: PendingApproveFailedEffect surfaces error snackbar', (
+    tester,
+  ) async {
+    final repo = _MockPendingRepo();
+    final catRepo = _MockCategoryRepo();
+    final accRepo = _MockAccountRepo();
+    when(() => repo.watchAll())
+        .thenAnswer((_) => Stream.value([_pending(id: 1)]));
+    when(() => repo.approve(1))
+        .thenThrow(const PendingTransactionRepositoryException('archived'));
+    when(() => repo.reject(any())).thenAnswer((_) async {});
+    _stubLookups(catRepo, accRepo);
+
+    final container = ProviderContainer(
+      overrides: [
+        pendingTransactionRepositoryProvider.overrideWithValue(repo),
+        categoryRepositoryProvider.overrideWithValue(catRepo),
+        accountRepositoryProvider.overrideWithValue(accRepo),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.check));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.byType(SnackBar), findsOneWidget);
+  });
+
+  testWidgets('PT05: swipe-left reveals Skip action', (tester) async {
+    final container = _makeContainer(
+      PendingState.data(items: [_pending(id: 1)], skippingId: null),
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container));
+    await tester.pumpAndSettle();
+
+    await tester.drag(find.text('Netflix'), const Offset(-300, 0));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Skip once'), findsOneWidget);
+  });
+
+  testWidgets('PT06: subtitle renders category · account · date', (
+    tester,
+  ) async {
+    final container = _makeContainer(
+      PendingState.data(items: [_pending(id: 1)], skippingId: null),
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Netflix'), findsOneWidget);
+    expect(find.textContaining('Food'), findsOneWidget);
+    expect(find.textContaining('Cash'), findsOneWidget);
+    expect(find.byIcon(Icons.check), findsOneWidget);
+  });
+
+  testWidgets('PT07: 2x text scale does not overflow trailing slot', (
+    tester,
+  ) async {
+    final container = _makeContainer(
+      PendingState.data(items: [_pending(id: 1)], skippingId: null),
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(textScaler: TextScaler.linear(2.0)),
+        child: _wrap(container),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byIcon(Icons.check), findsOneWidget);
+    expect(find.text('Netflix'), findsOneWidget);
   });
 }
