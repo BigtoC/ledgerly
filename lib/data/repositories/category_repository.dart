@@ -178,18 +178,10 @@ final class DriftCategoryRepository implements CategoryRepository {
     CategoryType? type,
     bool includeArchived = false,
   }) {
-    final Stream<List<CategoryRow>> source;
-    if (type == null) {
-      source = _dao.watchAll(includeArchived: includeArchived);
-    } else if (!includeArchived) {
-      source = _dao.watchByType(_wireFromType(type));
-    } else {
-      // includeArchived + type: no DAO helper; filter in Dart.
-      final wire = _wireFromType(type);
-      source = _dao
-          .watchAll(includeArchived: true)
-          .map((rows) => rows.where((r) => r.type == wire).toList());
-    }
+    final source = _dao.watchAll(
+      includeArchived: includeArchived,
+      type: type == null ? null : _wireFromType(type),
+    );
     return source.map((rows) => rows.map(_toDomain).toList(growable: false));
   }
 
