@@ -49,12 +49,6 @@ PR #135 removed 2,831 lines (1,614 hand-written `lib/` lines) without changing b
 
 **Don't "simplify" these away.** Each one was a rejected cleanup finding:
 
-- **What PRD or the docs name.** This covers:
-  - a seam with no caller yet (the Duplicate flow, whose removal is open as #134; `CurrencyRepository.updateCustomName`)
-  - a named state shape
-  - a documented guard or decision (exhaustive `switch` over sealed outcomes, explicit enum wire mappers)
-
-  Search `PRD.md`, `docs/` and `docs/solutions/` before you delete.
 - **Code that only looks equivalent.** Read the pinned library source and look for a counterexample:
   - Drift `Value.absent()` keeps the stored value under `replace`, but `Value(null)` writes NULL.
   - A `keepAlive` provider has a different lifetime.
@@ -87,12 +81,6 @@ PR #135 removed 2,831 lines (1,614 hand-written `lib/` lines) without changing b
 - `AGENTS.md` is the quick reference. [`CLAUDE.md`](CLAUDE.md) only imports it, so edit guidance here.
 - [`README.md`](README.md) and PRD's *Project Status* block can lag the tree. Trust the checked-in code when they differ.
 - `docs/superpowers/specs/`, `docs/superpowers/plans/` and `docs/plans/` are historical design context. If they conflict with `PRD.md`, follow `PRD.md`.
-
-## Project status
-
-- The MVP is complete and Phase 2 is in progress. The shipped slices are listed under *Project Status* in `PRD.md`, and the code is under `lib/ui/features/`. Still to do: wallet sync (Ankr) and credit-card / transfer flows.
-- The Drift schema is at v7 (`schemaVersion` in `lib/data/database/app_database.dart`). Version history and migration rules are in [`data-model.md`](docs/architecture/data-model.md).
-- Extend the scaffold with the folder layout and package list in `PRD.md` (see *Project structure* below), not a generic `flutter create` shape.
 
 ## Commits and Pull Requests
 
