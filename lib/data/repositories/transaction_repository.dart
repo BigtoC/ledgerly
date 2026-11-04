@@ -98,8 +98,8 @@ abstract class TransactionRepository {
 
   /// Expense and income totals per currency for transactions in
   /// `[start, end)`, both unsigned (non-negative). [accountId] limits the
-  /// totals to one account; null covers every account. Used by the
-  /// Analysis summary card, which derives the net as income − expense.
+  /// totals to one account; null covers every account. Backs the
+  /// Analysis summary card and Home's daily and month totals.
   Stream<Map<String, ({int expense, int income})>> watchTotalsByTypeInRange({
     required DateTime start,
     required DateTime end,
@@ -257,9 +257,7 @@ final class DriftTransactionRepository implements TransactionRepository {
   @override
   Stream<List<Transaction>> watchByDay(DateTime day) {
     final start = DateHelpers.startOfDay(day);
-    final end = DateHelpers.startOfDay(
-      DateTime(day.year, day.month, day.day + 1),
-    );
+    final end = DateTime(day.year, day.month, day.day + 1);
     return _dao
         .watchInDateRange(start: start, end: end)
         .asyncMap(_rowsToDomain);
@@ -273,78 +271,22 @@ final class DriftTransactionRepository implements TransactionRepository {
   }
 
   @override
-  Stream<DailyTotals> watchDailyTotalsByType(DateTime day) {
-    final start = DateHelpers.startOfDay(day);
-    final end = DateHelpers.startOfDay(
-      DateTime(day.year, day.month, day.day + 1),
-    );
-    // Both totals are unsigned (non-negative); the screen splits them
-    // for the summary strip.
-    final query = _db.customSelect(
-      'SELECT t.currency AS code, '
-      "COALESCE(SUM(CASE WHEN c.type = 'expense' "
-      'THEN t.amount_minor_units ELSE 0 END), 0) AS expense, '
-      "COALESCE(SUM(CASE WHEN c.type = 'income' "
-      'THEN t.amount_minor_units ELSE 0 END), 0) AS income '
-      'FROM transactions t '
-      'JOIN categories c ON c.id = t.category_id '
-      'WHERE t.date >= ? AND t.date < ? '
-      'GROUP BY t.currency',
-      variables: <Variable<Object>>[
-        Variable<DateTime>(start),
-        Variable<DateTime>(end),
-      ],
-      readsFrom: {_db.transactions, _db.categories},
-    );
-    return query.watch().map((rows) {
-      final DailyTotals out = {};
-      for (final row in rows) {
-        out[row.read<String>('code')] = (
-          expense: row.read<int>('expense'),
-          income: row.read<int>('income'),
-        );
-      }
-      return out;
-    });
-  }
+  Stream<DailyTotals> watchDailyTotalsByType(DateTime day) =>
+      watchTotalsByTypeInRange(
+        start: DateHelpers.startOfDay(day),
+        end: DateTime(day.year, day.month, day.day + 1),
+      );
 
   @override
-  Stream<Map<String, int>> watchMonthNetByCurrency(DateTime month) {
-    final start = DateHelpers.startOfDay(DateTime(month.year, month.month, 1));
-    final end = DateHelpers.startOfDay(
-      DateTime(month.year, month.month + 1, 1),
-    );
-    return _watchNetByCurrency(start: start, end: end);
-  }
-
-  Stream<Map<String, int>> _watchNetByCurrency({
-    required DateTime start,
-    required DateTime end,
-  }) {
-    final query = _db.customSelect(
-      'SELECT t.currency AS code, '
-      'SUM(CASE c.type '
-      "WHEN 'income' THEN t.amount_minor_units "
-      "WHEN 'expense' THEN -t.amount_minor_units "
-      'END) AS net '
-      'FROM transactions t '
-      'JOIN categories c ON c.id = t.category_id '
-      'WHERE t.date >= ? AND t.date < ? '
-      'GROUP BY t.currency',
-      variables: <Variable<Object>>[
-        Variable<DateTime>(start),
-        Variable<DateTime>(end),
-      ],
-      readsFrom: {_db.transactions, _db.categories},
-    );
-    return query.watch().map((rows) {
-      final out = <String, int>{};
-      for (final row in rows) {
-        out[row.read<String>('code')] = row.read<int>('net');
-      }
-      return out;
-    });
-  }
+  Stream<Map<String, int>> watchMonthNetByCurrency(DateTime month) =>
+      watchTotalsByTypeInRange(
+        start: DateTime(month.year, month.month, 1),
+        end: DateTime(month.year, month.month + 1, 1),
+      ).map(
+        (m) => {
+          for (final e in m.entries) e.key: e.value.income - e.value.expense,
+        },
+      );
 
   @override
   Stream<Map<String, ({int expense, int income})>> watchTotalsByTypeInRange({
