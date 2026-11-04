@@ -137,7 +137,7 @@ switch (outcome) {
 - **Use an exhaustive `switch` over the generated subclasses, never `is` chains.** A new variant then fails to compile in every widget that does not handle it.
 - **Check `mounted` after every `await`.** Use `mounted`, or `context.mounted` in a stateless widget, before touching `setState`, `context` or the widget's `ref`. That includes awaits on picker sheets.
 - **Capture before awaiting.** Take `ScaffoldMessenger.of(context)` and `AppLocalizations` before the `await`; the captured messenger is safe to use afterwards.
-- **No unhandled Futures.** Every Future is either awaited with its outcome handled, or wrapped in `unawaited(...)` on a command that cannot throw, for example `unawaited(controller.hydrateForEdit(id))`.
+- **No unhandled Futures.** Every Future is either awaited with its outcome handled, or wrapped in `unawaited(...)` on a command that cannot throw, for example `unawaited(controller.hydrate(widget.mode))`.
 
 ### (d) Write SnackBar actions that can outlive the widget
 
@@ -147,9 +147,9 @@ Never use the widget's `ref` inside an action. Use one of two shapes:
 - **Doing nothing is correct after the widget is gone.** Return early. In the shopping list, the auto-dispose controller's `onDispose` has already dropped the pending delete:
 
   ```dart
-  onPressed: () {
+  onUndo: () {
     if (!mounted) return;
-    unawaited(ref.read(shoppingListControllerProvider.notifier).undoDelete());
+    ref.read(shoppingListControllerProvider.notifier).undoDelete();
   },
   ```
 
@@ -166,6 +166,8 @@ messenger
   ..clearSnackBars()
   ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
 ```
+
+Since #135 the Undo snackbar itself goes through `messenger.showUndoSnackBar(message:, undoLabel:, onUndo:)` in `lib/ui/core/widgets/undo_snack_bar.dart`, which calls `clearSnackBars()` first. Other snackbars on these screens still clear by hand, as above.
 
 The failure only shows up when an Undo snackbar is already on screen. With an empty messenger the test passes either way (`S16b`, `MAB12`).
 
@@ -234,16 +236,12 @@ final container = ProviderScope.containerOf(context, listen: false);
 final outcome = await ref.read(accountsControllerProvider.notifier).archive(id);
 switch (outcome) {
   case ArchiveAccountOk():
-    messenger
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(
-        content: Text(l10n.accountsArchiveUndoSnackbar),
-        action: SnackBarAction(
-          label: l10n.commonUndo,
-          onPressed: () =>
-              unawaited(_undoArchive(container, messenger, l10n, id)),
-        ),
-      ));
+    // showUndoSnackBar (lib/ui/core/widgets/undo_snack_bar.dart) clears first.
+    messenger.showUndoSnackBar(
+      message: l10n.accountsArchiveUndoSnackbar,
+      undoLabel: l10n.commonUndo,
+      onUndo: () => unawaited(_undoArchive(container, messenger, l10n, id)),
+    );
   // isDefault, lastActive, hasActiveRecurringRule: two cases elided
   case ArchiveAccountFailed():
     messenger

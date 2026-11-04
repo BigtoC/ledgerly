@@ -1,6 +1,7 @@
 ---
 title: Recurring generation timing, schedule recomputation, and recurring-reference guards
 date: 2026-05-08
+last_updated: 2026-11-04
 category: logic-errors
 module: recurring-transactions
 problem_type: logic_error
@@ -77,7 +78,7 @@ This keeps future-only edit semantics while ensuring future generations follow t
 `lib/domain/use_cases/recurring_generation_use_case.dart`
 
 ```dart
-if (generated == catchUpCap && !_isAfter(currentDue, today)) {
+if (generated == catchUpCap && !currentDue.isAfter(today)) {
   currentDue = recurringRepo.fastForwardToRecent(
     rule,
     today,
@@ -111,12 +112,14 @@ child: App(
 `lib/app/app.dart`
 
 ```dart
-widget.schedulePostFrameCallback(_runFirstFrameCallback);
+WidgetsBinding.instance.addPostFrameCallback(
+  (_) => _runFirstFrameCallback(),
+);
 
 void _runFirstFrameCallback() {
-  if (_ranFirstFrameCallback || !mounted) return;
-  _ranFirstFrameCallback = true;
+  if (!mounted) return;
   widget.onFirstFrame?.call();
+  // ...followed by the once-per-launch update check
 }
 ```
 
@@ -134,11 +137,24 @@ Future<int> countActiveByCategory(int categoryId) async { ... }
 `lib/data/repositories/account_repository.dart`
 
 ```dart
-final recurringCount = await _recurringDao.countActiveByAccount(id);
-if (recurringCount > 0) throw AccountInUseException(id);
+// delete(): transactions, active recurring rules (via isReferenced) and
+// shopping-list drafts all block a hard delete.
+if (await _slDao.countByAccount(id) > 0 || await isReferenced(id)) {
+  throw AccountInUseException(id);
+}
+
+@override
+Future<bool> isReferenced(int id) async {
+  final txCount = await _txDao.countByAccount(id);
+  if (txCount > 0) return true;
+  final recurringCount = await _recurringDao.countActiveByAccount(id);
+  return recurringCount > 0;
+}
 ```
 
 ```dart
+// archive()
+final recurringCount = await _recurringDao.countActiveByAccount(id);
 if (recurringCount > 0) {
   throw AccountHasRecurringRuleException(id);
 }
@@ -147,13 +163,16 @@ if (recurringCount > 0) {
 `lib/data/repositories/category_repository.dart`
 
 ```dart
-final recurringCount = await _recurringDao.countActiveByCategory(id);
-if (recurringCount > 0) {
+// delete(): same shape; isReferenced counts transactions, then active
+// recurring rules via _recurringDao.countActiveByCategory.
+if (await _slDao.countByCategory(id) > 0 || await isReferenced(id)) {
   throw CategoryInUseException(id);
 }
 ```
 
 ```dart
+// archive()
+final recurringCount = await _recurringDao.countActiveByCategory(id);
 if (recurringCount > 0) {
   throw CategoryHasRecurringRuleException(id);
 }

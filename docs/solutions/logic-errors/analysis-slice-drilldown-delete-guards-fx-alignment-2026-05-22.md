@@ -60,7 +60,7 @@ Make `SliceDrilldownController` follow the same async contract already proven in
 2. If that forced commit fails, the new delete is aborted instead of proceeding into a corrupted state.
 3. `_committedDeleteIds` keeps already-committed rows hidden until the repository stream stops returning them.
 4. `_generation` and `_commitInFlight` guard stale `onData`, stale `onError`, and stale async delete failures from canceled selections.
-5. `_visibleRowsFromCache()` now filters to the actually displayable slice under missing FX. This builds on the earlier `SelectedSlice.category(..., currencyCode)` design that was reserved for missing-FX split cases (session history).
+5. `_visibleRowsFromCache()` now filters to the actually displayable slice under missing FX. This builds on the earlier `SelectedSlice.category(..., currencyCode)` design that was reserved for missing-FX split cases (session history). (Since #135 that optional `currencyCode` is gone because nothing ever passed it: category slices are `SelectedSlice.category(int categoryId)`, and the per-currency row filter was removed with it.)
 6. `SelectedSliceItemsList` now checks exact pair freshness through `ChartsFxStatus.metadataForPair(...)` instead of reaching into the global FX snapshot and using unrelated fresh rates.
 
 The two key controller changes were:
@@ -97,12 +97,6 @@ List<Transaction> _visibleRowsFromCache() {
   }
 
   final selection = ref.read(chartsSelectionControllerProvider).selectedSlice;
-  if (selection case SelectedCategorySlice(:final currencyCode?)) {
-    rows = rows
-        .where((tx) => tx.currency.code == currencyCode)
-        .toList(growable: false);
-  }
-
   if (selection is! SelectedCurrencySlice) {
     final fxStatus = ref.read(chartsFxStatusProvider).value;
     if (fxStatus != null) {
