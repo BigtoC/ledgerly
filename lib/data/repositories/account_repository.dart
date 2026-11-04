@@ -204,12 +204,9 @@ final class DriftAccountRepository implements AccountRepository {
 
   @override
   Future<void> delete(int id) async {
-    final slCount = await _slDao.countByAccount(id);
-    if (slCount > 0) throw AccountInUseException(id);
-    final count = await _txDao.countByAccount(id);
-    if (count > 0) throw AccountInUseException(id);
-    final recurringCount = await _recurringDao.countActiveByAccount(id);
-    if (recurringCount > 0) throw AccountInUseException(id);
+    if (await _slDao.countByAccount(id) > 0 || await isReferenced(id)) {
+      throw AccountInUseException(id);
+    }
     await _dao.deleteById(id);
   }
 

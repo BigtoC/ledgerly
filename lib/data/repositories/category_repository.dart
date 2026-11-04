@@ -300,17 +300,7 @@ final class DriftCategoryRepository implements CategoryRepository {
       return false;
     }
 
-    final slCount = await _slDao.countByCategory(id);
-    if (slCount > 0) {
-      throw CategoryInUseException(id);
-    }
-
-    final refCount = await _txDao.countByCategory(id);
-    if (refCount > 0) {
-      throw CategoryInUseException(id);
-    }
-    final recurringCount = await _recurringDao.countActiveByCategory(id);
-    if (recurringCount > 0) {
+    if (await _slDao.countByCategory(id) > 0 || await isReferenced(id)) {
       throw CategoryInUseException(id);
     }
     if (existing.l10nKey != null) {
