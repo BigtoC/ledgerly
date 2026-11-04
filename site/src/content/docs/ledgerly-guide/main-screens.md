@@ -52,8 +52,7 @@ Typical flow:
 5. Optionally add a memo.
 6. Save the transaction.
 
-You can also open an existing transaction to edit it or duplicate it for quick
-repeat entry.
+You can also open an existing transaction to edit it.
 
 ## Analysis
 

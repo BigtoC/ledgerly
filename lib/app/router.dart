@@ -366,15 +366,10 @@ class _AdaptiveTransactionFormRoute extends StatelessWidget {
   }
 }
 
-/// `/home/add` extras: `{'duplicateSourceId': <int>}` opens the Duplicate
-/// flow; otherwise Home's `{'initialDate': <DateTime>}` seeds the Add date.
-/// Values of any other type are ignored.
+/// `/home/add` extras: Home's `{'initialDate': <DateTime>}` seeds the Add
+/// date. Other keys, and values of any other type, are ignored.
 TransactionFormMode _addModeFromExtra(Object? extra) {
   if (extra is Map) {
-    final sourceId = extra['duplicateSourceId'];
-    if (sourceId is int) {
-      return DuplicateTransactionMode(sourceTransactionId: sourceId);
-    }
     final initialDate = extra['initialDate'];
     if (initialDate is DateTime) {
       return AddTransactionMode(initialDate: initialDate);

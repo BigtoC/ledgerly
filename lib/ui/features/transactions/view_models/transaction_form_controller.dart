@@ -1,7 +1,7 @@
 // Transaction-form controller — Wave 2 §4.1 / §5 / §6 / §9 / Task 5.
 //
 // Owns the form's mutable state plus the keypad accumulator, drives all
-// four hydration entry points (Add / Duplicate / Edit / EditShoppingListDraft),
+// three hydration entry points (Add / Edit / EditShoppingListDraft),
 // and exposes the typed commands the screen widget binds to. Every command
 // mutates the `_Data` variant via `state = ...`; widgets never call
 // repositories directly.
@@ -37,7 +37,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../app/providers/default_currency_provider.dart';
 import '../../../../app/providers/repository_providers.dart';
 import '../../../../core/utils/date_helpers.dart';
-import '../../../../data/repositories/category_repository.dart';
 import '../../../../domain/models/account.dart';
 import '../../../../domain/models/category.dart';
 import '../../../../domain/models/currency.dart';
@@ -89,9 +88,6 @@ class TransactionFormController extends _$TransactionFormController {
     AddTransactionMode(:final initialDate) => hydrateForAdd(
       initialDate: initialDate,
     ),
-    DuplicateTransactionMode(:final sourceTransactionId) => hydrateForDuplicate(
-      sourceTransactionId,
-    ),
     EditTransactionMode(:final transactionId) => hydrateForEdit(transactionId),
     EditShoppingListDraftMode(:final shoppingListItemId) =>
       hydrateForShoppingListDraft(shoppingListItemId),
@@ -126,50 +122,6 @@ class TransactionFormController extends _$TransactionFormController {
         selectedCategory: null,
         date: DateHelpers.startOfDay(initialDate ?? DateTime.now()),
         memo: '',
-      );
-    } catch (e, st) {
-      if (ref.mounted) {
-        state = TransactionFormState.error(e, st, formMode: _formMode);
-      }
-    }
-  }
-
-  Future<void> hydrateForDuplicate(int sourceId) async {
-    _formMode = DuplicateTransactionMode(sourceTransactionId: sourceId);
-    try {
-      state = TransactionFormState.loading(formMode: _formMode);
-      final txRepo = ref.read(transactionRepositoryProvider);
-      final source = await txRepo.getById(sourceId);
-      if (!ref.mounted) return;
-      if (source == null) {
-        state = TransactionFormState.empty(
-          reason: TransactionFormEmptyReason.notFound,
-          formMode: _formMode,
-        );
-        return;
-      }
-      final accountRepo = ref.read(accountRepositoryProvider);
-      final categoryRepo = ref.read(categoryRepositoryProvider);
-      final sourceAccount = await accountRepo.getById(source.accountId);
-      if (!ref.mounted) return;
-      // Source account no longer usable — fall back to the standard
-      // default-resolution chain, like an Add hydration but with
-      // amount/category/memo prefilled.
-      final account = sourceAccount == null || sourceAccount.isArchived
-          ? await _resolveDefaultAccount()
-          : sourceAccount;
-      if (!ref.mounted) return;
-      if (account == null) {
-        state = TransactionFormState.empty(
-          reason: TransactionFormEmptyReason.noActiveAccount,
-          formMode: _formMode,
-        );
-        return;
-      }
-      await _applyDuplicatePrefill(
-        source: source,
-        account: account,
-        categoryRepo: categoryRepo,
       );
     } catch (e, st) {
       if (ref.mounted) {
@@ -798,42 +750,6 @@ class TransactionFormController extends _$TransactionFormController {
     if (lastUsed != null) return lastUsed;
     final firstActive = await accountRepo.watchAll().first;
     return firstActive.firstOrNull;
-  }
-
-  Future<void> _applyDuplicatePrefill({
-    required Transaction source,
-    required Account account,
-    required CategoryRepository categoryRepo,
-  }) async {
-    // Resolve category against the live row so an archived source
-    // category still renders historically (risk #8).
-    final category = await categoryRepo.getById(source.categoryId);
-    if (!ref.mounted) return;
-    final preservesAmount = source.currency.code == account.currency.code;
-    final amountMinorUnits = preservesAmount ? source.amountMinorUnits : 0;
-    _keypad = preservesAmount
-        ? _keypadForStored(
-            source.amountMinorUnits,
-            source.amountFormula,
-            decimals: account.currency.decimals,
-          )
-        : const KeypadState.initial();
-    // Wave 2 risk #7 — duplicate prefill must default `date` to today,
-    // not carry the source's date.
-    // currencyTouched starts false (same as Add): currency seeds from
-    // account default; account changes will re-seed currency if the user
-    // has not yet manually selected a currency.
-    state = TransactionFormState.data(
-      formMode: _formMode,
-      amountMinorUnits: amountMinorUnits,
-      keypad: _keypad,
-      selectedAccount: account,
-      displayCurrency: account.currency,
-      currencyTouched: false,
-      selectedCategory: category,
-      date: DateHelpers.startOfDay(DateTime.now()),
-      memo: source.memo ?? '',
-    );
   }
 
   /// Rebuilds the keypad for a stored amount. A stored formula is replayed

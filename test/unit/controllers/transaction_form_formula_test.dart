@@ -2,7 +2,7 @@
 //
 // Covers saving the typed expression alongside the amount, rebuilding a
 // working (recalculating, editable) keypad from the stored formula on
-// Edit and Duplicate, and the fallbacks when a stored formula cannot be
+// Edit, and the fallbacks when a stored formula cannot be
 // trusted.
 //
 // Repositories mocked via `mocktail`; no live DB.
@@ -350,25 +350,6 @@ void main() {
       final s = data(c);
       expect(s.amountMinorUnits, 2800);
       expect(s.keypad.formula(decimals: 2), isNull);
-    });
-  });
-
-  group('hydrateForDuplicate', () {
-    test('TF20: copies the formula with the amount', () async {
-      when(
-        () => txRepo.getById(99),
-      ).thenAnswer((_) async => _persistedTx(amountFormula: '3.5+10.5+11+3'));
-      final c = makeContainer();
-      final controller = c.read(transactionFormControllerProvider.notifier);
-      await controller.hydrateForDuplicate(99);
-
-      expect(data(c).amountMinorUnits, 2800);
-      expect(data(c).keypad.formula(decimals: 2), '3.5+10.5+11+3');
-
-      final saved =
-          (await controller.save() as SaveTransactionSaved).transaction;
-      expect(saved.id, 0);
-      expect(saved.amountFormula, '3.5+10.5+11+3');
     });
   });
 }

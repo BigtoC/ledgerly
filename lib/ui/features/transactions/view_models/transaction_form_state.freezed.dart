@@ -1565,7 +1565,7 @@ class TransactionFormData extends TransactionFormState {
 @JsonKey() final  bool isSaving;
 /// `true` between `deleteExisting()` await-start and resolution.
 @JsonKey() final  bool isDeleting;
-/// Edit-mode target id. `null` in Add and Duplicate.
+/// Edit-mode target id. `null` in Add.
  final  int? editingId;
 /// Edit-mode original `createdAt`, preserved on update so the
 /// repository contract (`save` keeps stored `createdAt`) is honored

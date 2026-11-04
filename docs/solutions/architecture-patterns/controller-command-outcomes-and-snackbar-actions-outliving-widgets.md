@@ -55,7 +55,7 @@ Moving failure handling into the controllers exposed four lifecycle bugs, each p
   - after leaving the shopping list (`SLS07b`)
   - after leaving the categories screen (`S13`)
   - after archiving the bottom row of the accounts Active card (`MAB08`). The card is an unkeyed `Column`, so that row's tile unmounts when the row moves to Archived.
-- **State was written after dispose.** Riverpod 3 throws `UnmountedRefException` on `state =` once a notifier is disposed. Closing the transaction form mid-hydration made the catch block's own `state = error(...)` throw (`TC05`, `TC12`, `TC24`, `TC05c`). Forms and sheets called `setState` after closing mid-save (`AF07`, `AF08`, `S12`).
+- **State was written after dispose.** Riverpod 3 throws `UnmountedRefException` on `state =` once a notifier is disposed. Closing the transaction form mid-hydration made the catch block's own `state = error(...)` throw (`TC05`, `TC12`, `TC05c`). Forms and sheets called `setState` after closing mid-save (`AF07`, `AF08`, `S12`).
 - **A failure after the commit looked retryable.** Recurring generation threw after the rule was inserted, the form stayed open, and retrying inserted a duplicate. Category reorder looped separate saves and left a half-applied order.
 - **Snackbars queued behind Undo.** A plain `showSnackBar` waits for the persistent Undo snackbar to be dismissed, so a failed reorder's message (`S16b`) or a set-default confirmation (`MAB12`) never appeared.
 

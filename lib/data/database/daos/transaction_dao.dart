@@ -162,7 +162,7 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
         .get();
   }
 
-  /// One-shot read by id (e.g. duplicate flow).
+  /// One-shot read by id (e.g. Edit hydration).
   Future<TransactionRow?> findById(int id) {
     return (select(
       transactions,

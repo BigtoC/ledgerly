@@ -47,14 +47,6 @@ class AddTransactionMode extends TransactionFormMode {
   final DateTime? initialDate;
 }
 
-/// Duplicate an existing transaction — prefills amount/category/memo and
-/// resets date to today.
-class DuplicateTransactionMode extends TransactionFormMode {
-  const DuplicateTransactionMode({required this.sourceTransactionId});
-
-  final int sourceTransactionId;
-}
-
 /// Edit an existing transaction in place.
 class EditTransactionMode extends TransactionFormMode {
   const EditTransactionMode({required this.transactionId});
@@ -195,7 +187,7 @@ enum TransactionFormEmptyReason {
   /// Wave 2 §6 / PRD → Add/Edit Interaction Rules.
   noActiveAccount,
 
-  /// Edit/duplicate hydration target row was missing — usually deleted
+  /// Edit hydration target row was missing — usually deleted
   /// on another screen while the user navigated. Render a recoverable
   /// "transaction not found" message and pop back to Home.
   notFound,
@@ -263,7 +255,7 @@ sealed class TransactionFormState with _$TransactionFormState {
     /// `true` between `deleteExisting()` await-start and resolution.
     @Default(false) bool isDeleting,
 
-    /// Edit-mode target id. `null` in Add and Duplicate.
+    /// Edit-mode target id. `null` in Add.
     int? editingId,
 
     /// Edit-mode original `createdAt`, preserved on update so the
