@@ -167,7 +167,7 @@ messenger
   ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
 ```
 
-Since #135 the Undo snackbar itself goes through `messenger.showUndoSnackBar(message:, undoLabel:, onUndo:)` in `lib/ui/core/widgets/undo_snack_bar.dart`, which calls `clearSnackBars()` first. Other snackbars on these screens still clear by hand, as above.
+Since #135 the Undo snackbar itself goes through `messenger.showUndoSnackBar(message:, undoLabel:, onUndo:)` in `lib/ui/core/widgets/undo_snack_bar.dart`, which calls `clearSnackBars()` first. The helper also passes `persist: false`, so Undo now hides after `kUndoWindow` instead of staying. Keep clearing before other snackbars on these screens, as above: without it, a message still waits behind the visible Undo for up to 4 s.
 
 The failure only shows up when an Undo snackbar is already on screen. With an empty messenger the test passes either way (`S16b`, `MAB12`).
 
