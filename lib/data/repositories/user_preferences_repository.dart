@@ -61,9 +61,6 @@ class PreferenceDecodeException extends RepositoryException {
 
   /// Underlying decode failure (JSON parse error or type mismatch).
   final Object cause;
-
-  @override
-  String toString() => 'PreferenceDecodeException: $message';
 }
 
 /// SSOT for `user_preferences`. Owns every write path to the Drift KV
@@ -258,14 +255,14 @@ final class DriftUserPreferencesRepository
   Stream<String> watchDefaultCurrency() => _watchJson<String>(
     _kDefaultCurrency,
     defaultValue: 'USD',
-    decode: _decodeString('default_currency'),
+    decode: _decodeAs<String>,
   );
 
   @override
   Future<String> getDefaultCurrency() => _readJson<String>(
     _kDefaultCurrency,
     defaultValue: 'USD',
-    decode: _decodeString('default_currency'),
+    decode: _decodeAs<String>,
   );
 
   @override
@@ -278,14 +275,14 @@ final class DriftUserPreferencesRepository
   Stream<int?> watchDefaultAccountId() => _watchJson<int?>(
     _kDefaultAccountId,
     defaultValue: null,
-    decode: _decodeNullableInt('default_account_id'),
+    decode: _decodeAs<int?>,
   );
 
   @override
   Future<int?> getDefaultAccountId() => _readJson<int?>(
     _kDefaultAccountId,
     defaultValue: null,
-    decode: _decodeNullableInt('default_account_id'),
+    decode: _decodeAs<int?>,
   );
 
   @override
@@ -298,7 +295,7 @@ final class DriftUserPreferencesRepository
   Future<bool> getFirstRunComplete() => _readJson<bool>(
     _kFirstRunCompleted,
     defaultValue: false,
-    decode: _decodeBool('first_run_completed'),
+    decode: _decodeAs<bool>,
   );
 
   @override
@@ -310,14 +307,14 @@ final class DriftUserPreferencesRepository
   Stream<bool> watchSplashEnabled() => _watchJson<bool>(
     _kSplashEnabled,
     defaultValue: true,
-    decode: _decodeBool('splash_enabled'),
+    decode: _decodeAs<bool>,
   );
 
   @override
   Future<bool> getSplashEnabled() => _readJson<bool>(
     _kSplashEnabled,
     defaultValue: true,
-    decode: _decodeBool('splash_enabled'),
+    decode: _decodeAs<bool>,
   );
 
   @override
@@ -346,7 +343,7 @@ final class DriftUserPreferencesRepository
   Stream<String> watchSplashDisplayText() => _watchJson<String>(
     _kSplashDisplayText,
     defaultValue: kDefaultSplashDisplayText,
-    decode: _decodeString('splash_display_text'),
+    decode: _decodeAs<String>,
   );
 
   @override
@@ -357,7 +354,7 @@ final class DriftUserPreferencesRepository
   Stream<String> watchSplashButtonLabel() => _watchJson<String>(
     _kSplashButtonLabel,
     defaultValue: kDefaultSplashButtonLabel,
-    decode: _decodeString('splash_button_label'),
+    decode: _decodeAs<String>,
   );
 
   @override
@@ -366,27 +363,9 @@ final class DriftUserPreferencesRepository
 
   // ---------- Decode helpers ----------
 
-  static String Function(dynamic) _decodeString(String key) => (dynamic v) {
-    if (v is! String) {
-      throw FormatException('Expected String for $key, got ${v.runtimeType}');
-    }
-    return v;
-  };
-
-  static bool Function(dynamic) _decodeBool(String key) => (dynamic v) {
-    if (v is! bool) {
-      throw FormatException('Expected bool for $key, got ${v.runtimeType}');
-    }
-    return v;
-  };
-
-  static int? Function(dynamic) _decodeNullableInt(String key) => (dynamic v) {
-    if (v == null) return null;
-    if (v is! int) {
-      throw FormatException('Expected int? for $key, got ${v.runtimeType}');
-    }
-    return v;
-  };
+  /// Returns [v] when it is a [T] (a nullable [T] also accepts null).
+  static T _decodeAs<T>(dynamic v) =>
+      v is T ? v : throw FormatException('Expected $T, got ${v.runtimeType}');
 
   static DateTime? Function(dynamic) _decodeNullableDate(String key) =>
       (dynamic v) {
