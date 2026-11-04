@@ -8,13 +8,6 @@ import '../../../../../domain/models/transaction.dart';
 
 part 'category_search_detail_state.freezed.dart';
 
-/// Pending-delete record set during the 4-second undo window.
-class CategorySearchPendingDelete {
-  const CategorySearchPendingDelete({required this.transaction});
-
-  final Transaction transaction;
-}
-
 @freezed
 sealed class CategorySearchDetailState with _$CategorySearchDetailState {
   /// `query` and `categoryId` are NOT echoed here — they're already
@@ -29,7 +22,7 @@ sealed class CategorySearchDetailState with _$CategorySearchDetailState {
     required List<DatedTransactionGroup> days,
     required int overallSumMinorUnits,
     required Currency currency,
-    CategorySearchPendingDelete? pendingDelete,
+    Transaction? pendingDelete,
   }) = DetailData;
 
   const factory CategorySearchDetailState.empty() = DetailEmpty;

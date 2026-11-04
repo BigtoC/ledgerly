@@ -120,7 +120,7 @@ return empty(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( List<DatedTransactionGroup> days,  int overallSumMinorUnits,  Currency currency,  CategorySearchPendingDelete? pendingDelete)?  data,TResult Function()?  empty,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( List<DatedTransactionGroup> days,  int overallSumMinorUnits,  Currency currency,  Transaction? pendingDelete)?  data,TResult Function()?  empty,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case DetailData() when data != null:
 return data(_that.days,_that.overallSumMinorUnits,_that.currency,_that.pendingDelete);case DetailEmpty() when empty != null:
@@ -142,7 +142,7 @@ return empty();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( List<DatedTransactionGroup> days,  int overallSumMinorUnits,  Currency currency,  CategorySearchPendingDelete? pendingDelete)  data,required TResult Function()  empty,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( List<DatedTransactionGroup> days,  int overallSumMinorUnits,  Currency currency,  Transaction? pendingDelete)  data,required TResult Function()  empty,}) {final _that = this;
 switch (_that) {
 case DetailData():
 return data(_that.days,_that.overallSumMinorUnits,_that.currency,_that.pendingDelete);case DetailEmpty():
@@ -160,7 +160,7 @@ return empty();}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( List<DatedTransactionGroup> days,  int overallSumMinorUnits,  Currency currency,  CategorySearchPendingDelete? pendingDelete)?  data,TResult? Function()?  empty,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( List<DatedTransactionGroup> days,  int overallSumMinorUnits,  Currency currency,  Transaction? pendingDelete)?  data,TResult? Function()?  empty,}) {final _that = this;
 switch (_that) {
 case DetailData() when data != null:
 return data(_that.days,_that.overallSumMinorUnits,_that.currency,_that.pendingDelete);case DetailEmpty() when empty != null:
@@ -188,7 +188,7 @@ class DetailData implements CategorySearchDetailState {
 
  final  int overallSumMinorUnits;
  final  Currency currency;
- final  CategorySearchPendingDelete? pendingDelete;
+ final  Transaction? pendingDelete;
 
 /// Create a copy of CategorySearchDetailState
 /// with the given fields replaced by the non-null parameter values.
@@ -222,11 +222,11 @@ abstract mixin class $DetailDataCopyWith<$Res> implements $CategorySearchDetailS
   factory $DetailDataCopyWith(DetailData value, $Res Function(DetailData) _then) = _$DetailDataCopyWithImpl;
 @useResult
 $Res call({
- List<DatedTransactionGroup> days, int overallSumMinorUnits, Currency currency, CategorySearchPendingDelete? pendingDelete
+ List<DatedTransactionGroup> days, int overallSumMinorUnits, Currency currency, Transaction? pendingDelete
 });
 
 
-$CurrencyCopyWith<$Res> get currency;
+$CurrencyCopyWith<$Res> get currency;$TransactionCopyWith<$Res>? get pendingDelete;
 
 }
 /// @nodoc
@@ -245,7 +245,7 @@ days: null == days ? _self._days : days // ignore: cast_nullable_to_non_nullable
 as List<DatedTransactionGroup>,overallSumMinorUnits: null == overallSumMinorUnits ? _self.overallSumMinorUnits : overallSumMinorUnits // ignore: cast_nullable_to_non_nullable
 as int,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
 as Currency,pendingDelete: freezed == pendingDelete ? _self.pendingDelete : pendingDelete // ignore: cast_nullable_to_non_nullable
-as CategorySearchPendingDelete?,
+as Transaction?,
   ));
 }
 
@@ -257,6 +257,18 @@ $CurrencyCopyWith<$Res> get currency {
   
   return $CurrencyCopyWith<$Res>(_self.currency, (value) {
     return _then(_self.copyWith(currency: value));
+  });
+}/// Create a copy of CategorySearchDetailState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$TransactionCopyWith<$Res>? get pendingDelete {
+    if (_self.pendingDelete == null) {
+    return null;
+  }
+
+  return $TransactionCopyWith<$Res>(_self.pendingDelete!, (value) {
+    return _then(_self.copyWith(pendingDelete: value));
   });
 }
 }

@@ -40,7 +40,7 @@ class CategorySearchDetailScreen extends ConsumerStatefulWidget {
 
 class _CategorySearchDetailScreenState
     extends ConsumerState<CategorySearchDetailScreen> {
-  CategorySearchPendingDelete? _lastShownPending;
+  Transaction? _lastShownPending;
   late final CategorySearchDetailController _controller;
 
   CategorySearchDetailControllerProvider get _provider =>
@@ -215,16 +215,13 @@ class _CategorySearchDetailScreenState
     // active query, in which case the row drops out naturally).
   }
 
-  void _maybeShowUndoSnackbar(
-    BuildContext context,
-    CategorySearchPendingDelete? pending,
-  ) {
+  void _maybeShowUndoSnackbar(BuildContext context, Transaction? pending) {
     final l10n = AppLocalizations.of(context);
     if (pending == null) {
       _lastShownPending = null;
       return;
     }
-    if (_lastShownPending?.transaction.id == pending.transaction.id) return;
+    if (_lastShownPending?.id == pending.id) return;
     _lastShownPending = pending;
     final messenger = ScaffoldMessenger.maybeOf(context);
     messenger
