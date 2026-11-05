@@ -47,12 +47,13 @@ Inline `# Phase 2` annotations throughout the rest of the document mark code pat
 - **[Shipped 2026-05-17]** Extended multi-currency — fetch currency prices and auto-convert balances, summaries, and charts to the user's default currency
 - **[Shipped 2026-10-30]** Fortune City CSV import — Settings → Import from CSV picks a Fortune City export, matches its accounts and categories against existing rows and every locale's labels, skips duplicates and invalid rows, and imports the rest in one transaction after a preview.
   - The same screen also imports Ledgerly's own CSV export (#70). The parser picks the format whose required columns the header has more of. Ledgerly rows keep the currency's full precision, the `date` column's day and `created_at`, and lose the export's formula-escape `'`. Their categories match only within the file's `type`, so the plan and preview key categories by (value, type); a missing one is created with that type.
+  - Duplicates (#140): a Ledgerly row whose `id` is a UUID is a duplicate when that uuid is already stored, even if the stored row was edited since (the device's copy wins; nothing is merged), or when an earlier row in the file has it. Every other row, including a Ledgerly row with an integer `id` (exports made before schema v8) and every Fortune City row, is a duplicate when its signature matches a stored row: `created_at` to the second, amount, currency and memo, counted as a multiset. A row with an unknown uuid also goes through the signature check, so rows imported before v8 are not duplicated, and a stored row matched by uuid is left out of it. An inserted row keeps the file's uuid, or gets a new one.
 
 ### Phase 3
 - **[Pending]** Detailed monthly summary
 - **[Pending]** Wallet transaction sync** — EVM wallet addresses linked to accounts, Ankr API integration, pending transaction review/approve/reject flow
 - **[Pending]** Budget management (weekly/monthly/yearly)
-- **[Shipped 2026-10-30]** Data export (CSV) — Settings → Data Management → Export data writes the transactions of a chosen date range (every transaction by default) to a UTF-8 CSV (`id, date, type, amount, currency, category, account, memo, created_at, updated_at`; decimal amounts, category and account names, local ISO 8601 times with offset; no `amount_formula`) and saves it through the system save dialog (Android opens in Downloads; iOS uses the Files picker).
+- **[Shipped 2026-10-30]** Data export (CSV) — Settings → Data Management → Export data writes the transactions of a chosen date range (every transaction by default) to a UTF-8 CSV (`id, date, type, amount, currency, category, account, memo, created_at, updated_at`; `id` holds the transaction's `uuid`; decimal amounts, category and account names, local ISO 8601 times with offset; no `amount_formula`) and saves it through the system save dialog (Android opens in Downloads; iOS uses the Files picker).
 - **[Pending]** Cloud backup & sync
 
 ### Future (Good to Have)
@@ -489,6 +490,7 @@ Notes:
 | Column             | Type     | Constraints                                             |
 |--------------------|----------|---------------------------------------------------------|
 | id                 | INTEGER  | PRIMARY KEY AUTO                                        |
+| uuid               | TEXT     | NOT NULL UNIQUE — random v4 UUID set on insert (v8)     |
 | amount_minor_units | INTEGER  | NOT NULL — see Money Storage Policy                     |
 | currency           | TEXT     | NOT NULL REFERENCES currencies(code)                    |
 | category_id        | INTEGER  | NOT NULL REFERENCES categories                          |
@@ -505,6 +507,7 @@ Notes:
 - `memo` is optional free-form user text and must support Unicode across all supported locales.
 - `amount_formula` records the calculator expression that produced `amount_minor_units`, such as `3.5+10.5+11+3`. It is canonical ASCII that does not depend on locale: operands as typed with `.` as the decimal separator and trailing fractional zeros dropped, operators `+ - * /`, no spaces. It is evaluated strictly left to right. Wherever × or ÷ follows + or −, the expression so far is bracketed, so the keys `1 + 2 × 2` are stored as `(1+2)*2` and shown as `(1 + 2) × 2 = 6`, which reads the same under usual precedence. Only this canonical form is accepted when reading. Subtotals may go negative; only the finished amount is clamped to zero. It is null when the amount was typed without an operator. When the form opens a transaction, it parses the formula and recalculates the result on the keypad, so the user can see and edit the calculation. `amount_minor_units` stays authoritative: a formula that does not parse, or that recalculates to a different amount, is ignored.
 - `currency` stores the original transaction currency. Phase 2 conversion never overwrites the original `amount_minor_units` or `currency`.
+- `uuid` identifies the transaction on every device; `id` is unique only inside one install. A Drift client default sets it on every insert path (form, recurring approval, shopping-list conversion, import), and `save` never writes it, so an edit keeps it. Only `insertImported` writes a uuid it is given: a Ledgerly export's. The CSV export writes it in the `id` column. Integer primary and foreign keys stay as they are, and no other table has a uuid.
 - `created_at` and `updated_at` are populated by `TransactionRepository`, not by the database. On insert, both are set to `DateTime.now()`. On every update, `updated_at` is refreshed to `DateTime.now()` and `created_at` is left unchanged.
 - **Exception: CSV import.** `TransactionRepository.insertImported` keeps each row's `created_at` as the source file's Recorded At (Ledgerly export: its `created_at`), so imported history keeps its original times and re-imports can be detected. `updated_at` is the import time, read once and shared by every row in the call. Later edits preserve the imported `created_at` like any other.
 
@@ -732,6 +735,7 @@ Notes:
 - v5 adds `exchange_rates` table for multi-currency conversion.
 - v6 adds the nullable `transactions.amount_formula` column.
 - v7 is data-only (no table changes): it appends the seeded `category.investment` expense row to installs seeded before it existed, and retires `category.personal` (deleted when nothing references it, archived otherwise).
+- v8 adds `transactions.uuid` (NOT NULL UNIQUE). SQLite cannot add such a column in place, so the step rebuilds `transactions` with Drift's `alterTable`, giving every existing row a random v4 UUID generated in SQL. Drift turns foreign keys off for the rebuild and back on after it, and re-creates the table's indexes.
 - Each schema version has a committed snapshot in `drift_schemas/` (generated via `drift_dev schema dump`).
 - Migrations are tested by generating every historical schema and running the upgrade path on both an empty DB and a seeded DB (see Testing Strategy → Repository Tests).
 - Breaking schema changes (column type swaps, table splits) require a new version + a documented data-transform step — never rewrite existing migrations in place.
