@@ -211,7 +211,9 @@ class _PreviewBodyState extends State<_PreviewBody> {
           SliverList.builder(
             itemCount: existing.length,
             itemBuilder: (context, i) => CsvExistingCategoryTile(
-              key: ValueKey('csvImportCategory:${existing[i].csvValue}'),
+              key: ValueKey(
+                'csvImportCategory:${csvCategoryKeyText(existing[i])}',
+              ),
               entry: existing[i],
             ),
           ),
@@ -225,10 +227,10 @@ class _PreviewBodyState extends State<_PreviewBody> {
             itemBuilder: (context, i) {
               final entry = created[i];
               return CsvNewCategoryTile(
-                key: ValueKey('csvImportCategory:${entry.csvValue}'),
+                key: ValueKey('csvImportCategory:${csvCategoryKeyText(entry)}'),
                 entry: entry,
                 onTypeChanged: (type) =>
-                    controller.setNewCategoryType(entry.csvValue, type),
+                    controller.setNewCategoryType(entry.key, type),
               );
             },
           ),

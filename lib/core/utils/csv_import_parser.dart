@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:csv/csv.dart';
 
+import '../../domain/models/category.dart';
 import '../../domain/models/csv_import.dart';
 
 /// Header names in a Fortune City (記帳城市) CSV export. Matched after
@@ -15,28 +16,65 @@ const kFortuneCityCurrencyColumn = 'Currency';
 const kFortuneCityRecordedAtColumn = 'Recorded At';
 const kFortuneCityNoteColumn = 'note';
 
-const _requiredColumns = [
-  kFortuneCityAccountColumn,
-  kFortuneCityCategoryColumn,
-  kFortuneCityAmountColumn,
-  kFortuneCityCurrencyColumn,
-  kFortuneCityRecordedAtColumn,
-];
+const _fortuneCity = (
+  account: kFortuneCityAccountColumn,
+  category: kFortuneCityCategoryColumn,
+  amount: kFortuneCityAmountColumn,
+  currency: kFortuneCityCurrencyColumn,
+  memo: kFortuneCityNoteColumn,
+  required: [
+    kFortuneCityAccountColumn,
+    kFortuneCityCategoryColumn,
+    kFortuneCityAmountColumn,
+    kFortuneCityCurrencyColumn,
+    kFortuneCityRecordedAtColumn,
+  ],
+);
+
+/// Header names in Ledgerly's own export (`encodeTransactionsCsv`), matched
+/// the same way. `id` and `updated_at` are never read.
+const _ledgerly = (
+  account: 'account',
+  category: 'category',
+  amount: 'amount',
+  currency: 'currency',
+  memo: 'memo',
+  required: [
+    'date',
+    'type',
+    'amount',
+    'currency',
+    'category',
+    'account',
+    'created_at',
+  ],
+);
 
 final _recordedAtPattern = RegExp(
   r'^(\d{4})/(\d{1,2})/(\d{1,2}) (\d{1,2}):(\d{2})(?::(\d{2}))?$',
 );
 
-/// Parses the bytes of a Fortune City CSV export.
+/// `formatLocalIso8601` output: `YYYY-MM-DDTHH:mm:ss±HH:MM`.
+final _iso8601Pattern = RegExp(
+  r'^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})([+-])(\d{2}):(\d{2})$',
+);
+
+/// The `'` the export puts before text a spreadsheet would run.
+final _escapedFormula = RegExp("^'[=+\\-@\t\r]");
+
+/// Parses the bytes of a Fortune City or Ledgerly CSV export. The format
+/// is the one whose required columns the header has more of; a tie is
+/// Fortune City.
 ///
 /// Covers UTF-8 decoding, line endings, CSV decoding, line numbering, the
-/// header and per-row syntax (blank account / category, Recorded At).
-/// Amounts and currency codes are trimmed but not validated: rounding and
-/// the currency lookup need the database, so the caller does both.
+/// header and per-row syntax (blank account / category, dates, Ledgerly's
+/// `type`). Ledgerly text loses the export's formula-escape `'`. Amounts
+/// and currency codes are trimmed but not validated: rounding and the
+/// currency lookup need the database, so the caller does both.
 ///
 /// Throws [CsvFileException] when the whole file is unusable. Pure and
 /// synchronous; never logs.
-FortuneCityCsvParseResult parseFortuneCityCsv(Uint8List bytes) {
+CsvParseResult parseImportCsv(Uint8List bytes) {
   final String decoded;
   try {
     decoded = utf8.decode(bytes);
@@ -70,8 +108,12 @@ FortuneCityCsvParseResult parseFortuneCityCsv(Uint8List bytes) {
   for (var i = 0; i < header.length; i++) {
     columns.putIfAbsent(header[i].toString().trim(), () => i);
   }
+  final ledgerly =
+      _ledgerly.required.where(columns.containsKey).length >
+      _fortuneCity.required.where(columns.containsKey).length;
+  final format = ledgerly ? _ledgerly : _fortuneCity;
   final missing = [
-    for (final name in _requiredColumns)
+    for (final name in format.required)
       if (!columns.containsKey(name)) name,
   ];
   if (missing.isNotEmpty) {
@@ -80,19 +122,9 @@ FortuneCityCsvParseResult parseFortuneCityCsv(Uint8List bytes) {
       missingColumns: missing,
     );
   }
-  final account = columns[kFortuneCityAccountColumn]!;
-  final category = columns[kFortuneCityCategoryColumn]!;
-  final amount = columns[kFortuneCityAmountColumn]!;
-  final currency = columns[kFortuneCityCurrencyColumn]!;
-  final recordedAt = columns[kFortuneCityRecordedAtColumn]!;
-  final note = columns[kFortuneCityNoteColumn];
-  final lastRequired = [
-    account,
-    category,
-    amount,
-    currency,
-    recordedAt,
-  ].reduce((a, b) => a > b ? a : b);
+  final note = columns[format.memo];
+  final lastRequired = [for (final name in format.required) columns[name]!]
+      .reduce((a, b) => a > b ? a : b);
 
   final rows = <ParsedCsvRow>[];
   final errors = <CsvRowError>[];
@@ -104,7 +136,12 @@ FortuneCityCsvParseResult parseFortuneCityCsv(Uint8List bytes) {
     if (_isBlank(record)) continue;
     dataRows++;
 
-    final fields = [for (final f in record) f.toString()];
+    // Only text fields can start with the escape, so every field is
+    // checked.
+    final fields = [
+      for (final f in record.map((f) => '$f'))
+        ledgerly && _escapedFormula.hasMatch(f) ? f.substring(1) : f,
+    ];
     if (fields.length <= lastRequired) {
       errors.add(
         CsvRowError(
@@ -114,12 +151,23 @@ FortuneCityCsvParseResult parseFortuneCityCsv(Uint8List bytes) {
       );
       continue;
     }
-    final date = _parseRecordedAt(fields[recordedAt].trim());
-    final reason = fields[account].trim().isEmpty
+    String field(String name) => fields[columns[name]!].trim();
+    final type = ledgerly
+        ? CategoryType.values.asNameMap()[field('type')]
+        : null;
+    final date = ledgerly ? _parseIso8601(field('date')) : null;
+    final recordedAt = ledgerly
+        ? _parseIso8601(field('created_at'))?.instant
+        : _parseRecordedAt(field(kFortuneCityRecordedAtColumn));
+    final account = field(format.account);
+    final category = field(format.category);
+    final reason = account.isEmpty
         ? CsvRowErrorReason.emptyAccount
-        : fields[category].trim().isEmpty
+        : category.isEmpty
         ? CsvRowErrorReason.emptyCategory
-        : date == null
+        : ledgerly && type == null
+        ? CsvRowErrorReason.invalidType
+        : recordedAt == null || (ledgerly && date == null)
         ? CsvRowErrorReason.invalidDate
         : null;
     if (reason != null) {
@@ -131,19 +179,21 @@ FortuneCityCsvParseResult parseFortuneCityCsv(Uint8List bytes) {
     rows.add(
       ParsedCsvRow(
         line: lineNumber,
-        account: fields[account].trim(),
-        category: fields[category].trim(),
-        amountText: fields[amount].trim(),
-        currencyCode: fields[currency].trim().toUpperCase(),
-        recordedAt: date!,
+        account: account,
+        category: category,
+        amountText: field(format.amount),
+        currencyCode: field(format.currency).toUpperCase(),
+        recordedAt: recordedAt!,
         memo: memo == null || memo.trim().isEmpty ? null : memo,
+        type: type,
+        date: date?.day,
       ),
     );
   }
   if (dataRows == 0) {
     throw const CsvFileException(CsvFileErrorKind.empty);
   }
-  return FortuneCityCsvParseResult(rows: rows, errors: errors);
+  return CsvParseResult(rows: rows, errors: errors);
 }
 
 /// Whether every quoted field in [text] is closed, and its closing quote is
@@ -191,9 +241,36 @@ int _newlines(List<dynamic> record) =>
 DateTime? _parseRecordedAt(String text) {
   final match = _recordedAtPattern.firstMatch(text);
   if (match == null) return null;
-  final parts = [for (var i = 1; i <= 6; i++) int.parse(match[i] ?? '0')];
-  // UTC has no DST gaps, so a field round-trip only rejects values that
-  // are out of range, never a valid wall-clock time.
+  final t = _wallTime([
+    for (var i = 1; i <= 6; i++) int.parse(match[i] ?? '0'),
+  ]);
+  return t == null
+      ? null
+      : DateTime(t.year, t.month, t.day, t.hour, t.minute, t.second);
+}
+
+/// Parses `YYYY-MM-DDTHH:mm:ss±HH:MM` into the written day at local
+/// midnight and the instant in local time, or returns null when the text
+/// does not match or names no real time.
+({DateTime day, DateTime instant})? _parseIso8601(String text) {
+  final match = _iso8601Pattern.firstMatch(text);
+  if (match == null) return null;
+  final t = _wallTime([for (var i = 1; i <= 6; i++) int.parse(match[i]!)]);
+  if (t == null) return null;
+  final offset = Duration(
+    hours: int.parse(match[8]!),
+    minutes: int.parse(match[9]!),
+  );
+  return (
+    day: DateTime(t.year, t.month, t.day),
+    instant: (match[7] == '-' ? t.add(offset) : t.subtract(offset)).toLocal(),
+  );
+}
+
+/// [parts] (year, month, day, hour, minute, second) as a UTC value with
+/// those fields, or null when they name no real time. UTC has no DST
+/// gaps, so the round-trip only rejects values that are out of range.
+DateTime? _wallTime(List<int> parts) {
   final utc = DateTime.utc(
     parts[0],
     parts[1],
@@ -202,13 +279,16 @@ DateTime? _parseRecordedAt(String text) {
     parts[4],
     parts[5],
   );
-  if (utc.year != parts[0] ||
-      utc.month != parts[1] ||
-      utc.day != parts[2] ||
-      utc.hour != parts[3] ||
-      utc.minute != parts[4] ||
-      utc.second != parts[5]) {
-    return null;
+  final fields = [
+    utc.year,
+    utc.month,
+    utc.day,
+    utc.hour,
+    utc.minute,
+    utc.second,
+  ];
+  for (var i = 0; i < parts.length; i++) {
+    if (fields[i] != parts[i]) return null;
   }
-  return DateTime(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5]);
+  return utc;
 }

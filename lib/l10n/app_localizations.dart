@@ -1780,10 +1780,10 @@ abstract class AppLocalizations {
   /// **'Import from CSV'**
   String get csvImportTitle;
 
-  /// CSV import intro text on the idle screen. Fortune City (記帳城市) is the app whose export format is supported.
+  /// CSV import intro text on the idle screen. Fortune City (記帳城市) and Ledgerly's own CSV export are the supported formats.
   ///
   /// In en, this message translates to:
-  /// **'Import transactions exported from Fortune City.'**
+  /// **'Import transactions exported from Fortune City or Ledgerly.'**
   String get csvImportIntro;
 
   /// Privacy note under the CSV import intro.
@@ -1990,11 +1990,17 @@ abstract class AppLocalizations {
   /// **'unknown currency {code}'**
   String csvImportReasonUnknownCurrency(String code);
 
-  /// CSV row error reason: Recorded At is not a valid date and time.
+  /// CSV row error reason: Recorded At (Fortune City) or date / created_at (Ledgerly export) is not a valid date and time.
   ///
   /// In en, this message translates to:
   /// **'invalid date'**
   String get csvImportReasonInvalidDate;
+
+  /// CSV row error reason: the type column of a Ledgerly export is neither expense nor income.
+  ///
+  /// In en, this message translates to:
+  /// **'invalid type'**
+  String get csvImportReasonInvalidType;
 
   /// CSV import preview: confirm button that writes the import.
   ///

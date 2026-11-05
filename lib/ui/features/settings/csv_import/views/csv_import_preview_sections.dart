@@ -28,8 +28,8 @@ class CsvImportSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final first = preview.firstRecordedAt;
-    final last = preview.lastRecordedAt;
+    final first = preview.firstDate;
+    final last = preview.lastDate;
     final locale = Localizations.localeOf(context).toString();
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -187,6 +187,13 @@ String _existingAccountLabel(
   return account == null ? '' : csvAccountLabel(account, l10n);
 }
 
+/// [entry]'s value, plus `:expense` or `:income` for a Ledgerly entry, so
+/// widget keys stay unique when one value comes in both types.
+String csvCategoryKeyText(CsvCategoryEntry entry) => switch (entry.csvType) {
+  null => entry.csvValue,
+  final type => '${entry.csvValue}:${type.name}',
+};
+
 /// A CSV Category value that resolves to existing categories: one target,
 /// or the income marker's Salary / Other income split.
 class CsvExistingCategoryTile extends StatelessWidget {
@@ -246,7 +253,7 @@ class CsvNewCategoryTile extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
           child: TransactionTypeSegmentedControl(
-            key: ValueKey('csvImportCategoryType:${entry.csvValue}'),
+            key: ValueKey('csvImportCategoryType:${csvCategoryKeyText(entry)}'),
             value: entry.type,
             onChanged: onTypeChanged,
           ),
@@ -285,6 +292,7 @@ String _reason(CsvRowError error, AppLocalizations l10n) =>
         error.currencyCode ?? '',
       ),
       CsvRowErrorReason.invalidDate => l10n.csvImportReasonInvalidDate,
+      CsvRowErrorReason.invalidType => l10n.csvImportReasonInvalidType,
     };
 
 /// The value, followed by a New badge when a row will be created. A

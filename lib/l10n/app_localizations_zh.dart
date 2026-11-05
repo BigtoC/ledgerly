@@ -944,7 +944,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get csvImportIntro =>
-      'Import transactions exported from Fortune City.';
+      'Import transactions exported from Fortune City or Ledgerly.';
 
   @override
   String get csvImportPrivacyNote =>
@@ -1088,6 +1088,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get csvImportReasonInvalidDate => 'invalid date';
+
+  @override
+  String get csvImportReasonInvalidType => 'invalid type';
 
   @override
   String csvImportConfirm(int count) {
@@ -2326,7 +2329,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get csvImportTitle => '从 CSV 导入';
 
   @override
-  String get csvImportIntro => '导入从记账城市导出的交易。';
+  String get csvImportIntro => '导入从记账城市或 Ledgerly 导出的交易。';
 
   @override
   String get csvImportPrivacyNote => '文件只会在此设备上读取，不会上传。';
@@ -2465,6 +2468,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get csvImportReasonInvalidDate => '日期无效';
+
+  @override
+  String get csvImportReasonInvalidType => '类型无效';
 
   @override
   String csvImportConfirm(int count) {
@@ -3694,7 +3700,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get csvImportTitle => '從 CSV 匯入';
 
   @override
-  String get csvImportIntro => '匯入從記帳城市匯出的交易。';
+  String get csvImportIntro => '匯入從記帳城市或 Ledgerly 匯出的交易。';
 
   @override
   String get csvImportPrivacyNote => '檔案只會在此裝置上讀取，不會上傳。';
@@ -3833,6 +3839,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get csvImportReasonInvalidDate => '日期無效';
+
+  @override
+  String get csvImportReasonInvalidType => '類型無效';
 
   @override
   String csvImportConfirm(int count) {

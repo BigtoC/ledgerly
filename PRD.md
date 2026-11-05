@@ -18,7 +18,7 @@ Ledgerly is a local-first mobile expense tracker built with Flutter. It is aimed
 
 **MVP — Complete.** All MVP features have shipped: manual entry, seeded + custom categories, multi-account / multi-currency, shopping list drafts, splash screen, theming, l10n.
 
-**Phase 2 — In progress.** Shipped slices on `main`: **Recurring transactions** + Home pending approval (2026-05-08; see [`recurring_rules`](#recurring_rules-phase-2--shipped-2026-05-08) table), **Transaction search** (2026-05-10), **Extended multi-currency conversion** (2026-05-17), **Basic charts** — pie + daily bar (2026-05-20), **Chart slice drill-down** (2026-05-22) — coordinated pie/legend/bar selection plus a per-slice items list with edit, delete + 4 s undo, FX-converted/original amount split, and stale-rate notice. Selection identity lives in the analysis layer as a sealed `SelectedSlice` (category | account | currency); the repository boundary stays filter-based via `{categoryId, accountId, currencyCode}` arguments. **Fortune City CSV import** (2026-10-30) — `/settings/import` previews a Fortune City export (account and category matching, duplicate and invalid-row skipping) and writes it in one Drift transaction; see the `transactions` table note on imported `created_at`. **CSV export** (2026-10-30) — `/settings/export` writes the transactions of a chosen date range (all by default) to a CSV the user saves through the system save dialog. Remaining Phase 2 work: wallet sync (Ankr integration), credit-card / transfer flows.
+**Phase 2 — In progress.** Shipped slices on `main`: **Recurring transactions** + Home pending approval (2026-05-08; see [`recurring_rules`](#recurring_rules-phase-2--shipped-2026-05-08) table), **Transaction search** (2026-05-10), **Extended multi-currency conversion** (2026-05-17), **Basic charts** — pie + daily bar (2026-05-20), **Chart slice drill-down** (2026-05-22) — coordinated pie/legend/bar selection plus a per-slice items list with edit, delete + 4 s undo, FX-converted/original amount split, and stale-rate notice. Selection identity lives in the analysis layer as a sealed `SelectedSlice` (category | account | currency); the repository boundary stays filter-based via `{categoryId, accountId, currencyCode}` arguments. **CSV import** (2026-10-30) — `/settings/import` previews a Fortune City export, or Ledgerly's own CSV export (#70), told apart by the header (account and category matching, duplicate and invalid-row skipping) and writes it in one Drift transaction; see the `transactions` table note on imported `created_at`. **CSV export** (2026-10-30) — `/settings/export` writes the transactions of a chosen date range (all by default) to a CSV the user saves through the system save dialog. Remaining Phase 2 work: wallet sync (Ankr integration), credit-card / transfer flows.
 
 Inline `# Phase 2` annotations throughout the rest of the document mark code paths and surfaces that have **not** yet shipped. The recurring-rules slice is the canonical example of how a Phase 2 feature lands: data layer first (DAOs, repos, migration), then a use case in `lib/domain/use_cases/`, then UI.
 
@@ -46,6 +46,7 @@ Inline `# Phase 2` annotations throughout the rest of the document mark code pat
 - **[Shipped 2026-05-10]** Transaction search
 - **[Shipped 2026-05-17]** Extended multi-currency — fetch currency prices and auto-convert balances, summaries, and charts to the user's default currency
 - **[Shipped 2026-10-30]** Fortune City CSV import — Settings → Import from CSV picks a Fortune City export, matches its accounts and categories against existing rows and every locale's labels, skips duplicates and invalid rows, and imports the rest in one transaction after a preview.
+  - The same screen also imports Ledgerly's own CSV export (#70). The parser picks the format whose required columns the header has more of. Ledgerly rows keep the currency's full precision, the `date` column's day and `created_at`, and lose the export's formula-escape `'`. Their categories match only within the file's `type`, so the plan and preview key categories by (value, type); a missing one is created with that type.
 
 ### Phase 3
 - **[Pending]** Detailed monthly summary
@@ -146,7 +147,7 @@ lib/
       color_palette.dart
       date_helpers.dart
       decimal_rounding.dart          # Decimal string ↔ minor units (CSV import/export)
-      fortune_city_csv_parser.dart   # Pure Fortune City CSV parser
+      csv_import_parser.dart         # Pure CSV import parser (Fortune City and Ledgerly exports)
       transactions_csv.dart          # Pure transactions CSV encoder (export)
       box_shadow.dart
       csv_import_keys.dart           # Matching keys shared by CSV import preview and commit
@@ -218,7 +219,7 @@ lib/
       csv_import.dart                      # CSV import rows, errors, plan and result
     use_cases/                             # Work that coordinates several repositories
       recurring_generation_use_case.dart   # Cold-start recurring rule engine
-      csv_import_use_case.dart             # CSV load, dedup and atomic commit
+      csv_import_use_case.dart             # CSV load, dedup and atomic commit (Fortune City or Ledgerly)
       csv_export_use_case.dart             # Date-range CSV export through the save dialog
   ui/
     core/
@@ -505,7 +506,7 @@ Notes:
 - `amount_formula` records the calculator expression that produced `amount_minor_units`, such as `3.5+10.5+11+3`. It is canonical ASCII that does not depend on locale: operands as typed with `.` as the decimal separator and trailing fractional zeros dropped, operators `+ - * /`, no spaces. It is evaluated strictly left to right. Wherever × or ÷ follows + or −, the expression so far is bracketed, so the keys `1 + 2 × 2` are stored as `(1+2)*2` and shown as `(1 + 2) × 2 = 6`, which reads the same under usual precedence. Only this canonical form is accepted when reading. Subtotals may go negative; only the finished amount is clamped to zero. It is null when the amount was typed without an operator. When the form opens a transaction, it parses the formula and recalculates the result on the keypad, so the user can see and edit the calculation. `amount_minor_units` stays authoritative: a formula that does not parse, or that recalculates to a different amount, is ignored.
 - `currency` stores the original transaction currency. Phase 2 conversion never overwrites the original `amount_minor_units` or `currency`.
 - `created_at` and `updated_at` are populated by `TransactionRepository`, not by the database. On insert, both are set to `DateTime.now()`. On every update, `updated_at` is refreshed to `DateTime.now()` and `created_at` is left unchanged.
-- **Exception: CSV import.** `TransactionRepository.insertImported` keeps each row's `created_at` as the source file's Recorded At, so imported history keeps its original times and re-imports can be detected. `updated_at` is the import time, read once and shared by every row in the call. Later edits preserve the imported `created_at` like any other.
+- **Exception: CSV import.** `TransactionRepository.insertImported` keeps each row's `created_at` as the source file's Recorded At (Ledgerly export: its `created_at`), so imported history keeps its original times and re-imports can be detected. `updated_at` is the import time, read once and shared by every row in the call. Later edits preserve the imported `created_at` like any other.
 
 ### categories
 

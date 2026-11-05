@@ -58,8 +58,12 @@ enum CsvRowErrorReason {
   /// Currency is not in `currencies`; see [CsvRowError.currencyCode].
   unknownCurrency,
 
-  /// Recorded At is not `yyyy/M/d H:mm[:ss]` or names no real time.
+  /// Recorded At is not `yyyy/M/d H:mm[:ss]`, or a Ledgerly `date` or
+  /// `created_at` is not ISO 8601, or the value names no real time.
   invalidDate,
+
+  /// A Ledgerly `type` is neither `expense` nor `income`.
+  invalidType,
 }
 
 /// A skipped row. Holds the line number and reason only, never field
@@ -77,8 +81,8 @@ abstract class CsvRowError with _$CsvRowError {
   }) = _CsvRowError;
 }
 
-/// One syntactically valid Fortune City row, before currency lookup and
-/// rounding (both need the database).
+/// One syntactically valid Fortune City or Ledgerly row, before currency
+/// lookup and rounding (both need the database).
 @freezed
 abstract class ParsedCsvRow with _$ParsedCsvRow {
   const factory ParsedCsvRow({
@@ -97,27 +101,41 @@ abstract class ParsedCsvRow with _$ParsedCsvRow {
     /// Trimmed and upper-cased, unvalidated currency code.
     required String currencyCode,
 
-    /// Recorded At as device-local time.
+    /// Recorded At (Ledgerly: `created_at`) as device-local time.
     required DateTime recordedAt,
 
     /// The note verbatim, or null when it is missing or blank.
     String? memo,
+
+    /// Ledgerly only: the category type. Null for Fortune City.
+    CategoryType? type,
+
+    /// Ledgerly only: the `date` column's calendar day, at local midnight.
+    /// Null for Fortune City, whose date is Recorded At's day.
+    DateTime? date,
   }) = _ParsedCsvRow;
 }
 
-/// Output of `parseFortuneCityCsv`: the valid rows in file order plus one
+/// Output of `parseImportCsv`: the valid rows in file order plus one
 /// error per skipped row.
 @freezed
-abstract class FortuneCityCsvParseResult with _$FortuneCityCsvParseResult {
-  const factory FortuneCityCsvParseResult({
+abstract class CsvParseResult with _$CsvParseResult {
+  const factory CsvParseResult({
     required List<ParsedCsvRow> rows,
     required List<CsvRowError> errors,
-  }) = _FortuneCityCsvParseResult;
+  }) = _CsvParseResult;
 }
+
+/// A CSV Category value plus, for Ledgerly rows, the type the file gives
+/// it. Keys [CsvImportPlan.categories]: one Ledgerly value can name both
+/// an expense and an income category (English "Investment").
+typedef CsvCategoryKey = ({String value, CategoryType? type});
 
 /// A valid row ready to import: currency resolved and amount rounded.
 @freezed
 abstract class CsvImportRow with _$CsvImportRow {
+  const CsvImportRow._();
+
   const factory CsvImportRow({
     /// 1-based physical line where the row starts.
     required int line,
@@ -125,18 +143,27 @@ abstract class CsvImportRow with _$CsvImportRow {
     /// Trimmed CSV Account value; keys [CsvImportPlan.accounts].
     required String account,
 
-    /// Trimmed CSV Category value; keys [CsvImportPlan.categories].
+    /// Trimmed CSV Category value; see [categoryKey].
     required String category,
 
-    /// Rounded half-up, always > 0.
+    /// Rounded half-up (Fortune City to at most 2 decimals, Ledgerly to
+    /// the currency's), always > 0.
     required int amountMinorUnits,
     required Currency currency,
 
-    /// Recorded At as device-local time. Becomes `createdAt`; its day
-    /// becomes `date`.
+    /// Recorded At (Ledgerly: `created_at`) as device-local time.
+    /// Becomes `createdAt`, and its day becomes `date` unless [date] is set.
     required DateTime recordedAt,
     String? memo,
+
+    /// See [ParsedCsvRow.type]; null for Fortune City.
+    CategoryType? type,
+
+    /// See [ParsedCsvRow.date]; null for Fortune City.
+    DateTime? date,
   }) = _CsvImportRow;
+
+  CsvCategoryKey get categoryKey => (value: category, type: type);
 }
 
 /// Output of loading a file.
@@ -202,8 +229,8 @@ sealed class CategoryResolution with _$CategoryResolution {
 }
 
 /// Everything the commit needs. [accounts] and [categories] are keyed by
-/// [CsvImportRow.account] and [CsvImportRow.category] and must cover every
-/// row the commit's duplicate recount leaves.
+/// [CsvImportRow.account] and [CsvImportRow.categoryKey] and must cover
+/// every row the commit's duplicate recount leaves.
 @freezed
 abstract class CsvImportPlan with _$CsvImportPlan {
   const factory CsvImportPlan({
@@ -211,7 +238,7 @@ abstract class CsvImportPlan with _$CsvImportPlan {
     /// them against the database.
     required List<CsvImportRow> rows,
     required Map<String, AccountResolution> accounts,
-    required Map<String, CategoryResolution> categories,
+    required Map<CsvCategoryKey, CategoryResolution> categories,
 
     /// The Salary category's label in every locale. Compared with each
     /// income row's note after trimming and lower-casing both.

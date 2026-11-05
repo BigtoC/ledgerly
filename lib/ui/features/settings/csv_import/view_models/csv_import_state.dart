@@ -27,9 +27,10 @@ sealed class CsvImportState with _$CsvImportState {
     /// Rows that will be inserted: valid and not already present.
     required int importCount,
 
-    /// Recorded At range of those rows; null when [importCount] is 0.
-    DateTime? firstRecordedAt,
-    DateTime? lastRecordedAt,
+    /// Date range of those rows: the transaction date of a Ledgerly row,
+    /// the Recorded At of a Fortune City row; null when [importCount] is 0.
+    DateTime? firstDate,
+    DateTime? lastDate,
 
     /// Skipped rows, sorted by line.
     required List<CsvRowError> errors,
@@ -38,7 +39,8 @@ sealed class CsvImportState with _$CsvImportState {
     /// [CsvAccountMatch.resolution] is the current choice.
     required List<CsvAccountMatch> accounts,
 
-    /// One entry per distinct CSV Category value among the rows to import.
+    /// One entry per distinct CSV Category value (and, for Ledgerly
+    /// rows, type) among the rows to import.
     required List<CsvCategoryEntry> categories,
     required int duplicateCount,
 
@@ -63,14 +65,18 @@ sealed class CsvImportState with _$CsvImportState {
   }) = CsvImportFailure;
 }
 
-/// A preview row for one CSV Category value, with the categories its
-/// resolution points at so the screen can label them.
+/// A preview row for one CSV Category value (and, for Ledgerly rows,
+/// type), with the categories its resolution points at so the screen can
+/// label them.
 @freezed
 abstract class CsvCategoryEntry with _$CsvCategoryEntry {
   const CsvCategoryEntry._();
 
   const factory CsvCategoryEntry({
     required String csvValue,
+
+    /// See [CsvCategoryMatch.csvType].
+    CategoryType? csvType,
     required int rowCount,
     required CategoryResolution resolution,
 
@@ -83,6 +89,8 @@ abstract class CsvCategoryEntry with _$CsvCategoryEntry {
     Category? otherIncomeCategory,
     @Default(0) int salaryRowCount,
   }) = _CsvCategoryEntry;
+
+  CsvCategoryKey get key => (value: csvValue, type: csvType);
 
   bool get isNew => resolution is CreateCategoryResolution;
 

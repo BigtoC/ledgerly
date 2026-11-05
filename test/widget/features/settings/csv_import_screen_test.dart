@@ -41,8 +41,8 @@ class _FakeCsvImportController extends CsvImportController {
       calls.add((csvValue, resolution));
 
   @override
-  void setNewCategoryType(String csvValue, CategoryType type) =>
-      calls.add((csvValue, type));
+  void setNewCategoryType(CsvCategoryKey key, CategoryType type) =>
+      calls.add((key, type));
 
   @override
   Future<void> commit() async => calls.add('commit');
@@ -168,8 +168,8 @@ CsvImportPreview _preview({
   return CsvImportPreview(
     fileName: 'fortune.csv',
     importCount: importCount,
-    firstRecordedAt: importCount == 0 ? null : DateTime(2022, 7, 16, 18, 28),
-    lastRecordedAt: importCount == 0 ? null : DateTime(2026, 10, 30, 10, 39),
+    firstDate: importCount == 0 ? null : DateTime(2022, 7, 16, 18, 28),
+    lastDate: importCount == 0 ? null : DateTime(2026, 10, 30, 10, 39),
     errors: errors,
     accounts: accounts,
     categories: categories,
@@ -272,7 +272,9 @@ void main() {
 
       expect(find.text('Import from CSV'), findsOneWidget);
       expect(
-        find.text('Import transactions exported from Fortune City.'),
+        find.text(
+          'Import transactions exported from Fortune City or Ledgerly.',
+        ),
         findsOneWidget,
       );
       expect(
@@ -571,23 +573,77 @@ void main() {
         find.descendant(of: toggle, matching: find.text('Income')),
       );
       await tester.pump();
-      expect(calls, [('還款', CategoryType.income)]);
+      expect(calls, [((value: '還款', type: null), CategoryType.income)]);
+    });
+
+    testWidgets('CI13b: one Ledgerly value in both types gets a toggle per '
+        'type', (tester) async {
+      const expenseKey = (value: 'Bonus', type: CategoryType.expense);
+      final calls = await _pump(
+        tester,
+        _preview(
+          categories: const [
+            CsvCategoryEntry(
+              csvValue: 'Bonus',
+              csvType: CategoryType.expense,
+              rowCount: 1,
+              resolution: CategoryResolution.create(
+                name: 'Bonus',
+                type: CategoryType.expense,
+              ),
+            ),
+            CsvCategoryEntry(
+              csvValue: 'Bonus',
+              csvType: CategoryType.income,
+              rowCount: 2,
+              resolution: CategoryResolution.create(
+                name: 'Bonus',
+                type: CategoryType.income,
+              ),
+            ),
+          ],
+        ),
+      );
+
+      final toggle = find.byKey(
+        const ValueKey('csvImportCategoryType:Bonus:expense'),
+      );
+      await _scrollTo(tester, toggle);
+      await tester.tap(
+        find.descendant(of: toggle, matching: find.text('Income')),
+      );
+      await tester.pump();
+      expect(calls, [(expenseKey, CategoryType.income)]);
     });
 
     testWidgets('CI14: invalid rows show line and reason, no field values', (
       tester,
     ) async {
-      await _pump(tester, _preview());
+      await _pump(
+        tester,
+        _preview(
+          errors: const [
+            CsvRowError(lineNumber: 7, reason: CsvRowErrorReason.invalidAmount),
+            CsvRowError(
+              lineNumber: 9,
+              reason: CsvRowErrorReason.unknownCurrency,
+              currencyCode: 'XYZ',
+            ),
+            CsvRowError(lineNumber: 11, reason: CsvRowErrorReason.invalidType),
+          ],
+        ),
+      );
 
-      final header = find.text('2 invalid rows will be skipped');
+      final header = find.text('3 invalid rows will be skipped');
       await _scrollTo(tester, header);
       expect(find.text('Line 7: invalid amount'), findsNothing);
       await tester.tap(header);
       await tester.pumpAndSettle();
 
-      await _scrollTo(tester, find.text('Line 9: unknown currency XYZ'));
+      await _scrollTo(tester, find.text('Line 11: invalid type'));
       expect(find.text('Line 7: invalid amount'), findsOneWidget);
       expect(find.text('Line 9: unknown currency XYZ'), findsOneWidget);
+      expect(find.text('Line 11: invalid type'), findsOneWidget);
     });
   });
 

@@ -1,5 +1,5 @@
-// `CsvImportUseCase` — loads a Fortune City CSV export and commits it in
-// one Drift transaction.
+// `CsvImportUseCase` — loads a Fortune City or Ledgerly CSV export and
+// commits it in one Drift transaction.
 //
 // A use case because the commit coordinates four
 // repositories inside one `db.transaction`, the role
@@ -15,7 +15,7 @@ import '../../core/utils/color_palette.dart';
 import '../../core/utils/csv_import_keys.dart';
 import '../../core/utils/date_helpers.dart';
 import '../../core/utils/decimal_rounding.dart';
-import '../../core/utils/fortune_city_csv_parser.dart';
+import '../../core/utils/csv_import_parser.dart';
 import '../../data/database/app_database.dart' show AppDatabase;
 import '../../data/repositories/account_repository.dart';
 import '../../data/repositories/account_type_repository.dart';
@@ -60,7 +60,7 @@ _loadInBackground(Uint8List bytes, Map<String, Currency> currencies) =>
   Uint8List bytes,
   Map<String, Currency> currencies,
 ) {
-  final parsed = parseFortuneCityCsv(bytes);
+  final parsed = parseImportCsv(bytes);
   final errors = [...parsed.errors];
   final valid = <CsvImportRow>[];
   for (final row in parsed.rows) {
@@ -77,9 +77,13 @@ _loadInBackground(Uint8List bytes, Map<String, Currency> currencies) =>
     }
     final int amount;
     try {
+      // Fortune City writes floats (`23.6000003814697`), so its amounts
+      // round to cents; Ledgerly writes exact amounts (rows with a type).
       amount = decimalStringToMinorUnits(
         row.amountText,
-        scale: math.min(2, currency.decimals),
+        scale: row.type == null
+            ? math.min(2, currency.decimals)
+            : currency.decimals,
         decimals: currency.decimals,
       );
     } on FormatException {
@@ -106,6 +110,8 @@ _loadInBackground(Uint8List bytes, Map<String, Currency> currencies) =>
         currency: currency,
         recordedAt: row.recordedAt,
         memo: row.memo,
+        type: row.type,
+        date: row.date,
       ),
     );
   }
@@ -243,14 +249,14 @@ class CsvImportUseCase {
         };
       }
 
-      final categoryIds = <String, int>{};
-      final incomeByNote = <String, IncomeByNoteCategoryResolution>{};
-      for (final value in rows.map((r) => r.category).toSet()) {
-        switch (plan.categories[value]!) {
+      final categoryIds = <CsvCategoryKey, int>{};
+      final incomeByNote = <CsvCategoryKey, IncomeByNoteCategoryResolution>{};
+      for (final key in rows.map((r) => r.categoryKey).toSet()) {
+        switch (plan.categories[key]!) {
           case ExistingCategoryResolution(:final categoryId):
-            categoryIds[value] = categoryId;
+            categoryIds[key] = categoryId;
           case CreateCategoryResolution(:final name, :final type):
-            categoryIds[value] =
+            categoryIds[key] =
                 createdCategories[(
                   normalizeImportKey(name),
                   type,
@@ -265,14 +271,14 @@ class CsvImportUseCase {
                   ),
                 )).id;
           case final IncomeByNoteCategoryResolution resolution:
-            incomeByNote[value] = resolution;
+            incomeByNote[key] = resolution;
         }
       }
 
       final salaryNotes = plan.salaryNotes.map(normalizeImportKey).toSet();
       int categoryIdFor(CsvImportRow row) {
-        final income = incomeByNote[row.category];
-        if (income == null) return categoryIds[row.category]!;
+        final income = incomeByNote[row.categoryKey];
+        if (income == null) return categoryIds[row.categoryKey]!;
         return isSalaryNote(row.memo, salaryNotes)
             ? income.salaryCategoryId
             : income.otherCategoryId;
@@ -296,7 +302,7 @@ class CsvImportUseCase {
               currency: row.currency,
               categoryId: categoryIdFor(row),
               accountId: accountIds[row.account]!,
-              date: DateHelpers.startOfDay(row.recordedAt),
+              date: row.date ?? DateHelpers.startOfDay(row.recordedAt),
               memo: row.memo,
               createdAt: row.recordedAt,
               // Replaced by the repository's clock.
