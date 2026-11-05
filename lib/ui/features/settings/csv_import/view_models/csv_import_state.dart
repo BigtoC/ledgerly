@@ -27,9 +27,10 @@ sealed class CsvImportState with _$CsvImportState {
     /// Rows that will be inserted: valid and not already present.
     required int importCount,
 
-    /// Recorded At range of those rows; null when [importCount] is 0.
-    DateTime? firstRecordedAt,
-    DateTime? lastRecordedAt,
+    /// Date range of those rows: the transaction date of a Ledgerly row,
+    /// the Recorded At of a Fortune City row; null when [importCount] is 0.
+    DateTime? firstDate,
+    DateTime? lastDate,
 
     /// Skipped rows, sorted by line.
     required List<CsvRowError> errors,

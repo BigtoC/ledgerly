@@ -28,8 +28,8 @@ class CsvImportSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final first = preview.firstRecordedAt;
-    final last = preview.lastRecordedAt;
+    final first = preview.firstDate;
+    final last = preview.lastDate;
     final locale = Localizations.localeOf(context).toString();
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),

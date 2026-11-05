@@ -132,12 +132,12 @@ return failure(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  idle,TResult Function()?  loading,TResult Function( String fileName,  int importCount,  DateTime? firstRecordedAt,  DateTime? lastRecordedAt,  List<CsvRowError> errors,  List<CsvAccountMatch> accounts,  List<CsvCategoryEntry> categories,  int duplicateCount,  bool canCommit)?  preview,TResult Function()?  committing,TResult Function( CsvImportResult result,  int invalidRowCount)?  done,TResult Function( CsvFileErrorKind kind,  List<String> missingColumns)?  failure,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  idle,TResult Function()?  loading,TResult Function( String fileName,  int importCount,  DateTime? firstDate,  DateTime? lastDate,  List<CsvRowError> errors,  List<CsvAccountMatch> accounts,  List<CsvCategoryEntry> categories,  int duplicateCount,  bool canCommit)?  preview,TResult Function()?  committing,TResult Function( CsvImportResult result,  int invalidRowCount)?  done,TResult Function( CsvFileErrorKind kind,  List<String> missingColumns)?  failure,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case CsvImportIdle() when idle != null:
 return idle();case CsvImportLoading() when loading != null:
 return loading();case CsvImportPreview() when preview != null:
-return preview(_that.fileName,_that.importCount,_that.firstRecordedAt,_that.lastRecordedAt,_that.errors,_that.accounts,_that.categories,_that.duplicateCount,_that.canCommit);case CsvImportCommitting() when committing != null:
+return preview(_that.fileName,_that.importCount,_that.firstDate,_that.lastDate,_that.errors,_that.accounts,_that.categories,_that.duplicateCount,_that.canCommit);case CsvImportCommitting() when committing != null:
 return committing();case CsvImportDone() when done != null:
 return done(_that.result,_that.invalidRowCount);case CsvImportFailure() when failure != null:
 return failure(_that.kind,_that.missingColumns);case _:
@@ -158,12 +158,12 @@ return failure(_that.kind,_that.missingColumns);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  idle,required TResult Function()  loading,required TResult Function( String fileName,  int importCount,  DateTime? firstRecordedAt,  DateTime? lastRecordedAt,  List<CsvRowError> errors,  List<CsvAccountMatch> accounts,  List<CsvCategoryEntry> categories,  int duplicateCount,  bool canCommit)  preview,required TResult Function()  committing,required TResult Function( CsvImportResult result,  int invalidRowCount)  done,required TResult Function( CsvFileErrorKind kind,  List<String> missingColumns)  failure,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  idle,required TResult Function()  loading,required TResult Function( String fileName,  int importCount,  DateTime? firstDate,  DateTime? lastDate,  List<CsvRowError> errors,  List<CsvAccountMatch> accounts,  List<CsvCategoryEntry> categories,  int duplicateCount,  bool canCommit)  preview,required TResult Function()  committing,required TResult Function( CsvImportResult result,  int invalidRowCount)  done,required TResult Function( CsvFileErrorKind kind,  List<String> missingColumns)  failure,}) {final _that = this;
 switch (_that) {
 case CsvImportIdle():
 return idle();case CsvImportLoading():
 return loading();case CsvImportPreview():
-return preview(_that.fileName,_that.importCount,_that.firstRecordedAt,_that.lastRecordedAt,_that.errors,_that.accounts,_that.categories,_that.duplicateCount,_that.canCommit);case CsvImportCommitting():
+return preview(_that.fileName,_that.importCount,_that.firstDate,_that.lastDate,_that.errors,_that.accounts,_that.categories,_that.duplicateCount,_that.canCommit);case CsvImportCommitting():
 return committing();case CsvImportDone():
 return done(_that.result,_that.invalidRowCount);case CsvImportFailure():
 return failure(_that.kind,_that.missingColumns);}
@@ -180,12 +180,12 @@ return failure(_that.kind,_that.missingColumns);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  idle,TResult? Function()?  loading,TResult? Function( String fileName,  int importCount,  DateTime? firstRecordedAt,  DateTime? lastRecordedAt,  List<CsvRowError> errors,  List<CsvAccountMatch> accounts,  List<CsvCategoryEntry> categories,  int duplicateCount,  bool canCommit)?  preview,TResult? Function()?  committing,TResult? Function( CsvImportResult result,  int invalidRowCount)?  done,TResult? Function( CsvFileErrorKind kind,  List<String> missingColumns)?  failure,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  idle,TResult? Function()?  loading,TResult? Function( String fileName,  int importCount,  DateTime? firstDate,  DateTime? lastDate,  List<CsvRowError> errors,  List<CsvAccountMatch> accounts,  List<CsvCategoryEntry> categories,  int duplicateCount,  bool canCommit)?  preview,TResult? Function()?  committing,TResult? Function( CsvImportResult result,  int invalidRowCount)?  done,TResult? Function( CsvFileErrorKind kind,  List<String> missingColumns)?  failure,}) {final _that = this;
 switch (_that) {
 case CsvImportIdle() when idle != null:
 return idle();case CsvImportLoading() when loading != null:
 return loading();case CsvImportPreview() when preview != null:
-return preview(_that.fileName,_that.importCount,_that.firstRecordedAt,_that.lastRecordedAt,_that.errors,_that.accounts,_that.categories,_that.duplicateCount,_that.canCommit);case CsvImportCommitting() when committing != null:
+return preview(_that.fileName,_that.importCount,_that.firstDate,_that.lastDate,_that.errors,_that.accounts,_that.categories,_that.duplicateCount,_that.canCommit);case CsvImportCommitting() when committing != null:
 return committing();case CsvImportDone() when done != null:
 return done(_that.result,_that.invalidRowCount);case CsvImportFailure() when failure != null:
 return failure(_that.kind,_that.missingColumns);case _:
@@ -264,15 +264,16 @@ String toString() {
 
 
 class CsvImportPreview implements CsvImportState {
-  const CsvImportPreview({required this.fileName, required this.importCount, this.firstRecordedAt, this.lastRecordedAt, required  List<CsvRowError> errors, required  List<CsvAccountMatch> accounts, required  List<CsvCategoryEntry> categories, required this.duplicateCount, required this.canCommit}): _errors = errors,_accounts = accounts,_categories = categories;
+  const CsvImportPreview({required this.fileName, required this.importCount, this.firstDate, this.lastDate, required  List<CsvRowError> errors, required  List<CsvAccountMatch> accounts, required  List<CsvCategoryEntry> categories, required this.duplicateCount, required this.canCommit}): _errors = errors,_accounts = accounts,_categories = categories;
   
 
  final  String fileName;
 /// Rows that will be inserted: valid and not already present.
  final  int importCount;
-/// Recorded At range of those rows; null when [importCount] is 0.
- final  DateTime? firstRecordedAt;
- final  DateTime? lastRecordedAt;
+/// Date range of those rows: the transaction date of a Ledgerly row,
+/// the Recorded At of a Fortune City row; null when [importCount] is 0.
+ final  DateTime? firstDate;
+ final  DateTime? lastDate;
 /// Skipped rows, sorted by line.
  final  List<CsvRowError> _errors;
 /// Skipped rows, sorted by line.
@@ -318,18 +319,18 @@ $CsvImportPreviewCopyWith<CsvImportPreview> get copyWith => _$CsvImportPreviewCo
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is CsvImportPreview&&(identical(other.fileName, fileName) || other.fileName == fileName)&&(identical(other.importCount, importCount) || other.importCount == importCount)&&(identical(other.firstRecordedAt, firstRecordedAt) || other.firstRecordedAt == firstRecordedAt)&&(identical(other.lastRecordedAt, lastRecordedAt) || other.lastRecordedAt == lastRecordedAt)&&const DeepCollectionEquality().equals(other.errors, _errors)&&const DeepCollectionEquality().equals(other.accounts, _accounts)&&const DeepCollectionEquality().equals(other.categories, _categories)&&(identical(other.duplicateCount, duplicateCount) || other.duplicateCount == duplicateCount)&&(identical(other.canCommit, canCommit) || other.canCommit == canCommit));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is CsvImportPreview&&(identical(other.fileName, fileName) || other.fileName == fileName)&&(identical(other.importCount, importCount) || other.importCount == importCount)&&(identical(other.firstDate, firstDate) || other.firstDate == firstDate)&&(identical(other.lastDate, lastDate) || other.lastDate == lastDate)&&const DeepCollectionEquality().equals(other.errors, _errors)&&const DeepCollectionEquality().equals(other.accounts, _accounts)&&const DeepCollectionEquality().equals(other.categories, _categories)&&(identical(other.duplicateCount, duplicateCount) || other.duplicateCount == duplicateCount)&&(identical(other.canCommit, canCommit) || other.canCommit == canCommit));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,fileName,importCount,firstRecordedAt,lastRecordedAt,const DeepCollectionEquality().hash(_errors),const DeepCollectionEquality().hash(_accounts),const DeepCollectionEquality().hash(_categories),duplicateCount,canCommit);
+    return Object.hash(runtimeType,fileName,importCount,firstDate,lastDate,const DeepCollectionEquality().hash(_errors),const DeepCollectionEquality().hash(_accounts),const DeepCollectionEquality().hash(_categories),duplicateCount,canCommit);
 }
 
 @override
 String toString() {
-    return 'CsvImportState.preview(fileName: $fileName, importCount: $importCount, firstRecordedAt: $firstRecordedAt, lastRecordedAt: $lastRecordedAt, errors: $errors, accounts: $accounts, categories: $categories, duplicateCount: $duplicateCount, canCommit: $canCommit)';
+    return 'CsvImportState.preview(fileName: $fileName, importCount: $importCount, firstDate: $firstDate, lastDate: $lastDate, errors: $errors, accounts: $accounts, categories: $categories, duplicateCount: $duplicateCount, canCommit: $canCommit)';
 }
 
 
@@ -340,7 +341,7 @@ abstract mixin class $CsvImportPreviewCopyWith<$Res> implements $CsvImportStateC
   factory $CsvImportPreviewCopyWith(CsvImportPreview value, $Res Function(CsvImportPreview) _then) = _$CsvImportPreviewCopyWithImpl;
 @useResult
 $Res call({
- String fileName, int importCount, DateTime? firstRecordedAt, DateTime? lastRecordedAt, List<CsvRowError> errors, List<CsvAccountMatch> accounts, List<CsvCategoryEntry> categories, int duplicateCount, bool canCommit
+ String fileName, int importCount, DateTime? firstDate, DateTime? lastDate, List<CsvRowError> errors, List<CsvAccountMatch> accounts, List<CsvCategoryEntry> categories, int duplicateCount, bool canCommit
 });
 
 
@@ -357,12 +358,12 @@ class _$CsvImportPreviewCopyWithImpl<$Res>
 
 /// Create a copy of CsvImportState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? fileName = null,Object? importCount = null,Object? firstRecordedAt = freezed,Object? lastRecordedAt = freezed,Object? errors = null,Object? accounts = null,Object? categories = null,Object? duplicateCount = null,Object? canCommit = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? fileName = null,Object? importCount = null,Object? firstDate = freezed,Object? lastDate = freezed,Object? errors = null,Object? accounts = null,Object? categories = null,Object? duplicateCount = null,Object? canCommit = null,}) {
   return _then(CsvImportPreview(
 fileName: null == fileName ? _self.fileName : fileName // ignore: cast_nullable_to_non_nullable
 as String,importCount: null == importCount ? _self.importCount : importCount // ignore: cast_nullable_to_non_nullable
-as int,firstRecordedAt: freezed == firstRecordedAt ? _self.firstRecordedAt : firstRecordedAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,lastRecordedAt: freezed == lastRecordedAt ? _self.lastRecordedAt : lastRecordedAt // ignore: cast_nullable_to_non_nullable
+as int,firstDate: freezed == firstDate ? _self.firstDate : firstDate // ignore: cast_nullable_to_non_nullable
+as DateTime?,lastDate: freezed == lastDate ? _self.lastDate : lastDate // ignore: cast_nullable_to_non_nullable
 as DateTime?,errors: null == errors ? _self._errors : errors // ignore: cast_nullable_to_non_nullable
 as List<CsvRowError>,accounts: null == accounts ? _self._accounts : accounts // ignore: cast_nullable_to_non_nullable
 as List<CsvAccountMatch>,categories: null == categories ? _self._categories : categories // ignore: cast_nullable_to_non_nullable

@@ -168,8 +168,8 @@ CsvImportPreview _preview({
   return CsvImportPreview(
     fileName: 'fortune.csv',
     importCount: importCount,
-    firstRecordedAt: importCount == 0 ? null : DateTime(2022, 7, 16, 18, 28),
-    lastRecordedAt: importCount == 0 ? null : DateTime(2026, 10, 30, 10, 39),
+    firstDate: importCount == 0 ? null : DateTime(2022, 7, 16, 18, 28),
+    lastDate: importCount == 0 ? null : DateTime(2026, 10, 30, 10, 39),
     errors: errors,
     accounts: accounts,
     categories: categories,

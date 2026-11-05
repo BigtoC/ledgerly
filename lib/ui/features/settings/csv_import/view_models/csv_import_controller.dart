@@ -109,10 +109,9 @@ class CsvImportController extends _$CsvImportController {
     DateTime? first;
     DateTime? last;
     for (final row in load.rowsToImport) {
-      if (first == null || row.recordedAt.isBefore(first)) {
-        first = row.recordedAt;
-      }
-      if (last == null || row.recordedAt.isAfter(last)) last = row.recordedAt;
+      final day = row.date ?? row.recordedAt;
+      if (first == null || day.isBefore(first)) first = day;
+      if (last == null || day.isAfter(last)) last = day;
     }
 
     _load = load;
@@ -121,8 +120,8 @@ class CsvImportController extends _$CsvImportController {
     state = CsvImportState.preview(
       fileName: load.fileName,
       importCount: importCount,
-      firstRecordedAt: first,
-      lastRecordedAt: last,
+      firstDate: first,
+      lastDate: last,
       errors: load.errors,
       accounts: match.accounts,
       categories: [
