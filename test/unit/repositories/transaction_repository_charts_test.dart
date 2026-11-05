@@ -64,9 +64,9 @@ Future<void> _insertTx(
 }) async {
   final epoch = DateTime.utc(2026).millisecondsSinceEpoch ~/ 1000;
   await db.customStatement(
-    'INSERT INTO transactions (id, amount_minor_units, currency, '
+    'INSERT INTO transactions (uuid, id, amount_minor_units, currency, '
     'category_id, account_id, date, created_at, updated_at) '
-    'VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    'VALUES (hex(randomblob(16)), ?, ?, ?, ?, ?, ?, ?, ?)',
     [
       id,
       amountMinorUnits,

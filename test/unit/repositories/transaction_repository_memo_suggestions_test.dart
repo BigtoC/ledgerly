@@ -45,9 +45,9 @@ Future<void> _insertTx({
   // tests that only care about order read naturally.
   final saved = (updatedAt ?? date).millisecondsSinceEpoch ~/ 1000;
   return db.customStatement(
-    'INSERT INTO transactions (id, amount_minor_units, currency, '
+    'INSERT INTO transactions (uuid, id, amount_minor_units, currency, '
     'category_id, account_id, date, memo, created_at, updated_at) '
-    "VALUES (?, 1000, 'USD', ?, 1, ?, ?, ?, ?)",
+    "VALUES (hex(randomblob(16)), ?, 1000, 'USD', ?, 1, ?, ?, ?, ?)",
     <Object?>[
       id,
       categoryId,

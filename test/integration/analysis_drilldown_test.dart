@@ -71,9 +71,9 @@ Future<void> _seed(
   final epoch = DateTime.now().millisecondsSinceEpoch ~/ 1000;
   Future<void> tx(int id, int amt, int cat, String currency, {DateTime? date}) {
     return db.customStatement(
-      'INSERT INTO transactions (id, amount_minor_units, currency, '
+      'INSERT INTO transactions (uuid, id, amount_minor_units, currency, '
       'category_id, account_id, date, created_at, updated_at) '
-      'VALUES (?, ?, ?, ?, 1, ?, ?, ?)',
+      'VALUES (hex(randomblob(16)), ?, ?, ?, ?, 1, ?, ?, ?)',
       [
         id,
         amt,

@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:uuid/uuid.dart';
 
 import 'daos/account_dao.dart';
 import 'daos/account_type_dao.dart';
@@ -74,7 +75,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -113,6 +114,17 @@ class AppDatabase extends _$AppDatabase {
       if (from < 7) {
         await _backfillInvestmentCategory();
         await _retirePersonalCategory();
+      }
+      if (from < 8) {
+        // SQLite cannot add a UNIQUE NOT NULL column without a constant
+        // default, so the table is rebuilt with a fresh UUID per row.
+        await m.alterTable(
+          TableMigration(
+            transactions,
+            newColumns: [transactions.uuid],
+            columnTransformer: {transactions.uuid: _sqlUuidV4},
+          ),
+        );
       }
     },
     beforeOpen: (details) async {
@@ -158,6 +170,15 @@ class AppDatabase extends _$AppDatabase {
       "WHERE l10n_key = 'category.personal'",
     );
   }
+
+  /// A random lower-case v4 UUID per evaluated row, built in SQL for the
+  /// v8 table rebuild: version nibble `4`, variant nibble one of `89ab`.
+  static const _sqlUuidV4 = CustomExpression<String>(
+    "lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || "
+    "substr(hex(randomblob(2)), 2) || '-' || "
+    "substr('89ab', 1 + (abs(random()) % 4), 1) || "
+    "substr(hex(randomblob(2)), 2) || '-' || hex(randomblob(6)))",
+  );
 
   /// Partial UNIQUE index for recurring-source idempotency.
   /// Drift cannot express the partial WHERE clause declaratively, so we
