@@ -121,12 +121,12 @@ void main() {
     expect(lines, [
       'id,date,type,amount,currency,category,account,memo,'
           'created_at,updated_at',
-      '${lunch.id},${formatLocalIso8601(lunch.date)},expense,12.50,USD,Food,'
-          'Cash,"lunch, with ""friends""",'
+      '${lunch.uuid},${formatLocalIso8601(lunch.date)},expense,12.50,USD,'
+          'Food,Cash,"lunch, with ""friends""",'
           '${formatLocalIso8601(lunch.createdAt)},'
           '${formatLocalIso8601(lunch.updatedAt)}',
-      '${salary.id},${formatLocalIso8601(salary.date)},income,300000,JPY,'
-          'Salary,Cash,,'
+      '${salary.uuid},${formatLocalIso8601(salary.date)},income,300000,'
+          'JPY,Salary,Cash,,'
           '${formatLocalIso8601(salary.createdAt)},'
           '${formatLocalIso8601(salary.updatedAt)}',
     ]);
