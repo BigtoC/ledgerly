@@ -15,7 +15,11 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Transaction {
 
- int get id;/// Integer minor units. Scaling factor is `Currency.decimals`. Never
+ int get id;/// Random v4 UUID, the same on every device, so CSV import can
+/// recognise a row it exported. Empty for a row not saved yet: the
+/// database sets it on insert and `save` never changes it. Only
+/// `insertImported` writes one it is given.
+ String get uuid;/// Integer minor units. Scaling factor is `Currency.decimals`. Never
 /// a double, not even for display. See PRD.md -> Money Storage Policy.
  int get amountMinorUnits;/// Original-transaction currency value object on the read side. Drift
 /// column stays a `TEXT` FK to `currencies.code`.
@@ -40,20 +44,20 @@ $TransactionCopyWith<Transaction> get copyWith => _$TransactionCopyWithImpl<Tran
 @override
 bool operator ==(Object other) {
   final _this = this as Transaction;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Transaction&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.amountMinorUnits, _this.amountMinorUnits) || other.amountMinorUnits == _this.amountMinorUnits)&&(identical(other.currency, _this.currency) || other.currency == _this.currency)&&(identical(other.categoryId, _this.categoryId) || other.categoryId == _this.categoryId)&&(identical(other.accountId, _this.accountId) || other.accountId == _this.accountId)&&(identical(other.date, _this.date) || other.date == _this.date)&&(identical(other.memo, _this.memo) || other.memo == _this.memo)&&(identical(other.amountFormula, _this.amountFormula) || other.amountFormula == _this.amountFormula)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.updatedAt, _this.updatedAt) || other.updatedAt == _this.updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Transaction&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.uuid, _this.uuid) || other.uuid == _this.uuid)&&(identical(other.amountMinorUnits, _this.amountMinorUnits) || other.amountMinorUnits == _this.amountMinorUnits)&&(identical(other.currency, _this.currency) || other.currency == _this.currency)&&(identical(other.categoryId, _this.categoryId) || other.categoryId == _this.categoryId)&&(identical(other.accountId, _this.accountId) || other.accountId == _this.accountId)&&(identical(other.date, _this.date) || other.date == _this.date)&&(identical(other.memo, _this.memo) || other.memo == _this.memo)&&(identical(other.amountFormula, _this.amountFormula) || other.amountFormula == _this.amountFormula)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.updatedAt, _this.updatedAt) || other.updatedAt == _this.updatedAt));
 }
 
 
 @override
 int get hashCode {
   final _this = this as Transaction;
-  return Object.hash(runtimeType,_this.id,_this.amountMinorUnits,_this.currency,_this.categoryId,_this.accountId,_this.date,_this.memo,_this.amountFormula,_this.createdAt,_this.updatedAt);
+  return Object.hash(runtimeType,_this.id,_this.uuid,_this.amountMinorUnits,_this.currency,_this.categoryId,_this.accountId,_this.date,_this.memo,_this.amountFormula,_this.createdAt,_this.updatedAt);
 }
 
 @override
 String toString() {
   final _this = this as Transaction;
-  return 'Transaction(id: ${_this.id}, amountMinorUnits: ${_this.amountMinorUnits}, currency: ${_this.currency}, categoryId: ${_this.categoryId}, accountId: ${_this.accountId}, date: ${_this.date}, memo: ${_this.memo}, amountFormula: ${_this.amountFormula}, createdAt: ${_this.createdAt}, updatedAt: ${_this.updatedAt})';
+  return 'Transaction(id: ${_this.id}, uuid: ${_this.uuid}, amountMinorUnits: ${_this.amountMinorUnits}, currency: ${_this.currency}, categoryId: ${_this.categoryId}, accountId: ${_this.accountId}, date: ${_this.date}, memo: ${_this.memo}, amountFormula: ${_this.amountFormula}, createdAt: ${_this.createdAt}, updatedAt: ${_this.updatedAt})';
 }
 
 
@@ -64,7 +68,7 @@ abstract mixin class $TransactionCopyWith<$Res>  {
   factory $TransactionCopyWith(Transaction value, $Res Function(Transaction) _then) = _$TransactionCopyWithImpl;
 @useResult
 $Res call({
- int id, int amountMinorUnits, Currency currency, int categoryId, int accountId, DateTime date, String? memo, String? amountFormula, DateTime createdAt, DateTime updatedAt
+ int id, String uuid, int amountMinorUnits, Currency currency, int categoryId, int accountId, DateTime date, String? memo, String? amountFormula, DateTime createdAt, DateTime updatedAt
 });
 
 
@@ -81,10 +85,11 @@ class _$TransactionCopyWithImpl<$Res>
 
 /// Create a copy of Transaction
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? amountMinorUnits = null,Object? currency = null,Object? categoryId = null,Object? accountId = null,Object? date = null,Object? memo = freezed,Object? amountFormula = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? uuid = null,Object? amountMinorUnits = null,Object? currency = null,Object? categoryId = null,Object? accountId = null,Object? date = null,Object? memo = freezed,Object? amountFormula = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
   return _then(Transaction(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as int,amountMinorUnits: null == amountMinorUnits ? _self.amountMinorUnits : amountMinorUnits // ignore: cast_nullable_to_non_nullable
+as int,uuid: null == uuid ? _self.uuid : uuid // ignore: cast_nullable_to_non_nullable
+as String,amountMinorUnits: null == amountMinorUnits ? _self.amountMinorUnits : amountMinorUnits // ignore: cast_nullable_to_non_nullable
 as int,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
 as Currency,categoryId: null == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as int,accountId: null == accountId ? _self.accountId : accountId // ignore: cast_nullable_to_non_nullable
@@ -187,10 +192,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  int amountMinorUnits,  Currency currency,  int categoryId,  int accountId,  DateTime date,  String? memo,  String? amountFormula,  DateTime createdAt,  DateTime updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String uuid,  int amountMinorUnits,  Currency currency,  int categoryId,  int accountId,  DateTime date,  String? memo,  String? amountFormula,  DateTime createdAt,  DateTime updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Transaction() when $default != null:
-return $default(_that.id,_that.amountMinorUnits,_that.currency,_that.categoryId,_that.accountId,_that.date,_that.memo,_that.amountFormula,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.uuid,_that.amountMinorUnits,_that.currency,_that.categoryId,_that.accountId,_that.date,_that.memo,_that.amountFormula,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -208,10 +213,10 @@ return $default(_that.id,_that.amountMinorUnits,_that.currency,_that.categoryId,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  int amountMinorUnits,  Currency currency,  int categoryId,  int accountId,  DateTime date,  String? memo,  String? amountFormula,  DateTime createdAt,  DateTime updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String uuid,  int amountMinorUnits,  Currency currency,  int categoryId,  int accountId,  DateTime date,  String? memo,  String? amountFormula,  DateTime createdAt,  DateTime updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _Transaction():
-return $default(_that.id,_that.amountMinorUnits,_that.currency,_that.categoryId,_that.accountId,_that.date,_that.memo,_that.amountFormula,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.uuid,_that.amountMinorUnits,_that.currency,_that.categoryId,_that.accountId,_that.date,_that.memo,_that.amountFormula,_that.createdAt,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -228,10 +233,10 @@ return $default(_that.id,_that.amountMinorUnits,_that.currency,_that.categoryId,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  int amountMinorUnits,  Currency currency,  int categoryId,  int accountId,  DateTime date,  String? memo,  String? amountFormula,  DateTime createdAt,  DateTime updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String uuid,  int amountMinorUnits,  Currency currency,  int categoryId,  int accountId,  DateTime date,  String? memo,  String? amountFormula,  DateTime createdAt,  DateTime updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Transaction() when $default != null:
-return $default(_that.id,_that.amountMinorUnits,_that.currency,_that.categoryId,_that.accountId,_that.date,_that.memo,_that.amountFormula,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.uuid,_that.amountMinorUnits,_that.currency,_that.categoryId,_that.accountId,_that.date,_that.memo,_that.amountFormula,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -243,10 +248,15 @@ return $default(_that.id,_that.amountMinorUnits,_that.currency,_that.categoryId,
 
 
 class _Transaction implements Transaction {
-  const _Transaction({required this.id, required this.amountMinorUnits, required this.currency, required this.categoryId, required this.accountId, required this.date, this.memo, this.amountFormula, required this.createdAt, required this.updatedAt});
+  const _Transaction({required this.id, this.uuid = '', required this.amountMinorUnits, required this.currency, required this.categoryId, required this.accountId, required this.date, this.memo, this.amountFormula, required this.createdAt, required this.updatedAt});
   
 
 @override final  int id;
+/// Random v4 UUID, the same on every device, so CSV import can
+/// recognise a row it exported. Empty for a row not saved yet: the
+/// database sets it on insert and `save` never changes it. Only
+/// `insertImported` writes one it is given.
+@override@JsonKey() final  String uuid;
 /// Integer minor units. Scaling factor is `Currency.decimals`. Never
 /// a double, not even for display. See PRD.md -> Money Storage Policy.
 @override final  int amountMinorUnits;
@@ -280,18 +290,18 @@ _$TransactionCopyWith<_Transaction> get copyWith => __$TransactionCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Transaction&&(identical(other.id, id) || other.id == id)&&(identical(other.amountMinorUnits, amountMinorUnits) || other.amountMinorUnits == amountMinorUnits)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.date, date) || other.date == date)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.amountFormula, amountFormula) || other.amountFormula == amountFormula)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Transaction&&(identical(other.id, id) || other.id == id)&&(identical(other.uuid, uuid) || other.uuid == uuid)&&(identical(other.amountMinorUnits, amountMinorUnits) || other.amountMinorUnits == amountMinorUnits)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.date, date) || other.date == date)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.amountFormula, amountFormula) || other.amountFormula == amountFormula)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,amountMinorUnits,currency,categoryId,accountId,date,memo,amountFormula,createdAt,updatedAt);
+    return Object.hash(runtimeType,id,uuid,amountMinorUnits,currency,categoryId,accountId,date,memo,amountFormula,createdAt,updatedAt);
 }
 
 @override
 String toString() {
-    return 'Transaction(id: $id, amountMinorUnits: $amountMinorUnits, currency: $currency, categoryId: $categoryId, accountId: $accountId, date: $date, memo: $memo, amountFormula: $amountFormula, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'Transaction(id: $id, uuid: $uuid, amountMinorUnits: $amountMinorUnits, currency: $currency, categoryId: $categoryId, accountId: $accountId, date: $date, memo: $memo, amountFormula: $amountFormula, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -302,7 +312,7 @@ abstract mixin class _$TransactionCopyWith<$Res> implements $TransactionCopyWith
   factory _$TransactionCopyWith(_Transaction value, $Res Function(_Transaction) _then) = __$TransactionCopyWithImpl;
 @override @useResult
 $Res call({
- int id, int amountMinorUnits, Currency currency, int categoryId, int accountId, DateTime date, String? memo, String? amountFormula, DateTime createdAt, DateTime updatedAt
+ int id, String uuid, int amountMinorUnits, Currency currency, int categoryId, int accountId, DateTime date, String? memo, String? amountFormula, DateTime createdAt, DateTime updatedAt
 });
 
 
@@ -319,10 +329,11 @@ class __$TransactionCopyWithImpl<$Res>
 
 /// Create a copy of Transaction
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? amountMinorUnits = null,Object? currency = null,Object? categoryId = null,Object? accountId = null,Object? date = null,Object? memo = freezed,Object? amountFormula = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? uuid = null,Object? amountMinorUnits = null,Object? currency = null,Object? categoryId = null,Object? accountId = null,Object? date = null,Object? memo = freezed,Object? amountFormula = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
   return _then(_Transaction(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as int,amountMinorUnits: null == amountMinorUnits ? _self.amountMinorUnits : amountMinorUnits // ignore: cast_nullable_to_non_nullable
+as int,uuid: null == uuid ? _self.uuid : uuid // ignore: cast_nullable_to_non_nullable
+as String,amountMinorUnits: null == amountMinorUnits ? _self.amountMinorUnits : amountMinorUnits // ignore: cast_nullable_to_non_nullable
 as int,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
 as Currency,categoryId: null == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as int,accountId: null == accountId ? _self.accountId : accountId // ignore: cast_nullable_to_non_nullable

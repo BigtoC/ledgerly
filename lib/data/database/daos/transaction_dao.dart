@@ -180,7 +180,7 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
     return batch((b) => b.insertAll(transactions, rows));
   }
 
-  /// `(id, created_at, amount_minor_units, currency, memo)` of up to
+  /// `(id, uuid, created_at, amount_minor_units, currency, memo)` of up to
   /// [limit] rows with `id > afterId` whose `created_at` lies in
   /// `[start, endInclusive]`, in `id` order. Selects only those columns:
   /// CSV import duplicate detection compares nothing else, and the range
@@ -190,6 +190,7 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
     List<
       ({
         int id,
+        String uuid,
         DateTime createdAt,
         int amountMinorUnits,
         String currency,
@@ -206,6 +207,7 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
     final query = selectOnly(transactions)
       ..addColumns([
         transactions.id,
+        transactions.uuid,
         transactions.createdAt,
         transactions.amountMinorUnits,
         transactions.currency,
@@ -222,6 +224,7 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
         .map(
           (r) => (
             id: r.read(transactions.id)!,
+            uuid: r.read(transactions.uuid)!,
             createdAt: r.read(transactions.createdAt)!,
             amountMinorUnits: r.read(transactions.amountMinorUnits)!,
             currency: r.read(transactions.currency)!,

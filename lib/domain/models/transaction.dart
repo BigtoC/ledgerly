@@ -21,6 +21,12 @@ abstract class Transaction with _$Transaction {
   const factory Transaction({
     required int id,
 
+    /// Random v4 UUID, the same on every device, so CSV import can
+    /// recognise a row it exported. Empty for a row not saved yet: the
+    /// database sets it on insert and `save` never changes it. Only
+    /// `insertImported` writes one it is given.
+    @Default('') String uuid,
+
     /// Integer minor units. Scaling factor is `Currency.decimals`. Never
     /// a double, not even for display. See PRD.md -> Money Storage Policy.
     required int amountMinorUnits,
