@@ -1,3 +1,6 @@
+import 'dart:ui' show GestureSettings;
+
+import 'package:flutter/gestures.dart' show kTouchSlop;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -350,6 +353,13 @@ void main() {
     }) async {
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1;
+      // A device reports its own touch slop in physical pixels, which the
+      // pixel ratio of 1 above turns into logical ones (21 on a Pixel
+      // emulator). Pin the host's 18 so the drags below scroll the same
+      // distance everywhere.
+      tester.view.gestureSettings = const GestureSettings(
+        physicalTouchSlop: kTouchSlop,
+      );
       addTearDown(tester.view.reset);
       final container = await _pumpAnalysisScreen(
         tester,
