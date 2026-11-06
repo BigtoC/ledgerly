@@ -564,6 +564,117 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('TFSLM07b: the keypad Save saves the draft, not a transaction', (
+    tester,
+  ) async {
+    final draft = _draft(
+      id: 77,
+      categoryId: _expenseCategory.id,
+      accountId: _account.id,
+      draftAmountMinorUnits: 500,
+      draftCurrencyCode: 'USD',
+    );
+    when(() => slRepo.getById(77)).thenAnswer((_) async => draft);
+    when(() => slRepo.update(any())).thenAnswer(
+      (inv) async => inv.positionalArguments.first as ShoppingListItem,
+    );
+    ShoppingListEditResult? poppedResult;
+    final router = buildPushRouter(
+      const EditShoppingListDraftMode(shoppingListItemId: 77),
+    );
+    await tester.pumpWidget(mountWithRouter(router));
+    unawaited(
+      router
+          .push<ShoppingListEditResult?>('/form')
+          .then((result) => poppedResult = result),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Save'));
+    await tester.pumpAndSettle();
+
+    verify(() => slRepo.update(any())).called(1);
+    verifyNever(
+      () => slRepo.convertToTransaction(
+        shoppingListItemId: any(named: 'shoppingListItemId'),
+        categoryId: any(named: 'categoryId'),
+        accountId: any(named: 'accountId'),
+        currencyCode: any(named: 'currencyCode'),
+        amountMinorUnits: any(named: 'amountMinorUnits'),
+        date: any(named: 'date'),
+        memo: any(named: 'memo'),
+        amountFormula: any(named: 'amountFormula'),
+      ),
+    );
+    expect(find.byType(TransactionFormScreen), findsNothing);
+    expect(poppedResult, isA<ShoppingListEditResultSavedDraft>());
+  });
+
+  testWidgets(
+    'TFSLM07d: a zero-amount draft keeps the keypad Save enabled (canSaveDraft, not canSave)',
+    (tester) async {
+      final router = buildPushRouter(
+        const EditShoppingListDraftMode(shoppingListItemId: 77),
+      );
+      final fakeController = _FakeTransactionFormController(
+        fixed: (_editableDraftState() as TransactionFormData).copyWith(
+          amountMinorUnits: 0,
+          keypad: const KeypadState.initial(),
+        ),
+      );
+      await tester.pumpWidget(
+        mountWithRouter(
+          router,
+          extra: [
+            transactionFormControllerProvider.overrideWith(
+              () => fakeController,
+            ),
+          ],
+        ),
+      );
+      unawaited(router.push<ShoppingListEditResult?>('/form'));
+      await tester.pumpAndSettle();
+
+      final keypadSave = find.descendant(
+        of: find.byTooltip('Save'),
+        matching: find.byType(InkWell),
+      );
+      expect(tester.widget<InkWell>(keypadSave).onTap, isNotNull);
+    },
+  );
+
+  testWidgets(
+    'TFSLM07c: the keypad Save is disabled while the draft cannot be saved',
+    (tester) async {
+      final router = buildPushRouter(
+        const EditShoppingListDraftMode(shoppingListItemId: 77),
+      );
+      final fakeController = _FakeTransactionFormController(
+        fixed: (_editableDraftState() as TransactionFormData).copyWith(
+          selectedCategory: null,
+        ),
+      );
+      await tester.pumpWidget(
+        mountWithRouter(
+          router,
+          extra: [
+            transactionFormControllerProvider.overrideWith(
+              () => fakeController,
+            ),
+          ],
+        ),
+      );
+      unawaited(router.push<ShoppingListEditResult?>('/form'));
+      await tester.pumpAndSettle();
+
+      final keypadSave = find.descendant(
+        of: find.byTooltip('Save'),
+        matching: find.byType(InkWell),
+      );
+      expect(tester.widget<InkWell>(keypadSave).onTap, isNull);
+    },
+  );
+
   testWidgets(
     'TFSLM08: a failed draft conversion shows the convert-failed snackbar',
     (tester) async {

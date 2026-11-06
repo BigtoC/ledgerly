@@ -910,7 +910,7 @@ abstract class AppLocalizations {
   /// **'Switching to this account changes the currency. The current amount or calculation will be cleared.'**
   String get txCurrencyChangeConfirmBody;
 
-  /// Wave 2 §8. Tooltip / a11y label for the calculator keypad C key.
+  /// Semantics label for the calculator keypad AC key, and the long-press action on its ⌫ key.
   ///
   /// In en, this message translates to:
   /// **'Clear amount'**
@@ -946,11 +946,17 @@ abstract class AppLocalizations {
   /// **'Divide'**
   String get txKeypadDivide;
 
-  /// Tooltip and semantics label for the = button on the amount display that finishes the pending calculation.
+  /// Semantics label for the = key on the calculator keypad that finishes the pending calculation.
   ///
   /// In en, this message translates to:
   /// **'Equals'**
   String get txKeypadEquals;
+
+  /// Semantics label for the % key on the calculator keypad. It turns the number being typed into a percent (200 − 10 % is 180).
+  ///
+  /// In en, this message translates to:
+  /// **'Percent'**
+  String get txKeypadPercent;
 
   /// Gap day empty card message shown when no transactions exist for the selected day but history exists.
   ///

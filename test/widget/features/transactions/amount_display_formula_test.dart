@@ -28,6 +28,7 @@ KeypadState _typed(String keys) {
       '-' => s.pushOperator(CalcOperator.subtract, decimals: 2),
       '*' => s.pushOperator(CalcOperator.multiply, decimals: 2),
       '/' => s.pushOperator(CalcOperator.divide, decimals: 2),
+      '%' => s.pushPercent(decimals: 2),
       '=' => s.equals(decimals: 2),
       _ => s.push(int.parse(key), decimals: 2),
     };
@@ -93,10 +94,7 @@ void main() {
       decimals: 2,
     );
     await tester.pumpWidget(
-      _wrap(
-        AmountDisplay(keypad: keypad, currency: _usd, onEquals: () {}),
-        textScale: 2.0,
-      ),
+      _wrap(AmountDisplay(keypad: keypad, currency: _usd), textScale: 2.0),
     );
 
     const history = '12.99 + 4.5 + 23.75 + 8 + 15.2 + 6.49 + 3 =';
@@ -113,9 +111,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      _wrap(
-        AmountDisplay(keypad: _typed('1+'), currency: _usd, onEquals: () {}),
-      ),
+      _wrap(AmountDisplay(keypad: _typed('1+'), currency: _usd)),
     );
 
     final history = tester.getRect(find.text('1 +'));
@@ -159,5 +155,38 @@ void main() {
 
     expect(find.text('1,234.5 + 1,000 ='), findsOneWidget);
     expect(find.text('2,234.50'), findsOneWidget);
+  });
+
+  group('percent (issue #144)', () {
+    testWidgets('ADF20: the operand being typed shows its %', (tester) async {
+      await tester.pumpWidget(
+        _wrap(AmountDisplay(keypad: _typed('200-10%'), currency: _usd)),
+      );
+
+      expect(find.text('200 −'), findsOneWidget);
+      expect(find.text('10%'), findsOneWidget);
+    });
+
+    testWidgets('ADF21: the history line shows the % behind a result', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(AmountDisplay(keypad: _typed('200-10%='), currency: _usd)),
+      );
+
+      expect(find.text('200 − 10% ='), findsOneWidget);
+      expect(find.text('180.00'), findsOneWidget);
+    });
+
+    testWidgets('ADF22: a lone percent shows its formula and result', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(AmountDisplay(keypad: _typed('10%'), currency: _usd)),
+      );
+
+      expect(find.text('10% ='), findsOneWidget);
+      expect(find.text('0.10'), findsOneWidget);
+    });
   });
 }

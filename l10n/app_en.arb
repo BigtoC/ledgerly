@@ -565,7 +565,7 @@
   },
   "txKeypadClear": "Clear amount",
   "@txKeypadClear": {
-    "description": "Wave 2 §8. Tooltip / a11y label for the calculator keypad C key."
+    "description": "Semantics label for the calculator keypad AC key, and the long-press action on its ⌫ key."
   },
   "txKeypadBackspace": "Backspace",
   "@txKeypadBackspace": {
@@ -589,7 +589,11 @@
   },
   "txKeypadEquals": "Equals",
   "@txKeypadEquals": {
-    "description": "Tooltip and semantics label for the = button on the amount display that finishes the pending calculation."
+    "description": "Semantics label for the = key on the calculator keypad that finishes the pending calculation."
+  },
+  "txKeypadPercent": "Percent",
+  "@txKeypadPercent": {
+    "description": "Semantics label for the % key on the calculator keypad. It turns the number being typed into a percent (200 − 10 % is 180)."
   },
 
   "homeEmptyDayMessage": "No transaction",

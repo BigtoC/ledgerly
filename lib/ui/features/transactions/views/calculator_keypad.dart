@@ -1,23 +1,27 @@
-// `CalculatorKeypad` — Wave 2 §8.
+// `CalculatorKeypad` — Wave 2 §8, issue #144.
 //
-// Numeric keypad pinned below the form. Layout per PRD → Layout
-// Primitives:
+// Calculator keypad pinned below the form, laid out like a phone
+// calculator. Layout per PRD → Layout Primitives:
 //
-//   7 8 9 ÷
-//   4 5 6 ×
-//   1 2 3 −
-//   . 0 ⌫ +
+//   AC  %  ⌫  ÷
+//   7   8  9  ×
+//   4   5  6  −
+//   1   2  3  +
+//   💾  0  .  =
 //
 // Notes:
 //   - The decimal key is greyed out when `decimals == 0` (JPY).
-//   - Long-pressing ⌫ triggers `onClear`.
+//   - AC and long-pressing ⌫ both trigger `onClear`.
 //   - Every enabled key tap fires a light haptic.
 //   - Operator keys (÷ × − +) emit `CalcOperator` values via `onOperator`.
-//   - Save lives in the AppBar, not the keypad — keep the surface
-//     numeric-only so the user can type quickly with one thumb.
-//   - Keys are 56dp tall. Given less height than that needs, they shrink
-//     to fill it (issue #100). A screen that reserves [minHeight] keeps
-//     them at the 48dp minimum tap target or above.
+//   - `=` and Save (💾) are greyed out while their callback is null: `=`
+//     while no expression is pending, Save while the page can't save. The
+//     transaction form keeps its AppBar Save too, so the thumb that typed
+//     the amount can save without reaching the top of the screen.
+//   - Five rows share the height four rows of 48–56dp keys took before
+//     issue #144, so keys are about 37–43dp: below the 48dp tap target
+//     (PRD → Accessibility lists the exception). Given less height than
+//     [minHeight], they shrink further (issue #100).
 
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
@@ -35,6 +39,9 @@ class CalculatorKeypad extends StatelessWidget {
     required this.onBackspace,
     required this.onClear,
     required this.onOperator,
+    required this.onPercent,
+    required this.onEquals,
+    required this.onSave,
   });
 
   final int decimals;
@@ -43,20 +50,34 @@ class CalculatorKeypad extends StatelessWidget {
   final VoidCallback onBackspace;
   final VoidCallback onClear;
   final ValueChanged<CalcOperator> onOperator;
+  final VoidCallback onPercent;
+
+  /// Finishes the pending calculation. Null greys `=` out.
+  final VoidCallback? onEquals;
+
+  /// Saves what the page is editing. Null greys Save out.
+  final VoidCallback? onSave;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final decimalEnabled = decimals > 0;
+    Widget digit(int d) => _TextKey(label: '$d', onTap: () => onDigit(d));
+    Widget operator(String label, String semanticsLabel, CalcOperator op) =>
+        _TextKey(
+          label: label,
+          semanticsLabel: semanticsLabel,
+          onTap: () => onOperator(op),
+          accent: true,
+        );
     return SafeArea(
       top: false,
       minimum: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // Four rows, each with 4dp of padding above and below its keys.
+          // Five rows, each with 4dp of padding above and below its keys.
           // The screen reserves [minHeight] when it can; given less, the
           // keys shrink further rather than clip the bottom row.
-          final keyHeight = (constraints.maxHeight / 4 - 8).clamp(
+          final keyHeight = (constraints.maxHeight / 5 - 8).clamp(
             0.0,
             _maxKeyHeight,
           );
@@ -65,48 +86,55 @@ class CalculatorKeypad extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               row([
-                _DigitKey(label: '7', onTap: () => onDigit(7)),
-                _DigitKey(label: '8', onTap: () => onDigit(8)),
-                _DigitKey(label: '9', onTap: () => onDigit(9)),
-                _OperatorKey(
-                  label: '÷',
-                  semanticsLabel: l10n.txKeypadDivide,
-                  onTap: () => onOperator(CalcOperator.divide),
+                _TextKey(
+                  label: 'AC',
+                  semanticsLabel: l10n.txKeypadClear,
+                  onTap: onClear,
                 ),
-              ]),
-              row([
-                _DigitKey(label: '4', onTap: () => onDigit(4)),
-                _DigitKey(label: '5', onTap: () => onDigit(5)),
-                _DigitKey(label: '6', onTap: () => onDigit(6)),
-                _OperatorKey(
-                  label: '×',
-                  semanticsLabel: l10n.txKeypadMultiply,
-                  onTap: () => onOperator(CalcOperator.multiply),
+                _TextKey(
+                  label: '%',
+                  semanticsLabel: l10n.txKeypadPercent,
+                  onTap: onPercent,
                 ),
-              ]),
-              row([
-                _DigitKey(label: '1', onTap: () => onDigit(1)),
-                _DigitKey(label: '2', onTap: () => onDigit(2)),
-                _DigitKey(label: '3', onTap: () => onDigit(3)),
-                _OperatorKey(
-                  label: '−',
-                  semanticsLabel: l10n.txKeypadSubtract,
-                  onTap: () => onOperator(CalcOperator.subtract),
-                ),
-              ]),
-              row([
-                _DigitKey(label: '.', onTap: decimalEnabled ? onDecimal : null),
-                _DigitKey(label: '0', onTap: () => onDigit(0)),
                 _IconKey(
                   icon: Icons.backspace_outlined,
                   tooltip: l10n.txKeypadBackspace,
                   onTap: onBackspace,
                   onLongPress: onClear,
                 ),
-                _OperatorKey(
-                  label: '+',
-                  semanticsLabel: l10n.txKeypadAdd,
-                  onTap: () => onOperator(CalcOperator.add),
+                operator('÷', l10n.txKeypadDivide, CalcOperator.divide),
+              ]),
+              row([
+                digit(7),
+                digit(8),
+                digit(9),
+                operator('×', l10n.txKeypadMultiply, CalcOperator.multiply),
+              ]),
+              row([
+                digit(4),
+                digit(5),
+                digit(6),
+                operator('−', l10n.txKeypadSubtract, CalcOperator.subtract),
+              ]),
+              row([
+                digit(1),
+                digit(2),
+                digit(3),
+                operator('+', l10n.txKeypadAdd, CalcOperator.add),
+              ]),
+              row([
+                _IconKey(
+                  icon: Icons.save_outlined,
+                  tooltip: l10n.commonSave,
+                  onTap: onSave,
+                ),
+                digit(0),
+                _TextKey(label: '.', onTap: decimals > 0 ? onDecimal : null),
+                _TextKey(
+                  label: '=',
+                  semanticsLabel: l10n.txKeypadEquals,
+                  onTap: onEquals,
+                  accent: true,
                 ),
               ]),
             ],
@@ -116,16 +144,15 @@ class CalculatorKeypad extends StatelessWidget {
     );
   }
 
-  /// The height the keypad needs with its smallest keys: four rows of a
-  /// key plus its 4dp padding above and below, and the 8dp minimum
-  /// padding above and below the keypad. A screen whose SafeArea has
-  /// already taken the bottom inset can count on it.
-  static const double minHeight = 4 * (_minKeyHeight + 8) + 16;
+  /// The height the screen reserves for the keypad: what four rows of 48dp
+  /// keys took before issue #144 added a fifth. Five rows of 36.8dp keys
+  /// share it now, each key with 4dp of padding above and below, plus the
+  /// 8dp minimum padding above and below the keypad. A screen whose
+  /// SafeArea has already taken the bottom inset can count on it.
+  static const double minHeight = 4 * (48 + 8) + 16;
 
-  static const double _maxKeyHeight = 56;
-
-  /// The minimum tap target (PRD → Accessibility).
-  static const double _minKeyHeight = 48;
+  /// The height four rows of 56dp keys took, shared by five rows.
+  static const double _maxKeyHeight = 4 * (56 + 8) / 5 - 8;
 
   Widget _row(List<Widget> children, double keyHeight) {
     return Padding(
@@ -151,80 +178,65 @@ VoidCallback? _withHaptic(VoidCallback? onTap) {
   };
 }
 
-class _DigitKey extends StatelessWidget {
-  const _DigitKey({required this.label, required this.onTap});
+/// The background of a key, greyed out while [onTap] is null.
+Color _keyColor(
+  ColorScheme colors,
+  VoidCallback? onTap, {
+  bool accent = false,
+}) {
+  if (onTap == null) {
+    return colors.surfaceContainerHighest.withValues(alpha: 0.4);
+  }
+  return accent ? colors.primaryContainer : colors.surfaceContainerHigh;
+}
+
+class _TextKey extends StatelessWidget {
+  const _TextKey({
+    required this.label,
+    required this.onTap,
+    this.semanticsLabel,
+    this.accent = false,
+  });
   final String label;
   final VoidCallback? onTap;
 
+  /// Read out instead of [label], for keys whose glyph isn't a word.
+  final String? semanticsLabel;
+
+  /// Operator keys take the primary container colour.
+  final bool accent;
+
   @override
   Widget build(BuildContext context) {
-    final disabled = onTap == null;
     final colors = Theme.of(context).colorScheme;
     final clamped = MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.5);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Material(
-        color: disabled
-            ? colors.surfaceContainerHighest.withValues(alpha: 0.4)
-            : colors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(12),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: _withHaptic(onTap),
-          child: Center(
-            child: Text(
-              label,
-              textScaler: clamped,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: disabled
-                    ? colors.onSurface.withValues(alpha: 0.4)
-                    : null,
-              ),
-            ),
-          ),
+    final foreground = accent ? colors.onPrimaryContainer : colors.onSurface;
+    Widget child = Center(
+      child: Text(
+        label,
+        textScaler: clamped,
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          color: onTap == null
+              ? colors.onSurface.withValues(alpha: 0.4)
+              : foreground,
         ),
       ),
     );
-  }
-}
-
-class _OperatorKey extends StatelessWidget {
-  const _OperatorKey({
-    required this.label,
-    required this.semanticsLabel,
-    required this.onTap,
-  });
-  final String label;
-  final String semanticsLabel;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final clamped = MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.5);
+    if (semanticsLabel != null) {
+      child = Semantics(
+        label: semanticsLabel,
+        button: true,
+        enabled: onTap != null,
+        child: ExcludeSemantics(child: child),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Material(
-        color: colors.primaryContainer,
+        color: _keyColor(colors, onTap, accent: accent),
         borderRadius: BorderRadius.circular(12),
         clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: _withHaptic(onTap),
-          child: Semantics(
-            label: semanticsLabel,
-            button: true,
-            child: ExcludeSemantics(
-              child: Center(
-                child: Text(
-                  label,
-                  textScaler: clamped,
-                  style: Theme.of(context).textTheme.titleLarge
-                      ?.copyWith(color: colors.onPrimaryContainer),
-                ),
-              ),
-            ),
-          ),
-        ),
+        child: InkWell(onTap: _withHaptic(onTap), child: child),
       ),
     );
   }
@@ -235,39 +247,48 @@ class _IconKey extends StatelessWidget {
     required this.icon,
     required this.tooltip,
     required this.onTap,
-    required this.onLongPress,
+    this.onLongPress,
   });
 
   final IconData icon;
   final String tooltip;
-  final VoidCallback onTap;
-  final VoidCallback onLongPress;
+  final VoidCallback? onTap;
+
+  /// Clears the amount; announced as a custom semantics action.
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Tooltip(
-        message: tooltip,
-        child: Semantics(
-          onLongPressHint: l10n.txKeypadClear,
-          customSemanticsActions: {
-            CustomSemanticsAction(label: l10n.txKeypadClear): onLongPress,
-          },
-          child: Material(
-            color: colors.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(12),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: _withHaptic(onTap),
-              onLongPress: onLongPress,
-              child: Center(child: Icon(icon)),
+    final key = Semantics(
+      button: true,
+      enabled: onTap != null,
+      onLongPressHint: onLongPress == null ? null : l10n.txKeypadClear,
+      customSemanticsActions: {
+        CustomSemanticsAction(label: l10n.txKeypadClear): ?onLongPress,
+      },
+      child: Material(
+        color: _keyColor(colors, onTap),
+        borderRadius: BorderRadius.circular(12),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: _withHaptic(onTap),
+          onLongPress: onLongPress,
+          child: Center(
+            child: Icon(
+              icon,
+              color: onTap == null
+                  ? colors.onSurface.withValues(alpha: 0.4)
+                  : null,
             ),
           ),
         ),
       ),
+    );
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Tooltip(message: tooltip, child: key),
     );
   }
 }

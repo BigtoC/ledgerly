@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ledgerly/domain/models/currency.dart';
@@ -219,124 +217,19 @@ void main() {
     },
   );
 
-  group('equals button', () {
-    final evaluating = KeypadState(
-      amountMinorUnits: 500,
-      fractionalDigitsEntered: 0,
-      isFractionalMode: false,
-      formulaOperands: [_whole(1200)],
-      formulaOperators: [CalcOperator.add],
-      isEvaluating: true,
-      hasCurrentInput: true,
-    );
-    final result = KeypadState(
-      amountMinorUnits: 1700,
-      fractionalDigitsEntered: 0,
-      isFractionalMode: false,
-      formulaOperands: [_whole(1200), _whole(500)],
-      formulaOperators: [CalcOperator.add],
-      showingResult: true,
+  testWidgets('AD10: the display has no = button (issue #144)', (tester) async {
+    // `=` moved to the keypad.
+    final evaluating = const KeypadState.initial()
+        .push(1, decimals: 2)
+        .pushOperator(CalcOperator.add, decimals: 2)
+        .push(5, decimals: 2);
+    await tester.pumpWidget(
+      _wrap(AmountDisplay(keypad: evaluating, currency: _usd)),
     );
 
-    IconButton equalsButton(WidgetTester tester) => tester.widget<IconButton>(
-      find.ancestor(of: find.text('='), matching: find.byType(IconButton)),
-    );
-
-    testWidgets('AD10: hidden while no expression is in progress', (
-      tester,
-    ) async {
-      final typed = const KeypadState.initial().push(5, decimals: 2);
-      await tester.pumpWidget(
-        _wrap(AmountDisplay(keypad: typed, currency: _usd, onEquals: () {})),
-      );
-
-      expect(find.byTooltip('Equals'), findsNothing);
-    });
-
-    testWidgets('AD11: enabled while an expression is pending', (tester) async {
-      var taps = 0;
-      await tester.pumpWidget(
-        _wrap(
-          AmountDisplay(
-            keypad: evaluating,
-            currency: _usd,
-            onEquals: () => taps++,
-          ),
-        ),
-      );
-
-      await tester.tap(find.byTooltip('Equals'));
-      expect(taps, 1);
-      // PRD a11y: keypad keys keep a 48x48dp minimum tap target.
-      final size = tester.getSize(
-        find.ancestor(of: find.text('='), matching: find.byType(IconButton)),
-      );
-      expect(size.width, greaterThanOrEqualTo(48));
-      expect(size.height, greaterThanOrEqualTo(48));
-    });
-
-    testWidgets('AD11b: tapping it fires a medium haptic', (tester) async {
-      final haptics = <String?>[];
-      final messenger = tester.binding.defaultBinaryMessenger;
-      messenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
-        if (call.method == 'HapticFeedback.vibrate') {
-          haptics.add(call.arguments as String?);
-        }
-        return null;
-      });
-      addTearDown(
-        () => messenger.setMockMethodCallHandler(SystemChannels.platform, null),
-      );
-      await tester.pumpWidget(
-        _wrap(
-          AmountDisplay(keypad: evaluating, currency: _usd, onEquals: () {}),
-        ),
-      );
-
-      await tester.tap(find.byTooltip('Equals'));
-
-      expect(haptics, ['HapticFeedbackType.mediumImpact']);
-    });
-
-    testWidgets('AD12: stays visible but disabled on the result', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        _wrap(AmountDisplay(keypad: result, currency: _usd, onEquals: () {})),
-      );
-
-      expect(find.byTooltip('Equals'), findsOneWidget);
-      expect(equalsButton(tester).onPressed, isNull);
-      // The glyph follows the button's disabled foreground, not full contrast.
-      final glyph = tester.renderObject<RenderParagraph>(find.text('='));
-      expect(glyph.text.style?.color?.a, lessThan(1.0));
-    });
-
-    testWidgets('AD13: absent when no onEquals callback is supplied', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        _wrap(AmountDisplay(keypad: evaluating, currency: _usd)),
-      );
-
-      expect(find.byTooltip('Equals'), findsNothing);
-    });
-
-    testWidgets('AD14: 2x text scale with the button does not overflow', (
-      tester,
-    ) async {
-      await tester.binding.setSurfaceSize(const Size(320, 600));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.pumpWidget(
-        _wrap(
-          AmountDisplay(keypad: evaluating, currency: _usd, onEquals: () {}),
-          textScale: 2.0,
-        ),
-      );
-
-      expect(find.byTooltip('Equals'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    });
+    expect(find.text('1 +'), findsOneWidget);
+    expect(find.byTooltip('Equals'), findsNothing);
+    expect(find.byType(IconButton), findsNothing);
   });
 
   testWidgets('AD15: the box is the amount line plus 8dp above and below', (
