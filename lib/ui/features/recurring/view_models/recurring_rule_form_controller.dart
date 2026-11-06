@@ -93,6 +93,9 @@ class RecurringRuleFormController extends _$RecurringRuleFormController {
   void applyOperator(CalcOperator op) =>
       _press((k, decimals) => k.pushOperator(op, decimals: decimals));
 
+  void applyPercent() =>
+      _press((k, decimals) => k.pushPercent(decimals: decimals));
+
   void equals() => _press((k, decimals) => k.equals(decimals: decimals));
 
   /// `amountMinorUnits` mirrors the value `=` would produce, so a pending

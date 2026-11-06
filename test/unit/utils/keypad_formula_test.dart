@@ -8,7 +8,7 @@ import 'package:ledgerly/ui/features/transactions/view_models/keypad_state.dart'
 const _usd = 2;
 
 /// Types [keys] into [start]. Digits and `.` enter numbers, `+ - * /` are
-/// operators, `=` is equals, `<` is backspace, `C` is clear.
+/// operators, `%` is percent, `=` is equals, `<` is backspace, `C` is clear.
 KeypadState type(
   String keys, {
   int decimals = _usd,
@@ -22,6 +22,7 @@ KeypadState type(
       '-' => s.pushOperator(CalcOperator.subtract, decimals: decimals),
       '*' => s.pushOperator(CalcOperator.multiply, decimals: decimals),
       '/' => s.pushOperator(CalcOperator.divide, decimals: decimals),
+      '%' => s.pushPercent(decimals: decimals),
       '=' => s.equals(decimals: decimals),
       '<' => s.pop(decimals: decimals),
       'C' => s.clear(),
@@ -219,6 +220,40 @@ void main() {
       expect(s.formula(decimals: _usd), '3-5+2');
       expect(finished(s), 0);
       expect(finished(type('+2', start: load('3-5'))), 0);
+    });
+  });
+
+  group('percent (issue #144)', () {
+    test('a percent operand is stored with its %', () {
+      expect(type('200-10%').formula(decimals: _usd), '200-10%');
+      expect(type('200-10%=').formula(decimals: _usd), '200-10%');
+      expect(type('200-10%*2').formula(decimals: _usd), '(200-10%)*2');
+    });
+
+    test('a percent with no operator is still a formula', () {
+      expect(type('10%').formula(decimals: _usd), '10%');
+      expect(type('10%+=').formula(decimals: _usd), '10%');
+    });
+
+    test('an operator after a percent result continues the formula', () {
+      final s = type('10%+5');
+      expect(s.formula(decimals: _usd), '10%+5');
+      expect(finished(s), 510);
+    });
+
+    test('a loaded percent formula recalculates and shows its history', () {
+      final s = load('200-10%');
+      expect(s.amountMinorUnits, 18000);
+      expect(s.showingResult, isTrue);
+      expect(load('10%').amountMinorUnits, 10);
+    });
+
+    test('backspace on a loaded percent formula removes the %', () {
+      final s = load('200-10%').pop(decimals: _usd);
+      expect(s.isEvaluating, isTrue);
+      expect(s.isPercent, isFalse);
+      expect(s.formula(decimals: _usd), '200-10');
+      expect(load('10%').pop(decimals: _usd), type('10'));
     });
   });
 }

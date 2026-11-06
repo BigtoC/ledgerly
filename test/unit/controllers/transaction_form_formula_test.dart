@@ -122,7 +122,7 @@ void main() {
     return c;
   }
 
-  /// Types [keys] on the controller: digits, `.`, `+ - * /`, `=`, `<`
+  /// Types [keys] on the controller: digits, `.`, `+ - * /`, `%`, `=`, `<`
   /// (backspace) and `C` (clear).
   void type(TransactionFormController controller, String keys) {
     for (final key in keys.split('')) {
@@ -137,6 +137,8 @@ void main() {
           controller.applyOperator(CalcOperator.multiply);
         case '/':
           controller.applyOperator(CalcOperator.divide);
+        case '%':
+          controller.applyPercent();
         case '=':
           controller.equals();
         case '<':
@@ -208,6 +210,21 @@ void main() {
 
       expect(saved.amountMinorUnits, 300);
       expect(saved.amountFormula, '1+2');
+    });
+
+    test('TF05: stores a percent formula and its result', () async {
+      final c = makeContainer();
+      final controller = c.read(transactionFormControllerProvider.notifier);
+      await controller.hydrateForAdd();
+      controller.selectCategory(_expenseCategory);
+      type(controller, '200-10%');
+      expect(data(c).amountMinorUnits, 18000);
+
+      final saved =
+          (await controller.save() as SaveTransactionSaved).transaction;
+
+      expect(saved.amountMinorUnits, 18000);
+      expect(saved.amountFormula, '200-10%');
     });
   });
 
@@ -350,6 +367,21 @@ void main() {
       final s = data(c);
       expect(s.amountMinorUnits, 2800);
       expect(s.keypad.formula(decimals: 2), isNull);
+    });
+
+    test('TF18: a stored percent formula is rebuilt', () async {
+      when(() => txRepo.getById(99)).thenAnswer(
+        (_) async =>
+            _persistedTx(amountMinorUnits: 18000, amountFormula: '200-10%'),
+      );
+      final c = makeContainer();
+      await c
+          .read(transactionFormControllerProvider.notifier)
+          .hydrateForEdit(99);
+
+      final s = data(c);
+      expect(s.keypad.showingResult, isTrue);
+      expect(s.keypad.formula(decimals: 2), '200-10%');
     });
   });
 }

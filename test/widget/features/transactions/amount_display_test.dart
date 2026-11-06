@@ -26,6 +26,7 @@ FormulaOperand _whole(int minorUnits) => (
   amountMinorUnits: minorUnits,
   fractionalDigitsEntered: 0,
   isFractionalMode: false,
+  isPercent: false,
 );
 
 void main() {
