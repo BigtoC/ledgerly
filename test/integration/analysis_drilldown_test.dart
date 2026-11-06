@@ -470,9 +470,19 @@ void main() {
 
     testWidgets('a user drag stops the card from being lifted', (tester) async {
       final rows = Completer<void>();
-      await pumpPhone(tester, drilldownRelease: rows.future);
+      // Tall enough that the card can never reach the top, so the reveal is
+      // still following when the drag comes.
+      await pumpPhone(
+        tester,
+        drilldownRelease: rows.future,
+        size: const Size(360, 700),
+      );
       await tapLegendRow(tester, 'Food');
       await pumpPastReveal(tester);
+      expect(
+        tester.getRect(trendCard).top,
+        greaterThan(tester.getRect(scrollable).top + 1),
+      );
       await tester.drag(scrollable, const Offset(0, 100));
       await pumpPastReveal(tester);
       expect(find.byType(SliceTransactionRow), findsNothing);
