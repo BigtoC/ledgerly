@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' show GestureSettings;
 
 import 'package:flutter/gestures.dart' show kTouchSlop;
@@ -100,18 +101,17 @@ Future<void> _seed(
   }
 }
 
-/// Holds back the drill-down rows so they land after the selection's reveal
-/// animation has finished.
+/// Holds back the drill-down rows until [release] completes, so the test
+/// decides when they land, on a fake clock or a device's real one.
 class _SlowDrilldownController extends SliceDrilldownController {
-  _SlowDrilldownController(this.delay);
+  _SlowDrilldownController(this.release);
 
-  final Duration delay;
+  final Future<void> release;
 
   @override
   Stream<SliceDrilldownData> build() {
     final rows = super.build();
-    return Stream<void>.fromFuture(Future<void>.delayed(delay))
-        .asyncExpand((_) => rows);
+    return Stream<void>.fromFuture(release).asyncExpand((_) => rows);
   }
 }
 
@@ -134,7 +134,7 @@ class _SlowDrilldownController extends SliceDrilldownController {
 ])
 Future<ProviderContainer> _pumpAnalysisScreen(
   WidgetTester tester, {
-  Duration? drilldownDelay,
+  Future<void>? drilldownRelease,
   bool seedPreviousWeek = false,
 }) async {
   late drift.AppDatabase db;
@@ -190,9 +190,9 @@ Future<ProviderContainer> _pumpAnalysisScreen(
             const ChartsFxStatus(defaultCurrencyCode: 'USD', rates: {}),
           ),
         ),
-        if (drilldownDelay != null)
+        if (drilldownRelease != null)
           sliceDrilldownControllerProvider.overrideWith(
-            () => _SlowDrilldownController(drilldownDelay),
+            () => _SlowDrilldownController(drilldownRelease),
           ),
       ],
     );
@@ -345,7 +345,7 @@ void main() {
     ])
     Future<ProviderContainer> pumpPhone(
       WidgetTester tester, {
-      Duration? drilldownDelay,
+      Future<void>? drilldownRelease,
       bool seedPreviousWeek = false,
       // A 432 dp viewport under the 64 dp app bar: short enough that the
       // page scrolls the trend card to the top.
@@ -363,7 +363,7 @@ void main() {
       addTearDown(tester.view.reset);
       final container = await _pumpAnalysisScreen(
         tester,
-        drilldownDelay: drilldownDelay,
+        drilldownRelease: drilldownRelease,
         seedPreviousWeek: seedPreviousWeek,
       );
       scrollable = find.byType(SingleChildScrollView).first;
@@ -400,8 +400,9 @@ void main() {
       expect(pieRect.bottom, lessThanOrEqualTo(viewport.bottom));
     }
 
-    // The drill-down spinner animates forever, so pumpAndSettle would also
-    // wait out the delay. Pump past the 300 ms reveal animation instead.
+    // The drill-down spinner animates until the rows are released, so
+    // pumpAndSettle would time out. Pump past the 300 ms reveal animation
+    // instead.
     Future<void> pumpPastReveal(WidgetTester tester) async {
       for (var i = 0; i < 5; i++) {
         await tester.pump(const Duration(milliseconds: 100));
@@ -445,9 +446,10 @@ void main() {
       // Tall enough that the transactions card's loading state alone cannot
       // fill the space below the trend card, short enough that the loaded
       // row can.
+      final rows = Completer<void>();
       await pumpPhone(
         tester,
-        drilldownDelay: const Duration(seconds: 1),
+        drilldownRelease: rows.future,
         size: const Size(360, 510),
       );
       await tapLegendRow(tester, 'Food');
@@ -460,14 +462,15 @@ void main() {
         greaterThan(tester.getRect(scrollable).top + 1),
       );
 
-      await tester.pump(const Duration(seconds: 1));
+      rows.complete();
       await tester.pumpAndSettle();
       expect(find.byType(SliceTransactionRow), findsOneWidget);
       expectCardAtTop(tester);
     });
 
     testWidgets('a user drag stops the card from being lifted', (tester) async {
-      await pumpPhone(tester, drilldownDelay: const Duration(seconds: 1));
+      final rows = Completer<void>();
+      await pumpPhone(tester, drilldownRelease: rows.future);
       await tapLegendRow(tester, 'Food');
       await pumpPastReveal(tester);
       await tester.drag(scrollable, const Offset(0, 100));
@@ -475,7 +478,7 @@ void main() {
       expect(find.byType(SliceTransactionRow), findsNothing);
       final pixels = position(tester).pixels;
 
-      await tester.pump(const Duration(seconds: 1));
+      rows.complete();
       await tester.pumpAndSettle();
       expect(find.byType(SliceTransactionRow), findsOneWidget);
       expect(position(tester).pixels, pixels);
