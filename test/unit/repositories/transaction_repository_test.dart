@@ -176,6 +176,37 @@ void main() {
       expect(cleared.amountFormula, isNull);
       expect((await txRepo.getById(inserted.id))!.amountFormula, isNull);
     });
+
+    test('T-uuid-01: insert gives each row its own v4 uuid', () async {
+      final a = await txRepo.save(sampleTx(amount: 100));
+      final b = await txRepo.save(sampleTx(amount: 100));
+      expect(a.uuid, matches(uuidV4));
+      expect(b.uuid, matches(uuidV4));
+      expect(a.uuid, isNot(b.uuid));
+      expect((await txRepo.getById(a.id))!.uuid, a.uuid);
+    });
+
+    test('T-uuid-02: insert ignores a uuid passed in', () async {
+      const foreign = '00000000-0000-4000-8000-000000000000';
+      final inserted = await txRepo.save(sampleTx().copyWith(uuid: foreign));
+      expect(inserted.uuid, matches(uuidV4));
+      expect(inserted.uuid, isNot(foreign));
+    });
+
+    test('T-uuid-03: edits keep the stored uuid', () async {
+      final inserted = await txRepo.save(sampleTx(amount: 100, memo: 'a'));
+      final edited = await txRepo.save(
+        inserted.copyWith(amountMinorUnits: 250, memo: 'b'),
+      );
+      expect(edited.uuid, inserted.uuid);
+      // The form builds a fresh Transaction with no uuid for an edit.
+      final reBuilt = await txRepo.save(
+        sampleTx(amount: 300).copyWith(id: inserted.id),
+      );
+      expect(reBuilt.amountMinorUnits, 300);
+      expect(reBuilt.uuid, inserted.uuid);
+      expect((await txRepo.getById(inserted.id))!.uuid, inserted.uuid);
+    });
   });
 
   group('watchByDay', () {
@@ -724,9 +755,11 @@ void main() {
     int? categoryId,
     String? memo,
     String? amountFormula,
+    String uuid = '',
   }) {
     return Transaction(
       id: 0,
+      uuid: uuid,
       amountMinorUnits: amount,
       currency: currency,
       categoryId: categoryId ?? fixtures.expenseCategoryId,
@@ -837,6 +870,20 @@ void main() {
       );
       expect(await countTransactions(), 0);
     });
+
+    test('I-05: writes a given uuid; an empty one gets a fresh uuid', () async {
+      const given = '6f1d4a52-1c3b-4e8a-9f00-2b7c5d6e7f80';
+      await txRepo.insertImported([
+        importedTx(createdAt: DateTime(2026, 1, 1, 10), uuid: given),
+        importedTx(createdAt: DateTime(2026, 1, 1, 11)),
+      ]);
+      final rows = await txRepo.getInDateRange(
+        DateTime(2026),
+        DateTime(2026, 1, 2),
+      );
+      expect(rows.first.uuid, given);
+      expect(rows.last.uuid, matches(uuidV4));
+    });
   });
 
   group('getImportSignatures', () {
@@ -852,9 +899,18 @@ void main() {
             amount: 1,
           ),
           // In: exactly start.
-          importedTx(createdAt: start, amount: 2, memo: 'start'),
+          importedTx(
+            createdAt: start,
+            amount: 2,
+            memo: 'start',
+            uuid: '00000000-0000-4000-8000-000000000002',
+          ),
           // In: exactly end.
-          importedTx(createdAt: end, amount: 3),
+          importedTx(
+            createdAt: end,
+            amount: 3,
+            uuid: '00000000-0000-4000-8000-000000000003',
+          ),
           // Out: one second after end.
           importedTx(createdAt: end.add(const Duration(seconds: 1)), amount: 4),
         ]);
@@ -867,12 +923,14 @@ void main() {
           signatures,
           unorderedEquals([
             (
+              uuid: '00000000-0000-4000-8000-000000000002',
               createdAt: start,
               amountMinorUnits: 2,
               currencyCode: 'USD',
               memo: 'start',
             ),
             (
+              uuid: '00000000-0000-4000-8000-000000000003',
               createdAt: end,
               amountMinorUnits: 3,
               currencyCode: 'USD',
@@ -904,6 +962,7 @@ void main() {
       expect(sql, contains('"amount_minor_units"'));
       expect(sql, contains('"currency"'));
       expect(sql, contains('"memo"'));
+      expect(sql, contains('"uuid"'));
       expect(sql, isNot(contains('"category_id"')));
       expect(sql, isNot(contains('"account_id"')));
       expect(sql, isNot(contains('"amount_formula"')));

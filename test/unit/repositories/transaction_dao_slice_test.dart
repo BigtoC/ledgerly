@@ -34,9 +34,9 @@ Future<void> _seed(AppDatabase db) async {
   final epoch = DateTime.utc(2026).millisecondsSinceEpoch ~/ 1000;
   Future<void> tx(int id, DateTime d, int amt, String cur, int cat) {
     return db.customStatement(
-      'INSERT INTO transactions (id, amount_minor_units, currency, '
+      'INSERT INTO transactions (uuid, id, amount_minor_units, currency, '
       'category_id, account_id, date, created_at, updated_at) '
-      'VALUES (?, ?, ?, ?, 1, ?, ?, ?)',
+      'VALUES (hex(randomblob(16)), ?, ?, ?, ?, 1, ?, ?, ?)',
       [id, amt, cur, cat, d.millisecondsSinceEpoch ~/ 1000, epoch, epoch],
     );
   }
@@ -93,9 +93,9 @@ void main() {
       );
       final epoch = DateTime.utc(2026).millisecondsSinceEpoch ~/ 1000;
       await db.customStatement(
-        'INSERT INTO transactions (id, amount_minor_units, currency, '
+        'INSERT INTO transactions (uuid, id, amount_minor_units, currency, '
         'category_id, account_id, date, created_at, updated_at) '
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        'VALUES (hex(randomblob(16)), ?, ?, ?, ?, ?, ?, ?, ?)',
         [
           100,
           400,
@@ -121,9 +121,9 @@ void main() {
     test('range is half-open: end-of-range row excluded', () async {
       final epoch = DateTime.utc(2026).millisecondsSinceEpoch ~/ 1000;
       await db.customStatement(
-        'INSERT INTO transactions (id, amount_minor_units, currency, '
+        'INSERT INTO transactions (uuid, id, amount_minor_units, currency, '
         'category_id, account_id, date, created_at, updated_at) '
-        'VALUES (?, ?, ?, ?, 1, ?, ?, ?)',
+        'VALUES (hex(randomblob(16)), ?, ?, ?, ?, 1, ?, ?, ?)',
         [
           50,
           100,

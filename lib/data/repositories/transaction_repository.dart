@@ -45,6 +45,7 @@ class TransactionRepositoryException extends RepositoryException {
 /// Fields CSV import compares to find rows that already exist. See
 /// [TransactionRepository.getImportSignatures].
 typedef TransactionImportSignature = ({
+  String uuid,
   DateTime createdAt,
   int amountMinorUnits,
   String currencyCode,
@@ -208,7 +209,8 @@ abstract class TransactionRepository {
 
   /// Inserts CSV-imported rows in list order, so ids ascend with the
   /// list, and returns how many were inserted. Each row keeps its own
-  /// `createdAt` (the source's recorded time) and `date`; `updatedAt` is
+  /// `createdAt` (the source's recorded time), `date` and non-empty
+  /// `uuid` (an empty one gets a fresh uuid); `updatedAt` is
   /// one clock reading shared by every row; `amountFormula` is null.
   /// This is the documented exception to "on insert both timestamps are
   /// set to now". All rows land in one transaction (a savepoint when the
@@ -219,7 +221,7 @@ abstract class TransactionRepository {
   Future<int> insertImported(List<Transaction> txs);
 
   /// Duplicate-detection keys of every transaction whose `createdAt`
-  /// lies in `[start, endInclusive]`. Returns only these four fields; the
+  /// lies in `[start, endInclusive]`. Returns only these five fields; the
   /// DAO also reads `id` to page.
   Future<List<TransactionImportSignature>> getImportSignatures(
     DateTime start,
@@ -535,11 +537,11 @@ final class DriftTransactionRepository implements TransactionRepository {
     final now = _clock();
     final rows = [
       for (final tx in txs)
-        _toCompanion(
-          tx,
-          createdAt: tx.createdAt,
-          updatedAt: now,
-        ).copyWith(id: const Value.absent(), amountFormula: const Value(null)),
+        _toCompanion(tx, createdAt: tx.createdAt, updatedAt: now).copyWith(
+          id: const Value.absent(),
+          uuid: tx.uuid.isEmpty ? const Value.absent() : Value(tx.uuid),
+          amountFormula: const Value(null),
+        ),
     ];
     await _db.transaction(() => _dao.insertBatch(rows));
     return rows.length;
@@ -563,6 +565,7 @@ final class DriftTransactionRepository implements TransactionRepository {
       );
       for (final r in page) {
         signatures.add((
+          uuid: r.uuid,
           createdAt: r.createdAt,
           amountMinorUnits: r.amountMinorUnits,
           currencyCode: r.currency,
@@ -605,6 +608,7 @@ final class DriftTransactionRepository implements TransactionRepository {
         .map(
           (row) => Transaction(
             id: row.id,
+            uuid: row.uuid,
             amountMinorUnits: row.amountMinorUnits,
             currency: currenciesByCode[row.currency]!,
             categoryId: row.categoryId,

@@ -352,6 +352,7 @@ void main() {
         [
           Transaction(
             id: 7,
+            uuid: '6f1d4a52-1c3b-4e8a-9f00-2b7c5d6e7f80',
             amountMinorUnits: 1234,
             currency: const Currency(code: 'HKD', decimals: 2),
             categoryId: 1,
@@ -393,6 +394,7 @@ void main() {
           memo: '=SUM(A1), "lunch"\nwith team',
           type: CategoryType.expense,
           date: DateTime(2026, 10, 29),
+          uuid: '6f1d4a52-1c3b-4e8a-9f00-2b7c5d6e7f80',
         ),
         ParsedCsvRow(
           line: 4,
@@ -426,6 +428,41 @@ void main() {
       ).rows.single;
       expect(row.memo, isNull);
       expect(row.type, CategoryType.income);
+      expect(row.uuid, isNull);
+    });
+
+    test('a Fortune City file never reads an id column', () {
+      final row = _parse(
+        '$_header,id\n'
+        'Cash,食物,1,HKD,2026/10/30 10:00,,0,'
+        '6f1d4a52-1c3b-4e8a-9f00-2b7c5d6e7f80\n',
+      ).rows.single;
+      expect(row.uuid, isNull);
+    });
+
+    test('a UUID id is read, lower-cased; any other id reads as none', () {
+      const rest =
+          ',2026-10-30T00:00:00+08:00,expense,1,HKD,Food,Cash,,'
+          '2026-10-30T10:00:00+08:00,2026-10-30T10:00:00+08:00';
+      final rows = _parse(
+        [
+          ledgerlyHeader,
+          ' 6f1d4a52-1c3b-4e8a-9f00-2b7c5d6e7f80 $rest',
+          '6F1D4A52-1C3B-4E8A-9F00-2B7C5D6E7F81$rest',
+          '42$rest',
+          rest,
+          '6f1d4a52-1c3b-4e8a-9f00-2b7c5d6e7f8$rest',
+          'x6f1d4a52-1c3b-4e8a-9f00-2b7c5d6e7f80$rest',
+        ].join('\n'),
+      ).rows;
+      expect(rows.map((r) => r.uuid), [
+        '6f1d4a52-1c3b-4e8a-9f00-2b7c5d6e7f80',
+        '6f1d4a52-1c3b-4e8a-9f00-2b7c5d6e7f81',
+        null,
+        null,
+        null,
+        null,
+      ]);
     });
 
     test('invalid type, dates, account and category', () {

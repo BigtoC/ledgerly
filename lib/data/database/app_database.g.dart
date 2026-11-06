@@ -2100,6 +2100,17 @@ class $TransactionsTable extends Transactions
       'PRIMARY KEY AUTOINCREMENT',
     ),
   );
+  static const VerificationMeta _uuidMeta = const VerificationMeta('uuid');
+  @override
+  late final GeneratedColumn<String> uuid = GeneratedColumn<String>(
+    'uuid',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+    clientDefault: () => const Uuid().v4(),
+  );
   static const VerificationMeta _amountMinorUnitsMeta = const VerificationMeta(
     'amountMinorUnits',
   );
@@ -2207,6 +2218,7 @@ class $TransactionsTable extends Transactions
   @override
   List<GeneratedColumn> get $columns => [
     id,
+    uuid,
     amountMinorUnits,
     currency,
     categoryId,
@@ -2231,6 +2243,12 @@ class $TransactionsTable extends Transactions
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('uuid')) {
+      context.handle(
+        _uuidMeta,
+        uuid.isAcceptableOrUnknown(data['uuid']!, _uuidMeta),
+      );
     }
     if (data.containsKey('amount_minor_units')) {
       context.handle(
@@ -2319,6 +2337,10 @@ class $TransactionsTable extends Transactions
         DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
+      uuid: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}uuid'],
+      )!,
       amountMinorUnits: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}amount_minor_units'],
@@ -2367,6 +2389,12 @@ class $TransactionsTable extends Transactions
 class TransactionRow extends DataClass implements Insertable<TransactionRow> {
   final int id;
 
+  /// Random v4 UUID, the same on every device, so CSV import can
+  /// recognise a row it exported. Set once by the client default on
+  /// insert and never rewritten: `replace` applies SQL defaults only.
+  /// Added in schema v8.
+  final String uuid;
+
   /// Integer minor units. Scaling factor is `currencies.decimals` —
   /// never a double. See `PRD.md` → Money Storage Policy and
   /// `CLAUDE.md` → Data-Model Invariants.
@@ -2386,6 +2414,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
   final DateTime updatedAt;
   const TransactionRow({
     required this.id,
+    required this.uuid,
     required this.amountMinorUnits,
     required this.currency,
     required this.categoryId,
@@ -2400,6 +2429,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
+    map['uuid'] = Variable<String>(uuid);
     map['amount_minor_units'] = Variable<int>(amountMinorUnits);
     map['currency'] = Variable<String>(currency);
     map['category_id'] = Variable<int>(categoryId);
@@ -2419,6 +2449,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
   TransactionsCompanion toCompanion(bool nullToAbsent) {
     return TransactionsCompanion(
       id: Value(id),
+      uuid: Value(uuid),
       amountMinorUnits: Value(amountMinorUnits),
       currency: Value(currency),
       categoryId: Value(categoryId),
@@ -2440,6 +2471,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return TransactionRow(
       id: serializer.fromJson<int>(json['id']),
+      uuid: serializer.fromJson<String>(json['uuid']),
       amountMinorUnits: serializer.fromJson<int>(json['amountMinorUnits']),
       currency: serializer.fromJson<String>(json['currency']),
       categoryId: serializer.fromJson<int>(json['categoryId']),
@@ -2456,6 +2488,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
+      'uuid': serializer.toJson<String>(uuid),
       'amountMinorUnits': serializer.toJson<int>(amountMinorUnits),
       'currency': serializer.toJson<String>(currency),
       'categoryId': serializer.toJson<int>(categoryId),
@@ -2470,6 +2503,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
 
   TransactionRow copyWith({
     int? id,
+    String? uuid,
     int? amountMinorUnits,
     String? currency,
     int? categoryId,
@@ -2481,6 +2515,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     DateTime? updatedAt,
   }) => TransactionRow(
     id: id ?? this.id,
+    uuid: uuid ?? this.uuid,
     amountMinorUnits: amountMinorUnits ?? this.amountMinorUnits,
     currency: currency ?? this.currency,
     categoryId: categoryId ?? this.categoryId,
@@ -2496,6 +2531,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
   TransactionRow copyWithCompanion(TransactionsCompanion data) {
     return TransactionRow(
       id: data.id.present ? data.id.value : this.id,
+      uuid: data.uuid.present ? data.uuid.value : this.uuid,
       amountMinorUnits: data.amountMinorUnits.present
           ? data.amountMinorUnits.value
           : this.amountMinorUnits,
@@ -2518,6 +2554,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
   String toString() {
     return (StringBuffer('TransactionRow(')
           ..write('id: $id, ')
+          ..write('uuid: $uuid, ')
           ..write('amountMinorUnits: $amountMinorUnits, ')
           ..write('currency: $currency, ')
           ..write('categoryId: $categoryId, ')
@@ -2534,6 +2571,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
   @override
   int get hashCode => Object.hash(
     id,
+    uuid,
     amountMinorUnits,
     currency,
     categoryId,
@@ -2549,6 +2587,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
       identical(this, other) ||
       (other is TransactionRow &&
           other.id == this.id &&
+          other.uuid == this.uuid &&
           other.amountMinorUnits == this.amountMinorUnits &&
           other.currency == this.currency &&
           other.categoryId == this.categoryId &&
@@ -2562,6 +2601,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
 
 class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
   final Value<int> id;
+  final Value<String> uuid;
   final Value<int> amountMinorUnits;
   final Value<String> currency;
   final Value<int> categoryId;
@@ -2573,6 +2613,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
   final Value<DateTime> updatedAt;
   const TransactionsCompanion({
     this.id = const Value.absent(),
+    this.uuid = const Value.absent(),
     this.amountMinorUnits = const Value.absent(),
     this.currency = const Value.absent(),
     this.categoryId = const Value.absent(),
@@ -2585,6 +2626,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
   });
   TransactionsCompanion.insert({
     this.id = const Value.absent(),
+    this.uuid = const Value.absent(),
     required int amountMinorUnits,
     required String currency,
     required int categoryId,
@@ -2603,6 +2645,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
        updatedAt = Value(updatedAt);
   static Insertable<TransactionRow> custom({
     Expression<int>? id,
+    Expression<String>? uuid,
     Expression<int>? amountMinorUnits,
     Expression<String>? currency,
     Expression<int>? categoryId,
@@ -2615,6 +2658,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (uuid != null) 'uuid': uuid,
       if (amountMinorUnits != null) 'amount_minor_units': amountMinorUnits,
       if (currency != null) 'currency': currency,
       if (categoryId != null) 'category_id': categoryId,
@@ -2629,6 +2673,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
 
   TransactionsCompanion copyWith({
     Value<int>? id,
+    Value<String>? uuid,
     Value<int>? amountMinorUnits,
     Value<String>? currency,
     Value<int>? categoryId,
@@ -2641,6 +2686,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
   }) {
     return TransactionsCompanion(
       id: id ?? this.id,
+      uuid: uuid ?? this.uuid,
       amountMinorUnits: amountMinorUnits ?? this.amountMinorUnits,
       currency: currency ?? this.currency,
       categoryId: categoryId ?? this.categoryId,
@@ -2658,6 +2704,9 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<int>(id.value);
+    }
+    if (uuid.present) {
+      map['uuid'] = Variable<String>(uuid.value);
     }
     if (amountMinorUnits.present) {
       map['amount_minor_units'] = Variable<int>(amountMinorUnits.value);
@@ -2693,6 +2742,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
   String toString() {
     return (StringBuffer('TransactionsCompanion(')
           ..write('id: $id, ')
+          ..write('uuid: $uuid, ')
           ..write('amountMinorUnits: $amountMinorUnits, ')
           ..write('currency: $currency, ')
           ..write('categoryId: $categoryId, ')
@@ -8899,6 +8949,7 @@ typedef $$AccountsTableProcessedTableManager =
 typedef $$TransactionsTableCreateCompanionBuilder =
     TransactionsCompanion Function({
       Value<int> id,
+      Value<String> uuid,
       required int amountMinorUnits,
       required String currency,
       required int categoryId,
@@ -8912,6 +8963,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
 typedef $$TransactionsTableUpdateCompanionBuilder =
     TransactionsCompanion Function({
       Value<int> id,
+      Value<String> uuid,
       Value<int> amountMinorUnits,
       Value<String> currency,
       Value<int> categoryId,
@@ -8990,6 +9042,11 @@ class $$TransactionsTableFilterComposer
   });
   ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get uuid => $composableBuilder(
+    column: $table.uuid,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9107,6 +9164,11 @@ class $$TransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get uuid => $composableBuilder(
+    column: $table.uuid,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get amountMinorUnits => $composableBuilder(
     column: $table.amountMinorUnits,
     builder: (column) => ColumnOrderings(column),
@@ -9218,6 +9280,9 @@ class $$TransactionsTableAnnotationComposer
   });
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get uuid =>
+      $composableBuilder(column: $table.uuid, builder: (column) => column);
 
   GeneratedColumn<int> get amountMinorUnits => $composableBuilder(
     column: $table.amountMinorUnits,
@@ -9344,6 +9409,7 @@ class $$TransactionsTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<String> uuid = const Value.absent(),
                 Value<int> amountMinorUnits = const Value.absent(),
                 Value<String> currency = const Value.absent(),
                 Value<int> categoryId = const Value.absent(),
@@ -9355,6 +9421,7 @@ class $$TransactionsTableTableManager
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => TransactionsCompanion(
                 id: id,
+                uuid: uuid,
                 amountMinorUnits: amountMinorUnits,
                 currency: currency,
                 categoryId: categoryId,
@@ -9368,6 +9435,7 @@ class $$TransactionsTableTableManager
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<String> uuid = const Value.absent(),
                 required int amountMinorUnits,
                 required String currency,
                 required int categoryId,
@@ -9379,6 +9447,7 @@ class $$TransactionsTableTableManager
                 required DateTime updatedAt,
               }) => TransactionsCompanion.insert(
                 id: id,
+                uuid: uuid,
                 amountMinorUnits: amountMinorUnits,
                 currency: currency,
                 categoryId: categoryId,

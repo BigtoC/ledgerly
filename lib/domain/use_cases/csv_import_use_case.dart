@@ -112,6 +112,7 @@ _loadInBackground(Uint8List bytes, Map<String, Currency> currencies) =>
         memo: row.memo,
         type: row.type,
         date: row.date,
+        uuid: row.uuid,
       ),
     );
   }
@@ -298,6 +299,7 @@ class CsvImportUseCase {
           ))
             Transaction(
               id: 0,
+              uuid: row.uuid ?? '',
               amountMinorUnits: row.amountMinorUnits,
               currency: row.currency,
               categoryId: categoryIdFor(row),
@@ -321,8 +323,14 @@ class CsvImportUseCase {
     });
   }
 
-  /// Multiset dedup: per key, keeps `max(0, countInFile - countInDb)`
-  /// rows, dropping the first occurrences in file order.
+  /// Drops rows already in the database. A row with a uuid is a duplicate
+  /// when that uuid is stored, whatever was edited since, or when an
+  /// earlier row in the file has it. Every other row goes through the
+  /// multiset signature check: per key, keeps
+  /// `max(0, countInFile - countInDb)` rows, dropping the first occurrences
+  /// in file order. Stored rows matched by uuid are left out of that
+  /// count. `createdAt` is never edited, so the file's `createdAt` range
+  /// also bounds the uuid matches.
   Future<({List<CsvImportRow> rows, int duplicateCount})> _withoutDuplicates(
     List<CsvImportRow> rows,
   ) async {
@@ -334,10 +342,16 @@ class CsvImportUseCase {
       if (row.recordedAt.isAfter(end)) end = row.recordedAt;
     }
 
+    final fileUuids = {for (final row in rows) ?row.uuid};
+    final dbUuids = <String>{};
     final inDb = <_ImportKey, int>{};
     var i = 0;
     for (final s in await transactionRepo.getImportSignatures(start, end)) {
       if (++i % _kDedupChunk == 0) await Future<void>.delayed(Duration.zero);
+      if (fileUuids.contains(s.uuid)) {
+        dbUuids.add(s.uuid);
+        continue;
+      }
       final key = _keyOf(
         s.createdAt,
         s.amountMinorUnits,
@@ -348,9 +362,14 @@ class CsvImportUseCase {
     }
 
     final kept = <CsvImportRow>[];
+    final seenUuids = <String>{};
     i = 0;
     for (final row in rows) {
       if (++i % _kDedupChunk == 0) await Future<void>.delayed(Duration.zero);
+      final uuid = row.uuid;
+      if (uuid != null && (!seenUuids.add(uuid) || dbUuids.contains(uuid))) {
+        continue;
+      }
       final key = _keyOf(
         row.recordedAt,
         row.amountMinorUnits,

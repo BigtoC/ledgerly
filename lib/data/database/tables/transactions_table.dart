@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:uuid/uuid.dart';
 
 import 'accounts_table.dart';
 import 'categories_table.dart';
@@ -22,6 +23,13 @@ import 'currencies_table.dart';
 @TableIndex(name: 'transactions_category_idx', columns: {#categoryId})
 class Transactions extends Table {
   IntColumn get id => integer().autoIncrement()();
+
+  /// Random v4 UUID, the same on every device, so CSV import can
+  /// recognise a row it exported. Set once by the client default on
+  /// insert and never rewritten: `replace` applies SQL defaults only.
+  /// Added in schema v8.
+  TextColumn get uuid =>
+      text().clientDefault(() => const Uuid().v4()).unique()();
 
   /// Integer minor units. Scaling factor is `currencies.decimals` —
   /// never a double. See `PRD.md` → Money Storage Policy and

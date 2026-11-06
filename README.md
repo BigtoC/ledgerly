@@ -26,8 +26,9 @@ display-text input in Settings and an auto-prepend guarantee so the date
 is always visible on the splash even if the user removes `{date}` from
 their template.
 
-Drift schema is at **v7** (v7 backfills the seeded Investment expense
-category and retires Personal; `transactions.amount_formula` added in v6;
+Drift schema is at **v8** (v8 adds `transactions.uuid`; v7 backfills the
+seeded Investment expense category and retires Personal;
+`transactions.amount_formula` added in v6;
 `exchange_rates` added in v5; `recurring_rules` + `pending_transactions`
 added in v4). Snapshots are
 committed under `drift_schemas/`.
@@ -165,8 +166,10 @@ preview before anything is written:
 - Rows that already exist are skipped, so importing the same file twice
   adds nothing. A duplicate is a row with the same Recorded At time,
   amount, currency and note. Re-importing a newer export of the same
-  ledger therefore adds only the new rows. Invalid rows are listed by
-  line number and skipped.
+  ledger therefore adds only the new rows. Ledgerly's own CSV export
+  also carries each transaction's ID, so importing it again still
+  recognises a row you edited after exporting, and keeps your edit.
+  Invalid rows are listed by line number and skipped.
 - There is no file size or row limit. Large files are parsed in the
   background, and the import writes rows in chunks so the screen stays
   responsive (see [CSV import performance](#csv-import-performance)).
@@ -328,7 +331,7 @@ test/
   widget/     # widget tests (organized by feature)
   integration/
   support/    # shared in-memory DB + ProviderContainer fixtures
-drift_schemas/ # Committed schema snapshots per schemaVersion (v1 – v7)
+drift_schemas/ # Committed schema snapshots per schemaVersion (v1 – v8)
 assets/
   splash/     # Sun-themed splash background image (shipped)
 ```

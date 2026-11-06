@@ -1,7 +1,8 @@
 // CSV export → import round trip (#70) through the real exporter, import
 // controller and Drift: a Ledgerly export imports into a fresh install
-// with every field intact, and importing it again, into either database,
-// finds every row a duplicate.
+// with every field intact, uuid included, and importing it again, into
+// either database, finds every row a duplicate, even a row edited since
+// the export (#140).
 //
 // The file service is a fake that hands the saved bytes back to the
 // picker; the FX service is a no-op.
@@ -20,6 +21,7 @@ import 'package:ledgerly/data/database/app_database.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
+import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/services/csv_file_service.dart';
 import 'package:ledgerly/data/services/exchange_rate_service.dart';
 import 'package:ledgerly/domain/models/category.dart';
@@ -163,6 +165,23 @@ void main() {
       expect(again.importCount, 0);
       expect(again.duplicateCount, 3);
     }
+
+    // Edit a row's amount and memo after the export, then restore the old
+    // file into the source: the uuid still recognises the row.
+    final sourceTxs = DriftTransactionRepository(source);
+    final lunch = (await sourceTxs.getInDateRange(
+      DateTime(2026, 10, 29),
+      DateTime(2026, 10, 30),
+    )).single;
+    await sourceTxs.save(
+      lunch.copyWith(amountMinorUnits: 9999, memo: 'edited'),
+    );
+    final restore = await pick(sourceContainer);
+    expect(restore.importCount, 0);
+    expect(restore.duplicateCount, 3);
+    expect(restore.canCommit, isFalse);
+    expect(await source.select(source.transactions).get(), hasLength(3));
+    expect((await sourceTxs.getById(lunch.id))!.amountMinorUnits, 9999);
   });
 }
 
@@ -185,6 +204,7 @@ Future<List<String>> _describe(AppDatabase db) async {
   return [
     for (final r in await db.select(db.transactions).get())
       [
+        r.uuid,
         r.amountMinorUnits,
         r.currency,
         categories[r.categoryId]!.l10nKey ??

@@ -11,6 +11,7 @@ const _jpy = Currency(code: 'JPY', decimals: 0);
 
 Transaction _tx({
   int id = 1,
+  String uuid = '',
   int amount = 1234,
   Currency currency = _hkd,
   int categoryId = 1,
@@ -19,6 +20,7 @@ Transaction _tx({
   String? amountFormula,
 }) => Transaction(
   id: id,
+  uuid: uuid,
   amountMinorUnits: amount,
   currency: currency,
   categoryId: categoryId,
@@ -92,11 +94,28 @@ void main() {
       ]);
     });
 
-    test('one row per transaction with names, type and decimal amount', () {
-      final tx = _tx(id: 7, memo: 'lunch', amountFormula: '10+2.34');
+    test('one row per transaction with uuid, names, type and decimal '
+        'amount', () {
+      const uuid7 = '6f1d4a52-1c3b-4e8a-9f00-2b7c5d6e7f80';
+      const uuid8 = '0b8e3c1a-5d2f-4a6b-8c7d-9e0f1a2b3c4d';
+      final tx = _tx(
+        id: 7,
+        uuid: uuid7,
+        memo: 'lunch',
+        amountFormula: '10+2.34',
+      );
       final lines = _lines(
         encodeTransactionsCsv(
-          [tx, _tx(id: 8, amount: 300000, currency: _jpy, categoryId: 2)],
+          [
+            tx,
+            _tx(
+              id: 8,
+              uuid: uuid8,
+              amount: 300000,
+              currency: _jpy,
+              categoryId: 2,
+            ),
+          ],
           categories: _categories,
           accountNames: _accounts,
         ),
@@ -104,12 +123,12 @@ void main() {
       expect(lines, hasLength(3));
       expect(
         lines[1],
-        '7,${formatLocalIso8601(tx.date)},expense,12.34,HKD,食物,Cash,lunch,'
+        '$uuid7,${formatLocalIso8601(tx.date)},expense,12.34,HKD,食物,Cash,lunch,'
         '${formatLocalIso8601(tx.createdAt)},'
         '${formatLocalIso8601(tx.updatedAt)}',
       );
       expect(lines[2].split(',').sublist(0, 8), [
-        '8',
+        uuid8,
         formatLocalIso8601(tx.date),
         'income',
         '300000',

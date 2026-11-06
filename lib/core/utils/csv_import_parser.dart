@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:csv/csv.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../domain/models/category.dart';
 import '../../domain/models/csv_import.dart';
@@ -32,7 +33,8 @@ const _fortuneCity = (
 );
 
 /// Header names in Ledgerly's own export (`encodeTransactionsCsv`), matched
-/// the same way. `id` and `updated_at` are never read.
+/// the same way. `id` is optional and read only when it holds a UUID;
+/// `updated_at` is never read.
 const _ledgerly = (
   account: 'account',
   category: 'category',
@@ -123,6 +125,7 @@ CsvParseResult parseImportCsv(Uint8List bytes) {
     );
   }
   final note = columns[format.memo];
+  final id = ledgerly ? columns['id'] : null;
   final lastRequired = [for (final name in format.required) columns[name]!]
       .reduce((a, b) => a > b ? a : b);
 
@@ -176,6 +179,7 @@ CsvParseResult parseImportCsv(Uint8List bytes) {
     }
 
     final memo = note != null && note < fields.length ? fields[note] : null;
+    final uuid = id != null && id < fields.length ? fields[id].trim() : '';
     rows.add(
       ParsedCsvRow(
         line: lineNumber,
@@ -187,6 +191,9 @@ CsvParseResult parseImportCsv(Uint8List bytes) {
         memo: memo == null || memo.trim().isEmpty ? null : memo,
         type: type,
         date: date?.day,
+        uuid: Uuid.isValidUUIDFormat(fromString: uuid)
+            ? uuid.toLowerCase()
+            : null,
       ),
     );
   }

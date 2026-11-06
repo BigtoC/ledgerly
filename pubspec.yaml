@@ -24,6 +24,7 @@ dependencies:
   drift: ^2.35.3
   drift_flutter: ^0.3.1
   path_provider: ^2.1.6
+  uuid: ^4.6.0
 
   # Navigation
   go_router: ^18.1.2

@@ -39,9 +39,9 @@ Future<void> _insertTx({
   // Drift stores DateTime as integer Unix seconds (default mode).
   final epoch = DateTime.utc(2026, 1, 1).millisecondsSinceEpoch ~/ 1000;
   return db.customStatement(
-    'INSERT INTO transactions (id, amount_minor_units, currency, '
+    'INSERT INTO transactions (uuid, id, amount_minor_units, currency, '
     'category_id, account_id, date, memo, created_at, updated_at) '
-    "VALUES (?, 1000, 'USD', 1, 1, ?, ?, ?, ?)",
+    "VALUES (hex(randomblob(16)), ?, 1000, 'USD', 1, 1, ?, ?, ?, ?)",
     <Object?>[id, date.millisecondsSinceEpoch ~/ 1000, memo, epoch, epoch],
   );
 }

@@ -15,7 +15,9 @@ typedef CsvExportCategory = ({String name, CategoryType type});
 /// names correctly) and CRLF line endings.
 ///
 /// Columns: `id, date, type, amount, currency, category, account, memo,
-/// created_at, updated_at`. `amount` is a plain decimal at the currency's
+/// created_at, updated_at`. `id` holds the transaction's `uuid`, which
+/// the import recognises on any device; the integer id meant nothing
+/// outside this one. `amount` is a plain decimal at the currency's
 /// scale; `type` comes from the category; the three timestamps use
 /// [formatLocalIso8601]. Category, account and memo text starting with
 /// `= + - @`, a tab or a carriage return gets a leading `'` so spreadsheets
@@ -42,7 +44,7 @@ Uint8List encodeTransactionsCsv(
     ],
     for (final tx in transactions)
       [
-        tx.id.toString(),
+        tx.uuid,
         formatLocalIso8601(tx.date),
         categories[tx.categoryId]!.type.name,
         minorUnitsToDecimalString(

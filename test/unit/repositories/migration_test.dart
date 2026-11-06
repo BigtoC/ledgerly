@@ -1,4 +1,4 @@
-// Migration harness — covers every committed snapshot (v1–v7).
+// Migration harness — covers every committed snapshot (v1–v8).
 //
 // See `docs/plans/m3-repositories-seed/stream-c-preferences-seed-migration.md`
 // §3 for the full specification.
@@ -37,7 +37,8 @@ import '_harness/generated/schema_v3.dart' as v3;
 import '_harness/generated/schema_v4.dart' as v4;
 import '_harness/generated/schema_v5.dart' as v5;
 import '_harness/generated/schema_v6.dart' as v6;
-import '_harness/test_app_database.dart' show FixedLocaleService;
+import '_harness/generated/schema_v7.dart' as v7;
+import '_harness/test_app_database.dart' show FixedLocaleService, uuidV4;
 
 void main() {
   group('migrations', () {
@@ -46,7 +47,7 @@ void main() {
       // snapshot" mistake next time Phase 2 touches the file.
       final db = AppDatabase(NativeDatabase.memory());
       addTearDown(() async => db.close());
-      expect(db.schemaVersion, 7);
+      expect(db.schemaVersion, 8);
       // The drift_dev-generated helper should advance with the new snapshot.
       expect(GeneratedHelper.versions, contains(db.schemaVersion));
       expect(GeneratedHelper.versions.last, db.schemaVersion);
@@ -637,7 +638,84 @@ void main() {
         expect(rows.single['is_archived'], 1);
       });
     });
+
+    group('v8 snapshot', () {
+      test('upgrades v7 DBs to v8, keeps transactions and gives each a '
+          'distinct uuid', () async {
+        final verifier = SchemaVerifier(GeneratedHelper());
+        final schema = await verifier.schemaAt(7);
+        final legacyDb = v7.DatabaseAtV7(schema.newConnection());
+        await legacyDb.customStatement(
+          'INSERT INTO currencies (code, decimals, symbol, name_l10n_key, '
+          'is_token, sort_order) VALUES (?, ?, ?, ?, 0, ?)',
+          <Object?>['USD', 2, r'$', 'currency.usd', 1],
+        );
+        await legacyDb.customStatement(
+          'INSERT INTO categories (l10n_key, icon, color, type, sort_order, '
+          'is_archived) VALUES (?, ?, ?, ?, ?, 0)',
+          <Object?>['category.food', 'restaurant', 0, 'expense', 0],
+        );
+        await legacyDb.customStatement(
+          'INSERT INTO account_types (l10n_key, icon, color, sort_order, '
+          'is_archived) VALUES (?, ?, ?, ?, 0)',
+          <Object?>['accountType.cash', 'wallet', 0, 1],
+        );
+        await legacyDb.customStatement(
+          'INSERT INTO accounts (name, account_type_id, currency, '
+          'opening_balance_minor_units, is_archived) '
+          'VALUES (?, 1, ?, 0, 0)',
+          <Object?>['Cash', 'USD'],
+        );
+        for (final (amount, memo) in [
+          (2800, 'lunch'),
+          (500, null),
+          (90, 'x'),
+        ]) {
+          await legacyDb.customStatement(
+            'INSERT INTO transactions (amount_minor_units, currency, '
+            'category_id, account_id, memo, amount_formula, date, '
+            'created_at, updated_at) VALUES (?, ?, 1, 1, ?, ?, 0, 0, 0)',
+            <Object?>[amount, 'USD', memo, memo == 'x' ? '45+45' : null],
+          );
+        }
+        await legacyDb.close();
+
+        final db = AppDatabase(schema.newConnection());
+        addTearDown(() async => db.close());
+
+        await verifier.migrateAndValidate(db, db.schemaVersion);
+
+        final query = db.customSelect(
+          'SELECT id, amount_minor_units, memo, amount_formula, uuid '
+          'FROM transactions ORDER BY id',
+        );
+        final rows = (await query.get()).map((r) => r.data).toList();
+        expect(rows.map((r) => (r['id'], r['amount_minor_units'], r['memo'])), [
+          (1, 2800, 'lunch'),
+          (2, 500, null),
+          (3, 90, 'x'),
+        ]);
+        expect(rows.last['amount_formula'], '45+45');
+        final uuids = rows.map((r) => r['uuid']).toList();
+        expect(uuids, everyElement(matches(uuidV4)));
+        expect(uuids.toSet(), hasLength(3));
+
+        final indexes = await db
+            .customSelect(
+              "SELECT name FROM sqlite_master WHERE type = 'index' "
+              "AND tbl_name = 'transactions' AND sql IS NOT NULL",
+            )
+            .get();
+        expect(indexes.map((r) => r.read<String>('name')), {
+          'transactions_date_idx',
+          'transactions_account_idx',
+          'transactions_category_idx',
+        });
+        final fk = await db.customSelect('PRAGMA foreign_keys').getSingle();
+        expect(fk.read<int>('foreign_keys'), 1);
+      });
+    });
   });
 }
 
-const int dbVersionForOpenCheck = 7;
+const int dbVersionForOpenCheck = 8;

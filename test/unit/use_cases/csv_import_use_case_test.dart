@@ -973,5 +973,127 @@ void main() {
         {500: expense, 700: income},
       );
     });
+
+    group('uuid', () {
+      const u1 = '6f1d4a52-1c3b-4e8a-9f00-2b7c5d6e7f80';
+      const u2 = '0b8e3c1a-5d2f-4a6b-8c7d-9e0f1a2b3c4d';
+
+      String row(
+        String id, {
+        String amount = '12.34',
+        String memo = 'lunch',
+        String createdAt = '2026-10-30T14:31:05+08:00',
+      }) =>
+          '$id,2026-10-29T00:00:00+08:00,expense,$amount,HKD,Food,Cash,'
+          '$memo,$createdAt,$createdAt';
+
+      /// Loads [rows] and commits every one of them to Cash and Food.
+      Future<({CsvLoadResult load, CsvImportResult result})> importRows(
+        List<String> rows,
+      ) async {
+        final useCase = useCaseWith(_serviceFor(ledgerlyCsv(rows)));
+        final load = (await useCase.pickAndLoad())!;
+        final cash = (await accounts.watchAll().first).single;
+        final food = await categoryIdFor('category.food');
+        final result = await useCase.commit(
+          CsvImportPlan(
+            rows: load.validRows,
+            accounts: {'Cash': AccountResolution.existing(cash.id)},
+            categories: {
+              (value: 'Food', type: CategoryType.expense):
+                  CategoryResolution.existing(food),
+            },
+            salaryNotes: _salaryNotes,
+          ),
+        );
+        return (load: load, result: result);
+      }
+
+      test('an unknown uuid is inserted with that uuid', () async {
+        final (:load, :result) = await importRows([row(u1.toUpperCase())]);
+
+        expect(load.rowsToImport.single.uuid, u1);
+        expect(result.importedCount, 1);
+        expect((await allTransactionRows()).single.uuid, u1);
+      });
+
+      test('a known uuid is a duplicate even after its amount and memo '
+          'were edited; the device copy wins', () async {
+        await importRows([row(u1)]);
+        final stored = (await transactions.getById(
+          (await allTransactionRows()).single.id,
+        ))!;
+        await transactions.save(
+          stored.copyWith(amountMinorUnits: 9999, memo: 'dinner'),
+        );
+
+        final (:load, :result) = await importRows([row(u1)]);
+
+        expect(load.rowsToImport, isEmpty);
+        expect(result.importedCount, 0);
+        expect(result.duplicateCount, 1);
+        final after = (await allTransactionRows()).single;
+        expect(
+          (after.uuid, after.amountMinorUnits, after.memo),
+          (u1, 9999, 'dinner'),
+        );
+      });
+
+      test('a uuid repeated in the file is imported once', () async {
+        final (:load, :result) = await importRows([
+          row(u1),
+          row(u1, amount: '5', memo: 'other'),
+        ]);
+
+        expect(load.rowsToImport.map((r) => r.line), [2]);
+        expect(result.importedCount, 1);
+        expect(result.duplicateCount, 1);
+        final stored = (await allTransactionRows()).single;
+        expect((stored.uuid, stored.amountMinorUnits), (u1, 1234));
+      });
+
+      test('an integer id falls back to the signature, and an inserted row '
+          'gets a fresh uuid', () async {
+        await importRows([row('1')]);
+        final first = (await allTransactionRows()).single.uuid;
+
+        // Same integer id both times: only the signature tells them apart.
+        final (:load, :result) = await importRows([
+          row('1'),
+          row('1', amount: '1'),
+        ]);
+
+        expect(load.rowsToImport.map((r) => r.line), [3]);
+        expect(result.importedCount, 1);
+        expect(result.duplicateCount, 1);
+        final uuids = (await allTransactionRows()).map((r) => r.uuid).toList();
+        expect(uuids.first, first);
+        expect(uuids.last, isNot(first));
+        expect(uuids, everyElement(hasLength(36)));
+      });
+
+      test('an unknown uuid still matches a row imported before v8 by '
+          'signature', () async {
+        await importRows([row('1')]);
+
+        final (:load, :result) = await importRows([row(u1)]);
+
+        expect(load.rowsToImport, isEmpty);
+        expect(result.duplicateCount, 1);
+        expect((await allTransactionRows()).single.uuid, isNot(u1));
+      });
+
+      test('a row matched by uuid is not matched again by signature', () async {
+        await importRows([row(u1)]);
+
+        // Two transactions that differ only in uuid; the first is stored.
+        final (:load, :result) = await importRows([row(u1), row(u2)]);
+
+        expect(load.rowsToImport.map((r) => r.uuid), [u2]);
+        expect(result.importedCount, 1);
+        expect(result.duplicateCount, 1);
+        expect((await allTransactionRows()).map((r) => r.uuid), [u1, u2]);
+      });
+    });
   });
 }

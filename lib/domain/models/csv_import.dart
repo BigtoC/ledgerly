@@ -113,6 +113,10 @@ abstract class ParsedCsvRow with _$ParsedCsvRow {
     /// Ledgerly only: the `date` column's calendar day, at local midnight.
     /// Null for Fortune City, whose date is Recorded At's day.
     DateTime? date,
+
+    /// Ledgerly only: the `id` column, lower-cased, when it is a UUID
+    /// (exports from schema v8 on). Null otherwise and for Fortune City.
+    String? uuid,
   }) = _ParsedCsvRow;
 }
 
@@ -161,6 +165,10 @@ abstract class CsvImportRow with _$CsvImportRow {
 
     /// See [ParsedCsvRow.date]; null for Fortune City.
     DateTime? date,
+
+    /// See [ParsedCsvRow.uuid]. Recognises the row in the database, and
+    /// an inserted row keeps it.
+    String? uuid,
   }) = _CsvImportRow;
 
   CsvCategoryKey get categoryKey => (value: category, type: type);

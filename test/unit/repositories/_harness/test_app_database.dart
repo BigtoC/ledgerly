@@ -6,8 +6,8 @@
 //
 // Besides `newTestAppDatabase()`, this file holds the raw-SQL fixtures that
 // several repository tests share, so they seed rows without depending on
-// other repositories' internals, a no-op `ExchangeRateRepository` and a
-// fixed-locale `LocaleService`.
+// other repositories' internals, a no-op `ExchangeRateRepository`, a
+// fixed-locale `LocaleService` and the `uuidV4` pattern.
 
 import 'package:drift/drift.dart' show Variable;
 import 'package:drift/native.dart';
@@ -20,6 +20,11 @@ import 'package:ledgerly/data/services/locale_service.dart';
 import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/domain/models/recurring_rule_draft.dart';
 import 'package:mocktail/mocktail.dart';
+
+/// A lower-case RFC 4122 version 4 UUID, as `transactions.uuid` holds.
+final uuidV4 = RegExp(
+  r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+);
 
 /// Returns a fresh in-memory `AppDatabase` for tests.
 ///

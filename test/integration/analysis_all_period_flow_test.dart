@@ -68,9 +68,9 @@ Future<void> _insertTx(
 }) {
   final epoch = DateTime.now().millisecondsSinceEpoch ~/ 1000;
   return db.customInsert(
-    'INSERT INTO transactions (id, amount_minor_units, currency, '
+    'INSERT INTO transactions (uuid, id, amount_minor_units, currency, '
     'category_id, account_id, date, created_at, updated_at) '
-    "VALUES (?, 1000, 'USD', 1, 1, ?, ?, ?)",
+    "VALUES (hex(randomblob(16)), ?, 1000, 'USD', 1, 1, ?, ?, ?)",
     variables: [
       Variable.withInt(id),
       Variable.withInt(date.millisecondsSinceEpoch ~/ 1000),

@@ -61,9 +61,9 @@ Future<int> _insertTransactionRaw(
   final txDate = date ?? DateTime.utc(2026, 1, 1);
   final nowIso = txDate.toIso8601String();
   await db.customInsert(
-    'INSERT INTO transactions (account_id, category_id, amount_minor_units, '
-    'currency, date, created_at, updated_at) '
-    'VALUES (?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO transactions (uuid, account_id, category_id, '
+    'amount_minor_units, currency, date, created_at, updated_at) '
+    'VALUES (hex(randomblob(16)), ?, ?, ?, ?, ?, ?, ?)',
     variables: [
       Variable<int>(accountId),
       Variable<int>(categoryId),
