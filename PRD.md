@@ -505,7 +505,7 @@ Notes:
 - Transaction type (expense/income) is derived from the linked category's `type` field. A category's `type` becomes immutable after the first transaction uses it, so historical transaction meaning cannot be changed later by editing the category.
 - **No third `type` value exists or will be added.** Phase 2 account transfers and wallet sync model direction as expense/income from the tracked account's (or wallet address's) perspective: inflow **into** the tracked account = **income**; outflow **out of** the tracked account = **expense**. An account-to-account transfer produces two transactions (expense on the source, income on the destination) linked by shared memo / timestamp — not a single `'transfer'` type.
 - `memo` is optional free-form user text and must support Unicode across all supported locales.
-- `amount_formula` records the calculator expression that produced `amount_minor_units`, such as `3.5+10.5+11+3`. It is canonical ASCII that does not depend on locale: operands as typed with `.` as the decimal separator and trailing fractional zeros dropped, operators `+ - * /`, no spaces. It is evaluated strictly left to right. Wherever × or ÷ follows + or −, the expression so far is bracketed, so the keys `1 + 2 × 2` are stored as `(1+2)*2` and shown as `(1 + 2) × 2 = 6`, which reads the same under usual precedence. Only this canonical form is accepted when reading. Subtotals may go negative; only the finished amount is clamped to zero. It is null when the amount was typed without an operator. When the form opens a transaction, it parses the formula and recalculates the result on the keypad, so the user can see and edit the calculation. `amount_minor_units` stays authoritative: a formula that does not parse, or that recalculates to a different amount, is ignored.
+- `amount_formula` records the calculator expression that produced `amount_minor_units`, such as `3.5+10.5+11+3`. It is canonical ASCII that does not depend on locale: operands as typed with `.` as the decimal separator and trailing fractional zeros dropped, operators `+ - * /`, a percent operand followed by `%`, no spaces. It is evaluated strictly left to right. A percent operand depends on the operator before it, as on phone calculators: after + or − it is that percent of the running total (`200-10%` is 180), after × or ÷ it is a hundredth (`200*10%` is 20, `200/10%` is 2000), and with no operator before it, a hundredth on its own (`10%` is 0.1). Percent arithmetic rounds half away from zero in minor units, like × and ÷. Wherever × or ÷ follows + or −, the expression so far is bracketed, so the keys `1 + 2 × 2` are stored as `(1+2)*2` and shown as `(1 + 2) × 2 = 6`, which reads the same under usual precedence. Only this canonical form is accepted when reading. Subtotals may go negative; only the finished amount is clamped to zero. It is null when the amount was typed without an operator or `%`. A build from before `%` cannot parse a percent formula, so it ignores it and keeps the stored amount. When the form opens a transaction, it parses the formula and recalculates the result on the keypad, so the user can see and edit the calculation. `amount_minor_units` stays authoritative: a formula that does not parse, or that recalculates to a different amount, is ignored.
 - `currency` stores the original transaction currency. Phase 2 conversion never overwrites the original `amount_minor_units` or `currency`.
 - `uuid` identifies the transaction on every device; `id` is unique only inside one install. A Drift client default sets it on every insert path (form, recurring approval, shopping-list conversion, import), and `save` never writes it, so an edit keeps it. Only `insertImported` writes a uuid it is given: a Ledgerly export's. The CSV export writes it in the `id` column. Integer primary and foreign keys stay as they are, and no other table has a uuid.
 - `created_at` and `updated_at` are populated by `TransactionRepository`, not by the database. On insert, both are set to `DateTime.now()`. On every update, `updated_at` is refreshed to `DateTime.now()` and `created_at` is left unchanged.
@@ -666,7 +666,7 @@ Notes:
 
 The create/edit form lives at `/settings/recurring/new` and `/settings/recurring/:id` and reuses transaction-form widgets for visual parity:
 - **Name** input → backed by `state.memo`; the only free-text field.
-- **Amount** display + `CalculatorKeypad` — same widget as the transaction form. Decimals come from the selected account's currency. Operators (`+ − × ÷`) are supported; long-press ⌫ clears.
+- **Amount** display + `CalculatorKeypad` — same widget as the transaction form. Decimals come from the selected account's currency. Operators (`+ − × ÷`) and `%` are supported; AC and long-press ⌫ clear. The keypad's `=` finishes the calculation, and its Save key saves the rule like the AppBar action.
 - **Category** picker → `CategoryChip` opens `showCategoryPicker(type: expense)`; v1 supports expense rules only.
 - **Account** picker → `AccountSelectorTile` opens `showAccountPickerSheet`.
 - **Frequency** dropdown with conditional sub-fields (weekday chips for weekly, day-of-month stepper for monthly, month dropdown + day-of-month stepper for yearly).
@@ -1005,7 +1005,7 @@ ShellRoute (bottom nav)
 - Save stays disabled until amount is greater than zero and both category and account are selected
 - Leaving with unsaved changes shows a confirm-discard dialog
 - Save failure keeps the form open and shows an error snackbar; successful save returns to Home and places the new transaction at the top of the list
-- **Shopping-list draft rules:** the "Add to shopping list" action requires account + expense category + date (amount is optional). "Save draft" in edit mode follows the same minimum requirements. "Save to transaction" additionally requires amount > 0. Income-category drafts are rejected at the repository layer regardless of UI state. Archived account/category references show an inline warning; draft save remains allowed but conversion is blocked until archived references are replaced. Zero-amount drafts persist `draft_amount_minor_units = null` / `draft_currency_code = null`; the visible currency reseeds from the selected account on next open.
+- **Shopping-list draft rules:** the "Add to shopping list" action requires account + expense category + date (amount is optional). "Save draft" in edit mode, and the keypad's Save there, follow the same minimum requirements. "Save to transaction" additionally requires amount > 0. Income-category drafts are rejected at the repository layer regardless of UI state. Archived account/category references show an inline warning; draft save remains allowed but conversion is blocked until archived references are replaced. Zero-amount drafts persist `draft_amount_minor_units = null` / `draft_currency_code = null`; the visible currency reseeds from the selected account on next open.
 
 ### Screen States
 
@@ -1128,7 +1128,22 @@ Scaffold(resizeToAvoidBottomInset: false)
           └─ Expanded → CalculatorKeypad (bottom-aligned)
 ```
 
-Category and account share one row, and currency and date the row below, as half-width tiles without a chevron. The form takes its natural height and the keypad's keys shrink from 56dp toward the 48dp tap target to fit the height left over, so on a typical phone the form does not scroll. The form scrolls only when even 48dp keys leave too little room (short phones, landscape, large text); the keypad is never pushed off screen.
+Category and account share one row, and currency and date the row below, as half-width tiles without a chevron. The form takes its natural height and the keypad's keys shrink to fit the height left over, so on a typical phone the form does not scroll. The form scrolls only when even the smallest keys leave too little room (short phones, landscape, large text); the keypad is never pushed off screen.
+
+The keypad is a 5 × 4 grid, like a phone calculator:
+
+```text
+ AC    %    ⌫    ÷
+  7    8    9    ×
+  4    5    6    −
+  1    2    3    +
+Save   0    .    =
+```
+
+- **AC** clears the amount, as long-pressing ⌫ does. **%** turns the operand being typed into a percent (see `amount_formula` under the data model). Digits and `.` after `%` are ignored; ⌫ removes the `%`.
+- **=** finishes the calculation. It is enabled only while an expression is pending. The amount display has no `=` of its own.
+- **Save** saves what the page is editing and is disabled while that save isn't allowed. On Add/Edit Transaction it saves the transaction (disabled while `canSave` is false), and the AppBar Save stays. In shopping-list draft edit mode it saves the draft back to the list, as "Save draft" does (disabled while `canSaveDraft` is false); it never converts the draft. On the recurring rule form it saves the rule.
+- Five rows share the height four rows of 48–56dp keys took before the fifth row was added (`CalculatorKeypad.minHeight` is unchanged), so keys are about 37–43dp tall, below the 48dp tap target (see *Accessibility*). Key labels use `titleMedium` and keep the 1.5× text-scale clamp.
 
 ### Category picker
 
@@ -1178,7 +1193,7 @@ No `try/catch` in widgets. No unhandled `Future` anywhere: a widget either await
 ## Accessibility
 
 - WCAG AA contrast for all text, including rainbow-gradient splash text and category tiles
-- Minimum 48×48dp tap targets for FAB, swipe actions, category tiles, keypad keys
+- Minimum 48×48dp tap targets for FAB, swipe actions, category tiles. Exception: calculator keypad keys are about 37–43dp tall, because the 5 × 4 grid fits five rows into the height four rows had (issue #144). They are wider than 48dp on a phone. A different fix can follow if they prove too small.
 - `Semantics` labels on icon-only buttons (FAB, delete, undo snackbar action)
 - Dynamic text scaling respected up to 2×; splash day counter uses `AutoSizeText` or clamps at 1.5× to preserve layout
 - `MediaQuery.boldText` respected in list rendering
