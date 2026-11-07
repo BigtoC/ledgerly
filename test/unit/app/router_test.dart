@@ -540,6 +540,40 @@ void main() {
     // RT04 — collapsed into RT02 (same route, different literal id; all
     // three assertions are already covered by RT02).
 
+    // RT05 — issue #147: `new` is not an item id for the :itemId redirect.
+    testWidgets(
+      'RT05: /home/shopping-list/new opens the form in shopping-list mode',
+      (tester) async {
+        final db = newTestAppDatabase();
+        addTearDown(db.close);
+        final container = makeTestContainer(
+          db: db,
+          extraOverrides: [
+            splashGateSnapshotProvider.overrideWithValue(
+              SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        final router = container.read(routerProvider);
+        addTearDown(router.dispose);
+
+        router.go('/home/shopping-list/new');
+
+        await tester.pumpWidget(buildTestApp(container: container));
+        await tester.pumpAndSettle();
+
+        final leaf = router.routerDelegate.currentConfiguration.last;
+        expect(leaf.matchedLocation, '/home/shopping-list/new');
+        expect(leaf.route.parentNavigatorKey, isNotNull);
+        final form = tester.widget<TransactionFormScreen>(
+          find.byType(TransactionFormScreen),
+        );
+        expect(form.mode, isA<AddShoppingListDraftMode>());
+      },
+    );
+
     testWidgets('/analysis renders AnalysisScreen', (tester) async {
       final db = newTestAppDatabase();
       addTearDown(db.close);
