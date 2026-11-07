@@ -19,23 +19,18 @@
 //   - While an expression is in progress, a one-line history above the
 //     amount shows the formula as typed with its pending operator
 //     ("3.5 + 10.5 + 11 +"), and the main amount shows the operand being
-//     typed.
+//     typed, with its `%` once that is pressed ("10%").
 //   - When `showingResult` is true, the history line shows the whole
 //     formula ("3.5 + 10.5 + 11 + 3 =") and the main amount shows the
 //     fixed-precision result (e.g. "28.00" for USD). This includes a
-//     formula loaded from a saved transaction. A dangling operator finished
-//     with `=` ("12 +") leaves no formula, so only the result shows and the
-//     history line is hidden.
+//     formula loaded from a saved transaction, and a lone percent
+//     ("10% ="). A dangling operator finished with `=` ("12 +") leaves no
+//     formula, so only the result shows and the history line is hidden.
 //   - Brackets show the left-to-right order where it differs from usual
 //     precedence ("(1 + 2) × 2 ="). Operands keep the fractional digits as
 //     typed, minus trailing zeros, with locale digit grouping ("1,234.5").
-//   - When `onEquals` is set, an `=` button sits at the end of the history
-//     line, directly above the currency code. It shows for as long as the
-//     history line does and is enabled only while an expression is pending.
-//     Tapping it fires a medium haptic, a step up from the keypad's light one.
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/utils/money_formatter.dart';
@@ -51,7 +46,6 @@ class AmountDisplay extends StatelessWidget {
     required this.currency,
     this.currencyTouched = false,
     this.hasError = false,
-    this.onEquals,
   });
 
   /// Source of truth for what to render. The screen reads it from the
@@ -71,9 +65,6 @@ class AmountDisplay extends StatelessWidget {
   /// inline validation).
   final bool hasError;
 
-  /// Finishes the pending calculation. When null, no `=` button is shown.
-  final VoidCallback? onEquals;
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -86,7 +77,8 @@ class AmountDisplay extends StatelessWidget {
     final expressionText = _buildExpressionText(locale: l10n.localeName);
     final text = showPlaceholder
         ? l10n.txAmountPlaceholderInCurrency(code)
-        : _renderAmountText(locale: l10n.localeName);
+        : '${_renderAmountText(locale: l10n.localeName)}'
+              '${keypad.isPercent ? '%' : ''}';
     final foreground = hasError
         ? theme.colorScheme.error
         : theme.colorScheme.onSurface;
@@ -108,56 +100,29 @@ class AmountDisplay extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (expressionText != null)
-            Row(
-              children: [
-                Expanded(
-                  // A long formula scrolls instead of being ellipsized, and
-                  // starts scrolled to its end so the operand being edited
-                  // stays visible. The minimum width keeps a short one
-                  // left-aligned with the amount below.
-                  child: LayoutBuilder(
-                    builder: (context, constraints) => SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      reverse: true,
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minWidth: constraints.maxWidth,
-                        ),
-                        child: Align(
-                          alignment: AlignmentDirectional.centerStart,
-                          child: Text(
-                            expressionText,
-                            maxLines: 1,
-                            softWrap: false,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: foreground.withValues(alpha: 0.6),
-                            ),
-                          ),
-                        ),
+            // A long formula scrolls instead of being ellipsized, and starts
+            // scrolled to its end so the operand being edited stays visible.
+            // The minimum width keeps a short one left-aligned with the
+            // amount below.
+            LayoutBuilder(
+              builder: (context, constraints) => SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                reverse: true,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(
+                      expressionText,
+                      maxLines: 1,
+                      softWrap: false,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: foreground.withValues(alpha: 0.6),
                       ),
                     ),
                   ),
                 ),
-                if (onEquals != null)
-                  IconButton.filledTonal(
-                    tooltip: l10n.txKeypadEquals,
-                    // The glyph only follows the button's enabled/disabled
-                    // foreground colour when its style comes from the
-                    // button, not from the Text itself.
-                    style: ButtonStyle(
-                      textStyle: WidgetStatePropertyAll(
-                        theme.textTheme.titleLarge,
-                      ),
-                    ),
-                    onPressed: keypad.isEvaluating
-                        ? () {
-                            HapticFeedback.mediumImpact();
-                            onEquals!();
-                          }
-                        : null,
-                    icon: const Text('='),
-                  ),
-              ],
+              ),
             ),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -216,7 +181,7 @@ class AmountDisplay extends StatelessWidget {
   String? _buildExpressionText({required String locale}) {
     // Evaluating, the formula ends with its pending operator; on a result
     // it is complete. A result without a formula has no history line.
-    if (keypad.formulaOperators.isEmpty) return null;
+    if (keypad.formulaOperands.isEmpty) return null;
     final text = _formulaText(
       keypad.formulaOperands,
       keypad.formulaOperators,

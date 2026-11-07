@@ -22,6 +22,7 @@ FormulaOperand _whole(int minorUnits) => (
   amountMinorUnits: minorUnits,
   fractionalDigitsEntered: 0,
   isFractionalMode: false,
+  isPercent: false,
 );
 
 void main() {
@@ -653,5 +654,127 @@ void main() {
         expect(result.amountMinorUnits, 0);
       },
     );
+  });
+
+  group('KeypadState.pushPercent (issue #144)', () {
+    // `%` turns the operand being typed into a percent, based on the
+    // operator before it: of the running total for + and −, a fraction for
+    // × and ÷, and a fraction straight away when there is no operator.
+    KeypadState keys(String typed, {int decimals = 2}) {
+      var s = const KeypadState.initial();
+      for (final key in typed.split(' ')) {
+        s = switch (key) {
+          '+' => s.pushOperator(CalcOperator.add, decimals: decimals),
+          '-' => s.pushOperator(CalcOperator.subtract, decimals: decimals),
+          '*' => s.pushOperator(CalcOperator.multiply, decimals: decimals),
+          '/' => s.pushOperator(CalcOperator.divide, decimals: decimals),
+          '%' => s.pushPercent(decimals: decimals),
+          '=' => s.equals(decimals: decimals),
+          '<' => s.pop(decimals: decimals),
+          '.' => s.pushDecimal(decimals: decimals),
+          _ =>
+            key
+                .split('')
+                .fold(s, (k, d) => k.push(int.parse(d), decimals: decimals)),
+        };
+      }
+      return s;
+    }
+
+    test('K100: 200 − 10 % = 180', () {
+      expect(keys('200 - 10 % =').amountMinorUnits, 18000);
+    });
+
+    test('K101: 200 + 10 % = 220', () {
+      expect(keys('200 + 10 % =').amountMinorUnits, 22000);
+    });
+
+    test('K102: 200 × 10 % = 20', () {
+      expect(keys('200 * 10 % =').amountMinorUnits, 2000);
+    });
+
+    test('K103: 200 ÷ 10 % = 2000', () {
+      expect(keys('200 / 10 % =').amountMinorUnits, 200000);
+    });
+
+    test('K104: 10 % with no operator shows 0.1 straight away', () {
+      final s = keys('10 %');
+      expect(s.showingResult, isTrue);
+      expect(s.amountMinorUnits, 10);
+    });
+
+    test(
+      'K105: the operand keeps its typed value and is marked as a percent',
+      () {
+        final s = keys('200 - 10 %');
+        expect(s.isEvaluating, isTrue);
+        expect(s.isPercent, isTrue);
+        expect(s.amountMinorUnits, 1000);
+      },
+    );
+
+    test('K106: % with no operand typed is a no-op', () {
+      expect(keys('%'), const KeypadState.initial());
+      final pending = keys('200 -');
+      expect(pending.pushPercent(decimals: 2), pending);
+    });
+
+    test('K107: % pressed twice is a no-op', () {
+      final once = keys('200 - 10 %');
+      expect(once.pushPercent(decimals: 2), once);
+    });
+
+    test('K108: ⌫ after % removes the % and keeps the operand', () {
+      final s = keys('200 - 10 % <');
+      expect(s, keys('200 - 10'));
+    });
+
+    test('K109: ⌫ after 10 % gives back 10', () {
+      expect(keys('10 % <'), keys('10'));
+    });
+
+    test('K109b: ⌫ on the operator after 10 % goes back to the 0.1 result', () {
+      expect(keys('10 % + <'), keys('10 %'));
+      expect(keys('10 % * <').equals(decimals: 2).amountMinorUnits, 10);
+    });
+
+    test('K110: digits and . after % are ignored', () {
+      final s = keys('200 - 10 %');
+      expect(s.push(5, decimals: 2), s);
+      expect(s.pushDecimal(decimals: 2), s);
+    });
+
+    test('K111: % on a result is a no-op', () {
+      final s = keys('200 - 10 =');
+      expect(s.pushPercent(decimals: 2), s);
+    });
+
+    test('K112: an operator after % commits the percent and chains', () {
+      expect(keys('200 - 10 % + 5 =').amountMinorUnits, 18500);
+    });
+
+    test('K113: a percent of zero divides to zero', () {
+      expect(keys('200 / 0 % =').amountMinorUnits, 0);
+    });
+
+    test('K114: JPY rounds the percent half away from zero', () {
+      expect(keys('200 - 10 % =', decimals: 0).amountMinorUnits, 180);
+      // 155 − 15.5 → 155 − 16
+      expect(keys('155 - 10 % =', decimals: 0).amountMinorUnits, 139);
+      expect(keys('200 * 10 % =', decimals: 0).amountMinorUnits, 20);
+      expect(keys('200 / 10 % =', decimals: 0).amountMinorUnits, 2000);
+      // 0.1 yen rounds to 0
+      expect(keys('10 %', decimals: 0).amountMinorUnits, 0);
+    });
+
+    test('K115: ETH (18 decimals) keeps full precision', () {
+      // Operands stay under 9.2 ETH, the most an int holds in wei.
+      const eth = 1000000000000000000;
+      // 2 − 5 % = 1.9
+      expect(keys('2 - 5 % =', decimals: 18).amountMinorUnits, eth ~/ 10 * 19);
+      expect(keys('2 * 5 % =', decimals: 18).amountMinorUnits, eth ~/ 10);
+      expect(keys('0 . 2 / 5 % =', decimals: 18).amountMinorUnits, eth * 4);
+      expect(keys('5 %', decimals: 18).amountMinorUnits, eth ~/ 20);
+    });
   });
 }

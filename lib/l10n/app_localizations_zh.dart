@@ -452,6 +452,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get txKeypadEquals => 'Equals';
 
   @override
+  String get txKeypadPercent => 'Percent';
+
+  @override
   String get homeEmptyDayMessage => 'No transaction';
 
   @override
@@ -1866,6 +1869,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get txKeypadEquals => '等于';
 
   @override
+  String get txKeypadPercent => '百分比';
+
+  @override
   String get homeEmptyDayMessage => '无交易';
 
   @override
@@ -3235,6 +3241,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get txKeypadEquals => '等於';
+
+  @override
+  String get txKeypadPercent => '百分比';
 
   @override
   String get homeEmptyDayMessage => '無交易';

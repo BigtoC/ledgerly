@@ -36,12 +36,15 @@ enum CalcOperator { add, subtract, multiply, divide }
 /// - [showingResult] is true immediately after `=` is pressed.
 /// - [hasCurrentInput] is true when the user has typed at least one digit
 ///   into the current operand slot.
+/// - [isPercent] is true once `%` finishes the operand being typed after an
+///   operator. [amountMinorUnits] keeps the number typed before the `%`.
 /// - [formulaOperands] / [formulaOperators] are the only record of the
 ///   expression, as typed, so it can be stored and reloaded (see
 ///   `amount_formula.dart`). While evaluating they hold the operands before
 ///   the current one, each followed by its operator. While showing a result
 ///   they hold the whole expression, or are both empty when the result has
-///   no formula (`1 + =`). Both are empty otherwise. The running total,
+///   no formula (`1 + =`). A lone percent (`10 %`) is a formula with no
+///   operator. Both are empty otherwise. The running total,
 ///   pending operator and last operand are all derived from them.
 class KeypadState {
   KeypadState({
@@ -51,6 +54,7 @@ class KeypadState {
     this.isEvaluating = false,
     this.showingResult = false,
     this.hasCurrentInput = false,
+    this.isPercent = false,
     this.formulaOperands = const [],
     this.formulaOperators = const [],
   }) : assert(
@@ -58,7 +62,7 @@ class KeypadState {
              ? !showingResult &&
                    formulaOperators.isNotEmpty &&
                    formulaOperands.length == formulaOperators.length
-             : showingResult && formulaOperators.isNotEmpty
+             : showingResult && formulaOperands.isNotEmpty
              ? formulaOperands.length == formulaOperators.length + 1
              : formulaOperands.isEmpty && formulaOperators.isEmpty,
          'formula lists do not match the keypad mode',
@@ -72,6 +76,7 @@ class KeypadState {
       isEvaluating = false,
       showingResult = false,
       hasCurrentInput = false,
+      isPercent = false,
       formulaOperands = const [],
       formulaOperators = const [];
 
@@ -136,6 +141,9 @@ class KeypadState {
   /// operand slot (used to distinguish "0 entered" from "nothing entered").
   final bool hasCurrentInput;
 
+  /// True once `%` finishes the operand being typed.
+  final bool isPercent;
+
   final List<FormulaOperand> formulaOperands;
   final List<CalcOperator> formulaOperators;
 
@@ -190,11 +198,12 @@ class KeypadState {
     amountMinorUnits: amountMinorUnits,
     fractionalDigitsEntered: fractionalDigitsEntered,
     isFractionalMode: isFractionalMode,
+    isPercent: isPercent,
   );
 
   /// The expression that produces the amount `=` would show, in the stored
   /// formula format (e.g. `3.5+10.5+11+3`). A dangling operator is left
-  /// out. Null when there is no operator to record.
+  /// out. Null when there is no operator or percent to record.
   String? formula({required int decimals}) {
     final finished = _finishedFormula;
     if (finished == null) return null;
@@ -206,7 +215,7 @@ class KeypadState {
   }
 
   /// The whole expression as `=` would finish it, or null when it has no
-  /// operator.
+  /// operator or percent.
   ParsedFormula? get _finishedFormula {
     final List<FormulaOperand> operands;
     final List<CalcOperator> operators;
@@ -220,7 +229,7 @@ class KeypadState {
       operands = formulaOperands;
       operators = formulaOperators;
     }
-    if (operators.isEmpty) return null;
+    if (!isFormula(operands, operators)) return null;
     return (operands: operands, operators: operators);
   }
 
@@ -239,6 +248,7 @@ class KeypadState {
       isFractionalMode: current.isFractionalMode,
       isEvaluating: committed.isNotEmpty,
       hasCurrentInput: true,
+      isPercent: current.isPercent,
       formulaOperands: committed,
       formulaOperators: committed.isEmpty ? const [] : operators,
     );
@@ -257,7 +267,7 @@ class KeypadState {
   ///   contract).
   ///
   /// When [showingResult] is true, typing a new digit clears the old
-  /// expression and starts a fresh operand.
+  /// expression and starts a fresh operand. After `%` it is ignored.
   KeypadState push(int digit, {required int decimals}) {
     assert(digit >= 0 && digit <= 9, 'digit out of range: $digit');
 
@@ -270,6 +280,7 @@ class KeypadState {
         hasCurrentInput: true,
       );
     }
+    if (isPercent) return this;
 
     if (isFractionalMode) {
       if (fractionalDigitsEntered >= decimals) {
@@ -297,13 +308,12 @@ class KeypadState {
   /// decimals (the keypad widget greys the key out, but the helper must
   /// also reject so a mistaken caller cannot toggle the flag).
   /// Idempotent — pressing `.` while already in fractional mode does
-  /// nothing.
+  /// nothing. Ignored after `%`.
   ///
   /// When [showingResult] is true, pressing `.` clears the old expression
   /// and starts a fresh fractional operand.
   KeypadState pushDecimal({required int decimals}) {
-    if (decimals == 0) return this;
-    if (isFractionalMode) return this;
+    if (decimals == 0 || isFractionalMode || isPercent) return this;
     if (showingResult) {
       // Decimal after a result clears the expression and starts fresh.
       return KeypadState(
@@ -331,11 +341,13 @@ class KeypadState {
   ///   last digit. A result without one becomes a plain amount instead.
   /// - While evaluating with no digit typed after the operator, removes the
   ///   operator and reopens the previous operand for editing.
+  ///   A lone percent (`10 % +`) goes back to its result instead.
   /// - While evaluating with a digit typed, edits that operand and keeps the
   ///   expression. [hasCurrentInput] turns false once it is back to 0.
+  /// - After `%`, removes the `%` and keeps the number typed before it.
   KeypadState pop({required int decimals}) {
     if (showingResult) {
-      if (formulaOperators.isNotEmpty) {
+      if (formulaOperands.isNotEmpty) {
         return _reopen(
           formulaOperands,
           formulaOperators,
@@ -350,7 +362,20 @@ class KeypadState {
     }
 
     if (isEvaluating && !hasCurrentInput) {
+      // `10 % +` goes back to the `10 %` result it came from.
+      if (formulaOperands case [final only] when only.isPercent) {
+        return equals(decimals: decimals);
+      }
       return _reopen(formulaOperands, _withoutLast(formulaOperators));
+    }
+
+    if (isPercent) {
+      return _withCurrentOperand(
+        amountMinorUnits: amountMinorUnits,
+        fractionalDigitsEntered: fractionalDigitsEntered,
+        isFractionalMode: isFractionalMode,
+        hasCurrentInput: true,
+      );
     }
 
     if (isFractionalMode) {
@@ -407,6 +432,7 @@ class KeypadState {
     required int fractionalDigitsEntered,
     required bool isFractionalMode,
     required bool hasCurrentInput,
+    bool isPercent = false,
   }) {
     return KeypadState(
       amountMinorUnits: amountMinorUnits,
@@ -414,6 +440,7 @@ class KeypadState {
       isFractionalMode: isFractionalMode,
       isEvaluating: isEvaluating,
       hasCurrentInput: hasCurrentInput,
+      isPercent: isPercent,
       formulaOperands: isEvaluating ? formulaOperands : const [],
       formulaOperators: isEvaluating ? formulaOperators : const [],
     );
@@ -444,7 +471,7 @@ class KeypadState {
     } else if (isEvaluating) {
       operands = [...formulaOperands, _currentOperand];
       operators = [...formulaOperators, op];
-    } else if (showingResult && formulaOperators.isNotEmpty) {
+    } else if (showingResult && formulaOperands.isNotEmpty) {
       // Continuing the formula resumes its unclamped running total, so the
       // keys and the replayed formula agree even when the shown result was
       // clamped at zero.
@@ -464,6 +491,38 @@ class KeypadState {
       isEvaluating: true,
       formulaOperands: operands,
       formulaOperators: operators,
+    );
+  }
+
+  /// The `%` key. Turns the operand being typed into a percent, based on the
+  /// operator before it, as phone calculators do:
+  ///
+  /// - After + or −, a percent of the running total (`200 − 10 %` is 180).
+  /// - After × or ÷, a fraction (`200 × 10 %` is 20).
+  /// - With no operator, a fraction shown straight away as a result
+  ///   (`10 %` is 0.1), with `10%` as its formula.
+  ///
+  /// No-op with no operand typed, after `%`, or on a result.
+  KeypadState pushPercent({required int decimals}) {
+    if (!hasCurrentInput || isPercent || showingResult) return this;
+    final percent = (
+      amountMinorUnits: amountMinorUnits,
+      fractionalDigitsEntered: fractionalDigitsEntered,
+      isFractionalMode: isFractionalMode,
+      isPercent: true,
+    );
+    if (!isEvaluating) {
+      return KeypadState.fromFormula((
+        operands: [percent],
+        operators: const [],
+      ), decimals: decimals);
+    }
+    return _withCurrentOperand(
+      amountMinorUnits: amountMinorUnits,
+      fractionalDigitsEntered: fractionalDigitsEntered,
+      isFractionalMode: isFractionalMode,
+      hasCurrentInput: true,
+      isPercent: true,
     );
   }
 
@@ -488,7 +547,7 @@ class KeypadState {
     final operators = hasCurrentInput
         ? formulaOperators
         : _withoutLast(formulaOperators);
-    final hasFormula = operators.isNotEmpty;
+    final hasFormula = isFormula(operands, operators);
     return KeypadState(
       amountMinorUnits: _nonNegative(
         _fold(operands, operators, decimals: decimals),
@@ -514,6 +573,7 @@ class KeypadState {
         other.isEvaluating == isEvaluating &&
         other.showingResult == showingResult &&
         other.hasCurrentInput == hasCurrentInput &&
+        other.isPercent == isPercent &&
         _listEquals(other.formulaOperands, formulaOperands) &&
         _listEquals(other.formulaOperators, formulaOperators);
   }
@@ -526,6 +586,7 @@ class KeypadState {
     isEvaluating,
     showingResult,
     hasCurrentInput,
+    isPercent,
     Object.hashAll(formulaOperands),
     Object.hashAll(formulaOperators),
   );
@@ -538,6 +599,7 @@ class KeypadState {
       'isEvaluating: $isEvaluating, '
       'showingResult: $showingResult, '
       'hasCurrentInput: $hasCurrentInput, '
+      'isPercent: $isPercent, '
       'formulaOperands: $formulaOperands, '
       'formulaOperators: $formulaOperators)';
 }
@@ -562,16 +624,20 @@ bool _listEquals<T>(List<T> a, List<T> b) {
 
 /// Evaluates [operands] joined by [operators] strictly left to right, the
 /// same way chained operator presses do. [operators] has one fewer entry.
+/// A leading percent operand is a hundredth of its number.
 int _fold(
   List<FormulaOperand> operands,
   List<CalcOperator> operators, {
   required int decimals,
 }) {
-  var result = operands.first.amountMinorUnits;
+  final first = operands.first;
+  var result = first.isPercent
+      ? _roundHalfUp(BigInt.from(first.amountMinorUnits), BigInt.from(100))
+      : first.amountMinorUnits;
   for (var i = 0; i < operators.length; i++) {
     result = _evaluate(
       leftOperand: result,
-      rightOperand: operands[i + 1].amountMinorUnits,
+      rightOperand: operands[i + 1],
       operator: operators[i],
       decimals: decimals,
     );
@@ -584,27 +650,31 @@ int _fold(
 /// round half away from zero at the [decimals] boundary. A subtotal may go
 /// negative (`5 - 10 + 20` is 15); only the finished result is clamped to
 /// zero, by [_nonNegative], because amounts can never be negative.
+///
+/// A percent [rightOperand] is a hundredth of its number: after × or ÷ it
+/// scales [leftOperand] by that fraction, and after + or − it adds or
+/// subtracts that fraction of [leftOperand], rounded the same way.
 int _evaluate({
   required int leftOperand,
-  required int rightOperand,
+  required FormulaOperand rightOperand,
   required CalcOperator operator,
   required int decimals,
 }) {
-  final unit = BigInt.from(pow10(decimals));
+  final left = BigInt.from(leftOperand);
+  final right = BigInt.from(rightOperand.amountMinorUnits);
+  // A percent's number is in hundredths of a unit.
+  final unit =
+      BigInt.from(pow10(decimals)) *
+      BigInt.from(rightOperand.isPercent ? 100 : 1);
+  final term = rightOperand.isPercent
+      ? _roundHalfUp(left * right, unit)
+      : rightOperand.amountMinorUnits;
   return switch (operator) {
-    CalcOperator.add => leftOperand + rightOperand,
-    CalcOperator.subtract => leftOperand - rightOperand,
-    CalcOperator.multiply => _roundHalfUp(
-      BigInt.from(leftOperand) * BigInt.from(rightOperand),
-      unit,
-    ),
+    CalcOperator.add => leftOperand + term,
+    CalcOperator.subtract => leftOperand - term,
+    CalcOperator.multiply => _roundHalfUp(left * right, unit),
     CalcOperator.divide =>
-      rightOperand == 0
-          ? 0
-          : _roundHalfUp(
-              BigInt.from(leftOperand) * unit,
-              BigInt.from(rightOperand),
-            ),
+      right == BigInt.zero ? 0 : _roundHalfUp(left * unit, right),
   };
 }
 

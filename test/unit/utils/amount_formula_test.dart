@@ -10,6 +10,7 @@ void main() {
           amountMinorUnits: 1100,
           fractionalDigitsEntered: 0,
           isFractionalMode: false,
+          isPercent: false,
         ), decimals: 2),
         '11',
       );
@@ -21,6 +22,7 @@ void main() {
           amountMinorUnits: 350,
           fractionalDigitsEntered: 1,
           isFractionalMode: true,
+          isPercent: false,
         ), decimals: 2),
         '3.5',
       );
@@ -29,6 +31,7 @@ void main() {
           amountMinorUnits: 305,
           fractionalDigitsEntered: 2,
           isFractionalMode: true,
+          isPercent: false,
         ), decimals: 2),
         '3.05',
       );
@@ -40,6 +43,7 @@ void main() {
           amountMinorUnits: 350,
           fractionalDigitsEntered: 2,
           isFractionalMode: true,
+          isPercent: false,
         ), decimals: 2),
         '3.5',
       );
@@ -48,6 +52,7 @@ void main() {
           amountMinorUnits: 300,
           fractionalDigitsEntered: 2,
           isFractionalMode: true,
+          isPercent: false,
         ), decimals: 2),
         '3',
       );
@@ -56,6 +61,7 @@ void main() {
           amountMinorUnits: 500000000000000000,
           fractionalDigitsEntered: 18,
           isFractionalMode: true,
+          isPercent: false,
         ), decimals: 18),
         '0.5',
       );
@@ -67,6 +73,7 @@ void main() {
           amountMinorUnits: 300,
           fractionalDigitsEntered: 0,
           isFractionalMode: true,
+          isPercent: false,
         ), decimals: 2),
         '3',
       );
@@ -78,6 +85,7 @@ void main() {
           amountMinorUnits: 1500,
           fractionalDigitsEntered: 0,
           isFractionalMode: false,
+          isPercent: false,
         ), decimals: 0),
         '1500',
       );
@@ -90,6 +98,7 @@ void main() {
         amountMinorUnits: 100,
         fractionalDigitsEntered: 0,
         isFractionalMode: false,
+        isPercent: false,
       );
       expect(
         encodeAmountFormula(
@@ -120,21 +129,25 @@ void main() {
           amountMinorUnits: 350,
           fractionalDigitsEntered: 1,
           isFractionalMode: true,
+          isPercent: false,
         ),
         (
           amountMinorUnits: 1050,
           fractionalDigitsEntered: 1,
           isFractionalMode: true,
+          isPercent: false,
         ),
         (
           amountMinorUnits: 1100,
           fractionalDigitsEntered: 0,
           isFractionalMode: false,
+          isPercent: false,
         ),
         (
           amountMinorUnits: 300,
           fractionalDigitsEntered: 0,
           isFractionalMode: false,
+          isPercent: false,
         ),
       ]);
       expect(
@@ -186,6 +199,7 @@ void main() {
       amountMinorUnits: 100,
       fractionalDigitsEntered: 0,
       isFractionalMode: false,
+      isPercent: false,
     );
     String encode(List<CalcOperator> operators) => encodeAmountFormula(
       operands: List.filled(operators.length + 1, one),
@@ -228,6 +242,64 @@ void main() {
         '3.50+1', // canonical form drops trailing zeros
         '03+1',
       ]) {
+        expect(parseAmountFormula(bad, decimals: 2), isNull, reason: bad);
+      }
+    });
+  });
+
+  group('percent (issue #144)', () {
+    const percent = (
+      amountMinorUnits: 1000,
+      fractionalDigitsEntered: 0,
+      isFractionalMode: false,
+      isPercent: true,
+    );
+    const whole = (
+      amountMinorUnits: 20000,
+      fractionalDigitsEntered: 0,
+      isFractionalMode: false,
+      isPercent: false,
+    );
+
+    test('a percent operand is written with a trailing %', () {
+      expect(
+        encodeAmountFormula(
+          operands: const [whole, percent],
+          operators: const [CalcOperator.subtract],
+          decimals: 2,
+        ),
+        '200-10%',
+      );
+    });
+
+    test('a lone percent operand is a formula', () {
+      expect(
+        encodeAmountFormula(
+          operands: const [percent],
+          operators: const [],
+          decimals: 2,
+        ),
+        '10%',
+      );
+      final parsed = parseAmountFormula('10%', decimals: 2)!;
+      expect(parsed.operands, const [percent]);
+      expect(parsed.operators, isEmpty);
+    });
+
+    test('parses a percent operand back', () {
+      final parsed = parseAmountFormula('200-10%', decimals: 2)!;
+      expect(parsed.operands, const [whole, percent]);
+      expect(parsed.operators, const [CalcOperator.subtract]);
+      expect(parseAmountFormula('2.5%*4', decimals: 2)!.operands.first, (
+        amountMinorUnits: 250,
+        fractionalDigitsEntered: 1,
+        isFractionalMode: true,
+        isPercent: true,
+      ));
+    });
+
+    test('rejects a misplaced %', () {
+      for (final bad in ['%', '10%%', '%10', '10%5', '10.%', '1%0+1']) {
         expect(parseAmountFormula(bad, decimals: 2), isNull, reason: bad);
       }
     });

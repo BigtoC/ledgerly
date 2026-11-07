@@ -175,11 +175,7 @@ class _FormBody extends StatelessWidget {
                   // Calculator-driven amount display. The keypad lives at the
                   // bottom of the screen (outside this ListView) so it can't
                   // be dismissed mid-entry by the soft keyboard.
-                  AmountDisplay(
-                    keypad: state.keypad,
-                    currency: state.currency,
-                    onEquals: controller.equals,
-                  ),
+                  AmountDisplay(keypad: state.keypad, currency: state.currency),
                   const SizedBox(height: 16),
                   _CategoryPickerTile(
                     state: state,
@@ -244,6 +240,9 @@ class _FormBody extends StatelessWidget {
               onBackspace: controller.backspace,
               onClear: controller.clearAmount,
               onOperator: controller.applyOperator,
+              onPercent: controller.applyPercent,
+              onEquals: state.keypad.isEvaluating ? controller.equals : null,
+              onSave: state.isLoading ? null : () => _onSave(context),
             ),
           ],
         ),

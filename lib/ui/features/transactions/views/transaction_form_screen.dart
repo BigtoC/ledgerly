@@ -11,14 +11,16 @@
 //             └─ Expanded → CalculatorKeypad, pinned to the bottom
 //
 // Issue #100: the form takes its natural height and the keypad's keys
-// shrink (down to 48dp) into the height left over, so on a phone the form
-// does not scroll. Only when even 48dp keys leave too little room (short
-// phones, landscape, large text) does the form scroll.
+// shrink (down to `CalculatorKeypad.minHeight`) into the height left over,
+// so on a phone the form does not scroll. Only when even that leaves too
+// little room (short phones, landscape, large text) does the form scroll.
 //
 // `resizeToAvoidBottomInset: false` is mandatory — the keypad must stay
-// visible while the memo field's soft keyboard is open. Save lives in
-// the AppBar (numeric-only keypad). Adaptive 600dp behavior is supplied
-// by the router (`fullscreenDialog: true` + parentNavigatorKey).
+// visible while the memo field's soft keyboard is open. Save sits both in
+// the AppBar and on the keypad (issue #144); in EditShoppingListDraftMode
+// the keypad's Save saves the draft, as "Save draft" does. Adaptive 600dp
+// behavior is supplied by the router (`fullscreenDialog: true` +
+// parentNavigatorKey).
 //
 // The router builds the typed `mode` (see `_addModeFromExtra` in
 // `router.dart`); it drives hydration, the AppBar title and the CTA set.
@@ -202,6 +204,11 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     final controlsLocked = _blocksPopDuringMutation(state);
 
     final isShoppingListDraftMode = activeMode is EditShoppingListDraftMode;
+    void saveDraft() => _submitDraft(
+      context,
+      controller.saveDraft,
+      l10n.shoppingListSaveFailedSnackbar,
+    );
 
     return IgnorePointer(
       ignoring: controlsLocked,
@@ -210,8 +217,9 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
           children: [
             ConstrainedBox(
               // The form takes its natural height and the keypad's keys
-              // shrink into what is left, down to 48dp. Past that, the form
-              // scrolls rather than push the keypad off screen.
+              // shrink into what is left, down to the keypad's minHeight.
+              // Past that, the form scrolls rather than push the keypad off
+              // screen.
               constraints: BoxConstraints(
                 maxHeight: math.max(
                   0,
@@ -228,7 +236,6 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                       currency: state.displayCurrency,
                       currencyTouched: state.currencyTouched,
                       hasError: showAmountError,
-                      onEquals: controller.equals,
                     ),
                     if (showAmountError)
                       Padding(
@@ -307,11 +314,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                           controller.convertDraft,
                           l10n.shoppingListConvertFailedSnackbar,
                         ),
-                        onSaveDraft: () => _submitDraft(
-                          context,
-                          controller.saveDraft,
-                          l10n.shoppingListSaveFailedSnackbar,
-                        ),
+                        onSaveDraft: saveDraft,
                       )
                     else if (activeMode is AddTransactionMode)
                       _AddToShoppingListAction(
@@ -337,6 +340,15 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                   onBackspace: controller.backspace,
                   onClear: controller.clearAmount,
                   onOperator: controller.applyOperator,
+                  onPercent: controller.applyPercent,
+                  onEquals: state.keypad.isEvaluating
+                      ? controller.equals
+                      : null,
+                  onSave: isShoppingListDraftMode
+                      ? (state.canSaveDraft ? saveDraft : null)
+                      : (state.canSave
+                            ? () => _save(context, l10n, controller)
+                            : null),
                 ),
               ),
             ),

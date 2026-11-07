@@ -43,8 +43,9 @@ class Transactions extends Table {
   TextColumn get memo => text().nullable()();
 
   /// Keypad expression that produced `amount_minor_units`, e.g.
-  /// `3.5+10.5+11+3`. Canonical ASCII (`.` decimal, `+ - * /`), evaluated
-  /// left to right. Null when the amount was typed without an operator.
+  /// `3.5+10.5+11+3` or `200-10%`. Canonical ASCII (`.` decimal,
+  /// `+ - * /`, a trailing `%` on a percent operand), evaluated left to
+  /// right. Null when the amount was typed without an operator or `%`.
   /// Added in schema v6.
   TextColumn get amountFormula => text().named('amount_formula').nullable()();
   DateTimeColumn get date => dateTime()();

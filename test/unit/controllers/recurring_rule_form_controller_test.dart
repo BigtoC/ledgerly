@@ -209,6 +209,26 @@ void main() {
       expect(state.keypad.amountMinorUnits, 700);
     });
 
+    test('the percent key applies to the pending expression', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      await buildState(c);
+      final controller = c.read(recurringRuleFormControllerProvider().notifier);
+
+      controller
+        ..appendDigit(2)
+        ..appendDigit(0)
+        ..appendDigit(0)
+        ..applyOperator(CalcOperator.subtract)
+        ..appendDigit(1)
+        ..appendDigit(0)
+        ..applyPercent();
+
+      final state = c.read(recurringRuleFormControllerProvider()).value!;
+      expect(state.keypad.isPercent, isTrue);
+      expect(state.amountMinorUnits, 18000);
+    });
+
     test(
       'save edit updates draft and reports generation failure in the outcome',
       () async {

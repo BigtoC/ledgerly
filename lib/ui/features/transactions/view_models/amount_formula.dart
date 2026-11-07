@@ -4,24 +4,30 @@
 // that wrote it: operands use `.` as the decimal separator and drop
 // trailing fractional zeros ("3.5", not "3.50"; "3", not "3.00"), so an
 // amount loaded at full precision reads the same as one typed short;
-// operators are `+ - * /`; there are no spaces. Example: `3.5+10.5+11+3`.
+// operators are `+ - * /`; a percent operand ends with `%`; there are no
+// spaces. Examples: `3.5+10.5+11+3`, `200-10%`.
 //
 // The keypad evaluates strictly left to right, so wherever × or ÷ follows
 // + or −, the expression so far is bracketed: the keys `1 + 2 × 2` are
 // stored as `(1+2)*2`, which any reader applying usual precedence also
 // evaluates to 6. The same rendering drives the history line on screen.
 //
-// A formula always has at least one operator. A plain amount is stored as
-// a null formula, never as a single operand.
+// A formula always has at least one operator or a percent operand, so `10%`
+// is one. A plain amount is stored as a null formula, never as a single
+// operand. A build from before `%` can't parse a percent formula; it keeps
+// the stored amount, which is authoritative.
 
 import 'keypad_state.dart';
 
 /// One operand as the user typed it, in the active currency's minor units.
-/// The fields mirror `KeypadState`'s current-operand fields.
+/// The fields mirror `KeypadState`'s current-operand fields. [isPercent]
+/// operands were finished with `%`, and [amountMinorUnits] holds the number
+/// typed before it.
 typedef FormulaOperand = ({
   int amountMinorUnits,
   int fractionalDigitsEntered,
   bool isFractionalMode,
+  bool isPercent,
 });
 
 /// Operands and the operators between them;
@@ -58,8 +64,9 @@ String encodeFormulaOperand(FormulaOperand operand, {required int decimals}) {
 /// Renders [operands] joined by [operators] left to right, bracketing the
 /// expression so far wherever × or ÷ follows + or −. When [operators] is
 /// as long as [operands], the text ends with that pending operator.
-/// [operand] and [operator] render the parts and [separator] goes around
-/// each operator, so storage and the history line share one rendering.
+/// [operand] and [operator] render the parts, a percent operand is followed
+/// by `%`, and [separator] goes around each operator, so storage and the
+/// history line share one rendering.
 String renderFormula({
   required List<FormulaOperand> operands,
   required List<CalcOperator> operators,
@@ -71,7 +78,8 @@ String renderFormula({
     operators.length == operands.length ||
         operators.length == operands.length - 1,
   );
-  var text = operand(operands.first);
+  String term(FormulaOperand o) => o.isPercent ? '${operand(o)}%' : operand(o);
+  var text = term(operands.first);
   var hasUnbracketedAddition = false;
   for (var i = 0; i < operators.length; i++) {
     final op = operators[i];
@@ -85,7 +93,7 @@ String renderFormula({
     }
     text += '$separator${operator(op)}';
     if (i + 1 < operands.length) {
-      text += '$separator${operand(operands[i + 1])}';
+      text += '$separator${term(operands[i + 1])}';
     }
   }
   return text;
@@ -107,10 +115,15 @@ String encodeAmountFormula({
   );
 }
 
-final _operandPattern = RegExp(r'^(\d+)(?:\.(\d+))?$');
+final _operandPattern = RegExp(r'^(\d+)(?:\.(\d+))?(%)?$');
+
+/// Whether [operands] joined by [operators] is a formula rather than a
+/// plain amount: it has an operator or a percent.
+bool isFormula(List<FormulaOperand> operands, List<CalcOperator> operators) =>
+    operators.isNotEmpty || operands.any((o) => o.isPercent);
 
 /// Parses a stored formula for a currency with [decimals]. Returns null
-/// when [formula] is malformed, has no operator, has more fractional digits
+/// when [formula] is malformed, is a plain amount, has more fractional digits
 /// than the currency allows, overflows an int, or is not exactly what
 /// [encodeAmountFormula] writes. The last check rejects brackets in any
 /// other place (`1+(2*2)`) and unbracketed mixed operators (`1+2*2`), whose
@@ -131,7 +144,7 @@ ParsedFormula? parseAmountFormula(String formula, {required int decimals}) {
     if (op != null) operators.add(op);
     start = i + 1;
   }
-  if (operators.isEmpty) return null;
+  if (!isFormula(operands, operators)) return null;
   final canonical = encodeAmountFormula(
     operands: operands,
     operators: operators,
@@ -164,5 +177,6 @@ FormulaOperand? _parseOperand(String text, {required int decimals}) {
     amountMinorUnits: minorUnits.toInt(),
     fractionalDigitsEntered: fraction.length,
     isFractionalMode: fraction.isNotEmpty,
+    isPercent: match.group(3) != null,
   );
 }

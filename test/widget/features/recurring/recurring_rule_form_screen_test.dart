@@ -23,6 +23,7 @@ import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/ui/features/categories/view_models/categories_controller.dart';
 import 'package:ledgerly/ui/features/recurring/view_models/recurring_rule_form_controller.dart';
 import 'package:ledgerly/ui/features/recurring/views/recurring_rule_form_screen.dart';
+import 'package:ledgerly/ui/features/transactions/views/calculator_keypad.dart';
 import 'package:ledgerly/ui/features/recurring/view_models/recurring_rule_form_state.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
@@ -419,4 +420,50 @@ void main() {
       expect(find.text('Edit rule'), findsNothing);
     },
   );
+
+  group('keypad = and Save (issue #144)', () {
+    Future<void> tapKey(WidgetTester tester, String label) async {
+      await tester.tap(
+        find.descendant(
+          of: find.byType(CalculatorKeypad),
+          matching: find.text(label),
+        ),
+      );
+      await tester.pump();
+    }
+
+    testWidgets('RFS12: the keypad = finishes the calculation', (tester) async {
+      _useTallViewport(tester);
+      final container = _makeContainer(initial: _editState, ruleId: 1);
+      addTearDown(container.dispose);
+      await tester.pumpWidget(_wrapRouted(container, ruleId: 1));
+      await tester.pumpAndSettle();
+
+      for (final key in ['2', '+', '3', '=']) {
+        await tapKey(tester, key);
+      }
+
+      expect(find.text('2 + 3 ='), findsOneWidget);
+      expect(find.text('5.00'), findsOneWidget);
+    });
+
+    testWidgets('RFS13: the keypad Save saves the rule like the AppBar', (
+      tester,
+    ) async {
+      _useTallViewport(tester);
+      final container = _makeContainer(
+        initial: _editState,
+        ruleId: 1,
+        saveOutcome: const SaveRecurringRuleOutcome.saved(1, false),
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(_wrapRouted(container, ruleId: 1));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Save'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('LIST'), findsOneWidget);
+    });
+  });
 }

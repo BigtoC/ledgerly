@@ -314,6 +314,16 @@ class TransactionFormController extends _$TransactionFormController {
     state = _copyWithKeypad(s);
   }
 
+  void applyPercent() {
+    final s = state;
+    if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
+    final decimals = s.displayCurrency.decimals;
+    final next = _keypad.pushPercent(decimals: decimals);
+    if (next == _keypad) return;
+    _keypad = next;
+    state = _copyWithKeypad(s);
+  }
+
   void equals() {
     final s = state;
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;

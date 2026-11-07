@@ -839,7 +839,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('5'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('Equals'));
+      await tester.tap(find.text('='));
       await tester.pumpAndSettle();
 
       final display = find.byType(AmountDisplay);
@@ -960,7 +960,7 @@ void main() {
       // the keypad button specifically via its position in the keypad.
       await tester.tap(find.text('0').last);
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('Equals'));
+      await tester.tap(find.text('='));
       await tester.pumpAndSettle();
 
       final saveButton = tester.widget<TextButton>(
@@ -991,7 +991,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('5'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('Equals'));
+      await tester.tap(find.text('='));
       await tester.pumpAndSettle();
 
       expect(find.text('+'), findsOneWidget);
@@ -1017,7 +1017,7 @@ void main() {
         findsOneWidget,
       );
 
-      await tester.tap(find.byTooltip('Equals'));
+      await tester.tap(find.text('='));
       await tester.pumpAndSettle();
 
       expect(
@@ -1066,6 +1066,52 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(capturedTx?.amountMinorUnits, 300);
+    },
+  );
+
+  testWidgets(
+    'WS28b: the keypad Save saves the transaction like the AppBar Save',
+    (tester) async {
+      Transaction? capturedTx;
+      when(() => txRepo.save(any())).thenAnswer((inv) async {
+        capturedTx = inv.positionalArguments.first as Transaction;
+        return capturedTx!;
+      });
+
+      await tester.pumpWidget(
+        mountAdd(
+          extraOverrides: [
+            categoriesByTypeProvider(CategoryType.expense)
+                .overrideWith((ref) => Stream.value(const [_expenseCategory])),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The keypad Save is greyed out until the form can save.
+      final keypadSave = find.descendant(
+        of: find.byTooltip('Save'),
+        matching: find.byType(InkWell),
+      );
+      expect(tester.widget<InkWell>(keypadSave).onTap, isNull);
+
+      for (final key in ['2', '0', '0', '−', '1', '0', '%']) {
+        await tester.tap(find.text(key).last);
+        await tester.pumpAndSettle();
+      }
+      await tester.tap(find.text('Select a category'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Food'));
+      await tester.pumpAndSettle();
+      // The AppBar Save stays.
+      expect(find.widgetWithText(TextButton, 'Save'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Save'));
+      await tester.pumpAndSettle();
+
+      expect(capturedTx?.amountMinorUnits, 18000);
+      expect(capturedTx?.amountFormula, '200-10%');
+      expect(find.byType(TransactionFormScreen), findsNothing);
     },
   );
 
@@ -1236,8 +1282,9 @@ void main() {
 
   // Issue #100 — on a normal phone the form fits above the keypad
   // without scrolling: two selector tiles per row and a shorter amount
-  // box. On a shorter screen the keypad's keys shrink, down to the 48dp
-  // tap target; only past that does the form scroll, never the keypad.
+  // box. On a shorter screen the keypad's keys shrink, down to the 36.8dp
+  // that `CalculatorKeypad.minHeight` gives five rows (issue #144); only
+  // past that does the form scroll, never the keypad.
   group('compact form (issue #100)', () {
     // The reporter's Android phone (1220×2656 px at ~3.2 dpr) without its
     // status and gesture bars.
@@ -1320,7 +1367,7 @@ void main() {
       expect(find.text('1 +'), findsOneWidget);
     }
 
-    /// The whole keypad is on screen with keys of at least 48dp, and the
+    /// The whole keypad is on screen with its smallest keys, and the
     /// form above it reaches its last control by scrolling.
     @Dependencies([TransactionFormController, categoriesByType])
     Future<void> expectKeypadWholeAndFormScrolls(
@@ -1332,7 +1379,7 @@ void main() {
         tester.getRect(find.byType(CalculatorKeypad)).bottom,
         surface.height,
       );
-      expect(keyHeight(tester), 48);
+      expect(keyHeight(tester), closeTo(36.8, 0.01));
       expect(formScroll(tester).maxScrollExtent, greaterThan(0));
 
       final action = find.byKey(const Key('addToShoppingListButton'));
@@ -1394,7 +1441,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(formScroll(tester).maxScrollExtent, 0);
-      expect(keyHeight(tester), 56);
+      expect(keyHeight(tester), closeTo(43.2, 0.01));
       final action = find.byKey(const Key('addToShoppingListButton'));
       expect(
         tester.getRect(action).bottom,
@@ -1418,17 +1465,21 @@ void main() {
       expect(find.widgetWithText(ActionChip, 'coffee'), findsOneWidget);
       expect(tester.takeException(), isNull);
       expect(formScroll(tester).maxScrollExtent, 0);
-      expect(keyHeight(tester), allOf(greaterThanOrEqualTo(48), lessThan(56)));
+      expect(
+        keyHeight(tester),
+        allOf(greaterThanOrEqualTo(36.8), lessThan(43.2)),
+      );
     });
 
-    testWidgets('WS45: past 48dp keys, the form scrolls, not the keypad', (
-      tester,
-    ) async {
-      await setSurface(tester, shortPhone);
-      await pumpTallestAddForm(tester);
+    testWidgets(
+      'WS45: past the smallest keys, the form scrolls, not the keypad',
+      (tester) async {
+        await setSurface(tester, shortPhone);
+        await pumpTallestAddForm(tester);
 
-      await expectKeypadWholeAndFormScrolls(tester, shortPhone);
-    });
+        await expectKeypadWholeAndFormScrolls(tester, shortPhone);
+      },
+    );
 
     testWidgets('WS46: at 2× text the form scrolls above a whole keypad', (
       tester,
