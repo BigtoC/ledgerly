@@ -1066,7 +1066,7 @@ abstract class AppLocalizations {
   /// **'No upcoming expenses saved'**
   String get shoppingListScreenEmptyBody;
 
-  /// Empty state CTA on the shopping list screen — navigates to /home/add.
+  /// Empty state CTA and add-button tooltip on the shopping list screen — opens /home/shopping-list/new.
   ///
   /// In en, this message translates to:
   /// **'Add to shopping list'**
@@ -1150,7 +1150,7 @@ abstract class AppLocalizations {
   /// **'Edit Draft'**
   String get shoppingListEditDraftTitle;
 
-  /// Inline CTA below MemoField in AddTransactionMode — saves the form as a draft.
+  /// Inline CTA below MemoField in AddTransactionMode — saves the form as a draft. Also the AppBar title of AddShoppingListDraftMode (/home/shopping-list/new).
   ///
   /// In en, this message translates to:
   /// **'Add to shopping list'**

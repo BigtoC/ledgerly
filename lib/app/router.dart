@@ -187,6 +187,18 @@ GoRouter router(Ref ref) {
                     pageBuilder: (_, state) =>
                         _materialPage(state, const ShoppingListScreen()),
                     routes: [
+                      // Before `:itemId`, whose redirect would send `new`
+                      // back to the list.
+                      GoRoute(
+                        path: 'new',
+                        parentNavigatorKey: _rootNavigatorKey,
+                        pageBuilder: (ctx, state) => _modalPage(
+                          state,
+                          const _AdaptiveTransactionFormRoute(
+                            mode: AddShoppingListDraftMode(),
+                          ),
+                        ),
+                      ),
                       GoRoute(
                         path: ':itemId',
                         redirect: (_, state) =>

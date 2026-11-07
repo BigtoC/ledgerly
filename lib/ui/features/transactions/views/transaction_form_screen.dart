@@ -18,7 +18,8 @@
 // `resizeToAvoidBottomInset: false` is mandatory — the keypad must stay
 // visible while the memo field's soft keyboard is open. Save sits both in
 // the AppBar and on the keypad (issue #144); in EditShoppingListDraftMode
-// the keypad's Save saves the draft, as "Save draft" does. Adaptive 600dp
+// the keypad's Save saves the draft, as "Save draft" does, and in
+// AddShoppingListDraftMode both Saves save a new draft. Adaptive 600dp
 // behavior is supplied by the router (`fullscreenDialog: true` +
 // parentNavigatorKey).
 //
@@ -29,6 +30,8 @@
 //   - EditShoppingListDraftMode: no AppBar save/delete; inline action row
 //     with "Save to transaction" (primary) + "Save draft" (secondary) +
 //     archived-ref warning text.
+//   - AddShoppingListDraftMode (issue #147): every Save saves a draft; no
+//     inline action; the category picker lists expense categories only.
 
 import 'dart:async';
 import 'dart:math' as math;
@@ -38,6 +41,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
+import '../../../../domain/models/category.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../categories/view_models/categories_controller.dart';
@@ -96,8 +100,14 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     final appBarTitle = switch (activeMode) {
       EditShoppingListDraftMode() => l10n.shoppingListEditDraftTitle,
       EditTransactionMode() => l10n.txEditTitle,
+      AddShoppingListDraftMode() => l10n.shoppingListAddToListAction,
       AddTransactionMode() => l10n.txAddTitle,
     };
+    void saveDraft() => _submitDraft(
+      context,
+      controller.saveDraft,
+      l10n.shoppingListSaveFailedSnackbar,
+    );
 
     // F1/F2: Auto-pop with ShoppingListEditResultMissingDraft when the draft
     // is not found during EditShoppingListDraftMode hydration. A
@@ -134,6 +144,12 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
           title: Text(appBarTitle),
           actions: switch (activeMode) {
             EditShoppingListDraftMode() => const <Widget>[],
+            AddShoppingListDraftMode() => <Widget>[
+              TextButton(
+                onPressed: state.canSaveDraft ? saveDraft : null,
+                child: Text(l10n.commonSave),
+              ),
+            ],
             EditTransactionMode() => <Widget>[
               IconButton(
                 icon: const Icon(Icons.delete_outline),
@@ -184,6 +200,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
               state,
               controller,
               activeMode: activeMode,
+              saveDraft: saveDraft,
             ),
           },
         ),
@@ -197,6 +214,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     TransactionFormData state,
     TransactionFormController controller, {
     required TransactionFormMode activeMode,
+    required VoidCallback saveDraft,
   }) {
     final showAmountError = _showValidationHints && state.amountMinorUnits == 0;
     final showCategoryError =
@@ -204,11 +222,6 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     final controlsLocked = _blocksPopDuringMutation(state);
 
     final isShoppingListDraftMode = activeMode is EditShoppingListDraftMode;
-    void saveDraft() => _submitDraft(
-      context,
-      controller.saveDraft,
-      l10n.shoppingListSaveFailedSnackbar,
-    );
 
     return IgnorePointer(
       ignoring: controlsLocked,
@@ -344,7 +357,9 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                   onEquals: state.keypad.isEvaluating
                       ? controller.equals
                       : null,
-                  onSave: isShoppingListDraftMode
+                  onSave:
+                      isShoppingListDraftMode ||
+                          activeMode is AddShoppingListDraftMode
                       ? (state.canSaveDraft ? saveDraft : null)
                       : (state.canSave
                             ? () => _save(context, l10n, controller)
@@ -383,7 +398,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     }
   }
 
-  /// Called from EditShoppingListDraftMode — runs [submit] (saveDraft or
+  /// Called from the shopping-list draft modes — runs [submit] (saveDraft or
   /// convertDraft) and pops with its result.
   Future<void> _submitDraft(
     BuildContext context,
@@ -496,7 +511,14 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     if (!context.mounted) return;
     switch (outcome) {
       case CategoryChipTapOpenPicker():
-        final picked = await showCategoryPicker(context);
+        // Drafts are expense-only (canSaveDraft), so the shopping-list
+        // mode hides income categories.
+        final picked = await showCategoryPicker(
+          context,
+          type: widget.mode is AddShoppingListDraftMode
+              ? CategoryType.expense
+              : null,
+        );
         if (picked == null || !context.mounted) return; // dismissed
         controller.selectCategory(picked);
       case CategoryChipTapManageCategories():

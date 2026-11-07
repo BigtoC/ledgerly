@@ -54,6 +54,13 @@ class EditTransactionMode extends TransactionFormMode {
   final int transactionId;
 }
 
+/// Add a shopping-list draft from the shopping list page (issue #147).
+/// Hydrates like [AddTransactionMode], but every save action saves a draft
+/// rather than a transaction.
+class AddShoppingListDraftMode extends TransactionFormMode {
+  const AddShoppingListDraftMode();
+}
+
 /// Edit a shopping-list draft. Hydrates from the draft row, exposes
 /// `saveDraft` and `convertDraft` commands rather than the normal `save`.
 class EditShoppingListDraftMode extends TransactionFormMode {
@@ -66,7 +73,8 @@ class EditShoppingListDraftMode extends TransactionFormMode {
 // ShoppingListEditResult — Task 5 §2
 // ---------------------------------------------------------------------------
 
-/// Result returned when the form is popped from `EditShoppingListDraftMode`.
+/// Result returned when the form is popped from `EditShoppingListDraftMode`
+/// or `AddShoppingListDraftMode`.
 sealed class ShoppingListEditResult {
   const ShoppingListEditResult();
 }
@@ -86,7 +94,8 @@ class ShoppingListEditResultMissingDraft extends ShoppingListEditResult {
   const ShoppingListEditResultMissingDraft();
 }
 
-/// A new draft was added to the shopping list from AddTransactionMode.
+/// A new draft was added to the shopping list (AddTransactionMode pops with
+/// `null` instead; AddShoppingListDraftMode pops with this).
 class ShoppingListEditResultAddedToList extends ShoppingListEditResult {
   const ShoppingListEditResultAddedToList();
 }
@@ -136,8 +145,8 @@ sealed class DeleteTransactionOutcome with _$DeleteTransactionOutcome {
 /// message.
 @freezed
 sealed class DraftSubmissionOutcome with _$DraftSubmissionOutcome {
-  /// Done. The screen closes the form, popping with [result] in
-  /// [EditShoppingListDraftMode].
+  /// Done. The screen closes the form, popping with [result] in the
+  /// shopping-list draft modes.
   const factory DraftSubmissionOutcome.ok(ShoppingListEditResult result) =
       DraftSubmissionOk;
 
