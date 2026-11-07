@@ -268,6 +268,74 @@ void main() {
     },
   );
 
+  group('TFSL13: AddShoppingListDraftMode (issue #147)', () {
+    test('hydrates a blank form that keeps its mode on retry', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+
+      await controller.hydrate(const AddShoppingListDraftMode());
+      await controller.retryHydration();
+
+      final data =
+          c.read(transactionFormControllerProvider) as TransactionFormData;
+      expect(data.formMode, isA<AddShoppingListDraftMode>());
+      expect(data.selectedAccount.id, _account.id);
+      expect(data.selectedCategory, isNull);
+      expect(data.amountMinorUnits, 0);
+      expect(data.shoppingListItemId, isNull);
+    });
+
+    test('saveDraft inserts a new draft', () async {
+      when(
+        () => slRepo.insert(
+          categoryId: any(named: 'categoryId'),
+          accountId: any(named: 'accountId'),
+          memo: any(named: 'memo'),
+          draftAmountMinorUnits: any(named: 'draftAmountMinorUnits'),
+          draftCurrencyCode: any(named: 'draftCurrencyCode'),
+          draftDate: any(named: 'draftDate'),
+        ),
+      ).thenAnswer((_) async => _draft());
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+      await controller.hydrate(const AddShoppingListDraftMode());
+      controller.selectCategory(_expenseCategory);
+
+      expect(
+        await controller.saveDraft(),
+        const DraftSubmissionOutcome.ok(ShoppingListEditResultAddedToList()),
+      );
+      verifyNever(() => slRepo.update(any()));
+    });
+
+    test('the category chip routes to manage categories when only income '
+        'categories exist, since the picker lists expense only', () async {
+      when(
+        () => categoryRepo.watchAll(
+          type: CategoryType.expense,
+          includeArchived: false,
+        ),
+      ).thenAnswer((_) => Stream.value(const []));
+      when(
+        () => categoryRepo.watchAll(
+          type: CategoryType.income,
+          includeArchived: false,
+        ),
+      ).thenAnswer((_) => Stream.value(const [_incomeCategory]));
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+      await controller.hydrate(const AddShoppingListDraftMode());
+
+      expect(
+        await controller.resolveCategoryChipTap(),
+        const CategoryChipTapOutcome.manageCategories(),
+      );
+    });
+  });
+
   group('TFSL03: saveDraft() in add mode calls insert and returns ShoppingListEditResultAddedToList', () {
     test('calls ShoppingListRepository.insert with form snapshot', () async {
       when(

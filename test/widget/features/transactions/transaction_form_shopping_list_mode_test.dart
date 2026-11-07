@@ -12,6 +12,9 @@
 //   - An ignored draft save / conversion does not pop the form
 //   - A failed draft save, draft conversion or "Add to shopping list" shows
 //     its failure snackbar and keeps the form open
+//   - AddShoppingListDraftMode (issue #147): both saves save a draft and
+//     pop, are disabled until canSaveDraft, the inline action is hidden and
+//     the picker lists expense categories only
 
 import 'dart:async';
 
@@ -28,6 +31,7 @@ import 'package:ledgerly/domain/models/account.dart';
 import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/domain/models/shopping_list_item.dart';
+import 'package:ledgerly/domain/models/transaction.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
@@ -78,6 +82,14 @@ const _expenseCategory = Category(
   color: 0,
   type: CategoryType.expense,
   l10nKey: 'category.food',
+);
+
+const _incomeCategory = Category(
+  id: 12,
+  icon: 'payments',
+  color: 2,
+  type: CategoryType.income,
+  l10nKey: 'category.income.salary',
 );
 
 const _archivedCategory = Category(
@@ -161,6 +173,18 @@ TransactionFormState _editableDraftState() => TransactionFormState.data(
 void main() {
   setUpAll(() {
     registerFallbackValue(_draft());
+    registerFallbackValue(
+      Transaction(
+        id: 0,
+        amountMinorUnits: 0,
+        currency: _usd,
+        categoryId: 0,
+        accountId: 0,
+        date: DateTime(2026),
+        createdAt: DateTime(2026),
+        updatedAt: DateTime(2026),
+      ),
+    );
   });
 
   late _MockTransactionRepository txRepo;
@@ -763,4 +787,130 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+  group('AddShoppingListDraftMode (issue #147)', () {
+    final categoryOverrides = [
+      categoriesByTypeProvider(CategoryType.expense)
+          .overrideWith((ref) => Stream.value(const [_expenseCategory])),
+      categoriesByTypeProvider(CategoryType.income)
+          .overrideWith((ref) => Stream.value(const [_incomeCategory])),
+    ];
+    final appBarSave = find.descendant(
+      of: find.byType(AppBar),
+      matching: find.text('Save'),
+    );
+    final keypadSave = find.descendant(
+      of: find.byTooltip('Save'),
+      matching: find.byType(InkWell),
+    );
+
+    /// Opens the form; the returned future completes with what it pops.
+    @Dependencies([TransactionFormController, categoriesByType])
+    Future<Future<ShoppingListEditResult?>> openForm(
+      WidgetTester tester,
+    ) async {
+      final router = buildPushRouter(const AddShoppingListDraftMode());
+      await tester.pumpWidget(
+        mountWithRouter(router, extra: categoryOverrides),
+      );
+      final popped = router.push<ShoppingListEditResult?>('/form');
+      await tester.pumpAndSettle();
+      return popped;
+    }
+
+    Future<void> pickFood(WidgetTester tester) async {
+      await tester.tap(find.text('Select a category'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Food'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets(
+      'TFSLN01: titles the form "Add to shopping list" and hides the inline action',
+      (tester) async {
+        await openForm(tester);
+
+        final l10n = AppLocalizationsEn();
+        expect(
+          find.descendant(
+            of: find.byType(AppBar),
+            matching: find.text(l10n.shoppingListAddToListAction),
+          ),
+          findsOneWidget,
+        );
+        expect(find.byKey(const Key('addToShoppingListButton')), findsNothing);
+      },
+    );
+
+    for (final (name, save) in [
+      ('AppBar', appBarSave),
+      ('keypad', find.byTooltip('Save')),
+    ]) {
+      testWidgets(
+        'TFSLN02: the $name Save saves a draft and pops, never a transaction',
+        (tester) async {
+          when(
+            () => slRepo.insert(
+              categoryId: any(named: 'categoryId'),
+              accountId: any(named: 'accountId'),
+              memo: any(named: 'memo'),
+              draftAmountMinorUnits: any(named: 'draftAmountMinorUnits'),
+              draftCurrencyCode: any(named: 'draftCurrencyCode'),
+              draftDate: any(named: 'draftDate'),
+            ),
+          ).thenAnswer((_) async => _draft());
+          final popped = await openForm(tester);
+          await tester.tap(find.text('5'));
+          await pickFood(tester);
+
+          await tester.tap(save);
+          await tester.pumpAndSettle();
+
+          verify(
+            () => slRepo.insert(
+              categoryId: _expenseCategory.id,
+              accountId: _account.id,
+              memo: null,
+              draftAmountMinorUnits: 500,
+              draftCurrencyCode: 'USD',
+              draftDate: any(named: 'draftDate'),
+            ),
+          ).called(1);
+          verifyNever(() => txRepo.save(any()));
+          expect(find.byType(TransactionFormScreen), findsNothing);
+          expect(await popped, isA<ShoppingListEditResultAddedToList>());
+        },
+      );
+    }
+
+    testWidgets(
+      'TFSLN03: both saves wait for canSaveDraft, not canSave (amount optional)',
+      (tester) async {
+        await openForm(tester);
+        final saveButton = find.ancestor(
+          of: appBarSave,
+          matching: find.byType(TextButton),
+        );
+
+        expect(tester.widget<TextButton>(saveButton).onPressed, isNull);
+        expect(tester.widget<InkWell>(keypadSave).onTap, isNull);
+
+        await pickFood(tester);
+
+        expect(tester.widget<TextButton>(saveButton).onPressed, isNotNull);
+        expect(tester.widget<InkWell>(keypadSave).onTap, isNotNull);
+      },
+    );
+
+    testWidgets('TFSLN04: the category picker lists expense categories only', (
+      tester,
+    ) async {
+      await openForm(tester);
+
+      await tester.tap(find.text('Select a category'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Food'), findsOneWidget);
+      expect(find.text('Salary'), findsNothing);
+    });
+  });
 }
