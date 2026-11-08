@@ -420,17 +420,23 @@ void main() {
 
       // Week+Category+AllMissing+cold-start → auto-switches to currency
       // dimension; the resulting state is ChartsDataState, not blocked.
-      ChartsState? latest;
+      // Wait for that state rather than a fixed delay: the switch takes
+      // several event-loop turns, which a loaded CI runner can stretch.
+      final switched = Completer<ChartsDataState>();
       final sub = container.listen<AsyncValue<ChartsState>>(
         chartsControllerProvider,
-        (_, next) => latest = next.value,
+        (_, next) {
+          if (next.value case final ChartsDataState state
+              when !switched.isCompleted) {
+            switched.complete(state);
+          }
+        },
         fireImmediately: true,
       );
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+      final latest = await switched.future.timeout(const Duration(seconds: 5));
       sub.close();
 
-      expect(latest, isA<ChartsDataState>());
-      final data = (latest! as ChartsDataState).chartData;
+      final data = latest.chartData;
       expect(data.dimension, ChartDimension.currency);
       expect(data.autoSwitchedFromCategoryDimension, isTrue);
     });
