@@ -5,9 +5,10 @@
 //     └─ AppBar (shoppingListScreenTitle)
 //     └─ body: switch on AsyncValue<ShoppingListState>:
 //         loading → Center(CircularProgressIndicator)
-//         empty   → Center(empty-state text + CTA to /home/add)
+//         empty   → Center(empty-state text + CTA to /home/shopping-list/new)
 //         data    → CustomScrollView with SliverList of rows
 //         error   → Center(error text + Retry button)
+//     └─ FAB (empty and data states) → /home/shopping-list/new (issue #147)
 //
 // Each row uses Slidable for swipe-to-delete, and a trailing IconButton
 // for non-swipe (accessibility) delete. Both call
@@ -105,21 +106,22 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
     );
   }
 
-  Future<void> _onTapItem(BuildContext context, int id) async {
+  /// Opens the draft form at [location] (`/home/shopping-list/<id>` or
+  /// `/home/shopping-list/new`) and confirms its result with a snackbar.
+  Future<void> _openForm(BuildContext context, String location) async {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    final result = await context.push<ShoppingListEditResult?>(
-      '/home/shopping-list/$id',
-    );
+    final result = await context.push<ShoppingListEditResult?>(location);
     if (!mounted) return;
     final message = switch (result) {
       ShoppingListEditResultMissingDraft() =>
         l10n.shoppingListDraftNotFoundSnackbar,
-      ShoppingListEditResultSavedDraft() => l10n.shoppingListSavedDraftSnackbar,
+      ShoppingListEditResultSavedDraft() ||
+      ShoppingListEditResultAddedToList() =>
+        l10n.shoppingListSavedDraftSnackbar,
       ShoppingListEditResultSavedTransaction() =>
         l10n.shoppingListConvertedSnackbar,
-      // unreachable from this route; only emitted by AddTransactionMode
-      ShoppingListEditResultAddedToList() || null => null,
+      null => null,
     };
     if (message == null) return;
     messenger
@@ -150,19 +152,32 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
       }
     });
 
+    void onAdd() => _openForm(context, '/home/shopping-list/new');
+
     return Scaffold(
       appBar: AppBar(title: Text(l10n.shoppingListScreenTitle)),
+      floatingActionButton: switch (state) {
+        AsyncData<ShoppingListState>(
+          value: ShoppingListEmpty() || ShoppingListData(),
+        ) =>
+          FloatingActionButton(
+            tooltip: l10n.shoppingListScreenEmptyCta,
+            onPressed: onAdd,
+            child: const Icon(Icons.add),
+          ),
+        _ => null,
+      },
       body: SlidableAutoCloseBehavior(
         child: switch (state) {
           AsyncData<ShoppingListState>(value: ShoppingListLoading()) =>
             const Center(child: CircularProgressIndicator()),
           AsyncData<ShoppingListState>(value: ShoppingListEmpty()) =>
-            _EmptyState(onAddPressed: () => context.push('/home/add')),
+            _EmptyState(onAddPressed: onAdd),
           AsyncData<ShoppingListState>(value: final ShoppingListData data) =>
             _DataBody(
               data: data,
               onDeleteItem: _onDeleteItem,
-              onTapItem: (id) => _onTapItem(context, id),
+              onTapItem: (id) => _openForm(context, '/home/shopping-list/$id'),
             ),
           AsyncData<ShoppingListState>(value: ShoppingListError()) ||
           AsyncError() => _ErrorSurface(

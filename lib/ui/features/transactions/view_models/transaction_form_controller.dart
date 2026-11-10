@@ -1,7 +1,8 @@
 // Transaction-form controller — Wave 2 §4.1 / §5 / §6 / §9 / Task 5.
 //
 // Owns the form's mutable state plus the keypad accumulator, drives all
-// three hydration entry points (Add / Edit / EditShoppingListDraft),
+// four hydration entry points (Add / Edit / AddShoppingListDraft /
+// EditShoppingListDraft),
 // and exposes the typed commands the screen widget binds to. Every command
 // mutates the `_Data` variant via `state = ...`; widgets never call
 // repositories directly.
@@ -88,6 +89,7 @@ class TransactionFormController extends _$TransactionFormController {
     AddTransactionMode(:final initialDate) => hydrateForAdd(
       initialDate: initialDate,
     ),
+    AddShoppingListDraftMode() => _hydrateBlank(mode),
     EditTransactionMode(:final transactionId) => hydrateForEdit(transactionId),
     EditShoppingListDraftMode(:final shoppingListItemId) =>
       hydrateForShoppingListDraft(shoppingListItemId),
@@ -98,8 +100,17 @@ class TransactionFormController extends _$TransactionFormController {
   /// `date` field starts at that day instead of today; the value is
   /// normalized to local midnight so it round-trips through `setDate`.
   /// Omitting [initialDate] preserves the prior default of today.
-  Future<void> hydrateForAdd({DateTime? initialDate}) async {
-    _formMode = AddTransactionMode(initialDate: initialDate);
+  Future<void> hydrateForAdd({DateTime? initialDate}) => _hydrateBlank(
+    AddTransactionMode(initialDate: initialDate),
+    initialDate: initialDate,
+  );
+
+  /// Hydrates a blank form in [mode], dated [initialDate] or today.
+  Future<void> _hydrateBlank(
+    TransactionFormMode mode, {
+    DateTime? initialDate,
+  }) async {
+    _formMode = mode;
     try {
       state = TransactionFormState.loading(formMode: _formMode);
       final account = await _resolveDefaultAccount();
@@ -572,9 +583,11 @@ class TransactionFormController extends _$TransactionFormController {
   /// Saves the current form snapshot as a shopping-list draft. Never
   /// throws.
   ///
-  /// In [AddTransactionMode]: calls `ShoppingListRepository.insert(...)` and
-  /// returns `ok(ShoppingListEditResultAddedToList)`; the screen closes the
-  /// form with `null` (no transaction result).
+  /// In [AddTransactionMode] and [AddShoppingListDraftMode]: calls
+  /// `ShoppingListRepository.insert(...)` and returns
+  /// `ok(ShoppingListEditResultAddedToList)`. The screen closes the form with
+  /// `null` in [AddTransactionMode] (no transaction result) and with the
+  /// result in [AddShoppingListDraftMode].
   ///
   /// In [EditShoppingListDraftMode]: calls `ShoppingListRepository.update(...)`
   /// and returns `ok(ShoppingListEditResultSavedDraft)` to the screen for
@@ -711,14 +724,19 @@ class TransactionFormController extends _$TransactionFormController {
   /// together (the category sets the transaction type), so if neither type
   /// has categories the screen routes straight to /settings/categories
   /// (the picker would just show its empty-state CTA and pop with `null`,
-  /// which the screen cannot tell apart from a dismiss).
+  /// which the screen cannot tell apart from a dismiss). In
+  /// [AddShoppingListDraftMode] the picker lists expense categories only, so
+  /// only those count.
   Future<CategoryChipTapOutcome> resolveCategoryChipTap() async {
     final subs = <ProviderSubscription<Future<List<Category>>>>[];
     try {
       // Hold subscriptions while awaiting: a bare `ref.read(...future)` on
       // this auto-dispose stream provider pauses its stream as soon as the
       // read returns (Riverpod 3), so the future would never complete.
-      for (final type in CategoryType.values) {
+      final types = _formMode is AddShoppingListDraftMode
+          ? const [CategoryType.expense]
+          : CategoryType.values;
+      for (final type in types) {
         subs.add(ref.listen(categoriesByTypeProvider(type).future, (_, _) {}));
       }
       final categories = await Future.wait([

@@ -679,7 +679,7 @@
   },
   "shoppingListScreenEmptyCta": "Add to shopping list",
   "@shoppingListScreenEmptyCta": {
-    "description": "Empty state CTA on the shopping list screen — navigates to /home/add."
+    "description": "Empty state CTA and add-button tooltip on the shopping list screen — opens /home/shopping-list/new."
   },
   "shoppingListScreenRetry": "Retry",
   "@shoppingListScreenRetry": {
@@ -737,7 +737,7 @@
   },
   "shoppingListAddToListAction": "Add to shopping list",
   "@shoppingListAddToListAction": {
-    "description": "Inline CTA below MemoField in AddTransactionMode — saves the form as a draft."
+    "description": "Inline CTA below MemoField in AddTransactionMode — saves the form as a draft. Also the AppBar title of AddShoppingListDraftMode (/home/shopping-list/new)."
   },
   "shoppingListSaveDraftAction": "Save draft",
   "@shoppingListSaveDraftAction": {

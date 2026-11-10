@@ -14,6 +14,10 @@
 //             ShoppingListEditResultMissingDraft and shows
 //             shoppingListDraftNotFoundSnackbar.
 //
+//   Path 5 – ShoppingListScreen add button (issue #147) → form in
+//             shopping-list mode → Save → back on the list with the new
+//             draft, and no transaction written.
+//
 // Pattern notes:
 //   • Direct repository writes run inside `tester.runAsync` (Drift real timers).
 //   • Uses `splashGateSnapshotProvider` override so the app boots directly to
@@ -342,22 +346,22 @@ void main() {
   // Strategy: insert a draft, navigate to ShoppingListScreen, then delete the
   // draft directly in the DB before the form opens. Because the ShoppingListRow
   // tap calls context.push<ShoppingListEditResult?> which is processed by
-  // _onTapItem, the snackbar is only shown through that path.
+  // _openForm, the snackbar is only shown through that path.
   //
   // The simplest reliable approach is: insert a draft → go to
   // ShoppingListScreen → programmatically push (not go) to the item route
   // after deleting the draft → form opens → finds draft missing → auto-pops
   // with ShoppingListEditResultMissingDraft → screen shows snackbar.
   //
-  // NOTE: Because `_onTapItem` calls `context.push<ShoppingListEditResult?>`
+  // NOTE: Because `_openForm` calls `context.push<ShoppingListEditResult?>`
   // and receives the result to decide whether to show the snackbar, the
   // programmatic `push` approach must simulate the same push so the result
   // is delivered to the ShoppingListScreen. However, `GoRouter.push` returns
   // a future that ShoppingListScreen's push does NOT await directly on a
-  // programmatic call — only taps wired through `_onTapItem` trigger the
+  // programmatic call — only taps wired through `_openForm` trigger the
   // snackbar. This Path 4 therefore verifies two separable sub-contracts:
   //   (a) navigating to a non-existent itemId auto-pops back to the list, and
-  //   (b) the snackbar appears when the result flows through _onTapItem.
+  //   (b) the snackbar appears when the result flows through _openForm.
   //
   // Sub-contract (a) is tested via programmatic push.
   // Sub-contract (b) is tested by tapping a stale row (delete-after-pump).
@@ -410,9 +414,9 @@ void main() {
         expect(find.byType(ShoppingListScreen), findsOneWidget);
 
         // Use GoRouter.push (not go) so the ShoppingListScreen is kept in
-        // the navigator stack and receives the pop result through _onTapItem.
+        // the navigator stack and receives the pop result through _openForm.
         // Since we call push directly (not through a user tap), the pop result
-        // is NOT processed by _onTapItem's switch statement. The snackbar
+        // is NOT processed by _openForm's switch statement. The snackbar
         // will NOT appear in this variant; see the next test for snackbar
         // coverage via actual tap on a stale row.
         // This sub-test verifies only sub-contract (a): auto-pop back to list.
@@ -442,7 +446,7 @@ void main() {
         // TODO: full e2e requires live form interaction with timing-sensitive
         // postFrameCallback auto-pop + snackbar display. This test seeds a
         // draft, pumps the ShoppingListScreen, then taps the row. The row
-        // tap calls _onTapItem which awaits context.push and inspects the
+        // tap calls _openForm which awaits context.push and inspects the
         // ShoppingListEditResultMissingDraft result to show the snackbar.
         //
         // The auto-pop path through postFrameCallback + GoRouter + ScaffoldMessenger
@@ -501,10 +505,10 @@ void main() {
         });
 
         // Tap the stale row (still visible before stream refreshes).
-        // _onTapItem calls context.push<ShoppingListEditResult?> with the
+        // _openForm calls context.push<ShoppingListEditResult?> with the
         // deleted draft's id. The form opens, hydrateForShoppingListDraft finds
         // the draft missing, transitions to draftNotFound, and auto-pops with
-        // ShoppingListEditResultMissingDraft. _onTapItem receives the result
+        // ShoppingListEditResultMissingDraft. _openForm receives the result
         // and shows the snackbar.
         await tester.tap(find.text('Disappearing draft'));
 
@@ -516,6 +520,78 @@ void main() {
         // The snackbar should now be visible.
         expect(find.text('Draft not found'), findsOneWidget);
         expect(find.byType(ShoppingListScreen), findsOneWidget);
+
+        expect(tester.takeException(), isNull);
+      },
+    );
+  });
+
+  // ---------------------------------------------------------------------------
+  // Path 5: the list's add button saves a draft, never a transaction
+  // ---------------------------------------------------------------------------
+
+  group('Path 5: add a draft from the shopping list (issue #147)', () {
+    testWidgets(
+      'add button → amount and Food → Save adds a draft beside the existing one',
+      (tester) async {
+        final db = newTestAppDatabase();
+        addTearDown(db.close);
+        await tester.runAsync(() async {
+          await runTestSeed(db);
+          final foodId = await getSeededCategoryId(db, 'category.food');
+          final cash = await getDefaultAccount(db);
+          await DriftShoppingListRepository(
+            db,
+            DriftTransactionRepository(db),
+          ).insert(
+            categoryId: foodId,
+            accountId: cash.id,
+            memo: 'Existing draft',
+            draftDate: DateTime.now(),
+          );
+        });
+
+        final container = makeTestContainer(
+          db: db,
+          extraOverrides: [
+            splashGateSnapshotProvider.overrideWithValue(
+              SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        await tester.pumpWidget(buildTestApp(container: container));
+        await pumpToHome(tester);
+        await tester.tap(find.byKey(const Key('homeShoppingListFab')).first);
+        await tester.pumpAndSettle();
+        expect(find.text('Existing draft'), findsOneWidget);
+
+        await tester.tap(find.byTooltip('Add to shopping list'));
+        await tester.pumpAndSettle();
+        await enterAmountAndFood(tester, '2');
+        await tester.enterText(find.byType(TextField).first, 'Batteries');
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.descendant(of: find.byType(AppBar), matching: find.text('Save')),
+        );
+        await settleAfterModalResult(tester);
+
+        expect(find.byType(ShoppingListScreen), findsOneWidget);
+        expect(find.text('Draft saved'), findsOneWidget);
+        expect(find.text('Existing draft'), findsOneWidget);
+        expect(find.text('Batteries'), findsOneWidget);
+
+        final txRows = await tester.runAsync(
+          () => db.select(db.transactions).get(),
+        );
+        final draftRows = await tester.runAsync(
+          () => db.select(db.shoppingListItems).get(),
+        );
+        expect(txRows, isEmpty);
+        expect(draftRows, hasLength(2));
+        final added = draftRows!.singleWhere((r) => r.memo == 'Batteries');
+        expect(added.draftAmountMinorUnits, 200);
 
         expect(tester.takeException(), isNull);
       },

@@ -939,6 +939,7 @@ ShellRoute (bottom nav)
     /home/add               Add Transaction (modal push)
     /home/edit/:id          Edit Transaction (modal push)
     /home/shopping-list     Shopping list screen
+    /home/shopping-list/new      Add draft (modal, root navigator)
     /home/shopping-list/:itemId  Edit draft (modal, root navigator)
   /analysis                 Analysis tab (charts + search)
     /analysis/search/:categoryId  Category search detail (requires q + c query params)
@@ -955,7 +956,7 @@ ShellRoute (bottom nav)
 
 - Add/Edit Transaction is a full-screen modal push (`MaterialPage` / `CupertinoPage`) so the calculator keypad has full vertical space.
 - Manage accounts is opened imperatively from Settings via the Manage accounts tile and adaptive sheet/dialog; only `/settings/manage-accounts/new` and `/settings/manage-accounts/:id` are route-addressable.
-- `/home/shopping-list/:itemId` uses `parentNavigatorKey: _rootNavigatorKey` so the shopping-list route stays mounted underneath the draft-edit modal. Non-parsable `:itemId` values redirect to `/home/shopping-list`. Parsable-but-missing ids pop the modal immediately with a `ShoppingListEditResultMissingDraft` result so the parent list shows the "Draft not found" snackbar.
+- `/home/shopping-list/new` and `/home/shopping-list/:itemId` use `parentNavigatorKey: _rootNavigatorKey` so the shopping-list route stays mounted underneath the draft form. `new` is declared before `:itemId`, whose redirect sends non-parsable `:itemId` values to `/home/shopping-list`. Parsable-but-missing ids pop the modal immediately with a `ShoppingListEditResultMissingDraft` result so the parent list shows the "Draft not found" snackbar.
 - The Home shopping-cart FAB is the only entry point to `ShoppingListScreen`; there is no ShoppingListCard on the Analysis tab.
 - Splash → Home transition uses a fade `CustomTransitionPage` to preserve the hnotes-style reveal.
 - Root `redirect:` reads `splash_enabled` from `user_preferences`; no splash route is visited when disabled.
@@ -989,7 +990,7 @@ ShellRoute (bottom nav)
 3. **Add/Edit Transaction** — calculator-style keypad for amount, category picker (icon grid of expense then income categories; the picked category sets the transaction type), account selector with currency indicator, date picker, memo field for optional free-form detail (once a category is selected, up to 10 recently used distinct memos from that category appear as chips below it; tapping one fills the memo), save; delete only in edit mode. In add mode, an inline "Add to shopping list" action below the memo field captures the current form state as a draft and returns to the caller without creating a transaction.
 4. **Analysis Screen** — A pinned 64-high app bar holds the title, the account filter pill and a search button that grows into a memo search field; while a query is active its results replace the charts. Below it, `ChartsSection` stacks a period track (Day · Week · Month · Year · All) with a period navigator, then cards: a summary card whose Expense / Income tiles pick the chart type and show both totals, a ratio bar and the period's net; a breakdown card with Category / Account / Currency chips, a donut and ranked rows; a trend card (hidden on Day) with daily or monthly bars, an average line and a slice filter chip; and, when a slice is selected, a transactions card with tap-to-edit and swipe-to-delete with undo. All covers every month from the first transaction to now. On Day, Week, Month and Year the navigator's date label opens a period picker (a sheet, a dialog at 600dp and wider) that jumps straight to any day, week, month or year from the first record to now, drilling up to months and years from its title. The account filter (picked from a sheet, a dialog at 600dp and wider, listing accounts with their share of the period's total) narrows every card to one account. Selection is coordinated through `SelectedSlice`; the screen's exact colours, motion and text styles come from `AnalysisColors`.
 4a. **Manage Accounts** (Settings > Manage Accounts, adaptive sheet/dialog) — Active accounts list with tracked balances in native currency. Add account, manage account types, set default account, archive account. Opened via the ManageAccountsTile in Settings. New and edit routes are `/settings/manage-accounts/new` and `/settings/manage-accounts/:id`.
-4b. **Shopping List Screen** (`/home/shopping-list`) — Full draft list sorted newest first. Accessed from the Home shopping-cart FAB. Swipe-delete or icon-button delete with a 4-second undo snackbar. Tapping a row opens the draft in the reused transaction form. Empty-state CTA opens `/home/add`. Delete is the only mutation on this screen; draft creation happens in `/home/add` only.
+4b. **Shopping List Screen** (`/home/shopping-list`) — Full draft list sorted newest first. Accessed from the Home shopping-cart FAB. Swipe-delete or icon-button delete with a 4-second undo snackbar. Tapping a row opens the draft in the reused transaction form. A bottom-right add button (shown with drafts and when empty) and the empty-state CTA open `/home/shopping-list/new`, the transaction form in add-draft mode, where every Save adds a draft; the list then shows the "Draft saved" snackbar. Delete is the only mutation on this screen itself.
 5. **Categories Screen** — List categories grouped by expense/income, add/edit/reorder/archive
 6. **Settings Screen** — Theme toggle (light/dark), language selector, default account, default currency, manage categories, manage recurring rules, splash screen settings, about screen, new-version badge (in-app APK download + install when a newer GitHub release exists)
 7. **Recurring Rules Screen** (`/settings/recurring`) — List of recurring rules with create/edit/archive. Create/edit form reuses transaction-form widgets for visual parity.
@@ -1005,7 +1006,7 @@ ShellRoute (bottom nav)
 - Save stays disabled until amount is greater than zero and both category and account are selected
 - Leaving with unsaved changes shows a confirm-discard dialog
 - Save failure keeps the form open and shows an error snackbar; successful save returns to Home and places the new transaction at the top of the list
-- **Shopping-list draft rules:** the "Add to shopping list" action requires account + expense category + date (amount is optional). "Save draft" in edit mode, and the keypad's Save there, follow the same minimum requirements. "Save to transaction" additionally requires amount > 0. Income-category drafts are rejected at the repository layer regardless of UI state. Archived account/category references show an inline warning; draft save remains allowed but conversion is blocked until archived references are replaced. Zero-amount drafts persist `draft_amount_minor_units = null` / `draft_currency_code = null`; the visible currency reseeds from the selected account on next open.
+- **Shopping-list draft rules:** the "Add to shopping list" action requires account + expense category + date (amount is optional). "Save draft" in edit mode, the keypad's Save there, and both Saves in add-draft mode (`/home/shopping-list/new`) follow the same minimum requirements. Add-draft mode's category picker lists expense categories only. "Save to transaction" additionally requires amount > 0. Income-category drafts are rejected at the repository layer regardless of UI state. Archived account/category references show an inline warning; draft save remains allowed but conversion is blocked until archived references are replaced. Zero-amount drafts persist `draft_amount_minor_units = null` / `draft_currency_code = null`; the visible currency reseeds from the selected account on next open.
 
 ### Screen States
 
@@ -1036,6 +1037,9 @@ Home → tap FAB → Add Transaction screen
   → tap "Add to shopping list" → draft saved, form closes, returns to caller
 
 Home → tap shopping-cart FAB → Shopping List Screen
+  → tap the add button (or the empty-state CTA) → "Add to shopping list" form
+    → fill in expense category, account, optional amount, date
+    → tap Save (AppBar or keypad) → draft saved, returns to list with "Draft saved"
   → tap a draft row → draft opens in Edit Draft form
     → adjust fields as needed
     → tap "Save draft" → draft updated, returns to list
@@ -1142,7 +1146,7 @@ Save   0    .    =
 
 - **AC** clears the amount, as long-pressing ⌫ does. **%** turns the operand being typed into a percent (see `amount_formula` under the data model). Digits and `.` after `%` are ignored; ⌫ removes the `%`.
 - **=** finishes the calculation. It is enabled only while an expression is pending. The amount display has no `=` of its own.
-- **Save** saves what the page is editing and is disabled while that save isn't allowed. On Add/Edit Transaction it saves the transaction (disabled while `canSave` is false), and the AppBar Save stays. In shopping-list draft edit mode it saves the draft back to the list, as "Save draft" does (disabled while `canSaveDraft` is false); it never converts the draft. On the recurring rule form it saves the rule.
+- **Save** saves what the page is editing and is disabled while that save isn't allowed. On Add/Edit Transaction it saves the transaction (disabled while `canSave` is false), and the AppBar Save stays. In shopping-list draft edit mode it saves the draft back to the list, as "Save draft" does (disabled while `canSaveDraft` is false); it never converts the draft. In add-draft mode (`/home/shopping-list/new`) it and the AppBar Save add a new draft, under the same rule. On the recurring rule form it saves the rule.
 - Five rows share the height four rows of 48–56dp keys took before the fifth row was added (`CalculatorKeypad.minHeight` is unchanged), so keys are about 37–43dp tall, below the 48dp tap target (see *Accessibility*). Key labels use `titleMedium` and keep the 1.5× text-scale clamp.
 
 ### Category picker

@@ -2,7 +2,9 @@
 //
 // Covers:
 //   - loading indicator in loading state
-//   - empty state CTA to /home/add
+//   - empty state CTA to /home/shopping-list/new
+//   - add button in the data and empty states opens /home/shopping-list/new
+//     and shows "Draft saved" when a draft was added (issue #147)
 //   - list of rows in data state
 //   - row tap navigates to /home/shopping-list/:id
 //   - row tap is disabled while pending delete is active
@@ -31,6 +33,7 @@ import 'package:ledgerly/ui/features/shopping_list/view_models/shopping_list_con
 import 'package:ledgerly/ui/features/shopping_list/view_models/shopping_list_providers.dart';
 import 'package:ledgerly/ui/features/shopping_list/views/shopping_list_screen.dart';
 import 'package:ledgerly/ui/features/shopping_list/view_models/shopping_list_state.dart';
+import 'package:ledgerly/ui/features/transactions/view_models/transaction_form_state.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockShoppingListRepository extends Mock
@@ -77,8 +80,14 @@ class _StubRouter {
       routes: [
         GoRoute(path: '/', builder: (_, _) => home),
         GoRoute(
-          path: '/home/add',
-          builder: (_, _) => const Scaffold(body: Text('ADD_TRANSACTION')),
+          path: '/home/shopping-list/new',
+          builder: (ctx, _) => Scaffold(
+            body: TextButton(
+              onPressed: () =>
+                  ctx.pop(const ShoppingListEditResultAddedToList()),
+              child: const Text('NEW_DRAFT'),
+            ),
+          ),
         ),
         GoRoute(
           path: '/home/shopping-list/:id',
@@ -173,7 +182,9 @@ void main() {
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 
-  testWidgets('SLS02: shows empty state CTA to /home/add', (tester) async {
+  testWidgets('SLS02: shows empty state CTA to /home/shopping-list/new', (
+    tester,
+  ) async {
     final container = _makeContainer(fixed: const ShoppingListState.empty());
     addTearDown(container.dispose);
 
@@ -186,8 +197,58 @@ void main() {
     await tester.tap(find.text('Add to shopping list'));
     await tester.pumpAndSettle();
 
-    expect(find.text('ADD_TRANSACTION'), findsOneWidget);
+    expect(find.text('NEW_DRAFT'), findsOneWidget);
   });
+
+  for (final (name, state, shown) in [
+    ('loading', const ShoppingListState.loading(), false),
+    ('empty', const ShoppingListState.empty(), true),
+    (
+      'data',
+      ShoppingListState.data(items: [_item(id: 1)], pendingDeleteId: null),
+      true,
+    ),
+    ('error', ShoppingListState.error(Exception('x'), StackTrace.empty), false),
+  ]) {
+    testWidgets('SLS11: the add button is ${shown ? '' : 'not '}shown in the '
+        '$name state', (tester) async {
+      final container = _makeContainer(fixed: state);
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container));
+      await tester.pump();
+
+      expect(
+        find.byTooltip('Add to shopping list'),
+        shown ? findsOneWidget : findsNothing,
+      );
+    });
+  }
+
+  testWidgets(
+    'SLS12: the add button opens /home/shopping-list/new and confirms the '
+    'new draft',
+    (tester) async {
+      final container = _makeContainer(
+        fixed: ShoppingListState.data(
+          items: [_item(id: 1)],
+          pendingDeleteId: null,
+        ),
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Add to shopping list'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('NEW_DRAFT'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ShoppingListScreen), findsOneWidget);
+      expect(find.text('Draft saved'), findsOneWidget);
+    },
+  );
 
   testWidgets('SLS03: shows list of rows in data state', (tester) async {
     final items = [_item(id: 1, memo: 'Apples'), _item(id: 2, memo: 'Bread')];
