@@ -340,5 +340,28 @@ void main() {
         );
       },
     );
+
+    test(
+      'PC12: removing a replaced listener keeps the one bound after it',
+      () async {
+        final container = makeContainer();
+        addTearDown(container.dispose);
+        container.listen(pendingControllerProvider, (_, _) {});
+
+        final notifier = container.read(pendingControllerProvider.notifier);
+        final a = <PendingEffect>[];
+        final b = <PendingEffect>[];
+        notifier
+          ..setEffectListener(a.add)
+          ..setEffectListener(b.add)
+          ..removeEffectListener(a.add);
+        await notifier.approve(1);
+        notifier.removeEffectListener(b.add);
+        await notifier.approve(1);
+
+        expect(a, isEmpty);
+        expect(b, hasLength(1));
+      },
+    );
   });
 }

@@ -114,8 +114,14 @@ class PendingController extends _$PendingController {
     _composer?.notifySkipChanged();
   }
 
-  void setEffectListener(PendingEffectListener? listener) {
+  void setEffectListener(PendingEffectListener listener) {
     _effectListener = listener;
+  }
+
+  /// Clears the listener only while [listener] still holds it, so a host
+  /// disposed after its replacement bound does not unbind the replacement.
+  void removeEffectListener(PendingEffectListener listener) {
+    if (_effectListener == listener) _effectListener = null;
   }
 
   Future<void> _commitSkip(int pendingId) async {

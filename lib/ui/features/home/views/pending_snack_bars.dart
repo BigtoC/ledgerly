@@ -37,7 +37,7 @@ class _PendingSnackBarsState extends ConsumerState<PendingSnackBars> {
 
   @override
   void dispose() {
-    _controller.setEffectListener(null);
+    _controller.removeEffectListener(_onEffect);
     super.dispose();
   }
 
