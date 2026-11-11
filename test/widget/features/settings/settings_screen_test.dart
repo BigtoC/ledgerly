@@ -14,8 +14,9 @@
 //     Management section and navigate to `/settings/import` and
 //     `/settings/export`.
 //   - "Pending transactions" tile sits in Data Management, navigates to
-//     `/settings/pending`, and shows its red dot only while a pending row
-//     is visible (not for the row inside the skip-undo window).
+//     `/settings/pending`, and shows and announces its red dot only while
+//     a pending row is visible (not for the row inside the skip-undo
+//     window).
 //   - Locale change via `setLocale` writes through the repo; a manual
 //     MaterialApp locale swap then verifies visible strings change
 //     without re-navigating.
@@ -623,6 +624,7 @@ void main() {
     testWidgets('SS05e: pending dot visible=$dotVisible with $label', (
       tester,
     ) async {
+      final handle = tester.ensureSemantics();
       final container = _makeContainer(
         prefs: _MockUserPreferencesRepository(),
         accountRepo: _MockAccountRepository(),
@@ -642,6 +644,14 @@ void main() {
         ),
       );
       expect(dot.isLabelVisible, dotVisible);
+      expect(
+        find.bySemanticsLabel(
+          RegExp('Waiting for approval'),
+          skipOffstage: false,
+        ),
+        dotVisible ? findsOneWidget : findsNothing,
+      );
+      handle.dispose();
     });
   }
 

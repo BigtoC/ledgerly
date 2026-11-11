@@ -2074,6 +2074,12 @@ abstract class AppLocalizations {
   /// **'Pending transactions'**
   String get settingsPendingTransactionsTile;
 
+  /// Screen-reader label of the red dot on the Settings Pending transactions tile, read after the tile title while any pending row awaits approval.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for approval'**
+  String get settingsPendingTransactionsDotSemantics;
+
   /// Pending transactions screen app-bar title. The screen lists every pending recurring row, from every day.
   ///
   /// In en, this message translates to:

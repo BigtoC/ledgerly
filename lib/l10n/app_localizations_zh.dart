@@ -1149,6 +1149,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsPendingTransactionsTile => 'Pending transactions';
 
   @override
+  String get settingsPendingTransactionsDotSemantics => 'Waiting for approval';
+
+  @override
   String get pendingTransactionsTitle => 'Pending transactions';
 
   @override
@@ -2539,6 +2542,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get settingsPendingTransactionsTile => '待处理交易';
 
   @override
+  String get settingsPendingTransactionsDotSemantics => '等待批准';
+
+  @override
   String get pendingTransactionsTitle => '待处理交易';
 
   @override
@@ -3920,6 +3926,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get settingsPendingTransactionsTile => '待處理交易';
+
+  @override
+  String get settingsPendingTransactionsDotSemantics => '等待核准';
 
   @override
   String get pendingTransactionsTitle => '待處理交易';

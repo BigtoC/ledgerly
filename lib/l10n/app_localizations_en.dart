@@ -1149,6 +1149,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsPendingTransactionsTile => 'Pending transactions';
 
   @override
+  String get settingsPendingTransactionsDotSemantics => 'Waiting for approval';
+
+  @override
   String get pendingTransactionsTitle => 'Pending transactions';
 
   @override

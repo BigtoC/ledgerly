@@ -430,6 +430,7 @@ const Set<String> _expectedEnKeys = <String>{
   'settingsExportDataTile',
   'csvExportTitle',
   'settingsPendingTransactionsTile',
+  'settingsPendingTransactionsDotSemantics',
   'pendingTransactionsTitle',
   'pendingTransactionsEmpty',
   'csvExportIntro',

@@ -9,9 +9,10 @@
 //      transactions (red dot while any pending row awaits approval).
 //   4. Splash — splash settings subsection (plan §6).
 //
-// The screen is purely a projection of `settingsControllerProvider` — it
-// never reads repositories directly, and no data transformation happens
-// in `build()` (PRD → Controller Contract).
+// The screen projects `settingsControllerProvider`, plus
+// `pendingControllerProvider` for the pending dot and the app version and
+// update providers for the footer. It never reads repositories directly
+// (PRD → Controller Contract).
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -86,7 +87,7 @@ class _SettingsBody extends ConsumerWidget {
     final hasPending = ref.watch(
       pendingControllerProvider.select(
         (s) => switch (s.value) {
-          final PendingData d => d.visibleOn(null).isNotEmpty,
+          final PendingData d => d.items.any((i) => i.id != d.skippingId),
           _ => false,
         },
       ),
@@ -154,10 +155,16 @@ class _SettingsBody extends ConsumerWidget {
                 ListTile(
                   key: const ValueKey('settingsPendingTransactionsTile'),
                   title: Text(l10n.settingsPendingTransactionsTile),
-                  trailing: Badge(
-                    key: const ValueKey('settingsPendingTransactionsDot'),
-                    isLabelVisible: hasPending,
-                    child: const Icon(Icons.chevron_right),
+                  // The dot is visual only, so screen readers get a label.
+                  trailing: Semantics(
+                    label: hasPending
+                        ? l10n.settingsPendingTransactionsDotSemantics
+                        : null,
+                    child: Badge(
+                      key: const ValueKey('settingsPendingTransactionsDot'),
+                      isLabelVisible: hasPending,
+                      child: const Icon(Icons.chevron_right),
+                    ),
                   ),
                   onTap: () => context.push('/settings/pending'),
                 ),
