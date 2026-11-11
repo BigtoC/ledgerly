@@ -4,6 +4,9 @@
 // error, lazy list, 2x text scale).
 // PTS04-05b: approve and swipe-skip through the real controller, with the
 // snackbars coming from the PendingSnackBars host.
+// PTS08: a row keeps its state when a row above it leaves the list.
+
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -306,5 +309,44 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Pending transactions'), findsOneWidget);
     expect(find.text('Netflix'), findsOneWidget);
+  });
+
+  testWidgets('PTS08: an approve in flight survives a row above leaving', (
+    tester,
+  ) async {
+    final rows = StreamController<List<PendingTransaction>>();
+    addTearDown(rows.close);
+    final repo = _MockPendingRepo();
+    when(() => repo.watchAll()).thenAnswer((_) => rows.stream);
+    when(() => repo.approve(2))
+        .thenAnswer((_) => Completer<Transaction>().future);
+    final container = _makeContainer(repo: repo);
+    addTearDown(container.dispose);
+
+    rows.add([_pending(id: 1, memo: 'Rent'), _pending(id: 2, memo: 'Gym')]);
+    await tester.pumpWidget(_wrap(container));
+    await tester.pump();
+    await tester.pump();
+
+    final approveGym = find.descendant(
+      of: find.widgetWithText(ListTile, 'Gym'),
+      matching: find.byIcon(Icons.check),
+    );
+    await tester.tap(approveGym);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    verify(() => repo.approve(2)).called(1);
+
+    // Rent leaves (approved elsewhere); Gym moves up to index 0.
+    rows.add([_pending(id: 2, memo: 'Gym')]);
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Rent'), findsNothing);
+
+    // Still in flight, so the circle ignores a second tap.
+    await tester.tap(approveGym);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    verifyNever(() => repo.approve(2));
   });
 }

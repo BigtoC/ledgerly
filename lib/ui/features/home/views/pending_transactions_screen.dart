@@ -44,6 +44,12 @@ class PendingTransactionsScreen extends ConsumerWidget {
             [] => empty,
             final rows => ListView.builder(
               itemCount: rows.length,
+              // Lets a row keep its state (approve in flight, open
+              // Slidable) when a row above it leaves.
+              findChildIndexCallback: (key) {
+                final i = rows.indexWhere((r) => ValueKey(r.id) == key);
+                return i < 0 ? null : i;
+              },
               itemBuilder: (_, i) {
                 final item = rows[i];
                 return PendingTile(
