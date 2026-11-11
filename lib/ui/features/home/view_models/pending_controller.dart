@@ -24,15 +24,15 @@ sealed class PendingEffect {
   const PendingEffect();
 }
 
-/// Fired immediately when the user swipes a row to skip. The widget shows
-/// a SnackBar with `homePendingSkippedSnack` text and an Undo action that
-/// calls `notifier.undoSkip()`.
+/// Fired immediately when the user swipes a row to skip. PendingSnackBars
+/// shows a SnackBar with `homePendingSkippedSnack` text and an Undo action
+/// that calls `notifier.undoSkip()`.
 final class PendingSkipStartedEffect extends PendingEffect {
   const PendingSkipStartedEffect();
 }
 
-/// Fired after a successful approve. The widget shows a SnackBar with
-/// `homePendingApprovedSnack(ruleName)`.
+/// Fired after a successful approve. PendingSnackBars shows a SnackBar
+/// with `homePendingApprovedSnack(ruleName)`.
 final class PendingApproveSucceededEffect extends PendingEffect {
   const PendingApproveSucceededEffect({required this.ruleName});
   final String ruleName;

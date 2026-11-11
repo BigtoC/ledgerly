@@ -257,6 +257,7 @@ lib/
           day_navigation_header.dart
           transaction_tile.dart
           pending_section.dart
+          pending_snack_bars.dart
           pending_badge.dart
       transactions/
         view_models/

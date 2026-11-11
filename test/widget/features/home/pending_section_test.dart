@@ -27,6 +27,7 @@ import 'package:ledgerly/ui/features/home/view_models/home_controller.dart';
 import 'package:ledgerly/ui/features/home/view_models/pending_controller.dart';
 import 'package:ledgerly/ui/features/home/view_models/pending_state.dart';
 import 'package:ledgerly/ui/features/home/views/pending_section.dart';
+import 'package:ledgerly/ui/features/home/views/pending_snack_bars.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockPendingRepo extends Mock implements PendingTransactionRepository {}
@@ -75,8 +76,10 @@ Widget _wrap(ProviderContainer container) {
         routes: [
           GoRoute(
             path: '/',
-            builder: (_, _) => const Scaffold(
-              body: CustomScrollView(slivers: [PendingSection()]),
+            builder: (_, _) => const PendingSnackBars(
+              child: Scaffold(
+                body: CustomScrollView(slivers: [PendingSection()]),
+              ),
             ),
           ),
         ],

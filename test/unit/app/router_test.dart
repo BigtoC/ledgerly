@@ -31,6 +31,7 @@ import 'package:ledgerly/ui/features/categories/view_models/categories_controlle
 import 'package:ledgerly/ui/features/home/view_models/home_controller.dart';
 import 'package:ledgerly/ui/features/home/views/home_screen.dart';
 import 'package:ledgerly/ui/features/home/view_models/pending_controller.dart';
+import 'package:ledgerly/ui/features/home/views/pending_snack_bars.dart';
 import 'package:ledgerly/ui/features/shopping_list/view_models/shopping_list_controller.dart';
 import 'package:ledgerly/ui/features/shopping_list/view_models/shopping_list_providers.dart';
 import 'package:ledgerly/ui/features/shopping_list/views/shopping_list_screen.dart';
@@ -118,6 +119,14 @@ void main() {
 
       expect(find.byType(HomeScreen), findsOneWidget);
       expect(find.byType(SplashScreen), findsNothing);
+      // One snackbar host above the shell receives every pending effect.
+      expect(
+        find.ancestor(
+          of: find.byType(AdaptiveShell),
+          matching: find.byType(PendingSnackBars),
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('splashEnabled=false: /splash → /home', (tester) async {
