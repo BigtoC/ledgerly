@@ -1,6 +1,7 @@
 ---
 title: Controller commands return sealed outcomes, widgets switch on them, and snackbar actions outlive the widget
 date: 2026-11-01
+last_updated: 2026-11-11
 category: architecture-patterns
 module: feature-slice controllers and widgets
 problem_type: architecture_pattern
@@ -168,6 +169,8 @@ messenger
 ```
 
 Since #135 the Undo snackbar itself goes through `messenger.showUndoSnackBar(message:, undoLabel:, onUndo:)` in `lib/ui/core/widgets/undo_snack_bar.dart`, which calls `clearSnackBars()` first. The helper also passes `persist: false`, so Undo now hides after `kUndoWindow` instead of staying. Keep clearing before other snackbars on these screens, as above: without it, a message still waits behind the visible Undo for up to 4 s.
+
+**Exception, pending transactions (PR #149).** Clearing an error removed another row's live Undo, so `PendingSnackBars` queues failure snackbars behind the Undo while `skippingId != null`. The wait stays short because the host closes the Undo when the controller commits: a SnackBar's `duration` starts only after its ~250 ms entrance, so `kUndoWindow` on the snackbar alone left Undo tappable after the 4 s commit. See [`keepalive-effect-listener-host-and-state-driven-undo-snackbar.md`](keepalive-effect-listener-host-and-state-driven-undo-snackbar.md).
 
 The failure only shows up when an Undo snackbar is already on screen. With an empty messenger the test passes either way (`S16b`, `MAB12`).
 
