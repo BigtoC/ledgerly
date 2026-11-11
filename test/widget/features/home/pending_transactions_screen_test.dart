@@ -310,7 +310,10 @@ void main() {
     expect(find.text('Row 39'), findsOneWidget);
   });
 
-  testWidgets('PTS07: 2x text scale renders without overflow', (tester) async {
+  testWidgets('PTS07: at 2x text a row fits a phone width', (tester) async {
+    const width = 390.0;
+    await tester.binding.setSurfaceSize(const Size(width, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     final container = _makeContainer(
       fixed: PendingState.data(items: [_pending(id: 1)], skippingId: null),
     );
@@ -321,7 +324,33 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('Pending transactions'), findsOneWidget);
-    expect(find.text('Netflix'), findsOneWidget);
+
+    // The approve circle keeps its 36 dp, fully on screen.
+    final circle = tester.getRect(
+      find
+          .ancestor(
+            of: find.byIcon(Icons.check),
+            matching: find.byType(Container),
+          )
+          .first,
+    );
+    expect(circle.size, const Size(36, 36));
+    expect(circle.left, greaterThanOrEqualTo(0));
+    expect(circle.right, lessThanOrEqualTo(width));
+
+    // Title, then the whole amount, then the circle, without overlap.
+    final title = tester.getRect(find.text('Netflix'));
+    final amountText = find.text(r'$15.99');
+    final amount = tester.getRect(amountText);
+    expect(title.width, greaterThan(0));
+    expect(title.right, lessThanOrEqualTo(amount.left));
+    expect(amount.right, lessThanOrEqualTo(circle.left));
+    final paragraph = tester.renderObject<RenderBox>(amountText);
+    expect(
+      paragraph.getMaxIntrinsicWidth(double.infinity),
+      lessThanOrEqualTo(paragraph.size.width + 0.01),
+      reason: 'the amount is cut short',
+    );
   });
 
   testWidgets('PTS08: an approve in flight survives a row above leaving', (

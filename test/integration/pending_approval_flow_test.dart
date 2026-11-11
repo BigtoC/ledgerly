@@ -304,7 +304,7 @@ void main() {
 
           final today = DateTime.now();
           final todayMidnight = DateTime(today.year, today.month, today.day);
-          for (final memo in ['Netflix', 'Spotify']) {
+          for (final memo in ['Netflix', 'Spotify', 'Gym']) {
             await pendingRepo.insert(
               source: 'recurring',
               amountMinorUnits: 1599,
@@ -329,6 +329,21 @@ void main() {
         addTearDown(container.dispose);
         final router = container.read(routerProvider);
 
+        Future<List<String?>> storedMemos() async =>
+            (await tester.runAsync(() => pendingRepo.watchAll().first))!
+                .map((p) => p.memo)
+                .toList();
+
+        /// Swipes [memo]'s row and taps Skip once; returns 1 s after the
+        /// tap, when any earlier snackbar has left and the Undo one entered.
+        Future<void> skip(String memo) async {
+          await tester.drag(find.text(memo), const Offset(-300, 0));
+          await tester.pump(const Duration(milliseconds: 500));
+          await tester.tap(find.text('Skip once'));
+          await tester.pump(const Duration(milliseconds: 500));
+          await tester.pump(const Duration(milliseconds: 500));
+        }
+
         await tester.pumpWidget(buildTestApp(container: container));
         await tester.pump();
         await tester.pump(const Duration(seconds: 1));
@@ -338,6 +353,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('Netflix'), findsOneWidget);
         expect(find.text('Spotify'), findsOneWidget);
+        expect(find.text('Gym'), findsOneWidget);
 
         await tester.tap(
           find.descendant(
@@ -349,24 +365,35 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        final remaining = await tester.runAsync(
-          () => pendingRepo.watchAll().first,
-        );
-        expect(remaining!.map((p) => p.memo), ['Spotify']);
+        expect(find.text('Approved — Netflix'), findsOneWidget);
+        expect(await storedMemos(), ['Gym', 'Spotify']);
+
+        // Skip, then Undo, on the page: the row comes back and stays.
+        await skip('Spotify');
+        expect(find.text('Spotify'), findsNothing);
+        expect(find.text('Skipped this occurrence'), findsOneWidget);
+        tester.widget<SnackBarAction>(find.byType(SnackBarAction)).onPressed();
+        await tester.pump(const Duration(milliseconds: 200));
+        expect(find.text('Spotify'), findsOneWidget);
+        await tester.pump(const Duration(seconds: 5));
+        expect(await storedMemos(), ['Gym', 'Spotify']);
+
+        // A skip left alone on the page commits once the window lapses.
+        await skip('Gym');
+        expect(find.text('Gym'), findsNothing);
+        await tester.pump(const Duration(seconds: 4));
+        // The Undo snackbar finishes leaving.
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(await storedMemos(), ['Spotify']);
+        expect(find.byType(SnackBarAction), findsNothing);
 
         router.go('/settings');
         await tester.pumpAndSettle();
         router.go('/home');
         await tester.pumpAndSettle();
 
-        // The page's effects came through the shell host, and Home's
-        // skip still gets its Undo snackbar from it.
-        await tester.drag(find.text('Spotify'), const Offset(-300, 0));
-        await tester.pump(const Duration(milliseconds: 500));
-        await tester.tap(find.text('Skip once'));
-        await tester.pump(const Duration(milliseconds: 500));
-        // The approve snackbar is still animating out; the Undo one follows.
-        await tester.pump(const Duration(milliseconds: 500));
+        // Home's skip still gets its Undo snackbar from the shell host.
+        await skip('Spotify');
         expect(find.text('Skipped this occurrence'), findsOneWidget);
 
         tester.widget<SnackBarAction>(find.byType(SnackBarAction)).onPressed();
