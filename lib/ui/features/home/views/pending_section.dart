@@ -217,6 +217,10 @@ class _ErrorBanner extends StatelessWidget {
   }
 }
 
+// Building a DateFormat parses the locale pattern, and every tile needs one.
+// One per locale; the key space is tiny, so no eviction.
+final _dateFormats = <String, DateFormat>{};
+
 /// Single pending-row tile with Approve circle + swipe-left Skip.
 class PendingTile extends StatelessWidget {
   const PendingTile({
@@ -255,7 +259,9 @@ class PendingTile extends StatelessWidget {
         ? categoryDisplayName(category!, l10n)
         : '';
     final accountName = account?.name ?? '';
-    final dateStr = DateFormat.yMMMd(locale).format(item.date);
+    final dateStr = (_dateFormats[locale] ??= DateFormat.yMMMd(
+      locale,
+    )).format(item.date);
     final subtitleParts = <String>[
       if (categoryName.isNotEmpty) categoryName,
       if (accountName.isNotEmpty) accountName,
