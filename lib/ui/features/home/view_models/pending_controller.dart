@@ -24,13 +24,6 @@ sealed class PendingEffect {
   const PendingEffect();
 }
 
-/// Fired immediately when the user swipes a row to skip. PendingSnackBars
-/// shows a SnackBar with `homePendingSkippedSnack` text and an Undo action
-/// that calls `notifier.undoSkip()`.
-final class PendingSkipStartedEffect extends PendingEffect {
-  const PendingSkipStartedEffect();
-}
-
 /// Fired after a successful approve. PendingSnackBars shows a SnackBar
 /// with `homePendingApprovedSnack(ruleName)`.
 final class PendingApproveSucceededEffect extends PendingEffect {
@@ -96,8 +89,6 @@ class PendingController extends _$PendingController {
 
     _skippingId = pendingId;
     _composer?.notifySkipChanged();
-
-    _effectListener?.call(const PendingSkipStartedEffect());
 
     _undoTimer = Timer(kUndoWindow, () async {
       final pending = _skippingId;

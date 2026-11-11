@@ -5,6 +5,7 @@
 // PTS04-05b: approve and swipe-skip through the real controller, with the
 // snackbars coming from the PendingSnackBars host.
 // PTS08: a row keeps its state when a row above it leaves the list.
+// PTS09-11: the Undo snackbar lives exactly as long as the skip window.
 
 import 'dart:async';
 
@@ -130,13 +131,43 @@ ProviderContainer _makeContainer({
   );
 }
 
-_MockPendingRepo _repoWithOneRow() {
+_MockPendingRepo _repoWithOneRow() => _repoWithRows([_pending(id: 1)]);
+
+_MockPendingRepo _repoWithRows(List<PendingTransaction> rows) {
   final repo = _MockPendingRepo();
-  when(() => repo.watchAll())
-      .thenAnswer((_) => Stream.value([_pending(id: 1)]));
+  when(() => repo.watchAll()).thenAnswer((_) => Stream.value(rows));
   when(() => repo.reject(any())).thenAnswer((_) async {});
   return repo;
 }
+
+Transaction _approved() => Transaction(
+  id: 99,
+  amountMinorUnits: 1599,
+  currency: _usd,
+  categoryId: 1,
+  accountId: 1,
+  date: DateTime(2026, 5, 8),
+  memo: 'Netflix',
+  createdAt: DateTime(2026, 5, 8, 12),
+  updatedAt: DateTime(2026, 5, 8, 12),
+);
+
+/// Swipes [memo]'s row and taps Skip once. The skip window starts at the
+/// tap; this returns 500 ms later.
+Future<void> _skip(WidgetTester tester, String memo) async {
+  await tester.drag(find.text(memo), const Offset(-300, 0));
+  await tester.pump(const Duration(milliseconds: 500));
+  await tester.tap(find.text('Skip once'));
+  await tester.pump(const Duration(milliseconds: 500));
+  // The skipped row's Slidable left while open; the other rows stop
+  // absorbing taps one frame later.
+  await tester.pump();
+}
+
+Finder _approveButton(String memo) => find.descendant(
+  of: find.widgetWithText(ListTile, memo),
+  matching: find.byIcon(Icons.check),
+);
 
 @Dependencies([PendingController])
 void main() {
@@ -197,19 +228,7 @@ void main() {
     tester,
   ) async {
     final repo = _repoWithOneRow();
-    when(() => repo.approve(1)).thenAnswer(
-      (_) async => Transaction(
-        id: 99,
-        amountMinorUnits: 1599,
-        currency: _usd,
-        categoryId: 1,
-        accountId: 1,
-        date: DateTime(2026, 5, 8),
-        memo: 'Netflix',
-        createdAt: DateTime(2026, 5, 8, 12),
-        updatedAt: DateTime(2026, 5, 8, 12),
-      ),
-    );
+    when(() => repo.approve(1)).thenAnswer((_) async => _approved());
     final container = _makeContainer(repo: repo);
     addTearDown(container.dispose);
 
@@ -236,10 +255,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    await tester.drag(find.text('Netflix'), const Offset(-300, 0));
-    await tester.pump(const Duration(milliseconds: 500));
-    await tester.tap(find.text('Skip once'));
-    await tester.pump(const Duration(milliseconds: 500));
+    await _skip(tester, 'Netflix');
 
     expect(find.text('Netflix'), findsNothing);
     expect(find.text('No pending transactions.'), findsOneWidget);
@@ -264,10 +280,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    await tester.drag(find.text('Netflix'), const Offset(-300, 0));
-    await tester.pump(const Duration(milliseconds: 500));
-    await tester.tap(find.text('Skip once'));
-    await tester.pump(const Duration(milliseconds: 500));
+    await _skip(tester, 'Netflix');
 
     await tester.pump(const Duration(seconds: 5));
     await tester.pump();
@@ -328,10 +341,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    final approveGym = find.descendant(
-      of: find.widgetWithText(ListTile, 'Gym'),
-      matching: find.byIcon(Icons.check),
-    );
+    final approveGym = _approveButton('Gym');
     await tester.tap(approveGym);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
@@ -348,5 +358,97 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     verifyNever(() => repo.approve(2));
+  });
+
+  testWidgets('PTS09: approving a row keeps a later skip\'s Undo', (
+    tester,
+  ) async {
+    final repo = _repoWithRows([
+      _pending(id: 1, memo: 'Netflix'),
+      _pending(id: 2, memo: 'Rent'),
+      _pending(id: 3, memo: 'Gym'),
+    ]);
+    when(() => repo.approve(3)).thenAnswer((_) async => _approved());
+    final container = _makeContainer(repo: repo);
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container));
+    await tester.pump();
+    await tester.pump();
+
+    // Skipping Rent commits Netflix's skip and replaces its Undo.
+    await _skip(tester, 'Netflix');
+    await _skip(tester, 'Rent');
+    verify(() => repo.reject(1)).called(1);
+
+    await tester.tap(_approveButton('Gym'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    verify(() => repo.approve(3)).called(1);
+
+    expect(find.text('Skipped this occurrence'), findsOneWidget);
+    expect(find.byType(SnackBarAction), findsOneWidget);
+    expect(find.text('Approved — Gym'), findsNothing);
+
+    // Let Rent's skip commit so its timer does not outlive the test.
+    await tester.pump(const Duration(seconds: 4));
+    verify(() => repo.reject(2)).called(1);
+  });
+
+  testWidgets('PTS10: the Undo closes when the skip commits', (tester) async {
+    final repo = _repoWithOneRow();
+    final container = _makeContainer(repo: repo);
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container));
+    await tester.pump();
+    await tester.pump();
+
+    await _skip(tester, 'Netflix');
+    // The snackbar finishes entering; its own 4 s starts now, 800 ms after
+    // the skip window did.
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byType(SnackBarAction), findsOneWidget);
+
+    // 4.1 s after the skip: committed, while the snackbar's timer has
+    // another 700 ms to run.
+    await tester.pump(const Duration(milliseconds: 3300));
+    verify(() => repo.reject(1)).called(1);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byType(SnackBarAction), findsNothing);
+  });
+
+  testWidgets('PTS11: an approve failure queues behind a live Undo', (
+    tester,
+  ) async {
+    final repo = _repoWithRows([
+      _pending(id: 1, memo: 'Netflix'),
+      _pending(id: 2, memo: 'Gym'),
+    ]);
+    when(() => repo.approve(2)).thenThrow(StateError('approve failed'));
+    final container = _makeContainer(repo: repo);
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container));
+    await tester.pump();
+    await tester.pump();
+
+    await _skip(tester, 'Netflix');
+    await tester.tap(_approveButton('Gym'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    verify(() => repo.approve(2)).called(1);
+    // Long enough for a cleared Undo to finish leaving.
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.byType(SnackBarAction), findsOneWidget);
+    const error = 'Something went wrong. Please try again.';
+    expect(find.text(error), findsNothing);
+
+    // The error shows once the skip commits and the Undo leaves.
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.byType(SnackBarAction), findsNothing);
+    expect(find.text(error), findsOneWidget);
   });
 }
