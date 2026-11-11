@@ -1,7 +1,8 @@
 // End-to-end integration test for pending approval flow.
 //
 // Exercises: seed → insert pending row → land on Home → approve →
-// verify pending row deleted and transaction inserted.
+// verify pending row deleted and transaction inserted. Also covers the
+// Settings › Pending transactions page (/settings/pending).
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -279,6 +280,100 @@ void main() {
             'PendingSection is day-scoped',
       );
     });
+
+    testWidgets(
+      "Settings pending page approves and skips; Home's skip undo still "
+      'works afterwards',
+      (tester) async {
+        late DriftPendingTransactionRepository pendingRepo;
+        await tester.runAsync(() async {
+          final txRepo = DriftTransactionRepository(db);
+          pendingRepo = DriftPendingTransactionRepository(db, txRepo: txRepo);
+          final categoryId = await getSeededCategoryId(db, 'category.food');
+          final account = await getDefaultAccount(db);
+
+          // Seed history so HomeData (and PendingSection) renders.
+          await insertTestTransaction(
+            db,
+            accountId: account.id,
+            categoryId: categoryId,
+            currencyCode: account.currency.code,
+            amountMinorUnits: 100,
+            memo: 'historical',
+          );
+
+          final today = DateTime.now();
+          final todayMidnight = DateTime(today.year, today.month, today.day);
+          for (final memo in ['Netflix', 'Spotify']) {
+            await pendingRepo.insert(
+              source: 'recurring',
+              amountMinorUnits: 1599,
+              currencyCode: account.currency.code,
+              categoryId: categoryId,
+              accountId: account.id,
+              memo: memo,
+              date: todayMidnight,
+              fetchedAt: todayMidnight,
+            );
+          }
+        });
+
+        final container = makeTestContainer(
+          db: db,
+          extraOverrides: [
+            splashGateSnapshotProvider.overrideWithValue(
+              SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+        final router = container.read(routerProvider);
+
+        await tester.pumpWidget(buildTestApp(container: container));
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+        await tester.pumpAndSettle();
+
+        router.go('/settings/pending');
+        await tester.pumpAndSettle();
+        expect(find.text('Netflix'), findsOneWidget);
+        expect(find.text('Spotify'), findsOneWidget);
+
+        await tester.tap(
+          find.descendant(
+            of: find.ancestor(
+              of: find.text('Netflix'),
+              matching: find.byType(ListTile),
+            ),
+            matching: find.byIcon(Icons.check),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final remaining = await tester.runAsync(
+          () => pendingRepo.watchAll().first,
+        );
+        expect(remaining!.map((p) => p.memo), ['Spotify']);
+
+        router.go('/settings');
+        await tester.pumpAndSettle();
+        router.go('/home');
+        await tester.pumpAndSettle();
+
+        // The page's effects came through the shell host, and Home's
+        // skip still gets its Undo snackbar from it.
+        await tester.drag(find.text('Spotify'), const Offset(-300, 0));
+        await tester.pump(const Duration(milliseconds: 500));
+        await tester.tap(find.text('Skip once'));
+        await tester.pump(const Duration(milliseconds: 500));
+        // The approve snackbar is still animating out; the Undo one follows.
+        await tester.pump(const Duration(milliseconds: 500));
+        expect(find.text('Skipped this occurrence'), findsOneWidget);
+
+        tester.widget<SnackBarAction>(find.byType(SnackBarAction)).onPressed();
+        await tester.pump(const Duration(milliseconds: 200));
+        expect(find.text('Spotify'), findsOneWidget);
+      },
+    );
 
     // Note: a previous test asserted that approving a past-dated pending
     // tile from today's view pinned Home to that past day so the new tx

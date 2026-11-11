@@ -392,6 +392,8 @@
   "settingsSectionDataManagement": "資料管理",
   "settingsExportDataTile": "匯出資料",
   "csvExportTitle": "匯出資料",
+  "pendingTransactionsTitle": "待處理交易",
+  "pendingTransactionsEmpty": "沒有待處理交易。",
   "csvExportIntro": "將交易匯出為 CSV 檔案，並選擇儲存位置。",
   "csvExportPrivacyNote": "檔案未加密，任何取得檔案的人都能讀取你的交易。",
   "csvExportEmpty": "沒有可匯出的交易。",

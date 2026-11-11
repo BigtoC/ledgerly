@@ -1146,6 +1146,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get csvExportTitle => 'Export data';
 
   @override
+  String get pendingTransactionsTitle => 'Pending transactions';
+
+  @override
+  String get pendingTransactionsEmpty => 'No pending transactions.';
+
+  @override
   String get csvExportIntro =>
       'Export your transactions to a CSV file. You choose where to save it.';
 

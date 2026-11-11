@@ -2068,6 +2068,18 @@ abstract class AppLocalizations {
   /// **'Export data'**
   String get csvExportTitle;
 
+  /// Pending transactions screen app-bar title. The screen lists every pending recurring row, from every day.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending transactions'**
+  String get pendingTransactionsTitle;
+
+  /// Pending transactions screen message when no rows await approval.
+  ///
+  /// In en, this message translates to:
+  /// **'No pending transactions.'**
+  String get pendingTransactionsEmpty;
+
   /// CSV export screen explanation above the date range.
   ///
   /// In en, this message translates to:

@@ -258,6 +258,7 @@ lib/
           transaction_tile.dart
           pending_section.dart
           pending_snack_bars.dart
+          pending_transactions_screen.dart
           pending_badge.dart
       transactions/
         view_models/
@@ -949,6 +950,7 @@ ShellRoute (bottom nav)
     /settings/about         About screen (modal push, root navigator)
     /settings/manage-accounts/new     New Account
     /settings/manage-accounts/:id     Edit Account
+    /settings/pending       Pending transactions (every day)
     /settings/recurring     Recurring rules list
     /settings/recurring/new New recurring rule (modal push)
     /settings/recurring/:id Edit recurring rule (modal push)
@@ -961,7 +963,7 @@ ShellRoute (bottom nav)
 - The Home shopping-cart FAB is the only entry point to `ShoppingListScreen`; there is no ShoppingListCard on the Analysis tab.
 - Splash → Home transition uses a fade `CustomTransitionPage` to preserve the hnotes-style reveal.
 - Root `redirect:` reads `splash_enabled` from `user_preferences`; no splash route is visited when disabled.
-- Pending transactions are reviewed inline on Home via `PendingSection` — there is no standalone pending-transactions route. The pending badge on Home triggers an inline expansion.
+- Pending transactions are reviewed inline on Home via `PendingSection`, which shows the selected day's rows. The pending badge on Home triggers an inline expansion. `/settings/pending` lists every pending row from every day, with the same approve and swipe-to-skip actions. Both screens' snackbars come from `PendingSnackBars`, mounted above the shell.
 - Recurring rule management lives at `/settings/recurring` with create/edit routes pushed modally.
 
 ---
@@ -995,6 +997,7 @@ ShellRoute (bottom nav)
 5. **Categories Screen** — List categories grouped by expense/income, add/edit/reorder/archive
 6. **Settings Screen** — Theme toggle (light/dark), language selector, default account, default currency, manage categories, manage recurring rules, splash screen settings, about screen, new-version badge (in-app APK download + install when a newer GitHub release exists)
 7. **Recurring Rules Screen** (`/settings/recurring`) — List of recurring rules with create/edit/archive. Create/edit form reuses transaction-form widgets for visual parity.
+7a. **Pending Transactions Screen** (`/settings/pending`) — Every pending row from every day, newest date first, in Home's `PendingTile`: tap the circle to approve, swipe left to skip once with a 4-second undo. Approving here does not move Home's selected day.
 8. **About Screen** (`/settings/about`) — App version, links, changelog
 
 ### Add/Edit Interaction Rules
@@ -1016,6 +1019,7 @@ ShellRoute (bottom nav)
 - **Add/Edit Transaction:** inline validation for missing amount/category/account, confirm-discard dialog, save-error snackbar
 - **Manage Accounts (Settings):** if no active account exists, show `Create account` CTA and block transaction save until one exists
 - **Categories:** if a type has no visible categories, show `Create category` CTA; used categories can be archived but not deleted
+- **Pending Transactions:** `No pending transactions.` when no row awaits approval, including while the only row is inside its skip-undo window; the Home load-error text when the stream fails
 
 ### Primary User Flow (Recording an Expense)
 
@@ -1079,7 +1083,7 @@ App open → WalletsController.sync() → auto-fetch transfers for all configure
 - Home summary stays a single compact strip, not a dashboard of generic metric cards
 - Home transaction rows: tap to edit, delete from the edit screen (with a confirm dialog); a horizontal swipe anywhere on Home, including over the list, switches the day
 - Summaries show auto-converted totals in `default_currency` when exchange rates are available, with original-currency amounts preserved
-- Pending transactions reviewed inline on Home rather than a separate screen — keeps the main transaction list clean while making approval frictionless
+- Pending transactions are reviewed inline on Home for the selected day — keeps the main transaction list clean while making approval frictionless. Settings › Pending transactions lists every day's rows in one place
 
 ---
 
