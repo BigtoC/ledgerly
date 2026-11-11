@@ -353,6 +353,7 @@ void main() {
     expect(find.text('Netflix'), findsOneWidget);
     expect(find.textContaining('Food'), findsOneWidget);
     expect(find.textContaining('Cash'), findsOneWidget);
+    expect(find.textContaining('May 8, 2026'), findsOneWidget);
     expect(find.byIcon(Icons.check), findsOneWidget);
   });
 
