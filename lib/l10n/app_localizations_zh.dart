@@ -1146,6 +1146,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get csvExportTitle => 'Export data';
 
   @override
+  String get settingsPendingTransactionsTile => 'Pending transactions';
+
+  @override
   String get pendingTransactionsTitle => 'Pending transactions';
 
   @override
@@ -2533,6 +2536,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get csvExportTitle => '导出数据';
 
   @override
+  String get settingsPendingTransactionsTile => '待处理交易';
+
+  @override
   String get pendingTransactionsTitle => '待处理交易';
 
   @override
@@ -3911,6 +3917,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get csvExportTitle => '匯出資料';
+
+  @override
+  String get settingsPendingTransactionsTile => '待處理交易';
 
   @override
   String get pendingTransactionsTitle => '待處理交易';

@@ -1146,6 +1146,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get csvExportTitle => 'Export data';
 
   @override
+  String get settingsPendingTransactionsTile => 'Pending transactions';
+
+  @override
   String get pendingTransactionsTitle => 'Pending transactions';
 
   @override

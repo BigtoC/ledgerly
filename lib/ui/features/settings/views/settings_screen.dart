@@ -5,7 +5,8 @@
 //   1. Appearance — theme segmented control + language selector.
 //   2. General — default account, default currency, manage categories,
 //      recurring.
-//   3. Data Management — import from CSV, export data.
+//   3. Data Management — import from CSV, export data, pending
+//      transactions (red dot while any pending row awaits approval).
 //   4. Splash — splash settings subsection (plan §6).
 //
 // The screen is purely a projection of `settingsControllerProvider` — it
@@ -24,6 +25,8 @@ import '../../../../app/providers/exchange_rates_provider.dart';
 import '../../../../core/constants.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../accounts/view_models/accounts_controller.dart';
+import '../../home/view_models/pending_controller.dart';
+import '../../home/view_models/pending_state.dart';
 import '../view_models/settings_controller.dart';
 import '../view_models/settings_state.dart';
 import 'manage_accounts_tile.dart';
@@ -40,6 +43,7 @@ import 'theme_mode_selector.dart';
   exchangeRates,
   initialDefaultCurrency,
   defaultCurrency,
+  PendingController,
 ])
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -67,6 +71,7 @@ class SettingsScreen extends ConsumerWidget {
   exchangeRates,
   initialDefaultCurrency,
   defaultCurrency,
+  PendingController,
 ])
 class _SettingsBody extends ConsumerWidget {
   const _SettingsBody({required this.data});
@@ -78,6 +83,14 @@ class _SettingsBody extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final appVersion = ref.watch(appVersionProvider);
     final update = ref.watch(availableAppUpdateProvider);
+    final hasPending = ref.watch(
+      pendingControllerProvider.select(
+        (s) => switch (s.value) {
+          final PendingData d => d.visibleOn(null).isNotEmpty,
+          _ => false,
+        },
+      ),
+    );
     const EdgeInsets cardPadding = EdgeInsets.symmetric(
       horizontal: homePageCardHorizontalPadding - 16,
     );
@@ -137,6 +150,16 @@ class _SettingsBody extends ConsumerWidget {
                   title: Text(l10n.settingsExportDataTile),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => context.push('/settings/export'),
+                ),
+                ListTile(
+                  key: const ValueKey('settingsPendingTransactionsTile'),
+                  title: Text(l10n.settingsPendingTransactionsTile),
+                  trailing: Badge(
+                    key: const ValueKey('settingsPendingTransactionsDot'),
+                    isLabelVisible: hasPending,
+                    child: const Icon(Icons.chevron_right),
+                  ),
+                  onTap: () => context.push('/settings/pending'),
                 ),
               ],
             ),
