@@ -106,7 +106,8 @@ visual layout.
 - Move backward or forward between days.
 - Start adding a new transaction from the main flow.
 - A pending-approval section appears when recurring rules have generated
-  upcoming entries waiting for you to confirm or skip.
+  entries for the selected day that wait for you to confirm or skip.
+  `Settings > Pending transactions` lists them from every day.
 - A search affordance lets you find historical transactions by memo,
   category, or amount across the full history.
 
@@ -143,8 +144,9 @@ You can also open an existing transaction to edit or delete it.
 
 `Settings > Recurring` lets you set up rules that pre-fill upcoming
 transactions on a cadence (daily, weekly, monthly, etc.). Generated
-entries land in the pending section on `Home` for approval — nothing is
-written to your books until you accept. Skipping an occurrence rejects
+entries land in the pending section on `Home`, and in
+`Settings > Pending transactions`, for approval — nothing is written to
+your books until you accept. Skipping an occurrence rejects
 that single date with a 4-second undo window; the parent rule keeps
 running.
 
@@ -213,6 +215,8 @@ Use `Settings` to personalize the app.
 - Manage categories and accounts (with archive-instead-of-delete for
   history-backed records).
 - Manage recurring transaction rules.
+- Approve or skip every pending transaction in one list; a red dot marks
+  the entry while any are waiting.
 - Import transactions from a Fortune City CSV export.
 - Enable or disable the splash screen.
 - Configure the splash day counter start date, the multi-line display
