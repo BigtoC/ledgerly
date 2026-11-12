@@ -70,10 +70,8 @@ The PR's code review then found three more problems in the first fix:
 
 ```dart
 StatefulShellRoute.indexedStack(
-  pageBuilder: (ctx, state, shell) => _materialPage(
-    state,
-    PendingSnackBars(child: AdaptiveShell(/* ... */ child: shell)),
-  ),
+  builder: (_, _, shell) =>
+      PendingSnackBars(child: AdaptiveShell(/* ... */ child: shell)),
 ```
 
 `lib/ui/features/home/views/pending_snack_bars.dart`:

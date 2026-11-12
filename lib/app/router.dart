@@ -114,11 +114,7 @@ GoRouter router(Ref ref) {
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/',
-        pageBuilder: (_, state) =>
-            _materialPage(state, const SizedBox.shrink()),
-      ),
+      GoRoute(path: '/', builder: (_, _) => const SizedBox.shrink()),
       GoRoute(
         path: '/splash',
         pageBuilder: (ctx, state) => CustomTransitionPage(
@@ -142,14 +138,11 @@ GoRouter router(Ref ref) {
         ),
       ),
       StatefulShellRoute.indexedStack(
-        pageBuilder: (ctx, state, shell) => _materialPage(
-          state,
-          PendingSnackBars(
-            child: AdaptiveShell(
-              currentIndex: shell.currentIndex,
-              onDestinationSelected: shell.goBranch,
-              child: shell,
-            ),
+        builder: (_, _, shell) => PendingSnackBars(
+          child: AdaptiveShell(
+            currentIndex: shell.currentIndex,
+            onDestinationSelected: shell.goBranch,
+            child: shell,
           ),
         ),
         branches: [
@@ -157,8 +150,7 @@ GoRouter router(Ref ref) {
             routes: [
               GoRoute(
                 path: '/home',
-                pageBuilder: (_, state) =>
-                    _materialPage(state, const HomeScreen()),
+                builder: (_, _) => const HomeScreen(),
                 routes: [
                   GoRoute(
                     path: 'add',
@@ -188,8 +180,7 @@ GoRouter router(Ref ref) {
                   ),
                   GoRoute(
                     path: 'shopping-list',
-                    pageBuilder: (_, state) =>
-                        _materialPage(state, const ShoppingListScreen()),
+                    builder: (_, _) => const ShoppingListScreen(),
                     routes: [
                       // Before `:itemId`, whose redirect would send `new`
                       // back to the list.
@@ -234,8 +225,7 @@ GoRouter router(Ref ref) {
             routes: [
               GoRoute(
                 path: '/analysis',
-                pageBuilder: (_, state) =>
-                    _materialPage(state, const AnalysisScreen()),
+                builder: (_, _) => const AnalysisScreen(),
                 routes: [
                   GoRoute(
                     path: 'search/:categoryId',
@@ -254,20 +244,17 @@ GoRouter router(Ref ref) {
                       }
                       return null;
                     },
-                    pageBuilder: (context, state) {
+                    builder: (context, state) {
                       final categoryId = int.parse(
                         state.pathParameters['categoryId']!,
                       );
                       final query = state.uri.queryParameters['q']!.trim();
                       final currencyCode = state.uri.queryParameters['c']!
                           .trim();
-                      return _materialPage(
-                        state,
-                        CategorySearchDetailScreen(
-                          categoryId: categoryId,
-                          query: query,
-                          currencyCode: currencyCode,
-                        ),
+                      return CategorySearchDetailScreen(
+                        categoryId: categoryId,
+                        query: query,
+                        currencyCode: currencyCode,
                       );
                     },
                   ),
@@ -279,19 +266,16 @@ GoRouter router(Ref ref) {
             routes: [
               GoRoute(
                 path: '/settings',
-                pageBuilder: (_, state) =>
-                    _materialPage(state, const SettingsScreen()),
+                builder: (_, _) => const SettingsScreen(),
                 routes: [
                   GoRoute(
                     path: 'categories',
-                    pageBuilder: (_, state) =>
-                        _materialPage(state, const CategoriesScreen()),
+                    builder: (_, _) => const CategoriesScreen(),
                   ),
                   GoRoute(
                     path: 'about',
                     parentNavigatorKey: _rootNavigatorKey,
-                    pageBuilder: (_, state) =>
-                        _materialPage(state, const AboutScreen()),
+                    builder: (_, _) => const AboutScreen(),
                   ),
                   GoRoute(
                     path: 'manage-accounts/new',
@@ -315,13 +299,11 @@ GoRouter router(Ref ref) {
                   ),
                   GoRoute(
                     path: 'recurring',
-                    pageBuilder: (_, state) =>
-                        _materialPage(state, const RecurringRulesScreen()),
+                    builder: (_, _) => const RecurringRulesScreen(),
                   ),
                   GoRoute(
                     path: 'pending',
-                    pageBuilder: (_, state) =>
-                        _materialPage(state, const PendingTransactionsScreen()),
+                    builder: (_, _) => const PendingTransactionsScreen(),
                   ),
                   GoRoute(
                     path: 'recurring/new',
@@ -434,26 +416,6 @@ class _AdaptiveFormRoute extends StatelessWidget {
       },
     );
   }
-}
-
-/// Flutter SDK `MaterialPage` for non-modal routes, matching what go_router
-/// built for plain `builder:` routes before 18.x. go_router 18 detects the
-/// app type via `package:material_ui`'s `MaterialApp`, which is a different
-/// class from the `package:flutter/material.dart` one this app uses, so plain
-/// `builder:` routes would silently fall back to `NoTransitionPage` (no push
-/// animation, no iOS back-swipe). Building the page explicitly keeps the
-/// platform-default Material transitions.
-Page<void> _materialPage(GoRouterState state, Widget child) {
-  return MaterialPage(
-    key: state.pageKey,
-    name: state.name ?? state.path,
-    arguments: <String, String>{
-      ...state.pathParameters,
-      ...state.uri.queryParameters,
-    },
-    restorationId: state.pageKey.value,
-    child: child,
-  );
 }
 
 Page<void> _modalPage(GoRouterState state, Widget child) {

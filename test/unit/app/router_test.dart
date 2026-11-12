@@ -451,10 +451,10 @@ void main() {
       expect(find.byType(AccountFormScreen), findsNothing);
     });
 
-    // go_router 18 only recognises `package:material_ui`'s MaterialApp, so
-    // plain `builder:` routes would fall back to NoTransitionPage. Non-modal
-    // routes and the shell must stay on Material pages (push transitions,
-    // iOS back-swipe).
+    // go_router 18 builds a MaterialPage for plain `builder:` routes only when
+    // it finds `package:material_ui`'s MaterialApp; otherwise it falls back to
+    // NoTransitionPage. Non-modal routes and the shell must stay on Material
+    // pages (push transitions, iOS back-swipe).
     testWidgets('pushed and shell routes use MaterialPage', (tester) async {
       final db = newTestAppDatabase();
       addTearDown(db.close);
@@ -471,15 +471,17 @@ void main() {
 
       final router = container.read(routerProvider);
       addTearDown(router.dispose);
-      router.go('/home/shopping-list');
+      router.go('/home/shopping-list?from=test');
 
       await tester.pumpWidget(buildTestApp(container: container));
       await tester.pumpAndSettle();
 
       Object? pageOf(Type widget) =>
           ModalRoute.of(tester.element(find.byType(widget)))!.settings;
-      expect(pageOf(ShoppingListScreen), isA<MaterialPage<void>>());
       expect(pageOf(AdaptiveShell), isA<MaterialPage<void>>());
+      final page = pageOf(ShoppingListScreen)! as MaterialPage<void>;
+      expect(page.name, 'shopping-list');
+      expect(page.arguments, {'from': 'test'});
     });
 
     testWidgets('/settings/pending renders PendingTransactionsScreen in the '
