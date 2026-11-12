@@ -39,8 +39,8 @@ dependencies:
   # Material and Cupertino widgets. Flutter 3.50 deprecates
   # package:flutter/material.dart and cupertino.dart; these packages are
   # their replacements (see docs/architecture/dependencies.md).
-  material_ui: ^1.9.0
-  cupertino_ui: ^1.1.5
+  material_ui: ^1.11.0
+  cupertino_ui: ^1.1.6
 
   # UI components
   flutter_slidable: ^4.0.3

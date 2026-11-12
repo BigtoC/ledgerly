@@ -1373,8 +1373,8 @@ Versions below are the tested resolvable set under Flutter **3.50.0** (Dart 3.14
 | `go_router`              | `^18.1.2`   | Navigation/routing (`StatefulShellRoute`)                                |
 | `freezed_annotation`     | `^3.1.0`    | Immutable data model annotations                                         |
 | `json_annotation`        | `^4.12.0`   | JSON serialization annotations                                           |
-| `material_ui`            | `^1.9.0`    | Material widgets (replaces the deprecated `package:flutter/material.dart`) |
-| `cupertino_ui`           | `^1.1.5`    | Cupertino widgets (`CupertinoPage` for modal routes in `router.dart`)    |
+| `material_ui`            | `^1.11.0`   | Material widgets (replaces the deprecated `package:flutter/material.dart`) |
+| `cupertino_ui`           | `^1.1.6`    | Cupertino widgets (`CupertinoPage` for modal routes in `router.dart`)    |
 | `flutter_localizations`  | sdk         | i18n framework (gen-l10n output; `material_ui`'s delegates build on it)  |
 | `intl`                   | `^0.20.2`   | Localization utilities + `NumberFormat`                                  |
 | `flutter_slidable`       | `^4.0.3`    | Swipe actions on list items                                              |
