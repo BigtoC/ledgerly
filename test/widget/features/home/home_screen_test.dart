@@ -1135,6 +1135,48 @@ void main() {
       findsNothing,
     );
   });
+
+  for (final reduceMotion in [false, true]) {
+    testWidgets(
+      'WH25: the day switch ${reduceMotion ? 'does not slide' : 'slides'}'
+      ' with Reduce Motion ${reduceMotion ? 'on' : 'off'}',
+      (tester) async {
+        tester.platformDispatcher.accessibilityFeaturesTestValue =
+            FakeAccessibilityFeatures(reduceMotion: reduceMotion);
+        addTearDown(
+          tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+        );
+        await tester.binding.setSurfaceSize(const Size(400, 800));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(makeApp());
+        await seedAll(tester);
+        final now = DateTime.now();
+        activityCtrl.add([DateTime(now.year, now.month, now.day)]);
+        feed();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        await tester.tap(find.widgetWithIcon(IconButton, Icons.chevron_left));
+        await tester.pump(const Duration(milliseconds: 50));
+        feed();
+        // About halfway through the 280 ms slide.
+        await tester.pump(const Duration(milliseconds: 140));
+        final dx = tester
+            .widget<SlideTransition>(
+              find
+                  .ancestor(
+                    of: find.byType(DayNavigationHeader),
+                    matching: find.byType(SlideTransition),
+                  )
+                  .first,
+            )
+            .position
+            .value
+            .dx;
+        expect(dx, reduceMotion ? 0 : lessThan(0));
+        await tester.pumpAndSettle();
+      },
+    );
+  }
 }
 
 class _StubFormScreen extends StatelessWidget {

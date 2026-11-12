@@ -1208,6 +1208,7 @@ No `try/catch` in widgets. No unhandled `Future` anywhere: a widget either await
 - `Semantics` labels on icon-only buttons (FAB, delete, undo snackbar action)
 - Dynamic text scaling respected up to 2×; splash day counter uses `AutoSizeText` or clamps at 1.5× to preserve layout
 - `MediaQuery.boldText` respected in list rendering
+- With the platform's Reduce Motion setting on (`MediaQuery.reduceMotionOf`, iOS), the Home day switch and the Analysis period switch do not slide: the new body appears in place. Route transitions are unchanged.
 - Screen reader order verified on Home and Add Transaction screens
 
 ---
