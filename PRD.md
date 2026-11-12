@@ -1377,7 +1377,7 @@ Versions below are the tested resolvable set under Flutter **3.50.0** (Dart 3.14
 | `cupertino_ui`           | `^1.1.6`    | Cupertino widgets (`CupertinoPage` for modal routes in `router.dart`)    |
 | `flutter_localizations`  | sdk         | i18n framework (gen-l10n output; `material_ui`'s delegates build on it)  |
 | `intl`                   | `^0.20.2`   | Localization utilities + `NumberFormat`                                  |
-| `flutter_slidable`       | `^4.0.3`    | Swipe actions on list items                                              |
+| `flutter_slidable`       | `^5.2.0`    | Swipe actions on list items                                              |
 | `package_info_plus`      | `^10.2.2`   | App version info (About screen, app-update check)                        |
 | `webview_flutter`        | `^4.14.1`   | In-app browser (About screen links)                                      |
 | `url_launcher`           | `^6.3.3`    | System browser launcher                                                  |

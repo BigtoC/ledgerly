@@ -43,7 +43,7 @@ dependencies:
   cupertino_ui: ^1.1.6
 
   # UI components
-  flutter_slidable: ^4.0.3
+  flutter_slidable: ^5.2.0
 
   # App info
   package_info_plus: ^10.2.2
