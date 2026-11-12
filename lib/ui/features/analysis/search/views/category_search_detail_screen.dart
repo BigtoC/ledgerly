@@ -54,13 +54,25 @@ class _CategorySearchDetailScreenState
   void initState() {
     super.initState();
     _controller = ref.read(_provider.notifier);
-    _controller.setEffectListener(_onEffect);
   }
 
   @override
-  void dispose() {
-    _controller.setEffectListener(null);
-    super.dispose();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Never cleared on dispose: a pending delete keeps the controller alive
+    // after a pop, and its commit can still fail (#150). The listener holds
+    // only the root messenger and the message, not this State.
+    final messenger = ScaffoldMessenger.of(context);
+    final message = AppLocalizations.of(context).errorSnackbarGeneric;
+    _controller.setEffectListener((effect) {
+      if (!messenger.mounted) return;
+      switch (effect) {
+        case CategorySearchDetailDeleteFailedEffect():
+          messenger
+            ..clearSnackBars()
+            ..showSnackBar(SnackBar(content: Text(message)));
+      }
+    });
   }
 
   @override
@@ -223,17 +235,5 @@ class _CategorySearchDetailScreenState
         _controller.undoDelete();
       },
     );
-  }
-
-  void _onEffect(CategorySearchDetailEffect effect) {
-    if (!mounted) return;
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    final l10n = AppLocalizations.of(context);
-    switch (effect) {
-      case CategorySearchDetailDeleteFailedEffect():
-        messenger
-          ?..clearSnackBars()
-          ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
-    }
   }
 }

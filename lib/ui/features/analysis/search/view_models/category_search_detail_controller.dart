@@ -173,7 +173,7 @@ class CategorySearchDetailController extends _$CategorySearchDetailController {
     _emitFromCache();
   }
 
-  void setEffectListener(CategorySearchDetailEffectListener? listener) {
+  void setEffectListener(CategorySearchDetailEffectListener listener) {
     _effectListener = listener;
   }
 

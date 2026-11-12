@@ -687,4 +687,88 @@ void main() {
       expect(find.widgetWithText(TextField, 'coffee'), findsOneWidget);
     },
   );
+
+  // Issue #150: the pending delete keeps the controller alive after the pop,
+  // so its commit can fail with no screen left to report it.
+  testWidgets(
+    'a delete that fails after the screen pops still shows the error',
+    (tester) async {
+      final tx = _MockTransactionRepository();
+      final cat = _MockCategoryRepository();
+      final acct = _MockAccountRepository();
+
+      when(() => tx.watchByMemo('coffee'))
+          .thenAnswer((_) => Stream.value([_tx()]));
+      when(() => cat.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([_cat()]));
+      when(() => acct.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([_acct()]));
+      when(() => tx.delete(any()))
+          .thenAnswer((_) async => throw StateError(''));
+
+      final router = GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, _) => const Scaffold(body: Text('analysis-stub')),
+            routes: [
+              GoRoute(
+                path: 'search/:categoryId',
+                builder: (_, state) => CategorySearchDetailScreen(
+                  categoryId: int.parse(state.pathParameters['categoryId']!),
+                  query: state.uri.queryParameters['q']!,
+                  currencyCode: state.uri.queryParameters['c']!,
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            transactionRepositoryProvider.overrideWithValue(tx),
+            categoryRepositoryProvider.overrideWithValue(cat),
+            accountRepositoryProvider.overrideWithValue(acct),
+          ],
+          child: MaterialApp.router(
+            theme: lightTheme,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            routerConfig: router,
+          ),
+        ),
+      );
+      unawaited(router.push('/search/1?q=coffee&c=USD'));
+      await tester.pumpAndSettle();
+      expect(find.byType(TransactionSearchRow), findsOneWidget);
+      final l10n = AppLocalizations.of(
+        tester.element(find.byType(CategorySearchDetailScreen)),
+      );
+
+      await tester.drag(
+        find.byKey(const ValueKey<int>(1)),
+        const Offset(-900, 0),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.commonDelete).last);
+      await tester.pump();
+      await tester.pump();
+
+      router.pop();
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.byType(CategorySearchDetailScreen), findsNothing);
+      verifyNever(() => tx.delete(any()));
+
+      // Past the 4-second undo window: the commit runs and fails.
+      await tester.pump(const Duration(seconds: 4));
+      await tester.pump(const Duration(milliseconds: 750));
+
+      verify(() => tx.delete(1)).called(1);
+      expect(find.text(l10n.errorSnackbarGeneric), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
