@@ -6,25 +6,25 @@
 //
 // The Approve circle button owns a 200ms grey→green animation and
 // debounces rapid taps. Swipe-left reveals a Skip action via
-// flutter_slidable.
+// flutter_slidable. The resulting snackbars come from PendingSnackBars,
+// mounted above the shell.
 
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:intl/intl.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
 import '../../../../core/constants.dart';
 import '../../../../core/utils/color_palette.dart';
+import '../../../../core/utils/date_helpers.dart';
 import '../../../../core/utils/icon_registry.dart';
 import '../../../../core/utils/money_formatter.dart';
 import '../../../../domain/models/account.dart';
 import '../../../../domain/models/category.dart';
 import '../../../../domain/models/pending_transaction.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../core/widgets/undo_snack_bar.dart';
 import '../../categories/views/category_display.dart';
 import '../view_models/home_controller.dart';
 import '../view_models/home_providers.dart';
@@ -48,65 +48,7 @@ class PendingSection extends ConsumerStatefulWidget {
 }
 
 class _PendingSectionState extends ConsumerState<PendingSection> {
-  PendingController? _controller;
   bool _expanded = false;
-  bool _skipUndoVisible = false;
-
-  @override
-  void dispose() {
-    _controller?.setEffectListener(null);
-    super.dispose();
-  }
-
-  void _bindController(PendingController controller) {
-    if (_controller == controller) return;
-    _controller?.setEffectListener(null);
-    _controller = controller;
-    controller.setEffectListener(_onEffect);
-  }
-
-  void _onEffect(PendingEffect effect) {
-    if (!mounted) return;
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    if (messenger == null) return;
-    final l10n = AppLocalizations.of(context);
-    switch (effect) {
-      case PendingSkipStartedEffect():
-        _skipUndoVisible = true;
-        // Capture the controller now: skipping the last visible row can
-        // unmount this section (Home swaps to its empty state) while the
-        // snackbar is still up, and `ref` is unusable after unmount.
-        // PendingController is keepAlive, so it outlives the section.
-        final controller = ref.read(pendingControllerProvider.notifier);
-        messenger
-            .showUndoSnackBar(
-              message: l10n.homePendingSkippedSnack,
-              undoLabel: l10n.commonUndo,
-              onUndo: () => unawaited(controller.undoSkip()),
-            )
-            .closed
-            .then((_) {
-              if (mounted) {
-                _skipUndoVisible = false;
-              }
-            });
-      case PendingApproveSucceededEffect(:final ruleName):
-        if (_skipUndoVisible) {
-          return;
-        }
-        messenger
-          ..clearSnackBars()
-          ..showSnackBar(
-            SnackBar(content: Text(l10n.homePendingApprovedSnack(ruleName))),
-          );
-      case PendingApproveFailedEffect():
-      case PendingSkipFailedEffect():
-        _skipUndoVisible = false;
-        messenger
-          ..clearSnackBars()
-          ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -128,7 +70,6 @@ class _PendingSectionState extends ConsumerState<PendingSection> {
 
   Widget _buildData(BuildContext context, PendingData data) {
     final notifier = ref.read(pendingControllerProvider.notifier);
-    _bindController(notifier);
 
     final l10n = AppLocalizations.of(context);
 
@@ -314,11 +255,10 @@ class PendingTile extends StatelessWidget {
         ? categoryDisplayName(category!, l10n)
         : '';
     final accountName = account?.name ?? '';
-    final dateStr = DateFormat.yMMMd(locale).format(item.date);
     final subtitleParts = <String>[
       if (categoryName.isNotEmpty) categoryName,
       if (accountName.isNotEmpty) accountName,
-      dateStr,
+      DateHelpers.formatDisplayDate(item.date, locale),
     ];
     final subtitle = subtitleParts.join(' · ');
 

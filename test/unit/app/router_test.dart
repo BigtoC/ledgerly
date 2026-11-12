@@ -31,6 +31,8 @@ import 'package:ledgerly/ui/features/categories/view_models/categories_controlle
 import 'package:ledgerly/ui/features/home/view_models/home_controller.dart';
 import 'package:ledgerly/ui/features/home/views/home_screen.dart';
 import 'package:ledgerly/ui/features/home/view_models/pending_controller.dart';
+import 'package:ledgerly/ui/features/home/views/pending_snack_bars.dart';
+import 'package:ledgerly/ui/features/home/views/pending_transactions_screen.dart';
 import 'package:ledgerly/ui/features/shopping_list/view_models/shopping_list_controller.dart';
 import 'package:ledgerly/ui/features/shopping_list/view_models/shopping_list_providers.dart';
 import 'package:ledgerly/ui/features/shopping_list/views/shopping_list_screen.dart';
@@ -118,6 +120,14 @@ void main() {
 
       expect(find.byType(HomeScreen), findsOneWidget);
       expect(find.byType(SplashScreen), findsNothing);
+      // One snackbar host above the shell receives every pending effect.
+      expect(
+        find.ancestor(
+          of: find.byType(AdaptiveShell),
+          matching: find.byType(PendingSnackBars),
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('splashEnabled=false: /splash → /home', (tester) async {
@@ -470,6 +480,39 @@ void main() {
           ModalRoute.of(tester.element(find.byType(widget)))!.settings;
       expect(pageOf(ShoppingListScreen), isA<MaterialPage<void>>());
       expect(pageOf(AdaptiveShell), isA<MaterialPage<void>>());
+    });
+
+    testWidgets('/settings/pending renders PendingTransactionsScreen in the '
+        'shell', (tester) async {
+      final db = newTestAppDatabase();
+      addTearDown(db.close);
+      await tester.runAsync(() => runTestSeed(db));
+      final container = makeTestContainer(
+        db: db,
+        extraOverrides: [
+          splashGateSnapshotProvider.overrideWithValue(
+            SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(routerProvider);
+      addTearDown(router.dispose);
+      router.go('/settings/pending');
+
+      await tester.pumpWidget(buildTestApp(container: container));
+      await tester.pumpAndSettle();
+
+      final leaf = router.routerDelegate.currentConfiguration.last;
+      expect(leaf.matchedLocation, '/settings/pending');
+      expect(find.byType(PendingTransactionsScreen), findsOneWidget);
+      expect(
+        ModalRoute.of(tester.element(find.byType(PendingTransactionsScreen)))!
+            .settings,
+        isA<MaterialPage<void>>(),
+      );
+      expect(find.byType(PendingSnackBars), findsOneWidget);
     });
 
     // RT02 — /home/shopping-list/:id routes to the form (root navigator)

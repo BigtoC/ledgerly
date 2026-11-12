@@ -1,7 +1,7 @@
 ---
 title: Home pending recurring approval visibility, undo lifecycle, and feedback coordination
 date: 2026-05-09
-last_updated: 2026-11-04
+last_updated: 2026-11-11
 category: logic-errors
 module: home
 problem_type: logic_error
@@ -19,6 +19,7 @@ related_components:
   - home_screen
   - pending_controller
   - pending_section
+  - pending_snack_bars
   - pending_transaction_dao
   - pending_transaction_repository_test
 tags:
@@ -95,33 +96,13 @@ AsyncData<HomeState>(value: final HomeEmpty empty) =>
         : _EmptyState(onAdd: () => _onAddPressed(context)),
 ```
 
-This keeps pending approvals reachable even when `HomeController` has no day activity and would otherwise choose the empty state. `visibleOn(day)` (in `pending_state.dart`) is the single visibility rule that both `HomeScreen` and `PendingSection` use. It drops the row in the skip-undo window and rows dated on other days.
+This keeps pending approvals reachable even when `HomeController` has no day activity and would otherwise choose the empty state. `visibleOn(day)` (in `pending_state.dart`) is the single visibility rule that both `HomeScreen` and `PendingSection` use. It drops the row in the skip-undo window and rows dated on other days. Settings › Pending transactions (`PendingTransactionsScreen`, PR #149) calls `visibleOn(null)` to list every day.
 
 3. Separate skip-undo feedback from approve-success feedback, and make the joined pending query explicitly reactive to archive changes.
 
-`lib/ui/features/home/views/pending_section.dart`
+> **Superseded (PR #149, 2026-11-11).** The `PendingSkipStartedEffect` handler and `_skipUndoVisible` flag in `pending_section.dart` described here were removed. `PendingSnackBars` (`lib/ui/features/home/views/pending_snack_bars.dart`), mounted once above the shell, is now the controller's only effect listener. It opens and closes the Undo from the controller's `skippingId`, and suppresses approve-success while `skippingId != null`. The mirrored flag went stale when one Undo replaced another. See [`../architecture-patterns/keepalive-effect-listener-host-and-state-driven-undo-snackbar.md`](../architecture-patterns/keepalive-effect-listener-host-and-state-driven-undo-snackbar.md).
 
-```dart
-case PendingSkipStartedEffect():
-  _skipUndoVisible = true;
-  messenger
-      .showUndoSnackBar(...) // clears existing snackbars first
-      .closed
-      .then((_) {
-        if (mounted) {
-          _skipUndoVisible = false;
-        }
-      });
-case PendingApproveSucceededEffect(:final ruleName):
-  if (_skipUndoVisible) {
-    return;
-  }
-  messenger
-    ..clearSnackBars()
-    ..showSnackBar(
-      SnackBar(content: Text(l10n.homePendingApprovedSnack(ruleName))),
-    );
-```
+Original change in `lib/ui/features/home/views/pending_section.dart`: approve-success was skipped while a `_skipUndoVisible` flag, set when the skip effect showed the Undo and cleared on its `.closed`, was true.
 
 `lib/data/database/daos/pending_transaction_dao.dart`
 
@@ -172,7 +153,7 @@ That final red test was a harness problem, not a production defect. `customState
 ## Prevention
 
 - If a screen can be empty in one data source but still actionable from another, make the empty-state branch watch both sources explicitly.
-- Keep providers alive when they own timers or other in-memory workflow state that must survive widget disposal.
+- Keep providers alive when they own timers or other in-memory workflow state that must survive widget disposal. Their effect listener needs the same lifetime: bind it in one always-mounted host, not in a widget that can unmount mid-window (see the keepalive-effect-listener-host doc).
 - For optimistic hide/remove flows, add a regression test for the failed persistence path, not just the success path.
 - For Drift `customSelect` joins, declare every participating table in `readsFrom`.
 - In reactivity tests, do not use `customStatement(...)` when the assertion depends on watchers re-emitting; use Drift APIs that report `updates: {...}`.

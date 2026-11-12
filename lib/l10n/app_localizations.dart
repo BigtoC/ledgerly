@@ -2050,7 +2050,7 @@ abstract class AppLocalizations {
   /// **'Done'**
   String get csvImportDone;
 
-  /// Settings section header for CSV import and export.
+  /// Settings section header for CSV import and export and the pending transactions list.
   ///
   /// In en, this message translates to:
   /// **'Data Management'**
@@ -2067,6 +2067,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Export data'**
   String get csvExportTitle;
+
+  /// Settings Data Management-section tile that opens the pending transactions screen. A red dot beside it shows while any pending row awaits approval.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending transactions'**
+  String get settingsPendingTransactionsTile;
+
+  /// Screen-reader label of the red dot on the Settings Pending transactions tile, read after the tile title while any pending row awaits approval.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for approval'**
+  String get settingsPendingTransactionsDotSemantics;
+
+  /// Pending transactions screen app-bar title. The screen lists every pending recurring row, from every day.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending transactions'**
+  String get pendingTransactionsTitle;
+
+  /// Pending transactions screen message when no rows await approval.
+  ///
+  /// In en, this message translates to:
+  /// **'No pending transactions.'**
+  String get pendingTransactionsEmpty;
 
   /// CSV export screen explanation above the date range.
   ///

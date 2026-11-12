@@ -44,7 +44,7 @@ final class PendingControllerProvider
   PendingController create() => PendingController();
 }
 
-String _$pendingControllerHash() => r'37984c257f96229330663bf87f2974bb383cb760';
+String _$pendingControllerHash() => r'1d431e9ade3b9b9a37b808e9786fc2a6116f40ea';
 
 abstract class _$PendingController extends $StreamNotifier<PendingState> {
   Stream<PendingState> build();

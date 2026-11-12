@@ -24,15 +24,8 @@ sealed class PendingEffect {
   const PendingEffect();
 }
 
-/// Fired immediately when the user swipes a row to skip. The widget shows
-/// a SnackBar with `homePendingSkippedSnack` text and an Undo action that
-/// calls `notifier.undoSkip()`.
-final class PendingSkipStartedEffect extends PendingEffect {
-  const PendingSkipStartedEffect();
-}
-
-/// Fired after a successful approve. The widget shows a SnackBar with
-/// `homePendingApprovedSnack(ruleName)`.
+/// Fired after a successful approve. PendingSnackBars shows a SnackBar
+/// with `homePendingApprovedSnack(ruleName)`.
 final class PendingApproveSucceededEffect extends PendingEffect {
   const PendingApproveSucceededEffect({required this.ruleName});
   final String ruleName;
@@ -97,8 +90,6 @@ class PendingController extends _$PendingController {
     _skippingId = pendingId;
     _composer?.notifySkipChanged();
 
-    _effectListener?.call(const PendingSkipStartedEffect());
-
     _undoTimer = Timer(kUndoWindow, () async {
       final pending = _skippingId;
       if (pending == null) return;
@@ -123,8 +114,14 @@ class PendingController extends _$PendingController {
     _composer?.notifySkipChanged();
   }
 
-  void setEffectListener(PendingEffectListener? listener) {
+  void setEffectListener(PendingEffectListener listener) {
     _effectListener = listener;
+  }
+
+  /// Clears the listener only while [listener] still holds it, so a host
+  /// disposed after its replacement bound does not unbind the replacement.
+  void removeEffectListener(PendingEffectListener listener) {
+    if (_effectListener == listener) _effectListener = null;
   }
 
   Future<void> _commitSkip(int pendingId) async {

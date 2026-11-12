@@ -13,6 +13,10 @@
 //   - "Import from CSV" and "Export data" tiles sit in the Data
 //     Management section and navigate to `/settings/import` and
 //     `/settings/export`.
+//   - "Pending transactions" tile sits in Data Management, navigates to
+//     `/settings/pending`, and shows and announces its red dot only while
+//     a pending row is visible (not for the row inside the skip-undo
+//     window).
 //   - Locale change via `setLocale` writes through the repo; a manual
 //     MaterialApp locale swap then verifies visible strings change
 //     without re-navigating.
@@ -38,11 +42,14 @@ import 'package:ledgerly/app/providers/repository_providers.dart';
 import 'package:ledgerly/domain/models/account.dart';
 import 'package:ledgerly/domain/models/app_update.dart';
 import 'package:ledgerly/domain/models/currency.dart';
+import 'package:ledgerly/domain/models/pending_transaction.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/ui/features/accounts/view_models/accounts_controller.dart';
 import 'package:ledgerly/ui/features/accounts/view_models/accounts_state.dart';
+import 'package:ledgerly/ui/features/home/view_models/pending_controller.dart';
+import 'package:ledgerly/ui/features/home/view_models/pending_state.dart';
 import 'package:ledgerly/ui/features/settings/view_models/settings_controller.dart';
 import 'package:ledgerly/ui/features/settings/views/settings_screen.dart';
 import 'package:ledgerly/ui/features/settings/views/new_version_badge.dart';
@@ -79,6 +86,16 @@ class _FakeAccountsController extends AccountsController {
   }
 }
 
+class _FakePendingController extends PendingController {
+  _FakePendingController(this._fixed);
+  final PendingState _fixed;
+
+  @override
+  Stream<PendingState> build() async* {
+    yield _fixed;
+  }
+}
+
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
 const _jpy = Currency(code: 'JPY', decimals: 0, symbol: '¥');
 
@@ -109,6 +126,10 @@ class _StubRouter {
           path: '/settings/export',
           builder: (_, _) => const Scaffold(body: Text('CSV_EXPORT')),
         ),
+        GoRoute(
+          path: '/settings/pending',
+          builder: (_, _) => const Scaffold(body: Text('PENDING_TRANSACTIONS')),
+        ),
       ],
     );
   }
@@ -120,6 +141,7 @@ class _StubRouter {
   exchangeRates,
   initialDefaultCurrency,
   defaultCurrency,
+  PendingController,
 ])
 Widget _wrap({
   required ProviderContainer container,
@@ -146,6 +168,7 @@ ProviderContainer _makeContainer({
   AccountsState? accountsFixed,
   AppUpdate? update,
   ({String version, String buildNumber})? appVersion,
+  PendingState pending = const PendingState.empty(),
 }) {
   final defaultAccountsState =
       accountsFixed ??
@@ -166,6 +189,9 @@ ProviderContainer _makeContainer({
         () => _FakeAccountsController(defaultAccountsState),
       ),
       availableAppUpdateProvider.overrideWithBuild((ref, notifier) => update),
+      pendingControllerProvider.overrideWith(
+        () => _FakePendingController(pending),
+      ),
       if (appVersion != null)
         appVersionProvider.overrideWith((ref) async => appVersion),
     ],
@@ -196,6 +222,7 @@ SettingsData _data() => const SettingsData(
   exchangeRates,
   initialDefaultCurrency,
   defaultCurrency,
+  PendingController,
 ])
 void main() {
   setUpAll(() {
@@ -528,6 +555,107 @@ void main() {
   });
 
   testWidgets(
+    'SS05d: Pending transactions tile navigates to /settings/pending',
+    (tester) async {
+      final container = _makeContainer(
+        prefs: _MockUserPreferencesRepository(),
+        accountRepo: _MockAccountRepository(),
+        currencyRepo: _MockCurrencyRepository(),
+        fixed: _data(),
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container));
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.byKey(_pendingTile),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.ensureVisible(find.byKey(_pendingTile));
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(
+          of: find.byKey(_pendingTile),
+          matching: find.text('Pending transactions'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: _dataManagementSection(),
+          matching: find.byKey(_pendingTile),
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(_pendingTile));
+      await tester.pumpAndSettle();
+
+      expect(find.text('PENDING_TRANSACTIONS'), findsOneWidget);
+    },
+  );
+
+  final pendingRow = PendingTransaction(
+    id: 1,
+    source: 'recurring',
+    amountMinorUnits: 1599,
+    currency: _usd,
+    categoryId: 1,
+    accountId: 1,
+    memo: 'Netflix',
+    date: DateTime(2026, 5, 8),
+    fetchedAt: DateTime(2026, 5, 8),
+    recurringRuleId: 1,
+  );
+  for (final (label, pending, dotVisible) in [
+    ('no pending rows', const PendingState.empty(), false),
+    (
+      'a visible pending row',
+      PendingState.data(items: [pendingRow], skippingId: null),
+      true,
+    ),
+    (
+      'only the row inside the skip-undo window',
+      PendingState.data(items: [pendingRow], skippingId: 1),
+      false,
+    ),
+  ]) {
+    testWidgets('SS05e: pending dot visible=$dotVisible with $label', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      final container = _makeContainer(
+        prefs: _MockUserPreferencesRepository(),
+        accountRepo: _MockAccountRepository(),
+        currencyRepo: _MockCurrencyRepository(),
+        fixed: _data(),
+        pending: pending,
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(_wrap(container: container));
+      await tester.pumpAndSettle();
+
+      final dot = tester.widget<Badge>(
+        find.byKey(
+          const ValueKey('settingsPendingTransactionsDot'),
+          skipOffstage: false,
+        ),
+      );
+      expect(dot.isLabelVisible, dotVisible);
+      expect(
+        find.bySemanticsLabel(
+          RegExp('Waiting for approval'),
+          skipOffstage: false,
+        ),
+        dotVisible ? findsOneWidget : findsNothing,
+      );
+      handle.dispose();
+    });
+  }
+
+  testWidgets(
     'SS06: locale change propagates visible strings without manual nav',
     (tester) async {
       // Renders at en first, then swaps to zh_TW via MaterialApp.locale
@@ -790,6 +918,8 @@ void main() {
     },
   );
 }
+
+const _pendingTile = ValueKey('settingsPendingTransactionsTile');
 
 Finder _dataManagementSection() => find.byWidgetPredicate(
   (w) => w is SettingsSection && w.title == 'Data Management',

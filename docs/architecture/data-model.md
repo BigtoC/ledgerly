@@ -21,7 +21,7 @@ These are easy to violate and expensive to retrofit.
 
 `pending_transactions` is a universal staging table for both blockchain and recurring sources, discriminated by `source`. Shared columns are always populated; source-specific columns (e.g. `tx_hash`, `recurring_rule_id`) are nullable.
 
-- The **`recurring`** source shipped 2026-05-08 via `RecurringGenerationUseCase` (cold-start generation) + `PendingSection` on Home (inline approve / skip-once).
+- The **`recurring`** source shipped 2026-05-08 via `RecurringGenerationUseCase` (cold-start generation) + `PendingSection` on Home (inline approve / skip-once for the selected day). `PendingTransactionsScreen` at `/settings/pending` lists every day's rows with the same actions.
 - The **`blockchain`** source is still Phase 3 / pending.
 
 **Approve** = insert into `transactions` + delete from `pending_transactions` atomically (`Drift.transaction { _txRepo.save(); _dao.rejectRow() }`), preserving the original `currency` and `amount_minor_units`.

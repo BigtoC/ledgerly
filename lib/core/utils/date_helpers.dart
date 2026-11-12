@@ -69,11 +69,18 @@ class DateHelpers {
     return (diffMs / msPerDay).round();
   }
 
+  // Building a DateFormat parses the locale pattern each time, and list rows
+  // call formatDisplayDate per build. One per locale; the key space is tiny,
+  // so no eviction.
+  static final Map<String, DateFormat> _displayDateCache = {};
+
   /// Locale-aware "long-ish" date for splash and settings display
   /// (e.g. `Apr 21, 2026` / `2026年4月21日`). Matches PRD.md 525 / 549
   /// "rainbow-gradient text below showing the start date".
   static String formatDisplayDate(DateTime date, String locale) =>
-      DateFormat.yMMMd(locale).format(date);
+      _displayDateCache
+          .putIfAbsent(locale, () => DateFormat.yMMMd(locale))
+          .format(date);
 
   /// Locale-aware "day header" date for the Home day-grouped list
   /// (e.g. `Tue, Apr 21` in en_US; `4月21日 週二` in zh_TW). No year —

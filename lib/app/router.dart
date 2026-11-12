@@ -25,6 +25,8 @@ import '../ui/features/categories/views/categories_screen.dart';
 import '../ui/features/home/view_models/home_controller.dart';
 import '../ui/features/home/view_models/pending_controller.dart';
 import '../ui/features/home/views/home_screen.dart';
+import '../ui/features/home/views/pending_snack_bars.dart';
+import '../ui/features/home/views/pending_transactions_screen.dart';
 import '../ui/features/recurring/view_models/recurring_rule_form_controller.dart';
 import '../ui/features/recurring/view_models/recurring_rules_controller.dart';
 import '../ui/features/recurring/views/recurring_rule_form_screen.dart';
@@ -142,10 +144,12 @@ GoRouter router(Ref ref) {
       StatefulShellRoute.indexedStack(
         pageBuilder: (ctx, state, shell) => _materialPage(
           state,
-          AdaptiveShell(
-            currentIndex: shell.currentIndex,
-            onDestinationSelected: shell.goBranch,
-            child: shell,
+          PendingSnackBars(
+            child: AdaptiveShell(
+              currentIndex: shell.currentIndex,
+              onDestinationSelected: shell.goBranch,
+              child: shell,
+            ),
           ),
         ),
         branches: [
@@ -313,6 +317,11 @@ GoRouter router(Ref ref) {
                     path: 'recurring',
                     pageBuilder: (_, state) =>
                         _materialPage(state, const RecurringRulesScreen()),
+                  ),
+                  GoRoute(
+                    path: 'pending',
+                    pageBuilder: (_, state) =>
+                        _materialPage(state, const PendingTransactionsScreen()),
                   ),
                   GoRoute(
                     path: 'recurring/new',

@@ -27,6 +27,7 @@ import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/services/csv_file_service.dart';
 import 'package:ledgerly/data/services/exchange_rate_service.dart';
 import 'package:ledgerly/ui/features/accounts/view_models/accounts_controller.dart';
+import 'package:ledgerly/ui/features/home/view_models/pending_controller.dart';
 import 'package:ledgerly/ui/features/settings/csv_import/view_models/csv_import_controller.dart';
 import 'package:ledgerly/ui/features/settings/csv_import/views/csv_import_screen.dart';
 import 'package:ledgerly/ui/features/settings/view_models/settings_controller.dart';
@@ -61,6 +62,7 @@ class _NoopExchangeRateService extends Mock implements ExchangeRateService {}
   exchangeRates,
   initialDefaultCurrency,
   defaultCurrency,
+  PendingController,
 ])
 void main() {
   testWidgets('Settings → Import from CSV imports the sample file', (

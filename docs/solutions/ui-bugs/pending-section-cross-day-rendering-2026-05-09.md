@@ -1,6 +1,7 @@
 ---
 title: PendingSection on Home rendered cross-day, causing approve-date misperception
 date: 2026-05-09
+last_updated: 2026-11-11
 category: ui-bugs
 module: home
 problem_type: ui_bug
@@ -120,7 +121,7 @@ DateTime? _selectedDay(WidgetRef ref) {
 
 The data layer was always correct — `PendingTransactionRepository.approve` (`lib/data/repositories/pending_transaction_repository.dart:114-168`) preserved `pending.date` end-to-end through `Transaction(id: 0, ..., date: pending.date, ...)` and `TransactionRepository.save`'s `_toCompanion` (`lib/data/repositories/transaction_repository.dart:632-651`) wrote `date: Value(tx.date)` verbatim. The defect was an **information-display mismatch**: `PendingSection` was a global sliver inside a day-scoped scroll, so a today-dated pending tile rendered identically on a May-7 Home view and a May-9 Home view. The user, viewing May 7, reasonably interpreted the tile as "May 7's pending row," approved it, and got a May-9-dated transaction (the truthful pending date) which appeared on May 9's view, not May 7's.
 
-Filtering `data.items` by `DateHelpers.isSameDay(item.date, selectedDay)` aligns the visible tiles with the day context the user is reading them in. The date the user sees on the tile and the date that gets written to `transactions` always match the day they're standing on. The previously-shipped `pinDay(item.date)` call after approve becomes a defensive no-op (since `item.date == selectedDay` always holds when approve is reachable through the day-scoped section) and is kept for robustness against future code paths that might surface pending tiles outside the day-scoped view (e.g., a future "All pending" sheet).
+Filtering `data.items` by `DateHelpers.isSameDay(item.date, selectedDay)` aligns the visible tiles with the day context the user is reading them in. The date the user sees on the tile and the date that gets written to `transactions` always match the day they're standing on. The previously-shipped `pinDay(item.date)` call after approve becomes a defensive no-op (since `item.date == selectedDay` always holds when approve is reachable through the day-scoped section). The all-days view now exists as Settings › Pending transactions (`/settings/pending`, PR #149). It deliberately does not call `pinDay`, so approving there leaves Home's selected day unchanged (PRD).
 
 ## Prevention
 

@@ -1,7 +1,8 @@
 // End-to-end integration test for pending approval flow.
 //
 // Exercises: seed → insert pending row → land on Home → approve →
-// verify pending row deleted and transaction inserted.
+// verify pending row deleted and transaction inserted. Also covers the
+// Settings › Pending transactions page (/settings/pending).
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -279,6 +280,127 @@ void main() {
             'PendingSection is day-scoped',
       );
     });
+
+    testWidgets(
+      "Settings pending page approves and skips; Home's skip undo still "
+      'works afterwards',
+      (tester) async {
+        late DriftPendingTransactionRepository pendingRepo;
+        await tester.runAsync(() async {
+          final txRepo = DriftTransactionRepository(db);
+          pendingRepo = DriftPendingTransactionRepository(db, txRepo: txRepo);
+          final categoryId = await getSeededCategoryId(db, 'category.food');
+          final account = await getDefaultAccount(db);
+
+          // Seed history so HomeData (and PendingSection) renders.
+          await insertTestTransaction(
+            db,
+            accountId: account.id,
+            categoryId: categoryId,
+            currencyCode: account.currency.code,
+            amountMinorUnits: 100,
+            memo: 'historical',
+          );
+
+          final today = DateTime.now();
+          final todayMidnight = DateTime(today.year, today.month, today.day);
+          for (final memo in ['Netflix', 'Spotify', 'Gym']) {
+            await pendingRepo.insert(
+              source: 'recurring',
+              amountMinorUnits: 1599,
+              currencyCode: account.currency.code,
+              categoryId: categoryId,
+              accountId: account.id,
+              memo: memo,
+              date: todayMidnight,
+              fetchedAt: todayMidnight,
+            );
+          }
+        });
+
+        final container = makeTestContainer(
+          db: db,
+          extraOverrides: [
+            splashGateSnapshotProvider.overrideWithValue(
+              SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+        final router = container.read(routerProvider);
+
+        Future<List<String?>> storedMemos() async =>
+            (await tester.runAsync(() => pendingRepo.watchAll().first))!
+                .map((p) => p.memo)
+                .toList();
+
+        /// Swipes [memo]'s row and taps Skip once; returns 1 s after the
+        /// tap, when any earlier snackbar has left and the Undo one entered.
+        Future<void> skip(String memo) async {
+          await tester.drag(find.text(memo), const Offset(-300, 0));
+          await tester.pump(const Duration(milliseconds: 500));
+          await tester.tap(find.text('Skip once'));
+          await tester.pump(const Duration(milliseconds: 500));
+          await tester.pump(const Duration(milliseconds: 500));
+        }
+
+        await tester.pumpWidget(buildTestApp(container: container));
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+        await tester.pumpAndSettle();
+
+        router.go('/settings/pending');
+        await tester.pumpAndSettle();
+        expect(find.text('Netflix'), findsOneWidget);
+        expect(find.text('Spotify'), findsOneWidget);
+        expect(find.text('Gym'), findsOneWidget);
+
+        await tester.tap(
+          find.descendant(
+            of: find.ancestor(
+              of: find.text('Netflix'),
+              matching: find.byType(ListTile),
+            ),
+            matching: find.byIcon(Icons.check),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Approved — Netflix'), findsOneWidget);
+        expect(await storedMemos(), ['Gym', 'Spotify']);
+
+        // Skip, then Undo, on the page: the row comes back and stays.
+        await skip('Spotify');
+        expect(find.text('Spotify'), findsNothing);
+        expect(find.text('Skipped this occurrence'), findsOneWidget);
+        tester.widget<SnackBarAction>(find.byType(SnackBarAction)).onPressed();
+        await tester.pump(const Duration(milliseconds: 200));
+        expect(find.text('Spotify'), findsOneWidget);
+        await tester.pump(const Duration(seconds: 5));
+        expect(await storedMemos(), ['Gym', 'Spotify']);
+
+        // A skip left alone on the page commits once the window lapses.
+        await skip('Gym');
+        expect(find.text('Gym'), findsNothing);
+        await tester.pump(const Duration(seconds: 4));
+        // The Undo snackbar finishes leaving.
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(await storedMemos(), ['Spotify']);
+        expect(find.byType(SnackBarAction), findsNothing);
+
+        router.go('/settings');
+        await tester.pumpAndSettle();
+        router.go('/home');
+        await tester.pumpAndSettle();
+
+        // Home's skip still gets its Undo snackbar from the shell host.
+        await skip('Spotify');
+        expect(find.text('Skipped this occurrence'), findsOneWidget);
+
+        tester.widget<SnackBarAction>(find.byType(SnackBarAction)).onPressed();
+        await tester.pump(const Duration(milliseconds: 200));
+        expect(find.text('Spotify'), findsOneWidget);
+      },
+    );
 
     // Note: a previous test asserted that approving a past-dated pending
     // tile from today's view pinned Home to that past day so the new tx

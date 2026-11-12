@@ -37,6 +37,7 @@ import 'package:ledgerly/data/repositories/pending_transaction_repository.dart';
 import 'package:ledgerly/data/repositories/shopping_list_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/ui/features/home/views/home_screen.dart';
+import 'package:ledgerly/ui/features/home/views/pending_snack_bars.dart';
 import 'package:ledgerly/ui/features/home/views/day_navigation_header.dart';
 import 'package:ledgerly/ui/features/home/views/summary_strip.dart';
 import 'package:ledgerly/ui/features/home/views/transaction_tile.dart';
@@ -189,7 +190,7 @@ void main() {
           routes: [
             GoRoute(
               path: '/home',
-              builder: (_, _) => const HomeScreen(),
+              builder: (_, _) => const PendingSnackBars(child: HomeScreen()),
               routes: [
                 GoRoute(
                   path: 'add',
@@ -417,6 +418,58 @@ void main() {
       // Let the undo window lapse: the skip must not commit.
       await tester.pump(const Duration(seconds: 5));
       verifyNever(() => pendingRepo.reject(1));
+    },
+  );
+
+  testWidgets(
+    'WH02f: a skip that fails after Home falls back to the empty state '
+    'still shows the error',
+    (tester) async {
+      // Skipping today's only row unmounts PendingSection. The skip commits
+      // after the undo window; its failure must still reach a snackbar.
+      final today = DateTime.now();
+      final todayMidnight = DateTime(today.year, today.month, today.day);
+      when(() => pendingRepo.watchAll()).thenAnswer(
+        (_) => Stream.value([
+          PendingTransaction(
+            id: 1,
+            source: 'recurring',
+            amountMinorUnits: 1599,
+            currency: _usd,
+            categoryId: 1,
+            accountId: 1,
+            memo: 'Netflix',
+            date: todayMidnight,
+            fetchedAt: todayMidnight,
+            recurringRuleId: 1,
+          ),
+        ]),
+      );
+      when(() => pendingRepo.reject(1))
+          .thenAnswer((_) async => throw StateError('reject failed'));
+
+      await tester.pumpWidget(makeApp());
+      await seedAll(tester);
+      dayCtrl.add(const []);
+      activityCtrl.add(const []);
+      todayTotalsCtrl.add(const {});
+      monthNetCtrl.add(const {});
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.text('Netflix'), findsOneWidget);
+
+      await tester.drag(find.text('Netflix'), const Offset(-300, 0));
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.tap(find.text('Skip once'));
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('No transactions yet'), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pump();
+      verify(() => pendingRepo.reject(1)).called(1);
+      expect(
+        find.text('Something went wrong. Please try again.'),
+        findsOneWidget,
+      );
     },
   );
 

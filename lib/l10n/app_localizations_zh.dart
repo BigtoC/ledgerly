@@ -1146,6 +1146,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get csvExportTitle => 'Export data';
 
   @override
+  String get settingsPendingTransactionsTile => 'Pending transactions';
+
+  @override
+  String get settingsPendingTransactionsDotSemantics => 'Waiting for approval';
+
+  @override
+  String get pendingTransactionsTitle => 'Pending transactions';
+
+  @override
+  String get pendingTransactionsEmpty => 'No pending transactions.';
+
+  @override
   String get csvExportIntro =>
       'Export your transactions to a CSV file. You choose where to save it.';
 
@@ -2527,6 +2539,18 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get csvExportTitle => '导出数据';
 
   @override
+  String get settingsPendingTransactionsTile => '待处理交易';
+
+  @override
+  String get settingsPendingTransactionsDotSemantics => '等待批准';
+
+  @override
+  String get pendingTransactionsTitle => '待处理交易';
+
+  @override
+  String get pendingTransactionsEmpty => '没有待处理交易。';
+
+  @override
   String get csvExportIntro => '将交易导出为 CSV 文件，并选择保存位置。';
 
   @override
@@ -3899,6 +3923,18 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get csvExportTitle => '匯出資料';
+
+  @override
+  String get settingsPendingTransactionsTile => '待處理交易';
+
+  @override
+  String get settingsPendingTransactionsDotSemantics => '等待核准';
+
+  @override
+  String get pendingTransactionsTitle => '待處理交易';
+
+  @override
+  String get pendingTransactionsEmpty => '沒有待處理交易。';
 
   @override
   String get csvExportIntro => '將交易匯出為 CSV 檔案，並選擇儲存位置。';
