@@ -17,8 +17,8 @@ dependencies:
     sdk: flutter
 
   # App shell / state
-  flutter_riverpod: ^3.4.3
-  riverpod_annotation: ^4.0.7
+  flutter_riverpod: ^3.5.0
+  riverpod_annotation: ^4.0.8
 
   # Local database
   drift: ^2.35.3
@@ -80,7 +80,7 @@ dev_dependencies:
   drift_dev: ^2.35.2
   freezed: ^4.0.3
   json_serializable: ^6.15.2
-  riverpod_generator: ^4.0.9
+  riverpod_generator: ^4.0.10
 
   # Linting / static analysis. riverpod_lint 3.1+ is an analysis_server_plugin
   # loaded from `analysis_options.yaml -> plugins:`, so it (and custom_lint)

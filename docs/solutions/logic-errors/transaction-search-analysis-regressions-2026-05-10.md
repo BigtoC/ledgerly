@@ -84,7 +84,7 @@ The category-listener path now follows the same contract: if metadata errors, fo
 In `lib/ui/features/analysis/search/view_models/category_search_detail_controller.dart`, pre-fill synchronously from active Analysis state only when it exists and holds `AnalysisResults` for the same query, then always open the detail page's own repository subscription:
 
 ```dart
-if (ref.exists(analysisControllerProvider)) {
+if (ref.read(analysisControllerProvider.exists)) {
   final settled = ref.read(analysisControllerProvider).value;
   if (settled is AnalysisResults && settled.query == trimmedQuery) {
     _lastTransactions = settled.transactions;
@@ -142,7 +142,7 @@ That keeps the UI honest about whether search results are still resolving, genui
 
 - Do not replace `AsyncValue` loading or error states with default containers when downstream behavior depends on the difference.
 - If two controllers derive the same filtered/grouped view, keep the transformation in one helper or one clearly mirrored path so they cannot drift on edge cases.
-- Guard any provider-state reuse with `ref.exists(...)` when the reused provider may not be initialized in every entry path.
+- Guard any provider-state reuse with `ref.read(provider.exists)` (`ref.exists` before Riverpod 3.5) when the reused provider may not be initialized in every entry path.
 - In widget tests for intentionally ignored taps, assert the non-navigation contract directly instead of relying on `pumpAndSettle()` timeouts.
 - Keep regression coverage for:
   - non-empty search while category metadata is still loading

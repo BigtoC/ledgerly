@@ -24,7 +24,7 @@ Tested versions live in `pubspec.yaml`. This page covers the layer-boundary chec
 
 ### Why not `import_lint`
 
-`import_lint` was dropped. The 0.1.6 pin, the only line that resolved, enforced nothing: it matched the `^lib/...` rules against the absolute paths from `Directory.current.list()`, so no rule ever applied, and it always called `exit(0)`. The 2.x line (newest: 2.0.0) pins `analyzer ^12.1.0`, but `freezed 4.0.3` requires `>=14`, and `riverpod_generator 4.0.9` and `drift_dev 2.35` require `>=13`. The 0.9.x–1.0.x band needs `analyzer ^5.2.0`, which conflicts with `freezed >=2.5.3`. The rule key names in `import_analysis_options.yaml` are inherited from 0.1.6.
+`import_lint` was dropped. The 0.1.6 pin, the only line that resolved, enforced nothing: it matched the `^lib/...` rules against the absolute paths from `Directory.current.list()`, so no rule ever applied, and it always called `exit(0)`. The 2.x line (newest: 2.0.0) pins `analyzer ^12.1.0`, but `freezed 4.0.3` requires `>=14`, and `riverpod_generator 4.0.10` and `drift_dev 2.35` require `>=13`. The 0.9.x–1.0.x band needs `analyzer ^5.2.0`, which conflicts with `freezed >=2.5.3`. The rule key names in `import_analysis_options.yaml` are inherited from 0.1.6.
 
 ## Chinese ARBs require a base `app_zh.arb`
 

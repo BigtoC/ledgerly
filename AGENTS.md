@@ -112,7 +112,7 @@ l10n: the ARBs are in `l10n/` and the config is in `l10n.yaml`. `flutter pub get
 ### CI workflows
 
 - **`check.yml`** runs on PRs and pushes to `main`, except changes only under `docs/**`, `**/*.md`, `site/**` or the two site workflows. It runs three parallel jobs, all on `flutter pub get --enforce-lockfile`:
-  - **Analyse:** `build_runner`, failing if the committed generated files change → `dart format --set-exit-if-changed .` → `dart analyze --fatal-infos`, which also fails if the riverpod_lint plugin doesn't load.
+  - **Analyse:** `build_runner`, failing if the committed generated files change → `dart format --set-exit-if-changed .` → `dart analyze --fatal-infos`, which also fails if the output reports an analyzer-plugin error. A riverpod_lint version that fails to resolve prints nothing and passes, so after changing it, check that a deliberate riverpod_lint violation is reported.
   - **Test:** `flutter test test/unit/architecture/` → `flutter test`.
   - **Android:** an arm64 APK, signed release if the signing secrets exist and debug otherwise, built with `--dart-define=FOREX_API_URL`.
 - **`android-release.yml`** runs on a `vX.Y.Z` tag. It fails unless the tag matches `version:` in `pubspec.yaml`, so bump that first. It then builds split signed APKs with SHA-256 checksums and uploads them to the GitHub Release.

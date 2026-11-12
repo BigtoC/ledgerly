@@ -55,7 +55,7 @@ void main() {
 
     // Nothing listens, so the autoDispose provider is disposed here.
     await container.pump();
-    expect(container.exists(txAccountLookupProvider), isFalse);
+    expect(container.read(txAccountLookupProvider.exists), isFalse);
 
     expect(await lookup(42), _account);
   });
