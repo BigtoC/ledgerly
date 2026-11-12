@@ -1,6 +1,7 @@
 ---
 title: A keepAlive controller's single effect listener belongs to one always-mounted host, and its Undo snackbar follows controller state
 date: 2026-11-11
+last_updated: 2026-11-12
 category: architecture-patterns
 module: home
 problem_type: architecture_pattern
@@ -207,13 +208,9 @@ These mechanics were checked against Flutter 3.47.9 and flutter_riverpod 3.4.3:
 
 ## When to Apply
 
-- **Adding a screen or sheet that uses a controller with a single effect slot.** This includes adding a second consumer to one that has a single owner today. Other single-slot controllers still clear unconditionally in `dispose`:
-  - `slice_drilldown_controller.dart` with `selected_slice_items_list.dart`
-  - `category_search_detail_controller.dart` with `category_search_detail_screen.dart`
-  - `recurring_rules_controller.dart` with `recurring_rules_screen.dart`
-  - `shopping_list_controller.dart` with `shopping_list_screen.dart`, which has the same identity short-circuit
-
-  Each has one owning screen, so none is a proven bug today. Of these, `SliceDrilldownController` is `keepAlive`, and `CategorySearchDetailController` holds a `KeepAliveLink` during its undo window, so a failure after the screen pops can reach a null listener.
+- **Adding a screen or sheet that uses a controller with a single effect slot.** This includes adding a second consumer to one that has a single owner today. Other single-slot controllers each have one owning screen:
+  - `recurring_rules_controller.dart` with `recurring_rules_screen.dart`, and `shopping_list_controller.dart` with `shopping_list_screen.dart` (which has the same identity short-circuit), still clear in `dispose`. Both are auto-dispose and drop the pending delete in `onDispose`, so nothing can fail after their screen is gone.
+  - `slice_drilldown_controller.dart` (`keepAlive`) with `selected_slice_items_list.dart`, and `category_search_detail_controller.dart` (a `KeepAliveLink` during the undo window) with `category_search_detail_screen.dart`, outlive their screen and still commit. A host above the shell cannot watch them: the search controller is a family, and the drill-down is scoped under Analysis. Since #150 each screen binds, in `didChangeDependencies`, a listener that captures only the messenger and the message, and leaves it bound after `dispose`. It holds no `State`, so running after unmount is safe, and the next screen's bind replaces it. Tests: `a delete that fails after the screen pops still shows the error` and `a delete that fails after the list unmounts still shows the error`.
 - **Any widget that binds a controller callback in `build`, or clears shared state unconditionally in `dispose`.**
 - **Any snackbar whose life should match a controller timer or window,** and any bool that mirrors a snackbar's visibility.
 - **Any `ListView.builder` / `SliverList.builder` with keyed stateful children whose rows can be removed above others.** Unchecked candidates:

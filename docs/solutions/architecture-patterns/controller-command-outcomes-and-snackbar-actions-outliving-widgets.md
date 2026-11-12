@@ -1,7 +1,7 @@
 ---
 title: Controller commands return sealed outcomes, widgets switch on them, and snackbar actions outlive the widget
 date: 2026-11-01
-last_updated: 2026-11-11
+last_updated: 2026-11-12
 category: architecture-patterns
 module: feature-slice controllers and widgets
 problem_type: architecture_pattern
@@ -191,7 +191,7 @@ Follow Example 2:
 
 ### (h) Channel details the PRD leaves implicit
 
-- **A command can return an outcome and still fire an effect later.** `deleteRule` returns `pending | notStarted`. A failed commit when the undo window closes arrives afterwards as `RecurringRulesDeleteFailedEffect`.
+- **A command can return an outcome and still fire an effect later.** `deleteRule` returns `pending | notStarted`. A failed commit when the undo window closes arrives afterwards as `RecurringRulesDeleteFailedEffect`. When the controller outlives the screen during the window (`keepAlive`, or a `KeepAliveLink`), the effect can fire after the screen is gone. Bind a listener that captures only the messenger and the message, and don't clear it in `dispose`: `CategorySearchDetailScreen` and `SelectedSliceItemsList` (#150).
 - **When form state already shows the reason, the outcome only stops the widget.** `SaveRecurringRuleOutcome.rejected()` relies on the field error keys and the `formError` banner already in state.
 - **Multi-row writes belong in one repository transaction.** Repositories keep throwing because Drift rolls back a `db.transaction` only when an exception escapes. `CategoryRepository.reorder(orderedIds)` writes every `sortOrder` in one transaction, replacing the controller's loop of saves.
 
