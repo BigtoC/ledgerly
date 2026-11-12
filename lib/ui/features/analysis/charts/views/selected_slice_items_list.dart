@@ -67,6 +67,7 @@ class _SelectedSliceItemsListState
   int? _lastShownPendingDeleteId;
   late final SliceDrilldownController _controller;
   ScaffoldMessengerState? _messenger;
+  late String _errorMessage;
   int _visibleCount = _kDrilldownPageSize;
 
   @override
@@ -78,20 +79,9 @@ class _SelectedSliceItemsListState
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final messenger = _messenger = ScaffoldMessenger.maybeOf(context);
-    final message = AppLocalizations.of(context).errorSnackbarGeneric;
-    // Never cleared on dispose: typing a search unmounts this list while the
-    // keepAlive controller still commits the pending delete (#150). The
-    // listener holds only the messenger and the message, not this State.
-    _controller.setEffectListener((effect) {
-      if (messenger == null || !messenger.mounted) return;
-      switch (effect) {
-        case SliceDrilldownDeleteFailedEffect():
-          messenger
-            ..clearSnackBars()
-            ..showSnackBar(SnackBar(content: Text(message)));
-      }
-    });
+    _messenger = ScaffoldMessenger.maybeOf(context);
+    _errorMessage = AppLocalizations.of(context).errorSnackbarGeneric;
+    _bindEffects(clearFirst: true);
   }
 
   @override
@@ -106,7 +96,26 @@ class _SelectedSliceItemsListState
   @override
   void dispose() {
     _messenger?.clearSnackBars();
+    // Typing a search unmounts this list while the keepAlive controller still
+    // commits the pending delete, which can fail (#150). Keep reporting, but
+    // queue behind the current snackbar: it may be another screen's live Undo.
+    _bindEffects(clearFirst: false);
     super.dispose();
+  }
+
+  /// The listener holds only the messenger and the message, never this
+  /// State, so it can outlive the list.
+  void _bindEffects({required bool clearFirst}) {
+    final messenger = _messenger;
+    final message = _errorMessage;
+    _controller.setEffectListener((effect) {
+      if (messenger == null || !messenger.mounted) return;
+      switch (effect) {
+        case SliceDrilldownDeleteFailedEffect():
+          if (clearFirst) messenger.clearSnackBars();
+          messenger.showSnackBar(SnackBar(content: Text(message)));
+      }
+    });
   }
 
   @override

@@ -42,6 +42,8 @@ class _CategorySearchDetailScreenState
     extends ConsumerState<CategorySearchDetailScreen> {
   Transaction? _lastShownPending;
   late final CategorySearchDetailController _controller;
+  late ScaffoldMessengerState _messenger;
+  late String _errorMessage;
 
   CategorySearchDetailControllerProvider get _provider =>
       categorySearchDetailControllerProvider(
@@ -59,18 +61,31 @@ class _CategorySearchDetailScreenState
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Never cleared on dispose: a pending delete keeps the controller alive
-    // after a pop, and its commit can still fail (#150). The listener holds
-    // only the root messenger and the message, not this State.
-    final messenger = ScaffoldMessenger.of(context);
-    final message = AppLocalizations.of(context).errorSnackbarGeneric;
+    _messenger = ScaffoldMessenger.of(context);
+    _errorMessage = AppLocalizations.of(context).errorSnackbarGeneric;
+    _bindEffects(clearFirst: true);
+  }
+
+  @override
+  void dispose() {
+    // A pending delete keeps the controller alive after a pop, and its commit
+    // can still fail (#150). Keep reporting, but queue behind the current
+    // snackbar instead of clearing it: it may be another screen's live Undo.
+    _bindEffects(clearFirst: false);
+    super.dispose();
+  }
+
+  /// The listener holds only the messenger and the message, never this
+  /// State, so it can outlive the screen.
+  void _bindEffects({required bool clearFirst}) {
+    final messenger = _messenger;
+    final message = _errorMessage;
     _controller.setEffectListener((effect) {
       if (!messenger.mounted) return;
       switch (effect) {
         case CategorySearchDetailDeleteFailedEffect():
-          messenger
-            ..clearSnackBars()
-            ..showSnackBar(SnackBar(content: Text(message)));
+          if (clearFirst) messenger.clearSnackBars();
+          messenger.showSnackBar(SnackBar(content: Text(message)));
       }
     });
   }
