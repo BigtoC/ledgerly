@@ -73,10 +73,8 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  # Code generation runners. build_runner stays on 2.16.x: 2.17.1 requires
-  # build 5.0 (2.17.0 is retracted), while drift_dev and riverpod_generator
-  # still cap build below 5.0.
-  build_runner: ^2.16.2
+  # Code generation runners.
+  build_runner: ^2.17.1
   drift_dev: ^2.35.2
   freezed: ^4.0.3
   json_serializable: ^6.15.2
