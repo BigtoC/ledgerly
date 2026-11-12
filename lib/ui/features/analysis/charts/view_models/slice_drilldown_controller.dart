@@ -144,7 +144,7 @@ class SliceDrilldownController extends _$SliceDrilldownController {
     return controller.stream;
   }
 
-  void setEffectListener(SliceDrilldownEffectListener? listener) {
+  void setEffectListener(SliceDrilldownEffectListener listener) {
     _effectListener = listener;
   }
 

@@ -19,6 +19,7 @@ import 'package:ledgerly/domain/models/transaction.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/core/theme/analysis_colors.dart';
 import 'package:ledgerly/ui/core/theme/app_theme.dart';
+import 'package:ledgerly/ui/core/widgets/undo_snack_bar.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_providers.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_selection_controller.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_state.dart';
@@ -85,6 +86,7 @@ Widget _harness({
   required _MockRepo repo,
   required ChartSlice slice,
   ValueListenable<ChartSlice>? sliceListenable,
+  ValueListenable<bool>? listMounted,
   SelectedSlice? activeSelection,
   Map<String, Currency> currenciesByCode = const {'USD': _usd},
   ChartsFxStatus fxStatus = const ChartsFxStatus(
@@ -138,14 +140,22 @@ Widget _harness({
         .read(chartsSelectionControllerProvider.notifier)
         .toggleSlice(activeSelection);
   }
+  final list = sliceListenable == null
+      ? SelectedSliceItemsList(slice: slice, locale: 'en')
+      : ValueListenableBuilder<ChartSlice>(
+          valueListenable: sliceListenable,
+          builder: (_, current, _) =>
+              SelectedSliceItemsList(slice: current, locale: 'en'),
+        );
   final body = Scaffold(
     body: SingleChildScrollView(
-      child: sliceListenable == null
-          ? SelectedSliceItemsList(slice: slice, locale: 'en')
-          : ValueListenableBuilder<ChartSlice>(
-              valueListenable: sliceListenable,
-              builder: (_, current, _) =>
-                  SelectedSliceItemsList(slice: current, locale: 'en'),
+      child: listMounted == null
+          ? list
+          : ValueListenableBuilder<bool>(
+              valueListenable: listMounted,
+              builder: (_, mounted, child) =>
+                  mounted ? child! : const SizedBox.shrink(),
+              child: list,
             ),
     ),
   );
@@ -928,6 +938,105 @@ void main() {
         await tester.pump(const Duration(seconds: 5));
       },
     );
+
+    // Issue #150: typing a search unmounts the list without rebuilding the
+    // keepAlive controller, so the commit can fail with no list to report it.
+    // The error must queue behind another screen's live Undo, not clear it.
+    testWidgets('a delete that fails after the list unmounts shows the error '
+        "behind another screen's Undo", (tester) async {
+      final repo = _MockRepo();
+      _stubRows(repo, () => Stream.value([_tx(1)]));
+      when(() => repo.delete(any()))
+          .thenAnswer((_) async => throw StateError(''));
+      final listMounted = ValueNotifier(true);
+      addTearDown(listMounted.dispose);
+
+      await tester.pumpWidget(
+        _harness(
+          repo: repo,
+          slice: _slice(const SelectedSlice.category(1)),
+          activeSelection: const SelectedSlice.category(1),
+          listMounted: listMounted,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.drag(find.byType(Slidable), const Offset(-300, 0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete'));
+      await tester.pump();
+      // Let the Undo finish sliding in, as it has by the time a user types.
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('Transaction deleted'), findsOneWidget);
+      final l10n = AppLocalizations.of(tester.element(find.byType(Scaffold)));
+
+      listMounted.value = false;
+      await tester.pump();
+      expect(find.byType(SelectedSliceItemsList), findsNothing);
+      verifyNever(() => repo.delete(any()));
+
+      ScaffoldMessenger.of(
+        tester.element(find.byType(Scaffold)),
+      ).showUndoSnackBar(message: 'other', undoLabel: 'Other', onUndo: () {});
+      // Frame by frame: the list's Undo leaves, then the other one comes in.
+      for (var i = 0; i < 3; i++) {
+        await tester.pump(const Duration(milliseconds: 300));
+      }
+
+      // Past the 4-second undo window: the commit runs and fails. Step frames
+      // so that a clear would have had time to take the other Undo away.
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      verify(() => repo.delete(1)).called(1);
+      expect(find.text('Other'), findsOneWidget);
+      expect(find.text(l10n.errorSnackbarGeneric), findsNothing);
+
+      // The other Undo runs out and leaves, then the error shows.
+      await tester.pump(const Duration(milliseconds: 700));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Other'), findsNothing);
+      expect(find.text(l10n.errorSnackbarGeneric), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a delete that fails while the list is open replaces its '
+        'stale Undo', (tester) async {
+      final repo = _MockRepo();
+      _stubRows(repo, () => Stream.value([_tx(1), _tx(2)]));
+      when(() => repo.delete(1)).thenAnswer((_) async => throw StateError(''));
+
+      await tester.pumpWidget(
+        _harness(
+          repo: repo,
+          slice: _slice(const SelectedSlice.category(1)),
+          activeSelection: const SelectedSlice.category(1),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final l10n = AppLocalizations.of(tester.element(find.byType(Scaffold)));
+
+      for (final id in [1, 2]) {
+        await tester.drag(
+          find.byType(Slidable).at(id - 1),
+          const Offset(-300, 0),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+        await tester.tap(find.text('Delete'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+      }
+
+      // Let the error finish sliding in before teardown clears it.
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // Deleting 2 committed 1, which failed: 1's Undo is gone at once.
+      verify(() => repo.delete(1)).called(1);
+      expect(find.text('Transaction deleted'), findsNothing);
+      expect(find.text(l10n.errorSnackbarGeneric), findsOneWidget);
+    });
   });
 
   group('empty', () {

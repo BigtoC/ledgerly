@@ -42,6 +42,8 @@ class _CategorySearchDetailScreenState
     extends ConsumerState<CategorySearchDetailScreen> {
   Transaction? _lastShownPending;
   late final CategorySearchDetailController _controller;
+  late ScaffoldMessengerState _messenger;
+  late String _errorMessage;
 
   CategorySearchDetailControllerProvider get _provider =>
       categorySearchDetailControllerProvider(
@@ -54,13 +56,38 @@ class _CategorySearchDetailScreenState
   void initState() {
     super.initState();
     _controller = ref.read(_provider.notifier);
-    _controller.setEffectListener(_onEffect);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _messenger = ScaffoldMessenger.of(context);
+    _errorMessage = AppLocalizations.of(context).errorSnackbarGeneric;
+    _bindEffects(clearFirst: true);
   }
 
   @override
   void dispose() {
-    _controller.setEffectListener(null);
+    // A pending delete keeps the controller alive after a pop, and its commit
+    // can still fail (#150). Keep reporting, but queue behind the current
+    // snackbar instead of clearing it: it may be another screen's live Undo.
+    _bindEffects(clearFirst: false);
     super.dispose();
+  }
+
+  /// The listener holds only the messenger and the message, never this
+  /// State, so it can outlive the screen.
+  void _bindEffects({required bool clearFirst}) {
+    final messenger = _messenger;
+    final message = _errorMessage;
+    _controller.setEffectListener((effect) {
+      if (!messenger.mounted) return;
+      switch (effect) {
+        case CategorySearchDetailDeleteFailedEffect():
+          if (clearFirst) messenger.clearSnackBars();
+          messenger.showSnackBar(SnackBar(content: Text(message)));
+      }
+    });
   }
 
   @override
@@ -223,17 +250,5 @@ class _CategorySearchDetailScreenState
         _controller.undoDelete();
       },
     );
-  }
-
-  void _onEffect(CategorySearchDetailEffect effect) {
-    if (!mounted) return;
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    final l10n = AppLocalizations.of(context);
-    switch (effect) {
-      case CategorySearchDetailDeleteFailedEffect():
-        messenger
-          ?..clearSnackBars()
-          ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
-    }
   }
 }

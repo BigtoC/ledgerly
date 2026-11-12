@@ -32,6 +32,7 @@ import 'package:ledgerly/ui/features/analysis/search/views/transaction_search_ro
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/core/theme/analysis_colors.dart';
 import 'package:ledgerly/ui/core/theme/app_theme.dart';
+import 'package:ledgerly/ui/core/widgets/undo_snack_bar.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/charts_range_providers.dart';
 
 class _MockTransactionRepository extends Mock
@@ -685,6 +686,166 @@ void main() {
       expect(find.byType(AnalysisScreen), findsOneWidget);
       expect(find.byType(CategorySearchTile), findsOneWidget);
       expect(find.widgetWithText(TextField, 'coffee'), findsOneWidget);
+    },
+  );
+
+  // Issue #150: the pending delete keeps the controller alive after the pop,
+  // so its commit can fail with no screen left to report it. The error must
+  // queue behind another screen's live Undo, not clear it.
+  testWidgets(
+    'a delete that fails after the screen pops shows the error behind '
+    "another screen's Undo",
+    (tester) async {
+      final tx = _MockTransactionRepository();
+      final cat = _MockCategoryRepository();
+      final acct = _MockAccountRepository();
+
+      when(() => tx.watchByMemo('coffee'))
+          .thenAnswer((_) => Stream.value([_tx()]));
+      when(() => cat.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([_cat()]));
+      when(() => acct.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([_acct()]));
+      when(() => tx.delete(any()))
+          .thenAnswer((_) async => throw StateError(''));
+
+      final router = GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, _) => const Scaffold(body: Text('analysis-stub')),
+            routes: [
+              GoRoute(
+                path: 'search/:categoryId',
+                builder: (_, state) => CategorySearchDetailScreen(
+                  categoryId: int.parse(state.pathParameters['categoryId']!),
+                  query: state.uri.queryParameters['q']!,
+                  currencyCode: state.uri.queryParameters['c']!,
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            transactionRepositoryProvider.overrideWithValue(tx),
+            categoryRepositoryProvider.overrideWithValue(cat),
+            accountRepositoryProvider.overrideWithValue(acct),
+          ],
+          child: MaterialApp.router(
+            theme: lightTheme,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            routerConfig: router,
+          ),
+        ),
+      );
+      unawaited(router.push('/search/1?q=coffee&c=USD'));
+      await tester.pumpAndSettle();
+      expect(find.byType(TransactionSearchRow), findsOneWidget);
+      final l10n = AppLocalizations.of(
+        tester.element(find.byType(CategorySearchDetailScreen)),
+      );
+
+      await tester.drag(
+        find.byKey(const ValueKey<int>(1)),
+        const Offset(-900, 0),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.commonDelete).last);
+      await tester.pump();
+      await tester.pump();
+
+      router.pop();
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.byType(CategorySearchDetailScreen), findsNothing);
+      verifyNever(() => tx.delete(any()));
+
+      ScaffoldMessenger.of(
+        tester.element(find.text('analysis-stub')),
+      ).showUndoSnackBar(message: 'other', undoLabel: 'Other', onUndo: () {});
+      // Frame by frame: the old Undo leaves, then the other one comes in.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // Past the 4-second undo window: the commit runs and fails. Step frames
+      // so that a clear would have had time to take the other Undo away.
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      verify(() => tx.delete(1)).called(1);
+      expect(find.text('Other'), findsOneWidget);
+      expect(find.text(l10n.errorSnackbarGeneric), findsNothing);
+
+      // The other Undo runs out and leaves, then the error shows.
+      await tester.pump(const Duration(milliseconds: 700));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Other'), findsNothing);
+      expect(find.text(l10n.errorSnackbarGeneric), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'a delete that fails while the screen is open replaces its stale Undo',
+    (tester) async {
+      final tx = _MockTransactionRepository();
+      final cat = _MockCategoryRepository();
+      final acct = _MockAccountRepository();
+
+      when(() => tx.watchByMemo('coffee'))
+          .thenAnswer((_) => Stream.value([_tx(), _tx().copyWith(id: 2)]));
+      when(() => cat.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([_cat()]));
+      when(() => acct.watchAll(includeArchived: true))
+          .thenAnswer((_) => Stream.value([_acct()]));
+      when(() => tx.delete(1)).thenAnswer((_) async => throw StateError(''));
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            transactionRepositoryProvider.overrideWithValue(tx),
+            categoryRepositoryProvider.overrideWithValue(cat),
+            accountRepositoryProvider.overrideWithValue(acct),
+          ],
+          child: MaterialApp(
+            theme: lightTheme,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const CategorySearchDetailScreen(
+              categoryId: 1,
+              query: 'coffee',
+              currencyCode: 'USD',
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+      final l10n = AppLocalizations.of(
+        tester.element(find.byType(CategorySearchDetailScreen)),
+      );
+
+      for (final id in [1, 2]) {
+        await tester.drag(find.byKey(ValueKey<int>(id)), const Offset(-900, 0));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+        await tester.tap(find.text(l10n.commonDelete).last);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 750));
+      }
+
+      // Deleting 2 committed 1, which failed: 1's Undo is gone at once.
+      verify(() => tx.delete(1)).called(1);
+      expect(find.text(l10n.homeDeleteUndoSnackbar), findsNothing);
+      expect(find.text(l10n.errorSnackbarGeneric), findsOneWidget);
     },
   );
 }
