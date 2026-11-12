@@ -2,7 +2,7 @@
 // from docs/design/analysis-redesign/Main.dc.html (lines 20-27,
 // accPillStyle in renderVals()).
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../core/theme/analysis_colors.dart';

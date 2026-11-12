@@ -7,7 +7,7 @@
 // controller, repository or use case — those are covered by controller,
 // repository and use-case unit tests respectively.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -25,6 +25,7 @@ import 'package:ledgerly/ui/features/recurring/view_models/recurring_rule_form_c
 import 'package:ledgerly/ui/features/recurring/views/recurring_rule_form_screen.dart';
 import 'package:ledgerly/ui/features/transactions/views/calculator_keypad.dart';
 import 'package:ledgerly/ui/features/recurring/view_models/recurring_rule_form_state.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockAccountRepository extends Mock implements AccountRepository {}
@@ -72,7 +73,7 @@ Widget _wrap(ProviderContainer container) {
   return UncontrolledProviderScope(
     container: container,
     child: const MaterialApp(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: RecurringRuleFormScreen(),
     ),
@@ -86,7 +87,7 @@ Widget _wrapRouted(ProviderContainer container, {int? ruleId}) {
   return UncontrolledProviderScope(
     container: container,
     child: MaterialApp.router(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: GoRouter(
         initialLocation: '/form',
@@ -197,7 +198,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: const MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: RecurringRuleFormScreen(ruleId: 1),
         ),
@@ -291,7 +292,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: const MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: RecurringRuleFormScreen(ruleId: 1),
         ),

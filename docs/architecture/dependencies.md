@@ -2,7 +2,7 @@
 
 > Authoritative source: [`PRD.md` → *Dependencies*](../../PRD.md#dependencies) and the live `pubspec.yaml`.
 
-Tested versions live in `pubspec.yaml`. This page covers the layer-boundary check that replaced `import_lint`, the base `app_zh.arb` requirement, and the Android build toolchain.
+Tested versions live in `pubspec.yaml`. This page covers the layer-boundary check that replaced `import_lint`, the base `app_zh.arb` requirement, the `material_ui` / `cupertino_ui` packages, and the Android build toolchain.
 
 ## Layer-boundary check
 
@@ -31,6 +31,14 @@ Tested versions live in `pubspec.yaml`. This page covers the layer-boundary chec
 `flutter_localizations` fails codegen with `Arb file for a fallback, zh, does not exist` when only `app_zh_CN.arb` / `app_zh_TW.arb` are present.
 
 **Keep `app_zh.arb` in `l10n/`** even if it only contains `appTitle` — removing it breaks `flutter pub get`. Bare `zh` resolves to English at runtime; the fallback exists only so codegen succeeds.
+
+## Material and Cupertino packages
+
+Flutter 3.50 deprecates `package:flutter/material.dart` and `package:flutter/cupertino.dart`. Ledgerly imports `package:material_ui/material_ui.dart` and `package:cupertino_ui/cupertino_ui.dart` instead, and both are direct dependencies. `material_ui` re-exports `package:flutter/widgets.dart`.
+
+- **Two copies, separate types.** The framework still ships its frozen Material copy behind the deprecated library. `material_ui` defines its own `MaterialApp`, `Theme`, `Scaffold`, `ScaffoldMessenger` and `MaterialLocalizations`, and lookups are keyed by type, so a widget built on one copy does not see the other copy's ancestors. A dependency whose widgets read the theme or Material localizations must be on the same copy as the app. Check this when adding one. `go_router` 18 already detects `material_ui`'s `MaterialApp`. `fl_chart` still imports the framework copy but uses only types and constants on Ledgerly's paths.
+- **Localizations.** gen-l10n in Flutter 3.50 still emits the deprecated `flutter_localizations` delegates in `AppLocalizations.localizationsDelegates` ([flutter/flutter#191072](https://github.com/flutter/flutter/issues/191072)). `material_ui` widgets cannot read them, so a `zh_TW` or `zh_CN` app would fail with no `MaterialLocalizations`. Every `MaterialApp`, in `lib/` and in tests, takes `appLocalizationsDelegates` from `lib/core/l10n/app_localizations_delegates.dart`, which is `AppLocalizations.delegate` plus `material_ui`'s `GlobalMaterialLocalizations.delegates`. `lib/l10n/**` is excluded from analysis so the generated file's deprecated references do not fail `--fatal-infos`. Drop both once gen-l10n emits `material_ui` delegates.
+- **`dart fix`.** Migrate stray imports with `dart fix --apply --code=migrate_design_widgets`. A plain `dart fix --apply` is safe only while `lib/l10n/**` stays excluded; without the exclude it rewrites the generated file into five analyzer errors.
 
 ## Android build toolchain
 

@@ -7,7 +7,7 @@
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -25,6 +25,7 @@ import 'package:ledgerly/data/repositories/recurring_rules_repository.dart';
 import 'package:ledgerly/ui/features/recurring/view_models/recurring_rules_controller.dart';
 import 'package:ledgerly/ui/features/recurring/views/recurring_rules_screen.dart';
 import 'package:ledgerly/ui/features/recurring/view_models/recurring_rules_state.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 import '../../../support/text_scale.dart';
@@ -111,7 +112,7 @@ Widget _wrap(ProviderContainer container, {double textScale = 1}) {
   return UncontrolledProviderScope(
     container: container,
     child: MaterialApp.router(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: textScaleBuilder(textScale),
       routerConfig: _StubRouter.build(const RecurringRulesScreen()),

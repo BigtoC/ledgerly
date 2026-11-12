@@ -1,6 +1,6 @@
 // `showUndoSnackBar` — the shared clear-then-show Undo snackbar.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ledgerly/core/constants.dart';

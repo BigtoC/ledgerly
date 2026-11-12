@@ -5,7 +5,7 @@
 //
 // Opens as an in-screen modal sheet via `showCategoryIconPicker`.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../../core/utils/color_palette.dart';
 import '../../../../core/utils/icon_registry.dart';

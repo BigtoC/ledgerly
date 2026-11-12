@@ -258,7 +258,7 @@ app stays fast, understandable, and centered on manual logging.
 
 ## Prerequisites
 
-- Flutter 3.47+ (stable channel, Dart 3.13). `flutter --version` must run
+- Flutter 3.50+ (stable channel, Dart 3.14). `flutter --version` must run
   cleanly.
 - For Android builds: JDK 17 or newer (CI uses Temurin 21) + Android SDK.
   The Gradle wrapper fetches Gradle 9.7.1; AGP 9.3.3 and Kotlin 2.4.21 are

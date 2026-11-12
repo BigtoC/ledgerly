@@ -143,6 +143,7 @@ lib/
   core/
     constants.dart
     l10n/
+      app_localizations_delegates.dart  # MaterialApp localizationsDelegates (material_ui)
     utils/
       money_formatter.dart
       icon_registry.dart
@@ -794,7 +795,7 @@ Seeded categories use stable `l10n_key` values so locale changes do not create d
 | Cash         | `accountType.cash`       | `'wallet'`      | Neutral Variant 70 — `#AEA9B4` | `user_preferences.default_currency` at seed time |
 | Investment   | `accountType.investment` | `'trending_up'` | Neutral Variant 70 — `#AEA9B4` | `user_preferences.default_currency` at seed time |
 
-Account type tiles deliberately use a shared neutral tint — account types are visually distinguished by their **icon**, not by color. Users creating custom account types can pick any other palette color if they want color-coded account types. Icon keys (`'wallet'`, `'trending_up'`) resolve via `core/utils/icon_registry.dart` at render time to `Icons.wallet` and `Icons.trending_up` from Flutter's built-in `material` library.
+Account type tiles deliberately use a shared neutral tint — account types are visually distinguished by their **icon**, not by color. Users creating custom account types can pick any other palette color if they want color-coded account types. Icon keys (`'wallet'`, `'trending_up'`) resolve via `core/utils/icon_registry.dart` at render time to `Icons.wallet` and `Icons.trending_up` from `package:material_ui`.
 
 Seeded account types follow the same identity rules as seeded categories: `l10n_key` stays stable across renames; user renames write `custom_name` only. Users can add custom account types from Settings > Manage Accounts (name + icon + color + default currency). Archiving / deletion rules match categories: archive when referenced, hard-delete only when unused.
 
@@ -1175,7 +1176,7 @@ All scrollable regions must survive a 2× text scale (`MediaQuery.textScalerOf`)
 
 Categories store `icon` as a string key and `color` as a palette index. The actual `IconData` and `Color` values are resolved at render time from compile-time registries in `core/utils/`:
 
-- `core/utils/icon_registry.dart` — `Map<String, IconData>` mapping string keys to `Icons.*` from Flutter's built-in `material` library. Unknown keys fall back to `Icons.category`. `kIconGroups` places every key in exactly one `IconGroup` (Food, Drinks, Transport, Shopping, Entertainment, Home, Electronics, Medical, Income, Other); the category icon picker shows one titled section per group, in that order.
+- `core/utils/icon_registry.dart` — `Map<String, IconData>` mapping string keys to `Icons.*` from `package:material_ui`. Unknown keys fall back to `Icons.category`. `kIconGroups` places every key in exactly one `IconGroup` (Food, Drinks, Transport, Shopping, Entertainment, Home, Electronics, Medical, Income, Other); the category icon picker shows one titled section per group, in that order.
 - `core/utils/color_palette.dart` — ordered `List<Color>` of MD3-compatible category colors. `categories.color` is the index into this list. Palette additions append; existing indices never change.
 
 This avoids storing raw `IconData` symbols or ARGB ints in the DB (both fragile across Flutter / Material updates) while keeping categories portable across future backup/restore.
@@ -1358,7 +1359,7 @@ Tests are organized by **architectural layer**, not by feature. This mirrors the
 
 ## Dependencies
 
-Versions below are the tested resolvable set under Flutter **3.47.9** (Dart 3.13.7). Keep `pubspec.yaml` in sync with this table — any version bump needs to round-trip `flutter pub get` and `dart run build_runner build` before landing here.
+Versions below are the tested resolvable set under Flutter **3.50.0** (Dart 3.14.0). Keep `pubspec.yaml` in sync with this table — any version bump needs to round-trip `flutter pub get` and `dart run build_runner build` before landing here.
 
 ### Core (MVP)
 
@@ -1372,7 +1373,9 @@ Versions below are the tested resolvable set under Flutter **3.47.9** (Dart 3.13
 | `go_router`              | `^18.1.2`   | Navigation/routing (`StatefulShellRoute`)                                |
 | `freezed_annotation`     | `^3.1.0`    | Immutable data model annotations                                         |
 | `json_annotation`        | `^4.12.0`   | JSON serialization annotations                                           |
-| `flutter_localizations`  | sdk         | i18n framework                                                           |
+| `material_ui`            | `^1.9.0`    | Material widgets (replaces the deprecated `package:flutter/material.dart`) |
+| `cupertino_ui`           | `^1.1.5`    | Cupertino widgets (`CupertinoPage` for modal routes in `router.dart`)    |
+| `flutter_localizations`  | sdk         | i18n framework (gen-l10n output; `material_ui`'s delegates build on it)  |
 | `intl`                   | `^0.20.2`   | Localization utilities + `NumberFormat`                                  |
 | `flutter_slidable`       | `^4.0.3`    | Swipe actions on list items                                              |
 | `package_info_plus`      | `^10.2.2`   | App version info (About screen, app-update check)                        |

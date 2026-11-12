@@ -9,7 +9,7 @@
 // button calls `context.pop()` instead so the user returns to the
 // settings page they came from.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
 class SplashEnterButton extends StatelessWidget {

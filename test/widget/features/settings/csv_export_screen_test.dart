@@ -6,7 +6,7 @@
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
@@ -15,6 +15,7 @@ import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/ui/features/settings/csv_export/view_models/csv_export_controller.dart';
 import 'package:ledgerly/ui/features/settings/csv_export/views/csv_export_screen.dart';
 import 'package:ledgerly/ui/features/settings/csv_export/view_models/csv_export_state.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 import '../../../support/text_scale.dart';
@@ -92,7 +93,7 @@ Future<List<Object>> _pump(
     UncontrolledProviderScope(
       container: container,
       child: MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         builder: textScaleBuilder(textScale),
         home: const CsvExportScreen(),

@@ -30,7 +30,7 @@
 //     precedence ("(1 + 2) × 2 ="). Operands keep the fractional digits as
 //     typed, minus trailing zeros, with locale digit grouping ("1,234.5").
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/utils/money_formatter.dart';

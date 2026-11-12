@@ -9,7 +9,7 @@
 //     frozen and must never change hex. Adding new colours is allowed,
 //     but only at the END. See `color_palette.dart` header for the rule.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/core/utils/color_palette.dart';
 

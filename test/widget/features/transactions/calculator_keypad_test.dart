@@ -15,11 +15,12 @@
 //   - Text scale clamping at 1.5×.
 //   - Key taps fire a light haptic; the disabled decimal key does not.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/features/transactions/view_models/keypad_state.dart';
 import 'package:ledgerly/ui/features/transactions/views/calculator_keypad.dart';
@@ -27,7 +28,7 @@ import 'package:ledgerly/ui/features/transactions/views/calculator_keypad.dart';
 import '../../../support/text_scale.dart';
 
 Widget _wrap(Widget child, {double? textScale}) => MaterialApp(
-  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  localizationsDelegates: appLocalizationsDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
   builder: textScale == null ? null : textScaleBuilder(textScale),
   home: Scaffold(body: child),

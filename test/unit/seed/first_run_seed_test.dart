@@ -4,7 +4,7 @@
 // `../repositories/_harness/test_app_database.dart`. Every case has a
 // direct row in the §6.2 Test Plan table.
 
-import 'package:flutter/material.dart' show ThemeMode;
+import 'package:material_ui/material_ui.dart' show ThemeMode;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/data/database/app_database.dart' show AppDatabase;
 import 'package:ledgerly/data/repositories/account_repository.dart';

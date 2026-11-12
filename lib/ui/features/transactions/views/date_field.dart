@@ -4,7 +4,7 @@
 // transaction date and opens `showDatePicker` on tap. Uses
 // `core/utils/date_helpers.dart` for the locale-aware display string.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../../core/utils/date_helpers.dart';
 import '../../../../l10n/app_localizations.dart';

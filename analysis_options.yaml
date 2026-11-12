@@ -20,6 +20,10 @@ analyzer:
     - "**/*.drift.dart"
     - "**/*.config.dart"
     - "lib/generated/**"
+    # gen-l10n output. Flutter 3.50's template still lists the deprecated
+    # flutter_localizations Material and Cupertino delegates
+    # (flutter/flutter#191072); the app uses appLocalizationsDelegates.
+    - "lib/l10n/**"
     - ".dart_tool/**"
     - "build/**"
     # drift_dev `schema generate` output — regenerated from the committed

@@ -1,7 +1,7 @@
 // The presentation the Analysis account sheet and period picker share: a
 // bottom sheet below 600 dp, a Dialog at 600 dp and wider (plan D10).
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../../core/theme/analysis_colors.dart';
 

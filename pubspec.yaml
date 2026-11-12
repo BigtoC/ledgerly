@@ -4,8 +4,8 @@ publish_to: "none"
 version: 0.10.3
 
 environment:
-  sdk: ^3.13.7
-  flutter: ">=3.47.8"
+  sdk: ^3.14.0
+  flutter: ">=3.50.0"
 
 # Dependency list mirrors PRD.md -> Dependencies (Core + shipped Phase 2).
 # Deferred Phase 2/3 packages (flutter_secure_storage, ...) are NOT
@@ -35,6 +35,12 @@ dependencies:
 
   # i18n
   intl: ^0.20.2
+
+  # Material and Cupertino widgets. Flutter 3.50 deprecates
+  # package:flutter/material.dart and cupertino.dart; these packages are
+  # their replacements (see docs/architecture/dependencies.md).
+  material_ui: ^1.9.0
+  cupertino_ui: ^1.1.5
 
   # UI components
   flutter_slidable: ^4.0.3

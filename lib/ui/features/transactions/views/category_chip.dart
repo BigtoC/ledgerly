@@ -8,7 +8,7 @@
 // screen can branch on the picker-vs-management routing rule (Wave 2
 // §7.1) before calling `showCategoryPicker`.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../../core/utils/color_palette.dart';
 import '../../../../core/utils/icon_registry.dart';

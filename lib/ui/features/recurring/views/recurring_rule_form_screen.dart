@@ -5,7 +5,7 @@
 // `RecurringGenerationUseCase.executeForRule` so the user sees today's
 // pending row on Home (Wave 3) without waiting for the next cold start.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';

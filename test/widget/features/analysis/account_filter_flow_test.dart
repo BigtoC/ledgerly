@@ -2,7 +2,7 @@
 // acceptance criteria 5, 6 and 12. Drives the real AnalysisScreen with a
 // mocked TransactionRepository whose answers depend on `accountId`.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/app/providers/default_currency_provider.dart';
@@ -17,6 +17,7 @@ import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/domain/models/currency_slice.dart';
 import 'package:ledgerly/domain/models/time_bucket_slice.dart';
 import 'package:ledgerly/domain/models/transaction.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/core/theme/analysis_colors.dart';
 import 'package:ledgerly/ui/core/theme/app_theme.dart';
@@ -291,7 +292,7 @@ Future<ProviderContainer> _pumpScreen(WidgetTester tester) async {
       container: container,
       child: MaterialApp(
         theme: lightTheme,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: const AnalysisScreen(),
       ),

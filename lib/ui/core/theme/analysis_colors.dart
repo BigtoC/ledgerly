@@ -5,7 +5,7 @@
 // (docs/superpowers/specs/2026-11-02-analysis-redesign-design.md). The
 // shell's nav / navIndicator tokens are reference only and not included.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Exact Analysis-screen colours, registered on `lightTheme` / `darkTheme`.
 @immutable

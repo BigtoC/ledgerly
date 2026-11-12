@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -36,6 +36,7 @@ import 'package:ledgerly/ui/features/analysis/charts/view_models/slice_drilldown
 import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_controller.dart';
 import 'package:ledgerly/ui/features/analysis/search/view_models/analysis_providers.dart';
 import 'package:ledgerly/ui/features/analysis/search/views/category_search_tile.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/core/theme/app_theme.dart';
 
@@ -104,7 +105,7 @@ Widget _harness({
     ],
     child: MaterialApp(
       theme: theme ?? lightTheme,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: textScaleBuilder(textScale),
       home: const AnalysisScreen(),
@@ -202,7 +203,7 @@ Widget _routerHarness({
     ],
     child: MaterialApp.router(
       theme: lightTheme,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: _detailRouter(initialLocation),
     ),

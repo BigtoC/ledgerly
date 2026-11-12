@@ -15,7 +15,7 @@
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -34,6 +34,7 @@ import 'package:ledgerly/ui/features/shopping_list/view_models/shopping_list_pro
 import 'package:ledgerly/ui/features/shopping_list/views/shopping_list_screen.dart';
 import 'package:ledgerly/ui/features/shopping_list/view_models/shopping_list_state.dart';
 import 'package:ledgerly/ui/features/transactions/view_models/transaction_form_state.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockShoppingListRepository extends Mock
@@ -114,7 +115,7 @@ Widget _wrap({required ProviderContainer container}) {
   return UncontrolledProviderScope(
     container: container,
     child: MaterialApp.router(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: _StubRouter.build(const ShoppingListScreen()),
     ),
@@ -399,7 +400,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: MaterialApp.router(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           routerConfig: router,
         ),

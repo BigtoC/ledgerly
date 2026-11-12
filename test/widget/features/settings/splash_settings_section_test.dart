@@ -14,7 +14,7 @@
 //     field shows `errorSnackbarGeneric` instead of escaping as an
 //     uncaught error; a failed text write is retried on the next submit.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -25,6 +25,7 @@ import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/ui/features/settings/view_models/settings_controller.dart';
 import 'package:ledgerly/ui/features/settings/view_models/settings_state.dart';
 import 'package:ledgerly/ui/features/settings/views/splash_settings_section.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockUserPreferencesRepository extends Mock
@@ -52,7 +53,7 @@ Widget _wrap({
   return UncontrolledProviderScope(
     container: container,
     child: MaterialApp(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
         body: SingleChildScrollView(

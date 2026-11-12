@@ -18,7 +18,7 @@
 //   - Omitting `type` lists expense categories, then income categories
 //     below them.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -29,6 +29,7 @@ import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/data/repositories/category_repository.dart';
 import 'package:ledgerly/ui/features/categories/view_models/categories_controller.dart';
 import 'package:ledgerly/ui/features/categories/views/category_picker.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 import '../../../support/text_scale.dart';
@@ -60,7 +61,7 @@ Widget _hostApp({
     child: MediaQuery(
       data: MediaQueryData(size: size, textScaler: textScaler),
       child: MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Builder(
           builder: (ctx) => Scaffold(
@@ -271,7 +272,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           builder: textScaleBuilder(2.0),
           home: Builder(

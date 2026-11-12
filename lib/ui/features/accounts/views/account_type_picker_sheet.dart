@@ -7,7 +7,7 @@
 // isolated from the outer account form so a save error there does not
 // blow away the outer form's state (plan §12 risk #5).
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/color_palette.dart';

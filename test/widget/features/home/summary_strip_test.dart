@@ -10,7 +10,7 @@
 // supplied for a non-default currency, the strip renders a unified
 // converted total in the default currency.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -19,6 +19,7 @@ import 'package:riverpod_annotation/experimental/scope.dart';
 import 'package:ledgerly/app/providers/exchange_rates_provider.dart';
 import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/ui/features/home/views/summary_strip.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 const _usd = Currency(code: 'USD', decimals: 2, symbol: r'$');
@@ -32,7 +33,7 @@ Widget _wrap(Widget child, {Map<String, int>? rates}) => ProviderScope(
     ),
   ],
   child: MaterialApp(
-    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    localizationsDelegates: appLocalizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     // Home renders the strip inside a scroll view; several currency
     // cards are taller than the test surface.
@@ -184,7 +185,7 @@ void main() {
     ],
     child: MaterialApp(
       theme: theme,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: const Scaffold(
         body: SummaryStrip(

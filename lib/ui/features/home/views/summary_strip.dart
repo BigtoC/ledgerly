@@ -12,7 +12,7 @@
 // All values are integer minor units, scaled at the UI boundary by
 // `MoneyFormatter` per Wave 0 §2.7 / PRD Money Storage Policy.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:riverpod_annotation/experimental/scope.dart';

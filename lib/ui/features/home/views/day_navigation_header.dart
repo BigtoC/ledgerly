@@ -6,7 +6,7 @@
 // is tappable and opens a manual `showDatePicker` so the user can jump
 // to any day in range.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../../core/utils/date_helpers.dart';
 import '../../../../l10n/app_localizations.dart';

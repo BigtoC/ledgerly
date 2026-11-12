@@ -13,7 +13,7 @@
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -41,6 +41,7 @@ import 'package:ledgerly/ui/features/home/views/pending_snack_bars.dart';
 import 'package:ledgerly/ui/features/home/views/day_navigation_header.dart';
 import 'package:ledgerly/ui/features/home/views/summary_strip.dart';
 import 'package:ledgerly/ui/features/home/views/transaction_tile.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 import '../../../support/text_scale.dart';
@@ -182,7 +183,7 @@ void main() {
         pendingTransactionRepositoryProvider.overrideWithValue(pendingRepo),
       ],
       child: MaterialApp.router(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         builder: textScale == null ? null : textScaleBuilder(textScale),
         routerConfig: GoRouter(

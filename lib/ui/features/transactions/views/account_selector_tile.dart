@@ -5,7 +5,7 @@
 // (caller decides whether the result triggers the currency-change
 // confirm dialog).
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../../domain/models/account.dart';
 import '../../../../l10n/app_localizations.dart';

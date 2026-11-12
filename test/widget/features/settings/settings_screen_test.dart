@@ -27,7 +27,7 @@
 //   - A failed theme, language or default-currency write shows
 //     `errorSnackbarGeneric` instead of escaping as an uncaught error.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -55,6 +55,7 @@ import 'package:ledgerly/ui/features/settings/views/settings_screen.dart';
 import 'package:ledgerly/ui/features/settings/views/new_version_badge.dart';
 import 'package:ledgerly/ui/features/settings/views/settings_section.dart';
 import 'package:ledgerly/ui/features/settings/view_models/settings_state.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 import '../../../support/text_scale.dart';
@@ -152,7 +153,7 @@ Widget _wrap({
     container: container,
     child: MaterialApp.router(
       locale: locale,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: textScaleBuilder(textScale),
       routerConfig: _StubRouter.build(const SettingsScreen()),

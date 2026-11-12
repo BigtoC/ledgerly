@@ -2,7 +2,7 @@
 // the account form returns the saved id, the sheet looks the account up
 // and pops it, or stays open when the account is gone or archived.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -13,6 +13,7 @@ import 'package:ledgerly/domain/models/account.dart';
 import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/data/repositories/account_repository.dart';
 import 'package:ledgerly/ui/features/transactions/views/account_picker_sheet.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockAccountRepository extends Mock implements AccountRepository {}
@@ -71,7 +72,7 @@ void main() {
       overrides: [accountRepositoryProvider.overrideWithValue(accountRepo)],
       child: MaterialApp.router(
         routerConfig: router,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
       ),
     );
