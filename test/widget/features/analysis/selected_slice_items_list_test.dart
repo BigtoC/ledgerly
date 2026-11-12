@@ -85,6 +85,7 @@ Widget _harness({
   required _MockRepo repo,
   required ChartSlice slice,
   ValueListenable<ChartSlice>? sliceListenable,
+  ValueListenable<bool>? listMounted,
   SelectedSlice? activeSelection,
   Map<String, Currency> currenciesByCode = const {'USD': _usd},
   ChartsFxStatus fxStatus = const ChartsFxStatus(
@@ -138,14 +139,22 @@ Widget _harness({
         .read(chartsSelectionControllerProvider.notifier)
         .toggleSlice(activeSelection);
   }
+  final list = sliceListenable == null
+      ? SelectedSliceItemsList(slice: slice, locale: 'en')
+      : ValueListenableBuilder<ChartSlice>(
+          valueListenable: sliceListenable,
+          builder: (_, current, _) =>
+              SelectedSliceItemsList(slice: current, locale: 'en'),
+        );
   final body = Scaffold(
     body: SingleChildScrollView(
-      child: sliceListenable == null
-          ? SelectedSliceItemsList(slice: slice, locale: 'en')
-          : ValueListenableBuilder<ChartSlice>(
-              valueListenable: sliceListenable,
-              builder: (_, current, _) =>
-                  SelectedSliceItemsList(slice: current, locale: 'en'),
+      child: listMounted == null
+          ? list
+          : ValueListenableBuilder<bool>(
+              valueListenable: listMounted,
+              builder: (_, mounted, child) =>
+                  mounted ? child! : const SizedBox.shrink(),
+              child: list,
             ),
     ),
   );
@@ -928,6 +937,49 @@ void main() {
         await tester.pump(const Duration(seconds: 5));
       },
     );
+
+    // Issue #150: typing a search unmounts the list without rebuilding the
+    // keepAlive controller, so the commit can fail with no list to report it.
+    testWidgets('a delete that fails after the list unmounts still shows the '
+        'error', (tester) async {
+      final repo = _MockRepo();
+      _stubRows(repo, () => Stream.value([_tx(1)]));
+      when(() => repo.delete(any()))
+          .thenAnswer((_) async => throw StateError(''));
+      final listMounted = ValueNotifier(true);
+      addTearDown(listMounted.dispose);
+
+      await tester.pumpWidget(
+        _harness(
+          repo: repo,
+          slice: _slice(const SelectedSlice.category(1)),
+          activeSelection: const SelectedSlice.category(1),
+          listMounted: listMounted,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.drag(find.byType(Slidable), const Offset(-300, 0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete'));
+      await tester.pump();
+      // Let the Undo finish sliding in, as it has by the time a user types.
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('Transaction deleted'), findsOneWidget);
+      final l10n = AppLocalizations.of(tester.element(find.byType(Scaffold)));
+
+      listMounted.value = false;
+      await tester.pump();
+      expect(find.byType(SelectedSliceItemsList), findsNothing);
+      verifyNever(() => repo.delete(any()));
+
+      // Past the 4-second undo window: the commit runs and fails.
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pump(const Duration(milliseconds: 750));
+
+      verify(() => repo.delete(1)).called(1);
+      expect(find.text(l10n.errorSnackbarGeneric), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
   });
 
   group('empty', () {

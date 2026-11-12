@@ -73,13 +73,25 @@ class _SelectedSliceItemsListState
   void initState() {
     super.initState();
     _controller = ref.read(sliceDrilldownControllerProvider.notifier);
-    _controller.setEffectListener(_onEffect);
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _messenger = ScaffoldMessenger.maybeOf(context);
+    final messenger = _messenger = ScaffoldMessenger.maybeOf(context);
+    final message = AppLocalizations.of(context).errorSnackbarGeneric;
+    // Never cleared on dispose: typing a search unmounts this list while the
+    // keepAlive controller still commits the pending delete (#150). The
+    // listener holds only the messenger and the message, not this State.
+    _controller.setEffectListener((effect) {
+      if (messenger == null || !messenger.mounted) return;
+      switch (effect) {
+        case SliceDrilldownDeleteFailedEffect():
+          messenger
+            ..clearSnackBars()
+            ..showSnackBar(SnackBar(content: Text(message)));
+      }
+    });
   }
 
   @override
@@ -94,7 +106,6 @@ class _SelectedSliceItemsListState
   @override
   void dispose() {
     _messenger?.clearSnackBars();
-    _controller.setEffectListener(null);
     super.dispose();
   }
 
@@ -278,17 +289,6 @@ class _SelectedSliceItemsListState
         ),
       ),
     );
-  }
-
-  void _onEffect(SliceDrilldownEffect effect) {
-    if (!mounted) return;
-    final l10n = AppLocalizations.of(context);
-    switch (effect) {
-      case SliceDrilldownDeleteFailedEffect():
-        _messenger
-          ?..clearSnackBars()
-          ..showSnackBar(SnackBar(content: Text(l10n.errorSnackbarGeneric)));
-    }
   }
 
   String? _convertedAmount({
