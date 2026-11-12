@@ -1370,7 +1370,7 @@ Versions below are the tested resolvable set under Flutter **3.50.0** (Dart 3.14
 | `drift`                  | `^2.35.3`   | Database ORM                                                             |
 | `drift_flutter`          | `^0.3.1`    | Flutter SQLite integration                                               |
 | `path_provider`          | `^2.1.6`    | DB file path location; update APK download directory                     |
-| `go_router`              | `^18.1.2`   | Navigation/routing (`StatefulShellRoute`)                                |
+| `go_router`              | `^18.1.4`   | Navigation/routing (`StatefulShellRoute`)                                |
 | `freezed_annotation`     | `^3.1.0`    | Immutable data model annotations                                         |
 | `json_annotation`        | `^4.12.0`   | JSON serialization annotations                                           |
 | `material_ui`            | `^1.11.0`   | Material widgets (replaces the deprecated `package:flutter/material.dart`) |

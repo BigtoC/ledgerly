@@ -515,6 +515,40 @@ void main() {
       expect(find.byType(PendingSnackBars), findsOneWidget);
     });
 
+    // go_router 18.1.2 claimed system back for the hidden Settings branch's
+    // sub-route, so back on Home did nothing instead of leaving the app.
+    testWidgets('system back on Home is not swallowed by another branch '
+        'sub-route', (tester) async {
+      final db = newTestAppDatabase();
+      addTearDown(db.close);
+      await tester.runAsync(() => runTestSeed(db));
+      final container = makeTestContainer(
+        db: db,
+        extraOverrides: [
+          splashGateSnapshotProvider.overrideWithValue(
+            SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(routerProvider);
+      addTearDown(router.dispose);
+      router.go('/settings/categories');
+
+      await tester.pumpWidget(buildTestApp(container: container));
+      await tester.pumpAndSettle();
+      tester
+          .state<StatefulNavigationShellState>(
+            find.byType(StatefulNavigationShell),
+          )
+          .goBranch(0);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(HomeScreen), findsOneWidget);
+      expect(await router.routerDelegate.popRoute(), isFalse);
+    });
+
     // RT02 — /home/shopping-list/:id routes to the form (root navigator)
     // We pump the widget first (so the router initialises), then navigate to
     // the route, then pump once to apply the navigation — but before
