@@ -23,7 +23,7 @@ plugins {
     // Pins the Kotlin compiler to 2.4.21. With AGP 9 and
     // android.builtInKotlin=true, AGP compiles Kotlin itself (Built-in
     // Kotlin) with whichever kotlin-gradle-plugin is on the build classpath.
-    // AGP 9 only brings in 2.2.10 and the Flutter Gradle Plugin only 2.0.0,
+    // AGP 9 only brings in 2.2.10 and the Flutter Gradle Plugin only 2.4.10,
     // so declaring the plugin here, with `apply false`, is what moves the
     // compiler to 2.4.21. It is not applied in app/build.gradle.kts: Built-in
     // Kotlin replaces the kotlin-android plugin there, and AGP 9 rejects it.
